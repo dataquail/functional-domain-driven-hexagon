@@ -11,6 +11,15 @@ export const DeleteUserCommand = Schema.TaggedStruct("DeleteUserCommand", {
 });
 export type DeleteUserCommand = typeof DeleteUserCommand.Type;
 
+declare module "@/platform/command-bus.js" {
+  interface CommandRegistry {
+    DeleteUserCommand: {
+      readonly command: DeleteUserCommand;
+      readonly output: Effect.Effect<void, UserNotFound, UserRepository | DomainEventBus>;
+    };
+  }
+}
+
 export const deleteUser = (
   cmd: DeleteUserCommand,
 ): Effect.Effect<void, UserNotFound, UserRepository | DomainEventBus> =>

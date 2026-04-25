@@ -26,7 +26,14 @@ describe("deleteUser", () => {
     Effect.gen(function* () {
       const repo = yield* UserRepository;
       const rec = yield* RecordedEvents;
-      const id = yield* createUser(CreateUserCommand.make({ email: "alice@example.com", address }));
+      const id = yield* createUser(
+        CreateUserCommand.make({
+          email: "alice@example.com",
+          country: address.country,
+          street: address.street,
+          postalCode: address.postalCode,
+        }),
+      );
 
       yield* deleteUser(DeleteUserCommand.make({ userId: id }));
 

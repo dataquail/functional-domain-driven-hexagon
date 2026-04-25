@@ -26,7 +26,14 @@ describe("changeUserRole", () => {
     Effect.gen(function* () {
       const repo = yield* UserRepository;
       const rec = yield* RecordedEvents;
-      const id = yield* createUser(CreateUserCommand.make({ email: "alice@example.com", address }));
+      const id = yield* createUser(
+        CreateUserCommand.make({
+          email: "alice@example.com",
+          country: address.country,
+          street: address.street,
+          postalCode: address.postalCode,
+        }),
+      );
 
       yield* changeUserRole(ChangeUserRoleCommand.make({ userId: id, role: "admin" }));
 
@@ -43,7 +50,14 @@ describe("changeUserRole", () => {
   it.effect("promotes to moderator", () =>
     Effect.gen(function* () {
       const repo = yield* UserRepository;
-      const id = yield* createUser(CreateUserCommand.make({ email: "alice@example.com", address }));
+      const id = yield* createUser(
+        CreateUserCommand.make({
+          email: "alice@example.com",
+          country: address.country,
+          street: address.street,
+          postalCode: address.postalCode,
+        }),
+      );
       yield* changeUserRole(ChangeUserRoleCommand.make({ userId: id, role: "moderator" }));
       const stored = yield* repo.findById(id);
       deepStrictEqual(stored.role, "moderator");

@@ -15,7 +15,13 @@ import * as Schedule from "effect/Schedule";
 import { createServer } from "node:http";
 import { Api } from "./api.js";
 import { EnvVars } from "./common/env-vars.js";
+import { userCommandHandlers } from "./modules/user/application/user-command-handlers.js";
+import { userQueryHandlers } from "./modules/user/application/user-query-handlers.js";
+import { UserHttpLive } from "./modules/user/interface/user-http-live.js";
+import { CommandBus, makeCommandBus } from "./platform/command-bus.js";
+import { DomainEventBusLive } from "./platform/domain-event-bus.js";
 import { UserAuthMiddlewareLive } from "./platform/middlewares/auth-middleware-live.js";
+import { makeQueryBus, QueryBus } from "./platform/query-bus.js";
 import { SseLive } from "./public/sse/sse-live.js";
 import { TodosLive } from "./public/todos/todos-live.js";
 
@@ -23,9 +29,12 @@ dotenv.config({
   path: "../../.env",
 });
 
+const CommandBusLive = Layer.succeed(CommandBus, makeCommandBus({ ...userCommandHandlers }));
+const QueryBusLive = Layer.succeed(QueryBus, makeQueryBus({ ...userQueryHandlers }));
+
 const ApiLive = HttpApiBuilder.api(Api).pipe(
-  Layer.provide([TodosLive, SseLive]),
-  Layer.provide([UserAuthMiddlewareLive]),
+  Layer.provide([TodosLive, SseLive, UserHttpLive]),
+  Layer.provide([UserAuthMiddlewareLive, DomainEventBusLive, CommandBusLive, QueryBusLive]),
 );
 
 const DatabaseLive = Layer.unwrapEffect(

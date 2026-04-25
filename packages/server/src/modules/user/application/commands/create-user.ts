@@ -10,9 +10,20 @@ import * as Schema from "effect/Schema";
 
 export const CreateUserCommand = Schema.TaggedStruct("CreateUserCommand", {
   email: Schema.String,
-  address: Address,
+  country: Schema.String,
+  street: Schema.String,
+  postalCode: Schema.String,
 });
 export type CreateUserCommand = typeof CreateUserCommand.Type;
+
+declare module "@/platform/command-bus.js" {
+  interface CommandRegistry {
+    CreateUserCommand: {
+      readonly command: CreateUserCommand;
+      readonly output: Effect.Effect<UserId, UserAlreadyExists, UserRepository | DomainEventBus>;
+    };
+  }
+}
 
 export const createUser = (
   cmd: CreateUserCommand,
@@ -22,7 +33,12 @@ export const createUser = (
     const bus = yield* DomainEventBus;
     const id = UserId.make(yield* Effect.sync(() => crypto.randomUUID()));
     const now = yield* DateTime.now;
-    const { events, user } = User.create({ id, email: cmd.email, address: cmd.address, now });
+    const address = new Address({
+      country: cmd.country,
+      street: cmd.street,
+      postalCode: cmd.postalCode,
+    });
+    const { events, user } = User.create({ id, email: cmd.email, address, now });
     yield* repo.insert(user);
     yield* bus.publishAll(events);
     return user.id;

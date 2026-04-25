@@ -16,6 +16,15 @@ export const ChangeUserRoleCommand = Schema.TaggedStruct("ChangeUserRoleCommand"
 });
 export type ChangeUserRoleCommand = typeof ChangeUserRoleCommand.Type;
 
+declare module "@/platform/command-bus.js" {
+  interface CommandRegistry {
+    ChangeUserRoleCommand: {
+      readonly command: ChangeUserRoleCommand;
+      readonly output: Effect.Effect<void, UserNotFound, UserRepository | DomainEventBus>;
+    };
+  }
+}
+
 export const changeUserRole = (
   cmd: ChangeUserRoleCommand,
 ): Effect.Effect<void, UserNotFound, UserRepository | DomainEventBus> =>
