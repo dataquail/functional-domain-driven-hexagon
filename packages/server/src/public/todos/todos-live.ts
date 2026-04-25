@@ -3,7 +3,7 @@ import * as HttpApiBuilder from "@effect/platform/HttpApiBuilder";
 import { SseContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import { SseManager } from "../sse/sse-manager.js";
+import { SseManager } from "../sse/index.js";
 import { TodosRepository } from "./todos-repository.js";
 
 export const TodosLive = HttpApiBuilder.group(

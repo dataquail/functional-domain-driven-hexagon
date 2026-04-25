@@ -16,6 +16,39 @@ module.exports = {
       to: { path: "^packages/database/" },
     },
     {
+      name: "module-user-barrel-only",
+      severity: "error",
+      comment:
+        "Files outside the user module must import it via packages/server/src/modules/user/index.ts",
+      from: { pathNot: "^packages/server/src/modules/user/" },
+      to: {
+        path: "^packages/server/src/modules/user/",
+        pathNot: "^packages/server/src/modules/user/index\\.ts$",
+      },
+    },
+    {
+      name: "module-todos-barrel-only",
+      severity: "error",
+      comment:
+        "Files outside the todos module must import it via packages/server/src/public/todos/index.ts",
+      from: { pathNot: "^packages/server/src/public/todos/" },
+      to: {
+        path: "^packages/server/src/public/todos/",
+        pathNot: "^packages/server/src/public/todos/index\\.ts$",
+      },
+    },
+    {
+      name: "module-sse-barrel-only",
+      severity: "error",
+      comment:
+        "Files outside the sse module must import it via packages/server/src/public/sse/index.ts",
+      from: { pathNot: "^packages/server/src/public/sse/" },
+      to: {
+        path: "^packages/server/src/public/sse/",
+        pathNot: "^packages/server/src/public/sse/index\\.ts$",
+      },
+    },
+    {
       name: "no-circular",
       severity: "error",
       comment:
