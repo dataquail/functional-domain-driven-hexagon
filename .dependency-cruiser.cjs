@@ -63,7 +63,7 @@ module.exports = {
       name: "domain-isolation",
       severity: "error",
       comment:
-        "Module domain may only import from its own folder, effect (external), and the platform shared kernel (`domain-event.ts` for the event factory; `span-attributable.ts` for the cross-cutting `SpanAttributesExtractor` type used by event extractor signatures). No contracts, no cross-module, no infrastructure/application/interface.",
+        "Module domain may only import from its own folder, effect (external), and the platform shared kernel (`domain-event.ts` for the event factory; `span-attributable.ts` for the cross-cutting `SpanAttributesExtractor` type used by event extractor signatures). No contracts, no cross-module, no infrastructure/commands/queries/event-handlers/interface.",
       from: { path: "^packages/server/src/modules/[^/]+/domain/" },
       to: {
         path: "^packages/",
@@ -83,43 +83,111 @@ module.exports = {
       },
     },
     {
-      name: "no-domain-to-application",
-      severity: "error",
-      comment: "Module domain layer must not depend on its application layer",
-      from: { path: "^packages/server/src/modules/[^/]+/domain/" },
-      to: { path: "^packages/server/src/modules/[^/]+/application/" },
-    },
-    {
-      name: "no-domain-to-infrastructure",
-      severity: "error",
-      comment: "Module domain layer must not depend on its infrastructure layer",
-      from: { path: "^packages/server/src/modules/[^/]+/domain/" },
-      to: { path: "^packages/server/src/modules/[^/]+/infrastructure/" },
-    },
-    {
-      name: "no-domain-to-interface",
-      severity: "error",
-      comment: "Module domain layer must not depend on its interface layer",
-      from: { path: "^packages/server/src/modules/[^/]+/domain/" },
-      to: { path: "^packages/server/src/modules/[^/]+/interface/" },
-    },
-    {
-      name: "no-application-to-interface",
-      severity: "error",
-      comment: "Module application layer must not depend on its interface layer",
-      from: { path: "^packages/server/src/modules/[^/]+/application/" },
-      to: { path: "^packages/server/src/modules/[^/]+/interface/" },
-    },
-    {
-      name: "no-application-to-infrastructure",
+      name: "commands-isolation",
       severity: "error",
       comment:
-        "Module application layer must not depend on its infrastructure layer (test files excluded — fakes are a test concern)",
+        "Module commands (write-side use cases) may only import: own module's domain and sibling commands, the platform shared kernel facades (command/query/event buses, transaction runner, span attributable, domain-event), and other modules' barrel (events). No infrastructure, no interface, no queries, no event-handlers, no @org/contracts, no @org/database. Test files excluded.",
       from: {
-        path: "^packages/server/src/modules/[^/]+/application/",
+        path: "^packages/server/src/modules/([^/]+)/commands/",
         pathNot: "\\.test\\.ts$",
       },
-      to: { path: "^packages/server/src/modules/[^/]+/infrastructure/" },
+      to: {
+        path: "^packages/",
+        pathNot: [
+          "^packages/server/src/modules/$1/(domain|commands)/",
+          "^packages/server/src/platform/(command-bus|query-bus|domain-event-bus|domain-event|transaction-runner|span-attributable)\\.ts$",
+          "^packages/server/src/modules/[^/]+/index\\.ts$",
+        ],
+      },
+    },
+    {
+      name: "commands-no-external-beyond-effect",
+      severity: "error",
+      comment:
+        "Commands are runtime-pure: only 'effect' allowed externally. No drivers, no clients, no framework code.",
+      from: {
+        path: "^packages/server/src/modules/[^/]+/commands/",
+        pathNot: "\\.test\\.ts$",
+      },
+      to: {
+        dependencyTypes: ["npm", "npm-dev", "npm-peer", "npm-optional"],
+        pathNot: "/node_modules/effect/",
+      },
+    },
+    {
+      name: "event-handlers-isolation",
+      severity: "error",
+      comment:
+        "Module event-handlers are write-side reactions to events. Same constraints as commands: own module's domain and sibling event-handlers, platform shared kernel facades, and other modules' barrel (events). No infrastructure, no interface, no commands, no queries, no @org/contracts, no @org/database. Test files excluded.",
+      from: {
+        path: "^packages/server/src/modules/([^/]+)/event-handlers/",
+        pathNot: "\\.test\\.ts$",
+      },
+      to: {
+        path: "^packages/",
+        pathNot: [
+          "^packages/server/src/modules/$1/(domain|event-handlers)/",
+          "^packages/server/src/platform/(command-bus|query-bus|domain-event-bus|domain-event|transaction-runner|span-attributable)\\.ts$",
+          "^packages/server/src/modules/[^/]+/index\\.ts$",
+        ],
+      },
+    },
+    {
+      name: "event-handlers-no-external-beyond-effect",
+      severity: "error",
+      comment:
+        "Event handlers are runtime-pure: only 'effect' allowed externally. No drivers, no clients, no framework code.",
+      from: {
+        path: "^packages/server/src/modules/[^/]+/event-handlers/",
+        pathNot: "\\.test\\.ts$",
+      },
+      to: {
+        dependencyTypes: ["npm", "npm-dev", "npm-peer", "npm-optional"],
+        pathNot: "/node_modules/effect/",
+      },
+    },
+    {
+      name: "queries-isolation",
+      severity: "error",
+      comment:
+        "Module queries are read-side: may import own module's domain (for IDs/value objects) and sibling queries, the platform shared kernel facades, other modules' barrel, and @org/database for direct SQL projection. May NOT import own commands, event-handlers, infrastructure, interface, or @org/contracts (wire types belong in interface). Test files excluded.",
+      from: {
+        path: "^packages/server/src/modules/([^/]+)/queries/",
+        pathNot: "\\.test\\.ts$",
+      },
+      to: {
+        path: "^packages/",
+        pathNot: [
+          "^packages/server/src/modules/$1/(domain|queries)/",
+          "^packages/server/src/platform/(command-bus|query-bus|domain-event-bus|domain-event|transaction-runner|span-attributable)\\.ts$",
+          "^packages/server/src/modules/[^/]+/index\\.ts$",
+          "^packages/database/",
+        ],
+      },
+    },
+    {
+      name: "queries-no-external-beyond-effect-and-database",
+      severity: "error",
+      comment:
+        "Queries may use 'effect' and the workspace database package. No other npm drivers/clients/frameworks.",
+      from: {
+        path: "^packages/server/src/modules/[^/]+/queries/",
+        pathNot: "\\.test\\.ts$",
+      },
+      to: {
+        dependencyTypes: ["npm", "npm-dev", "npm-peer", "npm-optional"],
+        pathNot: "/node_modules/(effect|@org/database)/",
+      },
+    },
+    {
+      name: "barrel-content-discipline",
+      severity: "error",
+      comment:
+        "Module barrel (index.ts) defines the cross-module public surface. It must not re-export anything from infrastructure/ or interface/ — those are private implementation details.",
+      from: { path: "^packages/server/src/modules/[^/]+/index\\.ts$" },
+      to: {
+        path: "^packages/server/src/modules/[^/]+/(infrastructure|interface)/",
+      },
     },
     {
       name: "no-infrastructure-to-interface",

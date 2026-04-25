@@ -1,7 +1,7 @@
 import {
   type DeleteUserCommand,
   type DeleteUserOutput,
-} from "@/modules/user/application/commands/delete-user-command.js";
+} from "@/modules/user/commands/delete-user-command.js";
 import { UserRepository } from "@/modules/user/domain/user-repository.js";
 import * as User from "@/modules/user/domain/user.js";
 import { DomainEventBus } from "@/platform/domain-event-bus.js";

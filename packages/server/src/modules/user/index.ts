@@ -1,9 +1,9 @@
-export { ChangeUserRoleCommand } from "./application/commands/change-user-role-command.js";
-export { CreateUserCommand } from "./application/commands/create-user-command.js";
-export { DeleteUserCommand } from "./application/commands/delete-user-command.js";
-export { FindUsersQuery } from "./application/queries/find-users-query.js";
-export { userCommandHandlers } from "./application/user-command-handlers.js";
-export { userEventSpanAttributes } from "./application/user-event-span-attributes.js";
-export { userQueryHandlers } from "./application/user-query-handlers.js";
+export { ChangeUserRoleCommand } from "./commands/change-user-role-command.js";
+export { CreateUserCommand } from "./commands/create-user-command.js";
+export { DeleteUserCommand } from "./commands/delete-user-command.js";
+export { userCommandHandlers } from "./commands/user-command-handlers.js";
 export { UserCreated } from "./domain/user-events.js";
+export { FindUsersQuery } from "./queries/find-users-query.js";
+export { userQueryHandlers } from "./queries/user-query-handlers.js";
+export { userEventSpanAttributes } from "./user-event-span-attributes.js";
 export { UserModuleLive } from "./user-module.js";

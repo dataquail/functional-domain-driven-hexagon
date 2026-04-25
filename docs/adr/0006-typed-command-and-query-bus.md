@@ -74,10 +74,12 @@ This split exists because the registry entry is what callers need to type-check 
 The convention:
 
 ```
-modules/<feature>/application/commands/
+modules/<feature>/commands/
   create-user-command.ts   ← schema + registry entry; barrel re-exports this
   create-user.ts           ← handler; imported only by the handler map and tests
 ```
+
+Queries follow the same pattern under `modules/<feature>/queries/`.
 
 ### Who is allowed to dispatch what
 

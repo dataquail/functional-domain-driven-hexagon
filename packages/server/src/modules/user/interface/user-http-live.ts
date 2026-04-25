@@ -1,25 +1,44 @@
 import { Api } from "@/api.js";
-import { ChangeUserRoleCommand } from "@/modules/user/application/commands/change-user-role-command.js";
-import { CreateUserCommand } from "@/modules/user/application/commands/create-user-command.js";
-import { DeleteUserCommand } from "@/modules/user/application/commands/delete-user-command.js";
-import { FindUsersQuery } from "@/modules/user/application/queries/find-users-query.js";
+import { ChangeUserRoleCommand } from "@/modules/user/commands/change-user-role-command.js";
+import { CreateUserCommand } from "@/modules/user/commands/create-user-command.js";
+import { DeleteUserCommand } from "@/modules/user/commands/delete-user-command.js";
+import { type FindUsersResult, FindUsersQuery } from "@/modules/user/queries/find-users-query.js";
 import { CommandBus } from "@/platform/command-bus.js";
 import { QueryBus } from "@/platform/query-bus.js";
 import * as HttpApiBuilder from "@effect/platform/HttpApiBuilder";
 import { UserContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
+const toPaginatedUsersContract = (result: FindUsersResult): UserContract.PaginatedUsers =>
+  new UserContract.PaginatedUsers({
+    users: result.users.map(
+      (user) =>
+        new UserContract.User({
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          address: user.address,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        }),
+    ),
+    page: result.page,
+    pageSize: result.pageSize,
+    total: result.total,
+  });
+
 export const UserHttpLive = HttpApiBuilder.group(Api, "user", (handlers) =>
   handlers
     .handle("find", (request) =>
       Effect.gen(function* () {
         const queryBus = yield* QueryBus;
-        return yield* queryBus.execute(
+        const result = yield* queryBus.execute(
           FindUsersQuery.make({
             page: request.urlParams.page,
             pageSize: request.urlParams.pageSize,
           }),
         );
+        return toPaginatedUsersContract(result);
       }).pipe(Effect.withSpan("UserHttpLive.find")),
     )
     .handle("create", (request) =>

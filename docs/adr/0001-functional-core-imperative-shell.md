@@ -26,7 +26,7 @@ export const create = (input: CreateInput): { user: User; events: ReadonlyArray<
 };
 ```
 
-All effectful concerns — I/O, time, randomness, logging, tracing, event publication — happen in the outer Effect programs (the "shell"), typically use cases under `application/`. Domain code uses Effect as a _type_ (e.g. errors are typed via `Schema.TaggedError`) but does not require an Effect runtime to execute its core logic.
+All effectful concerns — I/O, time, randomness, logging, tracing, event publication — happen in the outer Effect programs (the "shell"), typically use cases in `commands/`, `queries/`, and `event-handlers/`. Domain code uses Effect as a _type_ (e.g. errors are typed via `Schema.TaggedError`) but does not require an Effect runtime to execute its core logic.
 
 ## Consequences
 

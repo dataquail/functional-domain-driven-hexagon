@@ -1,37 +1,29 @@
 import {
-  type CreateUserCommand,
-  type CreateUserOutput,
-} from "@/modules/user/application/commands/create-user-command.js";
-import { UserId } from "@/modules/user/domain/user-id.js";
+  type ChangeUserRoleCommand,
+  type ChangeUserRoleOutput,
+} from "@/modules/user/commands/change-user-role-command.js";
 import { UserRepository } from "@/modules/user/domain/user-repository.js";
 import * as User from "@/modules/user/domain/user.js";
-import { Address } from "@/modules/user/domain/value-objects/address.js";
 import { DomainEventBus } from "@/platform/domain-event-bus.js";
 import { TransactionRunner } from "@/platform/transaction-runner.js";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-export const createUser = (cmd: CreateUserCommand): CreateUserOutput =>
+export const changeUserRole = (cmd: ChangeUserRoleCommand): ChangeUserRoleOutput =>
   Effect.gen(function* () {
     const repo = yield* UserRepository;
     const bus = yield* DomainEventBus;
     const tx = yield* TransactionRunner;
-    const id = UserId.make(yield* Effect.sync(() => crypto.randomUUID()));
-    yield* Effect.annotateCurrentSpan("user.id", id);
     const now = yield* DateTime.now;
-    const address = new Address({
-      country: cmd.country,
-      street: cmd.street,
-      postalCode: cmd.postalCode,
-    });
-    const { events, user } = User.create({ id, email: cmd.email, address, now });
+    const user = yield* repo.findById(cmd.userId);
+    const { events, user: updated } =
+      cmd.role === "admin" ? User.makeAdmin(user, { now }) : User.makeModerator(user, { now });
     yield* tx
       .run(
         Effect.gen(function* () {
-          yield* repo.insert(user);
+          yield* repo.update(updated);
           yield* bus.dispatch(events);
         }),
       )
       .pipe(Effect.catchTag("DatabaseError", Effect.die));
-    return user.id;
   });

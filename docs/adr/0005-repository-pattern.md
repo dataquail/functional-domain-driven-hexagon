@@ -48,7 +48,7 @@ Persistence-format conversion lives in `infrastructure/<feature>-mapper.ts` as a
 
 ### Test exemption
 
-Static analysis allows test files in `application/` to import from `infrastructure/` (so unit tests can pull in the fake). Production application code may not (see ADR-0008).
+Static analysis allows test files in `commands/`, `queries/`, and `event-handlers/` to import from `infrastructure/` (so unit tests can pull in the fake). Production code in those folders may not (see ADR-0008).
 
 ## Consequences
 
