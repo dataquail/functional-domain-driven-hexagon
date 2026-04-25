@@ -10,6 +10,14 @@
     "types": ["node"],
     "tsBuildInfoFile": ".tsbuildinfo/test.tsbuildinfo",
     "rootDir": ".",
-    "noEmit": true
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@org/contracts": ["../contracts/src/index.js"],
+      "@org/contracts/*": ["../contracts/src/*.js"],
+      "@org/database": ["../database/src/index.js"],
+      "@org/database/*": ["../database/src/*.js"]
+    }
   }
 }
