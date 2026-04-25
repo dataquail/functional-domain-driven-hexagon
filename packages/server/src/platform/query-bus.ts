@@ -36,6 +36,14 @@ export type QueryHandlers<K extends keyof QueryRegistry = keyof QueryRegistry> =
   readonly [T in K]: QueryHandlerFor<T>;
 };
 
+export const queryHandlers = <
+  const M extends {
+    readonly [K in keyof M]: K extends keyof QueryRegistry ? QueryHandlerFor<K> : never;
+  },
+>(
+  map: M,
+): M => map;
+
 export const makeQueryBus = (handlers: QueryHandlers): QueryBusShape => ({
   execute: ((query: { readonly _tag: string }) => {
     const handler = (handlers as Record<string, QueryHandlerFor<keyof QueryRegistry>>)[query._tag];

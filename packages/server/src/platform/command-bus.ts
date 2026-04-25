@@ -61,6 +61,20 @@ export type CommandHandlers<K extends keyof CommandRegistry = keyof CommandRegis
 };
 
 /**
+ * Factory for a module's contribution to the command bus. Checks each
+ * key against `CommandRegistry` individually: registered tags must map to
+ * the correct handler signature, unknown tags (typos, never-declared
+ * commands) must map to `never`, which no function satisfies.
+ */
+export const commandHandlers = <
+  const M extends {
+    readonly [K in keyof M]: K extends keyof CommandRegistry ? CommandHandlerFor<K> : never;
+  },
+>(
+  map: M,
+): M => map;
+
+/**
  * Builds a CommandBus from a full handler set. Takes `CommandHandlers` for
  * the entire `CommandRegistry`, so forgetting to register a handler — or
  * registering the wrong one under a tag — fails to compile.
