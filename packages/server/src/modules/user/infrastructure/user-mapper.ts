@@ -1,12 +1,11 @@
-import type { DbSchema } from "@org/database/index";
+import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import { UserId } from "../domain/user-id.js";
 import { type UserRole } from "../domain/user-role.js";
 import { User } from "../domain/user.js";
 import { Address } from "../domain/value-objects/address.js";
 
-type Row = typeof DbSchema.usersTable.$inferSelect;
-type InsertRow = typeof DbSchema.usersTable.$inferInsert;
+type Row = RowSchemas.UserRow;
 
 export const toDomain = (row: Row): User =>
   new User({
@@ -16,19 +15,30 @@ export const toDomain = (row: Row): User =>
     address: new Address({
       country: row.country,
       street: row.street,
-      postalCode: row.postalCode,
+      postalCode: row.postal_code,
     }),
-    createdAt: DateTime.unsafeMake(row.createdAt),
-    updatedAt: DateTime.unsafeMake(row.updatedAt),
+    createdAt: DateTime.unsafeMake(row.created_at),
+    updatedAt: DateTime.unsafeMake(row.updated_at),
   });
 
-export const toPersistence = (user: User): InsertRow => ({
+export type PersistenceRow = {
+  readonly id: string;
+  readonly email: string;
+  readonly role: string;
+  readonly country: string;
+  readonly street: string;
+  readonly postal_code: string;
+  readonly created_at: Date;
+  readonly updated_at: Date;
+};
+
+export const toPersistence = (user: User): PersistenceRow => ({
   id: user.id,
   email: user.email,
   role: user.role,
   country: user.address.country,
   street: user.address.street,
-  postalCode: user.address.postalCode,
-  createdAt: DateTime.toDate(user.createdAt),
-  updatedAt: DateTime.toDate(user.updatedAt),
+  postal_code: user.address.postalCode,
+  created_at: DateTime.toDate(user.createdAt),
+  updated_at: DateTime.toDate(user.updatedAt),
 });

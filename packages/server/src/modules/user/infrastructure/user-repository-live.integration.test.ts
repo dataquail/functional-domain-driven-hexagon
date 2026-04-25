@@ -4,12 +4,7 @@ import { UserRepository } from "@/modules/user/domain/user-repository.js";
 import * as User from "@/modules/user/domain/user.js";
 import { Address } from "@/modules/user/domain/value-objects/address.js";
 import { UserRepositoryLive } from "@/modules/user/infrastructure/user-repository-live.js";
-import {
-  hasTestDatabase,
-  runMigrations,
-  TestDatabaseLive,
-  truncate,
-} from "@/test-utils/test-database.js";
+import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 import { describe, it } from "@effect/vitest";
 import { Database } from "@org/database/index";
 import { deepStrictEqual } from "assert";
@@ -18,7 +13,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
-import { beforeAll, beforeEach } from "vitest";
+import { beforeEach } from "vitest";
 
 const aliceId = UserId.make("11111111-1111-1111-1111-111111111111");
 const bobId = UserId.make("22222222-2222-2222-2222-222222222222");
@@ -40,10 +35,6 @@ const TestLayer = UserRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("UserRepositoryLive (integration)", () => {
-  beforeAll(async () => {
-    await runMigrations();
-  });
-
   beforeEach(async () => {
     await Effect.runPromise(truncate("users").pipe(Effect.provide(TestDatabaseLive)));
   });

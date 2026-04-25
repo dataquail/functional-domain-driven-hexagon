@@ -1,10 +1,10 @@
 import { Api } from "@/api.js";
-import { hasTestDatabase, runMigrations, truncate } from "@/test-utils/test-database.js";
+import { hasTestDatabase, truncate } from "@/test-utils/test-database.js";
 import { TestServerLive } from "@/test-utils/test-server.js";
 import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import { UserContract } from "@org/contracts/api/Contracts";
-import { Database } from "@org/database/index";
+import { Database, RowSchemas, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -28,7 +28,6 @@ suite("UserHttpLive (integration)", () => {
   let runtime: ManagedRuntime.ManagedRuntime<ServerContext, ServerError>;
 
   beforeAll(async () => {
-    await runMigrations();
     runtime = ManagedRuntime.make(TestServerLive);
     // Force the runtime to finish building so the server is listening before
     // the first test runs.
@@ -59,9 +58,9 @@ suite("UserHttpLive (integration)", () => {
         // DB side-effect check via the shared Database service.
         const db = yield* Database.Database;
         const rows = yield* db.execute((c) =>
-          c.query.usersTable.findMany({
-            where: (u, { eq }) => eq(u.email, basePayload.email),
-          }),
+          c.any(sql.type(RowSchemas.UserRowStd)`
+            SELECT * FROM users WHERE email = ${basePayload.email}
+          `),
         );
         deepStrictEqual(rows.length, 1);
         deepStrictEqual(rows[0]?.role, "guest");

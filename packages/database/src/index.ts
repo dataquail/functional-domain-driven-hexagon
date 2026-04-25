@@ -1,2 +1,3 @@
+export { sql } from "slonik";
 export * as Database from "./Database.js";
-export * as DbSchema from "./DbSchema.js";
+export * as RowSchemas from "./row-schemas/index.js";

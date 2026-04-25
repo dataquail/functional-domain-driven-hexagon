@@ -1,10 +1,16 @@
 import { TodosContract } from "@org/contracts/api/Contracts";
 import { TodoId } from "@org/contracts/EntityIds";
-import { Database, DbSchema } from "@org/database/index";
-import * as d from "drizzle-orm";
-import * as Array from "effect/Array";
+import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
+import type { ParseError } from "effect/ParseResult";
 import * as Schema from "effect/Schema";
+
+const toContract = (row: RowSchemas.TodoRow): Effect.Effect<TodosContract.Todo, ParseError> =>
+  Schema.decode(TodosContract.Todo)({
+    id: row.id,
+    title: row.title,
+    completed: row.completed,
+  });
 
 export class TodosRepository extends Effect.Service<TodosRepository>()("TodosRepository", {
   effect: Effect.gen(function* () {
@@ -18,12 +24,19 @@ export class TodosRepository extends Effect.Service<TodosRepository>()("TodosRep
           completed: boolean;
         },
       ) =>
-        execute((client) => client.insert(DbSchema.todosTable).values(input).returning()).pipe(
-          Effect.flatMap(Array.head),
-          Effect.flatMap(Schema.decode(TodosContract.Todo)),
+        execute((client) =>
+          client.maybeOne(sql.type(RowSchemas.TodoRowStd)`
+            INSERT INTO todos (title, completed)
+            VALUES (${input.title}, ${input.completed})
+            RETURNING *
+          `),
+        ).pipe(
+          Effect.flatMap(
+            (row): Effect.Effect<TodosContract.Todo, ParseError> =>
+              row === null ? Effect.dieMessage("INSERT did not return a row") : toContract(row),
+          ),
           Effect.catchTags({
             DatabaseError: Effect.die,
-            NoSuchElementException: () => Effect.dieMessage(""),
             ParseError: Effect.die,
           }),
           Effect.withSpan("TodosRepository.create"),
@@ -40,20 +53,27 @@ export class TodosRepository extends Effect.Service<TodosRepository>()("TodosRep
         },
       ) =>
         execute((client) =>
-          client
-            .update(DbSchema.todosTable)
-            .set(input)
-            .where(d.eq(DbSchema.todosTable.id, input.id))
-            .returning(),
+          client.maybeOne(sql.type(RowSchemas.TodoRowStd)`
+            UPDATE todos
+            SET title = ${input.title}, completed = ${input.completed}
+            WHERE id = ${input.id}
+            RETURNING *
+          `),
         ).pipe(
-          Effect.flatMap(Array.head),
-          Effect.flatMap(Schema.decode(TodosContract.Todo)),
+          Effect.flatMap(
+            (
+              row,
+            ): Effect.Effect<TodosContract.Todo, ParseError | TodosContract.TodoNotFoundError> =>
+              row === null
+                ? Effect.fail(
+                    new TodosContract.TodoNotFoundError({
+                      message: `Todo with id ${input.id} not found`,
+                    }),
+                  )
+                : toContract(row),
+          ),
           Effect.catchTags({
             DatabaseError: Effect.die,
-            NoSuchElementException: () =>
-              new TodosContract.TodoNotFoundError({
-                message: `Todo with id ${input.id} not found`,
-              }),
             ParseError: Effect.die,
           }),
           Effect.withSpan("TodosRepository.update"),
@@ -62,11 +82,12 @@ export class TodosRepository extends Effect.Service<TodosRepository>()("TodosRep
 
     const findAll = db.makeQuery((execute) =>
       execute((client) =>
-        client.query.todosTable.findMany({
-          orderBy: (todos, { desc }) => [desc(todos.createdAt)],
-        }),
+        client.any(sql.type(RowSchemas.TodoRowStd)`
+          SELECT * FROM todos ORDER BY created_at DESC
+        `),
       ).pipe(
-        Effect.flatMap(Schema.decode(Schema.Array(TodosContract.Todo))),
+        Effect.flatMap((rows) => Effect.forEach(rows, toContract)),
+        Effect.map((todos) => todos as ReadonlyArray<TodosContract.Todo>),
         Effect.catchTags({
           DatabaseError: Effect.die,
           ParseError: Effect.die,
@@ -77,20 +98,22 @@ export class TodosRepository extends Effect.Service<TodosRepository>()("TodosRep
 
     const del = db.makeQuery((execute, input: TodoId) =>
       execute((client) =>
-        client
-          .delete(DbSchema.todosTable)
-          .where(d.eq(DbSchema.todosTable.id, input))
-          .returning({ id: DbSchema.todosTable.id }),
+        client.maybeOne(sql.type(RowSchemas.TodoRowStd)`
+          DELETE FROM todos WHERE id = ${input} RETURNING *
+        `),
       ).pipe(
-        Effect.flatMap(Array.head),
-        Effect.flatMap(Schema.decode(Schema.Struct({ id: TodoId }))),
+        Effect.flatMap(
+          (row): Effect.Effect<{ readonly id: TodoId }, TodosContract.TodoNotFoundError> =>
+            row === null
+              ? Effect.fail(
+                  new TodosContract.TodoNotFoundError({
+                    message: `Todo with id ${input} not found`,
+                  }),
+                )
+              : Effect.succeed({ id: TodoId.make(row.id) }),
+        ),
         Effect.catchTags({
           DatabaseError: Effect.die,
-          NoSuchElementException: () =>
-            new TodosContract.TodoNotFoundError({
-              message: `Todo with id ${input} not found`,
-            }),
-          ParseError: Effect.die,
         }),
         Effect.withSpan("TodosRepository.del"),
       ),

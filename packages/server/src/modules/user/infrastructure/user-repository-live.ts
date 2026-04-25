@@ -1,6 +1,4 @@
-import { Database, DbSchema } from "@org/database/index";
-import * as d from "drizzle-orm";
-import * as Array from "effect/Array";
+import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
@@ -15,9 +13,22 @@ export const UserRepositoryLive = Layer.effect(
   Effect.gen(function* () {
     const db = yield* Database.Database;
 
-    const insert = db.makeQuery((execute, user: User) =>
-      execute((client) =>
-        client.insert(DbSchema.usersTable).values(UserMapper.toPersistence(user)),
+    const insert = db.makeQuery((execute, user: User) => {
+      const row = UserMapper.toPersistence(user);
+      return execute((client) =>
+        client.query(sql.unsafe`
+          INSERT INTO users (id, email, role, country, street, postal_code, created_at, updated_at)
+          VALUES (
+            ${row.id},
+            ${row.email},
+            ${row.role},
+            ${row.country},
+            ${row.street},
+            ${row.postal_code},
+            ${sql.timestamp(row.created_at)},
+            ${sql.timestamp(row.updated_at)}
+          )
+        `),
       ).pipe(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", (e) =>
@@ -26,54 +37,59 @@ export const UserRepositoryLive = Layer.effect(
             : Effect.die(e),
         ),
         Effect.withSpan("UserRepository.insert"),
-      ),
-    );
+      );
+    });
 
-    const update = db.makeQuery((execute, user: User) =>
-      execute((client) =>
-        client
-          .update(DbSchema.usersTable)
-          .set(UserMapper.toPersistence(user))
-          .where(d.eq(DbSchema.usersTable.id, user.id))
-          .returning({ id: DbSchema.usersTable.id }),
+    const update = db.makeQuery((execute, user: User) => {
+      const row = UserMapper.toPersistence(user);
+      return execute((client) =>
+        client.maybeOne(sql.type(RowSchemas.UserRowStd)`
+          UPDATE users SET
+            email = ${row.email},
+            role = ${row.role},
+            country = ${row.country},
+            street = ${row.street},
+            postal_code = ${row.postal_code},
+            updated_at = ${sql.timestamp(row.updated_at)}
+          WHERE id = ${row.id}
+          RETURNING *
+        `),
       ).pipe(
-        Effect.flatMap(Array.head),
-        Effect.asVoid,
-        Effect.catchTags({
-          NoSuchElementException: () => Effect.fail(new UserNotFound({ userId: user.id })),
-          DatabaseError: Effect.die,
-        }),
+        Effect.flatMap(
+          (found): Effect.Effect<void, UserNotFound> =>
+            found === null ? Effect.fail(new UserNotFound({ userId: user.id })) : Effect.void,
+        ),
+        Effect.catchTag("DatabaseError", Effect.die),
         Effect.withSpan("UserRepository.update"),
-      ),
-    );
+      );
+    });
 
     const remove = db.makeQuery((execute, id: UserId) =>
       execute((client) =>
-        client
-          .delete(DbSchema.usersTable)
-          .where(d.eq(DbSchema.usersTable.id, id))
-          .returning({ id: DbSchema.usersTable.id }),
+        client.maybeOne(sql.type(RowSchemas.UserRowStd)`
+          DELETE FROM users WHERE id = ${id} RETURNING *
+        `),
       ).pipe(
-        Effect.flatMap(Array.head),
-        Effect.asVoid,
-        Effect.catchTags({
-          NoSuchElementException: () => Effect.fail(new UserNotFound({ userId: id })),
-          DatabaseError: Effect.die,
-        }),
+        Effect.flatMap(
+          (found): Effect.Effect<void, UserNotFound> =>
+            found === null ? Effect.fail(new UserNotFound({ userId: id })) : Effect.void,
+        ),
+        Effect.catchTag("DatabaseError", Effect.die),
         Effect.withSpan("UserRepository.remove"),
       ),
     );
 
     const findById = db.makeQuery((execute, id: UserId) =>
       execute((client) =>
-        client.query.usersTable.findFirst({
-          where: d.eq(DbSchema.usersTable.id, id),
-        }),
+        client.maybeOne(sql.type(RowSchemas.UserRowStd)`
+          SELECT * FROM users WHERE id = ${id}
+        `),
       ).pipe(
-        Effect.flatMap((row) =>
-          row === undefined
-            ? Effect.fail(new UserNotFound({ userId: id }))
-            : Effect.succeed(UserMapper.toDomain(row)),
+        Effect.flatMap(
+          (row): Effect.Effect<User, UserNotFound> =>
+            row === null
+              ? Effect.fail(new UserNotFound({ userId: id }))
+              : Effect.succeed(UserMapper.toDomain(row)),
         ),
         Effect.catchTag("DatabaseError", Effect.die),
         Effect.withSpan("UserRepository.findById"),
@@ -82,13 +98,11 @@ export const UserRepositoryLive = Layer.effect(
 
     const findByEmail = db.makeQuery((execute, email: string) =>
       execute((client) =>
-        client.query.usersTable.findFirst({
-          where: d.eq(DbSchema.usersTable.email, email),
-        }),
+        client.maybeOne(sql.type(RowSchemas.UserRowStd)`
+          SELECT * FROM users WHERE email = ${email}
+        `),
       ).pipe(
-        Effect.map((row) =>
-          row === undefined ? Option.none() : Option.some(UserMapper.toDomain(row)),
-        ),
+        Effect.map((row) => (row === null ? Option.none() : Option.some(UserMapper.toDomain(row)))),
         Effect.catchTag("DatabaseError", Effect.die),
         Effect.withSpan("UserRepository.findByEmail"),
       ),

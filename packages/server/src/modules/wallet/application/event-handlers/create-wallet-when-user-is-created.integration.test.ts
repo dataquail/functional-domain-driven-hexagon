@@ -1,11 +1,10 @@
 import { Api } from "@/api.js";
-import { hasTestDatabase, runMigrations, truncate } from "@/test-utils/test-database.js";
+import { hasTestDatabase, truncate } from "@/test-utils/test-database.js";
 import { TestServerLive } from "@/test-utils/test-server.js";
 import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
-import { Database, DbSchema } from "@org/database/index";
+import { Database, RowSchemas, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
-import * as d from "drizzle-orm";
 import * as Effect from "effect/Effect";
 import type * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
@@ -30,21 +29,20 @@ const waitForWallet = (userId: string, attempts = 40) =>
     const db = yield* Database.Database;
     for (let i = 0; i < attempts; i++) {
       const rows = yield* db.execute((c) =>
-        c.query.walletsTable.findMany({
-          where: d.eq(DbSchema.walletsTable.userId, userId),
-        }),
+        c.any(sql.type(RowSchemas.WalletRowStd)`
+          SELECT * FROM wallets WHERE user_id = ${userId}
+        `),
       );
       if (rows.length > 0) return rows;
       yield* Effect.sleep("25 millis");
     }
-    return [] as ReadonlyArray<typeof DbSchema.walletsTable.$inferSelect>;
+    return [] as ReadonlyArray<RowSchemas.WalletRow>;
   });
 
 suite("CreateWalletWhenUserIsCreated (integration)", () => {
   let runtime: ManagedRuntime.ManagedRuntime<ServerContext, ServerError>;
 
   beforeAll(async () => {
-    await runMigrations();
     runtime = ManagedRuntime.make(TestServerLive);
     await runtime.runPromise(Effect.void);
   });
@@ -73,7 +71,7 @@ suite("CreateWalletWhenUserIsCreated (integration)", () => {
         deepStrictEqual(rows.length, 1);
         const wallet = rows[0];
         ok(wallet !== undefined);
-        deepStrictEqual(wallet.userId, id);
+        deepStrictEqual(wallet.user_id, id);
         deepStrictEqual(wallet.balance, 0);
       }),
     );

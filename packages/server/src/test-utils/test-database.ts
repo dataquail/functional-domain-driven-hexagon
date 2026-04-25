@@ -1,10 +1,8 @@
-import { Database } from "@org/database/index";
-import { sql } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { Database, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Redacted from "effect/Redacted";
+import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as pg from "pg";
@@ -28,7 +26,7 @@ const assertTestDbName = (url: string): string => {
 
 const migrationsFolder = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
-  "../../../database/drizzle",
+  "../../../database/migrations",
 );
 
 export const TestDatabaseLive =
@@ -39,22 +37,47 @@ export const TestDatabaseLive =
       })
     : (Layer.die(new Error("DATABASE_URL_TEST is not set")) as ReturnType<typeof Database.layer>);
 
-export const runMigrations = async (): Promise<void> => {
+// Tests always migrate from scratch, so we drop the public schema and replay
+// the Flyway-named migration files in order. This intentionally avoids
+// Flyway's checksum/history semantics — those matter for production drift,
+// not for a per-run test database. Memoized so concurrent test files that
+// each call runMigrations in beforeAll don't race the destructive reset.
+let migrationsPromise: Promise<void> | undefined;
+
+const doRunMigrations = async (): Promise<void> => {
   if (TEST_DATABASE_URL === undefined) return;
   assertTestDbName(TEST_DATABASE_URL);
   const pool = new pg.Pool({ connectionString: TEST_DATABASE_URL });
   try {
-    const db = drizzle(pool);
-    await migrate(db, { migrationsFolder });
+    await pool.query(`DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;`);
+    const entries = await fs.readdir(migrationsFolder);
+    const sqlFiles = entries
+      .filter((f) => /^V\d+__.*\.sql$/.test(f))
+      .sort((a, b) => {
+        const na = Number(/^V(\d+)__/.exec(a)?.[1] ?? 0);
+        const nb = Number(/^V(\d+)__/.exec(b)?.[1] ?? 0);
+        return na - nb;
+      });
+    for (const file of sqlFiles) {
+      const body = await fs.readFile(path.join(migrationsFolder, file), "utf8");
+      await pool.query(body);
+    }
   } finally {
     await pool.end();
   }
+};
+
+export const runMigrations = (): Promise<void> => {
+  migrationsPromise ??= doRunMigrations();
+  return migrationsPromise;
 };
 
 export const truncate = (...tables: ReadonlyArray<string>) =>
   Effect.gen(function* () {
     const db = yield* Database.Database;
     for (const table of tables) {
-      yield* db.execute((client) => client.execute(sql.raw(`TRUNCATE TABLE "${table}" CASCADE`)));
+      yield* db.execute((client) =>
+        client.query(sql.unsafe`TRUNCATE TABLE ${sql.identifier([table])} CASCADE`),
+      );
     }
   }).pipe(Effect.orDie);

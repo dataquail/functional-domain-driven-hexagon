@@ -1,6 +1,3 @@
-import { type ExtractTablesWithRelations } from "drizzle-orm";
-import { drizzle, type NodePgDatabase, type NodePgQueryResultHKT } from "drizzle-orm/node-postgres";
-import { type PgTransaction } from "drizzle-orm/pg-core";
 import type * as Cause from "effect/Cause";
 import * as Context from "effect/Context";
 import * as Data from "effect/Data";
@@ -10,22 +7,16 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
 import * as Runtime from "effect/Runtime";
-import * as pg from "pg";
-import * as DbSchema from "./DbSchema.js";
+import * as Slonik from "slonik";
 
-type TransactionClient = PgTransaction<
-  NodePgQueryResultHKT,
-  typeof DbSchema,
-  ExtractTablesWithRelations<typeof DbSchema>
->;
-
-type Client = NodePgDatabase<typeof DbSchema> & {
-  $client: pg.Pool;
-};
+export type Client = Slonik.DatabasePool;
+export type TxClient = Slonik.DatabaseTransactionConnection;
+export type AnyClient = Client | TxClient;
 
 type TransactionContextShape = <U>(
-  fn: (client: TransactionClient) => Promise<U>,
+  fn: (client: TxClient) => Promise<U>,
 ) => Effect.Effect<U, DatabaseError>;
+
 export class TransactionContext extends Context.Tag("TransactionContext")<
   TransactionContext,
   TransactionContextShape
@@ -40,27 +31,43 @@ export class TransactionContext extends Context.Tag("TransactionContext")<
 
 export class DatabaseError extends Data.TaggedError("DatabaseError")<{
   readonly type: "unique_violation" | "foreign_key_violation" | "connection_error";
-  readonly cause: pg.DatabaseError;
+  readonly cause: unknown;
+  readonly errorMessage: string;
 }> {
   public override toString() {
-    return `DatabaseError: ${this.cause.message}`;
+    return `DatabaseError: ${this.errorMessage}`;
   }
 
   public get message() {
-    return this.cause.message;
+    return this.errorMessage;
   }
 }
 
-const matchPgError = (error: unknown) => {
-  if (error instanceof pg.DatabaseError) {
-    switch (error.code) {
-      case "23505":
-        return new DatabaseError({ type: "unique_violation", cause: error });
-      case "23503":
-        return new DatabaseError({ type: "foreign_key_violation", cause: error });
-      case "08000":
-        return new DatabaseError({ type: "connection_error", cause: error });
-    }
+const matchSlonikError = (error: unknown): DatabaseError | null => {
+  if (error instanceof Slonik.UniqueIntegrityConstraintViolationError) {
+    return new DatabaseError({
+      type: "unique_violation",
+      cause: error,
+      errorMessage: error.message,
+    });
+  }
+  if (error instanceof Slonik.ForeignKeyIntegrityConstraintViolationError) {
+    return new DatabaseError({
+      type: "foreign_key_violation",
+      cause: error,
+      errorMessage: error.message,
+    });
+  }
+  if (
+    error instanceof Slonik.ConnectionError ||
+    error instanceof Slonik.BackendTerminatedError ||
+    error instanceof Slonik.BackendTerminatedUnexpectedlyError
+  ) {
+    return new DatabaseError({
+      type: "connection_error",
+      cause: error,
+      errorMessage: error.message,
+    });
   }
   return null;
 };
@@ -77,20 +84,30 @@ export type Config = {
 
 const makeService = (config: Config) =>
   Effect.gen(function* () {
-    const pool = yield* Effect.acquireRelease(
-      Effect.sync(
-        () =>
-          new pg.Pool({
-            connectionString: Redacted.value(config.url),
-            ssl: config.ssl,
-            idleTimeoutMillis: 0,
-            connectionTimeoutMillis: 0,
-          }),
-      ),
-      (pool) => Effect.promise(() => pool.end()),
+    // Slonik's default int8 parser returns native BigInt. Match the prior
+    // drizzle config (`bigint(..., { mode: "number" })`) by parsing int8 to
+    // a Number, accepting the precision loss above 2^53 just like before.
+    const typeParsers = Slonik.createTypeParserPreset().map((p) =>
+      p.name === "int8" ? { name: "int8" as const, parse: (value: string) => Number(value) } : p,
     );
 
-    yield* Effect.tryPromise(() => pool.query("SELECT 1")).pipe(
+    const pool: Slonik.DatabasePool = yield* Effect.acquireRelease(
+      Effect.tryPromise({
+        try: () =>
+          Slonik.createPool(Redacted.value(config.url), {
+            ssl: config.ssl ? { rejectUnauthorized: true } : undefined,
+            typeParsers,
+          } as Slonik.ClientConfigurationInput),
+        catch: (cause) =>
+          new DatabaseConnectionLostError({
+            cause,
+            message: "[Database] Failed to create pool",
+          }),
+      }),
+      (p) => Effect.promise(() => p.end()),
+    );
+
+    yield* Effect.tryPromise(() => pool.query(Slonik.sql.unsafe`SELECT 1`)).pipe(
       Effect.timeoutFail({
         duration: "10 seconds",
         onTimeout: () =>
@@ -126,6 +143,10 @@ const makeService = (config: Config) =>
         });
 
         return Effect.sync(() => {
+          // Slonik's StrictEventEmitter intersection makes
+          // removeAllListeners' type lose its callable signature for the
+          // narrowed event union. The runtime call is safe.
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
           pool.removeAllListeners("error");
         });
       }),
@@ -135,13 +156,11 @@ const makeService = (config: Config) =>
       },
     );
 
-    const db = drizzle(pool, { schema: DbSchema });
-
     const execute = Effect.fn(<T>(fn: (client: Client) => Promise<T>) =>
       Effect.tryPromise({
-        try: () => fn(db),
+        try: () => fn(pool),
         catch: (cause) => {
-          const error = matchPgError(cause);
+          const error = matchSlonikError(cause);
           if (error !== null) {
             return error;
           }
@@ -150,10 +169,9 @@ const makeService = (config: Config) =>
       }),
     );
 
-    // Drizzle rolls back only if the transaction callback throws. Returning
-    // normally commits, even if we called resume(Effect.fail(...)) inside.
-    // So on inner Effect failure we throw this sentinel carrying the Cause,
-    // then re-surface it via Effect.failCause in the outer handler — which
+    // Slonik rolls back when the transaction handler throws. Returning normally
+    // commits, so on inner Effect failure we throw a sentinel carrying the
+    // Cause and re-surface it via Effect.failCause in the outer handler — which
     // preserves the original typed error channel.
     class TxFailure<E> {
       constructor(public readonly cause: Cause.Cause<E>) {}
@@ -165,45 +183,45 @@ const makeService = (config: Config) =>
           Effect.map((runtime) => Runtime.runPromiseExit(runtime)),
           Effect.flatMap((runPromiseExit) =>
             Effect.async<T, DatabaseError | E, R>((resume) => {
-              db.transaction(async (tx: TransactionClient) => {
-                const txWrapper = (fn: (client: TransactionClient) => Promise<any>) =>
-                  Effect.tryPromise({
-                    try: () => fn(tx),
-                    catch: (cause) => {
-                      const error = matchPgError(cause);
-                      if (error !== null) {
-                        return error;
-                      }
-                      throw cause;
-                    },
-                  });
+              pool
+                .transaction(async (tx: TxClient) => {
+                  const txWrapper = (fn: (client: TxClient) => Promise<any>) =>
+                    Effect.tryPromise({
+                      try: () => fn(tx),
+                      catch: (cause) => {
+                        const error = matchSlonikError(cause);
+                        if (error !== null) {
+                          return error;
+                        }
+                        throw cause;
+                      },
+                    });
 
-                const result = await runPromiseExit(txExecute(txWrapper));
-                if (Exit.isSuccess(result)) {
-                  return result.value;
-                }
-                throw new TxFailure(result.cause);
-              }).then(
-                (value) => {
-                  resume(Effect.succeed(value));
-                },
-                (cause: unknown) => {
-                  if (cause instanceof TxFailure) {
-                    resume(Effect.failCause(cause.cause as Cause.Cause<E>));
-                    return;
+                  const result = await runPromiseExit(txExecute(txWrapper));
+                  if (Exit.isSuccess(result)) {
+                    return result.value;
                   }
-                  const error = matchPgError(cause);
-                  resume(error !== null ? Effect.fail(error) : Effect.die(cause));
-                },
-              );
+                  throw new TxFailure(result.cause);
+                })
+                .then(
+                  (value) => {
+                    resume(Effect.succeed(value));
+                  },
+                  (cause: unknown) => {
+                    if (cause instanceof TxFailure) {
+                      resume(Effect.failCause(cause.cause as Cause.Cause<E>));
+                      return;
+                    }
+                    const error = matchSlonikError(cause);
+                    resume(error !== null ? Effect.fail(error) : Effect.die(cause));
+                  },
+                );
             }),
           ),
         ),
     );
 
-    type ExecuteFn = <T>(
-      fn: (client: Client | TransactionClient) => Promise<T>,
-    ) => Effect.Effect<T, DatabaseError>;
+    type ExecuteFn = <T>(fn: (client: AnyClient) => Promise<T>) => Effect.Effect<T, DatabaseError>;
     const makeQuery =
       <A, E, R, Input = never>(
         queryFn: (execute: ExecuteFn, input: Input) => Effect.Effect<A, E, R>,

@@ -22,18 +22,17 @@
     "check": "tsc -b tsconfig.json",
     "test": "vitest",
     "coverage": "vitest --coverage",
-    "db:generate": "NODE_OPTIONS='--import tsx' drizzle-kit generate",
-    "db:migrate": "NODE_OPTIONS='--import tsx' drizzle-kit migrate",
-    "db:push": "NODE_OPTIONS='--import tsx' drizzle-kit push",
-    "db:studio": "NODE_OPTIONS='--import tsx' drizzle-kit studio",
+    "db:migrate": "docker compose --profile migrate run --rm flyway",
+    "db:migrate:test": "docker compose --profile migrate-test run --rm flyway-test",
     "db:reset": "bun ./src/scripts/reset-database.ts"
   },
   "dependencies": {
     "@effect/platform": "*",
-    "drizzle-orm": "0.39.2",
+    "@effect/platform-node": "*",
+    "@standard-schema/spec": "^1.1.0",
     "effect": "*",
     "pg": "8.13.1",
-    "@effect/platform-node": "*"
+    "slonik": "^48.14.0"
   },
   "effect": {
     "generateExports": {
@@ -50,7 +49,6 @@
   "devDependencies": {
     "@types/dotenv": "^8.2.3",
     "@types/pg": "^8.11.11",
-    "dotenv": "^16.4.7",
-    "drizzle-kit": "^0.30.4"
+    "dotenv": "^16.4.7"
   }
 }

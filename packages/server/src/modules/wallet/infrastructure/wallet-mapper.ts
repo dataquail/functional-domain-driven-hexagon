@@ -1,25 +1,32 @@
-import type { DbSchema } from "@org/database/index";
+import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import { UserId } from "../domain/user-id.js";
 import { WalletId } from "../domain/wallet-id.js";
 import { Wallet } from "../domain/wallet.js";
 
-type Row = typeof DbSchema.walletsTable.$inferSelect;
-type InsertRow = typeof DbSchema.walletsTable.$inferInsert;
+type Row = RowSchemas.WalletRow;
 
 export const toDomain = (row: Row): Wallet =>
   new Wallet({
     id: WalletId.make(row.id),
-    userId: UserId.make(row.userId),
+    userId: UserId.make(row.user_id),
     balance: row.balance,
-    createdAt: DateTime.unsafeMake(row.createdAt),
-    updatedAt: DateTime.unsafeMake(row.updatedAt),
+    createdAt: DateTime.unsafeMake(row.created_at),
+    updatedAt: DateTime.unsafeMake(row.updated_at),
   });
 
-export const toPersistence = (wallet: Wallet): InsertRow => ({
+export type PersistenceRow = {
+  readonly id: string;
+  readonly user_id: string;
+  readonly balance: number;
+  readonly created_at: Date;
+  readonly updated_at: Date;
+};
+
+export const toPersistence = (wallet: Wallet): PersistenceRow => ({
   id: wallet.id,
-  userId: wallet.userId,
+  user_id: wallet.userId,
   balance: wallet.balance,
-  createdAt: DateTime.toDate(wallet.createdAt),
-  updatedAt: DateTime.toDate(wallet.updatedAt),
+  created_at: DateTime.toDate(wallet.createdAt),
+  updated_at: DateTime.toDate(wallet.updatedAt),
 });

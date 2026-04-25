@@ -14,6 +14,40 @@ services:
       - jaeger-network
     restart: unless-stopped
 
+  flyway:
+    image: flyway/flyway:10
+    command:
+      - -url=jdbc:postgresql://postgres:5432/effect-monorepo
+      - -user=postgres
+      - -password=postgres
+      - -connectRetries=10
+      - migrate
+    volumes:
+      - ./packages/database/migrations:/flyway/sql
+    depends_on:
+      - postgres
+    networks:
+      - jaeger-network
+    profiles:
+      - migrate
+
+  flyway-test:
+    image: flyway/flyway:10
+    command:
+      - -url=jdbc:postgresql://postgres:5432/effect-monorepo-test
+      - -user=postgres
+      - -password=postgres
+      - -connectRetries=10
+      - migrate
+    volumes:
+      - ./packages/database/migrations:/flyway/sql
+    depends_on:
+      - postgres
+    networks:
+      - jaeger-network
+    profiles:
+      - migrate-test
+
   jaeger:
     container_name: effect-monorepo-jaeger
     image: jaegertracing/all-in-one:latest

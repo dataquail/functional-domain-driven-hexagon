@@ -1,48 +1,54 @@
 import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
 import { config as dotenv } from "dotenv";
-import { sql } from "drizzle-orm";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Schema from "effect/Schema";
+import { sql } from "slonik";
 import * as Database from "../Database.js";
 
 dotenv({
   path: "../../.env",
 });
 
+const TypeRow = Schema.standardSchemaV1(Schema.Struct({ typname: Schema.String }));
+const TableRow = Schema.standardSchemaV1(Schema.Struct({ table_name: Schema.String }));
+
 const resetDatabase = Effect.gen(function* () {
   const db = yield* Database.Database;
 
   yield* db.transaction(
     Effect.fnUntraced(function* (tx) {
-      const typesResult = yield* tx((client) =>
-        client.execute<{ typname: string }>(sql`
-      SELECT typname 
-      FROM pg_type 
-      WHERE typtype = 'e' 
-      AND typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public');
-    `),
+      const types = yield* tx((client) =>
+        client.any(sql.type(TypeRow)`
+          SELECT typname
+          FROM pg_type
+          WHERE typtype = 'e'
+          AND typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
+        `),
       );
 
-      for (const type of typesResult.rows) {
+      for (const type of types) {
         yield* tx((client) =>
-          client.execute(sql`DROP TYPE IF EXISTS "${sql.raw(type.typname)}" CASCADE;`),
+          client.query(sql.unsafe`DROP TYPE IF EXISTS ${sql.identifier([type.typname])} CASCADE`),
         );
         yield* Effect.log(`Dropped type: ${type.typname}`);
       }
 
-      const tablesResult = yield* tx((client) =>
-        client.execute<{ table_name: string }>(sql`
-      SELECT table_name 
-      FROM information_schema.tables 
-      WHERE table_schema = 'public'
-      AND table_type = 'BASE TABLE';
-    `),
+      const tables = yield* tx((client) =>
+        client.any(sql.type(TableRow)`
+          SELECT table_name
+          FROM information_schema.tables
+          WHERE table_schema = 'public'
+          AND table_type = 'BASE TABLE'
+        `),
       );
 
-      for (const table of tablesResult.rows) {
+      for (const table of tables) {
         yield* tx((client) =>
-          client.execute(sql`DROP TABLE IF EXISTS "${sql.raw(table.table_name)}" CASCADE;`),
+          client.query(
+            sql.unsafe`DROP TABLE IF EXISTS ${sql.identifier([table.table_name])} CASCADE`,
+          ),
         );
         yield* Effect.log(`Dropped table: ${table.table_name}`);
       }

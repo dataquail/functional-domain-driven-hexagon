@@ -1,7 +1,6 @@
 import { UserId } from "@/modules/user/domain/user-id.js";
 import { UserContract } from "@org/contracts/api/Contracts";
-import { Database, DbSchema } from "@org/database/index";
-import { count } from "drizzle-orm";
+import { Database, RowSchemas, sql } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
@@ -12,9 +11,9 @@ export const FindUsersQuery = Schema.TaggedStruct("FindUsersQuery", {
 });
 export type FindUsersQuery = typeof FindUsersQuery.Type;
 
-type UserRow = typeof DbSchema.usersTable.$inferSelect;
+const CountRowStd = Schema.standardSchemaV1(Schema.Struct({ value: Schema.Number }));
 
-const toUserView = (row: UserRow): UserContract.User =>
+const toUserView = (row: RowSchemas.UserRow): UserContract.User =>
   new UserContract.User({
     id: UserId.make(row.id),
     email: row.email,
@@ -22,10 +21,10 @@ const toUserView = (row: UserRow): UserContract.User =>
     address: {
       country: row.country,
       street: row.street,
-      postalCode: row.postalCode,
+      postalCode: row.postal_code,
     },
-    createdAt: DateTime.unsafeMake(row.createdAt),
-    updatedAt: DateTime.unsafeMake(row.updatedAt),
+    createdAt: DateTime.unsafeMake(row.created_at),
+    updatedAt: DateTime.unsafeMake(row.updated_at),
   });
 
 declare module "@/platform/query-bus.js" {
@@ -47,23 +46,24 @@ export const findUsers = (
     const result = yield* db
       .execute((client) =>
         Promise.all([
-          client.query.usersTable.findMany({
-            limit: query.pageSize,
-            offset,
-            orderBy: (t, { desc }) => [desc(t.createdAt)],
-          }),
-          client.select({ value: count() }).from(DbSchema.usersTable),
+          client.any(sql.type(RowSchemas.UserRowStd)`
+            SELECT * FROM users
+            ORDER BY created_at DESC
+            LIMIT ${query.pageSize} OFFSET ${offset}
+          `),
+          client.one(sql.type(CountRowStd)`
+            SELECT COUNT(*)::int AS value FROM users
+          `),
         ]),
       )
       .pipe(Effect.catchTag("DatabaseError", Effect.die));
 
-    const [rows, countRows] = result;
-    const total = countRows[0]?.value ?? 0;
+    const [rows, countRow] = result;
 
     return new UserContract.PaginatedUsers({
       users: rows.map(toUserView),
       page: query.page,
       pageSize: query.pageSize,
-      total,
+      total: countRow.value,
     });
   }).pipe(Effect.withSpan("findUsers"));
