@@ -7,7 +7,7 @@ import { type UserId } from "../domain/user-id.js";
 import { WalletAlreadyExistsForUser } from "../domain/wallet-errors.js";
 import { type WalletId } from "../domain/wallet-id.js";
 import { WalletRepository } from "../domain/wallet-repository.js";
-import { type Wallet } from "../domain/wallet.js";
+import { type Wallet } from "../domain/wallet.aggregate.js";
 
 const findByUserIdIn = (
   store: HashMap.HashMap<WalletId, Wallet>,

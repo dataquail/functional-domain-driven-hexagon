@@ -76,7 +76,16 @@ The contracts package (which is consumable by clients as well as the server) has
 
 dependency-cruiser checks edges in the import graph; some architectural rules are about file _existence_, not edges. "Every HTTP endpoint must have a sibling integration test" (ADR-0013) is one such rule — the integration test does not import the endpoint (it goes through `HttpApiClient`), so reachability isn't the right property.
 
-A small repository-root script `scripts/check-test-parity.mjs` covers these cases. It globs subjects defined in a `rules` array and asserts that each has a sibling test file. It is wired as `pnpm lint:tests` and runs in `pnpm check:all` alongside `lint:deps`. Today it covers HTTP endpoints; the rules array is the extension point when the same parity is wanted for commands, queries, or event handlers.
+A small repository-root script `scripts/check-test-parity.mjs` covers these cases. It globs subjects defined in a `rules` array and asserts that each has a sibling test file. It is wired as `pnpm lint:tests` and runs in `pnpm check:all` alongside `lint:deps`. The current rules cover:
+
+- HTTP endpoints — `interface/*.endpoint.ts` requires a sibling `*.endpoint.integration.test.ts` (or `*.endpoint.test.ts`)
+- Commands — `commands/*-command.ts` requires a sibling `<base>.test.ts` (drop the `-command` suffix). The schema file is the detector because its registry-merge `declare module` is the authoritative "this command exists" announcement (ADR-0006).
+- Queries — `queries/*-query.ts` requires a sibling `<base>.integration.test.ts` (or `<base>.test.ts`). Queries naturally hit the database directly, so integration is the default form.
+- Event handlers — every non-test `event-handlers/*.ts` requires a sibling `<base>.integration.test.ts` (or `<base>.test.ts`).
+- Aggregates — `domain/*.aggregate.ts` requires a sibling `*.aggregate.test.ts`. The `.aggregate.ts` suffix is an explicit DDD signal: "this is the root of a consistency boundary; invariants live here." Value objects, errors, and IDs in `domain/` are not subject to parity.
+- Live repositories — `infrastructure/*-repository-live.ts` requires (1) a sibling `*-repository-live.integration.test.ts` exercising the live SQL behavior (mapping, unique-violation translation, transaction-context joining), and (2) a sibling `*-repository-fake.ts` counterpart so use-case unit tests can run without a database (ADR-0005). The fake itself is not subject to parity — testing the fake is opt-in.
+
+The naming conventions chosen as detectors do double duty — they enforce the rule and document the architectural role of the file at a filename glance. They are bypassable (a contributor could name an aggregate `user.ts` instead of `user.aggregate.ts`), but bypass is the kind of thing a reviewer catches; the rule's job is to catch _forgetfulness_, not malice. Empty test files would similarly pass parity but fail review.
 
 The two tools are complementary: depcruise enforces _what_ a file may depend on; the parity script enforces _that a sibling file exists_. Both fail CI; both produce explicit error output that points at the missing artifact.
 

@@ -23,7 +23,7 @@ Each feature module lives at `modules/<feature>/` with sibling subfolders, named
 
 ```
 modules/<feature>/
-  domain/          — pure data, ops, repository ports, errors, events, value objects
+  domain/          — pure data, ops, repository ports, errors, events, value objects (aggregate roots are named `*.aggregate.ts` as an explicit DDD signal)
   commands/        — write-side use cases + their bus-registration map
   queries/         — read-side projections (may bypass the domain) + their bus-registration map
   event-handlers/  — write-side reactions to domain events from this or other modules

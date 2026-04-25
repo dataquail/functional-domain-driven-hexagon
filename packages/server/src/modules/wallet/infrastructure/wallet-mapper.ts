@@ -2,7 +2,7 @@ import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import { UserId } from "../domain/user-id.js";
 import { WalletId } from "../domain/wallet-id.js";
-import { Wallet } from "../domain/wallet.js";
+import { Wallet } from "../domain/wallet.aggregate.js";
 
 type Row = RowSchemas.WalletRow;
 

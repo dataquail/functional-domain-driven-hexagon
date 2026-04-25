@@ -3,7 +3,7 @@ import {
   type DeleteUserOutput,
 } from "@/modules/user/commands/delete-user-command.js";
 import { UserRepository } from "@/modules/user/domain/user-repository.js";
-import * as User from "@/modules/user/domain/user.js";
+import * as User from "@/modules/user/domain/user.aggregate.js";
 import { DomainEventBus } from "@/platform/domain-event-bus.js";
 import { TransactionRunner } from "@/platform/transaction-runner.js";
 import * as Effect from "effect/Effect";

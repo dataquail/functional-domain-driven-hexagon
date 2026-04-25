@@ -6,7 +6,7 @@ import * as Ref from "effect/Ref";
 import { UserAlreadyExists, UserNotFound } from "../domain/user-errors.js";
 import { type UserId } from "../domain/user-id.js";
 import { UserRepository } from "../domain/user-repository.js";
-import { type User } from "../domain/user.js";
+import { type User } from "../domain/user.aggregate.js";
 
 const findUserByEmail = (
   store: HashMap.HashMap<UserId, User>,

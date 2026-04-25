@@ -3,7 +3,7 @@ import type * as Effect from "effect/Effect";
 import type * as Option from "effect/Option";
 import { type UserId } from "./user-id.js";
 import { type WalletAlreadyExistsForUser } from "./wallet-errors.js";
-import { type Wallet } from "./wallet.js";
+import { type Wallet } from "./wallet.aggregate.js";
 
 export type WalletRepositoryShape = {
   readonly insert: (wallet: Wallet) => Effect.Effect<void, WalletAlreadyExistsForUser>;
