@@ -27,6 +27,17 @@ module.exports = {
       },
     },
     {
+      name: "module-wallet-barrel-only",
+      severity: "error",
+      comment:
+        "Files outside the wallet module must import it via packages/server/src/modules/wallet/index.ts",
+      from: { pathNot: "^packages/server/src/modules/wallet/" },
+      to: {
+        path: "^packages/server/src/modules/wallet/",
+        pathNot: "^packages/server/src/modules/wallet/index\\.ts$",
+      },
+    },
+    {
       name: "module-todos-barrel-only",
       severity: "error",
       comment:
@@ -47,6 +58,52 @@ module.exports = {
         path: "^packages/server/src/public/sse/",
         pathNot: "^packages/server/src/public/sse/index\\.ts$",
       },
+    },
+    {
+      name: "no-domain-to-application",
+      severity: "error",
+      comment: "Module domain layer must not depend on its application layer",
+      from: { path: "^packages/server/src/modules/[^/]+/domain/" },
+      to: { path: "^packages/server/src/modules/[^/]+/application/" },
+    },
+    {
+      name: "no-domain-to-infrastructure",
+      severity: "error",
+      comment: "Module domain layer must not depend on its infrastructure layer",
+      from: { path: "^packages/server/src/modules/[^/]+/domain/" },
+      to: { path: "^packages/server/src/modules/[^/]+/infrastructure/" },
+    },
+    {
+      name: "no-domain-to-interface",
+      severity: "error",
+      comment: "Module domain layer must not depend on its interface layer",
+      from: { path: "^packages/server/src/modules/[^/]+/domain/" },
+      to: { path: "^packages/server/src/modules/[^/]+/interface/" },
+    },
+    {
+      name: "no-application-to-interface",
+      severity: "error",
+      comment: "Module application layer must not depend on its interface layer",
+      from: { path: "^packages/server/src/modules/[^/]+/application/" },
+      to: { path: "^packages/server/src/modules/[^/]+/interface/" },
+    },
+    {
+      name: "no-application-to-infrastructure",
+      severity: "error",
+      comment:
+        "Module application layer must not depend on its infrastructure layer (test files excluded — fakes are a test concern)",
+      from: {
+        path: "^packages/server/src/modules/[^/]+/application/",
+        pathNot: "\\.test\\.ts$",
+      },
+      to: { path: "^packages/server/src/modules/[^/]+/infrastructure/" },
+    },
+    {
+      name: "no-infrastructure-to-interface",
+      severity: "error",
+      comment: "Module infrastructure layer must not depend on its interface layer",
+      from: { path: "^packages/server/src/modules/[^/]+/infrastructure/" },
+      to: { path: "^packages/server/src/modules/[^/]+/interface/" },
     },
     {
       name: "no-circular",

@@ -1,21 +1,22 @@
+import { DomainEvent } from "@/platform/domain-event-bus.js";
 import { UserId } from "@org/contracts/EntityIds";
 import * as Schema from "effect/Schema";
 import { UserRole } from "./user-role.js";
 import { Address } from "./value-objects/address.js";
 
-export const UserCreated = Schema.TaggedStruct("UserCreated", {
+export const UserCreated = DomainEvent("UserCreated", {
   userId: UserId,
   email: Schema.String,
   address: Address,
 });
 export type UserCreated = typeof UserCreated.Type;
 
-export const UserDeleted = Schema.TaggedStruct("UserDeleted", {
+export const UserDeleted = DomainEvent("UserDeleted", {
   userId: UserId,
 });
 export type UserDeleted = typeof UserDeleted.Type;
 
-export const UserAddressUpdated = Schema.TaggedStruct("UserAddressUpdated", {
+export const UserAddressUpdated = DomainEvent("UserAddressUpdated", {
   userId: UserId,
   country: Schema.String,
   street: Schema.String,
@@ -23,7 +24,7 @@ export const UserAddressUpdated = Schema.TaggedStruct("UserAddressUpdated", {
 });
 export type UserAddressUpdated = typeof UserAddressUpdated.Type;
 
-export const UserRoleChanged = Schema.TaggedStruct("UserRoleChanged", {
+export const UserRoleChanged = DomainEvent("UserRoleChanged", {
   userId: UserId,
   oldRole: UserRole,
   newRole: UserRole,

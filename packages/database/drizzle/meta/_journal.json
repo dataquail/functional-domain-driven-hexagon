@@ -8,6 +8,13 @@
       "when": 1776964157245,
       "tag": "0000_brainy_lord_tyger",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777046912594,
+      "tag": "0001_friendly_red_ghost",
+      "breakpoints": true
     }
   ]
 }
