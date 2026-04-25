@@ -4,16 +4,19 @@ import { UserId } from "@/modules/user/domain/user-id.js";
 import { UserRepository } from "@/modules/user/domain/user-repository.js";
 import { Address } from "@/modules/user/domain/value-objects/address.js";
 import { UserRepositoryFake } from "@/modules/user/infrastructure/user-repository-fake.js";
+import { IdentityTransactionRunner } from "@/test-utils/identity-transaction-runner.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import { changeUserRole, ChangeUserRoleCommand } from "./change-user-role.js";
-import { createUser, CreateUserCommand } from "./create-user.js";
+import { ChangeUserRoleCommand } from "./change-user-role-command.js";
+import { changeUserRole } from "./change-user-role.js";
+import { CreateUserCommand } from "./create-user-command.js";
+import { createUser } from "./create-user.js";
 
-const TestLayer = Layer.mergeAll(UserRepositoryFake, RecordingEventBus);
+const TestLayer = Layer.mergeAll(UserRepositoryFake, RecordingEventBus, IdentityTransactionRunner);
 
 const address = Address.make({
   country: "USA",

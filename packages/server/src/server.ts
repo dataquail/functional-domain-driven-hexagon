@@ -21,6 +21,7 @@ import { CommandBus, makeCommandBus } from "./platform/command-bus.js";
 import { DomainEventBusLive } from "./platform/domain-event-bus.js";
 import { UserAuthMiddlewareLive } from "./platform/middlewares/auth-middleware-live.js";
 import { makeQueryBus, QueryBus } from "./platform/query-bus.js";
+import { TransactionRunnerLive } from "./platform/transaction-runner.js";
 import { SseModuleLive } from "./public/sse/index.js";
 import { TodosModuleLive } from "./public/todos/index.js";
 
@@ -33,7 +34,13 @@ const QueryBusLive = Layer.succeed(QueryBus, makeQueryBus({ ...userQueryHandlers
 
 const ApiLive = HttpApiBuilder.api(Api).pipe(
   Layer.provide([TodosModuleLive, SseModuleLive, UserModuleLive, WalletModuleLive]),
-  Layer.provide([UserAuthMiddlewareLive, DomainEventBusLive, CommandBusLive, QueryBusLive]),
+  Layer.provide([
+    UserAuthMiddlewareLive,
+    DomainEventBusLive,
+    CommandBusLive,
+    QueryBusLive,
+    TransactionRunnerLive,
+  ]),
 );
 
 const DatabaseLive = Layer.unwrapEffect(

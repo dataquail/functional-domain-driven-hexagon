@@ -1,8 +1,8 @@
 import { Api } from "@/api.js";
-import { ChangeUserRoleCommand } from "@/modules/user/application/commands/change-user-role.js";
-import { CreateUserCommand } from "@/modules/user/application/commands/create-user.js";
-import { DeleteUserCommand } from "@/modules/user/application/commands/delete-user.js";
-import { FindUsersQuery } from "@/modules/user/application/queries/find-users.js";
+import { ChangeUserRoleCommand } from "@/modules/user/application/commands/change-user-role-command.js";
+import { CreateUserCommand } from "@/modules/user/application/commands/create-user-command.js";
+import { DeleteUserCommand } from "@/modules/user/application/commands/delete-user-command.js";
+import { FindUsersQuery } from "@/modules/user/application/queries/find-users-query.js";
 import { CommandBus } from "@/platform/command-bus.js";
 import { QueryBus } from "@/platform/query-bus.js";
 import * as HttpApiBuilder from "@effect/platform/HttpApiBuilder";

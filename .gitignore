@@ -5,11 +5,12 @@ node_modules/
 tmp/
 dist/
 build/
-docs/
+docs/scratch/
 scratchpad/*
 !scratchpad/tsconfig.json
 .direnv/
 .idea/
+.claude/
 .env
 .env.local
 .env.development.local

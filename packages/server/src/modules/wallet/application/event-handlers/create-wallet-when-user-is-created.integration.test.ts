@@ -22,23 +22,6 @@ const basePayload = {
 
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
-// The event handler runs in a forked fiber after publishAll. Poll the DB
-// briefly so the test isn't racy in CI.
-const waitForWallet = (userId: string, attempts = 40) =>
-  Effect.gen(function* () {
-    const db = yield* Database.Database;
-    for (let i = 0; i < attempts; i++) {
-      const rows = yield* db.execute((c) =>
-        c.any(sql.type(RowSchemas.WalletRowStd)`
-          SELECT * FROM wallets WHERE user_id = ${userId}
-        `),
-      );
-      if (rows.length > 0) return rows;
-      yield* Effect.sleep("25 millis");
-    }
-    return [] as ReadonlyArray<RowSchemas.WalletRow>;
-  });
-
 suite("CreateWalletWhenUserIsCreated (integration)", () => {
   let runtime: ManagedRuntime.ManagedRuntime<ServerContext, ServerError>;
 
@@ -61,13 +44,20 @@ suite("CreateWalletWhenUserIsCreated (integration)", () => {
 
   const run = <A, E>(effect: Effect.Effect<A, E, ServerContext>) => runtime.runPromise(effect);
 
-  it("creates a wallet with balance 0 after a user is created", async () => {
+  it("creates a wallet with balance 0 in the same transaction as the user", async () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         const { id } = yield* client.user.create({ payload: basePayload });
 
-        const rows = yield* waitForWallet(id);
+        // Synchronous in-fiber dispatch: the wallet must be visible
+        // immediately after the create-user response returns.
+        const db = yield* Database.Database;
+        const rows = yield* db.execute((c) =>
+          c.any(sql.type(RowSchemas.WalletRowStd)`
+            SELECT * FROM wallets WHERE user_id = ${id}
+          `),
+        );
         deepStrictEqual(rows.length, 1);
         const wallet = rows[0];
         ok(wallet !== undefined);

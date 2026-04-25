@@ -1,15 +1,13 @@
+import {
+  type FindUsersOutput,
+  type FindUsersQuery,
+} from "@/modules/user/application/queries/find-users-query.js";
 import { UserId } from "@/modules/user/domain/user-id.js";
 import { UserContract } from "@org/contracts/api/Contracts";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
-
-export const FindUsersQuery = Schema.TaggedStruct("FindUsersQuery", {
-  page: Schema.Number,
-  pageSize: Schema.Number,
-});
-export type FindUsersQuery = typeof FindUsersQuery.Type;
 
 const CountRowStd = Schema.standardSchemaV1(Schema.Struct({ value: Schema.Number }));
 
@@ -27,18 +25,7 @@ const toUserView = (row: RowSchemas.UserRow): UserContract.User =>
     updatedAt: DateTime.unsafeMake(row.updated_at),
   });
 
-declare module "@/platform/query-bus.js" {
-  interface QueryRegistry {
-    FindUsersQuery: {
-      readonly query: FindUsersQuery;
-      readonly output: Effect.Effect<UserContract.PaginatedUsers, never, Database.Database>;
-    };
-  }
-}
-
-export const findUsers = (
-  query: FindUsersQuery,
-): Effect.Effect<UserContract.PaginatedUsers, never, Database.Database> =>
+export const findUsers = (query: FindUsersQuery): FindUsersOutput =>
   Effect.gen(function* () {
     const db = yield* Database.Database;
     const offset = (query.page - 1) * query.pageSize;
