@@ -1,3 +1,7 @@
+import {
+  type SpanAttributeValue,
+  type SpanAttributesExtractor,
+} from "@/platform/span-attributable.js";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 
@@ -42,33 +46,54 @@ export interface CommandBusShape {
 
 export class CommandBus extends Context.Tag("CommandBus")<CommandBus, CommandBusShape>() {}
 
-/**
- * The exact signature a handler for a specific command tag must have —
- * parameter type and return type are both derived from the registry entry
- * for that tag.
- */
-export type CommandHandlerFor<T extends keyof CommandRegistry> = (
-  cmd: CommandRegistry[T] extends { readonly command: infer C } ? C : never,
-) => CommandRegistry[T] extends { readonly output: infer O } ? O : never;
+type CommandFor<T extends keyof CommandRegistry> = CommandRegistry[T] extends {
+  readonly command: infer C;
+}
+  ? C
+  : never;
+
+type OutputFor<T extends keyof CommandRegistry> = CommandRegistry[T] extends {
+  readonly output: infer O;
+}
+  ? O
+  : never;
 
 /**
- * A typed map from command tags to their handlers. Parameterize `K` to
- * describe a partial contribution (e.g. a single module's handlers); omit
- * it to demand every registered command's handler at once.
+ * A single registry entry: the handler that runs the command, plus an
+ * optional `spanAttributes` extractor whose result is merged into the
+ * bus-level span. The extractor is the type's "sibling" redaction function
+ * — it lives next to the schema definition and is composed into the bus
+ * here, rather than being a method on the command (which would require
+ * class-based commands; we keep them as plain `TaggedStruct` data so they
+ * stay serialization-friendly).
+ *
+ * Returning `{}` (or omitting the extractor entirely) is the safe default
+ * — only fields the extractor's author has audited as non-PHI/non-PII
+ * should appear in the result.
+ */
+export type CommandHandlerEntry<T extends keyof CommandRegistry> = {
+  readonly handle: (cmd: CommandFor<T>) => OutputFor<T>;
+  readonly spanAttributes?: SpanAttributesExtractor<CommandFor<T>>;
+};
+
+/**
+ * A typed map from command tags to their handler entries. Parameterize `K`
+ * to describe a partial contribution (e.g. a single module's handlers);
+ * omit it to demand every registered command's entry at once.
  */
 export type CommandHandlers<K extends keyof CommandRegistry = keyof CommandRegistry> = {
-  readonly [T in K]: CommandHandlerFor<T>;
+  readonly [T in K]: CommandHandlerEntry<T>;
 };
 
 /**
  * Factory for a module's contribution to the command bus. Checks each
  * key against `CommandRegistry` individually: registered tags must map to
- * the correct handler signature, unknown tags (typos, never-declared
- * commands) must map to `never`, which no function satisfies.
+ * the correct entry shape, unknown tags (typos, never-declared commands)
+ * must map to `never`, which no entry satisfies.
  */
 export const commandHandlers = <
   const M extends {
-    readonly [K in keyof M]: K extends keyof CommandRegistry ? CommandHandlerFor<K> : never;
+    readonly [K in keyof M]: K extends keyof CommandRegistry ? CommandHandlerEntry<K> : never;
   },
 >(
   map: M,
@@ -77,16 +102,24 @@ export const commandHandlers = <
 /**
  * Builds a CommandBus from a full handler set. Takes `CommandHandlers` for
  * the entire `CommandRegistry`, so forgetting to register a handler — or
- * registering the wrong one under a tag — fails to compile.
+ * registering the wrong one under a tag — fails to compile. The bus
+ * attaches the bus-level span (`command:<tag>`), invokes the handler, and
+ * merges any per-command attributes contributed by `spanAttributes`.
  */
 export const makeCommandBus = (handlers: CommandHandlers): CommandBusShape => ({
   execute: ((cmd: { readonly _tag: string }) => {
-    const handler = (handlers as Record<string, CommandHandlerFor<keyof CommandRegistry>>)[
+    const entry = (handlers as Record<string, CommandHandlerEntry<keyof CommandRegistry>>)[
       cmd._tag
     ];
-    if (handler === undefined) {
+    if (entry === undefined) {
       return Effect.die(new Error(`[CommandBus] no handler registered for '${cmd._tag}'`));
     }
-    return handler(cmd as never);
+    const extra: Record<string, SpanAttributeValue> =
+      entry.spanAttributes !== undefined ? entry.spanAttributes(cmd as never) : {};
+    return (entry.handle(cmd as never) as Effect.Effect<unknown, unknown, unknown>).pipe(
+      Effect.withSpan(`command:${cmd._tag}`, {
+        attributes: { "command.tag": cmd._tag, ...extra },
+      }),
+    );
   }) as CommandBusShape["execute"],
 });

@@ -23,4 +23,4 @@ export const deleteUser = (cmd: DeleteUserCommand): DeleteUserOutput =>
         }),
       )
       .pipe(Effect.catchTag("DatabaseError", Effect.die));
-  }).pipe(Effect.withSpan("deleteUser"));
+  });

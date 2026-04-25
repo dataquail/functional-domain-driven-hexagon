@@ -37,7 +37,7 @@ Within each module, dependencies must point inward. Outer layers may depend on i
 
 Domain code is held to stricter standards than the rest of the layered rules require:
 
-- `domain-isolation`: a module's domain may import from itself, the `effect` package, and the small set of cross-cutting domain primitives in `platform/` (specifically the shared kernel for declaring domain events). Nothing else.
+- `domain-isolation`: a module's domain may import from itself, the `effect` package, and the small set of cross-cutting domain primitives in `platform/` (the shared kernel for declaring domain events, plus the `SpanAttributesExtractor` type used by per-event extractor signatures). Nothing else.
 - `domain-no-external-beyond-effect`: domain code may not depend on any external npm package other than `effect`. No SQL client, no PG bindings, no HTTP framework, no ORM. The domain runtime is pure data and Effect types.
 
 ### Module barrel-only

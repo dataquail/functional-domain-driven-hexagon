@@ -3,6 +3,7 @@ export { CreateUserCommand } from "./application/commands/create-user-command.js
 export { DeleteUserCommand } from "./application/commands/delete-user-command.js";
 export { FindUsersQuery } from "./application/queries/find-users-query.js";
 export { userCommandHandlers } from "./application/user-command-handlers.js";
+export { userEventSpanAttributes } from "./application/user-event-span-attributes.js";
 export { userQueryHandlers } from "./application/user-query-handlers.js";
 export { UserCreated } from "./domain/user-events.js";
 export { UserModuleLive } from "./user-module.js";

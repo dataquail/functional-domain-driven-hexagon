@@ -1,3 +1,7 @@
+import {
+  type SpanAttributeValue,
+  type SpanAttributesExtractor,
+} from "@/platform/span-attributable.js";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 
@@ -28,17 +32,30 @@ export interface QueryBusShape {
 
 export class QueryBus extends Context.Tag("QueryBus")<QueryBus, QueryBusShape>() {}
 
-export type QueryHandlerFor<T extends keyof QueryRegistry> = (
-  query: QueryRegistry[T] extends { readonly query: infer Q } ? Q : never,
-) => QueryRegistry[T] extends { readonly output: infer O } ? O : never;
+type QueryFor<T extends keyof QueryRegistry> = QueryRegistry[T] extends {
+  readonly query: infer Q;
+}
+  ? Q
+  : never;
+
+type OutputFor<T extends keyof QueryRegistry> = QueryRegistry[T] extends {
+  readonly output: infer O;
+}
+  ? O
+  : never;
+
+export type QueryHandlerEntry<T extends keyof QueryRegistry> = {
+  readonly handle: (query: QueryFor<T>) => OutputFor<T>;
+  readonly spanAttributes?: SpanAttributesExtractor<QueryFor<T>>;
+};
 
 export type QueryHandlers<K extends keyof QueryRegistry = keyof QueryRegistry> = {
-  readonly [T in K]: QueryHandlerFor<T>;
+  readonly [T in K]: QueryHandlerEntry<T>;
 };
 
 export const queryHandlers = <
   const M extends {
-    readonly [K in keyof M]: K extends keyof QueryRegistry ? QueryHandlerFor<K> : never;
+    readonly [K in keyof M]: K extends keyof QueryRegistry ? QueryHandlerEntry<K> : never;
   },
 >(
   map: M,
@@ -46,10 +63,16 @@ export const queryHandlers = <
 
 export const makeQueryBus = (handlers: QueryHandlers): QueryBusShape => ({
   execute: ((query: { readonly _tag: string }) => {
-    const handler = (handlers as Record<string, QueryHandlerFor<keyof QueryRegistry>>)[query._tag];
-    if (handler === undefined) {
+    const entry = (handlers as Record<string, QueryHandlerEntry<keyof QueryRegistry>>)[query._tag];
+    if (entry === undefined) {
       return Effect.die(new Error(`[QueryBus] no handler registered for '${query._tag}'`));
     }
-    return handler(query as never);
+    const extra: Record<string, SpanAttributeValue> =
+      entry.spanAttributes !== undefined ? entry.spanAttributes(query as never) : {};
+    return (entry.handle(query as never) as Effect.Effect<unknown, unknown, unknown>).pipe(
+      Effect.withSpan(`query:${query._tag}`, {
+        attributes: { "query.tag": query._tag, ...extra },
+      }),
+    );
   }) as QueryBusShape["execute"],
 });

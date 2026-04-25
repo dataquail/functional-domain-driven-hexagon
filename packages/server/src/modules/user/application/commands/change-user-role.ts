@@ -26,4 +26,4 @@ export const changeUserRole = (cmd: ChangeUserRoleCommand): ChangeUserRoleOutput
         }),
       )
       .pipe(Effect.catchTag("DatabaseError", Effect.die));
-  }).pipe(Effect.withSpan("changeUserRole"));
+  });

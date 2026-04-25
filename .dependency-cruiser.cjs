@@ -63,11 +63,12 @@ module.exports = {
       name: "domain-isolation",
       severity: "error",
       comment:
-        "Module domain may only import from its own folder, effect (external), and platform/domain-event.ts (shared kernel). No contracts, no cross-module, no infrastructure/application/interface.",
+        "Module domain may only import from its own folder, effect (external), and the platform shared kernel (`domain-event.ts` for the event factory; `span-attributable.ts` for the cross-cutting `SpanAttributesExtractor` type used by event extractor signatures). No contracts, no cross-module, no infrastructure/application/interface.",
       from: { path: "^packages/server/src/modules/[^/]+/domain/" },
       to: {
         path: "^packages/",
-        pathNot: "/domain/|^packages/server/src/platform/domain-event\\.ts$",
+        pathNot:
+          "/domain/|^packages/server/src/platform/domain-event\\.ts$|^packages/server/src/platform/span-attributable\\.ts$",
       },
     },
     {

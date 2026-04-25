@@ -17,6 +17,7 @@ export const createUser = (cmd: CreateUserCommand): CreateUserOutput =>
     const bus = yield* DomainEventBus;
     const tx = yield* TransactionRunner;
     const id = UserId.make(yield* Effect.sync(() => crypto.randomUUID()));
+    yield* Effect.annotateCurrentSpan("user.id", id);
     const now = yield* DateTime.now;
     const address = new Address({
       country: cmd.country,
@@ -33,4 +34,4 @@ export const createUser = (cmd: CreateUserCommand): CreateUserOutput =>
       )
       .pipe(Effect.catchTag("DatabaseError", Effect.die));
     return user.id;
-  }).pipe(Effect.withSpan("createUser"));
+  });

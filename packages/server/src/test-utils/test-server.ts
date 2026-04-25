@@ -1,8 +1,13 @@
 import { Api } from "@/api.js";
-import { userCommandHandlers, UserModuleLive, userQueryHandlers } from "@/modules/user/index.js";
-import { WalletModuleLive } from "@/modules/wallet/index.js";
+import {
+  userCommandHandlers,
+  userEventSpanAttributes,
+  UserModuleLive,
+  userQueryHandlers,
+} from "@/modules/user/index.js";
+import { walletEventSpanAttributes, WalletModuleLive } from "@/modules/wallet/index.js";
 import { CommandBus, makeCommandBus } from "@/platform/command-bus.js";
-import { DomainEventBusLive } from "@/platform/domain-event-bus.js";
+import { makeDomainEventBusLive } from "@/platform/domain-event-bus.js";
 import { UserAuthMiddlewareLive } from "@/platform/middlewares/auth-middleware-live.js";
 import { makeQueryBus, QueryBus } from "@/platform/query-bus.js";
 import { TransactionRunnerLive } from "@/platform/transaction-runner.js";
@@ -15,6 +20,9 @@ import * as Layer from "effect/Layer";
 
 const CommandBusLive = Layer.succeed(CommandBus, makeCommandBus({ ...userCommandHandlers }));
 const QueryBusLive = Layer.succeed(QueryBus, makeQueryBus({ ...userQueryHandlers }));
+const DomainEventBusLive = makeDomainEventBusLive({
+  spanAttributes: { ...userEventSpanAttributes, ...walletEventSpanAttributes },
+});
 
 const ApiLive = HttpApiBuilder.api(Api).pipe(
   Layer.provide([TodosModuleLive, SseModuleLive, UserModuleLive, WalletModuleLive]),

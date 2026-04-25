@@ -2,6 +2,7 @@ import { type UserNotFound } from "@/modules/user/domain/user-errors.js";
 import { UserId } from "@/modules/user/domain/user-id.js";
 import { type UserRepository } from "@/modules/user/domain/user-repository.js";
 import { type DomainEventBus } from "@/platform/domain-event-bus.js";
+import { type SpanAttributesExtractor } from "@/platform/span-attributable.js";
 import { type TransactionRunner } from "@/platform/transaction-runner.js";
 import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
@@ -14,6 +15,10 @@ export const ChangeUserRoleCommand = Schema.TaggedStruct("ChangeUserRoleCommand"
   role: PromotableRole,
 });
 export type ChangeUserRoleCommand = typeof ChangeUserRoleCommand.Type;
+
+export const changeUserRoleCommandSpanAttributes: SpanAttributesExtractor<ChangeUserRoleCommand> = (
+  cmd,
+) => ({ "user.id": cmd.userId, "user.role.target": cmd.role });
 
 export type ChangeUserRoleOutput = Effect.Effect<
   void,

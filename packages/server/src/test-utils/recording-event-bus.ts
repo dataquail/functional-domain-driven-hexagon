@@ -7,7 +7,7 @@ import * as Ref from "effect/Ref";
 // Test double for `DomainEventBus`: records every dispatched event and
 // ignores `subscribe` calls. Use-case unit tests assert against the
 // recorded log without needing the real subscribers wired up. Integration
-// tests that need real subscribers use `DomainEventBusLive` instead.
+// tests that need real subscribers use the real bus from `makeDomainEventBusLive` instead.
 export class RecordedEvents extends Context.Tag("RecordedEvents")<
   RecordedEvents,
   {

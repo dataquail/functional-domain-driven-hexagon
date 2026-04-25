@@ -53,4 +53,4 @@ export const findUsers = (query: FindUsersQuery): FindUsersOutput =>
       pageSize: query.pageSize,
       total: countRow.value,
     });
-  }).pipe(Effect.withSpan("findUsers"));
+  });

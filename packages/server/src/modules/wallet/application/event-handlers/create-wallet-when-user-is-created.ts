@@ -14,7 +14,7 @@ export const handle = (event: UserCreated) =>
     const now = yield* DateTime.now;
     const { wallet } = Wallet.create({ id, userId: event.userId, now });
     yield* repo.insert(wallet);
-  }).pipe(Effect.withSpan("createWalletWhenUserIsCreated"));
+  });
 
 // The handler runs synchronously inside the publisher's transaction, so an
 // unexpected failure rolls back the originating user-creation. The
