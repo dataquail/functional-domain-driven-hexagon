@@ -1,6 +1,6 @@
 import { TodosContract } from "@org/contracts/api/Contracts";
 import { TodoId } from "@org/contracts/EntityIds";
-import { Database, RowSchemas, sql } from "@org/database/index";
+import { Database, orFail, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import type { ParseError } from "effect/ParseResult";
 import * as Schema from "effect/Schema";
@@ -31,10 +31,11 @@ export class TodosRepository extends Effect.Service<TodosRepository>()("TodosRep
             RETURNING *
           `),
         ).pipe(
-          Effect.flatMap(
-            (row): Effect.Effect<TodosContract.Todo, ParseError> =>
-              row === null ? Effect.dieMessage("INSERT did not return a row") : toContract(row),
+          Effect.filterOrDie(
+            (row): row is NonNullable<typeof row> => row !== null,
+            () => new Error("INSERT did not return a row"),
           ),
+          Effect.flatMap(toContract),
           Effect.catchTags({
             DatabaseError: Effect.die,
             ParseError: Effect.die,
@@ -60,18 +61,13 @@ export class TodosRepository extends Effect.Service<TodosRepository>()("TodosRep
             RETURNING *
           `),
         ).pipe(
-          Effect.flatMap(
-            (
-              row,
-            ): Effect.Effect<TodosContract.Todo, ParseError | TodosContract.TodoNotFoundError> =>
-              row === null
-                ? Effect.fail(
-                    new TodosContract.TodoNotFoundError({
-                      message: `Todo with id ${input.id} not found`,
-                    }),
-                  )
-                : toContract(row),
+          orFail(
+            () =>
+              new TodosContract.TodoNotFoundError({
+                message: `Todo with id ${input.id} not found`,
+              }),
           ),
+          Effect.flatMap(toContract),
           Effect.catchTags({
             DatabaseError: Effect.die,
             ParseError: Effect.die,
@@ -102,16 +98,13 @@ export class TodosRepository extends Effect.Service<TodosRepository>()("TodosRep
           DELETE FROM todos WHERE id = ${input} RETURNING *
         `),
       ).pipe(
-        Effect.flatMap(
-          (row): Effect.Effect<{ readonly id: TodoId }, TodosContract.TodoNotFoundError> =>
-            row === null
-              ? Effect.fail(
-                  new TodosContract.TodoNotFoundError({
-                    message: `Todo with id ${input} not found`,
-                  }),
-                )
-              : Effect.succeed({ id: TodoId.make(row.id) }),
+        orFail(
+          () =>
+            new TodosContract.TodoNotFoundError({
+              message: `Todo with id ${input} not found`,
+            }),
         ),
+        Effect.map((row) => ({ id: TodoId.make(row.id) })),
         Effect.catchTags({
           DatabaseError: Effect.die,
         }),

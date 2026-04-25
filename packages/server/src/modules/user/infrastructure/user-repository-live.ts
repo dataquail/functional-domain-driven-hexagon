@@ -1,4 +1,4 @@
-import { Database, RowSchemas, sql } from "@org/database/index";
+import { Database, orFail, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
@@ -55,10 +55,8 @@ export const UserRepositoryLive = Layer.effect(
           RETURNING *
         `),
       ).pipe(
-        Effect.flatMap(
-          (found): Effect.Effect<void, UserNotFound> =>
-            found === null ? Effect.fail(new UserNotFound({ userId: user.id })) : Effect.void,
-        ),
+        orFail(() => new UserNotFound({ userId: user.id })),
+        Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         Effect.withSpan("UserRepository.update"),
       );
@@ -70,10 +68,8 @@ export const UserRepositoryLive = Layer.effect(
           DELETE FROM users WHERE id = ${id} RETURNING *
         `),
       ).pipe(
-        Effect.flatMap(
-          (found): Effect.Effect<void, UserNotFound> =>
-            found === null ? Effect.fail(new UserNotFound({ userId: id })) : Effect.void,
-        ),
+        orFail(() => new UserNotFound({ userId: id })),
+        Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         Effect.withSpan("UserRepository.remove"),
       ),
@@ -85,12 +81,8 @@ export const UserRepositoryLive = Layer.effect(
           SELECT * FROM users WHERE id = ${id}
         `),
       ).pipe(
-        Effect.flatMap(
-          (row): Effect.Effect<User, UserNotFound> =>
-            row === null
-              ? Effect.fail(new UserNotFound({ userId: id }))
-              : Effect.succeed(UserMapper.toDomain(row)),
-        ),
+        orFail(() => new UserNotFound({ userId: id })),
+        Effect.map(UserMapper.toDomain),
         Effect.catchTag("DatabaseError", Effect.die),
         Effect.withSpan("UserRepository.findById"),
       ),
