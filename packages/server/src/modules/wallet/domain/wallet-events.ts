@@ -1,5 +1,6 @@
-import { DomainEvent } from "@/platform/domain-event-bus.js";
-import { UserId, WalletId } from "@org/contracts/EntityIds";
+import { DomainEvent } from "@/platform/domain-event.js";
+import { UserId } from "./user-id.js";
+import { WalletId } from "./wallet-id.js";
 
 export const WalletCreated = DomainEvent("WalletCreated", {
   walletId: WalletId,

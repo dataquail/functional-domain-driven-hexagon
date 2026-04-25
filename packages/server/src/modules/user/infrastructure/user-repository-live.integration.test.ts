@@ -1,4 +1,5 @@
 import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user-errors.js";
+import { UserId } from "@/modules/user/domain/user-id.js";
 import { UserRepository } from "@/modules/user/domain/user-repository.js";
 import * as User from "@/modules/user/domain/user.js";
 import { Address } from "@/modules/user/domain/value-objects/address.js";
@@ -10,7 +11,6 @@ import {
   truncate,
 } from "@/test-utils/test-database.js";
 import { describe, it } from "@effect/vitest";
-import { UserId } from "@org/contracts/EntityIds";
 import { Database } from "@org/database/index";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";

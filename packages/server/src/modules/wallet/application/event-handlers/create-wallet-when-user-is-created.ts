@@ -1,8 +1,8 @@
 import { UserCreated } from "@/modules/user/index.js";
+import { WalletId } from "@/modules/wallet/domain/wallet-id.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet-repository.js";
 import * as Wallet from "@/modules/wallet/domain/wallet.js";
 import { DomainEventBus } from "@/platform/domain-event-bus.js";
-import { WalletId } from "@org/contracts/EntityIds";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 

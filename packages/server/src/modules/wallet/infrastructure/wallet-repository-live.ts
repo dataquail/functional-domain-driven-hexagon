@@ -1,9 +1,9 @@
-import { type UserId } from "@org/contracts/EntityIds";
 import { Database, DbSchema } from "@org/database/index";
 import * as d from "drizzle-orm";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import { type UserId } from "../domain/user-id.js";
 import { WalletAlreadyExistsForUser } from "../domain/wallet-errors.js";
 import { WalletRepository } from "../domain/wallet-repository.js";
 import { type Wallet } from "../domain/wallet.js";

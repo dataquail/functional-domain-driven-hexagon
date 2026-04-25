@@ -1,7 +1,8 @@
-import { UserId, WalletId } from "@org/contracts/EntityIds";
 import type * as DateTime from "effect/DateTime";
 import * as Schema from "effect/Schema";
+import { UserId } from "./user-id.js";
 import { WalletCreated, type WalletEvent } from "./wallet-events.js";
+import { WalletId } from "./wallet-id.js";
 
 export class Wallet extends Schema.Class<Wallet>("Wallet")({
   id: WalletId,

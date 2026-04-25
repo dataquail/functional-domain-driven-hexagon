@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./packages/server/src/*"],
+      "@org/contracts": ["./packages/contracts/src/index.js"],
+      "@org/contracts/*": ["./packages/contracts/src/*.js"],
+      "@org/database": ["./packages/database/src/index.js"],
+      "@org/database/*": ["./packages/database/src/*.js"]
+    },
+    "moduleResolution": "NodeNext",
+    "module": "NodeNext",
+    "target": "ES2022"
+  }
+}

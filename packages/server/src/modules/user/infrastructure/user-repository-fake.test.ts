@@ -1,5 +1,5 @@
+import { UserId } from "@/modules/user/domain/user-id.js";
 import { describe, it } from "@effect/vitest";
-import { UserId } from "@org/contracts/EntityIds";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";

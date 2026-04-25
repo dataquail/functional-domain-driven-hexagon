@@ -60,6 +60,28 @@ module.exports = {
       },
     },
     {
+      name: "domain-isolation",
+      severity: "error",
+      comment:
+        "Module domain may only import from its own folder, effect (external), and platform/domain-event.ts (shared kernel). No contracts, no cross-module, no infrastructure/application/interface.",
+      from: { path: "^packages/server/src/modules/[^/]+/domain/" },
+      to: {
+        path: "^packages/",
+        pathNot: "/domain/|^packages/server/src/platform/domain-event\\.ts$",
+      },
+    },
+    {
+      name: "domain-no-external-beyond-effect",
+      severity: "error",
+      comment:
+        "Module domain may only use 'effect' as an external dependency. No drizzle, no pg, no HTTP framework — keep the domain runtime-pure.",
+      from: { path: "^packages/server/src/modules/[^/]+/domain/" },
+      to: {
+        dependencyTypes: ["npm", "npm-dev", "npm-peer", "npm-optional"],
+        pathNot: "/node_modules/effect/",
+      },
+    },
+    {
       name: "no-domain-to-application",
       severity: "error",
       comment: "Module domain layer must not depend on its application layer",
@@ -126,7 +148,7 @@ module.exports = {
   options: {
     doNotFollow: { path: "node_modules" },
     tsPreCompilationDeps: true,
-    tsConfig: { fileName: "tsconfig.json" },
+    tsConfig: { fileName: "tsconfig.depcruise.json" },
     enhancedResolveOptions: {
       exportsFields: ["exports"],
       conditionNames: ["import", "require", "node", "default"],

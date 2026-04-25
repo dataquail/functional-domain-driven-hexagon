@@ -1,6 +1,6 @@
-import { DomainEvent } from "@/platform/domain-event-bus.js";
-import { UserId } from "@org/contracts/EntityIds";
+import { DomainEvent } from "@/platform/domain-event.js";
 import * as Schema from "effect/Schema";
+import { UserId } from "./user-id.js";
 import { UserRole } from "./user-role.js";
 import { Address } from "./value-objects/address.js";
 

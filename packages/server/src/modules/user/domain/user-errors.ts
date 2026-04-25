@@ -1,5 +1,5 @@
-import { UserId } from "@org/contracts/EntityIds";
 import * as Schema from "effect/Schema";
+import { UserId } from "./user-id.js";
 
 export class UserAlreadyExists extends Schema.TaggedError<UserAlreadyExists>("UserAlreadyExists")(
   "UserAlreadyExists",

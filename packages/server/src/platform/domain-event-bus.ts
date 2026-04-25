@@ -2,30 +2,12 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as PubSub from "effect/PubSub";
-import * as Schema from "effect/Schema";
+import type * as Schema from "effect/Schema";
 import type * as Scope from "effect/Scope";
 import * as Stream from "effect/Stream";
+import { type AnyDomainEventSchema, type DomainEvent } from "./domain-event.js";
 
-export interface DomainEvent {
-  readonly _tag: string;
-}
-
-const DOMAIN_EVENT_BRAND = "@platform/DomainEvent";
-
-export type DomainEventBrand = { readonly __brand: typeof DOMAIN_EVENT_BRAND };
-
-export type AnyDomainEventSchema = Schema.Schema.Any & DomainEventBrand & { readonly tag: string };
-
-export const DomainEvent = <Tag extends string, Fields extends Schema.Struct.Fields>(
-  tag: Tag,
-  fields: Fields,
-): Schema.TaggedStruct<Tag, Fields> & DomainEventBrand & { readonly tag: Tag } => {
-  const schema = Schema.TaggedStruct(tag, fields);
-  return Object.assign(schema, {
-    tag,
-    __brand: DOMAIN_EVENT_BRAND,
-  }) as Schema.TaggedStruct<Tag, Fields> & DomainEventBrand & { readonly tag: Tag };
-};
+export { DomainEvent } from "./domain-event.js";
 
 export interface DomainEventBusShape {
   readonly publishAll: (events: ReadonlyArray<DomainEvent>) => Effect.Effect<void>;

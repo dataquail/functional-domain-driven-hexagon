@@ -1,6 +1,7 @@
-import { UserId, WalletId } from "@org/contracts/EntityIds";
 import type { DbSchema } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
+import { UserId } from "../domain/user-id.js";
+import { WalletId } from "../domain/wallet-id.js";
 import { Wallet } from "../domain/wallet.js";
 
 type Row = typeof DbSchema.walletsTable.$inferSelect;

@@ -1,6 +1,6 @@
-import { UserId } from "@org/contracts/EntityIds";
 import type { DbSchema } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
+import { UserId } from "../domain/user-id.js";
 import { type UserRole } from "../domain/user-role.js";
 import { User } from "../domain/user.js";
 import { Address } from "../domain/value-objects/address.js";

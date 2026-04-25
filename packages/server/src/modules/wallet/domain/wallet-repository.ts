@@ -1,7 +1,7 @@
-import { type UserId } from "@org/contracts/EntityIds";
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 import type * as Option from "effect/Option";
+import { type UserId } from "./user-id.js";
 import { type WalletAlreadyExistsForUser } from "./wallet-errors.js";
 import { type Wallet } from "./wallet.js";
 

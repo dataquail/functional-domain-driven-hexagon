@@ -1,4 +1,4 @@
-import { UserId } from "@org/contracts/EntityIds";
+import { UserId } from "@/modules/user/domain/user-id.js";
 import { UserContract } from "@org/contracts/api/Contracts";
 import { Database, DbSchema } from "@org/database/index";
 import { count } from "drizzle-orm";
