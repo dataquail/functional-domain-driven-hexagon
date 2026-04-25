@@ -1,0 +1,62 @@
+{
+  "name": "@org/server",
+  "version": "0.0.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "The server template",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lucas-barake/effect-monorepo.git",
+    "directory": "packages/server"
+  },
+  "scripts": {
+    "check": "tsc -b tsconfig.json",
+    "test": "vitest",
+    "coverage": "vitest --coverage",
+    "clean": "rm -rf build .tsbuildinfo",
+    "prebuild": "npm run clean",
+    "build": "tsc -b tsconfig.build.json",
+    "dev": "bun --watch src/server.ts",
+    "start": "bun build/esm/server.js",
+    "circular": "madge --circular src/server.ts",
+    "lint": "eslint . --quiet",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@effect/experimental": "*",
+    "@effect/opentelemetry": "*",
+    "@effect/platform": "*",
+    "@effect/platform-node": "*",
+    "@effect/cluster": "*",
+    "@effect/sql": "*",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.57.1",
+    "@opentelemetry/sdk-trace-base": "^1.30.1",
+    "@opentelemetry/sdk-trace-node": "^1.30.1",
+    "@org/database": "workspace:^",
+    "@org/domain": "workspace:^",
+    "drizzle-orm": "0.39.2",
+    "effect": "*",
+    "pg": "8.13.1",
+    "svix": "^1.45.1"
+  },
+  "effect": {
+    "generateExports": {
+      "include": [
+        "**/*.ts"
+      ]
+    },
+    "generateIndex": {
+      "include": [
+        "**/*.ts"
+      ]
+    }
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.11",
+    "dotenv": "^16.4.7",
+    "drizzle-kit": "^0.30.4",
+    "madge": "^8.0.0",
+    "tsx": "^4.19.2"
+  }
+}
