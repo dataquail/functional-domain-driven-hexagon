@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@effect/vitest";
-import { SseContract } from "@org/domain/api/Contracts";
-import { UserId } from "@org/domain/EntityIds";
+import { SseContract } from "@org/contracts/api/Contracts";
+import { UserId } from "@org/contracts/EntityIds";
 import * as Effect from "effect/Effect";
 import * as Queue from "effect/Queue";
 import * as Schema from "effect/Schema";

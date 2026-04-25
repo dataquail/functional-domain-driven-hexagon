@@ -3,16 +3,16 @@ module.exports = {
   forbidden: [
     {
       name: "no-domain-to-server",
-      comment: "packages/domain must not depend on packages/server",
+      comment: "packages/contracts must not depend on packages/server",
       severity: "error",
-      from: { path: "^packages/domain/src/" },
+      from: { path: "^packages/contracts/src/" },
       to: { path: "^packages/server/" },
     },
     {
       name: "no-domain-to-database",
-      comment: "packages/domain must not depend on packages/database",
+      comment: "packages/contracts must not depend on packages/database",
       severity: "error",
-      from: { path: "^packages/domain/src/" },
+      from: { path: "^packages/contracts/src/" },
       to: { path: "^packages/database/" },
     },
     {

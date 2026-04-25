@@ -6,8 +6,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@org/domain": ["../domain/src/index.js"],
-      "@org/domain/*": ["../domain/src/*.js"],
+      "@org/contracts": ["../contracts/src/index.js"],
+      "@org/contracts/*": ["../contracts/src/*.js"],
       "@org/database": ["../database/src/index.js"],
       "@org/database/*": ["../database/src/*.js"]
     }

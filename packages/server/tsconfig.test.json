@@ -3,7 +3,7 @@
   "include": ["src/**/*.test.ts"],
   "references": [
     { "path": "tsconfig.src.json" },
-    { "path": "../domain" },
+    { "path": "../contracts" },
     { "path": "../database" }
   ],
   "compilerOptions": {

@@ -2,7 +2,7 @@ import { envVars } from "@/lib/env-vars";
 import * as FetchHttpClient from "@effect/platform/FetchHttpClient";
 import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import * as HttpClient from "@effect/platform/HttpClient";
-import { DomainApi } from "@org/domain/DomainApi";
+import { DomainApi } from "@org/contracts/DomainApi";
 import * as Effect from "effect/Effect";
 import * as UnsafeHttpApiClient from "./unsafe-http-api-client";
 

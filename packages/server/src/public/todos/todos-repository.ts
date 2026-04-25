@@ -1,6 +1,6 @@
+import { TodosContract } from "@org/contracts/api/Contracts";
+import { TodoId } from "@org/contracts/EntityIds";
 import { Database, DbSchema } from "@org/database/index";
-import { TodosContract } from "@org/domain/api/Contracts";
-import { TodoId } from "@org/domain/EntityIds";
 import * as d from "drizzle-orm";
 import * as Array from "effect/Array";
 import * as Effect from "effect/Effect";

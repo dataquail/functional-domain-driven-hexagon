@@ -1,5 +1,5 @@
-import { UserId } from "@org/domain/EntityIds";
-import { Permission, UserAuthMiddleware } from "@org/domain/Policy";
+import { UserId } from "@org/contracts/EntityIds";
+import { Permission, UserAuthMiddleware } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";

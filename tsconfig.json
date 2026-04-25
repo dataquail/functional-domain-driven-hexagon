@@ -3,7 +3,7 @@
   "include": [],
   "exclude": [],
   "references": [
-    { "path": "packages/domain" },
+    { "path": "packages/contracts" },
     { "path": "packages/server" },
     { "path": "packages/client" },
     { "path": "packages/database" }

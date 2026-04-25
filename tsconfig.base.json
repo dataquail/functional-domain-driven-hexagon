@@ -37,9 +37,9 @@
     "removeComments": false,
     "plugins": [{ "name": "@effect/language-service" }],
     "paths": {
-      "@org/domain": ["./packages/domain/src/index.js"],
-      "@org/domain/*": ["./packages/domain/src/*.js"],
-      "@org/domain/test/*": ["./packages/domain/test/*.js"],
+      "@org/contracts": ["./packages/contracts/src/index.js"],
+      "@org/contracts/*": ["./packages/contracts/src/*.js"],
+      "@org/contracts/test/*": ["./packages/contracts/test/*.js"],
       "@org/server": ["./packages/server/src/index.js"],
       "@org/server/*": ["./packages/server/src/*.js"],
       "@org/server/test/*": ["./packages/server/test/*.js"],

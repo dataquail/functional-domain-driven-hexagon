@@ -1,6 +1,6 @@
-import { SseContract } from "@org/domain/api/Contracts";
-import { type UserId } from "@org/domain/EntityIds";
-import { CurrentUser } from "@org/domain/Policy";
+import { SseContract } from "@org/contracts/api/Contracts";
+import { type UserId } from "@org/contracts/EntityIds";
+import { CurrentUser } from "@org/contracts/Policy";
 import * as Array from "effect/Array";
 import * as Effect from "effect/Effect";
 import { pipe } from "effect/Function";

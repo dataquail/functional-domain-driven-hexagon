@@ -1,8 +1,8 @@
 import { Api } from "@/api.js";
 import * as HttpApiBuilder from "@effect/platform/HttpApiBuilder";
 import * as HttpServerResponse from "@effect/platform/HttpServerResponse";
-import { TestEvent } from "@org/domain/api/SseContract";
-import { CurrentUser } from "@org/domain/Policy";
+import { TestEvent } from "@org/contracts/api/SseContract";
+import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Queue from "effect/Queue";

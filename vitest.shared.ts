@@ -32,7 +32,7 @@ const config: ViteUserConfig = {
     include: ["test/**/*.test.ts", "src/**/*.test.ts"],
     alias: {
       ...alias("cli"),
-      ...alias("domain"),
+      ...alias("contracts"),
       ...alias("server"),
     },
   },

@@ -1,6 +1,6 @@
 import { Api } from "@/api.js";
 import * as HttpApiBuilder from "@effect/platform/HttpApiBuilder";
-import { SseContract } from "@org/domain/api/Contracts";
+import { SseContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { SseManager } from "../sse/sse-manager.js";

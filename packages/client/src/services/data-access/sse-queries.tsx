@@ -1,4 +1,4 @@
-import { SseContract } from "@org/domain/api/Contracts";
+import { SseContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 import * as Either from "effect/Either";
 import * as Fiber from "effect/Fiber";

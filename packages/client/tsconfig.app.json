@@ -20,9 +20,9 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@org/domain/*": ["../domain/src/*"]
+      "@org/contracts/*": ["../contracts/src/*"]
     }
   },
   "include": ["src", "prettier.config.js"],
-  "references": [{ "path": "../domain" }]
+  "references": [{ "path": "../contracts" }]
 }
