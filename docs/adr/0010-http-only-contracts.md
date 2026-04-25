@@ -39,23 +39,37 @@ A contract file declares:
 
 ### Server binding
 
-Each module's `interface/<feature>-http-live.ts` binds the contract endpoints to use-case calls (typically through the command/query bus from ADR-0006):
+Each module's `interface/` folder contains one file per endpoint plus a thin group-registration file (see ADR-0013 for the conventions). Each endpoint file implements a single contract endpoint and binds it to use-case calls, typically through the command/query bus from ADR-0006:
 
 ```ts
-HttpApiBuilder.group(Api, "user", (handlers) =>
-  handlers
-    .handle("create", (request) =>
-      Effect.gen(function* () {
-        const commandBus = yield* CommandBus;
-        const id = yield* commandBus.execute(CreateUserCommand.make({ ... }));
-        return new UserContract.CreateUserResponse({ id });
-      }).pipe(
-        Effect.catchTag("UserAlreadyExists", (e) =>
-          Effect.fail(new UserContract.UserAlreadyExistsError({ ... })),
-        ),
-      ),
+// modules/user/interface/create.endpoint.ts
+export const createEndpoint = (
+  request: EndpointRequest<typeof UserContract.Group, "create">,
+) =>
+  Effect.gen(function* () {
+    const commandBus = yield* CommandBus;
+    const id = yield* commandBus.execute(
+      CreateUserCommand.make({ ...request.payload }),
+    );
+    return new UserContract.CreateUserResponse({ id });
+  }).pipe(
+    Effect.catchTag("UserAlreadyExists", (e) =>
+      Effect.fail(new UserContract.UserAlreadyExistsError({ ... })),
     ),
-)
+  );
+```
+
+The group-registration file binds each endpoint by name:
+
+```ts
+// modules/user/interface/user-http-live.ts
+export const UserHttpLive = HttpApiBuilder.group(Api, "user", (handlers) =>
+  handlers
+    .handle("find", findEndpoint)
+    .handle("create", createEndpoint)
+    .handle("delete", deleteEndpoint)
+    .handle("changeRole", changeRoleEndpoint),
+);
 ```
 
 ### Client binding
@@ -85,5 +99,6 @@ The client consumes the same `DomainApi` via `HttpApiClient.make(Api)`. Endpoint
 ## Related
 
 - ADR-0004 (errors) — the domain-vs-contract error split that lives at this boundary.
-- ADR-0006 (typed bus) — what the HTTP handlers call into.
+- ADR-0006 (typed bus) — what the HTTP endpoints call into.
 - ADR-0008 (architecture enforcement) — the rules that keep the contracts package free of server dependencies.
+- ADR-0013 (HTTP endpoint file conventions) — how the per-module `interface/` folder is organized, and how test parity is enforced.

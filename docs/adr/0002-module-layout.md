@@ -28,7 +28,7 @@ modules/<feature>/
   queries/         — read-side projections (may bypass the domain) + their bus-registration map
   event-handlers/  — write-side reactions to domain events from this or other modules
   infrastructure/  — repository Live + Fake implementations, mappers
-  interface/       — HTTP handler bindings to contracts
+  interface/       — one file per HTTP endpoint plus a thin group-registration file (see ADR-0013)
   <feature>-event-span-attributes.ts  — per-event span-attribute extractors aggregated for this module
   <feature>-module.ts                 — the composed Layer for the module
   index.ts                            — barrel: re-exports only what other modules legitimately need

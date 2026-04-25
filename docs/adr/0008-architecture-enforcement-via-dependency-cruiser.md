@@ -72,6 +72,14 @@ The contracts package (which is consumable by clients as well as the server) has
 - `no-circular`: no circular dependencies.
 - `not-to-spec`: production code may not depend on test files.
 
+### Test-parity check (`pnpm lint:tests`)
+
+dependency-cruiser checks edges in the import graph; some architectural rules are about file _existence_, not edges. "Every HTTP endpoint must have a sibling integration test" (ADR-0013) is one such rule — the integration test does not import the endpoint (it goes through `HttpApiClient`), so reachability isn't the right property.
+
+A small repository-root script `scripts/check-test-parity.mjs` covers these cases. It globs subjects defined in a `rules` array and asserts that each has a sibling test file. It is wired as `pnpm lint:tests` and runs in `pnpm check:all` alongside `lint:deps`. Today it covers HTTP endpoints; the rules array is the extension point when the same parity is wanted for commands, queries, or event handlers.
+
+The two tools are complementary: depcruise enforces _what_ a file may depend on; the parity script enforces _that a sibling file exists_. Both fail CI; both produce explicit error output that points at the missing artifact.
+
 ## Consequences
 
 - Architecture violations fail CI, not code review. The cost of repeatedly explaining the rules drops to zero, and the rules cannot be silently weakened.
