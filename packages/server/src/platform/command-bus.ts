@@ -7,7 +7,7 @@ import * as Effect from "effect/Effect";
 //
 // Example (inside the command's source file):
 //
-//   declare module "@/platform/command-bus" {
+//   declare module "@/platform/command-bus.js" {
 //     interface CommandRegistry {
 //       CreateUserCommand: {
 //         command: CreateUserCommand;
@@ -42,20 +42,37 @@ export interface CommandBusShape {
 
 export class CommandBus extends Context.Tag("CommandBus")<CommandBus, CommandBusShape>() {}
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyHandler = (cmd: any) => Effect.Effect<unknown, unknown, unknown>;
+/**
+ * The exact signature a handler for a specific command tag must have —
+ * parameter type and return type are both derived from the registry entry
+ * for that tag.
+ */
+export type CommandHandlerFor<T extends keyof CommandRegistry> = (
+  cmd: CommandRegistry[T] extends { readonly command: infer C } ? C : never,
+) => CommandRegistry[T] extends { readonly output: infer O } ? O : never;
 
 /**
- * Builds a CommandBus shape from a map of `{ tag: handler }`. Missing tags
- * dispatch to Effect.die at runtime — this is a surface for a smoke test
- * that asserts every declared CommandRegistry key has a registered handler.
+ * A typed map from command tags to their handlers. Parameterize `K` to
+ * describe a partial contribution (e.g. a single module's handlers); omit
+ * it to demand every registered command's handler at once.
  */
-export const makeCommandBus = (handlers: Record<string, AnyHandler>): CommandBusShape => ({
+export type CommandHandlers<K extends keyof CommandRegistry = keyof CommandRegistry> = {
+  readonly [T in K]: CommandHandlerFor<T>;
+};
+
+/**
+ * Builds a CommandBus from a full handler set. Takes `CommandHandlers` for
+ * the entire `CommandRegistry`, so forgetting to register a handler — or
+ * registering the wrong one under a tag — fails to compile.
+ */
+export const makeCommandBus = (handlers: CommandHandlers): CommandBusShape => ({
   execute: ((cmd: { readonly _tag: string }) => {
-    const handler = handlers[cmd._tag];
+    const handler = (handlers as Record<string, CommandHandlerFor<keyof CommandRegistry>>)[
+      cmd._tag
+    ];
     if (handler === undefined) {
       return Effect.die(new Error(`[CommandBus] no handler registered for '${cmd._tag}'`));
     }
-    return handler(cmd);
+    return handler(cmd as never);
   }) as CommandBusShape["execute"],
 });

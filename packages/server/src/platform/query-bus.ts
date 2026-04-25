@@ -28,15 +28,20 @@ export interface QueryBusShape {
 
 export class QueryBus extends Context.Tag("QueryBus")<QueryBus, QueryBusShape>() {}
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyHandler = (query: any) => Effect.Effect<unknown, unknown, unknown>;
+export type QueryHandlerFor<T extends keyof QueryRegistry> = (
+  query: QueryRegistry[T] extends { readonly query: infer Q } ? Q : never,
+) => QueryRegistry[T] extends { readonly output: infer O } ? O : never;
 
-export const makeQueryBus = (handlers: Record<string, AnyHandler>): QueryBusShape => ({
+export type QueryHandlers<K extends keyof QueryRegistry = keyof QueryRegistry> = {
+  readonly [T in K]: QueryHandlerFor<T>;
+};
+
+export const makeQueryBus = (handlers: QueryHandlers): QueryBusShape => ({
   execute: ((query: { readonly _tag: string }) => {
-    const handler = handlers[query._tag];
+    const handler = (handlers as Record<string, QueryHandlerFor<keyof QueryRegistry>>)[query._tag];
     if (handler === undefined) {
       return Effect.die(new Error(`[QueryBus] no handler registered for '${query._tag}'`));
     }
-    return handler(query);
+    return handler(query as never);
   }) as QueryBusShape["execute"],
 });
