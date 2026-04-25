@@ -1,7 +1,7 @@
 import { type ExtractTablesWithRelations } from "drizzle-orm";
 import { drizzle, type NodePgDatabase, type NodePgQueryResultHKT } from "drizzle-orm/node-postgres";
 import { type PgTransaction } from "drizzle-orm/pg-core";
-import * as Cause from "effect/Cause";
+import type * as Cause from "effect/Cause";
 import * as Context from "effect/Context";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
@@ -150,6 +150,15 @@ const makeService = (config: Config) =>
       }),
     );
 
+    // Drizzle rolls back only if the transaction callback throws. Returning
+    // normally commits, even if we called resume(Effect.fail(...)) inside.
+    // So on inner Effect failure we throw this sentinel carrying the Cause,
+    // then re-surface it via Effect.failCause in the outer handler — which
+    // preserves the original typed error channel.
+    class TxFailure<E> {
+      constructor(public readonly cause: Cause.Cause<E>) {}
+    }
+
     const transaction = Effect.fn("Database.transaction")(
       <T, E, R>(txExecute: (tx: TransactionContextShape) => Effect.Effect<T, E, R>) =>
         Effect.runtime<R>().pipe(
@@ -170,22 +179,23 @@ const makeService = (config: Config) =>
                   });
 
                 const result = await runPromiseExit(txExecute(txWrapper));
-                Exit.match(result, {
-                  onSuccess: (value) => {
-                    resume(Effect.succeed(value));
-                  },
-                  onFailure: (cause) => {
-                    if (Cause.isFailure(cause)) {
-                      resume(Effect.fail(Cause.originalError(cause) as E));
-                    } else {
-                      resume(Effect.die(cause));
-                    }
-                  },
-                });
-              }).catch((cause) => {
-                const error = matchPgError(cause);
-                resume(error !== null ? Effect.fail(error) : Effect.die(cause));
-              });
+                if (Exit.isSuccess(result)) {
+                  return result.value;
+                }
+                throw new TxFailure(result.cause);
+              }).then(
+                (value) => {
+                  resume(Effect.succeed(value));
+                },
+                (cause: unknown) => {
+                  if (cause instanceof TxFailure) {
+                    resume(Effect.failCause(cause.cause as Cause.Cause<E>));
+                    return;
+                  }
+                  const error = matchPgError(cause);
+                  resume(error !== null ? Effect.fail(error) : Effect.die(cause));
+                },
+              );
             }),
           ),
         ),
