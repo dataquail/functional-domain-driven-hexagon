@@ -37,6 +37,8 @@ export default [
       "**/setupTests.ts",
       "**/vitest.shared.ts",
       "**/vitest.workspace.ts",
+      "reference/**",
+      "scratchpad/**",
     ],
   },
   ...compat.extends(

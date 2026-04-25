@@ -15,7 +15,7 @@ import * as Schedule from "effect/Schedule";
 import { createServer } from "node:http";
 import { Api } from "./api.js";
 import { EnvVars } from "./common/env-vars.js";
-import { UserAuthMiddlewareLive } from "./public/middlewares/auth-middleware-live.js";
+import { UserAuthMiddlewareLive } from "./platform/middlewares/auth-middleware-live.js";
 import { SseLive } from "./public/sse/sse-live.js";
 import { TodosLive } from "./public/todos/todos-live.js";
 
