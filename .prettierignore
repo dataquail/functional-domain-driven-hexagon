@@ -1,0 +1,5 @@
+reference/
+scratchpad/
+**/dist/
+**/build/
+pnpm-lock.yaml
