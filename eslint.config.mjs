@@ -39,6 +39,7 @@ export default [
       "**/vitest.workspace.ts",
       "reference/**",
       "scratchpad/**",
+      "scripts/check-test-parity.mjs",
     ],
   },
   ...compat.extends(

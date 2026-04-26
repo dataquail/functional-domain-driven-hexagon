@@ -24,7 +24,7 @@
     "coverage": "vitest --coverage",
     "db:migrate": "docker compose --profile migrate run --rm flyway",
     "db:migrate:test": "docker compose --profile migrate-test run --rm flyway-test",
-    "db:reset": "bun ./src/scripts/reset-database.ts"
+    "db:reset": "tsx ./src/scripts/reset-database.ts"
   },
   "dependencies": {
     "@effect/platform": "*",
@@ -49,6 +49,7 @@
   "devDependencies": {
     "@types/dotenv": "^8.2.3",
     "@types/pg": "^8.11.11",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "tsx": "^4.19.2"
   }
 }

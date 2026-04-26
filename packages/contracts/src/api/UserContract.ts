@@ -61,9 +61,9 @@ export class User extends Schema.Class<User>("User")({
 
 export class CreateUserPayload extends Schema.Class<CreateUserPayload>("CreateUserPayload")({
   email: Schema.String.pipe(Schema.minLength(3), Schema.maxLength(255)),
-  country: Schema.String,
-  street: Schema.String,
-  postalCode: Schema.String,
+  country: Schema.String.pipe(Schema.minLength(2), Schema.maxLength(50)),
+  street: Schema.String.pipe(Schema.minLength(2), Schema.maxLength(50)),
+  postalCode: Schema.String.pipe(Schema.minLength(2), Schema.maxLength(10)),
 }) {}
 
 export class CreateUserResponse extends Schema.Class<CreateUserResponse>("CreateUserResponse")({

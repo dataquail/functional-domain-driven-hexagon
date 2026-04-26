@@ -337,6 +337,9 @@ importers:
       dotenv:
         specifier: ^16.4.7
         version: 16.4.7
+      tsx:
+        specifier: ^4.19.2
+        version: 4.19.2
     publishDirectory: dist
 
   packages/server:

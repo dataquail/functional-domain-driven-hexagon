@@ -1,0 +1,118 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Docker: Up",
+      "detail": "Start postgres + jaeger in the background",
+      "type": "shell",
+      "command": "docker-compose up -d postgres jaeger",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true,
+        "close": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker: Down",
+      "detail": "Stop all docker-compose services (keeps the postgres volume)",
+      "type": "shell",
+      "command": "docker-compose down",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker: Migrate (dev DB)",
+      "detail": "Run flyway migrations against effect-monorepo",
+      "type": "shell",
+      "command": "docker-compose --profile migrate up flyway",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker: Migrate (test DB)",
+      "detail": "Run flyway migrations against effect-monorepo-test",
+      "type": "shell",
+      "command": "docker-compose --profile migrate-test up flyway-test",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Server: Dev",
+      "detail": "Run the server in watch mode",
+      "type": "shell",
+      "command": "pnpm --filter server dev",
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "dev",
+        "clear": true
+      },
+      "problemMatcher": {
+        "owner": "server",
+        "pattern": { "regexp": "^$" },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*$",
+          "endsPattern": "(Listening on|Server listening|listening on port|HttpServer)"
+        }
+      }
+    },
+    {
+      "label": "Client: Dev",
+      "detail": "Run the Vite dev server",
+      "type": "shell",
+      "command": "pnpm --filter client dev",
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "dev",
+        "clear": true
+      },
+      "problemMatcher": {
+        "owner": "vite",
+        "pattern": { "regexp": "^$" },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*$",
+          "endsPattern": "ready in"
+        }
+      }
+    },
+    {
+      "label": "Dev: Servers",
+      "detail": "Run server + client side-by-side",
+      "dependsOn": ["Server: Dev", "Client: Dev"],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    },
+    {
+      "label": "Dev: All",
+      "detail": "Docker → migrate → server + client",
+      "dependsOn": ["Docker: Up", "Docker: Migrate (dev DB)", "Dev: Servers"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    }
+  ]
+}

@@ -132,6 +132,17 @@ const makeService = (config: Config) =>
     const setupConnectionListeners = Effect.zipRight(
       Effect.async<void, DatabaseConnectionLostError>((resume) => {
         pool.on("error", (error) => {
+          // Slonik emits pool 'error' for every query error, not just connection
+          // loss. Only tear the pool down on actual connection failures —
+          // integrity violations are surfaced through the query's own error
+          // channel and must not crash the server.
+          if (
+            !(error instanceof Slonik.ConnectionError) &&
+            !(error instanceof Slonik.BackendTerminatedError) &&
+            !(error instanceof Slonik.BackendTerminatedUnexpectedlyError)
+          ) {
+            return;
+          }
           resume(
             Effect.fail(
               new DatabaseConnectionLostError({
