@@ -1,0 +1,48 @@
+{
+  "name": "@chimeric/tanstack-query-spa",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build --base=/tanstack-query-spa",
+    "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
+    "format": "prettier --write .",
+    "format:ci": "prettier --check .",
+    "test": "vitest",
+    "test:ci": "vitest run",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@chimeric/react": "workspace:*",
+    "@chimeric/react-query": "workspace:*",
+    "@tanstack/react-query": "^5.99.0",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-router-dom": "7.14.0",
+    "uuid": "^9.0.1",
+    "zustand": "^5.0.12"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/jest": "^30.0.0",
+    "@types/react": "^19.0.12",
+    "@types/react-dom": "^19.0.4",
+    "@types/uuid": "^9.0.8",
+    "@typescript-eslint/eslint-plugin": "^8.58.2",
+    "@typescript-eslint/parser": "^7.2.0",
+    "@vitejs/plugin-react": "^4.4.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.3",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.6",
+    "jsdom": "^24.1.0",
+    "msw": "^2.3.1",
+    "prettier": "^3.8.3",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.28.0",
+    "vite": "^6.4.2",
+    "vitest": "^4.1.4"
+  }
+}

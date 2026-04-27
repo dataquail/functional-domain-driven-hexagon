@@ -15,6 +15,7 @@ import { routeTree } from "./routeTree.gen";
 import { ApiClient } from "./services/common/api-client";
 import { NetworkMonitor } from "./services/common/network-monitor";
 import { QueryClient } from "./services/common/query-client";
+import { Toast } from "./services/common/toast";
 import { SseQueries } from "./services/data-access/sse-queries";
 import { type LiveManagedRuntime } from "./services/live-layer";
 import { RuntimeProvider } from "./services/runtime/runtime-provider";
@@ -56,6 +57,7 @@ const InnerProviders: React.FC = () => {
           NetworkMonitor.Default,
           ApiClient.Default,
           QueryClient.make(queryClient),
+          Toast.Default,
           Logger.minimumLogLevel(envVars.ENV === "dev" ? LogLevel.Debug : LogLevel.Info),
         ).pipe(Layer.provide(Logger.pretty)),
       ),

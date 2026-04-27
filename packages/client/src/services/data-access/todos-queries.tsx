@@ -13,85 +13,95 @@ export namespace TodosQueries {
 
   const pendingOptimisticIds = Ref.unsafeMake(new Set<string>());
 
-  export const useTodosQuery = () => {
-    return useEffectQuery({
+  // ── List ─────────────────────────────────────────────────────────────────
+
+  export const getTodos = Effect.flatMap(ApiClient, ({ client }) => client.todos.get());
+
+  export const useTodosQuery = () =>
+    useEffectQuery({
       queryKey: todosKey(),
-      // eslint-disable-next-line react-hooks/rules-of-hooks
-      queryFn: () => ApiClient.use(({ client }) => client.todos.get()),
+      queryFn: () => getTodos,
     });
-  };
 
-  export const useCreateTodoMutation = () => {
-    return useEffectMutation({
-      mutationKey: ["TodosQueries.createTodo"],
-      mutationFn: Effect.fnUntraced(function* (
-        todo: Omit<TodosContract.CreateTodoPayload, "optimisticId">,
-      ) {
-        const { client } = yield* ApiClient;
+  // ── Create ───────────────────────────────────────────────────────────────
 
-        const optimisticId = crypto.randomUUID();
-        yield* Ref.update(pendingOptimisticIds, (set) => set.add(optimisticId));
-        yield* Effect.addFinalizer(() =>
-          Ref.update(pendingOptimisticIds, (set) => {
-            set.delete(optimisticId);
-            return set;
+  export const createTodo = (todo: Omit<TodosContract.CreateTodoPayload, "optimisticId">) =>
+    Effect.gen(function* () {
+      const { client } = yield* ApiClient;
+
+      const optimisticId = crypto.randomUUID();
+      yield* Ref.update(pendingOptimisticIds, (set) => set.add(optimisticId));
+      yield* Effect.addFinalizer(() =>
+        Ref.update(pendingOptimisticIds, (set) => {
+          set.delete(optimisticId);
+          return set;
+        }),
+      );
+
+      return yield* client.todos.create({ payload: { ...todo, optimisticId } }).pipe(
+        Effect.tap((createdTodo) =>
+          todosHelpers.setData((draft) => {
+            if (!draft.some((t) => t.id === createdTodo.id)) {
+              draft.unshift(createdTodo);
+            }
           }),
-        );
+        ),
+      );
+    }).pipe(Effect.scoped);
 
-        return yield* client.todos.create({ payload: { ...todo, optimisticId } }).pipe(
-          Effect.tap((createdTodo) =>
-            todosHelpers.setData((draft) => {
-              if (!draft.some((t) => t.id === createdTodo.id)) {
-                draft.unshift(createdTodo);
-              }
-            }),
-          ),
-        );
-      }, Effect.scoped),
+  export const useCreateTodoMutation = () =>
+    useEffectMutation({
+      mutationKey: ["TodosQueries.createTodo"],
+      mutationFn: createTodo,
       toastifySuccess: () => "Todo created!",
     });
-  };
 
-  export const useUpdateTodoMutation = () => {
-    return useEffectMutation({
+  // ── Update ───────────────────────────────────────────────────────────────
+
+  export const updateTodo = (todo: TodosContract.Todo) =>
+    Effect.flatMap(ApiClient, ({ client }) => client.todos.update({ payload: todo })).pipe(
+      Effect.tap((updatedTodo) =>
+        todosHelpers.setData((draft) => {
+          const index = draft.findIndex((t) => t.id === updatedTodo.id);
+          if (index !== -1) {
+            draft[index] = updatedTodo;
+          }
+        }),
+      ),
+    );
+
+  export const useUpdateTodoMutation = () =>
+    useEffectMutation({
       mutationKey: ["TodosQueries.updateTodo"],
-      mutationFn: (todo: TodosContract.Todo) =>
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        ApiClient.use(({ client }) => client.todos.update({ payload: todo })).pipe(
-          Effect.tap((updatedTodo) =>
-            todosHelpers.setData((draft) => {
-              const index = draft.findIndex((t) => t.id === updatedTodo.id);
-              if (index !== -1) {
-                draft[index] = updatedTodo;
-              }
-            }),
-          ),
-        ),
+      mutationFn: updateTodo,
       toastifySuccess: () => "Todo updated!",
     });
-  };
 
-  export const useDeleteTodoMutation = () => {
-    return useEffectMutation({
+  // ── Delete ───────────────────────────────────────────────────────────────
+
+  export const deleteTodo = (id: TodoId) =>
+    Effect.flatMap(ApiClient, ({ client }) => client.todos.delete({ payload: id })).pipe(
+      Effect.tap(() =>
+        todosHelpers.setData((draft) => {
+          const index = draft.findIndex((t) => t.id === id);
+          if (index !== -1) {
+            draft.splice(index, 1);
+          }
+        }),
+      ),
+    );
+
+  export const useDeleteTodoMutation = () =>
+    useEffectMutation({
       mutationKey: ["TodosQueries.deleteTodo"],
-      mutationFn: (id: TodoId) =>
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        ApiClient.use(({ client }) => client.todos.delete({ payload: id })).pipe(
-          Effect.tap(() =>
-            todosHelpers.setData((draft) => {
-              const index = draft.findIndex((t) => t.id === id);
-              if (index !== -1) {
-                draft.splice(index, 1);
-              }
-            }),
-          ),
-        ),
+      mutationFn: deleteTodo,
       toastifySuccess: () => "Todo deleted!",
       toastifyErrors: {
         TodoNotFoundError: (error) => error.message,
       },
     });
-  };
+
+  // ── SSE event integration ────────────────────────────────────────────────
 
   export const stream = <E, R>(self: Stream.Stream<SseContract.Events, E, R>) =>
     self.pipe(
