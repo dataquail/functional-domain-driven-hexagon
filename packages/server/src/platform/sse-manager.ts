@@ -1,4 +1,3 @@
-import { SseContract } from "@org/contracts/api/Contracts";
 import { type UserId } from "@org/contracts/EntityIds";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Array from "effect/Array";
@@ -8,7 +7,11 @@ import * as MutableHashMap from "effect/MutableHashMap";
 import * as Option from "effect/Option";
 import type * as Queue from "effect/Queue";
 import * as Ref from "effect/Ref";
-import * as Schema from "effect/Schema";
+
+// Type-agnostic SSE delivery service. Tracks connections per user and writes
+// already-encoded payload strings into their queues. Modules own their event
+// schemas and encoding; the platform only delivers strings (modules/<x>/
+// infrastructure/<x>-notifier.ts is the typical encoding seam).
 
 type ActiveConnection = {
   readonly connectionId: string;
@@ -67,7 +70,7 @@ export class SseManager extends Effect.Service<SseManager>()("SseManager", {
         ];
       }).pipe(Effect.flatten);
 
-    const notifyUser = ({ event, userId }: { userId: UserId; event: SseContract.Events }) =>
+    const notifyUser = ({ payload, userId }: { userId: UserId; payload: string }) =>
       Effect.gen(function* () {
         const connections = yield* Ref.get(connectionsRef);
         const connectionsForUser = MutableHashMap.get(connections, userId);
@@ -75,13 +78,9 @@ export class SseManager extends Effect.Service<SseManager>()("SseManager", {
           return;
         }
 
-        const encodedEvent = yield* Schema.encode(Schema.parseJson(SseContract.Events))(event).pipe(
-          Effect.orDie,
-        );
-
         yield* Effect.forEach(
           connectionsForUser.value,
-          (connection) => connection.queue.offer(encodedEvent),
+          (connection) => connection.queue.offer(payload),
           {
             concurrency: "unbounded",
             discard: true,
@@ -89,13 +88,13 @@ export class SseManager extends Effect.Service<SseManager>()("SseManager", {
         );
       });
 
-    const notifyCurrentUser = (event: SseContract.Events) =>
+    const notifyCurrentUser = (payload: string) =>
       Effect.gen(function* () {
         const currentUser = yield* CurrentUser;
-        yield* notifyUser({ event, userId: currentUser.userId });
+        yield* notifyUser({ payload, userId: currentUser.userId });
       });
 
-    const notifyAll = ({ event }: { event: SseContract.Events }) =>
+    const notifyAll = ({ payload }: { payload: string }) =>
       Effect.gen(function* () {
         const connectionsMap = yield* Ref.get(connectionsRef);
         const allConnections = Array.flatten(MutableHashMap.values(connectionsMap));
@@ -104,18 +103,10 @@ export class SseManager extends Effect.Service<SseManager>()("SseManager", {
           return;
         }
 
-        const encodedEvent = yield* Schema.encode(Schema.parseJson(SseContract.Events))(event).pipe(
-          Effect.orDie,
-        );
-
-        yield* Effect.forEach(
-          allConnections,
-          (connection) => connection.queue.offer(encodedEvent),
-          {
-            concurrency: "unbounded",
-            discard: true,
-          },
-        );
+        yield* Effect.forEach(allConnections, (connection) => connection.queue.offer(payload), {
+          concurrency: "unbounded",
+          discard: true,
+        });
       });
 
     return {

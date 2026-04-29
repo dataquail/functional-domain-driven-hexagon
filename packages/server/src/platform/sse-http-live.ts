@@ -1,16 +1,18 @@
 import { Api } from "@/api.js";
+import { SseManager } from "@/platform/sse-manager.js";
 import * as HttpApiBuilder from "@effect/platform/HttpApiBuilder";
 import * as HttpServerResponse from "@effect/platform/HttpServerResponse";
-import { TestEvent } from "@org/contracts/api/SseContract";
+import { SseContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
-import * as Layer from "effect/Layer";
 import * as Queue from "effect/Queue";
 import * as Schedule from "effect/Schedule";
+import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
-import { SseManager } from "./sse-manager.js";
 
-export const SseLive = HttpApiBuilder.group(
+const encodeTestEvent = Schema.encode(Schema.parseJson(SseContract.Events));
+
+export const SseHttpLive = HttpApiBuilder.group(
   Api,
   "sse",
   Effect.fnUntraced(function* (handlers) {
@@ -58,13 +60,11 @@ export const SseLive = HttpApiBuilder.group(
       )
       .handle("notify", () =>
         Effect.gen(function* () {
-          const currentUser = yield* CurrentUser;
-
-          yield* sseManager.notifyUser({
-            userId: currentUser.userId,
-            event: new TestEvent({ message: "hello" }),
-          });
+          const payload = yield* encodeTestEvent(
+            new SseContract.TestEvent({ message: "hello" }),
+          ).pipe(Effect.orDie);
+          yield* sseManager.notifyCurrentUser(payload);
         }),
       );
   }),
-).pipe(Layer.provide(SseManager.Default));
+);

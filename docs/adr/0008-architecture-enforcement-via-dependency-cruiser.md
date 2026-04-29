@@ -59,12 +59,12 @@ If long-running orchestrations (sagas, process managers) appear, they get their 
 
 ### Module barrel-only and barrel content
 
-Two generalized rules enforce barrel-only access for any folder under `src/modules/<name>` or `src/public/<name>`:
+Two generalized rules enforce barrel-only access for any folder under `src/modules/<name>`:
 
-- `module-barrel-only-cross-module` — when the importer is itself inside a module, it may import another module only via that module's `index.ts`. Same-module imports are allowed via a backreference in `pathNot` (`^packages/server/src/$1/$2/`).
-- `module-barrel-only-from-outside` — when the importer is outside `src/modules/` and `src/public/` (e.g. composition root, contracts package), it may import any module only via that module's `index.ts`.
+- `module-barrel-only-cross-module` — when the importer is itself inside a module, it may import another module only via that module's `index.ts`. Same-module imports are allowed via a backreference in `pathNot` (`^packages/server/src/modules/$1/`).
+- `module-barrel-only-from-outside` — when the importer is outside `src/modules/` (e.g. composition root, contracts package, platform), it may import any module only via that module's `index.ts`.
 
-Together these subsume what was previously a per-module rule (`module-user-barrel-only`, `module-wallet-barrel-only`, …). New modules added under either folder are covered automatically with no config change.
+Together these subsume what was previously a per-module rule (`module-user-barrel-only`, `module-wallet-barrel-only`, …). New modules under `src/modules/` are covered automatically with no config change.
 
 `barrel-content-discipline` constrains the barrel itself: `index.ts` may not re-export anything from `infrastructure/` or `interface/` — those are private. The published cross-module surface is therefore: domain types (events, IDs, errors), command/query types (messages dispatched via the bus), handler-registration maps and span-attribute aggregators, and the module's `Live` layer for composition. Other modules see messages and notifications, never raw use case functions or repositories.
 
@@ -97,7 +97,7 @@ The two tools are complementary: depcruise enforces _what_ a file may depend on;
 ## Consequences
 
 - Architecture violations fail CI, not code review. The cost of repeatedly explaining the rules drops to zero, and the rules cannot be silently weakened.
-- Adding a new module under `src/modules/` or `src/public/` requires no dependency-cruiser config change — the two generalized barrel rules cover any new folder automatically. The "is this really a module?" question still has to be asked, but the prompt now lives in code review and ADR-0002, not in a forced edit to `.dependency-cruiser.cjs`.
+- Adding a new module under `src/modules/` requires no dependency-cruiser config change — the two generalized barrel rules cover any new folder automatically. The "is this really a module?" question still has to be asked, but the prompt now lives in code review and ADR-0002, not in a forced edit to `.dependency-cruiser.cjs`.
 - Rules are tightened over time as patterns stabilize. Don't fight a rule by widening it; fight it by changing the design. If a command legitimately needs to reach into infrastructure, that is a smell to investigate (probably a missing port in `domain/`), not a rule to relax.
 - Test code is exempt from the per-folder isolation rules (`commands-isolation`, `queries-isolation`, `event-handlers-isolation`). The exemption is encoded inline in each rule (`pathNot: "\\.test\\.ts$"`), not in a separate ignore list — easier to audit and harder to abuse. Tests can therefore pull fakes from `infrastructure/` and use the database directly in integration tests.
 - The dependency-cruiser TypeScript resolver requires its own `tsconfig` so that path aliases resolve correctly during analysis. This is a minor maintenance cost; the alternative is silently-passing rules because the cruiser couldn't follow imports.

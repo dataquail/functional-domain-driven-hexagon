@@ -19,28 +19,27 @@ module.exports = {
       name: "module-barrel-only-cross-module",
       severity: "error",
       comment:
-        "A module may only import another module via its index.ts barrel. Applies automatically to any new folder under src/modules/ or src/public/.",
-      from: { path: "^packages/server/src/(modules|public)/([^/]+)/" },
+        "A module may only import another module via its index.ts barrel. Applies automatically to any new folder under src/modules/.",
+      from: { path: "^packages/server/src/modules/([^/]+)/" },
       to: {
-        path: "^packages/server/src/(modules|public)/([^/]+)/",
+        path: "^packages/server/src/modules/([^/]+)/",
         pathNot: [
-          "^packages/server/src/$1/$2/",
-          "^packages/server/src/(modules|public)/[^/]+/index\\.ts$",
+          "^packages/server/src/modules/$1/",
+          "^packages/server/src/modules/[^/]+/index\\.ts$",
         ],
       },
     },
     {
       name: "module-barrel-only-from-outside",
       severity: "error",
-      comment:
-        "Files outside src/modules and src/public must import a module via its index.ts barrel.",
+      comment: "Files outside src/modules must import a module via its index.ts barrel.",
       from: {
         path: "^packages/",
-        pathNot: "^packages/server/src/(modules|public)/[^/]+/",
+        pathNot: "^packages/server/src/modules/[^/]+/",
       },
       to: {
-        path: "^packages/server/src/(modules|public)/[^/]+/",
-        pathNot: "^packages/server/src/(modules|public)/[^/]+/index\\.ts$",
+        path: "^packages/server/src/modules/[^/]+/",
+        pathNot: "^packages/server/src/modules/[^/]+/index\\.ts$",
       },
     },
     {

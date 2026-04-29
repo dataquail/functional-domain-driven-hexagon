@@ -1,5 +1,5 @@
 import { QueryData, useEffectMutation, useEffectQuery } from "@/lib/tanstack-query";
-import { SseContract, type TodosContract } from "@org/contracts/api/Contracts";
+import { type SseContract, TodosContract } from "@org/contracts/api/Contracts";
 import { type TodoId } from "@org/contracts/EntityIds";
 import { QueryObserver, type QueryObserverResult } from "@tanstack/react-query";
 import * as Effect from "effect/Effect";
@@ -167,7 +167,7 @@ export namespace TodosQueries {
 
   export const stream = <E, R>(self: Stream.Stream<SseContract.Events, E, R>) =>
     self.pipe(
-      Stream.filter(SseContract.Todos.is),
+      Stream.filter(TodosContract.SseEvents.is),
       Stream.tap((event) =>
         Match.value(event).pipe(
           Match.tag("UpsertedTodo", (upsertedEvent) =>

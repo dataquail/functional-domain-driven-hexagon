@@ -1,4 +1,5 @@
 import { Api } from "@/api.js";
+import { todoCommandHandlers, todoQueryHandlers, TodosModuleLive } from "@/modules/todos/index.js";
 import {
   userCommandHandlers,
   userEventSpanAttributes,
@@ -10,28 +11,35 @@ import { CommandBus, makeCommandBus } from "@/platform/command-bus.js";
 import { makeDomainEventBusLive } from "@/platform/domain-event-bus.js";
 import { UserAuthMiddlewareLive } from "@/platform/middlewares/auth-middleware-live.js";
 import { makeQueryBus, QueryBus } from "@/platform/query-bus.js";
+import { SseHttpLive } from "@/platform/sse-http-live.js";
+import { SseManager } from "@/platform/sse-manager.js";
 import { TransactionRunnerLive } from "@/platform/transaction-runner.js";
-import { SseModuleLive } from "@/public/sse/index.js";
-import { TodosModuleLive } from "@/public/todos/index.js";
 import { TestDatabaseLive } from "@/test-utils/test-database.js";
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import * as HttpApiBuilder from "@effect/platform/HttpApiBuilder";
 import * as Layer from "effect/Layer";
 
-const CommandBusLive = Layer.succeed(CommandBus, makeCommandBus({ ...userCommandHandlers }));
-const QueryBusLive = Layer.succeed(QueryBus, makeQueryBus({ ...userQueryHandlers }));
+const CommandBusLive = Layer.succeed(
+  CommandBus,
+  makeCommandBus({ ...userCommandHandlers, ...todoCommandHandlers }),
+);
+const QueryBusLive = Layer.succeed(
+  QueryBus,
+  makeQueryBus({ ...userQueryHandlers, ...todoQueryHandlers }),
+);
 const DomainEventBusLive = makeDomainEventBusLive({
   spanAttributes: { ...userEventSpanAttributes, ...walletEventSpanAttributes },
 });
 
 const ApiLive = HttpApiBuilder.api(Api).pipe(
-  Layer.provide([TodosModuleLive, SseModuleLive, UserModuleLive, WalletModuleLive]),
+  Layer.provide([TodosModuleLive, SseHttpLive, UserModuleLive, WalletModuleLive]),
   Layer.provide([
     UserAuthMiddlewareLive,
     DomainEventBusLive,
     CommandBusLive,
     QueryBusLive,
     TransactionRunnerLive,
+    SseManager.Default,
   ]),
 );
 
