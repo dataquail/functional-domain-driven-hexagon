@@ -1,3 +1,6 @@
+// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+import storybook from "eslint-plugin-storybook";
+
 /* eslint-disable */
 import { fixupPluginRules } from "@eslint/compat";
 import { FlatCompat } from "@eslint/eslintrc";
@@ -91,7 +94,13 @@ export default [
           jsx: true,
         },
         projectService: {
-          allowDefaultProject: ["*.js", "*.mjs", "scripts/*.mjs", "scripts/eslint-rules/*.mjs"],
+          allowDefaultProject: [
+            "*.js",
+            "*.mjs",
+            "scripts/*.mjs",
+            "scripts/eslint-rules/*.mjs",
+            "packages/*/.storybook/*.ts",
+          ],
         },
         tsconfigRootDir: process.cwd(),
       },
@@ -350,6 +359,30 @@ export default [
     },
   },
   {
+    // ADR-0015: features and patterns must consume the bespoke component library.
+    // Forbid raw HTML elements that already have a primitive equivalent.
+    // The forbid-list grows as new primitives are added.
+    files: [
+      "packages/client/src/features/**/*.tsx",
+      "packages/client/src/components/patterns/**/*.tsx",
+    ],
+    ignores: ["**/*.test.tsx", "**/*.spec.tsx", "**/*.stories.tsx"],
+    rules: {
+      "react/forbid-elements": [
+        "error",
+        {
+          forbid: [
+            { element: "button", message: "Use <Button> from @/components/primitives instead." },
+            { element: "input", message: "Use <Input> from @/components/primitives instead." },
+            { element: "label", message: "Use <Label> from @/components/primitives instead." },
+            { element: "select", message: "Use <Select> from @/components/primitives instead." },
+            { element: "form", message: "Use <Form> from @/components/primitives instead." },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ["packages/server/**/*.{ts,tsx,js,jsx}"],
     rules: {
       "no-deep-relative-imports/no-deep-relative-imports": "error",
@@ -359,6 +392,16 @@ export default [
     files: ["packages/{domain,database}/**/*.{ts,tsx,js,jsx}"],
     rules: {
       "no-restricted-imports": "off",
+    },
+  },
+  ...storybook.configs["flat/recommended"],
+  {
+    // ADR-0015: Storybook story and config files require `export default`. Loosen
+    // project-wide restrictions that conflict with their conventions. These are
+    // documentation/config artifacts, not production code.
+    files: ["**/*.stories.tsx", "**/.storybook/*.ts"],
+    rules: {
+      "no-restricted-syntax": "off",
     },
   },
 ];

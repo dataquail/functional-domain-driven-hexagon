@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/primitives/button";
+import { Form } from "@/components/primitives/form";
+import { Input } from "@/components/primitives/input";
+import { Label } from "@/components/primitives/label";
 import { makeFormOptions } from "@/lib/tanstack-query/make-form-options";
 import { UsersQueries } from "@/services/data-access/users-queries";
 import { UserContract } from "@org/contracts/api/Contracts";

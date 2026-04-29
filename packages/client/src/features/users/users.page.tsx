@@ -1,4 +1,4 @@
-import { Card } from "@/components/ui/card";
+import { Card } from "@/components/primitives/card";
 import { CreateUser } from "./create-user";
 import { UserList } from "./user-list";
 

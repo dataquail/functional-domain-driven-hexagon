@@ -16,47 +16,31 @@ module.exports = {
       to: { path: "^packages/database/" },
     },
     {
-      name: "module-user-barrel-only",
+      name: "module-barrel-only-cross-module",
       severity: "error",
       comment:
-        "Files outside the user module must import it via packages/server/src/modules/user/index.ts",
-      from: { pathNot: "^packages/server/src/modules/user/" },
+        "A module may only import another module via its index.ts barrel. Applies automatically to any new folder under src/modules/ or src/public/.",
+      from: { path: "^packages/server/src/(modules|public)/([^/]+)/" },
       to: {
-        path: "^packages/server/src/modules/user/",
-        pathNot: "^packages/server/src/modules/user/index\\.ts$",
+        path: "^packages/server/src/(modules|public)/([^/]+)/",
+        pathNot: [
+          "^packages/server/src/$1/$2/",
+          "^packages/server/src/(modules|public)/[^/]+/index\\.ts$",
+        ],
       },
     },
     {
-      name: "module-wallet-barrel-only",
+      name: "module-barrel-only-from-outside",
       severity: "error",
       comment:
-        "Files outside the wallet module must import it via packages/server/src/modules/wallet/index.ts",
-      from: { pathNot: "^packages/server/src/modules/wallet/" },
-      to: {
-        path: "^packages/server/src/modules/wallet/",
-        pathNot: "^packages/server/src/modules/wallet/index\\.ts$",
+        "Files outside src/modules and src/public must import a module via its index.ts barrel.",
+      from: {
+        path: "^packages/",
+        pathNot: "^packages/server/src/(modules|public)/[^/]+/",
       },
-    },
-    {
-      name: "module-todos-barrel-only",
-      severity: "error",
-      comment:
-        "Files outside the todos module must import it via packages/server/src/public/todos/index.ts",
-      from: { pathNot: "^packages/server/src/public/todos/" },
       to: {
-        path: "^packages/server/src/public/todos/",
-        pathNot: "^packages/server/src/public/todos/index\\.ts$",
-      },
-    },
-    {
-      name: "module-sse-barrel-only",
-      severity: "error",
-      comment:
-        "Files outside the sse module must import it via packages/server/src/public/sse/index.ts",
-      from: { pathNot: "^packages/server/src/public/sse/" },
-      to: {
-        path: "^packages/server/src/public/sse/",
-        pathNot: "^packages/server/src/public/sse/index\\.ts$",
+        path: "^packages/server/src/(modules|public)/[^/]+/",
+        pathNot: "^packages/server/src/(modules|public)/[^/]+/index\\.ts$",
       },
     },
     {
@@ -209,7 +193,7 @@ module.exports = {
           "^packages/client/src/services/common/query-client\\.ts$",
           "^packages/client/src/lib/tanstack-query/",
           "^packages/client/src/global-providers\\.tsx$",
-          "\\.(test|spec)\\.(ts|tsx)$",
+          "\\.(stories|test|spec)\\.(ts|tsx)$",
         ],
       },
       to: { path: "/node_modules/@tanstack/(react-query|query-core)/" },
@@ -223,12 +207,35 @@ module.exports = {
         path: "^packages/client/src/features/.*\\.tsx$",
         pathNot: [
           "^packages/client/src/features/.*\\.presenter\\.tsx$",
-          "\\.(test|spec)\\.(ts|tsx)$",
+          "\\.(stories|test|spec)\\.(ts|tsx)$",
         ],
       },
       to: {
         path: "/node_modules/effect/.*/(Effect|Stream|Fiber|Ref|SubscriptionRef|Layer|Scope|Runtime|ManagedRuntime|Cause|Exit|Match)\\.",
       },
+    },
+    {
+      name: "client-primitives-only-touch-ui-libs",
+      severity: "error",
+      comment:
+        "Third-party visual libraries (@radix-ui/*, lucide-react, recharts, sonner) may only be imported from components/primitives/. Patterns and features consume them via the primitives layer so the third-party prop surface stays encapsulated. Class-name utilities (clsx, tailwind-merge, class-variance-authority) are not subject to this rule. The Toast service (services/common/toast.ts) is the imperative sonner adapter; everything else triggers toasts via the Toast service. Test files exempted. See ADR-0015.",
+      from: {
+        path: "^packages/client/src/",
+        pathNot: [
+          "^packages/client/src/components/primitives/",
+          "^packages/client/src/services/common/toast\\.ts$",
+          "\\.(stories|test|spec)\\.(ts|tsx)$",
+        ],
+      },
+      to: { path: "/node_modules/(@radix-ui/|lucide-react/|recharts/|sonner/)" },
+    },
+    {
+      name: "client-patterns-no-features",
+      severity: "error",
+      comment:
+        "components/patterns/ may not import from features/. The dependency direction is features → patterns → primitives, never reversed. See ADR-0015.",
+      from: { path: "^packages/client/src/components/patterns/" },
+      to: { path: "^packages/client/src/features/" },
     },
     {
       name: "client-view-model-no-react",
@@ -237,7 +244,7 @@ module.exports = {
         "ViewModels (*.view-model.ts) are framework-agnostic. They may not import react, react-dom, or any React-coupled package (@tanstack/react-*, react-hook-form, etc.). If you need React or a React-coupled library, use a presenter instead. See ADR-0014.",
       from: {
         path: "^packages/client/src/features/.*\\.view-model\\.ts$",
-        pathNot: "\\.(test|spec)\\.(ts|tsx)$",
+        pathNot: "\\.(stories|test|spec)\\.(ts|tsx)$",
       },
       to: {
         path: "/node_modules/(react|react-dom|@tanstack/react-|react-hook-form)",

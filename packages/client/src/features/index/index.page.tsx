@@ -1,4 +1,4 @@
-import { Button, Card, Skeleton } from "@/components/ui";
+import { Button, Card, Skeleton } from "@/components/primitives";
 import { AddTodo } from "./add-todo";
 import { TodoItem } from "./todo-item";
 import { useIndexViewModel } from "./use-index-view-model";

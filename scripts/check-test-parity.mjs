@@ -92,11 +92,26 @@ const rules = [
     subject: "packages/client/src/features/**/*.presenter.{ts,tsx}",
     candidates: [(f) => f.replace(/\.presenter\.tsx?$/, ".presenter.test.tsx")],
   },
+  // ── Client component library (ADR-0015) ──────────────────────────────
+  {
+    label: "Primitive component",
+    requirement: "sibling Storybook story",
+    subject: "packages/client/src/components/primitives/**/*.tsx",
+    ignore: ["**/*.stories.tsx", "**/*.test.tsx"],
+    candidates: [(f) => f.replace(/\.tsx$/, ".stories.tsx")],
+  },
+  {
+    label: "Pattern component",
+    requirement: "sibling Storybook story",
+    subject: "packages/client/src/components/patterns/**/*.tsx",
+    ignore: ["**/*.stories.tsx", "**/*.test.tsx"],
+    candidates: [(f) => f.replace(/\.tsx$/, ".stories.tsx")],
+  },
 ];
 
 let missing = 0;
 for (const rule of rules) {
-  const subjects = Glob.globSync(rule.subject, { ignore: "**/*.test.ts" });
+  const subjects = Glob.globSync(rule.subject, { ignore: rule.ignore ?? "**/*.test.ts" });
   for (const subject of subjects) {
     const tried = rule.candidates.map((fn) => fn(subject));
     if (!tried.some((p) => Fs.existsSync(p))) {

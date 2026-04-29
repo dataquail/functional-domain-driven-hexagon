@@ -13,7 +13,7 @@
   "aliases": {
     "components": "/packages/client/src/components",
     "utils": "@/lib/utils/cn",
-    "ui": "@/lib/components/ui",
+    "ui": "@/components/primitives",
     "lib": "@/lib",
     "hooks": "@/lib/hooks"
   },

@@ -1,3 +1,4 @@
+import { Toast } from "@/services/common/toast";
 import { type LiveRuntimeContext } from "@/services/live-layer";
 import { useRuntime } from "@/services/runtime/use-runtime";
 import {
@@ -24,7 +25,6 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Predicate from "effect/Predicate";
 import * as React from "react";
-import { toast } from "sonner";
 
 export class QueryDefect extends Data.TaggedError("QueryDefect")<{
   cause: unknown;
@@ -74,32 +74,33 @@ const useRunner = <A, E extends EffectfulError, R extends LiveRuntimeContext>({
         return self
           .pipe(
             Effect.tapError((error) =>
-              Effect.sync(() => {
+              Effect.gen(function* () {
+                const toast = yield* Toast;
                 const errorTag = error._tag as keyof typeof tagConfigs;
                 const tagHandler = tagConfigs[errorTag];
 
                 if (tagHandler !== undefined) {
                   // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                   const message = tagHandler(error as any);
-                  toast.error(message);
+                  yield* toast.error(message);
                   return;
                 } else if (orElse !== false) {
                   if (orElse === "extractMessage" && hasStringMessage(error)) {
-                    toast.error(error.message);
+                    yield* toast.error(error.message);
                   } else if (typeof orElse === "string") {
-                    toast.error(orElse);
+                    yield* toast.error(orElse);
                   } else {
                     // orElse === true, use default message
-                    toast.error(DEFAULT_ERROR_MESSAGE);
+                    yield* toast.error(DEFAULT_ERROR_MESSAGE);
                   }
                 }
               }),
             ),
-            Effect.tap((result) => {
-              if (toastifySuccess !== undefined) {
-                toast.success(toastifySuccess(result));
-              }
-            }),
+            Effect.tap((result) =>
+              toastifySuccess !== undefined
+                ? Effect.flatMap(Toast, (toast) => toast.success(toastifySuccess(result)))
+                : Effect.void,
+            ),
             Effect.tapErrorCause(Effect.logError),
             Effect.withSpan(span),
             runtime.runPromiseExit,
@@ -115,7 +116,7 @@ const useRunner = <A, E extends EffectfulError, R extends LiveRuntimeContext>({
                 if (toastifyDefects !== false) {
                   const defectMessage =
                     typeof toastifyDefects === "string" ? toastifyDefects : DEFAULT_DEFECT_MESSAGE;
-                  toast.error(defectMessage);
+                  runtime.runSync(Effect.flatMap(Toast, (toast) => toast.error(defectMessage)));
                 }
 
                 throw new QueryDefect({ cause: Cause.squash(cause) });

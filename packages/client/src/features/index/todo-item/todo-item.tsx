@@ -1,7 +1,6 @@
-import { Button, Checkbox } from "@/components/ui";
+import { Button, Checkbox, Label, TrashIcon } from "@/components/primitives";
 import { TodosQueries } from "@/services/data-access/todos-queries";
 import type { TodosContract } from "@org/contracts/api/Contracts";
-import { Trash2Icon } from "lucide-react";
 import React from "react";
 
 export const TodoItem: React.FC<{ todo: TodosContract.Todo }> = ({ todo }) => {
@@ -25,14 +24,14 @@ export const TodoItem: React.FC<{ todo: TodosContract.Todo }> = ({ todo }) => {
           }}
         />
 
-        <label
+        <Label
           htmlFor={`todo-${todo.id}`}
           className={`flex-1 cursor-pointer truncate ${
             todo.completed ? "text-muted-foreground line-through" : "text-foreground"
           }`}
         >
           {todo.title}
-        </label>
+        </Label>
       </div>
 
       <Button
@@ -44,7 +43,7 @@ export const TodoItem: React.FC<{ todo: TodosContract.Todo }> = ({ todo }) => {
           deleteTodo.mutate(todo.id);
         }}
       >
-        <Trash2Icon className="text-destructive h-4 w-4" />
+        <TrashIcon tone="destructive" />
         <span className="sr-only">Delete</span>
       </Button>
     </li>

@@ -1,9 +1,9 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/primitives/badge";
+import { Button } from "@/components/primitives/button";
+import { ChevronLeftIcon, ChevronRightIcon } from "@/components/primitives/icon";
+import { Skeleton } from "@/components/primitives/skeleton";
 import { UsersQueries } from "@/services/data-access/users-queries";
 import * as Array from "effect/Array";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import * as React from "react";
 
 const PAGE_SIZE = 10;
@@ -67,7 +67,7 @@ export const UserList: React.FC = () => {
               setPage((p) => Math.max(1, p - 1));
             }}
           >
-            <ChevronLeftIcon className="h-4 w-4" />
+            <ChevronLeftIcon />
             <span className="sr-only">Previous page</span>
           </Button>
           <Button
@@ -79,7 +79,7 @@ export const UserList: React.FC = () => {
               setPage((p) => Math.min(totalPages, p + 1));
             }}
           >
-            <ChevronRightIcon className="h-4 w-4" />
+            <ChevronRightIcon />
             <span className="sr-only">Next page</span>
           </Button>
         </div>

@@ -1,12 +1,12 @@
-import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/primitives/button";
+import { Form } from "@/components/primitives/form";
+import { PlusIcon } from "@/components/primitives/icon";
+import { Input } from "@/components/primitives/input";
 import { makeFormOptions } from "@/lib/tanstack-query/make-form-options";
 import { TodosQueries } from "@/services/data-access/todos-queries";
 import { TodosContract } from "@org/contracts/api/Contracts";
 import { useForm } from "@tanstack/react-form";
 import * as Schema from "effect/Schema";
-import { PlusIcon } from "lucide-react";
 import type React from "react";
 
 export const AddTodo: React.FC = () => {
@@ -56,7 +56,7 @@ export const AddTodo: React.FC = () => {
               {isSubmitting ? (
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
               ) : (
-                <PlusIcon className="h-5 w-5" />
+                <PlusIcon size="lg" />
               )}
               <span className="sr-only">Add task</span>
             </Button>
