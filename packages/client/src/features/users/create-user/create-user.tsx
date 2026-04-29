@@ -2,33 +2,11 @@ import { Button } from "@/components/primitives/button";
 import { Form } from "@/components/primitives/form";
 import { Input } from "@/components/primitives/input";
 import { Label } from "@/components/primitives/label";
-import { makeFormOptions } from "@/lib/tanstack-query/make-form-options";
-import { UsersQueries } from "@/services/data-access/users-queries";
-import { UserContract } from "@org/contracts/api/Contracts";
-import { useForm } from "@tanstack/react-form";
-import * as Schema from "effect/Schema";
 import type React from "react";
+import { useCreateUserPresenter } from "./create-user.presenter";
 
 export const CreateUser: React.FC = () => {
-  const createUserMutation = UsersQueries.useCreateUserMutation();
-
-  const form = useForm({
-    ...makeFormOptions({
-      schema: UserContract.CreateUserPayload,
-      defaultValues: {
-        email: "",
-        country: "",
-        street: "",
-        postalCode: "",
-      },
-      validator: "onSubmit",
-    }),
-    onSubmit: async ({ formApi, value }) => {
-      const payload = Schema.decodeSync(UserContract.CreateUserPayload)(value);
-      await createUserMutation.mutateAsync(payload);
-      formApi.reset();
-    },
-  });
+  const { form } = useCreateUserPresenter();
 
   return (
     <Form onSubmit={form.handleSubmit}>

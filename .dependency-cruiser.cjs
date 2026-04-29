@@ -184,7 +184,7 @@ module.exports = {
       name: "client-tanstack-allowlist",
       severity: "error",
       comment:
-        "TanStack Query (@tanstack/react-query, @tanstack/query-core) may only be imported by services/data-access/, services/common/query-client.ts, lib/tanstack-query/, and global-providers.tsx. Test files exempted. See ADR-0014.",
+        "TanStack Query (@tanstack/react-query, @tanstack/query-core) may only be imported by services/data-access/, services/common/query-client.ts, lib/tanstack-query/, global-providers.tsx, and shared test helpers in test/. Test files exempted. See ADR-0014.",
       from: {
         path: "^packages/client/src/",
         pathNot: [
@@ -192,6 +192,7 @@ module.exports = {
           "^packages/client/src/services/common/query-client\\.ts$",
           "^packages/client/src/lib/tanstack-query/",
           "^packages/client/src/global-providers\\.tsx$",
+          "^packages/client/src/test/",
           "\\.(stories|test|spec)\\.(ts|tsx)$",
         ],
       },
@@ -212,6 +213,21 @@ module.exports = {
       to: {
         path: "/node_modules/effect/.*/(Effect|Stream|Fiber|Ref|SubscriptionRef|Layer|Scope|Runtime|ManagedRuntime|Cause|Exit|Match)\\.",
       },
+    },
+    {
+      name: "client-react-form-presenter-only",
+      severity: "error",
+      comment:
+        "React-coupled form libraries (@tanstack/react-form, react-hook-form) may only be imported by *.presenter.{ts,tsx} files in features/ and shared form helpers in lib/tanstack-query/. Importing useForm directly from a feature component is the ADR-0014 violation that triggered this rule — extract the form orchestration to a sibling presenter and consume the returned form instance from JSX. Test files exempted.",
+      from: {
+        path: "^packages/client/src/",
+        pathNot: [
+          "^packages/client/src/features/.*\\.presenter\\.(ts|tsx)$",
+          "^packages/client/src/lib/tanstack-query/",
+          "\\.(stories|test|spec)\\.(ts|tsx)$",
+        ],
+      },
+      to: { path: "/node_modules/(@tanstack/react-form|react-hook-form)/" },
     },
     {
       name: "client-primitives-only-touch-ui-libs",

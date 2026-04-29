@@ -90,7 +90,14 @@ const rules = [
     label: "Presenter",
     requirement: "sibling test",
     subject: "packages/client/src/features/**/*.presenter.{ts,tsx}",
-    candidates: [(f) => f.replace(/\.presenter\.tsx?$/, ".presenter.test.tsx")],
+    // Test extension is independent of the presenter's: a presenter that only
+    // exports a hook is fine to test from `.test.ts`; one that exports JSX
+    // (provider, wrapper) or wants to render its hook through a JSX wrapper
+    // typically picks `.test.tsx`. Either satisfies the parity rule.
+    candidates: [
+      (f) => f.replace(/\.presenter\.tsx?$/, ".presenter.test.ts"),
+      (f) => f.replace(/\.presenter\.tsx?$/, ".presenter.test.tsx"),
+    ],
   },
   // ── Client component library (ADR-0015) ──────────────────────────────
   {
