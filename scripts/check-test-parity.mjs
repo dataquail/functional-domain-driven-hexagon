@@ -79,6 +79,19 @@ const rules = [
     subject: "packages/server/src/modules/*/infrastructure/*-repository-live.ts",
     candidates: [(f) => f.replace(/-repository-live\.ts$/, "-repository-fake.ts")],
   },
+  // ── Client (ADR-0014) ─────────────────────────────────────────────────
+  {
+    label: "ViewModel",
+    requirement: "sibling test",
+    subject: "packages/client/src/features/**/*.view-model.ts",
+    candidates: [(f) => f.replace(/\.view-model\.ts$/, ".view-model.test.ts")],
+  },
+  {
+    label: "Presenter",
+    requirement: "sibling test",
+    subject: "packages/client/src/features/**/*.presenter.{ts,tsx}",
+    candidates: [(f) => f.replace(/\.presenter\.tsx?$/, ".presenter.test.tsx")],
+  },
 ];
 
 let missing = 0;

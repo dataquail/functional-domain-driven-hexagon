@@ -6,7 +6,7 @@ import { useIndexViewModel } from "./use-index-view-model";
 const SKELETON_COUNT = 3;
 
 export const IndexPage = () => {
-  const { calculatePrimes, filterLargeData, state } = useIndexViewModel();
+  const { actions, state } = useIndexViewModel();
 
   return (
     <Card className="mx-auto w-full max-w-lg shadow-md">
@@ -41,10 +41,10 @@ export const IndexPage = () => {
       </Card.Content>
 
       <Card.Footer className="flex gap-2">
-        <Button onClick={filterLargeData} disabled={state.filterPending}>
+        <Button onClick={actions.filterLargeData} disabled={state.filterPending}>
           Filter Data
         </Button>
-        <Button onClick={calculatePrimes} disabled={state.primesPending}>
+        <Button onClick={actions.calculatePrimes} disabled={state.primesPending}>
           Calculate Primes
         </Button>
       </Card.Footer>

@@ -196,6 +196,53 @@ module.exports = {
       from: { path: "^packages/server/src/modules/[^/]+/infrastructure/" },
       to: { path: "^packages/server/src/modules/[^/]+/interface/" },
     },
+    // ── Client rules (ADR-0014) ────────────────────────────────────────
+    {
+      name: "client-tanstack-allowlist",
+      severity: "error",
+      comment:
+        "TanStack Query (@tanstack/react-query, @tanstack/query-core) may only be imported by services/data-access/, services/common/query-client.ts, lib/tanstack-query/, and global-providers.tsx. Test files exempted. See ADR-0014.",
+      from: {
+        path: "^packages/client/src/",
+        pathNot: [
+          "^packages/client/src/services/data-access/",
+          "^packages/client/src/services/common/query-client\\.ts$",
+          "^packages/client/src/lib/tanstack-query/",
+          "^packages/client/src/global-providers\\.tsx$",
+          "\\.(test|spec)\\.(ts|tsx)$",
+        ],
+      },
+      to: { path: "/node_modules/@tanstack/(react-query|query-core)/" },
+    },
+    {
+      name: "client-component-no-effect-runtime",
+      severity: "error",
+      comment:
+        "Components in features/ may not import Effect runtime primitives. Reaching for Effect/Stream/Fiber/Ref/SubscriptionRef/Layer/Scope/Runtime/ManagedRuntime/Cause/Exit/Match means extracting to a presenter (*.presenter.{ts,tsx}) or view-model (*.view-model.ts). Allowed effect modules in components: Schema, Function, Either, Option, Predicate, Duration. See ADR-0014.",
+      from: {
+        path: "^packages/client/src/features/.*\\.tsx$",
+        pathNot: [
+          "^packages/client/src/features/.*\\.presenter\\.tsx$",
+          "\\.(test|spec)\\.(ts|tsx)$",
+        ],
+      },
+      to: {
+        path: "/node_modules/effect/.*/(Effect|Stream|Fiber|Ref|SubscriptionRef|Layer|Scope|Runtime|ManagedRuntime|Cause|Exit|Match)\\.",
+      },
+    },
+    {
+      name: "client-view-model-no-react",
+      severity: "error",
+      comment:
+        "ViewModels (*.view-model.ts) are framework-agnostic. They may not import react, react-dom, or any React-coupled package (@tanstack/react-*, react-hook-form, etc.). If you need React or a React-coupled library, use a presenter instead. See ADR-0014.",
+      from: {
+        path: "^packages/client/src/features/.*\\.view-model\\.ts$",
+        pathNot: "\\.(test|spec)\\.(ts|tsx)$",
+      },
+      to: {
+        path: "/node_modules/(react|react-dom|@tanstack/react-|react-hook-form)",
+      },
+    },
     {
       name: "no-circular",
       severity: "error",

@@ -1,15 +1,15 @@
-import { ApiClient } from "@/services/common/api-client";
-import { QueryClient } from "@/services/common/query-client";
+import { type ViewModel } from "@/lib/view-model";
+import { type ApiClient } from "@/services/common/api-client";
+import { type QueryClient } from "@/services/common/query-client";
 import { Toast } from "@/services/common/toast";
-import { TodosQueries } from "@/services/data-access/todos-queries";
+import { type QueryState, TodosQueries } from "@/services/data-access/todos-queries";
 import { WorkerClient } from "@/services/worker/worker-client";
 import { type TodosContract } from "@org/contracts/api/Contracts";
-import { QueryObserver, type QueryObserverResult } from "@tanstack/react-query";
 import * as Array from "effect/Array";
 import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
-import * as Runtime from "effect/Runtime";
 import type * as Scope from "effect/Scope";
+import * as Stream from "effect/Stream";
 import * as SubscriptionRef from "effect/SubscriptionRef";
 
 export type TodosViewState =
@@ -30,21 +30,22 @@ export const initialIndexViewState: IndexViewState = {
   primesPending: false,
 };
 
-export type IndexViewModel = {
-  readonly state: SubscriptionRef.SubscriptionRef<IndexViewState>;
+type IndexActions = {
   readonly filterLargeData: Effect.Effect<void>;
   readonly calculatePrimes: Effect.Effect<void>;
 };
+
+export type IndexViewModel = ViewModel<IndexViewState, IndexActions>;
 
 const FILTER_DATA_SIZE = 1_000_000;
 const FILTER_THRESHOLD = 99_990;
 const PRIME_UPPER_BOUND = 10_000_000;
 
 export const deriveTodosViewState = (
-  result: Pick<QueryObserverResult<ReadonlyArray<TodosContract.Todo>>, "data" | "status">,
+  result: QueryState<ReadonlyArray<TodosContract.Todo>>,
 ): TodosViewState => {
   if (result.status === "error") return { kind: "error", message: "Failed to load todos" };
-  if (result.status === "pending" || result.data === undefined) return { kind: "loading" };
+  if (result.status === "pending") return { kind: "loading" };
   if (result.data.length === 0) return { kind: "empty" };
   return { kind: "ready", todos: result.data };
 };
@@ -54,39 +55,17 @@ export const make: Effect.Effect<
   never,
   ApiClient | QueryClient | Toast | WorkerClient | Scope.Scope
 > = Effect.gen(function* () {
-  const apiClient = yield* ApiClient;
-  const queryClient = yield* QueryClient;
   const toast = yield* Toast;
   const workerClient = yield* WorkerClient;
-  const runtime = yield* Effect.runtime<never>();
-  const runFork = Runtime.runFork(runtime);
-
   const state = yield* SubscriptionRef.make(initialIndexViewState);
 
-  const observer = new QueryObserver<
-    ReadonlyArray<TodosContract.Todo>,
-    Error,
-    ReadonlyArray<TodosContract.Todo>,
-    ReadonlyArray<TodosContract.Todo>,
-    readonly ["todos"]
-  >(queryClient, {
-    queryKey: ["todos"] as const,
-    queryFn: () =>
-      Effect.runPromise(TodosQueries.getTodos.pipe(Effect.provideService(ApiClient, apiClient))),
-  });
-
-  const writeTodosState = (result: QueryObserverResult<ReadonlyArray<TodosContract.Todo>>) =>
-    SubscriptionRef.update(state, (s) => ({ ...s, todos: deriveTodosViewState(result) }));
-
-  yield* writeTodosState(observer.getCurrentResult());
-  const unsubscribe = observer.subscribe((result) => {
-    runFork(writeTodosState(result));
-  });
-  yield* Effect.addFinalizer(() =>
-    Effect.sync(() => {
-      unsubscribe();
-      observer.destroy();
-    }),
+  yield* Effect.forkScoped(
+    TodosQueries.observeTodos.pipe(
+      Stream.tap((result) =>
+        SubscriptionRef.update(state, (s) => ({ ...s, todos: deriveTodosViewState(result) })),
+      ),
+      Stream.runDrain,
+    ),
   );
 
   const filterLargeData = Effect.gen(function* () {
@@ -114,5 +93,8 @@ export const make: Effect.Effect<
     Effect.withSpan("IndexViewModel.calculatePrimes"),
   );
 
-  return { state, filterLargeData, calculatePrimes };
+  return {
+    state,
+    actions: { filterLargeData, calculatePrimes },
+  };
 });

@@ -56,7 +56,7 @@ describe("IndexViewModel", () => {
     Effect.gen(function* () {
       const vm = yield* make;
 
-      yield* vm.filterLargeData;
+      yield* vm.actions.filterLargeData;
 
       const recorded = yield* RecordedToasts;
       const calls = yield* recorded.all;
@@ -72,7 +72,7 @@ describe("IndexViewModel", () => {
     Effect.gen(function* () {
       const vm = yield* make;
 
-      yield* vm.filterLargeData;
+      yield* vm.actions.filterLargeData;
 
       const recorded = yield* RecordedToasts;
       const calls = yield* recorded.all;
@@ -95,7 +95,7 @@ describe("IndexViewModel", () => {
     Effect.gen(function* () {
       const vm = yield* make;
 
-      yield* vm.calculatePrimes;
+      yield* vm.actions.calculatePrimes;
 
       const recorded = yield* RecordedToasts;
       const calls = yield* recorded.all;

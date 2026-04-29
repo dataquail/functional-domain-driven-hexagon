@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./packages/client/src/*"],
+      "@org/contracts": ["./packages/contracts/src/index.js"],
+      "@org/contracts/*": ["./packages/contracts/src/*.js"]
+    },
+    "moduleResolution": "Bundler",
+    "module": "ESNext",
+    "target": "ES2022",
+    "jsx": "react-jsx"
+  }
+}
