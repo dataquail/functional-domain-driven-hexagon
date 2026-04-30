@@ -130,9 +130,9 @@ describe("ManualCache", () => {
       strictEqual(values.length, 2);
       strictEqual(entries.length, 2);
       strictEqual(entries[0]?.[0], "key1");
-      strictEqual(entries[0]?.[1], "value1");
+      strictEqual(entries[0][1], "value1");
       strictEqual(entries[1]?.[0], "key2");
-      strictEqual(entries[1]?.[1], "value2");
+      strictEqual(entries[1][1], "value2");
     }),
   );
 
