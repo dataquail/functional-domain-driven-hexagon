@@ -6,3 +6,4 @@ scratchpad/
 **/test-results/
 **/playwright-report/
 pnpm-lock.yaml
+**/routeTree.gen.ts
