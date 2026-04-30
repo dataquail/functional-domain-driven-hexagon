@@ -67,6 +67,9 @@ jobs:
             psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d effect-monorepo-test -f "$f"
           done
 
+      - name: Materialize .env from .env.example
+        run: cp .env.example .env
+
       - name: Run acceptance tests
         run: pnpm test:acceptance
         env:
