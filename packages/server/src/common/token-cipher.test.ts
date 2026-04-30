@@ -220,9 +220,7 @@ describe("TokenCipher", () => {
           algorithm: "aes-256-gcm",
         });
 
-        const result = yield* Schema.decode(schema)(
-          "invaliddata" as typeof TokenCipher.EncryptedToken.Encoded,
-        ).pipe(Effect.exit);
+        const result = yield* Schema.decode(schema)("invaliddata").pipe(Effect.exit);
 
         deepStrictEqual(Exit.isFailure(result), true);
       }),

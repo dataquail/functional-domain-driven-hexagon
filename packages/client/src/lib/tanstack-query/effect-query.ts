@@ -241,14 +241,7 @@ export type EffectfulInfiniteQueryOptions<
   QueryKeyType extends QueryKey = QueryKey,
   PageParam = unknown,
 > = Omit<
-  UseInfiniteQueryOptions<
-    A,
-    E | QueryDefect,
-    InfiniteData<A, PageParam>,
-    A,
-    QueryKeyType,
-    PageParam
-  >,
+  UseInfiniteQueryOptions<A, E | QueryDefect, InfiniteData<A, PageParam>, QueryKeyType, PageParam>,
   "queryFn" | "retry" | "retryDelay" | "staleTime" | "gcTime"
 > & {
   queryKey: QueryKeyType;

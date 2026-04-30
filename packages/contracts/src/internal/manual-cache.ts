@@ -305,7 +305,7 @@ class ManualCacheImpl<in out Key, in out Value> implements ManualCache<Key, Valu
             const currentEntry = Option.getOrUndefined(
               MutableHashMap.get(this.cacheState.map, keyToUpdate.current),
             );
-            if (currentEntry !== undefined && currentEntry.key === keyToUpdate) {
+            if (currentEntry?.key === keyToUpdate) {
               this.cacheState.keys.add(keyToUpdate); // Update LRU order (move to tail)
             }
           }
