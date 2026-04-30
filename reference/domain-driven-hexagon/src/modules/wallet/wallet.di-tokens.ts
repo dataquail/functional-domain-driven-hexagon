@@ -1,1 +1,0 @@
-export const WALLET_REPOSITORY = Symbol('WALLET_REPOSITORY');
