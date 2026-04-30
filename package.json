@@ -94,7 +94,11 @@
       "rollup": "^4.60.0",
       "lodash": "^4.18.1",
       "glob@10": "^10.5.0",
-      "glob@11": "^11.1.0"
+      "glob@11": "^11.1.0",
+      "uuid": "^14.0.0",
+      "js-yaml@3": "^3.14.2",
+      "@babel/runtime": "^7.26.10",
+      "esbuild": "^0.25.0"
     },
     "patchedDependencies": {
       "babel-plugin-annotate-pure-calls@0.4.0": "patches/babel-plugin-annotate-pure-calls@0.4.0.patch"
