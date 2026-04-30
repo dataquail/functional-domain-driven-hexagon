@@ -1,5 +1,0 @@
-{
-  "cucumberautocomplete.steps": ["tests/**/*.ts"],
-  "cucumberautocomplete.strictGherkinCompletion": true,
-  "cSpell.words": ["instanceof", "Slonik"]
-}
