@@ -43,6 +43,7 @@ export default [
       "reference/**",
       "scratchpad/**",
       "scripts/check-test-parity.mjs",
+      "**/routeTree.gen.ts",
     ],
   },
   ...compat.extends(

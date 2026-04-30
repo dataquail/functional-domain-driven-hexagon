@@ -191,7 +191,7 @@ describe("TodosQueries.updateTodo", () => {
       title: "New title",
       completed: true,
     });
-    await harness.run(TodosQueries.updateTodo(updated as unknown as TodosContract.Todo));
+    await harness.run(TodosQueries.updateTodo(updated));
 
     expect(harness.apiCalls.update).toHaveLength(1);
     expect(harness.apiCalls.update[0]?.id).toBe(aliceId);
@@ -211,7 +211,7 @@ describe("TodosQueries.updateTodo", () => {
       title: "Ghost",
       completed: false,
     });
-    await harness.run(TodosQueries.updateTodo(ghost as unknown as TodosContract.Todo));
+    await harness.run(TodosQueries.updateTodo(ghost));
 
     const cache = cacheState(harness.queryClient);
     expect(cache).toHaveLength(1);

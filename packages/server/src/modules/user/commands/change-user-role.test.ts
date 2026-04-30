@@ -46,7 +46,7 @@ describe("changeUserRole", () => {
       const events = yield* rec.byTag<UserRoleChanged>("UserRoleChanged");
       deepStrictEqual(events.length, 1);
       deepStrictEqual(events[0]?.oldRole, "guest");
-      deepStrictEqual(events[0]?.newRole, "admin");
+      deepStrictEqual(events[0].newRole, "admin");
     }).pipe(Effect.provide(TestLayer)),
   );
 

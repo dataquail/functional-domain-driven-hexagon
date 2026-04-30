@@ -1,7 +1,6 @@
 import { ApiClient } from "@/services/common/api-client";
 import { NetworkMonitor } from "@/services/common/network-monitor";
 import { QueryClient } from "@/services/common/query-client";
-import { type LiveManagedRuntime } from "@/services/live-layer";
 import { RuntimeProvider } from "@/services/runtime/runtime-provider";
 import { WorkerClient } from "@/services/worker/worker-client";
 import { RecordedToasts, RecordingToast, type ToastCall } from "@/test/recording-toast";
@@ -58,9 +57,7 @@ export const makePresenterHarness = (opts: {
 
   const wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <QueryClientProvider client={queryClient}>
-      <RuntimeProvider runtime={runtime as unknown as LiveManagedRuntime}>
-        {children}
-      </RuntimeProvider>
+      <RuntimeProvider runtime={runtime}>{children}</RuntimeProvider>
     </QueryClientProvider>
   );
 

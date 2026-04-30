@@ -95,9 +95,7 @@ export function makeHelpers<Data, Variables = void>(
     getData: (...variables: QueryParams) =>
       Effect.andThen(QueryClient, (client) =>
         client.getQueryData<Data>(
-          variables.length === 0
-            ? (queryKey as () => readonly [string])()
-            : (queryKey as (v: Variables) => readonly [string, ...Array<unknown>])(variables[0]),
+          variables.length === 0 ? (queryKey as () => readonly [string])() : queryKey(variables[0]),
         ),
       ),
     removeQuery: (...variables: QueryParams) =>
@@ -106,7 +104,7 @@ export function makeHelpers<Data, Variables = void>(
           queryKey:
             variables.length === 0
               ? (queryKey as () => readonly [string])()
-              : (queryKey as (v: Variables) => readonly [string, ...Array<unknown>])(variables[0]),
+              : queryKey(variables[0]),
         });
       }),
     removeAllQueries: () =>
@@ -116,9 +114,7 @@ export function makeHelpers<Data, Variables = void>(
     setData: (...params: SetDataParams) =>
       Effect.andThen(QueryClient, (client) =>
         client.setQueryData<Data>(
-          params.length === 1
-            ? (queryKey as () => readonly [string])()
-            : (queryKey as (v: Variables) => readonly [string, ...Array<unknown>])(params[0]),
+          params.length === 1 ? (queryKey as () => readonly [string])() : queryKey(params[0]),
           (oldData) => {
             if (oldData === undefined) return oldData;
             return mutative.create(
@@ -141,7 +137,7 @@ export function makeHelpers<Data, Variables = void>(
           queryKey:
             variables.length === 0
               ? (queryKey as () => readonly [string])()
-              : (queryKey as (v: Variables) => readonly [string, ...Array<unknown>])(variables[0]),
+              : queryKey(variables[0]),
         }),
       ).pipe(Effect.orDie),
     invalidateAllQueries: () =>
@@ -154,7 +150,7 @@ export function makeHelpers<Data, Variables = void>(
           queryKey:
             variables.length === 0
               ? (queryKey as () => readonly [string])()
-              : (queryKey as (v: Variables) => readonly [string, ...Array<unknown>])(variables[0]),
+              : queryKey(variables[0]),
         }),
       ).pipe(Effect.orDie),
     refetchAllQueries: () =>
