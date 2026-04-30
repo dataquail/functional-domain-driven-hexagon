@@ -10,6 +10,11 @@ export namespace UsersQueries {
   const usersKey = QueryData.makeQueryKey<"users", ListVariables>("users");
   const usersHelpers = QueryData.makeHelpers<UserContract.PaginatedUsers, ListVariables>(usersKey);
 
+  export const createUser = (payload: UserContract.CreateUserPayload) =>
+    Effect.flatMap(ApiClient, ({ client }) => client.user.create({ payload })).pipe(
+      Effect.tap(() => usersHelpers.invalidateAllQueries()),
+    );
+
   export const useUsersQuery = (variables: ListVariables) => {
     return useEffectQuery({
       queryKey: usersKey(variables),
@@ -22,11 +27,7 @@ export namespace UsersQueries {
   export const useCreateUserMutation = () => {
     return useEffectMutation({
       mutationKey: ["UsersQueries.createUser"],
-      mutationFn: (payload: UserContract.CreateUserPayload) =>
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        ApiClient.use(({ client }) => client.user.create({ payload })).pipe(
-          Effect.tap(() => usersHelpers.invalidateAllQueries()),
-        ),
+      mutationFn: createUser,
       toastifySuccess: () => "User created!",
       toastifyErrors: {
         UserAlreadyExistsError: (error) => error.message,

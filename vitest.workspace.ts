@@ -13,6 +13,11 @@ const project = (
 export default defineWorkspace([
   // Add specialized configuration for some packages.
   // project({ name: "my-package|browser", environment: "happy-dom" }),
-  // Add the default configuration for all packages.
-  "packages/*",
+  // Vitest workspaces — listed explicitly so packages/acceptance/ (Playwright)
+  // isn't auto-discovered and its `*.spec.ts` files aren't loaded as Vitest
+  // tests. Acceptance specs run via `pnpm test:acceptance`.
+  "packages/contracts",
+  "packages/database",
+  "packages/server",
+  "packages/client",
 ]);
