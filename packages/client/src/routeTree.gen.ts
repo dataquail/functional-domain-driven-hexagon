@@ -68,25 +68,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-declare module "@tanstack/react-router" {
-  interface FileRoutesByPath {
-    "/users": {
-      id: "/users";
-      path: "/users";
-      fullPath: "/users";
-      preLoaderRoute: typeof UsersRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/": {
-      id: "/";
-      path: "/";
-      fullPath: "/";
-      preLoaderRoute: typeof IndexRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-  }
-}
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   UsersRoute: UsersRoute,
