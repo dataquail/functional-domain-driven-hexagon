@@ -77,6 +77,7 @@ export const make: Effect.Effect<
     yield* toast.success(`Filtered ${items.length} items in ${Duration.format(duration)}`);
   }).pipe(
     Effect.catchTag("FilterError", () => toast.error("Error filtering data")),
+    Effect.catchTag("RpcClientError", () => toast.error("Worker connection failed")),
     Effect.ensuring(SubscriptionRef.update(state, (s) => ({ ...s, filterPending: false }))),
     Effect.withSpan("IndexViewModel.filterLargeData"),
   );
@@ -89,6 +90,7 @@ export const make: Effect.Effect<
     );
     yield* toast.success(`Found ${primeCount} primes in ${Duration.format(duration)}`);
   }).pipe(
+    Effect.catchTag("RpcClientError", () => toast.error("Worker connection failed")),
     Effect.ensuring(SubscriptionRef.update(state, (s) => ({ ...s, primesPending: false }))),
     Effect.withSpan("IndexViewModel.calculatePrimes"),
   );
