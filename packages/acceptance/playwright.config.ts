@@ -27,7 +27,7 @@ export default defineConfig({
   workers: 1,
   fullyParallel: false,
   forbidOnly: isCi,
-  retries: isCi ? 1 : 0,
+  retries: 0,
   reporter: isCi ? "line" : "list",
 
   globalSetup: "./global-setup.ts",

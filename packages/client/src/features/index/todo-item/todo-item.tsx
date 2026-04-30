@@ -12,7 +12,7 @@ export const TodoItem: React.FC<{ todo: TodosContract.Todo }> = ({ todo }) => {
       key={todo.id}
       data-testid="todo-item"
       data-todo-title={todo.title}
-      className="bg-card group flex items-center justify-between rounded-md border p-3 transition-all hover:shadow-sm"
+      className="group flex items-center justify-between rounded-md border bg-card p-3 transition-all hover:shadow-sm"
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <Checkbox

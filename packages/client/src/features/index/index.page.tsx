@@ -23,12 +23,12 @@ export const IndexPage = () => {
               <Skeleton key={i} className="h-12 w-full rounded-md" />
             ))
           ) : state.todos.kind === "error" ? (
-            <div className="bg-destructive/10 text-destructive rounded-lg py-8 text-center">
+            <div className="rounded-lg bg-destructive/10 py-8 text-center text-destructive">
               <p className="text-sm">{state.todos.message}</p>
             </div>
           ) : state.todos.kind === "empty" ? (
-            <div className="bg-muted/50 rounded-lg py-8 text-center">
-              <p className="text-muted-foreground text-sm">No tasks yet. Add one above!</p>
+            <div className="rounded-lg bg-muted/50 py-8 text-center">
+              <p className="text-sm text-muted-foreground">No tasks yet. Add one above!</p>
             </div>
           ) : (
             <ul className="space-y-2" data-testid="todo-list">

@@ -20,7 +20,7 @@ type PathsLimited<Data, Path extends string = "", Depth extends number = 3> =
     ? `${Path}${Path extends "" ? "" : "."}${string}` | Path // Allow the current path or any string suffix.
     : Data extends ReadonlyArray<infer Element>
       ? // For arrays: Generate paths for numeric indices and recurse on the element type.
-        | `${Path}${Path extends "" ? "" : "."}${number}`
+          | `${Path}${Path extends "" ? "" : "."}${number}`
           | PathsLimited<Element, `${Path}${Path extends "" ? "" : "."}${number}`, Prev<Depth>>
       : Data extends object
         ? // For objects: Generate paths for keys and recurse on property types.

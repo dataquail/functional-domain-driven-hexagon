@@ -26,6 +26,16 @@ export default defineConfig({
   server: {
     allowedHosts: true,
   },
+  // Pre-bundle the worker's heavy deps so Vite doesn't discover them only
+  // after the page mounts the worker and trigger a full-page reload mid-run.
+  // The reload races with Playwright in CI; see add-todo flake.
+  optimizeDeps: {
+    include: [
+      "@effect/platform-browser/BrowserRuntime",
+      "@effect/platform-browser/BrowserWorkerRunner",
+      "@effect/rpc/RpcServer",
+    ],
+  },
   build: {
     target: "esnext",
     minify: "terser",
