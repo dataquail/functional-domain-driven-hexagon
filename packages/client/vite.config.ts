@@ -44,7 +44,6 @@ export default defineConfig({
     },
   },
   envDir: "../../",
-  // @ts-expect-error - Vitest config is not typed
   test: {
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
