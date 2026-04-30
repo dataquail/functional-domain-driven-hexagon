@@ -31,13 +31,21 @@ const DomainEventBusLive = makeDomainEventBusLive({
   spanAttributes: { ...userEventSpanAttributes, ...walletEventSpanAttributes },
 });
 
+// `CommandBus` and `QueryBus` are cross-cutting public production APIs
+// (ADR-0006) — the same dispatch surface every HTTP handler uses. Exposing
+// them at the test runtime via `provideMerge` lets integration tests seed
+// state and assert via the production seam without leaking module-internal
+// ports (repositories) into the test runtime. The remaining services
+// (UserAuthMiddleware, DomainEventBus, TransactionRunner, SseManager) stay
+// consumed by `Layer.provide` because they're either internal infrastructure
+// (DomainEventBus, TransactionRunner) or feature-specific (auth middleware,
+// SseManager) and aren't meant to be driven directly from tests.
 const ApiLive = HttpApiBuilder.api(Api).pipe(
   Layer.provide([TodosModuleLive, SseHttpLive, UserModuleLive, WalletModuleLive]),
+  Layer.provideMerge(Layer.mergeAll(CommandBusLive, QueryBusLive)),
   Layer.provide([
     UserAuthMiddlewareLive,
     DomainEventBusLive,
-    CommandBusLive,
-    QueryBusLive,
     TransactionRunnerLive,
     SseManager.Default,
   ]),
@@ -47,8 +55,10 @@ const ApiLive = HttpApiBuilder.api(Api).pipe(
 // HttpClient wired to it — no port, no network hop. provideMerge (instead
 // of provide) keeps HttpClient + Database reachable in the test runtime so
 // tests can `yield* HttpApiClient.make(Api)` and drive the DB directly.
+// `provideMerge(ApiLive)` carries the bus exposure forward into the
+// TestServerLive runtime context so tests can `yield* CommandBus`/`QueryBus`.
 export const TestServerLive = HttpApiBuilder.serve().pipe(
-  Layer.provide(ApiLive),
+  Layer.provideMerge(ApiLive),
   Layer.provideMerge(TestDatabaseLive),
   Layer.provideMerge(NodeHttpServer.layerTest),
 );

@@ -1,10 +1,11 @@
 import { Api } from "@/api.js";
+import { FindUsersQuery } from "@/modules/user/index.js";
+import { QueryBus } from "@/platform/query-bus.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { hasTestDatabase } from "@/test-utils/test-database.js";
 import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import { UserContract } from "@org/contracts/api/Contracts";
-import { Database, RowSchemas, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -28,14 +29,16 @@ suite("POST /users (integration)", () => {
         const res = yield* client.user.create({ payload: basePayload });
         ok(typeof res.id === "string" && res.id.length > 0);
 
-        const db = yield* Database.Database;
-        const rows = yield* db.execute((c) =>
-          c.any(sql.type(RowSchemas.UserRowStd)`
-            SELECT * FROM users WHERE email = ${basePayload.email}
-          `),
-        );
-        deepStrictEqual(rows.length, 1);
-        deepStrictEqual(rows[0]?.role, "guest");
+        // Verify persistence via the production read seam — the typed query
+        // bus (ADR-0006). `QueryBus` is exposed at the test runtime via
+        // `Layer.provideMerge` in TestServerLive because it's a public
+        // cross-module dispatch surface, not a module-internal port.
+        const queryBus = yield* QueryBus;
+        const result = yield* queryBus.execute(FindUsersQuery.make({ page: 1, pageSize: 10 }));
+        const stored = result.users.find((u) => u.email === basePayload.email);
+        ok(stored !== undefined);
+        deepStrictEqual(stored.role, "guest");
+        deepStrictEqual(stored.id, res.id);
       }),
     );
   });
