@@ -57,6 +57,16 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm -F @org/acceptance exec playwright install-deps chromium
 
+      - name: Apply database migrations
+        env:
+          PGPASSWORD: postgres
+        run: |
+          set -euo pipefail
+          for f in packages/database/migrations/V*.sql; do
+            echo "Applying $f"
+            psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d effect-monorepo-test -f "$f"
+          done
+
       - name: Run acceptance tests
         run: pnpm test:acceptance
         env:
