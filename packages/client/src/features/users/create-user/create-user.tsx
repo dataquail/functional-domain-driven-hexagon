@@ -23,6 +23,7 @@ export const CreateUser: React.FC = () => {
                   field.handleChange(e.target.value);
                 }}
                 placeholder="user@example.com"
+                data-testid="create-user-email"
               />
               <Form.Error error={form.state.errorMap.onSubmit?.email} />
             </Form.Control>
@@ -40,6 +41,7 @@ export const CreateUser: React.FC = () => {
                   field.handleChange(e.target.value);
                 }}
                 placeholder="USA"
+                data-testid="create-user-country"
               />
               <Form.Error error={form.state.errorMap.onSubmit?.country} />
             </Form.Control>
@@ -57,6 +59,7 @@ export const CreateUser: React.FC = () => {
                   field.handleChange(e.target.value);
                 }}
                 placeholder="12345"
+                data-testid="create-user-postal-code"
               />
               <Form.Error error={form.state.errorMap.onSubmit?.postalCode} />
             </Form.Control>
@@ -74,6 +77,7 @@ export const CreateUser: React.FC = () => {
                   field.handleChange(e.target.value);
                 }}
                 placeholder="123 Main St"
+                data-testid="create-user-street"
               />
               <Form.Error error={form.state.errorMap.onSubmit?.street} />
             </Form.Control>
@@ -84,7 +88,12 @@ export const CreateUser: React.FC = () => {
       <form.Subscribe
         selector={(state) => [state.canSubmit, state.isSubmitting] as const}
         children={([canSubmit, isSubmitting]) => (
-          <Button type="submit" disabled={!canSubmit} className="mt-4 w-full">
+          <Button
+            type="submit"
+            disabled={!canSubmit}
+            className="mt-4 w-full"
+            data-testid="create-user-submit"
+          >
             {isSubmitting ? "Creating…" : "Create user"}
           </Button>
         )}

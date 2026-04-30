@@ -394,6 +394,15 @@ export default [
       "no-restricted-imports": "off",
     },
   },
+  {
+    // Playwright requires `export default` in playwright.config.ts and
+    // globalSetup files. The "prefer named exports" project-wide rule
+    // doesn't fit those framework hooks.
+    files: ["packages/acceptance/{playwright.config,global-setup}.ts"],
+    rules: {
+      "no-restricted-syntax": "off",
+    },
+  },
   ...storybook.configs["flat/recommended"],
   {
     // ADR-0015: Storybook story and config files require `export default`. Loosen

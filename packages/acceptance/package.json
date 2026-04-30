@@ -1,0 +1,22 @@
+{
+  "name": "@org/acceptance",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Playwright acceptance tests with layered architecture (specs / drivers / pages / infrastructure). See ADR / docs/scratch/template-evaluation-remediation-plan.md.",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@org/contracts": "workspace:^",
+    "@playwright/test": "^1.49.1",
+    "@types/node": "^22.10.5",
+    "effect": "*",
+    "@effect/platform": "*",
+    "pg": "8.13.1",
+    "@types/pg": "^8.11.10",
+    "typescript": "~5.7.2"
+  }
+}

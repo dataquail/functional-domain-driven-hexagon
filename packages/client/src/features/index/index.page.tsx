@@ -31,7 +31,7 @@ export const IndexPage = () => {
               <p className="text-muted-foreground text-sm">No tasks yet. Add one above!</p>
             </div>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-2" data-testid="todo-list">
               {state.todos.todos.map((todo) => (
                 <TodoItem key={todo.id} todo={todo} />
               ))}

@@ -23,6 +23,7 @@ export const AddTodo: React.FC = () => {
                 }}
                 placeholder="Add a new task..."
                 className="h-10"
+                data-testid="add-todo-input"
               />
 
               <Form.Error error={form.state.errorMap.onSubmit?.title} />
@@ -33,7 +34,13 @@ export const AddTodo: React.FC = () => {
         <form.Subscribe
           selector={(state) => [state.canSubmit, state.isSubmitting] as const}
           children={([canSubmit, isSubmitting]) => (
-            <Button type="submit" disabled={!canSubmit} size="icon" className="h-10 w-10 shrink-0">
+            <Button
+              type="submit"
+              disabled={!canSubmit}
+              size="icon"
+              className="h-10 w-10 shrink-0"
+              data-testid="add-todo-submit"
+            >
               {isSubmitting ? (
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
               ) : (

@@ -26,10 +26,12 @@ export const UserList: React.FC = () => {
             <p className="text-muted-foreground text-sm">No users yet.</p>
           </div>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-2" data-testid="user-list">
             {users.map((user) => (
               <li
                 key={user.id}
+                data-testid="user-list-item"
+                data-user-email={user.email}
                 className="bg-card flex flex-col gap-1 rounded-md border p-3 transition-all hover:shadow-sm sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0 flex-1">

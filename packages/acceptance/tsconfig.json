@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": ["specs", "drivers", "test-utils", "playwright.config.ts", "global-setup.ts"],
+  "compilerOptions": {
+    "noEmit": true,
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "rootDir": ".",
+    "types": ["node"],
+    "baseUrl": ".",
+    // Playwright's runtime uses bundler-style resolution (no .js extension on
+    // relative imports). Override the workspace-default NodeNext for this
+    // package so tsc agrees with how Playwright actually loads files.
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "paths": {
+      "@/*": ["./*"],
+      "@org/contracts": ["../contracts/src/index.ts"],
+      "@org/contracts/*": ["../contracts/src/*"]
+    }
+  }
+}

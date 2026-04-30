@@ -19,3 +19,8 @@ scratchpad/*
 
 # Client
 stats.html
+
+# Acceptance (Playwright)
+test-results/
+playwright-report/
+playwright/.cache/
