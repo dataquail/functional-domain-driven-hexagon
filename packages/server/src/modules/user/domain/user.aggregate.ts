@@ -1,3 +1,4 @@
+import { UserId } from "@/platform/ids/user-id.js";
 import type * as DateTime from "effect/DateTime";
 import * as Schema from "effect/Schema";
 import {
@@ -7,7 +8,6 @@ import {
   UserRoleChanged,
   type UserEvent,
 } from "./user-events.js";
-import { UserId } from "./user-id.js";
 import { UserRole } from "./user-role.js";
 import { Address } from "./value-objects/address.js";
 

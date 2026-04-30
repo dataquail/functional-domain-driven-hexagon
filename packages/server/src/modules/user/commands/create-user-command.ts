@@ -1,7 +1,7 @@
 import { type UserAlreadyExists } from "@/modules/user/domain/user-errors.js";
-import { type UserId } from "@/modules/user/domain/user-id.js";
 import { type UserRepository } from "@/modules/user/domain/user-repository.js";
 import { type DomainEventBus } from "@/platform/domain-event-bus.js";
+import { type UserId } from "@/platform/ids/user-id.js";
 import { type SpanAttributesExtractor } from "@/platform/span-attributable.js";
 import { type TransactionRunner } from "@/platform/transaction-runner.js";
 import type * as Effect from "effect/Effect";

@@ -1,10 +1,10 @@
-import { UserId } from "@/modules/user/domain/user-id.js";
 import { UserRepository } from "@/modules/user/domain/user-repository.js";
 import * as User from "@/modules/user/domain/user.aggregate.js";
 import { Address } from "@/modules/user/domain/value-objects/address.js";
 import { UserRepositoryLive } from "@/modules/user/infrastructure/user-repository-live.js";
 import { FindUsersQuery } from "@/modules/user/queries/find-users-query.js";
 import { findUsers } from "@/modules/user/queries/find-users.js";
+import { UserId } from "@/platform/ids/user-id.js";
 import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";

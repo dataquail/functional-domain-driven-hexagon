@@ -1,8 +1,8 @@
+import { type UserId } from "@/platform/ids/user-id.js";
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 import { type TodoId } from "./todo-id.js";
 import { type Todo } from "./todo.js";
-import { type UserId } from "./user-id.js";
 
 // Module-owned facade over the platform SSE manager. Commands talk to this
 // port so the side effect lives in the use case; the live impl encodes the

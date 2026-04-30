@@ -1,11 +1,11 @@
 import { type UserCreated } from "@/modules/user/index.js";
-import { UserId } from "@/modules/wallet/domain/user-id.js";
 import { WalletAlreadyExistsForUser } from "@/modules/wallet/domain/wallet-errors.js";
 import { WalletId } from "@/modules/wallet/domain/wallet-id.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet-repository.js";
 import * as Wallet from "@/modules/wallet/domain/wallet.aggregate.js";
 import { WalletRepositoryFake } from "@/modules/wallet/infrastructure/wallet-repository-fake.js";
 import { DomainEventBus, makeDomainEventBusLive } from "@/platform/domain-event-bus.js";
+import { UserId } from "@/platform/ids/user-id.js";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual, ok } from "assert";
 import * as DateTime from "effect/DateTime";

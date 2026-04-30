@@ -1,9 +1,9 @@
-import { UserId } from "@/modules/wallet/domain/user-id.js";
 import { WalletAlreadyExistsForUser } from "@/modules/wallet/domain/wallet-errors.js";
 import { WalletId } from "@/modules/wallet/domain/wallet-id.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet-repository.js";
 import * as Wallet from "@/modules/wallet/domain/wallet.aggregate.js";
 import { WalletRepositoryLive } from "@/modules/wallet/infrastructure/wallet-repository-live.js";
+import { UserId } from "@/platform/ids/user-id.js";
 import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";

@@ -50,6 +50,16 @@ Enforced by static analysis (see ADR-0008):
 - Cross-module flow happens via three channels: the published HTTP contract, published domain events, or dispatch through the typed command/query bus (ADR-0006). The bus carries one constraint: a command handler in one module must not dispatch a command in another module — the chain goes through an event (Command → Event → Command). Cross-module _queries_ via the bus are unrestricted; they are reads, with no transactional or coupling consequences.
 - Domain events that other modules subscribe to, and command/query schemas that other modules dispatch, are part of the source module's public surface and are re-exported from its `index.ts`.
 
+### Typed-ID shared kernel
+
+`platform/ids/` holds branded entity IDs that more than one module references — `UserId` is the load-bearing example: wallet stores it as `userId` on the `Wallet` aggregate; todos commands carry it through `currentUser.userId`. Without a shared declaration, each module would redeclare the same `Schema.brand("UserId")` and silently invite drift if one definition ever evolved (e.g. added length or format validation).
+
+The kernel is allowlisted by all four layer-isolation dep-cruiser rules (`domain-isolation`, `commands-isolation`, `event-handlers-isolation`, `queries-isolation`), so any layer can import an ID without weakening the layer's other constraints.
+
+Scope is narrow on purpose. Only branded entity IDs live here — no value objects, no enums, no aggregate types, no domain services. Vernon's warning that shared kernels grow is real, and the constraint is the rule itself: when a non-ID type seems to want to live here, that's a signal to ask whether two modules really need the same thing or whether one should expose it via its barrel and the other should consume it through the public surface.
+
+Module-private IDs (e.g. `WalletId`, `TodoId` — only referenced inside their owning module today) stay in `<module>/domain/`. They graduate to `platform/ids/` only when a second module needs to reference them.
+
 ## Consequences
 
 - Predictable navigation. Every module uses the same folder vocabulary. Finding "the persistence implementation for X" is always `modules/<feature>/infrastructure/`; finding "where the read-side projection for Y lives" is always `modules/<feature>/queries/`.

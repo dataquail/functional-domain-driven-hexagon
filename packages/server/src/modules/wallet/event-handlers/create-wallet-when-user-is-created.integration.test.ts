@@ -1,9 +1,9 @@
 import { Api } from "@/api.js";
 import { UserCreated } from "@/modules/user/index.js";
-import { UserId } from "@/modules/wallet/domain/user-id.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet-repository.js";
 import { CreateWalletWhenUserIsCreatedLive } from "@/modules/wallet/event-handlers/create-wallet-when-user-is-created.js";
 import { DomainEventBus, makeDomainEventBusLive } from "@/platform/domain-event-bus.js";
+import { UserId } from "@/platform/ids/user-id.js";
 import { TransactionRunner, TransactionRunnerLive } from "@/platform/transaction-runner.js";
 import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 import { TestServerLive } from "@/test-utils/test-server.js";

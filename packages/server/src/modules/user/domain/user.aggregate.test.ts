@@ -1,4 +1,4 @@
-import { UserId } from "@/modules/user/domain/user-id.js";
+import { UserId } from "@/platform/ids/user-id.js";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";

@@ -1,9 +1,9 @@
 import { UserNotFound } from "@/modules/user/domain/user-errors.js";
 import { type UserRoleChanged } from "@/modules/user/domain/user-events.js";
-import { UserId } from "@/modules/user/domain/user-id.js";
 import { UserRepository } from "@/modules/user/domain/user-repository.js";
 import { Address } from "@/modules/user/domain/value-objects/address.js";
 import { UserRepositoryFake } from "@/modules/user/infrastructure/user-repository-fake.js";
+import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityTransactionRunner } from "@/test-utils/identity-transaction-runner.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 import { describe, it } from "@effect/vitest";

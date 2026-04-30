@@ -1,9 +1,9 @@
 import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user-errors.js";
-import { UserId } from "@/modules/user/domain/user-id.js";
 import { UserRepository } from "@/modules/user/domain/user-repository.js";
 import * as User from "@/modules/user/domain/user.aggregate.js";
 import { Address } from "@/modules/user/domain/value-objects/address.js";
 import { UserRepositoryLive } from "@/modules/user/infrastructure/user-repository-live.js";
+import { UserId } from "@/platform/ids/user-id.js";
 import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 import { describe, it } from "@effect/vitest";
 import { Database } from "@org/database/index";

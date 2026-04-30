@@ -1,5 +1,5 @@
-import { type UserId } from "@/modules/user/domain/user-id.js";
 import { type UserRole } from "@/modules/user/domain/user-role.js";
+import { type UserId } from "@/platform/ids/user-id.js";
 import { type SpanAttributesExtractor } from "@/platform/span-attributable.js";
 import { type Database } from "@org/database/index";
 import type * as DateTime from "effect/DateTime";

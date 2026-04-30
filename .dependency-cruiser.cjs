@@ -46,12 +46,12 @@ module.exports = {
       name: "domain-isolation",
       severity: "error",
       comment:
-        "Module domain may only import from its own folder, effect (external), and the platform shared kernel (`domain-event.ts` for the event factory; `span-attributable.ts` for the cross-cutting `SpanAttributesExtractor` type used by event extractor signatures). No contracts, no cross-module, no infrastructure/commands/queries/event-handlers/interface.",
+        "Module domain may only import from its own folder, effect (external), and the platform shared kernel (`domain-event.ts` for the event factory; `span-attributable.ts` for the cross-cutting `SpanAttributesExtractor` type used by event extractor signatures; `platform/ids/` for branded entity IDs referenced cross-module — see ADR-0002). No contracts, no cross-module domain, no infrastructure/commands/queries/event-handlers/interface.",
       from: { path: "^packages/server/src/modules/[^/]+/domain/" },
       to: {
         path: "^packages/",
         pathNot:
-          "/domain/|^packages/server/src/platform/domain-event\\.ts$|^packages/server/src/platform/span-attributable\\.ts$",
+          "/domain/|^packages/server/src/platform/domain-event\\.ts$|^packages/server/src/platform/span-attributable\\.ts$|^packages/server/src/platform/ids/",
       },
     },
     {
@@ -79,6 +79,7 @@ module.exports = {
         pathNot: [
           "^packages/server/src/modules/$1/(domain|commands)/",
           "^packages/server/src/platform/(command-bus|query-bus|domain-event-bus|domain-event|transaction-runner|span-attributable)\\.ts$",
+          "^packages/server/src/platform/ids/",
           "^packages/server/src/modules/[^/]+/index\\.ts$",
         ],
       },
@@ -111,6 +112,7 @@ module.exports = {
         pathNot: [
           "^packages/server/src/modules/$1/(domain|event-handlers)/",
           "^packages/server/src/platform/(command-bus|query-bus|domain-event-bus|domain-event|transaction-runner|span-attributable)\\.ts$",
+          "^packages/server/src/platform/ids/",
           "^packages/server/src/modules/[^/]+/index\\.ts$",
         ],
       },
@@ -143,6 +145,7 @@ module.exports = {
         pathNot: [
           "^packages/server/src/modules/$1/(domain|queries)/",
           "^packages/server/src/platform/(command-bus|query-bus|domain-event-bus|domain-event|transaction-runner|span-attributable)\\.ts$",
+          "^packages/server/src/platform/ids/",
           "^packages/server/src/modules/[^/]+/index\\.ts$",
           "^packages/database/",
         ],

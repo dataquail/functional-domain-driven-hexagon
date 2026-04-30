@@ -1,10 +1,10 @@
-import { UserId } from "@/modules/user/domain/user-id.js";
 import { type UserRole } from "@/modules/user/domain/user-role.js";
 import {
   type FindUsersOutput,
   type FindUsersQuery,
   type FindUsersUserView,
 } from "@/modules/user/queries/find-users-query.js";
+import { UserId } from "@/platform/ids/user-id.js";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";

@@ -1,3 +1,4 @@
+import { type UserId } from "@/platform/ids/user-id.js";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -5,7 +6,6 @@ import * as Ref from "effect/Ref";
 import { type TodoId } from "../domain/todo-id.js";
 import { type Todo } from "../domain/todo.js";
 import { TodosNotifier } from "../domain/todos-notifier.js";
-import { type UserId } from "../domain/user-id.js";
 
 // Test double for `TodosNotifier`: records every call and exposes the log
 // for assertions. Use-case unit tests verify that the right notification
