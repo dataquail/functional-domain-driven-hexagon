@@ -14,7 +14,6 @@
     "url": "git+https://github.com/lucas-barake/effect-monorepo.git"
   },
   "scripts": {
-    "clean": "node scripts/clean.mjs",
     "codegen": "pnpm --recursive --parallel run codegen",
     "build": "tsc -b tsconfig.build.json && pnpm --recursive --parallel run build",
     "check": "tsc -b tsconfig.json",
@@ -88,7 +87,18 @@
       "@effect/eslint-plugin": "0.3.2",
       "@effect/language-service": "0.85.1",
       "@effect/vitest": "0.29.0",
-      "@opentelemetry/resources": "1.30.1"
+      "@opentelemetry/resources": "1.30.1",
+      "protobufjs": "^7.5.5",
+      "form-data": "^4.0.4",
+      "flatted": "^3.4.2",
+      "rollup": "^4.60.0",
+      "lodash": "^4.18.1",
+      "glob@10": "^10.5.0",
+      "glob@11": "^11.1.0",
+      "uuid": "^14.0.0",
+      "js-yaml@3": "^3.14.2",
+      "@babel/runtime": "^7.26.10",
+      "esbuild": "^0.25.0"
     },
     "patchedDependencies": {
       "babel-plugin-annotate-pure-calls@0.4.0": "patches/babel-plugin-annotate-pure-calls@0.4.0.patch"
