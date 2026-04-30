@@ -83,7 +83,7 @@
       "@effect/opentelemetry": "0.45.6",
       "@effect/platform-node": "0.77.4",
       "@effect/cluster": "0.30.4",
-      "@effect/sql": "0.33.16",
+      "@effect/sql": "0.51.1",
       "@effect/build-utils": "0.8.9",
       "@effect/eslint-plugin": "0.3.2",
       "@effect/language-service": "0.85.1",
