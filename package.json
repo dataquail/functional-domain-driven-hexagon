@@ -34,7 +34,7 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@babel/cli": "^7.25.9",
+    "@babel/cli": "^7.28.6",
     "@babel/core": "^7.26.0",
     "@babel/plugin-transform-export-namespace-from": "^7.25.9",
     "@babel/plugin-transform-modules-commonjs": "^7.25.9",
