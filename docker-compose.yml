@@ -10,9 +10,19 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # Init scripts run once when the data volume is first created. The
+      # script creates a peer `zitadel` database alongside the app DB so
+      # Zitadel doesn't need its own Postgres container — see
+      # docs/dev-setup.md.
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
     networks:
       - jaeger-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d zitadel"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   flyway:
     image: flyway/flyway:10
@@ -48,19 +58,6 @@ services:
     profiles:
       - migrate-test
 
-  zitadel-db:
-    container_name: effect-monorepo-zitadel-db
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: zitadel
-    volumes:
-      - zitadel_db_data:/var/lib/postgresql/data
-    networks:
-      - jaeger-network
-    restart: unless-stopped
-
   zitadel:
     container_name: effect-monorepo-zitadel
     # Pinned for reproducibility; bump after checking https://github.com/zitadel/zitadel/releases
@@ -72,7 +69,10 @@ services:
     # we keep one source of truth.
     command: 'start-from-init --masterkey "${ZITADEL_MASTERKEY:-MasterkeyNeedsToHave32Characters}" --tlsMode disabled --config /etc/zitadel/zitadel.yaml --steps /etc/zitadel/zitadel.yaml'
     environment:
-      ZITADEL_DATABASE_POSTGRES_HOST: zitadel-db
+      # Zitadel and the app DB share a single Postgres container; isolation
+      # is at the database level (`effect-monorepo` vs `zitadel`). See
+      # infra/postgres/init/01-create-zitadel-db.sql.
+      ZITADEL_DATABASE_POSTGRES_HOST: postgres
       ZITADEL_DATABASE_POSTGRES_PORT: 5432
       ZITADEL_DATABASE_POSTGRES_DATABASE: zitadel
       ZITADEL_DATABASE_POSTGRES_USER_USERNAME: postgres
@@ -93,7 +93,8 @@ services:
       # by CI to skip the manual "console → service user → PAT" step.
       - ./infra/zitadel/.machinekey:/machinekey
     depends_on:
-      - zitadel-db
+      postgres:
+        condition: service_healthy
     networks:
       - jaeger-network
     restart: unless-stopped
@@ -121,7 +122,11 @@ services:
       ZITADEL_ADMIN_EMAIL: ${ZITADEL_ADMIN_EMAIL:-admin@example.com}
       APP_REDIRECT_URI: ${ZITADEL_REDIRECT_URI:-http://localhost:3000/auth/callback}
       APP_POST_LOGOUT_REDIRECT_URI: ${ZITADEL_POST_LOGOUT_REDIRECT_URI:-http://localhost:5173/}
-      APP_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/effect-monorepo
+      # CI overrides this so the seed targets `effect-monorepo-test`. Local
+      # dev sticks with the default. The host inside this container is
+      # `postgres` because seed-zitadel shares zitadel's network namespace
+      # (which is on the compose `jaeger-network`).
+      APP_DATABASE_URL: ${SEED_APP_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/effect-monorepo}
     depends_on:
       - zitadel
       - postgres
@@ -158,6 +163,4 @@ networks:
 
 volumes:
   postgres_data:
-    driver: local
-  zitadel_db_data:
     driver: local

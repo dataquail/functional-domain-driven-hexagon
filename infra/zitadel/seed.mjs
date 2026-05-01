@@ -97,17 +97,25 @@ async function waitForZitadel() {
 }
 
 async function api(path, init = {}) {
+  const { tolerate, ...fetchInit } = init;
   const r = await fetch(`${issuer}${path}`, {
-    ...init,
+    ...fetchInit,
     headers: {
       "content-type": "application/json",
       authorization: `Bearer ${pat}`,
       host: instanceHost,
-      ...(init.headers ?? {}),
+      ...(fetchInit.headers ?? {}),
     },
   });
   if (!r.ok) {
     const text = await r.text();
+    if (
+      tolerate !== undefined &&
+      r.status === tolerate.status &&
+      text.includes(tolerate.messageIncludes)
+    ) {
+      return null;
+    }
     throw new Error(`${init.method ?? "GET"} ${path} -> ${r.status} ${r.statusText}\n${text}`);
   }
   return r.json();
@@ -145,6 +153,11 @@ async function ensureOidcApp(projectId) {
     // (e.g. a moved redirect URI). Only the redirect-URI list is updated;
     // client_id / client_secret are stable across updates and aren't
     // re-emitted by Zitadel here.
+    //
+    // Zitadel returns 400 "No changes (COMMAND-1m88i)" when the PUT body
+    // matches the stored config exactly. Treat that as success — re-running
+    // an already-configured seed is the common case (e.g. `pnpm bootstrap`
+    // run twice).
     await api(`/management/v1/projects/${projectId}/apps/${app.id}/oidc_config`, {
       method: "PUT",
       body: JSON.stringify({
@@ -158,6 +171,7 @@ async function ensureOidcApp(projectId) {
         devMode: true,
         accessTokenType: "OIDC_TOKEN_TYPE_JWT",
       }),
+      tolerate: { status: 400, messageIncludes: "No changes" },
     });
     return {
       appId: app.id,
