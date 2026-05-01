@@ -69,9 +69,13 @@ jobs:
 
       - name: Bring up Zitadel
         run: |
-          # Pre-create the bind-mount target so the PAT file is owned by the
-          # runner user (Docker would create it root-owned otherwise).
+          # Pre-create the bind-mount target and make it writable for any
+          # UID. The Zitadel container runs as a non-root user that doesn't
+          # match the runner; without 0777 the FirstInstance step fails with
+          # "open /machinekey/zitadel-bootstrap.pat: permission denied",
+          # which corrupts the volume's first-init state on retry.
           mkdir -p ./infra/zitadel/.machinekey
+          chmod 0777 ./infra/zitadel/.machinekey
           docker compose up -d zitadel-db zitadel
 
       - name: Wait for Zitadel ready
