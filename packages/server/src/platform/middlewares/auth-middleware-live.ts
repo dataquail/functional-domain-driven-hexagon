@@ -1,61 +1,47 @@
-import { UserId } from "@org/contracts/EntityIds";
-import { Permission, UserAuthMiddleware } from "@org/contracts/Policy";
+import { EnvVars } from "@/common/env-vars.js";
+import { FindSessionQuery, SessionId, SessionRepository } from "@/modules/auth/index.js";
+import { CookieCodec } from "@/platform/auth/cookie-codec.js";
+import { PermissionsResolver } from "@/platform/auth/permissions-resolver.js";
+import { QueryBus } from "@/platform/query-bus.js";
+import * as HttpServerRequest from "@effect/platform/HttpServerRequest";
+import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
+import { UserAuthMiddleware } from "@org/contracts/Policy";
+import * as cookie from "cookie";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Schema from "effect/Schema";
-
-// const Headers = Schema.Struct({
-//   authorization: Schema.NonEmptyTrimmedString.pipe(Schema.startsWith("Bearer ")),
-// });
-
-// const validateTokenFormat = (token: string) =>
-//   token.length >= 32 ? Effect.succeed(token) : Effect.fail(new CustomHttpApiError.Unauthorized());
-
-// const verifyToken = (token: string) =>
-//   Effect.succeed({
-//     sessionId: "sim_" + token.substring(0, 8),
-//     userId: "user_" + token.substring(8, 16),
-//     permissions: new Set([
-//       "__test:read",
-//       "__test:manage",
-//       "__test:delete",
-//     ] satisfies Array<Permission>),
-//   });
-
-// const make = <A, I, R>(schema: Schema.Schema<A, I, R>) =>
-//   Effect.sync(() => {
-//     return Effect.gen(function* () {
-//       const headers = yield* HttpServerRequest.schemaHeaders(Headers).pipe(
-//         Effect.mapError(() => new CustomHttpApiError.Unauthorized()),
-//       );
-
-//       const token = headers.authorization.slice(7);
-
-//       yield* validateTokenFormat(token);
-//       const authResponse = yield* verifyToken(token);
-
-//       return yield* Schema.decodeUnknown(schema)(authResponse).pipe(
-//         Effect.withSpan("decode"),
-//         Effect.mapError(() => new CustomHttpApiError.Unauthorized()),
-//       );
-//     }).pipe(Effect.withSpan("auth.middleware"));
-//   });
-
-const CurrentUserSchema = Schema.Struct({
-  sessionId: Schema.String,
-  userId: UserId,
-  permissions: Schema.Set(Permission),
-});
 
 export const UserAuthMiddlewareLive = Layer.effect(
   UserAuthMiddleware,
-  Effect.sync(() =>
-    Effect.succeed(
-      CurrentUserSchema.make({
-        sessionId: "sim_1234567890",
-        userId: UserId.make("user_1234567890"),
-        permissions: new Set(["__test:read", "__test:manage", "__test:delete"]),
-      }),
-    ),
-  ),
+  Effect.gen(function* () {
+    const env = yield* EnvVars;
+    const codec = yield* CookieCodec;
+    const queryBus = yield* QueryBus;
+    const perms = yield* PermissionsResolver;
+    // Resolved in outer scope so we can provide it inline below — the
+    // per-request Effect must be `Provided` (HTTP request context only),
+    // and `bus.execute(FindSessionQuery)` carries the handler's
+    // SessionRepository requirement.
+    const sessions = yield* SessionRepository;
+
+    return Effect.gen(function* () {
+      const httpReq = yield* HttpServerRequest.HttpServerRequest;
+      const cookies = cookie.parse(httpReq.headers.cookie ?? "");
+      const raw = cookies[env.SESSION_COOKIE_NAME];
+      if (raw === undefined || raw === "")
+        return yield* Effect.fail(new CustomHttpApiError.Unauthorized());
+      const verified = codec.verify(raw);
+      if (verified === null) return yield* Effect.fail(new CustomHttpApiError.Unauthorized());
+      const sessionId = SessionId.make(verified);
+      const session = yield* queryBus.execute(FindSessionQuery.make({ sessionId })).pipe(
+        Effect.provideService(SessionRepository, sessions),
+        Effect.mapError(() => new CustomHttpApiError.Unauthorized()),
+      );
+      const permissions = yield* perms.get(session.userId);
+      return {
+        sessionId: session.id,
+        userId: session.userId,
+        permissions: new Set(permissions),
+      };
+    }).pipe(Effect.withSpan("auth.middleware"));
+  }),
 );

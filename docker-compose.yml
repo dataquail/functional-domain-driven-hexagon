@@ -48,6 +48,73 @@ services:
     profiles:
       - migrate-test
 
+  zitadel-db:
+    container_name: effect-monorepo-zitadel-db
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: zitadel
+    volumes:
+      - zitadel_db_data:/var/lib/postgresql/data
+    networks:
+      - jaeger-network
+    restart: unless-stopped
+
+  zitadel:
+    container_name: effect-monorepo-zitadel
+    # Pinned for reproducibility; bump after checking https://github.com/zitadel/zitadel/releases
+    image: ghcr.io/zitadel/zitadel:v2.71.0
+    command: 'start-from-init --masterkey "${ZITADEL_MASTERKEY:-MasterkeyNeedsToHave32Characters}" --tlsMode disabled --config /etc/zitadel/zitadel.yaml'
+    environment:
+      ZITADEL_DATABASE_POSTGRES_HOST: zitadel-db
+      ZITADEL_DATABASE_POSTGRES_PORT: 5432
+      ZITADEL_DATABASE_POSTGRES_DATABASE: zitadel
+      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: postgres
+      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: postgres
+      ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable
+      ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: postgres
+      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: postgres
+      ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
+      ZITADEL_EXTERNALSECURE: "false"
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_EMAIL_ADDRESS: ${ZITADEL_ADMIN_EMAIL:-admin@example.com}
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: ${ZITADEL_ADMIN_PASSWORD:-ChangeMe!1}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./infra/zitadel/zitadel.yaml:/etc/zitadel/zitadel.yaml:ro
+    depends_on:
+      - zitadel-db
+    networks:
+      - jaeger-network
+    restart: unless-stopped
+
+  seed-zitadel:
+    image: node:22-alpine
+    working_dir: /seed
+    volumes:
+      - ./infra/zitadel:/seed
+    # Installs `pg` into a sibling node_modules on first run; subsequent runs are fast.
+    command: ["sh", "-c", "npm install --silent --no-audit --no-fund && node seed.mjs"]
+    # Share Zitadel's network namespace so `localhost:8080` inside this
+    # container reaches Zitadel. Required because Zitadel keys instances by
+    # the inbound Host header and the default instance is registered for
+    # `localhost`. We can still reach other services on jaeger-network
+    # (postgres, etc.) because zitadel itself is on that network.
+    network_mode: "service:zitadel"
+    environment:
+      ZITADEL_ISSUER: http://localhost:8080
+      ZITADEL_BOOTSTRAP_PAT: ${ZITADEL_BOOTSTRAP_PAT:-}
+      ZITADEL_ADMIN_EMAIL: ${ZITADEL_ADMIN_EMAIL:-admin@example.com}
+      APP_REDIRECT_URI: ${ZITADEL_REDIRECT_URI:-http://localhost:3000/auth/callback}
+      APP_POST_LOGOUT_REDIRECT_URI: ${ZITADEL_POST_LOGOUT_REDIRECT_URI:-http://localhost:5173/}
+      APP_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/effect-monorepo
+    depends_on:
+      - zitadel
+      - postgres
+    profiles:
+      - seed-zitadel
+
   jaeger:
     container_name: effect-monorepo-jaeger
     image: jaegertracing/all-in-one:latest
@@ -78,4 +145,6 @@ networks:
 
 volumes:
   postgres_data:
+    driver: local
+  zitadel_db_data:
     driver: local

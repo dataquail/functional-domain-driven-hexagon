@@ -13,10 +13,11 @@
     "@org/contracts": "workspace:^",
     "@playwright/test": "^1.49.1",
     "@types/node": "^25.6.0",
-    "effect": "^3.20.0",
-    "@effect/platform": "*",
-    "pg": "8.13.1",
     "@types/pg": "^8.11.10",
+    "@effect/platform": "*",
+    "dotenv": "^16.4.7",
+    "effect": "^3.20.0",
+    "pg": "8.13.1",
     "typescript": "~5.7.2"
   }
 }

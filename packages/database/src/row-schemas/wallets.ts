@@ -5,8 +5,8 @@ export const WalletRow = Schema.Struct({
   id: Schema.UUID,
   user_id: Schema.UUID,
   balance: Schema.Number,
-  created_at: Schema.DateFromSelf,
-  updated_at: Schema.DateFromSelf,
+  created_at: Schema.DateTimeUtcFromDate,
+  updated_at: Schema.DateTimeUtcFromDate,
 });
 export type WalletRow = typeof WalletRow.Type;
 

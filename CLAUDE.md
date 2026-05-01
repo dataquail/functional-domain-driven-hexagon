@@ -53,6 +53,7 @@ The naming conventions are also the parity-rule detectors. Don't rename a file t
 - **Typed bus** (ADR-0006). `bus.execute(SomeCommand.make({...}))` returns the exact `Effect<A, E, R>` declared in the registry. No casts, no `Result` unwrapping.
 - **Synchronous event bus** (ADR-0007). Subscribers run in the publisher's fiber and inherit `TransactionContext`. A subscriber's failure rolls back the publisher's transaction.
 - **Bus-boundary spans** (ADR-0012). Spans live at the command/query/event bus and at HTTP endpoints; use cases don't need their own `Effect.withSpan`. Span attributes are sibling extractor functions composed at registration.
+- **Authentication via self-hosted Zitadel as a server-side BFF** (ADR-0016, ADR-0017). The SPA never holds access or id tokens; the server runs the OIDC dance and issues a `HttpOnly` session cookie. Application code consumes `CurrentUser` (`@org/contracts/Policy`); only `modules/auth/` and `platform/auth/` know about Zitadel. Roles live app-side in `users.role`; the seed script pre-seeds the admin's `users` + `auth_identities` rows so the first sign-in finds an existing identity.
 
 ## Frontend (`packages/client/`)
 

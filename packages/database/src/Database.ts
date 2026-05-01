@@ -87,9 +87,51 @@ const makeService = (config: Config) =>
     // Slonik's default int8 parser returns native BigInt. Match the prior
     // drizzle config (`bigint(..., { mode: "number" })`) by parsing int8 to
     // a Number, accepting the precision loss above 2^53 just like before.
-    const typeParsers = Slonik.createTypeParserPreset().map((p) =>
-      p.name === "int8" ? { name: "int8" as const, parse: (value: string) => Number(value) } : p,
-    );
+    //
+    // Slonik also defaults timestamp / timestamptz to a Unix-millis number,
+    // but our row schemas (RowSchemas.*) declare these columns as
+    // `Schema.DateFromSelf` (i.e. real `Date` instances). Override the two
+    // parsers so reads produce Dates and the mappers' `DateTime.unsafeFromDate`
+    // calls work without a conversion shim in every mapper.
+    const typeParsers = Slonik.createTypeParserPreset().map((p) => {
+      if (p.name === "int8") {
+        return { name: "int8" as const, parse: (value: string) => Number(value) };
+      }
+      if (p.name === "timestamp") {
+        return {
+          name: "timestamp" as const,
+          parse: (value: string) => new Date(`${value} UTC`),
+        };
+      }
+      if (p.name === "timestamptz") {
+        return {
+          name: "timestamptz" as const,
+          parse: (value: string) => new Date(value),
+        };
+      }
+      return p;
+    });
+
+    // Slonik 48 stores the row's `resultParser` (StandardSchemaV1) in the
+    // query context but doesn't actually execute it — it expects an
+    // interceptor to run validation. Without this, `sql.type(SchemaStd)` is a
+    // type-level annotation only, and rows are passed through unchecked
+    // (which is how a Date column claiming `Schema.DateFromSelf` reached a
+    // mapper as a number). This interceptor closes the loop: every read row
+    // is validated and decoded by the schema, so mappers can trust types.
+    const resultParserInterceptor: Slonik.Interceptor = {
+      name: "effect-monorepo/result-parser",
+      transformRowAsync: async (queryContext, query, row) => {
+        const parser = queryContext.resultParser;
+        if (parser === undefined) return row;
+        const validation = parser["~standard"].validate(row);
+        const result = validation instanceof Promise ? await validation : validation;
+        if (result.issues !== undefined) {
+          throw new Slonik.SchemaValidationError(query, row, result.issues);
+        }
+        return result.value as Slonik.QueryResultRow;
+      },
+    };
 
     const pool: Slonik.DatabasePool = yield* Effect.acquireRelease(
       Effect.tryPromise({
@@ -97,6 +139,7 @@ const makeService = (config: Config) =>
           Slonik.createPool(Redacted.value(config.url), {
             ssl: config.ssl ? { rejectUnauthorized: true } : undefined,
             typeParsers,
+            interceptors: [resultParserInterceptor],
           } as Slonik.ClientConfigurationInput),
         catch: (cause) =>
           new DatabaseConnectionLostError({

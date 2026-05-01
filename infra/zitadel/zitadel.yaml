@@ -1,0 +1,36 @@
+# Zitadel runtime + first-instance config.
+# Most secrets/host-specific values come from env (see docker-compose.yml).
+# Reference: https://zitadel.com/docs/self-hosting/manage/configure
+
+ExternalDomain: localhost
+ExternalPort: 8080
+ExternalSecure: false
+
+TLS:
+  Enabled: false
+
+LogStore:
+  Access:
+    Database:
+      Enabled: false
+
+# Bootstrap: declarative admin human user.
+# Email/password are overridden by env in compose so a fresh clone
+# can swap them via .env without editing this file.
+FirstInstance:
+  InstanceName: effect-monorepo
+  DefaultLanguage: en
+  Org:
+    Name: effect-monorepo
+    Human:
+      UserName: admin
+      FirstName: Admin
+      LastName: User
+      NickName: admin
+      DisplayName: Admin User
+      PreferredLanguage: en
+      Email:
+        Address: admin@example.com
+        Verified: true
+      Password: ChangeMe!1
+      PasswordChangeRequired: false

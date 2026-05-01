@@ -15,6 +15,12 @@ import * as Schedule from "effect/Schedule";
 import { createServer } from "node:http";
 import { Api } from "./api.js";
 import { EnvVars } from "./common/env-vars.js";
+import {
+  authCommandHandlers,
+  AuthModuleLive,
+  authQueryHandlers,
+  AuthSharedDepsLive,
+} from "./modules/auth/index.js";
 import { todoCommandHandlers, todoQueryHandlers, TodosModuleLive } from "./modules/todos/index.js";
 import {
   userCommandHandlers,
@@ -23,6 +29,7 @@ import {
   userQueryHandlers,
 } from "./modules/user/index.js";
 import { walletEventSpanAttributes, WalletModuleLive } from "./modules/wallet/index.js";
+import { PermissionsResolver } from "./platform/auth/permissions-resolver.js";
 import { CommandBus, makeCommandBus } from "./platform/command-bus.js";
 import { makeDomainEventBusLive } from "./platform/domain-event-bus.js";
 import { UserAuthMiddlewareLive } from "./platform/middlewares/auth-middleware-live.js";
@@ -37,26 +44,31 @@ dotenv.config({
 
 const CommandBusLive = Layer.succeed(
   CommandBus,
-  makeCommandBus({ ...userCommandHandlers, ...todoCommandHandlers }),
+  makeCommandBus({ ...userCommandHandlers, ...todoCommandHandlers, ...authCommandHandlers }),
 );
 const QueryBusLive = Layer.succeed(
   QueryBus,
-  makeQueryBus({ ...userQueryHandlers, ...todoQueryHandlers }),
+  makeQueryBus({ ...userQueryHandlers, ...todoQueryHandlers, ...authQueryHandlers }),
 );
 const DomainEventBusLive = makeDomainEventBusLive({
   spanAttributes: { ...userEventSpanAttributes, ...walletEventSpanAttributes },
 });
 
 const ApiLive = HttpApiBuilder.api(Api).pipe(
-  Layer.provide([TodosModuleLive, SseHttpLive, UserModuleLive, WalletModuleLive]),
+  Layer.provide([TodosModuleLive, SseHttpLive, UserModuleLive, WalletModuleLive, AuthModuleLive]),
   Layer.provide([
     UserAuthMiddlewareLive,
     DomainEventBusLive,
-    CommandBusLive,
-    QueryBusLive,
     TransactionRunnerLive,
     SseManager.Default,
   ]),
+  // CommandBus + QueryBus must provide TO the middleware (not be its peers
+  // in the array above), since UserAuthMiddlewareLive now dispatches the
+  // FindSessionQuery via the bus.
+  Layer.provide([CommandBusLive, QueryBusLive]),
+  Layer.provide(PermissionsResolver.Default),
+  Layer.provide(AuthSharedDepsLive),
+  Layer.provide(EnvVars.Default),
 );
 
 const DatabaseLive = Layer.unwrapEffect(
@@ -91,7 +103,10 @@ const CorsLive = Layer.unwrapEffect(
   EnvVars.pipe(
     Effect.map((envVars) =>
       HttpApiBuilder.middlewareCors({
-        allowedOrigins: [envVars.ENV === "dev" ? "*" : envVars.APP_URL],
+        // Must be a specific origin (not "*") because we send credentials.
+        // Browsers reject `Access-Control-Allow-Origin: *` with
+        // `Access-Control-Allow-Credentials: true`.
+        allowedOrigins: [envVars.APP_URL],
         allowedMethods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
         allowedHeaders: ["Content-Type", "Authorization", "B3", "traceparent"],
         credentials: true,

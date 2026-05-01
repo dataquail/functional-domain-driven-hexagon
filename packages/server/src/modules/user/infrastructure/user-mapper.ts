@@ -17,8 +17,8 @@ export const toDomain = (row: Row): User =>
       street: row.street,
       postalCode: row.postal_code,
     }),
-    createdAt: DateTime.unsafeMake(row.created_at),
-    updatedAt: DateTime.unsafeMake(row.updated_at),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   });
 
 export type PersistenceRow = {

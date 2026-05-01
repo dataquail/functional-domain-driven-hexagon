@@ -1,4 +1,11 @@
 import { Api } from "@/api.js";
+import { EnvVars } from "@/common/env-vars.js";
+import {
+  authCommandHandlers,
+  AuthModuleLive,
+  authQueryHandlers,
+  AuthSharedDepsLive,
+} from "@/modules/auth/index.js";
 import { todoCommandHandlers, todoQueryHandlers, TodosModuleLive } from "@/modules/todos/index.js";
 import {
   userCommandHandlers,
@@ -7,13 +14,14 @@ import {
   userQueryHandlers,
 } from "@/modules/user/index.js";
 import { walletEventSpanAttributes, WalletModuleLive } from "@/modules/wallet/index.js";
+import { PermissionsResolver } from "@/platform/auth/permissions-resolver.js";
 import { CommandBus, makeCommandBus } from "@/platform/command-bus.js";
 import { makeDomainEventBusLive } from "@/platform/domain-event-bus.js";
-import { UserAuthMiddlewareLive } from "@/platform/middlewares/auth-middleware-live.js";
 import { makeQueryBus, QueryBus } from "@/platform/query-bus.js";
 import { SseHttpLive } from "@/platform/sse-http-live.js";
 import { SseManager } from "@/platform/sse-manager.js";
 import { TransactionRunnerLive } from "@/platform/transaction-runner.js";
+import { UserAuthMiddlewareFake } from "@/test-utils/fake-auth-middleware.js";
 import { TestDatabaseLive } from "@/test-utils/test-database.js";
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import * as HttpApiBuilder from "@effect/platform/HttpApiBuilder";
@@ -21,11 +29,11 @@ import * as Layer from "effect/Layer";
 
 const CommandBusLive = Layer.succeed(
   CommandBus,
-  makeCommandBus({ ...userCommandHandlers, ...todoCommandHandlers }),
+  makeCommandBus({ ...userCommandHandlers, ...todoCommandHandlers, ...authCommandHandlers }),
 );
 const QueryBusLive = Layer.succeed(
   QueryBus,
-  makeQueryBus({ ...userQueryHandlers, ...todoQueryHandlers }),
+  makeQueryBus({ ...userQueryHandlers, ...todoQueryHandlers, ...authQueryHandlers }),
 );
 const DomainEventBusLive = makeDomainEventBusLive({
   spanAttributes: { ...userEventSpanAttributes, ...walletEventSpanAttributes },
@@ -41,14 +49,21 @@ const DomainEventBusLive = makeDomainEventBusLive({
 // (DomainEventBus, TransactionRunner) or feature-specific (auth middleware,
 // SseManager) and aren't meant to be driven directly from tests.
 const ApiLive = HttpApiBuilder.api(Api).pipe(
-  Layer.provide([TodosModuleLive, SseHttpLive, UserModuleLive, WalletModuleLive]),
-  Layer.provideMerge(Layer.mergeAll(CommandBusLive, QueryBusLive)),
+  Layer.provide([TodosModuleLive, SseHttpLive, UserModuleLive, WalletModuleLive, AuthModuleLive]),
   Layer.provide([
-    UserAuthMiddlewareLive,
+    UserAuthMiddlewareFake,
     DomainEventBusLive,
     TransactionRunnerLive,
     SseManager.Default,
   ]),
+  // CommandBus + QueryBus must provide TO the modules above (they dispatch
+  // via the buses) AND remain reachable from test runtimes — `provideMerge`
+  // keeps them in the runtime context so `yield* CommandBus`/`QueryBus`
+  // works in test bodies.
+  Layer.provideMerge(Layer.mergeAll(CommandBusLive, QueryBusLive)),
+  Layer.provide(PermissionsResolver.Default),
+  Layer.provide(AuthSharedDepsLive),
+  Layer.provide(EnvVars.Default),
 );
 
 // layerTest binds the server to an in-memory transport and exposes an

@@ -38,6 +38,41 @@ docker-compose exec postgres psql -U postgres -c 'CREATE DATABASE "effect-monore
 docker-compose --profile migrate-test up flyway-test
 ```
 
+## Authentication (Zitadel)
+
+The server uses [Zitadel](https://zitadel.com) (self-hosted via docker-compose) as the OIDC identity provider. The SPA never holds an access or id token; the server is the OIDC client and issues a `HttpOnly` session cookie. See [ADR-0016](docs/adr/0016-authentication-with-self-hosted-zitadel.md) for the full design and [ADR-0017](docs/adr/0017-frontend-auth-flow.md) for the SPA side.
+
+```bash
+# 1. Boot Zitadel + its Postgres
+pnpm auth:up
+
+# 2. Wait ~30s for first init, then complete the one-time PAT bootstrap.
+#    Open http://localhost:8080/ui/console
+#    Sign in as admin@example.com / ChangeMe!1
+#    Default Org → Service Users → New
+#      Username: bootstrap-bot, Access Token Type: Bearer
+#    On the new service user → Personal Access Tokens → New (copy the token)
+#    Default Org → Members → Add Member: bootstrap-bot, role ORG_OWNER
+#    Save the token to .env as ZITADEL_BOOTSTRAP_PAT=<token>
+
+# 3. Generate a session cookie secret
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+# Save that into .env as SESSION_COOKIE_SECRET
+
+# 4. Seed the OIDC project + app and the admin row in the dev DB
+pnpm auth:seed
+# Paste the printed ZITADEL_CLIENT_ID and ZITADEL_CLIENT_SECRET into .env
+
+# 5. Restart the server so it picks up the new env vars
+pnpm --filter server dev
+```
+
+After signing in once at `http://localhost:5173/auth/login`, the session cookie is set on the SPA origin and protected endpoints work normally.
+
+**Known quirk:** the seed script's "update existing OIDC app" path reports `[updated]` but Zitadel doesn't actually pick up the new `postLogoutRedirectUris` on a re-run. If you change `ZITADEL_POST_LOGOUT_REDIRECT_URI` in `.env`, also update the URL manually once in the Zitadel console (Default Org → Projects → effect-monorepo → effect-monorepo-bff → URLs → Post-logout URLs).
+
+**Acceptance tests** (Playwright) drive the real Zitadel hosted UI on every run — make sure `pnpm auth:up && pnpm auth:seed` have completed and dev servers on `:3000` / `:5173` are stopped before running `pnpm test:acceptance`. CI E2E (`.github/workflows/e2e.yml`) does not yet provision Zitadel; tracked as a follow-up.
+
 ## Development
 
 ```bash

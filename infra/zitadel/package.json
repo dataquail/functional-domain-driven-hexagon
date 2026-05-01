@@ -1,0 +1,10 @@
+{
+  "name": "zitadel-seed",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "One-shot bootstrap for Zitadel + the app's admin row. Not part of the workspace.",
+  "dependencies": {
+    "pg": "^8.13.1"
+  }
+}
