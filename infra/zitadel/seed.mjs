@@ -11,6 +11,7 @@
 // the error message printed when ZITADEL_BOOTSTRAP_PAT is unset.
 
 import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 import pg from "pg";
 
 const issuer = process.env.ZITADEL_ISSUER ?? "http://localhost:8080";
@@ -19,18 +20,40 @@ const issuer = process.env.ZITADEL_ISSUER ?? "http://localhost:8080";
 // container connect to `zitadel:8080` over Docker DNS, but Zitadel must
 // see Host=localhost:8080 to find the instance. Override here.
 const instanceHost = process.env.ZITADEL_INSTANCE_HOST ?? "localhost:8080";
-const pat = process.env.ZITADEL_BOOTSTRAP_PAT;
 const adminEmail = process.env.ZITADEL_ADMIN_EMAIL ?? "admin@example.com";
 const redirectUri = process.env.APP_REDIRECT_URI ?? "http://localhost:3000/auth/callback";
 const postLogoutRedirectUri = process.env.APP_POST_LOGOUT_REDIRECT_URI ?? "http://localhost:5173/";
 const dbUrl = process.env.APP_DATABASE_URL;
+// Zitadel writes the bootstrap-bot PAT here on first boot (see
+// FirstInstance.PatPath in zitadel.yaml). Mounted into this container by
+// docker-compose.yml as a fallback for `ZITADEL_BOOTSTRAP_PAT`.
+const patPath = process.env.ZITADEL_BOOTSTRAP_PAT_PATH ?? "/machinekey/zitadel-bootstrap.pat";
+
+const pat = process.env.ZITADEL_BOOTSTRAP_PAT || readPatFromFile(patPath);
+
+function readPatFromFile(path) {
+  try {
+    return readFileSync(path, "utf8").trim();
+  } catch {
+    return undefined;
+  }
+}
 
 if (!pat) {
   console.error(`
-ZITADEL_BOOTSTRAP_PAT is not set.
+ZITADEL_BOOTSTRAP_PAT is not set and no PAT was found at ${patPath}.
 
-This is a one-time manual step (per Zitadel install). Do this once after
-your first 'pnpm auth:up':
+Normal local flow: a fresh \`pnpm auth:up\` boots Zitadel with FirstInstance,
+which writes the bootstrap PAT to ./infra/zitadel/.machinekey/. If the file
+isn't there, your Zitadel volume was created before the declarative
+machine-user config was added — the easiest fix is to wipe the Zitadel
+volume and re-bootstrap:
+
+  docker compose down
+  docker volume rm $(basename $PWD)_zitadel_db_data
+  pnpm auth:up && pnpm auth:seed
+
+If you'd rather create the service user by hand:
 
   1. Open http://localhost:8080/ui/console
   2. Sign in as ${adminEmail} (default password: ChangeMe!1)
@@ -42,9 +65,8 @@ your first 'pnpm auth:up':
      Copy the token.
   5. Default Organization → Members → Add Member
      Add bootstrap-bot with role: ORG_OWNER
-  6. Save the token to your repo .env:
-       ZITADEL_BOOTSTRAP_PAT=<token>
-  7. Re-run 'pnpm auth:seed'.
+  6. Save the token to your repo .env as ZITADEL_BOOTSTRAP_PAT=<token>
+     and re-run 'pnpm auth:seed'.
 `);
   process.exit(2);
 }
@@ -280,6 +302,13 @@ async function ensureAdminInAppDb(subject) {
     console.log("Note: client_secret is only emitted at creation. Save it now.");
   } else {
     console.log("ZITADEL_CLIENT_SECRET=(unchanged — app already existed)");
+  }
+
+  // Machine-readable single line for CI to parse with `grep '^__seed__ '`.
+  // Only emitted when both values are present (i.e. fresh app creation —
+  // re-runs against an existing app can't recover the secret from Zitadel).
+  if (clientId && clientSecret) {
+    console.log(`__seed__ ZITADEL_CLIENT_ID=${clientId} ZITADEL_CLIENT_SECRET=${clientSecret}`);
   }
 })().catch((err) => {
   console.error(err);

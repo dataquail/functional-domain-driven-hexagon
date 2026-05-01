@@ -65,7 +65,12 @@ services:
     container_name: effect-monorepo-zitadel
     # Pinned for reproducibility; bump after checking https://github.com/zitadel/zitadel/releases
     image: ghcr.io/zitadel/zitadel:v2.71.0
-    command: 'start-from-init --masterkey "${ZITADEL_MASTERKEY:-MasterkeyNeedsToHave32Characters}" --tlsMode disabled --config /etc/zitadel/zitadel.yaml'
+    # `--steps` is required for the FirstInstance section of zitadel.yaml to
+    # be respected (it isn't part of the runtime `--config` schema). Without
+    # `--steps`, Zitadel silently ignores FirstInstance.Org.Machine and the
+    # bootstrap PAT is never written. Same file is passed to both flags so
+    # we keep one source of truth.
+    command: 'start-from-init --masterkey "${ZITADEL_MASTERKEY:-MasterkeyNeedsToHave32Characters}" --tlsMode disabled --config /etc/zitadel/zitadel.yaml --steps /etc/zitadel/zitadel.yaml'
     environment:
       ZITADEL_DATABASE_POSTGRES_HOST: zitadel-db
       ZITADEL_DATABASE_POSTGRES_PORT: 5432
@@ -83,6 +88,10 @@ services:
       - "8080:8080"
     volumes:
       - ./infra/zitadel/zitadel.yaml:/etc/zitadel/zitadel.yaml:ro
+      # Zitadel writes the bootstrap-bot PAT here on first boot (see
+      # FirstInstance.PatPath in zitadel.yaml). Read by `pnpm auth:seed` and
+      # by CI to skip the manual "console → service user → PAT" step.
+      - ./infra/zitadel/.machinekey:/machinekey
     depends_on:
       - zitadel-db
     networks:
@@ -94,6 +103,10 @@ services:
     working_dir: /seed
     volumes:
       - ./infra/zitadel:/seed
+      # Lets seed.mjs fall back to reading the bootstrap PAT from the file
+      # Zitadel writes during FirstInstance, so a fresh `pnpm auth:up &&
+      # pnpm auth:seed` works without any manual console step.
+      - ./infra/zitadel/.machinekey:/machinekey:ro
     # Installs `pg` into a sibling node_modules on first run; subsequent runs are fast.
     command: ["sh", "-c", "npm install --silent --no-audit --no-fund && node seed.mjs"]
     # Share Zitadel's network namespace so `localhost:8080` inside this

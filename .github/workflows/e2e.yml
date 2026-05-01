@@ -67,8 +67,91 @@ jobs:
             psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d effect-monorepo-test -f "$f"
           done
 
-      - name: Materialize .env from .env.example
-        run: cp .env.example .env
+      - name: Bring up Zitadel
+        run: |
+          # Pre-create the bind-mount target so the PAT file is owned by the
+          # runner user (Docker would create it root-owned otherwise).
+          mkdir -p ./infra/zitadel/.machinekey
+          docker compose up -d zitadel-db zitadel
+
+      - name: Wait for Zitadel ready
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 90); do
+            if curl -sf http://localhost:8080/debug/ready >/dev/null; then
+              echo "Zitadel ready after ${i}s window"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::Zitadel did not become ready within 180s"
+          docker compose logs zitadel
+          exit 1
+
+      - name: Wait for bootstrap PAT file
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 60); do
+            if [ -s ./infra/zitadel/.machinekey/zitadel-bootstrap.pat ]; then
+              echo "Bootstrap PAT file present"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::Bootstrap PAT was never written by Zitadel FirstInstance"
+          ls -la ./infra/zitadel/.machinekey/ || true
+          docker compose logs zitadel
+          exit 1
+
+      - name: Install seed dependencies
+        working-directory: infra/zitadel
+        run: npm install --no-audit --no-fund --silent
+
+      - name: Run Zitadel seed
+        env:
+          ZITADEL_ISSUER: http://localhost:8080
+          ZITADEL_ADMIN_EMAIL: admin@example.com
+          APP_REDIRECT_URI: http://localhost:5173/auth/callback
+          APP_POST_LOGOUT_REDIRECT_URI: http://localhost:5173/auth/login
+          APP_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/effect-monorepo-test
+        run: |
+          set -euo pipefail
+          PAT=$(cat ./infra/zitadel/.machinekey/zitadel-bootstrap.pat)
+          echo "::add-mask::$PAT"
+          export ZITADEL_BOOTSTRAP_PAT="$PAT"
+          # Tee to stderr so logs are visible; capture stdout to parse the
+          # `__seed__ ZITADEL_CLIENT_ID=… ZITADEL_CLIENT_SECRET=…` line.
+          SEED_OUT=$(node infra/zitadel/seed.mjs | tee /dev/stderr)
+          SEED_LINE=$(printf '%s\n' "$SEED_OUT" | grep '^__seed__ ' | head -n1 || true)
+          if [ -z "$SEED_LINE" ]; then
+            echo "::error::Seed output missing __seed__ line — OIDC app likely already existed (CI starts from a fresh Zitadel volume, so this should not happen)"
+            exit 1
+          fi
+          # Parse "__seed__ K=V K=V" by stripping prefix and assigning.
+          SEED_VARS=${SEED_LINE#"__seed__ "}
+          # shellcheck disable=SC2086
+          for kv in $SEED_VARS; do
+            key=${kv%%=*}
+            val=${kv#*=}
+            echo "::add-mask::$val"
+            echo "$key=$val" >> "$GITHUB_ENV"
+          done
+          echo "ZITADEL_BOOTSTRAP_PAT=$PAT" >> "$GITHUB_ENV"
+
+      - name: Materialize .env for the test run
+        run: |
+          set -euo pipefail
+          cp .env.example .env
+          SESSION_COOKIE_SECRET=$(openssl rand -hex 32)
+          echo "::add-mask::$SESSION_COOKIE_SECRET"
+          {
+            echo ""
+            echo "# === Filled in by CI ==="
+            echo "ZITADEL_BOOTSTRAP_PAT=$ZITADEL_BOOTSTRAP_PAT"
+            echo "ZITADEL_CLIENT_ID=$ZITADEL_CLIENT_ID"
+            echo "ZITADEL_CLIENT_SECRET=$ZITADEL_CLIENT_SECRET"
+            echo "SESSION_COOKIE_SECRET=$SESSION_COOKIE_SECRET"
+          } >> .env
 
       - name: Run acceptance tests
         run: pnpm test:acceptance
@@ -82,3 +165,7 @@ jobs:
           name: playwright-report
           path: packages/acceptance/playwright-report/
           retention-days: 14
+
+      - name: Dump Zitadel logs on failure
+        if: failure()
+        run: docker compose logs zitadel zitadel-db || true
