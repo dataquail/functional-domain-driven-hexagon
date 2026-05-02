@@ -3,9 +3,11 @@
   "tasks": [
     {
       "label": "Docker: Up",
-      "detail": "Start postgres + jaeger in the background",
+      "detail": "Start postgres + jaeger + zitadel in the background",
+      // `zitadel` depends on postgres being healthy (see docker-compose.yml),
+      // so compose orders the startup; we just list everything we need.
       "type": "shell",
-      "command": "docker-compose up -d postgres jaeger",
+      "command": "docker-compose up -d postgres jaeger zitadel",
       "options": { "cwd": "${workspaceFolder}" },
       "presentation": {
         "reveal": "always",
@@ -55,9 +57,29 @@
       "problemMatcher": []
     },
     {
+      "label": "Auth: Seed",
+      "detail": "Idempotent Zitadel seed (project + OIDC client + admin user → app DB)",
+      // Brings up the one-shot `seed-zitadel` compose profile, which waits
+      // for Zitadel to be reachable, creates the OIDC client if missing,
+      // and writes the admin row into the app DB. Safe to re-run; second
+      // run prints `[exists]` for everything and exits clean.
+      "type": "shell",
+      "command": "pnpm auth:seed",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Server: Dev",
       "detail": "Run the server in watch mode",
       "type": "shell",
+      // The `predev` script in packages/server/package.json frees port
+      // 3000 before `tsx watch` tries to bind, so an orphan from a
+      // previously-closed terminal doesn't block the next start.
       "command": "pnpm --filter server dev",
       "options": { "cwd": "${workspaceFolder}" },
       "isBackground": true,
@@ -81,6 +103,9 @@
       "label": "Client: Dev",
       "detail": "Run the Vite dev server",
       "type": "shell",
+      // See "Server: Dev" — `predev` in packages/client/package.json
+      // frees port 5173 before Vite binds, so closing the terminal and
+      // re-running this task always works.
       "command": "pnpm --filter client dev",
       "options": { "cwd": "${workspaceFolder}" },
       "isBackground": true,
@@ -101,16 +126,39 @@
       }
     },
     {
+      "label": "Jobs: Dev",
+      "detail": "Run the cron-style background jobs runner in watch mode (purges stale sessions hourly + on boot)",
+      "type": "shell",
+      "command": "pnpm --filter @org/jobs dev",
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "dev",
+        "clear": true
+      },
+      "problemMatcher": {
+        "owner": "jobs",
+        "pattern": { "regexp": "^$" },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*$",
+          "endsPattern": "first run immediate, subsequent runs hourly"
+        }
+      }
+    },
+    {
       "label": "Dev: Servers",
-      "detail": "Run server + client side-by-side",
-      "dependsOn": ["Server: Dev", "Client: Dev"],
+      "detail": "Run server + client + jobs side-by-side",
+      "dependsOn": ["Server: Dev", "Client: Dev", "Jobs: Dev"],
       "dependsOrder": "parallel",
       "problemMatcher": []
     },
     {
       "label": "Dev: All",
-      "detail": "Docker → migrate → server + client",
-      "dependsOn": ["Docker: Up", "Docker: Migrate (dev DB)", "Dev: Servers"],
+      "detail": "Docker (postgres + jaeger + zitadel) → migrate → seed Zitadel → server + client + jobs",
+      "dependsOn": ["Docker: Up", "Docker: Migrate (dev DB)", "Auth: Seed", "Dev: Servers"],
       "dependsOrder": "sequence",
       "problemMatcher": []
     }

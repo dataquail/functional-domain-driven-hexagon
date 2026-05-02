@@ -43,14 +43,30 @@ export const runMigrations = async (databaseUrl: string): Promise<void> => {
   }
 };
 
+// Truncate is auth-aware: when a spec asks to clear `users`, we DELETE non-
+// admin rows instead of TRUNCATE'ing — the admin's session and
+// `auth_identities` row would otherwise CASCADE-delete and break the
+// storageState cookie for the next spec. The admin email is read from
+// ZITADEL_ADMIN_EMAIL (the same value as the seeded Zitadel user / the row
+// global-setup inserts via admin-seed.ts).
 export const truncate = async (
   databaseUrl: string,
   tables: ReadonlyArray<string>,
 ): Promise<void> => {
   assertTestDbName(databaseUrl);
   if (tables.length === 0) return;
+  const adminEmail = process.env.ZITADEL_ADMIN_EMAIL ?? "admin@example.com";
   const pool = new pg.Pool({ connectionString: databaseUrl });
   try {
+    if (tables.includes("users")) {
+      await pool.query(`DELETE FROM users WHERE email != $1`, [adminEmail]);
+      const others = tables.filter((t) => t !== "users");
+      if (others.length > 0) {
+        const list = others.map((t) => `"${t}"`).join(", ");
+        await pool.query(`TRUNCATE TABLE ${list} CASCADE`);
+      }
+      return;
+    }
     const list = tables.map((t) => `"${t}"`).join(", ");
     await pool.query(`TRUNCATE TABLE ${list} CASCADE`);
   } finally {

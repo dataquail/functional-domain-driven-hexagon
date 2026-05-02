@@ -19,23 +19,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: effect-monorepo-test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-
     env:
       DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/effect-monorepo-test
+      # Used by `@org/jobs` (background runner) when started in this job.
+      # Same DB Playwright is exercising, so the purge runs against the test
+      # data and we get end-to-end signal that the cron deployable works.
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/effect-monorepo-test
 
     steps:
       - uses: actions/checkout@v6
@@ -57,6 +46,26 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm -F @org/acceptance exec playwright install-deps chromium
 
+      - name: Prepare Zitadel bind-mount
+        run: |
+          # The Zitadel container runs as a non-root UID and writes its
+          # bootstrap PAT to /machinekey on first boot. The bind-mount target
+          # has to be writable for that UID, otherwise FirstInstance fails
+          # with "permission denied" and the volume gets stuck in a
+          # half-initialized state.
+          mkdir -p ./infra/zitadel/.machinekey
+          chmod 0777 ./infra/zitadel/.machinekey
+
+      - name: Bring up Postgres + create test DB
+        run: |
+          set -euo pipefail
+          # Postgres comes up via compose so the init script in
+          # infra/postgres/init/ runs and creates the `zitadel` database
+          # alongside the app DB.
+          docker compose up -d --wait postgres
+          docker compose exec -T postgres psql -U postgres -c \
+            'CREATE DATABASE "effect-monorepo-test"'
+
       - name: Apply database migrations
         env:
           PGPASSWORD: postgres
@@ -67,8 +76,39 @@ jobs:
             psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d effect-monorepo-test -f "$f"
           done
 
-      - name: Materialize .env from .env.example
-        run: cp .env.example .env
+      - name: Bootstrap Zitadel + .env
+        env:
+          # The seed inserts the admin row into the app DB. In CI that's the
+          # test DB created above; locally it's `effect-monorepo`.
+          SEED_APP_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/effect-monorepo-test
+        run: pnpm bootstrap
+
+      - name: Start background jobs runner
+        # Spin up the `@org/jobs` cron runner against the test DB so Playwright
+        # exercises the same set of deployables that production will run.
+        # The runner does an eager purge on boot and then waits for the hourly
+        # cron — within a 25-minute job window only the boot run actually
+        # fires, but that's enough to surface "the deployable doesn't start"
+        # regressions and to keep CI honest about the system shape.
+        # Backgrounded with logs to a file so the runner stays alive for the
+        # whole Playwright run; the GitHub runner cleans up the process at
+        # job end, no explicit teardown needed.
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/jobs-logs
+          nohup pnpm -F @org/jobs start:dev > /tmp/jobs-logs/jobs.log 2>&1 &
+          echo $! > /tmp/jobs-logs/jobs.pid
+          # Give the runner a moment to connect to Postgres + run the boot
+          # purge before Playwright starts. The eager run logs a known line we
+          # can poll for instead of sleeping blindly.
+          for i in $(seq 1 30); do
+            if grep -q "purge-expired-sessions" /tmp/jobs-logs/jobs.log 2>/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          echo "--- jobs.log so far ---"
+          cat /tmp/jobs-logs/jobs.log
 
       - name: Run acceptance tests
         run: pnpm test:acceptance
@@ -82,3 +122,11 @@ jobs:
           name: playwright-report
           path: packages/acceptance/playwright-report/
           retention-days: 14
+
+      - name: Dump background jobs log on failure
+        if: failure()
+        run: cat /tmp/jobs-logs/jobs.log || true
+
+      - name: Dump container logs on failure
+        if: failure()
+        run: docker compose logs postgres zitadel || true

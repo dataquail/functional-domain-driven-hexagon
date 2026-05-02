@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": ["src/**/*.test.ts"],
+  "references": [{ "path": "tsconfig.src.json" }, { "path": "../database" }],
+  "compilerOptions": {
+    "types": ["node"],
+    "tsBuildInfoFile": ".tsbuildinfo/test.tsbuildinfo",
+    "rootDir": ".",
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@org/database": ["../database/src/index.js"],
+      "@org/database/*": ["../database/src/*.js"]
+    }
+  }
+}

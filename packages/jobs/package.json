@@ -1,0 +1,31 @@
+{
+  "name": "@org/jobs",
+  "version": "0.0.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "Background jobs (cron-style) for the effect-monorepo deployment.",
+  "scripts": {
+    "check": "tsc -b tsconfig.json",
+    "test": "vitest",
+    "clean": "rm -rf build .tsbuildinfo",
+    "build": "tsc -b tsconfig.build.json",
+    "dev": "tsx watch src/main.ts",
+    "start:dev": "tsx src/main.ts",
+    "start": "node build/esm/main.js",
+    "lint": "eslint . --quiet",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@effect/platform": "*",
+    "@effect/platform-node": "*",
+    "@org/database": "workspace:^",
+    "effect": "^3.20.0",
+    "pg": "8.13.1",
+    "slonik": "^48.14.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.11",
+    "dotenv": "^16.4.7",
+    "tsx": "^4.19.2"
+  }
+}

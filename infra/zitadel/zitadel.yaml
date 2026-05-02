@@ -1,0 +1,50 @@
+# Zitadel runtime + first-instance config.
+# Most secrets/host-specific values come from env (see docker-compose.yml).
+# Reference: https://zitadel.com/docs/self-hosting/manage/configure
+
+ExternalDomain: localhost
+ExternalPort: 8080
+ExternalSecure: false
+
+TLS:
+  Enabled: false
+
+LogStore:
+  Access:
+    Database:
+      Enabled: false
+
+# FirstInstance only runs on a fresh Zitadel database. It declares:
+#   1. A human admin user (email/password overridden by env in compose)
+#   2. A machine user `bootstrap-bot` with a long-lived PAT used by
+#      `pnpm auth:seed`. The PAT is written to /machinekey/zitadel-bootstrap.pat
+#      inside the container (mounted to ./infra/zitadel/.machinekey/ on the host
+#      via compose). This eliminates the manual "console → service user → PAT"
+#      step both for fresh local clones and for CI.
+FirstInstance:
+  InstanceName: effect-monorepo
+  DefaultLanguage: en
+  PatPath: /machinekey/zitadel-bootstrap.pat
+  Org:
+    Name: effect-monorepo
+    Human:
+      UserName: admin
+      FirstName: Admin
+      LastName: User
+      NickName: admin
+      DisplayName: Admin User
+      PreferredLanguage: en
+      Email:
+        Address: admin@example.com
+        Verified: true
+      Password: ChangeMe!1
+      PasswordChangeRequired: false
+    Machine:
+      Machine:
+        Username: bootstrap-bot
+        Name: Bootstrap Bot
+        Description: Used by infra/zitadel/seed.mjs to provision the OIDC app.
+      Pat:
+        # Effectively non-expiring; the PAT is bound to a fresh Zitadel
+        # database, so on a real prod install you would rotate this anyway.
+        ExpirationDate: "2125-01-01T00:00:00Z"

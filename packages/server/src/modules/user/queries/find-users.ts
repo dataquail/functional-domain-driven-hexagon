@@ -6,7 +6,6 @@ import {
 } from "@/modules/user/queries/find-users-query.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { Database, RowSchemas, sql } from "@org/database/index";
-import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
@@ -21,8 +20,8 @@ const toUserView = (row: RowSchemas.UserRow): FindUsersUserView => ({
     street: row.street,
     postalCode: row.postal_code,
   },
-  createdAt: DateTime.unsafeMake(row.created_at),
-  updatedAt: DateTime.unsafeMake(row.updated_at),
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
 });
 
 export const findUsers = (query: FindUsersQuery): FindUsersOutput =>

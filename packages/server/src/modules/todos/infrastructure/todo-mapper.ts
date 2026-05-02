@@ -10,8 +10,8 @@ export const toDomain = (row: Row): Todo =>
     id: TodoId.make(row.id),
     title: row.title,
     completed: row.completed,
-    createdAt: DateTime.unsafeMake(row.created_at),
-    updatedAt: DateTime.unsafeMake(row.updated_at),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   });
 
 export type PersistenceRow = {

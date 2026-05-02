@@ -16,6 +16,7 @@
     "clean": "rm -rf build .tsbuildinfo",
     "prebuild": "npm run clean",
     "build": "tsc -b tsconfig.build.json",
+    "predev": "lsof -ti:3000 | xargs kill -9 2>/dev/null; true",
     "dev": "tsx watch src/server.ts",
     "start": "node build/esm/server.js",
     "circular": "madge --circular src/server.ts",
@@ -37,7 +38,9 @@
     "@opentelemetry/sdk-trace-web": "^2.7.1",
     "@org/database": "workspace:^",
     "@org/contracts": "workspace:^",
+    "cookie": "^1.0.2",
     "effect": "^3.20.0",
+    "openid-client": "^6.1.7",
     "pg": "8.13.1",
     "svix": "^1.45.1"
   },
@@ -54,6 +57,7 @@
     }
   },
   "devDependencies": {
+    "@types/cookie": "^0.6.0",
     "@types/pg": "^8.11.11",
     "dotenv": "^16.4.7",
     "madge": "^8.0.0",

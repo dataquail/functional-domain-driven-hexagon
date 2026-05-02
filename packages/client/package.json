@@ -9,6 +9,7 @@
     "directory": "packages/client"
   },
   "scripts": {
+    "predev": "lsof -ti:5173 | xargs kill -9 2>/dev/null; true",
     "dev": "dotenv -e ../../.env vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",

@@ -8,8 +8,8 @@ export const UserRow = Schema.Struct({
   country: Schema.String,
   street: Schema.String,
   postal_code: Schema.String,
-  created_at: Schema.DateFromSelf,
-  updated_at: Schema.DateFromSelf,
+  created_at: Schema.DateTimeUtcFromDate,
+  updated_at: Schema.DateTimeUtcFromDate,
 });
 export type UserRow = typeof UserRow.Type;
 

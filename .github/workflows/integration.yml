@@ -30,6 +30,19 @@ jobs:
 
     env:
       DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/effect-monorepo-test
+      # `EnvVars.Default` (provided by `TestServerLive` via `Layer.provide`)
+      # eagerly validates every Config field. The test runtime overrides the
+      # database with `TestDatabaseLive` (which reads `DATABASE_URL_TEST`)
+      # and the auth middleware with `UserAuthMiddlewareFake` — so the
+      # values below only need to satisfy parser shape, never get reached
+      # at runtime. `DATABASE_URL` mirrors the test URL as a defense-in-
+      # depth measure: if any code path slips past the override and reads
+      # the prod URL, it lands on the test DB instead of a real one.
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/effect-monorepo-test
+      ZITADEL_ISSUER: http://localhost:8080
+      ZITADEL_CLIENT_ID: ci-integration-tests-placeholder
+      ZITADEL_CLIENT_SECRET: ci-integration-tests-placeholder
+      SESSION_COOKIE_SECRET: 0000000000000000000000000000000000000000000000000000000000000000
 
     steps:
       - uses: actions/checkout@v6

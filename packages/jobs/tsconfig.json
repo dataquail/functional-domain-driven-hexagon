@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": [],
+  "exclude": ["src/**/*.test.ts"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@org/database": ["../database/src/index.js"],
+      "@org/database/*": ["../database/src/*.js"]
+    }
+  },
+  "references": [{ "path": "tsconfig.src.json" }, { "path": "tsconfig.test.json" }]
+}

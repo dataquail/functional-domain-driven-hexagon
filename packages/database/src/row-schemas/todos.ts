@@ -5,8 +5,8 @@ export const TodoRow = Schema.Struct({
   id: Schema.UUID,
   title: Schema.String,
   completed: Schema.Boolean,
-  created_at: Schema.DateFromSelf,
-  updated_at: Schema.DateFromSelf,
+  created_at: Schema.DateTimeUtcFromDate,
+  updated_at: Schema.DateTimeUtcFromDate,
 });
 export type TodoRow = typeof TodoRow.Type;
 
