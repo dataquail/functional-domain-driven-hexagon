@@ -407,6 +407,37 @@ importers:
         version: 4.19.2
     publishDirectory: dist
 
+  packages/jobs:
+    dependencies:
+      '@effect/platform':
+        specifier: 0.96.1
+        version: 0.96.1(effect@3.21.2)
+      '@effect/platform-node':
+        specifier: 0.106.0
+        version: 0.106.0(@effect/cluster@0.58.2(@effect/platform@0.96.1(effect@3.21.2))(@effect/rpc@0.75.1(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/sql@0.51.1(@effect/experimental@0.60.0(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/workflow@0.18.1(@effect/experimental@0.60.0(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/platform@0.96.1(effect@3.21.2))(@effect/rpc@0.75.1(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(effect@3.21.2))(effect@3.21.2))(@effect/platform@0.96.1(effect@3.21.2))(@effect/rpc@0.75.1(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/sql@0.51.1(@effect/experimental@0.60.0(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(@effect/platform@0.96.1(effect@3.21.2))(effect@3.21.2))(effect@3.21.2)
+      '@org/database':
+        specifier: workspace:^
+        version: link:../database/dist
+      effect:
+        specifier: 3.21.2
+        version: 3.21.2
+      pg:
+        specifier: 8.13.1
+        version: 8.13.1
+      slonik:
+        specifier: ^48.14.0
+        version: 48.14.0
+    devDependencies:
+      '@types/pg':
+        specifier: ^8.11.11
+        version: 8.11.11
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.4.7
+      tsx:
+        specifier: ^4.19.2
+        version: 4.19.2
+
   packages/server:
     dependencies:
       '@effect/cluster':

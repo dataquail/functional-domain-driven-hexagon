@@ -22,7 +22,11 @@ const issuer = process.env.ZITADEL_ISSUER ?? "http://localhost:8080";
 const instanceHost = process.env.ZITADEL_INSTANCE_HOST ?? "localhost:8080";
 const adminEmail = process.env.ZITADEL_ADMIN_EMAIL ?? "admin@example.com";
 const redirectUri = process.env.APP_REDIRECT_URI ?? "http://localhost:3000/auth/callback";
-const postLogoutRedirectUri = process.env.APP_POST_LOGOUT_REDIRECT_URI ?? "http://localhost:5173/";
+// Default must match `ZITADEL_POST_LOGOUT_REDIRECT_URI` in the server's
+// env-vars.ts. If they drift apart, the server's logout request to
+// `end_session_endpoint` is rejected with "post_logout_redirect_uri invalid".
+const postLogoutRedirectUri =
+  process.env.APP_POST_LOGOUT_REDIRECT_URI ?? "http://localhost:5173/auth/login";
 const dbUrl = process.env.APP_DATABASE_URL;
 // Zitadel writes the bootstrap-bot PAT here on first boot (see
 // FirstInstance.PatPath in zitadel.yaml). Mounted into this container by

@@ -6,6 +6,7 @@
     { "path": "packages/contracts" },
     { "path": "packages/server" },
     { "path": "packages/client" },
-    { "path": "packages/database" }
+    { "path": "packages/database" },
+    { "path": "packages/jobs" }
   ]
 }

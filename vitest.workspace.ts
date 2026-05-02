@@ -18,6 +18,7 @@ export default defineWorkspace([
   // tests. Acceptance specs run via `pnpm test:acceptance`.
   "packages/contracts",
   "packages/database",
+  "packages/jobs",
   "packages/server",
   "packages/client",
 ]);

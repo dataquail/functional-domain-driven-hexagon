@@ -53,6 +53,26 @@ Every authenticated request, after `findSession` succeeds, the middleware dispat
 
 This keeps lifecycle reads (`findSession`) and writes (`TouchSessionCommand`) on opposite sides of CQRS without putting business logic in the middleware. The middleware's only knob is the env-var-derived throttle and TTL; the throttle decision and the clamp live in the command + aggregate.
 
+### Physical eviction via `@org/jobs`
+
+The TTL/revocation logic only governs _validity_ — expired and revoked rows still occupy the `sessions` table until something physically deletes them. Without a sweeper the table grows monotonically.
+
+A separate workspace package, `@org/jobs`, runs `purgeExpiredSessions` on an hourly cron (`Schedule.cron("0 * * * *")`, plus one eager run on boot) with the SQL:
+
+```sql
+DELETE FROM sessions
+WHERE expires_at < now()
+   OR (revoked_at IS NOT NULL AND revoked_at < now() - interval '7 days')
+```
+
+The 7-day grace on revoked rows preserves a short audit window for "did this user actually sign out before X happened?" Expired-but-not-revoked rows have no audit value and are deleted as soon as `expires_at < now()`.
+
+A Postgres transaction-scoped advisory lock (`pg_try_advisory_xact_lock`) guards the run so concurrent jobs replicas don't race on the DELETE — the lock auto-releases at transaction end, with no try/finally needed. If a second replica fires concurrently it short-circuits with `{ skipped: true }` and logs.
+
+`@org/jobs` is its own deployable. It depends on `@org/database` and owns its DELETE SQL directly — it does **not** import from `@org/server` or share the auth module's `SessionRepository`. The plan considered promoting the session domain into a shared package (so both `@org/server` and `@org/jobs` could reuse the repository), but until a second job needs the same domain, that refactor is premature; duplicating one DELETE statement is cheaper than the cross-package extraction.
+
+Out of scope here (deferred): a `Dockerfile` and a `docker-compose.yml` `jobs` service. Local dev runs the job via `pnpm jobs:dev`. Production deployment of the jobs container will be wired up alongside the server's deployment pipeline, which doesn't exist yet.
+
 ### Slonik validation actually runs
 
 A separate decision that fell out of this work: Slonik 48 stores a query's `resultParser` (StandardSchemaV1) in the query context but **does not invoke it** without an interceptor. We added `Database.ts`'s `result-parser` interceptor that runs the schema's `~standard.validate` on every row, throwing `SchemaValidationError` on issues and returning the validated/decoded value otherwise. Row schemas use `Schema.DateTimeUtcFromDate` so reads decode `Date → DateTime.Utc` directly; mappers no longer call `DateTime.unsafeFromDate`. Belt-and-suspenders typeParsers convert pg's millis-numbers to Date at the slonik layer so the schema's input contract is honored. This isn't auth-specific, but it surfaced because session timestamps were the first columns to actually round-trip the validation path.
