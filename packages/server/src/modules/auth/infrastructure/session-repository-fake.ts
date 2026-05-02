@@ -54,6 +54,34 @@ export const SessionRepositoryFake = Layer.effect(
         );
       });
 
-    return SessionRepository.of({ insert, findById, revoke });
+    // Mirrors the live impl: only updates rows where revoked_at IS NULL.
+    // A revoked or missing row fails SessionNotFound — callers on the touch
+    // path catch and ignore (benign race).
+    const update = (session: Session): Effect.Effect<void, SessionNotFound> =>
+      Effect.gen(function* () {
+        const m = yield* Ref.get(store);
+        const existing = HashMap.get(m, session.id);
+        if (Option.isNone(existing) || existing.value.revokedAt !== null) {
+          return yield* Effect.fail(new SessionNotFound({ sessionId: session.id }));
+        }
+        yield* Ref.update(store, (m2) =>
+          HashMap.set(
+            m2,
+            session.id,
+            Session.make({
+              id: existing.value.id,
+              userId: existing.value.userId,
+              subject: existing.value.subject,
+              expiresAt: session.expiresAt,
+              absoluteExpiresAt: existing.value.absoluteExpiresAt,
+              revokedAt: existing.value.revokedAt,
+              createdAt: existing.value.createdAt,
+              lastUsedAt: session.lastUsedAt,
+            }),
+          ),
+        );
+      });
+
+    return SessionRepository.of({ insert, findById, revoke, update });
   }),
 );

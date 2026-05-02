@@ -34,3 +34,30 @@ export const create = (input: CreateInput): Session =>
     createdAt: input.now,
     lastUsedAt: input.now,
   });
+
+export type TouchInput = {
+  readonly session: Session;
+  readonly now: DateTime.Utc;
+  readonly ttlSeconds: number;
+};
+
+// Sliding refresh: advance `expiresAt` to `now + ttlSeconds`, clamped to the
+// session's hard `absoluteExpiresAt` cap, and stamp `lastUsedAt`. Pure state
+// transition — the throttle decision (whether to call this at all) lives in
+// the use case, and revocation is enforced by the repository's WHERE clause.
+export const touch = (input: TouchInput): Session => {
+  const candidate = DateTime.add(input.now, { seconds: input.ttlSeconds });
+  const expiresAt = DateTime.lessThan(candidate, input.session.absoluteExpiresAt)
+    ? candidate
+    : input.session.absoluteExpiresAt;
+  return Session.make({
+    id: input.session.id,
+    userId: input.session.userId,
+    subject: input.session.subject,
+    expiresAt,
+    absoluteExpiresAt: input.session.absoluteExpiresAt,
+    revokedAt: input.session.revokedAt,
+    createdAt: input.session.createdAt,
+    lastUsedAt: input.now,
+  });
+};

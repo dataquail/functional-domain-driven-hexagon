@@ -18,7 +18,7 @@ import * as Effect from "effect/Effect";
 export const signIn = (cmd: SignInCommand): SignInOutput =>
   Effect.gen(function* () {
     const identities = yield* AuthIdentityRepository;
-    const sessions = yield* SessionRepository;
+    const repo = yield* SessionRepository;
 
     const identity = yield* identities.findBySubject(cmd.subject).pipe(
       Effect.catchTag("AuthIdentityNotFound", () =>
@@ -40,7 +40,7 @@ export const signIn = (cmd: SignInCommand): SignInOutput =>
       ttlSeconds: cmd.ttlSeconds,
       absoluteTtlSeconds: cmd.absoluteTtlSeconds,
     });
-    yield* sessions.insert(session);
+    yield* repo.insert(session);
     yield* Effect.annotateCurrentSpan("user.id", identity.userId);
     return { sessionId: id, userId: identity.userId };
   });

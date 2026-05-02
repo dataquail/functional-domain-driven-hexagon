@@ -1,7 +1,13 @@
 import { EnvVars } from "@/common/env-vars.js";
-import { FindSessionQuery, SessionId, SessionRepository } from "@/modules/auth/index.js";
+import {
+  FindSessionQuery,
+  SessionId,
+  SessionRepository,
+  TouchSessionCommand,
+} from "@/modules/auth/index.js";
 import { CookieCodec } from "@/platform/auth/cookie-codec.js";
 import { PermissionsResolver } from "@/platform/auth/permissions-resolver.js";
+import { CommandBus } from "@/platform/command-bus.js";
 import { QueryBus } from "@/platform/query-bus.js";
 import * as HttpServerRequest from "@effect/platform/HttpServerRequest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
@@ -16,6 +22,7 @@ export const UserAuthMiddlewareLive = Layer.effect(
     const env = yield* EnvVars;
     const codec = yield* CookieCodec;
     const queryBus = yield* QueryBus;
+    const commandBus = yield* CommandBus;
     const perms = yield* PermissionsResolver;
     // Resolved in outer scope so we can provide it inline below — the
     // per-request Effect must be `Provided` (HTTP request context only),
@@ -36,6 +43,19 @@ export const UserAuthMiddlewareLive = Layer.effect(
         Effect.provideService(SessionRepository, sessions),
         Effect.mapError(() => new CustomHttpApiError.Unauthorized()),
       );
+      // Sliding-TTL refresh, fire-and-forget on the request fiber. The
+      // command's own throttle decides whether to write; failures are
+      // benign races (revoked / removed mid-flight) and are swallowed by
+      // the handler so they never bubble up as a 401.
+      yield* commandBus
+        .execute(
+          TouchSessionCommand.make({
+            sessionId,
+            ttlSeconds: env.SESSION_TTL_SECONDS,
+            thresholdSeconds: env.SESSION_TOUCH_THRESHOLD_SECONDS,
+          }),
+        )
+        .pipe(Effect.provideService(SessionRepository, sessions));
       const permissions = yield* perms.get(session.userId);
       return {
         sessionId: session.id,

@@ -77,4 +77,49 @@ describe("SessionRepositoryFake", () => {
       deepStrictEqual(Exit.isFailure(exit), true);
     }).pipe(provide),
   );
+
+  it.effect("update advances expiresAt and lastUsedAt for an unrevoked session", () =>
+    Effect.gen(function* () {
+      const repo = yield* SessionRepository;
+      const seed = makeSession(idA);
+      yield* repo.insert(seed);
+      const later = DateTime.add(now, { seconds: 1800 });
+      const touched = Session.touch({ session: seed, now: later, ttlSeconds: 3600 });
+      yield* repo.update(touched);
+      const found = yield* repo.findById(idA);
+      deepStrictEqual(found.expiresAt, touched.expiresAt);
+      deepStrictEqual(found.lastUsedAt, touched.lastUsedAt);
+      deepStrictEqual(found.createdAt, seed.createdAt);
+      deepStrictEqual(found.absoluteExpiresAt, seed.absoluteExpiresAt);
+    }).pipe(provide),
+  );
+
+  it.effect("update fails SessionNotFound on a missing id", () =>
+    Effect.gen(function* () {
+      const repo = yield* SessionRepository;
+      const exit = yield* Effect.exit(repo.update(makeSession(idMissing)));
+      deepStrictEqual(Exit.isFailure(exit), true);
+      if (Exit.isFailure(exit)) {
+        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        deepStrictEqual(error instanceof SessionNotFound, true);
+      }
+    }).pipe(provide),
+  );
+
+  it.effect("update fails SessionNotFound when the session is already revoked", () =>
+    Effect.gen(function* () {
+      const repo = yield* SessionRepository;
+      const seed = makeSession(idA);
+      yield* repo.insert(seed);
+      yield* repo.revoke(idA);
+      const later = DateTime.add(now, { seconds: 1800 });
+      const touched = Session.touch({ session: seed, now: later, ttlSeconds: 3600 });
+      const exit = yield* Effect.exit(repo.update(touched));
+      deepStrictEqual(Exit.isFailure(exit), true);
+      if (Exit.isFailure(exit)) {
+        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        deepStrictEqual(error instanceof SessionNotFound, true);
+      }
+    }).pipe(provide),
+  );
 });

@@ -64,6 +64,24 @@ export const SessionRepositoryLive = Layer.effect(
       ),
     );
 
-    return SessionRepository.of({ insert, findById, revoke });
+    const update = db.makeQuery((execute, session: Session) => {
+      const row = SessionMapper.toPersistence(session);
+      return execute((client) =>
+        client.maybeOne(sql.type(RowSchemas.SessionRowStd)`
+          UPDATE sessions
+          SET expires_at = ${sql.timestamp(row.expires_at)},
+              last_used_at = ${sql.timestamp(row.last_used_at)}
+          WHERE id = ${row.id} AND revoked_at IS NULL
+          RETURNING *
+        `),
+      ).pipe(
+        orFail(() => new SessionNotFound({ sessionId: session.id })),
+        Effect.asVoid,
+        Effect.catchTag("DatabaseError", Effect.die),
+        Effect.withSpan("SessionRepository.update"),
+      );
+    });
+
+    return SessionRepository.of({ insert, findById, revoke, update });
   }),
 );

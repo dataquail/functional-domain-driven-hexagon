@@ -44,6 +44,12 @@ export class EnvVars extends Effect.Service<EnvVars>()("EnvVars", {
       SESSION_ABSOLUTE_TTL_SECONDS: yield* Config.integer("SESSION_ABSOLUTE_TTL_SECONDS").pipe(
         Config.withDefault(43200),
       ),
+      // Throttle for sliding-TTL writes: only `update` the session row when
+      // the prior `lastUsedAt` is older than this many seconds. Prevents
+      // every API call from issuing a write.
+      SESSION_TOUCH_THRESHOLD_SECONDS: yield* Config.integer(
+        "SESSION_TOUCH_THRESHOLD_SECONDS",
+      ).pipe(Config.withDefault(60)),
     } as const;
   }),
 }) {}

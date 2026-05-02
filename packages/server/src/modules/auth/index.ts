@@ -1,5 +1,6 @@
 export { authCommandHandlers } from "./commands/auth-command-handlers.js";
 export { SignInCommand } from "./commands/sign-in-command.js";
+export { TouchSessionCommand } from "./commands/touch-session-command.js";
 export { authQueryHandlers } from "./queries/auth-query-handlers.js";
 export { FindSessionQuery } from "./queries/find-session-query.js";
 

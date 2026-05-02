@@ -37,11 +37,21 @@ Logout flow: SPA navigates to `GET /auth/logout` (idempotent, public — works e
 
 ### `modules/auth/` owns Session
 
-`Session` is an aggregate, not a leaf record. Sliding TTL with an absolute cap (`SESSION_TTL_SECONDS` / `SESSION_ABSOLUTE_TTL_SECONDS`). The aggregate, repository (live + fake), the `SignIn` command, the `findSession` query, and the four endpoints (`login`, `callback`, `me`, `logout`) all live under `modules/auth/` per the existing module conventions (ADR-0002, ADR-0013). A few things sit at platform level rather than inside the module:
+`Session` is an aggregate, not a leaf record. Sliding TTL with an absolute cap (`SESSION_TTL_SECONDS` / `SESSION_ABSOLUTE_TTL_SECONDS`). The aggregate, repository (live + fake), the `SignIn` and `TouchSession` commands, the `findSession` query, and the four endpoints (`login`, `callback`, `me`, `logout`) all live under `modules/auth/` per the existing module conventions (ADR-0002, ADR-0013). A few things sit at platform level rather than inside the module:
 
 - `platform/auth/cookie-codec.ts` — generic HMAC sign/verify, used by both the auth module and the auth middleware.
 - `platform/auth/permissions-resolver.ts` — reads `users.role` and maps to `Set<Permission>`. Per-request DB lookup (cacheable later).
-- `platform/middlewares/auth-middleware-live.ts` — the real implementation behind `UserAuthMiddleware`. Reads the cookie, calls `findSession`, calls `PermissionsResolver`, hydrates `CurrentUser`. The Tag and contract are unchanged from the stub-era `Policy.ts`.
+- `platform/middlewares/auth-middleware-live.ts` — the real implementation behind `UserAuthMiddleware`. Reads the cookie, dispatches `FindSessionQuery`, dispatches `TouchSessionCommand` (sliding refresh), calls `PermissionsResolver`, hydrates `CurrentUser`. The Tag and contract are unchanged from the stub-era `Policy.ts`.
+
+### Sliding-TTL refresh via `TouchSessionCommand`
+
+Every authenticated request, after `findSession` succeeds, the middleware dispatches `TouchSessionCommand` through the command bus. The handler:
+
+- Skips the write when the prior `lastUsedAt` is younger than `SESSION_TOUCH_THRESHOLD_SECONDS` (default 60). Without this throttle, a busy SPA would hammer Postgres with one UPDATE per request for no real-world benefit.
+- Computes the new `expiresAt` via the `Session.touch` aggregate function, which clamps to `absoluteExpiresAt` so the hard cap holds.
+- Persists via `SessionRepository.update`, whose SQL `WHERE revoked_at IS NULL` guards against touching a session that was revoked between the query and the command. `SessionNotFound` failures (revoked or deleted mid-flight) are swallowed — the user already has a valid `CurrentUser` for this request, and the next request will fail cleanly.
+
+This keeps lifecycle reads (`findSession`) and writes (`TouchSessionCommand`) on opposite sides of CQRS without putting business logic in the middleware. The middleware's only knob is the env-var-derived throttle and TTL; the throttle decision and the clamp live in the command + aggregate.
 
 ### Slonik validation actually runs
 

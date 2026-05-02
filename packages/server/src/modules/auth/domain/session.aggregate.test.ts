@@ -54,3 +54,39 @@ describe("Session.create", () => {
     deepStrictEqual(DateTime.lessThan(session.expiresAt, session.absoluteExpiresAt), true);
   });
 });
+
+describe("Session.touch", () => {
+  const seed = Session.create({
+    id: sessionId,
+    userId,
+    subject: "s",
+    now,
+    ttlSeconds: 3600,
+    absoluteTtlSeconds: 43200,
+  });
+
+  it("advances expiresAt to now + ttlSeconds and updates lastUsedAt", () => {
+    const later = DateTime.add(now, { seconds: 1800 });
+    const touched = Session.touch({ session: seed, now: later, ttlSeconds: 3600 });
+    deepStrictEqual(touched.expiresAt, DateTime.add(later, { seconds: 3600 }));
+    deepStrictEqual(touched.lastUsedAt, later);
+  });
+
+  it("clamps expiresAt to absoluteExpiresAt when the new window would exceed the cap", () => {
+    const nearCap = DateTime.add(now, { seconds: 43000 });
+    const touched = Session.touch({ session: seed, now: nearCap, ttlSeconds: 3600 });
+    deepStrictEqual(touched.expiresAt, seed.absoluteExpiresAt);
+    deepStrictEqual(touched.lastUsedAt, nearCap);
+  });
+
+  it("preserves identity, ownership, subject, createdAt, absoluteExpiresAt, revokedAt", () => {
+    const later = DateTime.add(now, { seconds: 60 });
+    const touched = Session.touch({ session: seed, now: later, ttlSeconds: 3600 });
+    deepStrictEqual(touched.id, seed.id);
+    deepStrictEqual(touched.userId, seed.userId);
+    deepStrictEqual(touched.subject, seed.subject);
+    deepStrictEqual(touched.createdAt, seed.createdAt);
+    deepStrictEqual(touched.absoluteExpiresAt, seed.absoluteExpiresAt);
+    deepStrictEqual(touched.revokedAt, seed.revokedAt);
+  });
+});

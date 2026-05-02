@@ -88,4 +88,36 @@ suite("SessionRepositoryLive (integration)", () => {
       deepStrictEqual(Exit.isFailure(second), true);
     }).pipe(Effect.provide(TestLayer)),
   );
+
+  it.effect("update persists expiresAt and lastUsedAt for an unrevoked session", () =>
+    Effect.gen(function* () {
+      yield* insertUserRow;
+      const repo = yield* SessionRepository;
+      const now = yield* DateTime.now;
+      const seed = makeSession(now);
+      yield* repo.insert(seed);
+      const later = DateTime.add(now, { seconds: 1800 });
+      const touched = Session.touch({ session: seed, now: later, ttlSeconds: 3600 });
+      yield* repo.update(touched);
+      const found = yield* repo.findById(sessionId);
+      deepStrictEqual(found.expiresAt, touched.expiresAt);
+      deepStrictEqual(found.lastUsedAt, touched.lastUsedAt);
+      deepStrictEqual(found.absoluteExpiresAt, seed.absoluteExpiresAt);
+    }).pipe(Effect.provide(TestLayer)),
+  );
+
+  it.effect("update fails SessionNotFound when the row is revoked", () =>
+    Effect.gen(function* () {
+      yield* insertUserRow;
+      const repo = yield* SessionRepository;
+      const now = yield* DateTime.now;
+      const seed = makeSession(now);
+      yield* repo.insert(seed);
+      yield* repo.revoke(sessionId);
+      const later = DateTime.add(now, { seconds: 1800 });
+      const touched = Session.touch({ session: seed, now: later, ttlSeconds: 3600 });
+      const exit = yield* Effect.exit(repo.update(touched));
+      deepStrictEqual(Exit.isFailure(exit), true);
+    }).pipe(Effect.provide(TestLayer)),
+  );
 });
