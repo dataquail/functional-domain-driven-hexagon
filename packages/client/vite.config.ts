@@ -50,7 +50,6 @@ export default defineConfig({
         bypass: (req) =>
           req.headers.accept?.includes("text/html") === true ? "/index.html" : null,
       },
-      "/sse": "http://localhost:3000",
     },
   },
   // Pre-bundle the worker's heavy deps so Vite doesn't discover them only

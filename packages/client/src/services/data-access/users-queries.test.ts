@@ -51,7 +51,6 @@ const makeHarness = (overrides?: {
           },
         },
       },
-      unsafeClient: {},
     } as unknown as ApiClient),
   );
 

@@ -16,6 +16,7 @@ import { ApiClient } from "./services/common/api-client";
 import { NetworkMonitor } from "./services/common/network-monitor";
 import { QueryClient } from "./services/common/query-client";
 import { Toast } from "./services/common/toast";
+import { WebSdkLive } from "./services/common/web-sdk";
 import { type LiveManagedRuntime } from "./services/live-layer";
 import { RuntimeProvider } from "./services/runtime/runtime-provider";
 import { WorkerClient } from "./services/worker/worker-client";
@@ -58,7 +59,7 @@ const InnerProviders: React.FC = () => {
           QueryClient.make(queryClient),
           Toast.Default,
           Logger.minimumLogLevel(envVars.ENV === "dev" ? LogLevel.Debug : LogLevel.Info),
-        ).pipe(Layer.provide(Logger.pretty)),
+        ).pipe(Layer.provide(Logger.pretty), Layer.provide(WebSdkLive)),
       ),
     [queryClient],
   );
@@ -68,11 +69,6 @@ const InnerProviders: React.FC = () => {
       <ReactQueryDevtools initialIsOpen={false} />
 
       <RuntimeProvider runtime={runtime}>
-        {/*
-         * SseConnector is mounted by RootLayout *inside* AuthGuard so we
-         * don't fire /sse/connect (which 401s) before the user is signed
-         * in. See features/__root/__root.tsx.
-         */}
         <RouterProvider router={router} />
       </RuntimeProvider>
     </QueryClientProvider>

@@ -63,7 +63,6 @@ describe("useAddTodoPresenter", () => {
 
     expect(recorded.current).toHaveLength(1);
     expect(recorded.current[0]?.title).toBe("Buy milk");
-    expect(typeof recorded.current[0]?.optimisticId).toBe("string");
 
     await waitFor(() => {
       expect(result.current.form.state.values.title).toBe("");

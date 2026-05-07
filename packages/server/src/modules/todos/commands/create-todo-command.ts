@@ -1,6 +1,5 @@
 import { type TodosRepository } from "@/modules/todos/domain/todo-repository.js";
 import { type Todo } from "@/modules/todos/domain/todo.js";
-import { type TodosNotifier } from "@/modules/todos/domain/todos-notifier.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { type SpanAttributesExtractor } from "@/platform/span-attributable.js";
 import type * as Effect from "effect/Effect";
@@ -8,7 +7,6 @@ import * as Schema from "effect/Schema";
 
 export const CreateTodoCommand = Schema.TaggedStruct("CreateTodoCommand", {
   title: Schema.String,
-  optimisticId: Schema.optional(Schema.String),
   userId: UserId,
 });
 export type CreateTodoCommand = typeof CreateTodoCommand.Type;
@@ -19,7 +17,7 @@ export const createTodoCommandSpanAttributes: SpanAttributesExtractor<CreateTodo
   cmd,
 ) => ({ "user.id": cmd.userId });
 
-export type CreateTodoOutput = Effect.Effect<Todo, never, TodosRepository | TodosNotifier>;
+export type CreateTodoOutput = Effect.Effect<Todo, never, TodosRepository>;
 
 declare module "@/platform/command-bus.js" {
   interface CommandRegistry {

@@ -23,9 +23,6 @@ export class Todo extends Schema.Class<Todo>("Todo")({
 
 export class CreateTodoPayload extends Schema.Class<CreateTodoPayload>("CreateTodoPayload")({
   title: Todo.fields.title,
-  optimisticId: Schema.optional(Schema.String).annotations({
-    description: "Client-generated ID for optimistic updates",
-  }),
 }) {}
 
 export class UpdateTodoPayload extends Schema.Class<UpdateTodoPayload>("UpdateTodoPayload")({
@@ -33,26 +30,6 @@ export class UpdateTodoPayload extends Schema.Class<UpdateTodoPayload>("UpdateTo
   title: Todo.fields.title,
   completed: Todo.fields.completed,
 }) {}
-
-export namespace SseEvents {
-  export class UpsertedTodo extends Schema.TaggedClass<UpsertedTodo>("UpsertedTodo")(
-    "UpsertedTodo",
-    {
-      todo: Todo,
-      optimisticId: Schema.optional(Schema.String),
-    },
-  ) {}
-
-  export class DeletedTodo extends Schema.TaggedClass<DeletedTodo>("DeletedTodo")("DeletedTodo", {
-    id: TodoId,
-  }) {}
-
-  export const All = Schema.Union(UpsertedTodo, DeletedTodo);
-  export type All = typeof All.Type;
-
-  export const is = (event: { readonly _tag: string }): event is UpsertedTodo | DeletedTodo =>
-    event._tag === "UpsertedTodo" || event._tag === "DeletedTodo";
-}
 
 export class Group extends HttpApiGroup.make("todos")
   .middleware(UserAuthMiddleware)

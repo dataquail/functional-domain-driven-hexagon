@@ -130,32 +130,60 @@ services:
       # `postgres` because seed-zitadel shares zitadel's network namespace
       # (which is on the compose `jaeger-network`).
       APP_DATABASE_URL: ${SEED_APP_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/effect-monorepo}
+      # SMTP — Zitadel notification provider (idempotently configured by
+      # seed.mjs via /admin/v1/smtp). Local defaults target the `mailpit`
+      # service above; prod overrides via .env or the deploy platform.
+      # SMTP_DESCRIPTION is the idempotency key — keep it stable across envs.
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      # Zitadel v2.71's notification subsystem rejects SMTP configs with a
+      # nil-encrypted password as `Errors.SMTPConfig.NotFound`, so user/password
+      # must be non-empty even against Mailpit (which ignores SMTP AUTH).
+      # In prod these come from real SES/SendGrid credentials in .env.
+      SMTP_USER: ${SMTP_USER:-dev}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-dev}
+      SMTP_TLS: ${SMTP_TLS:-false}
+      SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS:-noreply@localhost}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Effect Monorepo}
+      SMTP_REPLY_TO: ${SMTP_REPLY_TO:-}
+      SMTP_DESCRIPTION: ${SMTP_DESCRIPTION:-default}
     depends_on:
       - zitadel
       - postgres
     profiles:
       - seed-zitadel
 
+  mailpit:
+    container_name: effect-monorepo-mailpit
+    # Local-only SMTP sink for Zitadel notification emails (password reset,
+    # invitation, email verification, …). Web UI at http://localhost:8025.
+    # In prod, Zitadel's SMTP provider points at SES/SendGrid/etc instead.
+    image: axllent/mailpit:latest
+    environment:
+      # Zitadel v2.71 always issues SMTP AUTH. Accept any creds so the local
+      # placeholder user/password (see seed-zitadel.SMTP_USER) is honored, and
+      # allow it without TLS since the dev relay is plaintext on :1025.
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    networks:
+      - jaeger-network
+    restart: unless-stopped
+
   jaeger:
     container_name: effect-monorepo-jaeger
-    image: jaegertracing/all-in-one:latest
-    command:
-      - "--collector.otlp.http.cors.allowed-headers=*"
-      - "--collector.otlp.http.tls.enabled=false"
+    # Jaeger v2 (OTel-Collector-based). Pinned for reproducibility; bump
+    # after checking https://github.com/jaegertracing/jaeger/releases.
+    image: jaegertracing/jaeger:2.17.0
+    command: ["--config", "/etc/jaeger/config.yaml"]
     ports:
-      - "6831:6831/udp"
-      - "6832:6832/udp"
-      - "5778:5778"
-      - "16686:16686"
-      - "4317:4317"
-      - "4318:4318"
-      - "14250:14250"
-      - "14268:14268"
-      - "14269:14269"
-      - "9411:9411"
-    environment:
-      - COLLECTOR_OTLP_ENABLED=true
-      - QUERY_BASE_PATH=/
+      - "16686:16686" # UI
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP — CORS allows browser SPA origins (see config.yaml)
+    volumes:
+      - ./infra/jaeger/config.yaml:/etc/jaeger/config.yaml:ro
     networks:
       - jaeger-network
     restart: unless-stopped

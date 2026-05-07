@@ -37,7 +37,6 @@ export const makePresenterHarness = (opts: {
     ApiClient,
     ApiClient.of({
       client: opts.apiClient,
-      unsafeClient: {},
     } as unknown as ApiClient),
   );
 

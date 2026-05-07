@@ -33,6 +33,16 @@ const dbUrl = process.env.APP_DATABASE_URL;
 // docker-compose.yml as a fallback for `ZITADEL_BOOTSTRAP_PAT`.
 const patPath = process.env.ZITADEL_BOOTSTRAP_PAT_PATH ?? "/machinekey/zitadel-bootstrap.pat";
 
+// SMTP — Zitadel notification provider config. Description is the
+// idempotency key: ensureSmtpProvider searches for an existing provider with
+// this description before deciding to create vs. update. Keep it stable
+// across environments.
+const SMTP_DESCRIPTION = process.env.SMTP_DESCRIPTION ?? "default";
+const smtpHost = process.env.SMTP_HOST;
+const smtpPort = process.env.SMTP_PORT;
+const smtpFromAddress = process.env.SMTP_FROM_ADDRESS;
+const smtpFromName = process.env.SMTP_FROM_NAME;
+
 const pat = process.env.ZITADEL_BOOTSTRAP_PAT || readPatFromFile(patPath);
 
 function readPatFromFile(path) {
@@ -77,6 +87,28 @@ If you'd rather create the service user by hand:
 
 if (!dbUrl) {
   console.error("APP_DATABASE_URL is not set.");
+  process.exit(2);
+}
+
+const missingSmtp = [
+  ["SMTP_HOST", smtpHost],
+  ["SMTP_PORT", smtpPort],
+  ["SMTP_FROM_ADDRESS", smtpFromAddress],
+  ["SMTP_FROM_NAME", smtpFromName],
+]
+  .filter(([, v]) => !v)
+  .map(([k]) => k);
+
+if (missingSmtp.length > 0) {
+  console.error(`
+The following SMTP env vars are required but unset: ${missingSmtp.join(", ")}.
+
+Local dev: defaults are wired in docker-compose.yml — if you're seeing this
+running 'pnpm auth:seed' on a fresh clone, check that compose passed the
+env through (look for the SMTP_* block under the seed-zitadel service).
+
+For other environments, see .env.example for the full list and documentation.
+`);
   process.exit(2);
 }
 
@@ -208,6 +240,53 @@ async function ensureOidcApp(projectId) {
   };
 }
 
+async function findSmtpProvider() {
+  const search = await api("/admin/v1/smtp/_search", {
+    method: "POST",
+    body: JSON.stringify({ queries: [] }),
+  });
+  return (search.result ?? []).find((p) => p.description === SMTP_DESCRIPTION);
+}
+
+async function ensureSmtpProvider() {
+  const body = {
+    description: SMTP_DESCRIPTION,
+    senderAddress: smtpFromAddress,
+    senderName: smtpFromName,
+    replyToAddress: process.env.SMTP_REPLY_TO ?? "",
+    tls: process.env.SMTP_TLS === "true",
+    host: `${smtpHost}:${smtpPort}`,
+    user: process.env.SMTP_USER ?? "",
+    password: process.env.SMTP_PASSWORD ?? "",
+  };
+
+  const existing = await findSmtpProvider();
+  if (existing) {
+    await api(`/admin/v1/smtp/${existing.id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+      // PUT with an unchanged body returns 400 "No changes" — re-running
+      // seed against an already-configured provider is the common case.
+      tolerate: { status: 400, messageIncludes: "No changes" },
+    });
+    return { id: existing.id, created: false };
+  }
+  const created = await api("/admin/v1/smtp", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  return { id: created.id, created: true };
+}
+
+async function activateSmtpProvider(id) {
+  await api(`/admin/v1/smtp/${id}/_activate`, {
+    method: "POST",
+    body: "{}",
+    // Activating the already-active provider returns a typed error.
+    tolerate: { status: 400, messageIncludes: "AlreadyActive" },
+  });
+}
+
 async function findAdminSubject() {
   const search = await api("/v2/users", {
     method: "POST",
@@ -295,6 +374,13 @@ async function ensureAdminInAppDb(subject) {
   if (!registeredPostLogout.includes(postLogoutRedirectUri)) {
     console.warn(`    WARN: ${postLogoutRedirectUri} not registered as a post-logout URI`);
   }
+
+  const smtp = await ensureSmtpProvider();
+  console.log(
+    `  smtp: ${SMTP_DESCRIPTION} (${smtp.id}) ${smtp.created ? "[created]" : "[updated]"}`,
+  );
+  await activateSmtpProvider(smtp.id);
+  console.log(`    active`);
 
   const subject = await findAdminSubject();
   console.log(`  admin sub: ${subject}`);

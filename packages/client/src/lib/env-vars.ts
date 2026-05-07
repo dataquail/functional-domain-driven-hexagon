@@ -8,6 +8,9 @@ const EnvVars = Schema.Struct({
   ENV: Schema.Literal("dev", "staging", "prod").annotations({
     decodingFallback: () => Either.right("prod" as const),
   }),
+  OTLP_URL: Schema.URL.annotations({
+    decodingFallback: () => Either.right(new URL("http://localhost:4318/v1/traces")),
+  }),
 });
 
 type EnvVarsShape = typeof EnvVars.Type;
@@ -20,6 +23,7 @@ const compute = (() => {
       {
         API_URL: import.meta.env.VITE_API_URL,
         ENV: import.meta.env.VITE_ENV,
+        OTLP_URL: import.meta.env.VITE_OTLP_URL,
       } satisfies Record<keyof typeof EnvVars.Encoded, unknown>,
       Schema.decodeUnknownEither(EnvVars),
       Either.getOrElse((parseIssue) => {
@@ -38,5 +42,8 @@ export const envVars: EnvVarsShape = {
   },
   get ENV() {
     return compute().ENV;
+  },
+  get OTLP_URL() {
+    return compute().OTLP_URL;
   },
 };
