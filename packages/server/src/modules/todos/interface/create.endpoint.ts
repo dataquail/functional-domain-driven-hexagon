@@ -12,7 +12,6 @@ export const createEndpoint = (request: EndpointRequest<typeof TodosContract.Gro
     const todo = yield* commandBus.execute(
       CreateTodoCommand.make({
         title: request.payload.title,
-        optimisticId: request.payload.optimisticId,
         userId: currentUser.userId,
       }),
     );

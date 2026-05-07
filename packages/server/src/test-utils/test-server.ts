@@ -18,8 +18,6 @@ import { PermissionsResolver } from "@/platform/auth/permissions-resolver.js";
 import { CommandBus, makeCommandBus } from "@/platform/command-bus.js";
 import { makeDomainEventBusLive } from "@/platform/domain-event-bus.js";
 import { makeQueryBus, QueryBus } from "@/platform/query-bus.js";
-import { SseHttpLive } from "@/platform/sse-http-live.js";
-import { SseManager } from "@/platform/sse-manager.js";
 import { TransactionRunnerLive } from "@/platform/transaction-runner.js";
 import { UserAuthMiddlewareFake } from "@/test-utils/fake-auth-middleware.js";
 import { TestDatabaseLive } from "@/test-utils/test-database.js";
@@ -44,18 +42,13 @@ const DomainEventBusLive = makeDomainEventBusLive({
 // them at the test runtime via `provideMerge` lets integration tests seed
 // state and assert via the production seam without leaking module-internal
 // ports (repositories) into the test runtime. The remaining services
-// (UserAuthMiddleware, DomainEventBus, TransactionRunner, SseManager) stay
-// consumed by `Layer.provide` because they're either internal infrastructure
-// (DomainEventBus, TransactionRunner) or feature-specific (auth middleware,
-// SseManager) and aren't meant to be driven directly from tests.
+// (UserAuthMiddleware, DomainEventBus, TransactionRunner) stay consumed by
+// `Layer.provide` because they're either internal infrastructure
+// (DomainEventBus, TransactionRunner) or feature-specific (auth middleware)
+// and aren't meant to be driven directly from tests.
 const ApiLive = HttpApiBuilder.api(Api).pipe(
-  Layer.provide([TodosModuleLive, SseHttpLive, UserModuleLive, WalletModuleLive, AuthModuleLive]),
-  Layer.provide([
-    UserAuthMiddlewareFake,
-    DomainEventBusLive,
-    TransactionRunnerLive,
-    SseManager.Default,
-  ]),
+  Layer.provide([TodosModuleLive, UserModuleLive, WalletModuleLive, AuthModuleLive]),
+  Layer.provide([UserAuthMiddlewareFake, DomainEventBusLive, TransactionRunnerLive]),
   // CommandBus + QueryBus must provide TO the modules above (they dispatch
   // via the buses) AND remain reachable from test runtimes — `provideMerge`
   // keeps them in the runtime context so `yield* CommandBus`/`QueryBus`

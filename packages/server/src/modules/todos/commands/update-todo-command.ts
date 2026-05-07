@@ -2,7 +2,6 @@ import { type TodoNotFound } from "@/modules/todos/domain/todo-errors.js";
 import { TodoId } from "@/modules/todos/domain/todo-id.js";
 import { type TodosRepository } from "@/modules/todos/domain/todo-repository.js";
 import { type Todo } from "@/modules/todos/domain/todo.js";
-import { type TodosNotifier } from "@/modules/todos/domain/todos-notifier.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { type SpanAttributesExtractor } from "@/platform/span-attributable.js";
 import type * as Effect from "effect/Effect";
@@ -20,7 +19,7 @@ export const updateTodoCommandSpanAttributes: SpanAttributesExtractor<UpdateTodo
   cmd,
 ) => ({ "todo.id": cmd.todoId, "todo.completed": cmd.completed, "user.id": cmd.userId });
 
-export type UpdateTodoOutput = Effect.Effect<Todo, TodoNotFound, TodosRepository | TodosNotifier>;
+export type UpdateTodoOutput = Effect.Effect<Todo, TodoNotFound, TodosRepository>;
 
 declare module "@/platform/command-bus.js" {
   interface CommandRegistry {

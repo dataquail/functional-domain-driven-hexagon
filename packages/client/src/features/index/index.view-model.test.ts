@@ -17,7 +17,6 @@ const FakeApiClient = (todos: ReadonlyArray<TodosContract.Todo>): Layer.Layer<Ap
     ApiClient,
     ApiClient.of({
       client: { todos: { get: () => Effect.succeed(todos) } },
-      unsafeClient: {},
     } as unknown as ApiClient),
   );
 

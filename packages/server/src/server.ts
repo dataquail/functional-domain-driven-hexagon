@@ -34,8 +34,6 @@ import { CommandBus, makeCommandBus } from "./platform/command-bus.js";
 import { makeDomainEventBusLive } from "./platform/domain-event-bus.js";
 import { UserAuthMiddlewareLive } from "./platform/middlewares/auth-middleware-live.js";
 import { makeQueryBus, QueryBus } from "./platform/query-bus.js";
-import { SseHttpLive } from "./platform/sse-http-live.js";
-import { SseManager } from "./platform/sse-manager.js";
 import { TransactionRunnerLive } from "./platform/transaction-runner.js";
 
 dotenv.config({
@@ -55,13 +53,8 @@ const DomainEventBusLive = makeDomainEventBusLive({
 });
 
 const ApiLive = HttpApiBuilder.api(Api).pipe(
-  Layer.provide([TodosModuleLive, SseHttpLive, UserModuleLive, WalletModuleLive, AuthModuleLive]),
-  Layer.provide([
-    UserAuthMiddlewareLive,
-    DomainEventBusLive,
-    TransactionRunnerLive,
-    SseManager.Default,
-  ]),
+  Layer.provide([TodosModuleLive, UserModuleLive, WalletModuleLive, AuthModuleLive]),
+  Layer.provide([UserAuthMiddlewareLive, DomainEventBusLive, TransactionRunnerLive]),
   // CommandBus + QueryBus must provide TO the middleware (not be its peers
   // in the array above), since UserAuthMiddlewareLive now dispatches the
   // FindSessionQuery via the bus.

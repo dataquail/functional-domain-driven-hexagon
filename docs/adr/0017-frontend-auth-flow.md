@@ -31,7 +31,7 @@ There is no mutation, no fetch, no SDK. Login and logout are both **navigations*
 
 The guard renders `useCurrentUserQuery`. If the query is pending or in error, it renders a blank surface (a `<main>` with the background color, no copy — earlier "Signing you in…" copy was misleading during logout). On error it dispatches `beginLogin` exactly once via a `redirectingRef` latch. On success it renders children.
 
-`RootLayout` wraps everything in `<AuthGuard>` and mounts `SseQueries.SseConnector` _inside_ the guard. Mounting the SSE connector at the global tree (where it used to live) opened the `/sse/connect` long-poll on every unauthenticated page load and retried every 3 seconds. Mounting it inside the guard makes it conditional on having a session, which is what we wanted all along.
+`RootLayout` wraps everything in `<AuthGuard>`.
 
 ### `ApiClient` always sends credentials
 
@@ -39,7 +39,7 @@ The guard renders `useCurrentUserQuery`. If the query is pending or in error, it
 
 ### Same-origin via Vite proxy in dev
 
-The session cookie is `SameSite=Strict`, which means the browser will not send it on cross-site requests at all. To keep the SPA same-origin with the API in dev, `vite.config.ts` proxies `/auth`, `/users`, `/todos`, `/sse` to `:3000`. The `/users` and `/todos` proxies use a `bypass` callback: when the request `Accept`s `text/html` (a real browser navigation) the proxy returns `/index.html` so Vite serves the SPA and TanStack Router takes over. When the request is a JSON fetch from the SPA, the proxy forwards to the API. Without that, `page.goto("/users")` from Playwright (or a manual page refresh on `/users`) hits the API and renders the JSON 400 instead of the form.
+The session cookie is `SameSite=Strict`, which means the browser will not send it on cross-site requests at all. To keep the SPA same-origin with the API in dev, `vite.config.ts` proxies `/auth`, `/users`, `/todos` to `:3000`. The `/users` and `/todos` proxies use a `bypass` callback: when the request `Accept`s `text/html` (a real browser navigation) the proxy returns `/index.html` so Vite serves the SPA and TanStack Router takes over. When the request is a JSON fetch from the SPA, the proxy forwards to the API. Without that, `page.goto("/users")` from Playwright (or a manual page refresh on `/users`) hits the API and renders the JSON 400 instead of the form.
 
 ### What the SPA does **not** own
 
@@ -67,7 +67,6 @@ The session cookie is `SameSite=Strict`, which means the browser will not send i
 - **`oidc-client-ts` in the SPA.** Standard token-in-browser approach. Rejected — defeats the BFF (ADR-0016). Also doubles the surface area: the SPA would need to hold + refresh tokens, the server would still need to verify them on every request, and the cookie story collapses.
 - **A `useLogoutMutation` that POSTs `/auth/logout` then redirects.** Original design. Rejected after we hit the orphan-refetch toast problem described above. The replacement — a plain navigation — is simpler and removes the failure mode entirely.
 - **Render "Signing you in…" copy in the guard's pending/error states.** Initially shipped. Rejected after the user pointed out that it shows briefly during _logout_, which is the opposite of what's happening. A blank surface is honest.
-- **Mount `SseConnector` globally and let it handle 401s gracefully.** The original layout. Rejected: it retried every 3 seconds on every unauthenticated page-load, served no purpose without a session, and produced confusing console errors. Mounting inside `AuthGuard` is one line of code and removes the entire class of issue.
 - **Skip the SameSite=Strict cookie and rely on CORS+credentials.** Considered to make cross-site deep links seamless. Rejected: SameSite is a real defense layer on top of CSRF tokens, and the deep-link cost is small. Also: the same-origin proxy is needed for cookie scoping anyway.
 
 ## Related

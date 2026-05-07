@@ -120,7 +120,7 @@ After `pnpm bootstrap`:
 
 ```sh
 pnpm --filter @org/server dev    # API on :3000
-pnpm --filter @org/client dev    # SPA on :5173, proxies /auth /users /todos /sse to :3000
+pnpm --filter @org/client dev    # SPA on :5173, proxies /auth /users /todos to :3000
 ```
 
 Sign in at [http://localhost:5173/auth/login](http://localhost:5173/auth/login) using the credentials in `.env` (`ZITADEL_ADMIN_EMAIL` / `ZITADEL_ADMIN_PASSWORD`). The first successful login walks through Zitadel's hosted UI; subsequent logins ride the Zitadel SSO cookie and feel near-silent.

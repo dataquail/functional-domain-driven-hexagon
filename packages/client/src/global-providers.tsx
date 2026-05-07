@@ -69,11 +69,6 @@ const InnerProviders: React.FC = () => {
       <ReactQueryDevtools initialIsOpen={false} />
 
       <RuntimeProvider runtime={runtime}>
-        {/*
-         * SseConnector is mounted by RootLayout *inside* AuthGuard so we
-         * don't fire /sse/connect (which 401s) before the user is signed
-         * in. See features/__root/__root.tsx.
-         */}
         <RouterProvider router={router} />
       </RuntimeProvider>
     </QueryClientProvider>

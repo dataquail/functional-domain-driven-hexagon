@@ -5,7 +5,6 @@ import * as HttpClient from "@effect/platform/HttpClient";
 import { DomainApi } from "@org/contracts/DomainApi";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as UnsafeHttpApiClient from "./unsafe-http-api-client";
 
 // Always send cookies with API requests. Required so the BFF session
 // cookie travels with every call. Same-origin requests would also send
@@ -22,11 +21,6 @@ export class ApiClient extends Effect.Service<ApiClient>()("ApiClient", {
   effect: Effect.gen(function* () {
     return {
       client: yield* HttpApiClient.make(DomainApi, {
-        baseUrl: envVars.API_URL.toString(),
-        transformClient: (client) => client.pipe(HttpClient.retryTransient({ times: 3 })),
-      }),
-
-      unsafeClient: yield* UnsafeHttpApiClient.make(DomainApi, {
         baseUrl: envVars.API_URL.toString(),
         transformClient: (client) => client.pipe(HttpClient.retryTransient({ times: 3 })),
       }),
