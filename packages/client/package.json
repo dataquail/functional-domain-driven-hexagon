@@ -60,7 +60,7 @@
     "@storybook/addon-docs": "^10.3.6",
     "@storybook/addon-themes": "^10.3.6",
     "@storybook/react-vite": "^10.3.6",
-    "@tailwindcss/vite": "4.0.4",
+    "@tailwindcss/vite": "4.2.4",
     "@tanstack/router-devtools": "^1.166.13",
     "@tanstack/router-plugin": "^1.167.29",
     "@testing-library/jest-dom": "^6.9.1",
