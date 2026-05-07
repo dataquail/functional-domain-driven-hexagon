@@ -57,7 +57,7 @@
     }
   },
   "devDependencies": {
-    "@types/cookie": "^0.6.0",
+    "@types/cookie": "^1.0.0",
     "@types/pg": "^8.11.11",
     "dotenv": "^16.4.7",
     "madge": "^8.0.0",
