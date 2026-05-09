@@ -182,12 +182,99 @@ module.exports = {
       from: { path: "^packages/server/src/modules/[^/]+/infrastructure/" },
       to: { path: "^packages/server/src/modules/[^/]+/interface/" },
     },
-    // ── Client rules (ADR-0014) ────────────────────────────────────────
-    // The view-tiering / component-library rules from packages/client/
-    // (ADR-0014, ADR-0015) need re-translation to the packages/web/
-    // layout (top-level features/, components/, lib/, services/ — no
-    // src/ wrapper, plus client/server file naming for Next conventions).
-    // Tracked as a Phase 6 cutover follow-up; see migration plan.
+    // ── Web rules (ADR-0014, ADR-0015) ─────────────────────────────────
+    // View-tiering and component-library guarantees, ported from the
+    // pre-Next SPA (`packages/client/src/`) to the Next App Router
+    // layout (`packages/web/`, no `src/` wrapper, `app/` framework
+    // surface added). Run via the second pass in `lint:deps` against
+    // `tsconfig.depcruise-web.json`.
+    {
+      name: "web-tanstack-allowlist",
+      severity: "error",
+      comment:
+        "TanStack Query (@tanstack/react-query, @tanstack/query-core) may only be imported by services/data-access/, services/common/query-client.ts, services/runtime.client.tsx, lib/tanstack-query/, lib/query-client.{shared,server}.ts, and the App Router prefetch surface (app/providers.tsx + app/**/page.tsx — these legitimately need dehydrate/HydrationBoundary). Test/story files exempted. See ADR-0014.",
+      from: {
+        path: "^packages/web/",
+        pathNot: [
+          "^packages/web/services/data-access/",
+          "^packages/web/services/common/query-client\\.ts$",
+          "^packages/web/services/runtime\\.client\\.tsx$",
+          "^packages/web/lib/tanstack-query/",
+          "^packages/web/lib/query-client\\.(shared|server)\\.ts$",
+          "^packages/web/app/providers\\.tsx$",
+          "^packages/web/app/.*/page\\.tsx$",
+          "\\.(stories|test|spec)\\.(ts|tsx)$",
+        ],
+      },
+      to: { path: "/node_modules/@tanstack/(react-query|query-core)/" },
+    },
+    {
+      name: "web-component-no-effect-runtime",
+      severity: "error",
+      comment:
+        "Components in features/ may not import Effect runtime primitives. Reaching for Effect/Stream/Fiber/Ref/SubscriptionRef/Layer/Scope/Runtime/ManagedRuntime/Cause/Exit/Match means extracting to a presenter (*.presenter.{ts,tsx}) or view-model (*.view-model.ts). Allowed effect modules in components: Schema, Function, Either, Option, Predicate, Duration. App Router files (app/) are framework-coupled and exempt. See ADR-0014.",
+      from: {
+        path: "^packages/web/features/.*\\.tsx$",
+        pathNot: [
+          "^packages/web/features/.*\\.presenter\\.tsx$",
+          "\\.(stories|test|spec)\\.(ts|tsx)$",
+        ],
+      },
+      to: {
+        path: "/node_modules/effect/.*/(Effect|Stream|Fiber|Ref|SubscriptionRef|Layer|Scope|Runtime|ManagedRuntime|Cause|Exit|Match)\\.",
+      },
+    },
+    {
+      name: "web-react-form-presenter-only",
+      severity: "error",
+      comment:
+        "React-coupled form libraries (@tanstack/react-form, react-hook-form) may only be imported by *.presenter.{ts,tsx} files in features/ and shared form helpers in lib/tanstack-query/. Importing useForm directly from a feature component is the ADR-0014 violation that triggered this rule — extract the form orchestration to a sibling presenter and consume the returned form instance from JSX. Test files exempted.",
+      from: {
+        path: "^packages/web/",
+        pathNot: [
+          "^packages/web/features/.*\\.presenter\\.(ts|tsx)$",
+          "^packages/web/lib/tanstack-query/",
+          "\\.(stories|test|spec)\\.(ts|tsx)$",
+        ],
+      },
+      to: { path: "/node_modules/(@tanstack/react-form|react-hook-form)/" },
+    },
+    {
+      name: "web-primitives-only-touch-ui-libs",
+      severity: "error",
+      comment:
+        "Third-party visual libraries (@radix-ui/*, lucide-react, recharts, sonner) may only be imported from components/primitives/. Patterns and features consume them via the primitives layer so the third-party prop surface stays encapsulated. Class-name utilities (clsx, tailwind-merge, class-variance-authority) are not subject to this rule. The Toast service (services/common/toast.ts) is the imperative sonner adapter; everything else triggers toasts via the Toast service. Test files exempted. See ADR-0015.",
+      from: {
+        path: "^packages/web/",
+        pathNot: [
+          "^packages/web/components/primitives/",
+          "^packages/web/services/common/toast\\.ts$",
+          "\\.(stories|test|spec)\\.(ts|tsx)$",
+        ],
+      },
+      to: { path: "/node_modules/(@radix-ui/|lucide-react/|recharts/|sonner/)" },
+    },
+    {
+      name: "web-patterns-no-features",
+      severity: "error",
+      comment:
+        "components/patterns/ may not import from features/. The dependency direction is features → patterns → primitives, never reversed. See ADR-0015.",
+      from: { path: "^packages/web/components/patterns/" },
+      to: { path: "^packages/web/features/" },
+    },
+    {
+      name: "web-view-model-no-react",
+      severity: "error",
+      comment:
+        "ViewModels (*.view-model.ts) are framework-agnostic. They may not import react, react-dom, or any React-coupled package (@tanstack/react-*, react-hook-form, etc.). If you need React or a React-coupled library, use a presenter instead. See ADR-0014.",
+      from: {
+        path: "^packages/web/features/.*\\.view-model\\.ts$",
+        pathNot: "\\.(stories|test|spec)\\.(ts|tsx)$",
+      },
+      to: {
+        path: "/node_modules/(react|react-dom|@tanstack/react-|react-hook-form)",
+      },
+    },
     {
       name: "no-circular",
       severity: "error",

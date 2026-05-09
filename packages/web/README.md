@@ -12,11 +12,10 @@ Next.js (App Router) renderer for the template. See [ADR-0018](../../docs/adr/00
 
 Routes mirror the existing SPA URLs:
 
-| URL              | File                                                                                                           | Auth     |
-| ---------------- | -------------------------------------------------------------------------------------------------------------- | -------- |
-| `/`              | [app/(authed)/page.tsx](<./app/(authed)/page.tsx>) — Tasks (placeholder; later port pulls index/ feature in)   | required |
-| `/users`         | [app/(authed)/users/page.tsx](<./app/(authed)/users/page.tsx>) — Users list, server-prefetched + suspense-read | required |
-| `/prefetch-demo` | [app/prefetch-demo/page.tsx](./app/prefetch-demo/page.tsx) — Phase 2 smoke test (constant Effect)              | none     |
+| URL      | File                                                                                                           | Auth     |
+| -------- | -------------------------------------------------------------------------------------------------------------- | -------- |
+| `/`      | [app/(authed)/page.tsx](<./app/(authed)/page.tsx>) — Tasks (placeholder; later port pulls index/ feature in)   | required |
+| `/users` | [app/(authed)/users/page.tsx](<./app/(authed)/users/page.tsx>) — Users list, server-prefetched + suspense-read | required |
 
 The `(authed)` route group attaches a server-side auth guard ([app/(authed)/layout.tsx](<./app/(authed)/layout.tsx>)) that calls `/auth/me` via the BFF and `redirect()`s to `/api/auth/login` on 401 — no flicker, no client-side guard. Nav lives in [features/\_\_root/nav.tsx](./features/__root/nav.tsx) as a server component using `next/link`; sign-out is a plain `<a href="/api/auth/logout">` (the BFF's logout endpoint is GET-idempotent per ADR-0017).
 

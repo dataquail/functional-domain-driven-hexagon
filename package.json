@@ -21,7 +21,7 @@
     "check:all": "pnpm lint && pnpm lint:deps && pnpm lint:tests && pnpm check && pnpm test",
     "lint": "eslint \"**/{src,test,examples,dtslint}/**/*.{ts,mjs,tsx}\" \"packages/web/{app,components,features,lib,services}/**/*.{ts,tsx}\" \"packages/web/{instrumentation,next.config}.ts\" \"packages/acceptance/{specs,drivers,test-utils,setup}/**/*.{ts,tsx}\" \"packages/acceptance/{playwright.config,global-setup}.ts\" --quiet",
     "lint:fix": "pnpm lint --fix",
-    "lint:deps": "depcruise --config .dependency-cruiser.cjs packages/server/src packages/contracts/src packages/jobs/src",
+    "lint:deps": "depcruise --config .dependency-cruiser.cjs packages/server/src packages/contracts/src packages/jobs/src && depcruise --config .dependency-cruiser.cjs --ts-config tsconfig.depcruise-web.json packages/web",
     "lint:tests": "node scripts/check-test-parity.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
