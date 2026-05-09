@@ -79,11 +79,30 @@ const rules = [
     subject: "packages/server/src/modules/*/infrastructure/*-repository-live.ts",
     candidates: [(f) => f.replace(/-repository-live\.ts$/, "-repository-fake.ts")],
   },
-  // ── Frontend (ADR-0014, ADR-0015) ────────────────────────────────────
-  // The view-tiering and component-library parity rules need
-  // re-translation to packages/web/'s top-level layout (features/,
-  // components/, lib/, services/ — no src/ wrapper). Tracked as a
-  // Phase 6 cutover follow-up; see migration plan.
+  // ── Web (ADR-0014) ───────────────────────────────────────────────────
+  // View-tiering parity for packages/web/. Storybook-story parity for
+  // components/{primitives,patterns}/ parks behind the Storybook port
+  // (Phase 6 follow-up F3) — adding it before stories exist would fail
+  // the gate.
+  {
+    label: "ViewModel",
+    requirement: "sibling test",
+    subject: "packages/web/features/**/*.view-model.ts",
+    candidates: [(f) => f.replace(/\.view-model\.ts$/, ".view-model.test.ts")],
+  },
+  {
+    label: "Presenter",
+    requirement: "sibling test",
+    subject: "packages/web/features/**/*.presenter.{ts,tsx}",
+    // Test extension is independent of the presenter's: a presenter that only
+    // exports a hook is fine to test from `.test.ts`; one that exports JSX
+    // (provider, wrapper) or wants to render its hook through a JSX wrapper
+    // typically picks `.test.tsx`. Either satisfies the parity rule.
+    candidates: [
+      (f) => f.replace(/\.presenter\.tsx?$/, ".presenter.test.ts"),
+      (f) => f.replace(/\.presenter\.tsx?$/, ".presenter.test.tsx"),
+    ],
+  },
 ];
 
 let missing = 0;

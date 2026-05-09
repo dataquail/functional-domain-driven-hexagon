@@ -192,7 +192,7 @@ module.exports = {
       name: "web-tanstack-allowlist",
       severity: "error",
       comment:
-        "TanStack Query (@tanstack/react-query, @tanstack/query-core) may only be imported by services/data-access/, services/common/query-client.ts, services/runtime.client.tsx, lib/tanstack-query/, lib/query-client.{shared,server}.ts, and the App Router prefetch surface (app/providers.tsx + app/**/page.tsx — these legitimately need dehydrate/HydrationBoundary). Test/story files exempted. See ADR-0014.",
+        "TanStack Query (@tanstack/react-query, @tanstack/query-core) may only be imported by services/data-access/, services/common/query-client.ts, services/runtime.client.tsx, lib/tanstack-query/, lib/query-client.{shared,server}.ts, the App Router prefetch surface (app/providers.tsx + app/**/page.tsx — these legitimately need dehydrate/HydrationBoundary), and shared test helpers in test/. Test/story files exempted. See ADR-0014.",
       from: {
         path: "^packages/web/",
         pathNot: [
@@ -203,6 +203,7 @@ module.exports = {
           "^packages/web/lib/query-client\\.(shared|server)\\.ts$",
           "^packages/web/app/providers\\.tsx$",
           "^packages/web/app/.*/page\\.tsx$",
+          "^packages/web/test/",
           "\\.(stories|test|spec)\\.(ts|tsx)$",
         ],
       },

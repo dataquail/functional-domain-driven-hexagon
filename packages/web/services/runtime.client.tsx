@@ -42,7 +42,11 @@ export type ClientManagedRuntime = ManagedRuntime.ManagedRuntime<
 
 export type ClientRuntimeContext = ManagedRuntime.ManagedRuntime.Context<ClientManagedRuntime>;
 
-const RuntimeContext = React.createContext<ClientManagedRuntime | null>(null);
+// Exported so test harnesses can mount a substitute runtime (e.g.
+// a FakeApiClient + RecordingToast layer) without going through the
+// prod-shape `RuntimeProvider`. App code should keep using
+// `RuntimeProvider`; only test code reaches for the raw context.
+export const RuntimeContext = React.createContext<ClientManagedRuntime | null>(null);
 
 export const RuntimeProvider: React.FC<{
   children: React.ReactNode;
