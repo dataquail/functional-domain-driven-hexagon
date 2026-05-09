@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@/components/primitives/button";
-import { Form } from "@/components/primitives/form";
-import { PlusIcon } from "@/components/primitives/icon";
-import { Input } from "@/components/primitives/input";
+import { Button } from "@org/components/primitives/button";
+import { Form } from "@org/components/primitives/form";
+import { PlusIcon } from "@org/components/primitives/icon";
+import { Input } from "@org/components/primitives/input";
 import { useAddTodoPresenter } from "./add-todo.presenter";
 
 export const AddTodo: React.FC = () => {

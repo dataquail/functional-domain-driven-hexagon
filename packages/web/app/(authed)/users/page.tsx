@@ -1,13 +1,13 @@
 // Users index. Phase 6 cutover wires the full mutation surface
 // (CreateUser presenter) on top of the Phase 4 read-side prefetch.
 
-import { Card } from "@/components/primitives/card";
-import { Skeleton } from "@/components/primitives/skeleton";
 import { CreateUser } from "@/features/users/create-user/create-user";
 import { UserList } from "@/features/users/user-list";
 import { getQueryClient } from "@/lib/query-client.server";
 import { prefetchEffectQuery } from "@/lib/tanstack-query/effect-prefetch.server";
 import { usersQuery, usersQueryKey } from "@/services/data-access/users-queries";
+import { Card } from "@org/components/primitives/card";
+import { Skeleton } from "@org/components/primitives/skeleton";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import React from "react";
 

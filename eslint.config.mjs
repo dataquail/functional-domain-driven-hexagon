@@ -313,7 +313,7 @@ export default [
     },
   },
   {
-    files: ["packages/web/**/*.{ts,tsx,js,jsx}"],
+    files: ["packages/web/**/*.{ts,tsx,js,jsx}", "packages/components/**/*.{ts,tsx,js,jsx}"],
     rules: {
       "react/function-component-definition": [
         "warn",
@@ -367,18 +367,33 @@ export default [
     // ADR-0015: features and patterns must consume the bespoke component library.
     // Forbid raw HTML elements that already have a primitive equivalent.
     // The forbid-list grows as new primitives are added.
-    files: ["packages/web/features/**/*.tsx", "packages/web/components/patterns/**/*.tsx"],
+    files: ["packages/web/features/**/*.tsx", "packages/components/patterns/**/*.tsx"],
     ignores: ["**/*.test.tsx", "**/*.spec.tsx", "**/*.stories.tsx"],
     rules: {
       "react/forbid-elements": [
         "error",
         {
           forbid: [
-            { element: "button", message: "Use <Button> from @/components/primitives instead." },
-            { element: "input", message: "Use <Input> from @/components/primitives instead." },
-            { element: "label", message: "Use <Label> from @/components/primitives instead." },
-            { element: "select", message: "Use <Select> from @/components/primitives instead." },
-            { element: "form", message: "Use <Form> from @/components/primitives instead." },
+            {
+              element: "button",
+              message: "Use <Button> from @org/components/primitives/button instead.",
+            },
+            {
+              element: "input",
+              message: "Use <Input> from @org/components/primitives/input instead.",
+            },
+            {
+              element: "label",
+              message: "Use <Label> from @org/components/primitives/label instead.",
+            },
+            {
+              element: "select",
+              message: "Use <Select> from @org/components/primitives/select instead.",
+            },
+            {
+              element: "form",
+              message: "Use <Form> from @org/components/primitives/form instead.",
+            },
           ],
         },
       ],

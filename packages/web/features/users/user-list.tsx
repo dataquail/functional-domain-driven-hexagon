@@ -12,10 +12,10 @@
 //   - There's no `isFetching`-disabled state on the buttons because
 //     suspense handles the in-flight UX above us.
 
-import { Badge } from "@/components/primitives/badge";
-import { Button } from "@/components/primitives/button";
-import { ChevronLeftIcon, ChevronRightIcon } from "@/components/primitives/icon";
 import { useUsersSuspenseQuery } from "@/services/data-access/use-users-queries";
+import { Badge } from "@org/components/primitives/badge";
+import { Button } from "@org/components/primitives/button";
+import { ChevronLeftIcon, ChevronRightIcon } from "@org/components/primitives/icon";
 import * as Array from "effect/Array";
 import * as React from "react";
 

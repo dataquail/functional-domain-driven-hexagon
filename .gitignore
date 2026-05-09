@@ -17,8 +17,8 @@ scratchpad/*
 .env.test.local
 .env.production.local
 
-# Client
-stats.html
+# Storybook (per-build static output)
+storybook-static/
 
 # Acceptance (Playwright)
 test-results/

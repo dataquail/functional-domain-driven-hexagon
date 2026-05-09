@@ -21,6 +21,7 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: /^@\/(.*)$/, replacement: path.join(__dirname, "./$1") },
+      { find: /^@org\/components\/(.*)$/, replacement: path.join(__dirname, "../components/$1") },
       {
         find: /^@org\/contracts$/,
         replacement: path.join(__dirname, "../contracts/build/esm/index.js"),

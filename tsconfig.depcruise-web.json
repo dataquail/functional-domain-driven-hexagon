@@ -3,6 +3,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./packages/web/*"],
+      "@org/components/*": ["./packages/components/*"],
       "@org/contracts": ["./packages/contracts/src/index.js"],
       "@org/contracts/*": ["./packages/contracts/src/*.js"]
     },

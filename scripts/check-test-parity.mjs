@@ -80,10 +80,8 @@ const rules = [
     candidates: [(f) => f.replace(/-repository-live\.ts$/, "-repository-fake.ts")],
   },
   // ── Web (ADR-0014) ───────────────────────────────────────────────────
-  // View-tiering parity for packages/web/. Storybook-story parity for
-  // components/{primitives,patterns}/ parks behind the Storybook port
-  // (Phase 6 follow-up F3) — adding it before stories exist would fail
-  // the gate.
+  // View-tiering parity for packages/web/. Component-library parity
+  // (Storybook stories) lives in @org/components — see below.
   {
     label: "ViewModel",
     requirement: "sibling test",
@@ -102,6 +100,24 @@ const rules = [
       (f) => f.replace(/\.presenter\.tsx?$/, ".presenter.test.ts"),
       (f) => f.replace(/\.presenter\.tsx?$/, ".presenter.test.tsx"),
     ],
+  },
+  // ── @org/components (ADR-0015) ──────────────────────────────────────
+  // Every primitive and pattern needs a Storybook story so the
+  // component library has a single navigable surface. Re-exports from
+  // index.ts and the icon registry (icons.ts) are not subjects.
+  {
+    label: "Primitive component",
+    requirement: "sibling Storybook story",
+    subject: "packages/components/primitives/**/*.tsx",
+    ignore: ["**/*.stories.tsx", "**/*.test.tsx", "**/index.tsx"],
+    candidates: [(f) => f.replace(/\.tsx$/, ".stories.tsx")],
+  },
+  {
+    label: "Pattern component",
+    requirement: "sibling Storybook story",
+    subject: "packages/components/patterns/**/*.tsx",
+    ignore: ["**/*.stories.tsx", "**/*.test.tsx", "**/index.tsx"],
+    candidates: [(f) => f.replace(/\.tsx$/, ".stories.tsx")],
   },
 ];
 

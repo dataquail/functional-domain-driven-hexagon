@@ -3,13 +3,13 @@
 // prefetch. Worker actions (filter, primes) from the SPA's view-model
 // are intentionally not ported — academic for a template repo.
 
-import { Card } from "@/components/primitives/card";
-import { Skeleton } from "@/components/primitives/skeleton";
 import { AddTodo } from "@/features/index/add-todo/add-todo";
 import { TodoList } from "@/features/index/todo-list";
 import { getQueryClient } from "@/lib/query-client.server";
 import { prefetchEffectQuery } from "@/lib/tanstack-query/effect-prefetch.server";
 import { todosQuery, todosQueryKey } from "@/services/data-access/todos-queries";
+import { Card } from "@org/components/primitives/card";
+import { Skeleton } from "@org/components/primitives/skeleton";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import React from "react";
 

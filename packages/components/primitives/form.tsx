@@ -1,6 +1,6 @@
-import { cn } from "@/lib/utils/cn";
 import * as String from "effect/String";
 import React from "react";
+import { cn } from "../lib/utils/cn";
 import { Input } from "./input";
 import { Label } from "./label";
 import { Select } from "./select";

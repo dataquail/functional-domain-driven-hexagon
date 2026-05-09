@@ -241,27 +241,52 @@ module.exports = {
       to: { path: "/node_modules/(@tanstack/react-form|react-hook-form)/" },
     },
     {
-      name: "web-primitives-only-touch-ui-libs",
+      name: "web-ui-libs-only-in-components-or-toast",
       severity: "error",
       comment:
-        "Third-party visual libraries (@radix-ui/*, lucide-react, recharts, sonner) may only be imported from components/primitives/. Patterns and features consume them via the primitives layer so the third-party prop surface stays encapsulated. Class-name utilities (clsx, tailwind-merge, class-variance-authority) are not subject to this rule. The Toast service (services/common/toast.ts) is the imperative sonner adapter; everything else triggers toasts via the Toast service. Test files exempted. See ADR-0015.",
+        "Third-party visual libraries (@radix-ui/*, lucide-react, recharts, sonner) live with the bespoke component library in @org/components. Web code may not import them directly — consume the wrapped primitive instead. Sole exception: services/common/toast.ts is the imperative sonner adapter and dispatches Effect Toast calls to the sonner runtime. Test files exempted. See ADR-0015.",
       from: {
         path: "^packages/web/",
         pathNot: [
-          "^packages/web/components/primitives/",
           "^packages/web/services/common/toast\\.ts$",
           "\\.(stories|test|spec)\\.(ts|tsx)$",
         ],
       },
       to: { path: "/node_modules/(@radix-ui/|lucide-react/|recharts/|sonner/)" },
     },
+    // ── @org/components rules (ADR-0015) ───────────────────────────────
+    // Run via the same web depcruise pass — `tsconfig.depcruise-web.json`
+    // resolves both `@/*` (web) and `@org/components/*` (components),
+    // so cross-package edges show up in the cruise.
     {
-      name: "web-patterns-no-features",
+      name: "components-primitives-only-touch-ui-libs",
       severity: "error",
       comment:
-        "components/patterns/ may not import from features/. The dependency direction is features → patterns → primitives, never reversed. See ADR-0015.",
-      from: { path: "^packages/web/components/patterns/" },
-      to: { path: "^packages/web/features/" },
+        "Third-party visual libraries (@radix-ui/*, lucide-react, recharts, sonner) may only be imported from packages/components/primitives/. Patterns consume them via the primitives layer so the third-party prop surface stays encapsulated. Class-name utilities (clsx, tailwind-merge, class-variance-authority) are not subject to this rule. Test/story files exempted. See ADR-0015.",
+      from: {
+        path: "^packages/components/",
+        pathNot: ["^packages/components/primitives/", "\\.(stories|test|spec)\\.(ts|tsx)$"],
+      },
+      to: { path: "/node_modules/(@radix-ui/|lucide-react/|recharts/|sonner/)" },
+    },
+    {
+      name: "components-patterns-no-features",
+      severity: "error",
+      comment:
+        "@org/components/patterns/ may not import from any feature tree. The dependency direction is features → patterns → primitives, never reversed; @org/components must not depend on @org/web at all. See ADR-0015.",
+      from: { path: "^packages/components/patterns/" },
+      to: { path: "^packages/web/features/|^@org/web/" },
+    },
+    {
+      name: "components-no-web-dep",
+      severity: "error",
+      comment:
+        "@org/components is a leaf workspace package. It must not import @org/web (or anything under packages/web/) — components are consumed by web, not the reverse. Class-name utilities live inside the package (lib/utils/cn.ts). Test/story files exempted.",
+      from: {
+        path: "^packages/components/",
+        pathNot: "\\.(stories|test|spec)\\.(ts|tsx)$",
+      },
+      to: { path: "^packages/web/|^@org/web($|/)" },
     },
     {
       name: "web-view-model-no-react",
@@ -295,7 +320,8 @@ module.exports = {
     },
   ],
   options: {
-    doNotFollow: { path: "node_modules" },
+    doNotFollow: { path: "node_modules|storybook-static|\\.next" },
+    exclude: { path: "storybook-static|\\.next" },
     tsPreCompilationDeps: true,
     tsConfig: { fileName: "tsconfig.depcruise.json" },
     enhancedResolveOptions: {

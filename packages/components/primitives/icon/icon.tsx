@@ -1,6 +1,6 @@
-import { cn } from "@/lib/utils/cn";
 import type { LucideIcon } from "lucide-react";
 import * as React from "react";
+import { cn } from "../../lib/utils/cn";
 
 export type IconSize = "sm" | "md" | "lg";
 export type IconTone = "default" | "muted" | "destructive" | "inherit";

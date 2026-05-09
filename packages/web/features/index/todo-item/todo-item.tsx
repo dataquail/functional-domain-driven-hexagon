@@ -1,13 +1,13 @@
 "use client";
 
-import { Button } from "@/components/primitives/button";
-import { Checkbox } from "@/components/primitives/checkbox";
-import { TrashIcon } from "@/components/primitives/icon";
-import { Label } from "@/components/primitives/label";
 import {
   useDeleteTodoMutation,
   useUpdateTodoMutation,
 } from "@/services/data-access/use-todos-queries";
+import { Button } from "@org/components/primitives/button";
+import { Checkbox } from "@org/components/primitives/checkbox";
+import { TrashIcon } from "@org/components/primitives/icon";
+import { Label } from "@org/components/primitives/label";
 import type { TodosContract } from "@org/contracts/api/Contracts";
 
 export const TodoItem: React.FC<{ todo: TodosContract.Todo }> = ({ todo }) => {

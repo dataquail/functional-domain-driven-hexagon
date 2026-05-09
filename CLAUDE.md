@@ -63,7 +63,7 @@ The frontend is a Next.js (App Router) renderer that proxies `/api/*` to the Eff
 
 - `app/` — Next file-based routes. `(authed)/` is the route group for protected pages (server-side guard in `(authed)/layout.tsx` calls `/auth/me`, `redirect()`s on 401). `app/providers.tsx` wires `ThemeProvider → QueryClientProvider → RuntimeProvider → Toaster`.
 - `features/` — feature-shaped components and presenters (no `src/` wrapper).
-- `components/{primitives,patterns}/` — bespoke component library. Same primitives → patterns → features direction as before.
+- Bespoke component library lives in a sibling workspace package — `@org/components` (`packages/components/`). Web imports primitives via `@org/components/primitives/<name>`. Storybook is hosted there too. Same primitives → patterns → features direction as before; the only thing that changed is the package boundary.
 - `services/` — runtime, ApiClient, data-access. Files split by environment when behavior differs:
   - `*.shared.ts` — environment-agnostic (e.g. the shared `ApiClient` `Context.Tag`).
   - `*.server.ts` — server-only (`import "server-only"`; reads cookies via `next/headers`).
@@ -75,9 +75,9 @@ The frontend is a Next.js (App Router) renderer that proxies `/api/*` to the Eff
 
 **Data fetching default** (ADR-0018): each route's `page.tsx` runs `prefetchEffectQuery` server-side, dehydrates the cache into `<HydrationBoundary>`, and the leaf component reads via `useEffectSuspenseQuery`. Plain `useQuery` is allowed only for client-only side data (search-as-you-type, polling). Mutations stay client-side via `useEffectMutation`.
 
-**View tiering** (ADR-0014, unchanged): naked component → `*.presenter.{ts,tsx}` (React-coupled libraries: TanStack Form, react-hook-form, etc.) → `*.view-model.ts` (pure Effect, framework-agnostic). Components in `features/` may not import Effect runtime primitives or `@tanstack/react-query` directly. The dep-cruiser and `lint:tests` parity rules that previously enforced this on `packages/client/` need re-translation to `packages/web/`'s top-level layout — tracked as a Phase 6 cutover follow-up.
+**View tiering** (ADR-0014): naked component → `*.presenter.{ts,tsx}` (React-coupled libraries: TanStack Form, react-hook-form, etc.) → `*.view-model.ts` (pure Effect, framework-agnostic). Components in `features/` may not import Effect runtime primitives or `@tanstack/react-query` directly. Enforced by the `web-*` rules in `.dependency-cruiser.cjs` (web pass) and the ViewModel/Presenter parity rules in `scripts/check-test-parity.mjs`.
 
-**Component library** (ADR-0015, unchanged direction). `components/primitives/` (atoms) and `components/patterns/` (molecules + organisms). The dependency direction is `features → patterns → primitives → third-party`. Only `primitives/` may import `@radix-ui/*`, `lucide-react`, `recharts`, or `sonner`. New icons: add a one-line `createIcon` wrapper to `primitives/icon/icons.ts`; never import `lucide-react` from outside `primitives/`. Storybook isn't currently wired in `packages/web/` — porting is a follow-up.
+**Component library** (`packages/components/`, ADR-0015). Two trees: `primitives/` (atoms) and `patterns/` (molecules + organisms). Dependency direction: `features (web) → patterns → primitives → third-party`. Only `primitives/` may import `@radix-ui/*`, `lucide-react`, `recharts`, or `sonner`. New icons: add a one-line `createIcon` wrapper to `primitives/icon/icons.ts`; never import `lucide-react` from outside `primitives/`. Every primitive and pattern needs a sibling `*.stories.tsx` (enforced by `lint:tests`). Storybook runs via `pnpm -F @org/components storybook`; a static build is part of `check:all`.
 
 **Run locally**:
 
