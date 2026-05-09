@@ -19,6 +19,16 @@ extensions:
   jaeger_query:
     storage:
       traces: memory_store
+    # Each Node process (Next renderer + BFF) anchors its OTEL clock at
+    # its own `performance.timeOrigin`, so spans from different services
+    # in the same trace can drift by a few ms even on one machine. The
+    # query service detects this when a child span's bounds fall outside
+    # its parent's; with a positive `max_clock_skew_adjust` it shifts
+    # the child to fit. Default is 0 (disabled — Jaeger emits a warning
+    # like "clock skew adjustment disabled; not applying calculated
+    # delta of -6.8ms"). 1s is plenty for local dev and below any
+    # plausible legitimate inter-service gap.
+    max_clock_skew_adjust: 1s
 
   jaeger_storage:
     backends:
