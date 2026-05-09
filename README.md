@@ -71,17 +71,22 @@ After signing in once at `http://localhost:5173/auth/login`, the session cookie 
 
 **Known quirk:** the seed script's "update existing OIDC app" path reports `[updated]` but Zitadel doesn't actually pick up the new `postLogoutRedirectUris` on a re-run. If you change `ZITADEL_POST_LOGOUT_REDIRECT_URI` in `.env`, also update the URL manually once in the Zitadel console (Default Org → Projects → effect-monorepo → effect-monorepo-bff → URLs → Post-logout URLs).
 
-**Acceptance tests** (Playwright) drive the real Zitadel hosted UI on every run — make sure `pnpm auth:up && pnpm auth:seed` have completed and dev servers on `:3000` / `:5173` are stopped before running `pnpm test:acceptance`. CI E2E (`.github/workflows/e2e.yml`) does not yet provision Zitadel; tracked as a follow-up.
+**Acceptance tests** (Playwright) drive the real Zitadel hosted UI on every run — make sure `pnpm auth:up && pnpm auth:seed` have completed and dev servers on `:3000` / `:3001` / `:5173` are stopped before running `pnpm test:acceptance`. CI E2E (`.github/workflows/e2e.yml`) does not yet provision Zitadel; tracked as a follow-up.
 
 ## Development
 
 ```bash
-# Start the server (watch mode, port 3000)
+# Start the Effect server (watch mode, port 3001)
 pnpm --filter server dev
 
-# Start the client (Vite, port 5173)
+# Start the existing SPA client (Vite, port 5173)
 pnpm --filter client dev
+
+# Start the Next.js renderer (port 3000, proxies /api/* to the Effect server)
+pnpm --filter @org/web dev
 ```
+
+Port 3000 belongs to the Next.js renderer (browser-facing); the Effect server moved to 3001 and is reached via Next's `/api/*` rewrite. See [ADR-0018](docs/adr/0018-frontend-nextjs-renderer-and-proxy.md). The existing SPA at `:5173` continues to talk to the Effect server through Vite's proxy and remains the primary surface until Phase 6 cutover.
 
 Run them in separate terminals, or use the **Dev: All** VS Code task (see [`.vscode/tasks.json`](.vscode/tasks.json)).
 

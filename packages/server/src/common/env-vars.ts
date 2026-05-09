@@ -6,7 +6,7 @@ export class EnvVars extends Effect.Service<EnvVars>()("EnvVars", {
   effect: Effect.gen(function* () {
     return {
       // Server
-      PORT: yield* Config.integer("PORT").pipe(Config.withDefault(3000)),
+      PORT: yield* Config.integer("PORT").pipe(Config.withDefault(3001)),
       ENV: yield* Config.literal("dev", "prod", "staging")("ENV").pipe(Config.withDefault("dev")),
       APP_URL: yield* Config.url("APP_URL").pipe(
         Config.map((url) => url.origin),
@@ -28,7 +28,7 @@ export class EnvVars extends Effect.Service<EnvVars>()("EnvVars", {
       ZITADEL_CLIENT_ID: yield* Config.string("ZITADEL_CLIENT_ID"),
       ZITADEL_CLIENT_SECRET: yield* Config.redacted("ZITADEL_CLIENT_SECRET"),
       ZITADEL_REDIRECT_URI: yield* Config.string("ZITADEL_REDIRECT_URI").pipe(
-        Config.withDefault("http://localhost:3000/auth/callback"),
+        Config.withDefault("http://localhost:3001/auth/callback"),
       ),
       ZITADEL_POST_LOGOUT_REDIRECT_URI: yield* Config.string(
         "ZITADEL_POST_LOGOUT_REDIRECT_URI",

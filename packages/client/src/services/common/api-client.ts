@@ -10,7 +10,7 @@ import * as Layer from "effect/Layer";
 // cookie travels with every call. Same-origin requests would also send
 // cookies by default, but `include` is correct for both same-origin and
 // cross-origin in case API_URL is pointed somewhere other than the SPA's
-// own origin (e.g., dev pointed straight at :3000 without the Vite proxy).
+// own origin (e.g., dev pointed straight at :3001 without the Vite proxy).
 const FetchWithCredentials = FetchHttpClient.layer.pipe(
   Layer.provide(Layer.succeed(FetchHttpClient.RequestInit, { credentials: "include" })),
 );

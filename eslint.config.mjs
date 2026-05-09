@@ -44,6 +44,10 @@ export default [
       "scratchpad/**",
       "scripts/check-test-parity.mjs",
       "**/routeTree.gen.ts",
+      // Next.js dev bundle output. Source lives under packages/web/{app,services,lib}.
+      "**/.next/**",
+      // PostCSS config — trivial config artifact outside any TS project service.
+      "**/postcss.config.mjs",
     ],
   },
   ...compat.extends(
@@ -410,6 +414,22 @@ export default [
     // project-wide restrictions that conflict with their conventions. These are
     // documentation/config artifacts, not production code.
     files: ["**/*.stories.tsx", "**/.storybook/*.ts"],
+    rules: {
+      "no-restricted-syntax": "off",
+    },
+  },
+  {
+    // ADR-0018: Next.js App Router requires `export default` in framework
+    // convention files (page.tsx, layout.tsx, error.tsx, loading.tsx,
+    // not-found.tsx, template.tsx, route.ts) and in next.config / middleware /
+    // instrumentation. The project-wide "prefer named exports" rule doesn't
+    // fit those framework hooks.
+    files: [
+      "packages/web/app/**/{page,layout,loading,error,not-found,template,route,default}.{ts,tsx}",
+      "packages/web/next.config.ts",
+      "packages/web/middleware.{ts,tsx}",
+      "packages/web/instrumentation.ts",
+    ],
     rules: {
       "no-restricted-syntax": "off",
     },

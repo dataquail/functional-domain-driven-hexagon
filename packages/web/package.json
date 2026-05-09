@@ -1,0 +1,37 @@
+{
+  "name": "@org/web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "predev": "lsof -ti:3000 | xargs kill -9 2>/dev/null; true; pnpm --filter @org/contracts build",
+    "dev": "dotenv -e ../../.env next dev -p 3000",
+    "prebuild": "pnpm --filter @org/contracts build",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@effect/platform": "*",
+    "@org/contracts": "workspace:^",
+    "@tanstack/react-query": "5.100.6",
+    "@tanstack/react-query-devtools": "^5.100.6",
+    "effect": "*",
+    "next": "16.2.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.2.4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "dotenv-cli": "8.0.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.6",
+    "tailwindcss": "4.2.4",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5"
+  }
+}

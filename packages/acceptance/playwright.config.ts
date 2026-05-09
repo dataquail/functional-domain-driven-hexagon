@@ -20,7 +20,7 @@ dotenv.config({ path: "../../.env" });
 
 const isCi = process.env.CI !== undefined && process.env.CI !== "";
 const APP_URL = process.env.APP_URL ?? "http://localhost:5173";
-const API_URL = process.env.API_URL ?? "http://localhost:3000";
+const API_URL = process.env.API_URL ?? "http://localhost:3001";
 const DATABASE_URL_TEST =
   process.env.DATABASE_URL_TEST ??
   "postgresql://postgres:postgres@localhost:5432/effect-monorepo-test";
@@ -90,7 +90,7 @@ export default defineConfig({
         ...process.env,
         DATABASE_URL: DATABASE_URL_TEST,
         ENV: "dev",
-        PORT: "3000",
+        PORT: "3001",
         APP_URL,
         OTLP_URL: process.env.OTLP_URL ?? "http://localhost:4318/v1/traces",
       },

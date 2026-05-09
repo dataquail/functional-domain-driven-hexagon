@@ -39,14 +39,14 @@ export default defineConfig({
     // over. SPA fetches send `Accept: application/json`/missing, so they
     // fall through to the proxy.
     proxy: {
-      "/auth": "http://localhost:3000",
+      "/auth": "http://localhost:3001",
       "/users": {
-        target: "http://localhost:3000",
+        target: "http://localhost:3001",
         bypass: (req) =>
           req.headers.accept?.includes("text/html") === true ? "/index.html" : null,
       },
       "/todos": {
-        target: "http://localhost:3000",
+        target: "http://localhost:3001",
         bypass: (req) =>
           req.headers.accept?.includes("text/html") === true ? "/index.html" : null,
       },

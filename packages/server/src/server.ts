@@ -116,7 +116,7 @@ const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
   Layer.provide(DatabaseLive),
   Layer.provide(NodeSdkLive),
   Layer.provide(EnvVars.Default),
-  Layer.provide(NodeHttpServer.layer(createServer, { port: 3000 })),
+  Layer.provide(NodeHttpServer.layer(createServer, { port: 3001 })),
 );
 
 Layer.launch(HttpLive).pipe(

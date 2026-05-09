@@ -78,8 +78,11 @@
       "detail": "Run the server in watch mode",
       "type": "shell",
       // The `predev` script in packages/server/package.json frees port
-      // 3000 before `tsx watch` tries to bind, so an orphan from a
-      // previously-closed terminal doesn't block the next start.
+      // 3001 before `tsx watch` tries to bind, so an orphan from a
+      // previously-closed terminal doesn't block the next start. Port
+      // 3000 belongs to the Next.js renderer (see ADR-0018); the Effect
+      // server runs on 3001 and is reached by the browser through Next's
+      // `/api/*` rewrite, never directly.
       "command": "pnpm --filter server dev",
       "options": { "cwd": "${workspaceFolder}" },
       "isBackground": true,
@@ -149,6 +152,32 @@
       }
     },
     {
+      "label": "Web: Dev",
+      "detail": "Run the Next.js renderer in watch mode (proxies /api/* to the Effect server)",
+      "type": "shell",
+      // The `predev` in packages/web/package.json frees port 3000 before
+      // `next dev` binds. Same kill-the-orphan motivation as Server: Dev /
+      // Client: Dev.
+      "command": "pnpm --filter @org/web dev",
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "dev",
+        "clear": true
+      },
+      "problemMatcher": {
+        "owner": "next",
+        "pattern": { "regexp": "^$" },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*$",
+          "endsPattern": "Ready in"
+        }
+      }
+    },
+    {
       "label": "Dev: Servers",
       "detail": "Run server + client + jobs side-by-side",
       "dependsOn": ["Server: Dev", "Client: Dev", "Jobs: Dev"],
@@ -156,9 +185,23 @@
       "problemMatcher": []
     },
     {
+      "label": "Dev: Servers (Next)",
+      "detail": "Run server + Next.js web + jobs side-by-side (post-migration stack; client coexists at :5173 if started separately)",
+      "dependsOn": ["Server: Dev", "Web: Dev", "Jobs: Dev"],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    },
+    {
       "label": "Dev: All",
       "detail": "Docker (postgres + jaeger + zitadel) → migrate → seed Zitadel → server + client + jobs",
       "dependsOn": ["Docker: Up", "Docker: Migrate (dev DB)", "Auth: Seed", "Dev: Servers"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "Dev: All (Next)",
+      "detail": "Docker → migrate → seed Zitadel → server + Next.js web + jobs",
+      "dependsOn": ["Docker: Up", "Docker: Migrate (dev DB)", "Auth: Seed", "Dev: Servers (Next)"],
       "dependsOrder": "sequence",
       "problemMatcher": []
     }

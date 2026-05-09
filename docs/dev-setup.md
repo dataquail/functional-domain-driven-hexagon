@@ -119,8 +119,9 @@ Parsed from the `__seed__` line and written to `.env`. If the seed didn't emit o
 After `pnpm bootstrap`:
 
 ```sh
-pnpm --filter @org/server dev    # API on :3000
-pnpm --filter @org/client dev    # SPA on :5173, proxies /auth /users /todos to :3000
+pnpm --filter @org/server dev    # API on :3001
+pnpm --filter @org/client dev    # SPA on :5173, proxies /auth /users /todos to :3001
+pnpm --filter @org/web dev       # Next.js renderer on :3000, proxies /api/* to :3001 (optional during migration; see ADR-0018)
 ```
 
 Sign in at [http://localhost:5173/auth/login](http://localhost:5173/auth/login) using the credentials in `.env` (`ZITADEL_ADMIN_EMAIL` / `ZITADEL_ADMIN_PASSWORD`). The first successful login walks through Zitadel's hosted UI; subsequent logins ride the Zitadel SSO cookie and feel near-silent.
