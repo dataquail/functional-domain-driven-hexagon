@@ -10,7 +10,7 @@ export class EnvVars extends Effect.Service<EnvVars>()("EnvVars", {
       ENV: yield* Config.literal("dev", "prod", "staging")("ENV").pipe(Config.withDefault("dev")),
       APP_URL: yield* Config.url("APP_URL").pipe(
         Config.map((url) => url.origin),
-        Config.withDefault("http://localhost:5173"),
+        Config.withDefault("http://localhost:3000"),
       ),
 
       // Database
@@ -28,11 +28,11 @@ export class EnvVars extends Effect.Service<EnvVars>()("EnvVars", {
       ZITADEL_CLIENT_ID: yield* Config.string("ZITADEL_CLIENT_ID"),
       ZITADEL_CLIENT_SECRET: yield* Config.redacted("ZITADEL_CLIENT_SECRET"),
       ZITADEL_REDIRECT_URI: yield* Config.string("ZITADEL_REDIRECT_URI").pipe(
-        Config.withDefault("http://localhost:3001/auth/callback"),
+        Config.withDefault("http://localhost:3000/api/auth/callback"),
       ),
       ZITADEL_POST_LOGOUT_REDIRECT_URI: yield* Config.string(
         "ZITADEL_POST_LOGOUT_REDIRECT_URI",
-      ).pipe(Config.withDefault("http://localhost:5173/auth/login")),
+      ).pipe(Config.withDefault("http://localhost:3000/")),
 
       SESSION_COOKIE_NAME: yield* Config.string("SESSION_COOKIE_NAME").pipe(
         Config.withDefault("session"),

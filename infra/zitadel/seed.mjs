@@ -21,13 +21,14 @@ const issuer = process.env.ZITADEL_ISSUER ?? "http://localhost:8080";
 // see Host=localhost:8080 to find the instance. Override here.
 const instanceHost = process.env.ZITADEL_INSTANCE_HOST ?? "localhost:8080";
 const adminEmail = process.env.ZITADEL_ADMIN_EMAIL ?? "admin@example.com";
-// `APP_REDIRECT_URI` may be a single URL or a comma-separated list. During
-// the Next.js migration both `http://localhost:5173/auth/callback` (the
-// existing Vite SPA) and `http://localhost:3000/api/auth/callback` (Next
-// proxied to the BFF, ADR-0018) need to be registered with Zitadel so
-// users can sign in via either origin. Phase 6 cutover collapses this to
-// a single `:3000` URI once the SPA is gone.
-const redirectUris = (process.env.APP_REDIRECT_URI ?? "http://localhost:3001/auth/callback")
+// `APP_REDIRECT_URI` is comma-separated to support multiple origins when
+// they exist (a sibling marketing site on a different host, a preview
+// environment, etc.). For the default template setup the Next renderer
+// at `:3000` is the only browser-facing surface — users sign in via
+// `:3000/api/auth/login`, the BFF redirects to Zitadel, Zitadel
+// redirects back to `:3000/api/auth/callback`. The single-URI default
+// reflects that. ADR-0018.
+const redirectUris = (process.env.APP_REDIRECT_URI ?? "http://localhost:3000/api/auth/callback")
   .split(",")
   .map((u) => u.trim())
   .filter((u) => u.length > 0);
@@ -35,7 +36,7 @@ const redirectUris = (process.env.APP_REDIRECT_URI ?? "http://localhost:3001/aut
 // env-vars.ts. If they drift apart, the server's logout request to
 // `end_session_endpoint` is rejected with "post_logout_redirect_uri invalid".
 const postLogoutRedirectUris = (
-  process.env.APP_POST_LOGOUT_REDIRECT_URI ?? "http://localhost:5173/auth/login"
+  process.env.APP_POST_LOGOUT_REDIRECT_URI ?? "http://localhost:3000/"
 )
   .split(",")
   .map((u) => u.trim())
