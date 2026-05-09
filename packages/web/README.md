@@ -4,9 +4,11 @@ Next.js (App Router) renderer for the template. See [ADR-0018](../../docs/adr/00
 
 ## Status
 
-**Phase 4 (prefetch + hydrate + suspense).** This package runs alongside [packages/client/](../client/) until Phase 6 cutover. Storybook is unchanged.
+**Phase 5 (OpenTelemetry).** This package runs alongside [packages/client/](../client/) until Phase 6 cutover. Storybook is unchanged.
 
 `/users` prefetches page 1 server-side, dehydrates the cache into the HTML, and `useSuspenseQuery` reads from cache on first paint — no client spinner. Pagination state stays client-side; clicking next/prev triggers Suspense to fall back to the skeleton while the new page fetches.
+
+[instrumentation.ts](./instrumentation.ts) wires Node OTEL via `@vercel/otel` on Next boot, exporting to the same OTLP collector as the Effect server (`OTLP_URL` env, ADR-0012). W3C trace context propagates: a request that crosses Next → Effect arrives at Jaeger as one trace. Verify at [http://localhost:16686](http://localhost:16686) — search for service `effect-monorepo-web` and look for traces with spans from both services.
 
 Routes mirror the existing SPA URLs:
 
