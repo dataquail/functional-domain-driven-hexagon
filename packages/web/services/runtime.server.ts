@@ -12,7 +12,8 @@ import "server-only";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import { cookies } from "next/headers";
 import { cache } from "react";
-import { type ApiClient, ApiClientLive } from "./api-client.server";
+import { ApiClientLive } from "./api-client.server";
+import { type ApiClient } from "./api-client.shared";
 
 export const getServerRuntime = cache(async () => {
   const cookieStore = await cookies();

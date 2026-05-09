@@ -13,7 +13,7 @@
 import "server-only";
 
 import { getQueryClient } from "@/lib/query-client.server";
-import type { ApiClient } from "@/services/api-client.server";
+import type { ApiClient } from "@/services/api-client.shared";
 import { getServerRuntime } from "@/services/runtime.server";
 import type { QueryKey } from "@tanstack/react-query";
 import type * as Effect from "effect/Effect";

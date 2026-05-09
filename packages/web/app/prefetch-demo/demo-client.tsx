@@ -15,10 +15,11 @@ type DemoData = { message: string; renderedAt: string };
 export const DemoClient: React.FC<{ queryKey: QueryKey }> = ({ queryKey }) => {
   const { data } = useEffectSuspenseQuery({
     queryKey,
-    queryFn: Effect.succeed<DemoData>({
-      message: "Refetched on the client (you should not normally see this)",
-      renderedAt: new Date().toISOString(),
-    }),
+    queryFn: () =>
+      Effect.succeed<DemoData>({
+        message: "Refetched on the client (you should not normally see this)",
+        renderedAt: new Date().toISOString(),
+      }),
   });
 
   return (

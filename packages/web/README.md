@@ -4,9 +4,19 @@ Next.js (App Router) renderer for the template. See [ADR-0018](../../docs/adr/00
 
 ## Status
 
-**Phase 2 (server-side query infrastructure).** This package runs alongside [packages/client/](../client/) until Phase 6 cutover. Storybook is unchanged.
+**Phase 4 (prefetch + hydrate + suspense).** This package runs alongside [packages/client/](../client/) until Phase 6 cutover. Storybook is unchanged.
 
-Verify the prefetch + hydrate + suspense pipeline at [http://localhost:3000/prefetch-demo](http://localhost:3000/prefetch-demo) — the page prefetches an Effect server-side, dehydrates the TanStack cache into the HTML, and `useSuspenseQuery` reads it without a client-side refetch.
+`/users` prefetches page 1 server-side, dehydrates the cache into the HTML, and `useSuspenseQuery` reads from cache on first paint — no client spinner. Pagination state stays client-side; clicking next/prev triggers Suspense to fall back to the skeleton while the new page fetches.
+
+Routes mirror the existing SPA URLs:
+
+| URL              | File                                                                                                           | Auth     |
+| ---------------- | -------------------------------------------------------------------------------------------------------------- | -------- |
+| `/`              | [app/(authed)/page.tsx](<./app/(authed)/page.tsx>) — Tasks (placeholder; later port pulls index/ feature in)   | required |
+| `/users`         | [app/(authed)/users/page.tsx](<./app/(authed)/users/page.tsx>) — Users list, server-prefetched + suspense-read | required |
+| `/prefetch-demo` | [app/prefetch-demo/page.tsx](./app/prefetch-demo/page.tsx) — Phase 2 smoke test (constant Effect)              | none     |
+
+The `(authed)` route group attaches a server-side auth guard ([app/(authed)/layout.tsx](<./app/(authed)/layout.tsx>)) that calls `/auth/me` via the BFF and `redirect()`s to `/api/auth/login` on 401 — no flicker, no client-side guard. Nav lives in [features/\_\_root/nav.tsx](./features/__root/nav.tsx) as a server component using `next/link`; sign-out is a plain `<a href="/api/auth/logout">` (the BFF's logout endpoint is GET-idempotent per ADR-0017).
 
 ## Local development
 

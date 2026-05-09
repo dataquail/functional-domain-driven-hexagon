@@ -15,6 +15,7 @@
 // the server-only client's dehydrated state into the browser client.
 
 import { makeQueryClient } from "@/lib/query-client.shared";
+import { RuntimeProvider } from "@/services/runtime.client";
 import { isServer, type QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
@@ -30,7 +31,7 @@ export const Providers: React.FC<{ children: React.ReactNode }> = ({ children })
   const queryClient = getQueryClient();
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <RuntimeProvider>{children}</RuntimeProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
