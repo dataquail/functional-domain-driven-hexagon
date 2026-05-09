@@ -2,6 +2,22 @@
 
 @plugin "tailwindcss-animate";
 
+/*
+ * Tailwind v4 auto-detects content relative to the directory it's run
+ * from. Without these `@source` lines, Next's build (which runs from
+ * packages/web) only scans web's tree — utility classes used inside
+ * @org/components primitives (rounded-xl, p-6, gap-6, …) get dropped
+ * from the generated stylesheet, so cards lose their corners + padding,
+ * dialogs lose their offsets, etc. Same applies to Storybook's Vite
+ * build running from packages/components — it needs to see web's
+ * features/ for any class used only at the consumer.
+ */
+@source "../primitives";
+@source "../patterns";
+@source "../providers";
+@source "../../web/app";
+@source "../../web/features";
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
