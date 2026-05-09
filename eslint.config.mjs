@@ -313,7 +313,7 @@ export default [
     },
   },
   {
-    files: ["packages/client/**/*.{ts,tsx,js,jsx}"],
+    files: ["packages/web/**/*.{ts,tsx,js,jsx}"],
     rules: {
       "react/function-component-definition": [
         "warn",
@@ -367,10 +367,7 @@ export default [
     // ADR-0015: features and patterns must consume the bespoke component library.
     // Forbid raw HTML elements that already have a primitive equivalent.
     // The forbid-list grows as new primitives are added.
-    files: [
-      "packages/client/src/features/**/*.tsx",
-      "packages/client/src/components/patterns/**/*.tsx",
-    ],
+    files: ["packages/web/features/**/*.tsx", "packages/web/components/patterns/**/*.tsx"],
     ignores: ["**/*.test.tsx", "**/*.spec.tsx", "**/*.stories.tsx"],
     rules: {
       "react/forbid-elements": [

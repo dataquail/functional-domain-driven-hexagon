@@ -11,7 +11,7 @@ import { getQueryClient } from "@/lib/query-client.server";
 import { prefetchEffectQuery } from "@/lib/tanstack-query/effect-prefetch.server";
 import { todosQuery, todosQueryKey } from "@/services/data-access/todos-queries";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { Suspense } from "react";
+import React from "react";
 
 const SKELETON_COUNT = 3;
 
@@ -38,9 +38,9 @@ export default async function TasksPage() {
       <Card.Content className="space-y-4">
         <AddTodo />
         <HydrationBoundary state={dehydrate(queryClient)}>
-          <Suspense fallback={<Fallback />}>
+          <React.Suspense fallback={<Fallback />}>
             <TodoList />
-          </Suspense>
+          </React.Suspense>
         </HydrationBoundary>
       </Card.Content>
     </Card>

@@ -55,7 +55,34 @@ The naming conventions are also the parity-rule detectors. Don't rename a file t
 - **Bus-boundary spans** (ADR-0012). Spans live at the command/query/event bus and at HTTP endpoints; use cases don't need their own `Effect.withSpan`. Span attributes are sibling extractor functions composed at registration.
 - **Authentication via self-hosted Zitadel as a server-side BFF** (ADR-0016, ADR-0017). The SPA never holds access or id tokens; the server runs the OIDC dance and issues a `HttpOnly` session cookie. Application code consumes `CurrentUser` (`@org/contracts/Policy`); only `modules/auth/` and `platform/auth/` know about Zitadel. Roles live app-side in `users.role`; the seed script pre-seeds the admin's `users` + `auth_identities` rows so the first sign-in finds an existing identity.
 
-## Frontend (`packages/client/`)
+## Frontend (`packages/web/`)
 
-- **View tiering** (ADR-0014). Logic graduates from naked component → `*.presenter.{ts,tsx}` (React-coupled libraries: TanStack Form, react-hook-form, etc.) → `*.view-model.ts` (pure Effect, framework-agnostic). Components in `features/` may not import Effect runtime primitives or `@tanstack/react-query` directly. Both Presenter and ViewModel files require sibling tests (`pnpm lint:tests`).
-- **Component library** (ADR-0015). Two folders: `components/primitives/` (atoms — Button, Input, Card, Icon, …) and `components/patterns/` (molecules + organisms — reusable compositions). The dependency direction is `features → patterns → primitives → third-party`, never reversed. **Before reaching for a third-party UI library or building a new component, run `pnpm -F @org/client storybook` (the canonical index) or read [packages/client/src/components/README.md](packages/client/src/components/README.md).** Only `primitives/` may import `@radix-ui/*`, `lucide-react`, `recharts`, or `sonner`. New icons: add a one-line `createIcon` wrapper to `primitives/icon/icons.ts`; never import `lucide-react` from outside `primitives/`. Lift a feature-local component to `patterns/` when a second feature wants the same shape. Every `primitives/**/*.tsx` and `patterns/**/*.tsx` requires a sibling `*.stories.tsx` (enforced by `pnpm lint:tests`); broken stories fail CI via `pnpm build:storybook`.
+The frontend is a Next.js (App Router) renderer that proxies `/api/*` to the Effect server. The Effect server stays the BFF — Next renders + proxies but does NOT terminate auth. See [ADR-0018](docs/adr/0018-frontend-nextjs-renderer-and-proxy.md).
+
+**Layout** (no `src/` wrapper):
+
+- `app/` — Next file-based routes. `(authed)/` is the route group for protected pages (server-side guard in `(authed)/layout.tsx` calls `/auth/me`, `redirect()`s on 401). `app/providers.tsx` wires `ThemeProvider → QueryClientProvider → RuntimeProvider → Toaster`.
+- `features/` — feature-shaped components and presenters (no `src/` wrapper).
+- `components/{primitives,patterns}/` — bespoke component library. Same primitives → patterns → features direction as before.
+- `services/` — runtime, ApiClient, data-access. Files split by environment when behavior differs:
+  - `*.shared.ts` — environment-agnostic (e.g. the shared `ApiClient` `Context.Tag`).
+  - `*.server.ts` — server-only (`import "server-only"`; reads cookies via `next/headers`).
+  - `*.client.tsx` — browser-only (`"use client"`; mounts via `RuntimeProvider`).
+  - `data-access/<feature>-queries.ts` — server-safe Effects (no `"use client"` so server components can prefetch).
+  - `data-access/use-<feature>-queries.ts` — client hooks wrapping the Effects in `useEffectSuspenseQuery`/`useEffectMutation`.
+- `lib/tanstack-query/` — `prefetchEffectQuery` (server), `useEffectSuspenseQuery` and `useEffectMutation` (client), `make-form-options.ts`, `query-data-helpers.ts`.
+- `instrumentation.ts` — Node OTEL bootstrap via `@vercel/otel` (Phase 5 of the migration). Browser OTEL ports later as a follow-up.
+
+**Data fetching default** (ADR-0018): each route's `page.tsx` runs `prefetchEffectQuery` server-side, dehydrates the cache into `<HydrationBoundary>`, and the leaf component reads via `useEffectSuspenseQuery`. Plain `useQuery` is allowed only for client-only side data (search-as-you-type, polling). Mutations stay client-side via `useEffectMutation`.
+
+**View tiering** (ADR-0014, unchanged): naked component → `*.presenter.{ts,tsx}` (React-coupled libraries: TanStack Form, react-hook-form, etc.) → `*.view-model.ts` (pure Effect, framework-agnostic). Components in `features/` may not import Effect runtime primitives or `@tanstack/react-query` directly. The dep-cruiser and `lint:tests` parity rules that previously enforced this on `packages/client/` need re-translation to `packages/web/`'s top-level layout — tracked as a Phase 6 cutover follow-up.
+
+**Component library** (ADR-0015, unchanged direction). `components/primitives/` (atoms) and `components/patterns/` (molecules + organisms). The dependency direction is `features → patterns → primitives → third-party`. Only `primitives/` may import `@radix-ui/*`, `lucide-react`, `recharts`, or `sonner`. New icons: add a one-line `createIcon` wrapper to `primitives/icon/icons.ts`; never import `lucide-react` from outside `primitives/`. Storybook isn't currently wired in `packages/web/` — porting is a follow-up.
+
+**Run locally**:
+
+```bash
+pnpm bootstrap                    # Docker (postgres, jaeger, zitadel) + migrate + seed
+pnpm --filter @org/server dev     # BFF on :3001
+pnpm --filter @org/web dev        # Next.js on :3000 (browser-facing); /api/* rewrites to :3001
+```

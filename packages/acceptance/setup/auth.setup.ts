@@ -27,9 +27,9 @@ setup("authenticate as admin", async ({ page }) => {
     );
   }
 
-  // SPA route that drops into our server's /auth/login (Vite proxy → :3001),
-  // which redirects to Zitadel's hosted login.
-  await page.goto("/auth/login");
+  // Next-proxied path to the BFF's /auth/login (ADR-0018 § "How the
+  // /api/* proxy works"). The BFF redirects to Zitadel's hosted login.
+  await page.goto("/api/auth/login");
 
   const zitadel = new ZitadelLoginPage(page);
   await zitadel.signIn(adminEmail, adminPassword);

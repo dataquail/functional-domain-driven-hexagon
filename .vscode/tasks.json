@@ -103,32 +103,6 @@
       }
     },
     {
-      "label": "Client: Dev",
-      "detail": "Run the Vite dev server",
-      "type": "shell",
-      // See "Server: Dev" — `predev` in packages/client/package.json
-      // frees port 5173 before Vite binds, so closing the terminal and
-      // re-running this task always works.
-      "command": "pnpm --filter client dev",
-      "options": { "cwd": "${workspaceFolder}" },
-      "isBackground": true,
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "group": "dev",
-        "clear": true
-      },
-      "problemMatcher": {
-        "owner": "vite",
-        "pattern": { "regexp": "^$" },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": "^.*$",
-          "endsPattern": "ready in"
-        }
-      }
-    },
-    {
       "label": "Jobs: Dev",
       "detail": "Run the cron-style background jobs runner in watch mode (purges stale sessions hourly + on boot)",
       "type": "shell",
@@ -179,29 +153,15 @@
     },
     {
       "label": "Dev: Servers",
-      "detail": "Run server + client + jobs side-by-side",
-      "dependsOn": ["Server: Dev", "Client: Dev", "Jobs: Dev"],
-      "dependsOrder": "parallel",
-      "problemMatcher": []
-    },
-    {
-      "label": "Dev: Servers (Next)",
-      "detail": "Run server + Next.js web + jobs side-by-side (post-migration stack; client coexists at :5173 if started separately)",
+      "detail": "Run server + Next.js web + jobs side-by-side",
       "dependsOn": ["Server: Dev", "Web: Dev", "Jobs: Dev"],
       "dependsOrder": "parallel",
       "problemMatcher": []
     },
     {
       "label": "Dev: All",
-      "detail": "Docker (postgres + jaeger + zitadel) → migrate → seed Zitadel → server + client + jobs",
+      "detail": "Docker (postgres + jaeger + zitadel) → migrate → seed Zitadel → server + web + jobs",
       "dependsOn": ["Docker: Up", "Docker: Migrate (dev DB)", "Auth: Seed", "Dev: Servers"],
-      "dependsOrder": "sequence",
-      "problemMatcher": []
-    },
-    {
-      "label": "Dev: All (Next)",
-      "detail": "Docker → migrate → seed Zitadel → server + Next.js web + jobs",
-      "dependsOn": ["Docker: Up", "Docker: Migrate (dev DB)", "Auth: Seed", "Dev: Servers (Next)"],
       "dependsOrder": "sequence",
       "problemMatcher": []
     }

@@ -79,41 +79,11 @@ const rules = [
     subject: "packages/server/src/modules/*/infrastructure/*-repository-live.ts",
     candidates: [(f) => f.replace(/-repository-live\.ts$/, "-repository-fake.ts")],
   },
-  // ── Client (ADR-0014) ─────────────────────────────────────────────────
-  {
-    label: "ViewModel",
-    requirement: "sibling test",
-    subject: "packages/client/src/features/**/*.view-model.ts",
-    candidates: [(f) => f.replace(/\.view-model\.ts$/, ".view-model.test.ts")],
-  },
-  {
-    label: "Presenter",
-    requirement: "sibling test",
-    subject: "packages/client/src/features/**/*.presenter.{ts,tsx}",
-    // Test extension is independent of the presenter's: a presenter that only
-    // exports a hook is fine to test from `.test.ts`; one that exports JSX
-    // (provider, wrapper) or wants to render its hook through a JSX wrapper
-    // typically picks `.test.tsx`. Either satisfies the parity rule.
-    candidates: [
-      (f) => f.replace(/\.presenter\.tsx?$/, ".presenter.test.ts"),
-      (f) => f.replace(/\.presenter\.tsx?$/, ".presenter.test.tsx"),
-    ],
-  },
-  // ── Client component library (ADR-0015) ──────────────────────────────
-  {
-    label: "Primitive component",
-    requirement: "sibling Storybook story",
-    subject: "packages/client/src/components/primitives/**/*.tsx",
-    ignore: ["**/*.stories.tsx", "**/*.test.tsx"],
-    candidates: [(f) => f.replace(/\.tsx$/, ".stories.tsx")],
-  },
-  {
-    label: "Pattern component",
-    requirement: "sibling Storybook story",
-    subject: "packages/client/src/components/patterns/**/*.tsx",
-    ignore: ["**/*.stories.tsx", "**/*.test.tsx"],
-    candidates: [(f) => f.replace(/\.tsx$/, ".stories.tsx")],
-  },
+  // ── Frontend (ADR-0014, ADR-0015) ────────────────────────────────────
+  // The view-tiering and component-library parity rules need
+  // re-translation to packages/web/'s top-level layout (features/,
+  // components/, lib/, services/ — no src/ wrapper). Tracked as a
+  // Phase 6 cutover follow-up; see migration plan.
 ];
 
 let missing = 0;

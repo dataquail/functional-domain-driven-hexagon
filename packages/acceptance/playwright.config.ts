@@ -19,8 +19,11 @@ dotenv.config({ path: "../../.env" });
 // the full UI flow on every run.
 
 const isCi = process.env.CI !== undefined && process.env.CI !== "";
-const APP_URL = process.env.APP_URL ?? "http://localhost:5173";
+// Browser-facing origin. Phase 6 cutover (ADR-0018) flipped this from the
+// existing Vite SPA at :5173 to the Next.js renderer at :3000.
+const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
 const API_URL = process.env.API_URL ?? "http://localhost:3001";
+const SERVER_INTERNAL_URL = process.env.SERVER_INTERNAL_URL ?? API_URL;
 const DATABASE_URL_TEST =
   process.env.DATABASE_URL_TEST ??
   "postgresql://postgres:postgres@localhost:5432/effect-monorepo-test";
@@ -105,16 +108,18 @@ export default defineConfig({
       stderr: "pipe",
     },
     {
-      // Vite dev server for the client. The default `.env` sets VITE_API_URL
-      // to the local API; no override needed for that.
-      command: "pnpm --filter @org/client dev",
+      // Next.js renderer. Phase 6 cutover replaced the Vite SPA here.
+      // SERVER_INTERNAL_URL points the /api/* rewrite at the test-DB-bound
+      // Effect server above. APP_URL stays :3000 so the BFF redirects
+      // post-sign-in to the same origin Playwright drives.
+      command: "pnpm --filter @org/web dev",
       url: APP_URL,
       cwd: "../../",
-      // Acceptance always spawns its own server processes — reusing a running
-      // `pnpm -F @org/server dev` would mean the test runs against the *dev*
-      // DB instead of the test DB (the env override below only takes effect
-      // when Playwright actually starts the command). Kill dev servers
-      // before running acceptance.
+      env: {
+        ...process.env,
+        SERVER_INTERNAL_URL,
+        OTLP_URL: process.env.OTLP_URL ?? "http://localhost:4318/v1/traces",
+      },
       reuseExistingServer: false,
       timeout: 60_000,
       stdout: "pipe",

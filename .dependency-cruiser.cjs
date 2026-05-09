@@ -183,91 +183,11 @@ module.exports = {
       to: { path: "^packages/server/src/modules/[^/]+/interface/" },
     },
     // ── Client rules (ADR-0014) ────────────────────────────────────────
-    {
-      name: "client-tanstack-allowlist",
-      severity: "error",
-      comment:
-        "TanStack Query (@tanstack/react-query, @tanstack/query-core) may only be imported by services/data-access/, services/common/query-client.ts, lib/tanstack-query/, global-providers.tsx, and shared test helpers in test/. Test files exempted. See ADR-0014.",
-      from: {
-        path: "^packages/client/src/",
-        pathNot: [
-          "^packages/client/src/services/data-access/",
-          "^packages/client/src/services/common/query-client\\.ts$",
-          "^packages/client/src/lib/tanstack-query/",
-          "^packages/client/src/global-providers\\.tsx$",
-          "^packages/client/src/test/",
-          "\\.(stories|test|spec)\\.(ts|tsx)$",
-        ],
-      },
-      to: { path: "/node_modules/@tanstack/(react-query|query-core)/" },
-    },
-    {
-      name: "client-component-no-effect-runtime",
-      severity: "error",
-      comment:
-        "Components in features/ may not import Effect runtime primitives. Reaching for Effect/Stream/Fiber/Ref/SubscriptionRef/Layer/Scope/Runtime/ManagedRuntime/Cause/Exit/Match means extracting to a presenter (*.presenter.{ts,tsx}) or view-model (*.view-model.ts). Allowed effect modules in components: Schema, Function, Either, Option, Predicate, Duration. See ADR-0014.",
-      from: {
-        path: "^packages/client/src/features/.*\\.tsx$",
-        pathNot: [
-          "^packages/client/src/features/.*\\.presenter\\.tsx$",
-          "\\.(stories|test|spec)\\.(ts|tsx)$",
-        ],
-      },
-      to: {
-        path: "/node_modules/effect/.*/(Effect|Stream|Fiber|Ref|SubscriptionRef|Layer|Scope|Runtime|ManagedRuntime|Cause|Exit|Match)\\.",
-      },
-    },
-    {
-      name: "client-react-form-presenter-only",
-      severity: "error",
-      comment:
-        "React-coupled form libraries (@tanstack/react-form, react-hook-form) may only be imported by *.presenter.{ts,tsx} files in features/ and shared form helpers in lib/tanstack-query/. Importing useForm directly from a feature component is the ADR-0014 violation that triggered this rule — extract the form orchestration to a sibling presenter and consume the returned form instance from JSX. Test files exempted.",
-      from: {
-        path: "^packages/client/src/",
-        pathNot: [
-          "^packages/client/src/features/.*\\.presenter\\.(ts|tsx)$",
-          "^packages/client/src/lib/tanstack-query/",
-          "\\.(stories|test|spec)\\.(ts|tsx)$",
-        ],
-      },
-      to: { path: "/node_modules/(@tanstack/react-form|react-hook-form)/" },
-    },
-    {
-      name: "client-primitives-only-touch-ui-libs",
-      severity: "error",
-      comment:
-        "Third-party visual libraries (@radix-ui/*, lucide-react, recharts, sonner) may only be imported from components/primitives/. Patterns and features consume them via the primitives layer so the third-party prop surface stays encapsulated. Class-name utilities (clsx, tailwind-merge, class-variance-authority) are not subject to this rule. The Toast service (services/common/toast.ts) is the imperative sonner adapter; everything else triggers toasts via the Toast service. Test files exempted. See ADR-0015.",
-      from: {
-        path: "^packages/client/src/",
-        pathNot: [
-          "^packages/client/src/components/primitives/",
-          "^packages/client/src/services/common/toast\\.ts$",
-          "\\.(stories|test|spec)\\.(ts|tsx)$",
-        ],
-      },
-      to: { path: "/node_modules/(@radix-ui/|lucide-react/|recharts/|sonner/)" },
-    },
-    {
-      name: "client-patterns-no-features",
-      severity: "error",
-      comment:
-        "components/patterns/ may not import from features/. The dependency direction is features → patterns → primitives, never reversed. See ADR-0015.",
-      from: { path: "^packages/client/src/components/patterns/" },
-      to: { path: "^packages/client/src/features/" },
-    },
-    {
-      name: "client-view-model-no-react",
-      severity: "error",
-      comment:
-        "ViewModels (*.view-model.ts) are framework-agnostic. They may not import react, react-dom, or any React-coupled package (@tanstack/react-*, react-hook-form, etc.). If you need React or a React-coupled library, use a presenter instead. See ADR-0014.",
-      from: {
-        path: "^packages/client/src/features/.*\\.view-model\\.ts$",
-        pathNot: "\\.(stories|test|spec)\\.(ts|tsx)$",
-      },
-      to: {
-        path: "/node_modules/(react|react-dom|@tanstack/react-|react-hook-form)",
-      },
-    },
+    // The view-tiering / component-library rules from packages/client/
+    // (ADR-0014, ADR-0015) need re-translation to the packages/web/
+    // layout (top-level features/, components/, lib/, services/ — no
+    // src/ wrapper, plus client/server file naming for Next conventions).
+    // Tracked as a Phase 6 cutover follow-up; see migration plan.
     {
       name: "no-circular",
       severity: "error",

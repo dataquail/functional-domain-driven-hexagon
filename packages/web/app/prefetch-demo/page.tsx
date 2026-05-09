@@ -21,7 +21,7 @@ import { prefetchEffectQuery } from "@/lib/tanstack-query/effect-prefetch.server
 import { getServerRuntime } from "@/services/runtime.server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import * as Effect from "effect/Effect";
-import { Suspense } from "react";
+import React from "react";
 import { DemoClient } from "./demo-client";
 
 const DEMO_QUERY_KEY = ["prefetch-demo"] as const;
@@ -54,9 +54,9 @@ export default async function PrefetchDemoPage() {
       </header>
 
       <HydrationBoundary state={dehydrate(queryClient)}>
-        <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+        <React.Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
           <DemoClient queryKey={DEMO_QUERY_KEY} />
-        </Suspense>
+        </React.Suspense>
       </HydrationBoundary>
     </main>
   );

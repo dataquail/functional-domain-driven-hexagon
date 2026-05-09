@@ -10,5 +10,5 @@
   "arrowParens": "always",
   "printWidth": 100,
   "tabWidth": 2,
-  "tailwindStylesheet": "./packages/client/src/index.css"
+  "tailwindStylesheet": "./packages/web/app/globals.css"
 }

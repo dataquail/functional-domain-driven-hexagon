@@ -20,5 +20,8 @@ export default defineWorkspace([
   "packages/database",
   "packages/jobs",
   "packages/server",
-  "packages/client",
 ]);
+// `packages/web` (Next.js) doesn't define its own vitest config yet —
+// add one alongside its tests when introducing Phase 6 cutover follow-up
+// unit-test coverage. The acceptance suite (Playwright) covers the
+// integration paths today.

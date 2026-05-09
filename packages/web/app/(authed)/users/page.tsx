@@ -9,7 +9,7 @@ import { getQueryClient } from "@/lib/query-client.server";
 import { prefetchEffectQuery } from "@/lib/tanstack-query/effect-prefetch.server";
 import { usersQuery, usersQueryKey } from "@/services/data-access/users-queries";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { Suspense } from "react";
+import React from "react";
 
 const PAGE_SIZE = 10;
 const INITIAL_VARIABLES = { page: 1, pageSize: PAGE_SIZE } as const;
@@ -46,9 +46,9 @@ export default async function UsersPage() {
         </Card.Header>
         <Card.Content>
           <HydrationBoundary state={dehydrate(queryClient)}>
-            <Suspense fallback={<Fallback />}>
+            <React.Suspense fallback={<Fallback />}>
               <UserList />
-            </Suspense>
+            </React.Suspense>
           </HydrationBoundary>
         </Card.Content>
       </Card>
