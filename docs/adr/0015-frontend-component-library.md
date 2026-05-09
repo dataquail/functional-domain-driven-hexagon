@@ -19,7 +19,7 @@ The forces:
 
 ## Decision
 
-Two folders in `packages/client/src/components/`, with the third-party encapsulation enforced at the folder boundary by dependency-cruiser.
+Two folders in `packages/components/` (a sibling workspace package consumed as `@org/components`), with the third-party encapsulation enforced at the folder boundary by dependency-cruiser. Storybook is hosted in the same package so the catalog has a stable home decoupled from the renderer's bundler conventions.
 
 ### `components/primitives/` — atoms
 
@@ -51,7 +51,7 @@ A component starts where it is used. When a second feature wants the same shape,
 
 ### Discoverability
 
-Storybook is the canonical index. Every primitive and pattern ships a sibling `*.stories.tsx` showing default rendering, variant matrix, light/dark theming, and interactive states. Run `pnpm -F @org/client storybook` to open it locally. A short markdown README at `components/README.md` keeps the rules of the road (folder layout, promotion path, icon contract) but defers the per-component catalog to Storybook itself.
+Storybook is the canonical index. Every primitive and pattern ships a sibling `*.stories.tsx` showing default rendering, variant matrix, light/dark theming, and interactive states. Run `pnpm -F @org/components storybook` to open it locally. The `lint:tests` parity check fails CI if a primitive or pattern lands without a sibling story.
 
 CLAUDE.md points future agents at Storybook (and the README as a fallback), so the question "is there already a component for this?" is the cheap first check rather than a missed step.
 

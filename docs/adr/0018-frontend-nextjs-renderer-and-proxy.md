@@ -12,7 +12,7 @@ The decision is _not_ "add SSR." The decision is "pick the renderer that lets us
 The forces:
 
 - We already have a working BFF (ADR-0016, ADR-0017): the Effect server runs the OIDC dance and issues an `HttpOnly` session cookie. Replacing it with a Next-based BFF would re-do work that already works.
-- The frontend already uses TanStack Query everywhere, and Effect-based queries via `useEffectQuery` (`packages/client/src/lib/tanstack-query/effect-query.ts`). A renderer that natively supports `prefetchQuery` + `<HydrationBoundary>` lets us preserve this surface and graduate routes to SSR per-need.
+- The frontend already uses TanStack Query everywhere, and Effect-based queries via Effect-aware hooks (now `useEffectMutation` + `useEffectSuspenseQuery` in `packages/web/lib/tanstack-query/`). A renderer that natively supports `prefetchQuery` + `<HydrationBoundary>` lets us preserve this surface and graduate routes to SSR per-need.
 - The cookie story breaks if Next and Effect are on different origins. `SameSite=Strict` (ADR-0017) means the browser will not attach the cookie cross-site at all; CORS+credentials does not save us.
 - We don't want a second auth authority. Two services holding session state means two places that need OIDC SDK, two refresh-token paths, two revocation stories.
 
@@ -43,9 +43,9 @@ A single origin reaches the browser. The browser hits `/<app>` and `/api/*` on t
 
 ### 4. OpenTelemetry is wired on Next via `instrumentation.ts`
 
-Next initializes the Node OTEL SDK in [packages/web/src/instrumentation.ts](packages/web/src/instrumentation.ts) on boot, exporting to the same OTLP collector as the Effect server (ADR-0012). W3C trace context propagates so a request entering Next produces a span; the proxied call to the Effect server inherits the trace ID; Jaeger shows browser → Next → Effect as a single trace per request.
+Next initializes the Node OTEL SDK in [packages/web/instrumentation.ts](../../packages/web/instrumentation.ts) on boot, exporting to the same OTLP collector as the Effect server (ADR-0012). W3C trace context propagates so a request entering Next produces a span; the proxied call to the Effect server inherits the trace ID; Jaeger shows browser → Next → Effect as a single trace per request.
 
-The browser SDK from [services/common/web-sdk.ts](packages/client/src/services/common/web-sdk.ts) is preserved on the Next side and points at the same collector. The browser span becomes the parent of the Next span when the browser propagates trace context on `/api/*` calls.
+The browser SDK lives at [services/common/web-sdk.client.ts](../../packages/web/services/common/web-sdk.client.ts) and points at the same collector. The browser span becomes the parent of the Next span when the browser propagates trace context on `/api/*` calls.
 
 ## What this ADR does _not_ change
 
