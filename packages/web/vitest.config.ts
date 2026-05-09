@@ -22,6 +22,9 @@ export default defineConfig({
     alias: [
       { find: /^@\/(.*)$/, replacement: path.join(__dirname, "./$1") },
       { find: /^@org\/components\/(.*)$/, replacement: path.join(__dirname, "../components/$1") },
+      // Match the tsconfig paths and the runtime export shape: contracts
+      // resolves via the built ESM. Keep the build step in the setup
+      // composite action so CI doesn't have to remember per-job.
       {
         find: /^@org\/contracts$/,
         replacement: path.join(__dirname, "../contracts/build/esm/index.js"),
