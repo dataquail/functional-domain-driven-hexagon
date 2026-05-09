@@ -16,14 +16,24 @@
 
 import { QueryClient } from "@/services/common/query-client";
 import { Toast } from "@/services/common/toast";
+import { WebSdkLive } from "@/services/common/web-sdk.client";
 import { type QueryClient as TanstackQueryClient } from "@tanstack/react-query";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as React from "react";
 import { ApiClientLive } from "./api-client.client";
 
+// `WebSdkLive` is `provide`d (not `mergeAll`'d): it satisfies the
+// `Tracer` requirement of the inner layers and erases that requirement
+// from the resulting runtime context. Inner layers emit spans against
+// the active tracer; the SDK ships them OTLP/HTTP to the Jaeger
+// collector. Browser-originated spans propagate `traceparent` on
+// outbound `/api/*` fetches, so Jaeger stitches browser → Next →
+// Effect into a single trace.
 const buildClientLive = (queryClient: TanstackQueryClient) =>
-  Layer.mergeAll(ApiClientLive, Toast.Default, QueryClient.make(queryClient));
+  Layer.mergeAll(ApiClientLive, Toast.Default, QueryClient.make(queryClient)).pipe(
+    Layer.provide(WebSdkLive),
+  );
 
 export type ClientManagedRuntime = ManagedRuntime.ManagedRuntime<
   Layer.Layer.Success<ReturnType<typeof buildClientLive>>,
