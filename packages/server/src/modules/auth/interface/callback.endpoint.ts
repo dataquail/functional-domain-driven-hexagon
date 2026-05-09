@@ -35,8 +35,21 @@ export const callbackEndpoint = () =>
       Buffer.from(verified, "base64url").toString("utf8"),
     ) as { state: string; codeVerifier: string };
 
-    // openid-client wants the full callback URL it received
-    const url = new URL(httpReq.url, env.ZITADEL_REDIRECT_URI);
+    // openid-client derives the token-exchange `redirect_uri` from this
+    // URL's origin+path, and Zitadel rejects the exchange if it doesn't
+    // match the authorize-time value byte-for-byte.
+    //
+    // We can't reconstruct from `httpReq.url` directly: Next's `/api/*`
+    // rewrite strips the `/api` prefix before the request reaches us, so
+    // `httpReq.url` is `/auth/callback?…` here, not `/api/auth/callback?…`.
+    // Feeding that as the path would yield a URL without `/api` and trip
+    // "redirect_uri does not correspond". Use the env-configured redirect
+    // URI for origin+path (the authorize step already used this value)
+    // and only carry the query string from the inbound request.
+    const queryIndex = httpReq.url.indexOf("?");
+    const url = new URL(
+      env.ZITADEL_REDIRECT_URI + (queryIndex >= 0 ? httpReq.url.slice(queryIndex) : ""),
+    );
     const exchange = yield* oidc.exchangeCode(url, expectedState, codeVerifier);
 
     const bus = yield* CommandBus;

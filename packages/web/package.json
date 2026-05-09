@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "predev": "lsof -ti:3000 | xargs kill -9 2>/dev/null; true; pnpm --filter @org/contracts build",
-    "dev": "dotenv -e ../../.env next dev -p 3000",
+    "dev": "dotenv -e ../../.env -- next dev -p 3000",
     "prebuild": "pnpm --filter @org/contracts build",
     "build": "next build",
     "start": "next start -p 3000",

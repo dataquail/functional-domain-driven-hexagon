@@ -96,10 +96,29 @@ export class OidcClient extends Effect.Service<OidcClient>()("OidcClient", {
               : null;
           return { subject: claims.sub, email };
         },
-        catch: (cause) =>
-          new CustomHttpApiError.Unauthorized({
-            message: `OIDC code exchange failed: ${String(cause)}`,
-          }),
+        catch: (cause) => {
+          // openid-client v6 surfaces Zitadel's response body on
+          // ResponseBodyError as `error` / `error_description` / `code`.
+          // Without unpacking, every failure looks like the same generic
+          // "ResponseBodyError" string and you can't tell a bad client
+          // secret from a stale code from a redirect URI mismatch.
+          const detail =
+            cause !== null && typeof cause === "object"
+              ? [
+                  (cause as { error?: unknown }).error,
+                  (cause as { error_description?: unknown }).error_description,
+                  (cause as { code?: unknown }).code,
+                ]
+                  .filter((v) => v !== undefined && v !== null && v !== "")
+                  .join(" — ")
+              : "";
+          return new CustomHttpApiError.Unauthorized({
+            message:
+              detail !== ""
+                ? `OIDC code exchange failed: ${String(cause)} [${detail}]`
+                : `OIDC code exchange failed: ${String(cause)}`,
+          });
+        },
       });
 
     const buildEndSessionUrl = (): Effect.Effect<URL, CustomHttpApiError.InternalServerError> =>

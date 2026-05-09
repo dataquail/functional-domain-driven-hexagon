@@ -26,6 +26,13 @@ export const prefetchEffectQuery = async <A, E>(args: {
   const runtime = await getServerRuntime();
   await queryClient.prefetchQuery({
     queryKey: args.queryKey,
-    queryFn: () => runtime.runPromise(args.queryFn),
+    // JSON round-trip strips Schema.Class prototypes so the dehydrated
+    // cache survives the RSC → Client Component serialization step.
+    // Effect's HttpApiClient decodes responses into Schema.Class
+    // instances (e.g. TodosContract.Todo); Next refuses to send class
+    // instances across the SC/CC boundary. Round-tripping yields the
+    // same wire-shape data the client would receive over fetch anyway.
+    queryFn: () =>
+      runtime.runPromise(args.queryFn).then((data) => JSON.parse(JSON.stringify(data)) as A),
   });
 };
