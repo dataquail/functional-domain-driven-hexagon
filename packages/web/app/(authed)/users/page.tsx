@@ -1,6 +1,3 @@
-// Users index. Phase 6 cutover wires the full mutation surface
-// (CreateUser presenter) on top of the Phase 4 read-side prefetch.
-
 import { CreateUser } from "@/features/users/create-user/create-user";
 import { UserList } from "@/features/users/user-list";
 import { getQueryClient } from "@/lib/query-client.server";

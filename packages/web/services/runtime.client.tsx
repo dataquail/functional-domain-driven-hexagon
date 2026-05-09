@@ -1,11 +1,10 @@
 "use client";
 
-// Browser-side Effect runtime, mirrored on the existing SPA's pattern in
-// packages/client/src/services/runtime/. Singleton-per-tab: one
-// ManagedRuntime survives across re-renders so cached resources (the
-// HttpApiClient instance, fetch retry transformers) aren't rebuilt on
-// every paint. `useRuntime()` exposes it to client hooks like
-// `useEffectSuspenseQuery` and `useEffectMutation`.
+// Browser-side Effect runtime. Singleton-per-tab: one ManagedRuntime
+// survives across re-renders so cached resources (the HttpApiClient
+// instance, fetch retry transformers) aren't rebuilt on every paint.
+// `useRuntime()` exposes it to client hooks like `useEffectSuspenseQuery`
+// and `useEffectMutation`.
 //
 // Layers:
 // - ApiClient — talks to the BFF through the same-origin /api proxy

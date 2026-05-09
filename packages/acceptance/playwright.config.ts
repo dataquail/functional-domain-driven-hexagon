@@ -8,8 +8,8 @@ dotenv.config({ path: "../../.env" });
 // Acceptance configuration follows the layered architecture from Synapse's
 // `acceptance-testing` doc: specs are business-language only, drivers/pages
 // hide selectors, infrastructure (this file + global-setup.ts) wires real
-// processes. The webServer entries spawn the API server (against the test
-// DB) and the Vite dev server before tests run; global-setup migrates the
+// processes. The webServer entries spawn the BFF (against the test DB)
+// and the Next renderer before tests run; global-setup migrates the
 // test DB once and pre-seeds the admin row.
 //
 // Auth: an `auth-setup` project runs the real Zitadel hosted-UI login as
@@ -19,8 +19,7 @@ dotenv.config({ path: "../../.env" });
 // the full UI flow on every run.
 
 const isCi = process.env.CI !== undefined && process.env.CI !== "";
-// Browser-facing origin. Phase 6 cutover (ADR-0018) flipped this from the
-// existing Vite SPA at :5173 to the Next.js renderer at :3000.
+// Browser-facing origin (Next renderer; ADR-0018).
 const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
 const API_URL = process.env.API_URL ?? "http://localhost:3001";
 const SERVER_INTERNAL_URL = process.env.SERVER_INTERNAL_URL ?? API_URL;
@@ -108,10 +107,9 @@ export default defineConfig({
       stderr: "pipe",
     },
     {
-      // Next.js renderer. Phase 6 cutover replaced the Vite SPA here.
-      // SERVER_INTERNAL_URL points the /api/* rewrite at the test-DB-bound
-      // Effect server above. APP_URL stays :3000 so the BFF redirects
-      // post-sign-in to the same origin Playwright drives.
+      // Next.js renderer. SERVER_INTERNAL_URL points the /api/* rewrite at
+      // the test-DB-bound BFF above. APP_URL stays :3000 so the BFF
+      // redirects post-sign-in to the same origin Playwright drives.
       command: "pnpm --filter @org/web dev",
       url: APP_URL,
       cwd: "../../",

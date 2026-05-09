@@ -1,11 +1,5 @@
 "use client";
 
-// Phase 6 port of packages/client/src/features/index/. Replaces the
-// Phase 4 follow-up's read-only placeholder with the full mutation
-// surface — toggle and delete via TodoItem. Worker actions
-// (filterLargeData, calculatePrimes) are intentionally skipped per
-// the migration plan (academic for the template).
-
 import { useTodosSuspenseQuery } from "@/services/data-access/use-todos-queries";
 import * as Array from "effect/Array";
 import { TodoItem } from "./todo-item/todo-item";

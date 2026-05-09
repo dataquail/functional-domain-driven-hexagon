@@ -1,17 +1,13 @@
 "use client";
 
-// Effect-based mutations on the client. Mirrors the existing SPA's
-// `useEffectMutation` from packages/client/src/lib/tanstack-query/
-// effect-query.ts, with one substitution: `LiveRuntimeContext` →
-// `ClientRuntimeContext`. Behavior, error handling, and toast surface
-// are identical so the existing data-access tier ports without
-// per-call rewrites.
-//
-// The runner glue is local to this file. `useEffectSuspenseQuery`
-// (the read-side counterpart) intentionally does NOT use the runner —
-// suspense errors throw to the nearest `error.tsx` boundary, which is
-// the routing-layer concern. Mutations, by contrast, are user-driven
-// and want toast feedback inline.
+// Effect-based mutations on the client. The runner glue is local to
+// this file: it bridges Effect's failure channel to TanStack's mutation
+// callbacks and surfaces tagged errors / defects through the Toast
+// service. `useEffectSuspenseQuery` (the read-side counterpart)
+// intentionally does NOT use the runner — suspense errors throw to the
+// nearest `error.tsx` boundary, which is the routing-layer concern.
+// Mutations, by contrast, are user-driven and want toast feedback
+// inline.
 
 import { Toast } from "@/services/common/toast";
 import { type ClientRuntimeContext, useRuntime } from "@/services/runtime.client";

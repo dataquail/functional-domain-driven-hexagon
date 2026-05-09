@@ -1,16 +1,9 @@
 "use client";
 
-// Phase 4 port of packages/client/src/features/users/user-list/user-list.tsx.
-// Differences from the SPA version:
-//   - `useEffectQuery` → `useEffectSuspenseQuery`. Page 1 is hydrated
-//     from the server prefetch (no client spinner on first paint);
-//     subsequent pages refetch via Suspense (the existing skeleton
-//     fallback comes from `<Suspense fallback>` in the page, not from
-//     `usersQuery.isPending` here).
-//   - The pagination state is unchanged — `useState` per the plan's
-//     "pagination/state-driven queries stay client-side" note.
-//   - There's no `isFetching`-disabled state on the buttons because
-//     suspense handles the in-flight UX above us.
+// Page 1 hydrates from the server prefetch (no client spinner on first
+// paint); subsequent pages refetch via Suspense, with the skeleton
+// fallback supplied by the parent `<Suspense>` in the page. Pagination
+// state stays client-side per ADR-0018.
 
 import { useUsersSuspenseQuery } from "@/services/data-access/use-users-queries";
 import { Badge } from "@org/components/primitives/badge";

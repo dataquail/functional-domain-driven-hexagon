@@ -1,8 +1,3 @@
-// Tasks index. Phase 6 cutover wires the full mutation surface
-// (AddTodo, TodoItem toggle/delete) on top of the Phase 4 read-side
-// prefetch. Worker actions (filter, primes) from the SPA's view-model
-// are intentionally not ported — academic for a template repo.
-
 import { AddTodo } from "@/features/index/add-todo/add-todo";
 import { TodoList } from "@/features/index/todo-list";
 import { getQueryClient } from "@/lib/query-client.server";
