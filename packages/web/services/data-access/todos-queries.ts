@@ -1,7 +1,8 @@
 // Todos data-access — server-safe Effects only. This file has NO
 // `"use client"` so it imports/runs in both server components (for
-// `prefetchEffectQuery`) and client components (transitively, via
-// use-todos-queries.ts which adds the suspense + mutation hooks).
+// the page-level `prefetchTodos` call in todos-queries.server.ts)
+// and client components (transitively, via use-todos-queries.ts
+// which adds the suspense + mutation hooks).
 //
 // Mutations chain `todosHelpers.invalidateAllQueries()` so the read
 // cache refreshes after writes. The helper depends on `QueryClient`

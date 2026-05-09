@@ -192,7 +192,7 @@ module.exports = {
       name: "web-tanstack-allowlist",
       severity: "error",
       comment:
-        "TanStack Query (@tanstack/react-query, @tanstack/query-core) may only be imported by services/data-access/, services/common/query-client.ts, services/runtime.client.tsx, lib/tanstack-query/, lib/query-client.{shared,server}.ts, the App Router prefetch surface (app/providers.tsx + app/**/page.tsx — these legitimately need dehydrate/HydrationBoundary), and shared test helpers in test/. Test/story files exempted. See ADR-0014.",
+        "TanStack Query (@tanstack/react-query, @tanstack/query-core) may only be imported by services/data-access/, services/common/query-client.ts, services/runtime.client.tsx, lib/tanstack-query/, lib/query-client.{shared,server}.ts, app/providers.tsx (the QueryClientProvider mount), and shared test helpers in test/. App Router pages do NOT import TanStack directly — they compose `<ServerHydrationBoundary>` (from lib/tanstack-query/) with per-feature prefetch helpers from services/data-access/. Test/story files exempted. ADR-0014.",
       from: {
         path: "^packages/web/",
         pathNot: [
@@ -202,12 +202,24 @@ module.exports = {
           "^packages/web/lib/tanstack-query/",
           "^packages/web/lib/query-client\\.(shared|server)\\.ts$",
           "^packages/web/app/providers\\.tsx$",
-          "^packages/web/app/.*/page\\.tsx$",
           "^packages/web/test/",
           "\\.(stories|test|spec)\\.(ts|tsx)$",
         ],
       },
       to: { path: "/node_modules/@tanstack/(react-query|query-core)/" },
+    },
+    {
+      name: "web-app-no-tanstack-internals",
+      severity: "error",
+      comment:
+        "App Router pages must consume the data-access port (per-feature `prefetch*` helpers + `use*Suspense` hooks) and the `<ServerHydrationBoundary>` component, not the TanStack glue beneath them. Reaching for `prefetchEffectQuery` (lib/tanstack-query/effect-prefetch.server.ts) or the per-request `getQueryClient` (lib/query-client.server.ts) from `app/` skips the data-access port that ADR-0014 requires. The boundary component encapsulates both. ADR-0014, ADR-0018.",
+      from: { path: "^packages/web/app/" },
+      to: {
+        path: [
+          "^packages/web/lib/tanstack-query/effect-prefetch\\.server\\.ts$",
+          "^packages/web/lib/query-client\\.server\\.ts$",
+        ],
+      },
     },
     {
       name: "web-component-no-effect-runtime",

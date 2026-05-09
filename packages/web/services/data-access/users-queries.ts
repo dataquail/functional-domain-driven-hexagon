@@ -1,10 +1,10 @@
 // Users data-access — server-safe Effects only. This file has NO
 // `"use client"` directive so it can be imported and executed in both
-// server components (for `prefetchEffectQuery`) and client components
-// (transitively, via `use-users-queries.ts` which adds the suspense
-// hook + mutation hook). Both runtimes provide the shared `ApiClient`
-// tag, so the same Effect runs in either context — only the
-// transport differs.
+// server components (for the page-level `prefetchUsers` call in
+// users-queries.server.ts) and client components (transitively, via
+// `use-users-queries.ts` which adds the suspense hook + mutation
+// hook). Both runtimes provide the shared `ApiClient` tag, so the
+// same Effect runs in either context — only the transport differs.
 
 import { QueryData } from "@/lib/tanstack-query";
 import { ApiClient } from "@/services/api-client.shared";

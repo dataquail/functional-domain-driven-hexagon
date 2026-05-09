@@ -1,11 +1,9 @@
 import { CreateUser } from "@/features/users/create-user/create-user";
 import { UserList } from "@/features/users/user-list";
-import { getQueryClient } from "@/lib/query-client.server";
-import { prefetchEffectQuery } from "@/lib/tanstack-query/effect-prefetch.server";
-import { usersQuery, usersQueryKey } from "@/services/data-access/users-queries";
+import { ServerHydrationBoundary } from "@/lib/tanstack-query/server-hydration-boundary";
+import { prefetchUsers } from "@/services/data-access/users-queries.server";
 import { Card } from "@org/components/primitives/card";
 import { Skeleton } from "@org/components/primitives/skeleton";
-import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import React from "react";
 
 const PAGE_SIZE = 10;
@@ -19,13 +17,7 @@ const Fallback: React.FC = () => (
   </div>
 );
 
-export default async function UsersPage() {
-  await prefetchEffectQuery({
-    queryKey: usersQueryKey(INITIAL_VARIABLES),
-    queryFn: usersQuery(INITIAL_VARIABLES),
-  });
-  const queryClient = getQueryClient();
-
+export default function UsersPage() {
   return (
     <div className="mx-auto w-full max-w-3xl space-y-4 px-4">
       <Card className="shadow-md">
@@ -42,11 +34,12 @@ export default async function UsersPage() {
           <Card.Title className="text-2xl font-semibold">Users</Card.Title>
         </Card.Header>
         <Card.Content>
-          <HydrationBoundary state={dehydrate(queryClient)}>
-            <React.Suspense fallback={<Fallback />}>
-              <UserList />
-            </React.Suspense>
-          </HydrationBoundary>
+          <ServerHydrationBoundary
+            prefetch={[prefetchUsers(INITIAL_VARIABLES)]}
+            fallback={<Fallback />}
+          >
+            <UserList />
+          </ServerHydrationBoundary>
         </Card.Content>
       </Card>
     </div>

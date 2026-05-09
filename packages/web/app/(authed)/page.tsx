@@ -1,11 +1,9 @@
 import { AddTodo } from "@/features/index/add-todo/add-todo";
 import { TodoList } from "@/features/index/todo-list";
-import { getQueryClient } from "@/lib/query-client.server";
-import { prefetchEffectQuery } from "@/lib/tanstack-query/effect-prefetch.server";
-import { todosQuery, todosQueryKey } from "@/services/data-access/todos-queries";
+import { ServerHydrationBoundary } from "@/lib/tanstack-query/server-hydration-boundary";
+import { prefetchTodos } from "@/services/data-access/todos-queries.server";
 import { Card } from "@org/components/primitives/card";
 import { Skeleton } from "@org/components/primitives/skeleton";
-import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import React from "react";
 
 const SKELETON_COUNT = 3;
@@ -18,13 +16,7 @@ const Fallback: React.FC = () => (
   </div>
 );
 
-export default async function TasksPage() {
-  await prefetchEffectQuery({
-    queryKey: todosQueryKey(),
-    queryFn: todosQuery,
-  });
-  const queryClient = getQueryClient();
-
+export default function TasksPage() {
   return (
     <Card className="mx-auto w-full max-w-lg shadow-md">
       <Card.Header className="pb-2">
@@ -32,11 +24,9 @@ export default async function TasksPage() {
       </Card.Header>
       <Card.Content className="space-y-4">
         <AddTodo />
-        <HydrationBoundary state={dehydrate(queryClient)}>
-          <React.Suspense fallback={<Fallback />}>
-            <TodoList />
-          </React.Suspense>
-        </HydrationBoundary>
+        <ServerHydrationBoundary prefetch={[prefetchTodos()]} fallback={<Fallback />}>
+          <TodoList />
+        </ServerHydrationBoundary>
       </Card.Content>
     </Card>
   );
