@@ -120,11 +120,11 @@ services:
       ZITADEL_ISSUER: http://localhost:8080
       ZITADEL_BOOTSTRAP_PAT: ${ZITADEL_BOOTSTRAP_PAT:-}
       ZITADEL_ADMIN_EMAIL: ${ZITADEL_ADMIN_EMAIL:-admin@example.com}
-      APP_REDIRECT_URI: ${ZITADEL_REDIRECT_URI:-http://localhost:3001/auth/callback}
+      APP_REDIRECT_URI: ${APP_REDIRECT_URI:-${ZITADEL_REDIRECT_URI:-http://localhost:3001/auth/callback}}
       # Default must match `ZITADEL_POST_LOGOUT_REDIRECT_URI` in
       # packages/server/src/common/env-vars.ts. If they drift apart,
       # /auth/logout 400s with "post_logout_redirect_uri invalid".
-      APP_POST_LOGOUT_REDIRECT_URI: ${ZITADEL_POST_LOGOUT_REDIRECT_URI:-http://localhost:5173/auth/login}
+      APP_POST_LOGOUT_REDIRECT_URI: ${APP_POST_LOGOUT_REDIRECT_URI:-${ZITADEL_POST_LOGOUT_REDIRECT_URI:-http://localhost:3000/}}
       # CI overrides this so the seed targets `effect-monorepo-test`. Local
       # dev sticks with the default. The host inside this container is
       # `postgres` because seed-zitadel shares zitadel's network namespace

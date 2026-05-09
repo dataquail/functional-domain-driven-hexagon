@@ -21,12 +21,25 @@ const issuer = process.env.ZITADEL_ISSUER ?? "http://localhost:8080";
 // see Host=localhost:8080 to find the instance. Override here.
 const instanceHost = process.env.ZITADEL_INSTANCE_HOST ?? "localhost:8080";
 const adminEmail = process.env.ZITADEL_ADMIN_EMAIL ?? "admin@example.com";
-const redirectUri = process.env.APP_REDIRECT_URI ?? "http://localhost:3001/auth/callback";
+// `APP_REDIRECT_URI` may be a single URL or a comma-separated list. During
+// the Next.js migration both `http://localhost:5173/auth/callback` (the
+// existing Vite SPA) and `http://localhost:3000/api/auth/callback` (Next
+// proxied to the BFF, ADR-0018) need to be registered with Zitadel so
+// users can sign in via either origin. Phase 6 cutover collapses this to
+// a single `:3000` URI once the SPA is gone.
+const redirectUris = (process.env.APP_REDIRECT_URI ?? "http://localhost:3001/auth/callback")
+  .split(",")
+  .map((u) => u.trim())
+  .filter((u) => u.length > 0);
 // Default must match `ZITADEL_POST_LOGOUT_REDIRECT_URI` in the server's
 // env-vars.ts. If they drift apart, the server's logout request to
 // `end_session_endpoint` is rejected with "post_logout_redirect_uri invalid".
-const postLogoutRedirectUri =
-  process.env.APP_POST_LOGOUT_REDIRECT_URI ?? "http://localhost:5173/auth/login";
+const postLogoutRedirectUris = (
+  process.env.APP_POST_LOGOUT_REDIRECT_URI ?? "http://localhost:5173/auth/login"
+)
+  .split(",")
+  .map((u) => u.trim())
+  .filter((u) => u.length > 0);
 const dbUrl = process.env.APP_DATABASE_URL;
 // Zitadel writes the bootstrap-bot PAT here on first boot (see
 // FirstInstance.PatPath in zitadel.yaml). Mounted into this container by
@@ -197,8 +210,8 @@ async function ensureOidcApp(projectId) {
     await api(`/management/v1/projects/${projectId}/apps/${app.id}/oidc_config`, {
       method: "PUT",
       body: JSON.stringify({
-        redirectUris: [redirectUri],
-        postLogoutRedirectUris: [postLogoutRedirectUri],
+        redirectUris,
+        postLogoutRedirectUris,
         responseTypes: ["OIDC_RESPONSE_TYPE_CODE"],
         grantTypes: ["OIDC_GRANT_TYPE_AUTHORIZATION_CODE", "OIDC_GRANT_TYPE_REFRESH_TOKEN"],
         appType: "OIDC_APP_TYPE_WEB",
@@ -221,8 +234,8 @@ async function ensureOidcApp(projectId) {
     method: "POST",
     body: JSON.stringify({
       name: APP_NAME,
-      redirectUris: [redirectUri],
-      postLogoutRedirectUris: [postLogoutRedirectUri],
+      redirectUris,
+      postLogoutRedirectUris,
       responseTypes: ["OIDC_RESPONSE_TYPE_CODE"],
       grantTypes: ["OIDC_GRANT_TYPE_AUTHORIZATION_CODE", "OIDC_GRANT_TYPE_REFRESH_TOKEN"],
       appType: "OIDC_APP_TYPE_WEB",
@@ -368,11 +381,15 @@ async function ensureAdminInAppDb(subject) {
   const registeredPostLogout = verify.app?.oidcConfig?.postLogoutRedirectUris ?? [];
   console.log(`    redirectUris:           ${JSON.stringify(registeredRedirects)}`);
   console.log(`    postLogoutRedirectUris: ${JSON.stringify(registeredPostLogout)}`);
-  if (!registeredRedirects.includes(redirectUri)) {
-    console.warn(`    WARN: ${redirectUri} not registered as a redirect URI`);
+  for (const expected of redirectUris) {
+    if (!registeredRedirects.includes(expected)) {
+      console.warn(`    WARN: ${expected} not registered as a redirect URI`);
+    }
   }
-  if (!registeredPostLogout.includes(postLogoutRedirectUri)) {
-    console.warn(`    WARN: ${postLogoutRedirectUri} not registered as a post-logout URI`);
+  for (const expected of postLogoutRedirectUris) {
+    if (!registeredPostLogout.includes(expected)) {
+      console.warn(`    WARN: ${expected} not registered as a post-logout URI`);
+    }
   }
 
   const smtp = await ensureSmtpProvider();

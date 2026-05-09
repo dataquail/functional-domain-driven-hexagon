@@ -72,7 +72,9 @@ export const callbackEndpoint = () =>
             secure: false,
             sameSite: "lax",
             maxAge: 0,
-            path: "/auth",
+            // Must match the login endpoint's path (`/`) so the browser
+            // accepts the deletion. ADR-0018 § "How the /api/* proxy works".
+            path: "/",
           },
         ],
       ]),
