@@ -2,15 +2,23 @@
 // `"use client"` directive so it can be imported and executed in both
 // server components (for `prefetchEffectQuery`) and client components
 // (transitively, via `use-users-queries.ts` which adds the suspense
-// hook). Both runtimes provide the shared `ApiClient` tag, so the
-// same Effect runs in either context — only the transport differs.
+// hook + mutation hook). Both runtimes provide the shared `ApiClient`
+// tag, so the same Effect runs in either context — only the
+// transport differs.
 
+import { QueryData } from "@/lib/tanstack-query";
 import { ApiClient } from "@/services/api-client.shared";
+import type { UserContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
 export type UsersListVariables = { page: number; pageSize: number };
 
-export const usersQueryKey = (variables: UsersListVariables) => ["users", variables] as const;
+const usersKey = QueryData.makeQueryKey<"users", UsersListVariables>("users");
+const usersHelpers = QueryData.makeHelpers<UserContract.PaginatedUsers, UsersListVariables>(
+  usersKey,
+);
+
+export const usersQueryKey = usersKey;
 
 // Return type is inferred — the error union (Unauthorized,
 // HttpApiDecodeError, HttpClientError, ParseError) comes from the
@@ -19,3 +27,8 @@ export const usersQueryKey = (variables: UsersListVariables) => ["users", variab
 // the tagged variants.
 export const usersQuery = (variables: UsersListVariables) =>
   Effect.flatMap(ApiClient, ({ client }) => client.user.find({ urlParams: variables }));
+
+export const createUser = (payload: UserContract.CreateUserPayload) =>
+  Effect.flatMap(ApiClient, ({ client }) => client.user.create({ payload })).pipe(
+    Effect.tap(() => usersHelpers.invalidateAllQueries()),
+  );

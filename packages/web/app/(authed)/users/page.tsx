@@ -1,15 +1,9 @@
-// Users index. Phase 4 wires the server-side prefetch and the client
-// suspense read. Page 1 of the user list is fetched on the server with
-// the inbound cookie, dehydrated into the HTML, and hydrated by the
-// browser's QueryClient — `useUsersSuspenseQuery` reads from cache on
-// first paint, no client spinner.
-//
-// Pagination state stays client-side (`useState` in `<UserList>`):
-// clicking next/prev causes Suspense to fall back to the skeleton
-// while the new page fetches.
+// Users index. Phase 6 cutover wires the full mutation surface
+// (CreateUser presenter) on top of the Phase 4 read-side prefetch.
 
 import { Card } from "@/components/primitives/card";
 import { Skeleton } from "@/components/primitives/skeleton";
+import { CreateUser } from "@/features/users/create-user/create-user";
 import { UserList } from "@/features/users/user-list";
 import { getQueryClient } from "@/lib/query-client.server";
 import { prefetchEffectQuery } from "@/lib/tanstack-query/effect-prefetch.server";
@@ -37,6 +31,15 @@ export default async function UsersPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-4 px-4">
+      <Card className="shadow-md">
+        <Card.Header>
+          <Card.Title className="text-2xl font-semibold">Create user</Card.Title>
+        </Card.Header>
+        <Card.Content>
+          <CreateUser />
+        </Card.Content>
+      </Card>
+
       <Card className="shadow-md">
         <Card.Header>
           <Card.Title className="text-2xl font-semibold">Users</Card.Title>

@@ -1,10 +1,11 @@
-// Tasks index. Phase 4 follow-up wires the server-side prefetch and
-// the client suspense read for the read side. Mutations (add/toggle/
-// delete) and worker actions (filter, primes) land at Phase 6 cutover
-// when the existing client's mutation tier moves over.
+// Tasks index. Phase 6 cutover wires the full mutation surface
+// (AddTodo, TodoItem toggle/delete) on top of the Phase 4 read-side
+// prefetch. Worker actions (filter, primes) from the SPA's view-model
+// are intentionally not ported — academic for a template repo.
 
 import { Card } from "@/components/primitives/card";
 import { Skeleton } from "@/components/primitives/skeleton";
+import { AddTodo } from "@/features/index/add-todo/add-todo";
 import { TodoList } from "@/features/index/todo-list";
 import { getQueryClient } from "@/lib/query-client.server";
 import { prefetchEffectQuery } from "@/lib/tanstack-query/effect-prefetch.server";
@@ -35,6 +36,7 @@ export default async function TasksPage() {
         <Card.Title className="text-center text-2xl font-semibold">My Tasks</Card.Title>
       </Card.Header>
       <Card.Content className="space-y-4">
+        <AddTodo />
         <HydrationBoundary state={dehydrate(queryClient)}>
           <Suspense fallback={<Fallback />}>
             <TodoList />

@@ -26,14 +26,10 @@ import {
   type UseSuspenseQueryResult,
 } from "@tanstack/react-query";
 import * as Cause from "effect/Cause";
-import * as Data from "effect/Data";
 import type * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as React from "react";
-
-export class QueryDefect extends Data.TaggedError("QueryDefect")<{
-  cause: unknown;
-}> {}
+import { QueryDefect } from "./use-effect-mutation";
 
 type EffectfulError<Tag extends string = string> = { _tag: Tag };
 

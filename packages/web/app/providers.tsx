@@ -14,6 +14,8 @@
 // `<HydrationBoundary>` in each page bridges the two by deserializing
 // the server-only client's dehydrated state into the browser client.
 
+import { Toaster } from "@/components/primitives/toaster";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 import { makeQueryClient } from "@/lib/query-client.shared";
 import { RuntimeProvider } from "@/services/runtime.client";
 import { isServer, type QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -30,9 +32,12 @@ const getQueryClient = (): QueryClient => {
 export const Providers: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const queryClient = getQueryClient();
   return (
-    <QueryClientProvider client={queryClient}>
-      <RuntimeProvider>{children}</RuntimeProvider>
-      <ReactQueryDevtools initialIsOpen={false} />
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <RuntimeProvider queryClient={queryClient}>{children}</RuntimeProvider>
+        <Toaster />
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 };

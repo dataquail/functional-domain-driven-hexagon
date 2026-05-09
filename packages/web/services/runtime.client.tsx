@@ -5,21 +5,28 @@
 // ManagedRuntime survives across re-renders so cached resources (the
 // HttpApiClient instance, fetch retry transformers) aren't rebuilt on
 // every paint. `useRuntime()` exposes it to client hooks like
-// `useEffectSuspenseQuery`.
+// `useEffectSuspenseQuery` and `useEffectMutation`.
 //
-// Phase 4 ships a minimal layer set (just ApiClient). NetworkMonitor,
-// Toast, WorkerClient — all client-only — port over from the existing
-// SPA in later phases as their consumers land.
+// Layers:
+// - ApiClient — talks to the BFF through the same-origin /api proxy
+// - Toast — sonner-backed surface used by useEffectMutation's runner
+// - QueryClient — the same instance the QueryClientProvider holds, so
+//   data-access mutation invalidation paths (query-data-helpers.ts)
+//   target the same cache the components read from.
 
+import { QueryClient } from "@/services/common/query-client";
+import { Toast } from "@/services/common/toast";
+import { type QueryClient as TanstackQueryClient } from "@tanstack/react-query";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as React from "react";
 import { ApiClientLive } from "./api-client.client";
 
-const ClientLive = Layer.mergeAll(ApiClientLive);
+const buildClientLive = (queryClient: TanstackQueryClient) =>
+  Layer.mergeAll(ApiClientLive, Toast.Default, QueryClient.make(queryClient));
 
 export type ClientManagedRuntime = ManagedRuntime.ManagedRuntime<
-  Layer.Layer.Success<typeof ClientLive>,
+  Layer.Layer.Success<ReturnType<typeof buildClientLive>>,
   never
 >;
 
@@ -27,8 +34,14 @@ export type ClientRuntimeContext = ManagedRuntime.ManagedRuntime.Context<ClientM
 
 const RuntimeContext = React.createContext<ClientManagedRuntime | null>(null);
 
-export const RuntimeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const runtime = React.useMemo(() => ManagedRuntime.make(ClientLive), []);
+export const RuntimeProvider: React.FC<{
+  children: React.ReactNode;
+  queryClient: TanstackQueryClient;
+}> = ({ children, queryClient }) => {
+  const runtime = React.useMemo(
+    () => ManagedRuntime.make(buildClientLive(queryClient)),
+    [queryClient],
+  );
 
   // Dispose on unmount-after-mount only. React Strict Mode mounts twice
   // in dev; disposing on the first cleanup would tear the cached
