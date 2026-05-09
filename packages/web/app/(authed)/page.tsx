@@ -1,18 +1,46 @@
-// Tasks index. Phase 3 ships a placeholder — Phase 4 ports the content
-// from packages/client/src/features/index/ (view-model, todo-item,
-// add-todo, primes/filter actions). The route exists at the same URL
-// as the existing SPA so deep links survive.
+// Tasks index. Phase 4 follow-up wires the server-side prefetch and
+// the client suspense read for the read side. Mutations (add/toggle/
+// delete) and worker actions (filter, primes) land at Phase 6 cutover
+// when the existing client's mutation tier moves over.
 
-export default function TasksPage() {
+import { Card } from "@/components/primitives/card";
+import { Skeleton } from "@/components/primitives/skeleton";
+import { TodoList } from "@/features/index/todo-list";
+import { getQueryClient } from "@/lib/query-client.server";
+import { prefetchEffectQuery } from "@/lib/tanstack-query/effect-prefetch.server";
+import { todosQuery, todosQueryKey } from "@/services/data-access/todos-queries";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { Suspense } from "react";
+
+const SKELETON_COUNT = 3;
+
+const Fallback: React.FC = () => (
+  <div className="space-y-2">
+    {Array.from({ length: SKELETON_COUNT }, (_, i) => (
+      <Skeleton key={i} className="h-12 w-full rounded-md" />
+    ))}
+  </div>
+);
+
+export default async function TasksPage() {
+  await prefetchEffectQuery({
+    queryKey: todosQueryKey(),
+    queryFn: todosQuery,
+  });
+  const queryClient = getQueryClient();
+
   return (
-    <section className="mx-auto w-full max-w-2xl space-y-4 px-4">
-      <div className="rounded-lg border bg-card p-6">
-        <h1 className="mb-2 text-xl font-semibold">My Tasks</h1>
-        <p className="text-sm text-muted-foreground">
-          Route placeholder. Phase 4 ports the todo list, AddTodo form, view-model, and worker
-          actions from <code className="font-mono">packages/client/src/features/index/</code>.
-        </p>
-      </div>
-    </section>
+    <Card className="mx-auto w-full max-w-lg shadow-md">
+      <Card.Header className="pb-2">
+        <Card.Title className="text-center text-2xl font-semibold">My Tasks</Card.Title>
+      </Card.Header>
+      <Card.Content className="space-y-4">
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <Suspense fallback={<Fallback />}>
+            <TodoList />
+          </Suspense>
+        </HydrationBoundary>
+      </Card.Content>
+    </Card>
   );
 }
