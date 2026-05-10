@@ -5,27 +5,21 @@
 // fallback supplied by the parent `<Suspense>` in the page. Pagination
 // state stays client-side per ADR-0018.
 
-import { useUsersSuspenseQuery } from "@/services/data-access/use-users-queries";
 import { Badge } from "@org/components/primitives/badge";
 import { Button } from "@org/components/primitives/button";
 import { ChevronLeftIcon, ChevronRightIcon } from "@org/components/primitives/icon";
 import * as Array from "effect/Array";
 import * as React from "react";
-
-const PAGE_SIZE = 10;
+import { useUserListPresenter } from "./user-list.presenter";
 
 export const UserList: React.FC = () => {
-  const [page, setPage] = React.useState(1);
-  const usersQuery = useUsersSuspenseQuery({ page, pageSize: PAGE_SIZE });
-
-  const total = usersQuery.data.total;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const users = usersQuery.data.users;
+  const { goNext, goPrev, hasNext, hasPrev, isEmpty, page, total, totalPages, users } =
+    useUserListPresenter();
 
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        {users.length === 0 ? (
+        {isEmpty ? (
           <div className="rounded-lg bg-muted/50 py-8 text-center">
             <p className="text-sm text-muted-foreground">No users yet.</p>
           </div>
@@ -64,27 +58,11 @@ export const UserList: React.FC = () => {
         </p>
 
         <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            disabled={page <= 1}
-            onClick={() => {
-              setPage((p) => Math.max(1, p - 1));
-            }}
-          >
+          <Button type="button" variant="outline" size="icon" disabled={!hasPrev} onClick={goPrev}>
             <ChevronLeftIcon />
             <span className="sr-only">Previous page</span>
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            disabled={page >= totalPages}
-            onClick={() => {
-              setPage((p) => Math.min(totalPages, p + 1));
-            }}
-          >
+          <Button type="button" variant="outline" size="icon" disabled={!hasNext} onClick={goNext}>
             <ChevronRightIcon />
             <span className="sr-only">Next page</span>
           </Button>
