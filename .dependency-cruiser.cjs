@@ -314,6 +314,27 @@ module.exports = {
       },
     },
     {
+      name: "event-handlers-cross-module-via-adapter-only",
+      severity: "error",
+      comment:
+        "Cross-module event-handler imports must go through a *-event-adapter.ts file " +
+        "(ADR-0007 ACL pattern + Phase 11 of the remediation plan). Handlers consume " +
+        "the module's own trigger types from event-handlers/triggers/; only the " +
+        "adapter is allowed to import the publisher module's barrel. Tests are " +
+        "exempt — they may import publisher events directly to drive end-to-end flows.",
+      from: {
+        path: "^packages/server/src/modules/([^/]+)/event-handlers/",
+        pathNot: [
+          "\\.test\\.ts$",
+          "\\.integration\\.test\\.ts$",
+          "^packages/server/src/modules/[^/]+/event-handlers/[^/]+-event-adapter\\.ts$",
+        ],
+      },
+      to: {
+        path: "^packages/server/src/modules/(?!\\1/)[^/]+/index\\.ts$",
+      },
+    },
+    {
       name: "platform-ids-effect-only",
       severity: "error",
       comment:
