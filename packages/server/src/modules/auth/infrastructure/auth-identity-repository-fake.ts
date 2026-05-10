@@ -1,35 +1,62 @@
+import { FakeDatabaseRelaxedLive, FakeDatabaseTag } from "@/test-utils/fake-database.js";
 import * as Effect from "effect/Effect";
-import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
-import * as Ref from "effect/Ref";
 import { type AuthIdentity, AuthIdentityRepository } from "../domain/auth-identity-repository.js";
 import { AuthIdentityNotFound } from "../domain/session-errors.js";
 
-// `AuthIdentityRepository` is read-only on the public contract — production
-// inserts happen out-of-band via the seed script (admin pre-seeded; non-admin
-// JIT is a documented evolution). The fake therefore exposes a constructor
-// that accepts initial state, so tests can seed identities without us having
-// to extend the public contract with an `insert` we don't actually want.
+// `AuthIdentityRepository` is read-only on the public contract —
+// production inserts happen out-of-band via the seed script (admin
+// pre-seeded; non-admin JIT is a documented evolution). The shared
+// variant therefore only exposes `findBySubject`; tests that need to
+// seed identities can either pass a `seed` to
+// `makeAuthIdentityRepositoryFake` or call `db.insertAuthIdentity(...)`
+// directly when working with a shared `FakeDatabase`.
+export const AuthIdentityRepositoryFakeShared: Layer.Layer<
+  AuthIdentityRepository,
+  never,
+  FakeDatabaseTag
+> = Layer.effect(
+  AuthIdentityRepository,
+  Effect.gen(function* () {
+    const db = yield* FakeDatabaseTag;
+
+    const findBySubject = (subject: string): Effect.Effect<AuthIdentity, AuthIdentityNotFound> => {
+      const identity = db.authIdentities.get(subject);
+      return identity === undefined
+        ? Effect.fail(new AuthIdentityNotFound({ subject }))
+        : Effect.succeed(identity);
+    };
+
+    return AuthIdentityRepository.of({ findBySubject });
+  }),
+);
+
+// Backward-compatible seedable constructor used by existing tests
+// (`makeAuthIdentityRepositoryFake([alice, bob])`). The seed pushes
+// rows straight into a private `FakeDatabase` — these tests don't
+// care about FK enforcement, only about the lookup behavior.
 export const makeAuthIdentityRepositoryFake = (
   seed: ReadonlyArray<AuthIdentity> = [],
-): Layer.Layer<AuthIdentityRepository> =>
-  Layer.effect(
+): Layer.Layer<AuthIdentityRepository> => {
+  const Seeded = Layer.effect(
     AuthIdentityRepository,
     Effect.gen(function* () {
-      const initial = HashMap.fromIterable(seed.map((i) => [i.subject, i] as const));
-      const store = yield* Ref.make(initial);
-
-      const findBySubject = (subject: string): Effect.Effect<AuthIdentity, AuthIdentityNotFound> =>
-        Effect.flatMap(Ref.get(store), (m) =>
-          Option.match(HashMap.get(m, subject), {
-            onNone: () => Effect.fail(new AuthIdentityNotFound({ subject })),
-            onSome: Effect.succeed,
-          }),
-        );
-
+      const db = yield* FakeDatabaseTag;
+      for (const identity of seed) {
+        db.authIdentities.set(identity.subject, identity);
+      }
+      const findBySubject = (
+        subject: string,
+      ): Effect.Effect<AuthIdentity, AuthIdentityNotFound> => {
+        const found = db.authIdentities.get(subject);
+        return found === undefined
+          ? Effect.fail(new AuthIdentityNotFound({ subject }))
+          : Effect.succeed(found);
+      };
       return AuthIdentityRepository.of({ findBySubject });
     }),
   );
+  return Seeded.pipe(Layer.provide(FakeDatabaseRelaxedLive));
+};
 
 export const AuthIdentityRepositoryFake = makeAuthIdentityRepositoryFake();

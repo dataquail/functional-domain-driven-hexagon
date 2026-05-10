@@ -32,10 +32,14 @@ module.exports = {
     {
       name: "module-barrel-only-from-outside",
       severity: "error",
-      comment: "Files outside src/modules must import a module via its index.ts barrel.",
+      comment:
+        "Files outside src/modules must import a module via its index.ts barrel. " +
+        "Test infrastructure (`src/test-utils/`) is exempted because the shared " +
+        "FakeDatabase needs to know about each module's domain row shapes — that's " +
+        "the test surface for `@org/test-backend` and the behavior contract suite.",
       from: {
         path: "^packages/",
-        pathNot: "^packages/server/src/modules/[^/]+/",
+        pathNot: ["^packages/server/src/modules/[^/]+/", "^packages/server/src/test-utils/"],
       },
       to: {
         path: "^packages/server/src/modules/[^/]+/",
