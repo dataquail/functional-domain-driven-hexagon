@@ -314,6 +314,33 @@ module.exports = {
       },
     },
     {
+      name: "web-no-cross-feature-imports",
+      severity: "error",
+      comment:
+        "Features under packages/web/features/ may not import each other. Cross-feature data flows belong in `services/data-access/`; shared rendering primitives belong in `@org/components/patterns/`. The feature boundary is the same kind of seam the server uses between modules.",
+      from: { path: "^packages/web/features/([^/]+)/" },
+      to: {
+        path: "^packages/web/features/([^/]+)/",
+        pathNot: "^packages/web/features/$1/",
+      },
+    },
+    {
+      name: "web-features-not-from-app",
+      severity: "error",
+      comment:
+        "Routes under packages/web/app/ compose features; features must not import app/ pages, layouts, or providers. The dependency direction is app → features, never reversed. Server-only or shared infra files in app/ are not feature dependencies — promote them to /services or /lib first.",
+      from: { path: "^packages/web/features/" },
+      to: { path: "^packages/web/app/" },
+    },
+    {
+      name: "web-features-no-server-data-access",
+      severity: "error",
+      comment:
+        "Features render in the client graph (`use client`). They must not transitively import `*-queries.server.ts` files — those carry `import 'server-only'` and would poison the client bundle. Use the client hooks in `services/data-access/use-*-queries.ts` instead, or run the prefetch in the route's `page.tsx` and read via `useEffectSuspenseQuery`.",
+      from: { path: "^packages/web/features/" },
+      to: { path: "^packages/web/services/data-access/.*\\.server\\.ts$" },
+    },
+    {
       name: "event-handlers-cross-module-via-adapter-only",
       severity: "error",
       comment:
