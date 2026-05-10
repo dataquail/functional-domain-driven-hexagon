@@ -16,3 +16,13 @@ runs:
     - name: Install dependencies
       shell: bash
       run: pnpm install --frozen-lockfile
+
+    # @org/contracts ships its built ESM as the resolution target for
+    # @org/web's tsconfig paths and vitest aliases (matching the
+    # runtime exports map). Locally `predev`/`prebuild` keep this
+    # fresh; CI jobs don't run those, so build once here so every
+    # consuming job (lint, typecheck, web-unit, storybook) sees a
+    # populated packages/contracts/build/ tree.
+    - name: Build @org/contracts
+      shell: bash
+      run: pnpm --filter @org/contracts build

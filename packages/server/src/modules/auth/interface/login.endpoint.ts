@@ -13,7 +13,14 @@ export const loginEndpoint = () =>
     const { codeVerifier, state, url } = yield* oidc.buildAuthorize();
 
     // Pack state+verifier into a signed cookie. Must be SameSite=Lax so the
-    // browser sends it on Zitadel's cross-site redirect back to /auth/callback.
+    // browser sends it on Zitadel's cross-site redirect back to the callback.
+    //
+    // `path: "/"` (rather than `/auth`) so the cookie rides through Next's
+    // `/api/*` rewrite (ADR-0018) — the browser sees the callback at
+    // `/api/auth/callback`, not `/auth/callback`, so a `/auth`-scoped cookie
+    // would be filtered out before the proxied request leaves the browser.
+    // The PKCE cookie is short-lived (5min), HttpOnly, and SameSite=Lax —
+    // the broader scope is fine.
     const payload = Buffer.from(JSON.stringify({ state, codeVerifier })).toString("base64url");
     const signed = codec.sign(payload);
 
@@ -28,7 +35,7 @@ export const loginEndpoint = () =>
             secure: false, // dev; set true behind TLS
             sameSite: "lax",
             maxAge: 300_000,
-            path: "/auth",
+            path: "/",
           },
         ],
       ]),

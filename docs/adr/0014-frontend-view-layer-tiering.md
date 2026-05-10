@@ -22,7 +22,7 @@ Three layers, with the view layer tiered into three forms classified by the _sha
 
 ### Data-access layer (ports)
 
-`packages/client/src/services/data-access/` is the hexagonal port for everything the application reads or writes. Each query or mutation publishes up to three shapes from a single definition, all backed by the same TanStack cache:
+`packages/web/services/data-access/` is the hexagonal port for everything the application reads or writes. Each query or mutation publishes up to three shapes from a single definition, all backed by the same TanStack cache:
 
 - **Hook** (`useTodosQuery`) — for components and presenters.
 - **Effect** (`getTodos`, `createTodo(input)`) — for ViewModels and any non-React orchestration.

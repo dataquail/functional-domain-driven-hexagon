@@ -92,21 +92,20 @@ const NodeSdkLive = Layer.unwrapEffect(
   ),
 );
 
-const CorsLive = Layer.unwrapEffect(
-  EnvVars.pipe(
-    Effect.map((envVars) =>
-      HttpApiBuilder.middlewareCors({
-        // Must be a specific origin (not "*") because we send credentials.
-        // Browsers reject `Access-Control-Allow-Origin: *` with
-        // `Access-Control-Allow-Credentials: true`.
-        allowedOrigins: [envVars.APP_URL],
-        allowedMethods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-        allowedHeaders: ["Content-Type", "Authorization", "B3", "traceparent"],
-        credentials: true,
-      }),
-    ),
-  ),
-);
+// CORS is a no-op in normal traffic post-ADR-0018: the Next renderer
+// is the only browser-facing surface and Next's `/api/*` rewrite calls
+// us server-to-server (no Origin header — middleware skips). No browser
+// reaches `:3001` directly. The allow-list is intentionally empty so a
+// stray cross-origin browser call would be rejected. Layer kept (not
+// deleted) so a future operator who genuinely needs to expose the BFF
+// to a non-Next browser caller can add an entry without re-discovering
+// the wiring; the credentials/methods/headers shape is preserved.
+const CorsLive = HttpApiBuilder.middlewareCors({
+  allowedOrigins: [],
+  allowedMethods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization", "B3", "traceparent"],
+  credentials: true,
+});
 
 const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
   HttpServer.withLogAddress,
@@ -116,7 +115,7 @@ const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
   Layer.provide(DatabaseLive),
   Layer.provide(NodeSdkLive),
   Layer.provide(EnvVars.Default),
-  Layer.provide(NodeHttpServer.layer(createServer, { port: 3000 })),
+  Layer.provide(NodeHttpServer.layer(createServer, { port: 3001 })),
 );
 
 Layer.launch(HttpLive).pipe(

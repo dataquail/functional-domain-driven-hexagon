@@ -20,5 +20,5 @@ export default defineWorkspace([
   "packages/database",
   "packages/jobs",
   "packages/server",
-  "packages/client",
+  "packages/web",
 ]);

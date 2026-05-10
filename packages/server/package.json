@@ -16,7 +16,7 @@
     "clean": "rm -rf build .tsbuildinfo",
     "prebuild": "npm run clean",
     "build": "tsc -b tsconfig.build.json",
-    "predev": "lsof -ti:3000 | xargs kill -9 2>/dev/null; true",
+    "predev": "lsof -ti:3001 | xargs kill -9 2>/dev/null; true",
     "dev": "tsx watch src/server.ts",
     "start": "node build/esm/server.js",
     "circular": "madge --circular src/server.ts",

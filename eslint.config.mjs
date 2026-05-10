@@ -44,6 +44,10 @@ export default [
       "scratchpad/**",
       "scripts/check-test-parity.mjs",
       "**/routeTree.gen.ts",
+      // Next.js dev bundle output. Source lives under packages/web/{app,services,lib}.
+      "**/.next/**",
+      // PostCSS config — trivial config artifact outside any TS project service.
+      "**/postcss.config.mjs",
     ],
   },
   ...compat.extends(
@@ -309,7 +313,7 @@ export default [
     },
   },
   {
-    files: ["packages/client/**/*.{ts,tsx,js,jsx}"],
+    files: ["packages/web/**/*.{ts,tsx,js,jsx}", "packages/components/**/*.{ts,tsx,js,jsx}"],
     rules: {
       "react/function-component-definition": [
         "warn",
@@ -363,21 +367,33 @@ export default [
     // ADR-0015: features and patterns must consume the bespoke component library.
     // Forbid raw HTML elements that already have a primitive equivalent.
     // The forbid-list grows as new primitives are added.
-    files: [
-      "packages/client/src/features/**/*.tsx",
-      "packages/client/src/components/patterns/**/*.tsx",
-    ],
+    files: ["packages/web/features/**/*.tsx", "packages/components/patterns/**/*.tsx"],
     ignores: ["**/*.test.tsx", "**/*.spec.tsx", "**/*.stories.tsx"],
     rules: {
       "react/forbid-elements": [
         "error",
         {
           forbid: [
-            { element: "button", message: "Use <Button> from @/components/primitives instead." },
-            { element: "input", message: "Use <Input> from @/components/primitives instead." },
-            { element: "label", message: "Use <Label> from @/components/primitives instead." },
-            { element: "select", message: "Use <Select> from @/components/primitives instead." },
-            { element: "form", message: "Use <Form> from @/components/primitives instead." },
+            {
+              element: "button",
+              message: "Use <Button> from @org/components/primitives/button instead.",
+            },
+            {
+              element: "input",
+              message: "Use <Input> from @org/components/primitives/input instead.",
+            },
+            {
+              element: "label",
+              message: "Use <Label> from @org/components/primitives/label instead.",
+            },
+            {
+              element: "select",
+              message: "Use <Select> from @org/components/primitives/select instead.",
+            },
+            {
+              element: "form",
+              message: "Use <Form> from @org/components/primitives/form instead.",
+            },
           ],
         },
       ],
@@ -410,6 +426,22 @@ export default [
     // project-wide restrictions that conflict with their conventions. These are
     // documentation/config artifacts, not production code.
     files: ["**/*.stories.tsx", "**/.storybook/*.ts"],
+    rules: {
+      "no-restricted-syntax": "off",
+    },
+  },
+  {
+    // ADR-0018: Next.js App Router requires `export default` in framework
+    // convention files (page.tsx, layout.tsx, error.tsx, loading.tsx,
+    // not-found.tsx, template.tsx, route.ts) and in next.config / middleware /
+    // instrumentation. The project-wide "prefer named exports" rule doesn't
+    // fit those framework hooks.
+    files: [
+      "packages/web/app/**/{page,layout,loading,error,not-found,template,route,default}.{ts,tsx}",
+      "packages/web/next.config.ts",
+      "packages/web/middleware.{ts,tsx}",
+      "packages/web/instrumentation.ts",
+    ],
     rules: {
       "no-restricted-syntax": "off",
     },

@@ -79,17 +79,19 @@ const rules = [
     subject: "packages/server/src/modules/*/infrastructure/*-repository-live.ts",
     candidates: [(f) => f.replace(/-repository-live\.ts$/, "-repository-fake.ts")],
   },
-  // ── Client (ADR-0014) ─────────────────────────────────────────────────
+  // ── Web (ADR-0014) ───────────────────────────────────────────────────
+  // View-tiering parity for packages/web/. Component-library parity
+  // (Storybook stories) lives in @org/components — see below.
   {
     label: "ViewModel",
     requirement: "sibling test",
-    subject: "packages/client/src/features/**/*.view-model.ts",
+    subject: "packages/web/features/**/*.view-model.ts",
     candidates: [(f) => f.replace(/\.view-model\.ts$/, ".view-model.test.ts")],
   },
   {
     label: "Presenter",
     requirement: "sibling test",
-    subject: "packages/client/src/features/**/*.presenter.{ts,tsx}",
+    subject: "packages/web/features/**/*.presenter.{ts,tsx}",
     // Test extension is independent of the presenter's: a presenter that only
     // exports a hook is fine to test from `.test.ts`; one that exports JSX
     // (provider, wrapper) or wants to render its hook through a JSX wrapper
@@ -99,19 +101,22 @@ const rules = [
       (f) => f.replace(/\.presenter\.tsx?$/, ".presenter.test.tsx"),
     ],
   },
-  // ── Client component library (ADR-0015) ──────────────────────────────
+  // ── @org/components (ADR-0015) ──────────────────────────────────────
+  // Every primitive and pattern needs a Storybook story so the
+  // component library has a single navigable surface. Re-exports from
+  // index.ts and the icon registry (icons.ts) are not subjects.
   {
     label: "Primitive component",
     requirement: "sibling Storybook story",
-    subject: "packages/client/src/components/primitives/**/*.tsx",
-    ignore: ["**/*.stories.tsx", "**/*.test.tsx"],
+    subject: "packages/components/primitives/**/*.tsx",
+    ignore: ["**/*.stories.tsx", "**/*.test.tsx", "**/index.tsx"],
     candidates: [(f) => f.replace(/\.tsx$/, ".stories.tsx")],
   },
   {
     label: "Pattern component",
     requirement: "sibling Storybook story",
-    subject: "packages/client/src/components/patterns/**/*.tsx",
-    ignore: ["**/*.stories.tsx", "**/*.test.tsx"],
+    subject: "packages/components/patterns/**/*.tsx",
+    ignore: ["**/*.stories.tsx", "**/*.test.tsx", "**/index.tsx"],
     candidates: [(f) => f.replace(/\.tsx$/, ".stories.tsx")],
   },
 ];

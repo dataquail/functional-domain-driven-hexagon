@@ -1,0 +1,51 @@
+{
+  "name": "@org/web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "predev": "lsof -ti:3000 | xargs kill -9 2>/dev/null; true; pnpm --filter @org/contracts build",
+    "dev": "dotenv -e ../../.env -- next dev -p 3000",
+    "prebuild": "pnpm --filter @org/contracts build",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "lint": "eslint",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@effect/opentelemetry": "*",
+    "@effect/platform": "*",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.216.0",
+    "@opentelemetry/sdk-trace-base": "^2.7.1",
+    "@opentelemetry/sdk-trace-web": "^2.7.1",
+    "@org/components": "workspace:^",
+    "@org/contracts": "workspace:^",
+    "@tanstack/react-form": "^0.43.2",
+    "@tanstack/react-query": "5.100.6",
+    "@tanstack/react-query-devtools": "^5.100.6",
+    "@vercel/otel": "^2.0.0",
+    "effect": "*",
+    "mutative": "^1.1.0",
+    "next": "16.2.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "server-only": "^0.0.1",
+    "sonner": "^2.0.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.2.4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "dotenv-cli": "8.0.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.6",
+    "jsdom": "^26.0.0",
+    "tailwindcss": "4.2.4",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5",
+    "vitest": "^3.2.0"
+  }
+}

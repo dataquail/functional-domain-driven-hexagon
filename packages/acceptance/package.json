@@ -5,8 +5,8 @@
   "type": "module",
   "description": "Playwright acceptance tests with layered architecture (specs / drivers / pages / infrastructure). See ADR / docs/scratch/template-evaluation-remediation-plan.md.",
   "scripts": {
-    "test": "playwright test",
-    "test:ui": "playwright test --ui",
+    "test": "pnpm -F @org/web build && playwright test",
+    "test:ui": "pnpm -F @org/web build && playwright test --ui",
     "check": "tsc --noEmit"
   },
   "devDependencies": {

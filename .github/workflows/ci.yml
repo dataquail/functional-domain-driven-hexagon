@@ -67,14 +67,14 @@ jobs:
         env:
           NODE_OPTIONS: --max_old_space_size=8192
 
-  client-unit:
-    name: Client unit tests
+  web-unit:
+    name: Web unit tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup
-      - run: pnpm -F @org/client run test --run
+      - run: pnpm -F @org/web run test --run
         env:
           NODE_OPTIONS: --max_old_space_size=8192
 
@@ -85,7 +85,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup
-      - run: pnpm build:storybook
+      - run: pnpm -F @org/components run build-storybook
 
   integration:
     name: Integration

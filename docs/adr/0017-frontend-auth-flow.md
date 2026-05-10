@@ -35,7 +35,7 @@ The guard renders `useCurrentUserQuery`. If the query is pending or in error, it
 
 ### `ApiClient` always sends credentials
 
-`packages/client/src/services/common/api-client.ts` provides `FetchHttpClient.RequestInit` with `credentials: "include"`. Same-origin requests would already attach the cookie by default, but `include` is correct for both same-origin (the Vite-proxied dev setup) and any cross-origin configuration. The server's CORS middleware allows the SPA's `APP_URL` specifically (browsers reject `Access-Control-Allow-Origin: *` with `Access-Control-Allow-Credentials: true`).
+`packages/web/services/api-client.client.ts` provides `FetchHttpClient.RequestInit` with `credentials: "include"`. Same-origin requests would already attach the cookie by default, but `include` is correct for both same-origin (the dev setup) and any cross-origin configuration. (ADR-0018 supersedes the same-origin mechanism: Next's `/api/*` rewrite replaces the SPA-era Vite proxy described later in this document.)
 
 ### Same-origin via Vite proxy in dev
 
