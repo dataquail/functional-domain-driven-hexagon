@@ -314,6 +314,20 @@ module.exports = {
       },
     },
     {
+      name: "platform-ids-effect-only",
+      severity: "error",
+      comment:
+        "platform/ids/ is the minimal shared kernel for cross-module branded entity " +
+        "IDs (ADR-0020). It may only depend on `effect` from third-party packages. " +
+        "Drizzle column types, validation libs, contract schemas, etc. do not belong " +
+        "here — they leak module-internal shape into the shared kernel.",
+      from: { path: "^packages/server/src/platform/ids/" },
+      to: {
+        dependencyTypes: ["npm", "npm-dev", "npm-peer", "npm-optional"],
+        pathNot: "/node_modules/effect/",
+      },
+    },
+    {
       name: "no-circular",
       severity: "error",
       comment:
