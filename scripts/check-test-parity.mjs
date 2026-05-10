@@ -101,6 +101,19 @@ const rules = [
       (f) => f.replace(/\.presenter\.tsx?$/, ".presenter.test.tsx"),
     ],
   },
+  // ── Bridge (web ↔ TanStack Query / Effect) ─────────────────────────
+  // Files under `packages/web/lib/tanstack-query/` are the bridge
+  // between two runtimes. They contain branch logic that's invisible
+  // to presenter tests (toast surfacing, defect extraction, JSON
+  // round-trip across the RSC/CC boundary, ParseError formatting). Each
+  // non-barrel source file needs a sibling unit test.
+  {
+    label: "Tanstack-query bridge",
+    requirement: "sibling test",
+    subject: "packages/web/lib/tanstack-query/*.{ts,tsx}",
+    ignore: ["**/*.test.ts", "**/*.test.tsx", "**/index.ts", "**/server-hydration-boundary.tsx"],
+    candidates: [(f) => f.replace(/\.tsx?$/, ".test.ts"), (f) => f.replace(/\.tsx?$/, ".test.tsx")],
+  },
   // ── @org/components (ADR-0015) ──────────────────────────────────────
   // Every primitive and pattern needs a Storybook story so the
   // component library has a single navigable surface. Re-exports from
