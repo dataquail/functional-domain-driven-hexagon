@@ -1,0 +1,25 @@
+{
+  "name": "@org/test-backend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "In-process backend harness for FE integration tests. Re-exports @org/server/test-utils/in-process-backend over a workspace boundary so @org/web's test code doesn't deep-import server internals.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check": "tsc -b tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --quiet"
+  },
+  "dependencies": {
+    "@org/contracts": "workspace:^",
+    "@org/server": "workspace:^",
+    "effect": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "typescript": "^5.6.3"
+  }
+}

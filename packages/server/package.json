@@ -4,6 +4,9 @@
   "type": "module",
   "license": "MIT",
   "description": "The server template",
+  "exports": {
+    "./test-utils/*": "./src/test-utils/*.ts"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/lucas-barake/effect-monorepo.git",

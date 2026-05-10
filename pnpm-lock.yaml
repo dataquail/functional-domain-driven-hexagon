@@ -415,6 +415,25 @@ importers:
         specifier: ^4.19.2
         version: 4.19.2
 
+  packages/test-backend:
+    dependencies:
+      '@org/contracts':
+        specifier: workspace:^
+        version: link:../contracts/dist
+      '@org/server':
+        specifier: workspace:^
+        version: link:../server
+      effect:
+        specifier: 3.21.2
+        version: 3.21.2
+    devDependencies:
+      '@types/node':
+        specifier: ^25.6.0
+        version: 25.6.0
+      typescript:
+        specifier: ^5.6.3
+        version: 5.7.3
+
   packages/web:
     dependencies:
       '@effect/opentelemetry':
