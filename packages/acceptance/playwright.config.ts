@@ -83,9 +83,13 @@ export default defineConfig({
 
   webServer: [
     {
-      // The API server points at the TEST database. global-setup has already
-      // migrated it before this command runs.
-      command: "pnpm --filter @org/server dev",
+      // BFF, against the TEST database. global-setup has already migrated
+      // it before this command runs. We run `tsx` (no watch) inside
+      // playwright — `tsx watch` would compete with Next's file watcher
+      // for inotify slots in CI and adds no value for a non-mutating
+      // test process.
+      name: "bff",
+      command: "pnpm -F @org/server exec tsx src/server.ts",
       url: `${API_URL}/auth/me`,
       cwd: "../../",
       env: {
@@ -107,10 +111,22 @@ export default defineConfig({
       stderr: "pipe",
     },
     {
-      // Next.js renderer. SERVER_INTERNAL_URL points the /api/* rewrite at
-      // the test-DB-bound BFF above. APP_URL stays :3000 so the BFF
-      // redirects post-sign-in to the same origin Playwright drives.
-      command: "pnpm --filter @org/web dev",
+      // Next renderer. We run a real production build + `next start`
+      // rather than `next dev` because:
+      //   1. dev compiles routes lazily, so the URL probe can time out
+      //      while Turbopack is still warming up — flaky in CI.
+      //   2. dev installs file watchers that compete with `tsx watch`'s
+      //      and the runner's own inotify slots.
+      // `next start` boots in ~1s once the build has run. The build is
+      // wired into a `pretest` script in @org/acceptance so a fresh
+      // `pnpm test:acceptance` always sees current source. `.next/cache`
+      // makes subsequent runs fast.
+      //
+      // SERVER_INTERNAL_URL points the /api/* rewrite at the test-DB-bound
+      // BFF above. APP_URL stays :3000 so the BFF redirects post-sign-in
+      // to the same origin Playwright drives.
+      name: "web",
+      command: "pnpm -F @org/web start",
       url: APP_URL,
       cwd: "../../",
       env: {
@@ -119,7 +135,7 @@ export default defineConfig({
         OTLP_URL: process.env.OTLP_URL ?? "http://localhost:4318/v1/traces",
       },
       reuseExistingServer: false,
-      timeout: 60_000,
+      timeout: 30_000,
       stdout: "pipe",
       stderr: "pipe",
     },
