@@ -79,9 +79,9 @@ describe("makeFormOptions", () => {
       defaultValues: { email: "" },
       validator: "onSubmit",
     });
-    expect(opts.validators?.onSubmit).toBeDefined();
-    expect(opts.validators?.onChange).toBeUndefined();
-    expect(opts.validators?.onBlur).toBeUndefined();
+    expect(opts?.validators?.onSubmit).toBeDefined();
+    expect(opts?.validators?.onChange).toBeUndefined();
+    expect(opts?.validators?.onBlur).toBeUndefined();
   });
 
   it("wires validators.onChange when validator: 'onChange'", () => {
@@ -90,8 +90,8 @@ describe("makeFormOptions", () => {
       defaultValues: { email: "" },
       validator: "onChange",
     });
-    expect(opts.validators?.onChange).toBeDefined();
-    expect(opts.validators?.onSubmit).toBeUndefined();
+    expect(opts?.validators?.onChange).toBeDefined();
+    expect(opts?.validators?.onSubmit).toBeUndefined();
   });
 
   it("wires validators.onBlur when validator: 'onBlur'", () => {
@@ -100,8 +100,8 @@ describe("makeFormOptions", () => {
       defaultValues: { email: "" },
       validator: "onBlur",
     });
-    expect(opts.validators?.onBlur).toBeDefined();
-    expect(opts.validators?.onSubmit).toBeUndefined();
+    expect(opts?.validators?.onBlur).toBeDefined();
+    expect(opts?.validators?.onSubmit).toBeUndefined();
   });
 
   it("returns defaultValues unchanged", () => {
@@ -111,6 +111,6 @@ describe("makeFormOptions", () => {
       defaultValues: defaults,
       validator: "onSubmit",
     });
-    expect(opts.defaultValues).toEqual(defaults);
+    expect(opts?.defaultValues).toEqual(defaults);
   });
 });

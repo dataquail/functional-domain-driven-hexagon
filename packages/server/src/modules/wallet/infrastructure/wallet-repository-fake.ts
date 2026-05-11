@@ -1,39 +1,46 @@
 import { type UserId } from "@/platform/ids/user-id.js";
+import { FakeDatabaseRelaxedLive, FakeDatabaseTag } from "@/test-utils/fake-database.js";
 import * as Effect from "effect/Effect";
-import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
-import * as Ref from "effect/Ref";
 import { WalletAlreadyExistsForUser } from "../domain/wallet-errors.js";
-import { type WalletId } from "../domain/wallet-id.js";
 import { WalletRepository } from "../domain/wallet-repository.js";
 import { type Wallet } from "../domain/wallet.aggregate.js";
 
-const findByUserIdIn = (
-  store: HashMap.HashMap<WalletId, Wallet>,
-  userId: UserId,
-): Option.Option<Wallet> => {
-  for (const wallet of HashMap.values(store)) {
-    if (wallet.userId === userId) return Option.some(wallet);
-  }
-  return Option.none();
-};
+// Shared-state variant. See user-repository-fake.ts header for the
+// rationale; compose under a single `FakeDatabaseLive` so cross-repo
+// FK invariants exercise the same in-memory tables.
+export const WalletRepositoryFakeShared: Layer.Layer<WalletRepository, never, FakeDatabaseTag> =
+  Layer.effect(
+    WalletRepository,
+    Effect.gen(function* () {
+      const db = yield* FakeDatabaseTag;
 
-export const WalletRepositoryFake = Layer.effect(
-  WalletRepository,
-  Effect.gen(function* () {
-    const store = yield* Ref.make(HashMap.empty<WalletId, Wallet>());
+      const insert = (wallet: Wallet) =>
+        db.insertWallet(wallet).pipe(
+          Effect.catchTag("UniqueViolation", () =>
+            Effect.fail(new WalletAlreadyExistsForUser({ userId: wallet.userId })),
+          ),
+          // ForeignKeyViolation from the FakeDatabase mirrors what the
+          // live repository surfaces as a DatabaseError defect: the
+          // event handler that owns wallet creation runs in the same
+          // transaction as the user insert, so a missing user is an
+          // architectural bug, not a user-facing failure. Die in
+          // both fake and live.
+          Effect.catchTag("ForeignKeyViolation", (e) => Effect.die(e)),
+        );
 
-    const insert = (wallet: Wallet): Effect.Effect<void, WalletAlreadyExistsForUser> =>
-      Effect.flatMap(Ref.get(store), (m) =>
-        Option.isSome(findByUserIdIn(m, wallet.userId))
-          ? Effect.fail(new WalletAlreadyExistsForUser({ userId: wallet.userId }))
-          : Ref.update(store, HashMap.set(wallet.id, wallet)),
-      );
+      const findByUserId = (userId: UserId) => {
+        for (const wallet of db.wallets.values()) {
+          if (wallet.userId === userId) return Effect.succeed(Option.some(wallet));
+        }
+        return Effect.succeed(Option.none<Wallet>());
+      };
 
-    const findByUserId = (userId: UserId): Effect.Effect<Option.Option<Wallet>> =>
-      Effect.map(Ref.get(store), (m) => findByUserIdIn(m, userId));
+      return WalletRepository.of({ insert, findByUserId });
+    }),
+  );
 
-    return WalletRepository.of({ insert, findByUserId });
-  }),
+export const WalletRepositoryFake = WalletRepositoryFakeShared.pipe(
+  Layer.provide(FakeDatabaseRelaxedLive),
 );
