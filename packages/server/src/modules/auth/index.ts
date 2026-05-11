@@ -5,8 +5,11 @@ export { authQueryHandlers } from "./queries/auth-query-handlers.js";
 export { FindSessionQuery } from "./queries/find-session-query.js";
 
 export { AuthModuleLive } from "./auth-module.js";
+// AuthSharedDepsLive narrowly exposes the auth-infra services that
+// must be shared by reference with the platform middleware
+// (CookieCodec + SessionRepository). Other auth-infra services stay
+// internal to AuthModuleLive — see auth-shared-deps.ts.
 export { AuthSharedDepsLive } from "./auth-shared-deps.js";
-export { AuthIdentityRepository } from "./domain/auth-identity-repository.js";
 export {
   AuthIdentityNotFound,
   SessionExpired,

@@ -1,18 +1,14 @@
 "use client";
 
-import {
-  useDeleteTodoMutation,
-  useUpdateTodoMutation,
-} from "@/services/data-access/use-todos-queries";
 import { Button } from "@org/components/primitives/button";
 import { Checkbox } from "@org/components/primitives/checkbox";
 import { TrashIcon } from "@org/components/primitives/icon";
 import { Label } from "@org/components/primitives/label";
 import type { TodosContract } from "@org/contracts/api/Contracts";
+import { useTodoItemPresenter } from "./todo-item.presenter";
 
 export const TodoItem: React.FC<{ todo: TodosContract.Todo }> = ({ todo }) => {
-  const updateTodo = useUpdateTodoMutation();
-  const deleteTodo = useDeleteTodoMutation();
+  const { deleteThis, toggleCompleted } = useTodoItemPresenter(todo);
 
   return (
     <li
@@ -25,12 +21,7 @@ export const TodoItem: React.FC<{ todo: TodosContract.Todo }> = ({ todo }) => {
         <Checkbox
           id={`todo-${todo.id}`}
           checked={todo.completed}
-          onCheckedChange={() => {
-            updateTodo.mutate({
-              ...todo,
-              completed: !todo.completed,
-            });
-          }}
+          onCheckedChange={toggleCompleted}
         />
 
         <Label
@@ -48,9 +39,7 @@ export const TodoItem: React.FC<{ todo: TodosContract.Todo }> = ({ todo }) => {
         variant="ghost"
         size="icon"
         className="h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100"
-        onClick={() => {
-          deleteTodo.mutate(todo.id);
-        }}
+        onClick={deleteThis}
       >
         <TrashIcon tone="destructive" />
         <span className="sr-only">Delete</span>

@@ -1,13 +1,13 @@
 "use client";
 
-import { useTodosSuspenseQuery } from "@/services/data-access/use-todos-queries";
 import * as Array from "effect/Array";
 import { TodoItem } from "./todo-item/todo-item";
+import { useTodoListPresenter } from "./todo-list.presenter";
 
 export const TodoList: React.FC = () => {
-  const { data: todos } = useTodosSuspenseQuery();
+  const { isEmpty, todos } = useTodoListPresenter();
 
-  if (todos.length === 0) {
+  if (isEmpty) {
     return (
       <div className="rounded-lg bg-muted/50 py-8 text-center">
         <p className="text-sm text-muted-foreground">No tasks yet. Add one above!</p>

@@ -36,6 +36,7 @@ The naming conventions are also the parity-rule detectors. Don't rename a file t
 - **Integration tests** (`*-repository-live.integration.test.ts`, `<endpoint>.endpoint.integration.test.ts`, `<query>.integration.test.ts`) hit a real DB. They self-skip when `DATABASE_URL_TEST` is unset; `pnpm test` succeeds with no auxiliary services.
 - **HTTP integration tests** use `useServerTestRuntime(["table1", "table2"])` from `test-utils/`, which wires `ManagedRuntime.make(TestServerLive)` + `beforeAll`/`afterAll` + per-test `truncate`. Tests then exercise the contract via `HttpApiClient.make(Api)` and seed prior state by calling _other endpoints_, not by reaching into module internals.
 - **Query/repository integration tests** seed via the live repository (or other production-path code), not via raw SQL. Using the repository as the seeding seam keeps the test honest about what production paths look like.
+- **Endpoint test naming.** A test file ending in `*.endpoint.integration.test.ts` exercises the real HTTP layer against a live database via `useServerTestRuntime(...)`. A file ending in `*.endpoint.test.ts` is a true unit test — no DB, no HTTP round-trip — typically a parity-rule token for endpoints whose meaningful coverage lives elsewhere (e.g. the OIDC `login` / `callback` / `logout` flows, covered by Playwright + `SessionRepositoryLive` integration tests). Any `.endpoint.test.ts` file must carry a header comment naming where the meaningful coverage lives; if a test starts hitting real HTTP + DB, rename it to `.endpoint.integration.test.ts`.
 
 ## Commands
 

@@ -4,7 +4,7 @@ A monorepo containing:
 
 - `packages/web`: Next.js (App Router) renderer; proxies `/api/*` to the BFF (see [ADR-0018](docs/adr/0018-frontend-nextjs-renderer-and-proxy.md))
 - `packages/server`: Effect-based BFF / API server (the auth authority — see ADR-0016)
-- `packages/contracts`: Shared HTTP API contracts consumed by both web and server
+- `packages/contracts`: Shared HTTP API contracts consumed by both web and server (the stack is intentionally isomorphic — see [ADR-0019](docs/adr/0019-isomorphic-stack.md))
 - `packages/database`: Database schema, migrations, and SQL access primitives
 - `packages/jobs`: Background-job runner (cron-style)
 - `packages/acceptance`: Playwright acceptance suite
