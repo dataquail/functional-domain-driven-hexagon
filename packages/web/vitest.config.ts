@@ -20,8 +20,29 @@ export default defineConfig({
   // module shape the app does.
   resolve: {
     alias: [
+      // Server's `@/` path map. The in-process backend (consumed via
+      // `@org/test-backend` in integration tests) imports server
+      // source like `@/api.js`, `@/modules/...`. The web's `@/` below
+      // is a different package — disambiguate by anchoring the
+      // server-side prefix to top-level dirs that exist only in the
+      // server tree (api/common/modules/platform/test-utils).
+      {
+        find: /^@\/(api(?:\.[jt]s)?|(?:common|modules|platform|test-utils)(?:\/.*)?)$/,
+        replacement: path.join(__dirname, "../server/src/$1"),
+      },
       { find: /^@\/(.*)$/, replacement: path.join(__dirname, "./$1") },
       { find: /^@org\/components\/(.*)$/, replacement: path.join(__dirname, "../components/$1") },
+      // The in-process backend (transitively, via fake repositories
+      // and query handlers) imports `@org/database`. Alias to the
+      // database package's source entry point.
+      {
+        find: /^@org\/database$/,
+        replacement: path.join(__dirname, "../database/src/index.ts"),
+      },
+      {
+        find: /^@org\/database\/(.*)$/,
+        replacement: path.join(__dirname, "../database/src/$1.ts"),
+      },
       // Match the tsconfig paths and the runtime export shape: contracts
       // resolves via the built ESM. Keep the build step in the setup
       // composite action so CI doesn't have to remember per-job.

@@ -16,24 +16,29 @@
 
 import { Api } from "@/api.js";
 import { EnvVars } from "@/common/env-vars.js";
-import { authCommandHandlers, authQueryHandlers } from "@/modules/auth/index.js";
+// Bypass the per-module `index.js` barrels and import the bits we
+// actually use directly. The barrels re-export `XxxModuleLive` which
+// transitively pulls in `XxxRepositoryLive` → `@org/database` —
+// loading that would force a database dependency even though
+// in-process tests never reach it.
+import { authCommandHandlers } from "@/modules/auth/commands/auth-command-handlers.js";
 import { AuthIdentityRepositoryFakeShared } from "@/modules/auth/infrastructure/auth-identity-repository-fake.js";
 import { OidcClient } from "@/modules/auth/infrastructure/oidc-client.js";
 import { SessionRepositoryFakeShared } from "@/modules/auth/infrastructure/session-repository-fake.js";
 import { AuthHttpLive } from "@/modules/auth/interface/auth-http-live.js";
-import { todoCommandHandlers, todoQueryHandlers } from "@/modules/todos/index.js";
+import { authQueryHandlers } from "@/modules/auth/queries/auth-query-handlers.js";
+import { todoCommandHandlers } from "@/modules/todos/commands/todo-command-handlers.js";
 import { TodosRepositoryFakeShared } from "@/modules/todos/infrastructure/todos-repository-fake.js";
 import { TodosHttpLive } from "@/modules/todos/interface/todos-http-live.js";
-import {
-  userCommandHandlers,
-  userEventSpanAttributes,
-  userQueryHandlers,
-} from "@/modules/user/index.js";
+import { todoQueryHandlers } from "@/modules/todos/queries/todo-query-handlers.js";
+import { userCommandHandlers } from "@/modules/user/commands/user-command-handlers.js";
 import { UserRepositoryFakeShared } from "@/modules/user/infrastructure/user-repository-fake.js";
 import { UserHttpLive } from "@/modules/user/interface/user-http-live.js";
+import { userQueryHandlers } from "@/modules/user/queries/user-query-handlers.js";
+import { userEventSpanAttributes } from "@/modules/user/user-event-span-attributes.js";
 import { UserEventAdapterLive } from "@/modules/wallet/event-handlers/user-event-adapter.js";
-import { walletEventSpanAttributes } from "@/modules/wallet/index.js";
 import { WalletRepositoryFakeShared } from "@/modules/wallet/infrastructure/wallet-repository-fake.js";
+import { walletEventSpanAttributes } from "@/modules/wallet/wallet-event-span-attributes.js";
 import { CookieCodec } from "@/platform/auth/cookie-codec.js";
 import { PermissionsResolver } from "@/platform/auth/permissions-resolver.js";
 import { CommandBus, makeCommandBus } from "@/platform/command-bus.js";
