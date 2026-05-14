@@ -499,6 +499,9 @@ importers:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     devDependencies:
+      '@org/test-drivers':
+        specifier: workspace:^
+        version: link:../test-drivers
       '@tailwindcss/postcss':
         specifier: 4.2.4
         version: 4.2.4
@@ -508,6 +511,9 @@ importers:
       '@testing-library/react':
         specifier: ^16.3.2
         version: 16.3.2(@testing-library/dom@10.4.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@testing-library/user-event':
+        specifier: ^14.6.1
+        version: 14.6.1(@testing-library/dom@10.4.0)
       '@types/node':
         specifier: ^20
         version: 20.19.40

@@ -27,8 +27,16 @@ export const useCreateUserPresenter = () => {
     }),
     onSubmit: async ({ formApi, value }) => {
       const payload = Schema.decodeSync(UserContract.CreateUserPayload)(value);
-      await createUserMutation.mutateAsync(payload);
-      formApi.reset();
+      try {
+        await createUserMutation.mutateAsync(payload);
+        formApi.reset();
+      } catch {
+        // The mutation has already surfaced the failure via the
+        // toastifyErrors / toastifyDefects pipeline. Swallow the
+        // rejection here so the Form primitive's onSubmit handler
+        // (which fires the user's onSubmit but doesn't await it)
+        // doesn't produce an unhandled rejection.
+      }
     },
   });
 
