@@ -20,4 +20,4 @@ export const createEndpoint = (request: EndpointRequest<typeof TodosContract.Gro
       title: todo.title,
       completed: todo.completed,
     });
-  }).pipe(Effect.withSpan("TodosHttpLive.create"));
+  }).pipe(Effect.withSpan("TodosLive.create"));

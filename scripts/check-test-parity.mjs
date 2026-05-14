@@ -13,7 +13,9 @@
 //   - `*-repository-live.ts` is the production repository implementation
 //     (ADR-0005). Each must have an integration test (live SQL behavior) and
 //     a fake counterpart (so use-case unit tests can run without a DB).
-//   - `*.endpoint.ts` covers HTTP endpoints (ADR-0013).
+//   - `*.endpoint.ts` covers HTTP endpoints in `interface/http/` (ADR-0013).
+//   - `*-event-adapter.ts` covers cross-module event subscribers in
+//     `interface/events/` (ADR-0007 ACL pattern).
 //   - Files in `event-handlers/` are by-name, not schema-then-impl, so any
 //     non-test file is a subject.
 
@@ -25,10 +27,19 @@ const rules = [
   {
     label: "HTTP endpoint",
     requirement: "sibling test",
-    subject: "packages/server/src/modules/*/interface/*.endpoint.ts",
+    subject: "packages/server/src/modules/*/interface/http/*.endpoint.ts",
     candidates: [
       (f) => f.replace(/\.endpoint\.ts$/, ".endpoint.integration.test.ts"),
       (f) => f.replace(/\.endpoint\.ts$/, ".endpoint.test.ts"),
+    ],
+  },
+  {
+    label: "Event adapter",
+    requirement: "sibling test",
+    subject: "packages/server/src/modules/*/interface/events/*-event-adapter.ts",
+    candidates: [
+      (f) => f.replace(/-event-adapter\.ts$/, "-event-adapter.test.ts"),
+      (f) => f.replace(/-event-adapter\.ts$/, "-event-adapter.integration.test.ts"),
     ],
   },
   {

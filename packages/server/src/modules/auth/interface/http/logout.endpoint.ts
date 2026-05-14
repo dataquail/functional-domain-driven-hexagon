@@ -1,12 +1,12 @@
 import { EnvVars } from "@/common/env-vars.js";
+import { SessionId } from "@/modules/auth/domain/session-id.js";
+import { SessionRepository } from "@/modules/auth/domain/session-repository.js";
+import { OidcClient } from "@/modules/auth/infrastructure/oidc-client.js";
 import { CookieCodec } from "@/platform/auth/cookie-codec.js";
 import * as HttpServerRequest from "@effect/platform/HttpServerRequest";
 import * as HttpServerResponse from "@effect/platform/HttpServerResponse";
 import * as cookie from "cookie";
 import * as Effect from "effect/Effect";
-import { SessionId } from "../domain/session-id.js";
-import { SessionRepository } from "../domain/session-repository.js";
-import { OidcClient } from "../infrastructure/oidc-client.js";
 
 // Sign out — single round-trip:
 //   1. Reads our session cookie inline (no middleware; logout must work even
@@ -57,4 +57,4 @@ export const logoutEndpoint = () =>
         ],
       ]),
     );
-  }).pipe(Effect.withSpan("AuthHttpLive.logout"));
+  }).pipe(Effect.withSpan("AuthLive.logout"));

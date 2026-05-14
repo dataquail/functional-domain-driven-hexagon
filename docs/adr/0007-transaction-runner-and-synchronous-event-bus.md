@@ -110,14 +110,17 @@ These are valid patterns but solve a different problem. If a future feature genu
 
 When a module subscribes to another module's domain event, that event's schema becomes load-bearing for the subscriber. A new field on `UserCreated` is harmless to `user`'s internal callers; it can be a breaking change for `wallet` if `wallet`'s handler reads field names off the event directly.
 
-To keep the publisher's event schema from leaking into the consumer's handlers, cross-module subscriptions go through an **adapter** file. The adapter is the only file allowed to import the publisher's barrel; handlers consume a wallet-internal trigger type instead.
+To keep the publisher's event schema from leaking into the consumer's handlers, cross-module subscriptions go through an **adapter** file. The adapter is an inbound port — structurally identical to an HTTP endpoint, just on the event-bus transport — so it lives in `interface/events/`, the only place allowed to import the publisher's barrel. Handlers stay in `event-handlers/` and consume a consumer-internal trigger type instead.
 
 ```
-modules/<consumer>/event-handlers/
-├── triggers/
-│   └── <publisher>-events.ts            # consumer-internal trigger types
-├── <publisher>-event-adapter.ts         # subscribes to publisher events
-└── <name>-when-<...>.ts                 # handler — imports the trigger type
+modules/<consumer>/
+├── interface/
+│   └── events/
+│       └── <publisher>-event-adapter.ts     # subscribes to publisher events (inbound port)
+└── event-handlers/
+    ├── triggers/
+    │   └── <publisher>-events.ts            # consumer-internal trigger types
+    └── <name>-when-<...>.ts                 # handler — imports the trigger type
 ```
 
 The adapter subscribes to each publisher event, translates it into the consumer's trigger shape, and forwards to the handler:
@@ -138,7 +141,7 @@ export const UserEventAdapterLive = Layer.effectDiscard(
 
 The handler depends only on the trigger type — never on `UserCreated`. If `user` adds a field, only the adapter changes; handlers stay stable.
 
-The pattern is enforced by the `event-handlers-cross-module-via-adapter-only` dep-cruiser rule: files under `event-handlers/` may not import another module's barrel unless they're a `*-event-adapter.ts` file. Tests are exempt (they often drive end-to-end flows that need the publisher's event constructor).
+The pattern is enforced by the `event-handlers-isolation` dep-cruiser rule, which forbids `event-handlers/` from importing other modules' barrels at all. The adapter lives in `interface/events/`, which (like `interface/http/`) is permitted to import other modules' barrels — that's the inbound-adapter layer's job.
 
 This is Vernon's anti-corruption layer at module scope. It costs one file per (consumer, publisher) pair and one trigger-types file. The benefit is that the consumer's handler logic remains testable, stable, and decoupled from the publisher's evolving schema.
 

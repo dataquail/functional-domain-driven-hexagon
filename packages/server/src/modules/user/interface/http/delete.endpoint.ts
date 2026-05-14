@@ -17,5 +17,5 @@ export const deleteEndpoint = (request: EndpointRequest<typeof UserContract.Grou
         }),
       ),
     ),
-    Effect.withSpan("UserHttpLive.delete"),
+    Effect.withSpan("UserLive.delete"),
   );

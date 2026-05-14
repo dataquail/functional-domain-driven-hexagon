@@ -6,15 +6,15 @@ import { loginEndpoint } from "./login.endpoint.js";
 import { logoutEndpoint } from "./logout.endpoint.js";
 import { meEndpoint } from "./me.endpoint.js";
 
-const AuthPublicHttpLive = HttpApiBuilder.group(Api, "auth", (handlers) =>
+const AuthPublicLive = HttpApiBuilder.group(Api, "auth", (handlers) =>
   handlers
     .handleRaw("login", loginEndpoint)
     .handleRaw("callback", callbackEndpoint)
     .handleRaw("logout", logoutEndpoint),
 );
 
-const AuthPrivateHttpLive = HttpApiBuilder.group(Api, "authSession", (handlers) =>
+const AuthPrivateLive = HttpApiBuilder.group(Api, "authSession", (handlers) =>
   handlers.handle("me", meEndpoint),
 );
 
-export const AuthHttpLive = Layer.mergeAll(AuthPublicHttpLive, AuthPrivateHttpLive);
+export const AuthLive = Layer.mergeAll(AuthPublicLive, AuthPrivateLive);

@@ -102,7 +102,7 @@ module.exports = {
       name: "event-handlers-isolation",
       severity: "error",
       comment:
-        "Module event-handlers are write-side reactions to events. Same constraints as commands: own module's domain and sibling event-handlers, platform shared kernel facades, and other modules' barrel (events). No infrastructure, no interface, no commands, no queries, no @org/contracts, no @org/database. Test files excluded.",
+        "Module event-handlers are write-side use cases reacting to internal triggers (event-handlers/triggers/*). Cross-module events arrive translated to triggers via `interface/events/<publisher>-event-adapter.ts` (ADR-0007 ACL). Same constraints as commands: own module's domain and sibling event-handlers, platform shared kernel facades. No infrastructure, no interface, no commands, no queries, no @org/contracts, no @org/database, no other-module barrels. Test files excluded.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/event-handlers/",
         pathNot: "\\.test\\.ts$",
@@ -113,7 +113,6 @@ module.exports = {
           "^packages/server/src/modules/$1/(domain|event-handlers)/",
           "^packages/server/src/platform/(command-bus|query-bus|domain-event-bus|domain-event|transaction-runner|span-attributable)\\.ts$",
           "^packages/server/src/platform/ids/",
-          "^packages/server/src/modules/[^/]+/index\\.ts$",
         ],
       },
     },
@@ -339,27 +338,6 @@ module.exports = {
         "Features render in the client graph (`use client`). They must not transitively import `*-queries.server.ts` files — those carry `import 'server-only'` and would poison the client bundle. Use the client hooks in `services/data-access/use-*-queries.ts` instead, or run the prefetch in the route's `page.tsx` and read via `useEffectSuspenseQuery`.",
       from: { path: "^packages/web/features/" },
       to: { path: "^packages/web/services/data-access/.*\\.server\\.ts$" },
-    },
-    {
-      name: "event-handlers-cross-module-via-adapter-only",
-      severity: "error",
-      comment:
-        "Cross-module event-handler imports must go through a *-event-adapter.ts file " +
-        "(ADR-0007 ACL pattern + Phase 11 of the remediation plan). Handlers consume " +
-        "the module's own trigger types from event-handlers/triggers/; only the " +
-        "adapter is allowed to import the publisher module's barrel. Tests are " +
-        "exempt — they may import publisher events directly to drive end-to-end flows.",
-      from: {
-        path: "^packages/server/src/modules/([^/]+)/event-handlers/",
-        pathNot: [
-          "\\.test\\.ts$",
-          "\\.integration\\.test\\.ts$",
-          "^packages/server/src/modules/[^/]+/event-handlers/[^/]+-event-adapter\\.ts$",
-        ],
-      },
-      to: {
-        path: "^packages/server/src/modules/(?!\\1/)[^/]+/index\\.ts$",
-      },
     },
     {
       name: "platform-ids-effect-only",

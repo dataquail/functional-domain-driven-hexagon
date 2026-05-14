@@ -23,4 +23,4 @@ export const getEndpoint = (_request: EndpointRequest<typeof TodosContract.Group
     const queryBus = yield* QueryBus;
     const result = yield* queryBus.execute(ListTodosQuery.make({}));
     return toResponse(result);
-  }).pipe(Effect.withSpan("TodosHttpLive.get"));
+  }).pipe(Effect.withSpan("TodosLive.get"));

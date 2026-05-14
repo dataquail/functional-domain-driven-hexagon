@@ -30,5 +30,5 @@ export const updateEndpoint = (request: EndpointRequest<typeof TodosContract.Gro
         }),
       ),
     ),
-    Effect.withSpan("TodosHttpLive.update"),
+    Effect.withSpan("TodosLive.update"),
   );

@@ -23,5 +23,5 @@ export const deleteEndpoint = (request: EndpointRequest<typeof TodosContract.Gro
         }),
       ),
     ),
-    Effect.withSpan("TodosHttpLive.delete"),
+    Effect.withSpan("TodosLive.delete"),
   );

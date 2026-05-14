@@ -32,4 +32,4 @@ export const findEndpoint = (request: EndpointRequest<typeof UserContract.Group,
       }),
     );
     return toPaginatedUsersContract(result);
-  }).pipe(Effect.withSpan("UserHttpLive.find"));
+  }).pipe(Effect.withSpan("UserLive.find"));

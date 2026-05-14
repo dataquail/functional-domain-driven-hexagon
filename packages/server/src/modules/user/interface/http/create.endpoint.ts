@@ -25,5 +25,5 @@ export const createEndpoint = (request: EndpointRequest<typeof UserContract.Grou
         }),
       ),
     ),
-    Effect.withSpan("UserHttpLive.create"),
+    Effect.withSpan("UserLive.create"),
   );

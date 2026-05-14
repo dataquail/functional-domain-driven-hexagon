@@ -9,9 +9,11 @@ Each feature module lives at `packages/server/src/modules/<feature>/` with sibli
 - `domain/` — entities, value objects, events, errors, IDs, repository ports. Aggregate roots are named `*.aggregate.ts` as an explicit DDD signal.
 - `commands/` — write-side use cases. Each has a `<verb-noun>-command.ts` schema (registry-merges into `CommandRegistry`) plus a `<verb-noun>.ts` handler.
 - `queries/` — read-side projections. Same `-query.ts` schema + `<base>.ts` handler split. May import `@org/database` directly and bypass the domain — there's no aggregate to protect when nothing mutates.
-- `event-handlers/` — write-side reactions to domain events. Run in the publisher's fiber and inherit its transaction (ADR-0007).
+- `event-handlers/` — write-side use cases reacting to internal triggers (`event-handlers/triggers/<publisher>-events.ts`). Run in the publisher's fiber and inherit its transaction (ADR-0007). Same dependency shape as `commands/` — no cross-module barrel imports.
 - `infrastructure/` — repository `Live` + `Fake` implementations, mappers. Private to the module.
-- `interface/` — one `<endpoint-name>.endpoint.ts` per HTTP endpoint (ADR-0013), plus a thin `<feature>-http-live.ts` group registration.
+- `interface/` — inbound adapters, one subfolder per protocol:
+  - `interface/http/` — one `<endpoint-name>.endpoint.ts` per HTTP endpoint (ADR-0013), plus a thin `<feature>-live.ts` group registration.
+  - `interface/events/` — one `<publisher>-event-adapter.ts` per upstream module whose domain events this module consumes (ADR-0007 ACL). The only place in the consumer module permitted to import another module's barrel.
 
 Cross-module access goes through the module's `index.ts` barrel, which may not re-export from `infrastructure/` or `interface/`. The published surface is domain types (events, IDs, errors), command/query messages, handler-registration maps, and the module's `Live` layer.
 
@@ -25,7 +27,8 @@ If you create any of these without a sibling test, CI fails:
 | `commands/*-command.ts`               | `commands/<base>.test.ts` (drop the `-command` suffix)                                                    |
 | `queries/*-query.ts`                  | `queries/<base>.integration.test.ts` (or `.test.ts`)                                                      |
 | `event-handlers/*.ts`                 | `event-handlers/<base>.integration.test.ts` (or `.test.ts`)                                               |
-| `interface/*.endpoint.ts`             | `interface/<base>.endpoint.integration.test.ts`                                                           |
+| `interface/http/*.endpoint.ts`        | `interface/http/<base>.endpoint.integration.test.ts` (or `.endpoint.test.ts`)                             |
+| `interface/events/*-event-adapter.ts` | `interface/events/<base>-event-adapter.test.ts`                                                           |
 | `infrastructure/*-repository-live.ts` | `infrastructure/<base>-repository-live.integration.test.ts` AND a `<base>-repository-fake.ts` counterpart |
 
 The naming conventions are also the parity-rule detectors. Don't rename a file to dodge the rule — write the test.

@@ -10,4 +10,4 @@ export const meEndpoint = (_request: EndpointRequest<typeof AuthContract.Private
       userId: user.userId,
       permissions: Array.from(user.permissions),
     });
-  }).pipe(Effect.withSpan("AuthHttpLive.me"));
+  }).pipe(Effect.withSpan("AuthLive.me"));

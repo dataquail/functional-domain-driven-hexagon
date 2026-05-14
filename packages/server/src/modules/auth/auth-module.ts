@@ -1,7 +1,7 @@
 import * as Layer from "effect/Layer";
 import { AuthIdentityRepositoryLive } from "./infrastructure/auth-identity-repository-live.js";
 import { OidcClient } from "./infrastructure/oidc-client.js";
-import { AuthHttpLive } from "./interface/auth-http-live.js";
+import { AuthLive } from "./interface/http/auth-live.js";
 
 // AuthModuleLive registers the HTTP handlers and the auth-only
 // infrastructure they depend on. The OIDC client is private to the
@@ -13,7 +13,7 @@ import { AuthHttpLive } from "./interface/auth-http-live.js";
 // instances). Those live in `AuthSharedDepsLive` (auth-shared-deps.ts)
 // and are provided once at the API layer so both consumers share the
 // same references.
-export const AuthModuleLive = AuthHttpLive.pipe(
+export const AuthModuleLive = AuthLive.pipe(
   Layer.provide(OidcClient.Default),
   Layer.provide(AuthIdentityRepositoryLive),
 );

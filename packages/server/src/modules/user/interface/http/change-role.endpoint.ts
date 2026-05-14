@@ -24,5 +24,5 @@ export const changeRoleEndpoint = (
         }),
       ),
     ),
-    Effect.withSpan("UserHttpLive.changeRole"),
+    Effect.withSpan("UserLive.changeRole"),
   );

@@ -7,8 +7,8 @@
 
 import { type UserCreated } from "@/modules/user/index.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet-repository.js";
-import { UserEventAdapterLive } from "@/modules/wallet/event-handlers/user-event-adapter.js";
 import { WalletRepositoryFake } from "@/modules/wallet/infrastructure/wallet-repository-fake.js";
+import { UserEventAdapterLive } from "@/modules/wallet/interface/events/user-event-adapter.js";
 import { DomainEventBus, makeDomainEventBusLive } from "@/platform/domain-event-bus.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { describe, it } from "@effect/vitest";

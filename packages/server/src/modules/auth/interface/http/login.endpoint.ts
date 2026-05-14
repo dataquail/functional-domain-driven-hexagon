@@ -1,7 +1,7 @@
+import { OidcClient } from "@/modules/auth/infrastructure/oidc-client.js";
 import { CookieCodec } from "@/platform/auth/cookie-codec.js";
 import * as HttpServerResponse from "@effect/platform/HttpServerResponse";
 import * as Effect from "effect/Effect";
-import { OidcClient } from "../infrastructure/oidc-client.js";
 
 const PKCE_COOKIE_NAME = "oidc_pkce";
 
@@ -40,4 +40,4 @@ export const loginEndpoint = () =>
         ],
       ]),
     );
-  }).pipe(Effect.withSpan("AuthHttpLive.login"));
+  }).pipe(Effect.withSpan("AuthLive.login"));
