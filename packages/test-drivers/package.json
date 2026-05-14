@@ -1,0 +1,43 @@
+{
+  "name": "@org/test-drivers",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "Tier-agnostic page driver contracts + per-tier adapters (Playwright for acceptance, React Testing Library for integration). The contract is expressed in business intent (createUser, expectUserInList) so the same spec body runs at multiple tiers.",
+  "exports": {
+    "./contracts/*": "./src/contracts/*.ts",
+    "./adapters/playwright/*": "./src/adapters/playwright/*.ts",
+    "./adapters/rtl/*": "./src/adapters/rtl/*.ts"
+  },
+  "scripts": {
+    "check": "tsc -b tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --quiet"
+  },
+  "peerDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1"
+  },
+  "peerDependenciesMeta": {
+    "@playwright/test": {
+      "optional": true
+    },
+    "@testing-library/react": {
+      "optional": true
+    },
+    "@testing-library/user-event": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^25.6.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.6.3"
+  }
+}
