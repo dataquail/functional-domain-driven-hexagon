@@ -95,8 +95,11 @@ export const makeFormOptions = <
     Match.exhaustive,
   );
 
-  return formOptions({
+  // `formOptions` is typed as returning `T | undefined` because its arg
+  // is optional, but with `defaultValues` set the result is always defined.
+  const out = formOptions({
     defaultValues: opts.defaultValues,
     validators,
   });
+  return out as NonNullable<typeof out>;
 };
