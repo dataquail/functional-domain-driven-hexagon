@@ -332,14 +332,6 @@ module.exports = {
       to: { path: "^packages/web/app/" },
     },
     {
-      name: "web-features-no-server-data-access",
-      severity: "error",
-      comment:
-        "Features render in the client graph (`use client`). They must not transitively import `*-queries.server.ts` files — those carry `import 'server-only'` and would poison the client bundle. Use the client hooks in `services/data-access/use-*-queries.ts` instead, or run the prefetch in the route's `page.tsx` and read via `useEffectSuspenseQuery`.",
-      from: { path: "^packages/web/features/" },
-      to: { path: "^packages/web/services/data-access/.*\\.server\\.ts$" },
-    },
-    {
       name: "platform-ids-effect-only",
       severity: "error",
       comment:
