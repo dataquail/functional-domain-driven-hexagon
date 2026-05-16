@@ -13,7 +13,9 @@
 //   - `*-repository-live.ts` is the production repository implementation
 //     (ADR-0005). Each must have an integration test (live SQL behavior) and
 //     a fake counterpart (so use-case unit tests can run without a DB).
-//   - `*.endpoint.ts` covers HTTP endpoints (ADR-0013).
+//   - `*.endpoint.ts` covers HTTP endpoints in `interface/http/` (ADR-0013).
+//   - `*-event-adapter.ts` covers cross-module event subscribers in
+//     `interface/events/` (ADR-0007 ACL pattern).
 //   - Files in `event-handlers/` are by-name, not schema-then-impl, so any
 //     non-test file is a subject.
 
@@ -25,10 +27,19 @@ const rules = [
   {
     label: "HTTP endpoint",
     requirement: "sibling test",
-    subject: "packages/server/src/modules/*/interface/*.endpoint.ts",
+    subject: "packages/server/src/modules/*/interface/http/*.endpoint.ts",
     candidates: [
       (f) => f.replace(/\.endpoint\.ts$/, ".endpoint.integration.test.ts"),
       (f) => f.replace(/\.endpoint\.ts$/, ".endpoint.test.ts"),
+    ],
+  },
+  {
+    label: "Event adapter",
+    requirement: "sibling test",
+    subject: "packages/server/src/modules/*/interface/events/*-event-adapter.ts",
+    candidates: [
+      (f) => f.replace(/-event-adapter\.ts$/, "-event-adapter.test.ts"),
+      (f) => f.replace(/-event-adapter\.ts$/, "-event-adapter.integration.test.ts"),
     ],
   },
   {
@@ -100,6 +111,19 @@ const rules = [
       (f) => f.replace(/\.presenter\.tsx?$/, ".presenter.test.ts"),
       (f) => f.replace(/\.presenter\.tsx?$/, ".presenter.test.tsx"),
     ],
+  },
+  // ── Bridge (web ↔ TanStack Query / Effect) ─────────────────────────
+  // Files under `packages/web/lib/tanstack-query/` are the bridge
+  // between two runtimes. They contain branch logic that's invisible
+  // to presenter tests (toast surfacing, defect extraction, JSON
+  // round-trip across the RSC/CC boundary, ParseError formatting). Each
+  // non-barrel source file needs a sibling unit test.
+  {
+    label: "Tanstack-query bridge",
+    requirement: "sibling test",
+    subject: "packages/web/lib/tanstack-query/*.{ts,tsx}",
+    ignore: ["**/*.test.ts", "**/*.test.tsx", "**/index.ts", "**/server-hydration-boundary.tsx"],
+    candidates: [(f) => f.replace(/\.tsx?$/, ".test.ts"), (f) => f.replace(/\.tsx?$/, ".test.tsx")],
   },
   // ── @org/components (ADR-0015) ──────────────────────────────────────
   // Every primitive and pattern needs a Storybook story so the

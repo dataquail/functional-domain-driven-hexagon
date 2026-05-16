@@ -26,15 +26,17 @@ modules/<feature>/
   domain/          — pure data, ops, repository ports, errors, events, value objects (aggregate roots are named `*.aggregate.ts` as an explicit DDD signal)
   commands/        — write-side use cases + their bus-registration map
   queries/         — read-side projections (may bypass the domain) + their bus-registration map
-  event-handlers/  — write-side reactions to domain events from this or other modules
+  event-handlers/  — write-side use cases reacting to internal triggers (event-handlers/triggers/*); same dependency shape as commands
   infrastructure/  — repository Live + Fake implementations, mappers
-  interface/       — one file per HTTP endpoint plus a thin group-registration file (see ADR-0013)
+  interface/       — inbound adapters, one subfolder per protocol
+    http/          — one file per HTTP endpoint plus a thin group-registration file (see ADR-0013)
+    events/        — one *-event-adapter.ts per upstream module whose domain events this module consumes (see ADR-0007)
   <feature>-event-span-attributes.ts  — per-event span-attribute extractors aggregated for this module
   <feature>-module.ts                 — the composed Layer for the module
   index.ts                            — barrel: re-exports only what other modules legitimately need
 ```
 
-Not every module has all six folders — `event-handlers/` and `queries/` are present only when the module needs them.
+Not every module has all six folders — `event-handlers/` and `queries/` are present only when the module needs them. Likewise `interface/http/` is present only for modules that expose HTTP endpoints; `interface/events/` only for modules that subscribe to another module's events.
 
 `commands/`, `queries/`, and `event-handlers/` together correspond to what hexagonal architecture calls the "application layer." There is deliberately no `application/` umbrella over them. The split reflects two real distinctions: write-side vs. read-side (queries can touch `@org/database` and bypass the domain because there is no aggregate to protect when nothing mutates), and use-case-driven vs. event-driven (event handlers run as reactions, not as direct dispatch). Each folder gets its own dependency-cruiser isolation rule (see ADR-0008), so the architectural distinction shows up at the file-system level rather than via convention.
 

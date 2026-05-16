@@ -9,9 +9,11 @@ Each feature module lives at `packages/server/src/modules/<feature>/` with sibli
 - `domain/` — entities, value objects, events, errors, IDs, repository ports. Aggregate roots are named `*.aggregate.ts` as an explicit DDD signal.
 - `commands/` — write-side use cases. Each has a `<verb-noun>-command.ts` schema (registry-merges into `CommandRegistry`) plus a `<verb-noun>.ts` handler.
 - `queries/` — read-side projections. Same `-query.ts` schema + `<base>.ts` handler split. May import `@org/database` directly and bypass the domain — there's no aggregate to protect when nothing mutates.
-- `event-handlers/` — write-side reactions to domain events. Run in the publisher's fiber and inherit its transaction (ADR-0007).
+- `event-handlers/` — write-side use cases reacting to internal triggers (`event-handlers/triggers/<publisher>-events.ts`). Run in the publisher's fiber and inherit its transaction (ADR-0007). Same dependency shape as `commands/` — no cross-module barrel imports.
 - `infrastructure/` — repository `Live` + `Fake` implementations, mappers. Private to the module.
-- `interface/` — one `<endpoint-name>.endpoint.ts` per HTTP endpoint (ADR-0013), plus a thin `<feature>-http-live.ts` group registration.
+- `interface/` — inbound adapters, one subfolder per protocol:
+  - `interface/http/` — one `<endpoint-name>.endpoint.ts` per HTTP endpoint (ADR-0013), plus a thin `<feature>-live.ts` group registration.
+  - `interface/events/` — one `<publisher>-event-adapter.ts` per upstream module whose domain events this module consumes (ADR-0007 ACL). The only place in the consumer module permitted to import another module's barrel.
 
 Cross-module access goes through the module's `index.ts` barrel, which may not re-export from `infrastructure/` or `interface/`. The published surface is domain types (events, IDs, errors), command/query messages, handler-registration maps, and the module's `Live` layer.
 
@@ -25,7 +27,8 @@ If you create any of these without a sibling test, CI fails:
 | `commands/*-command.ts`               | `commands/<base>.test.ts` (drop the `-command` suffix)                                                    |
 | `queries/*-query.ts`                  | `queries/<base>.integration.test.ts` (or `.test.ts`)                                                      |
 | `event-handlers/*.ts`                 | `event-handlers/<base>.integration.test.ts` (or `.test.ts`)                                               |
-| `interface/*.endpoint.ts`             | `interface/<base>.endpoint.integration.test.ts`                                                           |
+| `interface/http/*.endpoint.ts`        | `interface/http/<base>.endpoint.integration.test.ts` (or `.endpoint.test.ts`)                             |
+| `interface/events/*-event-adapter.ts` | `interface/events/<base>-event-adapter.test.ts`                                                           |
 | `infrastructure/*-repository-live.ts` | `infrastructure/<base>-repository-live.integration.test.ts` AND a `<base>-repository-fake.ts` counterpart |
 
 The naming conventions are also the parity-rule detectors. Don't rename a file to dodge the rule — write the test.
@@ -36,6 +39,7 @@ The naming conventions are also the parity-rule detectors. Don't rename a file t
 - **Integration tests** (`*-repository-live.integration.test.ts`, `<endpoint>.endpoint.integration.test.ts`, `<query>.integration.test.ts`) hit a real DB. They self-skip when `DATABASE_URL_TEST` is unset; `pnpm test` succeeds with no auxiliary services.
 - **HTTP integration tests** use `useServerTestRuntime(["table1", "table2"])` from `test-utils/`, which wires `ManagedRuntime.make(TestServerLive)` + `beforeAll`/`afterAll` + per-test `truncate`. Tests then exercise the contract via `HttpApiClient.make(Api)` and seed prior state by calling _other endpoints_, not by reaching into module internals.
 - **Query/repository integration tests** seed via the live repository (or other production-path code), not via raw SQL. Using the repository as the seeding seam keeps the test honest about what production paths look like.
+- **Endpoint test naming.** A test file ending in `*.endpoint.integration.test.ts` exercises the real HTTP layer against a live database via `useServerTestRuntime(...)`. A file ending in `*.endpoint.test.ts` is a true unit test — no DB, no HTTP round-trip — typically a parity-rule token for endpoints whose meaningful coverage lives elsewhere (e.g. the OIDC `login` / `callback` / `logout` flows, covered by Playwright + `SessionRepositoryLive` integration tests). Any `.endpoint.test.ts` file must carry a header comment naming where the meaningful coverage lives; if a test starts hitting real HTTP + DB, rename it to `.endpoint.integration.test.ts`.
 
 ## Commands
 

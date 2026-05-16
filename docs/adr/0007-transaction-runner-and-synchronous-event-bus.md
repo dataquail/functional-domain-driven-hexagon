@@ -106,6 +106,45 @@ These are valid patterns but solve a different problem. If a future feature genu
 - **Fail-soft subscribers** (a failed subscriber logs and continues, the publisher's transaction commits anyway). Rejected. Immediate consistency is the goal; fail-soft is exactly the partial-failure-with-logged-silence behavior we're trying to prevent.
 - **Outbox from day one.** Rejected. Adds machinery (a table, a publisher process, retry semantics, dedup) for a problem we don't have. When the problem appears, the outbox is the right answer; today, it would be speculative complexity.
 
+## Anti-corruption layer for cross-module event consumption
+
+When a module subscribes to another module's domain event, that event's schema becomes load-bearing for the subscriber. A new field on `UserCreated` is harmless to `user`'s internal callers; it can be a breaking change for `wallet` if `wallet`'s handler reads field names off the event directly.
+
+To keep the publisher's event schema from leaking into the consumer's handlers, cross-module subscriptions go through an **adapter** file. The adapter is an inbound port — structurally identical to an HTTP endpoint, just on the event-bus transport — so it lives in `interface/events/`, the only place allowed to import the publisher's barrel. Handlers stay in `event-handlers/` and consume a consumer-internal trigger type instead.
+
+```
+modules/<consumer>/
+├── interface/
+│   └── events/
+│       └── <publisher>-event-adapter.ts     # subscribes to publisher events (inbound port)
+└── event-handlers/
+    ├── triggers/
+    │   └── <publisher>-events.ts            # consumer-internal trigger types
+    └── <name>-when-<...>.ts                 # handler — imports the trigger type
+```
+
+The adapter subscribes to each publisher event, translates it into the consumer's trigger shape, and forwards to the handler:
+
+```ts
+const toTrigger = (event: UserCreated): UserCreatedTrigger => ({ userId: event.userId });
+
+export const UserEventAdapterLive = Layer.effectDiscard(
+  Effect.gen(function* () {
+    const bus = yield* DomainEventBus;
+    const repo = yield* WalletRepository;
+    yield* bus.subscribe(UserCreated, (event) =>
+      handleUserCreated(toTrigger(event)).pipe(Effect.provideService(WalletRepository, repo)),
+    );
+  }),
+);
+```
+
+The handler depends only on the trigger type — never on `UserCreated`. If `user` adds a field, only the adapter changes; handlers stay stable.
+
+The pattern is enforced by the `event-handlers-isolation` dep-cruiser rule, which forbids `event-handlers/` from importing other modules' barrels at all. The adapter lives in `interface/events/`, which (like `interface/http/`) is permitted to import other modules' barrels — that's the inbound-adapter layer's job.
+
+This is Vernon's anti-corruption layer at module scope. It costs one file per (consumer, publisher) pair and one trigger-types file. The benefit is that the consumer's handler logic remains testable, stable, and decoupled from the publisher's evolving schema.
+
 ## Related
 
 - ADR-0003 (events as values) — the events arriving at `dispatch` come from pure aggregate ops.

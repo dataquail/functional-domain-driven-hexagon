@@ -1,5 +1,5 @@
-import { UsersPage } from "@/drivers/pages/users-page";
 import { truncate } from "@/test-utils/database";
+import { playwrightUsersDriver } from "@org/test-drivers/adapters/playwright/users-page-driver";
 import { test } from "@playwright/test";
 
 const DATABASE_URL_TEST =
@@ -15,8 +15,8 @@ test.beforeEach(async () => {
 });
 
 test("a user can be created from the users page", async ({ page }) => {
-  const users = new UsersPage(page);
-  await users.visit();
+  const users = playwrightUsersDriver(page);
+  await users.goto();
 
   await users.createUser({
     email: "alice@example.com",
@@ -25,5 +25,5 @@ test("a user can be created from the users page", async ({ page }) => {
     postalCode: "12345",
   });
 
-  await users.expectUserVisible("alice@example.com");
+  await users.expectUserInList("alice@example.com");
 });

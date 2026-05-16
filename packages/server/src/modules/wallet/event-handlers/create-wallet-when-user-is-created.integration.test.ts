@@ -1,7 +1,7 @@
 import { Api } from "@/api.js";
 import { UserCreated } from "@/modules/user/index.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet-repository.js";
-import { CreateWalletWhenUserIsCreatedLive } from "@/modules/wallet/event-handlers/create-wallet-when-user-is-created.js";
+import { UserEventAdapterLive } from "@/modules/wallet/interface/events/user-event-adapter.js";
 import { DomainEventBus, makeDomainEventBusLive } from "@/platform/domain-event-bus.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TransactionRunner, TransactionRunnerLive } from "@/platform/transaction-runner.js";
@@ -99,10 +99,7 @@ const FailingWalletRepository = Layer.succeed(
   }),
 );
 
-const RollbackTestLayer = Layer.mergeAll(
-  TransactionRunnerLive,
-  CreateWalletWhenUserIsCreatedLive,
-).pipe(
+const RollbackTestLayer = Layer.mergeAll(TransactionRunnerLive, UserEventAdapterLive).pipe(
   Layer.provideMerge(makeDomainEventBusLive()),
   Layer.provideMerge(FailingWalletRepository),
   Layer.provideMerge(TestDatabaseLive),

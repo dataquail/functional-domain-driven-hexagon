@@ -102,7 +102,7 @@ module.exports = {
       name: "event-handlers-isolation",
       severity: "error",
       comment:
-        "Module event-handlers are write-side reactions to events. Same constraints as commands: own module's domain and sibling event-handlers, platform shared kernel facades, and other modules' barrel (events). No infrastructure, no interface, no commands, no queries, no @org/contracts, no @org/database. Test files excluded.",
+        "Module event-handlers are write-side use cases reacting to internal triggers (event-handlers/triggers/*). Cross-module events arrive translated to triggers via `interface/events/<publisher>-event-adapter.ts` (ADR-0007 ACL). Same constraints as commands: own module's domain and sibling event-handlers, platform shared kernel facades. No infrastructure, no interface, no commands, no queries, no @org/contracts, no @org/database, no other-module barrels. Test files excluded.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/event-handlers/",
         pathNot: "\\.test\\.ts$",
@@ -113,7 +113,6 @@ module.exports = {
           "^packages/server/src/modules/$1/(domain|event-handlers)/",
           "^packages/server/src/platform/(command-bus|query-bus|domain-event-bus|domain-event|transaction-runner|span-attributable)\\.ts$",
           "^packages/server/src/platform/ids/",
-          "^packages/server/src/modules/[^/]+/index\\.ts$",
         ],
       },
     },
@@ -311,6 +310,39 @@ module.exports = {
       },
       to: {
         path: "/node_modules/(react|react-dom|@tanstack/react-|react-hook-form)",
+      },
+    },
+    {
+      name: "web-no-cross-feature-imports",
+      severity: "error",
+      comment:
+        "Features under packages/web/features/ may not import each other. Cross-feature data flows belong in `services/data-access/`; shared rendering primitives belong in `@org/components/patterns/`. The feature boundary is the same kind of seam the server uses between modules.",
+      from: { path: "^packages/web/features/([^/]+)/" },
+      to: {
+        path: "^packages/web/features/([^/]+)/",
+        pathNot: "^packages/web/features/$1/",
+      },
+    },
+    {
+      name: "web-features-not-from-app",
+      severity: "error",
+      comment:
+        "Routes under packages/web/app/ compose features; features must not import app/ pages, layouts, or providers. The dependency direction is app → features, never reversed. Server-only or shared infra files in app/ are not feature dependencies — promote them to /services or /lib first.",
+      from: { path: "^packages/web/features/" },
+      to: { path: "^packages/web/app/" },
+    },
+    {
+      name: "platform-ids-effect-only",
+      severity: "error",
+      comment:
+        "platform/ids/ is the minimal shared kernel for cross-module branded entity " +
+        "IDs (ADR-0020). It may only depend on `effect` from third-party packages. " +
+        "Drizzle column types, validation libs, contract schemas, etc. do not belong " +
+        "here — they leak module-internal shape into the shared kernel.",
+      from: { path: "^packages/server/src/platform/ids/" },
+      to: {
+        dependencyTypes: ["npm", "npm-dev", "npm-peer", "npm-optional"],
+        pathNot: "/node_modules/effect/",
       },
     },
     {
