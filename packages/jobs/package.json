@@ -25,7 +25,7 @@
   },
   "devDependencies": {
     "@types/pg": "^8.11.11",
-    "dotenv": "^16.4.7",
+    "dotenv": "^17.4.2",
     "tsx": "^4.19.2"
   }
 }
