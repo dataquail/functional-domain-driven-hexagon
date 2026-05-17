@@ -9,6 +9,7 @@ export { FindSessionQuery } from "./queries/find-session-query.js";
 // (CookieCodec + SessionRepository). Other auth-infra services stay
 // internal to AuthModuleLive — see auth-shared-deps.ts.
 export { AuthSharedDepsLive } from "./auth-shared-deps.js";
+export { Session } from "./domain/session.aggregate.js";
 export {
   AuthIdentityNotFound,
   SessionExpired,
@@ -17,4 +18,3 @@ export {
 } from "./domain/session-errors.js";
 export { SessionId } from "./domain/session-id.js";
 export { SessionRepository } from "./domain/session-repository.js";
-export { Session } from "./domain/session.aggregate.js";

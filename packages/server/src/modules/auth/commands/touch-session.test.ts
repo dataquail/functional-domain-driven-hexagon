@@ -3,11 +3,11 @@ import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { TouchSessionCommand } from "@/modules/auth/commands/touch-session-command.js";
 import { touchSession } from "@/modules/auth/commands/touch-session.js";
+import { TouchSessionCommand } from "@/modules/auth/commands/touch-session-command.js";
+import * as Session from "@/modules/auth/domain/session.aggregate.js";
 import { SessionId } from "@/modules/auth/domain/session-id.js";
 import { SessionRepository } from "@/modules/auth/domain/session-repository.js";
-import * as Session from "@/modules/auth/domain/session.aggregate.js";
 import { SessionRepositoryFake } from "@/modules/auth/infrastructure/session-repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
 

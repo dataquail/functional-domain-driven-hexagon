@@ -1,9 +1,9 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
+import { type Todo } from "./todo.js";
 import { type TodoNotFound } from "./todo-errors.js";
 import { type TodoId } from "./todo-id.js";
-import { type Todo } from "./todo.js";
 
 export type TodosRepositoryShape = {
   readonly insert: (todo: Todo) => Effect.Effect<void>;

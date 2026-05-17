@@ -3,8 +3,8 @@ import * as DateTime from "effect/DateTime";
 
 import { UserId } from "@/platform/ids/user-id.js";
 
-import { SessionId } from "../domain/session-id.js";
 import { Session } from "../domain/session.aggregate.js";
+import { SessionId } from "../domain/session-id.js";
 
 export const toDomain = (row: RowSchemas.SessionRow): Session =>
   Session.make({

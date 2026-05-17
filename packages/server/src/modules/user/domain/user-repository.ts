@@ -4,8 +4,8 @@ import type * as Option from "effect/Option";
 
 import { type UserId } from "@/platform/ids/user-id.js";
 
-import { type UserAlreadyExists, type UserNotFound } from "./user-errors.js";
 import { type User } from "./user.aggregate.js";
+import { type UserAlreadyExists, type UserNotFound } from "./user-errors.js";
 
 export type UserRepositoryShape = {
   readonly insert: (user: User) => Effect.Effect<void, UserAlreadyExists>;

@@ -1,8 +1,8 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 
-import { TodoId } from "../domain/todo-id.js";
 import { Todo } from "../domain/todo.js";
+import { TodoId } from "../domain/todo-id.js";
 
 type Row = RowSchemas.TodoRow;
 

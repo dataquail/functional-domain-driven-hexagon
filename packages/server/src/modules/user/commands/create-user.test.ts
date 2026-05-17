@@ -11,8 +11,8 @@ import { UserRepositoryFake } from "@/modules/user/infrastructure/user-repositor
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
-import { CreateUserCommand } from "./create-user-command.js";
 import { createUser } from "./create-user.js";
+import { CreateUserCommand } from "./create-user-command.js";
 
 const TestLayer = Layer.mergeAll(UserRepositoryFake, RecordingEventBus, IdentityUnitOfWork);
 

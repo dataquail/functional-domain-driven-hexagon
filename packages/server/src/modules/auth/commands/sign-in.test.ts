@@ -5,8 +5,8 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 
-import { SignInCommand } from "@/modules/auth/commands/sign-in-command.js";
 import { signIn } from "@/modules/auth/commands/sign-in.js";
+import { SignInCommand } from "@/modules/auth/commands/sign-in-command.js";
 import { type AuthIdentity } from "@/modules/auth/domain/auth-identity-repository.js";
 import { SessionRepository } from "@/modules/auth/domain/session-repository.js";
 import { makeAuthIdentityRepositoryFake } from "@/modules/auth/infrastructure/auth-identity-repository-fake.js";

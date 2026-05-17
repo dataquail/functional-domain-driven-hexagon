@@ -13,9 +13,9 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
+import * as Wallet from "@/modules/wallet/domain/wallet.aggregate.js";
 import { WalletId } from "@/modules/wallet/domain/wallet-id.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet-repository.js";
-import * as Wallet from "@/modules/wallet/domain/wallet.aggregate.js";
 
 import { type UserCreatedTrigger } from "./triggers/user-events.js";
 

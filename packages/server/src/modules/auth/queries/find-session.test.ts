@@ -4,6 +4,7 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 
+import { Session } from "@/modules/auth/domain/session.aggregate.js";
 import {
   SessionExpired,
   SessionNotFound,
@@ -11,10 +12,9 @@ import {
 } from "@/modules/auth/domain/session-errors.js";
 import { SessionId } from "@/modules/auth/domain/session-id.js";
 import { SessionRepository } from "@/modules/auth/domain/session-repository.js";
-import { Session } from "@/modules/auth/domain/session.aggregate.js";
 import { SessionRepositoryFake } from "@/modules/auth/infrastructure/session-repository-fake.js";
-import { FindSessionQuery } from "@/modules/auth/queries/find-session-query.js";
 import { findSession } from "@/modules/auth/queries/find-session.js";
+import { FindSessionQuery } from "@/modules/auth/queries/find-session-query.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 const sessionId = SessionId.make("22222222-2222-2222-2222-222222222222");

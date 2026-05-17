@@ -1,5 +1,5 @@
-import { findUsersQuerySpanAttributes } from "@/modules/user/queries/find-users-query.js";
 import { findUsers } from "@/modules/user/queries/find-users.js";
+import { findUsersQuerySpanAttributes } from "@/modules/user/queries/find-users-query.js";
 import { queryHandlers } from "@/platform/ddd/query-bus.js";
 
 export const userQueryHandlers = queryHandlers({

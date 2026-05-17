@@ -6,8 +6,8 @@ import { TodosRepository } from "@/modules/todos/domain/todo-repository.js";
 import { TodosRepositoryFake } from "@/modules/todos/infrastructure/todos-repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-import { CreateTodoCommand } from "./create-todo-command.js";
 import { createTodo } from "./create-todo.js";
+import { CreateTodoCommand } from "./create-todo-command.js";
 
 const aliceUserId = UserId.make("11111111-1111-1111-1111-111111111111");
 

@@ -4,7 +4,7 @@
 //   - defect: wrapped in QueryDefect and thrown
 //   - cache hit: hydrated value is read without invoking the runtime
 
-import { QueryClientProvider, QueryClient as TanstackQueryClient } from "@tanstack/react-query";
+import { QueryClient as TanstackQueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";

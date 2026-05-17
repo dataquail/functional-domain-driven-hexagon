@@ -2,10 +2,10 @@ import { Database, orFail, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { type Todo } from "../domain/todo.js";
 import { TodoNotFound } from "../domain/todo-errors.js";
 import { type TodoId } from "../domain/todo-id.js";
 import { TodosRepository } from "../domain/todo-repository.js";
-import { type Todo } from "../domain/todo.js";
 import * as TodoMapper from "./todo-mapper.js";
 
 export const TodosRepositoryLive = Layer.effect(

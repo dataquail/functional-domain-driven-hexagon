@@ -4,8 +4,8 @@ import {
   type DeleteUserCommand,
   type DeleteUserOutput,
 } from "@/modules/user/commands/delete-user-command.js";
-import { UserRepository } from "@/modules/user/domain/user-repository.js";
 import * as User from "@/modules/user/domain/user.aggregate.js";
+import { UserRepository } from "@/modules/user/domain/user-repository.js";
 import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
 import { UnitOfWork } from "@/platform/ddd/unit-of-work.js";
 

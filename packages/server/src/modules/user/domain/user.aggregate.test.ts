@@ -6,8 +6,8 @@ import * as Schema from "effect/Schema";
 
 import { UserId } from "@/platform/ids/user-id.js";
 
-import { type UserEvent } from "./user-events.js";
 import * as User from "./user.aggregate.js";
+import { type UserEvent } from "./user-events.js";
 import { Address } from "./value-objects/address.js";
 
 const id = UserId.make("11111111-1111-1111-1111-111111111111");

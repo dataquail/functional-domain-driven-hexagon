@@ -7,10 +7,10 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
 
+import * as Session from "@/modules/auth/domain/session.aggregate.js";
 import { SessionNotFound } from "@/modules/auth/domain/session-errors.js";
 import { SessionId } from "@/modules/auth/domain/session-id.js";
 import { SessionRepository } from "@/modules/auth/domain/session-repository.js";
-import * as Session from "@/modules/auth/domain/session.aggregate.js";
 import { SessionRepositoryLive } from "@/modules/auth/infrastructure/session-repository-live.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";

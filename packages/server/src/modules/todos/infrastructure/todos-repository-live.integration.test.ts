@@ -7,10 +7,10 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
 
+import * as Todo from "@/modules/todos/domain/todo.js";
 import { TodoNotFound } from "@/modules/todos/domain/todo-errors.js";
 import { TodoId } from "@/modules/todos/domain/todo-id.js";
 import { TodosRepository } from "@/modules/todos/domain/todo-repository.js";
-import * as Todo from "@/modules/todos/domain/todo.js";
 import { TodosRepositoryLive } from "@/modules/todos/infrastructure/todos-repository-live.js";
 import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 

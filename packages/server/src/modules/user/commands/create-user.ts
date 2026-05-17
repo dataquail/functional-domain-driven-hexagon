@@ -5,8 +5,8 @@ import {
   type CreateUserCommand,
   type CreateUserOutput,
 } from "@/modules/user/commands/create-user-command.js";
-import { UserRepository } from "@/modules/user/domain/user-repository.js";
 import * as User from "@/modules/user/domain/user.aggregate.js";
+import { UserRepository } from "@/modules/user/domain/user-repository.js";
 import { Address } from "@/modules/user/domain/value-objects/address.js";
 import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
 import { UnitOfWork } from "@/platform/ddd/unit-of-work.js";

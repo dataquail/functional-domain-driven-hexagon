@@ -4,7 +4,7 @@
 // and sonner-backed Toast. Tests assert on toast calls via
 // `getToasts()` and on QueryClient state via `queryClient`.
 
-import { QueryClientProvider, QueryClient as TanstackQueryClient } from "@tanstack/react-query";
+import { QueryClient as TanstackQueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";

@@ -2,8 +2,8 @@ import { describe, it } from "@effect/vitest";
 import { deepStrictEqual, ok } from "assert";
 import * as DateTime from "effect/DateTime";
 
-import { WalletId } from "@/modules/wallet/domain/wallet-id.js";
 import * as Wallet from "@/modules/wallet/domain/wallet.aggregate.js";
+import { WalletId } from "@/modules/wallet/domain/wallet-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 const walletId = WalletId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");

@@ -13,10 +13,10 @@ import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
-import { ChangeUserRoleCommand } from "./change-user-role-command.js";
 import { changeUserRole } from "./change-user-role.js";
-import { CreateUserCommand } from "./create-user-command.js";
+import { ChangeUserRoleCommand } from "./change-user-role-command.js";
 import { createUser } from "./create-user.js";
+import { CreateUserCommand } from "./create-user-command.js";
 
 const TestLayer = Layer.mergeAll(UserRepositoryFake, RecordingEventBus, IdentityUnitOfWork);
 

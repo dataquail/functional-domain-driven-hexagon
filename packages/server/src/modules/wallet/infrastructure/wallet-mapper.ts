@@ -3,8 +3,8 @@ import * as DateTime from "effect/DateTime";
 
 import { UserId } from "@/platform/ids/user-id.js";
 
-import { WalletId } from "../domain/wallet-id.js";
 import { Wallet } from "../domain/wallet.aggregate.js";
+import { WalletId } from "../domain/wallet-id.js";
 
 type Row = RowSchemas.WalletRow;
 
