@@ -1,3 +1,7 @@
+import * as HttpApiBuilder from "@effect/platform/HttpApiBuilder";
+import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
+import * as Layer from "effect/Layer";
+
 import { Api } from "@/api.js";
 import { EnvVars } from "@/common/env-vars.js";
 import {
@@ -23,9 +27,6 @@ import { makeQueryBus } from "@/platform/query-bus-live.js";
 import { UnitOfWorkLive } from "@/platform/unit-of-work-live.js";
 import { UserAuthMiddlewareFake } from "@/test-utils/fake-auth-middleware.js";
 import { TestDatabaseLive } from "@/test-utils/test-database.js";
-import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
-import * as HttpApiBuilder from "@effect/platform/HttpApiBuilder";
-import * as Layer from "effect/Layer";
 
 const CommandBusLive = Layer.succeed(
   CommandBus,

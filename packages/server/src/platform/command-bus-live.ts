@@ -1,3 +1,5 @@
+import * as Effect from "effect/Effect";
+
 import {
   type CommandBusShape,
   type CommandHandlerEntry,
@@ -5,7 +7,6 @@ import {
   type CommandRegistry,
 } from "@/platform/ddd/command-bus.js";
 import { type SpanAttributeValue } from "@/platform/ddd/span-attributable.js";
-import * as Effect from "effect/Effect";
 
 /**
  * Builds a CommandBus from a full handler set. Takes `CommandHandlers` for

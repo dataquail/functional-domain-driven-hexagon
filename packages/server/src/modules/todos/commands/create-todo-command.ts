@@ -1,9 +1,10 @@
-import { type TodosRepository } from "@/modules/todos/domain/todo-repository.js";
-import { type Todo } from "@/modules/todos/domain/todo.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
-import { UserId } from "@/platform/ids/user-id.js";
 import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
+
+import { type Todo } from "@/modules/todos/domain/todo.js";
+import { type TodosRepository } from "@/modules/todos/domain/todo-repository.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
+import { UserId } from "@/platform/ids/user-id.js";
 
 export const CreateTodoCommand = Schema.TaggedStruct("CreateTodoCommand", {
   title: Schema.String,

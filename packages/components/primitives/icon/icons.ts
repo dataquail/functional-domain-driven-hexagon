@@ -4,6 +4,7 @@ import {
   PlusIcon as LucidePlusIcon,
   Trash2Icon as LucideTrash2Icon,
 } from "lucide-react";
+
 import { createIcon } from "./icon";
 
 export const PlusIcon = createIcon(LucidePlusIcon);

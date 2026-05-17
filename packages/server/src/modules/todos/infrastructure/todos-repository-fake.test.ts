@@ -1,12 +1,14 @@
-import { TodoId } from "@/modules/todos/domain/todo-id.js";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+
+import { TodoId } from "@/modules/todos/domain/todo-id.js";
+
+import * as Todo from "../domain/todo.js";
 import { TodoNotFound } from "../domain/todo-errors.js";
 import { TodosRepository } from "../domain/todo-repository.js";
-import * as Todo from "../domain/todo.js";
 import { TodosRepositoryFake } from "./todos-repository-fake.js";
 
 const aliceId = TodoId.make("11111111-1111-1111-1111-111111111111");

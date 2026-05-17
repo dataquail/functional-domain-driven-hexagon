@@ -15,15 +15,16 @@
 // create and assertion — MSW resolves the most recently registered
 // handler first.
 
+import { rtlUsersDriver } from "@org/test-drivers/adapters/rtl/users-page-driver";
+import * as React from "react";
+import { describe, it } from "vitest";
+
 import { CreateUser } from "@/features/users/create-user/create-user";
 import { UserList } from "@/features/users/user-list";
 import { makeUser } from "@/test/fixtures";
 import { handlers } from "@/test/handlers";
 import { renderWithHarness } from "@/test/integration-harness";
 import { installMswLifecycle, server } from "@/test/msw-server";
-import { rtlUsersDriver } from "@org/test-drivers/adapters/rtl/users-page-driver";
-import * as React from "react";
-import { describe, it } from "vitest";
 
 installMswLifecycle();
 

@@ -1,4 +1,5 @@
 import * as Layer from "effect/Layer";
+
 import { WalletRepositoryLive } from "./infrastructure/wallet-repository-live.js";
 import { UserEventAdapterLive } from "./interface/events/user-event-adapter.js";
 

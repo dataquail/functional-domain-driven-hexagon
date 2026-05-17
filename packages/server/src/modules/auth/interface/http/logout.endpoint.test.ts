@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { logoutEndpoint } from "./logout.endpoint.js";
 
 // The logout endpoint reads the session cookie inline, revokes the row,

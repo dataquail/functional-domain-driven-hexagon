@@ -162,7 +162,8 @@ export default [
       "import/no-duplicates": "error",
       "import/no-unresolved": "off",
       "import/order": "off",
-      "simple-import-sort/imports": "off",
+      "simple-import-sort/imports": "error",
+      "simple-import-sort/exports": "error",
       "sort-destructure-keys/sort-destructure-keys": "error",
 
       "@typescript-eslint/array-type": [

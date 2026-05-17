@@ -1,8 +1,10 @@
-import { UserId } from "@/platform/ids/user-id.js";
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
-import { type UserRole } from "../domain/user-role.js";
+
+import { UserId } from "@/platform/ids/user-id.js";
+
 import { User } from "../domain/user.aggregate.js";
+import { type UserRole } from "../domain/user-role.js";
 import { Address } from "../domain/value-objects/address.js";
 
 type Row = RowSchemas.UserRow;

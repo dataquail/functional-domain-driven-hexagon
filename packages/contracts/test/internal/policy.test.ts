@@ -1,5 +1,6 @@
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
+
 import * as internal from "../../src/internal/policy.js";
 
 describe("makePermissions", () => {

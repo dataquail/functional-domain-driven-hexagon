@@ -1,11 +1,13 @@
-import { type UserId } from "@/platform/ids/user-id.js";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+
+import { type UserId } from "@/platform/ids/user-id.js";
+
+import { type Wallet } from "../domain/wallet.aggregate.js";
 import { WalletAlreadyExistsForUser } from "../domain/wallet-errors.js";
 import { WalletRepository } from "../domain/wallet-repository.js";
-import { type Wallet } from "../domain/wallet.aggregate.js";
 import * as WalletMapper from "./wallet-mapper.js";
 
 export const WalletRepositoryLive = Layer.effect(

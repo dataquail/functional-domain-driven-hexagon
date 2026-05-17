@@ -1,11 +1,12 @@
+import type * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
+import type * as Effect from "effect/Effect";
+import * as Schema from "effect/Schema";
+
 import { type AuthIdentityRepository } from "@/modules/auth/domain/auth-identity-repository.js";
 import { type SessionId } from "@/modules/auth/domain/session-id.js";
 import { type SessionRepository } from "@/modules/auth/domain/session-repository.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import { type UserId } from "@/platform/ids/user-id.js";
-import type * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
-import type * as Effect from "effect/Effect";
-import * as Schema from "effect/Schema";
 
 // Inputs come from the OIDC callback: a verified Zitadel `subject` + the
 // caller's chosen TTLs. `email` is informational (kept for future JIT

@@ -1,10 +1,3 @@
-import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user-errors.js";
-import { UserRepository } from "@/modules/user/domain/user-repository.js";
-import * as User from "@/modules/user/domain/user.aggregate.js";
-import { Address } from "@/modules/user/domain/value-objects/address.js";
-import { UserRepositoryLive } from "@/modules/user/infrastructure/user-repository-live.js";
-import { UserId } from "@/platform/ids/user-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 import { describe, it } from "@effect/vitest";
 import { Database } from "@org/database/index";
 import { deepStrictEqual } from "assert";
@@ -14,6 +7,14 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import { beforeEach } from "vitest";
+
+import * as User from "@/modules/user/domain/user.aggregate.js";
+import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user-errors.js";
+import { UserRepository } from "@/modules/user/domain/user-repository.js";
+import { Address } from "@/modules/user/domain/value-objects/address.js";
+import { UserRepositoryLive } from "@/modules/user/infrastructure/user-repository-live.js";
+import { UserId } from "@/platform/ids/user-id.js";
+import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const aliceId = UserId.make("11111111-1111-1111-1111-111111111111");
 const bobId = UserId.make("22222222-2222-2222-2222-222222222222");

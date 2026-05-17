@@ -1,12 +1,13 @@
+import * as DateTime from "effect/DateTime";
+import * as Duration from "effect/Duration";
+import * as Effect from "effect/Effect";
+
 import {
   type TouchSessionCommand,
   type TouchSessionOutput,
 } from "@/modules/auth/commands/touch-session-command.js";
-import { SessionRepository } from "@/modules/auth/domain/session-repository.js";
 import * as Session from "@/modules/auth/domain/session.aggregate.js";
-import * as DateTime from "effect/DateTime";
-import * as Duration from "effect/Duration";
-import * as Effect from "effect/Effect";
+import { SessionRepository } from "@/modules/auth/domain/session-repository.js";
 
 // Sliding-TTL refresh.
 //

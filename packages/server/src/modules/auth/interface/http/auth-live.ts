@@ -1,6 +1,8 @@
-import { Api } from "@/api.js";
 import * as HttpApiBuilder from "@effect/platform/HttpApiBuilder";
 import * as Layer from "effect/Layer";
+
+import { Api } from "@/api.js";
+
 import { callbackEndpoint } from "./callback.endpoint.js";
 import { loginEndpoint } from "./login.endpoint.js";
 import { logoutEndpoint } from "./logout.endpoint.js";

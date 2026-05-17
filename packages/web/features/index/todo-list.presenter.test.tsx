@@ -1,9 +1,11 @@
-import { makePresenterHarness } from "@/test/presenter-harness";
 import { TodosContract } from "@org/contracts/api/Contracts";
 import { TodoId } from "@org/contracts/EntityIds";
 import { renderHook, waitFor } from "@testing-library/react";
 import * as Effect from "effect/Effect";
 import { afterEach, describe, expect, it } from "vitest";
+
+import { makePresenterHarness } from "@/test/presenter-harness";
+
 import { useTodoListPresenter } from "./todo-list.presenter";
 
 const mkTodo = (i: number): TodosContract.Todo =>

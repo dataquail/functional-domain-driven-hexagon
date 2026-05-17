@@ -1,5 +1,7 @@
-import { CookieCodec } from "@/platform/auth/cookie-codec.js";
 import * as Layer from "effect/Layer";
+
+import { CookieCodec } from "@/platform/auth/cookie-codec.js";
+
 import { SessionRepositoryLive } from "./infrastructure/session-repository-live.js";
 
 // The two auth-infra services that genuinely cross the module

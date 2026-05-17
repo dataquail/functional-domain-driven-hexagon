@@ -1,6 +1,7 @@
 import * as HttpApiEndpoint from "@effect/platform/HttpApiEndpoint";
 import * as HttpApiGroup from "@effect/platform/HttpApiGroup";
 import * as Schema from "effect/Schema";
+
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
 import { UserId } from "../EntityIds.js";
 import { Permission, UserAuthMiddleware } from "../Policy.js";

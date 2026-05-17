@@ -1,9 +1,10 @@
-import { WalletId } from "@/modules/wallet/domain/wallet-id.js";
-import * as Wallet from "@/modules/wallet/domain/wallet.aggregate.js";
-import { UserId } from "@/platform/ids/user-id.js";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual, ok } from "assert";
 import * as DateTime from "effect/DateTime";
+
+import * as Wallet from "@/modules/wallet/domain/wallet.aggregate.js";
+import { WalletId } from "@/modules/wallet/domain/wallet-id.js";
+import { UserId } from "@/platform/ids/user-id.js";
 
 const walletId = WalletId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");

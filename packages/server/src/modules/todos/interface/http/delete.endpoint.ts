@@ -1,9 +1,10 @@
-import { DeleteTodoCommand } from "@/modules/todos/commands/delete-todo-command.js";
-import { CommandBus } from "@/platform/ddd/command-bus.js";
-import { type EndpointRequest } from "@/platform/http-endpoint.js";
 import { TodosContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
+
+import { DeleteTodoCommand } from "@/modules/todos/commands/delete-todo-command.js";
+import { CommandBus } from "@/platform/ddd/command-bus.js";
+import { type EndpointRequest } from "@/platform/http-endpoint.js";
 
 export const deleteEndpoint = (request: EndpointRequest<typeof TodosContract.Group, "delete">) =>
   Effect.gen(function* () {

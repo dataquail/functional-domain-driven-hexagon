@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, userEvent, within } from "storybook/test";
+
 import { Checkbox } from "./checkbox";
 import { Label } from "./label";
 

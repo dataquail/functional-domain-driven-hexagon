@@ -1,10 +1,11 @@
+import * as crypto from "node:crypto";
+
 import * as Effect from "effect/Effect";
 import { flow } from "effect/Function";
 import * as Layer from "effect/Layer";
 import * as ParseResult from "effect/ParseResult";
 import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
-import * as crypto from "node:crypto";
 
 export const EncryptedToken = Schema.String.pipe(Schema.brand("encryptedToken"));
 export type EncryptedToken = typeof EncryptedToken.Type;

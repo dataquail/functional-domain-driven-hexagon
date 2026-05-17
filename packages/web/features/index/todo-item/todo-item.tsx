@@ -5,6 +5,7 @@ import { Checkbox } from "@org/components/primitives/checkbox";
 import { TrashIcon } from "@org/components/primitives/icon";
 import { Label } from "@org/components/primitives/label";
 import type { TodosContract } from "@org/contracts/api/Contracts";
+
 import { useTodoItemPresenter } from "./todo-item.presenter";
 
 export const TodoItem: React.FC<{ todo: TodosContract.Todo }> = ({ todo }) => {

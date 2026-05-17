@@ -1,8 +1,9 @@
-import { type TodoId } from "@/modules/todos/domain/todo-id.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import { type Database } from "@org/database/index";
 import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
+
+import { type TodoId } from "@/modules/todos/domain/todo-id.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 
 export const ListTodosQuery = Schema.TaggedStruct("ListTodosQuery", {});
 export type ListTodosQuery = typeof ListTodosQuery.Type;

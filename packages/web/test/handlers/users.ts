@@ -5,6 +5,7 @@
 import * as UserContract from "@org/contracts/api/UserContract";
 import type { UserId } from "@org/contracts/EntityIds";
 import * as Effect from "effect/Effect";
+
 import { makePaginatedUsers, makeUser } from "../fixtures/user";
 import { getEndpoint, typedHandler } from "../typed-handler";
 

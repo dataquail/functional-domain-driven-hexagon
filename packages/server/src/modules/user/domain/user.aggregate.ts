@@ -1,12 +1,14 @@
-import { UserId } from "@/platform/ids/user-id.js";
 import type * as DateTime from "effect/DateTime";
 import * as Schema from "effect/Schema";
+
+import { UserId } from "@/platform/ids/user-id.js";
+
 import {
   UserAddressUpdated,
   UserCreated,
   UserDeleted,
-  UserRoleChanged,
   type UserEvent,
+  UserRoleChanged,
 } from "./user-events.js";
 import { UserRole } from "./user-role.js";
 import { Address } from "./value-objects/address.js";

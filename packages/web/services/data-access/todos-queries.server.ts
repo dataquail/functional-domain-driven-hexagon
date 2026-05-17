@@ -7,6 +7,7 @@
 import "server-only";
 
 import { prefetchEffectQuery } from "@/lib/tanstack-query/effect-prefetch.server";
+
 import { todosQuery, todosQueryKey } from "./todos-queries";
 
 export const prefetchTodos = (): Promise<void> =>

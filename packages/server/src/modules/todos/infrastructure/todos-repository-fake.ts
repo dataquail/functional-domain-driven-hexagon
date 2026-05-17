@@ -3,10 +3,11 @@ import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
+
+import { type Todo } from "../domain/todo.js";
 import { TodoNotFound } from "../domain/todo-errors.js";
 import { type TodoId } from "../domain/todo-id.js";
 import { TodosRepository } from "../domain/todo-repository.js";
-import { type Todo } from "../domain/todo.js";
 
 export const TodosRepositoryFake = Layer.effect(
   TodosRepository,

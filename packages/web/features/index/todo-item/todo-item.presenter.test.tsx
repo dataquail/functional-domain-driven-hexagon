@@ -1,10 +1,12 @@
-import { makePresenterHarness } from "@/test/presenter-harness";
 import { TodosContract } from "@org/contracts/api/Contracts";
 import { TodoId } from "@org/contracts/EntityIds";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
 import { afterEach, describe, expect, it } from "vitest";
+
+import { makePresenterHarness } from "@/test/presenter-harness";
+
 import { useTodoItemPresenter } from "./todo-item.presenter";
 
 class TodoNotFoundError extends Data.TaggedError("TodoNotFoundError")<{

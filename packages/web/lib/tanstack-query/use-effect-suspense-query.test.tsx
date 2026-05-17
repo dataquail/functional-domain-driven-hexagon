@@ -4,11 +4,7 @@
 //   - defect: wrapped in QueryDefect and thrown
 //   - cache hit: hydrated value is read without invoking the runtime
 
-import { ApiClient } from "@/services/api-client.shared";
-import { QueryClient } from "@/services/common/query-client";
-import { type ClientManagedRuntime, RuntimeContext } from "@/services/runtime.client";
-import { RecordingToast } from "@/test/recording-toast";
-import { QueryClientProvider, QueryClient as TanstackQueryClient } from "@tanstack/react-query";
+import { QueryClient as TanstackQueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
@@ -16,6 +12,12 @@ import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { ApiClient } from "@/services/api-client.shared";
+import { QueryClient } from "@/services/common/query-client";
+import { type ClientManagedRuntime, RuntimeContext } from "@/services/runtime.client";
+import { RecordingToast } from "@/test/recording-toast";
+
 import { QueryDefect } from "./use-effect-mutation";
 import { useEffectSuspenseQuery } from "./use-effect-suspense-query";
 

@@ -7,6 +7,7 @@
 // to get data on first paint.
 
 import { useEffectMutation, useEffectSuspenseQuery } from "@/lib/tanstack-query";
+
 import { createUser, type UsersListVariables, usersQuery, usersQueryKey } from "./users-queries";
 
 // Generic params on `useEffectSuspenseQuery` are inferred — the error

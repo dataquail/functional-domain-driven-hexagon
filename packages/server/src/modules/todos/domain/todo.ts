@@ -1,5 +1,6 @@
 import type * as DateTime from "effect/DateTime";
 import * as Schema from "effect/Schema";
+
 import { TodoId } from "./todo-id.js";
 
 export class Todo extends Schema.Class<Todo>("Todo")({

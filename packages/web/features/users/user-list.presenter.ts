@@ -5,8 +5,10 @@
 // `user-list.view-model.ts` Tier-3 module. Page changes drive new
 // fetches via the queryKey (page is part of the variables).
 
-import { useUsersSuspenseQuery } from "@/services/data-access/use-users-queries";
 import * as React from "react";
+
+import { useUsersSuspenseQuery } from "@/services/data-access/use-users-queries";
+
 import { computePaginationView } from "./user-list.view-model";
 
 const DEFAULT_PAGE_SIZE = 10;

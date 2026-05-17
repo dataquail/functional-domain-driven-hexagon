@@ -5,6 +5,7 @@ import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schedule from "effect/Schedule";
+
 import { purgeExpiredSessions } from "./jobs/purge-expired-sessions.js";
 
 dotenv.config({ path: "../../.env" });

@@ -1,9 +1,11 @@
-import { UserId } from "@/platform/ids/user-id.js";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
-import { SessionId } from "./session-id.js";
+
+import { UserId } from "@/platform/ids/user-id.js";
+
 import * as Session from "./session.aggregate.js";
+import { SessionId } from "./session-id.js";
 
 const sessionId = SessionId.make("11111111-1111-1111-1111-111111111111");
 const userId = UserId.make("22222222-2222-2222-2222-222222222222");

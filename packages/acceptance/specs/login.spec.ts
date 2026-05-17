@@ -1,5 +1,6 @@
-import { ZitadelLoginPage } from "@/drivers/pages/zitadel-login-page";
 import { expect, test } from "@playwright/test";
+
+import { ZitadelLoginPage } from "@/drivers/pages/zitadel-login-page";
 
 // Login is a critical user path; it gets exercised on every run, not just
 // in setup. Runs in the dedicated `login` project (no storageState) so the

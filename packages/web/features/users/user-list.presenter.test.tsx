@@ -1,10 +1,12 @@
-import { makePresenterHarness } from "@/test/presenter-harness";
 import { UserContract } from "@org/contracts/api/Contracts";
 import { UserId } from "@org/contracts/EntityIds";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+
+import { makePresenterHarness } from "@/test/presenter-harness";
+
 import { useUserListPresenter } from "./user-list.presenter";
 
 const mkUser = (i: number): UserContract.User =>

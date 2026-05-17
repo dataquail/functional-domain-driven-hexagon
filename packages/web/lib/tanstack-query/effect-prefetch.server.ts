@@ -12,11 +12,12 @@
 // rather than dragging the whole tree into a generic 500.
 import "server-only";
 
+import type { QueryKey } from "@tanstack/react-query";
+import type * as Effect from "effect/Effect";
+
 import { getQueryClient } from "@/lib/query-client.server";
 import type { ApiClient } from "@/services/api-client.shared";
 import { getServerRuntime } from "@/services/runtime.server";
-import type { QueryKey } from "@tanstack/react-query";
-import type * as Effect from "effect/Effect";
 
 export const prefetchEffectQuery = async <A, E>(args: {
   queryKey: QueryKey;

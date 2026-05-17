@@ -1,13 +1,15 @@
-import { type UserId } from "@/platform/ids/user-id.js";
 import * as Effect from "effect/Effect";
 import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
+
+import { type UserId } from "@/platform/ids/user-id.js";
+
+import { type Wallet } from "../domain/wallet.aggregate.js";
 import { WalletAlreadyExistsForUser } from "../domain/wallet-errors.js";
 import { type WalletId } from "../domain/wallet-id.js";
 import { WalletRepository } from "../domain/wallet-repository.js";
-import { type Wallet } from "../domain/wallet.aggregate.js";
 
 const findByUserIdIn = (
   store: HashMap.HashMap<WalletId, Wallet>,

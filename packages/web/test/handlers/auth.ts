@@ -11,6 +11,7 @@
 import * as AuthContract from "@org/contracts/api/AuthContract";
 import * as Effect from "effect/Effect";
 import { http, HttpResponse } from "msw";
+
 import { makeCurrentUser } from "../fixtures/auth";
 import { getEndpoint, TEST_API_BASE, typedHandler } from "../typed-handler";
 

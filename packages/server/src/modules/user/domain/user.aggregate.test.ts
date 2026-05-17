@@ -1,11 +1,13 @@
-import { UserId } from "@/platform/ids/user-id.js";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Either from "effect/Either";
 import * as Schema from "effect/Schema";
-import { type UserEvent } from "./user-events.js";
+
+import { UserId } from "@/platform/ids/user-id.js";
+
 import * as User from "./user.aggregate.js";
+import { type UserEvent } from "./user-events.js";
 import { Address } from "./value-objects/address.js";
 
 const id = UserId.make("11111111-1111-1111-1111-111111111111");

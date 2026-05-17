@@ -1,14 +1,15 @@
-import { Api } from "@/api.js";
-import { FindUsersQuery } from "@/modules/user/index.js";
-import { QueryBus } from "@/platform/ddd/query-bus.js";
-import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { hasTestDatabase } from "@/test-utils/test-database.js";
 import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import { UserContract } from "@org/contracts/api/Contracts";
 import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+
+import { Api } from "@/api.js";
+import { FindUsersQuery } from "@/modules/user/index.js";
+import { QueryBus } from "@/platform/ddd/query-bus.js";
+import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
+import { hasTestDatabase } from "@/test-utils/test-database.js";
 
 const basePayload = {
   email: "alice@example.com",

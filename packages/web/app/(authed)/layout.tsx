@@ -15,12 +15,13 @@
 // before rendering. It must NOT be wrapped in try/catch — otherwise
 // the marker is swallowed and the redirect silently fails.
 
-import { Nav } from "@/features/__root/nav";
-import { ApiClient } from "@/services/api-client.shared";
-import { getServerRuntime } from "@/services/runtime.server";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import { redirect } from "next/navigation";
+
+import { Nav } from "@/features/__root/nav";
+import { ApiClient } from "@/services/api-client.shared";
+import { getServerRuntime } from "@/services/runtime.server";
 
 export default async function AuthedLayout({ children }: { children: React.ReactNode }) {
   const runtime = await getServerRuntime();

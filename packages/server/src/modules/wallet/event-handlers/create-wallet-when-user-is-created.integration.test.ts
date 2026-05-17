@@ -1,3 +1,14 @@
+import * as HttpApiClient from "@effect/platform/HttpApiClient";
+import { describe, it } from "@effect/vitest";
+import { Database, RowSchemas, sql } from "@org/database/index";
+import { deepStrictEqual, ok } from "assert";
+import * as Effect from "effect/Effect";
+import * as Exit from "effect/Exit";
+import * as Layer from "effect/Layer";
+import * as ManagedRuntime from "effect/ManagedRuntime";
+import * as Option from "effect/Option";
+import { afterAll, beforeAll, beforeEach } from "vitest";
+
 import { Api } from "@/api.js";
 import { UserCreated } from "@/modules/user/index.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet-repository.js";
@@ -9,16 +20,6 @@ import { UserId } from "@/platform/ids/user-id.js";
 import { UnitOfWorkLive } from "@/platform/unit-of-work-live.js";
 import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 import { TestServerLive } from "@/test-utils/test-server.js";
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
-import { describe, it } from "@effect/vitest";
-import { Database, RowSchemas, sql } from "@org/database/index";
-import { deepStrictEqual, ok } from "assert";
-import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
-import * as Layer from "effect/Layer";
-import * as ManagedRuntime from "effect/ManagedRuntime";
-import * as Option from "effect/Option";
-import { afterAll, beforeAll, beforeEach } from "vitest";
 
 type ServerContext = Layer.Layer.Success<typeof TestServerLive>;
 type ServerError = Layer.Layer.Error<typeof TestServerLive>;

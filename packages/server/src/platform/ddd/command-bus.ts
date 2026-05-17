@@ -1,5 +1,6 @@
-import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import * as Context from "effect/Context";
+
+import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 
 // Port for the write-side bus. The bus itself is one Tag; the typed
 // `execute` shape and the registry that names every command/handler pair

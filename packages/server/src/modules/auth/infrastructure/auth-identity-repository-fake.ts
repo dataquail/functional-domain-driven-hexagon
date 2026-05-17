@@ -3,6 +3,7 @@ import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
+
 import { type AuthIdentity, AuthIdentityRepository } from "../domain/auth-identity-repository.js";
 import { AuthIdentityNotFound } from "../domain/session-errors.js";
 

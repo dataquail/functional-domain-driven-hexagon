@@ -1,16 +1,17 @@
-import { SignInCommand } from "@/modules/auth/commands/sign-in-command.js";
-import { signIn } from "@/modules/auth/commands/sign-in.js";
-import { type AuthIdentity } from "@/modules/auth/domain/auth-identity-repository.js";
-import { SessionRepository } from "@/modules/auth/domain/session-repository.js";
-import { makeAuthIdentityRepositoryFake } from "@/modules/auth/infrastructure/auth-identity-repository-fake.js";
-import { SessionRepositoryFake } from "@/modules/auth/infrastructure/session-repository-fake.js";
-import { UserId } from "@/platform/ids/user-id.js";
 import { describe, it } from "@effect/vitest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
+
+import { signIn } from "@/modules/auth/commands/sign-in.js";
+import { SignInCommand } from "@/modules/auth/commands/sign-in-command.js";
+import { type AuthIdentity } from "@/modules/auth/domain/auth-identity-repository.js";
+import { SessionRepository } from "@/modules/auth/domain/session-repository.js";
+import { makeAuthIdentityRepositoryFake } from "@/modules/auth/infrastructure/auth-identity-repository-fake.js";
+import { SessionRepositoryFake } from "@/modules/auth/infrastructure/session-repository-fake.js";
+import { UserId } from "@/platform/ids/user-id.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const subject = "zitadel-sub-1";

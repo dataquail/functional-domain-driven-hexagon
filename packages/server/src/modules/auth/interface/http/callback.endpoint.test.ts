@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { callbackEndpoint } from "./callback.endpoint.js";
 
 // The callback endpoint reads the OIDC PKCE cookie, exchanges the code with

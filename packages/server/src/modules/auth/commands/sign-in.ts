@@ -1,11 +1,12 @@
-import { type SignInCommand, type SignInOutput } from "@/modules/auth/commands/sign-in-command.js";
-import { AuthIdentityRepository } from "@/modules/auth/domain/auth-identity-repository.js";
-import { SessionId } from "@/modules/auth/domain/session-id.js";
-import { SessionRepository } from "@/modules/auth/domain/session-repository.js";
-import * as Session from "@/modules/auth/domain/session.aggregate.js";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+
+import { type SignInCommand, type SignInOutput } from "@/modules/auth/commands/sign-in-command.js";
+import { AuthIdentityRepository } from "@/modules/auth/domain/auth-identity-repository.js";
+import * as Session from "@/modules/auth/domain/session.aggregate.js";
+import { SessionId } from "@/modules/auth/domain/session-id.js";
+import { SessionRepository } from "@/modules/auth/domain/session-repository.js";
 
 // Slice-scope SignIn:
 //   - looks up auth_identities by Zitadel subject

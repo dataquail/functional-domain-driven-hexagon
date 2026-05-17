@@ -1,12 +1,13 @@
+import { TodosContract } from "@org/contracts/api/Contracts";
+import * as Effect from "effect/Effect";
+
 import {
+  ListTodosQuery,
   type ListTodosResult,
   type ListTodosTodoView,
-  ListTodosQuery,
 } from "@/modules/todos/queries/list-todos-query.js";
 import { QueryBus } from "@/platform/ddd/query-bus.js";
 import { type EndpointRequest } from "@/platform/http-endpoint.js";
-import { TodosContract } from "@org/contracts/api/Contracts";
-import * as Effect from "effect/Effect";
 
 const toContract = (view: ListTodosTodoView): TodosContract.Todo =>
   new TodosContract.Todo({

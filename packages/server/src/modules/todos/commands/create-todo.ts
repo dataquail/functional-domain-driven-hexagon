@@ -1,12 +1,13 @@
+import * as DateTime from "effect/DateTime";
+import * as Effect from "effect/Effect";
+
 import {
   type CreateTodoCommand,
   type CreateTodoOutput,
 } from "@/modules/todos/commands/create-todo-command.js";
+import * as Todo from "@/modules/todos/domain/todo.js";
 import { TodoId } from "@/modules/todos/domain/todo-id.js";
 import { TodosRepository } from "@/modules/todos/domain/todo-repository.js";
-import * as Todo from "@/modules/todos/domain/todo.js";
-import * as DateTime from "effect/DateTime";
-import * as Effect from "effect/Effect";
 
 export const createTodo = (cmd: CreateTodoCommand): CreateTodoOutput =>
   Effect.gen(function* () {
