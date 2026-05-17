@@ -1,4 +1,4 @@
-import { DomainEventBus, type DomainEvent } from "@/platform/domain-event-bus.js";
+import { DomainEventBus, type DomainEvent } from "@/platform/ddd/domain-event-bus.js";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";

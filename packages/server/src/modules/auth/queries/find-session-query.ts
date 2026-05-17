@@ -6,7 +6,7 @@ import {
 import { SessionId } from "@/modules/auth/domain/session-id.js";
 import { type SessionRepository } from "@/modules/auth/domain/session-repository.js";
 import { type Session } from "@/modules/auth/domain/session.aggregate.js";
-import { type SpanAttributesExtractor } from "@/platform/span-attributable.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
@@ -26,7 +26,7 @@ export type FindSessionOutput = Effect.Effect<
   SessionRepository
 >;
 
-declare module "@/platform/query-bus.js" {
+declare module "@/platform/ddd/query-bus.js" {
   interface QueryRegistry {
     FindSessionQuery: {
       readonly query: FindSessionQuery;

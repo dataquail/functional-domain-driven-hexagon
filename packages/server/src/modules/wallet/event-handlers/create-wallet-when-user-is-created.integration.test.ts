@@ -2,9 +2,11 @@ import { Api } from "@/api.js";
 import { UserCreated } from "@/modules/user/index.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet-repository.js";
 import { UserEventAdapterLive } from "@/modules/wallet/interface/events/user-event-adapter.js";
-import { DomainEventBus, makeDomainEventBusLive } from "@/platform/domain-event-bus.js";
+import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
+import { UnitOfWork } from "@/platform/ddd/unit-of-work.js";
+import { makeDomainEventBusLive } from "@/platform/domain-event-bus-live.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { TransactionRunner, TransactionRunnerLive } from "@/platform/transaction-runner.js";
+import { UnitOfWorkLive } from "@/platform/unit-of-work-live.js";
 import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 import { TestServerLive } from "@/test-utils/test-server.js";
 import * as HttpApiClient from "@effect/platform/HttpApiClient";
@@ -99,7 +101,7 @@ const FailingWalletRepository = Layer.succeed(
   }),
 );
 
-const RollbackTestLayer = Layer.mergeAll(TransactionRunnerLive, UserEventAdapterLive).pipe(
+const RollbackTestLayer = Layer.mergeAll(UnitOfWorkLive, UserEventAdapterLive).pipe(
   Layer.provideMerge(makeDomainEventBusLive()),
   Layer.provideMerge(FailingWalletRepository),
   Layer.provideMerge(TestDatabaseLive),
@@ -112,16 +114,16 @@ suite("CreateWalletWhenUserIsCreated (rollback integration)", () => {
 
   it.effect("rolls back the publisher's writes when the wallet subscriber defects", () =>
     Effect.gen(function* () {
-      const tx = yield* TransactionRunner;
+      const uow = yield* UnitOfWork;
       const bus = yield* DomainEventBus;
       const db = yield* Database.Database;
 
       // Inside the same transaction: insert a users row, then dispatch
       // UserCreated. The (failing) wallet subscriber runs synchronously in
       // this fiber and inherits the transaction context. Its defect must
-      // propagate out of tx.run and roll back the users insert.
+      // propagate out of uow.run and roll back the users insert.
       const exit = yield* Effect.exit(
-        tx.run(
+        uow.run(
           Effect.gen(function* () {
             yield* db.execute((c) =>
               c.query(sql.unsafe`

@@ -1,5 +1,5 @@
 import { type TodoId } from "@/modules/todos/domain/todo-id.js";
-import { type SpanAttributesExtractor } from "@/platform/span-attributable.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import { type Database } from "@org/database/index";
 import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
@@ -21,7 +21,7 @@ export type ListTodosResult = {
 
 export type ListTodosOutput = Effect.Effect<ListTodosResult, never, Database.Database>;
 
-declare module "@/platform/query-bus.js" {
+declare module "@/platform/ddd/query-bus.js" {
   interface QueryRegistry {
     ListTodosQuery: {
       readonly query: ListTodosQuery;

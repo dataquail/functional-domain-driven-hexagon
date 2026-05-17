@@ -15,10 +15,12 @@ import {
 } from "@/modules/user/index.js";
 import { walletEventSpanAttributes, WalletModuleLive } from "@/modules/wallet/index.js";
 import { PermissionsResolver } from "@/platform/auth/permissions-resolver.js";
-import { CommandBus, makeCommandBus } from "@/platform/command-bus.js";
-import { makeDomainEventBusLive } from "@/platform/domain-event-bus.js";
-import { makeQueryBus, QueryBus } from "@/platform/query-bus.js";
-import { TransactionRunnerLive } from "@/platform/transaction-runner.js";
+import { makeCommandBus } from "@/platform/command-bus-live.js";
+import { CommandBus } from "@/platform/ddd/command-bus.js";
+import { QueryBus } from "@/platform/ddd/query-bus.js";
+import { makeDomainEventBusLive } from "@/platform/domain-event-bus-live.js";
+import { makeQueryBus } from "@/platform/query-bus-live.js";
+import { UnitOfWorkLive } from "@/platform/unit-of-work-live.js";
 import { UserAuthMiddlewareFake } from "@/test-utils/fake-auth-middleware.js";
 import { TestDatabaseLive } from "@/test-utils/test-database.js";
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
@@ -42,13 +44,13 @@ const DomainEventBusLive = makeDomainEventBusLive({
 // them at the test runtime via `provideMerge` lets integration tests seed
 // state and assert via the production seam without leaking module-internal
 // ports (repositories) into the test runtime. The remaining services
-// (UserAuthMiddleware, DomainEventBus, TransactionRunner) stay consumed by
+// (UserAuthMiddleware, DomainEventBus, UnitOfWork) stay consumed by
 // `Layer.provide` because they're either internal infrastructure
-// (DomainEventBus, TransactionRunner) or feature-specific (auth middleware)
+// (DomainEventBus, UnitOfWork) or feature-specific (auth middleware)
 // and aren't meant to be driven directly from tests.
 const ApiLive = HttpApiBuilder.api(Api).pipe(
   Layer.provide([TodosModuleLive, UserModuleLive, WalletModuleLive, AuthModuleLive]),
-  Layer.provide([UserAuthMiddlewareFake, DomainEventBusLive, TransactionRunnerLive]),
+  Layer.provide([UserAuthMiddlewareFake, DomainEventBusLive, UnitOfWorkLive]),
   // CommandBus + QueryBus must provide TO the modules above (they dispatch
   // via the buses) AND remain reachable from test runtimes — `provideMerge`
   // keeps them in the runtime context so `yield* CommandBus`/`QueryBus`

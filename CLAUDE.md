@@ -35,7 +35,7 @@ The naming conventions are also the parity-rule detectors. Don't rename a file t
 
 ## Test seams
 
-- **Use-case unit tests** (`commands/`, `event-handlers/`) compose three test-only services: `UserRepositoryFake`, `RecordingEventBus`, `IdentityTransactionRunner`. No DB, no docker.
+- **Use-case unit tests** (`commands/`, `event-handlers/`) compose three test-only services: `UserRepositoryFake`, `RecordingEventBus`, `IdentityUnitOfWork`. No DB, no docker.
 - **Integration tests** (`*-repository-live.integration.test.ts`, `<endpoint>.endpoint.integration.test.ts`, `<query>.integration.test.ts`) hit a real DB. They self-skip when `DATABASE_URL_TEST` is unset; `pnpm test` succeeds with no auxiliary services.
 - **HTTP integration tests** use `useServerTestRuntime(["table1", "table2"])` from `test-utils/`, which wires `ManagedRuntime.make(TestServerLive)` + `beforeAll`/`afterAll` + per-test `truncate`. Tests then exercise the contract via `HttpApiClient.make(Api)` and seed prior state by calling _other endpoints_, not by reaching into module internals.
 - **Query/repository integration tests** seed via the live repository (or other production-path code), not via raw SQL. Using the repository as the seeding seam keeps the test honest about what production paths look like.
@@ -55,7 +55,8 @@ The naming conventions are also the parity-rule detectors. Don't rename a file t
 
 - **Errors as `Schema.TaggedError`** (ADR-0004). Domain errors live in `domain/`, contract errors live in the contracts package, and the HTTP endpoint maps domain → contract via `Effect.catchTag`.
 - **Typed bus** (ADR-0006). `bus.execute(SomeCommand.make({...}))` returns the exact `Effect<A, E, R>` declared in the registry. No casts, no `Result` unwrapping.
-- **Synchronous event bus** (ADR-0007). Subscribers run in the publisher's fiber and inherit `TransactionContext`. A subscriber's failure rolls back the publisher's transaction.
+- **Synchronous event bus** (ADR-0007). Subscribers run in the publisher's fiber and inherit `TransactionContext`. A subscriber's failure rolls back the publisher's unit of work.
+- **Ports vs Lives** (ADR-0007). The DDD shared kernel — `UnitOfWork`, `CommandBus`, `QueryBus`, `DomainEventBus`, `DomainEvent`, `SpanAttributesExtractor` — lives in `platform/ddd/` as ports (`Context.Tag`s + factory helpers like `commandHandlers`, `eventSpanAttributes`). Production implementations live in sibling `platform/*-live.ts` files (`UnitOfWorkLive`, `makeCommandBus`, `makeQueryBus`, `makeDomainEventBusLive`). Use cases, interface, and middlewares depend on `platform/ddd/` only; Lives are wired at the composition root (`server.ts`, `test-utils/test-server.ts`) and in integration tests that intentionally stage a sub-graph. Enforced by `lives-only-from-composition-roots` in `.dependency-cruiser.cjs`.
 - **Bus-boundary spans** (ADR-0012). Spans live at the command/query/event bus and at HTTP endpoints; use cases don't need their own `Effect.withSpan`. Span attributes are sibling extractor functions composed at registration.
 - **Authentication via self-hosted Zitadel as a server-side BFF** (ADR-0016, ADR-0017). The SPA never holds access or id tokens; the server runs the OIDC dance and issues a `HttpOnly` session cookie. Application code consumes `CurrentUser` (`@org/contracts/Policy`); only `modules/auth/` and `platform/auth/` know about Zitadel. Roles live app-side in `users.role`; the seed script pre-seeds the admin's `users` + `auth_identities` rows so the first sign-in finds an existing identity.
 

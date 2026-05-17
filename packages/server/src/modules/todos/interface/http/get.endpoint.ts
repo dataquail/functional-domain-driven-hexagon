@@ -3,8 +3,8 @@ import {
   type ListTodosTodoView,
   ListTodosQuery,
 } from "@/modules/todos/queries/list-todos-query.js";
+import { QueryBus } from "@/platform/ddd/query-bus.js";
 import { type EndpointRequest } from "@/platform/http-endpoint.js";
-import { QueryBus } from "@/platform/query-bus.js";
 import { TodosContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 

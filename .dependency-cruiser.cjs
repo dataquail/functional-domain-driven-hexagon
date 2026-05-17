@@ -46,12 +46,12 @@ module.exports = {
       name: "domain-isolation",
       severity: "error",
       comment:
-        "Module domain may only import from its own folder, effect (external), and the platform shared kernel (`domain-event.ts` for the event factory; `span-attributable.ts` for the cross-cutting `SpanAttributesExtractor` type used by event extractor signatures; `platform/ids/` for branded entity IDs referenced cross-module — see ADR-0002). No contracts, no cross-module domain, no infrastructure/commands/queries/event-handlers/interface.",
+        "Module domain may only import from its own folder, effect (external), and the DDD shared kernel (`platform/ddd/domain-event.ts` for the event factory; `platform/ddd/span-attributable.ts` for the cross-cutting `SpanAttributesExtractor` type used by event extractor signatures; `platform/ids/` for branded entity IDs referenced cross-module — see ADR-0002). No contracts, no cross-module domain, no infrastructure/commands/queries/event-handlers/interface.",
       from: { path: "^packages/server/src/modules/[^/]+/domain/" },
       to: {
         path: "^packages/",
         pathNot:
-          "/domain/|^packages/server/src/platform/domain-event\\.ts$|^packages/server/src/platform/span-attributable\\.ts$|^packages/server/src/platform/ids/",
+          "/domain/|^packages/server/src/platform/ddd/(domain-event|span-attributable)\\.ts$|^packages/server/src/platform/ids/",
       },
     },
     {
@@ -69,7 +69,7 @@ module.exports = {
       name: "commands-isolation",
       severity: "error",
       comment:
-        "Module commands (write-side use cases) may only import: own module's domain and sibling commands, the platform shared kernel facades (command/query/event buses, transaction runner, span attributable, domain-event), and other modules' barrel (events). No infrastructure, no interface, no queries, no event-handlers, no @org/contracts, no @org/database. Test files excluded.",
+        "Module commands (write-side use cases) may only import: own module's domain and sibling commands, the DDD shared kernel ports under platform/ddd/ (CommandBus, QueryBus, DomainEventBus, UnitOfWork, DomainEvent, SpanAttributesExtractor), platform/ids/, and other modules' barrel (events). No platform/*-live.ts (Lives are wired at the composition root), no infrastructure, no interface, no queries, no event-handlers, no @org/contracts, no @org/database. Test files excluded.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/commands/",
         pathNot: "\\.test\\.ts$",
@@ -78,7 +78,7 @@ module.exports = {
         path: "^packages/",
         pathNot: [
           "^packages/server/src/modules/$1/(domain|commands)/",
-          "^packages/server/src/platform/(command-bus|query-bus|domain-event-bus|domain-event|transaction-runner|span-attributable)\\.ts$",
+          "^packages/server/src/platform/ddd/",
           "^packages/server/src/platform/ids/",
           "^packages/server/src/modules/[^/]+/index\\.ts$",
         ],
@@ -102,7 +102,7 @@ module.exports = {
       name: "event-handlers-isolation",
       severity: "error",
       comment:
-        "Module event-handlers are write-side use cases reacting to internal triggers (event-handlers/triggers/*). Cross-module events arrive translated to triggers via `interface/events/<publisher>-event-adapter.ts` (ADR-0007 ACL). Same constraints as commands: own module's domain and sibling event-handlers, platform shared kernel facades. No infrastructure, no interface, no commands, no queries, no @org/contracts, no @org/database, no other-module barrels. Test files excluded.",
+        "Module event-handlers are write-side use cases reacting to internal triggers (event-handlers/triggers/*). Cross-module events arrive translated to triggers via `interface/events/<publisher>-event-adapter.ts` (ADR-0007 ACL). Same constraints as commands: own module's domain and sibling event-handlers, the DDD shared kernel ports under platform/ddd/, platform/ids/. No platform/*-live.ts, no infrastructure, no interface, no commands, no queries, no @org/contracts, no @org/database, no other-module barrels. Test files excluded.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/event-handlers/",
         pathNot: "\\.test\\.ts$",
@@ -111,7 +111,7 @@ module.exports = {
         path: "^packages/",
         pathNot: [
           "^packages/server/src/modules/$1/(domain|event-handlers)/",
-          "^packages/server/src/platform/(command-bus|query-bus|domain-event-bus|domain-event|transaction-runner|span-attributable)\\.ts$",
+          "^packages/server/src/platform/ddd/",
           "^packages/server/src/platform/ids/",
         ],
       },
@@ -134,7 +134,7 @@ module.exports = {
       name: "queries-isolation",
       severity: "error",
       comment:
-        "Module queries are read-side: may import own module's domain (for IDs/value objects) and sibling queries, the platform shared kernel facades, other modules' barrel, and @org/database for direct SQL projection. May NOT import own commands, event-handlers, infrastructure, interface, or @org/contracts (wire types belong in interface). Test files excluded.",
+        "Module queries are read-side: may import own module's domain (for IDs/value objects) and sibling queries, the DDD shared kernel ports under platform/ddd/, platform/ids/, other modules' barrel, and @org/database for direct SQL projection. May NOT import platform/*-live.ts, own commands, event-handlers, infrastructure, interface, or @org/contracts (wire types belong in interface). Test files excluded.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/queries/",
         pathNot: "\\.test\\.ts$",
@@ -143,7 +143,7 @@ module.exports = {
         path: "^packages/",
         pathNot: [
           "^packages/server/src/modules/$1/(domain|queries)/",
-          "^packages/server/src/platform/(command-bus|query-bus|domain-event-bus|domain-event|transaction-runner|span-attributable)\\.ts$",
+          "^packages/server/src/platform/ddd/",
           "^packages/server/src/platform/ids/",
           "^packages/server/src/modules/[^/]+/index\\.ts$",
           "^packages/database/",
@@ -180,6 +180,22 @@ module.exports = {
       comment: "Module infrastructure layer must not depend on its interface layer",
       from: { path: "^packages/server/src/modules/[^/]+/infrastructure/" },
       to: { path: "^packages/server/src/modules/[^/]+/interface/" },
+    },
+    {
+      name: "lives-only-from-composition-roots",
+      severity: "error",
+      comment:
+        "Live implementations of DDD shared kernel ports (platform/*-live.ts) are wired only by the composition root (server.ts), the test runtime (test-utils/), and integration tests that intentionally stage a sub-graph. Production-path code — commands, queries, event-handlers, domain, interface, middlewares — depends on the ports under platform/ddd/, never on these Lives. Lives may import each other.",
+      from: {
+        path: "^packages/server/src/",
+        pathNot: [
+          "^packages/server/src/server\\.ts$",
+          "^packages/server/src/test-utils/",
+          ".*\\.test\\.ts$",
+          "^packages/server/src/platform/[^/]+-live\\.ts$",
+        ],
+      },
+      to: { path: "^packages/server/src/platform/[^/]+-live\\.ts$" },
     },
     // ── Web rules (ADR-0014, ADR-0015) ─────────────────────────────────
     // View-tiering and component-library guarantees, ported from the

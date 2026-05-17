@@ -1,6 +1,6 @@
-import { DomainEvent } from "@/platform/domain-event.js";
+import { DomainEvent } from "@/platform/ddd/domain-event.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { type SpanAttributesExtractor } from "@/platform/span-attributable.js";
 import { WalletId } from "./wallet-id.js";
 
 export const WalletCreated = DomainEvent("WalletCreated", {

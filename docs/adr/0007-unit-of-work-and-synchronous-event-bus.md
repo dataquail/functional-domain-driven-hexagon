@@ -1,7 +1,9 @@
-# ADR-0007: TransactionRunner + synchronous DomainEventBus
+# ADR-0007: UnitOfWork + synchronous DomainEventBus
 
 - Status: Accepted
 - Date: 2026-04-24
+
+> Originally introduced as `TransactionRunner`; renamed to `UnitOfWork` and split into a port (`platform/ddd/unit-of-work.ts`) + a Live (`platform/unit-of-work-live.ts`) in a subsequent refactor. The decision, semantics, and rationale below are unchanged — only the name and the file layout have moved. The other DDD shared-kernel ports (`CommandBus`, `QueryBus`, `DomainEventBus`, `DomainEvent`, `SpanAttributesExtractor`) received the same port/Live split at the same time; their Lives are `command-bus-live.ts`, `query-bus-live.ts`, and `domain-event-bus-live.ts` in `platform/`.
 
 ## Context and Problem Statement
 
@@ -22,11 +24,11 @@ There is a subtler implementation hazard. If the event bus delivers events to su
 
 ## Decision
 
-Two collaborating platform services: `TransactionRunner` and a synchronous `DomainEventBus`.
+Two collaborating platform services: `UnitOfWork` and a synchronous `DomainEventBus`. Both are exposed as ports under `platform/ddd/`; production Lives live in sibling `platform/*-live.ts` files and are wired only at the composition root.
 
-### TransactionRunner
+### UnitOfWork
 
-A platform service exposing one method:
+A platform port exposing one method:
 
 ```ts
 readonly run: <A, E, R>(
@@ -34,9 +36,11 @@ readonly run: <A, E, R>(
 ) => Effect.Effect<A, E | DatabaseError, Exclude<R, TransactionContext>>;
 ```
 
-The production implementation calls the database's `transaction` primitive, which provides a `TransactionContext` to the inner effect. Repositories use the database's `makeQuery` helper, which checks for an active `TransactionContext` per call; in scope of `run`, every repository call automatically joins the active transaction. Outside `run`, repository calls fall back to the connection pool's default execute path (auto-commit per query).
+The production implementation (`UnitOfWorkLive` in `platform/unit-of-work-live.ts`) calls the database's `transaction` primitive, which provides a `TransactionContext` to the inner effect. Repositories use the database's `makeQuery` helper, which checks for an active `TransactionContext` per call; in scope of `run`, every repository call automatically joins the active transaction. Outside `run`, repository calls fall back to the connection pool's default execute path (auto-commit per query).
 
-A test-only identity implementation makes `run` the identity function. The inner effect runs as-is; no transaction is opened, no `TransactionContext` is provided. Fake repositories don't consult `TransactionContext`, so the identity runner is a faithful pass-through for unit tests.
+A test-only identity implementation (`IdentityUnitOfWork` in `test-utils/`) makes `run` the identity function. The inner effect runs as-is; no transaction is opened, no `TransactionContext` is provided. Fake repositories don't consult `TransactionContext`, so the identity unit of work is a faithful pass-through for unit tests.
+
+The name reflects the DDD vocabulary: a unit of work is the atomicity boundary for a logical operation. Use cases depend on this port — not on `Database` — so the unit-test fakes don't have to provide a database and the architectural rule "use cases depend on ports, never Lives" stays enforceable in the dep graph (`lives-only-from-composition-roots` in `.dependency-cruiser.cjs`).
 
 ### DomainEventBus
 
@@ -55,20 +59,20 @@ const dispatch: DomainEventBusShape["dispatch"] = (events) =>
   });
 ```
 
-Because handlers run in the publisher's fiber, they inherit `TransactionContext`. A subscriber's repository write joins the publisher's transaction. A subscriber's failure propagates back through `dispatch`, then up through `tx.run`, which causes the database transaction to roll back.
+Because handlers run in the publisher's fiber, they inherit `TransactionContext`. A subscriber's repository write joins the publisher's transaction. A subscriber's failure propagates back through `dispatch`, then up through `uow.run`, which causes the database transaction to roll back.
 
 ### Use-case shape
 
-A use case that produces events wraps the persistence + dispatch step in `tx.run`:
+A use case that produces events wraps the persistence + dispatch step in `uow.run`:
 
 ```ts
 export const createUser = (cmd: CreateUserCommand) =>
   Effect.gen(function* () {
     const repo = yield* UserRepository;
     const bus = yield* DomainEventBus;
-    const tx = yield* TransactionRunner;
+    const uow = yield* UnitOfWork;
     // ... build the next state and the events purely ...
-    yield* tx.run(
+    yield* uow.run(
       Effect.gen(function* () {
         yield* repo.insert(user);
         yield* bus.dispatch(events);
@@ -94,7 +98,7 @@ These are valid patterns but solve a different problem. If a future feature genu
 - A subscriber's failure aborts the publisher's command. This is the price of immediate consistency, and is the correct behavior given the goal: a partial success in this model is exactly the bug class the design exists to prevent.
 - A subscriber that legitimately wants to swallow specific known errors does so explicitly, via `Effect.catchTag` in its own subscription closure. Catching errors is a deliberate, narrow act per subscriber, not a default.
 - Slow subscribers slow their publishers. Real, accepted: subscribers participating in the same transaction are part of the same logical operation; their cost is paid by the originating request.
-- Use-case unit tests don't need a real database. The identity transaction runner makes `tx.run(effect)` equivalent to running the effect, and fake repositories don't consult `TransactionContext`.
+- Use-case unit tests don't need a real database. The identity unit of work makes `uow.run(effect)` equivalent to running the effect, and fake repositories don't consult `TransactionContext`.
 - A short window of risk exists if the database commits and the publishing fiber is killed before returning a response (process death, OS signal, network drop). The wallet write commits but the HTTP client retries and triggers a duplicate. Mitigated by (a) idempotency catches in subscribers (e.g. tolerating "wallet already exists for user" as a no-op), (b) deterministic ids generated upstream of the transaction so retries hit the same row, and (c) at-most-once dispatch — but not eliminated.
 - The design implies one bus for all in-process domain events. There is no per-subscriber escape hatch to "make this one async." If you find yourself wanting one, that's the signal that you actually want the outbox pattern, and the right response is to build it as a separate mechanism rather than complicate the in-process bus.
 
