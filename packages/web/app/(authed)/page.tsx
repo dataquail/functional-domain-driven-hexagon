@@ -1,10 +1,11 @@
+import { Card } from "@org/components/primitives/card";
+import { Skeleton } from "@org/components/primitives/skeleton";
+import React from "react";
+
 import { AddTodo } from "@/features/index/add-todo/add-todo";
 import { TodoList } from "@/features/index/todo-list";
 import { ServerHydrationBoundary } from "@/lib/tanstack-query/server-hydration-boundary";
 import { prefetchTodos } from "@/services/data-access/todos-queries.server";
-import { Card } from "@org/components/primitives/card";
-import { Skeleton } from "@org/components/primitives/skeleton";
-import React from "react";
 
 const SKELETON_COUNT = 3;
 

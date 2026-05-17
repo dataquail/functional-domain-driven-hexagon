@@ -1,9 +1,11 @@
-import { TodoId } from "@/modules/todos/domain/todo-id.js";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+
+import { TodoId } from "@/modules/todos/domain/todo-id.js";
+
 import { TodoNotFound } from "../domain/todo-errors.js";
 import { TodosRepository } from "../domain/todo-repository.js";
 import * as Todo from "../domain/todo.js";

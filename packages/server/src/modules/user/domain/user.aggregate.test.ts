@@ -1,9 +1,11 @@
-import { UserId } from "@/platform/ids/user-id.js";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Either from "effect/Either";
 import * as Schema from "effect/Schema";
+
+import { UserId } from "@/platform/ids/user-id.js";
+
 import { type UserEvent } from "./user-events.js";
 import * as User from "./user.aggregate.js";
 import { Address } from "./value-objects/address.js";

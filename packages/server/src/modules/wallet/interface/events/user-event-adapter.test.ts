@@ -5,6 +5,12 @@
 // integration test for the publisher-bound flow; this test only
 // asserts the adapter glue (subscribe + translate).
 
+import { describe, it } from "@effect/vitest";
+import { deepStrictEqual, ok } from "assert";
+import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
+
 import { type UserCreated } from "@/modules/user/index.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet-repository.js";
 import { WalletRepositoryFake } from "@/modules/wallet/infrastructure/wallet-repository-fake.js";
@@ -12,11 +18,6 @@ import { UserEventAdapterLive } from "@/modules/wallet/interface/events/user-eve
 import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
 import { makeDomainEventBusLive } from "@/platform/domain-event-bus-live.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { describe, it } from "@effect/vitest";
-import { deepStrictEqual, ok } from "assert";
-import * as Effect from "effect/Effect";
-import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 
 const TestLayer = UserEventAdapterLive.pipe(
   Layer.provideMerge(makeDomainEventBusLive()),

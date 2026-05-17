@@ -1,11 +1,12 @@
+import type * as Effect from "effect/Effect";
+import * as Schema from "effect/Schema";
+
 import { type TodoNotFound } from "@/modules/todos/domain/todo-errors.js";
 import { TodoId } from "@/modules/todos/domain/todo-id.js";
 import { type TodosRepository } from "@/modules/todos/domain/todo-repository.js";
 import { type Todo } from "@/modules/todos/domain/todo.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import type * as Effect from "effect/Effect";
-import * as Schema from "effect/Schema";
 
 export const UpdateTodoCommand = Schema.TaggedStruct("UpdateTodoCommand", {
   todoId: TodoId,

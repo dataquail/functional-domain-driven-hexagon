@@ -1,6 +1,7 @@
-import { truncate } from "@/test-utils/database";
 import { playwrightUsersDriver } from "@org/test-drivers/adapters/playwright/users-page-driver";
 import { test } from "@playwright/test";
+
+import { truncate } from "@/test-utils/database";
 
 const DATABASE_URL_TEST =
   process.env.DATABASE_URL_TEST ??

@@ -1,3 +1,6 @@
+import * as DateTime from "effect/DateTime";
+import * as Effect from "effect/Effect";
+
 import {
   type CreateUserCommand,
   type CreateUserOutput,
@@ -8,8 +11,6 @@ import { Address } from "@/modules/user/domain/value-objects/address.js";
 import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
 import { UnitOfWork } from "@/platform/ddd/unit-of-work.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import * as DateTime from "effect/DateTime";
-import * as Effect from "effect/Effect";
 
 export const createUser = (cmd: CreateUserCommand): CreateUserOutput =>
   Effect.gen(function* () {

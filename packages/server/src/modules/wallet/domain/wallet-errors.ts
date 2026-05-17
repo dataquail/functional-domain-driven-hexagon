@@ -1,5 +1,7 @@
-import { UserId } from "@/platform/ids/user-id.js";
 import * as Schema from "effect/Schema";
+
+import { UserId } from "@/platform/ids/user-id.js";
+
 import { WalletId } from "./wallet-id.js";
 
 export class WalletAlreadyExistsForUser extends Schema.TaggedError<WalletAlreadyExistsForUser>(

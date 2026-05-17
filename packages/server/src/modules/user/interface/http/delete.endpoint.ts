@@ -1,8 +1,9 @@
+import { UserContract } from "@org/contracts/api/Contracts";
+import * as Effect from "effect/Effect";
+
 import { DeleteUserCommand } from "@/modules/user/commands/delete-user-command.js";
 import { CommandBus } from "@/platform/ddd/command-bus.js";
 import { type EndpointRequest } from "@/platform/http-endpoint.js";
-import { UserContract } from "@org/contracts/api/Contracts";
-import * as Effect from "effect/Effect";
 
 export const deleteEndpoint = (request: EndpointRequest<typeof UserContract.Group, "delete">) =>
   Effect.gen(function* () {

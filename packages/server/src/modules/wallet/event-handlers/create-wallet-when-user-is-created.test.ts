@@ -1,14 +1,16 @@
-import { WalletId } from "@/modules/wallet/domain/wallet-id.js";
-import { WalletRepository } from "@/modules/wallet/domain/wallet-repository.js";
-import * as Wallet from "@/modules/wallet/domain/wallet.aggregate.js";
-import { WalletRepositoryFake } from "@/modules/wallet/infrastructure/wallet-repository-fake.js";
-import { UserId } from "@/platform/ids/user-id.js";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual, ok } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
+
+import { WalletId } from "@/modules/wallet/domain/wallet-id.js";
+import { WalletRepository } from "@/modules/wallet/domain/wallet-repository.js";
+import * as Wallet from "@/modules/wallet/domain/wallet.aggregate.js";
+import { WalletRepositoryFake } from "@/modules/wallet/infrastructure/wallet-repository-fake.js";
+import { UserId } from "@/platform/ids/user-id.js";
+
 import { handleUserCreated } from "./create-wallet-when-user-is-created.js";
 import { type UserCreatedTrigger } from "./triggers/user-events.js";
 

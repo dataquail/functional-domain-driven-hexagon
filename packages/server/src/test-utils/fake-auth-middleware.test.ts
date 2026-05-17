@@ -1,6 +1,7 @@
-import { UserAuthMiddlewareFake } from "@/test-utils/fake-auth-middleware.js";
 import * as Layer from "effect/Layer";
 import { describe, expect, it } from "vitest";
+
+import { UserAuthMiddlewareFake } from "@/test-utils/fake-auth-middleware.js";
 
 // The middleware itself can only be evaluated inside an HTTP request scope
 // (Provided context). End-to-end coverage of the fake's behavior comes from

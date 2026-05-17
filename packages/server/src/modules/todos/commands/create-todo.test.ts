@@ -1,9 +1,11 @@
-import { TodosRepository } from "@/modules/todos/domain/todo-repository.js";
-import { TodosRepositoryFake } from "@/modules/todos/infrastructure/todos-repository-fake.js";
-import { UserId } from "@/platform/ids/user-id.js";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
+
+import { TodosRepository } from "@/modules/todos/domain/todo-repository.js";
+import { TodosRepositoryFake } from "@/modules/todos/infrastructure/todos-repository-fake.js";
+import { UserId } from "@/platform/ids/user-id.js";
+
 import { CreateTodoCommand } from "./create-todo-command.js";
 import { createTodo } from "./create-todo.js";
 

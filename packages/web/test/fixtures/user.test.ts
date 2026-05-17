@@ -8,6 +8,7 @@ import * as UserContract from "@org/contracts/api/UserContract";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import { describe, expect, it } from "vitest";
+
 import { makeCreateUserPayload, makePaginatedUsers, makeUser } from "./user";
 
 const roundTrip = <A, I>(schema: Schema.Schema<A, I>, value: A) =>

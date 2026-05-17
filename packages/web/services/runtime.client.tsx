@@ -13,13 +13,15 @@
 //   data-access mutation invalidation paths (query-data-helpers.ts)
 //   target the same cache the components read from.
 
-import { QueryClient } from "@/services/common/query-client";
-import { Toast } from "@/services/common/toast";
-import { WebSdkLive } from "@/services/common/web-sdk.client";
 import { type QueryClient as TanstackQueryClient } from "@tanstack/react-query";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as React from "react";
+
+import { QueryClient } from "@/services/common/query-client";
+import { Toast } from "@/services/common/toast";
+import { WebSdkLive } from "@/services/common/web-sdk.client";
+
 import { ApiClientLive } from "./api-client.client";
 
 // `WebSdkLive` is `provide`d (not `mergeAll`'d): it satisfies the

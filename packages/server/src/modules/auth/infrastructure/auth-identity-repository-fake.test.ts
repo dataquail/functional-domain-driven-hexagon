@@ -1,8 +1,10 @@
-import { UserId } from "@/platform/ids/user-id.js";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+
+import { UserId } from "@/platform/ids/user-id.js";
+
 import { AuthIdentityRepository } from "../domain/auth-identity-repository.js";
 import { AuthIdentityNotFound } from "../domain/session-errors.js";
 import { makeAuthIdentityRepositoryFake } from "./auth-identity-repository-fake.js";

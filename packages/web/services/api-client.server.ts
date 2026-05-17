@@ -19,6 +19,7 @@ import * as HttpClientRequest from "@effect/platform/HttpClientRequest";
 import { DomainApi } from "@org/contracts/DomainApi";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+
 import { ApiClient } from "./api-client.shared";
 
 const SERVER_INTERNAL_URL = process.env.SERVER_INTERNAL_URL ?? "http://localhost:3001";

@@ -1,10 +1,11 @@
+import { Card } from "@org/components/primitives/card";
+import { Skeleton } from "@org/components/primitives/skeleton";
+import React from "react";
+
 import { CreateUser } from "@/features/users/create-user/create-user";
 import { UserList } from "@/features/users/user-list";
 import { ServerHydrationBoundary } from "@/lib/tanstack-query/server-hydration-boundary";
 import { prefetchUsers } from "@/services/data-access/users-queries.server";
-import { Card } from "@org/components/primitives/card";
-import { Skeleton } from "@org/components/primitives/skeleton";
-import React from "react";
 
 const PAGE_SIZE = 10;
 const INITIAL_VARIABLES = { page: 1, pageSize: PAGE_SIZE } as const;

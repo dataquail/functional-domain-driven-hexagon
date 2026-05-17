@@ -1,3 +1,6 @@
+import type * as Effect from "effect/Effect";
+import * as Schema from "effect/Schema";
+
 import {
   type SessionExpired,
   type SessionNotFound,
@@ -7,8 +10,6 @@ import { SessionId } from "@/modules/auth/domain/session-id.js";
 import { type SessionRepository } from "@/modules/auth/domain/session-repository.js";
 import { type Session } from "@/modules/auth/domain/session.aggregate.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
-import type * as Effect from "effect/Effect";
-import * as Schema from "effect/Schema";
 
 export const FindSessionQuery = Schema.TaggedStruct("FindSessionQuery", {
   sessionId: SessionId,

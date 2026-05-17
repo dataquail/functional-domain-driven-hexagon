@@ -1,6 +1,8 @@
-import { QueryClient } from "@/services/common/query-client";
 import * as Effect from "effect/Effect";
 import * as mutative from "mutative";
+
+import { QueryClient } from "@/services/common/query-client";
+
 import { type QueryVariables } from "./use-effect-mutation";
 
 export type QueryDataUpdater<TData> = (draft: mutative.Draft<TData>) => void;

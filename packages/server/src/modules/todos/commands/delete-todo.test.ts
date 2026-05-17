@@ -1,14 +1,16 @@
+import { describe, it } from "@effect/vitest";
+import { deepStrictEqual } from "assert";
+import * as DateTime from "effect/DateTime";
+import * as Effect from "effect/Effect";
+import * as Exit from "effect/Exit";
+
 import { TodoNotFound } from "@/modules/todos/domain/todo-errors.js";
 import { TodoId } from "@/modules/todos/domain/todo-id.js";
 import { TodosRepository } from "@/modules/todos/domain/todo-repository.js";
 import * as Todo from "@/modules/todos/domain/todo.js";
 import { TodosRepositoryFake } from "@/modules/todos/infrastructure/todos-repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
-import * as DateTime from "effect/DateTime";
-import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
+
 import { DeleteTodoCommand } from "./delete-todo-command.js";
 import { deleteTodo } from "./delete-todo.js";
 

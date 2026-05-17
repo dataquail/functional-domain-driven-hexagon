@@ -1,7 +1,9 @@
-import { UserId } from "@/platform/ids/user-id.js";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
+
+import { UserId } from "@/platform/ids/user-id.js";
+
 import { SessionId } from "./session-id.js";
 import * as Session from "./session.aggregate.js";
 

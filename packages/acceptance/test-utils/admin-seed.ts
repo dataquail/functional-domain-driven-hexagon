@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+
 import pg from "pg";
 
 // Mirrors the relevant slice of `infra/zitadel/seed.mjs` against the TEST

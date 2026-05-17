@@ -1,7 +1,9 @@
+import { strictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as TestClock from "effect/TestClock";
-import { strictEqual } from "node:assert";
+
 import * as ManualCache from "../src/ManualCache.js";
 
 describe("ManualCache", () => {

@@ -19,6 +19,7 @@ import * as HttpClient from "@effect/platform/HttpClient";
 import { DomainApi } from "@org/contracts/DomainApi";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+
 import { ApiClient } from "./api-client.shared";
 
 const FetchWithCredentials = FetchHttpClient.layer.pipe(

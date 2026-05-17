@@ -6,6 +6,7 @@
 // the same in-flight feedback the existing SPA used.
 
 import { useEffectMutation, useEffectSuspenseQuery } from "@/lib/tanstack-query";
+
 import { createTodo, deleteTodo, todosQuery, todosQueryKey, updateTodo } from "./todos-queries";
 
 export const useTodosSuspenseQuery = () =>

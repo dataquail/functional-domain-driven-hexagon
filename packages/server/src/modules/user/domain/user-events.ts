@@ -1,7 +1,9 @@
+import * as Schema from "effect/Schema";
+
 import { DomainEvent } from "@/platform/ddd/domain-event.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import * as Schema from "effect/Schema";
+
 import { UserRole } from "./user-role.js";
 import { Address } from "./value-objects/address.js";
 

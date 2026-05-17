@@ -1,8 +1,9 @@
-import { type AnyDomainEventSchema, type DomainEvent } from "@/platform/ddd/domain-event.js";
-import { type SpanAttributeValue } from "@/platform/ddd/span-attributable.js";
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 import type * as Schema from "effect/Schema";
+
+import { type AnyDomainEventSchema, type DomainEvent } from "@/platform/ddd/domain-event.js";
+import { type SpanAttributeValue } from "@/platform/ddd/span-attributable.js";
 
 export { DomainEvent } from "@/platform/ddd/domain-event.js";
 

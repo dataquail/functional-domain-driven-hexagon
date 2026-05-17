@@ -4,6 +4,7 @@ import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
+
 import { SessionNotFound } from "../domain/session-errors.js";
 import { type SessionId } from "../domain/session-id.js";
 import { SessionRepository } from "../domain/session-repository.js";

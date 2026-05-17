@@ -1,6 +1,8 @@
-import { UserId } from "@/platform/ids/user-id.js";
 import * as DateTime from "effect/DateTime";
 import * as Schema from "effect/Schema";
+
+import { UserId } from "@/platform/ids/user-id.js";
+
 import { SessionId } from "./session-id.js";
 
 export class Session extends Schema.Class<Session>("Session")({

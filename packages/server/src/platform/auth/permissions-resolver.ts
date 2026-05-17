@@ -1,8 +1,9 @@
-import { type UserId } from "@/platform/ids/user-id.js";
 import { type Permission } from "@org/contracts/Policy";
 import { Database, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
+
+import { type UserId } from "@/platform/ids/user-id.js";
 
 // Slice-scope: read users.role and map role → permissions via a static map.
 // Everything currently flows through the existing __test:* permission set —

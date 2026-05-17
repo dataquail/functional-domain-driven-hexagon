@@ -1,8 +1,9 @@
+import { UserContract } from "@org/contracts/api/Contracts";
+import * as Effect from "effect/Effect";
+
 import { CreateUserCommand } from "@/modules/user/commands/create-user-command.js";
 import { CommandBus } from "@/platform/ddd/command-bus.js";
 import { type EndpointRequest } from "@/platform/http-endpoint.js";
-import { UserContract } from "@org/contracts/api/Contracts";
-import * as Effect from "effect/Effect";
 
 export const createEndpoint = (request: EndpointRequest<typeof UserContract.Group, "create">) =>
   Effect.gen(function* () {

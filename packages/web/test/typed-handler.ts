@@ -18,10 +18,10 @@ import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import {
-  http,
-  HttpResponse,
   type DefaultBodyType,
+  http,
   type HttpHandler,
+  HttpResponse,
   type JsonBodyType,
   type StrictRequest,
 } from "msw";

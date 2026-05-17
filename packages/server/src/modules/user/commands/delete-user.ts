@@ -1,3 +1,5 @@
+import * as Effect from "effect/Effect";
+
 import {
   type DeleteUserCommand,
   type DeleteUserOutput,
@@ -6,7 +8,6 @@ import { UserRepository } from "@/modules/user/domain/user-repository.js";
 import * as User from "@/modules/user/domain/user.aggregate.js";
 import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
 import { UnitOfWork } from "@/platform/ddd/unit-of-work.js";
-import * as Effect from "effect/Effect";
 
 export const deleteUser = (cmd: DeleteUserCommand): DeleteUserOutput =>
   Effect.gen(function* () {

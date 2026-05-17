@@ -4,6 +4,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
+
 import * as TokenCipher from "./token-cipher.js";
 
 const TEST_KEY = Redacted.make("test-key-32-chars-exactly-12345678");

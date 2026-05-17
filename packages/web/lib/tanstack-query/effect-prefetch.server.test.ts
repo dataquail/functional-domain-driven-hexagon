@@ -11,6 +11,7 @@ import { QueryClient as TanstackQueryClient } from "@tanstack/react-query";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { prefetchEffectQuery } from "./effect-prefetch.server";
 
 vi.mock("server-only", () => ({}));

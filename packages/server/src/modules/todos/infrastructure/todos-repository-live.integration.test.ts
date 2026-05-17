@@ -1,9 +1,3 @@
-import { TodoNotFound } from "@/modules/todos/domain/todo-errors.js";
-import { TodoId } from "@/modules/todos/domain/todo-id.js";
-import { TodosRepository } from "@/modules/todos/domain/todo-repository.js";
-import * as Todo from "@/modules/todos/domain/todo.js";
-import { TodosRepositoryLive } from "@/modules/todos/infrastructure/todos-repository-live.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 import { describe, it } from "@effect/vitest";
 import { Database } from "@org/database/index";
 import { deepStrictEqual } from "assert";
@@ -12,6 +6,13 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
+
+import { TodoNotFound } from "@/modules/todos/domain/todo-errors.js";
+import { TodoId } from "@/modules/todos/domain/todo-id.js";
+import { TodosRepository } from "@/modules/todos/domain/todo-repository.js";
+import * as Todo from "@/modules/todos/domain/todo.js";
+import { TodosRepositoryLive } from "@/modules/todos/infrastructure/todos-repository-live.js";
+import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const aliceId = TodoId.make("11111111-1111-1111-1111-111111111111");
 const bobId = TodoId.make("22222222-2222-2222-2222-222222222222");

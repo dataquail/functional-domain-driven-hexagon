@@ -6,12 +6,13 @@
 // shape; behavior (mutation dispatch, optimistic flags, invalidation)
 // is testable via the presenter without rendering JSX.
 
+import type { TodosContract } from "@org/contracts/api/Contracts";
+import * as React from "react";
+
 import {
   useDeleteTodoMutation,
   useUpdateTodoMutation,
 } from "@/services/data-access/use-todos-queries";
-import type { TodosContract } from "@org/contracts/api/Contracts";
-import * as React from "react";
 
 export const useTodoItemPresenter = (todo: TodosContract.Todo) => {
   const updateTodo = useUpdateTodoMutation();

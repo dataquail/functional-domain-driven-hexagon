@@ -19,7 +19,6 @@
 // applied here — server-prefetched failures are a routing concern, not
 // a UI-feedback concern.
 
-import { type ClientRuntimeContext, useRuntime } from "@/services/runtime.client";
 import {
   type QueryKey,
   useSuspenseQuery,
@@ -29,6 +28,9 @@ import * as Cause from "effect/Cause";
 import type * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as React from "react";
+
+import { type ClientRuntimeContext, useRuntime } from "@/services/runtime.client";
+
 import { QueryDefect } from "./use-effect-mutation";
 
 type EffectfulError<Tag extends string = string> = { _tag: Tag };

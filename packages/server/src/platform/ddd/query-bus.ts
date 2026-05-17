@@ -1,5 +1,6 @@
-import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import * as Context from "effect/Context";
+
+import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 
 // Port for the read-side bus. See `command-bus.ts` for the equivalent
 // pattern — semantics are identical, but the split into two buses

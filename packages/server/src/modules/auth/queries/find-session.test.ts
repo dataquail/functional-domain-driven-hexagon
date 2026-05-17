@@ -1,3 +1,9 @@
+import { describe, it } from "@effect/vitest";
+import { deepStrictEqual } from "assert";
+import * as DateTime from "effect/DateTime";
+import * as Effect from "effect/Effect";
+import * as Exit from "effect/Exit";
+
 import {
   SessionExpired,
   SessionNotFound,
@@ -10,11 +16,6 @@ import { SessionRepositoryFake } from "@/modules/auth/infrastructure/session-rep
 import { FindSessionQuery } from "@/modules/auth/queries/find-session-query.js";
 import { findSession } from "@/modules/auth/queries/find-session.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
-import * as DateTime from "effect/DateTime";
-import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 
 const sessionId = SessionId.make("22222222-2222-2222-2222-222222222222");
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");

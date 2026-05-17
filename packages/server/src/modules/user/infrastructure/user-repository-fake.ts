@@ -1,9 +1,11 @@
-import { type UserId } from "@/platform/ids/user-id.js";
 import * as Effect from "effect/Effect";
 import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
+
+import { type UserId } from "@/platform/ids/user-id.js";
+
 import { UserAlreadyExists, UserNotFound } from "../domain/user-errors.js";
 import { UserRepository } from "../domain/user-repository.js";
 import { type User } from "../domain/user.aggregate.js";

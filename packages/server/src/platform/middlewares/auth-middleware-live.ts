@@ -1,3 +1,10 @@
+import * as HttpServerRequest from "@effect/platform/HttpServerRequest";
+import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
+import { UserAuthMiddleware } from "@org/contracts/Policy";
+import * as cookie from "cookie";
+import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
+
 import { EnvVars } from "@/common/env-vars.js";
 import {
   FindSessionQuery,
@@ -9,12 +16,6 @@ import { CookieCodec } from "@/platform/auth/cookie-codec.js";
 import { PermissionsResolver } from "@/platform/auth/permissions-resolver.js";
 import { CommandBus } from "@/platform/ddd/command-bus.js";
 import { QueryBus } from "@/platform/ddd/query-bus.js";
-import * as HttpServerRequest from "@effect/platform/HttpServerRequest";
-import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
-import { UserAuthMiddleware } from "@org/contracts/Policy";
-import * as cookie from "cookie";
-import * as Effect from "effect/Effect";
-import * as Layer from "effect/Layer";
 
 export const UserAuthMiddlewareLive = Layer.effect(
   UserAuthMiddleware,

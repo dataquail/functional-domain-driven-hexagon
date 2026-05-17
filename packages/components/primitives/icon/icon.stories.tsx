@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+
 import type { IconProps } from "./icon";
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, TrashIcon } from "./icons";
 

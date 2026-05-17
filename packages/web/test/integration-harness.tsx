@@ -8,11 +8,6 @@
 // `server.use(...)` before calling `renderWithHarness(<RoutePage />)`,
 // then drive the UI through the RTL page driver in `packages/test-drivers`.
 
-import { ApiClient } from "@/services/api-client.shared";
-import { QueryClient as QueryClientService } from "@/services/common/query-client";
-import { Toast } from "@/services/common/toast";
-import { WebSdkLive } from "@/services/common/web-sdk.client";
-import { RuntimeContext, type ClientManagedRuntime } from "@/services/runtime.client";
 import * as FetchHttpClient from "@effect/platform/FetchHttpClient";
 import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { Toaster } from "@org/components/primitives/toaster";
@@ -24,6 +19,13 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as React from "react";
+
+import { ApiClient } from "@/services/api-client.shared";
+import { QueryClient as QueryClientService } from "@/services/common/query-client";
+import { Toast } from "@/services/common/toast";
+import { WebSdkLive } from "@/services/common/web-sdk.client";
+import { type ClientManagedRuntime, RuntimeContext } from "@/services/runtime.client";
+
 import { TEST_API_BASE } from "./typed-handler";
 
 const ApiClientTestLive = Layer.effect(

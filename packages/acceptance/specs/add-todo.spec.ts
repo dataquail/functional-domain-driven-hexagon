@@ -1,6 +1,7 @@
+import { test } from "@playwright/test";
+
 import { IndexPage } from "@/drivers/pages/index-page";
 import { truncate } from "@/test-utils/database";
-import { test } from "@playwright/test";
 
 const DATABASE_URL_TEST =
   process.env.DATABASE_URL_TEST ??

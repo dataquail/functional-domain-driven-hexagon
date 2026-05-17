@@ -1,8 +1,10 @@
-import { type UserId } from "@/platform/ids/user-id.js";
 import { Database, orFail, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+
+import { type UserId } from "@/platform/ids/user-id.js";
+
 import { UserAlreadyExists, UserNotFound } from "../domain/user-errors.js";
 import { UserRepository } from "../domain/user-repository.js";
 import { type User } from "../domain/user.aggregate.js";

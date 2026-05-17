@@ -1,8 +1,10 @@
-import { QueryClient } from "@/services/common/query-client";
 import { QueryClient as TanstackQueryClient } from "@tanstack/react-query";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import { describe, expect, it } from "vitest";
+
+import { QueryClient } from "@/services/common/query-client";
+
 import { makeHelpers, makeQueryKey } from "./query-data-helpers";
 
 type User = { readonly id: string; readonly name: string };

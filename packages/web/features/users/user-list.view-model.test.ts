@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { computePaginationView } from "./user-list.view-model";
 
 describe("computePaginationView — empty set", () => {

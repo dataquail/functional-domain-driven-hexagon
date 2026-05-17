@@ -6,6 +6,7 @@ import "server-only";
 
 import { type QueryClient } from "@tanstack/react-query";
 import React from "react";
+
 import { makeQueryClient } from "./query-client.shared";
 
 export const getQueryClient = React.cache((): QueryClient => makeQueryClient());

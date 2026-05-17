@@ -1,10 +1,12 @@
-import { UserId } from "@/platform/ids/user-id.js";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
+
+import { UserId } from "@/platform/ids/user-id.js";
+
 import { UserAlreadyExists, UserNotFound } from "../domain/user-errors.js";
 import { UserRepository } from "../domain/user-repository.js";
 import * as User from "../domain/user.aggregate.js";

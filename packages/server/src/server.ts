@@ -1,3 +1,5 @@
+import { createServer } from "node:http";
+
 import * as NodeSdk from "@effect/opentelemetry/NodeSdk";
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
@@ -12,7 +14,7 @@ import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schedule from "effect/Schedule";
-import { createServer } from "node:http";
+
 import { Api } from "./api.js";
 import { EnvVars } from "./common/env-vars.js";
 import {

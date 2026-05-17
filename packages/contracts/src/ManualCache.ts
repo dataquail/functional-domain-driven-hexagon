@@ -4,6 +4,7 @@ import type * as Effect from "effect/Effect";
 import type * as Option from "effect/Option";
 import type * as Scope from "effect/Scope";
 import type * as Types from "effect/Types";
+
 import * as internal from "./internal/manual-cache.js";
 
 /**

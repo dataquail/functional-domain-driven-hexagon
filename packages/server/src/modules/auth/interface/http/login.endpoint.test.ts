@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { loginEndpoint } from "./login.endpoint.js";
 
 // The login endpoint redirects (302) to Zitadel's authorization endpoint and

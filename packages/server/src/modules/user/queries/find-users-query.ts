@@ -1,10 +1,11 @@
-import { type UserRole } from "@/modules/user/domain/user-role.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
-import { type UserId } from "@/platform/ids/user-id.js";
 import { type Database } from "@org/database/index";
 import type * as DateTime from "effect/DateTime";
 import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
+
+import { type UserRole } from "@/modules/user/domain/user-role.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
+import { type UserId } from "@/platform/ids/user-id.js";
 
 export const FindUsersQuery = Schema.TaggedStruct("FindUsersQuery", {
   page: Schema.Number,

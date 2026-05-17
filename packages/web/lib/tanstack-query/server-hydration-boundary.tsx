@@ -20,9 +20,10 @@
 
 import "server-only";
 
-import { getQueryClient } from "@/lib/query-client.server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import * as React from "react";
+
+import { getQueryClient } from "@/lib/query-client.server";
 
 export const ServerHydrationBoundary = async ({
   children,

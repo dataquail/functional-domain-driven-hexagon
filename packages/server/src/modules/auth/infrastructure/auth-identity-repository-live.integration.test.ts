@@ -1,8 +1,3 @@
-import { AuthIdentityRepository } from "@/modules/auth/domain/auth-identity-repository.js";
-import { AuthIdentityNotFound } from "@/modules/auth/domain/session-errors.js";
-import { AuthIdentityRepositoryLive } from "@/modules/auth/infrastructure/auth-identity-repository-live.js";
-import { UserId } from "@/platform/ids/user-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
@@ -10,6 +5,12 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
+
+import { AuthIdentityRepository } from "@/modules/auth/domain/auth-identity-repository.js";
+import { AuthIdentityNotFound } from "@/modules/auth/domain/session-errors.js";
+import { AuthIdentityRepositoryLive } from "@/modules/auth/infrastructure/auth-identity-repository-live.js";
+import { UserId } from "@/platform/ids/user-id.js";
+import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const subject = "zitadel-sub-integration";

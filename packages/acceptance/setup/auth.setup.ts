@@ -1,5 +1,6 @@
-import { ZitadelLoginPage } from "@/drivers/pages/zitadel-login-page";
 import { test as setup } from "@playwright/test";
+
+import { ZitadelLoginPage } from "@/drivers/pages/zitadel-login-page";
 
 // Auth setup project. Runs once per Playwright invocation (before the
 // `chromium` test project) and stamps the resulting session cookie into

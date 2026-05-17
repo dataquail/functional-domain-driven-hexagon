@@ -4,11 +4,13 @@
 // extraction) — not the TanStack Query state machine, which the
 // library already covers.
 
-import { makePresenterHarness } from "@/test/presenter-harness";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+
+import { makePresenterHarness } from "@/test/presenter-harness";
+
 import { QueryDefect, useEffectMutation } from "./use-effect-mutation";
 
 class TaggedA extends Data.TaggedError("TaggedA")<{ readonly message: string }> {}

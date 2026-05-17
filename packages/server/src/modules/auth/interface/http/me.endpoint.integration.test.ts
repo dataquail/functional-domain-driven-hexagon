@@ -1,10 +1,11 @@
-import { Api } from "@/api.js";
-import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { hasTestDatabase } from "@/test-utils/test-database.js";
 import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
+
+import { Api } from "@/api.js";
+import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
+import { hasTestDatabase } from "@/test-utils/test-database.js";
 
 // `TestServerLive` provides `UserAuthMiddlewareFake`, which always succeeds
 // with a deterministic admin CurrentUser. So `/auth/me` should always return

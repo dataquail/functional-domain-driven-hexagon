@@ -6,10 +6,11 @@
 // hook). Both runtimes provide the shared `ApiClient` tag, so the
 // same Effect runs in either context — only the transport differs.
 
-import { QueryData } from "@/lib/tanstack-query";
-import { ApiClient } from "@/services/api-client.shared";
 import type { UserContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
+
+import { QueryData } from "@/lib/tanstack-query";
+import { ApiClient } from "@/services/api-client.shared";
 
 export type UsersListVariables = { page: number; pageSize: number };
 

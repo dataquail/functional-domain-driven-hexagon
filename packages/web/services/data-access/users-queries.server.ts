@@ -7,6 +7,7 @@
 import "server-only";
 
 import { prefetchEffectQuery } from "@/lib/tanstack-query/effect-prefetch.server";
+
 import { type UsersListVariables, usersQuery, usersQueryKey } from "./users-queries";
 
 export const prefetchUsers = (variables: UsersListVariables): Promise<void> =>

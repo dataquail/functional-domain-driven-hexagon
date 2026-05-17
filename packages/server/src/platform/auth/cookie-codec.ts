@@ -1,7 +1,9 @@
-import { EnvVars } from "@/common/env-vars.js";
+import { createHmac, timingSafeEqual } from "node:crypto";
+
 import * as Effect from "effect/Effect";
 import * as Redacted from "effect/Redacted";
-import { createHmac, timingSafeEqual } from "node:crypto";
+
+import { EnvVars } from "@/common/env-vars.js";
 
 // Signs a session id with HMAC-SHA256 and packs as `<id>.<signature>`.
 // JS-readable callers cannot mint or alter the value without knowing the

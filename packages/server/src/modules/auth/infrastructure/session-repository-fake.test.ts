@@ -1,9 +1,11 @@
-import { UserId } from "@/platform/ids/user-id.js";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+
+import { UserId } from "@/platform/ids/user-id.js";
+
 import { SessionNotFound } from "../domain/session-errors.js";
 import { SessionId } from "../domain/session-id.js";
 import { SessionRepository } from "../domain/session-repository.js";

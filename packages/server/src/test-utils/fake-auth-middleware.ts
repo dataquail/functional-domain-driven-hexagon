@@ -1,7 +1,8 @@
-import { UserId } from "@/platform/ids/user-id.js";
 import { type Permission, UserAuthMiddleware } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+
+import { UserId } from "@/platform/ids/user-id.js";
 
 // Test-only middleware. Existing endpoint integration tests don't carry a
 // session cookie; this returns a deterministic admin CurrentUser so they keep

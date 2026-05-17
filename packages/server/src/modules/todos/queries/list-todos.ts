@@ -1,11 +1,12 @@
+import { Database, RowSchemas, sql } from "@org/database/index";
+import * as Effect from "effect/Effect";
+
 import { TodoId } from "@/modules/todos/domain/todo-id.js";
 import {
   type ListTodosOutput,
   type ListTodosQuery,
   type ListTodosTodoView,
 } from "@/modules/todos/queries/list-todos-query.js";
-import { Database, RowSchemas, sql } from "@org/database/index";
-import * as Effect from "effect/Effect";
 
 const toView = (row: RowSchemas.TodoRow): ListTodosTodoView => ({
   id: TodoId.make(row.id),

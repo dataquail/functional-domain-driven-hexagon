@@ -10,13 +10,14 @@
 // If `user` adds fields to `UserCreated`, only this file changes —
 // the handler and trigger types stay stable.
 
+import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
+
 import { UserCreated } from "@/modules/user/index.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet-repository.js";
 import { handleUserCreated } from "@/modules/wallet/event-handlers/create-wallet-when-user-is-created.js";
 import { type UserCreatedTrigger } from "@/modules/wallet/event-handlers/triggers/user-events.js";
 import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
-import * as Effect from "effect/Effect";
-import * as Layer from "effect/Layer";
 
 const toTrigger = (event: UserCreated): UserCreatedTrigger => ({ userId: event.userId });
 

@@ -2,11 +2,12 @@
 // the sonner DOM. Presenter tests assert via `getToasts()` on the
 // harness; the Toast service itself stays unchanged in production.
 
-import { Toast } from "@/services/common/toast";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
+
+import { Toast } from "@/services/common/toast";
 
 export type ToastCall = { readonly kind: "success" | "error"; readonly message: string };
 

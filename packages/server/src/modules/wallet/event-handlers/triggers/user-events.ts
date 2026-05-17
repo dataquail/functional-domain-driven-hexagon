@@ -8,8 +8,9 @@
 // through an adapter that translates the publisher's event into the
 // consumer's trigger type. See ../user-event-adapter.ts.
 
-import { UserId } from "@/platform/ids/user-id.js";
 import * as Schema from "effect/Schema";
+
+import { UserId } from "@/platform/ids/user-id.js";
 
 export const UserCreatedTrigger = Schema.Struct({
   userId: UserId,

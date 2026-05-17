@@ -1,6 +1,8 @@
-import { type UserId } from "@/platform/ids/user-id.js";
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
+
+import { type UserId } from "@/platform/ids/user-id.js";
+
 import { type AuthIdentityNotFound } from "./session-errors.js";
 
 export type AuthIdentity = {
