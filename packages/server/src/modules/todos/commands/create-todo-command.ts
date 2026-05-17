@@ -1,7 +1,7 @@
 import { type TodosRepository } from "@/modules/todos/domain/todo-repository.js";
 import { type Todo } from "@/modules/todos/domain/todo.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { type SpanAttributesExtractor } from "@/platform/span-attributable.js";
 import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
@@ -19,7 +19,7 @@ export const createTodoCommandSpanAttributes: SpanAttributesExtractor<CreateTodo
 
 export type CreateTodoOutput = Effect.Effect<Todo, never, TodosRepository>;
 
-declare module "@/platform/command-bus.js" {
+declare module "@/platform/ddd/command-bus.js" {
   interface CommandRegistry {
     CreateTodoCommand: {
       readonly command: CreateTodoCommand;

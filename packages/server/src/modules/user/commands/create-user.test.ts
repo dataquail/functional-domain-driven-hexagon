@@ -2,7 +2,7 @@ import { UserAlreadyExists } from "@/modules/user/domain/user-errors.js";
 import { type UserCreated } from "@/modules/user/domain/user-events.js";
 import { UserRepository } from "@/modules/user/domain/user-repository.js";
 import { UserRepositoryFake } from "@/modules/user/infrastructure/user-repository-fake.js";
-import { IdentityTransactionRunner } from "@/test-utils/identity-transaction-runner.js";
+import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
@@ -12,7 +12,7 @@ import * as Layer from "effect/Layer";
 import { CreateUserCommand } from "./create-user-command.js";
 import { createUser } from "./create-user.js";
 
-const TestLayer = Layer.mergeAll(UserRepositoryFake, RecordingEventBus, IdentityTransactionRunner);
+const TestLayer = Layer.mergeAll(UserRepositoryFake, RecordingEventBus, IdentityUnitOfWork);
 
 const baseCmd = {
   email: "alice@example.com",

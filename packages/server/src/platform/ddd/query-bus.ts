@@ -1,14 +1,12 @@
-import {
-  type SpanAttributeValue,
-  type SpanAttributesExtractor,
-} from "@/platform/span-attributable.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import * as Context from "effect/Context";
-import * as Effect from "effect/Effect";
 
-// Each query registers an entry here via TypeScript declaration merging.
-// See `command-bus.ts` for the equivalent pattern — semantics are identical,
-// but the split into two buses preserves the CQRS distinction at the type
-// level (a CommandBus.execute will not accept a query, and vice versa).
+// Port for the read-side bus. See `command-bus.ts` for the equivalent
+// pattern — semantics are identical, but the split into two buses
+// preserves the CQRS distinction at the type level (a CommandBus.execute
+// will not accept a query, and vice versa). The live implementation
+// (`makeQueryBus` in `platform/query-bus-live.ts`) is wired only at the
+// composition root.
 // Intentionally empty — modules extend this via TypeScript declaration merging.
 /* eslint-disable @typescript-eslint/no-empty-interface, @typescript-eslint/no-empty-object-type */
 export interface QueryRegistry {}
@@ -60,19 +58,3 @@ export const queryHandlers = <
 >(
   map: M,
 ): M => map;
-
-export const makeQueryBus = (handlers: QueryHandlers): QueryBusShape => ({
-  execute: ((query: { readonly _tag: string }) => {
-    const entry = (handlers as Record<string, QueryHandlerEntry<keyof QueryRegistry>>)[query._tag];
-    if (entry === undefined) {
-      return Effect.die(new Error(`[QueryBus] no handler registered for '${query._tag}'`));
-    }
-    const extra: Record<string, SpanAttributeValue> =
-      entry.spanAttributes !== undefined ? entry.spanAttributes(query as never) : {};
-    return (entry.handle(query as never) as Effect.Effect<unknown, unknown, unknown>).pipe(
-      Effect.withSpan(`query:${query._tag}`, {
-        attributes: { "query.tag": query._tag, ...extra },
-      }),
-    );
-  }) as QueryBusShape["execute"],
-});

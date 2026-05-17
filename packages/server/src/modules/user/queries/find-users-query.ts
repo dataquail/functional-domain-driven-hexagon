@@ -1,6 +1,6 @@
 import { type UserRole } from "@/modules/user/domain/user-role.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import { type UserId } from "@/platform/ids/user-id.js";
-import { type SpanAttributesExtractor } from "@/platform/span-attributable.js";
 import { type Database } from "@org/database/index";
 import type * as DateTime from "effect/DateTime";
 import type * as Effect from "effect/Effect";
@@ -39,7 +39,7 @@ export type FindUsersResult = {
 
 export type FindUsersOutput = Effect.Effect<FindUsersResult, never, Database.Database>;
 
-declare module "@/platform/query-bus.js" {
+declare module "@/platform/ddd/query-bus.js" {
   interface QueryRegistry {
     FindUsersQuery: {
       readonly query: FindUsersQuery;

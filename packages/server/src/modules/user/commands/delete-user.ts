@@ -4,18 +4,18 @@ import {
 } from "@/modules/user/commands/delete-user-command.js";
 import { UserRepository } from "@/modules/user/domain/user-repository.js";
 import * as User from "@/modules/user/domain/user.aggregate.js";
-import { DomainEventBus } from "@/platform/domain-event-bus.js";
-import { TransactionRunner } from "@/platform/transaction-runner.js";
+import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
+import { UnitOfWork } from "@/platform/ddd/unit-of-work.js";
 import * as Effect from "effect/Effect";
 
 export const deleteUser = (cmd: DeleteUserCommand): DeleteUserOutput =>
   Effect.gen(function* () {
     const repo = yield* UserRepository;
     const bus = yield* DomainEventBus;
-    const tx = yield* TransactionRunner;
+    const uow = yield* UnitOfWork;
     const user = yield* repo.findById(cmd.userId);
     const { events } = User.markDeleted(user);
-    yield* tx
+    yield* uow
       .run(
         Effect.gen(function* () {
           yield* repo.remove(user.id);

@@ -1,6 +1,6 @@
 import { Api } from "@/api.js";
 import { FindUsersQuery } from "@/modules/user/index.js";
-import { QueryBus } from "@/platform/query-bus.js";
+import { QueryBus } from "@/platform/ddd/query-bus.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { hasTestDatabase } from "@/test-utils/test-database.js";
 import * as HttpApiClient from "@effect/platform/HttpApiClient";

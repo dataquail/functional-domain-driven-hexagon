@@ -1,8 +1,8 @@
 import { type AuthIdentityRepository } from "@/modules/auth/domain/auth-identity-repository.js";
 import { type SessionId } from "@/modules/auth/domain/session-id.js";
 import { type SessionRepository } from "@/modules/auth/domain/session-repository.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import { type UserId } from "@/platform/ids/user-id.js";
-import { type SpanAttributesExtractor } from "@/platform/span-attributable.js";
 import type * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
@@ -36,7 +36,7 @@ export type SignInOutput = Effect.Effect<
   AuthIdentityRepository | SessionRepository
 >;
 
-declare module "@/platform/command-bus.js" {
+declare module "@/platform/ddd/command-bus.js" {
   interface CommandRegistry {
     SignInCommand: {
       readonly command: SignInCommand;

@@ -2,7 +2,7 @@ import { signInCommandSpanAttributes } from "@/modules/auth/commands/sign-in-com
 import { signIn } from "@/modules/auth/commands/sign-in.js";
 import { touchSessionCommandSpanAttributes } from "@/modules/auth/commands/touch-session-command.js";
 import { touchSession } from "@/modules/auth/commands/touch-session.js";
-import { commandHandlers } from "@/platform/command-bus.js";
+import { commandHandlers } from "@/platform/ddd/command-bus.js";
 
 export const authCommandHandlers = commandHandlers({
   SignInCommand: { handle: signIn, spanAttributes: signInCommandSpanAttributes },

@@ -7,8 +7,8 @@ import {
 } from "@/modules/auth/index.js";
 import { CookieCodec } from "@/platform/auth/cookie-codec.js";
 import { PermissionsResolver } from "@/platform/auth/permissions-resolver.js";
-import { CommandBus } from "@/platform/command-bus.js";
-import { QueryBus } from "@/platform/query-bus.js";
+import { CommandBus } from "@/platform/ddd/command-bus.js";
+import { QueryBus } from "@/platform/ddd/query-bus.js";
 import * as HttpServerRequest from "@effect/platform/HttpServerRequest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { UserAuthMiddleware } from "@org/contracts/Policy";

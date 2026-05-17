@@ -1,6 +1,6 @@
 import { SessionId } from "@/modules/auth/domain/session-id.js";
 import { type SessionRepository } from "@/modules/auth/domain/session-repository.js";
-import { type SpanAttributesExtractor } from "@/platform/span-attributable.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
@@ -23,7 +23,7 @@ export const touchSessionCommandSpanAttributes: SpanAttributesExtractor<TouchSes
 
 export type TouchSessionOutput = Effect.Effect<void, never, SessionRepository>;
 
-declare module "@/platform/command-bus.js" {
+declare module "@/platform/ddd/command-bus.js" {
   interface CommandRegistry {
     TouchSessionCommand: {
       readonly command: TouchSessionCommand;

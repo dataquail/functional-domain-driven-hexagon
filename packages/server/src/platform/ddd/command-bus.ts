@@ -1,17 +1,18 @@
-import {
-  type SpanAttributeValue,
-  type SpanAttributesExtractor,
-} from "@/platform/span-attributable.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import * as Context from "effect/Context";
-import * as Effect from "effect/Effect";
 
+// Port for the write-side bus. The bus itself is one Tag; the typed
+// `execute` shape and the registry that names every command/handler pair
+// are part of the contract. The live implementation (`makeCommandBus` in
+// `platform/command-bus-live.ts`) is wired only at the composition root.
+//
 // Each command registers an entry here via TypeScript declaration merging.
 // The `command` key holds the command's data type; `output` is the
 // full Effect.Effect<Success, Failure, Requirements> the handler returns.
 //
 // Example (inside the command's source file):
 //
-//   declare module "@/platform/command-bus.js" {
+//   declare module "@/platform/ddd/command-bus.js" {
 //     interface CommandRegistry {
 //       CreateUserCommand: {
 //         command: CreateUserCommand;
@@ -98,28 +99,3 @@ export const commandHandlers = <
 >(
   map: M,
 ): M => map;
-
-/**
- * Builds a CommandBus from a full handler set. Takes `CommandHandlers` for
- * the entire `CommandRegistry`, so forgetting to register a handler — or
- * registering the wrong one under a tag — fails to compile. The bus
- * attaches the bus-level span (`command:<tag>`), invokes the handler, and
- * merges any per-command attributes contributed by `spanAttributes`.
- */
-export const makeCommandBus = (handlers: CommandHandlers): CommandBusShape => ({
-  execute: ((cmd: { readonly _tag: string }) => {
-    const entry = (handlers as Record<string, CommandHandlerEntry<keyof CommandRegistry>>)[
-      cmd._tag
-    ];
-    if (entry === undefined) {
-      return Effect.die(new Error(`[CommandBus] no handler registered for '${cmd._tag}'`));
-    }
-    const extra: Record<string, SpanAttributeValue> =
-      entry.spanAttributes !== undefined ? entry.spanAttributes(cmd as never) : {};
-    return (entry.handle(cmd as never) as Effect.Effect<unknown, unknown, unknown>).pipe(
-      Effect.withSpan(`command:${cmd._tag}`, {
-        attributes: { "command.tag": cmd._tag, ...extra },
-      }),
-    );
-  }) as CommandBusShape["execute"],
-});
