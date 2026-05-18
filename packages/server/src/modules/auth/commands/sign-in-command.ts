@@ -5,6 +5,7 @@ import * as Schema from "effect/Schema";
 import { type AuthIdentityRepository } from "@/modules/auth/domain/auth-identity-repository.js";
 import { type SessionId } from "@/modules/auth/domain/session-id.js";
 import { type SessionRepository } from "@/modules/auth/domain/session-repository.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 
@@ -33,7 +34,7 @@ export type SignInResult = {
 
 export type SignInOutput = Effect.Effect<
   SignInResult,
-  CustomHttpApiError.Unauthorized,
+  CustomHttpApiError.Unauthorized | PersistenceUnavailable,
   AuthIdentityRepository | SessionRepository
 >;
 

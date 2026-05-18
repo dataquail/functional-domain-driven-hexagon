@@ -1,9 +1,11 @@
 import type * as DateTime from "effect/DateTime";
+import * as Either from "effect/Either";
 import * as Schema from "effect/Schema";
 
 import { UserId } from "@/platform/ids/user-id.js";
 
-import { WalletCreated, type WalletEvent } from "./wallet-events.js";
+import { WalletInsufficientFunds, WalletInvalidAmount } from "./wallet-errors.js";
+import { WalletCreated, WalletCredited, WalletDebited, type WalletEvent } from "./wallet-events.js";
 import { WalletId } from "./wallet-id.js";
 
 export class Wallet extends Schema.Class<Wallet>("Wallet")({
@@ -37,4 +39,76 @@ export const create = (input: CreateInput): Result => {
     wallet,
     events: [WalletCreated.make({ walletId: wallet.id, userId: wallet.userId })],
   };
+};
+
+export type AmountInput = {
+  readonly amount: number;
+  readonly now: DateTime.Utc;
+};
+
+// Aggregate-protected invariant: a wallet's balance never goes negative
+// and amounts must be positive. Returned as Either so the use case (and
+// tests) can reason about the failure without an Effect runtime; the
+// command handler lifts to Effect via Effect.fromEither.
+export const credit = (
+  wallet: Wallet,
+  input: AmountInput,
+): Either.Either<Result, WalletInvalidAmount> => {
+  if (!Number.isFinite(input.amount) || input.amount <= 0) {
+    return Either.left(new WalletInvalidAmount({ walletId: wallet.id, amount: input.amount }));
+  }
+  const newBalance = wallet.balance + input.amount;
+  const updated = Wallet.make({
+    id: wallet.id,
+    userId: wallet.userId,
+    balance: newBalance,
+    createdAt: wallet.createdAt,
+    updatedAt: input.now,
+  });
+  return Either.right({
+    wallet: updated,
+    events: [
+      WalletCredited.make({
+        walletId: wallet.id,
+        amount: input.amount,
+        newBalance,
+      }),
+    ],
+  });
+};
+
+export const debit = (
+  wallet: Wallet,
+  input: AmountInput,
+): Either.Either<Result, WalletInvalidAmount | WalletInsufficientFunds> => {
+  if (!Number.isFinite(input.amount) || input.amount <= 0) {
+    return Either.left(new WalletInvalidAmount({ walletId: wallet.id, amount: input.amount }));
+  }
+  if (input.amount > wallet.balance) {
+    return Either.left(
+      new WalletInsufficientFunds({
+        walletId: wallet.id,
+        balance: wallet.balance,
+        attemptedDebit: input.amount,
+      }),
+    );
+  }
+  const newBalance = wallet.balance - input.amount;
+  const updated = Wallet.make({
+    id: wallet.id,
+    userId: wallet.userId,
+    balance: newBalance,
+    createdAt: wallet.createdAt,
+    updatedAt: input.now,
+  });
+  return Either.right({
+    wallet: updated,
+    events: [
+      WalletDebited.make({
+        walletId: wallet.id,
+        amount: input.amount,
+        newBalance,
+      }),
+    ],
+  });
 };

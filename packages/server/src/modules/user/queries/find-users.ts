@@ -8,6 +8,7 @@ import {
   type FindUsersQuery,
   type FindUsersUserView,
 } from "@/modules/user/queries/find-users-query.js";
+import { PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 const CountRowStd = Schema.standardSchemaV1(Schema.Struct({ value: Schema.Number }));
@@ -43,7 +44,12 @@ export const findUsers = (query: FindUsersQuery): FindUsersOutput =>
           `),
         ]),
       )
-      .pipe(Effect.catchTag("DatabaseError", Effect.die));
+      .pipe(
+        Effect.catchTag("DatabaseError", Effect.die),
+        Effect.catchTag("DatabaseUnavailable", (e) =>
+          Effect.fail(new PersistenceUnavailable({ message: e.message })),
+        ),
+      );
 
     const [rows, countRow] = result;
 

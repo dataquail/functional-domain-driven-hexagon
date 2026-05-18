@@ -4,7 +4,7 @@ import * as Effect from "effect/Effect";
 
 import { CreateTodoCommand } from "@/modules/todos/commands/create-todo-command.js";
 import { CommandBus } from "@/platform/ddd/command-bus.js";
-import { type EndpointRequest } from "@/platform/http-endpoint.js";
+import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 export const createEndpoint = (request: EndpointRequest<typeof TodosContract.Group, "create">) =>
   Effect.gen(function* () {
@@ -21,4 +21,4 @@ export const createEndpoint = (request: EndpointRequest<typeof TodosContract.Gro
       title: todo.title,
       completed: todo.completed,
     });
-  }).pipe(Effect.withSpan("TodosLive.create"));
+  }).pipe(recoverPersistenceUnavailable, Effect.withSpan("TodosLive.create"));

@@ -4,6 +4,7 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
 import { type UserId } from "@/platform/ids/user-id.js";
+import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
 import { type User } from "../domain/user.aggregate.js";
 import { UserAlreadyExists, UserNotFound } from "../domain/user-errors.js";
@@ -38,6 +39,7 @@ export const UserRepositoryLive = Layer.effect(
             ? Effect.fail(new UserAlreadyExists({ email: user.email }))
             : Effect.die(e),
         ),
+        translatePersistenceUnavailable,
         Effect.withSpan("UserRepository.insert"),
       );
     });
@@ -60,6 +62,7 @@ export const UserRepositoryLive = Layer.effect(
         orFail(() => new UserNotFound({ userId: user.id })),
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
+        translatePersistenceUnavailable,
         Effect.withSpan("UserRepository.update"),
       );
     });
@@ -73,6 +76,7 @@ export const UserRepositoryLive = Layer.effect(
         orFail(() => new UserNotFound({ userId: id })),
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
+        translatePersistenceUnavailable,
         Effect.withSpan("UserRepository.remove"),
       ),
     );
@@ -86,6 +90,7 @@ export const UserRepositoryLive = Layer.effect(
         orFail(() => new UserNotFound({ userId: id })),
         Effect.map(UserMapper.toDomain),
         Effect.catchTag("DatabaseError", Effect.die),
+        translatePersistenceUnavailable,
         Effect.withSpan("UserRepository.findById"),
       ),
     );
@@ -98,6 +103,7 @@ export const UserRepositoryLive = Layer.effect(
       ).pipe(
         Effect.map((row) => (row === null ? Option.none() : Option.some(UserMapper.toDomain(row)))),
         Effect.catchTag("DatabaseError", Effect.die),
+        translatePersistenceUnavailable,
         Effect.withSpan("UserRepository.findByEmail"),
       ),
     );

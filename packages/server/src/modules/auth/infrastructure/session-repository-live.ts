@@ -2,6 +2,8 @@ import { Database, orFail, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
+
 import { type Session } from "../domain/session.aggregate.js";
 import { SessionNotFound } from "../domain/session-errors.js";
 import { type SessionId } from "../domain/session-id.js";
@@ -33,6 +35,7 @@ export const SessionRepositoryLive = Layer.effect(
       ).pipe(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
+        translatePersistenceUnavailable,
         Effect.withSpan("SessionRepository.insert"),
       );
     });
@@ -46,6 +49,7 @@ export const SessionRepositoryLive = Layer.effect(
         orFail(() => new SessionNotFound({ sessionId: id })),
         Effect.map(SessionMapper.toDomain),
         Effect.catchTag("DatabaseError", Effect.die),
+        translatePersistenceUnavailable,
         Effect.withSpan("SessionRepository.findById"),
       ),
     );
@@ -61,6 +65,7 @@ export const SessionRepositoryLive = Layer.effect(
         orFail(() => new SessionNotFound({ sessionId: id })),
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
+        translatePersistenceUnavailable,
         Effect.withSpan("SessionRepository.revoke"),
       ),
     );
@@ -79,6 +84,7 @@ export const SessionRepositoryLive = Layer.effect(
         orFail(() => new SessionNotFound({ sessionId: session.id })),
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
+        translatePersistenceUnavailable,
         Effect.withSpan("SessionRepository.update"),
       );
     });

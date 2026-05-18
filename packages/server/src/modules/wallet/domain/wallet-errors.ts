@@ -12,3 +12,18 @@ export class WalletNotFound extends Schema.TaggedError<WalletNotFound>("WalletNo
   "WalletNotFound",
   { walletId: WalletId },
 ) {}
+
+export class WalletInsufficientFunds extends Schema.TaggedError<WalletInsufficientFunds>(
+  "WalletInsufficientFunds",
+)("WalletInsufficientFunds", {
+  walletId: WalletId,
+  balance: Schema.Number,
+  attemptedDebit: Schema.Number,
+}) {}
+
+export class WalletInvalidAmount extends Schema.TaggedError<WalletInvalidAmount>(
+  "WalletInvalidAmount",
+)("WalletInvalidAmount", {
+  walletId: WalletId,
+  amount: Schema.Number,
+}) {}

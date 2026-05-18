@@ -4,7 +4,7 @@ import * as Effect from "effect/Effect";
 import { OidcClient } from "@/modules/auth/infrastructure/oidc-client.js";
 import { CookieCodec } from "@/platform/auth/cookie-codec.js";
 
-const PKCE_COOKIE_NAME = "oidc_pkce";
+import { encodePkcePayload, PKCE_COOKIE_MAX_AGE_MS, PKCE_COOKIE_NAME } from "./oidc-pkce-cookie.js";
 
 export const loginEndpoint = () =>
   Effect.gen(function* () {
@@ -22,8 +22,7 @@ export const loginEndpoint = () =>
     // would be filtered out before the proxied request leaves the browser.
     // The PKCE cookie is short-lived (5min), HttpOnly, and SameSite=Lax —
     // the broader scope is fine.
-    const payload = Buffer.from(JSON.stringify({ state, codeVerifier })).toString("base64url");
-    const signed = codec.sign(payload);
+    const signed = codec.sign(encodePkcePayload({ state, codeVerifier }));
 
     return HttpServerResponse.empty({ status: 302 }).pipe(
       HttpServerResponse.setHeader("location", url.toString()),
@@ -35,7 +34,7 @@ export const loginEndpoint = () =>
             httpOnly: true,
             secure: false, // dev; set true behind TLS
             sameSite: "lax",
-            maxAge: 300_000,
+            maxAge: PKCE_COOKIE_MAX_AGE_MS,
             path: "/",
           },
         ],

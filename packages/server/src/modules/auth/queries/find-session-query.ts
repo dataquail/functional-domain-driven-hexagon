@@ -9,6 +9,7 @@ import {
 } from "@/modules/auth/domain/session-errors.js";
 import { SessionId } from "@/modules/auth/domain/session-id.js";
 import { type SessionRepository } from "@/modules/auth/domain/session-repository.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 
 export const FindSessionQuery = Schema.TaggedStruct("FindSessionQuery", {
@@ -23,7 +24,7 @@ export const findSessionQuerySpanAttributes: SpanAttributesExtractor<FindSession
 
 export type FindSessionOutput = Effect.Effect<
   Session,
-  SessionNotFound | SessionExpired | SessionRevoked,
+  SessionNotFound | SessionExpired | SessionRevoked | PersistenceUnavailable,
   SessionRepository
 >;
 

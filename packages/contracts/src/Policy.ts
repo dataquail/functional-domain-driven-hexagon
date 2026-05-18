@@ -34,10 +34,15 @@ export class CurrentUser extends Context.Tag("CurrentUser")<
   }
 >() {}
 
+// The middleware fails with `Unauthorized` for normal auth failures
+// (missing/invalid cookie, expired session) and `ServiceUnavailable`
+// when the auth store is transiently down. Without the second case in
+// the failure union, a DB outage would surface as 401 and trigger a
+// client-side re-auth loop instead of a backoff-and-retry 503.
 export class UserAuthMiddleware extends HttpApiMiddleware.Tag<UserAuthMiddleware>()(
   "UserAuthMiddleware",
   {
-    failure: CustomHttpApiError.Unauthorized,
+    failure: Schema.Union(CustomHttpApiError.Unauthorized, CustomHttpApiError.ServiceUnavailable),
     provides: CurrentUser,
   },
 ) {}

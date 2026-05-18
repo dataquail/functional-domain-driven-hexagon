@@ -3,6 +3,7 @@ import * as HttpApiGroup from "@effect/platform/HttpApiGroup";
 import * as HttpApiSchema from "@effect/platform/HttpApiSchema";
 import * as Schema from "effect/Schema";
 
+import * as CustomHttpApiError from "../CustomHttpApiError.js";
 import { TodoId } from "../EntityIds.js";
 import { UserAuthMiddleware } from "../Policy.js";
 
@@ -48,4 +49,6 @@ export class Group extends HttpApiGroup.make("todos")
       .addSuccess(Schema.Void)
       .setPayload(TodoId),
   )
+  // Group-wide 503 surface — see UserContract for rationale.
+  .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/todos") {}

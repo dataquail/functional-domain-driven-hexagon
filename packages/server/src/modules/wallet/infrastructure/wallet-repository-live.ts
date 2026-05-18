@@ -4,6 +4,7 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
 import { type UserId } from "@/platform/ids/user-id.js";
+import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
 import { type Wallet } from "../domain/wallet.aggregate.js";
 import { WalletAlreadyExistsForUser } from "../domain/wallet-errors.js";
@@ -35,6 +36,7 @@ export const WalletRepositoryLive = Layer.effect(
             ? Effect.fail(new WalletAlreadyExistsForUser({ userId: wallet.userId }))
             : Effect.die(e),
         ),
+        translatePersistenceUnavailable,
         Effect.withSpan("WalletRepository.insert"),
       );
     });
@@ -49,6 +51,7 @@ export const WalletRepositoryLive = Layer.effect(
           row === null ? Option.none() : Option.some(WalletMapper.toDomain(row)),
         ),
         Effect.catchTag("DatabaseError", Effect.die),
+        translatePersistenceUnavailable,
         Effect.withSpan("WalletRepository.findByUserId"),
       ),
     );

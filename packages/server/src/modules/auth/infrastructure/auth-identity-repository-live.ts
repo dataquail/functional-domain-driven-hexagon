@@ -2,6 +2,8 @@ import { Database, orFail, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
+
 import { AuthIdentityRepository } from "../domain/auth-identity-repository.js";
 import { AuthIdentityNotFound } from "../domain/session-errors.js";
 import * as AuthIdentityMapper from "./auth-identity-mapper.js";
@@ -20,6 +22,7 @@ export const AuthIdentityRepositoryLive = Layer.effect(
         orFail(() => new AuthIdentityNotFound({ subject })),
         Effect.map(AuthIdentityMapper.toDomain),
         Effect.catchTag("DatabaseError", Effect.die),
+        translatePersistenceUnavailable,
         Effect.withSpan("AuthIdentityRepository.findBySubject"),
       ),
     );

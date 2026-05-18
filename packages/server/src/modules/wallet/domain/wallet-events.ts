@@ -1,3 +1,5 @@
+import * as Schema from "effect/Schema";
+
 import { DomainEvent } from "@/platform/ddd/domain-event.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import { UserId } from "@/platform/ids/user-id.js";
@@ -15,4 +17,30 @@ export const walletCreatedSpanAttributes: SpanAttributesExtractor<WalletCreated>
   "user.id": event.userId,
 });
 
-export type WalletEvent = WalletCreated;
+export const WalletCredited = DomainEvent("WalletCredited", {
+  walletId: WalletId,
+  amount: Schema.Number,
+  newBalance: Schema.Number,
+});
+export type WalletCredited = typeof WalletCredited.Type;
+
+export const walletCreditedSpanAttributes: SpanAttributesExtractor<WalletCredited> = (event) => ({
+  "wallet.id": event.walletId,
+  "wallet.amount": event.amount,
+  "wallet.new_balance": event.newBalance,
+});
+
+export const WalletDebited = DomainEvent("WalletDebited", {
+  walletId: WalletId,
+  amount: Schema.Number,
+  newBalance: Schema.Number,
+});
+export type WalletDebited = typeof WalletDebited.Type;
+
+export const walletDebitedSpanAttributes: SpanAttributesExtractor<WalletDebited> = (event) => ({
+  "wallet.id": event.walletId,
+  "wallet.amount": event.amount,
+  "wallet.new_balance": event.newBalance,
+});
+
+export type WalletEvent = WalletCreated | WalletCredited | WalletDebited;

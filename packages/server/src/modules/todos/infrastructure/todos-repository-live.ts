@@ -2,6 +2,8 @@ import { Database, orFail, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
+
 import { type Todo } from "../domain/todo.js";
 import { TodoNotFound } from "../domain/todo-errors.js";
 import { type TodoId } from "../domain/todo-id.js";
@@ -29,6 +31,7 @@ export const TodosRepositoryLive = Layer.effect(
       ).pipe(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
+        translatePersistenceUnavailable,
         Effect.withSpan("TodosRepository.insert"),
       );
     });
@@ -48,6 +51,7 @@ export const TodosRepositoryLive = Layer.effect(
         orFail(() => new TodoNotFound({ todoId: todo.id })),
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
+        translatePersistenceUnavailable,
         Effect.withSpan("TodosRepository.update"),
       );
     });
@@ -61,6 +65,7 @@ export const TodosRepositoryLive = Layer.effect(
         orFail(() => new TodoNotFound({ todoId: id })),
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
+        translatePersistenceUnavailable,
         Effect.withSpan("TodosRepository.remove"),
       ),
     );
@@ -74,6 +79,7 @@ export const TodosRepositoryLive = Layer.effect(
         orFail(() => new TodoNotFound({ todoId: id })),
         Effect.map(TodoMapper.toDomain),
         Effect.catchTag("DatabaseError", Effect.die),
+        translatePersistenceUnavailable,
         Effect.withSpan("TodosRepository.findById"),
       ),
     );

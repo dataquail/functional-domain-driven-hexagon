@@ -15,7 +15,7 @@ export type AnyClient = Client | TxClient;
 
 type TransactionContextShape = <U>(
   fn: (client: TxClient) => Promise<U>,
-) => Effect.Effect<U, DatabaseError>;
+) => Effect.Effect<U, DatabaseError | DatabaseUnavailable>;
 
 export class TransactionContext extends Context.Tag("TransactionContext")<
   TransactionContext,
@@ -29,8 +29,20 @@ export class TransactionContext extends Context.Tag("TransactionContext")<
     Effect.provideService(this, transaction);
 }
 
+// `DatabaseError` now carries only *permanent* failures — constraint
+// violations the application is expected to either translate to a domain
+// error (e.g. `unique_violation` → `UserAlreadyExists`) or treat as a
+// defect (programmer error or schema drift). Transient failures
+// (connection lost, backend terminated) are surfaced as
+// `DatabaseUnavailable` so use cases can propagate them through their
+// typed error channel and the HTTP layer can map them to 503.
+//
+// This split lets command handlers drop the blanket
+// `Effect.catchTag("DatabaseError", Effect.die)` — they can still die on
+// unhandled constraint violations (those mean the repo missed a case)
+// while letting `DatabaseUnavailable` flow through.
 export class DatabaseError extends Data.TaggedError("DatabaseError")<{
-  readonly type: "unique_violation" | "foreign_key_violation" | "connection_error";
+  readonly type: "unique_violation" | "foreign_key_violation";
   readonly cause: unknown;
   readonly errorMessage: string;
 }> {
@@ -43,7 +55,25 @@ export class DatabaseError extends Data.TaggedError("DatabaseError")<{
   }
 }
 
-const matchSlonikError = (error: unknown): DatabaseError | null => {
+// Transient failure: the pool is unable to talk to Postgres right now.
+// Distinct from `DatabaseConnectionLostError` (which is raised by the
+// pool-level connection listener and tears the server down for a
+// restart). `DatabaseUnavailable` is a per-query signal — the right
+// reaction is a 503 to this caller; the next request might succeed.
+export class DatabaseUnavailable extends Data.TaggedError("DatabaseUnavailable")<{
+  readonly cause: unknown;
+  readonly errorMessage: string;
+}> {
+  public override toString() {
+    return `DatabaseUnavailable: ${this.errorMessage}`;
+  }
+
+  public get message() {
+    return this.errorMessage;
+  }
+}
+
+const matchSlonikError = (error: unknown): DatabaseError | DatabaseUnavailable | null => {
   if (error instanceof Slonik.UniqueIntegrityConstraintViolationError) {
     return new DatabaseError({
       type: "unique_violation",
@@ -63,8 +93,7 @@ const matchSlonikError = (error: unknown): DatabaseError | null => {
     error instanceof Slonik.BackendTerminatedError ||
     error instanceof Slonik.BackendTerminatedUnexpectedlyError
   ) {
-    return new DatabaseError({
-      type: "connection_error",
+    return new DatabaseUnavailable({
       cause: error,
       errorMessage: error.message,
     });
@@ -236,7 +265,7 @@ const makeService = (config: Config) =>
         Effect.runtime<R>().pipe(
           Effect.map((runtime) => Runtime.runPromiseExit(runtime)),
           Effect.flatMap((runPromiseExit) =>
-            Effect.async<T, DatabaseError | E, R>((resume) => {
+            Effect.async<T, DatabaseError | DatabaseUnavailable | E, R>((resume) => {
               pool
                 .transaction(async (tx: TxClient) => {
                   const txWrapper = (fn: (client: TxClient) => Promise<any>) =>
@@ -275,7 +304,9 @@ const makeService = (config: Config) =>
         ),
     );
 
-    type ExecuteFn = <T>(fn: (client: AnyClient) => Promise<T>) => Effect.Effect<T, DatabaseError>;
+    type ExecuteFn = <T>(
+      fn: (client: AnyClient) => Promise<T>,
+    ) => Effect.Effect<T, DatabaseError | DatabaseUnavailable>;
     const makeQuery =
       <A, E, R, Input = never>(
         queryFn: (execute: ExecuteFn, input: Input) => Effect.Effect<A, E, R>,

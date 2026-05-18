@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 
 import { FindUsersQuery, type FindUsersResult } from "@/modules/user/queries/find-users-query.js";
 import { QueryBus } from "@/platform/ddd/query-bus.js";
-import { type EndpointRequest } from "@/platform/http-endpoint.js";
+import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 const toPaginatedUsersContract = (result: FindUsersResult): UserContract.PaginatedUsers =>
   new UserContract.PaginatedUsers({
@@ -33,4 +33,4 @@ export const findEndpoint = (request: EndpointRequest<typeof UserContract.Group,
       }),
     );
     return toPaginatedUsersContract(result);
-  }).pipe(Effect.withSpan("UserLive.find"));
+  }).pipe(recoverPersistenceUnavailable, Effect.withSpan("UserLive.find"));
