@@ -10,7 +10,7 @@ import { hasTestDatabase } from "@/test-utils/test-database.js";
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("GET /todos (integration)", () => {
-  const { run } = useServerTestRuntime(["todos"]);
+  const { run } = useServerTestRuntime(["todos.todos"]);
 
   it("returns an empty list initially", async () => {
     await run(

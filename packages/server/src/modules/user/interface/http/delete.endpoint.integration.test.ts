@@ -19,7 +19,7 @@ const basePayload = {
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("DELETE /users/:id (integration)", () => {
-  const { run } = useServerTestRuntime(["users"]);
+  const { run } = useServerTestRuntime(["user.users"]);
 
   it("removes the user", async () => {
     await run(

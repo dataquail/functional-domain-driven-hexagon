@@ -36,7 +36,7 @@ const seedUserRow = (id: UserId) =>
     yield* db
       .execute((c) =>
         c.query(sql.unsafe`
-          INSERT INTO users (id, email, role, country, street, postal_code, created_at, updated_at)
+          INSERT INTO "user".users (id, email, role, country, street, postal_code, created_at, updated_at)
           VALUES (${id}, ${id + "@example.com"}, 'guest', 'USA', '123 Main', '12345', NOW(), NOW())
         `),
       )
@@ -49,7 +49,9 @@ const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("WalletRepositoryLive (integration)", () => {
   beforeEach(async () => {
-    await Effect.runPromise(truncate("wallets", "users").pipe(Effect.provide(TestDatabaseLive)));
+    await Effect.runPromise(
+      truncate("wallet.wallets", "user.users").pipe(Effect.provide(TestDatabaseLive)),
+    );
   });
 
   describe("insert", () => {

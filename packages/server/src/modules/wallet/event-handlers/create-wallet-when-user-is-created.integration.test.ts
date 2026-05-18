@@ -48,7 +48,7 @@ suite("CreateWalletWhenUserIsCreated (integration)", () => {
   beforeEach(async () => {
     await runtime.runPromise(
       Effect.gen(function* () {
-        yield* truncate("wallets", "users");
+        yield* truncate("wallet.wallets", "user.users");
       }),
     );
   });
@@ -72,7 +72,7 @@ suite("CreateWalletWhenUserIsCreated (integration)", () => {
         const db = yield* Database.Database;
         const rows = yield* db.execute((c) =>
           c.any(sql.type(RowSchemas.WalletRowStd)`
-            SELECT * FROM wallets WHERE user_id = ${id}
+            SELECT * FROM wallet.wallets WHERE user_id = ${id}
           `),
         );
         deepStrictEqual(rows.length, 1);
@@ -110,7 +110,9 @@ const RollbackTestLayer = Layer.mergeAll(UnitOfWorkLive, UserEventAdapterLive).p
 
 suite("CreateWalletWhenUserIsCreated (rollback integration)", () => {
   beforeEach(async () => {
-    await Effect.runPromise(truncate("wallets", "users").pipe(Effect.provide(TestDatabaseLive)));
+    await Effect.runPromise(
+      truncate("wallet.wallets", "user.users").pipe(Effect.provide(TestDatabaseLive)),
+    );
   });
 
   it.effect("rolls back the publisher's writes when the wallet subscriber defects", () =>
@@ -128,7 +130,7 @@ suite("CreateWalletWhenUserIsCreated (rollback integration)", () => {
           Effect.gen(function* () {
             yield* db.execute((c) =>
               c.query(sql.unsafe`
-                INSERT INTO users (id, email, role, country, street, postal_code, created_at, updated_at)
+                INSERT INTO "user".users (id, email, role, country, street, postal_code, created_at, updated_at)
                 VALUES (
                   ${probeUserId},
                   ${probeEmail},
@@ -157,7 +159,7 @@ suite("CreateWalletWhenUserIsCreated (rollback integration)", () => {
       // surrounding transaction is undone.
       const rows = yield* db.execute((c) =>
         c.any(sql.type(RowSchemas.UserRowStd)`
-          SELECT * FROM users WHERE id = ${probeUserId}
+          SELECT * FROM "user".users WHERE id = ${probeUserId}
         `),
       );
       deepStrictEqual(rows.length, 0);

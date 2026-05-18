@@ -19,7 +19,7 @@ export const TodosRepositoryLive = Layer.effect(
       const row = TodoMapper.toPersistence(todo);
       return execute((client) =>
         client.query(sql.unsafe`
-          INSERT INTO todos (id, title, completed, created_at, updated_at)
+          INSERT INTO todos.todos (id, title, completed, created_at, updated_at)
           VALUES (
             ${row.id},
             ${row.title},
@@ -40,7 +40,7 @@ export const TodosRepositoryLive = Layer.effect(
       const row = TodoMapper.toPersistence(todo);
       return execute((client) =>
         client.maybeOne(sql.type(RowSchemas.TodoRowStd)`
-          UPDATE todos SET
+          UPDATE todos.todos SET
             title = ${row.title},
             completed = ${row.completed},
             updated_at = ${sql.timestamp(row.updated_at)}
@@ -59,7 +59,7 @@ export const TodosRepositoryLive = Layer.effect(
     const remove = db.makeQuery((execute, id: TodoId) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.TodoRowStd)`
-          DELETE FROM todos WHERE id = ${id} RETURNING *
+          DELETE FROM todos.todos WHERE id = ${id} RETURNING *
         `),
       ).pipe(
         orFail(() => new TodoNotFound({ todoId: id })),
@@ -73,7 +73,7 @@ export const TodosRepositoryLive = Layer.effect(
     const findById = db.makeQuery((execute, id: TodoId) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.TodoRowStd)`
-          SELECT * FROM todos WHERE id = ${id}
+          SELECT * FROM todos.todos WHERE id = ${id}
         `),
       ).pipe(
         orFail(() => new TodoNotFound({ todoId: id })),

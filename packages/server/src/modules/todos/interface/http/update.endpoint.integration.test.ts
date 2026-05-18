@@ -13,7 +13,7 @@ import { hasTestDatabase } from "@/test-utils/test-database.js";
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("PUT /todos/:id (integration)", () => {
-  const { run } = useServerTestRuntime(["todos"]);
+  const { run } = useServerTestRuntime(["todos.todos"]);
 
   it("updates title and completed", async () => {
     await run(

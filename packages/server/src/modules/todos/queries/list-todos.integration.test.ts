@@ -33,7 +33,7 @@ const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("listTodos (integration)", () => {
   beforeEach(async () => {
-    await Effect.runPromise(truncate("todos").pipe(Effect.provide(TestDatabaseLive)));
+    await Effect.runPromise(truncate("todos.todos").pipe(Effect.provide(TestDatabaseLive)));
   });
 
   it.effect("returns rows ordered by created_at desc", () =>

@@ -38,19 +38,24 @@ export const TestDatabaseLive =
       })
     : (Layer.die(new Error("DATABASE_URL_TEST is not set")) as ReturnType<typeof Database.layer>);
 
-// Tests always migrate from scratch, so we drop the public schema and replay
+// Tests always migrate from scratch, so we drop every module schema and replay
 // the Flyway-named migration files in order. This intentionally avoids
 // Flyway's checksum/history semantics — those matter for production drift,
 // not for a per-run test database. Memoized so concurrent test files that
 // each call runMigrations in beforeAll don't race the destructive reset.
 let migrationsPromise: Promise<void> | undefined;
 
+// Kept in sync with packages/database/migrations/V00*__create_schema_*.sql.
+// Each module owns its own schema (ADR-0021).
+const MODULE_SCHEMAS = ["user", "todos", "wallet", "auth"] as const;
+
 const doRunMigrations = async (): Promise<void> => {
   if (TEST_DATABASE_URL === undefined) return;
   assertTestDbName(TEST_DATABASE_URL);
   const pool = new pg.Pool({ connectionString: TEST_DATABASE_URL });
   try {
-    await pool.query(`DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;`);
+    const dropList = MODULE_SCHEMAS.map((s) => `"${s}"`).join(", ");
+    await pool.query(`DROP SCHEMA IF EXISTS ${dropList} CASCADE;`);
     const entries = await fs.readdir(migrationsFolder);
     const sqlFiles = entries
       .filter((f) => /^V\d+__.*\.sql$/.test(f))
@@ -73,12 +78,27 @@ export const runMigrations = (): Promise<void> => {
   return migrationsPromise;
 };
 
+// Each table reference must be schema-qualified ("schema.table") so we can
+// build a "schema"."table" identifier. Cross-schema TRUNCATE CASCADE remains
+// the test seam — application code never crosses schemas (enforced by
+// no-cross-schema-slonik-access).
+const splitQualified = (qualified: string): readonly [string, string] => {
+  const [schema, table, ...rest] = qualified.split(".");
+  if (schema === undefined || table === undefined || rest.length > 0) {
+    throw new Error(
+      `[truncate] expected "schema.table", got "${qualified}". Tests must qualify table names with their owning module schema.`,
+    );
+  }
+  return [schema, table];
+};
+
 export const truncate = (...tables: ReadonlyArray<string>) =>
   Effect.gen(function* () {
     const db = yield* Database.Database;
-    for (const table of tables) {
+    for (const qualified of tables) {
+      const [schema, table] = splitQualified(qualified);
       yield* db.execute((client) =>
-        client.query(sql.unsafe`TRUNCATE TABLE ${sql.identifier([table])} CASCADE`),
+        client.query(sql.unsafe`TRUNCATE TABLE ${sql.identifier([schema, table])} CASCADE`),
       );
     }
   }).pipe(Effect.orDie);

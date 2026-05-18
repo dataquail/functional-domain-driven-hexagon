@@ -16,7 +16,7 @@ export const AuthIdentityRepositoryLive = Layer.effect(
     const findBySubject = db.makeQuery((execute, subject: string) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.AuthIdentityRowStd)`
-          SELECT * FROM auth_identities WHERE subject = ${subject}
+          SELECT * FROM auth.auth_identities WHERE subject = ${subject}
         `),
       ).pipe(
         orFail(() => new AuthIdentityNotFound({ subject })),

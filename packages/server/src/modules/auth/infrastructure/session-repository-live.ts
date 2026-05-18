@@ -19,7 +19,7 @@ export const SessionRepositoryLive = Layer.effect(
       const row = SessionMapper.toPersistence(session);
       return execute((client) =>
         client.query(sql.unsafe`
-          INSERT INTO sessions
+          INSERT INTO auth.sessions
             (id, user_id, subject, expires_at, absolute_expires_at, revoked_at, created_at, last_used_at)
           VALUES (
             ${row.id},
@@ -43,7 +43,7 @@ export const SessionRepositoryLive = Layer.effect(
     const findById = db.makeQuery((execute, id: SessionId) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.SessionRowStd)`
-          SELECT * FROM sessions WHERE id = ${id}
+          SELECT * FROM auth.sessions WHERE id = ${id}
         `),
       ).pipe(
         orFail(() => new SessionNotFound({ sessionId: id })),
@@ -57,7 +57,7 @@ export const SessionRepositoryLive = Layer.effect(
     const revoke = db.makeQuery((execute, id: SessionId) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.SessionRowStd)`
-          UPDATE sessions SET revoked_at = now()
+          UPDATE auth.sessions SET revoked_at = now()
           WHERE id = ${id} AND revoked_at IS NULL
           RETURNING *
         `),
@@ -74,7 +74,7 @@ export const SessionRepositoryLive = Layer.effect(
       const row = SessionMapper.toPersistence(session);
       return execute((client) =>
         client.maybeOne(sql.type(RowSchemas.SessionRowStd)`
-          UPDATE sessions
+          UPDATE auth.sessions
           SET expires_at = ${sql.timestamp(row.expires_at)},
               last_used_at = ${sql.timestamp(row.last_used_at)}
           WHERE id = ${row.id} AND revoked_at IS NULL

@@ -21,13 +21,13 @@ const seedUserAndIdentity = Effect.gen(function* () {
   const db = yield* Database.Database;
   yield* db.execute((client) =>
     client.query(sql.unsafe`
-      INSERT INTO users (id, email, role, country, street, postal_code, created_at, updated_at)
+      INSERT INTO "user".users (id, email, role, country, street, postal_code, created_at, updated_at)
       VALUES (${userId}, 'admin@example.com', 'admin', 'N/A', 'N/A', 'N/A', now(), now())
     `),
   );
   yield* db.execute((client) =>
     client.query(sql.unsafe`
-      INSERT INTO auth_identities (subject, user_id, provider, created_at)
+      INSERT INTO auth.auth_identities (subject, user_id, provider, created_at)
       VALUES (${subject}, ${userId}, 'zitadel', now())
     `),
   );
@@ -37,7 +37,7 @@ const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("AuthIdentityRepositoryLive (integration)", () => {
   beforeEach(async () => {
-    await Effect.runPromise(truncate("users").pipe(Effect.provide(TestDatabaseLive)));
+    await Effect.runPromise(truncate("user.users").pipe(Effect.provide(TestDatabaseLive)));
   });
 
   it.effect("findBySubject returns the seeded identity", () =>

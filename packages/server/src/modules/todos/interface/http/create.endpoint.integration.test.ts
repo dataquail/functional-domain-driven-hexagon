@@ -10,7 +10,7 @@ import { hasTestDatabase } from "@/test-utils/test-database.js";
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("POST /todos (integration)", () => {
-  const { run } = useServerTestRuntime(["todos"]);
+  const { run } = useServerTestRuntime(["todos.todos"]);
 
   it("creates a todo and returns the persisted shape", async () => {
     await run(

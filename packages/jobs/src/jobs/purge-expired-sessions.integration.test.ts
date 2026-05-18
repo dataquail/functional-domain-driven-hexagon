@@ -14,7 +14,7 @@ const seedUser = Effect.gen(function* () {
   const db = yield* Database.Database;
   yield* db.execute((client) =>
     client.query(sql.unsafe`
-      INSERT INTO users (id, email, role, country, street, postal_code, created_at, updated_at)
+      INSERT INTO "user".users (id, email, role, country, street, postal_code, created_at, updated_at)
       VALUES (${userId}, 'admin@example.com', 'admin', 'N/A', 'N/A', 'N/A', now(), now())
     `),
   );
@@ -31,7 +31,7 @@ const seedSession = (s: SessionShape) =>
   Effect.flatMap(Database.Database, (db) =>
     db.execute((client) =>
       client.query(sql.unsafe`
-        INSERT INTO sessions (id, user_id, subject, expires_at, absolute_expires_at, revoked_at, created_at, last_used_at)
+        INSERT INTO auth.sessions (id, user_id, subject, expires_at, absolute_expires_at, revoked_at, created_at, last_used_at)
         VALUES (
           ${s.id},
           ${userId},
@@ -47,11 +47,13 @@ const seedSession = (s: SessionShape) =>
   ).pipe(Effect.orDie);
 
 const countSessions = Effect.flatMap(Database.Database, (db) =>
-  db.execute((client) => client.oneFirst(sql.unsafe`SELECT count(*)::int FROM sessions`)),
+  db.execute((client) => client.oneFirst(sql.unsafe`SELECT count(*)::int FROM auth.sessions`)),
 ).pipe(Effect.orDie) as Effect.Effect<number, never, Database.Database>;
 
 const findSessionIds = Effect.flatMap(Database.Database, (db) =>
-  db.execute((client) => client.anyFirst(sql.unsafe`SELECT id::text FROM sessions ORDER BY id`)),
+  db.execute((client) =>
+    client.anyFirst(sql.unsafe`SELECT id::text FROM auth.sessions ORDER BY id`),
+  ),
 ).pipe(Effect.orDie) as Effect.Effect<ReadonlyArray<string>, never, Database.Database>;
 
 const TestLayer = Layer.provideMerge(Layer.empty, TestDatabaseLive);
@@ -60,7 +62,9 @@ const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("purgeExpiredSessions (integration)", () => {
   beforeEach(async () => {
-    await Effect.runPromise(truncate("sessions", "users").pipe(Effect.provide(TestDatabaseLive)));
+    await Effect.runPromise(
+      truncate("auth.sessions", "user.users").pipe(Effect.provide(TestDatabaseLive)),
+    );
   });
 
   it.effect("deletes rows whose expires_at has passed and keeps still-valid rows", () =>
@@ -104,7 +108,7 @@ suite("purgeExpiredSessions (integration)", () => {
         yield* Effect.flatMap(Database.Database, (db) =>
           db.execute((client) =>
             client.query(sql.unsafe`
-              INSERT INTO sessions (id, user_id, subject, expires_at, absolute_expires_at, revoked_at, created_at, last_used_at)
+              INSERT INTO auth.sessions (id, user_id, subject, expires_at, absolute_expires_at, revoked_at, created_at, last_used_at)
               VALUES (
                 'dddddddd-dddd-dddd-dddd-dddddddddddd',
                 ${userId},

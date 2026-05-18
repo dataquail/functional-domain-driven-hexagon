@@ -40,7 +40,7 @@ export const purgeExpiredSessions: Effect.Effect<PurgeResult, never, Database.Da
             return { rowsPurged: 0, skipped: true } satisfies PurgeResult;
           }
           const deleted = await tx.query(sql.unsafe`
-            DELETE FROM sessions
+            DELETE FROM auth.sessions
             WHERE expires_at < now()
                OR (revoked_at IS NOT NULL AND revoked_at < now() - interval '7 days')
           `);

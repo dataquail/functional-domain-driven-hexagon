@@ -19,7 +19,7 @@ const basePayload = {
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("PUT /users/:id/role (integration)", () => {
-  const { run } = useServerTestRuntime(["users"]);
+  const { run } = useServerTestRuntime(["user.users"]);
 
   it("promotes the user to admin", async () => {
     await run(

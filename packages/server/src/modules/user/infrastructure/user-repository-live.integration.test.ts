@@ -37,7 +37,7 @@ const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("UserRepositoryLive (integration)", () => {
   beforeEach(async () => {
-    await Effect.runPromise(truncate("users").pipe(Effect.provide(TestDatabaseLive)));
+    await Effect.runPromise(truncate("user.users").pipe(Effect.provide(TestDatabaseLive)));
   });
 
   describe("insert", () => {

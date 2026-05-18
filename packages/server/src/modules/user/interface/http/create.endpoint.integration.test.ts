@@ -21,7 +21,7 @@ const basePayload = {
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("POST /users (integration)", () => {
-  const { run } = useServerTestRuntime(["users"]);
+  const { run } = useServerTestRuntime(["user.users"]);
 
   it("creates a user and persists it", async () => {
     await run(
