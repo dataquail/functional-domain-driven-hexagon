@@ -4,6 +4,7 @@ import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 import { type UserRole } from "@/modules/user/domain/user-role.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 
@@ -38,7 +39,11 @@ export type FindUsersResult = {
   readonly total: number;
 };
 
-export type FindUsersOutput = Effect.Effect<FindUsersResult, never, Database.Database>;
+export type FindUsersOutput = Effect.Effect<
+  FindUsersResult,
+  PersistenceUnavailable,
+  Database.Database
+>;
 
 declare module "@/platform/ddd/query-bus.js" {
   interface QueryRegistry {

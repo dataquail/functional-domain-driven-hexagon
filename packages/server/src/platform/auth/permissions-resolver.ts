@@ -5,6 +5,8 @@ import * as Schema from "effect/Schema";
 
 import { type UserId } from "@/platform/ids/user-id.js";
 
+import { translatePersistenceUnavailable } from "../translate-persistence-unavailable.js";
+
 // Slice-scope: read users.role and map role → permissions via a static map.
 // Everything currently flows through the existing __test:* permission set —
 // when real domain permissions are introduced, expand the map below.
@@ -51,6 +53,7 @@ export class PermissionsResolver extends Effect.Service<PermissionsResolver>()(
         ).pipe(
           Effect.map((row) => (row === null ? guestPermissions : forRole(row.role))),
           Effect.catchTag("DatabaseError", Effect.die),
+          translatePersistenceUnavailable,
           Effect.withSpan("PermissionsResolver.get"),
         ),
       );

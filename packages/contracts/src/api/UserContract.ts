@@ -3,6 +3,7 @@ import * as HttpApiGroup from "@effect/platform/HttpApiGroup";
 import * as HttpApiSchema from "@effect/platform/HttpApiSchema";
 import * as Schema from "effect/Schema";
 
+import * as CustomHttpApiError from "../CustomHttpApiError.js";
 import { UserId } from "../EntityIds.js";
 import { UserAuthMiddleware } from "../Policy.js";
 
@@ -115,4 +116,9 @@ export class Group extends HttpApiGroup.make("user")
       .addSuccess(Schema.Void)
       .addError(UserNotFoundError),
   )
+  // Group-wide: every endpoint here can 503 on transient DB failure. The
+  // typed channel lets endpoint handlers `Effect.catchTag` the
+  // `PersistenceUnavailable` use cases produce and surface the 503 to
+  // the SPA without leaking infrastructure tags into the contract.
+  .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/users") {}

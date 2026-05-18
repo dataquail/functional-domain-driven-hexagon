@@ -17,6 +17,16 @@ import { PermissionsResolver } from "@/platform/auth/permissions-resolver.js";
 import { CommandBus } from "@/platform/ddd/command-bus.js";
 import { QueryBus } from "@/platform/ddd/query-bus.js";
 
+// Distinguish "the DB is down" (503, retry) from "your session is bad"
+// (401, log back in). `Effect.mapError(() => Unauthorized)` would collapse
+// the former into the latter and confuse clients into a re-auth loop.
+const toAuthError = (e: {
+  readonly _tag: string;
+}): CustomHttpApiError.Unauthorized | CustomHttpApiError.ServiceUnavailable =>
+  e._tag === "PersistenceUnavailable"
+    ? new CustomHttpApiError.ServiceUnavailable({ message: "Auth store is unavailable" })
+    : new CustomHttpApiError.Unauthorized();
+
 export const UserAuthMiddlewareLive = Layer.effect(
   UserAuthMiddleware,
   Effect.gen(function* () {
@@ -40,10 +50,9 @@ export const UserAuthMiddlewareLive = Layer.effect(
       const verified = codec.verify(raw);
       if (verified === null) return yield* Effect.fail(new CustomHttpApiError.Unauthorized());
       const sessionId = SessionId.make(verified);
-      const session = yield* queryBus.execute(FindSessionQuery.make({ sessionId })).pipe(
-        Effect.provideService(SessionRepository, sessions),
-        Effect.mapError(() => new CustomHttpApiError.Unauthorized()),
-      );
+      const session = yield* queryBus
+        .execute(FindSessionQuery.make({ sessionId }))
+        .pipe(Effect.provideService(SessionRepository, sessions), Effect.mapError(toAuthError));
       // Sliding-TTL refresh, fire-and-forget on the request fiber. The
       // command's own throttle decides whether to write; failures are
       // benign races (revoked / removed mid-flight) and are swallowed by
@@ -57,7 +66,7 @@ export const UserAuthMiddlewareLive = Layer.effect(
           }),
         )
         .pipe(Effect.provideService(SessionRepository, sessions));
-      const permissions = yield* perms.get(session.userId);
+      const permissions = yield* perms.get(session.userId).pipe(Effect.mapError(toAuthError));
       return {
         sessionId: session.id,
         userId: session.userId,

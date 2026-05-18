@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 
 import { DeleteUserCommand } from "@/modules/user/commands/delete-user-command.js";
 import { CommandBus } from "@/platform/ddd/command-bus.js";
-import { type EndpointRequest } from "@/platform/http-endpoint.js";
+import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 export const deleteEndpoint = (request: EndpointRequest<typeof UserContract.Group, "delete">) =>
   Effect.gen(function* () {
@@ -18,5 +18,6 @@ export const deleteEndpoint = (request: EndpointRequest<typeof UserContract.Grou
         }),
       ),
     ),
+    recoverPersistenceUnavailable,
     Effect.withSpan("UserLive.delete"),
   );

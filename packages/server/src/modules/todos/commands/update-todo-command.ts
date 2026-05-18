@@ -5,6 +5,7 @@ import { type Todo } from "@/modules/todos/domain/todo.js";
 import { type TodoNotFound } from "@/modules/todos/domain/todo-errors.js";
 import { TodoId } from "@/modules/todos/domain/todo-id.js";
 import { type TodosRepository } from "@/modules/todos/domain/todo-repository.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
@@ -20,7 +21,11 @@ export const updateTodoCommandSpanAttributes: SpanAttributesExtractor<UpdateTodo
   cmd,
 ) => ({ "todo.id": cmd.todoId, "todo.completed": cmd.completed, "user.id": cmd.userId });
 
-export type UpdateTodoOutput = Effect.Effect<Todo, TodoNotFound, TodosRepository>;
+export type UpdateTodoOutput = Effect.Effect<
+  Todo,
+  TodoNotFound | PersistenceUnavailable,
+  TodosRepository
+>;
 
 declare module "@/platform/ddd/command-bus.js" {
   interface CommandRegistry {

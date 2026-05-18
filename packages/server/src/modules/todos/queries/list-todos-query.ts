@@ -3,6 +3,7 @@ import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 import { type TodoId } from "@/modules/todos/domain/todo-id.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 
 export const ListTodosQuery = Schema.TaggedStruct("ListTodosQuery", {});
@@ -20,7 +21,11 @@ export type ListTodosResult = {
   readonly todos: ReadonlyArray<ListTodosTodoView>;
 };
 
-export type ListTodosOutput = Effect.Effect<ListTodosResult, never, Database.Database>;
+export type ListTodosOutput = Effect.Effect<
+  ListTodosResult,
+  PersistenceUnavailable,
+  Database.Database
+>;
 
 declare module "@/platform/ddd/query-bus.js" {
   interface QueryRegistry {

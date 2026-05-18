@@ -49,6 +49,9 @@ export class PublicGroup extends HttpApiGroup.make("auth")
       .addSuccess(Schema.Void)
       .addError(CustomHttpApiError.InternalServerError),
   )
+  // Callback talks to the DB (SignInCommand persists a session). Transient
+  // store failure surfaces here as 503 — see UserContract for rationale.
+  .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/auth") {}
 
 // ==========================================
@@ -58,4 +61,6 @@ export class PublicGroup extends HttpApiGroup.make("auth")
 export class PrivateGroup extends HttpApiGroup.make("authSession")
   .middleware(UserAuthMiddleware)
   .add(HttpApiEndpoint.get("me", "/me").addSuccess(CurrentUserResponse))
+  // Group-wide 503 surface — see UserContract for rationale.
+  .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/auth") {}

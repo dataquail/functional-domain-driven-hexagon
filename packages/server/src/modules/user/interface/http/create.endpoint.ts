@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 
 import { CreateUserCommand } from "@/modules/user/commands/create-user-command.js";
 import { CommandBus } from "@/platform/ddd/command-bus.js";
-import { type EndpointRequest } from "@/platform/http-endpoint.js";
+import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 export const createEndpoint = (request: EndpointRequest<typeof UserContract.Group, "create">) =>
   Effect.gen(function* () {
@@ -26,5 +26,6 @@ export const createEndpoint = (request: EndpointRequest<typeof UserContract.Grou
         }),
       ),
     ),
+    recoverPersistenceUnavailable,
     Effect.withSpan("UserLive.create"),
   );

@@ -26,7 +26,19 @@ export const UserEventAdapterLive = Layer.effectDiscard(
     const bus = yield* DomainEventBus;
     const repo = yield* WalletRepository;
     yield* bus.subscribe(UserCreated, (event) =>
-      handleUserCreated(toTrigger(event)).pipe(Effect.provideService(WalletRepository, repo)),
+      handleUserCreated(toTrigger(event)).pipe(
+        Effect.provideService(WalletRepository, repo),
+        // The bus contract (`subscribe` returns `Effect<void>`) requires
+        // handlers with no typed error channel: per ADR-0007, subscriber
+        // failures roll back the publisher's transaction via the defect
+        // path. The handler now propagates `PersistenceUnavailable` (since
+        // the wallet repo can fail transiently); `Effect.orDie` demotes
+        // that to a defect so the rollback still happens, at the cost of
+        // collapsing 503 into 500 for the *cross-module* failure case.
+        // A direct `UserRepository` transient failure still surfaces as
+        // 503 because that flows through the command's typed channel.
+        Effect.orDie,
+      ),
     );
   }),
 );

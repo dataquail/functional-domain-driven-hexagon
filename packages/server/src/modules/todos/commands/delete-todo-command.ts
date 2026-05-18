@@ -4,6 +4,7 @@ import * as Schema from "effect/Schema";
 import { type TodoNotFound } from "@/modules/todos/domain/todo-errors.js";
 import { TodoId } from "@/modules/todos/domain/todo-id.js";
 import { type TodosRepository } from "@/modules/todos/domain/todo-repository.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
@@ -17,7 +18,11 @@ export const deleteTodoCommandSpanAttributes: SpanAttributesExtractor<DeleteTodo
   cmd,
 ) => ({ "todo.id": cmd.todoId, "user.id": cmd.userId });
 
-export type DeleteTodoOutput = Effect.Effect<void, TodoNotFound, TodosRepository>;
+export type DeleteTodoOutput = Effect.Effect<
+  void,
+  TodoNotFound | PersistenceUnavailable,
+  TodosRepository
+>;
 
 declare module "@/platform/ddd/command-bus.js" {
   interface CommandRegistry {

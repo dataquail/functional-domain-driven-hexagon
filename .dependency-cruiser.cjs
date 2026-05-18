@@ -46,12 +46,12 @@ module.exports = {
       name: "domain-isolation",
       severity: "error",
       comment:
-        "Module domain may only import from its own folder, effect (external), and the DDD shared kernel (`platform/ddd/domain-event.ts` for the event factory; `platform/ddd/span-attributable.ts` for the cross-cutting `SpanAttributesExtractor` type used by event extractor signatures; `platform/ids/` for branded entity IDs referenced cross-module — see ADR-0002). No contracts, no cross-module domain, no infrastructure/commands/queries/event-handlers/interface.",
+        "Module domain may only import from its own folder, effect (external), and the DDD shared kernel (`platform/ddd/domain-event.ts` for the event factory; `platform/ddd/span-attributable.ts` for the cross-cutting `SpanAttributesExtractor` type used by event extractor signatures; `platform/ddd/persistence-unavailable.ts` for the abstract transient-store port-level error every repository channel includes; `platform/ids/` for branded entity IDs referenced cross-module — see ADR-0002). No contracts, no cross-module domain, no infrastructure/commands/queries/event-handlers/interface.",
       from: { path: "^packages/server/src/modules/[^/]+/domain/" },
       to: {
         path: "^packages/",
         pathNot:
-          "/domain/|^packages/server/src/platform/ddd/(domain-event|span-attributable)\\.ts$|^packages/server/src/platform/ids/",
+          "/domain/|^packages/server/src/platform/ddd/(domain-event|span-attributable|persistence-unavailable)\\.ts$|^packages/server/src/platform/ids/",
       },
     },
     {

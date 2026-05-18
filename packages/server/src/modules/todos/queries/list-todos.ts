@@ -7,6 +7,7 @@ import {
   type ListTodosQuery,
   type ListTodosTodoView,
 } from "@/modules/todos/queries/list-todos-query.js";
+import { PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
 
 const toView = (row: RowSchemas.TodoRow): ListTodosTodoView => ({
   id: TodoId.make(row.id),
@@ -23,6 +24,11 @@ export const listTodos = (_query: ListTodosQuery): ListTodosOutput =>
           SELECT * FROM todos ORDER BY created_at DESC
         `),
       )
-      .pipe(Effect.catchTag("DatabaseError", Effect.die));
+      .pipe(
+        Effect.catchTag("DatabaseError", Effect.die),
+        Effect.catchTag("DatabaseUnavailable", (e) =>
+          Effect.fail(new PersistenceUnavailable({ message: e.message })),
+        ),
+      );
     return { todos: rows.map(toView) };
   });
