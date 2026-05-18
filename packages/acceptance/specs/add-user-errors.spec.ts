@@ -8,7 +8,7 @@ const DATABASE_URL_TEST =
   "postgresql://postgres:postgres@localhost:5432/effect-monorepo-test";
 
 test.beforeEach(async () => {
-  await truncate(DATABASE_URL_TEST, ["wallets", "users"]);
+  await truncate(DATABASE_URL_TEST, ["wallet.wallets", "user.users"]);
 });
 
 // Negative-path acceptance coverage. The Synapse acceptance-testing guide is

@@ -8,7 +8,7 @@ const DATABASE_URL_TEST =
   "postgresql://postgres:postgres@localhost:5432/effect-monorepo-test";
 
 test.beforeEach(async () => {
-  await truncate(DATABASE_URL_TEST, ["todos"]);
+  await truncate(DATABASE_URL_TEST, ["todos.todos"]);
 });
 
 test("a todo can be added from the index page", async ({ page }) => {

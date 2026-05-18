@@ -48,7 +48,7 @@ export class PermissionsResolver extends Effect.Service<PermissionsResolver>()(
       const get = db.makeQuery((execute, userId: UserId) =>
         execute((client) =>
           client.maybeOne(sql.type(RoleRowStd)`
-            SELECT role FROM users WHERE id = ${userId}
+            SELECT role FROM "user".users WHERE id = ${userId}
           `),
         ).pipe(
           Effect.map((row) => (row === null ? guestPermissions : forRole(row.role))),

@@ -25,7 +25,7 @@ const insertUserRow = Effect.gen(function* () {
   const db = yield* Database.Database;
   yield* db.execute((client) =>
     client.query(sql.unsafe`
-      INSERT INTO users (id, email, role, country, street, postal_code, created_at, updated_at)
+      INSERT INTO "user".users (id, email, role, country, street, postal_code, created_at, updated_at)
       VALUES (${userId}, 'admin@example.com', 'admin', 'N/A', 'N/A', 'N/A', now(), now())
     `),
   );
@@ -45,7 +45,7 @@ const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("SessionRepositoryLive (integration)", () => {
   beforeEach(async () => {
-    await Effect.runPromise(truncate("users").pipe(Effect.provide(TestDatabaseLive)));
+    await Effect.runPromise(truncate("user.users").pipe(Effect.provide(TestDatabaseLive)));
   });
 
   it.effect("insert + findById round-trips a Session through the DB", () =>

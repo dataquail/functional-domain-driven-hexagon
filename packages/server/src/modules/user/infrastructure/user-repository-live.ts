@@ -20,7 +20,7 @@ export const UserRepositoryLive = Layer.effect(
       const row = UserMapper.toPersistence(user);
       return execute((client) =>
         client.query(sql.unsafe`
-          INSERT INTO users (id, email, role, country, street, postal_code, created_at, updated_at)
+          INSERT INTO "user".users (id, email, role, country, street, postal_code, created_at, updated_at)
           VALUES (
             ${row.id},
             ${row.email},
@@ -48,7 +48,7 @@ export const UserRepositoryLive = Layer.effect(
       const row = UserMapper.toPersistence(user);
       return execute((client) =>
         client.maybeOne(sql.type(RowSchemas.UserRowStd)`
-          UPDATE users SET
+          UPDATE "user".users SET
             email = ${row.email},
             role = ${row.role},
             country = ${row.country},
@@ -70,7 +70,7 @@ export const UserRepositoryLive = Layer.effect(
     const remove = db.makeQuery((execute, id: UserId) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.UserRowStd)`
-          DELETE FROM users WHERE id = ${id} RETURNING *
+          DELETE FROM "user".users WHERE id = ${id} RETURNING *
         `),
       ).pipe(
         orFail(() => new UserNotFound({ userId: id })),
@@ -84,7 +84,7 @@ export const UserRepositoryLive = Layer.effect(
     const findById = db.makeQuery((execute, id: UserId) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.UserRowStd)`
-          SELECT * FROM users WHERE id = ${id}
+          SELECT * FROM "user".users WHERE id = ${id}
         `),
       ).pipe(
         orFail(() => new UserNotFound({ userId: id })),
@@ -98,7 +98,7 @@ export const UserRepositoryLive = Layer.effect(
     const findByEmail = db.makeQuery((execute, email: string) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.UserRowStd)`
-          SELECT * FROM users WHERE email = ${email}
+          SELECT * FROM "user".users WHERE email = ${email}
         `),
       ).pipe(
         Effect.map((row) => (row === null ? Option.none() : Option.some(UserMapper.toDomain(row)))),

@@ -20,7 +20,7 @@ export const WalletRepositoryLive = Layer.effect(
       const row = WalletMapper.toPersistence(wallet);
       return execute((client) =>
         client.query(sql.unsafe`
-          INSERT INTO wallets (id, user_id, balance, created_at, updated_at)
+          INSERT INTO wallet.wallets (id, user_id, balance, created_at, updated_at)
           VALUES (
             ${row.id},
             ${row.user_id},
@@ -44,7 +44,7 @@ export const WalletRepositoryLive = Layer.effect(
     const findByUserId = db.makeQuery((execute, userId: UserId) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.WalletRowStd)`
-          SELECT * FROM wallets WHERE user_id = ${userId}
+          SELECT * FROM wallet.wallets WHERE user_id = ${userId}
         `),
       ).pipe(
         Effect.map((row) =>

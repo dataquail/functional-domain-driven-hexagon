@@ -12,7 +12,7 @@ test.beforeEach(async () => {
   // initialization, not cleanup"). users + wallets together because the
   // wallet event subscriber writes synchronously inside the create-user
   // transaction.
-  await truncate(DATABASE_URL_TEST, ["wallets", "users"]);
+  await truncate(DATABASE_URL_TEST, ["wallet.wallets", "user.users"]);
 });
 
 test("a user can be created from the users page", async ({ page }) => {

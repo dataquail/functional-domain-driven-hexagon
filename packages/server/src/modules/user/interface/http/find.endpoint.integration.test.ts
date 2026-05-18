@@ -17,7 +17,7 @@ const basePayload = {
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("GET /users (integration)", () => {
-  const { run } = useServerTestRuntime(["users"]);
+  const { run } = useServerTestRuntime(["user.users"]);
 
   it("returns a paginated list after creates", async () => {
     await run(

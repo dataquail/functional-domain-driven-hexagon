@@ -35,12 +35,12 @@ export const findUsers = (query: FindUsersQuery): FindUsersOutput =>
       .execute((client) =>
         Promise.all([
           client.any(sql.type(RowSchemas.UserRowStd)`
-            SELECT * FROM users
+            SELECT * FROM "user".users
             ORDER BY created_at DESC
             LIMIT ${query.pageSize} OFFSET ${offset}
           `),
           client.one(sql.type(CountRowStd)`
-            SELECT COUNT(*)::int AS value FROM users
+            SELECT COUNT(*)::int AS value FROM "user".users
           `),
         ]),
       )

@@ -41,7 +41,7 @@ const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("findUsers (integration)", () => {
   beforeEach(async () => {
-    await Effect.runPromise(truncate("users").pipe(Effect.provide(TestDatabaseLive)));
+    await Effect.runPromise(truncate("user.users").pipe(Effect.provide(TestDatabaseLive)));
   });
 
   it.effect("returns rows ordered by created_at desc with paging metadata", () =>

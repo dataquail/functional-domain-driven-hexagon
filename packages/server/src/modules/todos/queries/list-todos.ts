@@ -21,7 +21,7 @@ export const listTodos = (_query: ListTodosQuery): ListTodosOutput =>
     const rows = yield* db
       .execute((client) =>
         client.any(sql.type(RowSchemas.TodoRowStd)`
-          SELECT * FROM todos ORDER BY created_at DESC
+          SELECT * FROM todos.todos ORDER BY created_at DESC
         `),
       )
       .pipe(

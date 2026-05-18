@@ -2,6 +2,7 @@
 import storybook from "eslint-plugin-storybook";
 
 /* eslint-disable */
+import dataBoundaries from "@synapsestudios/eslint-plugin-data-boundaries";
 import { fixupPluginRules } from "@eslint/compat";
 import { FlatCompat } from "@eslint/eslintrc";
 import js from "@eslint/js";
@@ -404,6 +405,25 @@ export default [
     files: ["packages/server/**/*.{ts,tsx,js,jsx}"],
     rules: {
       "no-deep-relative-imports/no-deep-relative-imports": "error",
+    },
+  },
+  {
+    // ADR-0021: each module owns its DB schema. App SQL must address its own
+    // schema only ("user".users, todos.todos, etc). Cross-schema reads belong
+    // in the synchronous event-bus seam, not in repository SQL.
+    // The plugin uses `/modules/<name>/` to derive the schema for a given file.
+    // test-utils/ is intentionally excluded — TRUNCATE in the test harness
+    // legitimately crosses schemas to reset state between tests.
+    files: ["packages/server/src/modules/**/*.{ts,tsx}"],
+    ignores: ["**/*.test.ts", "**/*.test.tsx", "**/*.integration.test.ts"],
+    plugins: {
+      "@synapsestudios/data-boundaries": dataBoundaries,
+    },
+    rules: {
+      "@synapsestudios/data-boundaries/no-cross-schema-slonik-access": [
+        "error",
+        { modulePath: "/modules/" },
+      ],
     },
   },
   {

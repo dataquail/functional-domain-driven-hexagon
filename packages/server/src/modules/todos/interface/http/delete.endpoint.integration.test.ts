@@ -13,7 +13,7 @@ import { hasTestDatabase } from "@/test-utils/test-database.js";
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("DELETE /todos/:id (integration)", () => {
-  const { run } = useServerTestRuntime(["todos"]);
+  const { run } = useServerTestRuntime(["todos.todos"]);
 
   it("removes the todo", async () => {
     await run(
