@@ -57,13 +57,18 @@ export const playwrightUsersDriver = (page: Page): UsersPageDriver => {
     },
 
     expectToast: async (kind: ToastKind, message: string) => {
-      // sonner renders toasts as <li role="status"> elements under
-      // a region. Assert by text + role; sonner doesn't carry a
-      // stable kind attribute we can pivot on at this tier, so the
-      // `kind` parameter is documentation-only here.
-      const toast = page.getByRole("status").filter({ hasText: message });
+      // sonner v2 renders each toast as `<li data-sonner-toast
+      // data-type="success|error|...">`. Earlier this driver looked for
+      // `role="status"`, but sonner v2 doesn't set that role — happy-path
+      // specs that only call `expectUserInList` never exercised this
+      // method, so the bug stayed hidden until a negative-path spec ran
+      // it. `data-sonner-toast` is sonner's stable attribute and
+      // `data-type` lets us pin the kind that was previously
+      // documentation-only.
+      const toast = page
+        .locator(`[data-sonner-toast][data-type="${kind}"]`)
+        .filter({ hasText: message });
       await expect(toast).toBeVisible();
-      void kind;
     },
   };
 };
