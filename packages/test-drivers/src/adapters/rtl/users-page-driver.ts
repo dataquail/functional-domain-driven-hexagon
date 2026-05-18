@@ -35,9 +35,11 @@ export const rtlUsersDriver = (
 ): UsersPageDriver => {
   const user = userEvent.setup();
   // sonner's <Toaster /> renders to document.body, not inside
-  // `rendered.container`. Use `within(document.body)` to find it.
+  // `rendered.container`. The toast lookup uses `document.querySelectorAll`
+  // directly against `[data-sonner-toast]` rather than going through
+  // `within(document.body)`, because sonner v2 doesn't tag its toasts
+  // with `role="status"` (the API `within` is otherwise good at).
   const formScope = within(rendered.container);
-  const bodyScope = within(document.body);
 
   const fieldInput = (field: CreateUserField) => formScope.getByTestId(testIdByField[field]);
 
@@ -99,10 +101,16 @@ export const rtlUsersDriver = (
           }
           return;
         }
-        // sonner default: each toast renders as a <li> under a region
-        // with role="status". Filter by message text.
-        const matches = bodyScope.queryAllByText(message, { exact: false });
-        if (matches.length === 0) {
+        // sonner v2 renders `<li data-sonner-toast data-type="success|error|..."`
+        // and the parent region is `role="region"`, not `role="status"`.
+        // Match by stable attribute + kind + text so a mis-typed toast
+        // (e.g. error rendered as success) fails the assertion.
+        const toasts = document.querySelectorAll(`[data-sonner-toast][data-type="${kind}"]`);
+        const lowered = message.toLowerCase();
+        const match = Array.from(toasts).some((t) =>
+          (t.textContent ?? "").toLowerCase().includes(lowered),
+        );
+        if (!match) {
           throw new Error(`expected ${kind} toast "${message}" in DOM, none found`);
         }
       });
