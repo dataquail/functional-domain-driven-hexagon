@@ -65,20 +65,21 @@ const insertAdminRow = async ({
     await client.query("BEGIN");
     const newId = randomUUID();
     await client.query(
-      `INSERT INTO users (id, email, role, country, street, postal_code, created_at, updated_at)
+      `INSERT INTO "user".users (id, email, role, country, street, postal_code, created_at, updated_at)
        VALUES ($1, $2, 'admin', 'N/A', 'N/A', 'N/A', now(), now())
        ON CONFLICT (email) DO UPDATE SET role = 'admin'`,
       [newId, adminEmail],
     );
-    const userRow = await client.query<{ id: string }>(`SELECT id FROM users WHERE email = $1`, [
-      adminEmail,
-    ]);
+    const userRow = await client.query<{ id: string }>(
+      `SELECT id FROM "user".users WHERE email = $1`,
+      [adminEmail],
+    );
     const finalUserId = userRow.rows[0]?.id;
     if (finalUserId === undefined) {
       throw new Error(`[acceptance/admin-seed] failed to read back admin user_id`);
     }
     await client.query(
-      `INSERT INTO auth_identities (subject, user_id, provider, created_at)
+      `INSERT INTO auth.auth_identities (subject, user_id, provider, created_at)
        VALUES ($1, $2, 'zitadel', now())
        ON CONFLICT (subject) DO NOTHING`,
       [subject, finalUserId],

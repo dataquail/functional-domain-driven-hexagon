@@ -22,11 +22,16 @@ const assertTestDbName = (url: string): string => {
   return url;
 };
 
+// Kept in sync with packages/database/migrations/V00*__create_schema_*.sql
+// (ADR-0021). Each module owns its own schema.
+const MODULE_SCHEMAS = ["user", "todos", "wallet", "auth"] as const;
+
 export const runMigrations = async (databaseUrl: string): Promise<void> => {
   assertTestDbName(databaseUrl);
   const pool = new pg.Pool({ connectionString: databaseUrl });
   try {
-    await pool.query(`DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;`);
+    const dropList = MODULE_SCHEMAS.map((s) => `"${s}"`).join(", ");
+    await pool.query(`DROP SCHEMA IF EXISTS ${dropList} CASCADE;`);
     const entries = await fs.readdir(migrationsFolder);
     const sqlFiles = entries
       .filter((f) => /^V\d+__.*\.sql$/.test(f))
@@ -44,8 +49,18 @@ export const runMigrations = async (databaseUrl: string): Promise<void> => {
   }
 };
 
-// Truncate is auth-aware: when a spec asks to clear `users`, we DELETE non-
-// admin rows instead of TRUNCATE'ing — the admin's session and
+const splitQualified = (qualified: string): readonly [string, string] => {
+  const [schema, table, ...rest] = qualified.split(".");
+  if (schema === undefined || table === undefined || rest.length > 0) {
+    throw new Error(
+      `[acceptance/test-utils] expected "schema.table", got "${qualified}". Acceptance specs must qualify table names with their owning module schema.`,
+    );
+  }
+  return [schema, table];
+};
+
+// Truncate is auth-aware: when a spec asks to clear `user.users`, we DELETE
+// non-admin rows instead of TRUNCATE'ing — the admin's session and
 // `auth_identities` row would otherwise CASCADE-delete and break the
 // storageState cookie for the next spec. The admin email is read from
 // ZITADEL_ADMIN_EMAIL (the same value as the seeded Zitadel user / the row
@@ -57,18 +72,20 @@ export const truncate = async (
   assertTestDbName(databaseUrl);
   if (tables.length === 0) return;
   const adminEmail = process.env.ZITADEL_ADMIN_EMAIL ?? "admin@example.com";
+  const qualified = tables.map(splitQualified);
   const pool = new pg.Pool({ connectionString: databaseUrl });
   try {
-    if (tables.includes("users")) {
-      await pool.query(`DELETE FROM users WHERE email != $1`, [adminEmail]);
-      const others = tables.filter((t) => t !== "users");
+    const usersEntry = qualified.find(([s, t]) => s === "user" && t === "users");
+    if (usersEntry !== undefined) {
+      await pool.query(`DELETE FROM "user".users WHERE email != $1`, [adminEmail]);
+      const others = qualified.filter(([s, t]) => !(s === "user" && t === "users"));
       if (others.length > 0) {
-        const list = others.map((t) => `"${t}"`).join(", ");
+        const list = others.map(([s, t]) => `"${s}"."${t}"`).join(", ");
         await pool.query(`TRUNCATE TABLE ${list} CASCADE`);
       }
       return;
     }
-    const list = tables.map((t) => `"${t}"`).join(", ");
+    const list = qualified.map(([s, t]) => `"${s}"."${t}"`).join(", ");
     await pool.query(`TRUNCATE TABLE ${list} CASCADE`);
   } finally {
     await pool.end();
