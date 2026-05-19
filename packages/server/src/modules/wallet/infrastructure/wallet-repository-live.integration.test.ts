@@ -36,8 +36,8 @@ const seedUserRow = (id: UserId) =>
     yield* db
       .execute((c) =>
         c.query(sql.unsafe`
-          INSERT INTO "user".users (id, email, role, country, street, postal_code, created_at, updated_at)
-          VALUES (${id}, ${id + "@example.com"}, 'guest', 'USA', '123 Main', '12345', NOW(), NOW())
+          INSERT INTO "user".users (id, email, is_super_admin, country, street, postal_code, created_at, updated_at)
+          VALUES (${id}, ${id + "@example.com"}, false, 'USA', '123 Main', '12345', NOW(), NOW())
         `),
       )
       .pipe(Effect.orDie);

@@ -1,6 +1,7 @@
-export { ChangeUserRoleCommand } from "./commands/change-user-role-command.js";
 export { CreateUserCommand } from "./commands/create-user-command.js";
 export { DeleteUserCommand } from "./commands/delete-user-command.js";
+export { DemoteFromSuperAdminCommand } from "./commands/demote-from-super-admin-command.js";
+export { PromoteToSuperAdminCommand } from "./commands/promote-to-super-admin-command.js";
 export { userCommandHandlers } from "./commands/user-command-handlers.js";
 export { UserCreated } from "./domain/user-events.js";
 export { FindUsersQuery } from "./queries/find-users-query.js";

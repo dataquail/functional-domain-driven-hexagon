@@ -18,17 +18,18 @@ const basePayload = {
 
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
-suite("PUT /users/:id/role (integration)", () => {
+suite("DELETE /users/:id/super-admin (integration)", () => {
   const { run } = useServerTestRuntime(["user.users"]);
 
-  it("promotes the user to admin", async () => {
+  it("demotes the user from super admin", async () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         const { id } = yield* client.user.create({ payload: basePayload });
-        yield* client.user.changeRole({ path: { id }, payload: { role: "admin" } });
+        yield* client.user.promoteToSuperAdmin({ path: { id } });
+        yield* client.user.demoteFromSuperAdmin({ path: { id } });
         const res = yield* client.user.find({ urlParams: { page: 1, pageSize: 10 } });
-        deepStrictEqual(res.users[0]?.role, "admin");
+        deepStrictEqual(res.users[0]?.isSuperAdmin, false);
       }),
     );
   });
@@ -38,9 +39,8 @@ suite("PUT /users/:id/role (integration)", () => {
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
-          client.user.changeRole({
+          client.user.demoteFromSuperAdmin({
             path: { id: "00000000-0000-0000-0000-000000000000" as never },
-            payload: { role: "admin" },
           }),
         );
         ok(Exit.isFailure(exit));

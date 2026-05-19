@@ -65,9 +65,9 @@ const insertAdminRow = async ({
     await client.query("BEGIN");
     const newId = randomUUID();
     await client.query(
-      `INSERT INTO "user".users (id, email, role, country, street, postal_code, created_at, updated_at)
-       VALUES ($1, $2, 'admin', 'N/A', 'N/A', 'N/A', now(), now())
-       ON CONFLICT (email) DO UPDATE SET role = 'admin'`,
+      `INSERT INTO "user".users (id, email, is_super_admin, country, street, postal_code, created_at, updated_at)
+       VALUES ($1, $2, true, 'N/A', 'N/A', 'N/A', now(), now())
+       ON CONFLICT (email) DO UPDATE SET is_super_admin = true`,
       [newId, adminEmail],
     );
     const userRow = await client.query<{ id: string }>(

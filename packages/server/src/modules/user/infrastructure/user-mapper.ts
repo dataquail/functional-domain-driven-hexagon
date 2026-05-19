@@ -4,7 +4,6 @@ import * as DateTime from "effect/DateTime";
 import { UserId } from "@/platform/ids/user-id.js";
 
 import { User } from "../domain/user.aggregate.js";
-import { type UserRole } from "../domain/user-role.js";
 import { Address } from "../domain/value-objects/address.js";
 
 type Row = RowSchemas.UserRow;
@@ -13,7 +12,7 @@ export const toDomain = (row: Row): User =>
   new User({
     id: UserId.make(row.id),
     email: row.email,
-    role: row.role as UserRole,
+    isSuperAdmin: row.is_super_admin,
     address: new Address({
       country: row.country,
       street: row.street,
@@ -26,7 +25,7 @@ export const toDomain = (row: Row): User =>
 export type PersistenceRow = {
   readonly id: string;
   readonly email: string;
-  readonly role: string;
+  readonly is_super_admin: boolean;
   readonly country: string;
   readonly street: string;
   readonly postal_code: string;
@@ -37,7 +36,7 @@ export type PersistenceRow = {
 export const toPersistence = (user: User): PersistenceRow => ({
   id: user.id,
   email: user.email,
-  role: user.role,
+  is_super_admin: user.isSuperAdmin,
   country: user.address.country,
   street: user.address.street,
   postal_code: user.address.postalCode,

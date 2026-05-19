@@ -7,35 +7,23 @@ import { type UserId } from "@/platform/ids/user-id.js";
 
 import { translatePersistenceUnavailable } from "../translate-persistence-unavailable.js";
 
-// Slice-scope: read users.role and map role → permissions via a static map.
-// Everything currently flows through the existing __test:* permission set —
-// when real domain permissions are introduced, expand the map below.
+// Slice-scope: read users.is_super_admin and map to permissions via a
+// static map. Everything currently flows through the existing __test:*
+// permission set — when real domain permissions are introduced, expand the
+// map below. Per ADR-0021 plan: ACL will replace this entirely in Phase 4.
 
-const adminPermissions: ReadonlySet<Permission> = new Set([
+const superAdminPermissions: ReadonlySet<Permission> = new Set([
   "__test:read",
   "__test:manage",
   "__test:delete",
 ] satisfies Array<Permission>);
 
-const moderatorPermissions: ReadonlySet<Permission> = new Set([
-  "__test:read",
-  "__test:manage",
-] satisfies Array<Permission>);
-
-const guestPermissions: ReadonlySet<Permission> = new Set([
+const memberPermissions: ReadonlySet<Permission> = new Set([
   "__test:read",
 ] satisfies Array<Permission>);
 
-const forRole = (role: string): ReadonlySet<Permission> => {
-  switch (role) {
-    case "admin":
-      return adminPermissions;
-    case "moderator":
-      return moderatorPermissions;
-    default:
-      return guestPermissions;
-  }
-};
+const forFlag = (isSuperAdmin: boolean): ReadonlySet<Permission> =>
+  isSuperAdmin ? superAdminPermissions : memberPermissions;
 
 export class PermissionsResolver extends Effect.Service<PermissionsResolver>()(
   "PermissionsResolver",
@@ -43,15 +31,15 @@ export class PermissionsResolver extends Effect.Service<PermissionsResolver>()(
     accessors: true,
     effect: Effect.gen(function* () {
       const db = yield* Database.Database;
-      const RoleRow = Schema.Struct({ role: Schema.String });
-      const RoleRowStd = Schema.standardSchemaV1(RoleRow);
+      const FlagRow = Schema.Struct({ is_super_admin: Schema.Boolean });
+      const FlagRowStd = Schema.standardSchemaV1(FlagRow);
       const get = db.makeQuery((execute, userId: UserId) =>
         execute((client) =>
-          client.maybeOne(sql.type(RoleRowStd)`
-            SELECT role FROM "user".users WHERE id = ${userId}
+          client.maybeOne(sql.type(FlagRowStd)`
+            SELECT is_super_admin FROM "user".users WHERE id = ${userId}
           `),
         ).pipe(
-          Effect.map((row) => (row === null ? guestPermissions : forRole(row.role))),
+          Effect.map((row) => (row === null ? memberPermissions : forFlag(row.is_super_admin))),
           Effect.catchTag("DatabaseError", Effect.die),
           translatePersistenceUnavailable,
           Effect.withSpan("PermissionsResolver.get"),

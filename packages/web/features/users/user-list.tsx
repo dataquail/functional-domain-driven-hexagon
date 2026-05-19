@@ -36,9 +36,11 @@ export const UserList: React.FC = () => {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="truncate font-medium text-foreground">{user.email}</p>
-                    <Badge variant="secondary" className="capitalize">
-                      {user.role}
-                    </Badge>
+                    {user.isSuperAdmin === true ? (
+                      <Badge variant="secondary" className="capitalize">
+                        super admin
+                      </Badge>
+                    ) : null}
                   </div>
                   <p className="truncate text-xs text-muted-foreground">
                     {user.address.street}, {user.address.postalCode} {user.address.country}

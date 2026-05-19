@@ -12,7 +12,7 @@ const toPaginatedUsersContract = (result: FindUsersResult): UserContract.Paginat
         new UserContract.User({
           id: user.id,
           email: user.email,
-          role: user.role,
+          isSuperAdmin: user.isSuperAdmin,
           address: user.address,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,

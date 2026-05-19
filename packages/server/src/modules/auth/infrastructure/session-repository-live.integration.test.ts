@@ -25,8 +25,8 @@ const insertUserRow = Effect.gen(function* () {
   const db = yield* Database.Database;
   yield* db.execute((client) =>
     client.query(sql.unsafe`
-      INSERT INTO "user".users (id, email, role, country, street, postal_code, created_at, updated_at)
-      VALUES (${userId}, 'admin@example.com', 'admin', 'N/A', 'N/A', 'N/A', now(), now())
+      INSERT INTO "user".users (id, email, is_super_admin, country, street, postal_code, created_at, updated_at)
+      VALUES (${userId}, 'admin@example.com', true, 'N/A', 'N/A', 'N/A', now(), now())
     `),
   );
 }).pipe(Effect.orDie);

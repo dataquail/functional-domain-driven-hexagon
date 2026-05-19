@@ -1,21 +1,16 @@
 import { UserContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
-import { ChangeUserRoleCommand } from "@/modules/user/commands/change-user-role-command.js";
+import { PromoteToSuperAdminCommand } from "@/modules/user/commands/promote-to-super-admin-command.js";
 import { CommandBus } from "@/platform/ddd/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
-export const changeRoleEndpoint = (
-  request: EndpointRequest<typeof UserContract.Group, "changeRole">,
+export const promoteEndpoint = (
+  request: EndpointRequest<typeof UserContract.Group, "promoteToSuperAdmin">,
 ) =>
   Effect.gen(function* () {
     const commandBus = yield* CommandBus;
-    yield* commandBus.execute(
-      ChangeUserRoleCommand.make({
-        userId: request.path.id,
-        role: request.payload.role,
-      }),
-    );
+    yield* commandBus.execute(PromoteToSuperAdminCommand.make({ userId: request.path.id }));
   }).pipe(
     Effect.catchTag("UserNotFound", (err) =>
       Effect.fail(
@@ -26,5 +21,5 @@ export const changeRoleEndpoint = (
       ),
     ),
     recoverPersistenceUnavailable,
-    Effect.withSpan("UserLive.changeRole"),
+    Effect.withSpan("UserLive.promoteToSuperAdmin"),
   );

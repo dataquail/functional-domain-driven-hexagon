@@ -24,9 +24,9 @@ describe("user fixtures", () => {
   });
 
   it("makeUser() honors overrides", () => {
-    const u = makeUser({ email: "override@example.com", role: "admin" });
+    const u = makeUser({ email: "override@example.com", isSuperAdmin: true });
     expect(u.email).toBe("override@example.com");
-    expect(u.role).toBe("admin");
+    expect(u.isSuperAdmin).toBe(true);
   });
 
   it("makePaginatedUsers() round-trips through UserContract.PaginatedUsers", async () => {

@@ -9,20 +9,16 @@ import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.j
 import { type UnitOfWork } from "@/platform/ddd/unit-of-work.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-export const PromotableRole = Schema.Literal("admin", "moderator");
-export type PromotableRole = typeof PromotableRole.Type;
-
-export const ChangeUserRoleCommand = Schema.TaggedStruct("ChangeUserRoleCommand", {
+export const DemoteFromSuperAdminCommand = Schema.TaggedStruct("DemoteFromSuperAdminCommand", {
   userId: UserId,
-  role: PromotableRole,
 });
-export type ChangeUserRoleCommand = typeof ChangeUserRoleCommand.Type;
+export type DemoteFromSuperAdminCommand = typeof DemoteFromSuperAdminCommand.Type;
 
-export const changeUserRoleCommandSpanAttributes: SpanAttributesExtractor<ChangeUserRoleCommand> = (
-  cmd,
-) => ({ "user.id": cmd.userId, "user.role.target": cmd.role });
+export const demoteFromSuperAdminCommandSpanAttributes: SpanAttributesExtractor<
+  DemoteFromSuperAdminCommand
+> = (cmd) => ({ "user.id": cmd.userId });
 
-export type ChangeUserRoleOutput = Effect.Effect<
+export type DemoteFromSuperAdminOutput = Effect.Effect<
   void,
   UserNotFound | PersistenceUnavailable,
   UserRepository | DomainEventBus | UnitOfWork
@@ -30,9 +26,9 @@ export type ChangeUserRoleOutput = Effect.Effect<
 
 declare module "@/platform/ddd/command-bus.js" {
   interface CommandRegistry {
-    ChangeUserRoleCommand: {
-      readonly command: ChangeUserRoleCommand;
-      readonly output: ChangeUserRoleOutput;
+    DemoteFromSuperAdminCommand: {
+      readonly command: DemoteFromSuperAdminCommand;
+      readonly output: DemoteFromSuperAdminOutput;
     };
   }
 }

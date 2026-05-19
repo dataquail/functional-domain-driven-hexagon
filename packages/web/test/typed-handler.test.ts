@@ -43,7 +43,7 @@ describe("typedHandler", () => {
     const sampleUser = new UserContract.User({
       id: UserId.make("11111111-1111-1111-1111-111111111111"),
       email: "alice@example.com",
-      role: "admin",
+      isSuperAdmin: true,
       address: { country: "US", street: "1 A St", postalCode: "10001" },
       createdAt: fixedDate,
       updatedAt: fixedDate,
@@ -72,7 +72,7 @@ describe("typedHandler", () => {
     expect(result.total).toBe(1);
     expect(result.users).toHaveLength(1);
     expect(result.users[0]?.email).toBe("alice@example.com");
-    expect(result.users[0]?.role).toBe("admin");
+    expect(result.users[0]?.isSuperAdmin).toBe(true);
   });
 
   it("round-trips Users.create success", async () => {

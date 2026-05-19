@@ -5,7 +5,7 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 
 import { UserNotFound } from "@/modules/user/domain/user-errors.js";
-import { type UserRoleChanged } from "@/modules/user/domain/user-events.js";
+import { type UserPromotedToSuperAdmin } from "@/modules/user/domain/user-events.js";
 import { UserRepository } from "@/modules/user/domain/user-repository.js";
 import { Address } from "@/modules/user/domain/value-objects/address.js";
 import { UserRepositoryFake } from "@/modules/user/infrastructure/user-repository-fake.js";
@@ -13,10 +13,10 @@ import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
-import { changeUserRole } from "./change-user-role.js";
-import { ChangeUserRoleCommand } from "./change-user-role-command.js";
 import { createUser } from "./create-user.js";
 import { CreateUserCommand } from "./create-user-command.js";
+import { promoteToSuperAdmin } from "./promote-to-super-admin.js";
+import { PromoteToSuperAdminCommand } from "./promote-to-super-admin-command.js";
 
 const TestLayer = Layer.mergeAll(UserRepositoryFake, RecordingEventBus, IdentityUnitOfWork);
 
@@ -26,8 +26,8 @@ const address = Address.make({
   postalCode: "12345",
 });
 
-describe("changeUserRole", () => {
-  it.effect("promotes to admin and publishes UserRoleChanged with oldRole 'guest'", () =>
+describe("promoteToSuperAdmin", () => {
+  it.effect("flips is_super_admin to true and publishes UserPromotedToSuperAdmin", () =>
     Effect.gen(function* () {
       const repo = yield* UserRepository;
       const rec = yield* RecordedEvents;
@@ -40,32 +40,14 @@ describe("changeUserRole", () => {
         }),
       );
 
-      yield* changeUserRole(ChangeUserRoleCommand.make({ userId: id, role: "admin" }));
+      yield* promoteToSuperAdmin(PromoteToSuperAdminCommand.make({ userId: id }));
 
       const stored = yield* repo.findById(id);
-      deepStrictEqual(stored.role, "admin");
+      deepStrictEqual(stored.isSuperAdmin, true);
 
-      const events = yield* rec.byTag<UserRoleChanged>("UserRoleChanged");
+      const events = yield* rec.byTag<UserPromotedToSuperAdmin>("UserPromotedToSuperAdmin");
       deepStrictEqual(events.length, 1);
-      deepStrictEqual(events[0]?.oldRole, "guest");
-      deepStrictEqual(events[0].newRole, "admin");
-    }).pipe(Effect.provide(TestLayer)),
-  );
-
-  it.effect("promotes to moderator", () =>
-    Effect.gen(function* () {
-      const repo = yield* UserRepository;
-      const id = yield* createUser(
-        CreateUserCommand.make({
-          email: "alice@example.com",
-          country: address.country,
-          street: address.street,
-          postalCode: address.postalCode,
-        }),
-      );
-      yield* changeUserRole(ChangeUserRoleCommand.make({ userId: id, role: "moderator" }));
-      const stored = yield* repo.findById(id);
-      deepStrictEqual(stored.role, "moderator");
+      deepStrictEqual(events[0]?.userId, id);
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -73,7 +55,7 @@ describe("changeUserRole", () => {
     Effect.gen(function* () {
       const unknownId = UserId.make("00000000-0000-0000-0000-000000000000");
       const exit = yield* Effect.exit(
-        changeUserRole(ChangeUserRoleCommand.make({ userId: unknownId, role: "admin" })),
+        promoteToSuperAdmin(PromoteToSuperAdminCommand.make({ userId: unknownId })),
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {

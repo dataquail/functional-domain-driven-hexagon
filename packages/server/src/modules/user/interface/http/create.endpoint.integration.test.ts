@@ -38,7 +38,7 @@ suite("POST /users (integration)", () => {
         const result = yield* queryBus.execute(FindUsersQuery.make({ page: 1, pageSize: 10 }));
         const stored = result.users.find((u) => u.email === basePayload.email);
         ok(stored !== undefined);
-        deepStrictEqual(stored.role, "guest");
+        deepStrictEqual(stored.isSuperAdmin, false);
         deepStrictEqual(stored.id, res.id);
       }),
     );

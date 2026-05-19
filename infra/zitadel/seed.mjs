@@ -2,7 +2,7 @@
 //
 // Responsibilities:
 //   1. Create (idempotent) the project + OIDC application in Zitadel.
-//   2. Pre-seed the bootstrap admin in the app DB so they have role=admin
+//   2. Pre-seed the bootstrap admin in the app DB so they have is_super_admin=true
 //      before their first login. Roles live app-side, so JIT on first login
 //      would otherwise create the admin with the default role and nobody
 //      would be able to grant the admin role to anyone. See plan §3.6.
@@ -338,9 +338,9 @@ async function ensureAdminInAppDb(subject) {
 
     const userId = randomUUID();
     await client.query(
-      `INSERT INTO "user".users (id, email, role, country, street, postal_code, created_at, updated_at)
-       VALUES ($1, $2, 'admin', 'N/A', 'N/A', 'N/A', now(), now())
-       ON CONFLICT (email) DO UPDATE SET role = 'admin'`,
+      `INSERT INTO "user".users (id, email, is_super_admin, country, street, postal_code, created_at, updated_at)
+       VALUES ($1, $2, true, 'N/A', 'N/A', 'N/A', now(), now())
+       ON CONFLICT (email) DO UPDATE SET is_super_admin = true`,
       [userId, adminEmail],
     );
     const userRow = await client.query(`SELECT id FROM "user".users WHERE email = $1`, [

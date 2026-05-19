@@ -7,16 +7,16 @@ import {
   UserAddressUpdated,
   UserCreated,
   UserDeleted,
+  UserDemotedFromSuperAdmin,
   type UserEvent,
-  UserRoleChanged,
+  UserPromotedToSuperAdmin,
 } from "./user-events.js";
-import { UserRole } from "./user-role.js";
 import { Address } from "./value-objects/address.js";
 
 export class User extends Schema.Class<User>("User")({
   id: UserId,
   email: Schema.String,
-  role: UserRole,
+  isSuperAdmin: Schema.Boolean,
   address: Address,
   createdAt: Schema.DateTimeUtc,
   updatedAt: Schema.DateTimeUtc,
@@ -38,7 +38,7 @@ export const create = (input: CreateInput): Result => {
   const user = User.make({
     id: input.id,
     email: input.email,
-    role: "guest",
+    isSuperAdmin: false,
     address: input.address,
     createdAt: input.now,
     updatedAt: input.now,
@@ -60,25 +60,31 @@ export const markDeleted = (user: User): Result => ({
   events: [UserDeleted.make({ userId: user.id })],
 });
 
-export type RoleChangeInput = { readonly now: DateTime.Utc };
+export type SuperAdminInput = { readonly now: DateTime.Utc };
 
-const changeRole = (user: User, newRole: UserRole, input: RoleChangeInput): Result => ({
+export const promoteToSuperAdmin = (user: User, input: SuperAdminInput): Result => ({
   user: User.make({
     id: user.id,
     email: user.email,
-    role: newRole,
+    isSuperAdmin: true,
     address: user.address,
     createdAt: user.createdAt,
     updatedAt: input.now,
   }),
-  events: [UserRoleChanged.make({ userId: user.id, oldRole: user.role, newRole })],
+  events: [UserPromotedToSuperAdmin.make({ userId: user.id })],
 });
 
-export const makeAdmin = (user: User, input: RoleChangeInput): Result =>
-  changeRole(user, "admin", input);
-
-export const makeModerator = (user: User, input: RoleChangeInput): Result =>
-  changeRole(user, "moderator", input);
+export const demoteFromSuperAdmin = (user: User, input: SuperAdminInput): Result => ({
+  user: User.make({
+    id: user.id,
+    email: user.email,
+    isSuperAdmin: false,
+    address: user.address,
+    createdAt: user.createdAt,
+    updatedAt: input.now,
+  }),
+  events: [UserDemotedFromSuperAdmin.make({ userId: user.id })],
+});
 
 export type UpdateAddressInput = {
   readonly country?: string;
@@ -97,7 +103,7 @@ export const updateAddress = (user: User, input: UpdateAddressInput): Result => 
     user: User.make({
       id: user.id,
       email: user.email,
-      role: user.role,
+      isSuperAdmin: user.isSuperAdmin,
       address: newAddress,
       createdAt: user.createdAt,
       updatedAt: input.now,
