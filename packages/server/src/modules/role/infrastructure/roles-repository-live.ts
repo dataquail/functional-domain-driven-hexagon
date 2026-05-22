@@ -1,6 +1,7 @@
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { type Roles } from "@/modules/role/domain/roles.aggregate.js";
 import { RolesRepository } from "@/modules/role/domain/roles-repository.js";
@@ -14,32 +15,48 @@ export const RolesRepositoryLive = Layer.effect(
     const db = yield* Database.Database;
 
     // Aggregate persistence: replace the user's row set with whatever
-    // the aggregate now holds. Two statements (DELETE + INSERTs) sharing
-    // the active TransactionContext — the command handler always wraps
-    // saves in a UnitOfWork, so atomicity is the caller's concern. With
-    // a handful of roles per user the DELETE-then-INSERT shape stays
-    // cheap.
-    const save = db.makeQuery((execute, roles: Roles) =>
+    // the aggregate now holds. The DELETE + N INSERTs must run on the
+    // same connection to be atomic. `db.makeQuery`'s ambient-vs-pool
+    // resolution is per-call, so a bare invocation without an outer
+    // `TransactionContext` would spread the statements across separate
+    // pool connections and lose atomicity.
+    //
+    // Strategy: reuse `TransactionContext` if already in scope (the
+    // command handler wrapped us in `UnitOfWork.run`) so the writes
+    // compose with the outer transaction; otherwise open our own
+    // `db.transaction` so the repo is internally atomic even when
+    // called bare. Either way the statements share one connection.
+    const writeStatements = (roles: Roles) =>
       Effect.gen(function* () {
-        yield* execute((client) =>
+        const tx = yield* Database.TransactionContext;
+        yield* tx((client) =>
           client.query(sql.unsafe`
             DELETE FROM platform.roles WHERE user_id = ${roles.userId}
           `),
         );
         for (const role of roles.roles) {
-          yield* execute((client) =>
+          yield* tx((client) =>
             client.query(sql.unsafe`
               INSERT INTO platform.roles (user_id, role)
               VALUES (${roles.userId}, ${role})
             `),
           );
         }
-      }).pipe(
+      });
+
+    const save = (roles: Roles) =>
+      Effect.serviceOption(Database.TransactionContext).pipe(
+        Effect.flatMap((existing) =>
+          Option.isSome(existing)
+            ? writeStatements(roles).pipe(Database.TransactionContext.provide(existing.value))
+            : db.transaction((tx) =>
+                writeStatements(roles).pipe(Database.TransactionContext.provide(tx)),
+              ),
+        ),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
         Effect.withSpan("RolesRepository.save"),
-      ),
-    );
+      );
 
     const findByUserId = db.makeQuery((execute, userId: UserId) =>
       execute((client) =>
