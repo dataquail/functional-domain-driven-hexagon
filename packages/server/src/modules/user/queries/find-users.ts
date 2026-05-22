@@ -15,7 +15,6 @@ const CountRowStd = Schema.standardSchemaV1(Schema.Struct({ value: Schema.Number
 const toUserView = (row: RowSchemas.UserRow): FindUsersUserView => ({
   id: UserId.make(row.id),
   email: row.email,
-  isSuperAdmin: row.is_super_admin,
   address: {
     country: row.country,
     street: row.street,

@@ -17,7 +17,6 @@ export const makeUser = (overrides: Partial<UserContract.User> = {}): UserContra
   new UserContract.User({
     id: DEFAULT_USER_ID,
     email: "alice@example.com",
-    isSuperAdmin: false,
     address: { country: "US", street: "1 A St", postalCode: "10001" },
     createdAt: FIXED_DATE,
     updatedAt: FIXED_DATE,

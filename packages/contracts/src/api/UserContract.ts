@@ -45,7 +45,6 @@ export type Address = typeof Address.Type;
 export class User extends Schema.Class<User>("User")({
   id: UserId,
   email: Schema.String,
-  isSuperAdmin: Schema.Boolean,
   address: Address,
   createdAt: Schema.DateTimeUtc,
   updatedAt: Schema.DateTimeUtc,
@@ -100,14 +99,16 @@ export class Group extends HttpApiGroup.make("user")
   .add(
     HttpApiEndpoint.post("promoteToSuperAdmin", "/:id/super-admin")
       .setPath(Schema.Struct({ id: UserId }))
-      .addSuccess(Schema.Void)
-      .addError(UserNotFoundError),
+      .addError(CustomHttpApiError.Forbidden)
+      .addError(UserNotFoundError)
+      .addSuccess(Schema.Void),
   )
   .add(
     HttpApiEndpoint.del("demoteFromSuperAdmin", "/:id/super-admin")
       .setPath(Schema.Struct({ id: UserId }))
-      .addSuccess(Schema.Void)
-      .addError(UserNotFoundError),
+      .addError(CustomHttpApiError.Forbidden)
+      .addError(UserNotFoundError)
+      .addSuccess(Schema.Void),
   )
   // Group-wide: every endpoint here can 503 on transient DB failure. The
   // typed channel lets endpoint handlers `Effect.catchTag` the

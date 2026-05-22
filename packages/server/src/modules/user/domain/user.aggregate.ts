@@ -3,20 +3,12 @@ import * as Schema from "effect/Schema";
 
 import { UserId } from "@/platform/ids/user-id.js";
 
-import {
-  UserAddressUpdated,
-  UserCreated,
-  UserDeleted,
-  UserDemotedFromSuperAdmin,
-  type UserEvent,
-  UserPromotedToSuperAdmin,
-} from "./user-events.js";
+import { UserAddressUpdated, UserCreated, UserDeleted, type UserEvent } from "./user-events.js";
 import { Address } from "./value-objects/address.js";
 
 export class User extends Schema.Class<User>("User")({
   id: UserId,
   email: Schema.String,
-  isSuperAdmin: Schema.Boolean,
   address: Address,
   createdAt: Schema.DateTimeUtc,
   updatedAt: Schema.DateTimeUtc,
@@ -38,7 +30,6 @@ export const create = (input: CreateInput): Result => {
   const user = User.make({
     id: input.id,
     email: input.email,
-    isSuperAdmin: false,
     address: input.address,
     createdAt: input.now,
     updatedAt: input.now,
@@ -60,32 +51,6 @@ export const markDeleted = (user: User): Result => ({
   events: [UserDeleted.make({ userId: user.id })],
 });
 
-export type SuperAdminInput = { readonly now: DateTime.Utc };
-
-export const promoteToSuperAdmin = (user: User, input: SuperAdminInput): Result => ({
-  user: User.make({
-    id: user.id,
-    email: user.email,
-    isSuperAdmin: true,
-    address: user.address,
-    createdAt: user.createdAt,
-    updatedAt: input.now,
-  }),
-  events: [UserPromotedToSuperAdmin.make({ userId: user.id })],
-});
-
-export const demoteFromSuperAdmin = (user: User, input: SuperAdminInput): Result => ({
-  user: User.make({
-    id: user.id,
-    email: user.email,
-    isSuperAdmin: false,
-    address: user.address,
-    createdAt: user.createdAt,
-    updatedAt: input.now,
-  }),
-  events: [UserDemotedFromSuperAdmin.make({ userId: user.id })],
-});
-
 export type UpdateAddressInput = {
   readonly country?: string;
   readonly postalCode?: string;
@@ -103,7 +68,6 @@ export const updateAddress = (user: User, input: UpdateAddressInput): Result => 
     user: User.make({
       id: user.id,
       email: user.email,
-      isSuperAdmin: user.isSuperAdmin,
       address: newAddress,
       createdAt: user.createdAt,
       updatedAt: input.now,

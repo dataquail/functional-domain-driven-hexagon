@@ -13,7 +13,6 @@ const mkUser = (i: number): UserContract.User =>
   new UserContract.User({
     id: UserId.make(`11111111-1111-1111-1111-${i.toString().padStart(12, "0")}`),
     email: `u${i}@example.com`,
-    isSuperAdmin: false,
     address: { country: "USA", street: "Main", postalCode: "12345" },
     createdAt: DateTime.unsafeFromDate(new Date("2026-01-01T00:00:00Z")),
     updatedAt: DateTime.unsafeFromDate(new Date("2026-01-01T00:00:00Z")),

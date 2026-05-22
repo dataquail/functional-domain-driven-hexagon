@@ -4,7 +4,7 @@ import * as Schema from "effect/Schema";
 
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
 import { UserId } from "../EntityIds.js";
-import { Permission, UserAuthMiddleware } from "../Policy.js";
+import { UserAuthMiddleware } from "../Policy.js";
 
 // ==========================================
 // Shapes
@@ -12,7 +12,7 @@ import { Permission, UserAuthMiddleware } from "../Policy.js";
 
 export class CurrentUserResponse extends Schema.Class<CurrentUserResponse>("CurrentUserResponse")({
   userId: UserId,
-  permissions: Schema.Array(Permission),
+  isSuperAdmin: Schema.Boolean,
 }) {}
 
 export class CallbackParams extends Schema.Class<CallbackParams>("CallbackParams")({

@@ -130,11 +130,10 @@ suite("CreateWalletWhenUserIsCreated (rollback integration)", () => {
           Effect.gen(function* () {
             yield* db.execute((c) =>
               c.query(sql.unsafe`
-                INSERT INTO "user".users (id, email, is_super_admin, country, street, postal_code, created_at, updated_at)
+                INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
                 VALUES (
                   ${probeUserId},
                   ${probeEmail},
-                  false,
                   'USA',
                   '123 Rollback Ln',
                   '12345',

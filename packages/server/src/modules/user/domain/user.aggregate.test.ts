@@ -90,11 +90,6 @@ describe("User.create", () => {
     deepStrictEqual(user.address.postalCode, "12345");
   });
 
-  it("defaults isSuperAdmin to false", () => {
-    const { user } = User.create({ id, email: "alice@example.com", address, now });
-    deepStrictEqual(user.isSuperAdmin, false);
-  });
-
   it("sets createdAt and updatedAt to the provided time", () => {
     const { user } = User.create({ id, email: "alice@example.com", address, now });
     deepStrictEqual(user.createdAt, now);
@@ -117,7 +112,6 @@ describe("User.markDeleted", () => {
     const { user } = User.markDeleted(original);
     deepStrictEqual(user.id, original.id);
     deepStrictEqual(user.email, original.email);
-    deepStrictEqual(user.isSuperAdmin, original.isSuperAdmin);
     deepStrictEqual(user.updatedAt, original.updatedAt);
   });
 
@@ -125,41 +119,6 @@ describe("User.markDeleted", () => {
     const { events } = User.markDeleted(seedUser());
     deepStrictEqual(events.length, 1);
     expectEvent(events, "UserDeleted");
-  });
-});
-
-describe("User.promoteToSuperAdmin", () => {
-  it("flips isSuperAdmin to true", () => {
-    const { user } = User.promoteToSuperAdmin(seedUser(), { now: later });
-    deepStrictEqual(user.isSuperAdmin, true);
-  });
-
-  it("updates updatedAt but preserves createdAt", () => {
-    const { user } = User.promoteToSuperAdmin(seedUser(), { now: later });
-    deepStrictEqual(user.updatedAt, later);
-    deepStrictEqual(user.createdAt, now);
-  });
-
-  it("emits a UserPromotedToSuperAdmin event carrying the userId", () => {
-    const { events } = User.promoteToSuperAdmin(seedUser(), { now: later });
-    deepStrictEqual(events.length, 1);
-    const event = expectEvent(events, "UserPromotedToSuperAdmin");
-    deepStrictEqual(event.userId, id);
-  });
-});
-
-describe("User.demoteFromSuperAdmin", () => {
-  it("flips isSuperAdmin to false", () => {
-    const promoted = User.promoteToSuperAdmin(seedUser(), { now: later }).user;
-    const { user } = User.demoteFromSuperAdmin(promoted, { now: later });
-    deepStrictEqual(user.isSuperAdmin, false);
-  });
-
-  it("emits a UserDemotedFromSuperAdmin event", () => {
-    const promoted = User.promoteToSuperAdmin(seedUser(), { now: later }).user;
-    const { events } = User.demoteFromSuperAdmin(promoted, { now: later });
-    const event = expectEvent(events, "UserDemotedFromSuperAdmin");
-    deepStrictEqual(event.userId, id);
   });
 });
 

@@ -38,27 +38,4 @@ export const userAddressUpdatedSpanAttributes: SpanAttributesExtractor<UserAddre
   event,
 ) => ({ "user.id": event.userId });
 
-export const UserPromotedToSuperAdmin = DomainEvent("UserPromotedToSuperAdmin", {
-  userId: UserId,
-});
-export type UserPromotedToSuperAdmin = typeof UserPromotedToSuperAdmin.Type;
-
-export const userPromotedToSuperAdminSpanAttributes: SpanAttributesExtractor<
-  UserPromotedToSuperAdmin
-> = (event) => ({ "user.id": event.userId });
-
-export const UserDemotedFromSuperAdmin = DomainEvent("UserDemotedFromSuperAdmin", {
-  userId: UserId,
-});
-export type UserDemotedFromSuperAdmin = typeof UserDemotedFromSuperAdmin.Type;
-
-export const userDemotedFromSuperAdminSpanAttributes: SpanAttributesExtractor<
-  UserDemotedFromSuperAdmin
-> = (event) => ({ "user.id": event.userId });
-
-export type UserEvent =
-  | UserCreated
-  | UserDeleted
-  | UserAddressUpdated
-  | UserPromotedToSuperAdmin
-  | UserDemotedFromSuperAdmin;
+export type UserEvent = UserCreated | UserDeleted | UserAddressUpdated;

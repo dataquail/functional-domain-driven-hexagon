@@ -21,7 +21,6 @@ export const findUsersQuerySpanAttributes: SpanAttributesExtractor<FindUsersQuer
 export type FindUsersUserView = {
   readonly id: UserId;
   readonly email: string;
-  readonly isSuperAdmin: boolean;
   readonly address: {
     readonly country: string;
     readonly street: string;

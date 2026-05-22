@@ -13,7 +13,6 @@ import {
   TouchSessionCommand,
 } from "@/modules/auth/index.js";
 import { CookieCodec } from "@/platform/auth/cookie-codec.js";
-import { PermissionsResolver } from "@/platform/auth/permissions-resolver.js";
 import { CommandBus } from "@/platform/ddd/command-bus.js";
 import { QueryBus } from "@/platform/ddd/query-bus.js";
 
@@ -34,11 +33,9 @@ export const UserAuthMiddlewareLive = Layer.effect(
     const codec = yield* CookieCodec;
     const queryBus = yield* QueryBus;
     const commandBus = yield* CommandBus;
-    const perms = yield* PermissionsResolver;
-    // Resolved in outer scope so we can provide it inline below — the
-    // per-request Effect must be `Provided` (HTTP request context only),
-    // and `bus.execute(FindSessionQuery)` carries the handler's
-    // SessionRepository requirement.
+    // Resolved in outer scope so the per-request Effect can provide it
+    // inline — `bus.execute(FindSessionQuery)` and TouchSessionCommand
+    // carry the SessionRepository requirement.
     const sessions = yield* SessionRepository;
 
     return Effect.gen(function* () {
@@ -66,11 +63,9 @@ export const UserAuthMiddlewareLive = Layer.effect(
           }),
         )
         .pipe(Effect.provideService(SessionRepository, sessions));
-      const permissions = yield* perms.get(session.userId).pipe(Effect.mapError(toAuthError));
       return {
         sessionId: session.id,
         userId: session.userId,
-        permissions: new Set(permissions),
       };
     }).pipe(Effect.withSpan("auth.middleware"));
   }),

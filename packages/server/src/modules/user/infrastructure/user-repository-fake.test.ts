@@ -102,10 +102,10 @@ describe("UserRepositoryFake", () => {
       Effect.gen(function* () {
         const repo = yield* UserRepository;
         yield* repo.insert(alice);
-        const { user: promoted } = User.promoteToSuperAdmin(alice, { now: later });
-        yield* repo.update(promoted);
+        const { user: updated } = User.updateAddress(alice, { country: "Canada", now: later });
+        yield* repo.update(updated);
         const found = yield* repo.findById(alice.id);
-        deepStrictEqual(found.isSuperAdmin, true);
+        deepStrictEqual(found.address.country, "Canada");
         deepStrictEqual(found.updatedAt, later);
       }).pipe(provide),
     );

@@ -15,7 +15,9 @@ import { hasTestDatabase } from "@/test-utils/test-database.js";
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("GET /auth/me (integration)", () => {
-  const { run } = useServerTestRuntime([]);
+  const { run } = useServerTestRuntime(["user.users", "platform.roles"], {
+    seedSuperAdminCaller: true,
+  });
 
   it("returns the fake admin CurrentUser", async () => {
     await run(
@@ -23,9 +25,7 @@ suite("GET /auth/me (integration)", () => {
         const client = yield* HttpApiClient.make(Api);
         const me = yield* client.authSession.me();
         deepStrictEqual(me.userId, "00000000-0000-0000-0000-000000000001");
-        deepStrictEqual(me.permissions.includes("__test:read"), true);
-        deepStrictEqual(me.permissions.includes("__test:manage"), true);
-        deepStrictEqual(me.permissions.includes("__test:delete"), true);
+        deepStrictEqual(me.isSuperAdmin, true);
       }),
     );
   });

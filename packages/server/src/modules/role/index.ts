@@ -1,0 +1,11 @@
+export { GrantRoleCommand } from "./commands/grant-role-command.js";
+export { RevokeRoleCommand } from "./commands/revoke-role-command.js";
+export { roleCommandHandlers } from "./commands/role-command-handlers.js";
+export { Role } from "./domain/role.js";
+export { CannotPromoteSelf } from "./domain/role-errors.js";
+export { RoleGranted, RoleRevoked } from "./domain/role-events.js";
+export { RolesRepository } from "./domain/roles-repository.js";
+export { FindUserRolesQuery } from "./queries/find-user-roles-query.js";
+export { roleQueryHandlers } from "./queries/role-query-handlers.js";
+export { roleEventSpanAttributes } from "./role-event-span-attributes.js";
+export { RoleSharedDepsLive } from "./role-shared-deps.js";

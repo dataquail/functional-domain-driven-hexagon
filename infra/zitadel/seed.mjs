@@ -2,7 +2,8 @@
 //
 // Responsibilities:
 //   1. Create (idempotent) the project + OIDC application in Zitadel.
-//   2. Pre-seed the bootstrap admin in the app DB so they have is_super_admin=true
+//   2. Pre-seed the bootstrap admin in the app DB and grant them the
+//      `super_admin` role in `platform.roles`.
 //      before their first login. Roles live app-side, so JIT on first login
 //      would otherwise create the admin with the default role and nobody
 //      would be able to grant the admin role to anyone. See plan §3.6.
@@ -338,9 +339,9 @@ async function ensureAdminInAppDb(subject) {
 
     const userId = randomUUID();
     await client.query(
-      `INSERT INTO "user".users (id, email, is_super_admin, country, street, postal_code, created_at, updated_at)
-       VALUES ($1, $2, true, 'N/A', 'N/A', 'N/A', now(), now())
-       ON CONFLICT (email) DO UPDATE SET is_super_admin = true`,
+      `INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
+       VALUES ($1, $2, 'N/A', 'N/A', 'N/A', now(), now())
+       ON CONFLICT (email) DO NOTHING`,
       [userId, adminEmail],
     );
     const userRow = await client.query(`SELECT id FROM "user".users WHERE email = $1`, [
@@ -351,6 +352,12 @@ async function ensureAdminInAppDb(subject) {
       `INSERT INTO auth.auth_identities (subject, user_id, provider, created_at)
        VALUES ($1, $2, 'zitadel', now())`,
       [subject, finalUserId],
+    );
+    await client.query(
+      `INSERT INTO platform.roles (user_id, role)
+       VALUES ($1, 'super_admin')
+       ON CONFLICT (user_id, role) DO NOTHING`,
+      [finalUserId],
     );
     await client.query("COMMIT");
     return { userId: finalUserId, created: true };

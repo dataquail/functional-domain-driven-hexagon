@@ -4,7 +4,6 @@ import * as Schema from "effect/Schema";
 export const UserRow = Schema.Struct({
   id: Schema.UUID,
   email: Schema.String,
-  is_super_admin: Schema.Boolean,
   country: Schema.String,
   street: Schema.String,
   postal_code: Schema.String,

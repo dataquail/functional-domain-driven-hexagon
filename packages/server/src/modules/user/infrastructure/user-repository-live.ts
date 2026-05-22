@@ -20,11 +20,10 @@ export const UserRepositoryLive = Layer.effect(
       const row = UserMapper.toPersistence(user);
       return execute((client) =>
         client.query(sql.unsafe`
-          INSERT INTO "user".users (id, email, is_super_admin, country, street, postal_code, created_at, updated_at)
+          INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
           VALUES (
             ${row.id},
             ${row.email},
-            ${row.is_super_admin},
             ${row.country},
             ${row.street},
             ${row.postal_code},
@@ -50,7 +49,6 @@ export const UserRepositoryLive = Layer.effect(
         client.maybeOne(sql.type(RowSchemas.UserRowStd)`
           UPDATE "user".users SET
             email = ${row.email},
-            is_super_admin = ${row.is_super_admin},
             country = ${row.country},
             street = ${row.street},
             postal_code = ${row.postal_code},
