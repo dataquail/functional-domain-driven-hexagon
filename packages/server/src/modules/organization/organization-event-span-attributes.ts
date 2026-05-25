@@ -1,4 +1,8 @@
 import {
+  membershipCreatedSpanAttributes,
+  membershipRevokedSpanAttributes,
+} from "@/modules/organization/domain/membership-events.js";
+import {
   organizationCreatedSpanAttributes,
   organizationRestoredSpanAttributes,
   organizationSoftDeletedSpanAttributes,
@@ -9,4 +13,6 @@ export const organizationEventSpanAttributes = eventSpanAttributes({
   OrganizationCreated: organizationCreatedSpanAttributes,
   OrganizationSoftDeleted: organizationSoftDeletedSpanAttributes,
   OrganizationRestored: organizationRestoredSpanAttributes,
+  MembershipCreated: membershipCreatedSpanAttributes,
+  MembershipRevoked: membershipRevokedSpanAttributes,
 });
