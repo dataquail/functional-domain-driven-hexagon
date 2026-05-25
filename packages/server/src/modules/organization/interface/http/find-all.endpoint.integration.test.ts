@@ -13,9 +13,10 @@ import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("GET /admin/orgs (integration)", () => {
-  const { run } = useServerTestRuntime(["organization.organizations", "platform.roles"], {
-    seedSuperAdminCaller: true,
-  });
+  const { run } = useServerTestRuntime(
+    ["organization.memberships", "organization.organizations", "platform.roles", "user.users"],
+    { seedSuperAdminCaller: true },
+  );
 
   it("returns created orgs (active-only by default)", async () => {
     await run(

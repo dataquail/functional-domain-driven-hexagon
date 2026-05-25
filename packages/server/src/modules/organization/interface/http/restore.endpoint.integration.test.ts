@@ -20,9 +20,10 @@ const DeletedAtRowStd = Schema.standardSchemaV1(
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("POST /orgs/:id/restore (integration)", () => {
-  const { run } = useServerTestRuntime(["organization.organizations", "platform.roles"], {
-    seedSuperAdminCaller: true,
-  });
+  const { run } = useServerTestRuntime(
+    ["organization.memberships", "organization.organizations", "platform.roles", "user.users"],
+    { seedSuperAdminCaller: true },
+  );
 
   it("clears the tombstone", async () => {
     await run(
@@ -79,9 +80,10 @@ suite("POST /orgs/:id/restore (integration)", () => {
 const memberSuite = hasTestDatabase ? describe.sequential : describe.skip;
 
 memberSuite("POST /orgs/:id/restore (integration, non-super-admin caller)", () => {
-  const { run } = useServerTestRuntime(["organization.organizations", "platform.roles"], {
-    server: TestServerLiveAsMember,
-  });
+  const { run } = useServerTestRuntime(
+    ["organization.memberships", "organization.organizations", "platform.roles", "user.users"],
+    { server: TestServerLiveAsMember, seedSuperAdminCaller: true },
+  );
 
   it("returns 403 Forbidden", async () => {
     await run(

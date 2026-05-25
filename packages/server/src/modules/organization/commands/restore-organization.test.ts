@@ -16,19 +16,30 @@ import {
 } from "@/modules/organization/domain/organization-errors.js";
 import { type OrganizationRestored } from "@/modules/organization/domain/organization-events.js";
 import { OrganizationRepository } from "@/modules/organization/domain/organization-repository.js";
+import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/membership-repository-fake.js";
 import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/organization-repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
+import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
-const TestLayer = Layer.mergeAll(OrganizationRepositoryFake, RecordingEventBus, IdentityUnitOfWork);
+const actorUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+
+const TestLayer = Layer.mergeAll(
+  OrganizationRepositoryFake,
+  MembershipRepositoryFake,
+  RecordingEventBus,
+  IdentityUnitOfWork,
+);
 
 describe("restoreOrganization", () => {
   it.effect("clears the tombstone and publishes OrganizationRestored", () =>
     Effect.gen(function* () {
       const repo = yield* OrganizationRepository;
       const rec = yield* RecordedEvents;
-      const id = yield* createOrganization(CreateOrganizationCommand.make({ name: "Acme" }));
+      const id = yield* createOrganization(
+        CreateOrganizationCommand.make({ name: "Acme", actorUserId }),
+      );
       yield* softDeleteOrganization(SoftDeleteOrganizationCommand.make({ organizationId: id }));
       yield* restoreOrganization(RestoreOrganizationCommand.make({ organizationId: id }));
       const stored = yield* repo.findById(id);
@@ -54,7 +65,9 @@ describe("restoreOrganization", () => {
 
   it.effect("fails OrganizationNotDeleted when the org is still active", () =>
     Effect.gen(function* () {
-      const id = yield* createOrganization(CreateOrganizationCommand.make({ name: "Acme" }));
+      const id = yield* createOrganization(
+        CreateOrganizationCommand.make({ name: "Acme", actorUserId }),
+      );
       const exit = yield* Effect.exit(
         restoreOrganization(RestoreOrganizationCommand.make({ organizationId: id })),
       );

@@ -21,6 +21,7 @@ import {
   type OrganizationNotDeleted,
   type OrganizationNotFound,
 } from "@/modules/organization/domain/organization-errors.js";
+import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/membership-repository-live.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/organization-repository-live.js";
 import { commandHandlers } from "@/platform/ddd/command-bus.js";
 import { type DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
@@ -66,7 +67,10 @@ declare module "@/platform/ddd/command-bus.js" {
 export const organizationCommandHandlers = commandHandlers({
   CreateOrganizationCommand: {
     handle: (cmd): CreateOrganizationBusOutput =>
-      createOrganization(cmd).pipe(Effect.provide(OrganizationRepositoryLive)),
+      createOrganization(cmd).pipe(
+        Effect.provide(OrganizationRepositoryLive),
+        Effect.provide(MembershipRepositoryLive),
+      ),
     spanAttributes: createOrganizationCommandSpanAttributes,
   },
   SoftDeleteOrganizationCommand: {

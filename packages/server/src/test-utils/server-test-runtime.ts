@@ -4,7 +4,7 @@ import type * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
 import { afterAll, beforeAll, beforeEach } from "vitest";
 
-import { SUPER_ADMIN_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
+import { MEMBER_CALLER_ID, SUPER_ADMIN_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
 import { truncate } from "@/test-utils/test-database.js";
 import { TestServerLive } from "@/test-utils/test-server.js";
 
@@ -21,12 +21,15 @@ type Opts = {
   // super-admin-only endpoints. Defaults to the standard `TestServerLive`
   // (super-admin caller) so existing callers don't change.
   readonly server?: Layer.Layer<ServerContext, ServerError>;
-  // After truncating, INSERT the deterministic super-admin caller row
-  // (matching `UserAuthMiddlewareFake`'s userId) plus a `platform.roles`
-  // entry granting `super_admin`. Set true for endpoint tests that
-  // exercise a `Authz.hasPermissions` check or `/auth/me`'s
-  // `isSuperAdmin` response — the live `RoleService` consults the DB
-  // and would otherwise see no role for this caller.
+  // After truncating, INSERT both deterministic caller rows
+  // (`SUPER_ADMIN_CALLER_ID` + `MEMBER_CALLER_ID`) into "user".users
+  // plus a `platform.roles` entry granting `super_admin` to the
+  // super-admin caller. Both user rows are seeded so any test that
+  // creates an org (which inserts a membership row FK'd to user.users)
+  // works regardless of which middleware variant the test uses. Set
+  // true for endpoint tests that exercise `Authz.hasPermissions`,
+  // `/auth/me`'s `isSuperAdmin`, or any flow that touches
+  // `organization.memberships`.
   readonly seedSuperAdminCaller?: boolean;
 };
 
@@ -57,7 +60,9 @@ export const useServerTestRuntime = (
           yield* db.execute((client) =>
             client.query(sql.unsafe`
               INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
-              VALUES (${SUPER_ADMIN_CALLER_ID}, 'super-admin@test.local', 'USA', '1 St', '00000', now(), now())
+              VALUES
+                (${SUPER_ADMIN_CALLER_ID}, 'super-admin@test.local', 'USA', '1 St', '00000', now(), now()),
+                (${MEMBER_CALLER_ID}, 'member@test.local', 'USA', '2 St', '00000', now(), now())
               ON CONFLICT (id) DO NOTHING
             `),
           );
