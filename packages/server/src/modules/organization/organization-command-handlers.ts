@@ -6,6 +6,16 @@ import {
   type CreateOrganizationCommand,
   createOrganizationCommandSpanAttributes,
 } from "@/modules/organization/commands/create-organization-command.js";
+import { leaveOrganization } from "@/modules/organization/commands/leave-organization.js";
+import {
+  type LeaveOrganizationCommand,
+  leaveOrganizationCommandSpanAttributes,
+} from "@/modules/organization/commands/leave-organization-command.js";
+import { removeMember } from "@/modules/organization/commands/remove-member.js";
+import {
+  type RemoveMemberCommand,
+  removeMemberCommandSpanAttributes,
+} from "@/modules/organization/commands/remove-member-command.js";
 import { restoreOrganization } from "@/modules/organization/commands/restore-organization.js";
 import {
   type RestoreOrganizationCommand,
@@ -16,6 +26,7 @@ import {
   type SoftDeleteOrganizationCommand,
   softDeleteOrganizationCommandSpanAttributes,
 } from "@/modules/organization/commands/soft-delete-organization-command.js";
+import { type MembershipNotFound } from "@/modules/organization/domain/membership-errors.js";
 import {
   type OrganizationAlreadyDeleted,
   type OrganizationNotDeleted,
@@ -47,6 +58,18 @@ type SoftDeleteOrganizationBusOutput = Effect.Effect<
   DomainEventBus | UnitOfWork | Database.Database
 >;
 
+type RemoveMemberBusOutput = Effect.Effect<
+  void,
+  MembershipNotFound | PersistenceUnavailable,
+  DomainEventBus | UnitOfWork | Database.Database
+>;
+
+type LeaveOrganizationBusOutput = Effect.Effect<
+  void,
+  MembershipNotFound | PersistenceUnavailable,
+  DomainEventBus | UnitOfWork | Database.Database
+>;
+
 declare module "@/platform/ddd/command-bus.js" {
   interface CommandRegistry {
     CreateOrganizationCommand: {
@@ -60,6 +83,14 @@ declare module "@/platform/ddd/command-bus.js" {
     SoftDeleteOrganizationCommand: {
       readonly command: SoftDeleteOrganizationCommand;
       readonly output: SoftDeleteOrganizationBusOutput;
+    };
+    RemoveMemberCommand: {
+      readonly command: RemoveMemberCommand;
+      readonly output: RemoveMemberBusOutput;
+    };
+    LeaveOrganizationCommand: {
+      readonly command: LeaveOrganizationCommand;
+      readonly output: LeaveOrganizationBusOutput;
     };
   }
 }
@@ -82,5 +113,15 @@ export const organizationCommandHandlers = commandHandlers({
     handle: (cmd): RestoreOrganizationBusOutput =>
       restoreOrganization(cmd).pipe(Effect.provide(OrganizationRepositoryLive)),
     spanAttributes: restoreOrganizationCommandSpanAttributes,
+  },
+  RemoveMemberCommand: {
+    handle: (cmd): RemoveMemberBusOutput =>
+      removeMember(cmd).pipe(Effect.provide(MembershipRepositoryLive)),
+    spanAttributes: removeMemberCommandSpanAttributes,
+  },
+  LeaveOrganizationCommand: {
+    handle: (cmd): LeaveOrganizationBusOutput =>
+      leaveOrganization(cmd).pipe(Effect.provide(MembershipRepositoryLive)),
+    spanAttributes: leaveOrganizationCommandSpanAttributes,
   },
 });
