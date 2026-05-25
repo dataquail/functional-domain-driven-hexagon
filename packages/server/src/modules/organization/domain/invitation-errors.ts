@@ -2,10 +2,18 @@ import * as Schema from "effect/Schema";
 
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 
-// Returned by the repository when an invitation token doesn't match.
+// Returned by the repository when a lookup by id finds nothing.
 export class InvitationNotFound extends Schema.TaggedError<InvitationNotFound>(
   "InvitationNotFound",
 )("InvitationNotFound", { invitationId: InvitationId }) {}
+
+// Returned by the repository when a lookup by token finds nothing.
+// Distinct from `InvitationNotFound` so the public accept endpoint's
+// error doesn't have to fabricate an id; the token itself isn't
+// included to avoid leaking it to span attributes / logs.
+export class InvitationTokenNotFound extends Schema.TaggedError<InvitationTokenNotFound>(
+  "InvitationTokenNotFound",
+)("InvitationTokenNotFound", {}) {}
 
 // Aggregate invariant: accept fails if `expiresAt < now`.
 export class InvitationExpired extends Schema.TaggedError<InvitationExpired>("InvitationExpired")(
