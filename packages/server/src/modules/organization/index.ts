@@ -3,6 +3,11 @@ export { LeaveOrganizationCommand } from "./commands/leave-organization-command.
 export { RemoveMemberCommand } from "./commands/remove-member-command.js";
 export { RestoreOrganizationCommand } from "./commands/restore-organization-command.js";
 export { SoftDeleteOrganizationCommand } from "./commands/soft-delete-organization-command.js";
+export {
+  InvitationAccepted,
+  InvitationIssued,
+  InvitationRevoked,
+} from "./domain/invitation-events.js";
 export { MembershipCreated, MembershipRevoked } from "./domain/membership-events.js";
 export {
   OrganizationCreated,
