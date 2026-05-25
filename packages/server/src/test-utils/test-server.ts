@@ -13,21 +13,29 @@ import {
   AuthSharedDepsLive,
 } from "@/modules/auth/index.js";
 import {
+  organizationCommandHandlers,
+  organizationEventSpanAttributes,
+  OrganizationModuleLive,
+  organizationPolicies,
+  organizationQueryHandlers,
+  OrganizationResolverEntry,
+  OrganizationResolverEntryLive,
+} from "@/modules/organization/index.js";
+import {
   roleCommandHandlers,
   roleEventSpanAttributes,
   roleQueryHandlers,
-  RoleSharedDepsLive,
+  RoleServiceLive,
 } from "@/modules/role/index.js";
 import { todoCommandHandlers, todoQueryHandlers, TodosModuleLive } from "@/modules/todos/index.js";
 import {
-  makeUserResourceResolverEntry,
   userCommandHandlers,
   userEventSpanAttributes,
   UserModuleLive,
   userPolicies,
   userQueryHandlers,
-  UserRepository,
-  UserSharedDepsLive,
+  UserResolverEntry,
+  UserResolverEntryLive,
 } from "@/modules/user/index.js";
 import { walletEventSpanAttributes, WalletModuleLive } from "@/modules/wallet/index.js";
 import { makePolicyRegistry } from "@/platform/auth/policy-registry.js";
@@ -37,7 +45,6 @@ import { CommandBus } from "@/platform/ddd/command-bus.js";
 import { QueryBus } from "@/platform/ddd/query-bus.js";
 import { makeDomainEventBusLive } from "@/platform/domain-event-bus-live.js";
 import { makeQueryBus } from "@/platform/query-bus-live.js";
-import { RoleServiceLive } from "@/platform/role-service-live.js";
 import { UnitOfWorkLive } from "@/platform/unit-of-work-live.js";
 import {
   UserAuthMiddlewareFake,
@@ -52,6 +59,7 @@ const CommandBusLive = Layer.succeed(
     ...todoCommandHandlers,
     ...authCommandHandlers,
     ...roleCommandHandlers,
+    ...organizationCommandHandlers,
   }),
 );
 const QueryBusLive = Layer.succeed(
@@ -61,6 +69,7 @@ const QueryBusLive = Layer.succeed(
     ...todoQueryHandlers,
     ...authQueryHandlers,
     ...roleQueryHandlers,
+    ...organizationQueryHandlers,
   }),
 );
 const DomainEventBusLive = makeDomainEventBusLive({
@@ -68,18 +77,22 @@ const DomainEventBusLive = makeDomainEventBusLive({
     ...userEventSpanAttributes,
     ...walletEventSpanAttributes,
     ...roleEventSpanAttributes,
+    ...organizationEventSpanAttributes,
   },
 });
 
-const PolicyRegistryLive = makePolicyRegistry([userPolicies]);
+const PolicyRegistryLive = makePolicyRegistry([userPolicies, organizationPolicies]);
 
 const ResourceResolverRegistryLive = Layer.unwrapEffect(
   Effect.gen(function* () {
-    const userRepo = yield* UserRepository;
-    const userEntry = makeUserResourceResolverEntry(userRepo);
-    return makeResourceResolverRegistry({ [userEntry.key]: userEntry.resolver });
+    const userResolver = yield* UserResolverEntry;
+    const organizationResolver = yield* OrganizationResolverEntry;
+    return makeResourceResolverRegistry({
+      user: userResolver,
+      organization: organizationResolver,
+    });
   }),
-);
+).pipe(Layer.provide([UserResolverEntryLive, OrganizationResolverEntryLive]));
 
 // `CommandBus` and `QueryBus` are cross-cutting public production APIs
 // (ADR-0006) — the same dispatch surface every HTTP handler uses. Exposing
@@ -95,7 +108,13 @@ const ResourceResolverRegistryLive = Layer.unwrapEffect(
 // super-admin fake. Authz tests opt in to a non-super-admin variant.
 export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddleware>) => {
   const ApiLive = HttpApiBuilder.api(Api).pipe(
-    Layer.provide([TodosModuleLive, UserModuleLive, WalletModuleLive, AuthModuleLive]),
+    Layer.provide([
+      TodosModuleLive,
+      UserModuleLive,
+      WalletModuleLive,
+      AuthModuleLive,
+      OrganizationModuleLive,
+    ]),
     Layer.provide([authMiddleware, RoleServiceLive, DomainEventBusLive, UnitOfWorkLive]),
     // CommandBus + QueryBus must provide TO the modules above (they dispatch
     // via the buses) AND remain reachable from test runtimes — `provideMerge`
@@ -106,11 +125,6 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
     // PolicyRegistry + ResourceResolverRegistry via Authz.requires*.
     Layer.provide([PolicyRegistryLive, ResourceResolverRegistryLive]),
     Layer.provide(AuthSharedDepsLive),
-    Layer.provide(UserSharedDepsLive),
-    // RoleSharedDepsLive exposes RolesRepository — consumed by the
-    // role-module's grant/revoke command handlers and by the
-    // FindUserRolesQuery handler that backs `RoleServiceLive`.
-    Layer.provide(RoleSharedDepsLive),
     Layer.provide(EnvVars.Default),
   );
 

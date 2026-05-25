@@ -28,17 +28,10 @@ export const grantRoleCommandSpanAttributes: SpanAttributesExtractor<GrantRoleCo
   "actor.user.id": cmd.actorUserId,
 });
 
+// Raw handler effect — `RolesRepository` is discharged by the wrap in
+// `role-command-handlers.ts`; the bus-registered output type lives there.
 export type GrantRoleOutput = Effect.Effect<
   void,
   AlreadyHasRole | CannotPromoteSelf | PersistenceUnavailable,
   RolesRepository | DomainEventBus | UnitOfWork
 >;
-
-declare module "@/platform/ddd/command-bus.js" {
-  interface CommandRegistry {
-    GrantRoleCommand: {
-      readonly command: GrantRoleCommand;
-      readonly output: GrantRoleOutput;
-    };
-  }
-}

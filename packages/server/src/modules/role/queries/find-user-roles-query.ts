@@ -26,17 +26,10 @@ export const findUserRolesQuerySpanAttributes: SpanAttributesExtractor<FindUserR
   query,
 ) => ({ "query.userId": query.userId });
 
+// Raw handler effect — `RolesRepository` is discharged by the wrap in
+// `role-query-handlers.ts`; the bus-registered output type lives there.
 export type FindUserRolesOutput = Effect.Effect<
   FindUserRolesResult,
   PersistenceUnavailable,
   RolesRepository
 >;
-
-declare module "@/platform/ddd/query-bus.js" {
-  interface QueryRegistry {
-    FindUserRolesQuery: {
-      readonly query: FindUserRolesQuery;
-      readonly output: FindUserRolesOutput;
-    };
-  }
-}

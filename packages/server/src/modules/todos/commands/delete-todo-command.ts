@@ -18,17 +18,10 @@ export const deleteTodoCommandSpanAttributes: SpanAttributesExtractor<DeleteTodo
   cmd,
 ) => ({ "todo.id": cmd.todoId, "user.id": cmd.userId });
 
+// Raw handler effect — `TodosRepository` is discharged by the wrap in
+// `todo-command-handlers.ts`; the bus-registered output type lives there.
 export type DeleteTodoOutput = Effect.Effect<
   void,
   TodoNotFound | PersistenceUnavailable,
   TodosRepository
 >;
-
-declare module "@/platform/ddd/command-bus.js" {
-  interface CommandRegistry {
-    DeleteTodoCommand: {
-      readonly command: DeleteTodoCommand;
-      readonly output: DeleteTodoOutput;
-    };
-  }
-}

@@ -22,17 +22,10 @@ export const findSessionQuerySpanAttributes: SpanAttributesExtractor<FindSession
   "auth.session.id": q.sessionId,
 });
 
+// Raw handler effect — `SessionRepository` is discharged by the wrap in
+// `auth-query-handlers.ts`; the bus-registered output type lives there.
 export type FindSessionOutput = Effect.Effect<
   Session,
   SessionNotFound | SessionExpired | SessionRevoked | PersistenceUnavailable,
   SessionRepository
 >;
-
-declare module "@/platform/ddd/query-bus.js" {
-  interface QueryRegistry {
-    FindSessionQuery: {
-      readonly query: FindSessionQuery;
-      readonly output: FindSessionOutput;
-    };
-  }
-}

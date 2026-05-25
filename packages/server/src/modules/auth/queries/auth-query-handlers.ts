@@ -1,7 +1,0 @@
-import { findSession } from "@/modules/auth/queries/find-session.js";
-import { findSessionQuerySpanAttributes } from "@/modules/auth/queries/find-session-query.js";
-import { queryHandlers } from "@/platform/ddd/query-bus.js";
-
-export const authQueryHandlers = queryHandlers({
-  FindSessionQuery: { handle: findSession, spanAttributes: findSessionQuerySpanAttributes },
-});

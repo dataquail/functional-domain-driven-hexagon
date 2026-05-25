@@ -23,17 +23,10 @@ export const revokeRoleCommandSpanAttributes: SpanAttributesExtractor<RevokeRole
   "role.name": cmd.role,
 });
 
+// Raw handler effect — `RolesRepository` is discharged by the wrap in
+// `role-command-handlers.ts`; the bus-registered output type lives there.
 export type RevokeRoleOutput = Effect.Effect<
   void,
   DoesNotHaveRole | PersistenceUnavailable,
   RolesRepository | DomainEventBus | UnitOfWork
 >;
-
-declare module "@/platform/ddd/command-bus.js" {
-  interface CommandRegistry {
-    RevokeRoleCommand: {
-      readonly command: RevokeRoleCommand;
-      readonly output: RevokeRoleOutput;
-    };
-  }
-}

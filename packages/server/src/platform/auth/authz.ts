@@ -67,15 +67,22 @@ export const hasPermissions = <R extends PolicyResource, A extends ActionFor<R>>
     // Erase the per-call generics for the runtime lookup: the resolver
     // is a name-keyed map (`Map<string, fn>` under the hood) and the
     // variadic-tuple input type already guarantees `(resource, id)` are
-    // a valid pair at the call site.
-    const erasedResource = resource as PolicyResource & ResourceName;
-    const id = (args as ReadonlyArray<unknown>)[0] as
-      | IdFor<PolicyResource & ResourceName>
-      | undefined;
+    // a valid pair at the call site. With multiple registered resources
+    // `IdFor<R>` widens to a union of brands; the cast on `id` says
+    // "this id belongs to *this* resource" — TS can't track that
+    // through the erased pair lookup.
+    type AnyResource = PolicyResource & ResourceName;
+    const id = (args as ReadonlyArray<unknown>)[0] as IdFor<AnyResource> | undefined;
     let loaded: unknown = undefined;
     if (id !== undefined) {
       const resolvers = yield* ResourceResolverRegistry;
-      loaded = yield* resolvers.resolve(erasedResource, id);
+      // `resolve(R, IdFor<R>)` doesn't see the connection between
+      // `id`'s widened union brand and the specific `resource` we have
+      // here. The cast forces them into the same `AnyResource` slot —
+      // sound because the variadic-tuple input already guarantees the
+      // pair at the call site.
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+      loaded = yield* resolvers.resolve(resource as AnyResource, id);
     }
 
     const allowed = yield* check(caller, loaded);

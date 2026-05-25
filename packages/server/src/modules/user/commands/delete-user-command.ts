@@ -18,17 +18,10 @@ export const deleteUserCommandSpanAttributes: SpanAttributesExtractor<DeleteUser
   cmd,
 ) => ({ "user.id": cmd.userId });
 
+// Raw handler effect — `UserRepository` is discharged by the wrap in
+// `user-command-handlers.ts`; the bus-registered output type lives there.
 export type DeleteUserOutput = Effect.Effect<
   void,
   UserNotFound | PersistenceUnavailable,
   UserRepository | DomainEventBus | UnitOfWork
 >;
-
-declare module "@/platform/ddd/command-bus.js" {
-  interface CommandRegistry {
-    DeleteUserCommand: {
-      readonly command: DeleteUserCommand;
-      readonly output: DeleteUserOutput;
-    };
-  }
-}

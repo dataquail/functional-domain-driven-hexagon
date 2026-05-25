@@ -45,7 +45,7 @@ export const TestDatabaseLive =
 let migrationsPromise: Promise<void> | undefined;
 
 // Kept in sync with packages/database/migrations/V00*__create_schema_*.sql.
-const MODULE_SCHEMAS = ["user", "todos", "wallet", "auth", "platform"] as const;
+const MODULE_SCHEMAS = ["user", "todos", "wallet", "auth", "platform", "organization"] as const;
 
 const doRunMigrations = async (): Promise<void> => {
   if (TEST_DATABASE_URL === undefined) return;
