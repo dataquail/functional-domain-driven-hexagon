@@ -7,6 +7,7 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 
 import { UserId } from "@/platform/ids/user-id.js";
+import { makeMembershipServiceFake } from "@/test-utils/membership-service-fake.js";
 import { makeRoleServiceFake } from "@/test-utils/role-service-fake.js";
 
 import { Actions } from "./actions.js";
@@ -66,10 +67,11 @@ const provideRegistries = (opts: {
             ? Effect.succeed(knownThing)
             : Effect.fail(new CustomHttpApiError.NotFound())),
     }),
-    // `Authz.hasPermissions` reaches `RoleService` (the platform-layer
-    // ACL); none of the synthetic checks below consume it, but the R
-    // channel still needs satisfying.
+    // `Authz.hasPermissions` reaches `RoleService` + `MembershipService`
+    // (the platform-layer ACLs); none of the synthetic checks below
+    // consume them, but the R channel still needs satisfying.
     makeRoleServiceFake(new Map()),
+    makeMembershipServiceFake(),
   );
 
 const provideCurrentUser = (caller: CurrentUser["Type"]) => Layer.succeed(CurrentUserTag, caller);
@@ -92,6 +94,7 @@ describe("makePolicyRegistry — array-of-checks AND composition", () => {
             test: () => Effect.succeed(knownThing),
           }),
           makeRoleServiceFake(new Map()),
+          makeMembershipServiceFake(),
         ),
       ),
       Effect.provide(provideCurrentUser(callerMember)),
@@ -126,6 +129,7 @@ describe("makePolicyRegistry — array-of-checks AND composition", () => {
             test: () => Effect.succeed(knownThing),
           }),
           makeRoleServiceFake(new Map()),
+          makeMembershipServiceFake(),
         ),
       ),
       Effect.provide(provideCurrentUser(callerMember)),
