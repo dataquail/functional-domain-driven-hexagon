@@ -1,7 +1,10 @@
+export { AcceptInvitationCommand } from "./commands/accept-invitation-command.js";
 export { CreateOrganizationCommand } from "./commands/create-organization-command.js";
+export { InviteUserCommand } from "./commands/invite-user-command.js";
 export { LeaveOrganizationCommand } from "./commands/leave-organization-command.js";
 export { RemoveMemberCommand } from "./commands/remove-member-command.js";
 export { RestoreOrganizationCommand } from "./commands/restore-organization-command.js";
+export { RevokeInvitationCommand } from "./commands/revoke-invitation-command.js";
 export { SoftDeleteOrganizationCommand } from "./commands/soft-delete-organization-command.js";
 export {
   InvitationAccepted,

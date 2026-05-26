@@ -69,7 +69,7 @@ module.exports = {
       name: "commands-isolation",
       severity: "error",
       comment:
-        "Module commands (write-side use cases) may only import: own module's domain and sibling commands, the DDD shared kernel ports under platform/ddd/ (CommandBus, QueryBus, DomainEventBus, UnitOfWork, DomainEvent, SpanAttributesExtractor), platform/ids/, and other modules' barrel (events). No platform/*-live.ts (Lives are wired at the composition root), no infrastructure, no interface, no queries, no event-handlers, no @org/contracts, no @org/database. Test files excluded.",
+        "Module commands (write-side use cases) may only import: own module's domain and sibling commands, the DDD shared kernel ports under platform/ddd/ (CommandBus, QueryBus, DomainEventBus, UnitOfWork, DomainEvent, SpanAttributesExtractor), platform/ids/, platform/notifications/ port files (e.g. Mailer Tag — same shape as platform/ddd/, just a different infrastructure surface), and other modules' barrel (events). No platform/*-live.ts (Lives are wired at the composition root), no infrastructure, no interface, no queries, no event-handlers, no @org/contracts, no @org/database. Test files excluded.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/commands/",
         pathNot: "\\.test\\.ts$",
@@ -80,6 +80,7 @@ module.exports = {
           "^packages/server/src/modules/$1/(domain|commands)/",
           "^packages/server/src/platform/ddd/",
           "^packages/server/src/platform/ids/",
+          "^packages/server/src/platform/notifications/(?!.*-live\\.ts$)",
           "^packages/server/src/modules/[^/]+/index\\.ts$",
         ],
       },

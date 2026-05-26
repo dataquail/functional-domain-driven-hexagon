@@ -1,11 +1,21 @@
 import { type Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
+import { acceptInvitation } from "@/modules/organization/commands/accept-invitation.js";
+import {
+  type AcceptInvitationCommand,
+  acceptInvitationCommandSpanAttributes,
+} from "@/modules/organization/commands/accept-invitation-command.js";
 import { createOrganization } from "@/modules/organization/commands/create-organization.js";
 import {
   type CreateOrganizationCommand,
   createOrganizationCommandSpanAttributes,
 } from "@/modules/organization/commands/create-organization-command.js";
+import { inviteUser } from "@/modules/organization/commands/invite-user.js";
+import {
+  type InviteUserCommand,
+  inviteUserCommandSpanAttributes,
+} from "@/modules/organization/commands/invite-user-command.js";
 import { leaveOrganization } from "@/modules/organization/commands/leave-organization.js";
 import {
   type LeaveOrganizationCommand,
@@ -21,24 +31,40 @@ import {
   type RestoreOrganizationCommand,
   restoreOrganizationCommandSpanAttributes,
 } from "@/modules/organization/commands/restore-organization-command.js";
+import { revokeInvitation } from "@/modules/organization/commands/revoke-invitation.js";
+import {
+  type RevokeInvitationCommand,
+  revokeInvitationCommandSpanAttributes,
+} from "@/modules/organization/commands/revoke-invitation-command.js";
 import { softDeleteOrganization } from "@/modules/organization/commands/soft-delete-organization.js";
 import {
   type SoftDeleteOrganizationCommand,
   softDeleteOrganizationCommandSpanAttributes,
 } from "@/modules/organization/commands/soft-delete-organization-command.js";
+import {
+  type InvitationAlreadyAccepted,
+  type InvitationAlreadyRevoked,
+  type InvitationExpired,
+  type InvitationNotFound,
+  type InvitationRevoked,
+  type InvitationTokenNotFound,
+} from "@/modules/organization/domain/invitation-errors.js";
 import { type MembershipNotFound } from "@/modules/organization/domain/membership-errors.js";
 import {
   type OrganizationAlreadyDeleted,
   type OrganizationNotDeleted,
   type OrganizationNotFound,
 } from "@/modules/organization/domain/organization-errors.js";
+import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/invitation-repository-live.js";
 import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/membership-repository-live.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/organization-repository-live.js";
 import { commandHandlers } from "@/platform/ddd/command-bus.js";
 import { type DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
 import { type UnitOfWork } from "@/platform/ddd/unit-of-work.js";
+import { type InvitationId } from "@/platform/ids/invitation-id.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
+import { LogMailerLive } from "@/platform/notifications/log-mailer-live.js";
 
 type CreateOrganizationBusOutput = Effect.Effect<
   OrganizationId,
@@ -70,6 +96,31 @@ type LeaveOrganizationBusOutput = Effect.Effect<
   DomainEventBus | UnitOfWork | Database.Database
 >;
 
+type InviteUserBusOutput = Effect.Effect<
+  InvitationId,
+  PersistenceUnavailable,
+  DomainEventBus | UnitOfWork | Database.Database
+>;
+
+type AcceptInvitationBusOutput = Effect.Effect<
+  OrganizationId,
+  | InvitationTokenNotFound
+  | InvitationAlreadyAccepted
+  | InvitationRevoked
+  | InvitationExpired
+  | PersistenceUnavailable,
+  DomainEventBus | UnitOfWork | Database.Database
+>;
+
+type RevokeInvitationBusOutput = Effect.Effect<
+  void,
+  | InvitationNotFound
+  | InvitationAlreadyAccepted
+  | InvitationAlreadyRevoked
+  | PersistenceUnavailable,
+  DomainEventBus | UnitOfWork | Database.Database
+>;
+
 declare module "@/platform/ddd/command-bus.js" {
   interface CommandRegistry {
     CreateOrganizationCommand: {
@@ -91,6 +142,18 @@ declare module "@/platform/ddd/command-bus.js" {
     LeaveOrganizationCommand: {
       readonly command: LeaveOrganizationCommand;
       readonly output: LeaveOrganizationBusOutput;
+    };
+    InviteUserCommand: {
+      readonly command: InviteUserCommand;
+      readonly output: InviteUserBusOutput;
+    };
+    AcceptInvitationCommand: {
+      readonly command: AcceptInvitationCommand;
+      readonly output: AcceptInvitationBusOutput;
+    };
+    RevokeInvitationCommand: {
+      readonly command: RevokeInvitationCommand;
+      readonly output: RevokeInvitationBusOutput;
     };
   }
 }
@@ -123,5 +186,23 @@ export const organizationCommandHandlers = commandHandlers({
     handle: (cmd): LeaveOrganizationBusOutput =>
       leaveOrganization(cmd).pipe(Effect.provide(MembershipRepositoryLive)),
     spanAttributes: leaveOrganizationCommandSpanAttributes,
+  },
+  InviteUserCommand: {
+    handle: (cmd): InviteUserBusOutput =>
+      inviteUser(cmd).pipe(Effect.provide(InvitationRepositoryLive), Effect.provide(LogMailerLive)),
+    spanAttributes: inviteUserCommandSpanAttributes,
+  },
+  AcceptInvitationCommand: {
+    handle: (cmd): AcceptInvitationBusOutput =>
+      acceptInvitation(cmd).pipe(
+        Effect.provide(InvitationRepositoryLive),
+        Effect.provide(MembershipRepositoryLive),
+      ),
+    spanAttributes: acceptInvitationCommandSpanAttributes,
+  },
+  RevokeInvitationCommand: {
+    handle: (cmd): RevokeInvitationBusOutput =>
+      revokeInvitation(cmd).pipe(Effect.provide(InvitationRepositoryLive)),
+    spanAttributes: revokeInvitationCommandSpanAttributes,
   },
 });
