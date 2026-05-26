@@ -11,6 +11,11 @@ import {
   type CreateOrganizationCommand,
   createOrganizationCommandSpanAttributes,
 } from "@/modules/organization/commands/create-organization-command.js";
+import { grantOrganizationRole } from "@/modules/organization/commands/grant-organization-role.js";
+import {
+  type GrantOrganizationRoleCommand,
+  grantOrganizationRoleCommandSpanAttributes,
+} from "@/modules/organization/commands/grant-organization-role-command.js";
 import { inviteUser } from "@/modules/organization/commands/invite-user.js";
 import {
   type InviteUserCommand,
@@ -36,6 +41,11 @@ import {
   type RevokeInvitationCommand,
   revokeInvitationCommandSpanAttributes,
 } from "@/modules/organization/commands/revoke-invitation-command.js";
+import { revokeOrganizationRole } from "@/modules/organization/commands/revoke-organization-role.js";
+import {
+  type RevokeOrganizationRoleCommand,
+  revokeOrganizationRoleCommandSpanAttributes,
+} from "@/modules/organization/commands/revoke-organization-role-command.js";
 import { softDeleteOrganization } from "@/modules/organization/commands/soft-delete-organization.js";
 import {
   type SoftDeleteOrganizationCommand,
@@ -55,9 +65,15 @@ import {
   type OrganizationNotDeleted,
   type OrganizationNotFound,
 } from "@/modules/organization/domain/organization-errors.js";
+import {
+  type AlreadyHasOrganizationRole,
+  type CannotPromoteSelfInOrganization,
+  type DoesNotHaveOrganizationRole,
+} from "@/modules/organization/domain/organization-role-errors.js";
 import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/invitation-repository-live.js";
 import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/membership-repository-live.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/organization-repository-live.js";
+import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastructure/organization-roles-repository-live.js";
 import { commandHandlers } from "@/platform/ddd/command-bus.js";
 import { type DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
@@ -121,6 +137,18 @@ type RevokeInvitationBusOutput = Effect.Effect<
   DomainEventBus | UnitOfWork | Database.Database
 >;
 
+type GrantOrganizationRoleBusOutput = Effect.Effect<
+  void,
+  AlreadyHasOrganizationRole | CannotPromoteSelfInOrganization | PersistenceUnavailable,
+  DomainEventBus | UnitOfWork | Database.Database
+>;
+
+type RevokeOrganizationRoleBusOutput = Effect.Effect<
+  void,
+  DoesNotHaveOrganizationRole | PersistenceUnavailable,
+  DomainEventBus | UnitOfWork | Database.Database
+>;
+
 declare module "@/platform/ddd/command-bus.js" {
   interface CommandRegistry {
     CreateOrganizationCommand: {
@@ -155,6 +183,14 @@ declare module "@/platform/ddd/command-bus.js" {
       readonly command: RevokeInvitationCommand;
       readonly output: RevokeInvitationBusOutput;
     };
+    GrantOrganizationRoleCommand: {
+      readonly command: GrantOrganizationRoleCommand;
+      readonly output: GrantOrganizationRoleBusOutput;
+    };
+    RevokeOrganizationRoleCommand: {
+      readonly command: RevokeOrganizationRoleCommand;
+      readonly output: RevokeOrganizationRoleBusOutput;
+    };
   }
 }
 
@@ -164,6 +200,7 @@ export const organizationCommandHandlers = commandHandlers({
       createOrganization(cmd).pipe(
         Effect.provide(OrganizationRepositoryLive),
         Effect.provide(MembershipRepositoryLive),
+        Effect.provide(OrganizationRolesRepositoryLive),
       ),
     spanAttributes: createOrganizationCommandSpanAttributes,
   },
@@ -204,5 +241,15 @@ export const organizationCommandHandlers = commandHandlers({
     handle: (cmd): RevokeInvitationBusOutput =>
       revokeInvitation(cmd).pipe(Effect.provide(InvitationRepositoryLive)),
     spanAttributes: revokeInvitationCommandSpanAttributes,
+  },
+  GrantOrganizationRoleCommand: {
+    handle: (cmd): GrantOrganizationRoleBusOutput =>
+      grantOrganizationRole(cmd).pipe(Effect.provide(OrganizationRolesRepositoryLive)),
+    spanAttributes: grantOrganizationRoleCommandSpanAttributes,
+  },
+  RevokeOrganizationRoleCommand: {
+    handle: (cmd): RevokeOrganizationRoleBusOutput =>
+      revokeOrganizationRole(cmd).pipe(Effect.provide(OrganizationRolesRepositoryLive)),
+    spanAttributes: revokeOrganizationRoleCommandSpanAttributes,
   },
 });

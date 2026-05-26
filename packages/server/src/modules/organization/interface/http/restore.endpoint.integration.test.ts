@@ -85,10 +85,10 @@ memberSuite("POST /orgs/:id/restore (integration, non-super-admin caller)", () =
     { server: TestServerLiveAsMember, seedSuperAdminCaller: true },
   );
 
-  // Seeds an org directly via SQL so the member-caller is NOT a member
-  // of it — `restore`'s policy is `any(SuperAdminOnly, IsMember)`, so
+  // Seeds an org directly via SQL so the member-caller is NOT an admin
+  // of it — `restore`'s policy is `any(SuperAdminOnly, IsOrgAdmin)`, so
   // the 403 path requires both halves to fail.
-  it("returns 403 Forbidden for a caller who's neither a super-admin nor a member", async () => {
+  it("returns 403 Forbidden for a caller who's neither a super-admin nor an org admin", async () => {
     await run(
       Effect.gen(function* () {
         const orgId = "11111111-1111-1111-1111-111111111111" as never;

@@ -21,6 +21,7 @@ import {
   organizationQueryHandlers,
   OrganizationResolverEntry,
   OrganizationResolverEntryLive,
+  OrganizationRoleServiceLive,
 } from "@/modules/organization/index.js";
 import {
   roleCommandHandlers,
@@ -120,6 +121,7 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
       authMiddleware,
       RoleServiceLive,
       MembershipServiceLive,
+      OrganizationRoleServiceLive,
       DomainEventBusLive,
       UnitOfWorkLive,
     ]),
