@@ -12,6 +12,10 @@ import {
   organizationRestoredSpanAttributes,
   organizationSoftDeletedSpanAttributes,
 } from "@/modules/organization/domain/organization-events.js";
+import {
+  organizationRoleGrantedSpanAttributes,
+  organizationRoleRevokedSpanAttributes,
+} from "@/modules/organization/domain/organization-role-events.js";
 import { eventSpanAttributes } from "@/platform/ddd/domain-event-bus.js";
 
 export const organizationEventSpanAttributes = eventSpanAttributes({
@@ -23,4 +27,6 @@ export const organizationEventSpanAttributes = eventSpanAttributes({
   InvitationIssued: invitationIssuedSpanAttributes,
   InvitationAccepted: invitationAcceptedSpanAttributes,
   InvitationRevoked: invitationRevokedSpanAttributes,
+  OrganizationRoleGranted: organizationRoleGrantedSpanAttributes,
+  OrganizationRoleRevoked: organizationRoleRevokedSpanAttributes,
 });

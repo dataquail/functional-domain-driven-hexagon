@@ -37,3 +37,15 @@ export type InvitationRow = typeof InvitationRow.Type;
 
 export const InvitationRowStd: StandardSchemaV1<unknown, InvitationRow> =
   Schema.standardSchemaV1(InvitationRow);
+
+export const OrganizationRoleRow = Schema.Struct({
+  organization_id: Schema.UUID,
+  user_id: Schema.UUID,
+  role: Schema.String,
+  issued_by: Schema.UUID,
+  created_at: Schema.DateTimeUtcFromDate,
+});
+export type OrganizationRoleRow = typeof OrganizationRoleRow.Type;
+
+export const OrganizationRoleRowStd: StandardSchemaV1<unknown, OrganizationRoleRow> =
+  Schema.standardSchemaV1(OrganizationRoleRow);

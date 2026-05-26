@@ -18,6 +18,7 @@ import { type OrganizationRestored } from "@/modules/organization/domain/organiz
 import { OrganizationRepository } from "@/modules/organization/domain/organization-repository.js";
 import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/membership-repository-fake.js";
 import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/organization-repository-fake.js";
+import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/organization-roles-repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
@@ -28,6 +29,7 @@ const actorUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const TestLayer = Layer.mergeAll(
   OrganizationRepositoryFake,
   MembershipRepositoryFake,
+  OrganizationRolesRepositoryFake,
   RecordingEventBus,
   IdentityUnitOfWork,
 );

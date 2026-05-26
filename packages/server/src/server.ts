@@ -32,6 +32,7 @@ import {
   organizationQueryHandlers,
   OrganizationResolverEntry,
   OrganizationResolverEntryLive,
+  OrganizationRoleServiceLive,
 } from "./modules/organization/index.js";
 import {
   roleCommandHandlers,
@@ -130,6 +131,7 @@ const ApiLive = HttpApiBuilder.api(Api).pipe(
     UserAuthMiddlewareLive,
     RoleServiceLive,
     MembershipServiceLive,
+    OrganizationRoleServiceLive,
     DomainEventBusLive,
     UnitOfWorkLive,
   ]),

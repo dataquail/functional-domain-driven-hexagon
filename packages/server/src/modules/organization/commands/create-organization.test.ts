@@ -9,8 +9,11 @@ import { type MembershipCreated } from "@/modules/organization/domain/membership
 import { MembershipRepository } from "@/modules/organization/domain/membership-repository.js";
 import { type OrganizationCreated } from "@/modules/organization/domain/organization-events.js";
 import { OrganizationRepository } from "@/modules/organization/domain/organization-repository.js";
+import { type OrganizationRoleGranted } from "@/modules/organization/domain/organization-role-events.js";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles-repository.js";
 import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/membership-repository-fake.js";
 import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/organization-repository-fake.js";
+import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/organization-roles-repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
@@ -20,6 +23,7 @@ const actorUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const TestLayer = Layer.mergeAll(
   OrganizationRepositoryFake,
   MembershipRepositoryFake,
+  OrganizationRolesRepositoryFake,
   RecordingEventBus,
   IdentityUnitOfWork,
 );
@@ -60,5 +64,30 @@ describe("createOrganization", () => {
       deepStrictEqual(event.userId, actorUserId);
       deepStrictEqual(event.organizationId, id);
     }).pipe(Effect.provide(TestLayer)),
+  );
+
+  it.effect(
+    "grants the creator the `admin` OrganizationRole and publishes OrganizationRoleGranted",
+    () =>
+      Effect.gen(function* () {
+        const orgRolesRepo = yield* OrganizationRolesRepository;
+        const rec = yield* RecordedEvents;
+        const id = yield* createOrganization(
+          CreateOrganizationCommand.make({ name: "Acme", actorUserId }),
+        );
+        const roles = yield* orgRolesRepo.findByUserIdAndOrgId(actorUserId, id);
+        deepStrictEqual(
+          roles.roles.map((r) => ({ role: r.role, issuedBy: r.issuedBy })),
+          [{ role: "admin", issuedBy: actorUserId }],
+        );
+        const events = yield* rec.byTag<OrganizationRoleGranted>("OrganizationRoleGranted");
+        deepStrictEqual(events.length, 1);
+        const event = events[0];
+        if (event === undefined) throw new Error("expected OrganizationRoleGranted event");
+        deepStrictEqual(event.userId, actorUserId);
+        deepStrictEqual(event.organizationId, id);
+        deepStrictEqual(event.role, "admin");
+        deepStrictEqual(event.issuedBy, actorUserId);
+      }).pipe(Effect.provide(TestLayer)),
   );
 });
