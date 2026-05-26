@@ -4,7 +4,6 @@ import { DomainEvent } from "@/platform/ddd/domain-event.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-import { UserRole } from "./user-role.js";
 import { Address } from "./value-objects/address.js";
 
 export const UserCreated = DomainEvent("UserCreated", {
@@ -39,17 +38,4 @@ export const userAddressUpdatedSpanAttributes: SpanAttributesExtractor<UserAddre
   event,
 ) => ({ "user.id": event.userId });
 
-export const UserRoleChanged = DomainEvent("UserRoleChanged", {
-  userId: UserId,
-  oldRole: UserRole,
-  newRole: UserRole,
-});
-export type UserRoleChanged = typeof UserRoleChanged.Type;
-
-export const userRoleChangedSpanAttributes: SpanAttributesExtractor<UserRoleChanged> = (event) => ({
-  "user.id": event.userId,
-  "user.role.old": event.oldRole,
-  "user.role.new": event.newRole,
-});
-
-export type UserEvent = UserCreated | UserDeleted | UserAddressUpdated | UserRoleChanged;
+export type UserEvent = UserCreated | UserDeleted | UserAddressUpdated;

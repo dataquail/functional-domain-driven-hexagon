@@ -22,13 +22,6 @@ export const touchSessionCommandSpanAttributes: SpanAttributesExtractor<TouchSes
   "auth.session.id": c.sessionId,
 });
 
+// Raw handler effect — `SessionRepository` is discharged by the wrap in
+// `auth-command-handlers.ts`; the bus-registered output type lives there.
 export type TouchSessionOutput = Effect.Effect<void, never, SessionRepository>;
-
-declare module "@/platform/ddd/command-bus.js" {
-  interface CommandRegistry {
-    TouchSessionCommand: {
-      readonly command: TouchSessionCommand;
-      readonly output: TouchSessionOutput;
-    };
-  }
-}

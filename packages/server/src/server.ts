@@ -23,16 +23,37 @@ import {
   authQueryHandlers,
   AuthSharedDepsLive,
 } from "./modules/auth/index.js";
+import {
+  MembershipServiceLive,
+  organizationCommandHandlers,
+  organizationEventSpanAttributes,
+  OrganizationModuleLive,
+  organizationPolicies,
+  organizationQueryHandlers,
+  OrganizationResolverEntry,
+  OrganizationResolverEntryLive,
+} from "./modules/organization/index.js";
+import {
+  roleCommandHandlers,
+  roleEventSpanAttributes,
+  roleQueryHandlers,
+  RoleServiceLive,
+} from "./modules/role/index.js";
 import { todoCommandHandlers, todoQueryHandlers, TodosModuleLive } from "./modules/todos/index.js";
 import {
   userCommandHandlers,
   userEventSpanAttributes,
   UserModuleLive,
+  userPolicies,
   userQueryHandlers,
+  UserResolverEntry,
+  UserResolverEntryLive,
 } from "./modules/user/index.js";
 import { walletEventSpanAttributes, WalletModuleLive } from "./modules/wallet/index.js";
-import { PermissionsResolver } from "./platform/auth/permissions-resolver.js";
+import { makePolicyRegistry } from "./platform/auth/policy-registry.js";
+import { makeResourceResolverRegistry } from "./platform/auth/resource-resolver-registry.js";
 import { makeCommandBus } from "./platform/command-bus-live.js";
+import { DatabaseLive } from "./platform/database-live.js";
 import { CommandBus } from "./platform/ddd/command-bus.js";
 import { QueryBus } from "./platform/ddd/query-bus.js";
 import { makeDomainEventBusLive } from "./platform/domain-event-bus-live.js";
@@ -46,38 +67,82 @@ dotenv.config({
 
 const CommandBusLive = Layer.succeed(
   CommandBus,
-  makeCommandBus({ ...userCommandHandlers, ...todoCommandHandlers, ...authCommandHandlers }),
+  makeCommandBus({
+    ...userCommandHandlers,
+    ...todoCommandHandlers,
+    ...authCommandHandlers,
+    ...roleCommandHandlers,
+    ...organizationCommandHandlers,
+  }),
 );
 const QueryBusLive = Layer.succeed(
   QueryBus,
-  makeQueryBus({ ...userQueryHandlers, ...todoQueryHandlers, ...authQueryHandlers }),
+  makeQueryBus({
+    ...userQueryHandlers,
+    ...todoQueryHandlers,
+    ...authQueryHandlers,
+    ...roleQueryHandlers,
+    ...organizationQueryHandlers,
+  }),
 );
 const DomainEventBusLive = makeDomainEventBusLive({
-  spanAttributes: { ...userEventSpanAttributes, ...walletEventSpanAttributes },
+  spanAttributes: {
+    ...userEventSpanAttributes,
+    ...walletEventSpanAttributes,
+    ...roleEventSpanAttributes,
+    ...organizationEventSpanAttributes,
+  },
 });
 
+const PolicyRegistryLive = makePolicyRegistry([userPolicies, organizationPolicies]);
+
+// Resource resolvers are owned by each module: the module exports a
+// `*ResolverEntryLive` layer that internally satisfies its repository
+// dependency, so the composition root never sees module-internal
+// repository Tags. Adding a module to the registry: import its
+// `*ResolverEntry` Tag + `*ResolverEntryLive` layer, yield the Tag,
+// and provide the layer below.
+const ResourceResolverRegistryLive = Layer.unwrapEffect(
+  Effect.gen(function* () {
+    const userResolver = yield* UserResolverEntry;
+    const organizationResolver = yield* OrganizationResolverEntry;
+    return makeResourceResolverRegistry({
+      user: userResolver,
+      organization: organizationResolver,
+    });
+  }),
+).pipe(Layer.provide([UserResolverEntryLive, OrganizationResolverEntryLive]));
+
 const ApiLive = HttpApiBuilder.api(Api).pipe(
-  Layer.provide([TodosModuleLive, UserModuleLive, WalletModuleLive, AuthModuleLive]),
-  Layer.provide([UserAuthMiddlewareLive, DomainEventBusLive, UnitOfWorkLive]),
+  Layer.provide([
+    TodosModuleLive,
+    UserModuleLive,
+    WalletModuleLive,
+    AuthModuleLive,
+    OrganizationModuleLive,
+  ]),
+  // RoleService is a peer of the auth middleware: both consume the
+  // buses provided just below, and both feed upstream consumers
+  // (endpoints + `SuperAdminOnly`). Placing it here means the same
+  // `Layer.provide([CommandBusLive, QueryBusLive])` step satisfies its
+  // QueryBus dependency too.
+  Layer.provide([
+    UserAuthMiddlewareLive,
+    RoleServiceLive,
+    MembershipServiceLive,
+    DomainEventBusLive,
+    UnitOfWorkLive,
+  ]),
   // CommandBus + QueryBus must provide TO the middleware (not be its peers
   // in the array above), since UserAuthMiddlewareLive now dispatches the
   // FindSessionQuery via the bus.
   Layer.provide([CommandBusLive, QueryBusLive]),
-  Layer.provide(PermissionsResolver.Default),
+  // Authz registries — endpoints consume PolicyRegistry +
+  // ResourceResolverRegistry via Authz.requires/requiresOn.
+  Layer.provide([PolicyRegistryLive, ResourceResolverRegistryLive]),
   Layer.provide(AuthSharedDepsLive),
   Layer.provide(EnvVars.Default),
 );
-
-const DatabaseLive = Layer.unwrapEffect(
-  EnvVars.pipe(
-    Effect.map((envVars) =>
-      Database.layer({
-        url: envVars.DATABASE_URL,
-        ssl: envVars.ENV === "prod",
-      }),
-    ),
-  ),
-).pipe(Layer.provide(EnvVars.Default));
 
 const NodeSdkLive = Layer.unwrapEffect(
   EnvVars.OTLP_URL.pipe(

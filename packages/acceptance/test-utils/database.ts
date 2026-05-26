@@ -24,7 +24,7 @@ const assertTestDbName = (url: string): string => {
 
 // Kept in sync with packages/database/migrations/V00*__create_schema_*.sql
 // (ADR-0021). Each module owns its own schema.
-const MODULE_SCHEMAS = ["user", "todos", "wallet", "auth"] as const;
+const MODULE_SCHEMAS = ["user", "todos", "wallet", "auth", "platform", "organization"] as const;
 
 export const runMigrations = async (databaseUrl: string): Promise<void> => {
   assertTestDbName(databaseUrl);

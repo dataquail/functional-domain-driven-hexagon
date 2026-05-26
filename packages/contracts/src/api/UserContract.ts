@@ -35,12 +35,6 @@ export class UserNotFoundError extends Schema.TaggedError<UserNotFoundError>("Us
 // Shapes
 // ==========================================
 
-export const UserRole = Schema.Literal("admin", "moderator", "guest");
-export type UserRole = typeof UserRole.Type;
-
-export const PromotableRole = Schema.Literal("admin", "moderator");
-export type PromotableRole = typeof PromotableRole.Type;
-
 export const Address = Schema.Struct({
   country: Schema.String,
   street: Schema.String,
@@ -51,7 +45,6 @@ export type Address = typeof Address.Type;
 export class User extends Schema.Class<User>("User")({
   id: UserId,
   email: Schema.String,
-  role: UserRole,
   address: Address,
   createdAt: Schema.DateTimeUtc,
   updatedAt: Schema.DateTimeUtc,
@@ -70,12 +63,6 @@ export class CreateUserPayload extends Schema.Class<CreateUserPayload>("CreateUs
 
 export class CreateUserResponse extends Schema.Class<CreateUserResponse>("CreateUserResponse")({
   id: UserId,
-}) {}
-
-export class ChangeUserRolePayload extends Schema.Class<ChangeUserRolePayload>(
-  "ChangeUserRolePayload",
-)({
-  role: PromotableRole,
 }) {}
 
 export class FindUsersParams extends Schema.Class<FindUsersParams>("FindUsersParams")({
@@ -110,11 +97,18 @@ export class Group extends HttpApiGroup.make("user")
       .addError(UserNotFoundError),
   )
   .add(
-    HttpApiEndpoint.put("changeRole", "/:id/role")
+    HttpApiEndpoint.post("promoteToSuperAdmin", "/:id/super-admin")
       .setPath(Schema.Struct({ id: UserId }))
-      .setPayload(ChangeUserRolePayload)
-      .addSuccess(Schema.Void)
-      .addError(UserNotFoundError),
+      .addError(CustomHttpApiError.Forbidden)
+      .addError(UserNotFoundError)
+      .addSuccess(Schema.Void),
+  )
+  .add(
+    HttpApiEndpoint.del("demoteFromSuperAdmin", "/:id/super-admin")
+      .setPath(Schema.Struct({ id: UserId }))
+      .addError(CustomHttpApiError.Forbidden)
+      .addError(UserNotFoundError)
+      .addSuccess(Schema.Void),
   )
   // Group-wide: every endpoint here can 503 on transient DB failure. The
   // typed channel lets endpoint handlers `Effect.catchTag` the

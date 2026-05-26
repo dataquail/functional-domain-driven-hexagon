@@ -65,9 +65,9 @@ const insertAdminRow = async ({
     await client.query("BEGIN");
     const newId = randomUUID();
     await client.query(
-      `INSERT INTO "user".users (id, email, role, country, street, postal_code, created_at, updated_at)
-       VALUES ($1, $2, 'admin', 'N/A', 'N/A', 'N/A', now(), now())
-       ON CONFLICT (email) DO UPDATE SET role = 'admin'`,
+      `INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
+       VALUES ($1, $2, 'N/A', 'N/A', 'N/A', now(), now())
+       ON CONFLICT (email) DO NOTHING`,
       [newId, adminEmail],
     );
     const userRow = await client.query<{ id: string }>(
@@ -83,6 +83,12 @@ const insertAdminRow = async ({
        VALUES ($1, $2, 'zitadel', now())
        ON CONFLICT (subject) DO NOTHING`,
       [subject, finalUserId],
+    );
+    await client.query(
+      `INSERT INTO platform.roles (user_id, role)
+       VALUES ($1, 'super_admin')
+       ON CONFLICT (user_id, role) DO NOTHING`,
+      [finalUserId],
     );
     await client.query("COMMIT");
   } catch (err) {

@@ -90,11 +90,6 @@ describe("User.create", () => {
     deepStrictEqual(user.address.postalCode, "12345");
   });
 
-  it("defaults role to 'guest'", () => {
-    const { user } = User.create({ id, email: "alice@example.com", address, now });
-    deepStrictEqual(user.role, "guest");
-  });
-
   it("sets createdAt and updatedAt to the provided time", () => {
     const { user } = User.create({ id, email: "alice@example.com", address, now });
     deepStrictEqual(user.createdAt, now);
@@ -117,7 +112,6 @@ describe("User.markDeleted", () => {
     const { user } = User.markDeleted(original);
     deepStrictEqual(user.id, original.id);
     deepStrictEqual(user.email, original.email);
-    deepStrictEqual(user.role, original.role);
     deepStrictEqual(user.updatedAt, original.updatedAt);
   });
 
@@ -125,36 +119,6 @@ describe("User.markDeleted", () => {
     const { events } = User.markDeleted(seedUser());
     deepStrictEqual(events.length, 1);
     expectEvent(events, "UserDeleted");
-  });
-});
-
-describe("User.makeAdmin", () => {
-  it("changes role to 'admin'", () => {
-    const { user } = User.makeAdmin(seedUser(), { now: later });
-    deepStrictEqual(user.role, "admin");
-  });
-
-  it("updates updatedAt but preserves createdAt", () => {
-    const { user } = User.makeAdmin(seedUser(), { now: later });
-    deepStrictEqual(user.updatedAt, later);
-    deepStrictEqual(user.createdAt, now);
-  });
-
-  it("emits a UserRoleChanged event with prior role as oldRole", () => {
-    const { events } = User.makeAdmin(seedUser(), { now: later });
-    deepStrictEqual(events.length, 1);
-    const event = expectEvent(events, "UserRoleChanged");
-    deepStrictEqual(event.oldRole, "guest");
-    deepStrictEqual(event.newRole, "admin");
-  });
-});
-
-describe("User.makeModerator", () => {
-  it("changes role to 'moderator' and emits UserRoleChanged", () => {
-    const { events, user } = User.makeModerator(seedUser(), { now: later });
-    deepStrictEqual(user.role, "moderator");
-    const event = expectEvent(events, "UserRoleChanged");
-    deepStrictEqual(event.newRole, "moderator");
   });
 });
 

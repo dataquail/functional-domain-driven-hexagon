@@ -3,20 +3,12 @@ import * as Schema from "effect/Schema";
 
 import { UserId } from "@/platform/ids/user-id.js";
 
-import {
-  UserAddressUpdated,
-  UserCreated,
-  UserDeleted,
-  type UserEvent,
-  UserRoleChanged,
-} from "./user-events.js";
-import { UserRole } from "./user-role.js";
+import { UserAddressUpdated, UserCreated, UserDeleted, type UserEvent } from "./user-events.js";
 import { Address } from "./value-objects/address.js";
 
 export class User extends Schema.Class<User>("User")({
   id: UserId,
   email: Schema.String,
-  role: UserRole,
   address: Address,
   createdAt: Schema.DateTimeUtc,
   updatedAt: Schema.DateTimeUtc,
@@ -38,7 +30,6 @@ export const create = (input: CreateInput): Result => {
   const user = User.make({
     id: input.id,
     email: input.email,
-    role: "guest",
     address: input.address,
     createdAt: input.now,
     updatedAt: input.now,
@@ -60,26 +51,6 @@ export const markDeleted = (user: User): Result => ({
   events: [UserDeleted.make({ userId: user.id })],
 });
 
-export type RoleChangeInput = { readonly now: DateTime.Utc };
-
-const changeRole = (user: User, newRole: UserRole, input: RoleChangeInput): Result => ({
-  user: User.make({
-    id: user.id,
-    email: user.email,
-    role: newRole,
-    address: user.address,
-    createdAt: user.createdAt,
-    updatedAt: input.now,
-  }),
-  events: [UserRoleChanged.make({ userId: user.id, oldRole: user.role, newRole })],
-});
-
-export const makeAdmin = (user: User, input: RoleChangeInput): Result =>
-  changeRole(user, "admin", input);
-
-export const makeModerator = (user: User, input: RoleChangeInput): Result =>
-  changeRole(user, "moderator", input);
-
 export type UpdateAddressInput = {
   readonly country?: string;
   readonly postalCode?: string;
@@ -97,7 +68,6 @@ export const updateAddress = (user: User, input: UpdateAddressInput): Result => 
     user: User.make({
       id: user.id,
       email: user.email,
-      role: user.role,
       address: newAddress,
       createdAt: user.createdAt,
       updatedAt: input.now,

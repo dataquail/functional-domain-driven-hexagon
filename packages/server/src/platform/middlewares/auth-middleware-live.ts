@@ -1,19 +1,14 @@
 import * as HttpServerRequest from "@effect/platform/HttpServerRequest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { UserAuthMiddleware } from "@org/contracts/Policy";
+import { Database } from "@org/database/index";
 import * as cookie from "cookie";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { EnvVars } from "@/common/env-vars.js";
-import {
-  FindSessionQuery,
-  SessionId,
-  SessionRepository,
-  TouchSessionCommand,
-} from "@/modules/auth/index.js";
+import { FindSessionQuery, SessionId, TouchSessionCommand } from "@/modules/auth/index.js";
 import { CookieCodec } from "@/platform/auth/cookie-codec.js";
-import { PermissionsResolver } from "@/platform/auth/permissions-resolver.js";
 import { CommandBus } from "@/platform/ddd/command-bus.js";
 import { QueryBus } from "@/platform/ddd/query-bus.js";
 
@@ -34,12 +29,10 @@ export const UserAuthMiddlewareLive = Layer.effect(
     const codec = yield* CookieCodec;
     const queryBus = yield* QueryBus;
     const commandBus = yield* CommandBus;
-    const perms = yield* PermissionsResolver;
-    // Resolved in outer scope so we can provide it inline below — the
-    // per-request Effect must be `Provided` (HTTP request context only),
-    // and `bus.execute(FindSessionQuery)` carries the handler's
-    // SessionRepository requirement.
-    const sessions = yield* SessionRepository;
+    // Captured here so the per-request Effect can satisfy the bus
+    // dispatch's Database requirement inline — auth-module handlers
+    // wrap their own SessionRepository (Stage B), leaving Database in R.
+    const db = yield* Database.Database;
 
     return Effect.gen(function* () {
       const httpReq = yield* HttpServerRequest.HttpServerRequest;
@@ -52,7 +45,7 @@ export const UserAuthMiddlewareLive = Layer.effect(
       const sessionId = SessionId.make(verified);
       const session = yield* queryBus
         .execute(FindSessionQuery.make({ sessionId }))
-        .pipe(Effect.provideService(SessionRepository, sessions), Effect.mapError(toAuthError));
+        .pipe(Effect.provideService(Database.Database, db), Effect.mapError(toAuthError));
       // Sliding-TTL refresh, fire-and-forget on the request fiber. The
       // command's own throttle decides whether to write; failures are
       // benign races (revoked / removed mid-flight) and are swallowed by
@@ -65,12 +58,10 @@ export const UserAuthMiddlewareLive = Layer.effect(
             thresholdSeconds: env.SESSION_TOUCH_THRESHOLD_SECONDS,
           }),
         )
-        .pipe(Effect.provideService(SessionRepository, sessions));
-      const permissions = yield* perms.get(session.userId).pipe(Effect.mapError(toAuthError));
+        .pipe(Effect.provideService(Database.Database, db));
       return {
         sessionId: session.id,
         userId: session.userId,
-        permissions: new Set(permissions),
       };
     }).pipe(Effect.withSpan("auth.middleware"));
   }),

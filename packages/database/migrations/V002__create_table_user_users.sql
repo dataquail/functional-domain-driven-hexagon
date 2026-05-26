@@ -1,7 +1,6 @@
 CREATE TABLE "user"."users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"email" varchar(255) NOT NULL,
-	"role" varchar(32) DEFAULT 'guest' NOT NULL,
 	"country" varchar(50) NOT NULL,
 	"street" varchar(50) NOT NULL,
 	"postal_code" varchar(10) NOT NULL,

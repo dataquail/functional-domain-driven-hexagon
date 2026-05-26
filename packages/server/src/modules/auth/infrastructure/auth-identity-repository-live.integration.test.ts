@@ -21,8 +21,8 @@ const seedUserAndIdentity = Effect.gen(function* () {
   const db = yield* Database.Database;
   yield* db.execute((client) =>
     client.query(sql.unsafe`
-      INSERT INTO "user".users (id, email, role, country, street, postal_code, created_at, updated_at)
-      VALUES (${userId}, 'admin@example.com', 'admin', 'N/A', 'N/A', 'N/A', now(), now())
+      INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
+      VALUES (${userId}, 'admin@example.com', 'N/A', 'N/A', 'N/A', now(), now())
     `),
   );
   yield* db.execute((client) =>

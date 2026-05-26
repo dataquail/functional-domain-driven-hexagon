@@ -48,7 +48,6 @@ suite("UserRepositoryLive (integration)", () => {
         const found = yield* repo.findById(alice.id);
         deepStrictEqual(found.id, alice.id);
         deepStrictEqual(found.email, alice.email);
-        deepStrictEqual(found.role, "guest");
         deepStrictEqual(found.address.country, "USA");
         deepStrictEqual(found.address.street, "123 Main St");
         deepStrictEqual(found.address.postalCode, "12345");
@@ -113,14 +112,14 @@ suite("UserRepositoryLive (integration)", () => {
   });
 
   describe("update", () => {
-    it.effect("overwrites role and updatedAt", () =>
+    it.effect("overwrites address and updatedAt", () =>
       Effect.gen(function* () {
         const repo = yield* UserRepository;
         yield* repo.insert(alice);
-        const { user: admin } = User.makeAdmin(alice, { now: later });
-        yield* repo.update(admin);
+        const { user: updated } = User.updateAddress(alice, { country: "Canada", now: later });
+        yield* repo.update(updated);
         const found = yield* repo.findById(alice.id);
-        deepStrictEqual(found.role, "admin");
+        deepStrictEqual(found.address.country, "Canada");
         deepStrictEqual(
           DateTime.toDate(found.updatedAt).toISOString(),
           DateTime.toDate(later).toISOString(),

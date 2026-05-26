@@ -32,17 +32,11 @@ export type SignInResult = {
   readonly userId: UserId;
 };
 
+// Raw handler effect — `AuthIdentityRepository` and `SessionRepository`
+// are discharged by the wrap in `auth-command-handlers.ts`; the bus-
+// registered output type lives there.
 export type SignInOutput = Effect.Effect<
   SignInResult,
   CustomHttpApiError.Unauthorized | PersistenceUnavailable,
   AuthIdentityRepository | SessionRepository
 >;
-
-declare module "@/platform/ddd/command-bus.js" {
-  interface CommandRegistry {
-    SignInCommand: {
-      readonly command: SignInCommand;
-      readonly output: SignInOutput;
-    };
-  }
-}

@@ -9,6 +9,4 @@ import { UserEventAdapterLive } from "./interface/events/user-event-adapter.js";
 // the only place allowed to import `@/modules/<publisher>/index.js`.
 // Handlers downstream of the adapter consume wallet-internal trigger
 // types from `event-handlers/triggers/` (see ADR-0007 ACL pattern).
-const EventSubscriptionsLive = UserEventAdapterLive.pipe(Layer.provide(WalletRepositoryLive));
-
-export const WalletModuleLive = Layer.mergeAll(WalletRepositoryLive, EventSubscriptionsLive);
+export const WalletModuleLive = UserEventAdapterLive.pipe(Layer.provide(WalletRepositoryLive));

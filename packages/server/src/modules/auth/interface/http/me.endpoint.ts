@@ -2,13 +2,16 @@ import { AuthContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { type EndpointRequest } from "@/platform/http-endpoint.js";
+import { RoleService } from "@/platform/ddd/role-service.js";
+import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 export const meEndpoint = (_request: EndpointRequest<typeof AuthContract.PrivateGroup, "me">) =>
   Effect.gen(function* () {
     const user = yield* CurrentUser;
+    const roles = yield* RoleService;
+    const perms = yield* roles.findPlatformPermissions(user.userId);
     return new AuthContract.CurrentUserResponse({
       userId: user.userId,
-      permissions: Array.from(user.permissions),
+      isSuperAdmin: perms.roles.includes("super_admin"),
     });
-  }).pipe(Effect.withSpan("AuthLive.me"));
+  }).pipe(recoverPersistenceUnavailable, Effect.withSpan("AuthLive.me"));

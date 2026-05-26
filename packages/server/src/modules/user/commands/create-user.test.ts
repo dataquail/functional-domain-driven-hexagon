@@ -30,7 +30,6 @@ describe("createUser", () => {
       const id = yield* createUser(CreateUserCommand.make(baseCmd));
       const stored = yield* repo.findById(id);
       deepStrictEqual(stored.email, "alice@example.com");
-      deepStrictEqual(stored.role, "guest");
     }).pipe(Effect.provide(TestLayer)),
   );
 

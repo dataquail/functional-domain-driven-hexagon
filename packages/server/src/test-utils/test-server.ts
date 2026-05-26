@@ -1,5 +1,7 @@
 import * as HttpApiBuilder from "@effect/platform/HttpApiBuilder";
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
+import { type UserAuthMiddleware } from "@org/contracts/Policy";
+import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { Api } from "@/api.js";
@@ -10,35 +12,88 @@ import {
   authQueryHandlers,
   AuthSharedDepsLive,
 } from "@/modules/auth/index.js";
+import {
+  MembershipServiceLive,
+  organizationCommandHandlers,
+  organizationEventSpanAttributes,
+  OrganizationModuleLive,
+  organizationPolicies,
+  organizationQueryHandlers,
+  OrganizationResolverEntry,
+  OrganizationResolverEntryLive,
+} from "@/modules/organization/index.js";
+import {
+  roleCommandHandlers,
+  roleEventSpanAttributes,
+  roleQueryHandlers,
+  RoleServiceLive,
+} from "@/modules/role/index.js";
 import { todoCommandHandlers, todoQueryHandlers, TodosModuleLive } from "@/modules/todos/index.js";
 import {
   userCommandHandlers,
   userEventSpanAttributes,
   UserModuleLive,
+  userPolicies,
   userQueryHandlers,
+  UserResolverEntry,
+  UserResolverEntryLive,
 } from "@/modules/user/index.js";
 import { walletEventSpanAttributes, WalletModuleLive } from "@/modules/wallet/index.js";
-import { PermissionsResolver } from "@/platform/auth/permissions-resolver.js";
+import { makePolicyRegistry } from "@/platform/auth/policy-registry.js";
+import { makeResourceResolverRegistry } from "@/platform/auth/resource-resolver-registry.js";
 import { makeCommandBus } from "@/platform/command-bus-live.js";
 import { CommandBus } from "@/platform/ddd/command-bus.js";
 import { QueryBus } from "@/platform/ddd/query-bus.js";
 import { makeDomainEventBusLive } from "@/platform/domain-event-bus-live.js";
 import { makeQueryBus } from "@/platform/query-bus-live.js";
 import { UnitOfWorkLive } from "@/platform/unit-of-work-live.js";
-import { UserAuthMiddlewareFake } from "@/test-utils/fake-auth-middleware.js";
+import {
+  UserAuthMiddlewareFake,
+  UserAuthMiddlewareFakeAsMember,
+} from "@/test-utils/fake-auth-middleware.js";
 import { TestDatabaseLive } from "@/test-utils/test-database.js";
 
 const CommandBusLive = Layer.succeed(
   CommandBus,
-  makeCommandBus({ ...userCommandHandlers, ...todoCommandHandlers, ...authCommandHandlers }),
+  makeCommandBus({
+    ...userCommandHandlers,
+    ...todoCommandHandlers,
+    ...authCommandHandlers,
+    ...roleCommandHandlers,
+    ...organizationCommandHandlers,
+  }),
 );
 const QueryBusLive = Layer.succeed(
   QueryBus,
-  makeQueryBus({ ...userQueryHandlers, ...todoQueryHandlers, ...authQueryHandlers }),
+  makeQueryBus({
+    ...userQueryHandlers,
+    ...todoQueryHandlers,
+    ...authQueryHandlers,
+    ...roleQueryHandlers,
+    ...organizationQueryHandlers,
+  }),
 );
 const DomainEventBusLive = makeDomainEventBusLive({
-  spanAttributes: { ...userEventSpanAttributes, ...walletEventSpanAttributes },
+  spanAttributes: {
+    ...userEventSpanAttributes,
+    ...walletEventSpanAttributes,
+    ...roleEventSpanAttributes,
+    ...organizationEventSpanAttributes,
+  },
 });
+
+const PolicyRegistryLive = makePolicyRegistry([userPolicies, organizationPolicies]);
+
+const ResourceResolverRegistryLive = Layer.unwrapEffect(
+  Effect.gen(function* () {
+    const userResolver = yield* UserResolverEntry;
+    const organizationResolver = yield* OrganizationResolverEntry;
+    return makeResourceResolverRegistry({
+      user: userResolver,
+      organization: organizationResolver,
+    });
+  }),
+).pipe(Layer.provide([UserResolverEntryLive, OrganizationResolverEntryLive]));
 
 // `CommandBus` and `QueryBus` are cross-cutting public production APIs
 // (ADR-0006) — the same dispatch surface every HTTP handler uses. Exposing
@@ -49,27 +104,53 @@ const DomainEventBusLive = makeDomainEventBusLive({
 // `Layer.provide` because they're either internal infrastructure
 // (DomainEventBus, UnitOfWork) or feature-specific (auth middleware)
 // and aren't meant to be driven directly from tests.
-const ApiLive = HttpApiBuilder.api(Api).pipe(
-  Layer.provide([TodosModuleLive, UserModuleLive, WalletModuleLive, AuthModuleLive]),
-  Layer.provide([UserAuthMiddlewareFake, DomainEventBusLive, UnitOfWorkLive]),
-  // CommandBus + QueryBus must provide TO the modules above (they dispatch
-  // via the buses) AND remain reachable from test runtimes — `provideMerge`
-  // keeps them in the runtime context so `yield* CommandBus`/`QueryBus`
-  // works in test bodies.
-  Layer.provideMerge(Layer.mergeAll(CommandBusLive, QueryBusLive)),
-  Layer.provide(PermissionsResolver.Default),
-  Layer.provide(AuthSharedDepsLive),
-  Layer.provide(EnvVars.Default),
-);
+// Factory: build a TestServer composition with a swappable auth-middleware
+// fake. Default callers (every existing integration test) get the
+// super-admin fake. Authz tests opt in to a non-super-admin variant.
+export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddleware>) => {
+  const ApiLive = HttpApiBuilder.api(Api).pipe(
+    Layer.provide([
+      TodosModuleLive,
+      UserModuleLive,
+      WalletModuleLive,
+      AuthModuleLive,
+      OrganizationModuleLive,
+    ]),
+    Layer.provide([
+      authMiddleware,
+      RoleServiceLive,
+      MembershipServiceLive,
+      DomainEventBusLive,
+      UnitOfWorkLive,
+    ]),
+    // CommandBus + QueryBus must provide TO the modules above (they dispatch
+    // via the buses) AND remain reachable from test runtimes — `provideMerge`
+    // keeps them in the runtime context so `yield* CommandBus`/`QueryBus`
+    // works in test bodies.
+    Layer.provideMerge(Layer.mergeAll(CommandBusLive, QueryBusLive)),
+    // Authz registries — same shape as `server.ts`. Endpoints consume
+    // PolicyRegistry + ResourceResolverRegistry via Authz.requires*.
+    Layer.provide([PolicyRegistryLive, ResourceResolverRegistryLive]),
+    Layer.provide(AuthSharedDepsLive),
+    Layer.provide(EnvVars.Default),
+  );
 
-// layerTest binds the server to an in-memory transport and exposes an
-// HttpClient wired to it — no port, no network hop. provideMerge (instead
-// of provide) keeps HttpClient + Database reachable in the test runtime so
-// tests can `yield* HttpApiClient.make(Api)` and drive the DB directly.
-// `provideMerge(ApiLive)` carries the bus exposure forward into the
-// TestServerLive runtime context so tests can `yield* CommandBus`/`QueryBus`.
-export const TestServerLive = HttpApiBuilder.serve().pipe(
-  Layer.provideMerge(ApiLive),
-  Layer.provideMerge(TestDatabaseLive),
-  Layer.provideMerge(NodeHttpServer.layerTest),
-);
+  // layerTest binds the server to an in-memory transport and exposes an
+  // HttpClient wired to it — no port, no network hop. provideMerge (instead
+  // of provide) keeps HttpClient + Database reachable in the test runtime so
+  // tests can `yield* HttpApiClient.make(Api)` and drive the DB directly.
+  // `provideMerge(ApiLive)` carries the bus exposure forward into the
+  // TestServerLive runtime context so tests can `yield* CommandBus`/`QueryBus`.
+  return HttpApiBuilder.serve().pipe(
+    Layer.provideMerge(ApiLive),
+    Layer.provideMerge(TestDatabaseLive),
+    Layer.provideMerge(NodeHttpServer.layerTest),
+  );
+};
+
+// Default — super-admin caller. Every existing integration test consumes this.
+export const TestServerLive = makeTestServerLive(UserAuthMiddlewareFake);
+
+// Non-super-admin caller. 403-Forbidden tests for super-admin-only
+// endpoints consume this via `useServerTestRuntime(tables, { server: ... })`.
+export const TestServerLiveAsMember = makeTestServerLive(UserAuthMiddlewareFakeAsMember);

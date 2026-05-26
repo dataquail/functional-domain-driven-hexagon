@@ -23,17 +23,10 @@ export const createUserCommandSpanAttributes: SpanAttributesExtractor<
   CreateUserCommand
 > = () => ({});
 
+// Raw handler effect — `UserRepository` is discharged by the wrap in
+// `user-command-handlers.ts`; the bus-registered output type lives there.
 export type CreateUserOutput = Effect.Effect<
   UserId,
   UserAlreadyExists | PersistenceUnavailable,
   UserRepository | DomainEventBus | UnitOfWork
 >;
-
-declare module "@/platform/ddd/command-bus.js" {
-  interface CommandRegistry {
-    CreateUserCommand: {
-      readonly command: CreateUserCommand;
-      readonly output: CreateUserOutput;
-    };
-  }
-}

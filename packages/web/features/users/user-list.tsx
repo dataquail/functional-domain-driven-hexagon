@@ -5,7 +5,6 @@
 // fallback supplied by the parent `<Suspense>` in the page. Pagination
 // state stays client-side per ADR-0018.
 
-import { Badge } from "@org/components/primitives/badge";
 import { Button } from "@org/components/primitives/button";
 import { ChevronLeftIcon, ChevronRightIcon } from "@org/components/primitives/icon";
 import * as Array from "effect/Array";
@@ -34,12 +33,7 @@ export const UserList: React.FC = () => {
                 className="flex flex-col gap-1 rounded-md border bg-card p-3 transition-all hover:shadow-sm sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate font-medium text-foreground">{user.email}</p>
-                    <Badge variant="secondary" className="capitalize">
-                      {user.role}
-                    </Badge>
-                  </div>
+                  <p className="truncate font-medium text-foreground">{user.email}</p>
                   <p className="truncate text-xs text-muted-foreground">
                     {user.address.street}, {user.address.postalCode} {user.address.country}
                   </p>

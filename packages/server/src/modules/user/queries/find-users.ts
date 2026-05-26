@@ -2,7 +2,6 @@ import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import { type UserRole } from "@/modules/user/domain/user-role.js";
 import {
   type FindUsersOutput,
   type FindUsersQuery,
@@ -16,7 +15,6 @@ const CountRowStd = Schema.standardSchemaV1(Schema.Struct({ value: Schema.Number
 const toUserView = (row: RowSchemas.UserRow): FindUsersUserView => ({
   id: UserId.make(row.id),
   email: row.email,
-  role: row.role as UserRole,
   address: {
     country: row.country,
     street: row.street,
