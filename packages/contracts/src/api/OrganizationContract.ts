@@ -4,7 +4,7 @@ import * as HttpApiSchema from "@effect/platform/HttpApiSchema";
 import * as Schema from "effect/Schema";
 
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
-import { OrganizationId } from "../EntityIds.js";
+import { InvitationId, OrganizationId, UserId } from "../EntityIds.js";
 import { UserAuthMiddleware } from "../Policy.js";
 
 // ==========================================
@@ -29,6 +29,36 @@ export class OrganizationNotDeletedError extends Schema.TaggedError<Organization
   "OrganizationNotDeletedError",
   { organizationId: OrganizationId, message: Schema.String },
   HttpApiSchema.annotations({ status: 409 }),
+) {}
+
+export class InvitationNotFoundError extends Schema.TaggedError<InvitationNotFoundError>(
+  "InvitationNotFoundError",
+)(
+  "InvitationNotFoundError",
+  { message: Schema.String },
+  HttpApiSchema.annotations({ status: 404 }),
+) {}
+
+// 410 Gone covers the three terminal/expired states (accepted, revoked,
+// expired). Clients see one error variant; the `reason` discriminates
+// so a UI can render the right message.
+export class InvitationGoneError extends Schema.TaggedError<InvitationGoneError>(
+  "InvitationGoneError",
+)(
+  "InvitationGoneError",
+  {
+    reason: Schema.Literal("accepted", "revoked", "expired"),
+    message: Schema.String,
+  },
+  HttpApiSchema.annotations({ status: 410 }),
+) {}
+
+export class MembershipNotFoundError extends Schema.TaggedError<MembershipNotFoundError>(
+  "MembershipNotFoundError",
+)(
+  "MembershipNotFoundError",
+  { message: Schema.String },
+  HttpApiSchema.annotations({ status: 404 }),
 ) {}
 
 // ==========================================
@@ -64,9 +94,6 @@ export class FindAllOrganizationsParams extends Schema.Class<FindAllOrganization
 )({
   page: Schema.NumberFromString.pipe(Schema.int(), Schema.greaterThanOrEqualTo(1)),
   pageSize: Schema.NumberFromString.pipe(Schema.int(), Schema.between(1, 100)),
-  // Comma-separated booleans are awkward; default false (active-only)
-  // is the common case so the param is optional. Clients flip the
-  // recycling-bin view on by passing `includeDeleted=true`.
   includeDeleted: Schema.optional(Schema.Literal("true", "false")),
 }) {}
 
@@ -77,6 +104,20 @@ export class PaginatedOrganizations extends Schema.Class<PaginatedOrganizations>
   page: Schema.Number,
   pageSize: Schema.Number,
   total: Schema.Number,
+}) {}
+
+export class InviteUserPayload extends Schema.Class<InviteUserPayload>("InviteUserPayload")({
+  email: Schema.String.pipe(Schema.minLength(3), Schema.maxLength(320)),
+}) {}
+
+export class InviteUserResponse extends Schema.Class<InviteUserResponse>("InviteUserResponse")({
+  invitationId: InvitationId,
+}) {}
+
+export class AcceptInvitationResponse extends Schema.Class<AcceptInvitationResponse>(
+  "AcceptInvitationResponse",
+)({
+  organizationId: OrganizationId,
 }) {}
 
 // ==========================================
@@ -105,6 +146,37 @@ export class Group extends HttpApiGroup.make("organization")
       .addError(OrganizationNotDeletedError)
       .addSuccess(Schema.Void),
   )
+  .add(
+    HttpApiEndpoint.post("inviteUser", "/:orgId/invitations")
+      .setPath(Schema.Struct({ orgId: OrganizationId }))
+      .setPayload(InviteUserPayload)
+      .addError(CustomHttpApiError.Forbidden)
+      .addError(OrganizationNotFoundError)
+      .addSuccess(InviteUserResponse),
+  )
+  .add(
+    HttpApiEndpoint.del("revokeInvitation", "/:orgId/invitations/:invitationId")
+      .setPath(Schema.Struct({ orgId: OrganizationId, invitationId: InvitationId }))
+      .addError(CustomHttpApiError.Forbidden)
+      .addError(OrganizationNotFoundError)
+      .addError(InvitationNotFoundError)
+      .addError(InvitationGoneError)
+      .addSuccess(Schema.Void),
+  )
+  .add(
+    HttpApiEndpoint.del("removeMember", "/:orgId/members/:userId")
+      .setPath(Schema.Struct({ orgId: OrganizationId, userId: UserId }))
+      .addError(CustomHttpApiError.Forbidden)
+      .addError(OrganizationNotFoundError)
+      .addError(MembershipNotFoundError)
+      .addSuccess(Schema.Void),
+  )
+  .add(
+    HttpApiEndpoint.post("leave", "/:orgId/leave")
+      .setPath(Schema.Struct({ orgId: OrganizationId }))
+      .addError(MembershipNotFoundError)
+      .addSuccess(Schema.Void),
+  )
   .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/orgs") {}
 
@@ -123,3 +195,20 @@ export class AdminGroup extends HttpApiGroup.make("organizationAdmin")
   )
   .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/admin/orgs") {}
+
+// The accept endpoint sits OUTSIDE the org/admin groups because the
+// caller doesn't yet have a membership and the URL is token-shaped,
+// not org-shaped. Still authenticated (the membership row is keyed
+// to CurrentUser.userId), no `Authz.hasPermissions` check beyond that
+// — the token IS the authorization.
+export class InvitationGroup extends HttpApiGroup.make("invitations")
+  .middleware(UserAuthMiddleware)
+  .add(
+    HttpApiEndpoint.post("accept", "/:token/accept")
+      .setPath(Schema.Struct({ token: Schema.String }))
+      .addError(InvitationNotFoundError)
+      .addError(InvitationGoneError)
+      .addSuccess(AcceptInvitationResponse),
+  )
+  .addError(CustomHttpApiError.ServiceUnavailable)
+  .prefix("/invitations") {}

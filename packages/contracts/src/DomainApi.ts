@@ -10,5 +10,6 @@ export class DomainApi extends HttpApi.make("domain")
   .add(UserContract.Group)
   .add(OrganizationContract.Group)
   .add(OrganizationContract.AdminGroup)
+  .add(OrganizationContract.InvitationGroup)
   .add(AuthContract.PublicGroup)
   .add(AuthContract.PrivateGroup) {}

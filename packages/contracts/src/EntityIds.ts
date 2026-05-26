@@ -8,3 +8,6 @@ export type TodoId = typeof TodoId.Type;
 
 export const OrganizationId = Schema.String.pipe(Schema.brand("OrganizationId"));
 export type OrganizationId = typeof OrganizationId.Type;
+
+export const InvitationId = Schema.String.pipe(Schema.brand("InvitationId"));
+export type InvitationId = typeof InvitationId.Type;
