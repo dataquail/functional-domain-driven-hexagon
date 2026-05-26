@@ -12,11 +12,17 @@ export {
   InvitationRevoked,
 } from "./domain/invitation-events.js";
 export { MembershipCreated, MembershipRevoked } from "./domain/membership-events.js";
+// MembershipServiceLive wraps the module's internal MembershipRepository
+// into the platform-layer `MembershipService` ACL. Composed at the API
+// layer (server.ts / test-server.ts) so policies — currently the org's
+// own `IsMember`, future modules' policies as Phase 4 lands — can
+// consume the generalized boolean shape without importing the repo type.
 export {
   OrganizationCreated,
   OrganizationRestored,
   OrganizationSoftDeleted,
 } from "./domain/organization-events.js";
+export { MembershipServiceLive } from "./membership-service-live.js";
 export { organizationCommandHandlers } from "./organization-command-handlers.js";
 export { organizationEventSpanAttributes } from "./organization-event-span-attributes.js";
 export { OrganizationModuleLive } from "./organization-module.js";

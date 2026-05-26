@@ -13,6 +13,7 @@ import {
   AuthSharedDepsLive,
 } from "@/modules/auth/index.js";
 import {
+  MembershipServiceLive,
   organizationCommandHandlers,
   organizationEventSpanAttributes,
   OrganizationModuleLive,
@@ -115,7 +116,13 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
       AuthModuleLive,
       OrganizationModuleLive,
     ]),
-    Layer.provide([authMiddleware, RoleServiceLive, DomainEventBusLive, UnitOfWorkLive]),
+    Layer.provide([
+      authMiddleware,
+      RoleServiceLive,
+      MembershipServiceLive,
+      DomainEventBusLive,
+      UnitOfWorkLive,
+    ]),
     // CommandBus + QueryBus must provide TO the modules above (they dispatch
     // via the buses) AND remain reachable from test runtimes — `provideMerge`
     // keeps them in the runtime context so `yield* CommandBus`/`QueryBus`

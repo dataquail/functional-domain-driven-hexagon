@@ -1,16 +1,18 @@
+import * as Check from "@/platform/auth/check.js";
 import { SuperAdminOnly } from "@/platform/auth/policies/super-admin.js";
 import type * as PolicyRegistry from "@/platform/auth/policy-registry.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 import { type Organization } from "../domain/organization.aggregate.js";
+import { IsMember } from "./is-member.js";
 
-// Phase 2 contribution. Per-org member checks (the `IsMember` half of
-// `update`/`read`) land with Phase 3 once the membership module
-// exposes a `MembershipService` ACL — until then every per-resource
-// gate falls back to `SuperAdminOnly`. Admin-side `read` on
-// `/api/admin/orgs` is also gated by `SuperAdminOnly` and exercised
-// via `Authz.hasPermissions(OrganizationResource, Actions.Read)` (no
-// id — flat action on the resource).
+// Phase 3 contribution. `update` now allows any member of the org (in
+// addition to super-admins) — the same policy gates invite, revoke,
+// remove-member endpoints. `delete` stays super-admin-only because
+// tombstoning an org is a platform-level operation. `read` will become
+// `any(SuperAdminOnly, IsMember)` once a `findMyOrganizations` endpoint
+// lands; the admin-side `findAll` reads use `Actions.Read` flat without
+// an id and remain super-admin-only.
 
 declare module "@/platform/auth/resource-resolver-registry.js" {
   interface ResourceResolverMap {
@@ -33,7 +35,7 @@ export const OrganizationResource = "organization" as const;
 export const organizationPolicies: PolicyRegistry.PolicyContribution = {
   organization: {
     read: SuperAdminOnly,
-    update: SuperAdminOnly,
+    update: Check.any(SuperAdminOnly, IsMember),
     delete: SuperAdminOnly,
   },
 };

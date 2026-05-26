@@ -3,6 +3,7 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { type MembershipService } from "@/platform/ddd/membership-service.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
 import { type RoleService } from "@/platform/ddd/role-service.js";
 
@@ -11,11 +12,11 @@ import { type ResourceName, type ResourceTypeFor } from "./resource-resolver-reg
 
 // Closed set of cross-cutting services a registered check may depend
 // on. Today: `RoleService` (the platform-layer ACL over the role
-// module). Future ACL services (OrgService, etc.) get added here and
-// to `Authz.hasPermissions`'s R channel — that single place reflects
-// "what every policy may consume." Keeping it explicit keeps the
-// registry strongly typed despite the heterogeneous collection.
-export type PolicyDeps = RoleService;
+// module) + `MembershipService` (the platform-layer ACL over the org
+// module's memberships). Both are platform/ddd/ shaped services, never
+// the source module's domain types — keeps consuming policies decoupled
+// and keeps the dep graph acyclic.
+export type PolicyDeps = RoleService | MembershipService;
 export type PolicyErrors = PersistenceUnavailable;
 
 // Registry of policy checks, keyed by (resource, action). Actions are

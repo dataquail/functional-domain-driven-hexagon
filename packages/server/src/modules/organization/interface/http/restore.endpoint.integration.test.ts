@@ -85,12 +85,24 @@ memberSuite("POST /orgs/:id/restore (integration, non-super-admin caller)", () =
     { server: TestServerLiveAsMember, seedSuperAdminCaller: true },
   );
 
-  it("returns 403 Forbidden", async () => {
+  // Seeds an org directly via SQL so the member-caller is NOT a member
+  // of it — `restore`'s policy is `any(SuperAdminOnly, IsMember)`, so
+  // the 403 path requires both halves to fail.
+  it("returns 403 Forbidden for a caller who's neither a super-admin nor a member", async () => {
     await run(
       Effect.gen(function* () {
+        const orgId = "11111111-1111-1111-1111-111111111111" as never;
+        const db = yield* Database.Database;
+        yield* db
+          .execute((c) =>
+            c.query(sql.unsafe`
+              INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
+              VALUES (${orgId}, 'Acme', now(), now(), now())
+            `),
+          )
+          .pipe(Effect.orDie);
         const client = yield* HttpApiClient.make(Api);
-        const { id } = yield* client.organization.create({ payload: { name: "Acme" } });
-        const exit = yield* Effect.exit(client.organization.restore({ path: { id } }));
+        const exit = yield* Effect.exit(client.organization.restore({ path: { id: orgId } }));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
           ok(exit.cause.error instanceof CustomHttpApiError.Forbidden);

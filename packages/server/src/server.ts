@@ -24,6 +24,7 @@ import {
   AuthSharedDepsLive,
 } from "./modules/auth/index.js";
 import {
+  MembershipServiceLive,
   organizationCommandHandlers,
   organizationEventSpanAttributes,
   OrganizationModuleLive,
@@ -125,7 +126,13 @@ const ApiLive = HttpApiBuilder.api(Api).pipe(
   // (endpoints + `SuperAdminOnly`). Placing it here means the same
   // `Layer.provide([CommandBusLive, QueryBusLive])` step satisfies its
   // QueryBus dependency too.
-  Layer.provide([UserAuthMiddlewareLive, RoleServiceLive, DomainEventBusLive, UnitOfWorkLive]),
+  Layer.provide([
+    UserAuthMiddlewareLive,
+    RoleServiceLive,
+    MembershipServiceLive,
+    DomainEventBusLive,
+    UnitOfWorkLive,
+  ]),
   // CommandBus + QueryBus must provide TO the middleware (not be its peers
   // in the array above), since UserAuthMiddlewareLive now dispatches the
   // FindSessionQuery via the bus.
