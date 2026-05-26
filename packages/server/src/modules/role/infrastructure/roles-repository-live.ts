@@ -3,8 +3,8 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
+import { RolesRepository } from "@/modules/role/domain/ports/repositories/roles-repository.js";
 import { type Roles } from "@/modules/role/domain/roles.aggregate.js";
-import { RolesRepository } from "@/modules/role/domain/roles-repository.js";
 import * as RoleMapper from "@/modules/role/infrastructure/role-mapper.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";

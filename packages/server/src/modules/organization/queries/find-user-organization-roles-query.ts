@@ -2,7 +2,7 @@ import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 import { type OrganizationRole } from "@/modules/organization/domain/organization-role.js";
-import { type OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles-repository.js";
+import { type OrganizationRolesRepository } from "@/modules/organization/domain/ports/repositories/organization-roles-repository.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";

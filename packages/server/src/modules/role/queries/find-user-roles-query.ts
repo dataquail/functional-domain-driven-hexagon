@@ -1,8 +1,8 @@
 import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
+import { type RolesRepository } from "@/modules/role/domain/ports/repositories/roles-repository.js";
 import { type Role } from "@/modules/role/domain/role.js";
-import { type RolesRepository } from "@/modules/role/domain/roles-repository.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
 import { UserId } from "@/platform/ids/user-id.js";

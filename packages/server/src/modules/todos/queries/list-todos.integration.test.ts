@@ -5,9 +5,9 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
 
+import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todo-repository.js";
 import * as Todo from "@/modules/todos/domain/todo.js";
 import { TodoId } from "@/modules/todos/domain/todo-id.js";
-import { TodosRepository } from "@/modules/todos/domain/todo-repository.js";
 import { TodosRepositoryLive } from "@/modules/todos/infrastructure/todos-repository-live.js";
 import { listTodos } from "@/modules/todos/queries/list-todos.js";
 import { ListTodosQuery } from "@/modules/todos/queries/list-todos-query.js";

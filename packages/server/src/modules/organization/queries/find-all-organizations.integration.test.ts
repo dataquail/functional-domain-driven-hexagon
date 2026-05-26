@@ -7,7 +7,7 @@ import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
 
 import * as Organization from "@/modules/organization/domain/organization.aggregate.js";
-import { OrganizationRepository } from "@/modules/organization/domain/organization-repository.js";
+import { OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization-repository.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/organization-repository-live.js";
 import { findAllOrganizations } from "@/modules/organization/queries/find-all-organizations.js";
 import { FindAllOrganizationsQuery } from "@/modules/organization/queries/find-all-organizations-query.js";

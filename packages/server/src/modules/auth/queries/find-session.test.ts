@@ -4,6 +4,7 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 
+import { SessionRepository } from "@/modules/auth/domain/ports/repositories/session-repository.js";
 import { Session } from "@/modules/auth/domain/session.aggregate.js";
 import {
   SessionExpired,
@@ -11,7 +12,6 @@ import {
   SessionRevoked,
 } from "@/modules/auth/domain/session-errors.js";
 import { SessionId } from "@/modules/auth/domain/session-id.js";
-import { SessionRepository } from "@/modules/auth/domain/session-repository.js";
 import { SessionRepositoryFake } from "@/modules/auth/infrastructure/session-repository-fake.js";
 import { findSession } from "@/modules/auth/queries/find-session.js";
 import { FindSessionQuery } from "@/modules/auth/queries/find-session-query.js";

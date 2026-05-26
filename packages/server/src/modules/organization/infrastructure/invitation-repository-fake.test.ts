@@ -10,7 +10,7 @@ import {
   InvitationNotFound,
   InvitationTokenNotFound,
 } from "@/modules/organization/domain/invitation-errors.js";
-import { InvitationRepository } from "@/modules/organization/domain/invitation-repository.js";
+import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation-repository.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";

@@ -1,11 +1,10 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
+import { type Organization } from "@/modules/organization/domain/organization.aggregate.js";
+import { type OrganizationNotFound } from "@/modules/organization/domain/organization-errors.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
-
-import { type Organization } from "./organization.aggregate.js";
-import { type OrganizationNotFound } from "./organization-errors.js";
 
 // Single-aggregate persistence port. `findById` filters out soft-deleted
 // rows by default; `findByIdIncludingDeleted` is the explicit opt-in for

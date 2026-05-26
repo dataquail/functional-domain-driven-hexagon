@@ -6,9 +6,9 @@ import * as Layer from "effect/Layer";
 
 import { grantRole } from "@/modules/role/commands/grant-role.js";
 import { GrantRoleCommand } from "@/modules/role/commands/grant-role-command.js";
+import { RolesRepository } from "@/modules/role/domain/ports/repositories/roles-repository.js";
 import { AlreadyHasRole, CannotPromoteSelf } from "@/modules/role/domain/role-errors.js";
 import { type RoleGranted } from "@/modules/role/domain/role-events.js";
-import { RolesRepository } from "@/modules/role/domain/roles-repository.js";
 import { RolesRepositoryFake } from "@/modules/role/infrastructure/roles-repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";

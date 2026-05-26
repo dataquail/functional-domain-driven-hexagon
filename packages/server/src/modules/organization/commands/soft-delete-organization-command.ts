@@ -5,7 +5,7 @@ import {
   type OrganizationAlreadyDeleted,
   type OrganizationNotFound,
 } from "@/modules/organization/domain/organization-errors.js";
-import { type OrganizationRepository } from "@/modules/organization/domain/organization-repository.js";
+import { type OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization-repository.js";
 import { type DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";

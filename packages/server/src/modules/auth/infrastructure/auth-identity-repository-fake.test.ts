@@ -5,7 +5,7 @@ import * as Exit from "effect/Exit";
 
 import { UserId } from "@/platform/ids/user-id.js";
 
-import { AuthIdentityRepository } from "../domain/auth-identity-repository.js";
+import { AuthIdentityRepository } from "../domain/ports/repositories/auth-identity-repository.js";
 import { AuthIdentityNotFound } from "../domain/session-errors.js";
 import { makeAuthIdentityRepositoryFake } from "./auth-identity-repository-fake.js";
 

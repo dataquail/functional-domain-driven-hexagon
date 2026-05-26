@@ -15,9 +15,9 @@ import {
   InvitationRevoked,
   InvitationTokenNotFound,
 } from "@/modules/organization/domain/invitation-errors.js";
-import { InvitationRepository } from "@/modules/organization/domain/invitation-repository.js";
 import { type MembershipCreated } from "@/modules/organization/domain/membership-events.js";
-import { MembershipRepository } from "@/modules/organization/domain/membership-repository.js";
+import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation-repository.js";
+import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership-repository.js";
 import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/invitation-repository-fake.js";
 import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/membership-repository-fake.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";

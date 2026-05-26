@@ -5,8 +5,8 @@ import {
   type UpdateTodoCommand,
   type UpdateTodoOutput,
 } from "@/modules/todos/commands/update-todo-command.js";
+import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todo-repository.js";
 import * as Todo from "@/modules/todos/domain/todo.js";
-import { TodosRepository } from "@/modules/todos/domain/todo-repository.js";
 
 export const updateTodo = (cmd: UpdateTodoCommand): UpdateTodoOutput =>
   Effect.gen(function* () {

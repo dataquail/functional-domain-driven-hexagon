@@ -12,7 +12,7 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
 import { type UserCreated } from "@/modules/user/index.js";
-import { WalletRepository } from "@/modules/wallet/domain/wallet-repository.js";
+import { WalletRepository } from "@/modules/wallet/domain/ports/repositories/wallet-repository.js";
 import { WalletRepositoryFake } from "@/modules/wallet/infrastructure/wallet-repository-fake.js";
 import { UserEventAdapterLive } from "@/modules/wallet/interface/events/user-event-adapter.js";
 import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";

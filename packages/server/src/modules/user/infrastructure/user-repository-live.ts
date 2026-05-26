@@ -6,9 +6,9 @@ import * as Option from "effect/Option";
 import { type UserId } from "@/platform/ids/user-id.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
+import { UserRepository } from "../domain/ports/repositories/user-repository.js";
 import { type User } from "../domain/user.aggregate.js";
 import { UserAlreadyExists, UserNotFound } from "../domain/user-errors.js";
-import { UserRepository } from "../domain/user-repository.js";
 import * as UserMapper from "./user-mapper.js";
 
 export const UserRepositoryLive = Layer.effect(

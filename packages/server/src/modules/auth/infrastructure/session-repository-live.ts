@@ -4,10 +4,10 @@ import * as Layer from "effect/Layer";
 
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
+import { SessionRepository } from "../domain/ports/repositories/session-repository.js";
 import { type Session } from "../domain/session.aggregate.js";
 import { SessionNotFound } from "../domain/session-errors.js";
 import { type SessionId } from "../domain/session-id.js";
-import { SessionRepository } from "../domain/session-repository.js";
 import * as SessionMapper from "./session-mapper.js";
 
 export const SessionRepositoryLive = Layer.effect(

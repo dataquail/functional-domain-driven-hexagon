@@ -90,6 +90,28 @@ const rules = [
     subject: "packages/server/src/modules/*/infrastructure/*-repository-live.ts",
     candidates: [(f) => f.replace(/-repository-live\.ts$/, "-repository-fake.ts")],
   },
+  // ── Outbound adapters (ADR-0023) ────────────────────────────────────
+  // `infrastructure/external/*-live.ts` is the driven adapter behind a
+  // `domain/ports/external/` port — the one place a module imports another
+  // module's barrel. Like a live repository, each needs a test (the
+  // error-translation behavior is the adapter's whole job) and a fake
+  // counterpart (so consumer use-case unit tests run against a focused
+  // port double instead of faking the typed bus).
+  {
+    label: "Outbound adapter",
+    requirement: "sibling test",
+    subject: "packages/server/src/modules/*/infrastructure/external/*-live.ts",
+    candidates: [
+      (f) => f.replace(/-live\.ts$/, "-live.integration.test.ts"),
+      (f) => f.replace(/-live\.ts$/, "-live.test.ts"),
+    ],
+  },
+  {
+    label: "Outbound adapter",
+    requirement: "fake counterpart",
+    subject: "packages/server/src/modules/*/infrastructure/external/*-live.ts",
+    candidates: [(f) => f.replace(/-live\.ts$/, "-fake.ts")],
+  },
   // ── Web (ADR-0014) ───────────────────────────────────────────────────
   // View-tiering parity for packages/web/. Component-library parity
   // (Storybook stories) lives in @org/components — see below.

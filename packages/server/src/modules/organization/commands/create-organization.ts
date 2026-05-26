@@ -9,11 +9,11 @@ import {
   type CreateOrganizationOutput,
 } from "@/modules/organization/commands/create-organization-command.js";
 import * as Membership from "@/modules/organization/domain/membership.aggregate.js";
-import { MembershipRepository } from "@/modules/organization/domain/membership-repository.js";
 import * as Organization from "@/modules/organization/domain/organization.aggregate.js";
-import { OrganizationRepository } from "@/modules/organization/domain/organization-repository.js";
 import * as OrganizationRoles from "@/modules/organization/domain/organization-roles.aggregate.js";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles-repository.js";
+import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership-repository.js";
+import { OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization-repository.js";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/ports/repositories/organization-roles-repository.js";
 import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
 import { UnitOfWork } from "@/platform/ddd/unit-of-work.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";

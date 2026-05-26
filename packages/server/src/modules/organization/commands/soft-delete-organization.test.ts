@@ -10,7 +10,7 @@ import { softDeleteOrganization } from "@/modules/organization/commands/soft-del
 import { SoftDeleteOrganizationCommand } from "@/modules/organization/commands/soft-delete-organization-command.js";
 import { OrganizationNotFound } from "@/modules/organization/domain/organization-errors.js";
 import { type OrganizationSoftDeleted } from "@/modules/organization/domain/organization-events.js";
-import { OrganizationRepository } from "@/modules/organization/domain/organization-repository.js";
+import { OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization-repository.js";
 import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/membership-repository-fake.js";
 import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/organization-repository-fake.js";
 import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/organization-roles-repository-fake.js";

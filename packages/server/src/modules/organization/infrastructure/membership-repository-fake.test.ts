@@ -6,7 +6,7 @@ import * as Exit from "effect/Exit";
 
 import * as Membership from "@/modules/organization/domain/membership.aggregate.js";
 import { MembershipNotFound } from "@/modules/organization/domain/membership-errors.js";
-import { MembershipRepository } from "@/modules/organization/domain/membership-repository.js";
+import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership-repository.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 

@@ -1,11 +1,13 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
+import { type Invitation } from "@/modules/organization/domain/invitation.aggregate.js";
+import {
+  type InvitationNotFound,
+  type InvitationTokenNotFound,
+} from "@/modules/organization/domain/invitation-errors.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
 import { type InvitationId } from "@/platform/ids/invitation-id.js";
-
-import { type Invitation } from "./invitation.aggregate.js";
-import { type InvitationNotFound, type InvitationTokenNotFound } from "./invitation-errors.js";
 
 // `insert` is a fresh insert — the unique constraint on `token` will
 // reject collisions (the command generates a high-entropy token, so a

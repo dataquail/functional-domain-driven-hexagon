@@ -8,7 +8,7 @@ import {
   type InviteUserOutput,
 } from "@/modules/organization/commands/invite-user-command.js";
 import * as Invitation from "@/modules/organization/domain/invitation.aggregate.js";
-import { InvitationRepository } from "@/modules/organization/domain/invitation-repository.js";
+import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation-repository.js";
 import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
 import { UnitOfWork } from "@/platform/ddd/unit-of-work.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";

@@ -1,7 +1,7 @@
 import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import { type InvitationRepository } from "@/modules/organization/domain/invitation-repository.js";
+import { type InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation-repository.js";
 import { type DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";

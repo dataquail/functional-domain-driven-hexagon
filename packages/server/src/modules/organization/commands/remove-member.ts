@@ -5,7 +5,7 @@ import {
   type RemoveMemberOutput,
 } from "@/modules/organization/commands/remove-member-command.js";
 import * as Membership from "@/modules/organization/domain/membership.aggregate.js";
-import { MembershipRepository } from "@/modules/organization/domain/membership-repository.js";
+import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership-repository.js";
 import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
 import { UnitOfWork } from "@/platform/ddd/unit-of-work.js";
 

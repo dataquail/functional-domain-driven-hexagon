@@ -6,8 +6,8 @@ import * as Either from "effect/Either";
 import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
 
+import { RolesRepository } from "@/modules/role/domain/ports/repositories/roles-repository.js";
 import { empty as emptyRoles, grant, revoke } from "@/modules/role/domain/roles.aggregate.js";
-import { RolesRepository } from "@/modules/role/domain/roles-repository.js";
 import { RolesRepositoryLive } from "@/modules/role/infrastructure/roles-repository-live.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";

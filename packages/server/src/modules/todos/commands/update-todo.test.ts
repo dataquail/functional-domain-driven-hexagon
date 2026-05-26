@@ -4,10 +4,10 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 
+import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todo-repository.js";
 import * as Todo from "@/modules/todos/domain/todo.js";
 import { TodoNotFound } from "@/modules/todos/domain/todo-errors.js";
 import { TodoId } from "@/modules/todos/domain/todo-id.js";
-import { TodosRepository } from "@/modules/todos/domain/todo-repository.js";
 import { TodosRepositoryFake } from "@/modules/todos/infrastructure/todos-repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
 

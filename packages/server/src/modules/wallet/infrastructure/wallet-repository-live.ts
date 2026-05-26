@@ -6,9 +6,9 @@ import * as Option from "effect/Option";
 import { type UserId } from "@/platform/ids/user-id.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
+import { WalletRepository } from "../domain/ports/repositories/wallet-repository.js";
 import { type Wallet } from "../domain/wallet.aggregate.js";
 import { WalletAlreadyExistsForUser } from "../domain/wallet-errors.js";
-import { WalletRepository } from "../domain/wallet-repository.js";
 import * as WalletMapper from "./wallet-mapper.js";
 
 export const WalletRepositoryLive = Layer.effect(

@@ -6,7 +6,7 @@ import * as Layer from "effect/Layer";
 import { inviteUser } from "@/modules/organization/commands/invite-user.js";
 import { InviteUserCommand } from "@/modules/organization/commands/invite-user-command.js";
 import { type InvitationIssued } from "@/modules/organization/domain/invitation-events.js";
-import { InvitationRepository } from "@/modules/organization/domain/invitation-repository.js";
+import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation-repository.js";
 import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/invitation-repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";

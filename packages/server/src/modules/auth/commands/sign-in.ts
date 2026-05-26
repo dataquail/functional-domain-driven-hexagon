@@ -3,10 +3,10 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
 import { type SignInCommand, type SignInOutput } from "@/modules/auth/commands/sign-in-command.js";
-import { AuthIdentityRepository } from "@/modules/auth/domain/auth-identity-repository.js";
+import { AuthIdentityRepository } from "@/modules/auth/domain/ports/repositories/auth-identity-repository.js";
+import { SessionRepository } from "@/modules/auth/domain/ports/repositories/session-repository.js";
 import * as Session from "@/modules/auth/domain/session.aggregate.js";
 import { SessionId } from "@/modules/auth/domain/session-id.js";
-import { SessionRepository } from "@/modules/auth/domain/session-repository.js";
 
 // Slice-scope SignIn:
 //   - looks up auth_identities by Zitadel subject

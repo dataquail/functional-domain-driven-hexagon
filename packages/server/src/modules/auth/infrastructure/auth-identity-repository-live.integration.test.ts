@@ -6,7 +6,7 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
 
-import { AuthIdentityRepository } from "@/modules/auth/domain/auth-identity-repository.js";
+import { AuthIdentityRepository } from "@/modules/auth/domain/ports/repositories/auth-identity-repository.js";
 import { AuthIdentityNotFound } from "@/modules/auth/domain/session-errors.js";
 import { AuthIdentityRepositoryLive } from "@/modules/auth/infrastructure/auth-identity-repository-live.js";
 import { UserId } from "@/platform/ids/user-id.js";

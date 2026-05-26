@@ -6,10 +6,10 @@ import * as Ref from "effect/Ref";
 
 import { type UserId } from "@/platform/ids/user-id.js";
 
+import { WalletRepository } from "../domain/ports/repositories/wallet-repository.js";
 import { type Wallet } from "../domain/wallet.aggregate.js";
 import { WalletAlreadyExistsForUser } from "../domain/wallet-errors.js";
 import { type WalletId } from "../domain/wallet-id.js";
-import { WalletRepository } from "../domain/wallet-repository.js";
 
 const findByUserIdIn = (
   store: HashMap.HashMap<WalletId, Wallet>,
