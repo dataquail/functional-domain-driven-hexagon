@@ -3,7 +3,7 @@ import type * as Effect from "effect/Effect";
 
 import { type Organization } from "@/modules/organization/domain/organization.aggregate.js";
 import { type OrganizationNotFound } from "@/modules/organization/domain/organization-errors.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 // Single-aggregate persistence port. `findById` filters out soft-deleted

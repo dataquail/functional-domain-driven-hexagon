@@ -8,9 +8,9 @@ import {
   type RoleManagementShape,
   SelfPromotionForbidden,
 } from "@/modules/user/domain/ports/external/role-management.js";
-import { CommandBus } from "@/platform/ddd/command-bus.js";
-import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
-import { UnitOfWork } from "@/platform/ddd/unit-of-work.js";
+import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
+import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
+import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 
 // Outbound adapter (ADR-0023): the one place in the user module allowed
 // to import the role module's barrel. It constructs the role module's

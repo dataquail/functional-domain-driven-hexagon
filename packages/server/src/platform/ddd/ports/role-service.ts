@@ -1,7 +1,7 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
-import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 
 // The set of platform-wide role names exposed to cross-module

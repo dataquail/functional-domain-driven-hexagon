@@ -7,7 +7,7 @@ import {
   type FindAllOrganizationsQuery,
   type FindAllOrganizationsView,
 } from "@/modules/organization/queries/find-all-organizations-query.js";
-import { PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 const CountRowStd = Schema.standardSchemaV1(Schema.Struct({ value: Schema.Number }));

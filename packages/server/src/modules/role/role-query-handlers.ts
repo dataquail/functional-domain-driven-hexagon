@@ -8,8 +8,8 @@ import {
   findUserRolesQuerySpanAttributes,
   type FindUserRolesResult,
 } from "@/modules/role/queries/find-user-roles-query.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
-import { queryHandlers } from "@/platform/ddd/query-bus.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
+import { queryHandlers } from "@/platform/ddd/ports/query-bus.js";
 
 type FindUserRolesBusOutput = Effect.Effect<
   FindUserRolesResult,
@@ -17,7 +17,7 @@ type FindUserRolesBusOutput = Effect.Effect<
   Database.Database
 >;
 
-declare module "@/platform/ddd/query-bus.js" {
+declare module "@/platform/ddd/ports/query-bus.js" {
   interface QueryRegistry {
     FindUserRolesQuery: {
       readonly query: FindUserRolesQuery;

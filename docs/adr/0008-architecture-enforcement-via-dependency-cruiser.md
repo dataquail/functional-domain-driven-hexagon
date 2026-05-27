@@ -43,8 +43,17 @@ The test-file exclusion (`pathNot: "\\.test\\.ts$"`) is encoded inline in each i
 
 Domain code is held to stricter standards than the outer-folder rules require:
 
-- `domain-isolation`: a module's domain may import from itself, the `effect` package, and the small set of cross-cutting domain primitives in `platform/` (the shared kernel for declaring domain events, plus the `SpanAttributesExtractor` type used by per-event extractor signatures). Nothing else.
+- `domain-isolation`: a module's domain may import from itself, the `effect` package, the DDD kernel's **contracts** tier (`platform/ddd/contracts/`), and `platform/ids/` for branded entity IDs. Nothing else.
 - `domain-no-external-beyond-effect`: domain code may not depend on any external npm package other than `effect`. No SQL client, no PG bindings, no HTTP framework, no ORM. The domain runtime is pure data and Effect types.
+
+#### The DDD kernel is tiered: contracts vs ports
+
+The shared kernel under `platform/ddd/` is split into two tiers by the principle that decides what the domain may touch: **the domain may depend on shared _types/contracts_, but it may not acquire and invoke shared _services_.**
+
+- `platform/ddd/contracts/` — the `DomainEvent` factory/base, the `SpanAttributesExtractor` type used by per-event extractor signatures, and `PersistenceUnavailable`, the abstract transient-store error every repository port's channel includes. These are types and contracts the domain merely _references_. `domain-isolation` allows this folder wholesale.
+- `platform/ddd/ports/` — `UnitOfWork`, `CommandBus`, `QueryBus`, `DomainEventBus`, and the cross-module ACL services. These are `Context.Tag` services the **application ring** (commands, queries, event-handlers, interface) `yield*`s and calls. The domain may not — an aggregate that opened a transaction or dispatched on a bus would stop being pure data (ADR-0001/0003).
+
+Tiering the kernel by folder is what lets `domain-isolation` name a directory (`platform/ddd/contracts/`) instead of maintaining a hand-curated allowlist of individual filenames — which it did before, precisely because the domain-safe primitives were mixed into one flat folder with the application-tier ports. A companion rule, `ddd-contracts-no-ports`, forbids `contracts/` from importing `ports/`, so the contracts tier stays transitively domain-safe (dependencies run ports → contracts only). The application-ring folder rules (`commands-isolation`, etc.) allow `platform/ddd/` as a whole — the application ring legitimately uses both tiers.
 
 ### Why no `application/` folder
 

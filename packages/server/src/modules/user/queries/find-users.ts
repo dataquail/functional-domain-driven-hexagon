@@ -7,7 +7,7 @@ import {
   type FindUsersQuery,
   type FindUsersUserView,
 } from "@/modules/user/queries/find-users-query.js";
-import { PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 const CountRowStd = Schema.standardSchemaV1(Schema.Struct({ value: Schema.Number }));

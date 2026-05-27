@@ -6,7 +6,7 @@ import {
   type InvitationNotFound,
   type InvitationTokenNotFound,
 } from "@/modules/organization/domain/invitation-errors.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type InvitationId } from "@/platform/ids/invitation-id.js";
 
 // `insert` is a fresh insert — the unique constraint on `token` will

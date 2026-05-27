@@ -15,7 +15,7 @@ import { type UserCreated } from "@/modules/user/index.js";
 import { WalletRepository } from "@/modules/wallet/domain/ports/repositories/wallet-repository.js";
 import { WalletRepositoryFake } from "@/modules/wallet/infrastructure/wallet-repository-fake.js";
 import { UserEventAdapterLive } from "@/modules/wallet/interface/events/user-event-adapter.js";
-import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
+import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { makeDomainEventBusLive } from "@/platform/domain-event-bus-live.js";
 import { UserId } from "@/platform/ids/user-id.js";
 

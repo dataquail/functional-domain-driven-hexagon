@@ -2,7 +2,7 @@ import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // Outbound port (ADR-0023): the user module's own contract for the

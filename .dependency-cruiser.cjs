@@ -68,13 +68,21 @@ module.exports = {
       name: "domain-isolation",
       severity: "error",
       comment:
-        "Module domain may only import from its own folder, effect (external), and the DDD shared kernel (`platform/ddd/domain-event.ts` for the event factory; `platform/ddd/span-attributable.ts` for the cross-cutting `SpanAttributesExtractor` type used by event extractor signatures; `platform/ddd/persistence-unavailable.ts` for the abstract transient-store port-level error every repository channel includes; `platform/ids/` for branded entity IDs referenced cross-module — see ADR-0002). No contracts, no cross-module domain, no infrastructure/commands/queries/event-handlers/interface.",
+        "Module domain may only import from its own folder, effect (external), the DDD kernel's *contracts* tier (`platform/ddd/contracts/` — the `DomainEvent` factory, the `SpanAttributesExtractor` type used by event extractor signatures, and the `PersistenceUnavailable` port-level error every repository channel includes), and `platform/ids/` for branded entity IDs referenced cross-module (ADR-0002). The contracts tier is the *types/contracts* the domain may reference; the kernel's *ports* tier (`platform/ddd/ports/` — the buses, UnitOfWork, ACL services) holds services the application ring invokes and is OFF-LIMITS to the domain. No contracts package, no cross-module domain, no infrastructure/commands/queries/event-handlers/interface. See ADR-0008.",
       from: { path: "^packages/server/src/modules/[^/]+/domain/" },
       to: {
         path: "^packages/",
         pathNot:
-          "/domain/|^packages/server/src/platform/ddd/(domain-event|span-attributable|persistence-unavailable)\\.ts$|^packages/server/src/platform/ids/",
+          "/domain/|^packages/server/src/platform/ddd/contracts/|^packages/server/src/platform/ids/",
       },
+    },
+    {
+      name: "ddd-contracts-no-ports",
+      severity: "error",
+      comment:
+        "The DDD kernel's contracts tier (`platform/ddd/contracts/`) is domain-importable, so it must stay free of the ports tier (`platform/ddd/ports/` — buses, UnitOfWork, ACL services). If a contract imported a port, domain code importing that contract would transitively pull in an application-tier service, silently defeating `domain-isolation`. Dependencies run ports → contracts only. See ADR-0008.",
+      from: { path: "^packages/server/src/platform/ddd/contracts/" },
+      to: { path: "^packages/server/src/platform/ddd/ports/" },
     },
     {
       name: "domain-no-external-beyond-effect",

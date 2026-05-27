@@ -2,13 +2,13 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
 
-import { type DomainEvent } from "@/platform/ddd/domain-event.js";
+import { type DomainEvent } from "@/platform/ddd/contracts/domain-event.js";
+import { type SpanAttributeValue } from "@/platform/ddd/contracts/span-attributable.js";
 import {
   DomainEventBus,
   type DomainEventBusShape,
   type DomainEventSpanAttributes,
-} from "@/platform/ddd/domain-event-bus.js";
-import { type SpanAttributeValue } from "@/platform/ddd/span-attributable.js";
+} from "@/platform/ddd/ports/domain-event-bus.js";
 
 type Handler = (event: DomainEvent) => Effect.Effect<void>;
 

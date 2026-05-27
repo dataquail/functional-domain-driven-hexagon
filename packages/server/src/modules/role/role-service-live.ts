@@ -3,8 +3,8 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { FindUserRolesQuery } from "@/modules/role/queries/find-user-roles-query.js";
-import { QueryBus } from "@/platform/ddd/query-bus.js";
-import { type PlatformRoleName, RoleService } from "@/platform/ddd/role-service.js";
+import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
+import { type PlatformRoleName, RoleService } from "@/platform/ddd/ports/role-service.js";
 
 const KNOWN_PLATFORM_ROLES = new Set<string>(["super_admin"]);
 

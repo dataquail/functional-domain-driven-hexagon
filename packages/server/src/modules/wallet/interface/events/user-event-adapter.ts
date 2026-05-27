@@ -17,7 +17,7 @@ import { UserCreated } from "@/modules/user/index.js";
 import { WalletRepository } from "@/modules/wallet/domain/ports/repositories/wallet-repository.js";
 import { handleUserCreated } from "@/modules/wallet/event-handlers/create-wallet-when-user-is-created.js";
 import { type UserCreatedTrigger } from "@/modules/wallet/event-handlers/triggers/user-events.js";
-import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
+import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 
 const toTrigger = (event: UserCreated): UserCreatedTrigger => ({ userId: event.userId });
 

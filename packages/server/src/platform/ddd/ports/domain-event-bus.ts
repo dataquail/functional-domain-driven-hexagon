@@ -2,10 +2,13 @@ import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 import type * as Schema from "effect/Schema";
 
-import { type AnyDomainEventSchema, type DomainEvent } from "@/platform/ddd/domain-event.js";
-import { type SpanAttributeValue } from "@/platform/ddd/span-attributable.js";
+import {
+  type AnyDomainEventSchema,
+  type DomainEvent,
+} from "@/platform/ddd/contracts/domain-event.js";
+import { type SpanAttributeValue } from "@/platform/ddd/contracts/span-attributable.js";
 
-export { DomainEvent } from "@/platform/ddd/domain-event.js";
+export { DomainEvent } from "@/platform/ddd/contracts/domain-event.js";
 
 // Port for synchronous in-fiber domain-event dispatch. Handlers run in
 // the publisher's fiber, in registration order, and inherit the

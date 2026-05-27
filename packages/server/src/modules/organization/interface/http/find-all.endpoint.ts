@@ -9,7 +9,7 @@ import {
 } from "@/modules/organization/queries/find-all-organizations-query.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
-import { QueryBus } from "@/platform/ddd/query-bus.js";
+import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 const toOrganizationContract = (

@@ -6,7 +6,7 @@ import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastr
 import {
   type OrganizationRoleName,
   OrganizationRoleService,
-} from "@/platform/ddd/organization-role-service.js";
+} from "@/platform/ddd/ports/organization-role-service.js";
 
 const KNOWN_ROLES = new Set<string>(["admin"]);
 const narrow = (role: string): role is OrganizationRoleName => KNOWN_ROLES.has(role);

@@ -3,10 +3,10 @@ import * as Schema from "effect/Schema";
 
 import { type MembershipNotFound } from "@/modules/organization/domain/membership-errors.js";
 import { type MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership-repository.js";
-import { type DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
-import { type UnitOfWork } from "@/platform/ddd/unit-of-work.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import { type DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
+import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 

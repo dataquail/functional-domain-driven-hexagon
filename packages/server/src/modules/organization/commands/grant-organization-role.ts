@@ -7,8 +7,8 @@ import {
 import { CannotPromoteSelfInOrganization } from "@/modules/organization/domain/organization-role-errors.js";
 import * as OrganizationRoles from "@/modules/organization/domain/organization-roles.aggregate.js";
 import { OrganizationRolesRepository } from "@/modules/organization/domain/ports/repositories/organization-roles-repository.js";
-import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
-import { UnitOfWork } from "@/platform/ddd/unit-of-work.js";
+import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
+import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 
 export const grantOrganizationRole = (
   cmd: GrantOrganizationRoleCommand,

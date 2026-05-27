@@ -13,8 +13,8 @@ import {
   type FindSessionQuery,
   findSessionQuerySpanAttributes,
 } from "@/modules/auth/queries/find-session-query.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
-import { queryHandlers } from "@/platform/ddd/query-bus.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
+import { queryHandlers } from "@/platform/ddd/ports/query-bus.js";
 
 type FindSessionBusOutput = Effect.Effect<
   Session,
@@ -22,7 +22,7 @@ type FindSessionBusOutput = Effect.Effect<
   Database.Database
 >;
 
-declare module "@/platform/ddd/query-bus.js" {
+declare module "@/platform/ddd/ports/query-bus.js" {
   interface QueryRegistry {
     FindSessionQuery: {
       readonly query: FindSessionQuery;

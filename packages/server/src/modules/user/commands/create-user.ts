@@ -8,8 +8,8 @@ import {
 import { UserRepository } from "@/modules/user/domain/ports/repositories/user-repository.js";
 import * as User from "@/modules/user/domain/user.aggregate.js";
 import { Address } from "@/modules/user/domain/value-objects/address.js";
-import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
-import { UnitOfWork } from "@/platform/ddd/unit-of-work.js";
+import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
+import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 export const createUser = (cmd: CreateUserCommand): CreateUserOutput =>

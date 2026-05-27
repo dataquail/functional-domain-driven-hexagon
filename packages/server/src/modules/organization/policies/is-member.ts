@@ -1,7 +1,7 @@
 import * as Effect from "effect/Effect";
 
 import type * as PolicyRegistry from "@/platform/auth/policy-registry.js";
-import { MembershipService } from "@/platform/ddd/membership-service.js";
+import { MembershipService } from "@/platform/ddd/ports/membership-service.js";
 
 // Per-org "is this caller a member?" check. Consumes the platform-layer
 // `MembershipService` ACL (never the org module's `MembershipRepository`

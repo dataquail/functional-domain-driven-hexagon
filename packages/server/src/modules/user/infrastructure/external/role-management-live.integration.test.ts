@@ -10,7 +10,7 @@ import { roleCommandHandlers } from "@/modules/role/index.js";
 import { RoleManagement } from "@/modules/user/domain/ports/external/role-management.js";
 import { RoleManagementLive } from "@/modules/user/infrastructure/external/role-management-live.js";
 import { makeCommandBus } from "@/platform/command-bus-live.js";
-import { CommandBus, type CommandHandlers } from "@/platform/ddd/command-bus.js";
+import { CommandBus, type CommandHandlers } from "@/platform/ddd/ports/command-bus.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordingEventBus } from "@/test-utils/recording-event-bus.js";

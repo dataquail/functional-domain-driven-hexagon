@@ -2,7 +2,7 @@ import { type Database } from "@org/database/index";
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
-import { type PersistenceUnavailable } from "./persistence-unavailable.js";
+import { type PersistenceUnavailable } from "../contracts/persistence-unavailable.js";
 
 // Port for "run this effect inside a single unit of work."
 //

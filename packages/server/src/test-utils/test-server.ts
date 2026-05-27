@@ -43,8 +43,8 @@ import { walletEventSpanAttributes, WalletModuleLive } from "@/modules/wallet/in
 import { makePolicyRegistry } from "@/platform/auth/policy-registry.js";
 import { makeResourceResolverRegistry } from "@/platform/auth/resource-resolver-registry.js";
 import { makeCommandBus } from "@/platform/command-bus-live.js";
-import { CommandBus } from "@/platform/ddd/command-bus.js";
-import { QueryBus } from "@/platform/ddd/query-bus.js";
+import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
+import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 import { makeDomainEventBusLive } from "@/platform/domain-event-bus-live.js";
 import { makeQueryBus } from "@/platform/query-bus-live.js";
 import { UnitOfWorkLive } from "@/platform/unit-of-work-live.js";

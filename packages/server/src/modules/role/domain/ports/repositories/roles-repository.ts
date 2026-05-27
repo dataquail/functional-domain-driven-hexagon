@@ -2,7 +2,7 @@ import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
 import { type Roles } from "@/modules/role/domain/roles.aggregate.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 
 // Dumb persistence port. The aggregate carries the invariants; the

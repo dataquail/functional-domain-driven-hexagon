@@ -1,12 +1,12 @@
 import * as Effect from "effect/Effect";
 
+import { type SpanAttributeValue } from "@/platform/ddd/contracts/span-attributable.js";
 import {
   type CommandBusShape,
   type CommandHandlerEntry,
   type CommandHandlers,
   type CommandRegistry,
-} from "@/platform/ddd/command-bus.js";
-import { type SpanAttributeValue } from "@/platform/ddd/span-attributable.js";
+} from "@/platform/ddd/ports/command-bus.js";
 
 /**
  * Builds a CommandBus from a full handler set. Takes `CommandHandlers` for

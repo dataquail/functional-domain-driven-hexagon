@@ -4,7 +4,7 @@ import type * as Effect from "effect/Effect";
 import { type Todo } from "@/modules/todos/domain/todo.js";
 import { type TodoNotFound } from "@/modules/todos/domain/todo-errors.js";
 import { type TodoId } from "@/modules/todos/domain/todo-id.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
 export type TodosRepositoryShape = {
   readonly insert: (todo: Todo) => Effect.Effect<void, PersistenceUnavailable>;

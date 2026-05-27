@@ -74,10 +74,10 @@ import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/
 import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/membership-repository-live.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/organization-repository-live.js";
 import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastructure/organization-roles-repository-live.js";
-import { commandHandlers } from "@/platform/ddd/command-bus.js";
-import { type DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
-import { type UnitOfWork } from "@/platform/ddd/unit-of-work.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
+import { commandHandlers } from "@/platform/ddd/ports/command-bus.js";
+import { type DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
+import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 import { type InvitationId } from "@/platform/ids/invitation-id.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { LogMailerLive } from "@/platform/notifications/log-mailer-live.js";
@@ -149,7 +149,7 @@ type RevokeOrganizationRoleBusOutput = Effect.Effect<
   DomainEventBus | UnitOfWork | Database.Database
 >;
 
-declare module "@/platform/ddd/command-bus.js" {
+declare module "@/platform/ddd/ports/command-bus.js" {
   interface CommandRegistry {
     CreateOrganizationCommand: {
       readonly command: CreateOrganizationCommand;

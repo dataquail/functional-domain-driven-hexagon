@@ -7,8 +7,8 @@ import {
 } from "@/modules/organization/commands/revoke-invitation-command.js";
 import * as Invitation from "@/modules/organization/domain/invitation.aggregate.js";
 import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation-repository.js";
-import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
-import { UnitOfWork } from "@/platform/ddd/unit-of-work.js";
+import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
+import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 
 export const revokeInvitation = (cmd: RevokeInvitationCommand): RevokeInvitationOutput =>
   Effect.gen(function* () {

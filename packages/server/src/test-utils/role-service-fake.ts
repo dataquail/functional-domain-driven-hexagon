@@ -1,7 +1,7 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { type PlatformRoleName, RoleService } from "@/platform/ddd/role-service.js";
+import { type PlatformRoleName, RoleService } from "@/platform/ddd/ports/role-service.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 
 // Factory for an in-memory `RoleService` Layer keyed by userId. Use in
