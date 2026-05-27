@@ -3,7 +3,7 @@ import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
 import { LeaveOrganizationCommand } from "@/modules/organization/commands/leave-organization-command.js";
-import { CommandBus } from "@/platform/ddd/command-bus.js";
+import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // No `Authz.hasPermissions` check — leaving is a self-action and the

@@ -6,8 +6,8 @@ import {
   type TouchSessionCommand,
   type TouchSessionOutput,
 } from "@/modules/auth/commands/touch-session-command.js";
+import { SessionRepository } from "@/modules/auth/domain/ports/repositories/session-repository.js";
 import * as Session from "@/modules/auth/domain/session.aggregate.js";
-import { SessionRepository } from "@/modules/auth/domain/session-repository.js";
 
 // Sliding-TTL refresh.
 //

@@ -1,12 +1,11 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
-import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
+import { type Membership } from "@/modules/organization/domain/membership.aggregate.js";
+import { type MembershipNotFound } from "@/modules/organization/domain/membership-errors.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { type UserId } from "@/platform/ids/user-id.js";
-
-import { type Membership } from "./membership.aggregate.js";
-import { type MembershipNotFound } from "./membership-errors.js";
 
 // `insert` is idempotent — a duplicate (userId, organizationId) is a
 // no-op (ON CONFLICT DO NOTHING). The PK enforces uniqueness; the

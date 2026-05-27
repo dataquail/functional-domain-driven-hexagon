@@ -19,8 +19,8 @@ import {
 import { type Todo } from "@/modules/todos/domain/todo.js";
 import { type TodoNotFound } from "@/modules/todos/domain/todo-errors.js";
 import { TodosRepositoryLive } from "@/modules/todos/infrastructure/todos-repository-live.js";
-import { commandHandlers } from "@/platform/ddd/command-bus.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
+import { commandHandlers } from "@/platform/ddd/ports/command-bus.js";
 
 type CreateTodoBusOutput = Effect.Effect<Todo, PersistenceUnavailable, Database.Database>;
 type DeleteTodoBusOutput = Effect.Effect<
@@ -34,7 +34,7 @@ type UpdateTodoBusOutput = Effect.Effect<
   Database.Database
 >;
 
-declare module "@/platform/ddd/command-bus.js" {
+declare module "@/platform/ddd/ports/command-bus.js" {
   interface CommandRegistry {
     CreateTodoCommand: {
       readonly command: CreateTodoCommand;

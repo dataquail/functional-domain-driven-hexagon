@@ -4,7 +4,7 @@ import * as Layer from "effect/Layer";
 
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
-import { AuthIdentityRepository } from "../domain/auth-identity-repository.js";
+import { AuthIdentityRepository } from "../domain/ports/repositories/auth-identity-repository.js";
 import { AuthIdentityNotFound } from "../domain/session-errors.js";
 import * as AuthIdentityMapper from "./auth-identity-mapper.js";
 

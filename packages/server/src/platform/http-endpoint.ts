@@ -3,7 +3,7 @@ import type * as HttpApiGroup from "@effect/platform/HttpApiGroup";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Effect from "effect/Effect";
 
-import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
 // Derives the typed request envelope ({ path, urlParams, payload, headers })
 // for a named endpoint within a contract group. Keeps endpoint signatures in

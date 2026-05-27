@@ -4,8 +4,8 @@ import * as cookie from "cookie";
 import * as Effect from "effect/Effect";
 
 import { EnvVars } from "@/common/env-vars.js";
+import { SessionRepository } from "@/modules/auth/domain/ports/repositories/session-repository.js";
 import { SessionId } from "@/modules/auth/domain/session-id.js";
-import { SessionRepository } from "@/modules/auth/domain/session-repository.js";
 import { OidcClient } from "@/modules/auth/infrastructure/oidc-client.js";
 import { CookieCodec } from "@/platform/auth/cookie-codec.js";
 

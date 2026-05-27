@@ -5,8 +5,8 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
 
+import { UserRepository } from "@/modules/user/domain/ports/repositories/user-repository.js";
 import * as User from "@/modules/user/domain/user.aggregate.js";
-import { UserRepository } from "@/modules/user/domain/user-repository.js";
 import { Address } from "@/modules/user/domain/value-objects/address.js";
 import { UserRepositoryLive } from "@/modules/user/infrastructure/user-repository-live.js";
 import { findUsers } from "@/modules/user/queries/find-users.js";

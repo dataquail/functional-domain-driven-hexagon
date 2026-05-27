@@ -1,9 +1,9 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { MembershipRepository } from "@/modules/organization/domain/membership-repository.js";
+import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership-repository.js";
 import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/membership-repository-live.js";
-import { MembershipService } from "@/platform/ddd/membership-service.js";
+import { MembershipService } from "@/platform/ddd/ports/membership-service.js";
 
 // Wraps the org module's own `MembershipRepository` into the generalized
 // `MembershipService` ACL. The Live provides `MembershipRepositoryLive`

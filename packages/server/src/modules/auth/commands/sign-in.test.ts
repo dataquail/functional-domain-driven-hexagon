@@ -7,8 +7,8 @@ import * as Layer from "effect/Layer";
 
 import { signIn } from "@/modules/auth/commands/sign-in.js";
 import { SignInCommand } from "@/modules/auth/commands/sign-in-command.js";
-import { type AuthIdentity } from "@/modules/auth/domain/auth-identity-repository.js";
-import { SessionRepository } from "@/modules/auth/domain/session-repository.js";
+import { type AuthIdentity } from "@/modules/auth/domain/ports/repositories/auth-identity-repository.js";
+import { SessionRepository } from "@/modules/auth/domain/ports/repositories/session-repository.js";
 import { makeAuthIdentityRepositoryFake } from "@/modules/auth/infrastructure/auth-identity-repository-fake.js";
 import { SessionRepositoryFake } from "@/modules/auth/infrastructure/session-repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";

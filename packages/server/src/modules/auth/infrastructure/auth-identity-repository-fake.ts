@@ -4,7 +4,10 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { type AuthIdentity, AuthIdentityRepository } from "../domain/auth-identity-repository.js";
+import {
+  type AuthIdentity,
+  AuthIdentityRepository,
+} from "../domain/ports/repositories/auth-identity-repository.js";
 import { AuthIdentityNotFound } from "../domain/session-errors.js";
 
 // `AuthIdentityRepository` is read-only on the public contract — production

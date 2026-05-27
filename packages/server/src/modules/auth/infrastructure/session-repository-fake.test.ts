@@ -6,10 +6,10 @@ import * as Exit from "effect/Exit";
 
 import { UserId } from "@/platform/ids/user-id.js";
 
+import { SessionRepository } from "../domain/ports/repositories/session-repository.js";
 import * as Session from "../domain/session.aggregate.js";
 import { SessionNotFound } from "../domain/session-errors.js";
 import { SessionId } from "../domain/session-id.js";
-import { SessionRepository } from "../domain/session-repository.js";
 import { SessionRepositoryFake } from "./session-repository-fake.js";
 
 const idA = SessionId.make("11111111-1111-1111-1111-111111111111");

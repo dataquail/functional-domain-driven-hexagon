@@ -6,10 +6,10 @@ import {
   type AcceptInvitationOutput,
 } from "@/modules/organization/commands/accept-invitation-command.js";
 import * as Invitation from "@/modules/organization/domain/invitation.aggregate.js";
-import { InvitationRepository } from "@/modules/organization/domain/invitation-repository.js";
-import { MembershipRepository } from "@/modules/organization/domain/membership-repository.js";
-import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
-import { UnitOfWork } from "@/platform/ddd/unit-of-work.js";
+import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation-repository.js";
+import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership-repository.js";
+import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
+import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 
 export const acceptInvitation = (cmd: AcceptInvitationCommand): AcceptInvitationOutput =>
   Effect.gen(function* () {

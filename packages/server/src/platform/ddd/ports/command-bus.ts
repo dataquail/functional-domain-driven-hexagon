@@ -1,6 +1,6 @@
 import * as Context from "effect/Context";
 
-import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 
 // Port for the write-side bus. The bus itself is one Tag; the typed
 // `execute` shape and the registry that names every command/handler pair
@@ -13,7 +13,7 @@ import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.j
 //
 // Example (inside the command's source file):
 //
-//   declare module "@/platform/ddd/command-bus.js" {
+//   declare module "@/platform/ddd/ports/command-bus.js" {
 //     interface CommandRegistry {
 //       CreateUserCommand: {
 //         command: CreateUserCommand;

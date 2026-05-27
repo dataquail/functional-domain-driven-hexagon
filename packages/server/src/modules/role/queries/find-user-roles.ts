@@ -1,6 +1,6 @@
 import * as Effect from "effect/Effect";
 
-import { RolesRepository } from "@/modules/role/domain/roles-repository.js";
+import { RolesRepository } from "@/modules/role/domain/ports/repositories/roles-repository.js";
 import {
   type FindUserRolesOutput,
   type FindUserRolesQuery,

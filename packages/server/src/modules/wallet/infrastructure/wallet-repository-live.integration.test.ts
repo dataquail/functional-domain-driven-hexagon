@@ -8,10 +8,10 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import { beforeEach } from "vitest";
 
+import { WalletRepository } from "@/modules/wallet/domain/ports/repositories/wallet-repository.js";
 import * as Wallet from "@/modules/wallet/domain/wallet.aggregate.js";
 import { WalletAlreadyExistsForUser } from "@/modules/wallet/domain/wallet-errors.js";
 import { WalletId } from "@/modules/wallet/domain/wallet-id.js";
-import { WalletRepository } from "@/modules/wallet/domain/wallet-repository.js";
 import { WalletRepositoryLive } from "@/modules/wallet/infrastructure/wallet-repository-live.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";

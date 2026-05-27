@@ -11,10 +11,10 @@ import { afterAll, beforeAll, beforeEach } from "vitest";
 
 import { Api } from "@/api.js";
 import { UserCreated } from "@/modules/user/index.js";
-import { WalletRepository } from "@/modules/wallet/domain/wallet-repository.js";
+import { WalletRepository } from "@/modules/wallet/domain/ports/repositories/wallet-repository.js";
 import { UserEventAdapterLive } from "@/modules/wallet/interface/events/user-event-adapter.js";
-import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
-import { UnitOfWork } from "@/platform/ddd/unit-of-work.js";
+import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
+import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 import { makeDomainEventBusLive } from "@/platform/domain-event-bus-live.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { UnitOfWorkLive } from "@/platform/unit-of-work-live.js";

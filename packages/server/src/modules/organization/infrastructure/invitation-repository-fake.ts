@@ -8,7 +8,7 @@ import {
   InvitationNotFound,
   InvitationTokenNotFound,
 } from "@/modules/organization/domain/invitation-errors.js";
-import { InvitationRepository } from "@/modules/organization/domain/invitation-repository.js";
+import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation-repository.js";
 import { type InvitationId } from "@/platform/ids/invitation-id.js";
 
 export const InvitationRepositoryFake = Layer.effect(

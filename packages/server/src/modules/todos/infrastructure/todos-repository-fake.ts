@@ -4,10 +4,10 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
+import { TodosRepository } from "../domain/ports/repositories/todo-repository.js";
 import { type Todo } from "../domain/todo.js";
 import { TodoNotFound } from "../domain/todo-errors.js";
 import { type TodoId } from "../domain/todo-id.js";
-import { TodosRepository } from "../domain/todo-repository.js";
 
 export const TodosRepositoryFake = Layer.effect(
   TodosRepository,

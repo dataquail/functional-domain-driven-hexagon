@@ -1,9 +1,9 @@
 import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
+import { type SessionRepository } from "@/modules/auth/domain/ports/repositories/session-repository.js";
 import { SessionId } from "@/modules/auth/domain/session-id.js";
-import { type SessionRepository } from "@/modules/auth/domain/session-repository.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 
 // Sliding-TTL refresh, dispatched by the auth middleware after a successful
 // `FindSessionQuery`. The handler does its own throttle + revocation guard,

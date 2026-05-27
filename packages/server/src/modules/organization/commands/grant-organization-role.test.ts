@@ -11,7 +11,7 @@ import {
   CannotPromoteSelfInOrganization,
 } from "@/modules/organization/domain/organization-role-errors.js";
 import { type OrganizationRoleGranted } from "@/modules/organization/domain/organization-role-events.js";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles-repository.js";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/ports/repositories/organization-roles-repository.js";
 import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/organization-roles-repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";

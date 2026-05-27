@@ -4,10 +4,10 @@ import * as Layer from "effect/Layer";
 
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
+import { TodosRepository } from "../domain/ports/repositories/todo-repository.js";
 import { type Todo } from "../domain/todo.js";
 import { TodoNotFound } from "../domain/todo-errors.js";
 import { type TodoId } from "../domain/todo-id.js";
-import { TodosRepository } from "../domain/todo-repository.js";
 import * as TodoMapper from "./todo-mapper.js";
 
 export const TodosRepositoryLive = Layer.effect(

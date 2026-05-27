@@ -2,7 +2,7 @@ import { type RowSchemas } from "@org/database/index";
 
 import { UserId } from "@/platform/ids/user-id.js";
 
-import { type AuthIdentity } from "../domain/auth-identity-repository.js";
+import { type AuthIdentity } from "../domain/ports/repositories/auth-identity-repository.js";
 
 export const toDomain = (row: RowSchemas.AuthIdentityRow): AuthIdentity => ({
   subject: row.subject,

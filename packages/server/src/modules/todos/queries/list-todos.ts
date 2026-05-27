@@ -7,7 +7,7 @@ import {
   type ListTodosQuery,
   type ListTodosTodoView,
 } from "@/modules/todos/queries/list-todos-query.js";
-import { PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
 const toView = (row: RowSchemas.TodoRow): ListTodosTodoView => ({
   id: TodoId.make(row.id),

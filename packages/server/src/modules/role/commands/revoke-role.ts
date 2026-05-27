@@ -4,10 +4,10 @@ import {
   type RevokeRoleCommand,
   type RevokeRoleOutput,
 } from "@/modules/role/commands/revoke-role-command.js";
+import { RolesRepository } from "@/modules/role/domain/ports/repositories/roles-repository.js";
 import * as Roles from "@/modules/role/domain/roles.aggregate.js";
-import { RolesRepository } from "@/modules/role/domain/roles-repository.js";
-import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
-import { UnitOfWork } from "@/platform/ddd/unit-of-work.js";
+import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
+import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 
 export const revokeRole = (cmd: RevokeRoleCommand): RevokeRoleOutput =>
   Effect.gen(function* () {

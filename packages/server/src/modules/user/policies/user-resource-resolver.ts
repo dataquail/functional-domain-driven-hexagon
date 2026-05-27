@@ -5,7 +5,7 @@ import * as Layer from "effect/Layer";
 
 import { type Resolver } from "@/platform/auth/resource-resolver-registry.js";
 
-import { UserRepository } from "../domain/user-repository.js";
+import { UserRepository } from "../domain/ports/repositories/user-repository.js";
 import { UserRepositoryLive } from "../infrastructure/user-repository-live.js";
 
 // PersistenceUnavailable is treated as an unrecoverable failure here

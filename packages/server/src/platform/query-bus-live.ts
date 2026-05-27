@@ -1,12 +1,12 @@
 import * as Effect from "effect/Effect";
 
+import { type SpanAttributeValue } from "@/platform/ddd/contracts/span-attributable.js";
 import {
   type QueryBusShape,
   type QueryHandlerEntry,
   type QueryHandlers,
   type QueryRegistry,
-} from "@/platform/ddd/query-bus.js";
-import { type SpanAttributeValue } from "@/platform/ddd/span-attributable.js";
+} from "@/platform/ddd/ports/query-bus.js";
 
 export const makeQueryBus = (handlers: QueryHandlers): QueryBusShape => ({
   execute: ((query: { readonly _tag: string }) => {

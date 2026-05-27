@@ -4,11 +4,11 @@ import {
   type GrantRoleCommand,
   type GrantRoleOutput,
 } from "@/modules/role/commands/grant-role-command.js";
+import { RolesRepository } from "@/modules/role/domain/ports/repositories/roles-repository.js";
 import { CannotPromoteSelf } from "@/modules/role/domain/role-errors.js";
 import * as Roles from "@/modules/role/domain/roles.aggregate.js";
-import { RolesRepository } from "@/modules/role/domain/roles-repository.js";
-import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
-import { UnitOfWork } from "@/platform/ddd/unit-of-work.js";
+import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
+import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 
 export const grantRole = (cmd: GrantRoleCommand): GrantRoleOutput =>
   Effect.gen(function* () {

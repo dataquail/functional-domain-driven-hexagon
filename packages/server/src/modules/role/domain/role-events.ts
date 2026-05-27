@@ -1,5 +1,5 @@
-import { DomainEvent } from "@/platform/ddd/domain-event.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
+import { DomainEvent } from "@/platform/ddd/contracts/domain-event.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 import { Role } from "./role.js";

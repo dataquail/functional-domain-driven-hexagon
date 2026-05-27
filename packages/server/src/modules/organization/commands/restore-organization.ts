@@ -6,9 +6,9 @@ import {
   type RestoreOrganizationOutput,
 } from "@/modules/organization/commands/restore-organization-command.js";
 import * as Organization from "@/modules/organization/domain/organization.aggregate.js";
-import { OrganizationRepository } from "@/modules/organization/domain/organization-repository.js";
-import { DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
-import { UnitOfWork } from "@/platform/ddd/unit-of-work.js";
+import { OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization-repository.js";
+import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
+import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 
 export const restoreOrganization = (cmd: RestoreOrganizationCommand): RestoreOrganizationOutput =>
   Effect.gen(function* () {

@@ -4,9 +4,9 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 
+import { UserRepository } from "@/modules/user/domain/ports/repositories/user-repository.js";
 import { UserNotFound } from "@/modules/user/domain/user-errors.js";
 import { type UserDeleted } from "@/modules/user/domain/user-events.js";
-import { UserRepository } from "@/modules/user/domain/user-repository.js";
 import { Address } from "@/modules/user/domain/value-objects/address.js";
 import { UserRepositoryFake } from "@/modules/user/infrastructure/user-repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";

@@ -6,9 +6,9 @@ import * as Ref from "effect/Ref";
 
 import { type UserId } from "@/platform/ids/user-id.js";
 
+import { UserRepository } from "../domain/ports/repositories/user-repository.js";
 import { type User } from "../domain/user.aggregate.js";
 import { UserAlreadyExists, UserNotFound } from "../domain/user-errors.js";
-import { UserRepository } from "../domain/user-repository.js";
 
 const findUserByEmail = (
   store: HashMap.HashMap<UserId, User>,

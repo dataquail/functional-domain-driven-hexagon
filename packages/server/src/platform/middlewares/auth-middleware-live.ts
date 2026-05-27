@@ -9,8 +9,8 @@ import * as Layer from "effect/Layer";
 import { EnvVars } from "@/common/env-vars.js";
 import { FindSessionQuery, SessionId, TouchSessionCommand } from "@/modules/auth/index.js";
 import { CookieCodec } from "@/platform/auth/cookie-codec.js";
-import { CommandBus } from "@/platform/ddd/command-bus.js";
-import { QueryBus } from "@/platform/ddd/query-bus.js";
+import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
+import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 
 // Distinguish "the DB is down" (503, retry) from "your session is bad"
 // (401, log back in). `Effect.mapError(() => Unauthorized)` would collapse

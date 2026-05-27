@@ -1,11 +1,10 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
-import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
-
-import { type Session } from "./session.aggregate.js";
-import { type SessionNotFound, type SessionRevoked } from "./session-errors.js";
-import { type SessionId } from "./session-id.js";
+import { type Session } from "@/modules/auth/domain/session.aggregate.js";
+import { type SessionNotFound, type SessionRevoked } from "@/modules/auth/domain/session-errors.js";
+import { type SessionId } from "@/modules/auth/domain/session-id.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
 export type SessionRepositoryShape = {
   readonly insert: (session: Session) => Effect.Effect<void, PersistenceUnavailable>;

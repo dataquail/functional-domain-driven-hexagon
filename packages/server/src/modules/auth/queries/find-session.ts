@@ -1,8 +1,8 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
+import { SessionRepository } from "@/modules/auth/domain/ports/repositories/session-repository.js";
 import { SessionExpired, SessionRevoked } from "@/modules/auth/domain/session-errors.js";
-import { SessionRepository } from "@/modules/auth/domain/session-repository.js";
 import {
   type FindSessionOutput,
   type FindSessionQuery,

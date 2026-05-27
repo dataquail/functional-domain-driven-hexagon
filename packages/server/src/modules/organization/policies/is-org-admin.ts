@@ -1,7 +1,7 @@
 import * as Effect from "effect/Effect";
 
 import type * as PolicyRegistry from "@/platform/auth/policy-registry.js";
-import { OrganizationRoleService } from "@/platform/ddd/organization-role-service.js";
+import { OrganizationRoleService } from "@/platform/ddd/ports/organization-role-service.js";
 
 // Per-org "is this caller an admin of this organization?" check.
 // Consumes the platform-layer `OrganizationRoleService` ACL (never the

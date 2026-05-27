@@ -7,7 +7,7 @@ import {
   InvitationNotFound,
   InvitationTokenNotFound,
 } from "@/modules/organization/domain/invitation-errors.js";
-import { InvitationRepository } from "@/modules/organization/domain/invitation-repository.js";
+import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation-repository.js";
 import * as InvitationMapper from "@/modules/organization/infrastructure/invitation-mapper.js";
 import { type InvitationId } from "@/platform/ids/invitation-id.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";

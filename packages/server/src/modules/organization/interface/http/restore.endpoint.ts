@@ -5,7 +5,7 @@ import { RestoreOrganizationCommand } from "@/modules/organization/commands/rest
 import { OrganizationResource } from "@/modules/organization/policies/organization-policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
-import { CommandBus } from "@/platform/ddd/command-bus.js";
+import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 export const restoreEndpoint = (

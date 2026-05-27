@@ -43,16 +43,46 @@ module.exports = {
       },
     },
     {
+      name: "foreign-barrel-only-from-outbound-adapter",
+      severity: "error",
+      comment:
+        "ADR-0023. Within a module, only outbound adapters (`infrastructure/external/`) and inbound event adapters (`interface/events/`) may import another module's `index.ts` barrel. Everywhere else — commands, queries, event-handlers, domain, interface/http — depends on a consumer-owned port in `domain/ports/external/`, whose adapter in `infrastructure/external/` is the one place the foreign command/query/error vocabulary appears. This narrows (does not replace) `module-barrel-only-cross-module`: the barrel is still the only legal target; this restricts which consumer folders may aim at a *foreign* one. Same-module barrel imports and test files are exempt.",
+      from: {
+        // The whitelist is folder-type-based, so it uses `[^/]+` rather than
+        // a `$1` backreference: a `$1` in `from.pathNot` does not resolve
+        // against the `from.path` capture (only the `to` side does). The
+        // capture group remains for the `to.pathNot` own-barrel exemption.
+        path: "^packages/server/src/modules/([^/]+)/",
+        pathNot: [
+          "^packages/server/src/modules/[^/]+/infrastructure/external/",
+          "^packages/server/src/modules/[^/]+/interface/events/",
+          "\\.test\\.ts$",
+        ],
+      },
+      to: {
+        path: "^packages/server/src/modules/[^/]+/index\\.ts$",
+        pathNot: "^packages/server/src/modules/$1/index\\.ts$",
+      },
+    },
+    {
       name: "domain-isolation",
       severity: "error",
       comment:
-        "Module domain may only import from its own folder, effect (external), and the DDD shared kernel (`platform/ddd/domain-event.ts` for the event factory; `platform/ddd/span-attributable.ts` for the cross-cutting `SpanAttributesExtractor` type used by event extractor signatures; `platform/ddd/persistence-unavailable.ts` for the abstract transient-store port-level error every repository channel includes; `platform/ids/` for branded entity IDs referenced cross-module — see ADR-0002). No contracts, no cross-module domain, no infrastructure/commands/queries/event-handlers/interface.",
+        "Module domain may only import from its own folder, effect (external), the DDD kernel's *contracts* tier (`platform/ddd/contracts/` — the `DomainEvent` factory, the `SpanAttributesExtractor` type used by event extractor signatures, and the `PersistenceUnavailable` port-level error every repository channel includes), and `platform/ids/` for branded entity IDs referenced cross-module (ADR-0002). The contracts tier is the *types/contracts* the domain may reference; the kernel's *ports* tier (`platform/ddd/ports/` — the buses, UnitOfWork, ACL services) holds services the application ring invokes and is OFF-LIMITS to the domain. No contracts package, no cross-module domain, no infrastructure/commands/queries/event-handlers/interface. See ADR-0008.",
       from: { path: "^packages/server/src/modules/[^/]+/domain/" },
       to: {
         path: "^packages/",
         pathNot:
-          "/domain/|^packages/server/src/platform/ddd/(domain-event|span-attributable|persistence-unavailable)\\.ts$|^packages/server/src/platform/ids/",
+          "/domain/|^packages/server/src/platform/ddd/contracts/|^packages/server/src/platform/ids/",
       },
+    },
+    {
+      name: "ddd-contracts-no-ports",
+      severity: "error",
+      comment:
+        "The DDD kernel's contracts tier (`platform/ddd/contracts/`) is domain-importable, so it must stay free of the ports tier (`platform/ddd/ports/` — buses, UnitOfWork, ACL services). If a contract imported a port, domain code importing that contract would transitively pull in an application-tier service, silently defeating `domain-isolation`. Dependencies run ports → contracts only. See ADR-0008.",
+      from: { path: "^packages/server/src/platform/ddd/contracts/" },
+      to: { path: "^packages/server/src/platform/ddd/ports/" },
     },
     {
       name: "domain-no-external-beyond-effect",
@@ -69,7 +99,7 @@ module.exports = {
       name: "commands-isolation",
       severity: "error",
       comment:
-        "Module commands (write-side use cases) may only import: own module's domain and sibling commands, the DDD shared kernel ports under platform/ddd/ (CommandBus, QueryBus, DomainEventBus, UnitOfWork, DomainEvent, SpanAttributesExtractor), platform/ids/, platform/notifications/ port files (e.g. Mailer Tag — same shape as platform/ddd/, just a different infrastructure surface), and other modules' barrel (events). No platform/*-live.ts (Lives are wired at the composition root), no infrastructure, no interface, no queries, no event-handlers, no @org/contracts, no @org/database. Test files excluded.",
+        "Module commands (write-side use cases) may only import: own module's domain and sibling commands, the DDD shared kernel ports under platform/ddd/ (CommandBus, QueryBus, DomainEventBus, UnitOfWork, DomainEvent, SpanAttributesExtractor), platform/ids/, and platform/notifications/ port files (e.g. Mailer Tag — same shape as platform/ddd/, just a different infrastructure surface). No platform/*-live.ts (Lives are wired at the composition root), no infrastructure, no interface, no queries, no event-handlers, no @org/contracts, no @org/database, and (ADR-0023) no other modules' barrels — cross-module calls go through a `domain/ports/external/` port whose adapter lives in `infrastructure/external/`. Test files excluded.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/commands/",
         pathNot: "\\.test\\.ts$",
@@ -81,7 +111,6 @@ module.exports = {
           "^packages/server/src/platform/ddd/",
           "^packages/server/src/platform/ids/",
           "^packages/server/src/platform/notifications/(?!.*-live\\.ts$)",
-          "^packages/server/src/modules/[^/]+/index\\.ts$",
         ],
       },
     },
@@ -135,7 +164,7 @@ module.exports = {
       name: "queries-isolation",
       severity: "error",
       comment:
-        "Module queries are read-side: may import own module's domain (for IDs/value objects) and sibling queries, the DDD shared kernel ports under platform/ddd/, platform/ids/, other modules' barrel, and @org/database for direct SQL projection. May NOT import platform/*-live.ts, own commands, event-handlers, infrastructure, interface, or @org/contracts (wire types belong in interface). Test files excluded.",
+        "Module queries are read-side: may import own module's domain (for IDs/value objects) and sibling queries, the DDD shared kernel ports under platform/ddd/, platform/ids/, and @org/database for direct SQL projection. May NOT import platform/*-live.ts, own commands, event-handlers, infrastructure, interface, @org/contracts (wire types belong in interface), or (ADR-0023) other modules' barrels — cross-module reads go through a `domain/ports/external/` port whose adapter lives in `infrastructure/external/`. Test files excluded.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/queries/",
         pathNot: "\\.test\\.ts$",
@@ -146,7 +175,6 @@ module.exports = {
           "^packages/server/src/modules/$1/(domain|queries)/",
           "^packages/server/src/platform/ddd/",
           "^packages/server/src/platform/ids/",
-          "^packages/server/src/modules/[^/]+/index\\.ts$",
           "^packages/database/",
         ],
       },

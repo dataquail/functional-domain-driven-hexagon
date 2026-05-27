@@ -17,10 +17,10 @@ import {
   type DoesNotHaveRole,
 } from "@/modules/role/domain/role-errors.js";
 import { RolesRepositoryLive } from "@/modules/role/infrastructure/roles-repository-live.js";
-import { commandHandlers } from "@/platform/ddd/command-bus.js";
-import { type DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
-import { type UnitOfWork } from "@/platform/ddd/unit-of-work.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
+import { commandHandlers } from "@/platform/ddd/ports/command-bus.js";
+import { type DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
+import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 
 // Bus-visible output types: the raw handlers in `commands/` carry
 // `RolesRepository` in R; the wraps below discharge that via
@@ -38,7 +38,7 @@ type RevokeRoleBusOutput = Effect.Effect<
   DomainEventBus | UnitOfWork | Database.Database
 >;
 
-declare module "@/platform/ddd/command-bus.js" {
+declare module "@/platform/ddd/ports/command-bus.js" {
   interface CommandRegistry {
     GrantRoleCommand: {
       readonly command: GrantRoleCommand;

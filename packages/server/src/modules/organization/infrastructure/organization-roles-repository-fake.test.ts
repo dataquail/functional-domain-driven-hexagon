@@ -7,7 +7,7 @@ import {
   empty as emptyOrgRoles,
   grantRole,
 } from "@/modules/organization/domain/organization-roles.aggregate.js";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles-repository.js";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/ports/repositories/organization-roles-repository.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 

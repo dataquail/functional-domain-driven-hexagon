@@ -1,7 +1,7 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { MembershipService } from "@/platform/ddd/membership-service.js";
+import { MembershipService } from "@/platform/ddd/ports/membership-service.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 

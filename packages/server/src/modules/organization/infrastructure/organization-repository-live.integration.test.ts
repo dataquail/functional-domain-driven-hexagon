@@ -9,7 +9,7 @@ import { beforeEach } from "vitest";
 
 import * as Organization from "@/modules/organization/domain/organization.aggregate.js";
 import { OrganizationNotFound } from "@/modules/organization/domain/organization-errors.js";
-import { OrganizationRepository } from "@/modules/organization/domain/organization-repository.js";
+import { OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization-repository.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/organization-repository-live.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";

@@ -4,7 +4,7 @@ import * as Layer from "effect/Layer";
 import {
   type OrganizationRoleName,
   OrganizationRoleService,
-} from "@/platform/ddd/organization-role-service.js";
+} from "@/platform/ddd/ports/organization-role-service.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 

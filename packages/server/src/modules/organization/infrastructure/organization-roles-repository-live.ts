@@ -4,7 +4,7 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
 import { type OrganizationRoles } from "@/modules/organization/domain/organization-roles.aggregate.js";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles-repository.js";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/ports/repositories/organization-roles-repository.js";
 import * as OrganizationRolesMapper from "@/modules/organization/infrastructure/organization-roles-mapper.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { type UserId } from "@/platform/ids/user-id.js";

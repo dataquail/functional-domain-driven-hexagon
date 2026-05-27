@@ -7,9 +7,9 @@ import * as Option from "effect/Option";
 
 import { UserId } from "@/platform/ids/user-id.js";
 
+import { UserRepository } from "../domain/ports/repositories/user-repository.js";
 import * as User from "../domain/user.aggregate.js";
 import { UserAlreadyExists, UserNotFound } from "../domain/user-errors.js";
-import { UserRepository } from "../domain/user-repository.js";
 import { Address } from "../domain/value-objects/address.js";
 import { UserRepositoryFake } from "./user-repository-fake.js";
 

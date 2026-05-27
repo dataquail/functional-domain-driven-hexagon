@@ -10,7 +10,7 @@ import { revokeOrganizationRole } from "@/modules/organization/commands/revoke-o
 import { RevokeOrganizationRoleCommand } from "@/modules/organization/commands/revoke-organization-role-command.js";
 import { DoesNotHaveOrganizationRole } from "@/modules/organization/domain/organization-role-errors.js";
 import { type OrganizationRoleRevoked } from "@/modules/organization/domain/organization-role-events.js";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles-repository.js";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/ports/repositories/organization-roles-repository.js";
 import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/organization-roles-repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";

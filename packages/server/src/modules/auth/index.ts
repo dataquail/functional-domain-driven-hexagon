@@ -7,6 +7,7 @@ export { authQueryHandlers } from "./auth-query-handlers.js";
 export { AuthSharedDepsLive } from "./auth-shared-deps.js";
 export { SignInCommand } from "./commands/sign-in-command.js";
 export { TouchSessionCommand } from "./commands/touch-session-command.js";
+export { SessionRepository } from "./domain/ports/repositories/session-repository.js";
 export { Session } from "./domain/session.aggregate.js";
 export {
   AuthIdentityNotFound,
@@ -15,5 +16,4 @@ export {
   SessionRevoked,
 } from "./domain/session-errors.js";
 export { SessionId } from "./domain/session-id.js";
-export { SessionRepository } from "./domain/session-repository.js";
 export { FindSessionQuery } from "./queries/find-session-query.js";

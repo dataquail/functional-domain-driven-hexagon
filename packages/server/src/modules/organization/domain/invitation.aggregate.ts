@@ -2,7 +2,7 @@ import * as DateTime from "effect/DateTime";
 import * as Either from "effect/Either";
 import * as Schema from "effect/Schema";
 
-import { type DomainEvent } from "@/platform/ddd/domain-event.js";
+import { type DomainEvent } from "@/platform/ddd/contracts/domain-event.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { type UserId } from "@/platform/ids/user-id.js";

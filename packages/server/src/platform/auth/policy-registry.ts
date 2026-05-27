@@ -3,10 +3,10 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { type MembershipService } from "@/platform/ddd/membership-service.js";
-import { type OrganizationRoleService } from "@/platform/ddd/organization-role-service.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
-import { type RoleService } from "@/platform/ddd/role-service.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
+import { type MembershipService } from "@/platform/ddd/ports/membership-service.js";
+import { type OrganizationRoleService } from "@/platform/ddd/ports/organization-role-service.js";
+import { type RoleService } from "@/platform/ddd/ports/role-service.js";
 
 import { type Action, type FlatAction } from "./actions.js";
 import { type ResourceName, type ResourceTypeFor } from "./resource-resolver-registry.js";

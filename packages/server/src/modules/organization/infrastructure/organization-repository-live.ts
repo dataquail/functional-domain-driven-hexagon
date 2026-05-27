@@ -4,7 +4,7 @@ import * as Layer from "effect/Layer";
 
 import { type Organization } from "@/modules/organization/domain/organization.aggregate.js";
 import { OrganizationNotFound } from "@/modules/organization/domain/organization-errors.js";
-import { OrganizationRepository } from "@/modules/organization/domain/organization-repository.js";
+import { OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization-repository.js";
 import * as OrganizationMapper from "@/modules/organization/infrastructure/organization-mapper.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";

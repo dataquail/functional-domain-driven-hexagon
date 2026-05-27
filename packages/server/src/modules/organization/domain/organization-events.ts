@@ -1,7 +1,7 @@
 import * as Schema from "effect/Schema";
 
-import { DomainEvent } from "@/platform/ddd/domain-event.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
+import { DomainEvent } from "@/platform/ddd/contracts/domain-event.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 export const OrganizationCreated = DomainEvent("OrganizationCreated", {

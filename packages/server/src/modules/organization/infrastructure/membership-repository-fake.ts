@@ -5,7 +5,7 @@ import * as Ref from "effect/Ref";
 
 import { type Membership } from "@/modules/organization/domain/membership.aggregate.js";
 import { MembershipNotFound } from "@/modules/organization/domain/membership-errors.js";
-import { MembershipRepository } from "@/modules/organization/domain/membership-repository.js";
+import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership-repository.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 

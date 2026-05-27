@@ -15,8 +15,8 @@ import {
 } from "@/modules/auth/commands/touch-session-command.js";
 import { AuthIdentityRepositoryLive } from "@/modules/auth/infrastructure/auth-identity-repository-live.js";
 import { SessionRepositoryLive } from "@/modules/auth/infrastructure/session-repository-live.js";
-import { commandHandlers } from "@/platform/ddd/command-bus.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
+import { commandHandlers } from "@/platform/ddd/ports/command-bus.js";
 
 type SignInBusOutput = Effect.Effect<
   SignInResult,
@@ -26,7 +26,7 @@ type SignInBusOutput = Effect.Effect<
 
 type TouchSessionBusOutput = Effect.Effect<void, never, Database.Database>;
 
-declare module "@/platform/ddd/command-bus.js" {
+declare module "@/platform/ddd/ports/command-bus.js" {
   interface CommandRegistry {
     SignInCommand: {
       readonly command: SignInCommand;

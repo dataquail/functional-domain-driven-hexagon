@@ -2,11 +2,11 @@ import type * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import { type AuthIdentityRepository } from "@/modules/auth/domain/auth-identity-repository.js";
+import { type AuthIdentityRepository } from "@/modules/auth/domain/ports/repositories/auth-identity-repository.js";
+import { type SessionRepository } from "@/modules/auth/domain/ports/repositories/session-repository.js";
 import { type SessionId } from "@/modules/auth/domain/session-id.js";
-import { type SessionRepository } from "@/modules/auth/domain/session-repository.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 
 // Inputs come from the OIDC callback: a verified Zitadel `subject` + the

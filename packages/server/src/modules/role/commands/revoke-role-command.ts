@@ -1,13 +1,13 @@
 import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
+import { type RolesRepository } from "@/modules/role/domain/ports/repositories/roles-repository.js";
 import { Role } from "@/modules/role/domain/role.js";
 import { type DoesNotHaveRole } from "@/modules/role/domain/role-errors.js";
-import { type RolesRepository } from "@/modules/role/domain/roles-repository.js";
-import { type DomainEventBus } from "@/platform/ddd/domain-event-bus.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/span-attributable.js";
-import { type UnitOfWork } from "@/platform/ddd/unit-of-work.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import { type DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
+import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 export const RevokeRoleCommand = Schema.TaggedStruct("RevokeRoleCommand", {

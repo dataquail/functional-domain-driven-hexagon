@@ -3,8 +3,8 @@ import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 import * as Either from "effect/Either";
 
+import { RolesRepository } from "@/modules/role/domain/ports/repositories/roles-repository.js";
 import { empty as emptyRoles, grant } from "@/modules/role/domain/roles.aggregate.js";
-import { RolesRepository } from "@/modules/role/domain/roles-repository.js";
 import { RolesRepositoryFake } from "@/modules/role/infrastructure/roles-repository-fake.js";
 import { findUserRoles } from "@/modules/role/queries/find-user-roles.js";
 import { FindUserRolesQuery } from "@/modules/role/queries/find-user-roles-query.js";

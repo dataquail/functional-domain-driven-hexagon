@@ -1,11 +1,10 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
-import { type PersistenceUnavailable } from "@/platform/ddd/persistence-unavailable.js";
+import { type OrganizationRoles } from "@/modules/organization/domain/organization-roles.aggregate.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { type UserId } from "@/platform/ids/user-id.js";
-
-import { type OrganizationRoles } from "./organization-roles.aggregate.js";
 
 // Dumb persistence port. The aggregate carries the invariants
 // (uniqueness, "revoke only what's held"); the repository only knows

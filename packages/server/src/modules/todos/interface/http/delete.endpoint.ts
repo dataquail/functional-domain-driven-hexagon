@@ -3,7 +3,7 @@ import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
 import { DeleteTodoCommand } from "@/modules/todos/commands/delete-todo-command.js";
-import { CommandBus } from "@/platform/ddd/command-bus.js";
+import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 export const deleteEndpoint = (request: EndpointRequest<typeof TodosContract.Group, "delete">) =>

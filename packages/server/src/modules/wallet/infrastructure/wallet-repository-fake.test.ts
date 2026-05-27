@@ -7,10 +7,10 @@ import * as Option from "effect/Option";
 
 import { UserId } from "@/platform/ids/user-id.js";
 
+import { WalletRepository } from "../domain/ports/repositories/wallet-repository.js";
 import * as Wallet from "../domain/wallet.aggregate.js";
 import { WalletAlreadyExistsForUser } from "../domain/wallet-errors.js";
 import { WalletId } from "../domain/wallet-id.js";
-import { WalletRepository } from "../domain/wallet-repository.js";
 import { WalletRepositoryFake } from "./wallet-repository-fake.js";
 
 const aliceId = UserId.make("11111111-1111-1111-1111-111111111111");

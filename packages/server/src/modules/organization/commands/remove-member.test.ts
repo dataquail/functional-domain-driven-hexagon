@@ -12,7 +12,7 @@ import { RemoveMemberCommand } from "@/modules/organization/commands/remove-memb
 import * as Membership from "@/modules/organization/domain/membership.aggregate.js";
 import { MembershipNotFound } from "@/modules/organization/domain/membership-errors.js";
 import { type MembershipRevoked } from "@/modules/organization/domain/membership-events.js";
-import { MembershipRepository } from "@/modules/organization/domain/membership-repository.js";
+import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership-repository.js";
 import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/membership-repository-fake.js";
 import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/organization-repository-fake.js";
 import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/organization-roles-repository-fake.js";

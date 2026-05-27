@@ -3,8 +3,8 @@ import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
 
+import { RolesRepository } from "@/modules/role/domain/ports/repositories/roles-repository.js";
 import { empty as emptyRoles, type Roles } from "@/modules/role/domain/roles.aggregate.js";
-import { RolesRepository } from "@/modules/role/domain/roles-repository.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 
 // In-memory `RolesRepository` for use-case unit tests. Composes with

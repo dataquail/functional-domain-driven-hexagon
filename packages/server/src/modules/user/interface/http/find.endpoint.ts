@@ -2,7 +2,7 @@ import { UserContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
 import { FindUsersQuery, type FindUsersResult } from "@/modules/user/queries/find-users-query.js";
-import { QueryBus } from "@/platform/ddd/query-bus.js";
+import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 const toPaginatedUsersContract = (result: FindUsersResult): UserContract.PaginatedUsers =>
