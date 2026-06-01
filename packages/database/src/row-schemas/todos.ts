@@ -3,6 +3,7 @@ import * as Schema from "effect/Schema";
 
 export const TodoRow = Schema.Struct({
   id: Schema.UUID,
+  organization_id: Schema.UUID,
   title: Schema.String,
   completed: Schema.Boolean,
   created_at: Schema.DateTimeUtcFromDate,

@@ -40,7 +40,16 @@ import {
   roleQueryHandlers,
   RoleServiceLive,
 } from "./modules/role/index.js";
-import { todoCommandHandlers, todoQueryHandlers, TodosModuleLive } from "./modules/todos/index.js";
+import {
+  TodoCollectionResolverEntry,
+  TodoCollectionResolverEntryLive,
+  todoCommandHandlers,
+  todoQueryHandlers,
+  TodoResolverEntry,
+  TodoResolverEntryLive,
+  TodosModuleLive,
+  todosPolicies,
+} from "./modules/todos/index.js";
 import {
   userCommandHandlers,
   userEventSpanAttributes,
@@ -95,7 +104,7 @@ const DomainEventBusLive = makeDomainEventBusLive({
   },
 });
 
-const PolicyRegistryLive = makePolicyRegistry([userPolicies, organizationPolicies]);
+const PolicyRegistryLive = makePolicyRegistry([userPolicies, organizationPolicies, todosPolicies]);
 
 // Resource resolvers are owned by each module: the module exports a
 // `*ResolverEntryLive` layer that internally satisfies its repository
@@ -107,12 +116,23 @@ const ResourceResolverRegistryLive = Layer.unwrapEffect(
   Effect.gen(function* () {
     const userResolver = yield* UserResolverEntry;
     const organizationResolver = yield* OrganizationResolverEntry;
+    const todoCollectionResolver = yield* TodoCollectionResolverEntry;
+    const todoResolver = yield* TodoResolverEntry;
     return makeResourceResolverRegistry({
       user: userResolver,
       organization: organizationResolver,
+      todoCollection: todoCollectionResolver,
+      todo: todoResolver,
     });
   }),
-).pipe(Layer.provide([UserResolverEntryLive, OrganizationResolverEntryLive]));
+).pipe(
+  Layer.provide([
+    UserResolverEntryLive,
+    OrganizationResolverEntryLive,
+    TodoCollectionResolverEntryLive,
+    TodoResolverEntryLive,
+  ]),
+);
 
 const ApiLive = HttpApiBuilder.api(Api).pipe(
   Layer.provide([

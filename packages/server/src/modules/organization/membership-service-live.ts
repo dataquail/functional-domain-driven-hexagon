@@ -1,24 +1,32 @@
+import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership-repository.js";
-import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/membership-repository-live.js";
+import { FindMembershipQuery } from "@/modules/organization/queries/find-membership-query.js";
 import { MembershipService } from "@/platform/ddd/ports/membership-service.js";
+import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 
-// Wraps the org module's own `MembershipRepository` into the generalized
-// `MembershipService` ACL. The Live provides `MembershipRepositoryLive`
-// internally — Effect's Layer memoization shares one instance with the
-// command-handler wraps that also reference it.
+// Surfaces the org module's membership state to policies via the
+// generalized `MembershipService` ACL. Delegates through the query bus
+// (`FindMembershipQuery`) rather than reaching the `MembershipRepository`
+// in-process, so the cross-module membership lookup is an explicit query
+// against the org module — the single source of truth. Same shape as
+// `RoleServiceLive`: the query handler self-wraps its repository, leaving
+// `Database` as the dispatch's residual R, which we capture and provide
+// inline so the `MembershipService` Tag stays R = never for consumers.
 export const MembershipServiceLive = Layer.effect(
   MembershipService,
   Effect.gen(function* () {
-    const repo = yield* MembershipRepository;
+    const queryBus = yield* QueryBus;
+    const db = yield* Database.Database;
+
     return MembershipService.of({
       isMember: (userId, organizationId) =>
-        repo.findByUserIdAndOrgId(userId, organizationId).pipe(
-          Effect.map(() => true),
-          Effect.catchTag("MembershipNotFound", () => Effect.succeed(false)),
+        queryBus.execute(FindMembershipQuery.make({ userId, organizationId })).pipe(
+          Effect.provideService(Database.Database, db),
+          Effect.map((result) => result.isMember),
+          Effect.withSpan("MembershipService.isMember"),
         ),
     });
   }),
-).pipe(Layer.provide(MembershipRepositoryLive));
+);

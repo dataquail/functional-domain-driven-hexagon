@@ -15,7 +15,12 @@ export const createTodo = (cmd: CreateTodoCommand): CreateTodoOutput =>
     const id = TodoId.make(yield* Effect.sync(() => crypto.randomUUID()));
     yield* Effect.annotateCurrentSpan("todo.id", id);
     const now = yield* DateTime.now;
-    const todo = Todo.create({ id, title: cmd.title, now });
+    const todo = Todo.create({
+      id,
+      organizationId: cmd.organizationId,
+      title: cmd.title,
+      now,
+    });
     yield* repo.insert(todo);
     return todo;
   });
