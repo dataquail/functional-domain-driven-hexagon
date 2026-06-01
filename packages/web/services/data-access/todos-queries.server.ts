@@ -6,9 +6,11 @@
 
 import "server-only";
 
+import type { OrganizationId } from "@org/contracts/EntityIds";
+
 import { prefetchEffectQuery } from "@/lib/tanstack-query/effect-prefetch.server";
 
 import { todosQuery, todosQueryKey } from "./todos-queries";
 
-export const prefetchTodos = (): Promise<void> =>
-  prefetchEffectQuery({ queryKey: todosQueryKey(), queryFn: todosQuery });
+export const prefetchTodos = (orgId: OrganizationId): Promise<void> =>
+  prefetchEffectQuery({ queryKey: todosQueryKey({ orgId }), queryFn: todosQuery(orgId) });

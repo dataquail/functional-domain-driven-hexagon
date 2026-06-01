@@ -4,15 +4,23 @@
 // todos-queries.ts with `useEffectSuspenseQuery` (read) and
 // `useEffectMutation` (writes). Mutations toast on success and use
 // the same in-flight feedback the existing SPA used.
+//
+// The read hook takes `orgId` to key the cache per org and to pass
+// through to the underlying contract path. Mutations stay
+// orgId-agnostic at the hook level — the caller hands the orgId in
+// at `mutate({ orgId, … })` time, the same shape the underlying
+// Effect functions accept.
+
+import type { OrganizationId } from "@org/contracts/EntityIds";
 
 import { useEffectMutation, useEffectSuspenseQuery } from "@/lib/tanstack-query";
 
 import { createTodo, deleteTodo, todosQuery, todosQueryKey, updateTodo } from "./todos-queries";
 
-export const useTodosSuspenseQuery = () =>
+export const useTodosSuspenseQuery = (orgId: OrganizationId) =>
   useEffectSuspenseQuery({
-    queryKey: todosQueryKey(),
-    queryFn: () => todosQuery,
+    queryKey: todosQueryKey({ orgId }),
+    queryFn: () => todosQuery(orgId),
   });
 
 export const useCreateTodoMutation = () =>

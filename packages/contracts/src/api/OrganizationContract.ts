@@ -126,6 +126,7 @@ export class AcceptInvitationResponse extends Schema.Class<AcceptInvitationRespo
 
 export class Group extends HttpApiGroup.make("organization")
   .middleware(UserAuthMiddleware)
+  .add(HttpApiEndpoint.get("findMine", "/").addSuccess(Schema.Array(Organization)))
   .add(
     HttpApiEndpoint.post("create", "/")
       .setPayload(CreateOrganizationPayload)

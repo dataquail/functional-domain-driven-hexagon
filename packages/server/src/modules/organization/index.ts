@@ -43,4 +43,5 @@ export {
 } from "./policies/organization-resource-resolver.js";
 export { FindAllOrganizationsQuery } from "./queries/find-all-organizations-query.js";
 export { FindMembershipQuery } from "./queries/find-membership-query.js";
+export { FindMyOrganizationsQuery } from "./queries/find-my-organizations-query.js";
 export { FindUserOrganizationRolesQuery } from "./queries/find-user-organization-roles-query.js";

@@ -4,6 +4,7 @@ import { Api } from "@/api.js";
 import { acceptInvitationEndpoint } from "@/modules/organization/interface/http/accept-invitation.endpoint.js";
 import { createEndpoint } from "@/modules/organization/interface/http/create.endpoint.js";
 import { findAllEndpoint } from "@/modules/organization/interface/http/find-all.endpoint.js";
+import { findMineEndpoint } from "@/modules/organization/interface/http/find-mine.endpoint.js";
 import { inviteEndpoint } from "@/modules/organization/interface/http/invite.endpoint.js";
 import { leaveEndpoint } from "@/modules/organization/interface/http/leave.endpoint.js";
 import { removeMemberEndpoint } from "@/modules/organization/interface/http/remove-member.endpoint.js";
@@ -16,6 +17,7 @@ import { softDeleteEndpoint } from "@/modules/organization/interface/http/soft-d
 // (self). All Authz checks live inside the endpoints.
 export const OrganizationLive = HttpApiBuilder.group(Api, "organization", (handlers) =>
   handlers
+    .handle("findMine", findMineEndpoint)
     .handle("create", createEndpoint)
     .handle("softDelete", softDeleteEndpoint)
     .handle("restore", restoreEndpoint)

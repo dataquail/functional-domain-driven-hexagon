@@ -1,5 +1,5 @@
 import { TodosContract } from "@org/contracts/api/Contracts";
-import { TodoId } from "@org/contracts/EntityIds";
+import { OrganizationId, TodoId } from "@org/contracts/EntityIds";
 import { renderHook, waitFor } from "@testing-library/react";
 import * as Effect from "effect/Effect";
 import { afterEach, describe, expect, it } from "vitest";
@@ -7,6 +7,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { makePresenterHarness } from "@/test/presenter-harness";
 
 import { useTodoListPresenter } from "./todo-list.presenter";
+
+const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 
 const mkTodo = (i: number): TodosContract.Todo =>
   new TodosContract.Todo({
@@ -33,7 +35,7 @@ afterEach(async () => {
 describe("useTodoListPresenter", () => {
   it("reports isEmpty=true when no todos are returned", async () => {
     harness = makePresenterHarness({ apiClient: makeApiClient([]) });
-    const { result } = renderHook(() => useTodoListPresenter(), { wrapper: harness.wrapper });
+    const { result } = renderHook(() => useTodoListPresenter(orgId), { wrapper: harness.wrapper });
     await waitFor(() => {
       expect(result.current.todos).toEqual([]);
     });
@@ -43,7 +45,7 @@ describe("useTodoListPresenter", () => {
   it("exposes the loaded todos and isEmpty=false when populated", async () => {
     const todos = [mkTodo(1), mkTodo(2)];
     harness = makePresenterHarness({ apiClient: makeApiClient(todos) });
-    const { result } = renderHook(() => useTodoListPresenter(), { wrapper: harness.wrapper });
+    const { result } = renderHook(() => useTodoListPresenter(orgId), { wrapper: harness.wrapper });
     await waitFor(() => {
       expect(result.current.todos.length).toBe(2);
     });

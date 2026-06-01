@@ -7,6 +7,7 @@
 // is testable via the presenter without rendering JSX.
 
 import type { TodosContract } from "@org/contracts/api/Contracts";
+import type { OrganizationId } from "@org/contracts/EntityIds";
 import * as React from "react";
 
 import {
@@ -14,17 +15,21 @@ import {
   useUpdateTodoMutation,
 } from "@/services/data-access/use-todos-queries";
 
-export const useTodoItemPresenter = (todo: TodosContract.Todo) => {
+export const useTodoItemPresenter = (todo: TodosContract.Todo, orgId: OrganizationId) => {
   const updateTodo = useUpdateTodoMutation();
   const deleteTodo = useDeleteTodoMutation();
 
   const toggleCompleted = React.useCallback(() => {
-    updateTodo.mutate({ ...todo, completed: !todo.completed });
-  }, [updateTodo, todo]);
+    updateTodo.mutate({
+      orgId,
+      id: todo.id,
+      payload: { title: todo.title, completed: !todo.completed },
+    });
+  }, [updateTodo, todo, orgId]);
 
   const deleteThis = React.useCallback(() => {
-    deleteTodo.mutate(todo.id);
-  }, [deleteTodo, todo.id]);
+    deleteTodo.mutate({ orgId, id: todo.id });
+  }, [deleteTodo, todo.id, orgId]);
 
   return {
     todo,

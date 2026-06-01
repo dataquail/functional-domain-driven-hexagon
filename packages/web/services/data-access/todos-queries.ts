@@ -4,36 +4,51 @@
 // and client components (transitively, via use-todos-queries.ts
 // which adds the suspense + mutation hooks).
 //
+// Every operation is org-scoped (Phase 5): the contract paths are
+// `/orgs/:orgId/todos[/:id]`, so `orgId` is required up front. The
+// query key includes it so two orgs don't share a cache slot.
+//
 // Mutations chain `todosHelpers.invalidateAllQueries()` so the read
-// cache refreshes after writes. The helper depends on `QueryClient`
-// (provided by the client runtime); on the server we don't run
-// mutations, so the helper's R is satisfied only client-side.
+// cache refreshes after writes (across all per-org keys in the
+// namespace). The helper depends on `QueryClient` (provided by the
+// client runtime); on the server we don't run mutations, so the
+// helper's R is satisfied only client-side.
 
 import type { TodosContract } from "@org/contracts/api/Contracts";
-import type { TodoId } from "@org/contracts/EntityIds";
+import type { OrganizationId, TodoId } from "@org/contracts/EntityIds";
 import * as Effect from "effect/Effect";
 
 import { QueryData } from "@/lib/tanstack-query";
 import { ApiClient } from "@/services/api-client.shared";
 
-const todosKey = QueryData.makeQueryKey("todos");
-const todosHelpers = QueryData.makeHelpers<Array<TodosContract.Todo>>(todosKey);
+type TodosKeyVars = { readonly orgId: OrganizationId };
+
+const todosKey = QueryData.makeQueryKey<"todos", TodosKeyVars>("todos");
+const todosHelpers = QueryData.makeHelpers<Array<TodosContract.Todo>, TodosKeyVars>(todosKey);
 
 export const todosQueryKey = todosKey;
 
-export const todosQuery = Effect.flatMap(ApiClient, ({ client }) => client.todos.get());
+export const todosQuery = (orgId: OrganizationId) =>
+  Effect.flatMap(ApiClient, ({ client }) => client.todos.get({ path: { orgId } }));
 
-export const createTodo = (todo: TodosContract.CreateTodoPayload) =>
-  Effect.flatMap(ApiClient, ({ client }) => client.todos.create({ payload: todo })).pipe(
-    Effect.tap(() => todosHelpers.invalidateAllQueries()),
-  );
+export const createTodo = (args: {
+  readonly orgId: OrganizationId;
+  readonly payload: TodosContract.CreateTodoPayload;
+}) =>
+  Effect.flatMap(ApiClient, ({ client }) =>
+    client.todos.create({ path: { orgId: args.orgId }, payload: args.payload }),
+  ).pipe(Effect.tap(() => todosHelpers.invalidateAllQueries()));
 
-export const updateTodo = (todo: TodosContract.Todo) =>
-  Effect.flatMap(ApiClient, ({ client }) => client.todos.update({ payload: todo })).pipe(
-    Effect.tap(() => todosHelpers.invalidateAllQueries()),
-  );
+export const updateTodo = (args: {
+  readonly orgId: OrganizationId;
+  readonly id: TodoId;
+  readonly payload: TodosContract.UpdateTodoPayload;
+}) =>
+  Effect.flatMap(ApiClient, ({ client }) =>
+    client.todos.update({ path: { orgId: args.orgId, id: args.id }, payload: args.payload }),
+  ).pipe(Effect.tap(() => todosHelpers.invalidateAllQueries()));
 
-export const deleteTodo = (id: TodoId) =>
-  Effect.flatMap(ApiClient, ({ client }) => client.todos.delete({ payload: id })).pipe(
-    Effect.tap(() => todosHelpers.invalidateAllQueries()),
-  );
+export const deleteTodo = (args: { readonly orgId: OrganizationId; readonly id: TodoId }) =>
+  Effect.flatMap(ApiClient, ({ client }) =>
+    client.todos.delete({ path: { orgId: args.orgId, id: args.id } }),
+  ).pipe(Effect.tap(() => todosHelpers.invalidateAllQueries()));

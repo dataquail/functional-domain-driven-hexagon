@@ -4,11 +4,12 @@ import { Button } from "@org/components/primitives/button";
 import { Form } from "@org/components/primitives/form";
 import { PlusIcon } from "@org/components/primitives/icon";
 import { Input } from "@org/components/primitives/input";
+import type { OrganizationId } from "@org/contracts/EntityIds";
 
 import { useAddTodoPresenter } from "./add-todo.presenter";
 
-export const AddTodo: React.FC = () => {
-  const { form } = useAddTodoPresenter();
+export const AddTodo: React.FC<{ orgId: OrganizationId }> = ({ orgId }) => {
+  const { form } = useAddTodoPresenter(orgId);
 
   return (
     <Form onSubmit={form.handleSubmit}>

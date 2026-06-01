@@ -11,6 +11,8 @@ import {
   findMembershipQuerySpanAttributes,
   type FindMembershipResult,
 } from "@/modules/organization/queries/find-membership-query.js";
+import { findMyOrganizations } from "@/modules/organization/queries/find-my-organizations.js";
+import { findMyOrganizationsQuerySpanAttributes } from "@/modules/organization/queries/find-my-organizations-query.js";
 import { findUserOrganizationRoles } from "@/modules/organization/queries/find-user-organization-roles.js";
 import {
   type FindUserOrganizationRolesQuery,
@@ -54,6 +56,10 @@ export const organizationQueryHandlers = queryHandlers({
   FindAllOrganizationsQuery: {
     handle: findAllOrganizations,
     spanAttributes: findAllOrganizationsQuerySpanAttributes,
+  },
+  FindMyOrganizationsQuery: {
+    handle: findMyOrganizations,
+    spanAttributes: findMyOrganizationsQuerySpanAttributes,
   },
   FindUserOrganizationRolesQuery: {
     handle: (q): FindUserOrganizationRolesBusOutput =>
