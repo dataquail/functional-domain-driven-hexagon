@@ -15,13 +15,15 @@ const toView = (row: RowSchemas.TodoRow): ListTodosTodoView => ({
   completed: row.completed,
 });
 
-export const listTodos = (_query: ListTodosQuery): ListTodosOutput =>
+export const listTodos = (query: ListTodosQuery): ListTodosOutput =>
   Effect.gen(function* () {
     const db = yield* Database.Database;
     const rows = yield* db
       .execute((client) =>
         client.any(sql.type(RowSchemas.TodoRowStd)`
-          SELECT * FROM todos.todos ORDER BY created_at DESC
+          SELECT * FROM todos.todos
+          WHERE organization_id = ${query.organizationId}
+          ORDER BY created_at DESC
         `),
       )
       .pipe(

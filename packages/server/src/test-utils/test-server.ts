@@ -29,7 +29,16 @@ import {
   roleQueryHandlers,
   RoleServiceLive,
 } from "@/modules/role/index.js";
-import { todoCommandHandlers, todoQueryHandlers, TodosModuleLive } from "@/modules/todos/index.js";
+import {
+  TodoCollectionResolverEntry,
+  TodoCollectionResolverEntryLive,
+  todoCommandHandlers,
+  todoQueryHandlers,
+  TodoResolverEntry,
+  TodoResolverEntryLive,
+  TodosModuleLive,
+  todosPolicies,
+} from "@/modules/todos/index.js";
 import {
   userCommandHandlers,
   userEventSpanAttributes,
@@ -83,18 +92,29 @@ const DomainEventBusLive = makeDomainEventBusLive({
   },
 });
 
-const PolicyRegistryLive = makePolicyRegistry([userPolicies, organizationPolicies]);
+const PolicyRegistryLive = makePolicyRegistry([userPolicies, organizationPolicies, todosPolicies]);
 
 const ResourceResolverRegistryLive = Layer.unwrapEffect(
   Effect.gen(function* () {
     const userResolver = yield* UserResolverEntry;
     const organizationResolver = yield* OrganizationResolverEntry;
+    const todoCollectionResolver = yield* TodoCollectionResolverEntry;
+    const todoResolver = yield* TodoResolverEntry;
     return makeResourceResolverRegistry({
       user: userResolver,
       organization: organizationResolver,
+      todoCollection: todoCollectionResolver,
+      todo: todoResolver,
     });
   }),
-).pipe(Layer.provide([UserResolverEntryLive, OrganizationResolverEntryLive]));
+).pipe(
+  Layer.provide([
+    UserResolverEntryLive,
+    OrganizationResolverEntryLive,
+    TodoCollectionResolverEntryLive,
+    TodoResolverEntryLive,
+  ]),
+);
 
 // `CommandBus` and `QueryBus` are cross-cutting public production APIs
 // (ADR-0006) — the same dispatch surface every HTTP handler uses. Exposing

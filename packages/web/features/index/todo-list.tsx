@@ -1,12 +1,13 @@
 "use client";
 
+import type { OrganizationId } from "@org/contracts/EntityIds";
 import * as Array from "effect/Array";
 
 import { TodoItem } from "./todo-item/todo-item";
 import { useTodoListPresenter } from "./todo-list.presenter";
 
-export const TodoList: React.FC = () => {
-  const { isEmpty, todos } = useTodoListPresenter();
+export const TodoList: React.FC<{ orgId: OrganizationId }> = ({ orgId }) => {
+  const { isEmpty, todos } = useTodoListPresenter(orgId);
 
   if (isEmpty) {
     return (
@@ -19,7 +20,7 @@ export const TodoList: React.FC = () => {
   return (
     <ul className="space-y-2" data-testid="todo-list">
       {Array.map(todos, (todo) => (
-        <TodoItem key={todo.id} todo={todo} />
+        <TodoItem key={todo.id} todo={todo} orgId={orgId} />
       ))}
     </ul>
   );

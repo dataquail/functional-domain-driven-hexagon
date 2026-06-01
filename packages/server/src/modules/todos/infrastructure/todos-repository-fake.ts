@@ -4,11 +4,17 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
+import { type OrganizationId } from "@/platform/ids/organization-id.js";
+
 import { TodosRepository } from "../domain/ports/repositories/todo-repository.js";
 import { type Todo } from "../domain/todo.js";
 import { TodoNotFound } from "../domain/todo-errors.js";
 import { type TodoId } from "../domain/todo-id.js";
 
+// Keyed by TodoId; org scoping is enforced by guarding on the stored
+// todo's organizationId — a read/mutate for the wrong org behaves like
+// a missing row (TodoNotFound), mirroring the live repo's
+// `WHERE id AND organization_id` filter.
 export const TodosRepositoryFake = Layer.effect(
   TodosRepository,
   Effect.gen(function* () {
@@ -18,24 +24,35 @@ export const TodosRepositoryFake = Layer.effect(
       Ref.update(store, HashMap.set(todo.id, todo));
 
     const update = (todo: Todo): Effect.Effect<void, TodoNotFound> =>
-      Effect.flatMap(Ref.get(store), (m) =>
-        HashMap.has(m, todo.id)
+      Effect.flatMap(Ref.get(store), (m) => {
+        const found = HashMap.get(m, todo.id);
+        return found._tag === "Some" && found.value.organizationId === todo.organizationId
           ? Ref.update(store, HashMap.set(todo.id, todo))
-          : Effect.fail(new TodoNotFound({ todoId: todo.id })),
-      );
+          : Effect.fail(new TodoNotFound({ todoId: todo.id }));
+      });
 
-    const remove = (id: TodoId): Effect.Effect<void, TodoNotFound> =>
-      Effect.flatMap(Ref.get(store), (m) =>
-        HashMap.has(m, id)
+    const remove = (
+      organizationId: OrganizationId,
+      id: TodoId,
+    ): Effect.Effect<void, TodoNotFound> =>
+      Effect.flatMap(Ref.get(store), (m) => {
+        const found = HashMap.get(m, id);
+        return found._tag === "Some" && found.value.organizationId === organizationId
           ? Ref.update(store, HashMap.remove(id))
-          : Effect.fail(new TodoNotFound({ todoId: id })),
-      );
+          : Effect.fail(new TodoNotFound({ todoId: id }));
+      });
 
-    const findById = (id: TodoId): Effect.Effect<Todo, TodoNotFound> =>
+    const findById = (
+      organizationId: OrganizationId,
+      id: TodoId,
+    ): Effect.Effect<Todo, TodoNotFound> =>
       Effect.flatMap(Ref.get(store), (m) =>
         Option.match(HashMap.get(m, id), {
           onNone: () => Effect.fail(new TodoNotFound({ todoId: id })),
-          onSome: Effect.succeed,
+          onSome: (todo) =>
+            todo.organizationId === organizationId
+              ? Effect.succeed(todo)
+              : Effect.fail(new TodoNotFound({ todoId: id })),
         }),
       );
 

@@ -10,18 +10,32 @@ import { TodoId } from "@/modules/todos/domain/todo-id.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { hasTestDatabase } from "@/test-utils/test-database.js";
 
+const TODO_TABLES = [
+  "todos.todos",
+  "organization.organization_roles",
+  "organization.memberships",
+  "organization.organizations",
+  "platform.roles",
+  "user.users",
+] as const;
+
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
-suite("PUT /todos/:id (integration)", () => {
-  const { run } = useServerTestRuntime(["todos.todos"]);
+suite("PUT /orgs/:orgId/todos/:id (integration)", () => {
+  const { run } = useServerTestRuntime(TODO_TABLES, { seedSuperAdminCaller: true });
 
   it("updates title and completed", async () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const created = yield* client.todos.create({ payload: { title: "Buy milk" } });
+        const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
+        const created = yield* client.todos.create({
+          path: { orgId },
+          payload: { title: "Buy milk" },
+        });
         const updated = yield* client.todos.update({
-          payload: { id: created.id, title: "Buy oat milk", completed: true },
+          path: { orgId, id: created.id },
+          payload: { title: "Buy oat milk", completed: true },
         });
         deepStrictEqual(updated.title, "Buy oat milk");
         deepStrictEqual(updated.completed, true);
@@ -33,10 +47,41 @@ suite("PUT /todos/:id (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
+        const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
         const ghostId = TodoId.make("00000000-0000-0000-0000-000000000000");
         const exit = yield* Effect.exit(
           client.todos.update({
-            payload: { id: ghostId, title: "x", completed: false },
+            path: { orgId, id: ghostId },
+            payload: { title: "x", completed: false },
+          }),
+        );
+        ok(Exit.isFailure(exit));
+        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
+          ok(exit.cause.error instanceof TodosContract.TodoNotFoundError);
+        } else {
+          throw new Error("expected a typed Fail, got " + JSON.stringify(exit));
+        }
+      }),
+    );
+  });
+
+  it("returns 404 when updating via a different org's path (tenant isolation)", async () => {
+    await run(
+      Effect.gen(function* () {
+        const client = yield* HttpApiClient.make(Api);
+        const { id: orgA } = yield* client.organization.create({ payload: { name: "Acme" } });
+        const { id: orgB } = yield* client.organization.create({ payload: { name: "Beta" } });
+        const created = yield* client.todos.create({
+          path: { orgId: orgA },
+          payload: { title: "Buy milk" },
+        });
+        // Super-admin bypasses the membership gate for orgB, but the
+        // repository is scoped by (orgId, todoId), so the todo created in
+        // orgA can't be reached through orgB's path.
+        const exit = yield* Effect.exit(
+          client.todos.update({
+            path: { orgId: orgB, id: created.id },
+            payload: { title: "hijack", completed: true },
           }),
         );
         ok(Exit.isFailure(exit));

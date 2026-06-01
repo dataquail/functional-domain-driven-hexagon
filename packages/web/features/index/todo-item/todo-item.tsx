@@ -5,11 +5,15 @@ import { Checkbox } from "@org/components/primitives/checkbox";
 import { TrashIcon } from "@org/components/primitives/icon";
 import { Label } from "@org/components/primitives/label";
 import type { TodosContract } from "@org/contracts/api/Contracts";
+import type { OrganizationId } from "@org/contracts/EntityIds";
 
 import { useTodoItemPresenter } from "./todo-item.presenter";
 
-export const TodoItem: React.FC<{ todo: TodosContract.Todo }> = ({ todo }) => {
-  const { deleteThis, toggleCompleted } = useTodoItemPresenter(todo);
+export const TodoItem: React.FC<{ todo: TodosContract.Todo; orgId: OrganizationId }> = ({
+  orgId,
+  todo,
+}) => {
+  const { deleteThis, toggleCompleted } = useTodoItemPresenter(todo, orgId);
 
   return (
     <li

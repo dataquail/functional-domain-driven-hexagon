@@ -5,11 +5,16 @@ import * as Schema from "effect/Schema";
 import { type TodoId } from "@/modules/todos/domain/todo-id.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import { OrganizationId } from "@/platform/ids/organization-id.js";
 
-export const ListTodosQuery = Schema.TaggedStruct("ListTodosQuery", {});
+export const ListTodosQuery = Schema.TaggedStruct("ListTodosQuery", {
+  organizationId: OrganizationId,
+});
 export type ListTodosQuery = typeof ListTodosQuery.Type;
 
-export const listTodosQuerySpanAttributes: SpanAttributesExtractor<ListTodosQuery> = () => ({});
+export const listTodosQuerySpanAttributes: SpanAttributesExtractor<ListTodosQuery> = (query) => ({
+  "organization.id": query.organizationId,
+});
 
 export type ListTodosTodoView = {
   readonly id: TodoId;

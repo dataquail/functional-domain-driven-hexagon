@@ -1,5 +1,5 @@
 import { TodosContract } from "@org/contracts/api/Contracts";
-import { TodoId } from "@org/contracts/EntityIds";
+import { OrganizationId, TodoId } from "@org/contracts/EntityIds";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
@@ -8,6 +8,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { makePresenterHarness } from "@/test/presenter-harness";
 
 import { useTodoItemPresenter } from "./todo-item.presenter";
+
+const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 
 class TodoNotFoundError extends Data.TaggedError("TodoNotFoundError")<{
   readonly todoId: string;
@@ -34,17 +36,29 @@ const makeApiClient = (opts?: {
   todos: {
     get: () => Effect.succeed([] as ReadonlyArray<TodosContract.Todo>),
     create: () => Effect.die("not used"),
-    update: (args: { payload: TodosContract.Todo }) => {
+    // Phase 5: the path now carries orgId + id, payload only the
+    // updatable fields. Stamp the id back on so existing assertions
+    // (`.id` / `.completed`) continue to work without each test having
+    // to know the path shape.
+    update: (args: {
+      path: { orgId: OrganizationId; id: TodoId };
+      payload: { title: string; completed: boolean };
+    }) => {
+      const stamped = new TodosContract.Todo({
+        id: args.path.id,
+        title: args.payload.title,
+        completed: args.payload.completed,
+      });
       if (opts?.updateCalls !== undefined) {
-        opts.updateCalls.current = [...opts.updateCalls.current, args.payload];
+        opts.updateCalls.current = [...opts.updateCalls.current, stamped];
       }
-      return opts?.update?.(args.payload) ?? Effect.succeed(args.payload);
+      return opts?.update?.(stamped) ?? Effect.succeed(stamped);
     },
-    delete: (args: { payload: TodoId }) => {
+    delete: (args: { path: { orgId: OrganizationId; id: TodoId } }) => {
       if (opts?.deleteCalls !== undefined) {
-        opts.deleteCalls.current = [...opts.deleteCalls.current, args.payload];
+        opts.deleteCalls.current = [...opts.deleteCalls.current, args.path.id];
       }
-      return opts?.delete?.(args.payload) ?? Effect.void;
+      return opts?.delete?.(args.path.id) ?? Effect.void;
     },
   },
 });
@@ -61,7 +75,9 @@ describe("useTodoItemPresenter — toggleCompleted", () => {
     harness = makePresenterHarness({ apiClient: makeApiClient({ updateCalls }) });
     const todo = mkTodo({ completed: false });
 
-    const { result } = renderHook(() => useTodoItemPresenter(todo), { wrapper: harness.wrapper });
+    const { result } = renderHook(() => useTodoItemPresenter(todo, orgId), {
+      wrapper: harness.wrapper,
+    });
 
     act(() => {
       result.current.toggleCompleted();
@@ -78,7 +94,9 @@ describe("useTodoItemPresenter — toggleCompleted", () => {
     harness = makePresenterHarness({ apiClient: makeApiClient({ updateCalls }) });
     const todo = mkTodo({ completed: true });
 
-    const { result } = renderHook(() => useTodoItemPresenter(todo), { wrapper: harness.wrapper });
+    const { result } = renderHook(() => useTodoItemPresenter(todo, orgId), {
+      wrapper: harness.wrapper,
+    });
 
     act(() => {
       result.current.toggleCompleted();
@@ -97,7 +115,9 @@ describe("useTodoItemPresenter — deleteThis", () => {
     harness = makePresenterHarness({ apiClient: makeApiClient({ deleteCalls }) });
     const todo = mkTodo();
 
-    const { result } = renderHook(() => useTodoItemPresenter(todo), { wrapper: harness.wrapper });
+    const { result } = renderHook(() => useTodoItemPresenter(todo, orgId), {
+      wrapper: harness.wrapper,
+    });
 
     act(() => {
       result.current.deleteThis();
@@ -116,7 +136,9 @@ describe("useTodoItemPresenter — deleteThis", () => {
     });
     const todo = mkTodo();
 
-    const { result } = renderHook(() => useTodoItemPresenter(todo), { wrapper: harness.wrapper });
+    const { result } = renderHook(() => useTodoItemPresenter(todo, orgId), {
+      wrapper: harness.wrapper,
+    });
 
     act(() => {
       result.current.deleteThis();

@@ -1,9 +1,18 @@
 import { type Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
+import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/membership-repository-live.js";
 import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastructure/organization-roles-repository-live.js";
 import { findAllOrganizations } from "@/modules/organization/queries/find-all-organizations.js";
 import { findAllOrganizationsQuerySpanAttributes } from "@/modules/organization/queries/find-all-organizations-query.js";
+import { findMembership } from "@/modules/organization/queries/find-membership.js";
+import {
+  type FindMembershipQuery,
+  findMembershipQuerySpanAttributes,
+  type FindMembershipResult,
+} from "@/modules/organization/queries/find-membership-query.js";
+import { findMyOrganizations } from "@/modules/organization/queries/find-my-organizations.js";
+import { findMyOrganizationsQuerySpanAttributes } from "@/modules/organization/queries/find-my-organizations-query.js";
 import { findUserOrganizationRoles } from "@/modules/organization/queries/find-user-organization-roles.js";
 import {
   type FindUserOrganizationRolesQuery,
@@ -19,28 +28,47 @@ type FindUserOrganizationRolesBusOutput = Effect.Effect<
   Database.Database
 >;
 
+type FindMembershipBusOutput = Effect.Effect<
+  FindMembershipResult,
+  PersistenceUnavailable,
+  Database.Database
+>;
+
 declare module "@/platform/ddd/ports/query-bus.js" {
   interface QueryRegistry {
     FindUserOrganizationRolesQuery: {
       readonly query: FindUserOrganizationRolesQuery;
       readonly output: FindUserOrganizationRolesBusOutput;
     };
+    FindMembershipQuery: {
+      readonly query: FindMembershipQuery;
+      readonly output: FindMembershipBusOutput;
+    };
   }
 }
 
 // `FindAllOrganizationsQuery` reads SQL directly (no repository in R)
 // so the handler doesn't need wrapping. `FindUserOrganizationRolesQuery`
-// goes through the `OrganizationRolesRepository` and is wrapped with
-// `OrganizationRolesRepositoryLive` to discharge that dep before the
-// bus dispatch.
+// and `FindMembershipQuery` go through their repositories and are
+// wrapped with the corresponding `*RepositoryLive` to discharge that
+// dep before the bus dispatch.
 export const organizationQueryHandlers = queryHandlers({
   FindAllOrganizationsQuery: {
     handle: findAllOrganizations,
     spanAttributes: findAllOrganizationsQuerySpanAttributes,
   },
+  FindMyOrganizationsQuery: {
+    handle: findMyOrganizations,
+    spanAttributes: findMyOrganizationsQuerySpanAttributes,
+  },
   FindUserOrganizationRolesQuery: {
     handle: (q): FindUserOrganizationRolesBusOutput =>
       findUserOrganizationRoles(q).pipe(Effect.provide(OrganizationRolesRepositoryLive)),
     spanAttributes: findUserOrganizationRolesQuerySpanAttributes,
+  },
+  FindMembershipQuery: {
+    handle: (q): FindMembershipBusOutput =>
+      findMembership(q).pipe(Effect.provide(MembershipRepositoryLive)),
+    spanAttributes: findMembershipQuerySpanAttributes,
   },
 });

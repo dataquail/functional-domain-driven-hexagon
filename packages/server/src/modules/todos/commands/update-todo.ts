@@ -11,7 +11,7 @@ import * as Todo from "@/modules/todos/domain/todo.js";
 export const updateTodo = (cmd: UpdateTodoCommand): UpdateTodoOutput =>
   Effect.gen(function* () {
     const repo = yield* TodosRepository;
-    const existing = yield* repo.findById(cmd.todoId);
+    const existing = yield* repo.findById(cmd.organizationId, cmd.todoId);
     const now = yield* DateTime.now;
     const updated = Todo.update(existing, {
       title: cmd.title,
