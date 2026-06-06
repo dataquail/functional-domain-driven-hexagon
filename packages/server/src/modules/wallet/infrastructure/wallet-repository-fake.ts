@@ -4,19 +4,19 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { type UserId } from "@/platform/ids/user-id.js";
+import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 import { WalletRepository } from "../domain/ports/repositories/wallet-repository.js";
 import { type Wallet } from "../domain/wallet.aggregate.js";
-import { WalletAlreadyExistsForUser } from "../domain/wallet-errors.js";
+import { WalletAlreadyExistsForOrganization } from "../domain/wallet-errors.js";
 import { type WalletId } from "../domain/wallet-id.js";
 
-const findByUserIdIn = (
+const findByOrganizationIdIn = (
   store: HashMap.HashMap<WalletId, Wallet>,
-  userId: UserId,
+  organizationId: OrganizationId,
 ): Option.Option<Wallet> => {
   for (const wallet of HashMap.values(store)) {
-    if (wallet.userId === userId) return Option.some(wallet);
+    if (wallet.organizationId === organizationId) return Option.some(wallet);
   }
   return Option.none();
 };
@@ -26,16 +26,20 @@ export const WalletRepositoryFake = Layer.effect(
   Effect.gen(function* () {
     const store = yield* Ref.make(HashMap.empty<WalletId, Wallet>());
 
-    const insert = (wallet: Wallet): Effect.Effect<void, WalletAlreadyExistsForUser> =>
+    const insert = (wallet: Wallet): Effect.Effect<void, WalletAlreadyExistsForOrganization> =>
       Effect.flatMap(Ref.get(store), (m) =>
-        Option.isSome(findByUserIdIn(m, wallet.userId))
-          ? Effect.fail(new WalletAlreadyExistsForUser({ userId: wallet.userId }))
+        Option.isSome(findByOrganizationIdIn(m, wallet.organizationId))
+          ? Effect.fail(
+              new WalletAlreadyExistsForOrganization({ organizationId: wallet.organizationId }),
+            )
           : Ref.update(store, HashMap.set(wallet.id, wallet)),
       );
 
-    const findByUserId = (userId: UserId): Effect.Effect<Option.Option<Wallet>> =>
-      Effect.map(Ref.get(store), (m) => findByUserIdIn(m, userId));
+    const findByOrganizationId = (
+      organizationId: OrganizationId,
+    ): Effect.Effect<Option.Option<Wallet>> =>
+      Effect.map(Ref.get(store), (m) => findByOrganizationIdIn(m, organizationId));
 
-    return WalletRepository.of({ insert, findByUserId });
+    return WalletRepository.of({ insert, findByOrganizationId });
   }),
 );

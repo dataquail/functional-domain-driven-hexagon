@@ -3,12 +3,12 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { type UserId } from "@/platform/ids/user-id.js";
+import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
 import { WalletRepository } from "../domain/ports/repositories/wallet-repository.js";
 import { type Wallet } from "../domain/wallet.aggregate.js";
-import { WalletAlreadyExistsForUser } from "../domain/wallet-errors.js";
+import { WalletAlreadyExistsForOrganization } from "../domain/wallet-errors.js";
 import * as WalletMapper from "./wallet-mapper.js";
 
 export const WalletRepositoryLive = Layer.effect(
@@ -20,10 +20,10 @@ export const WalletRepositoryLive = Layer.effect(
       const row = WalletMapper.toPersistence(wallet);
       return execute((client) =>
         client.query(sql.unsafe`
-          INSERT INTO wallet.wallets (id, user_id, balance, created_at, updated_at)
+          INSERT INTO wallet.wallets (id, organization_id, balance, created_at, updated_at)
           VALUES (
             ${row.id},
-            ${row.user_id},
+            ${row.organization_id},
             ${row.balance},
             ${sql.timestamp(row.created_at)},
             ${sql.timestamp(row.updated_at)}
@@ -33,7 +33,11 @@ export const WalletRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", (e) =>
           e.type === "unique_violation"
-            ? Effect.fail(new WalletAlreadyExistsForUser({ userId: wallet.userId }))
+            ? Effect.fail(
+                new WalletAlreadyExistsForOrganization({
+                  organizationId: wallet.organizationId,
+                }),
+              )
             : Effect.die(e),
         ),
         translatePersistenceUnavailable,
@@ -41,10 +45,10 @@ export const WalletRepositoryLive = Layer.effect(
       );
     });
 
-    const findByUserId = db.makeQuery((execute, userId: UserId) =>
+    const findByOrganizationId = db.makeQuery((execute, organizationId: OrganizationId) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.WalletRowStd)`
-          SELECT * FROM wallet.wallets WHERE user_id = ${userId}
+          SELECT * FROM wallet.wallets WHERE organization_id = ${organizationId}
         `),
       ).pipe(
         Effect.map((row) =>
@@ -52,10 +56,10 @@ export const WalletRepositoryLive = Layer.effect(
         ),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("WalletRepository.findByUserId"),
+        Effect.withSpan("WalletRepository.findByOrganizationId"),
       ),
     );
 
-    return WalletRepository.of({ insert, findByUserId });
+    return WalletRepository.of({ insert, findByOrganizationId });
   }),
 );
