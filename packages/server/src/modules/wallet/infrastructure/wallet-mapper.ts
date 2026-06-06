@@ -1,7 +1,7 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 
-import { UserId } from "@/platform/ids/user-id.js";
+import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 import { Wallet } from "../domain/wallet.aggregate.js";
 import { WalletId } from "../domain/wallet-id.js";
@@ -11,7 +11,7 @@ type Row = RowSchemas.WalletRow;
 export const toDomain = (row: Row): Wallet =>
   new Wallet({
     id: WalletId.make(row.id),
-    userId: UserId.make(row.user_id),
+    organizationId: OrganizationId.make(row.organization_id),
     balance: row.balance,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -19,7 +19,7 @@ export const toDomain = (row: Row): Wallet =>
 
 export type PersistenceRow = {
   readonly id: string;
-  readonly user_id: string;
+  readonly organization_id: string;
   readonly balance: number;
   readonly created_at: Date;
   readonly updated_at: Date;
@@ -27,7 +27,7 @@ export type PersistenceRow = {
 
 export const toPersistence = (wallet: Wallet): PersistenceRow => ({
   id: wallet.id,
-  user_id: wallet.userId,
+  organization_id: wallet.organizationId,
   balance: wallet.balance,
   created_at: DateTime.toDate(wallet.createdAt),
   updated_at: DateTime.toDate(wallet.updatedAt),

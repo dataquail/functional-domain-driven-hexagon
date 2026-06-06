@@ -9,36 +9,36 @@ import {
   WalletInvalidAmount,
 } from "@/modules/wallet/domain/wallet-errors.js";
 import { WalletId } from "@/modules/wallet/domain/wallet-id.js";
-import { UserId } from "@/platform/ids/user-id.js";
+import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 const walletId = WalletId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
-const userId = UserId.make("11111111-1111-1111-1111-111111111111");
+const organizationId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
 const later = DateTime.unsafeMake(new Date("2025-02-01T00:00:00Z"));
 
-const fresh = () => Wallet.create({ id: walletId, userId, now }).wallet;
+const fresh = () => Wallet.create({ id: walletId, organizationId, now }).wallet;
 
 describe("Wallet.create", () => {
   it("constructs a wallet with balance 0 and the given ids/timestamps", () => {
-    const { wallet } = Wallet.create({ id: walletId, userId, now });
+    const { wallet } = Wallet.create({ id: walletId, organizationId, now });
     deepStrictEqual(wallet.id, walletId);
-    deepStrictEqual(wallet.userId, userId);
+    deepStrictEqual(wallet.organizationId, organizationId);
     deepStrictEqual(wallet.balance, 0);
     deepStrictEqual(wallet.createdAt, now);
     deepStrictEqual(wallet.updatedAt, now);
   });
 
-  it("emits exactly one WalletCreated event carrying the wallet and user ids", () => {
-    const { events } = Wallet.create({ id: walletId, userId, now });
+  it("emits exactly one WalletCreated event carrying the wallet and organization ids", () => {
+    const { events } = Wallet.create({ id: walletId, organizationId, now });
     deepStrictEqual(events.length, 1);
     const event = events[0];
     ok(event !== undefined);
     // `events` is inferred narrowly as `[WalletCreated]` here because
     // `Wallet.create` only ever produces a WalletCreated; reading
-    // `walletId`/`userId` requires no further narrowing.
+    // `walletId`/`organizationId` requires no further narrowing.
     deepStrictEqual(event._tag, "WalletCreated");
     deepStrictEqual(event.walletId, walletId);
-    deepStrictEqual(event.userId, userId);
+    deepStrictEqual(event.organizationId, organizationId);
   });
 });
 

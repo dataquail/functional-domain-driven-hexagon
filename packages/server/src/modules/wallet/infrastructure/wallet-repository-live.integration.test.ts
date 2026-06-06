@@ -10,34 +10,35 @@ import { beforeEach } from "vitest";
 
 import { WalletRepository } from "@/modules/wallet/domain/ports/repositories/wallet-repository.js";
 import * as Wallet from "@/modules/wallet/domain/wallet.aggregate.js";
-import { WalletAlreadyExistsForUser } from "@/modules/wallet/domain/wallet-errors.js";
+import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet-errors.js";
 import { WalletId } from "@/modules/wallet/domain/wallet-id.js";
 import { WalletRepositoryLive } from "@/modules/wallet/infrastructure/wallet-repository-live.js";
-import { UserId } from "@/platform/ids/user-id.js";
+import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
-const userId = UserId.make("11111111-1111-1111-1111-111111111111");
-const otherUserId = UserId.make("22222222-2222-2222-2222-222222222222");
+const organizationId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
+const otherOrgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const walletId = WalletId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const otherWalletId = WalletId.make("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
 const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
 
-const aliceWallet = Wallet.create({ id: walletId, userId, now }).wallet;
+const acmeWallet = Wallet.create({ id: walletId, organizationId, now }).wallet;
 
-// FK precondition only. The user row exists solely to satisfy
-// `wallets_user_id_users_id_fk`; it is not the subject of these tests. Going
-// through the user module's HTTP layer to seed it would also fire the
-// `CreateWalletWhenUserIsCreated` event handler and create a wallet as a
-// side effect, defeating the test setup. Direct SQL is the smallest, most
-// honest seam for a cross-module FK precondition.
-const seedUserRow = (id: UserId) =>
+// FK precondition only. The org row exists solely to satisfy
+// `wallets_organization_id_organizations_id_fk`; it is not the subject
+// of these tests. Going through the org module's HTTP layer to seed
+// it would also fire the `CreateWalletWhenOrganizationIsCreated` event
+// handler and create a wallet as a side effect, defeating the test
+// setup. Direct SQL is the smallest, most honest seam for a cross-
+// module FK precondition.
+const seedOrgRow = (id: OrganizationId) =>
   Effect.gen(function* () {
     const db = yield* Database.Database;
     yield* db
       .execute((c) =>
         c.query(sql.unsafe`
-          INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
-          VALUES (${id}, ${id + "@example.com"}, 'USA', '123 Main', '12345', NOW(), NOW())
+          INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
+          VALUES (${id}, 'Acme', NOW(), NOW(), null)
         `),
       )
       .pipe(Effect.orDie);
@@ -50,50 +51,55 @@ const suite = hasTestDatabase ? describe.sequential : describe.skip;
 suite("WalletRepositoryLive (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
-      truncate("wallet.wallets", "user.users").pipe(Effect.provide(TestDatabaseLive)),
+      truncate("wallet.wallets", "organization.organizations").pipe(
+        Effect.provide(TestDatabaseLive),
+      ),
     );
   });
 
   describe("insert", () => {
-    it.effect("persists the wallet and decodes it back via findByUserId", () =>
+    it.effect("persists the wallet and decodes it back via findByOrganizationId", () =>
       Effect.gen(function* () {
-        yield* seedUserRow(userId);
+        yield* seedOrgRow(organizationId);
         const repo = yield* WalletRepository;
-        yield* repo.insert(aliceWallet);
-        const found = yield* repo.findByUserId(userId);
+        yield* repo.insert(acmeWallet);
+        const found = yield* repo.findByOrganizationId(organizationId);
         deepStrictEqual(Option.isSome(found), true);
         if (Option.isSome(found)) {
-          deepStrictEqual(found.value.id, aliceWallet.id);
-          deepStrictEqual(found.value.userId, userId);
+          deepStrictEqual(found.value.id, acmeWallet.id);
+          deepStrictEqual(found.value.organizationId, organizationId);
           deepStrictEqual(found.value.balance, 0);
         }
       }).pipe(Effect.provide(TestLayer)),
     );
 
     it.effect(
-      "fails WalletAlreadyExistsForUser on duplicate user_id (unique violation → domain error)",
+      "fails WalletAlreadyExistsForOrganization on duplicate organization_id (unique violation → domain error)",
       () =>
         Effect.gen(function* () {
-          yield* seedUserRow(userId);
+          yield* seedOrgRow(organizationId);
           const repo = yield* WalletRepository;
-          yield* repo.insert(aliceWallet);
-          const clashing = Wallet.create({ id: otherWalletId, userId, now }).wallet;
+          yield* repo.insert(acmeWallet);
+          const clashing = Wallet.create({ id: otherWalletId, organizationId, now }).wallet;
           const exit = yield* Effect.exit(repo.insert(clashing));
           deepStrictEqual(Exit.isFailure(exit), true);
           if (Exit.isFailure(exit)) {
             const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
-            deepStrictEqual(error instanceof WalletAlreadyExistsForUser, true);
-            deepStrictEqual((error as WalletAlreadyExistsForUser).userId, userId);
+            deepStrictEqual(error instanceof WalletAlreadyExistsForOrganization, true);
+            deepStrictEqual(
+              (error as WalletAlreadyExistsForOrganization).organizationId,
+              organizationId,
+            );
           }
         }).pipe(Effect.provide(TestLayer)),
     );
   });
 
-  describe("findByUserId", () => {
-    it.effect("returns None when no wallet exists for the user", () =>
+  describe("findByOrganizationId", () => {
+    it.effect("returns None when no wallet exists for the org", () =>
       Effect.gen(function* () {
         const repo = yield* WalletRepository;
-        const result = yield* repo.findByUserId(otherUserId);
+        const result = yield* repo.findByOrganizationId(otherOrgId);
         deepStrictEqual(Option.isNone(result), true);
       }).pipe(Effect.provide(TestLayer)),
     );

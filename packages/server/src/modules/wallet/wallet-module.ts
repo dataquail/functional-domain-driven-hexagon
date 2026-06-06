@@ -1,7 +1,7 @@
 import * as Layer from "effect/Layer";
 
 import { WalletRepositoryLive } from "./infrastructure/wallet-repository-live.js";
-import { UserEventAdapterLive } from "./interface/events/user-event-adapter.js";
+import { OrganizationEventAdapterLive } from "./interface/events/organization-event-adapter.js";
 
 // Cross-module event subscriptions go through the per-publisher
 // adapter in `interface/events/<publisher>-event-adapter.ts` — an
@@ -9,4 +9,6 @@ import { UserEventAdapterLive } from "./interface/events/user-event-adapter.js";
 // the only place allowed to import `@/modules/<publisher>/index.js`.
 // Handlers downstream of the adapter consume wallet-internal trigger
 // types from `event-handlers/triggers/` (see ADR-0007 ACL pattern).
-export const WalletModuleLive = UserEventAdapterLive.pipe(Layer.provide(WalletRepositoryLive));
+export const WalletModuleLive = OrganizationEventAdapterLive.pipe(
+  Layer.provide(WalletRepositoryLive),
+);

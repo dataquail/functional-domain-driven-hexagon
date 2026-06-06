@@ -9,42 +9,44 @@ import { WalletRepository } from "@/modules/wallet/domain/ports/repositories/wal
 import * as Wallet from "@/modules/wallet/domain/wallet.aggregate.js";
 import { WalletId } from "@/modules/wallet/domain/wallet-id.js";
 import { WalletRepositoryFake } from "@/modules/wallet/infrastructure/wallet-repository-fake.js";
-import { UserId } from "@/platform/ids/user-id.js";
+import { OrganizationId } from "@/platform/ids/organization-id.js";
 
-import { handleUserCreated } from "./create-wallet-when-user-is-created.js";
-import { type UserCreatedTrigger } from "./triggers/user-events.js";
+import { handleOrganizationCreated } from "./create-wallet-when-organization-is-created.js";
+import { type OrganizationCreatedTrigger } from "./triggers/organization-events.js";
 
-const aliceId = UserId.make("11111111-1111-1111-1111-111111111111");
+const acmeId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 
-const trigger = (userId: UserId): UserCreatedTrigger => ({ userId });
+const trigger = (organizationId: OrganizationId): OrganizationCreatedTrigger => ({
+  organizationId,
+});
 
-const seedWallet = (userId: UserId) =>
+const seedWallet = (organizationId: OrganizationId) =>
   Effect.gen(function* () {
     const repo = yield* WalletRepository;
     const id = WalletId.make("99999999-9999-9999-9999-999999999999");
     const now = yield* DateTime.now;
-    const { wallet } = Wallet.create({ id, userId, now });
+    const { wallet } = Wallet.create({ id, organizationId, now });
     yield* repo.insert(wallet);
   });
 
-describe("createWalletWhenUserIsCreated (handleUserCreated)", () => {
-  it.effect("inserts a wallet with balance=0 carrying the trigger's userId", () =>
+describe("createWalletWhenOrganizationIsCreated (handleOrganizationCreated)", () => {
+  it.effect("inserts a wallet with balance=0 carrying the trigger's organizationId", () =>
     Effect.gen(function* () {
-      yield* handleUserCreated(trigger(aliceId));
+      yield* handleOrganizationCreated(trigger(acmeId));
       const repo = yield* WalletRepository;
-      const stored = yield* repo.findByUserId(aliceId);
+      const stored = yield* repo.findByOrganizationId(acmeId);
       ok(Option.isSome(stored));
       deepStrictEqual(stored.value.balance, 0);
-      deepStrictEqual(stored.value.userId, aliceId);
+      deepStrictEqual(stored.value.organizationId, acmeId);
     }).pipe(Effect.provide(WalletRepositoryFake)),
   );
 
   it.effect(
-    "swallows WalletAlreadyExistsForUser so a duplicate trigger is a no-op (idempotent at the handler boundary)",
+    "swallows WalletAlreadyExistsForOrganization so a duplicate trigger is a no-op (idempotent at the handler boundary)",
     () =>
       Effect.gen(function* () {
-        yield* seedWallet(aliceId);
-        const exit = yield* Effect.exit(handleUserCreated(trigger(aliceId)));
+        yield* seedWallet(acmeId);
+        const exit = yield* Effect.exit(handleOrganizationCreated(trigger(acmeId)));
         deepStrictEqual(Exit.isSuccess(exit), true);
       }).pipe(Effect.provide(WalletRepositoryFake)),
   );
@@ -55,9 +57,11 @@ describe("createWalletWhenUserIsCreated (handleUserCreated)", () => {
       Effect.gen(function* () {
         const FailingRepo = Effect.provideService(WalletRepository, {
           insert: () => Effect.die("simulated infrastructure failure"),
-          findByUserId: () => Effect.succeed(Option.none()),
+          findByOrganizationId: () => Effect.succeed(Option.none()),
         });
-        const exit = yield* Effect.exit(handleUserCreated(trigger(aliceId)).pipe(FailingRepo));
+        const exit = yield* Effect.exit(
+          handleOrganizationCreated(trigger(acmeId)).pipe(FailingRepo),
+        );
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
           // A defect (Die), not a typed Fail — the catchTag in the handler

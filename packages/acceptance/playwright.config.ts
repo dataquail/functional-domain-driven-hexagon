@@ -19,10 +19,30 @@ dotenv.config({ path: "../../.env" });
 // the full UI flow on every run.
 
 const isCi = process.env.CI !== undefined && process.env.CI !== "";
-// Browser-facing origin (Next renderer; ADR-0018).
+// Browser-facing origin (Next renderer; ADR-0018). Browser navigation
+// uses `localhost` so the session cookie set by Zitadel's OIDC callback
+// (registered as `http://localhost:3000/api/auth/callback`) is visible
+// to the test origin — the cookie domain MUST match the registered
+// redirect URI.
 const APP_URL = process.env.APP_URL ?? "http://localhost:3000";
 const API_URL = process.env.API_URL ?? "http://localhost:3001";
-const SERVER_INTERNAL_URL = process.env.SERVER_INTERNAL_URL ?? API_URL;
+// `WEB_PROBE_URL` and `BFF_PROBE_URL` are *server-side only* readiness
+// probes used by Playwright's `webServer.url`. They go to `127.0.0.1`
+// instead of `localhost` to dodge an IPv6/IPv4 resolution race: Node
+// 18+ uses verbatim `getaddrinfo` order, and on dual-stack runners
+// `localhost` may resolve to `::1` first. The BFF binds on
+// `0.0.0.0:3001` (IPv4 wildcard) — if `fetch` picks `::1` it gets
+// ECONNREFUSED and Playwright's probe times out. Pinning the probes
+// to `127.0.0.1` forces IPv4 and matches the BFF's listener. The
+// browser-side `baseURL` (above) stays `localhost` because that's
+// what Zitadel's redirect URI is registered as.
+const toIpv4 = (url: string): string => url.replace(/\/\/localhost(:|\/|$)/, "//127.0.0.1$1");
+const WEB_PROBE_URL = toIpv4(APP_URL);
+const BFF_PROBE_URL = toIpv4(API_URL);
+// Server-side rewrite target (Next → BFF). Also pinned to IPv4 for the
+// same reason; Next's `/api/*` rewrite runs server-side and is not
+// browser-visible.
+const SERVER_INTERNAL_URL = process.env.SERVER_INTERNAL_URL ?? BFF_PROBE_URL;
 const DATABASE_URL_TEST =
   process.env.DATABASE_URL_TEST ??
   "postgresql://postgres:postgres@localhost:5432/effect-monorepo-test";
@@ -90,7 +110,7 @@ export default defineConfig({
       // test process.
       name: "bff",
       command: "pnpm -F @org/server exec tsx src/server.ts",
-      url: `${API_URL}/auth/me`,
+      url: `${BFF_PROBE_URL}/auth/me`,
       cwd: "../../",
       env: {
         ...process.env,
@@ -127,7 +147,7 @@ export default defineConfig({
       // to the same origin Playwright drives.
       name: "web",
       command: "pnpm -F @org/web start",
-      url: APP_URL,
+      url: WEB_PROBE_URL,
       cwd: "../../",
       env: {
         ...process.env,

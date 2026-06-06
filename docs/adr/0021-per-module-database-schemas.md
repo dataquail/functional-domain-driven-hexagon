@@ -41,7 +41,10 @@ Both failure modes existed only because the persistence layer was undivided.
 
 Migrations live in `packages/database/migrations/` as one-thing-per-file
 Flyway-versioned SQL: `V001__create_schema_user.sql`,
-`V002__create_table_user_users.sql`, etc. FK dependencies dictate the order.
+`V002__create_schema_organization.sql`, etc. FK dependencies dictate the
+order — every `CREATE SCHEMA` lands before any `CREATE TABLE`, and any
+table that references another table's id (including cross-schema) is
+numbered after the referenced table.
 
 ### All application SQL must be schema-qualified
 

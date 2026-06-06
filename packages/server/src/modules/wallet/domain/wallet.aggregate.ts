@@ -2,7 +2,7 @@ import type * as DateTime from "effect/DateTime";
 import * as Either from "effect/Either";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/platform/ids/user-id.js";
+import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 import { WalletInsufficientFunds, WalletInvalidAmount } from "./wallet-errors.js";
 import { WalletCreated, WalletCredited, WalletDebited, type WalletEvent } from "./wallet-events.js";
@@ -10,7 +10,7 @@ import { WalletId } from "./wallet-id.js";
 
 export class Wallet extends Schema.Class<Wallet>("Wallet")({
   id: WalletId,
-  userId: UserId,
+  organizationId: OrganizationId,
   balance: Schema.Number,
   createdAt: Schema.DateTimeUtc,
   updatedAt: Schema.DateTimeUtc,
@@ -23,21 +23,21 @@ export type Result = {
 
 export type CreateInput = {
   readonly id: WalletId;
-  readonly userId: UserId;
+  readonly organizationId: OrganizationId;
   readonly now: DateTime.Utc;
 };
 
 export const create = (input: CreateInput): Result => {
   const wallet = Wallet.make({
     id: input.id,
-    userId: input.userId,
+    organizationId: input.organizationId,
     balance: 0,
     createdAt: input.now,
     updatedAt: input.now,
   });
   return {
     wallet,
-    events: [WalletCreated.make({ walletId: wallet.id, userId: wallet.userId })],
+    events: [WalletCreated.make({ walletId: wallet.id, organizationId: wallet.organizationId })],
   };
 };
 
@@ -60,7 +60,7 @@ export const credit = (
   const newBalance = wallet.balance + input.amount;
   const updated = Wallet.make({
     id: wallet.id,
-    userId: wallet.userId,
+    organizationId: wallet.organizationId,
     balance: newBalance,
     createdAt: wallet.createdAt,
     updatedAt: input.now,
@@ -96,7 +96,7 @@ export const debit = (
   const newBalance = wallet.balance - input.amount;
   const updated = Wallet.make({
     id: wallet.id,
-    userId: wallet.userId,
+    organizationId: wallet.organizationId,
     balance: newBalance,
     createdAt: wallet.createdAt,
     updatedAt: input.now,

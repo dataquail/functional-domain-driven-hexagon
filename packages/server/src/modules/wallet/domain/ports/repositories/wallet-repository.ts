@@ -3,16 +3,16 @@ import type * as Effect from "effect/Effect";
 import type * as Option from "effect/Option";
 
 import { type Wallet } from "@/modules/wallet/domain/wallet.aggregate.js";
-import { type WalletAlreadyExistsForUser } from "@/modules/wallet/domain/wallet-errors.js";
+import { type WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet-errors.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { type UserId } from "@/platform/ids/user-id.js";
+import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 export type WalletRepositoryShape = {
   readonly insert: (
     wallet: Wallet,
-  ) => Effect.Effect<void, WalletAlreadyExistsForUser | PersistenceUnavailable>;
-  readonly findByUserId: (
-    userId: UserId,
+  ) => Effect.Effect<void, WalletAlreadyExistsForOrganization | PersistenceUnavailable>;
+  readonly findByOrganizationId: (
+    organizationId: OrganizationId,
   ) => Effect.Effect<Option.Option<Wallet>, PersistenceUnavailable>;
 };
 
