@@ -52,30 +52,30 @@ describe("SessionRepositoryFake", () => {
     }).pipe(provide),
   );
 
-  it.effect("revoke marks the session as revoked", () =>
+  it.effect("delete marks the session as revoked (soft-delete)", () =>
     Effect.gen(function* () {
       const repo = yield* SessionRepository;
       yield* repo.insert(makeSession(idA));
-      yield* repo.revoke(idA);
+      yield* repo.delete(idA);
       const found = yield* repo.findById(idA);
       deepStrictEqual(found.revokedAt !== null, true);
     }).pipe(provide),
   );
 
-  it.effect("revoke fails SessionNotFound on a missing id", () =>
+  it.effect("delete fails SessionNotFound on a missing id", () =>
     Effect.gen(function* () {
       const repo = yield* SessionRepository;
-      const exit = yield* Effect.exit(repo.revoke(idMissing));
+      const exit = yield* Effect.exit(repo.delete(idMissing));
       deepStrictEqual(Exit.isFailure(exit), true);
     }).pipe(provide),
   );
 
-  it.effect("revoke is idempotent: a second revoke fails NotFound (matches live impl)", () =>
+  it.effect("delete: a second delete on the same row fails NotFound (matches live impl)", () =>
     Effect.gen(function* () {
       const repo = yield* SessionRepository;
       yield* repo.insert(makeSession(idA));
-      yield* repo.revoke(idA);
-      const exit = yield* Effect.exit(repo.revoke(idA));
+      yield* repo.delete(idA);
+      const exit = yield* Effect.exit(repo.delete(idA));
       deepStrictEqual(Exit.isFailure(exit), true);
     }).pipe(provide),
   );
@@ -113,7 +113,7 @@ describe("SessionRepositoryFake", () => {
       const repo = yield* SessionRepository;
       const seed = makeSession(idA);
       yield* repo.insert(seed);
-      yield* repo.revoke(idA);
+      yield* repo.delete(idA);
       const later = DateTime.add(now, { seconds: 1800 });
       const touched = Session.touch({ session: seed, now: later, ttlSeconds: 3600 });
       const exit = yield* Effect.exit(repo.update(touched));

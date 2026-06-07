@@ -1,13 +1,13 @@
 export { authCommandHandlers } from "./auth-command-handlers.js";
 export { AuthModuleLive } from "./auth-module.js";
 export { authQueryHandlers } from "./auth-query-handlers.js";
-// AuthSharedDepsLive now narrowly exposes only CookieCodec for the
-// platform middleware (Stage B wraps SessionRepository inside the
-// auth-module's handlers). See auth-shared-deps.ts.
+// AuthSharedDepsLive narrowly exposes only CookieCodec for the
+// platform middleware. The auth-module's handlers wrap their own
+// SessionRepository internally (Stage B).
 export { AuthSharedDepsLive } from "./auth-shared-deps.js";
+export { RevokeSessionCommand } from "./commands/revoke-session-command.js";
 export { SignInCommand } from "./commands/sign-in-command.js";
 export { TouchSessionCommand } from "./commands/touch-session-command.js";
-export { SessionRepository } from "./domain/ports/repositories/session-repository.js";
 export { Session } from "./domain/session.aggregate.js";
 export {
   AuthIdentityNotFound,

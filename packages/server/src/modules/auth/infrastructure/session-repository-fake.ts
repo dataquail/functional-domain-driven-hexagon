@@ -26,10 +26,11 @@ export const SessionRepositoryFake = Layer.effect(
         }),
       );
 
-    // Mirrors the live impl: an already-revoked session is reported as
-    // SessionNotFound (the SQL UPDATE matches `WHERE revoked_at IS NULL`,
-    // so a re-revoke returns zero rows and `orFail` raises NotFound).
-    const revoke = (id: SessionId): Effect.Effect<void, SessionNotFound> =>
+    // Mirrors the live impl: a re-delete on an already-soft-deleted
+    // session is reported as SessionNotFound (the SQL UPDATE matches
+    // `WHERE revoked_at IS NULL`, so the second call returns zero rows
+    // and `orFail` raises NotFound).
+    const deleteSession = (id: SessionId): Effect.Effect<void, SessionNotFound> =>
       Effect.gen(function* () {
         const m = yield* Ref.get(store);
         const existing = HashMap.get(m, id);
@@ -83,6 +84,6 @@ export const SessionRepositoryFake = Layer.effect(
         );
       });
 
-    return SessionRepository.of({ insert, findById, revoke, update });
+    return SessionRepository.of({ insert, findById, delete: deleteSession, update });
   }),
 );

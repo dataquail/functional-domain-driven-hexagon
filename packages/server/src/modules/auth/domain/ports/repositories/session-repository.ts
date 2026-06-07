@@ -11,7 +11,15 @@ export type SessionRepositoryShape = {
   readonly findById: (
     id: SessionId,
   ) => Effect.Effect<Session, SessionNotFound | PersistenceUnavailable>;
-  readonly revoke: (
+  // Soft-deletes the session by stamping `revoked_at`. Named after the
+  // collection operation, not the business meaning ("revoke" is a
+  // use-case concern — see `RevokeSessionCommand`). Repository ports
+  // stay dumb (per `feedback_dumb_repositories`); the storage
+  // mechanism (soft-delete via UPDATE so the audit row survives) is
+  // an implementation detail. `SessionRevoked` is reserved for the
+  // already-soft-deleted case so the caller can preserve the original
+  // `revoked_at` timestamp.
+  readonly delete: (
     id: SessionId,
   ) => Effect.Effect<void, SessionNotFound | SessionRevoked | PersistenceUnavailable>;
   readonly update: (

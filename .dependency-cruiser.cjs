@@ -214,49 +214,17 @@ module.exports = {
       name: "outbound-ports-private-to-use-cases",
       severity: "error",
       comment:
-        "Module outbound ports under `domain/ports/` — repository ports, integration gateways (`billing-gateway`, future `mailer`), and ADR-0023 cross-module external ports — are the seam through which use cases reach the outside world. The Tag stays in the use-case ring; nothing above it (interface/http endpoints, the module barrel, composition roots) should see the Tag. Allowlist: commands, queries, event-handlers (use cases per ADR-0007), the module's own infrastructure (Live + Fake + mapper), interface/events ACL adapters (materialize a port to provide it to a handler — wallet's organization-event-adapter is the canonical site), policies' resource-resolvers (single-row read for authz — conceptually inline queries), module-root *-service-live.ts ACL bridges (e.g. `organization-role-service-live.ts`), module-root *-{command,query}-handlers.ts registration shims (which reference port types for bus output signatures), and same-module `domain/` itself (a domain event whose payload references a port-defined schema is intra-domain). Interface/http endpoints in particular MUST go through a command or query — a controller reaching a port skips the use-case layer where transactions, domain events, and authorization live.\n\nProd-vs-test adapter swap (Stripe live vs in-memory fake, future mailers, etc.) lives INSIDE the module as two named Lives at module root — e.g. `BillingModuleLive` bundles `StripeBillingGatewayLive`, `BillingModuleTestLive` bundles `FakeBillingGatewayLive`. Composition roots compose finished modules; they don't pick a `Layer.Layer<Port>` at assembly time. That earlier shape leaked the Tag through the composition root's parameter type and required a `*-gateways.ts` carve-out in both this rule AND `module-barrel-only-from-outside`. Adding such a parameter again is a smell; reach for a third named Live (or a query) instead.\n\nExceptions are EXPLICIT — add the violating path to `pathNot` below with a `TODO(port-isolation)` marker so the next reviewer sees it and decides whether to refactor through the bus.",
+        "Outbound ports under `domain/ports/` are private to use cases — see `pathNot` for the allowlist. The common violation is a controller reaching for a port instead of dispatching through the bus.",
       from: {
         path: "^packages/server/src/modules/[^/]+/",
         pathNot: [
-          // Legitimate use-case sites.
           "^packages/server/src/modules/[^/]+/(commands|queries|event-handlers|infrastructure)/",
-          // Event ACL adapter (publisher → consumer) materializes the
-          // port to pass into the dispatched handler.
           "^packages/server/src/modules/[^/]+/interface/events/",
-          // Resource resolvers in policies/ load by id for the authz
-          // layer (single-row read). Checks (`is-*.ts`) consume ACL
-          // services and may NOT appear here — the resolver carve-out
-          // is intentionally narrow.
           "^packages/server/src/modules/[^/]+/policies/.*resource-resolvers?\\.ts$",
-          // Domain code (events, services) may reference port-defined
-          // schemas — ports live in `domain/ports/`, so this is an
-          // intra-domain import.
           "^packages/server/src/modules/[^/]+/domain/",
-          // Module-root files that legitimately reference port TYPES:
-          //   - *-service-live.ts: platform-ACL bridges wrapping a
-          //     module-private repo into a generalized
-          //     `platform/ddd/ports/*Service` tag.
-          //   - *-command-handlers.ts / *-query-handlers.ts: bus
-          //     registration shims that reference port types in the
-          //     handler's bus-visible R/E channels.
           "^packages/server/src/modules/[^/]+/[^/]+-service-live\\.ts$",
           "^packages/server/src/modules/[^/]+/[^/]+-(command|query)-handlers\\.ts$",
-          // Test files.
           "\\.test\\.ts$",
-          // ── Explicit pre-existing exceptions ─────────────────────
-          // TODO(port-isolation): auth/logout reads SessionRepository
-          // directly instead of dispatching a `RevokeSessionCommand`,
-          // and the barrel re-exports SessionRepository to support
-          // that path. Refactor by extracting the revoke into a
-          // command and removing the barrel export.
-          "^packages/server/src/modules/auth/interface/http/logout\\.endpoint\\.ts$",
-          "^packages/server/src/modules/auth/index\\.ts$",
-          // TODO(port-isolation): the user module's super-admin
-          // promote/demote endpoints call `RoleManagement` (an ADR-
-          // 0023 outbound port) directly. Refactor by introducing
-          // commands that wrap the role-management call so the
-          // endpoint dispatches via the bus.
-          "^packages/server/src/modules/user/interface/http/(promote|demote)\\.endpoint\\.ts$",
         ],
       },
       to: { path: "^packages/server/src/modules/[^/]+/domain/ports/" },
