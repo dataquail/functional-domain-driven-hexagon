@@ -16,7 +16,7 @@
     "@types/node": "^25.6.0",
     "@types/pg": "^8.11.10",
     "@effect/platform": "*",
-    "dotenv": "^16.4.7",
+    "dotenv": "^17.4.2",
     "effect": "^3.20.0",
     "pg": "8.13.1",
     "typescript": "~5.7.2"
