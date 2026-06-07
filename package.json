@@ -51,7 +51,7 @@
     "@eslint/eslintrc": "3.3.5",
     "@eslint/js": "9.13.0",
     "@synapsestudios/eslint-plugin-data-boundaries": "^2.0.1",
-    "@types/node": "^25.6.0",
+    "@types/node": "^25.9.2",
     "@typescript-eslint/eslint-plugin": "8.59.1",
     "@typescript-eslint/parser": "8.59.1",
     "babel-plugin-annotate-pure-calls": "^0.4.0",
