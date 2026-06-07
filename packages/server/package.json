@@ -39,7 +39,7 @@
     "@org/contracts": "workspace:^",
     "@org/database": "workspace:^",
     "cookie": "^1.0.2",
-    "effect": "^3.20.0",
+    "effect": "^3.21.3",
     "openid-client": "^6.1.7",
     "pg": "8.13.1",
     "stripe": "^22.2.0",
