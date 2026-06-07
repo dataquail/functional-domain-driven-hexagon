@@ -25,23 +25,24 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@effect/cluster": "*",
     "@effect/experimental": "*",
     "@effect/opentelemetry": "*",
     "@effect/platform": "*",
     "@effect/platform-node": "*",
-    "@effect/cluster": "*",
     "@effect/sql": "*",
     "@opentelemetry/exporter-trace-otlp-http": "^0.216.0",
     "@opentelemetry/resources": "^2.7.1",
     "@opentelemetry/sdk-trace-base": "^2.7.1",
     "@opentelemetry/sdk-trace-node": "^2.7.1",
     "@opentelemetry/sdk-trace-web": "^2.7.1",
-    "@org/database": "workspace:^",
     "@org/contracts": "workspace:^",
+    "@org/database": "workspace:^",
     "cookie": "^1.0.2",
     "effect": "^3.20.0",
     "openid-client": "^6.1.7",
     "pg": "8.13.1",
+    "stripe": "^22.2.0",
     "svix": "^1.45.1"
   },
   "effect": {

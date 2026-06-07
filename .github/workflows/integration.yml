@@ -43,6 +43,13 @@ jobs:
       ZITADEL_CLIENT_ID: ci-integration-tests-placeholder
       ZITADEL_CLIENT_SECRET: ci-integration-tests-placeholder
       SESSION_COOKIE_SECRET: 0000000000000000000000000000000000000000000000000000000000000000
+      # `FakeBillingGatewayLive` is provided by `TestServerLive`, so the
+      # Stripe SDK is never instantiated and these values never reach a
+      # real Stripe call. They only have to satisfy `Config.redacted`/
+      # `Config.string` parser shape at boot.
+      STRIPE_SECRET_KEY: sk_test_ci_placeholder
+      STRIPE_WEBHOOK_SECRET: whsec_test_ci_placeholder
+      STRIPE_PRICE_ID_DEFAULT: price_test_ci_placeholder
 
     steps:
       - uses: actions/checkout@v6

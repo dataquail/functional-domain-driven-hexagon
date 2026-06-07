@@ -50,6 +50,13 @@ export class EnvVars extends Effect.Service<EnvVars>()("EnvVars", {
       SESSION_TOUCH_THRESHOLD_SECONDS: yield* Config.integer(
         "SESSION_TOUCH_THRESHOLD_SECONDS",
       ).pipe(Config.withDefault(60)),
+
+      // Stripe / Billing
+      STRIPE_SECRET_KEY: yield* Config.redacted("STRIPE_SECRET_KEY"),
+      STRIPE_WEBHOOK_SECRET: yield* Config.redacted("STRIPE_WEBHOOK_SECRET"),
+      // Single default price id for the MVP. A real product would
+      // resolve this from a plans catalog; we ship one tier.
+      STRIPE_PRICE_ID_DEFAULT: yield* Config.string("STRIPE_PRICE_ID_DEFAULT"),
     } as const;
   }),
 }) {}

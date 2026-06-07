@@ -24,6 +24,15 @@ import {
   AuthSharedDepsLive,
 } from "./modules/auth/index.js";
 import {
+  billingCommandHandlers,
+  billingEventSpanAttributes,
+  BillingModuleLive,
+  billingPolicies,
+  billingQueryHandlers,
+  BillingResolverEntry,
+  BillingResolverEntryLive,
+} from "./modules/billing/index.js";
+import {
   MembershipServiceLive,
   organizationCommandHandlers,
   organizationEventSpanAttributes,
@@ -83,6 +92,7 @@ const CommandBusLive = Layer.succeed(
     ...authCommandHandlers,
     ...roleCommandHandlers,
     ...organizationCommandHandlers,
+    ...billingCommandHandlers,
   }),
 );
 const QueryBusLive = Layer.succeed(
@@ -93,6 +103,7 @@ const QueryBusLive = Layer.succeed(
     ...authQueryHandlers,
     ...roleQueryHandlers,
     ...organizationQueryHandlers,
+    ...billingQueryHandlers,
   }),
 );
 const DomainEventBusLive = makeDomainEventBusLive({
@@ -101,10 +112,16 @@ const DomainEventBusLive = makeDomainEventBusLive({
     ...walletEventSpanAttributes,
     ...roleEventSpanAttributes,
     ...organizationEventSpanAttributes,
+    ...billingEventSpanAttributes,
   },
 });
 
-const PolicyRegistryLive = makePolicyRegistry([userPolicies, organizationPolicies, todosPolicies]);
+const PolicyRegistryLive = makePolicyRegistry([
+  userPolicies,
+  organizationPolicies,
+  todosPolicies,
+  billingPolicies,
+]);
 
 // Resource resolvers are owned by each module: the module exports a
 // `*ResolverEntryLive` layer that internally satisfies its repository
@@ -118,11 +135,13 @@ const ResourceResolverRegistryLive = Layer.unwrapEffect(
     const organizationResolver = yield* OrganizationResolverEntry;
     const todoCollectionResolver = yield* TodoCollectionResolverEntry;
     const todoResolver = yield* TodoResolverEntry;
+    const billingResolver = yield* BillingResolverEntry;
     return makeResourceResolverRegistry({
       user: userResolver,
       organization: organizationResolver,
       todoCollection: todoCollectionResolver,
       todo: todoResolver,
+      billing: billingResolver,
     });
   }),
 ).pipe(
@@ -131,6 +150,7 @@ const ResourceResolverRegistryLive = Layer.unwrapEffect(
     OrganizationResolverEntryLive,
     TodoCollectionResolverEntryLive,
     TodoResolverEntryLive,
+    BillingResolverEntryLive,
   ]),
 );
 
@@ -141,12 +161,16 @@ const ApiLive = HttpApiBuilder.api(Api).pipe(
     WalletModuleLive,
     AuthModuleLive,
     OrganizationModuleLive,
+    BillingModuleLive,
   ]),
   // RoleService is a peer of the auth middleware: both consume the
   // buses provided just below, and both feed upstream consumers
   // (endpoints + `SuperAdminOnly`). Placing it here means the same
-  // `Layer.provide([CommandBusLive, QueryBusLive])` step satisfies its
-  // QueryBus dependency too.
+  // `Layer.provide([CommandBusLive, QueryBusLive])` step satisfies
+  // its QueryBus dependency too. The Stripe-vs-fake swap for
+  // `BillingGateway` lives INSIDE `BillingModuleLive` (this is the
+  // prod variant; `test-server.ts` uses `BillingModuleTestLive`),
+  // so no gateway Layer appears in this list.
   Layer.provide([
     UserAuthMiddlewareLive,
     RoleServiceLive,

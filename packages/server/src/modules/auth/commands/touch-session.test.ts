@@ -73,7 +73,7 @@ describe("touchSession", () => {
       const farPast = DateTime.unsafeMake(new Date("2000-01-01T00:00:00Z"));
       const seed = yield* seedSession(farPast);
       const repo = yield* SessionRepository;
-      yield* repo.revoke(sessionId);
+      yield* repo.delete(sessionId);
       yield* touchSession(cmd);
       const after = yield* repo.findById(sessionId);
       deepStrictEqual(after.expiresAt, seed.expiresAt);

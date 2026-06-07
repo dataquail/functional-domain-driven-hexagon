@@ -81,11 +81,11 @@ suite("SessionRepositoryLive (integration)", () => {
       const repo = yield* SessionRepository;
       const now = yield* DateTime.now;
       yield* repo.insert(makeSession(now));
-      yield* repo.revoke(sessionId);
+      yield* repo.delete(sessionId);
       const found = yield* repo.findById(sessionId);
       deepStrictEqual(found.revokedAt !== null, true);
 
-      const second = yield* Effect.exit(repo.revoke(sessionId));
+      const second = yield* Effect.exit(repo.delete(sessionId));
       deepStrictEqual(Exit.isFailure(second), true);
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -114,7 +114,7 @@ suite("SessionRepositoryLive (integration)", () => {
       const now = yield* DateTime.now;
       const seed = makeSession(now);
       yield* repo.insert(seed);
-      yield* repo.revoke(sessionId);
+      yield* repo.delete(sessionId);
       const later = DateTime.add(now, { seconds: 1800 });
       const touched = Session.touch({ session: seed, now: later, ttlSeconds: 3600 });
       const exit = yield* Effect.exit(repo.update(touched));

@@ -211,6 +211,25 @@ module.exports = {
       to: { path: "^packages/server/src/modules/[^/]+/interface/" },
     },
     {
+      name: "outbound-ports-private-to-use-cases",
+      severity: "error",
+      comment:
+        "Outbound ports under `domain/ports/` are private to use cases — see `pathNot` for the allowlist. The common violation is a controller reaching for a port instead of dispatching through the bus.",
+      from: {
+        path: "^packages/server/src/modules/[^/]+/",
+        pathNot: [
+          "^packages/server/src/modules/[^/]+/(commands|queries|event-handlers|infrastructure)/",
+          "^packages/server/src/modules/[^/]+/interface/events/",
+          "^packages/server/src/modules/[^/]+/policies/.*resource-resolvers?\\.ts$",
+          "^packages/server/src/modules/[^/]+/domain/",
+          "^packages/server/src/modules/[^/]+/[^/]+-service-live\\.ts$",
+          "^packages/server/src/modules/[^/]+/[^/]+-(command|query)-handlers\\.ts$",
+          "\\.test\\.ts$",
+        ],
+      },
+      to: { path: "^packages/server/src/modules/[^/]+/domain/ports/" },
+    },
+    {
       name: "lives-only-from-composition-roots",
       severity: "error",
       comment:

@@ -54,7 +54,7 @@ export const SessionRepositoryLive = Layer.effect(
       ),
     );
 
-    const revoke = db.makeQuery((execute, id: SessionId) =>
+    const deleteById = db.makeQuery((execute, id: SessionId) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.SessionRowStd)`
           UPDATE auth.sessions SET revoked_at = now()
@@ -66,7 +66,7 @@ export const SessionRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("SessionRepository.revoke"),
+        Effect.withSpan("SessionRepository.delete"),
       ),
     );
 
@@ -89,6 +89,6 @@ export const SessionRepositoryLive = Layer.effect(
       );
     });
 
-    return SessionRepository.of({ insert, findById, revoke, update });
+    return SessionRepository.of({ insert, findById, delete: deleteById, update });
   }),
 );

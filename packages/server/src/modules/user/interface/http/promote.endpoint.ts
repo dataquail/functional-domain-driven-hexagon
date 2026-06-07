@@ -3,29 +3,32 @@ import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { RoleManagement } from "@/modules/user/domain/ports/external/role-management.js";
+import { PromoteToSuperAdminCommand } from "@/modules/user/commands/promote-to-super-admin-command.js";
 import { UserResource } from "@/modules/user/policies/user-policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
+import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // `/users/:id/super-admin` lives in the user module because the URL is
-// user-shaped, but the write belongs to the role module. It goes through
-// the `RoleManagement` outbound port (ADR-0023) — the role module's
-// command and error types stay in `infrastructure/external/`, never here.
+// user-shaped, but the write belongs to the role module. The dispatch
+// goes through `PromoteToSuperAdminCommand`; that command's handler
+// calls the user-owned `RoleManagement` port (ADR-0023), and the
+// port's outbound adapter is the one place the role module's command
+// + error vocabulary appears.
 export const promoteEndpoint = (
   request: EndpointRequest<typeof UserContract.Group, "promoteToSuperAdmin">,
 ) =>
   Effect.gen(function* () {
     yield* Authz.hasPermissions(UserResource, Actions.Update, request.path.id);
     const currentUser = yield* CurrentUser;
-    const roleManagement = yield* RoleManagement;
-    // The port is idempotent — already holding the role is a success — so
-    // the endpoint no longer absorbs an "already has role" case here.
-    yield* roleManagement.grantSuperAdmin({
-      userId: request.path.id,
-      actorUserId: currentUser.userId,
-    });
+    const commandBus = yield* CommandBus;
+    yield* commandBus.execute(
+      PromoteToSuperAdminCommand.make({
+        userId: request.path.id,
+        actorUserId: currentUser.userId,
+      }),
+    );
   }).pipe(
     // `NotFound` originates in the authorization resource resolution, not
     // the role write.
