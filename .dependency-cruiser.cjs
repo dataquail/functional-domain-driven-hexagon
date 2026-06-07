@@ -32,18 +32,14 @@ module.exports = {
     {
       name: "module-barrel-only-from-outside",
       severity: "error",
-      comment:
-        "Files outside src/modules must import a module via its index.ts barrel — with one carved-out exception. Module-root *-gateways.ts files (e.g. `billing-gateways.ts`) exist specifically to expose swap-at-composition-root seams (the prod-vs-fake `BillingGateway` Tag + its two Lives) WITHOUT going through `index.ts`. Routing those through the barrel would force the barrel to re-export an outbound port, opening a hole where any controller could grab the Tag via `index.ts` and skip the bus. Composition roots (`server.ts`, `test-utils/`) reach the `*-gateways.ts` file directly instead.",
+      comment: "Files outside src/modules must import a module via its index.ts barrel.",
       from: {
         path: "^packages/",
         pathNot: "^packages/server/src/modules/[^/]+/",
       },
       to: {
         path: "^packages/server/src/modules/[^/]+/",
-        pathNot: [
-          "^packages/server/src/modules/[^/]+/index\\.ts$",
-          "^packages/server/src/modules/[^/]+/[^/]+-gateways\\.ts$",
-        ],
+        pathNot: "^packages/server/src/modules/[^/]+/index\\.ts$",
       },
     },
     {
@@ -243,14 +239,8 @@ module.exports = {
           //   - *-command-handlers.ts / *-query-handlers.ts: bus
           //     registration shims that reference port types in the
           //     handler's bus-visible R/E channels.
-          //   - *-gateways.ts: module-root re-exporter for the
-          //     swap-at-composition-root seam (the port Tag + its
-          //     prod/fake Lives). Deliberately separate from
-          //     `index.ts` so the port doesn't leak through the
-          //     barrel.
           "^packages/server/src/modules/[^/]+/[^/]+-service-live\\.ts$",
           "^packages/server/src/modules/[^/]+/[^/]+-(command|query)-handlers\\.ts$",
-          "^packages/server/src/modules/[^/]+/[^/]+-gateways\\.ts$",
           // Test files.
           "\\.test\\.ts$",
           // ── Explicit pre-existing exceptions ─────────────────────

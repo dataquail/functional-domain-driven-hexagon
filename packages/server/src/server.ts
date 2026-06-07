@@ -31,7 +31,6 @@ import {
   billingQueryHandlers,
   BillingResolverEntry,
   BillingResolverEntryLive,
-  StripeBillingGatewayLive,
 } from "./modules/billing/index.js";
 import {
   MembershipServiceLive,
@@ -167,15 +166,16 @@ const ApiLive = HttpApiBuilder.api(Api).pipe(
   // RoleService is a peer of the auth middleware: both consume the
   // buses provided just below, and both feed upstream consumers
   // (endpoints + `SuperAdminOnly`). Placing it here means the same
-  // `Layer.provide([CommandBusLive, QueryBusLive])` step satisfies its
-  // QueryBus dependency too. `StripeBillingGatewayLive` is the prod
-  // gateway impl; `test-server.ts` swaps in `FakeBillingGatewayLive`.
+  // `Layer.provide([CommandBusLive, QueryBusLive])` step satisfies
+  // its QueryBus dependency too. The Stripe-vs-fake swap for
+  // `BillingGateway` lives INSIDE `BillingModuleLive` (this is the
+  // prod variant; `test-server.ts` uses `BillingModuleTestLive`),
+  // so no gateway Layer appears in this list.
   Layer.provide([
     UserAuthMiddlewareLive,
     RoleServiceLive,
     MembershipServiceLive,
     OrganizationRoleServiceLive,
-    StripeBillingGatewayLive,
     DomainEventBusLive,
     UnitOfWorkLive,
   ]),

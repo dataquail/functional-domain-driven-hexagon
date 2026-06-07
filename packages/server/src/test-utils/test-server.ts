@@ -12,19 +12,10 @@ import {
   authQueryHandlers,
   AuthSharedDepsLive,
 } from "@/modules/auth/index.js";
-// `BillingGateway` is the swap seam between Stripe (prod) and the
-// in-memory fake (tests). It's intentionally NOT re-exported from
-// the module's `index.ts` barrel — the `outbound-ports-private-to-
-// use-cases` rule keeps outbound ports private to use cases, and
-// exposing the Tag through the barrel would create a hole where any
-// controller could reach it. Composition roots (this file and
-// `server.ts`) live outside the modules folder, so they can read
-// the module-root `billing-gateways.ts` directly.
-import { type BillingGateway, FakeBillingGatewayLive } from "@/modules/billing/billing-gateways.js";
 import {
   billingCommandHandlers,
   billingEventSpanAttributes,
-  BillingModuleLive,
+  BillingModuleTestLive,
   billingPolicies,
   billingQueryHandlers,
   BillingResolverEntry,
@@ -154,14 +145,13 @@ const ResourceResolverRegistryLive = Layer.unwrapEffect(
 // `Layer.provide` because they're either internal infrastructure
 // (DomainEventBus, UnitOfWork) or feature-specific (auth middleware)
 // and aren't meant to be driven directly from tests.
-// Factory: build a TestServer composition with a swappable auth-middleware
-// fake AND a swappable `BillingGateway`. Default callers (every existing
-// integration test) get the super-admin fake; the gateway defaults to
-// `FakeBillingGatewayLive` so tests never reach real Stripe.
-export const makeTestServerLive = (
-  authMiddleware: Layer.Layer<UserAuthMiddleware>,
-  billingGateway: Layer.Layer<BillingGateway> = FakeBillingGatewayLive,
-) => {
+// Factory: build a TestServer composition with a swappable
+// auth-middleware fake. Default callers (every existing integration
+// test) get the super-admin fake. The Stripe-vs-fake `BillingGateway`
+// swap lives inside `BillingModuleTestLive` (the test-variant module
+// Live exported from billing's barrel) — no gateway Layer threads
+// through the composition root.
+export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddleware>) => {
   const ApiLive = HttpApiBuilder.api(Api).pipe(
     Layer.provide([
       TodosModuleLive,
@@ -169,14 +159,13 @@ export const makeTestServerLive = (
       WalletModuleLive,
       AuthModuleLive,
       OrganizationModuleLive,
-      BillingModuleLive,
+      BillingModuleTestLive,
     ]),
     Layer.provide([
       authMiddleware,
       RoleServiceLive,
       MembershipServiceLive,
       OrganizationRoleServiceLive,
-      billingGateway,
       DomainEventBusLive,
       UnitOfWorkLive,
     ]),
