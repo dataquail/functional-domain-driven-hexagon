@@ -12,7 +12,7 @@
   "devDependencies": {
     "@org/contracts": "workspace:^",
     "@org/test-drivers": "workspace:^",
-    "@playwright/test": "^1.49.1",
+    "@playwright/test": "^1.60.0",
     "@types/node": "^25.6.0",
     "@types/pg": "^8.11.10",
     "@effect/platform": "*",
