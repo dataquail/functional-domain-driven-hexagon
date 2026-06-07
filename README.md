@@ -75,6 +75,17 @@ After signing in once at `http://localhost:3000/api/auth/login`, the session coo
 
 **Acceptance tests** (Playwright) drive the real Zitadel hosted UI on every run — make sure `pnpm auth:up && pnpm auth:seed` have completed and dev servers on `:3000` / `:3001` are stopped before running `pnpm test:acceptance`. CI E2E (`.github/workflows/e2e.yml`) does not yet provision Zitadel; tracked as a follow-up.
 
+## Billing (Stripe)
+
+The billing module wraps Stripe behind a `BillingGateway` port. Tests run against an in-memory `FakeBillingGatewayLive` (no Stripe account needed); the `.env.example` placeholders for `STRIPE_*` are good enough for `pnpm test` and `pnpm check:all` to pass.
+
+For the real-Stripe smoke loop (subscribe / cancel / webhook delivery against test-mode Stripe):
+
+1. Set `STRIPE_SECRET_KEY` and `STRIPE_PRICE_ID_DEFAULT` from your Stripe dashboard (test mode).
+2. Run `stripe listen --forward-to localhost:3001/webhooks/stripe`; copy the printed `whsec_…` into `STRIPE_WEBHOOK_SECRET`.
+3. Restart the BFF so it picks up the env vars.
+4. `POST /api/orgs/:orgId/billing/subscriptions` (as an org admin) → Stripe creates a customer + subscription → the CLI forwards `customer.subscription.created` back to your webhook.
+
 ## Development
 
 ```bash

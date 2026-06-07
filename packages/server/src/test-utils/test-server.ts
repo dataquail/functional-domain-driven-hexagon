@@ -13,6 +13,17 @@ import {
   AuthSharedDepsLive,
 } from "@/modules/auth/index.js";
 import {
+  billingCommandHandlers,
+  billingEventSpanAttributes,
+  type BillingGateway,
+  BillingModuleLive,
+  billingPolicies,
+  billingQueryHandlers,
+  BillingResolverEntry,
+  BillingResolverEntryLive,
+  FakeBillingGatewayLive,
+} from "@/modules/billing/index.js";
+import {
   MembershipServiceLive,
   organizationCommandHandlers,
   organizationEventSpanAttributes,
@@ -71,6 +82,7 @@ const CommandBusLive = Layer.succeed(
     ...authCommandHandlers,
     ...roleCommandHandlers,
     ...organizationCommandHandlers,
+    ...billingCommandHandlers,
   }),
 );
 const QueryBusLive = Layer.succeed(
@@ -81,6 +93,7 @@ const QueryBusLive = Layer.succeed(
     ...authQueryHandlers,
     ...roleQueryHandlers,
     ...organizationQueryHandlers,
+    ...billingQueryHandlers,
   }),
 );
 const DomainEventBusLive = makeDomainEventBusLive({
@@ -89,10 +102,16 @@ const DomainEventBusLive = makeDomainEventBusLive({
     ...walletEventSpanAttributes,
     ...roleEventSpanAttributes,
     ...organizationEventSpanAttributes,
+    ...billingEventSpanAttributes,
   },
 });
 
-const PolicyRegistryLive = makePolicyRegistry([userPolicies, organizationPolicies, todosPolicies]);
+const PolicyRegistryLive = makePolicyRegistry([
+  userPolicies,
+  organizationPolicies,
+  todosPolicies,
+  billingPolicies,
+]);
 
 const ResourceResolverRegistryLive = Layer.unwrapEffect(
   Effect.gen(function* () {
@@ -100,11 +119,13 @@ const ResourceResolverRegistryLive = Layer.unwrapEffect(
     const organizationResolver = yield* OrganizationResolverEntry;
     const todoCollectionResolver = yield* TodoCollectionResolverEntry;
     const todoResolver = yield* TodoResolverEntry;
+    const billingResolver = yield* BillingResolverEntry;
     return makeResourceResolverRegistry({
       user: userResolver,
       organization: organizationResolver,
       todoCollection: todoCollectionResolver,
       todo: todoResolver,
+      billing: billingResolver,
     });
   }),
 ).pipe(
@@ -113,6 +134,7 @@ const ResourceResolverRegistryLive = Layer.unwrapEffect(
     OrganizationResolverEntryLive,
     TodoCollectionResolverEntryLive,
     TodoResolverEntryLive,
+    BillingResolverEntryLive,
   ]),
 );
 
@@ -126,9 +148,13 @@ const ResourceResolverRegistryLive = Layer.unwrapEffect(
 // (DomainEventBus, UnitOfWork) or feature-specific (auth middleware)
 // and aren't meant to be driven directly from tests.
 // Factory: build a TestServer composition with a swappable auth-middleware
-// fake. Default callers (every existing integration test) get the
-// super-admin fake. Authz tests opt in to a non-super-admin variant.
-export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddleware>) => {
+// fake AND a swappable `BillingGateway`. Default callers (every existing
+// integration test) get the super-admin fake; the gateway defaults to
+// `FakeBillingGatewayLive` so tests never reach real Stripe.
+export const makeTestServerLive = (
+  authMiddleware: Layer.Layer<UserAuthMiddleware>,
+  billingGateway: Layer.Layer<BillingGateway> = FakeBillingGatewayLive,
+) => {
   const ApiLive = HttpApiBuilder.api(Api).pipe(
     Layer.provide([
       TodosModuleLive,
@@ -136,12 +162,14 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
       WalletModuleLive,
       AuthModuleLive,
       OrganizationModuleLive,
+      BillingModuleLive,
     ]),
     Layer.provide([
       authMiddleware,
       RoleServiceLive,
       MembershipServiceLive,
       OrganizationRoleServiceLive,
+      billingGateway,
       DomainEventBusLive,
       UnitOfWorkLive,
     ]),
