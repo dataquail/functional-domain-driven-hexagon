@@ -1,34 +1,56 @@
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
+import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
+import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
 
 import { WebhookEventRepository } from "@/modules/billing/domain/ports/repositories/webhook-event-repository.js";
+import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event-errors.js";
 import { WebhookEventRepositoryFake } from "@/modules/billing/infrastructure/webhook-event-repository-fake.js";
 
 const provide = Effect.provide(WebhookEventRepositoryFake);
 
-describe("WebhookEventRepositoryFake.recordIfNew", () => {
-  it.effect("returns true on first insert and false on subsequent inserts of the same id", () =>
+describe("WebhookEventRepositoryFake.insert", () => {
+  it.effect("persists the event id and makes it findable", () =>
     Effect.gen(function* () {
       const repo = yield* WebhookEventRepository;
-      const first = yield* repo.recordIfNew("evt_abc");
-      const second = yield* repo.recordIfNew("evt_abc");
-      const third = yield* repo.recordIfNew("evt_abc");
-      deepStrictEqual(first, true);
-      deepStrictEqual(second, false);
-      deepStrictEqual(third, false);
+      yield* repo.insert("evt_abc");
+      const found = yield* repo.findByStripeEventId("evt_abc");
+      ok(Option.isSome(found));
+      if (Option.isSome(found)) deepStrictEqual(found.value.stripeEventId, "evt_abc");
+    }).pipe(provide),
+  );
+
+  it.effect("fails WebhookEventAlreadyRecorded on a duplicate insert", () =>
+    Effect.gen(function* () {
+      const repo = yield* WebhookEventRepository;
+      yield* repo.insert("evt_abc");
+      const exit = yield* Effect.exit(repo.insert("evt_abc"));
+      ok(Exit.isFailure(exit));
+      if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
+        ok(exit.cause.error instanceof WebhookEventAlreadyRecorded);
+      }
     }).pipe(provide),
   );
 
   it.effect("treats distinct event ids independently", () =>
     Effect.gen(function* () {
       const repo = yield* WebhookEventRepository;
-      const a = yield* repo.recordIfNew("evt_a");
-      const b = yield* repo.recordIfNew("evt_b");
-      const aRepeat = yield* repo.recordIfNew("evt_a");
-      deepStrictEqual(a, true);
-      deepStrictEqual(b, true);
-      deepStrictEqual(aRepeat, false);
+      yield* repo.insert("evt_a");
+      yield* repo.insert("evt_b");
+      const a = yield* repo.findByStripeEventId("evt_a");
+      const b = yield* repo.findByStripeEventId("evt_b");
+      ok(Option.isSome(a) && Option.isSome(b));
+    }).pipe(provide),
+  );
+});
+
+describe("WebhookEventRepositoryFake.findByStripeEventId", () => {
+  it.effect("returns None when no event has been recorded for the id", () =>
+    Effect.gen(function* () {
+      const repo = yield* WebhookEventRepository;
+      const found = yield* repo.findByStripeEventId("evt_unknown");
+      ok(Option.isNone(found));
     }).pipe(provide),
   );
 });

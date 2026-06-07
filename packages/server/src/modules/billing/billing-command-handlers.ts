@@ -6,11 +6,11 @@ import {
   type CancelSubscriptionCommand,
   cancelSubscriptionCommandSpanAttributes,
 } from "@/modules/billing/commands/cancel-subscription-command.js";
-import { markSubscriptionStatus } from "@/modules/billing/commands/mark-subscription-status.js";
+import { ingestStripeWebhook } from "@/modules/billing/commands/ingest-stripe-webhook.js";
 import {
-  type MarkSubscriptionStatusCommand,
-  markSubscriptionStatusCommandSpanAttributes,
-} from "@/modules/billing/commands/mark-subscription-status-command.js";
+  type IngestStripeWebhookCommand,
+  ingestStripeWebhookCommandSpanAttributes,
+} from "@/modules/billing/commands/ingest-stripe-webhook-command.js";
 import { startSubscription } from "@/modules/billing/commands/start-subscription.js";
 import {
   type StartSubscriptionCommand,
@@ -24,6 +24,7 @@ import {
   type SubscriptionNotFound,
 } from "@/modules/billing/domain/subscription-errors.js";
 import { SubscriptionRepositoryLive } from "@/modules/billing/infrastructure/subscription-repository-live.js";
+import { WebhookEventRepositoryLive } from "@/modules/billing/infrastructure/webhook-event-repository-live.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { commandHandlers } from "@/platform/ddd/ports/command-bus.js";
 import { type DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
@@ -49,7 +50,7 @@ type CancelSubscriptionBusOutput = Effect.Effect<
   BillingGateway | DomainEventBus | UnitOfWork | Database.Database
 >;
 
-type MarkSubscriptionStatusBusOutput = Effect.Effect<
+type IngestStripeWebhookBusOutput = Effect.Effect<
   void,
   PersistenceUnavailable,
   DomainEventBus | UnitOfWork | Database.Database
@@ -65,9 +66,9 @@ declare module "@/platform/ddd/ports/command-bus.js" {
       readonly command: CancelSubscriptionCommand;
       readonly output: CancelSubscriptionBusOutput;
     };
-    MarkSubscriptionStatusCommand: {
-      readonly command: MarkSubscriptionStatusCommand;
-      readonly output: MarkSubscriptionStatusBusOutput;
+    IngestStripeWebhookCommand: {
+      readonly command: IngestStripeWebhookCommand;
+      readonly output: IngestStripeWebhookBusOutput;
     };
   }
 }
@@ -83,9 +84,9 @@ export const billingCommandHandlers = commandHandlers({
       cancelSubscription(cmd).pipe(Effect.provide(SubscriptionRepositoryLive)),
     spanAttributes: cancelSubscriptionCommandSpanAttributes,
   },
-  MarkSubscriptionStatusCommand: {
-    handle: (cmd): MarkSubscriptionStatusBusOutput =>
-      markSubscriptionStatus(cmd).pipe(Effect.provide(SubscriptionRepositoryLive)),
-    spanAttributes: markSubscriptionStatusCommandSpanAttributes,
+  IngestStripeWebhookCommand: {
+    handle: (cmd): IngestStripeWebhookBusOutput =>
+      ingestStripeWebhook(cmd).pipe(Effect.provide(WebhookEventRepositoryLive)),
+    spanAttributes: ingestStripeWebhookCommandSpanAttributes,
   },
 });

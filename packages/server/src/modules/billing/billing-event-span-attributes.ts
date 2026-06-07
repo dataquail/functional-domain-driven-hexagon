@@ -1,3 +1,4 @@
+import { stripeWebhookIngestedSpanAttributes } from "@/modules/billing/domain/stripe-webhook-events.js";
 import {
   subscriptionCanceledSpanAttributes,
   subscriptionStartedSpanAttributes,
@@ -9,4 +10,5 @@ export const billingEventSpanAttributes = eventSpanAttributes({
   SubscriptionStarted: subscriptionStartedSpanAttributes,
   SubscriptionStatusChanged: subscriptionStatusChangedSpanAttributes,
   SubscriptionCanceled: subscriptionCanceledSpanAttributes,
+  StripeWebhookIngested: stripeWebhookIngestedSpanAttributes,
 });

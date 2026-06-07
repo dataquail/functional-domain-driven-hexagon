@@ -12,9 +12,10 @@ export {
 export { BillingModuleLive } from "./billing-module.js";
 export { billingQueryHandlers } from "./billing-query-handlers.js";
 export { CancelSubscriptionCommand } from "./commands/cancel-subscription-command.js";
-export { MarkSubscriptionStatusCommand } from "./commands/mark-subscription-status-command.js";
+export { IngestStripeWebhookCommand } from "./commands/ingest-stripe-webhook-command.js";
 export { StartSubscriptionCommand } from "./commands/start-subscription-command.js";
 export { BillingGateway } from "./domain/ports/billing-gateway.js";
+export { StripeWebhookIngested } from "./domain/stripe-webhook-events.js";
 export {
   SubscriptionCanceled,
   SubscriptionStarted,
