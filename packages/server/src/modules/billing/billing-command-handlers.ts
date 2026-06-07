@@ -20,6 +20,7 @@ import { type BillingGateway } from "@/modules/billing/domain/ports/billing-gate
 import { type Subscription } from "@/modules/billing/domain/subscription.aggregate.js";
 import {
   type BillingGatewayUnavailable,
+  type InvalidWebhookSignature,
   type SubscriptionAlreadyExistsForOrganization,
   type SubscriptionNotFound,
 } from "@/modules/billing/domain/subscription-errors.js";
@@ -52,8 +53,8 @@ type CancelSubscriptionBusOutput = Effect.Effect<
 
 type IngestStripeWebhookBusOutput = Effect.Effect<
   void,
-  PersistenceUnavailable,
-  DomainEventBus | UnitOfWork | Database.Database
+  InvalidWebhookSignature | PersistenceUnavailable,
+  BillingGateway | DomainEventBus | UnitOfWork | Database.Database
 >;
 
 declare module "@/platform/ddd/ports/command-bus.js" {

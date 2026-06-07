@@ -32,14 +32,18 @@ module.exports = {
     {
       name: "module-barrel-only-from-outside",
       severity: "error",
-      comment: "Files outside src/modules must import a module via its index.ts barrel.",
+      comment:
+        "Files outside src/modules must import a module via its index.ts barrel — with one carved-out exception. Module-root *-gateways.ts files (e.g. `billing-gateways.ts`) exist specifically to expose swap-at-composition-root seams (the prod-vs-fake `BillingGateway` Tag + its two Lives) WITHOUT going through `index.ts`. Routing those through the barrel would force the barrel to re-export an outbound port, opening a hole where any controller could grab the Tag via `index.ts` and skip the bus. Composition roots (`server.ts`, `test-utils/`) reach the `*-gateways.ts` file directly instead.",
       from: {
         path: "^packages/",
         pathNot: "^packages/server/src/modules/[^/]+/",
       },
       to: {
         path: "^packages/server/src/modules/[^/]+/",
-        pathNot: "^packages/server/src/modules/[^/]+/index\\.ts$",
+        pathNot: [
+          "^packages/server/src/modules/[^/]+/index\\.ts$",
+          "^packages/server/src/modules/[^/]+/[^/]+-gateways\\.ts$",
+        ],
       },
     },
     {
@@ -209,6 +213,63 @@ module.exports = {
       comment: "Module infrastructure layer must not depend on its interface layer",
       from: { path: "^packages/server/src/modules/[^/]+/infrastructure/" },
       to: { path: "^packages/server/src/modules/[^/]+/interface/" },
+    },
+    {
+      name: "outbound-ports-private-to-use-cases",
+      severity: "error",
+      comment:
+        "Module outbound ports under `domain/ports/` — repository ports, integration gateways (`billing-gateway`, future `mailer`), and ADR-0023 cross-module external ports — are the seam through which use cases reach the outside world. Only commands, queries, event-handlers (use cases per ADR-0007), the module's own infrastructure (Live + Fake + mapper), interface/events ACL adapters (materialize a port to provide it to a handler — wallet's organization-event-adapter is the canonical site), policies' resource-resolvers (single-row read for authz — conceptually inline queries), module-root *-service-live.ts ACL bridges (e.g. `organization-role-service-live.ts`), and module-root *-{command,query}-handlers.ts registration shims (which reference port types for bus output signatures) may import from `domain/ports/`. Domain code itself may also reference port types — a domain event whose payload includes a port-defined schema lives in `domain/` and depends on `domain/ports/`. Interface/http endpoints in particular MUST go through a command or query: a controller reaching a port skips the use-case layer where transactions, domain events, and authorization live. Exceptions to this rule are EXPLICIT — add the violating path to `pathNot` with a `TODO(port-isolation)` marker so the next reviewer sees it and decides whether to refactor through the bus.",
+      from: {
+        path: "^packages/server/src/modules/[^/]+/",
+        pathNot: [
+          // Legitimate use-case sites.
+          "^packages/server/src/modules/[^/]+/(commands|queries|event-handlers|infrastructure)/",
+          // Event ACL adapter (publisher → consumer) materializes the
+          // port to pass into the dispatched handler.
+          "^packages/server/src/modules/[^/]+/interface/events/",
+          // Resource resolvers in policies/ load by id for the authz
+          // layer (single-row read). Checks (`is-*.ts`) consume ACL
+          // services and may NOT appear here — the resolver carve-out
+          // is intentionally narrow.
+          "^packages/server/src/modules/[^/]+/policies/.*resource-resolvers?\\.ts$",
+          // Domain code (events, services) may reference port-defined
+          // schemas — ports live in `domain/ports/`, so this is an
+          // intra-domain import.
+          "^packages/server/src/modules/[^/]+/domain/",
+          // Module-root files that legitimately reference port TYPES:
+          //   - *-service-live.ts: platform-ACL bridges wrapping a
+          //     module-private repo into a generalized
+          //     `platform/ddd/ports/*Service` tag.
+          //   - *-command-handlers.ts / *-query-handlers.ts: bus
+          //     registration shims that reference port types in the
+          //     handler's bus-visible R/E channels.
+          //   - *-gateways.ts: module-root re-exporter for the
+          //     swap-at-composition-root seam (the port Tag + its
+          //     prod/fake Lives). Deliberately separate from
+          //     `index.ts` so the port doesn't leak through the
+          //     barrel.
+          "^packages/server/src/modules/[^/]+/[^/]+-service-live\\.ts$",
+          "^packages/server/src/modules/[^/]+/[^/]+-(command|query)-handlers\\.ts$",
+          "^packages/server/src/modules/[^/]+/[^/]+-gateways\\.ts$",
+          // Test files.
+          "\\.test\\.ts$",
+          // ── Explicit pre-existing exceptions ─────────────────────
+          // TODO(port-isolation): auth/logout reads SessionRepository
+          // directly instead of dispatching a `RevokeSessionCommand`,
+          // and the barrel re-exports SessionRepository to support
+          // that path. Refactor by extracting the revoke into a
+          // command and removing the barrel export.
+          "^packages/server/src/modules/auth/interface/http/logout\\.endpoint\\.ts$",
+          "^packages/server/src/modules/auth/index\\.ts$",
+          // TODO(port-isolation): the user module's super-admin
+          // promote/demote endpoints call `RoleManagement` (an ADR-
+          // 0023 outbound port) directly. Refactor by introducing
+          // commands that wrap the role-management call so the
+          // endpoint dispatches via the bus.
+          "^packages/server/src/modules/user/interface/http/(promote|demote)\\.endpoint\\.ts$",
+        ],
+      },
+      to: { path: "^packages/server/src/modules/[^/]+/domain/ports/" },
     },
     {
       name: "lives-only-from-composition-roots",
