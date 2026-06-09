@@ -3,11 +3,10 @@
 // which never paints on the client — the redirect throw is unwound
 // before the layout renders. ADR-0017 / ADR-0018.
 //
-// We also prefetch the caller's organizations here so the nav's org
-// switcher hydrates on first paint without a client spinner. The
-// switcher uses `useSuspenseQuery`, so the Nav wraps it in its own
-// thin `<Suspense>` to keep that boundary local — the shell renders
-// immediately while the (prefetched) switcher hydrates underneath.
+// For regular users we prefetch their organizations here so the nav's
+// org switcher hydrates on first paint. Super-admins are a disjoint
+// user type — they don't own/join orgs and the nav doesn't render the
+// switcher for them, so we skip the prefetch entirely.
 //
 // `redirect()` throws a NEXT_REDIRECT marker that React unwinds before
 // rendering. It must NOT be wrapped in try/catch — otherwise the marker
@@ -27,8 +26,10 @@ export default async function AuthedLayout({ children }: { children: React.React
     redirect("/api/auth/login");
   }
 
+  const prefetch = me.isSuperAdmin ? [] : [prefetchMyOrgs()];
+
   return (
-    <ServerHydrationBoundary prefetch={[prefetchMyOrgs()]} fallback={null}>
+    <ServerHydrationBoundary prefetch={prefetch} fallback={null}>
       <main className="flex min-h-screen flex-col bg-background">
         <Nav />
         <div className="flex flex-1 flex-col py-12">{children}</div>

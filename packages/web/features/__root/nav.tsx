@@ -1,8 +1,10 @@
 // Top-level nav for the authed shell. Server component; renders the
-// client-side org switcher inline so the active org can be chosen
-// from any route. The conditional Admin link surfaces only when
-// `/auth/me` reports super_admin — pages still gate themselves
-// server-side, the link is just discoverability.
+// client-side org switcher inline only for regular users. Super-admins
+// are a disjoint user type — they don't own or join organizations
+// (enforced server-side in `createOrganization` /
+// `acceptInvitation`), so the org switcher + create-new button are
+// hidden for them. Their nav surfaces the admin links (Users + Admin
+// orgs) instead. Regular users see neither admin link.
 
 import Link from "next/link";
 import * as React from "react";
@@ -18,16 +20,18 @@ export const Nav = async () => {
     <nav className="border-b bg-card">
       <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 py-3">
         <Link
-          href="/"
+          href={isSuperAdmin ? "/admin/orgs" : "/"}
           className="rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent"
         >
           Home
         </Link>
-        <React.Suspense
-          fallback={<div className="h-9 w-[200px] animate-pulse rounded-md bg-muted/40" />}
-        >
-          <OrgSwitcher />
-        </React.Suspense>
+        {isSuperAdmin ? null : (
+          <React.Suspense
+            fallback={<div className="h-9 w-[200px] animate-pulse rounded-md bg-muted/40" />}
+          >
+            <OrgSwitcher />
+          </React.Suspense>
+        )}
         <div className="ml-auto flex items-center gap-1">
           {isSuperAdmin ? (
             <React.Fragment>

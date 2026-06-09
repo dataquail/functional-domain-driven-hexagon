@@ -1,18 +1,22 @@
-// Root authed route — the organization picker. Lists the caller's
-// memberships as cards and offers a create-org form. Choosing an org
-// navigates into `/orgs/[orgId]/` where the membership-guarded layout
-// takes over. Phase 8 (ADR-0018).
+// Root authed route. Two branches depending on the caller's user type:
+// - Regular user → organization picker (their memberships) + create-org
+//   form. Choosing an org navigates into `/orgs/[orgId]/`.
+// - Super-admin → redirect to `/admin/orgs`. SAs are a disjoint user
+//   type, they don't own organizations, and their natural landing
+//   page is the platform-wide org admin view.
 //
 // The `myOrgs` cache is prefetched by the parent (authed) layout for
-// the nav switcher, so the picker hydrates from the same key without
-// a duplicate fetch.
+// the nav switcher (regular users only); the picker hydrates from
+// that same key without a duplicate fetch.
 
 import { Card } from "@org/components/primitives/card";
 import { Skeleton } from "@org/components/primitives/skeleton";
+import { redirect } from "next/navigation";
 import React from "react";
 
 import { CreateOrg } from "@/features/orgs/create-org/create-org";
 import { OrgPicker } from "@/features/orgs/org-picker/org-picker";
+import { fetchCurrentUser } from "@/services/data-access/me.server";
 
 const Fallback: React.FC = () => (
   <div className="grid gap-3 sm:grid-cols-2">
@@ -22,7 +26,12 @@ const Fallback: React.FC = () => (
   </div>
 );
 
-export default function RootPickerPage() {
+export default async function RootPickerPage() {
+  const me = await fetchCurrentUser();
+  if (me?.isSuperAdmin === true) {
+    redirect("/admin/orgs");
+  }
+
   return (
     <div className="mx-auto w-full max-w-3xl space-y-4 px-4">
       <Card className="shadow-md">
