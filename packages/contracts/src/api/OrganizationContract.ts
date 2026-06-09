@@ -132,6 +132,22 @@ export class AcceptInvitationResponse extends Schema.Class<AcceptInvitationRespo
   organizationId: OrganizationId,
 }) {}
 
+// Joined view returned by the SA admin "list members of org" endpoint.
+// The handler composes the org-module's membership query with the
+// user-module's `FindUsersByIdsQuery` (ADR-0021 forbids cross-schema
+// SQL) — both are reads, so no transactional concern.
+export class OrganizationMember extends Schema.Class<OrganizationMember>("OrganizationMember")({
+  userId: UserId,
+  email: Schema.String,
+  joinedAt: Schema.DateTimeUtc,
+}) {}
+
+export class OrganizationMembersResponse extends Schema.Class<OrganizationMembersResponse>(
+  "OrganizationMembersResponse",
+)({
+  members: Schema.Array(OrganizationMember),
+}) {}
+
 // ==========================================
 // Endpoints
 // ==========================================
@@ -206,6 +222,17 @@ export class AdminGroup extends HttpApiGroup.make("organizationAdmin")
       .setUrlParams(FindAllOrganizationsParams)
       .addError(CustomHttpApiError.Forbidden)
       .addSuccess(PaginatedOrganizations),
+  )
+  // Super-admin drill-in: list the members of a specific org, joined
+  // with each user's email. Reuses the regular `removeMember` /
+  // `inviteUser` endpoints on `Group` for write actions (their
+  // policies already let super-admins through via the OR chain).
+  .add(
+    HttpApiEndpoint.get("findMembers", "/:orgId/members")
+      .setPath(Schema.Struct({ orgId: OrganizationId }))
+      .addError(CustomHttpApiError.Forbidden)
+      .addError(OrganizationNotFoundError)
+      .addSuccess(OrganizationMembersResponse),
   )
   .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/admin/orgs") {}

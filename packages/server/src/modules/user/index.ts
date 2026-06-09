@@ -3,6 +3,7 @@ export { DeleteUserCommand } from "./commands/delete-user-command.js";
 export { UserCreated } from "./domain/user-events.js";
 export { userPolicies, UserResource } from "./policies/user-policies.js";
 export { UserResolverEntry, UserResolverEntryLive } from "./policies/user-resource-resolver.js";
+export { FindUsersByIdsQuery } from "./queries/find-users-by-ids-query.js";
 export { FindUsersQuery } from "./queries/find-users-query.js";
 export { userCommandHandlers } from "./user-command-handlers.js";
 export { userEventSpanAttributes } from "./user-event-span-attributes.js";

@@ -4,6 +4,7 @@ import { Api } from "@/api.js";
 import { acceptInvitationEndpoint } from "@/modules/organization/interface/http/accept-invitation.endpoint.js";
 import { createEndpoint } from "@/modules/organization/interface/http/create.endpoint.js";
 import { findAllEndpoint } from "@/modules/organization/interface/http/find-all.endpoint.js";
+import { findMembersEndpoint } from "@/modules/organization/interface/http/find-members.endpoint.js";
 import { findMineEndpoint } from "@/modules/organization/interface/http/find-mine.endpoint.js";
 import { inviteEndpoint } from "@/modules/organization/interface/http/invite.endpoint.js";
 import { leaveEndpoint } from "@/modules/organization/interface/http/leave.endpoint.js";
@@ -31,7 +32,7 @@ export const OrganizationLive = HttpApiBuilder.group(Api, "organization", (handl
 // inside the endpoint, so non-super-admins get 403 before any query
 // dispatches.
 export const OrganizationAdminLive = HttpApiBuilder.group(Api, "organizationAdmin", (handlers) =>
-  handlers.handle("findAll", findAllEndpoint),
+  handlers.handle("findAll", findAllEndpoint).handle("findMembers", findMembersEndpoint),
 );
 
 // Anonymous-friendly accept flow sits in its own group because the URL

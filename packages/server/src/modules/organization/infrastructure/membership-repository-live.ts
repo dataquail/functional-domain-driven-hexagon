@@ -90,11 +90,27 @@ export const MembershipRepositoryLive = Layer.effect(
         ),
     );
 
+    const findByOrganizationId = db.makeQuery((execute, args: { organizationId: OrganizationId }) =>
+      execute((client) =>
+        client.any(sql.type(RowSchemas.MembershipRowStd)`
+            SELECT * FROM "organization".memberships
+            WHERE organization_id = ${args.organizationId}
+            ORDER BY created_at ASC
+          `),
+      ).pipe(
+        Effect.map((rows) => rows.map(MembershipMapper.toDomain)),
+        Effect.catchTag("DatabaseError", Effect.die),
+        translatePersistenceUnavailable,
+        Effect.withSpan("MembershipRepository.findByOrganizationId"),
+      ),
+    );
+
     return MembershipRepository.of({
       insert,
       delete: (userId, organizationId) => deleteRow({ userId, organizationId }),
       findByUserIdAndOrgId: (userId, organizationId) =>
         findByUserIdAndOrgId({ userId, organizationId }),
+      findByOrganizationId: (organizationId) => findByOrganizationId({ organizationId }),
     });
   }),
 );
