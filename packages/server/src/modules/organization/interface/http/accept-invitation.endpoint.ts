@@ -54,6 +54,13 @@ export const acceptInvitationEndpoint = (
         }),
       ),
     ),
+    Effect.catchTag("SuperAdminCannotOwnOrganization", () =>
+      Effect.fail(
+        new OrganizationContract.SuperAdminCannotOwnOrganizationError({
+          message: "Super-admins don't join organizations.",
+        }),
+      ),
+    ),
     recoverPersistenceUnavailable,
     Effect.withSpan("OrganizationLive.acceptInvitation"),
   );

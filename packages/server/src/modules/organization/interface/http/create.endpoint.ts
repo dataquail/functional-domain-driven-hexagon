@@ -23,4 +23,14 @@ export const createEndpoint = (
       }),
     );
     return new OrganizationContract.CreateOrganizationResponse({ id });
-  }).pipe(recoverPersistenceUnavailable, Effect.withSpan("OrganizationLive.create"));
+  }).pipe(
+    Effect.catchTag("SuperAdminCannotOwnOrganization", () =>
+      Effect.fail(
+        new OrganizationContract.SuperAdminCannotOwnOrganizationError({
+          message: "Super-admins don't own organizations.",
+        }),
+      ),
+    ),
+    recoverPersistenceUnavailable,
+    Effect.withSpan("OrganizationLive.create"),
+  );

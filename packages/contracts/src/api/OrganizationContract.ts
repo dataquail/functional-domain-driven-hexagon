@@ -61,6 +61,18 @@ export class MembershipNotFoundError extends Schema.TaggedError<MembershipNotFou
   HttpApiSchema.annotations({ status: 404 }),
 ) {}
 
+// 409 Conflict: model invariant — super-admins are a separate user
+// type from regular users; they don't own or join organizations.
+// Surfaces from `create` and `accept` when the caller's platform role
+// is `super_admin`.
+export class SuperAdminCannotOwnOrganizationError extends Schema.TaggedError<SuperAdminCannotOwnOrganizationError>(
+  "SuperAdminCannotOwnOrganizationError",
+)(
+  "SuperAdminCannotOwnOrganizationError",
+  { message: Schema.String },
+  HttpApiSchema.annotations({ status: 409 }),
+) {}
+
 // ==========================================
 // Shapes
 // ==========================================
@@ -130,6 +142,7 @@ export class Group extends HttpApiGroup.make("organization")
   .add(
     HttpApiEndpoint.post("create", "/")
       .setPayload(CreateOrganizationPayload)
+      .addError(SuperAdminCannotOwnOrganizationError)
       .addSuccess(CreateOrganizationResponse),
   )
   .add(
@@ -209,6 +222,7 @@ export class InvitationGroup extends HttpApiGroup.make("invitations")
       .setPath(Schema.Struct({ token: Schema.String }))
       .addError(InvitationNotFoundError)
       .addError(InvitationGoneError)
+      .addError(SuperAdminCannotOwnOrganizationError)
       .addSuccess(AcceptInvitationResponse),
   )
   .addError(CustomHttpApiError.ServiceUnavailable)

@@ -1,12 +1,14 @@
 import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
+import { type SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization-errors.js";
 import { type MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership-repository.js";
 import { type OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization-repository.js";
 import { type OrganizationRolesRepository } from "@/modules/organization/domain/ports/repositories/organization-roles-repository.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 import { type DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
+import { type RoleService } from "@/platform/ddd/ports/role-service.js";
 import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
@@ -31,10 +33,11 @@ export const createOrganizationCommandSpanAttributes: SpanAttributesExtractor<
 // lives there.
 export type CreateOrganizationOutput = Effect.Effect<
   OrganizationId,
-  PersistenceUnavailable,
+  PersistenceUnavailable | SuperAdminCannotOwnOrganization,
   | OrganizationRepository
   | MembershipRepository
   | OrganizationRolesRepository
   | DomainEventBus
   | UnitOfWork
+  | RoleService
 >;

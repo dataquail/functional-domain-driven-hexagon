@@ -64,6 +64,7 @@ import {
   type OrganizationAlreadyDeleted,
   type OrganizationNotDeleted,
   type OrganizationNotFound,
+  type SuperAdminCannotOwnOrganization,
 } from "@/modules/organization/domain/organization-errors.js";
 import {
   type AlreadyHasOrganizationRole,
@@ -77,15 +78,19 @@ import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastr
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { commandHandlers } from "@/platform/ddd/ports/command-bus.js";
 import { type DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
+import { type RoleService } from "@/platform/ddd/ports/role-service.js";
 import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 import { type InvitationId } from "@/platform/ids/invitation-id.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { LogMailerLive } from "@/platform/notifications/log-mailer-live.js";
 
+// `RoleService` stays in the bus output's R because the model-invariant
+// check (super-admins can't own orgs) needs the platform-role ACL. The
+// composition root wires `RoleServiceLive` alongside the module Live.
 type CreateOrganizationBusOutput = Effect.Effect<
   OrganizationId,
-  PersistenceUnavailable,
-  DomainEventBus | UnitOfWork | Database.Database
+  PersistenceUnavailable | SuperAdminCannotOwnOrganization,
+  DomainEventBus | UnitOfWork | Database.Database | RoleService
 >;
 
 type RestoreOrganizationBusOutput = Effect.Effect<
@@ -124,8 +129,9 @@ type AcceptInvitationBusOutput = Effect.Effect<
   | InvitationAlreadyAccepted
   | InvitationRevoked
   | InvitationExpired
+  | SuperAdminCannotOwnOrganization
   | PersistenceUnavailable,
-  DomainEventBus | UnitOfWork | Database.Database
+  DomainEventBus | UnitOfWork | Database.Database | RoleService
 >;
 
 type RevokeInvitationBusOutput = Effect.Effect<

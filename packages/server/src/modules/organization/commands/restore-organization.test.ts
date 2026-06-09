@@ -23,6 +23,7 @@ import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
+import { makeRoleServiceFake } from "@/test-utils/role-service-fake.js";
 
 const actorUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
@@ -32,6 +33,7 @@ const TestLayer = Layer.mergeAll(
   OrganizationRolesRepositoryFake,
   RecordingEventBus,
   IdentityUnitOfWork,
+  makeRoleServiceFake(new Map()),
 );
 
 describe("restoreOrganization", () => {

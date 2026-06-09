@@ -1,11 +1,13 @@
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
+import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 
 import { createOrganization } from "@/modules/organization/commands/create-organization.js";
 import { CreateOrganizationCommand } from "@/modules/organization/commands/create-organization-command.js";
 import { type MembershipCreated } from "@/modules/organization/domain/membership-events.js";
+import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization-errors.js";
 import { type OrganizationCreated } from "@/modules/organization/domain/organization-events.js";
 import { type OrganizationRoleGranted } from "@/modules/organization/domain/organization-role-events.js";
 import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership-repository.js";
@@ -17,8 +19,10 @@ import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastr
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
+import { makeRoleServiceFake } from "@/test-utils/role-service-fake.js";
 
 const actorUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+const superAdminUserId = UserId.make("ssssssss-ssss-ssss-ssss-ssssssssssss");
 
 const TestLayer = Layer.mergeAll(
   OrganizationRepositoryFake,
@@ -26,6 +30,9 @@ const TestLayer = Layer.mergeAll(
   OrganizationRolesRepositoryFake,
   RecordingEventBus,
   IdentityUnitOfWork,
+  // Default: caller is a regular user (no platform roles). The
+  // super-admin-rejection test composes its own RoleService fake.
+  makeRoleServiceFake(new Map()),
 );
 
 describe("createOrganization", () => {
@@ -89,5 +96,31 @@ describe("createOrganization", () => {
         deepStrictEqual(event.role, "admin");
         deepStrictEqual(event.issuedBy, actorUserId);
       }).pipe(Effect.provide(TestLayer)),
+  );
+
+  it.effect("rejects with SuperAdminCannotOwnOrganization when caller is a super-admin", () =>
+    Effect.gen(function* () {
+      const exit = yield* Effect.exit(
+        createOrganization(
+          CreateOrganizationCommand.make({ name: "Acme", actorUserId: superAdminUserId }),
+        ),
+      );
+      deepStrictEqual(Exit.isFailure(exit), true);
+      if (Exit.isFailure(exit)) {
+        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        deepStrictEqual(error instanceof SuperAdminCannotOwnOrganization, true);
+      }
+    }).pipe(
+      Effect.provide(
+        Layer.mergeAll(
+          OrganizationRepositoryFake,
+          MembershipRepositoryFake,
+          OrganizationRolesRepositoryFake,
+          RecordingEventBus,
+          IdentityUnitOfWork,
+          makeRoleServiceFake(new Map([[superAdminUserId, ["super_admin"]]])),
+        ),
+      ),
+    ),
   );
 });
