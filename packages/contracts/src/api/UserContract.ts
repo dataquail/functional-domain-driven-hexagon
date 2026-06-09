@@ -96,20 +96,6 @@ export class Group extends HttpApiGroup.make("user")
       .addSuccess(Schema.Void)
       .addError(UserNotFoundError),
   )
-  .add(
-    HttpApiEndpoint.post("promoteToSuperAdmin", "/:id/super-admin")
-      .setPath(Schema.Struct({ id: UserId }))
-      .addError(CustomHttpApiError.Forbidden)
-      .addError(UserNotFoundError)
-      .addSuccess(Schema.Void),
-  )
-  .add(
-    HttpApiEndpoint.del("demoteFromSuperAdmin", "/:id/super-admin")
-      .setPath(Schema.Struct({ id: UserId }))
-      .addError(CustomHttpApiError.Forbidden)
-      .addError(UserNotFoundError)
-      .addSuccess(Schema.Void),
-  )
   // Group-wide: every endpoint here can 503 on transient DB failure. The
   // typed channel lets endpoint handlers `Effect.catchTag` the
   // `PersistenceUnavailable` use cases produce and surface the 503 to

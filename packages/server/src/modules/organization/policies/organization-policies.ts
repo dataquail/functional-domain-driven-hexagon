@@ -6,9 +6,9 @@ import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { type Organization } from "../domain/organization.aggregate.js";
 import { IsOrgAdmin } from "./is-org-admin.js";
 
-// Phase 4 contribution. `update` (which gates invite, revoke,
-// remove-member, and future promote/demote endpoints) now requires the
-// `admin` OrganizationRole — plain members no longer manage members.
+// Phase 4 contribution. `update` (which gates invite, revoke, and
+// remove-member endpoints) requires the `admin` OrganizationRole —
+// plain members no longer manage members.
 // The creator of an org is auto-granted `admin` in
 // `create-organization.ts`. `read` stays super-admin-only because the
 // only `Authz.hasPermissions("organization", Actions.Read)` call site
