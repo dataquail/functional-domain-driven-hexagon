@@ -21,11 +21,12 @@ export const findUsersQuerySpanAttributes: SpanAttributesExtractor<FindUsersQuer
 export type FindUsersUserView = {
   readonly id: UserId;
   readonly email: string;
+  // Nullable: JIT-provisioned users have no address until they fill it in.
   readonly address: {
     readonly country: string;
     readonly street: string;
     readonly postalCode: string;
-  };
+  } | null;
   readonly createdAt: DateTime.Utc;
   readonly updatedAt: DateTime.Utc;
 };

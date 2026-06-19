@@ -3,11 +3,14 @@
   "tasks": [
     {
       "label": "Docker: Up",
-      "detail": "Start postgres + jaeger + zitadel in the background",
+      "detail": "Start postgres + jaeger + zitadel + mailpit in the background",
       // `zitadel` depends on postgres being healthy (see docker-compose.yml),
       // so compose orders the startup; we just list everything we need.
+      // `mailpit` is the local SMTP sink Zitadel's notification provider
+      // points at; it isn't profile-gated, but naming services means compose
+      // starts only the ones listed, so it has to be named here too.
       "type": "shell",
-      "command": "docker-compose up -d postgres jaeger zitadel",
+      "command": "docker-compose up -d postgres jaeger zitadel mailpit",
       "options": { "cwd": "${workspaceFolder}" },
       "presentation": {
         "reveal": "always",

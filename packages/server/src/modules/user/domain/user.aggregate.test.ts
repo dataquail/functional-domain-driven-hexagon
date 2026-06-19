@@ -22,6 +22,13 @@ const address = Address.make({
 
 const seedUser = () => User.create({ id, email: "alice@example.com", address, now }).user;
 
+// Narrows the nullable aggregate address for assertions on a user we know
+// was created with one.
+const requireAddress = (user: User.User): Address => {
+  if (user.address === null) throw new Error("expected an address");
+  return user.address;
+};
+
 const expectEvent = <T extends UserEvent["_tag"]>(
   events: ReadonlyArray<UserEvent>,
   tag: T,
@@ -85,9 +92,17 @@ describe("User.create", () => {
     const { user } = User.create({ id, email: "alice@example.com", address, now });
     deepStrictEqual(user.id, id);
     deepStrictEqual(user.email, "alice@example.com");
-    deepStrictEqual(user.address.country, "USA");
-    deepStrictEqual(user.address.street, "123 Main St");
-    deepStrictEqual(user.address.postalCode, "12345");
+    const addr = requireAddress(user);
+    deepStrictEqual(addr.country, "USA");
+    deepStrictEqual(addr.street, "123 Main St");
+    deepStrictEqual(addr.postalCode, "12345");
+  });
+
+  it("creates an address-less user when address is null (JIT provisioning)", () => {
+    const { events, user } = User.create({ id, email: "jit@example.com", address: null, now });
+    deepStrictEqual(user.address, null);
+    const event = expectEvent(events, "UserCreated");
+    deepStrictEqual(event.address, null);
   });
 
   it("sets createdAt and updatedAt to the provided time", () => {
@@ -102,7 +117,7 @@ describe("User.create", () => {
     const event = expectEvent(events, "UserCreated");
     deepStrictEqual(event.userId, id);
     deepStrictEqual(event.email, "alice@example.com");
-    deepStrictEqual(event.address.country, "USA");
+    deepStrictEqual(event.address?.country, "USA");
   });
 });
 
@@ -130,9 +145,10 @@ describe("User.updateAddress", () => {
       postalCode: "K1A0B1",
       now: later,
     });
-    deepStrictEqual(user.address.country, "Canada");
-    deepStrictEqual(user.address.street, "456 Maple Ave");
-    deepStrictEqual(user.address.postalCode, "K1A0B1");
+    const addr = requireAddress(user);
+    deepStrictEqual(addr.country, "Canada");
+    deepStrictEqual(addr.street, "456 Maple Ave");
+    deepStrictEqual(addr.postalCode, "K1A0B1");
   });
 
   it("merges partial updates with the existing address", () => {
@@ -140,9 +156,10 @@ describe("User.updateAddress", () => {
       country: "Canada",
       now: later,
     });
-    deepStrictEqual(user.address.country, "Canada");
-    deepStrictEqual(user.address.street, "123 Main St");
-    deepStrictEqual(user.address.postalCode, "12345");
+    const addr = requireAddress(user);
+    deepStrictEqual(addr.country, "Canada");
+    deepStrictEqual(addr.street, "123 Main St");
+    deepStrictEqual(addr.postalCode, "12345");
   });
 
   it("updates updatedAt but preserves createdAt", () => {

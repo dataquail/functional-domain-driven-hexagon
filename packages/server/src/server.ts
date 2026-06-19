@@ -64,6 +64,7 @@ import {
   userEventSpanAttributes,
   UserModuleLive,
   userPolicies,
+  UserProvisioningLive,
   userQueryHandlers,
   UserResolverEntry,
   UserResolverEntryLive,
@@ -163,6 +164,13 @@ const ApiLive = HttpApiBuilder.api(Api).pipe(
     OrganizationModuleLive,
     BillingModuleLive,
   ]),
+  // UserProvisioning (JIT user creation for `auth` first sign-in) gets its
+  // own step rather than sitting in the service block below: its Live
+  // depends on DomainEventBus + UnitOfWork, which are peers in that block
+  // (peers don't satisfy each other). Placed here, the block below
+  // (DomainEventBus/UnitOfWork) and the buses two steps down (CommandBus —
+  // it fires CreateUserCommand) provide TO it.
+  Layer.provide([UserProvisioningLive]),
   // RoleService is a peer of the auth middleware: both consume the
   // buses provided just below, and both feed upstream consumers
   // (endpoints + `SuperAdminOnly`). Placing it here means the same

@@ -42,7 +42,17 @@ describe("createUser", () => {
       const event = events[0];
       if (event === undefined) throw new Error("expected UserCreated event");
       deepStrictEqual(event.email, "alice@example.com");
-      deepStrictEqual(event.address.country, "USA");
+      deepStrictEqual(event.address?.country, "USA");
+    }).pipe(Effect.provide(TestLayer)),
+  );
+
+  it.effect("provisions an address-less user when no address fields are given (JIT path)", () =>
+    Effect.gen(function* () {
+      const repo = yield* UserRepository;
+      const id = yield* createUser(CreateUserCommand.make({ email: "jit@example.com" }));
+      const stored = yield* repo.findById(id);
+      deepStrictEqual(stored.email, "jit@example.com");
+      deepStrictEqual(stored.address, null);
     }).pipe(Effect.provide(TestLayer)),
   );
 

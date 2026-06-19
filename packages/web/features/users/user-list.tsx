@@ -35,7 +35,9 @@ export const UserList: React.FC = () => {
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium text-foreground">{user.email}</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {user.address.street}, {user.address.postalCode} {user.address.country}
+                    {user.address !== null
+                      ? `${user.address.street}, ${user.address.postalCode} ${user.address.country}`
+                      : "No address on file"}
                   </p>
                 </div>
                 <p className="shrink-0 text-xs text-muted-foreground">

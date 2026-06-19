@@ -53,6 +53,7 @@ import {
   userEventSpanAttributes,
   UserModuleLive,
   userPolicies,
+  UserProvisioningLive,
   userQueryHandlers,
   UserResolverEntry,
   UserResolverEntryLive,
@@ -161,6 +162,10 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
       OrganizationModuleLive,
       BillingModuleTestLive,
     ]),
+    // Own step (mirrors server.ts): UserProvisioningLive depends on
+    // DomainEventBus + UnitOfWork (peers in the block below) + CommandBus, so
+    // those steps must provide TO it.
+    Layer.provide([UserProvisioningLive]),
     Layer.provide([
       authMiddleware,
       RoleServiceLive,

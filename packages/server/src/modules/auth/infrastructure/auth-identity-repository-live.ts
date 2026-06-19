@@ -4,7 +4,10 @@ import * as Layer from "effect/Layer";
 
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
-import { AuthIdentityRepository } from "../domain/ports/repositories/auth-identity-repository.js";
+import {
+  type AuthIdentity,
+  AuthIdentityRepository,
+} from "../domain/ports/repositories/auth-identity-repository.js";
 import { AuthIdentityNotFound } from "../domain/session-errors.js";
 import * as AuthIdentityMapper from "./auth-identity-mapper.js";
 
@@ -27,6 +30,20 @@ export const AuthIdentityRepositoryLive = Layer.effect(
       ),
     );
 
-    return AuthIdentityRepository.of({ findBySubject });
+    const insert = db.makeQuery((execute, identity: AuthIdentity) =>
+      execute((client) =>
+        client.query(sql.unsafe`
+          INSERT INTO auth.auth_identities (subject, user_id, provider, created_at)
+          VALUES (${identity.subject}, ${identity.userId}, ${identity.provider}, now())
+        `),
+      ).pipe(
+        Effect.asVoid,
+        Effect.catchTag("DatabaseError", Effect.die),
+        translatePersistenceUnavailable,
+        Effect.withSpan("AuthIdentityRepository.insert"),
+      ),
+    );
+
+    return AuthIdentityRepository.of({ findBySubject, insert });
   }),
 );

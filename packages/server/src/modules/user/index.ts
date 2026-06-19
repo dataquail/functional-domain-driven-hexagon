@@ -8,4 +8,5 @@ export { FindUsersQuery } from "./queries/find-users-query.js";
 export { userCommandHandlers } from "./user-command-handlers.js";
 export { userEventSpanAttributes } from "./user-event-span-attributes.js";
 export { UserModuleLive } from "./user-module.js";
+export { UserProvisioningLive } from "./user-provisioning-live.js";
 export { userQueryHandlers } from "./user-query-handlers.js";

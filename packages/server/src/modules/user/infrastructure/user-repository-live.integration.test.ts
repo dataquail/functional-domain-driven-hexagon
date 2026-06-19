@@ -48,6 +48,7 @@ suite("UserRepositoryLive (integration)", () => {
         const found = yield* repo.findById(alice.id);
         deepStrictEqual(found.id, alice.id);
         deepStrictEqual(found.email, alice.email);
+        if (found.address === null) throw new Error("expected a stored address");
         deepStrictEqual(found.address.country, "USA");
         deepStrictEqual(found.address.street, "123 Main St");
         deepStrictEqual(found.address.postalCode, "12345");
@@ -119,7 +120,7 @@ suite("UserRepositoryLive (integration)", () => {
         const { user: updated } = User.updateAddress(alice, { country: "Canada", now: later });
         yield* repo.update(updated);
         const found = yield* repo.findById(alice.id);
-        deepStrictEqual(found.address.country, "Canada");
+        deepStrictEqual(found.address?.country, "Canada");
         deepStrictEqual(
           DateTime.toDate(found.updatedAt).toISOString(),
           DateTime.toDate(later).toISOString(),

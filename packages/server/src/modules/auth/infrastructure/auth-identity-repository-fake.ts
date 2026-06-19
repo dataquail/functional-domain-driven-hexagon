@@ -10,11 +10,9 @@ import {
 } from "../domain/ports/repositories/auth-identity-repository.js";
 import { AuthIdentityNotFound } from "../domain/session-errors.js";
 
-// `AuthIdentityRepository` is read-only on the public contract — production
-// inserts happen out-of-band via the seed script (admin pre-seeded; non-admin
-// JIT is a documented evolution). The fake therefore exposes a constructor
-// that accepts initial state, so tests can seed identities without us having
-// to extend the public contract with an `insert` we don't actually want.
+// The fake exposes a constructor that accepts initial state so tests can
+// seed identities up front, and an in-memory `insert` mirroring the live
+// write path used by JIT provisioning on first OIDC sign-in.
 export const makeAuthIdentityRepositoryFake = (
   seed: ReadonlyArray<AuthIdentity> = [],
 ): Layer.Layer<AuthIdentityRepository> =>
@@ -32,7 +30,10 @@ export const makeAuthIdentityRepositoryFake = (
           }),
         );
 
-      return AuthIdentityRepository.of({ findBySubject });
+      const insert = (identity: AuthIdentity): Effect.Effect<void> =>
+        Ref.update(store, (m) => HashMap.set(m, identity.subject, identity));
+
+      return AuthIdentityRepository.of({ findBySubject, insert });
     }),
   );
 

@@ -45,7 +45,9 @@ export type Address = typeof Address.Type;
 export class User extends Schema.Class<User>("User")({
   id: UserId,
   email: Schema.String,
-  address: Address,
+  // Nullable: a user provisioned just-in-time on first OIDC sign-in has no
+  // address until they fill it in.
+  address: Schema.NullOr(Address),
   createdAt: Schema.DateTimeUtc,
   updatedAt: Schema.DateTimeUtc,
 }) {}

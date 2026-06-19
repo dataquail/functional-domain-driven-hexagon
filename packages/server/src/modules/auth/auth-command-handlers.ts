@@ -22,11 +22,17 @@ import { AuthIdentityRepositoryLive } from "@/modules/auth/infrastructure/auth-i
 import { SessionRepositoryLive } from "@/modules/auth/infrastructure/session-repository-live.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { commandHandlers } from "@/platform/ddd/ports/command-bus.js";
+import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
+import { type UserProvisioning } from "@/platform/ddd/ports/user-provisioning.js";
 
+// `UnitOfWork` + `UserProvisioning` are not provided by the handler wrap
+// (only the two repositories are); they're satisfied from the composition-
+// root context, so they remain in the bus output's residual R alongside
+// `Database`.
 type SignInBusOutput = Effect.Effect<
   SignInResult,
   CustomHttpApiError.Unauthorized | PersistenceUnavailable,
-  Database.Database
+  Database.Database | UnitOfWork | UserProvisioning
 >;
 
 type TouchSessionBusOutput = Effect.Effect<void, never, Database.Database>;

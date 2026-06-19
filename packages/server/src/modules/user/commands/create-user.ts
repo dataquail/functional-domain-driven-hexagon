@@ -20,11 +20,16 @@ export const createUser = (cmd: CreateUserCommand): CreateUserOutput =>
     const id = UserId.make(yield* Effect.sync(() => crypto.randomUUID()));
     yield* Effect.annotateCurrentSpan("user.id", id);
     const now = yield* DateTime.now;
-    const address = new Address({
-      country: cmd.country,
-      street: cmd.street,
-      postalCode: cmd.postalCode,
-    });
+    // Build an address only when the full set is supplied; JIT provisioning
+    // passes none, leaving the user address-less until they fill it in.
+    const address =
+      cmd.country !== undefined && cmd.street !== undefined && cmd.postalCode !== undefined
+        ? new Address({
+            country: cmd.country,
+            street: cmd.street,
+            postalCode: cmd.postalCode,
+          })
+        : null;
     const { events, user } = User.create({ id, email: cmd.email, address, now });
     yield* uow
       .run(

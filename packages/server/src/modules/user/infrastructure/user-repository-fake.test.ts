@@ -105,7 +105,7 @@ describe("UserRepositoryFake", () => {
         const { user: updated } = User.updateAddress(alice, { country: "Canada", now: later });
         yield* repo.update(updated);
         const found = yield* repo.findById(alice.id);
-        deepStrictEqual(found.address.country, "Canada");
+        deepStrictEqual(found.address?.country, "Canada");
         deepStrictEqual(found.updatedAt, later);
       }).pipe(provide),
     );
