@@ -7,6 +7,7 @@
 // `stripe-webhook.endpoint.integration.test.ts`.
 
 import { describe, it } from "@effect/vitest";
+import { Database } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -23,6 +24,7 @@ import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/sub
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { makeDomainEventBusLive } from "@/platform/domain-event-bus-live.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
+import { fakeTransaction } from "@/test-utils/fake-transaction-context.js";
 
 const acme = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const subId = SubscriptionId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
@@ -62,6 +64,9 @@ const TestLayer = SyncSubscriptionFromStripeWebhookLive.pipe(
   Layer.provideMerge(SubscriptionRepositoryFake),
 );
 
+// The real bus guards that dispatch happens inside a unit of work; in
+// production the ingest command's `uow.run` provides the transaction context.
+// This handler test dispatches directly, so it supplies a no-op context.
 const dispatchAndReadStatus = (ingested: StripeWebhookIngested) =>
   Effect.gen(function* () {
     yield* seedSubscription();
@@ -69,7 +74,7 @@ const dispatchAndReadStatus = (ingested: StripeWebhookIngested) =>
     yield* bus.dispatch([ingested]);
     const repo = yield* SubscriptionRepository;
     return yield* repo.findByOrganizationId(acme);
-  }).pipe(Effect.provide(TestLayer));
+  }).pipe(Database.TransactionContext.provide(fakeTransaction), Effect.provide(TestLayer));
 
 describe("SyncSubscriptionFromStripeWebhookLive", () => {
   it.effect("on customer.subscription.updated → applies the reported status", () =>
@@ -139,6 +144,6 @@ describe("SyncSubscriptionFromStripeWebhookLive", () => {
       const repo = yield* SubscriptionRepository;
       const found = yield* repo.findByOrganizationId(acme);
       ok(Option.isNone(found));
-    }).pipe(Effect.provide(TestLayer)),
+    }).pipe(Database.TransactionContext.provide(fakeTransaction), Effect.provide(TestLayer)),
   );
 });

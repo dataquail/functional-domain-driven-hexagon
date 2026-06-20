@@ -65,6 +65,7 @@ import { makeCommandBus } from "@/platform/command-bus-live.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 import { makeDomainEventBusLive } from "@/platform/domain-event-bus-live.js";
+import { makeIntegrationEventBusLive } from "@/platform/integration-event-bus-live.js";
 import { makeQueryBus } from "@/platform/query-bus-live.js";
 import { UnitOfWorkLive } from "@/platform/unit-of-work-live.js";
 import {
@@ -104,6 +105,7 @@ const DomainEventBusLive = makeDomainEventBusLive({
     ...billingEventSpanAttributes,
   },
 });
+const IntegrationEventBusLive = makeIntegrationEventBusLive();
 
 const PolicyRegistryLive = makePolicyRegistry([
   userPolicies,
@@ -177,8 +179,11 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
     // CommandBus + QueryBus must provide TO the modules above (they dispatch
     // via the buses) AND remain reachable from test runtimes — `provideMerge`
     // keeps them in the runtime context so `yield* CommandBus`/`QueryBus`
-    // works in test bodies.
-    Layer.provideMerge(Layer.mergeAll(CommandBusLive, QueryBusLive)),
+    // works in test bodies. IntegrationEventBusLive rides along in the same
+    // `provideMerge` so it lands in the SUCCESS channel rather than being
+    // `Exclude`d from requirements — the latter makes the inferred type and the
+    // emitted `.d.ts` diverge (and trips a `tsc -b` declaration-emit crash).
+    Layer.provideMerge(Layer.mergeAll(CommandBusLive, QueryBusLive, IntegrationEventBusLive)),
     // Authz registries — same shape as `server.ts`. Endpoints consume
     // PolicyRegistry + ResourceResolverRegistry via Authz.requires*.
     Layer.provide([PolicyRegistryLive, ResourceResolverRegistryLive]),

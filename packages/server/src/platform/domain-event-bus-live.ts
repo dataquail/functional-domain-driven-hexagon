@@ -1,5 +1,7 @@
+import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
 import { type DomainEvent } from "@/platform/ddd/contracts/domain-event.js";
@@ -37,6 +39,18 @@ export const makeDomainEventBusLive = (
 
       const dispatch: DomainEventBusShape["dispatch"] = (events) =>
         Effect.gen(function* () {
+          // Dispatch presumes a unit of work. The in-fiber bus only makes
+          // sense inside the publisher's transaction (subscribers inherit it
+          // and a failure rolls the publisher back — ADR-0007). Dispatching
+          // without an ambient `TransactionContext` means a `withUnitOfWork`
+          // was forgotten; fail fast rather than run subscribers outside any
+          // transaction.
+          const tx = yield* Effect.serviceOption(Database.TransactionContext);
+          if (Option.isNone(tx)) {
+            return yield* Effect.dieMessage(
+              "DomainEventBus.dispatch requires a unit of work: no TransactionContext in scope (did you forget withUnitOfWork?)",
+            );
+          }
           const map = yield* Ref.get(handlers);
           for (const event of events) {
             const list = map.get(event._tag) ?? [];

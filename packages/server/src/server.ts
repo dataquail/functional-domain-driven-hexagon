@@ -77,6 +77,7 @@ import { DatabaseLive } from "./platform/database-live.js";
 import { CommandBus } from "./platform/ddd/ports/command-bus.js";
 import { QueryBus } from "./platform/ddd/ports/query-bus.js";
 import { makeDomainEventBusLive } from "./platform/domain-event-bus-live.js";
+import { makeIntegrationEventBusLive } from "./platform/integration-event-bus-live.js";
 import { UserAuthMiddlewareLive } from "./platform/middlewares/auth-middleware-live.js";
 import { makeQueryBus } from "./platform/query-bus-live.js";
 import { UnitOfWorkLive } from "./platform/unit-of-work-live.js";
@@ -116,6 +117,7 @@ const DomainEventBusLive = makeDomainEventBusLive({
     ...billingEventSpanAttributes,
   },
 });
+const IntegrationEventBusLive = makeIntegrationEventBusLive();
 
 const PolicyRegistryLive = makePolicyRegistry([
   userPolicies,
@@ -189,8 +191,11 @@ const ApiLive = HttpApiBuilder.api(Api).pipe(
   ]),
   // CommandBus + QueryBus must provide TO the middleware (not be its peers
   // in the array above), since UserAuthMiddlewareLive now dispatches the
-  // FindSessionQuery via the bus.
-  Layer.provide([CommandBusLive, QueryBusLive]),
+  // FindSessionQuery via the bus. IntegrationEventBusLive sits here too (not as
+  // a peer of UnitOfWorkLive above): `UnitOfWorkLive` depends on it for the
+  // post-commit flush, so it must be provided TO that block rather than
+  // alongside it.
+  Layer.provide([CommandBusLive, QueryBusLive, IntegrationEventBusLive]),
   // Authz registries — endpoints consume PolicyRegistry +
   // ResourceResolverRegistry via Authz.requires/requiresOn.
   Layer.provide([PolicyRegistryLive, ResourceResolverRegistryLive]),
