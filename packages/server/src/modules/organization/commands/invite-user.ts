@@ -10,7 +10,7 @@ import {
 import * as Invitation from "@/modules/organization/domain/invitation.aggregate.js";
 import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation-repository.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
+import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { Mailer } from "@/platform/notifications/mailer.js";
 
@@ -30,7 +30,6 @@ export const inviteUser = (cmd: InviteUserCommand): InviteUserOutput =>
   Effect.gen(function* () {
     const repo = yield* InvitationRepository;
     const bus = yield* DomainEventBus;
-    const uow = yield* UnitOfWork;
     const mailer = yield* Mailer;
     const now = yield* DateTime.now;
     const id = InvitationId.make(crypto.randomUUID());
@@ -45,14 +44,10 @@ export const inviteUser = (cmd: InviteUserCommand): InviteUserOutput =>
       now,
     });
     yield* Effect.annotateCurrentSpan("invitation.id", id);
-    yield* uow
-      .run(
-        Effect.gen(function* () {
-          yield* repo.insert(invitation);
-          yield* bus.dispatch(events);
-        }),
-      )
-      .pipe(Effect.catchTag("DatabaseError", Effect.die));
+    yield* Effect.gen(function* () {
+      yield* repo.insert(invitation);
+      yield* bus.dispatch(events);
+    }).pipe(withUnitOfWork);
     // Fire after the UoW commits — the email may include the token, so
     // we don't want to send it on a transaction that ends up rolled back.
     yield* mailer.send({

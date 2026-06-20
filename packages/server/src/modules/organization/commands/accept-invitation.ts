@@ -11,7 +11,7 @@ import { InvitationRepository } from "@/modules/organization/domain/ports/reposi
 import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership-repository.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { RoleService } from "@/platform/ddd/ports/role-service.js";
-import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
+import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
 export const acceptInvitation = (cmd: AcceptInvitationCommand): AcceptInvitationOutput =>
   Effect.gen(function* () {
@@ -27,7 +27,6 @@ export const acceptInvitation = (cmd: AcceptInvitationCommand): AcceptInvitation
     const invRepo = yield* InvitationRepository;
     const memberRepo = yield* MembershipRepository;
     const bus = yield* DomainEventBus;
-    const uow = yield* UnitOfWork;
     const now = yield* DateTime.now;
 
     const invitation = yield* invRepo.findByToken(cmd.token);
@@ -35,19 +34,13 @@ export const acceptInvitation = (cmd: AcceptInvitationCommand): AcceptInvitation
     yield* Effect.annotateCurrentSpan("invitation.id", invitation.id);
     yield* Effect.annotateCurrentSpan("organization.id", invitation.organizationId);
 
-    yield* uow
-      .run(
-        Effect.gen(function* () {
-          yield* invRepo.update(result.invitation);
-          yield* memberRepo.insert(result.membership);
-          yield* bus.dispatch(result.events);
-        }),
-      )
-      .pipe(Effect.catchTag("DatabaseError", Effect.die));
+    yield* invRepo.update(result.invitation);
+    yield* memberRepo.insert(result.membership);
+    yield* bus.dispatch(result.events);
     // Concurrent revoke between findByToken and update would surface as
     // InvitationNotFound from `update` — treat as a defect (the token
     // was valid moments ago; the operator should look at the trace).
     // For normal use, the aggregate's accept() catches expired/revoked.
 
     return invitation.organizationId;
-  }).pipe(Effect.catchTag("InvitationNotFound", Effect.die));
+  }).pipe(withUnitOfWork, Effect.catchTag("InvitationNotFound", Effect.die));

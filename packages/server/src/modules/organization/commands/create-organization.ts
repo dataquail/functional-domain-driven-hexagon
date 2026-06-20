@@ -17,7 +17,7 @@ import { OrganizationRepository } from "@/modules/organization/domain/ports/repo
 import { OrganizationRolesRepository } from "@/modules/organization/domain/ports/repositories/organization-roles-repository.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { RoleService } from "@/platform/ddd/ports/role-service.js";
-import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
+import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 // Creating an org also creates the creator's Membership AND grants the
@@ -50,7 +50,6 @@ export const createOrganization = (cmd: CreateOrganizationCommand): CreateOrgani
     const memberRepo = yield* MembershipRepository;
     const orgRolesRepo = yield* OrganizationRolesRepository;
     const bus = yield* DomainEventBus;
-    const uow = yield* UnitOfWork;
     const now = yield* DateTime.now;
     const id = OrganizationId.make(crypto.randomUUID());
     const { events: orgEvents, organization } = Organization.create({ id, name: cmd.name, now });
@@ -70,15 +69,9 @@ export const createOrganization = (cmd: CreateOrganizationCommand): CreateOrgani
     }
     const grantResult = grantEither.right;
 
-    yield* uow
-      .run(
-        Effect.gen(function* () {
-          yield* orgRepo.insert(organization);
-          yield* memberRepo.insert(membership);
-          yield* orgRolesRepo.save(grantResult.organizationRoles);
-          yield* bus.dispatch([...orgEvents, ...memberEvents, ...grantResult.events]);
-        }),
-      )
-      .pipe(Effect.catchTag("DatabaseError", Effect.die));
+    yield* orgRepo.insert(organization);
+    yield* memberRepo.insert(membership);
+    yield* orgRolesRepo.save(grantResult.organizationRoles);
+    yield* bus.dispatch([...orgEvents, ...memberEvents, ...grantResult.events]);
     return id;
-  });
+  }).pipe(withUnitOfWork);

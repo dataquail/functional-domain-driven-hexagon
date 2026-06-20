@@ -7,7 +7,7 @@ import { SubscriptionRepository } from "@/modules/billing/domain/ports/repositor
 import * as Subscription from "@/modules/billing/domain/subscription.aggregate.js";
 import { SubscriptionNotFound } from "@/modules/billing/domain/subscription-errors.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
+import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
 import {
   type CancelSubscriptionCommand,
@@ -24,7 +24,6 @@ export const cancelSubscription = (cmd: CancelSubscriptionCommand): CancelSubscr
     const repo = yield* SubscriptionRepository;
     const gateway = yield* BillingGateway;
     const bus = yield* DomainEventBus;
-    const uow = yield* UnitOfWork;
 
     const found = yield* repo.findByOrganizationId(cmd.organizationId);
     if (Option.isNone(found)) {
@@ -39,14 +38,10 @@ export const cancelSubscription = (cmd: CancelSubscriptionCommand): CancelSubscr
     const now = yield* DateTime.now;
     const { events, subscription } = Subscription.cancel(existing, now);
 
-    yield* uow
-      .run(
-        Effect.gen(function* () {
-          yield* repo.update(subscription);
-          yield* bus.dispatch(events);
-        }),
-      )
-      .pipe(Effect.catchTag("DatabaseError", Effect.die));
+    yield* Effect.gen(function* () {
+      yield* repo.update(subscription);
+      yield* bus.dispatch(events);
+    }).pipe(withUnitOfWork);
 
     return subscription;
   });
