@@ -1,7 +1,12 @@
 # ADR-0007: UnitOfWork + synchronous DomainEventBus
 
-- Status: Accepted
+- Status: Accepted (extended by ADR-0024)
 - Date: 2026-04-24
+
+> Extended by ADR-0024, which reshapes the boundary into a `withUnitOfWork` combinator, restores
+> real nested savepoints, and adds the eventually-consistent second bus (`IntegrationEventBus`)
+> that the "Non-goals" section below deferred. The atomicity guarantees of the unit of work and
+> the in-fiber `DomainEventBus` described here are unchanged.
 
 > Originally introduced as `TransactionRunner`; renamed to `UnitOfWork` and split into a port (`platform/ddd/unit-of-work.ts`) + a Live (`platform/unit-of-work-live.ts`) in a subsequent refactor. The decision, semantics, and rationale below are unchanged — only the name and the file layout have moved. The other DDD shared-kernel ports (`CommandBus`, `QueryBus`, `DomainEventBus`, `DomainEvent`, `SpanAttributesExtractor`) received the same port/Live split at the same time; their Lives are `command-bus-live.ts`, `query-bus-live.ts`, and `domain-event-bus-live.ts` in `platform/`.
 
