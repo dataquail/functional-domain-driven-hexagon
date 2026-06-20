@@ -1,6 +1,7 @@
 import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
+import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -13,19 +14,33 @@ import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("GET /admin/orgs (integration)", () => {
+  // Listing all orgs is super-admin-only (organizationPolicies.read =
+  // SuperAdminOnly). Super-admins can't create orgs, so seed the orgs to list
+  // directly: "Acme" active, "Beta" tombstoned.
   const { run } = useServerTestRuntime(
     ["organization.memberships", "organization.organizations", "platform.roles", "user.users"],
     { seedSuperAdminCaller: true },
   );
 
+  const seedOrgs = Effect.gen(function* () {
+    const db = yield* Database.Database;
+    yield* db
+      .execute((c) =>
+        c.query(sql.unsafe`
+          INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
+          VALUES
+            ('11111111-1111-1111-1111-111111111111', 'Acme', now(), now(), null),
+            ('22222222-2222-2222-2222-222222222222', 'Beta', now(), now(), now())
+        `),
+      )
+      .pipe(Effect.orDie);
+  });
+
   it("returns created orgs (active-only by default)", async () => {
     await run(
       Effect.gen(function* () {
+        yield* seedOrgs;
         const client = yield* HttpApiClient.make(Api);
-        yield* client.organization.create({ payload: { name: "Acme" } });
-        const { id: betaId } = yield* client.organization.create({ payload: { name: "Beta" } });
-        yield* client.organization.softDelete({ path: { id: betaId } });
-
         const res = yield* client.organizationAdmin.findAll({
           urlParams: { page: 1, pageSize: 10 },
         });
@@ -38,11 +53,8 @@ suite("GET /admin/orgs (integration)", () => {
   it("returns tombstoned orgs when includeDeleted=true", async () => {
     await run(
       Effect.gen(function* () {
+        yield* seedOrgs;
         const client = yield* HttpApiClient.make(Api);
-        yield* client.organization.create({ payload: { name: "Acme" } });
-        const { id: betaId } = yield* client.organization.create({ payload: { name: "Beta" } });
-        yield* client.organization.softDelete({ path: { id: betaId } });
-
         const res = yield* client.organizationAdmin.findAll({
           urlParams: { page: 1, pageSize: 10, includeDeleted: "true" },
         });

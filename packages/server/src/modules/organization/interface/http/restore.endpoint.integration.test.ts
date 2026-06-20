@@ -20,23 +20,45 @@ const DeletedAtRowStd = Schema.standardSchemaV1(
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("POST /orgs/:id/restore (integration)", () => {
+  // Restore is super-admin-or-org-admin; this suite runs as the super-admin
+  // caller. Super-admins can't create orgs, so target orgs are seeded directly.
   const { run } = useServerTestRuntime(
     ["organization.memberships", "organization.organizations", "platform.roles", "user.users"],
     { seedSuperAdminCaller: true },
   );
 
+  const orgId = "11111111-1111-1111-1111-111111111111" as never;
+  const seedOrg = (deleted: boolean) =>
+    Effect.gen(function* () {
+      const db = yield* Database.Database;
+      yield* db
+        .execute((c) =>
+          c.query(
+            deleted
+              ? sql.unsafe`
+                  INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
+                  VALUES (${orgId}, 'Acme', now(), now(), now())
+                `
+              : sql.unsafe`
+                  INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
+                  VALUES (${orgId}, 'Acme', now(), now(), null)
+                `,
+          ),
+        )
+        .pipe(Effect.orDie);
+    });
+
   it("clears the tombstone", async () => {
     await run(
       Effect.gen(function* () {
+        yield* seedOrg(true);
         const client = yield* HttpApiClient.make(Api);
-        const { id } = yield* client.organization.create({ payload: { name: "Acme" } });
-        yield* client.organization.softDelete({ path: { id } });
-        yield* client.organization.restore({ path: { id } });
+        yield* client.organization.restore({ path: { id: orgId } });
         const db = yield* Database.Database;
         const rows = yield* db
           .execute((c) =>
             c.any(sql.type(DeletedAtRowStd)`
-              SELECT deleted_at FROM "organization".organizations WHERE id = ${id}
+              SELECT deleted_at FROM "organization".organizations WHERE id = ${orgId}
             `),
           )
           .pipe(Effect.orDie);
@@ -48,9 +70,9 @@ suite("POST /orgs/:id/restore (integration)", () => {
   it("returns 409 OrganizationNotDeletedError when restoring an active org", async () => {
     await run(
       Effect.gen(function* () {
+        yield* seedOrg(false);
         const client = yield* HttpApiClient.make(Api);
-        const { id } = yield* client.organization.create({ payload: { name: "Acme" } });
-        const exit = yield* Effect.exit(client.organization.restore({ path: { id } }));
+        const exit = yield* Effect.exit(client.organization.restore({ path: { id: orgId } }));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
           ok(exit.cause.error instanceof OrganizationContract.OrganizationNotDeletedError);

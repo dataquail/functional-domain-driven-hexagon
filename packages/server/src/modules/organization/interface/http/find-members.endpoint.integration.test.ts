@@ -1,6 +1,7 @@
 import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
+import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -52,12 +53,21 @@ memberSuite("GET /admin/orgs/:orgId/members (integration, non-super-admin caller
   it("returns 403 Forbidden", async () => {
     await run(
       Effect.gen(function* () {
+        // Seed a real org so the resource resolves; the SuperAdminOnly policy
+        // then denies the member with Forbidden. (Against a missing org the
+        // resolver would surface NotFound before the policy runs.)
+        const orgId = "11111111-1111-1111-1111-111111111111" as never;
+        const db = yield* Database.Database;
+        yield* db
+          .execute((c) =>
+            c.query(sql.unsafe`
+              INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
+              VALUES (${orgId}, 'Acme', now(), now(), null)
+            `),
+          )
+          .pipe(Effect.orDie);
         const client = yield* HttpApiClient.make(Api);
-        const exit = yield* Effect.exit(
-          client.organizationAdmin.findMembers({
-            path: { orgId: "00000000-0000-0000-0000-000000000000" as never },
-          }),
-        );
+        const exit = yield* Effect.exit(client.organizationAdmin.findMembers({ path: { orgId } }));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
           ok(exit.cause.error instanceof CustomHttpApiError.Forbidden);

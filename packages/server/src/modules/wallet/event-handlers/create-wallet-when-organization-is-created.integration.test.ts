@@ -20,6 +20,7 @@ import { makeIntegrationEventBusLive } from "@/platform/integration-event-bus-li
 import { UnitOfWorkLive } from "@/platform/unit-of-work-live.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 const WALLET_TABLES = [
   "wallet.wallets",
@@ -40,7 +41,10 @@ suite("CreateWalletWhenOrganizationIsCreated (integration)", () => {
   // would FK-fail, the publisher tx would roll back, and the test
   // would see a 500 from POST /orgs — masking the wallet subscriber
   // path we're trying to verify.
-  const { run } = useServerTestRuntime(WALLET_TABLES, { seedSuperAdminCaller: true });
+  const { run } = useServerTestRuntime(WALLET_TABLES, {
+    server: TestServerLiveAsMember,
+    seedSuperAdminCaller: true,
+  });
 
   it("creates a wallet with balance 0 in the same transaction as the organization", async () => {
     await run(
