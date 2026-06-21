@@ -7,11 +7,14 @@ import { inviteUser } from "@/modules/organization/commands/invite-user.js";
 import { InviteUserCommand } from "@/modules/organization/commands/invite-user-command.js";
 import { type InvitationIssued } from "@/modules/organization/domain/invitation-events.js";
 import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation-repository.js";
+import {
+  InvitationMailerFake,
+  SentInvitations,
+} from "@/modules/organization/infrastructure/external/invitation-mailer-fake.js";
 import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/invitation-repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
-import { MailerFake, SentMails } from "@/test-utils/mailer-fake.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
 const actorUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
@@ -21,7 +24,7 @@ const TestLayer = Layer.mergeAll(
   InvitationRepositoryFake,
   RecordingEventBus,
   IdentityUnitOfWork,
-  MailerFake,
+  InvitationMailerFake,
 );
 
 describe("inviteUser", () => {
@@ -29,7 +32,7 @@ describe("inviteUser", () => {
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
       const rec = yield* RecordedEvents;
-      const sent = yield* SentMails;
+      const sent = yield* SentInvitations;
       const id = yield* inviteUser(
         InviteUserCommand.make({
           organizationId,
@@ -51,12 +54,15 @@ describe("inviteUser", () => {
       deepStrictEqual(event.organizationId, organizationId);
       deepStrictEqual(event.inviteeEmail, "alice@example.com");
 
-      const mails = yield* sent.all;
-      deepStrictEqual(mails.length, 1);
-      const mail = mails[0];
-      if (mail === undefined) throw new Error("expected one sent mail");
-      deepStrictEqual(mail.to, "alice@example.com");
-      ok(mail.body.includes(stored.token));
+      const invites = yield* sent.all;
+      deepStrictEqual(invites.length, 1);
+      const invite = invites[0];
+      if (invite === undefined) throw new Error("expected one sent invitation");
+      deepStrictEqual(invite.to, "alice@example.com");
+      // The use case hands the adapter the raw token; the adapter builds
+      // the accept link. Asserting the token matches the persisted row
+      // proves the invitee gets a link that resolves to this invitation.
+      deepStrictEqual(invite.token, stored.token);
     }).pipe(Effect.provide(TestLayer)),
   );
 });

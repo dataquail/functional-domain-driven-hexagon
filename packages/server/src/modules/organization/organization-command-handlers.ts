@@ -71,6 +71,7 @@ import {
   type CannotPromoteSelfInOrganization,
   type DoesNotHaveOrganizationRole,
 } from "@/modules/organization/domain/organization-role-errors.js";
+import { type InvitationMailer } from "@/modules/organization/domain/ports/external/invitation-mailer.js";
 import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/invitation-repository-live.js";
 import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/membership-repository-live.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/organization-repository-live.js";
@@ -82,7 +83,6 @@ import { type RoleService } from "@/platform/ddd/ports/role-service.js";
 import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 import { type InvitationId } from "@/platform/ids/invitation-id.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
-import { LogMailerLive } from "@/platform/notifications/log-mailer-live.js";
 
 // `RoleService` stays in the bus output's R because the model-invariant
 // check (super-admins can't own orgs) needs the platform-role ACL. The
@@ -117,10 +117,13 @@ type LeaveOrganizationBusOutput = Effect.Effect<
   DomainEventBus | UnitOfWork | Database.Database
 >;
 
+// `InvitationMailer` stays in R (provided by `OrganizationModuleLive`,
+// which wires the env-selected transport behind it) — the same shape as
+// the `UsersLookup` outbound adapter on the query side.
 type InviteUserBusOutput = Effect.Effect<
   InvitationId,
   PersistenceUnavailable,
-  DomainEventBus | UnitOfWork | Database.Database
+  DomainEventBus | UnitOfWork | Database.Database | InvitationMailer
 >;
 
 type AcceptInvitationBusOutput = Effect.Effect<
@@ -232,7 +235,7 @@ export const organizationCommandHandlers = commandHandlers({
   },
   InviteUserCommand: {
     handle: (cmd): InviteUserBusOutput =>
-      inviteUser(cmd).pipe(Effect.provide(InvitationRepositoryLive), Effect.provide(LogMailerLive)),
+      inviteUser(cmd).pipe(Effect.provide(InvitationRepositoryLive)),
     spanAttributes: inviteUserCommandSpanAttributes,
   },
   AcceptInvitationCommand: {
