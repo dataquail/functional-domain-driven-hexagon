@@ -91,10 +91,25 @@ export class OidcClient extends Effect.Service<OidcClient>()("OidcClient", {
           if (claims === undefined || typeof claims.sub !== "string") {
             throw new Error("id_token missing subject");
           }
-          const email =
-            typeof (claims as { email?: unknown }).email === "string"
-              ? ((claims as { email?: string }).email ?? null)
-              : null;
+          const readEmail = (source: { email?: unknown }): string | null =>
+            typeof source.email === "string" ? (source.email ?? null) : null;
+          let email = readEmail(claims as { email?: unknown });
+          // Zitadel omits the `email` claim from the id_token by default —
+          // it's only guaranteed at the userinfo endpoint. Pre-seeded users
+          // (e.g. the admin) already have an `auth_identities` row so sign-in
+          // never needs their email; but a self-registered user's first
+          // sign-in must provision a `users` row, which requires the email.
+          // Fall back to userinfo when the id_token didn't carry it. Best
+          // effort: a userinfo failure must not break sign-in for users who
+          // are already provisioned, so we swallow it and leave email null.
+          if (email === null) {
+            try {
+              const userinfo = await openid.fetchUserInfo(config, tokens.access_token, claims.sub);
+              email = readEmail(userinfo);
+            } catch {
+              email = null;
+            }
+          }
           return { subject: claims.sub, email };
         },
         catch: (cause) => {
