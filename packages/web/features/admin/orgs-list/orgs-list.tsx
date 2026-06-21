@@ -3,6 +3,7 @@
 import { Badge } from "@org/components/primitives/badge";
 import { Button } from "@org/components/primitives/button";
 import { ChevronLeftIcon, ChevronRightIcon } from "@org/components/primitives/icon";
+import Link from "next/link";
 
 import { useOrgsListPresenter } from "./orgs-list.presenter";
 
@@ -52,7 +53,17 @@ export const OrgsList: React.FC = () => {
               className="flex items-center justify-between gap-3 rounded-md border bg-card p-3"
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-foreground">{row.name}</p>
+                {row.isDeleted ? (
+                  <p className="truncate font-medium text-foreground">{row.name}</p>
+                ) : (
+                  <Link
+                    href={`/admin/orgs/${row.id}`}
+                    className="block truncate font-medium text-foreground hover:underline"
+                    data-testid="admin-orgs-row-link"
+                  >
+                    {row.name}
+                  </Link>
+                )}
                 <p className="text-xs text-muted-foreground">Created {row.createdAtLabel}</p>
                 {row.isDeleted && row.deletedAtLabel !== null ? (
                   <p className="text-xs text-destructive">Deleted {row.deletedAtLabel}</p>
