@@ -15,7 +15,7 @@ import React from "react";
 
 import { OrgMembersList } from "@/features/admin/org-members-list/org-members-list";
 import { ServerHydrationBoundary } from "@/lib/tanstack-query/server-hydration-boundary";
-import { prefetchAdminOrgMembers } from "@/services/data-access/admin-org-members-queries.server";
+import { prefetchOrgMembers } from "@/services/data-access/org-members-queries.server";
 
 const Fallback: React.FC = () => (
   <div className="space-y-2">
@@ -49,10 +49,7 @@ export default async function AdminOrgDetailPage({
           </div>
         </Card.Header>
         <Card.Content>
-          <ServerHydrationBoundary
-            prefetch={[prefetchAdminOrgMembers(orgId)]}
-            fallback={<Fallback />}
-          >
+          <ServerHydrationBoundary prefetch={[prefetchOrgMembers(orgId)]} fallback={<Fallback />}>
             <OrgMembersList orgId={orgId} />
           </ServerHydrationBoundary>
         </Card.Content>

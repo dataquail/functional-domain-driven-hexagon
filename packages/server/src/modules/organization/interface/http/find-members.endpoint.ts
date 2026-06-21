@@ -8,15 +8,16 @@ import * as Authz from "@/platform/auth/authz.js";
 import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
-// Super-admin only. Lists the members of one org, enriched with each
-// user's email. The cross-module orchestration (membership +
-// `UsersLookup`) lives inside the query handler; this endpoint stays a
-// thin dispatch — outbound ports are private to use cases.
+// Org admins + super-admins (the `update` policy's OR chain). Lists the
+// members of one org, enriched with each user's email and `isAdmin`
+// flag. The cross-module orchestration (membership + `UsersLookup` +
+// roles) lives inside the query handler; this endpoint stays a thin
+// dispatch — outbound ports are private to use cases.
 export const findMembersEndpoint = (
-  request: EndpointRequest<typeof OrganizationContract.AdminGroup, "findMembers">,
+  request: EndpointRequest<typeof OrganizationContract.Group, "findMembers">,
 ) =>
   Effect.gen(function* () {
-    yield* Authz.hasPermissions(OrganizationResource, Actions.Read, request.path.orgId).pipe(
+    yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.path.orgId).pipe(
       Effect.catchTag("NotFound", () =>
         Effect.fail(
           new OrganizationContract.OrganizationNotFoundError({
@@ -39,7 +40,8 @@ export const findMembersEndpoint = (
             userId: m.userId,
             email: m.email,
             joinedAt: m.joinedAt,
+            isAdmin: m.isAdmin,
           }),
       ),
     });
-  }).pipe(recoverPersistenceUnavailable, Effect.withSpan("OrganizationAdminLive.findMembers"));
+  }).pipe(recoverPersistenceUnavailable, Effect.withSpan("OrganizationLive.findMembers"));

@@ -65,6 +65,22 @@ export class MembershipNotFoundError extends Schema.TaggedError<MembershipNotFou
 // type from regular users; they don't own or join organizations.
 // Surfaces from `create` and `accept` when the caller's platform role
 // is `super_admin`.
+// 409 Conflict: the role grant/revoke contradicts the member's current
+// state. `already_admin` surfaces from promote when the member is
+// already an admin; `not_admin` from demote when they aren't one. One
+// error variant, a `reason` discriminator — same shape as
+// `InvitationGoneError`.
+export class OrganizationRoleConflictError extends Schema.TaggedError<OrganizationRoleConflictError>(
+  "OrganizationRoleConflictError",
+)(
+  "OrganizationRoleConflictError",
+  {
+    reason: Schema.Literal("already_admin", "not_admin"),
+    message: Schema.String,
+  },
+  HttpApiSchema.annotations({ status: 409 }),
+) {}
+
 export class SuperAdminCannotOwnOrganizationError extends Schema.TaggedError<SuperAdminCannotOwnOrganizationError>(
   "SuperAdminCannotOwnOrganizationError",
 )(
@@ -140,6 +156,9 @@ export class OrganizationMember extends Schema.Class<OrganizationMember>("Organi
   userId: UserId,
   email: Schema.String,
   joinedAt: Schema.DateTimeUtc,
+  // True when the member holds the `admin` OrganizationRole. Drives the
+  // promote/demote affordance in the member-management UI.
+  isAdmin: Schema.Boolean,
 }) {}
 
 export class OrganizationMembersResponse extends Schema.Class<OrganizationMembersResponse>(
@@ -201,6 +220,34 @@ export class Group extends HttpApiGroup.make("organization")
       .addError(MembershipNotFoundError)
       .addSuccess(Schema.Void),
   )
+  // Member-management surface. Gated by the `update` policy
+  // (`any(SuperAdminOnly, IsOrgAdmin)`), so both org admins and
+  // super-admins reach it via the same OR chain — exactly like
+  // `inviteUser` / `removeMember`. `findMembers` is the roster the
+  // org-admin UI and the super-admin drill-in both render.
+  .add(
+    HttpApiEndpoint.get("findMembers", "/:orgId/members")
+      .setPath(Schema.Struct({ orgId: OrganizationId }))
+      .addError(CustomHttpApiError.Forbidden)
+      .addError(OrganizationNotFoundError)
+      .addSuccess(OrganizationMembersResponse),
+  )
+  .add(
+    HttpApiEndpoint.post("promoteMember", "/:orgId/members/:userId/admin")
+      .setPath(Schema.Struct({ orgId: OrganizationId, userId: UserId }))
+      .addError(CustomHttpApiError.Forbidden)
+      .addError(OrganizationNotFoundError)
+      .addError(OrganizationRoleConflictError)
+      .addSuccess(Schema.Void),
+  )
+  .add(
+    HttpApiEndpoint.del("demoteMember", "/:orgId/members/:userId/admin")
+      .setPath(Schema.Struct({ orgId: OrganizationId, userId: UserId }))
+      .addError(CustomHttpApiError.Forbidden)
+      .addError(OrganizationNotFoundError)
+      .addError(OrganizationRoleConflictError)
+      .addSuccess(Schema.Void),
+  )
   .add(
     HttpApiEndpoint.post("leave", "/:orgId/leave")
       .setPath(Schema.Struct({ orgId: OrganizationId }))
@@ -223,17 +270,9 @@ export class AdminGroup extends HttpApiGroup.make("organizationAdmin")
       .addError(CustomHttpApiError.Forbidden)
       .addSuccess(PaginatedOrganizations),
   )
-  // Super-admin drill-in: list the members of a specific org, joined
-  // with each user's email. Reuses the regular `removeMember` /
-  // `inviteUser` endpoints on `Group` for write actions (their
-  // policies already let super-admins through via the OR chain).
-  .add(
-    HttpApiEndpoint.get("findMembers", "/:orgId/members")
-      .setPath(Schema.Struct({ orgId: OrganizationId }))
-      .addError(CustomHttpApiError.Forbidden)
-      .addError(OrganizationNotFoundError)
-      .addSuccess(OrganizationMembersResponse),
-  )
+  // Member listing moved to `Group.findMembers` (`/orgs/:orgId/members`,
+  // `update`-gated) so org admins and super-admins share one endpoint
+  // via the OR chain — consistent with `inviteUser` / `removeMember`.
   .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/admin/orgs") {}
 

@@ -7,37 +7,87 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 
 import { Api } from "@/api.js";
+import { MEMBER_CALLER_ID, SUPER_ADMIN_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { hasTestDatabase } from "@/test-utils/test-database.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
-suite("GET /admin/orgs/:orgId/members (integration)", () => {
+const ORG_ID = "11111111-1111-1111-1111-111111111111" as never;
+// A second, plain (non-admin) member, distinct from the seeded callers.
+const ADMIN_MEMBER_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa" as never;
+
+// Seeds an org with two members: the deterministic `MEMBER_CALLER_ID`
+// (plain member, no role) and `ADMIN_MEMBER_ID` (holds the `admin`
+// role). Org/membership/role rows are seeded directly because no
+// single-caller HTTP path can assemble a multi-member org (create-org
+// rejects super-admins, and accept needs the invitee's own session).
+const seedOrgWithMembers = Effect.gen(function* () {
+  const db = yield* Database.Database;
+  yield* db
+    .execute((c) =>
+      c.query(sql.unsafe`
+        INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
+        VALUES (${ADMIN_MEMBER_ID}, 'admin-member@test.local', 'USA', '3 St', '00000', now(), now())
+        ON CONFLICT (id) DO NOTHING
+      `),
+    )
+    .pipe(Effect.orDie);
+  yield* db
+    .execute((c) =>
+      c.query(sql.unsafe`
+        INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
+        VALUES (${ORG_ID}, 'Acme', now(), now(), null)
+      `),
+    )
+    .pipe(Effect.orDie);
+  yield* db
+    .execute((c) =>
+      c.query(sql.unsafe`
+        INSERT INTO "organization".memberships (user_id, organization_id, created_at)
+        VALUES (${MEMBER_CALLER_ID}, ${ORG_ID}, now()), (${ADMIN_MEMBER_ID}, ${ORG_ID}, now())
+      `),
+    )
+    .pipe(Effect.orDie);
+  yield* db
+    .execute((c) =>
+      c.query(sql.unsafe`
+        INSERT INTO "organization".organization_roles (organization_id, user_id, role, issued_by, created_at)
+        VALUES (${ORG_ID}, ${ADMIN_MEMBER_ID}, 'admin', ${SUPER_ADMIN_CALLER_ID}, now())
+      `),
+    )
+    .pipe(Effect.orDie);
+});
+
+suite("GET /orgs/:orgId/members (integration, super-admin caller)", () => {
   const { run } = useServerTestRuntime(
-    ["organization.memberships", "organization.organizations", "platform.roles", "user.users"],
+    [
+      "organization.organization_roles",
+      "organization.memberships",
+      "organization.organizations",
+      "platform.roles",
+      "user.users",
+    ],
     { seedSuperAdminCaller: true },
   );
 
-  it("returns the org's members enriched with email", async () => {
+  it("lists members enriched with email and the isAdmin flag", async () => {
     await run(
       Effect.gen(function* () {
+        yield* seedOrgWithMembers;
         const client = yield* HttpApiClient.make(Api);
-        // The seed user is super-admin; create-org now rejects SAs (slice 1),
-        // so we exercise find-members against an empty org by creating one
-        // via direct seed in future test fixtures. For now, the most we can
-        // assert without the user-invite flow is that an org with no
-        // members returns an empty array.
-        // TODO: replace once acceptInvitation can run end-to-end in a
-        //       single test process; for now we just exercise the empty case.
-        const { id: orgId } = yield* Effect.succeed({
-          id: "00000000-0000-0000-0000-000000000000" as never,
-        });
-        const exit = yield* Effect.exit(client.organizationAdmin.findMembers({ path: { orgId } }));
-        // The org doesn't actually exist in this trimmed setup; the
-        // endpoint completes the QueryBus dispatch and returns an empty
-        // member list (no NotFound check against the org row).
-        ok(Exit.isSuccess(exit) || Exit.isFailure(exit));
+        const res = yield* client.organization.findMembers({ path: { orgId: ORG_ID } });
+
+        deepStrictEqual(res.members.length, 2);
+        const byId = new Map(res.members.map((m) => [m.userId, m]));
+        const plain = byId.get(MEMBER_CALLER_ID);
+        const admin = byId.get(ADMIN_MEMBER_ID);
+        ok(plain !== undefined && admin !== undefined);
+        deepStrictEqual(plain.email, "member@test.local");
+        deepStrictEqual(plain.isAdmin, false);
+        deepStrictEqual(admin.email, "admin-member@test.local");
+        deepStrictEqual(admin.isAdmin, true);
       }),
     );
   });
@@ -45,29 +95,33 @@ suite("GET /admin/orgs/:orgId/members (integration)", () => {
 
 const memberSuite = hasTestDatabase ? describe.sequential : describe.skip;
 
-memberSuite("GET /admin/orgs/:orgId/members (integration, non-super-admin caller)", () => {
-  const { run } = useServerTestRuntime(["organization.organizations", "platform.roles"], {
-    server: TestServerLiveAsMember,
-  });
+memberSuite("GET /orgs/:orgId/members (integration, plain-member caller)", () => {
+  const { run } = useServerTestRuntime(
+    [
+      "organization.organization_roles",
+      "organization.organizations",
+      "platform.roles",
+      "user.users",
+    ],
+    { server: TestServerLiveAsMember, seedSuperAdminCaller: true },
+  );
 
-  it("returns 403 Forbidden", async () => {
+  it("returns 403 Forbidden for a member who holds no admin role", async () => {
     await run(
       Effect.gen(function* () {
-        // Seed a real org so the resource resolves; the SuperAdminOnly policy
-        // then denies the member with Forbidden. (Against a missing org the
-        // resolver would surface NotFound before the policy runs.)
-        const orgId = "11111111-1111-1111-1111-111111111111" as never;
         const db = yield* Database.Database;
         yield* db
           .execute((c) =>
             c.query(sql.unsafe`
               INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
-              VALUES (${orgId}, 'Acme', now(), now(), null)
+              VALUES (${ORG_ID}, 'Acme', now(), now(), null)
             `),
           )
           .pipe(Effect.orDie);
         const client = yield* HttpApiClient.make(Api);
-        const exit = yield* Effect.exit(client.organizationAdmin.findMembers({ path: { orgId } }));
+        const exit = yield* Effect.exit(
+          client.organization.findMembers({ path: { orgId: ORG_ID } }),
+        );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
           ok(exit.cause.error instanceof CustomHttpApiError.Forbidden);
@@ -76,8 +130,3 @@ memberSuite("GET /admin/orgs/:orgId/members (integration, non-super-admin caller
     );
   });
 });
-
-// Without a `DATABASE_URL_TEST`, the suites above self-skip; this keeps
-// the file present for the parity rule (every `*.endpoint.ts` needs a
-// sibling test) without requiring DB-side fixtures.
-deepStrictEqual.bind(null); // hold the import — used inside skipped suites

@@ -13,11 +13,13 @@ describe("computeOrgMembersListView", () => {
           userId: UserId.make("22222222-2222-2222-2222-222222222222"),
           email: "a@example.com",
           joinedAt: "2026-05-01T00:00:00.000Z",
+          isAdmin: true,
         },
       ],
     } as unknown as never);
     expect(view.rows).toHaveLength(1);
     expect(view.rows[0]?.joinedAtLabel).toBe("2026-05-01");
+    expect(view.rows[0]?.isAdmin).toBe(true);
     expect(view.isEmpty).toBe(false);
     void orgId;
   });

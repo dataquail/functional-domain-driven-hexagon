@@ -97,6 +97,7 @@ export const organizationQueryHandlers = queryHandlers({
       findOrganizationMemberships(q).pipe(
         Effect.provide(MembershipRepositoryLive),
         Effect.provide(UsersLookupLive),
+        Effect.provide(OrganizationRolesRepositoryLive),
       ),
     spanAttributes: findOrganizationMembershipsQuerySpanAttributes,
   },

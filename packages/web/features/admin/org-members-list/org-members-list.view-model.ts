@@ -13,6 +13,7 @@ export type MemberRowView = {
   readonly userId: UserId;
   readonly email: string;
   readonly joinedAtLabel: string;
+  readonly isAdmin: boolean;
 };
 
 export type OrgMembersListView = {
@@ -40,6 +41,7 @@ export const computeOrgMembersListView = (
     userId: m.userId,
     email: m.email,
     joinedAtLabel: formatDate(m.joinedAt),
+    isAdmin: m.isAdmin,
   }));
   return { rows, isEmpty: rows.length === 0 };
 };

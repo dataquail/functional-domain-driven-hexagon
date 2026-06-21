@@ -13,6 +13,7 @@ export const OrgNav: React.FC<{ readonly orgId: OrganizationId }> = ({ orgId }) 
   const base = `/orgs/${orgId}`;
   const links: ReadonlyArray<{ href: string; label: string; testid: string }> = [
     { href: `${base}`, label: "Tasks", testid: "org-nav-tasks" },
+    { href: `${base}/members`, label: "Members", testid: "org-nav-members" },
     { href: `${base}/billing`, label: "Billing", testid: "org-nav-billing" },
     { href: `${base}/invite`, label: "Invite", testid: "org-nav-invite" },
   ];
