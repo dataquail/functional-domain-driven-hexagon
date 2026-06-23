@@ -24,7 +24,11 @@ test("a user can sign in via Zitadel and land on the app", async ({ page }) => {
   const zitadel = new ZitadelLoginPage(page);
   await zitadel.signIn(adminEmail, adminPassword);
 
-  await page.waitForURL(({ pathname }) => pathname === "/", { timeout: 15_000 });
+  // The seeded admin is a super-admin (`platform.roles = 'super_admin'`,
+  // see admin-seed.ts). Super-admins are locked out of the regular-user
+  // shell — the root `/` route redirects them to the platform-wide org
+  // admin view (commit cf22144), which is their landing page.
+  await page.waitForURL(({ pathname }) => pathname === "/admin/orgs", { timeout: 15_000 });
 
   // Authenticated nav element from the root layout. Sign-out is a plain
   // <a href="/api/auth/logout"> on Next (BFF logout is GET-idempotent

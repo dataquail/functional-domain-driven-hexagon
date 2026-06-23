@@ -1,22 +1,26 @@
 import { test } from "@playwright/test";
 
-import { IndexPage } from "@/drivers/pages/index-page";
-import { truncate } from "@/test-utils/database";
+import { OrgTasksPage } from "@/drivers/pages/org-tasks-page";
+import { RootPage } from "@/drivers/pages/root-page";
+import { MEMBER_STORAGE_STATE } from "@/test-utils/member-credentials";
 
-const DATABASE_URL_TEST =
-  process.env.DATABASE_URL_TEST ??
-  "postgresql://postgres:postgres@localhost:5432/effect-monorepo-test";
+// Todos are org-scoped (ADR-0021), and super-admins can't own orgs, so
+// this path runs as the regular member (member-setup mints the cookie).
+// Each run creates a fresh org and adds a todo inside it — a brand-new
+// org has no todos, so no truncation is needed for isolation.
+test.use({ storageState: MEMBER_STORAGE_STATE });
 
-test.beforeEach(async () => {
-  await truncate(DATABASE_URL_TEST, ["todos.todos"]);
-});
+test("a member can add a todo within their organization", async ({ page }) => {
+  const root = new RootPage(page);
+  await root.visit();
+  const orgId = await root.createOrg(`Acme ${Date.now()}`);
 
-test("a todo can be added from the index page", async ({ page }) => {
-  const index = new IndexPage(page);
-  await index.visit();
+  // createOrg navigates into the new org's tasks page on success.
+  const tasks = new OrgTasksPage(page, orgId);
+  await tasks.expectReady();
 
-  await index.addTodo("Buy milk");
+  await tasks.addTodo("Buy milk");
 
-  await index.expectTodoVisible("Buy milk");
-  await index.expectInputCleared();
+  await tasks.expectTodoVisible("Buy milk");
+  await tasks.expectInputCleared();
 });

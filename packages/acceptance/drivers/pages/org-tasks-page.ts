@@ -1,15 +1,23 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
-// Page Object for the todos page (route: /). Hides selectors and Playwright
-// API behind domain-shaped methods so specs can stay declarative. Only this
-// file knows about data-testid="add-todo-input" etc.
-export class IndexPage {
-  constructor(private readonly page: Page) {}
+// Page Object for an organization's tasks page (route: /orgs/:orgId, the
+// "Tasks" tab). Todos are org-scoped (ADR-0021), so the add-todo surface
+// lives here rather than at the old `/` index. Only this file knows about
+// data-testid="add-todo-input" etc.
+export class OrgTasksPage {
+  constructor(
+    private readonly page: Page,
+    private readonly orgId: string,
+  ) {}
 
   public async visit(): Promise<void> {
-    await this.page.goto("/");
-    // Wait on the form's testid rather than a heading — Card.Title renders a
-    // <div>, not a heading element.
+    await this.page.goto(`/orgs/${this.orgId}`);
+    await expect(this.input).toBeVisible();
+  }
+
+  // For when the caller already navigated here (e.g. right after creating
+  // the org): just assert the form is ready.
+  public async expectReady(): Promise<void> {
     await expect(this.input).toBeVisible();
   }
 

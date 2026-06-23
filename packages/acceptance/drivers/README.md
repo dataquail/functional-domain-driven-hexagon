@@ -4,7 +4,7 @@ Layered abstraction between specs and Playwright/HTTP, per Synapse's `acceptance
 
 ## `pages/`
 
-Page Objects. Each file owns a route (`/users` → `UsersPage`, `/` → `IndexPage`) and exposes domain-shaped methods (`createUser`, `addTodo`). All `data-testid` selectors and Playwright `Locator` access lives here. Specs never see selectors.
+Page Objects. Each file owns a route (`/users` → `UsersPage`, `/` → `RootPage`, `/orgs/:orgId` → `OrgTasksPage`) and exposes domain-shaped methods (`createUser`, `createOrg`, `addTodo`). All `data-testid` selectors and Playwright `Locator` access lives here. Specs never see selectors.
 
 ## `workflows/` (extension point)
 
