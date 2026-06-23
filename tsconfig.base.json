@@ -47,7 +47,13 @@
       "@org/database/*": ["./packages/database/src/*.js"],
       "@org/database/test/*": ["./packages/database/test/*.js"],
       "@org/jobs": ["./packages/jobs/src/main.js"],
-      "@org/jobs/*": ["./packages/jobs/src/*.js"]
+      "@org/jobs/*": ["./packages/jobs/src/*.js"],
+      "@org/api-client": ["./packages/api-client/src/index.js"],
+      "@org/api-client/*": ["./packages/api-client/src/*.js"],
+      "@org/cli": ["./packages/cli/src/main.js"],
+      "@org/cli/*": ["./packages/cli/src/*.js"],
+      "@org/mcp": ["./packages/mcp/src/main.js"],
+      "@org/mcp/*": ["./packages/mcp/src/*.js"]
     }
   }
 }

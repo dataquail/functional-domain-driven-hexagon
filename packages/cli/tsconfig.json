@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": [],
+  "exclude": ["src/**/*.test.ts"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@org/api-client": ["../api-client/src/index.js"],
+      "@org/api-client/*": ["../api-client/src/*.js"],
+      "@org/contracts": ["../contracts/src/index.js"],
+      "@org/contracts/*": ["../contracts/src/*.js"]
+    }
+  },
+  "references": [{ "path": "tsconfig.src.json" }]
+}

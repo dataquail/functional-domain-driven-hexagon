@@ -3,7 +3,7 @@ import * as HttpApiGroup from "@effect/platform/HttpApiGroup";
 import * as Schema from "effect/Schema";
 
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
-import { UserId } from "../EntityIds.js";
+import { ApiTokenId, UserId } from "../EntityIds.js";
 import { UserAuthMiddleware } from "../Policy.js";
 
 // ==========================================
@@ -64,3 +64,81 @@ export class PrivateGroup extends HttpApiGroup.make("authSession")
   // Group-wide 503 surface — see UserContract for rationale.
   .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/auth") {}
+
+// ==========================================
+// API tokens: GUI-managed personal access tokens (ADR-0024)
+// ==========================================
+
+// Owner-facing summary of an active token. Carries no secret — `prefix` is
+// the non-secret display fragment shown so an owner can tell tokens apart.
+export class ApiTokenSummary extends Schema.Class<ApiTokenSummary>("ApiTokenSummary")({
+  id: ApiTokenId,
+  label: Schema.String,
+  prefix: Schema.String,
+  expiresAt: Schema.NullOr(Schema.DateTimeUtc),
+  createdAt: Schema.DateTimeUtc,
+  lastUsedAt: Schema.DateTimeUtc,
+}) {}
+
+export class CreateApiTokenPayload extends Schema.Class<CreateApiTokenPayload>(
+  "CreateApiTokenPayload",
+)({
+  label: Schema.String.pipe(Schema.minLength(1), Schema.maxLength(255)),
+  // Days until the token expires. Optional — the server falls back to its
+  // configured default. Capped to keep CI tokens from living forever.
+  expiresInDays: Schema.optional(
+    Schema.Int.pipe(Schema.greaterThanOrEqualTo(1), Schema.lessThanOrEqualTo(3650)),
+  ),
+}) {}
+
+// The plaintext `token` is returned exactly once at creation and never again.
+export class CreateApiTokenResponse extends Schema.Class<CreateApiTokenResponse>(
+  "CreateApiTokenResponse",
+)({
+  id: ApiTokenId,
+  token: Schema.String,
+  prefix: Schema.String,
+  expiresAt: Schema.NullOr(Schema.DateTimeUtc),
+}) {}
+
+export class DeviceApprovalPayload extends Schema.Class<DeviceApprovalPayload>(
+  "DeviceApprovalPayload",
+)({
+  userCode: Schema.String.pipe(Schema.minLength(1), Schema.maxLength(32)),
+}) {}
+
+// Browser-side approval of a CLI device grant (ADR-0024). The signed-in user
+// submits the code the CLI showed them; the server binds the grant to them.
+// On the GUI surface (the human is in the browser); the CLI's start/poll
+// endpoints live on `CliApi`.
+export class DeviceApprovalGroup extends HttpApiGroup.make("authDevice")
+  .middleware(UserAuthMiddleware)
+  .add(
+    HttpApiEndpoint.post("approve", "/approve")
+      .setPayload(DeviceApprovalPayload)
+      .addError(CustomHttpApiError.NotFound)
+      .addError(CustomHttpApiError.Gone)
+      .addSuccess(Schema.Void),
+  )
+  .addError(CustomHttpApiError.ServiceUnavailable)
+  .prefix("/auth/device") {}
+
+// Token management is a human-in-the-browser concern (a user mints a CI
+// token); the CLI/MCP obtain tokens via the device flow or a pre-minted PAT.
+// Hence this lives on the GUI `DomainApi`, not the CLI surface (ADR-0024).
+export class TokensGroup extends HttpApiGroup.make("authTokens")
+  .middleware(UserAuthMiddleware)
+  .add(
+    HttpApiEndpoint.post("create", "/")
+      .setPayload(CreateApiTokenPayload)
+      .addSuccess(CreateApiTokenResponse),
+  )
+  .add(HttpApiEndpoint.get("list", "/").addSuccess(Schema.Array(ApiTokenSummary)))
+  .add(
+    HttpApiEndpoint.del("revoke", "/:id")
+      .setPath(Schema.Struct({ id: ApiTokenId }))
+      .addError(CustomHttpApiError.NotFound)
+      .addSuccess(Schema.Void),
+  )
+  .addError(CustomHttpApiError.ServiceUnavailable)
+  .prefix("/auth/tokens") {}

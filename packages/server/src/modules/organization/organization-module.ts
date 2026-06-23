@@ -4,6 +4,7 @@ import { MailerLive } from "@/platform/notifications/mailer-live.js";
 
 import { InvitationMailerLive } from "./infrastructure/external/invitation-mailer-live.js";
 import { OrganizationRepositoryLive } from "./infrastructure/organization-repository-live.js";
+import { OrgCliLive } from "./interface/cli/org-cli-live.js";
 import {
   InvitationLive,
   OrganizationAdminLive,
@@ -23,4 +24,6 @@ export const OrganizationModuleLive = Layer.mergeAll(
   OrganizationLive,
   OrganizationAdminLive,
   InvitationLive,
+  // CLI-facing `listMine` (the `cliOrganization` group on CliApi).
+  OrgCliLive,
 ).pipe(Layer.provide(OrganizationRepositoryLive), Layer.provide(InvitationMailerProvided));

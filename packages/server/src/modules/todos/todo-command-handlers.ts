@@ -1,6 +1,11 @@
 import { type Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
+import { completeTodo } from "@/modules/todos/commands/complete-todo.js";
+import {
+  type CompleteTodoCommand,
+  completeTodoCommandSpanAttributes,
+} from "@/modules/todos/commands/complete-todo-command.js";
 import { createTodo } from "@/modules/todos/commands/create-todo.js";
 import {
   type CreateTodoCommand,
@@ -33,6 +38,11 @@ type UpdateTodoBusOutput = Effect.Effect<
   TodoNotFound | PersistenceUnavailable,
   Database.Database
 >;
+type CompleteTodoBusOutput = Effect.Effect<
+  Todo,
+  TodoNotFound | PersistenceUnavailable,
+  Database.Database
+>;
 
 declare module "@/platform/ddd/ports/command-bus.js" {
   interface CommandRegistry {
@@ -43,6 +53,10 @@ declare module "@/platform/ddd/ports/command-bus.js" {
     UpdateTodoCommand: {
       readonly command: UpdateTodoCommand;
       readonly output: UpdateTodoBusOutput;
+    };
+    CompleteTodoCommand: {
+      readonly command: CompleteTodoCommand;
+      readonly output: CompleteTodoBusOutput;
     };
     DeleteTodoCommand: {
       readonly command: DeleteTodoCommand;
@@ -59,6 +73,11 @@ export const todoCommandHandlers = commandHandlers({
   UpdateTodoCommand: {
     handle: (cmd): UpdateTodoBusOutput => updateTodo(cmd).pipe(Effect.provide(TodosRepositoryLive)),
     spanAttributes: updateTodoCommandSpanAttributes,
+  },
+  CompleteTodoCommand: {
+    handle: (cmd): CompleteTodoBusOutput =>
+      completeTodo(cmd).pipe(Effect.provide(TodosRepositoryLive)),
+    spanAttributes: completeTodoCommandSpanAttributes,
   },
   DeleteTodoCommand: {
     handle: (cmd): DeleteTodoBusOutput => deleteTodo(cmd).pipe(Effect.provide(TodosRepositoryLive)),
