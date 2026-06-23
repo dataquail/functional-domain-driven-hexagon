@@ -26,7 +26,7 @@ export const startDeviceGrant = (cmd: StartDeviceGrantCommand): StartDeviceGrant
     const repo = yield* DeviceGrantRepository;
     const { deviceCode, userCode } = yield* Effect.sync(() => ({
       deviceCode: randomBytes(32).toString("base64url"),
-      userCode: toUserCode(randomBytes(8)),
+      userCode: toUserCode(randomBytes(16)),
     }));
     const id = DeviceGrantId.make(yield* Effect.sync(() => randomUUID()));
     const now = yield* DateTime.now;
