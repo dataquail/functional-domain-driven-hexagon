@@ -31,6 +31,11 @@ import {
   type RemoveMemberCommand,
   removeMemberCommandSpanAttributes,
 } from "@/modules/organization/commands/remove-member-command.js";
+import { resendInvitation } from "@/modules/organization/commands/resend-invitation.js";
+import {
+  type ResendInvitationCommand,
+  resendInvitationCommandSpanAttributes,
+} from "@/modules/organization/commands/resend-invitation-command.js";
 import { restoreOrganization } from "@/modules/organization/commands/restore-organization.js";
 import {
   type RestoreOrganizationCommand,
@@ -146,6 +151,17 @@ type RevokeInvitationBusOutput = Effect.Effect<
   DomainEventBus | UnitOfWork | Database.Database
 >;
 
+// `InvitationMailer` stays in R (provided by `OrganizationModuleLive`) —
+// resend re-sends the email after the reissue commits.
+type ResendInvitationBusOutput = Effect.Effect<
+  void,
+  | InvitationNotFound
+  | InvitationAlreadyAccepted
+  | InvitationAlreadyRevoked
+  | PersistenceUnavailable,
+  DomainEventBus | UnitOfWork | Database.Database | InvitationMailer
+>;
+
 type GrantOrganizationRoleBusOutput = Effect.Effect<
   void,
   AlreadyHasOrganizationRole | CannotPromoteSelfInOrganization | PersistenceUnavailable,
@@ -191,6 +207,10 @@ declare module "@/platform/ddd/ports/command-bus.js" {
     RevokeInvitationCommand: {
       readonly command: RevokeInvitationCommand;
       readonly output: RevokeInvitationBusOutput;
+    };
+    ResendInvitationCommand: {
+      readonly command: ResendInvitationCommand;
+      readonly output: ResendInvitationBusOutput;
     };
     GrantOrganizationRoleCommand: {
       readonly command: GrantOrganizationRoleCommand;
@@ -250,6 +270,11 @@ export const organizationCommandHandlers = commandHandlers({
     handle: (cmd): RevokeInvitationBusOutput =>
       revokeInvitation(cmd).pipe(Effect.provide(InvitationRepositoryLive)),
     spanAttributes: revokeInvitationCommandSpanAttributes,
+  },
+  ResendInvitationCommand: {
+    handle: (cmd): ResendInvitationBusOutput =>
+      resendInvitation(cmd).pipe(Effect.provide(InvitationRepositoryLive)),
+    spanAttributes: resendInvitationCommandSpanAttributes,
   },
   GrantOrganizationRoleCommand: {
     handle: (cmd): GrantOrganizationRoleBusOutput =>

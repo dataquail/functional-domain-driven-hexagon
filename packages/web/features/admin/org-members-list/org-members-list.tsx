@@ -6,12 +6,17 @@ import type { OrganizationId } from "@org/contracts/EntityIds";
 
 import { useOrgMembersListPresenter } from "./org-members-list.presenter";
 
-// Shared member-management list. Rendered by both the super-admin
-// drill-in (/admin/orgs/[orgId]) and the org-admin members page
-// (/orgs/[orgId]/members). The backing endpoints are `update`-gated, so
-// both surfaces reach the same data; a non-admin who somehow submits a
-// role change gets a 403 toast.
-export const OrgMembersList: React.FC<{ readonly orgId: OrganizationId }> = ({ orgId }) => {
+// Shared member roster. Rendered by the super-admin drill-in
+// (/admin/orgs/[orgId]), the org-admin members page, and — read-only —
+// the plain-member members page (/orgs/[orgId]/members). The roster
+// endpoint is member-readable; the management actions (promote/demote/
+// remove) are `update`-gated. `canManage` hides those controls for
+// non-admins so a plain member sees the roster without dead buttons;
+// the backend still 403s any mutation regardless.
+export const OrgMembersList: React.FC<{
+  readonly orgId: OrganizationId;
+  readonly canManage?: boolean;
+}> = ({ canManage = true, orgId }) => {
   const { isChangingRole, isEmpty, isRemoving, onDemote, onPromote, onRemove, rows } =
     useOrgMembersListPresenter(orgId);
 
@@ -44,47 +49,49 @@ export const OrgMembersList: React.FC<{ readonly orgId: OrganizationId }> = ({ o
             </div>
             <p className="text-xs text-muted-foreground">Joined {row.joinedAtLabel}</p>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {row.isAdmin ? (
+          {canManage ? (
+            <div className="flex shrink-0 items-center gap-2">
+              {row.isAdmin ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={isChangingRole}
+                  onClick={() => {
+                    onDemote(row);
+                  }}
+                  data-testid="admin-org-members-demote"
+                >
+                  Demote
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={isChangingRole}
+                  onClick={() => {
+                    onPromote(row);
+                  }}
+                  data-testid="admin-org-members-promote"
+                >
+                  Promote
+                </Button>
+              )}
               <Button
                 type="button"
                 size="sm"
-                variant="outline"
-                disabled={isChangingRole}
+                variant="destructive"
+                disabled={isRemoving}
                 onClick={() => {
-                  onDemote(row);
+                  onRemove(row);
                 }}
-                data-testid="admin-org-members-demote"
+                data-testid="admin-org-members-remove"
               >
-                Demote
+                Remove
               </Button>
-            ) : (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={isChangingRole}
-                onClick={() => {
-                  onPromote(row);
-                }}
-                data-testid="admin-org-members-promote"
-              >
-                Promote
-              </Button>
-            )}
-            <Button
-              type="button"
-              size="sm"
-              variant="destructive"
-              disabled={isRemoving}
-              onClick={() => {
-                onRemove(row);
-              }}
-              data-testid="admin-org-members-remove"
-            >
-              Remove
-            </Button>
-          </div>
+            </div>
+          ) : null}
         </li>
       ))}
     </ul>

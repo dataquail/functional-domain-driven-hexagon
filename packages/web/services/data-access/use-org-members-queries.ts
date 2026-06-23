@@ -6,16 +6,52 @@ import { useEffectMutation, useEffectSuspenseQuery } from "@/lib/tanstack-query"
 
 import {
   demoteOrgMember,
+  orgInvitationsQuery,
+  orgInvitationsQueryKey,
   orgMembersQuery,
   orgMembersQueryKey,
   promoteOrgMember,
   removeOrgMember,
+  resendOrgInvitation,
+  revokeOrgInvitation,
 } from "./org-members-queries";
 
 export const useOrgMembersSuspenseQuery = (orgId: OrganizationId) =>
   useEffectSuspenseQuery({
     queryKey: orgMembersQueryKey({ orgId }),
     queryFn: () => orgMembersQuery(orgId),
+  });
+
+export const useOrgInvitationsSuspenseQuery = (orgId: OrganizationId) =>
+  useEffectSuspenseQuery({
+    queryKey: orgInvitationsQueryKey({ orgId }),
+    queryFn: () => orgInvitationsQuery(orgId),
+  });
+
+export const useResendOrgInvitationMutation = () =>
+  useEffectMutation({
+    mutationKey: ["OrgInvitations.resend"],
+    mutationFn: resendOrgInvitation,
+    toastifySuccess: () => "Invitation resent.",
+    toastifyErrors: {
+      OrganizationNotFoundError: (error) => error.message,
+      InvitationNotFoundError: (error) => error.message,
+      InvitationGoneError: (error) => error.message,
+      Forbidden: (error) => error.message,
+    },
+  });
+
+export const useRevokeOrgInvitationMutation = () =>
+  useEffectMutation({
+    mutationKey: ["OrgInvitations.revoke"],
+    mutationFn: revokeOrgInvitation,
+    toastifySuccess: () => "Invitation revoked.",
+    toastifyErrors: {
+      OrganizationNotFoundError: (error) => error.message,
+      InvitationNotFoundError: (error) => error.message,
+      InvitationGoneError: (error) => error.message,
+      Forbidden: (error) => error.message,
+    },
   });
 
 export const useRemoveOrgMemberMutation = () =>

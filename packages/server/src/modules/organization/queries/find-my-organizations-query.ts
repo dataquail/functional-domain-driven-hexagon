@@ -30,6 +30,10 @@ export type FindMyOrganizationsView = {
   readonly name: string;
   readonly createdAt: DateTime.Utc;
   readonly updatedAt: DateTime.Utc;
+  // Whether the caller holds the `admin` OrganizationRole in this org.
+  // Drives the frontend's admin-only surfaces (Billing / Invite tabs,
+  // member management) without a separate role probe.
+  readonly isAdmin: boolean;
 };
 
 export type FindMyOrganizationsResult = {

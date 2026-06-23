@@ -15,7 +15,13 @@ suite("GET /orgs (integration — findMine)", () => {
   // findMine returns the caller's own orgs, so the caller must be able to own
   // them: a regular member, not a super-admin.
   const { run } = useServerTestRuntime(
-    ["organization.memberships", "organization.organizations", "platform.roles", "user.users"],
+    [
+      "organization.organization_roles",
+      "organization.memberships",
+      "organization.organizations",
+      "platform.roles",
+      "user.users",
+    ],
     { server: TestServerLiveAsMember, seedSuperAdminCaller: true },
   );
 
@@ -30,6 +36,12 @@ suite("GET /orgs (integration — findMine)", () => {
         deepStrictEqual(
           orgs.map((o) => o.name),
           ["Beta", "Acme"],
+        );
+        // The creator is auto-granted the `admin` role, so both orgs the
+        // caller just created come back flagged `isAdmin`.
+        deepStrictEqual(
+          orgs.map((o) => o.isAdmin),
+          [true, true],
         );
       }),
     );

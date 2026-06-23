@@ -101,6 +101,21 @@ export class Organization extends Schema.Class<Organization>("Organization")({
   deletedAt: Schema.NullOr(Schema.DateTimeUtc),
 }) {}
 
+// The caller's own org as returned by `findMine`. Carries `isAdmin` —
+// whether the caller holds the `admin` OrganizationRole here — so the
+// frontend can gate admin-only surfaces (Billing / Invite tabs, member
+// management) without a separate role probe. Distinct from the shared
+// `Organization` shape, which is also returned by the super-admin
+// `findAll` listing where "isAdmin relative to whom?" has no answer.
+export class MyOrganization extends Schema.Class<MyOrganization>("MyOrganization")({
+  id: OrganizationId,
+  name: Schema.String,
+  createdAt: Schema.DateTimeUtc,
+  updatedAt: Schema.DateTimeUtc,
+  deletedAt: Schema.NullOr(Schema.DateTimeUtc),
+  isAdmin: Schema.Boolean,
+}) {}
+
 // ==========================================
 // Payloads / Responses
 // ==========================================
@@ -167,13 +182,32 @@ export class OrganizationMembersResponse extends Schema.Class<OrganizationMember
   members: Schema.Array(OrganizationMember),
 }) {}
 
+// A still-open invitation (not yet accepted, not revoked) for the
+// pending-invitations section of the member-management surface.
+// `status` distinguishes a live invite from a lapsed (expired) one so
+// the UI can flag the latter for resend. Accepted invitees appear in
+// the members list instead; revoked invitations aren't returned.
+export class PendingInvitation extends Schema.Class<PendingInvitation>("PendingInvitation")({
+  invitationId: InvitationId,
+  inviteeEmail: Schema.String,
+  status: Schema.Literal("pending", "expired"),
+  expiresAt: Schema.DateTimeUtc,
+  createdAt: Schema.DateTimeUtc,
+}) {}
+
+export class PendingInvitationsResponse extends Schema.Class<PendingInvitationsResponse>(
+  "PendingInvitationsResponse",
+)({
+  invitations: Schema.Array(PendingInvitation),
+}) {}
+
 // ==========================================
 // Endpoints
 // ==========================================
 
 export class Group extends HttpApiGroup.make("organization")
   .middleware(UserAuthMiddleware)
-  .add(HttpApiEndpoint.get("findMine", "/").addSuccess(Schema.Array(Organization)))
+  .add(HttpApiEndpoint.get("findMine", "/").addSuccess(Schema.Array(MyOrganization)))
   .add(
     HttpApiEndpoint.post("create", "/")
       .setPayload(CreateOrganizationPayload)
@@ -212,6 +246,28 @@ export class Group extends HttpApiGroup.make("organization")
       .addError(InvitationGoneError)
       .addSuccess(Schema.Void),
   )
+  // Pending-invitations roster for the member-management surface.
+  // `update`-gated (org admin OR super-admin) — viewing who has been
+  // invited is part of managing invitations, so unlike `findMembers`
+  // (member-readable) this stays admin-only.
+  .add(
+    HttpApiEndpoint.get("findInvitations", "/:orgId/invitations")
+      .setPath(Schema.Struct({ orgId: OrganizationId }))
+      .addError(CustomHttpApiError.Forbidden)
+      .addError(OrganizationNotFoundError)
+      .addSuccess(PendingInvitationsResponse),
+  )
+  // Resend = reissue (fresh token + expiry) + re-send the email. Reissue
+  // refuses a terminal invitation, surfaced as 410 Gone like revoke.
+  .add(
+    HttpApiEndpoint.post("resendInvitation", "/:orgId/invitations/:invitationId/resend")
+      .setPath(Schema.Struct({ orgId: OrganizationId, invitationId: InvitationId }))
+      .addError(CustomHttpApiError.Forbidden)
+      .addError(OrganizationNotFoundError)
+      .addError(InvitationNotFoundError)
+      .addError(InvitationGoneError)
+      .addSuccess(Schema.Void),
+  )
   .add(
     HttpApiEndpoint.del("removeMember", "/:orgId/members/:userId")
       .setPath(Schema.Struct({ orgId: OrganizationId, userId: UserId }))
@@ -220,11 +276,11 @@ export class Group extends HttpApiGroup.make("organization")
       .addError(MembershipNotFoundError)
       .addSuccess(Schema.Void),
   )
-  // Member-management surface. Gated by the `update` policy
-  // (`any(SuperAdminOnly, IsOrgAdmin)`), so both org admins and
-  // super-admins reach it via the same OR chain — exactly like
-  // `inviteUser` / `removeMember`. `findMembers` is the roster the
-  // org-admin UI and the super-admin drill-in both render.
+  // Members roster. `read`-gated (`any(SuperAdminOnly, IsMember)`) so
+  // any member of the org may view it — managing the roster (promote /
+  // demote / remove) stays `update`-gated. Rendered by the org members
+  // page (read-only for plain members), the org-admin management UI,
+  // and the super-admin drill-in.
   .add(
     HttpApiEndpoint.get("findMembers", "/:orgId/members")
       .setPath(Schema.Struct({ orgId: OrganizationId }))
@@ -271,8 +327,8 @@ export class AdminGroup extends HttpApiGroup.make("organizationAdmin")
       .addSuccess(PaginatedOrganizations),
   )
   // Member listing moved to `Group.findMembers` (`/orgs/:orgId/members`,
-  // `update`-gated) so org admins and super-admins share one endpoint
-  // via the OR chain — consistent with `inviteUser` / `removeMember`.
+  // `read`-gated) so members, org admins, and super-admins share one
+  // endpoint via the OR chain.
   .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/admin/orgs") {}
 

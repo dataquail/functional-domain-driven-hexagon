@@ -1,3 +1,13 @@
+/** @jsxRuntime automatic */
+/** @jsxImportSource react */
+// The pragmas above pin this file to the automatic JSX runtime regardless
+// of which tsconfig the launcher resolves. Without them, a runtime that
+// falls back to the classic transform (e.g. `tsx`/esbuild resolving the
+// root tsconfig.json, whose `include: []` makes its `jsx` setting inert)
+// emits `React.createElement` with no React in scope — "ReferenceError:
+// React is not defined" at render time. tsc + vitest already use the
+// automatic runtime via tsconfig.src.json; these make every other entry
+// path (dev `tsx watch`, VSCode tasks, prod build) agree.
 import {
   Body,
   Button,

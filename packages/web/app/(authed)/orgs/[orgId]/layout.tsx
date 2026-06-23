@@ -29,7 +29,7 @@ export default async function OrgScopedLayout({
 
   return (
     <React.Fragment>
-      <OrgNav orgId={typedOrgId} />
+      <OrgNav orgId={typedOrgId} isAdmin={member.isAdmin} />
       <div className="flex flex-1 flex-col py-8">{children}</div>
     </React.Fragment>
   );

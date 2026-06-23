@@ -99,6 +99,7 @@ memberSuite("GET /orgs/:orgId/members (integration, plain-member caller)", () =>
   const { run } = useServerTestRuntime(
     [
       "organization.organization_roles",
+      "organization.memberships",
       "organization.organizations",
       "platform.roles",
       "user.users",
@@ -106,18 +107,50 @@ memberSuite("GET /orgs/:orgId/members (integration, plain-member caller)", () =>
     { server: TestServerLiveAsMember, seedSuperAdminCaller: true },
   );
 
-  it("returns 403 Forbidden for a member who holds no admin role", async () => {
+  const seedOrg = Effect.gen(function* () {
+    const db = yield* Database.Database;
+    yield* db
+      .execute((c) =>
+        c.query(sql.unsafe`
+          INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
+          VALUES (${ORG_ID}, 'Acme', now(), now(), null)
+        `),
+      )
+      .pipe(Effect.orDie);
+  });
+
+  it("lets a plain member (no admin role) read the roster", async () => {
     await run(
       Effect.gen(function* () {
+        yield* seedOrg;
         const db = yield* Database.Database;
+        // The caller is a member but holds no `admin` role.
         yield* db
           .execute((c) =>
             c.query(sql.unsafe`
-              INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
-              VALUES (${ORG_ID}, 'Acme', now(), now(), null)
+              INSERT INTO "organization".memberships (user_id, organization_id, created_at)
+              VALUES (${MEMBER_CALLER_ID}, ${ORG_ID}, now())
             `),
           )
           .pipe(Effect.orDie);
+
+        const client = yield* HttpApiClient.make(Api);
+        const res = yield* client.organization.findMembers({ path: { orgId: ORG_ID } });
+
+        deepStrictEqual(res.members.length, 1);
+        const self = res.members[0];
+        ok(self !== undefined);
+        deepStrictEqual(self.userId, MEMBER_CALLER_ID);
+        // Viewing is allowed; the member is not an admin.
+        deepStrictEqual(self.isAdmin, false);
+      }),
+    );
+  });
+
+  it("returns 403 Forbidden for a caller who is not a member of the org", async () => {
+    await run(
+      Effect.gen(function* () {
+        yield* seedOrg;
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
           client.organization.findMembers({ path: { orgId: ORG_ID } }),

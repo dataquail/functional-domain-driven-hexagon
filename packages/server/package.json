@@ -17,7 +17,7 @@
     "prebuild": "npm run clean",
     "build": "tsc -b tsconfig.build.json",
     "predev": "lsof -ti:3001 | xargs kill -9 2>/dev/null; true",
-    "dev": "tsx watch src/server.ts",
+    "dev": "TSX_TSCONFIG_PATH=./tsconfig.src.json tsx watch src/server.ts",
     "start": "node build/esm/server.js",
     "circular": "madge --circular src/server.ts",
     "lint": "eslint . --quiet",

@@ -8,16 +8,19 @@ import * as Authz from "@/platform/auth/authz.js";
 import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
-// Org admins + super-admins (the `update` policy's OR chain). Lists the
-// members of one org, enriched with each user's email and `isAdmin`
-// flag. The cross-module orchestration (membership + `UsersLookup` +
-// roles) lives inside the query handler; this endpoint stays a thin
-// dispatch — outbound ports are private to use cases.
+// Any member of the org (plus super-admins) may read the roster — the
+// `read` policy's OR chain (`any(SuperAdminOnly, IsMember)`). Viewing
+// the member list is not privileged; only *managing* it (promote /
+// demote / remove, the `update`-gated endpoints) requires org admin.
+// Lists the members of one org, enriched with each user's email and
+// `isAdmin` flag. The cross-module orchestration (membership +
+// `UsersLookup` + roles) lives inside the query handler; this endpoint
+// stays a thin dispatch — outbound ports are private to use cases.
 export const findMembersEndpoint = (
   request: EndpointRequest<typeof OrganizationContract.Group, "findMembers">,
 ) =>
   Effect.gen(function* () {
-    yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.path.orgId).pipe(
+    yield* Authz.hasPermissions(OrganizationResource, Actions.Read, request.path.orgId).pipe(
       Effect.catchTag("NotFound", () =>
         Effect.fail(
           new OrganizationContract.OrganizationNotFoundError({

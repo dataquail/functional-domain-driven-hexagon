@@ -65,4 +65,34 @@ describe("inviteUser", () => {
       deepStrictEqual(invite.token, stored.token);
     }).pipe(Effect.provide(TestLayer)),
   );
+
+  it.effect("inviting an email with an open invite reissues it instead of duplicating", () =>
+    Effect.gen(function* () {
+      const repo = yield* InvitationRepository;
+      const sent = yield* SentInvitations;
+      const make = () =>
+        InviteUserCommand.make({
+          organizationId,
+          inviteeEmail: "alice@example.com",
+          ttlSeconds: 60 * 60 * 24 * 7,
+          actorUserId,
+        });
+
+      const firstId = yield* inviteUser(make());
+      const firstToken = (yield* repo.findById(firstId)).token;
+
+      const secondId = yield* inviteUser(make());
+
+      // Same invitation row (dedup), with a rotated token.
+      deepStrictEqual(secondId, firstId);
+      const all = yield* repo.findByOrganizationId(organizationId);
+      deepStrictEqual(all.length, 1);
+      ok(all[0]?.token !== firstToken, "token should be rotated on reissue");
+
+      // Two emails were sent (one per invite call), the latest with the new token.
+      const invites = yield* sent.all;
+      deepStrictEqual(invites.length, 2);
+      deepStrictEqual(invites[1]?.token, all[0]?.token);
+    }).pipe(Effect.provide(TestLayer)),
+  );
 });

@@ -1,15 +1,17 @@
+import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
 
-import { type Invitation } from "@/modules/organization/domain/invitation.aggregate.js";
+import { type Invitation, isOpen } from "@/modules/organization/domain/invitation.aggregate.js";
 import {
   InvitationNotFound,
   InvitationTokenNotFound,
 } from "@/modules/organization/domain/invitation-errors.js";
 import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation-repository.js";
 import { type InvitationId } from "@/platform/ids/invitation-id.js";
+import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 export const InvitationRepositoryFake = Layer.effect(
   InvitationRepository,
@@ -42,6 +44,42 @@ export const InvitationRepositoryFake = Layer.effect(
         return Effect.fail(new InvitationTokenNotFound());
       });
 
-    return InvitationRepository.of({ insert, update, findById, findByToken });
+    // Newest-first, matching the live repo's `ORDER BY created_at DESC`.
+    const byCreatedAtDesc = (a: Invitation, b: Invitation): number =>
+      DateTime.toEpochMillis(b.createdAt) - DateTime.toEpochMillis(a.createdAt);
+
+    const findByOrganizationId = (
+      organizationId: OrganizationId,
+    ): Effect.Effect<ReadonlyArray<Invitation>> =>
+      Effect.map(Ref.get(store), (m) =>
+        Array.from(HashMap.values(m))
+          .filter((inv) => inv.organizationId === organizationId)
+          .sort(byCreatedAtDesc),
+      );
+
+    const findOpenByOrganizationIdAndEmail = (
+      organizationId: OrganizationId,
+      inviteeEmail: string,
+    ): Effect.Effect<Invitation | null> =>
+      Effect.map(Ref.get(store), (m) => {
+        const open = Array.from(HashMap.values(m))
+          .filter(
+            (inv) =>
+              inv.organizationId === organizationId &&
+              inv.inviteeEmail === inviteeEmail &&
+              isOpen(inv),
+          )
+          .sort(byCreatedAtDesc);
+        return open[0] ?? null;
+      });
+
+    return InvitationRepository.of({
+      insert,
+      update,
+      findById,
+      findByToken,
+      findByOrganizationId,
+      findOpenByOrganizationIdAndEmail,
+    });
   }),
 );
