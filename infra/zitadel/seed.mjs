@@ -255,6 +255,54 @@ async function ensureOidcApp(projectId) {
   };
 }
 
+async function ensureLoginPolicy() {
+  // Close the username-enumeration disclosure: by default Zitadel's login
+  // screen returns "User could not be found" for unknown usernames, which
+  // reveals which emails are registered. With `ignoreUnknownUsernames`, an
+  // unknown username is sent to the password screen and fails generically.
+  //
+  // We set the *instance default* policy (/admin/v1) rather than an org-level
+  // one so it applies to every org that hasn't overridden it. UpdateLoginPolicy
+  // replaces the whole policy, so we GET the current values and merge — sending
+  // a partial body would silently reset omitted booleans (e.g. turn off
+  // username/password login).
+  //
+  // NOTE: this flag does not fully close enumeration on v2.71.0 — the
+  // select-account and password-reset flows have separate bypasses
+  // (GHSA-pvm5-9frx-264r, fixed in v2.71.15). Keep the Zitadel image bumped.
+  const current = await api("/admin/v1/policies/login");
+  const p = current.policy ?? {};
+  if (p.ignoreUnknownUsernames === true) {
+    return { changed: false };
+  }
+  await api("/admin/v1/policies/login", {
+    method: "PUT",
+    body: JSON.stringify({
+      allowUsernamePassword: p.allowUsernamePassword,
+      allowRegister: p.allowRegister,
+      allowExternalIdp: p.allowExternalIdp,
+      forceMfa: p.forceMfa,
+      forceMfaLocalOnly: p.forceMfaLocalOnly,
+      passwordlessType: p.passwordlessType,
+      hidePasswordReset: p.hidePasswordReset,
+      ignoreUnknownUsernames: true,
+      allowDomainDiscovery: p.allowDomainDiscovery,
+      disableLoginWithEmail: p.disableLoginWithEmail,
+      disableLoginWithPhone: p.disableLoginWithPhone,
+      defaultRedirectUri: p.defaultRedirectUri,
+      passwordCheckLifetime: p.passwordCheckLifetime,
+      externalLoginCheckLifetime: p.externalLoginCheckLifetime,
+      mfaInitSkipLifetime: p.mfaInitSkipLifetime,
+      secondFactorCheckLifetime: p.secondFactorCheckLifetime,
+      multiFactorCheckLifetime: p.multiFactorCheckLifetime,
+    }),
+    // PUT with an unchanged body returns 400 "No changes" — re-running seed
+    // against an already-hardened policy is the common case.
+    tolerate: { status: 400, messageIncludes: "No changes" },
+  });
+  return { changed: true };
+}
+
 async function findSmtpProvider() {
   const search = await api("/admin/v1/smtp/_search", {
     method: "POST",
@@ -402,6 +450,11 @@ async function ensureAdminInAppDb(subject) {
       console.warn(`    WARN: ${expected} not registered as a post-logout URI`);
     }
   }
+
+  const loginPolicy = await ensureLoginPolicy();
+  console.log(
+    `  login policy: ignoreUnknownUsernames=true ${loginPolicy.changed ? "[updated]" : "[already set]"}`,
+  );
 
   const smtp = await ensureSmtpProvider();
   console.log(

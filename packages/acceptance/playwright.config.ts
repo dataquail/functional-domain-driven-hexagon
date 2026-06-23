@@ -80,6 +80,11 @@ export default defineConfig({
       // No storageState — this IS the project that creates it.
     },
     {
+      name: "member-setup",
+      testMatch: /setup\/member\.setup\.ts/,
+      // No storageState — logs in the regular member to create it.
+    },
+    {
       name: "chromium",
       testDir: "./specs",
       // Skip the login spec here; it runs in its own project below so it
@@ -87,9 +92,12 @@ export default defineConfig({
       testIgnore: /login\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
+        // Default to the admin session. Org-scoped specs (add-todo) opt
+        // into the member session via `test.use({ storageState })`; both
+        // setups are dependencies so either cookie is ready.
         storageState: ADMIN_STORAGE_STATE,
       },
-      dependencies: ["auth-setup"],
+      dependencies: ["auth-setup", "member-setup"],
     },
     {
       name: "login",

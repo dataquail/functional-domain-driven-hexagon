@@ -20,22 +20,39 @@ const DeletedAtRowStd = Schema.standardSchemaV1(
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("DELETE /orgs/:id (integration)", () => {
+  // Tombstoning an org is super-admin-only (organizationPolicies.delete =
+  // SuperAdminOnly), so this suite runs as the default super-admin caller.
+  // Super-admins can't create orgs, so the target org is seeded directly.
   const { run } = useServerTestRuntime(
     ["organization.memberships", "organization.organizations", "platform.roles", "user.users"],
     { seedSuperAdminCaller: true },
   );
 
+  const seededOrgId = "11111111-1111-1111-1111-111111111111" as never;
+  const seedOrg = (id: string, name: string) =>
+    Effect.gen(function* () {
+      const db = yield* Database.Database;
+      yield* db
+        .execute((c) =>
+          c.query(sql.unsafe`
+            INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
+            VALUES (${id}, ${name}, now(), now(), null)
+          `),
+        )
+        .pipe(Effect.orDie);
+    });
+
   it("tombstones the org", async () => {
     await run(
       Effect.gen(function* () {
+        yield* seedOrg(seededOrgId, "Acme");
         const client = yield* HttpApiClient.make(Api);
-        const { id } = yield* client.organization.create({ payload: { name: "Acme" } });
-        yield* client.organization.softDelete({ path: { id } });
+        yield* client.organization.softDelete({ path: { id: seededOrgId } });
         const db = yield* Database.Database;
         const rows = yield* db
           .execute((c) =>
             c.any(sql.type(DeletedAtRowStd)`
-              SELECT deleted_at FROM "organization".organizations WHERE id = ${id}
+              SELECT deleted_at FROM "organization".organizations WHERE id = ${seededOrgId}
             `),
           )
           .pipe(Effect.orDie);

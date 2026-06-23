@@ -1,6 +1,8 @@
 import { type Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
+import { UsersLookupLive } from "@/modules/organization/infrastructure/external/users-lookup-live.js";
+import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/invitation-repository-live.js";
 import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/membership-repository-live.js";
 import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastructure/organization-roles-repository-live.js";
 import { findAllOrganizations } from "@/modules/organization/queries/find-all-organizations.js";
@@ -13,6 +15,18 @@ import {
 } from "@/modules/organization/queries/find-membership-query.js";
 import { findMyOrganizations } from "@/modules/organization/queries/find-my-organizations.js";
 import { findMyOrganizationsQuerySpanAttributes } from "@/modules/organization/queries/find-my-organizations-query.js";
+import { findOrganizationMemberships } from "@/modules/organization/queries/find-organization-memberships.js";
+import {
+  type FindOrganizationMembershipsQuery,
+  findOrganizationMembershipsQuerySpanAttributes,
+  type OrganizationMemberView,
+} from "@/modules/organization/queries/find-organization-memberships-query.js";
+import { findPendingInvitations } from "@/modules/organization/queries/find-pending-invitations.js";
+import {
+  type FindPendingInvitationsQuery,
+  findPendingInvitationsQuerySpanAttributes,
+  type PendingInvitationView,
+} from "@/modules/organization/queries/find-pending-invitations-query.js";
 import { findUserOrganizationRoles } from "@/modules/organization/queries/find-user-organization-roles.js";
 import {
   type FindUserOrganizationRolesQuery,
@@ -20,7 +34,7 @@ import {
   type FindUserOrganizationRolesResult,
 } from "@/modules/organization/queries/find-user-organization-roles-query.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { queryHandlers } from "@/platform/ddd/ports/query-bus.js";
+import { type QueryBus, queryHandlers } from "@/platform/ddd/ports/query-bus.js";
 
 type FindUserOrganizationRolesBusOutput = Effect.Effect<
   FindUserOrganizationRolesResult,
@@ -34,6 +48,22 @@ type FindMembershipBusOutput = Effect.Effect<
   Database.Database
 >;
 
+// `QueryBus` stays in R because `UsersLookupLive` (the outbound
+// adapter that discharges `UsersLookup` here) uses the bus to
+// dispatch the user-module's `FindUsersByIdsQuery`. The bus is
+// provided at the composition root.
+type FindOrganizationMembershipsBusOutput = Effect.Effect<
+  ReadonlyArray<OrganizationMemberView>,
+  PersistenceUnavailable,
+  Database.Database | QueryBus
+>;
+
+type FindPendingInvitationsBusOutput = Effect.Effect<
+  ReadonlyArray<PendingInvitationView>,
+  PersistenceUnavailable,
+  Database.Database
+>;
+
 declare module "@/platform/ddd/ports/query-bus.js" {
   interface QueryRegistry {
     FindUserOrganizationRolesQuery: {
@@ -43,6 +73,14 @@ declare module "@/platform/ddd/ports/query-bus.js" {
     FindMembershipQuery: {
       readonly query: FindMembershipQuery;
       readonly output: FindMembershipBusOutput;
+    };
+    FindOrganizationMembershipsQuery: {
+      readonly query: FindOrganizationMembershipsQuery;
+      readonly output: FindOrganizationMembershipsBusOutput;
+    };
+    FindPendingInvitationsQuery: {
+      readonly query: FindPendingInvitationsQuery;
+      readonly output: FindPendingInvitationsBusOutput;
     };
   }
 }
@@ -70,5 +108,19 @@ export const organizationQueryHandlers = queryHandlers({
     handle: (q): FindMembershipBusOutput =>
       findMembership(q).pipe(Effect.provide(MembershipRepositoryLive)),
     spanAttributes: findMembershipQuerySpanAttributes,
+  },
+  FindOrganizationMembershipsQuery: {
+    handle: (q): FindOrganizationMembershipsBusOutput =>
+      findOrganizationMemberships(q).pipe(
+        Effect.provide(MembershipRepositoryLive),
+        Effect.provide(UsersLookupLive),
+        Effect.provide(OrganizationRolesRepositoryLive),
+      ),
+    spanAttributes: findOrganizationMembershipsQuerySpanAttributes,
+  },
+  FindPendingInvitationsQuery: {
+    handle: (q): FindPendingInvitationsBusOutput =>
+      findPendingInvitations(q).pipe(Effect.provide(InvitationRepositoryLive)),
+    spanAttributes: findPendingInvitationsQuerySpanAttributes,
   },
 });

@@ -48,4 +48,25 @@ export const invitationRevokedSpanAttributes: SpanAttributesExtractor<Invitation
   "organization.id": event.organizationId,
 });
 
-export type InvitationEvent = InvitationIssued | InvitationAccepted | InvitationRevoked;
+// Emitted when an open invitation is re-issued (resend, or invite-again
+// for an email that already has an open invite): a fresh token + expiry
+// replace the old ones, so the previous accept link stops working.
+export const InvitationReissued = DomainEvent("InvitationReissued", {
+  invitationId: InvitationId,
+  organizationId: OrganizationId,
+  inviteeEmail: Schema.String,
+});
+export type InvitationReissued = typeof InvitationReissued.Type;
+
+export const invitationReissuedSpanAttributes: SpanAttributesExtractor<InvitationReissued> = (
+  event,
+) => ({
+  "invitation.id": event.invitationId,
+  "organization.id": event.organizationId,
+});
+
+export type InvitationEvent =
+  | InvitationIssued
+  | InvitationAccepted
+  | InvitationRevoked
+  | InvitationReissued;

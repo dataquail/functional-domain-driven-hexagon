@@ -25,7 +25,10 @@ const BILLING_TABLES = [
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("GET /orgs/:orgId/billing/subscriptions/current (integration)", () => {
-  const { run } = useServerTestRuntime(BILLING_TABLES, { seedSuperAdminCaller: true });
+  const { run } = useServerTestRuntime(BILLING_TABLES, {
+    server: TestServerLiveAsMember,
+    seedSuperAdminCaller: true,
+  });
 
   it("returns the subscription view after subscribing", async () => {
     await run(

@@ -46,9 +46,12 @@ const suite = hasTestDatabase ? describe.sequential : describe.skip;
 suite("findMyOrganizations (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
-      truncate("organization.memberships", "organization.organizations", "user.users").pipe(
-        Effect.provide(TestDatabaseLive),
-      ),
+      truncate(
+        "organization.organization_roles",
+        "organization.memberships",
+        "organization.organizations",
+        "user.users",
+      ).pipe(Effect.provide(TestDatabaseLive)),
     );
   });
 
@@ -72,6 +75,38 @@ suite("findMyOrganizations (integration)", () => {
         result.organizations.map((o) => o.name),
         ["Acme"],
       );
+    }).pipe(Effect.provide(TestLayer)),
+  );
+
+  it.effect("flags orgs where the caller holds the admin role", () =>
+    Effect.gen(function* () {
+      yield* seedUsers;
+      const orgs = yield* OrganizationRepository;
+      const memberships = yield* MembershipRepository;
+      yield* orgs.insert(Organization.create({ id: acmeId, name: "Acme", now }).organization);
+      yield* orgs.insert(Organization.create({ id: betaId, name: "Beta", now }).organization);
+      yield* memberships.insert(
+        Membership.create({ userId: aliceId, organizationId: acmeId, now }).membership,
+      );
+      yield* memberships.insert(
+        Membership.create({ userId: aliceId, organizationId: betaId, now }).membership,
+      );
+      // Alice holds the `admin` role in Acme only.
+      const db = yield* Database.Database;
+      yield* db
+        .execute((client) =>
+          client.query(sql.unsafe`
+            INSERT INTO "organization".organization_roles
+              (organization_id, user_id, role, issued_by, created_at)
+            VALUES (${acmeId}, ${aliceId}, 'admin', ${aliceId}, now())
+          `),
+        )
+        .pipe(Effect.orDie);
+
+      const result = yield* findMyOrganizations(FindMyOrganizationsQuery.make({ userId: aliceId }));
+      const isAdminByName = new Map(result.organizations.map((o) => [o.name, o.isAdmin]));
+      deepStrictEqual(isAdminByName.get("Acme"), true);
+      deepStrictEqual(isAdminByName.get("Beta"), false);
     }).pipe(Effect.provide(TestLayer)),
   );
 

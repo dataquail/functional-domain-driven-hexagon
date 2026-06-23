@@ -9,17 +9,12 @@ import { type User } from "../domain/user.aggregate.js";
 
 // Per-module declaration-merge contribution.
 //
-// `user.update` allows EITHER a super-admin OR the user themselves. The
-// OR-composition is via `Check.any` (arrays are AND-composed; for OR
-// you wrap with `any`). Today this covers two endpoints:
-//   - promote-to-super-admin
-//   - demote-from-super-admin
-// Both call `Authz.hasPermissions(UserResource, Actions.Update, id)`.
-//
-// The policy says "can update this user." Whether a specific update
-// makes business sense (e.g. should you be able to promote *yourself*
-// to super-admin?) is a domain invariant, not an authz rule — that
-// guard belongs in the relevant command/aggregate, not here.
+// `user.update` allows EITHER a super-admin OR the user themselves.
+// The OR-composition is via `Check.any` (arrays are AND-composed; for
+// OR you wrap with `any`). The policy says "can update this user."
+// Whether a specific update makes business sense is a domain
+// invariant, not an authz rule — that guard belongs in the relevant
+// command/aggregate, not here.
 
 declare module "@/platform/auth/resource-resolver-registry.js" {
   interface ResourceResolverMap {
@@ -41,9 +36,7 @@ declare module "@/platform/auth/policy-registry.js" {
 export const UserResource = "user" as const;
 
 // The caller and the target are the same person. Used to allow
-// self-service operations (notably self-demote — a super-admin who
-// changes their mind should be able to drop the flag without first
-// finding another super-admin).
+// self-service operations on a user resource.
 const IsSelf: PolicyRegistry.CheckFor<"user", "update"> = (caller, user) =>
   Effect.succeed(caller.userId === user.id);
 

@@ -29,7 +29,10 @@ suite("POST /orgs/:orgId/billing/subscriptions (integration)", () => {
   // `SuperAdminOnly` half of the composed check. Creates an org via
   // the public endpoint (so the FK + creator-admin row both exist),
   // then subscribes.
-  const { run } = useServerTestRuntime(BILLING_TABLES, { seedSuperAdminCaller: true });
+  const { run } = useServerTestRuntime(BILLING_TABLES, {
+    server: TestServerLiveAsMember,
+    seedSuperAdminCaller: true,
+  });
 
   it("subscribes an org and returns the created subscription view", async () => {
     await run(

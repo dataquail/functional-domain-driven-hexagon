@@ -49,6 +49,18 @@ export const MembershipRepositoryFake = Layer.effect(
           : Effect.fail(new MembershipNotFound({ userId, organizationId }));
       });
 
-    return MembershipRepository.of({ insert, delete: deleteRow, findByUserIdAndOrgId });
+    const findByOrganizationId = (
+      organizationId: OrganizationId,
+    ): Effect.Effect<ReadonlyArray<Membership>> =>
+      Effect.map(Ref.get(store), (m) =>
+        Array.from(HashMap.values(m)).filter((mem) => mem.organizationId === organizationId),
+      );
+
+    return MembershipRepository.of({
+      insert,
+      delete: deleteRow,
+      findByUserIdAndOrgId,
+      findByOrganizationId,
+    });
   }),
 );

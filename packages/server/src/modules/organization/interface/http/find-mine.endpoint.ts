@@ -9,13 +9,14 @@ import {
 import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
-const toContract = (view: FindMyOrganizationsView): OrganizationContract.Organization =>
-  new OrganizationContract.Organization({
+const toContract = (view: FindMyOrganizationsView): OrganizationContract.MyOrganization =>
+  new OrganizationContract.MyOrganization({
     id: view.id,
     name: view.name,
     createdAt: view.createdAt,
     updatedAt: view.updatedAt,
     deletedAt: null,
+    isAdmin: view.isAdmin,
   });
 
 // Authenticated, no `Authz.hasPermissions` gate — the query filters by

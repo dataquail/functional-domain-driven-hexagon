@@ -9,7 +9,10 @@ import { Address } from "./value-objects/address.js";
 export class User extends Schema.Class<User>("User")({
   id: UserId,
   email: Schema.String,
-  address: Address,
+  // Nullable: a user provisioned just-in-time on first OIDC sign-in has no
+  // address yet (only email + Zitadel subject are known). It's filled in
+  // later via `updateAddress`.
+  address: Schema.NullOr(Address),
   createdAt: Schema.DateTimeUtc,
   updatedAt: Schema.DateTimeUtc,
 }) {}
@@ -22,7 +25,7 @@ export type Result = {
 export type CreateInput = {
   readonly id: UserId;
   readonly email: string;
-  readonly address: Address;
+  readonly address: Address | null;
   readonly now: DateTime.Utc;
 };
 
@@ -60,9 +63,9 @@ export type UpdateAddressInput = {
 
 export const updateAddress = (user: User, input: UpdateAddressInput): Result => {
   const newAddress = Address.make({
-    country: input.country ?? user.address.country,
-    postalCode: input.postalCode ?? user.address.postalCode,
-    street: input.street ?? user.address.street,
+    country: input.country ?? user.address?.country ?? "",
+    postalCode: input.postalCode ?? user.address?.postalCode ?? "",
+    street: input.street ?? user.address?.street ?? "",
   });
   return {
     user: User.make({

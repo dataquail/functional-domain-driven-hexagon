@@ -31,6 +31,11 @@ import {
   type RemoveMemberCommand,
   removeMemberCommandSpanAttributes,
 } from "@/modules/organization/commands/remove-member-command.js";
+import { resendInvitation } from "@/modules/organization/commands/resend-invitation.js";
+import {
+  type ResendInvitationCommand,
+  resendInvitationCommandSpanAttributes,
+} from "@/modules/organization/commands/resend-invitation-command.js";
 import { restoreOrganization } from "@/modules/organization/commands/restore-organization.js";
 import {
   type RestoreOrganizationCommand,
@@ -64,12 +69,14 @@ import {
   type OrganizationAlreadyDeleted,
   type OrganizationNotDeleted,
   type OrganizationNotFound,
+  type SuperAdminCannotOwnOrganization,
 } from "@/modules/organization/domain/organization-errors.js";
 import {
   type AlreadyHasOrganizationRole,
   type CannotPromoteSelfInOrganization,
   type DoesNotHaveOrganizationRole,
 } from "@/modules/organization/domain/organization-role-errors.js";
+import { type InvitationMailer } from "@/modules/organization/domain/ports/external/invitation-mailer.js";
 import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/invitation-repository-live.js";
 import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/membership-repository-live.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/organization-repository-live.js";
@@ -77,15 +84,18 @@ import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastr
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { commandHandlers } from "@/platform/ddd/ports/command-bus.js";
 import { type DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
+import { type RoleService } from "@/platform/ddd/ports/role-service.js";
 import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 import { type InvitationId } from "@/platform/ids/invitation-id.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
-import { LogMailerLive } from "@/platform/notifications/log-mailer-live.js";
 
+// `RoleService` stays in the bus output's R because the model-invariant
+// check (super-admins can't own orgs) needs the platform-role ACL. The
+// composition root wires `RoleServiceLive` alongside the module Live.
 type CreateOrganizationBusOutput = Effect.Effect<
   OrganizationId,
-  PersistenceUnavailable,
-  DomainEventBus | UnitOfWork | Database.Database
+  PersistenceUnavailable | SuperAdminCannotOwnOrganization,
+  DomainEventBus | UnitOfWork | Database.Database | RoleService
 >;
 
 type RestoreOrganizationBusOutput = Effect.Effect<
@@ -112,10 +122,13 @@ type LeaveOrganizationBusOutput = Effect.Effect<
   DomainEventBus | UnitOfWork | Database.Database
 >;
 
+// `InvitationMailer` stays in R (provided by `OrganizationModuleLive`,
+// which wires the env-selected transport behind it) — the same shape as
+// the `UsersLookup` outbound adapter on the query side.
 type InviteUserBusOutput = Effect.Effect<
   InvitationId,
   PersistenceUnavailable,
-  DomainEventBus | UnitOfWork | Database.Database
+  DomainEventBus | UnitOfWork | Database.Database | InvitationMailer
 >;
 
 type AcceptInvitationBusOutput = Effect.Effect<
@@ -124,8 +137,9 @@ type AcceptInvitationBusOutput = Effect.Effect<
   | InvitationAlreadyAccepted
   | InvitationRevoked
   | InvitationExpired
+  | SuperAdminCannotOwnOrganization
   | PersistenceUnavailable,
-  DomainEventBus | UnitOfWork | Database.Database
+  DomainEventBus | UnitOfWork | Database.Database | RoleService
 >;
 
 type RevokeInvitationBusOutput = Effect.Effect<
@@ -135,6 +149,17 @@ type RevokeInvitationBusOutput = Effect.Effect<
   | InvitationAlreadyRevoked
   | PersistenceUnavailable,
   DomainEventBus | UnitOfWork | Database.Database
+>;
+
+// `InvitationMailer` stays in R (provided by `OrganizationModuleLive`) —
+// resend re-sends the email after the reissue commits.
+type ResendInvitationBusOutput = Effect.Effect<
+  void,
+  | InvitationNotFound
+  | InvitationAlreadyAccepted
+  | InvitationAlreadyRevoked
+  | PersistenceUnavailable,
+  DomainEventBus | UnitOfWork | Database.Database | InvitationMailer
 >;
 
 type GrantOrganizationRoleBusOutput = Effect.Effect<
@@ -183,6 +208,10 @@ declare module "@/platform/ddd/ports/command-bus.js" {
       readonly command: RevokeInvitationCommand;
       readonly output: RevokeInvitationBusOutput;
     };
+    ResendInvitationCommand: {
+      readonly command: ResendInvitationCommand;
+      readonly output: ResendInvitationBusOutput;
+    };
     GrantOrganizationRoleCommand: {
       readonly command: GrantOrganizationRoleCommand;
       readonly output: GrantOrganizationRoleBusOutput;
@@ -226,7 +255,7 @@ export const organizationCommandHandlers = commandHandlers({
   },
   InviteUserCommand: {
     handle: (cmd): InviteUserBusOutput =>
-      inviteUser(cmd).pipe(Effect.provide(InvitationRepositoryLive), Effect.provide(LogMailerLive)),
+      inviteUser(cmd).pipe(Effect.provide(InvitationRepositoryLive)),
     spanAttributes: inviteUserCommandSpanAttributes,
   },
   AcceptInvitationCommand: {
@@ -241,6 +270,11 @@ export const organizationCommandHandlers = commandHandlers({
     handle: (cmd): RevokeInvitationBusOutput =>
       revokeInvitation(cmd).pipe(Effect.provide(InvitationRepositoryLive)),
     spanAttributes: revokeInvitationCommandSpanAttributes,
+  },
+  ResendInvitationCommand: {
+    handle: (cmd): ResendInvitationBusOutput =>
+      resendInvitation(cmd).pipe(Effect.provide(InvitationRepositoryLive)),
+    spanAttributes: resendInvitationCommandSpanAttributes,
   },
   GrantOrganizationRoleCommand: {
     handle: (cmd): GrantOrganizationRoleBusOutput =>

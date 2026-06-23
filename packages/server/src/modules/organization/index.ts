@@ -4,6 +4,7 @@ export { GrantOrganizationRoleCommand } from "./commands/grant-organization-role
 export { InviteUserCommand } from "./commands/invite-user-command.js";
 export { LeaveOrganizationCommand } from "./commands/leave-organization-command.js";
 export { RemoveMemberCommand } from "./commands/remove-member-command.js";
+export { ResendInvitationCommand } from "./commands/resend-invitation-command.js";
 export { RestoreOrganizationCommand } from "./commands/restore-organization-command.js";
 export { RevokeInvitationCommand } from "./commands/revoke-invitation-command.js";
 export { RevokeOrganizationRoleCommand } from "./commands/revoke-organization-role-command.js";
@@ -11,6 +12,7 @@ export { SoftDeleteOrganizationCommand } from "./commands/soft-delete-organizati
 export {
   InvitationAccepted,
   InvitationIssued,
+  InvitationReissued,
   InvitationRevoked,
 } from "./domain/invitation-events.js";
 export { MembershipCreated, MembershipRevoked } from "./domain/membership-events.js";
@@ -44,4 +46,5 @@ export {
 export { FindAllOrganizationsQuery } from "./queries/find-all-organizations-query.js";
 export { FindMembershipQuery } from "./queries/find-membership-query.js";
 export { FindMyOrganizationsQuery } from "./queries/find-my-organizations-query.js";
+export { FindPendingInvitationsQuery } from "./queries/find-pending-invitations-query.js";
 export { FindUserOrganizationRolesQuery } from "./queries/find-user-organization-roles-query.js";

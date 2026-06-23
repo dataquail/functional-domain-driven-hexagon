@@ -9,6 +9,7 @@ import { Api } from "@/api.js";
 import { TodoId } from "@/modules/todos/domain/todo-id.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { hasTestDatabase } from "@/test-utils/test-database.js";
+import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 const TODO_TABLES = [
   "todos.todos",
@@ -22,7 +23,10 @@ const TODO_TABLES = [
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("PUT /orgs/:orgId/todos/:id (integration)", () => {
-  const { run } = useServerTestRuntime(TODO_TABLES, { seedSuperAdminCaller: true });
+  const { run } = useServerTestRuntime(TODO_TABLES, {
+    server: TestServerLiveAsMember,
+    seedSuperAdminCaller: true,
+  });
 
   it("updates title and completed", async () => {
     await run(

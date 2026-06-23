@@ -10,12 +10,14 @@ import {
 } from "@/modules/organization/commands/create-organization-command.js";
 import * as Membership from "@/modules/organization/domain/membership.aggregate.js";
 import * as Organization from "@/modules/organization/domain/organization.aggregate.js";
+import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization-errors.js";
 import * as OrganizationRoles from "@/modules/organization/domain/organization-roles.aggregate.js";
 import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership-repository.js";
 import { OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization-repository.js";
 import { OrganizationRolesRepository } from "@/modules/organization/domain/ports/repositories/organization-roles-repository.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
+import { RoleService } from "@/platform/ddd/ports/role-service.js";
+import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 // Creating an org also creates the creator's Membership AND grants the
@@ -34,11 +36,20 @@ import { OrganizationId } from "@/platform/ids/organization-id.js";
 // bus, not the system-level seed.
 export const createOrganization = (cmd: CreateOrganizationCommand): CreateOrganizationOutput =>
   Effect.gen(function* () {
+    // Model invariant: super-admins are a separate user type — they
+    // don't own or join organizations. The check sits at the use-case
+    // level (not at HTTP authz) because the rule is a fact about the
+    // role model, not a per-resource permission decision.
+    const roles = yield* RoleService;
+    const perms = yield* roles.findPlatformPermissions(cmd.actorUserId);
+    if (perms.roles.includes("super_admin")) {
+      return yield* Effect.fail(new SuperAdminCannotOwnOrganization({ userId: cmd.actorUserId }));
+    }
+
     const orgRepo = yield* OrganizationRepository;
     const memberRepo = yield* MembershipRepository;
     const orgRolesRepo = yield* OrganizationRolesRepository;
     const bus = yield* DomainEventBus;
-    const uow = yield* UnitOfWork;
     const now = yield* DateTime.now;
     const id = OrganizationId.make(crypto.randomUUID());
     const { events: orgEvents, organization } = Organization.create({ id, name: cmd.name, now });
@@ -58,15 +69,9 @@ export const createOrganization = (cmd: CreateOrganizationCommand): CreateOrgani
     }
     const grantResult = grantEither.right;
 
-    yield* uow
-      .run(
-        Effect.gen(function* () {
-          yield* orgRepo.insert(organization);
-          yield* memberRepo.insert(membership);
-          yield* orgRolesRepo.save(grantResult.organizationRoles);
-          yield* bus.dispatch([...orgEvents, ...memberEvents, ...grantResult.events]);
-        }),
-      )
-      .pipe(Effect.catchTag("DatabaseError", Effect.die));
+    yield* orgRepo.insert(organization);
+    yield* memberRepo.insert(membership);
+    yield* orgRolesRepo.save(grantResult.organizationRoles);
+    yield* bus.dispatch([...orgEvents, ...memberEvents, ...grantResult.events]);
     return id;
-  });
+  }).pipe(withUnitOfWork);

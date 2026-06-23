@@ -9,7 +9,8 @@ import { Address } from "./value-objects/address.js";
 export const UserCreated = DomainEvent("UserCreated", {
   userId: UserId,
   email: Schema.String,
-  address: Address,
+  // Nullable: a JIT-provisioned user is created without an address.
+  address: Schema.NullOr(Address),
 });
 export type UserCreated = typeof UserCreated.Type;
 

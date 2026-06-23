@@ -10,6 +10,7 @@ import {
 import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation-repository.js";
 import * as InvitationMapper from "@/modules/organization/infrastructure/invitation-mapper.js";
 import { type InvitationId } from "@/platform/ids/invitation-id.js";
+import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
 export const InvitationRepositoryLive = Layer.effect(
@@ -47,8 +48,15 @@ export const InvitationRepositoryLive = Layer.effect(
     const update = db.makeQuery((execute, invitation: Invitation) => {
       const row = InvitationMapper.toPersistence(invitation);
       return execute((client) =>
+        // Persist the whole mutable aggregate, not a hand-picked subset.
+        // accept/revoke only flip terminal timestamps, but reissue also
+        // rotates `token` and resets `expires_at` — dropping those here
+        // silently strands the new token (email holds it, DB doesn't),
+        // and accept-by-token then 404s.
         client.maybeOne(sql.type(RowSchemas.InvitationRowStd)`
           UPDATE "organization".invitations SET
+            token = ${row.token},
+            expires_at = ${sql.timestamp(row.expires_at)},
             accepted_at = ${row.accepted_at === null ? null : sql.timestamp(row.accepted_at)},
             revoked_at = ${row.revoked_at === null ? null : sql.timestamp(row.revoked_at)}
           WHERE id = ${row.id}
@@ -91,6 +99,49 @@ export const InvitationRepositoryLive = Layer.effect(
       ),
     );
 
-    return InvitationRepository.of({ insert, update, findById, findByToken });
+    const findByOrganizationId = db.makeQuery((execute, organizationId: OrganizationId) =>
+      execute((client) =>
+        client.any(sql.type(RowSchemas.InvitationRowStd)`
+          SELECT * FROM "organization".invitations
+          WHERE organization_id = ${organizationId}
+          ORDER BY created_at DESC
+        `),
+      ).pipe(
+        Effect.map((rows) => rows.map(InvitationMapper.toDomain)),
+        Effect.catchTag("DatabaseError", Effect.die),
+        translatePersistenceUnavailable,
+        Effect.withSpan("InvitationRepository.findByOrganizationId"),
+      ),
+    );
+
+    const findOpenByOrganizationIdAndEmail = db.makeQuery(
+      (execute, args: { organizationId: OrganizationId; inviteeEmail: string }) =>
+        execute((client) =>
+          client.maybeOne(sql.type(RowSchemas.InvitationRowStd)`
+            SELECT * FROM "organization".invitations
+            WHERE organization_id = ${args.organizationId}
+              AND invitee_email = ${args.inviteeEmail}
+              AND accepted_at IS NULL
+              AND revoked_at IS NULL
+            ORDER BY created_at DESC
+            LIMIT 1
+          `),
+        ).pipe(
+          Effect.map((row) => (row === null ? null : InvitationMapper.toDomain(row))),
+          Effect.catchTag("DatabaseError", Effect.die),
+          translatePersistenceUnavailable,
+          Effect.withSpan("InvitationRepository.findOpenByOrganizationIdAndEmail"),
+        ),
+    );
+
+    return InvitationRepository.of({
+      insert,
+      update,
+      findById,
+      findByToken,
+      findByOrganizationId,
+      findOpenByOrganizationIdAndEmail: (organizationId, inviteeEmail) =>
+        findOpenByOrganizationIdAndEmail({ organizationId, inviteeEmail }),
+    });
   }),
 );

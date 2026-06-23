@@ -260,46 +260,78 @@ const makeService = (config: Config) =>
       constructor(public readonly cause: Cause.Cause<E>) {}
     }
 
+    // Shared Effect↔Slonik bridge for both top-level transactions and nested
+    // savepoints. `open` is the Slonik call that begins the scope and runs our
+    // handler against the scoped connection — `pool.transaction` for a
+    // top-level transaction, a transaction connection's own `.transaction`
+    // (which Slonik implements as `SAVEPOINT` / `ROLLBACK TO SAVEPOINT`) for a
+    // nested savepoint. The handler provides the scoped client as a
+    // `TransactionContext`, runs the caller's effect to an `Exit`, and either
+    // returns its value (commit / release) or throws `TxFailure` carrying the
+    // Cause (rollback). On the Effect side we re-surface that Cause verbatim so
+    // the caller's typed error channel survives the round-trip through Slonik.
+    const runInSlonikTx = <T, E, R>(
+      open: (handler: (client: TxClient) => Promise<T>) => Promise<T>,
+      txExecute: (tx: TransactionContextShape) => Effect.Effect<T, E, R>,
+    ): Effect.Effect<T, DatabaseError | DatabaseUnavailable | E, R> =>
+      Effect.runtime<R>().pipe(
+        Effect.map((runtime) => Runtime.runPromiseExit(runtime)),
+        Effect.flatMap((runPromiseExit) =>
+          Effect.async<T, DatabaseError | DatabaseUnavailable | E, R>((resume) => {
+            open(async (client: TxClient) => {
+              const txWrapper = (fn: (c: TxClient) => Promise<any>) =>
+                Effect.tryPromise({
+                  try: () => fn(client),
+                  catch: (cause) => {
+                    const error = matchSlonikError(cause);
+                    if (error !== null) {
+                      return error;
+                    }
+                    throw cause;
+                  },
+                });
+
+              const result = await runPromiseExit(txExecute(txWrapper));
+              if (Exit.isSuccess(result)) {
+                return result.value;
+              }
+              throw new TxFailure(result.cause);
+            }).then(
+              (value) => {
+                resume(Effect.succeed(value));
+              },
+              (cause: unknown) => {
+                if (cause instanceof TxFailure) {
+                  resume(Effect.failCause(cause.cause as Cause.Cause<E>));
+                  return;
+                }
+                const error = matchSlonikError(cause);
+                resume(error !== null ? Effect.fail(error) : Effect.die(cause));
+              },
+            );
+          }),
+        ),
+      );
+
     const transaction = Effect.fn("Database.transaction")(
       <T, E, R>(txExecute: (tx: TransactionContextShape) => Effect.Effect<T, E, R>) =>
-        Effect.runtime<R>().pipe(
-          Effect.map((runtime) => Runtime.runPromiseExit(runtime)),
-          Effect.flatMap((runPromiseExit) =>
-            Effect.async<T, DatabaseError | DatabaseUnavailable | E, R>((resume) => {
-              pool
-                .transaction(async (tx: TxClient) => {
-                  const txWrapper = (fn: (client: TxClient) => Promise<any>) =>
-                    Effect.tryPromise({
-                      try: () => fn(tx),
-                      catch: (cause) => {
-                        const error = matchSlonikError(cause);
-                        if (error !== null) {
-                          return error;
-                        }
-                        throw cause;
-                      },
-                    });
+        runInSlonikTx<T, E, R>((handler) => pool.transaction(handler), txExecute),
+    );
 
-                  const result = await runPromiseExit(txExecute(txWrapper));
-                  if (Exit.isSuccess(result)) {
-                    return result.value;
-                  }
-                  throw new TxFailure(result.cause);
-                })
-                .then(
-                  (value) => {
-                    resume(Effect.succeed(value));
-                  },
-                  (cause: unknown) => {
-                    if (cause instanceof TxFailure) {
-                      resume(Effect.failCause(cause.cause as Cause.Cause<E>));
-                      return;
-                    }
-                    const error = matchSlonikError(cause);
-                    resume(error !== null ? Effect.fail(error) : Effect.die(cause));
-                  },
-                );
-            }),
+    // Open a nested savepoint on the ambient transaction. Requires a
+    // `TransactionContext` in scope — it is the re-entrant arm of a unit of
+    // work (`UnitOfWorkLive.run` calls this when a `run` is nested inside
+    // another). We pull the live transaction connection out of the ambient
+    // context and ask Slonik for a nested transaction on it, which emits a
+    // `SAVEPOINT`. A caught failure inside rolls back only to the savepoint,
+    // leaving the outer transaction free to commit; success releases it.
+    const savepoint = Effect.fn("Database.savepoint")(
+      <T, E, R>(spExecute: (sp: TransactionContextShape) => Effect.Effect<T, E, R>) =>
+        Effect.flatMap(TransactionContext, (existingTx) =>
+          existingTx((tx) => Promise.resolve(tx)).pipe(
+            Effect.flatMap((tx) =>
+              runInSlonikTx<T, E, R>((handler) => tx.transaction(handler), spExecute),
+            ),
           ),
         ),
     );
@@ -322,6 +354,7 @@ const makeService = (config: Config) =>
     return {
       execute,
       transaction,
+      savepoint,
       setupConnectionListeners,
       makeQuery,
     } as const;

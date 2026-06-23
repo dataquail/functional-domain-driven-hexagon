@@ -1,43 +1,58 @@
+// Root authed route. Two branches depending on the caller's user type:
+// - Regular user → organization picker (their memberships) + create-org
+//   form. Choosing an org navigates into `/orgs/[orgId]/`.
+// - Super-admin → redirect to `/admin/orgs`. SAs are a disjoint user
+//   type, they don't own organizations, and their natural landing
+//   page is the platform-wide org admin view.
+//
+// The `myOrgs` cache is prefetched by the parent (authed) layout for
+// the nav switcher (regular users only); the picker hydrates from
+// that same key without a duplicate fetch.
+
 import { Card } from "@org/components/primitives/card";
 import { Skeleton } from "@org/components/primitives/skeleton";
+import { redirect } from "next/navigation";
 import React from "react";
 
-import { AddTodo } from "@/features/index/add-todo/add-todo";
-import { TodoList } from "@/features/index/todo-list";
-import { ServerHydrationBoundary } from "@/lib/tanstack-query/server-hydration-boundary";
-import { ensurePrimaryOrgId } from "@/services/data-access/primary-org.server";
-import { prefetchTodos } from "@/services/data-access/todos-queries.server";
-
-const SKELETON_COUNT = 3;
+import { CreateOrg } from "@/features/orgs/create-org/create-org";
+import { OrgPicker } from "@/features/orgs/org-picker/org-picker";
+import { fetchCurrentUser } from "@/services/data-access/me.server";
 
 const Fallback: React.FC = () => (
-  <div className="space-y-2">
-    {Array.from({ length: SKELETON_COUNT }, (_, i) => (
-      <Skeleton key={i} className="h-12 w-full rounded-md" />
+  <div className="grid gap-3 sm:grid-cols-2">
+    {Array.from({ length: 2 }, (_, i) => (
+      <Skeleton key={i} className="h-20 w-full rounded-lg" />
     ))}
   </div>
 );
 
-// Phase 5 bridge: contract paths are now `/orgs/:orgId/todos`, but the
-// route surface still lives at `/`. Resolve the caller's primary org
-// server-side (auto-creating "My Workspace" on first sign-in) and
-// thread the id down through prefetch + the two client features.
-// Phase 8 will replace this with `/orgs/[orgId]/todos` and read orgId
-// from the URL segment.
-export default async function TasksPage() {
-  const orgId = await ensurePrimaryOrgId();
+export default async function RootPickerPage() {
+  const me = await fetchCurrentUser();
+  if (me?.isSuperAdmin === true) {
+    redirect("/admin/orgs");
+  }
 
   return (
-    <Card className="mx-auto w-full max-w-lg shadow-md">
-      <Card.Header className="pb-2">
-        <Card.Title className="text-center text-2xl font-semibold">My Tasks</Card.Title>
-      </Card.Header>
-      <Card.Content className="space-y-4">
-        <AddTodo orgId={orgId} />
-        <ServerHydrationBoundary prefetch={[prefetchTodos(orgId)]} fallback={<Fallback />}>
-          <TodoList orgId={orgId} />
-        </ServerHydrationBoundary>
-      </Card.Content>
-    </Card>
+    <div className="mx-auto w-full max-w-3xl space-y-4 px-4">
+      <Card className="shadow-md">
+        <Card.Header>
+          <Card.Title className="text-2xl font-semibold">Your organizations</Card.Title>
+        </Card.Header>
+        <Card.Content>
+          <React.Suspense fallback={<Fallback />}>
+            <OrgPicker />
+          </React.Suspense>
+        </Card.Content>
+      </Card>
+
+      <Card className="shadow-md">
+        <Card.Header>
+          <Card.Title className="text-2xl font-semibold">Create a new organization</Card.Title>
+        </Card.Header>
+        <Card.Content>
+          <CreateOrg />
+        </Card.Content>
+      </Card>
+    </div>
   );
 }

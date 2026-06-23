@@ -12,6 +12,7 @@ import { FAKE_WEBHOOK_SIGNATURE } from "@/modules/billing/index.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { hasTestDatabase } from "@/test-utils/test-database.js";
+import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 // The fake billing gateway's `sub_test_N` counter persists across
 // tests inside one describe (the runtime is created in beforeAll;
@@ -56,7 +57,10 @@ const suite = hasTestDatabase ? describe.sequential : describe.skip;
 // deliver the event.
 
 suite("POST /webhooks/stripe (integration)", () => {
-  const { run } = useServerTestRuntime(BILLING_TABLES, { seedSuperAdminCaller: true });
+  const { run } = useServerTestRuntime(BILLING_TABLES, {
+    server: TestServerLiveAsMember,
+    seedSuperAdminCaller: true,
+  });
 
   it("flips an existing subscription's status when delivered an updated event", async () => {
     await run(

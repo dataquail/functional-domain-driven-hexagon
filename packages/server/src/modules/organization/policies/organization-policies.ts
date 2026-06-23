@@ -4,17 +4,21 @@ import type * as PolicyRegistry from "@/platform/auth/policy-registry.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 import { type Organization } from "../domain/organization.aggregate.js";
+import { IsMemberRead } from "./is-member.js";
 import { IsOrgAdmin } from "./is-org-admin.js";
 
-// Phase 4 contribution. `update` (which gates invite, revoke,
-// remove-member, and future promote/demote endpoints) now requires the
-// `admin` OrganizationRole — plain members no longer manage members.
+// Phase 4 contribution. `update` (which gates invite, revoke, and
+// remove-member endpoints) requires the `admin` OrganizationRole —
+// plain members no longer manage members.
 // The creator of an org is auto-granted `admin` in
-// `create-organization.ts`. `read` stays super-admin-only because the
-// only `Authz.hasPermissions("organization", Actions.Read)` call site
-// today is the admin-side `findAll` listing (flat, no id) — `IsMember`
-// can't run against a missing resource. `delete` stays super-admin-only
-// — tombstoning an org is a platform-level operation.
+// `create-organization.ts`.
+// `read` is `any(SuperAdminOnly, IsMemberRead)`: the org-scoped
+// `findMembers` endpoint passes an orgId so any member of that org may
+// read the roster (managing it stays `update`-gated), while the
+// super-admin `findAll` listing passes no id — `IsMemberRead` denies
+// the missing-resource case, so non-super-admins are still rejected
+// there. `delete` stays super-admin-only — tombstoning an org is a
+// platform-level operation.
 
 declare module "@/platform/auth/resource-resolver-registry.js" {
   interface ResourceResolverMap {
@@ -36,7 +40,7 @@ export const OrganizationResource = "organization" as const;
 
 export const organizationPolicies: PolicyRegistry.PolicyContribution = {
   organization: {
-    read: SuperAdminOnly,
+    read: Check.any(SuperAdminOnly, IsMemberRead),
     update: Check.any(SuperAdminOnly, IsOrgAdmin),
     delete: SuperAdminOnly,
   },

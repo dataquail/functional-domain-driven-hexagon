@@ -17,6 +17,7 @@ import {
   InvitationAccepted,
   type InvitationEvent,
   InvitationIssued,
+  InvitationReissued,
   InvitationRevoked,
 } from "./invitation-events.js";
 import * as Membership from "./membership.aggregate.js";
@@ -78,6 +79,20 @@ export const isAccepted = (invitation: Invitation): boolean => invitation.accept
 export const isRevoked = (invitation: Invitation): boolean => invitation.revokedAt !== null;
 export const isExpiredAt = (invitation: Invitation, now: DateTime.Utc): boolean =>
   DateTime.lessThanOrEqualTo(invitation.expiresAt, now);
+
+// "Open" = not yet accepted and not revoked — the set of invitations the
+// pending-list surfaces and that invite-again/resend re-issue. An open
+// invite is still further classified by `statusAt` as pending vs expired.
+export const isOpen = (invitation: Invitation): boolean =>
+  !isAccepted(invitation) && !isRevoked(invitation);
+
+export type InvitationStatus = "pending" | "expired";
+
+// Display status for an *open* invitation. Accepted/revoked invitations
+// are filtered out before this is called (they aren't part of the
+// pending list), so only the live-vs-lapsed distinction remains.
+export const statusAt = (invitation: Invitation, now: DateTime.Utc): InvitationStatus =>
+  isExpiredAt(invitation, now) ? "expired" : "pending";
 
 export type AcceptInput = {
   readonly userId: UserId;
@@ -180,6 +195,55 @@ export const revoke = (
       InvitationRevoked.make({
         invitationId: invitation.id,
         organizationId: invitation.organizationId,
+      }),
+    ],
+  });
+};
+
+export type ReissueInput = {
+  readonly token: string;
+  readonly expiresAt: DateTime.Utc;
+  readonly now: DateTime.Utc;
+};
+
+export type ReissueResult = {
+  readonly invitation: Invitation;
+  readonly events: ReadonlyArray<InvitationEvent>;
+};
+
+// Aggregate-protected invariant: re-issue rotates the token and resets
+// the expiry on an *open* invitation (the resend action, and the
+// invite-again-for-an-existing-email path). Fails on a terminal
+// invitation — accepted (the invitee already joined; use RemoveMember)
+// or revoked (gone; issue a fresh invite instead). The old token is
+// discarded, so any previously-sent accept link stops working.
+export const reissue = (
+  invitation: Invitation,
+  input: ReissueInput,
+): Either.Either<ReissueResult, InvitationAlreadyAccepted | InvitationAlreadyRevoked> => {
+  if (isAccepted(invitation)) {
+    return Either.left(new InvitationAlreadyAccepted({ invitationId: invitation.id }));
+  }
+  if (isRevoked(invitation)) {
+    return Either.left(new InvitationAlreadyRevoked({ invitationId: invitation.id }));
+  }
+  const updated = Invitation.make({
+    id: invitation.id,
+    organizationId: invitation.organizationId,
+    inviteeEmail: invitation.inviteeEmail,
+    token: input.token,
+    expiresAt: input.expiresAt,
+    acceptedAt: null,
+    revokedAt: null,
+    createdAt: invitation.createdAt,
+  });
+  return Either.right({
+    invitation: updated,
+    events: [
+      InvitationReissued.make({
+        invitationId: invitation.id,
+        organizationId: invitation.organizationId,
+        inviteeEmail: invitation.inviteeEmail,
       }),
     ],
   });

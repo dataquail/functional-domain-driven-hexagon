@@ -8,6 +8,7 @@ import * as Exit from "effect/Exit";
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { hasTestDatabase } from "@/test-utils/test-database.js";
+import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 const BILLING_TABLES = [
   "billing.subscriptions",
@@ -22,7 +23,10 @@ const BILLING_TABLES = [
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("DELETE /orgs/:orgId/billing/subscriptions/current (integration)", () => {
-  const { run } = useServerTestRuntime(BILLING_TABLES, { seedSuperAdminCaller: true });
+  const { run } = useServerTestRuntime(BILLING_TABLES, {
+    server: TestServerLiveAsMember,
+    seedSuperAdminCaller: true,
+  });
 
   it("flips the subscription's status to 'canceled' and returns the canceled view", async () => {
     await run(

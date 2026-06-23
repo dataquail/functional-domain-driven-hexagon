@@ -6,9 +6,10 @@ import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 import { Api } from "@/api.js";
-import { SUPER_ADMIN_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
+import { MEMBER_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { hasTestDatabase } from "@/test-utils/test-database.js";
+import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 const NameRowStd = Schema.standardSchemaV1(Schema.Struct({ name: Schema.String }));
 const MembershipCountRowStd = Schema.standardSchemaV1(Schema.Struct({ user_id: Schema.UUID }));
@@ -16,9 +17,11 @@ const MembershipCountRowStd = Schema.standardSchemaV1(Schema.Struct({ user_id: S
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("POST /orgs (integration)", () => {
+  // Super-admins can't own orgs (they're a disjoint user type), so org
+  // creation runs as a regular member; the creator becomes the first member.
   const { run } = useServerTestRuntime(
     ["organization.memberships", "organization.organizations", "platform.roles", "user.users"],
-    { seedSuperAdminCaller: true },
+    { server: TestServerLiveAsMember, seedSuperAdminCaller: true },
   );
 
   it("creates an org, returns its id, and seeds the caller as the first Membership", async () => {
@@ -50,7 +53,7 @@ suite("POST /orgs (integration)", () => {
           .pipe(Effect.orDie);
         deepStrictEqual(
           memberRows.map((r) => r.user_id),
-          [SUPER_ADMIN_CALLER_ID],
+          [MEMBER_CALLER_ID],
         );
       }),
     );

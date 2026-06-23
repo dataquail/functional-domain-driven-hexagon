@@ -18,6 +18,7 @@ import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
+import { makeRoleServiceFake } from "@/test-utils/role-service-fake.js";
 
 const userId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
@@ -27,6 +28,9 @@ const TestLayer = Layer.mergeAll(
   OrganizationRolesRepositoryFake,
   RecordingEventBus,
   IdentityUnitOfWork,
+  // Seed `createOrganization` calls need `RoleService`; defaulting to
+  // "caller has no platform roles" matches the regular-user path.
+  makeRoleServiceFake(new Map()),
 );
 
 describe("leaveOrganization", () => {

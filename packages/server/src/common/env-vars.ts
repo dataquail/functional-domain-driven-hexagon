@@ -1,5 +1,6 @@
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
+import * as Redacted from "effect/Redacted";
 
 export class EnvVars extends Effect.Service<EnvVars>()("EnvVars", {
   accessors: true,
@@ -50,6 +51,29 @@ export class EnvVars extends Effect.Service<EnvVars>()("EnvVars", {
       SESSION_TOUCH_THRESHOLD_SECONDS: yield* Config.integer(
         "SESSION_TOUCH_THRESHOLD_SECONDS",
       ).pipe(Config.withDefault(60)),
+
+      // Email / Notifications
+      // Transport selection for the application `Mailer` port. `log` (default)
+      // writes a structured log line — no real send. `smtp` targets the local
+      // Mailpit sink (or any SMTP relay) for dev. `ses` uses AWS SES in prod.
+      //
+      // These MAIL_SMTP_* vars are deliberately namespaced apart from the bare
+      // SMTP_* block, which configures *Zitadel's* notification provider inside
+      // docker (where the host is the `mailpit` service name). The app server
+      // runs on the host, so its default points at `localhost`. SES reads
+      // region + credentials from the standard AWS chain (AWS_REGION, etc.).
+      MAILER: yield* Config.literal("log", "smtp", "ses")("MAILER").pipe(Config.withDefault("log")),
+      MAIL_FROM: yield* Config.string("MAIL_FROM").pipe(
+        Config.withDefault("Effect Monorepo <noreply@localhost>"),
+      ),
+      MAIL_SMTP_HOST: yield* Config.string("MAIL_SMTP_HOST").pipe(Config.withDefault("localhost")),
+      MAIL_SMTP_PORT: yield* Config.integer("MAIL_SMTP_PORT").pipe(Config.withDefault(1025)),
+      MAIL_SMTP_SECURE: yield* Config.boolean("MAIL_SMTP_SECURE").pipe(Config.withDefault(false)),
+      // Optional auth — Mailpit ignores credentials, so they default empty.
+      MAIL_SMTP_USER: yield* Config.string("MAIL_SMTP_USER").pipe(Config.withDefault("")),
+      MAIL_SMTP_PASSWORD: yield* Config.redacted("MAIL_SMTP_PASSWORD").pipe(
+        Config.withDefault(Redacted.make("")),
+      ),
 
       // Stripe / Billing
       STRIPE_SECRET_KEY: yield* Config.redacted("STRIPE_SECRET_KEY"),

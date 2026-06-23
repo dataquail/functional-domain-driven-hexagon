@@ -3,18 +3,20 @@ import * as Layer from "effect/Layer";
 
 import { Mailer } from "./mailer.js";
 
-// Dev/MVP backend: structured logs only. Body is truncated in the log
-// to keep the line readable; full body is dropped (it's the only way to
-// recover the invitation token from logs, which is by design — the
-// production path uses a real email backend).
+// Dev/CI default backend (`MAILER=log`): structured logs only, no real
+// send — so `pnpm test` and a fresh checkout need no SMTP/SES. The
+// plaintext body is logged in full (not the HTML) so an invitation link
+// is recoverable from logs when no Mailpit is running. Never fails:
+// `Effect.logInfo` is `Effect<void, never>`, assignable to the port's
+// `MailDeliveryError` channel.
 export const LogMailerLive = Layer.succeed(
   Mailer,
   Mailer.of({
-    send: (input) =>
-      Effect.log("Mailer.send", {
-        to: input.to,
-        subject: input.subject,
-        bodyPreview: input.body.length > 120 ? `${input.body.slice(0, 117)}...` : input.body,
+    send: (message) =>
+      Effect.logInfo("Mailer.send", {
+        to: message.to,
+        subject: message.subject,
+        text: message.text,
       }),
   }),
 );

@@ -16,6 +16,7 @@ import {
   InvitationTokenNotFound,
 } from "@/modules/organization/domain/invitation-errors.js";
 import { type MembershipCreated } from "@/modules/organization/domain/membership-events.js";
+import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization-errors.js";
 import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation-repository.js";
 import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership-repository.js";
 import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/invitation-repository-fake.js";
@@ -25,10 +26,12 @@ import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
+import { makeRoleServiceFake } from "@/test-utils/role-service-fake.js";
 
 const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");
 const organizationId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const userId = UserId.make("33333333-3333-3333-3333-333333333333");
+const superAdminUserId = UserId.make("ssssssss-ssss-ssss-ssss-ssssssssssss");
 const now = DateTime.unsafeMake(new Date("2026-01-01T00:00:00Z"));
 const inOneWeek = DateTime.unsafeMake(new Date("2026-01-08T00:00:00Z"));
 
@@ -47,6 +50,9 @@ const TestLayer = Layer.mergeAll(
   MembershipRepositoryFake,
   RecordingEventBus,
   IdentityUnitOfWork,
+  // Default: caller is a regular user. The super-admin-rejection test
+  // composes its own RoleService fake.
+  makeRoleServiceFake(new Map()),
 );
 
 describe("acceptInvitation", () => {
@@ -154,5 +160,33 @@ describe("acceptInvitation", () => {
         deepStrictEqual(error instanceof InvitationExpired, true);
       }
     }).pipe(Effect.provide(TestLayer)),
+  );
+
+  it.effect("rejects with SuperAdminCannotOwnOrganization when caller is a super-admin", () =>
+    Effect.gen(function* () {
+      const inv = yield* InvitationRepository;
+      yield* inv.insert(seed());
+
+      const exit = yield* Effect.exit(
+        acceptInvitation(
+          AcceptInvitationCommand.make({ token: "tok-abc", userId: superAdminUserId }),
+        ),
+      );
+      deepStrictEqual(Exit.isFailure(exit), true);
+      if (Exit.isFailure(exit)) {
+        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        deepStrictEqual(error instanceof SuperAdminCannotOwnOrganization, true);
+      }
+    }).pipe(
+      Effect.provide(
+        Layer.mergeAll(
+          InvitationRepositoryFake,
+          MembershipRepositoryFake,
+          RecordingEventBus,
+          IdentityUnitOfWork,
+          makeRoleServiceFake(new Map([[superAdminUserId, ["super_admin"]]])),
+        ),
+      ),
+    ),
   );
 });

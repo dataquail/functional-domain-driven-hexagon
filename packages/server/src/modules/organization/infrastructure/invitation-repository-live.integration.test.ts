@@ -117,6 +117,38 @@ suite("InvitationRepositoryLive (integration)", () => {
       }).pipe(Effect.provide(TestLayer)),
     );
 
+    it.effect("persists a reissue (rotated token + reset expiry)", () =>
+      Effect.gen(function* () {
+        yield* seedOrg;
+        const repo = yield* InvitationRepository;
+        yield* repo.insert(seed());
+        const newExpiresAt = DateTime.unsafeMake(new Date("2026-02-01T00:00:00Z"));
+        const reissued = Invitation.reissue(seed(), {
+          token: "tok-rotated",
+          expiresAt: newExpiresAt,
+          now,
+        });
+        if (Either.isLeft(reissued)) throw new Error("expected Right");
+        yield* repo.update(reissued.right.invitation);
+
+        // The new token must resolve...
+        const byNew = yield* repo.findByToken("tok-rotated");
+        deepStrictEqual(byNew.id, invitationId);
+        deepStrictEqual(
+          DateTime.toEpochMillis(byNew.expiresAt),
+          DateTime.toEpochMillis(newExpiresAt),
+        );
+
+        // ...and the old token must no longer resolve.
+        const exit = yield* Effect.exit(repo.findByToken("tok-abc"));
+        deepStrictEqual(Exit.isFailure(exit), true);
+        if (Exit.isFailure(exit)) {
+          const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+          deepStrictEqual(error instanceof InvitationTokenNotFound, true);
+        }
+      }).pipe(Effect.provide(TestLayer)),
+    );
+
     it.effect("update fails InvitationNotFound when the row is missing", () =>
       Effect.gen(function* () {
         yield* seedOrg;
@@ -127,6 +159,76 @@ suite("InvitationRepositoryLive (integration)", () => {
           const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
           deepStrictEqual(error instanceof InvitationNotFound, true);
         }
+      }).pipe(Effect.provide(TestLayer)),
+    );
+  });
+
+  describe("findByOrganizationId", () => {
+    const secondId = InvitationId.make("44444444-4444-4444-4444-444444444445");
+
+    it.effect("returns all invitations for the org, newest first", () =>
+      Effect.gen(function* () {
+        yield* seedOrg;
+        const repo = yield* InvitationRepository;
+        yield* repo.insert(seed());
+        const later = Invitation.issue({
+          id: secondId,
+          organizationId: orgId,
+          inviteeEmail: "bob@example.com",
+          token: "tok-bob",
+          expiresAt,
+          now: DateTime.unsafeMake(new Date("2026-01-02T00:00:00Z")),
+        }).invitation;
+        yield* repo.insert(later);
+        const all = yield* repo.findByOrganizationId(orgId);
+        deepStrictEqual(all.length, 2);
+        // ORDER BY created_at DESC → bob (later) first.
+        deepStrictEqual(all[0]?.id, secondId);
+        deepStrictEqual(all[1]?.id, invitationId);
+      }).pipe(Effect.provide(TestLayer)),
+    );
+
+    it.effect("returns an empty array for an org with no invitations", () =>
+      Effect.gen(function* () {
+        yield* seedOrg;
+        const repo = yield* InvitationRepository;
+        const all = yield* repo.findByOrganizationId(orgId);
+        deepStrictEqual(all.length, 0);
+      }).pipe(Effect.provide(TestLayer)),
+    );
+  });
+
+  describe("findOpenByOrganizationIdAndEmail", () => {
+    it.effect("finds an open invitation by (org, email)", () =>
+      Effect.gen(function* () {
+        yield* seedOrg;
+        const repo = yield* InvitationRepository;
+        yield* repo.insert(seed());
+        const found = yield* repo.findOpenByOrganizationIdAndEmail(orgId, "alice@example.com");
+        deepStrictEqual(found?.id, invitationId);
+      }).pipe(Effect.provide(TestLayer)),
+    );
+
+    it.effect("returns null when the only invitation is revoked (not open)", () =>
+      Effect.gen(function* () {
+        yield* seedOrg;
+        const repo = yield* InvitationRepository;
+        yield* repo.insert(seed());
+        const revoked = Invitation.revoke(seed(), { now });
+        if (Either.isLeft(revoked)) throw new Error("expected Right");
+        yield* repo.update(revoked.right.invitation);
+        const found = yield* repo.findOpenByOrganizationIdAndEmail(orgId, "alice@example.com");
+        deepStrictEqual(found, null);
+      }).pipe(Effect.provide(TestLayer)),
+    );
+
+    it.effect("returns null when no invitation matches the email", () =>
+      Effect.gen(function* () {
+        yield* seedOrg;
+        const repo = yield* InvitationRepository;
+        yield* repo.insert(seed());
+        const found = yield* repo.findOpenByOrganizationIdAndEmail(orgId, "nobody@example.com");
+        deepStrictEqual(found, null);
       }).pipe(Effect.provide(TestLayer)),
     );
   });

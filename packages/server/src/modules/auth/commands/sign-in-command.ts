@@ -7,13 +7,14 @@ import { type SessionRepository } from "@/modules/auth/domain/ports/repositories
 import { type SessionId } from "@/modules/auth/domain/session-id.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
+import { type UserProvisioning } from "@/platform/ddd/ports/user-provisioning.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 
-// Inputs come from the OIDC callback: a verified Zitadel `subject` + the
-// caller's chosen TTLs. `email` is informational (kept for future JIT
-// provisioning); we don't use it on the v1 happy path because the admin
-// identity is pre-seeded by `infra/zitadel/seed.mjs` and non-admin JIT is
-// deferred (plan §3.6).
+// Inputs come from the OIDC callback: a verified Zitadel `subject`, the
+// signed-in `email`, and the caller's chosen TTLs. `email` is required to
+// JIT-provision an unknown subject on first sign-in (admins are pre-seeded
+// by `infra/zitadel/seed.mjs`); a `null` email fails provisioning.
 export const SignInCommand = Schema.TaggedStruct("SignInCommand", {
   subject: Schema.String,
   email: Schema.NullOr(Schema.String),
@@ -32,11 +33,12 @@ export type SignInResult = {
   readonly userId: UserId;
 };
 
-// Raw handler effect — `AuthIdentityRepository` and `SessionRepository`
-// are discharged by the wrap in `auth-command-handlers.ts`; the bus-
-// registered output type lives there.
+// Raw handler effect — `AuthIdentityRepository` and `SessionRepository` are
+// discharged by the wrap in `auth-command-handlers.ts`; `UnitOfWork` and
+// `UserProvisioning` are satisfied from the composition-root context. The
+// bus-registered output type lives in `auth-command-handlers.ts`.
 export type SignInOutput = Effect.Effect<
   SignInResult,
   CustomHttpApiError.Unauthorized | PersistenceUnavailable,
-  AuthIdentityRepository | SessionRepository
+  AuthIdentityRepository | SessionRepository | UnitOfWork | UserProvisioning
 >;

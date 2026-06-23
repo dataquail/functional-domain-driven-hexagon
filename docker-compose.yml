@@ -61,7 +61,10 @@ services:
   zitadel:
     container_name: effect-monorepo-zitadel
     # Pinned for reproducibility; bump after checking https://github.com/zitadel/zitadel/releases
-    image: ghcr.io/zitadel/zitadel:v2.71.0
+    # v2.71.15 patches the login-UI user-enumeration bypasses (GHSA-pvm5-9frx-264r /
+    # CVE-2025-57770) that the `ignoreUnknownUsernames` login policy alone does not
+    # close (select-account page + password-reset flow). Pair with that flag, set in seed.mjs.
+    image: ghcr.io/zitadel/zitadel:v2.71.15
     # `--steps` is required for the FirstInstance section of zitadel.yaml to
     # be respected (it isn't part of the runtime `--config` schema). Without
     # `--steps`, Zitadel silently ignores FirstInstance.Org.Machine and the

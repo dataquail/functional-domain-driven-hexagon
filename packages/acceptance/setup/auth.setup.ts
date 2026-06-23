@@ -35,14 +35,17 @@ setup("authenticate as admin", async ({ page }) => {
   const zitadel = new ZitadelLoginPage(page);
   await zitadel.signIn(adminEmail, adminPassword);
 
-  // Wait for the OIDC callback to land us back on the SPA root with a
-  // session cookie set. Surface a clearer error than a bare timeout if we
-  // get stuck on Zitadel (most often: bad password — see screenshot).
+  // Wait for the OIDC callback to land us back in the app with a session
+  // cookie set. The seeded admin is a super-admin, redirected off the
+  // regular-user root `/` to the platform org admin view — wait for that
+  // settled URL rather than the transient `/` (which the server redirect
+  // may never commit to). Surface a clearer error than a bare timeout if
+  // we get stuck on Zitadel (most often: bad password — see screenshot).
   try {
-    await page.waitForURL(({ pathname }) => pathname === "/", { timeout: 15_000 });
+    await page.waitForURL(({ pathname }) => pathname === "/admin/orgs", { timeout: 15_000 });
   } catch (cause) {
     throw new Error(
-      `[auth.setup] Sign-in did not land on the SPA root.\n` +
+      `[auth.setup] Sign-in did not land on the platform admin view.\n` +
         `  Stuck at: ${page.url()}\n` +
         `  Page title: ${await page.title()}\n` +
         `  Most common cause: ZITADEL_ADMIN_PASSWORD doesn't match Zitadel.\n` +

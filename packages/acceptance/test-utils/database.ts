@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 
 import pg from "pg";
 
+import { MEMBER_EMAIL } from "./member-credentials";
+
 // Test-database utilities for the acceptance workspace. Mirrors the server's
 // `test-utils/test-database.ts` approach: drop+replay migrations from the
 // shared `packages/database/migrations/` directory, and refuse to operate
@@ -68,11 +70,13 @@ const splitQualified = (qualified: string): readonly [string, string] => {
 };
 
 // Truncate is auth-aware: when a spec asks to clear `user.users`, we DELETE
-// non-admin rows instead of TRUNCATE'ing — the admin's session and
+// non-system rows instead of TRUNCATE'ing — a preserved user's session and
 // `auth_identities` row would otherwise CASCADE-delete and break the
-// storageState cookie for the next spec. The admin email is read from
-// ZITADEL_ADMIN_EMAIL (the same value as the seeded Zitadel user / the row
-// global-setup inserts via admin-seed.ts).
+// storageState cookie for the next spec. We preserve BOTH the admin
+// (ZITADEL_ADMIN_EMAIL, seeded by admin-seed.ts) and the regular member
+// (MEMBER_EMAIL, JIT-provisioned at member-setup login) so an org-scoped
+// spec's member session survives a user-table reset by another spec
+// regardless of run order.
 export const truncate = async (
   databaseUrl: string,
   tables: ReadonlyArray<string>,
@@ -80,12 +84,15 @@ export const truncate = async (
   assertTestDbName(databaseUrl);
   if (tables.length === 0) return;
   const adminEmail = process.env.ZITADEL_ADMIN_EMAIL ?? "admin@example.com";
+  const preservedEmails = [adminEmail, MEMBER_EMAIL];
   const qualified = tables.map(splitQualified);
   const pool = new pg.Pool({ connectionString: databaseUrl });
   try {
     const usersEntry = qualified.find(([s, t]) => s === "user" && t === "users");
     if (usersEntry !== undefined) {
-      await pool.query(`DELETE FROM "user".users WHERE email != $1`, [adminEmail]);
+      await pool.query(`DELETE FROM "user".users WHERE email <> ALL($1::text[])`, [
+        preservedEmails,
+      ]);
       const others = qualified.filter(([s, t]) => !(s === "user" && t === "users"));
       if (others.length > 0) {
         const list = others.map(([s, t]) => `"${s}"."${t}"`).join(", ");

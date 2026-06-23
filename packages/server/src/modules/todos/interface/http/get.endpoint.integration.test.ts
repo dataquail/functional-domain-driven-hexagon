@@ -23,7 +23,10 @@ const TODO_TABLES = [
 const suite = hasTestDatabase ? describe.sequential : describe.skip;
 
 suite("GET /orgs/:orgId/todos (integration)", () => {
-  const { run } = useServerTestRuntime(TODO_TABLES, { seedSuperAdminCaller: true });
+  const { run } = useServerTestRuntime(TODO_TABLES, {
+    server: TestServerLiveAsMember,
+    seedSuperAdminCaller: true,
+  });
 
   it("lists only the org's todos, created_at desc", async () => {
     await run(

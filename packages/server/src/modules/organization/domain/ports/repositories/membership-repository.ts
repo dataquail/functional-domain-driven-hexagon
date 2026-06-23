@@ -25,6 +25,9 @@ export type MembershipRepositoryShape = {
     userId: UserId,
     organizationId: OrganizationId,
   ) => Effect.Effect<Membership, MembershipNotFound | PersistenceUnavailable>;
+  readonly findByOrganizationId: (
+    organizationId: OrganizationId,
+  ) => Effect.Effect<ReadonlyArray<Membership>, PersistenceUnavailable>;
 };
 
 export class MembershipRepository extends Context.Tag("MembershipRepository")<

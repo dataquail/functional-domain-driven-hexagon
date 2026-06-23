@@ -16,9 +16,11 @@ import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 import { makeDomainEventBusLive } from "@/platform/domain-event-bus-live.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
+import { makeIntegrationEventBusLive } from "@/platform/integration-event-bus-live.js";
 import { UnitOfWorkLive } from "@/platform/unit-of-work-live.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 const WALLET_TABLES = [
   "wallet.wallets",
@@ -39,7 +41,10 @@ suite("CreateWalletWhenOrganizationIsCreated (integration)", () => {
   // would FK-fail, the publisher tx would roll back, and the test
   // would see a 500 from POST /orgs — masking the wallet subscriber
   // path we're trying to verify.
-  const { run } = useServerTestRuntime(WALLET_TABLES, { seedSuperAdminCaller: true });
+  const { run } = useServerTestRuntime(WALLET_TABLES, {
+    server: TestServerLiveAsMember,
+    seedSuperAdminCaller: true,
+  });
 
   it("creates a wallet with balance 0 in the same transaction as the organization", async () => {
     await run(
@@ -92,6 +97,7 @@ const FailingWalletRepository = Layer.succeed(
 
 const RollbackTestLayer = Layer.mergeAll(UnitOfWorkLive, OrganizationEventAdapterLive).pipe(
   Layer.provideMerge(makeDomainEventBusLive()),
+  Layer.provideMerge(makeIntegrationEventBusLive()),
   Layer.provideMerge(FailingWalletRepository),
   Layer.provideMerge(TestDatabaseLive),
 );

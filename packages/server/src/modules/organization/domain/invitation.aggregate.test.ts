@@ -117,3 +117,84 @@ describe("Invitation.revoke", () => {
     }
   });
 });
+
+describe("Invitation.reissue", () => {
+  const seed = () => Invitation.issue(inputs).invitation;
+  const newExpiry = DateTime.unsafeMake(new Date("2026-01-15T00:00:00Z"));
+
+  it("rotates the token, resets the expiry, and emits InvitationReissued", () => {
+    const result = Invitation.reissue(seed(), {
+      token: "tok-fresh",
+      expiresAt: newExpiry,
+      now: inOneDay,
+    });
+    if (Either.isLeft(result)) throw new Error("expected Right");
+    deepStrictEqual(result.right.invitation.token, "tok-fresh");
+    deepStrictEqual(result.right.invitation.expiresAt, newExpiry);
+    deepStrictEqual(result.right.invitation.acceptedAt, null);
+    deepStrictEqual(result.right.invitation.revokedAt, null);
+    deepStrictEqual(result.right.events[0]?._tag, "InvitationReissued");
+  });
+
+  it("re-issues an expired (but open) invitation", () => {
+    const past = DateTime.unsafeMake(new Date("2026-02-01T00:00:00Z"));
+    const result = Invitation.reissue(seed(), {
+      token: "tok-fresh",
+      expiresAt: newExpiry,
+      now: past,
+    });
+    deepStrictEqual(Either.isRight(result), true);
+  });
+
+  it("fails InvitationAlreadyAccepted when the invitation was accepted", () => {
+    const accepted = Invitation.accept(seed(), { userId, now: inOneDay });
+    if (Either.isLeft(accepted)) throw new Error("expected Right");
+    const result = Invitation.reissue(accepted.right.invitation, {
+      token: "tok-fresh",
+      expiresAt: newExpiry,
+      now: inOneDay,
+    });
+    deepStrictEqual(Either.isLeft(result), true);
+    if (Either.isLeft(result)) {
+      deepStrictEqual(result.left instanceof InvitationAlreadyAccepted, true);
+    }
+  });
+
+  it("fails InvitationAlreadyRevoked when the invitation was revoked", () => {
+    const revoked = Invitation.revoke(seed(), { now: inOneDay });
+    if (Either.isLeft(revoked)) throw new Error("expected Right");
+    const result = Invitation.reissue(revoked.right.invitation, {
+      token: "tok-fresh",
+      expiresAt: newExpiry,
+      now: inOneDay,
+    });
+    deepStrictEqual(Either.isLeft(result), true);
+    if (Either.isLeft(result)) {
+      deepStrictEqual(result.left instanceof InvitationAlreadyRevoked, true);
+    }
+  });
+});
+
+describe("Invitation.statusAt / isOpen", () => {
+  const seed = () => Invitation.issue(inputs).invitation;
+
+  it("an issued invitation is open and pending before expiry", () => {
+    const inv = seed();
+    deepStrictEqual(Invitation.isOpen(inv), true);
+    deepStrictEqual(Invitation.statusAt(inv, inOneDay), "pending");
+  });
+
+  it("an open invitation past expiry reports expired", () => {
+    const past = DateTime.unsafeMake(new Date("2026-02-01T00:00:00Z"));
+    deepStrictEqual(Invitation.statusAt(seed(), past), "expired");
+  });
+
+  it("accepted and revoked invitations are not open", () => {
+    const accepted = Invitation.accept(seed(), { userId, now: inOneDay });
+    if (Either.isLeft(accepted)) throw new Error("expected Right");
+    deepStrictEqual(Invitation.isOpen(accepted.right.invitation), false);
+    const revoked = Invitation.revoke(seed(), { now: inOneDay });
+    if (Either.isLeft(revoked)) throw new Error("expected Right");
+    deepStrictEqual(Invitation.isOpen(revoked.right.invitation), false);
+  });
+});

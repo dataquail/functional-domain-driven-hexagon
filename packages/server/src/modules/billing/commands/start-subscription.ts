@@ -8,7 +8,7 @@ import * as Subscription from "@/modules/billing/domain/subscription.aggregate.j
 import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription-errors.js";
 import { SubscriptionId } from "@/modules/billing/domain/subscription-id.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
+import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
 import {
   type StartSubscriptionCommand,
@@ -26,7 +26,6 @@ export const startSubscription = (cmd: StartSubscriptionCommand): StartSubscript
     const repo = yield* SubscriptionRepository;
     const gateway = yield* BillingGateway;
     const bus = yield* DomainEventBus;
-    const uow = yield* UnitOfWork;
 
     // Idempotency check at the use-case layer: avoid a Stripe-side
     // double-charge if a caller retries POST after a network blip.
@@ -54,14 +53,10 @@ export const startSubscription = (cmd: StartSubscriptionCommand): StartSubscript
       now,
     });
 
-    yield* uow
-      .run(
-        Effect.gen(function* () {
-          yield* repo.insert(subscription);
-          yield* bus.dispatch(events);
-        }),
-      )
-      .pipe(Effect.catchTag("DatabaseError", Effect.die));
+    yield* Effect.gen(function* () {
+      yield* repo.insert(subscription);
+      yield* bus.dispatch(events);
+    }).pipe(withUnitOfWork);
 
     return subscription;
   });

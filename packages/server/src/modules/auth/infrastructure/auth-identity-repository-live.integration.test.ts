@@ -51,6 +51,30 @@ suite("AuthIdentityRepositoryLive (integration)", () => {
     }).pipe(Effect.provide(TestLayer)),
   );
 
+  it.effect("insert links a subject to a user, retrievable via findBySubject", () =>
+    Effect.gen(function* () {
+      // Seed only the user row (the FK target); the identity is created via
+      // the repository's write path, mirroring JIT provisioning.
+      const db = yield* Database.Database;
+      yield* db
+        .execute((client) =>
+          client.query(sql.unsafe`
+            INSERT INTO "user".users (id, email, created_at, updated_at)
+            VALUES (${userId}, 'jit@example.com', now(), now())
+          `),
+        )
+        .pipe(Effect.orDie);
+
+      const repo = yield* AuthIdentityRepository;
+      yield* repo.insert({ subject: "jit-sub", userId, provider: "zitadel" });
+
+      const found = yield* repo.findBySubject("jit-sub");
+      deepStrictEqual(found.subject, "jit-sub");
+      deepStrictEqual(found.userId, userId);
+      deepStrictEqual(found.provider, "zitadel");
+    }).pipe(Effect.provide(TestLayer)),
+  );
+
   it.effect("findBySubject fails AuthIdentityNotFound for an unknown subject", () =>
     Effect.gen(function* () {
       const repo = yield* AuthIdentityRepository;

@@ -1,6 +1,7 @@
 import {
   invitationAcceptedSpanAttributes,
   invitationIssuedSpanAttributes,
+  invitationReissuedSpanAttributes,
   invitationRevokedSpanAttributes,
 } from "@/modules/organization/domain/invitation-events.js";
 import {
@@ -27,6 +28,7 @@ export const organizationEventSpanAttributes = eventSpanAttributes({
   InvitationIssued: invitationIssuedSpanAttributes,
   InvitationAccepted: invitationAcceptedSpanAttributes,
   InvitationRevoked: invitationRevokedSpanAttributes,
+  InvitationReissued: invitationReissuedSpanAttributes,
   OrganizationRoleGranted: organizationRoleGrantedSpanAttributes,
   OrganizationRoleRevoked: organizationRoleRevokedSpanAttributes,
 });

@@ -8,7 +8,7 @@ import { RolesRepository } from "@/modules/role/domain/ports/repositories/roles-
 import { CannotPromoteSelf } from "@/modules/role/domain/role-errors.js";
 import * as Roles from "@/modules/role/domain/roles.aggregate.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
+import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
 export const grantRole = (cmd: GrantRoleCommand): GrantRoleOutput =>
   Effect.gen(function* () {
@@ -21,17 +21,10 @@ export const grantRole = (cmd: GrantRoleCommand): GrantRoleOutput =>
 
     const repo = yield* RolesRepository;
     const bus = yield* DomainEventBus;
-    const uow = yield* UnitOfWork;
 
     const aggregate = yield* repo.findByUserId(cmd.userId);
     const result = yield* Roles.grant(aggregate, cmd.role);
 
-    yield* uow
-      .run(
-        Effect.gen(function* () {
-          yield* repo.save(result.roles);
-          yield* bus.dispatch(result.events);
-        }),
-      )
-      .pipe(Effect.catchTag("DatabaseError", Effect.die));
-  });
+    yield* repo.save(result.roles);
+    yield* bus.dispatch(result.events);
+  }).pipe(withUnitOfWork);
