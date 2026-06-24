@@ -14,3 +14,6 @@ export type InvitationId = typeof InvitationId.Type;
 
 export const SubscriptionId = Schema.String.pipe(Schema.brand("SubscriptionId"));
 export type SubscriptionId = typeof SubscriptionId.Type;
+
+export const ApiTokenId = Schema.String.pipe(Schema.brand("ApiTokenId"));
+export type ApiTokenId = typeof ApiTokenId.Type;

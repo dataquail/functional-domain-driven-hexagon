@@ -52,6 +52,25 @@ export class EnvVars extends Effect.Service<EnvVars>()("EnvVars", {
         "SESSION_TOUCH_THRESHOLD_SECONDS",
       ).pipe(Config.withDefault(60)),
 
+      // API tokens (ADR-0024). Default expiry applied when a mint request
+      // omits `expiresInDays`. Touch threshold throttles the per-request
+      // `last_used_at` write the bearer path issues, same as sessions.
+      API_TOKEN_DEFAULT_TTL_DAYS: yield* Config.integer("API_TOKEN_DEFAULT_TTL_DAYS").pipe(
+        Config.withDefault(90),
+      ),
+      API_TOKEN_TOUCH_THRESHOLD_SECONDS: yield* Config.integer(
+        "API_TOKEN_TOUCH_THRESHOLD_SECONDS",
+      ).pipe(Config.withDefault(60)),
+
+      // Device authorization flow (ADR-0024). Grant TTL (how long the user
+      // has to approve) and the poll interval the CLI is told to wait.
+      DEVICE_CODE_TTL_SECONDS: yield* Config.integer("DEVICE_CODE_TTL_SECONDS").pipe(
+        Config.withDefault(600),
+      ),
+      DEVICE_POLL_INTERVAL_SECONDS: yield* Config.integer("DEVICE_POLL_INTERVAL_SECONDS").pipe(
+        Config.withDefault(5),
+      ),
+
       // Email / Notifications
       // Transport selection for the application `Mailer` port. `log` (default)
       // writes a structured log line — no real send. `smtp` targets the local

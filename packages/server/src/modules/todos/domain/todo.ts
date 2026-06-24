@@ -49,3 +49,17 @@ export const update = (todo: Todo, input: UpdateInput): Todo =>
     createdAt: todo.createdAt,
     updatedAt: input.now,
   });
+
+// Marks the todo done. A first-class verb (not a generic `update`) because
+// the CLI exposes "complete" as its own command and there's no reason to
+// require the title to flip the flag. Idempotent: completing a done todo
+// just re-stamps `updatedAt`.
+export const complete = (todo: Todo, now: DateTime.Utc): Todo =>
+  Todo.make({
+    id: todo.id,
+    organizationId: todo.organizationId,
+    title: todo.title,
+    completed: true,
+    createdAt: todo.createdAt,
+    updatedAt: now,
+  });

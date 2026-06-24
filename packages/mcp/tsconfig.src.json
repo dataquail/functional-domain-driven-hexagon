@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts"],
+  "references": [{ "path": "../api-client" }, { "path": "../contracts" }],
+  "compilerOptions": {
+    "types": ["node"],
+    "outDir": "build/src",
+    "tsBuildInfoFile": ".tsbuildinfo/src.tsbuildinfo",
+    "rootDir": "src",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@org/api-client": ["../api-client/src/index.js"],
+      "@org/api-client/*": ["../api-client/src/*.js"],
+      "@org/contracts": ["../contracts/src/index.js"],
+      "@org/contracts/*": ["../contracts/src/*.js"]
+    }
+  }
+}

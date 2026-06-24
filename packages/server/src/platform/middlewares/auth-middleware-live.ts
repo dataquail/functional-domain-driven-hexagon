@@ -7,10 +7,28 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { EnvVars } from "@/common/env-vars.js";
-import { FindSessionQuery, SessionId, TouchSessionCommand } from "@/modules/auth/index.js";
+import {
+  FindApiTokenByHashQuery,
+  FindSessionQuery,
+  hashToken,
+  SessionId,
+  TouchApiTokenCommand,
+  TouchSessionCommand,
+} from "@/modules/auth/index.js";
 import { CookieCodec } from "@/platform/auth/cookie-codec.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
+
+// `Authorization: Bearer <token>` — case-insensitive scheme. Returns the
+// raw token, or null when the header is absent or not a bearer credential.
+const BEARER_PREFIX = /^Bearer\s+/i;
+const readBearer = (authorization: string | undefined): string | null => {
+  if (authorization === undefined) return null;
+  const trimmed = authorization.trim();
+  if (!BEARER_PREFIX.test(trimmed)) return null;
+  const token = trimmed.replace(BEARER_PREFIX, "").trim();
+  return token === "" ? null : token;
+};
 
 // Distinguish "the DB is down" (503, retry) from "your session is bad"
 // (401, log back in). `Effect.mapError(() => Unauthorized)` would collapse
@@ -36,6 +54,31 @@ export const UserAuthMiddlewareLive = Layer.effect(
 
     return Effect.gen(function* () {
       const httpReq = yield* HttpServerRequest.HttpServerRequest;
+
+      // Bearer path (CLI / MCP / CI — ADR-0024): an `Authorization: Bearer`
+      // token takes precedence over the cookie. We hash the presented token
+      // here so the raw secret never travels through the bus or a span,
+      // then resolve it to the same `CurrentUser` the cookie path produces.
+      const bearer = readBearer(httpReq.headers.authorization);
+      if (bearer !== null) {
+        const apiToken = yield* queryBus
+          .execute(FindApiTokenByHashQuery.make({ tokenHash: hashToken(bearer) }))
+          .pipe(Effect.provideService(Database.Database, db), Effect.mapError(toAuthError));
+        // Fire-and-forget last-used stamp; throttled + error-swallowing in the
+        // handler, same rationale as the session touch below.
+        yield* commandBus
+          .execute(
+            TouchApiTokenCommand.make({
+              apiTokenId: apiToken.id,
+              thresholdSeconds: env.API_TOKEN_TOUCH_THRESHOLD_SECONDS,
+            }),
+          )
+          .pipe(Effect.provideService(Database.Database, db));
+        // No browser session for a bearer caller; the token id stands in as
+        // the opaque principal id on `CurrentUser` (Policy.ts unchanged).
+        return { sessionId: apiToken.id, userId: apiToken.userId };
+      }
+
       const cookies = cookie.parse(httpReq.headers.cookie ?? "");
       const raw = cookies[env.SESSION_COOKIE_NAME];
       if (raw === undefined || raw === "")

@@ -1,0 +1,32 @@
+{
+  "name": "@org/mcp",
+  "version": "0.0.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "Model Context Protocol (stdio) server exposing the effect-monorepo CLI surface as tools.",
+  "bin": {
+    "org-mcp": "build/esm/main.js"
+  },
+  "scripts": {
+    "check": "tsc -b tsconfig.json",
+    "clean": "rm -rf build .tsbuildinfo",
+    "build": "tsc -b tsconfig.build.json",
+    "dev": "tsx src/main.ts",
+    "start": "node build/esm/main.js",
+    "lint": "eslint . --quiet",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@effect/platform": "*",
+    "@effect/platform-node": "*",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@org/api-client": "workspace:^",
+    "@org/contracts": "workspace:^",
+    "effect": "^3.20.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "tsx": "^4.19.2"
+  }
+}

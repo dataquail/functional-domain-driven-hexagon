@@ -1,3 +1,4 @@
+export { CompleteTodoCommand } from "./commands/complete-todo-command.js";
 export { CreateTodoCommand } from "./commands/create-todo-command.js";
 export { DeleteTodoCommand } from "./commands/delete-todo-command.js";
 export { UpdateTodoCommand } from "./commands/update-todo-command.js";

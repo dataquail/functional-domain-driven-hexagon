@@ -1,0 +1,54 @@
+import * as HttpApiClient from "@effect/platform/HttpApiClient";
+import { describe, it } from "@effect/vitest";
+import { ApiTokenId } from "@org/contracts/EntityIds";
+import { deepStrictEqual } from "assert";
+import * as Effect from "effect/Effect";
+
+import { Api } from "@/api.js";
+import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
+import { hasTestDatabase } from "@/test-utils/test-database.js";
+
+const suite = hasTestDatabase ? describe.sequential : describe.skip;
+
+suite("DELETE /auth/tokens/:id (integration)", () => {
+  const { run } = useServerTestRuntime(["auth.api_tokens", "user.users", "platform.roles"], {
+    seedSuperAdminCaller: true,
+  });
+
+  it("revokes a token so it drops out of the listing", async () => {
+    await run(
+      Effect.gen(function* () {
+        const client = yield* HttpApiClient.make(Api);
+        const created = yield* client.authTokens.create({ payload: { label: "ci" } });
+        yield* client.authTokens.revoke({ path: { id: created.id } });
+        deepStrictEqual((yield* client.authTokens.list()).length, 0);
+      }),
+    );
+  });
+
+  it("a second revoke (now absent) fails 404 NotFound", async () => {
+    await run(
+      Effect.gen(function* () {
+        const client = yield* HttpApiClient.make(Api);
+        const created = yield* client.authTokens.create({ payload: { label: "ci" } });
+        yield* client.authTokens.revoke({ path: { id: created.id } });
+        const error = yield* client.authTokens
+          .revoke({ path: { id: created.id } })
+          .pipe(Effect.flip);
+        deepStrictEqual(error._tag, "NotFound");
+      }),
+    );
+  });
+
+  it("revoking an unknown id fails 404 NotFound", async () => {
+    await run(
+      Effect.gen(function* () {
+        const client = yield* HttpApiClient.make(Api);
+        const error = yield* client.authTokens
+          .revoke({ path: { id: ApiTokenId.make("99999999-9999-9999-9999-999999999999") } })
+          .pipe(Effect.flip);
+        deepStrictEqual(error._tag, "NotFound");
+      }),
+    );
+  });
+});

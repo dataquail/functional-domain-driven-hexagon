@@ -34,6 +34,17 @@ const rules = [
     ],
   },
   {
+    label: "CLI endpoint",
+    requirement: "sibling test",
+    // CLI-facing wire endpoints in `interface/cli/` (ADR-0024) — a separate
+    // inbound adapter from `interface/http/`, dispatching to the same bus.
+    subject: "packages/server/src/modules/*/interface/cli/*.endpoint.ts",
+    candidates: [
+      (f) => f.replace(/\.endpoint\.ts$/, ".endpoint.integration.test.ts"),
+      (f) => f.replace(/\.endpoint\.ts$/, ".endpoint.test.ts"),
+    ],
+  },
+  {
     label: "Event adapter",
     requirement: "sibling test",
     subject: "packages/server/src/modules/*/interface/events/*-event-adapter.ts",

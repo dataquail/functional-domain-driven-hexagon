@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts"],
+  "references": [{ "path": "../contracts" }],
+  "compilerOptions": {
+    "types": ["node"],
+    "outDir": "build/src",
+    "tsBuildInfoFile": ".tsbuildinfo/src.tsbuildinfo",
+    "rootDir": "src",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@org/contracts": ["../contracts/src/index.js"],
+      "@org/contracts/*": ["../contracts/src/*.js"]
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": [],
+  "exclude": ["src/**/*.test.ts"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@org/contracts": ["../contracts/src/index.js"],
+      "@org/contracts/*": ["../contracts/src/*.js"]
+    }
+  },
+  "references": [{ "path": "tsconfig.src.json" }]
+}
