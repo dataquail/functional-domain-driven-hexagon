@@ -42,7 +42,7 @@ describe("deleteUser", () => {
 
       yield* deleteUser(DeleteUserCommand.make({ userId: id }));
 
-      const exit = yield* Effect.exit(repo.findById(id));
+      const exit = yield* Effect.exit(repo.findOneById(id));
       deepStrictEqual(Exit.isFailure(exit), true);
 
       const events = yield* rec.byTag<UserDeleted>("UserDeleted");

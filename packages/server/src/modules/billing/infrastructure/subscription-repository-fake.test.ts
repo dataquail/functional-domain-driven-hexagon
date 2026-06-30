@@ -35,8 +35,8 @@ describe("SubscriptionRepositoryFake.insert", () => {
   it.effect("stores a subscription and makes it findable by organizationId", () =>
     Effect.gen(function* () {
       const repo = yield* SubscriptionRepository;
-      yield* repo.insert(mk(subA, acme));
-      const found = yield* repo.findByOrganizationId(acme);
+      yield* repo.insertOne(mk(subA, acme));
+      const found = yield* repo.findOneByOrganizationId(acme);
       ok(Option.isSome(found));
       if (Option.isSome(found)) deepStrictEqual(found.value.id, subA);
     }).pipe(provide),
@@ -45,8 +45,8 @@ describe("SubscriptionRepositoryFake.insert", () => {
   it.effect("fails SubscriptionAlreadyExistsForOrganization on duplicate org", () =>
     Effect.gen(function* () {
       const repo = yield* SubscriptionRepository;
-      yield* repo.insert(mk(subA, acme));
-      const exit = yield* Effect.exit(repo.insert(mk(subB, acme, "sub_y")));
+      yield* repo.insertOne(mk(subA, acme));
+      const exit = yield* Effect.exit(repo.insertOne(mk(subB, acme, "sub_y")));
       ok(Exit.isFailure(exit));
       if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
         ok(exit.cause.error instanceof SubscriptionAlreadyExistsForOrganization);
@@ -57,10 +57,10 @@ describe("SubscriptionRepositoryFake.insert", () => {
   it.effect("allows different organizations to each have their own subscription", () =>
     Effect.gen(function* () {
       const repo = yield* SubscriptionRepository;
-      yield* repo.insert(mk(subA, acme, "sub_a"));
-      yield* repo.insert(mk(subB, beta, "sub_b"));
-      const a = yield* repo.findByOrganizationId(acme);
-      const b = yield* repo.findByOrganizationId(beta);
+      yield* repo.insertOne(mk(subA, acme, "sub_a"));
+      yield* repo.insertOne(mk(subB, beta, "sub_b"));
+      const a = yield* repo.findOneByOrganizationId(acme);
+      const b = yield* repo.findOneByOrganizationId(beta);
       ok(Option.isSome(a) && Option.isSome(b));
     }).pipe(provide),
   );
@@ -71,22 +71,22 @@ describe("SubscriptionRepositoryFake.update", () => {
     Effect.gen(function* () {
       const repo = yield* SubscriptionRepository;
       const sub = mk(subA, acme);
-      yield* repo.insert(sub);
+      yield* repo.insertOne(sub);
       const { subscription: canceled } = Subscription.cancel(sub, now);
-      yield* repo.update(canceled);
-      const found = yield* repo.findByOrganizationId(acme);
+      yield* repo.updateOne(canceled);
+      const found = yield* repo.findOneByOrganizationId(acme);
       ok(Option.isSome(found));
       if (Option.isSome(found)) deepStrictEqual(found.value.status, "canceled");
     }).pipe(provide),
   );
 });
 
-describe("SubscriptionRepositoryFake.findByStripeSubscriptionId", () => {
+describe("SubscriptionRepositoryFake.findOneByStripeSubscriptionId", () => {
   it.effect("returns the subscription that has the matching Stripe id", () =>
     Effect.gen(function* () {
       const repo = yield* SubscriptionRepository;
-      yield* repo.insert(mk(subA, acme, "sub_unique"));
-      const found = yield* repo.findByStripeSubscriptionId("sub_unique");
+      yield* repo.insertOne(mk(subA, acme, "sub_unique"));
+      const found = yield* repo.findOneByStripeSubscriptionId("sub_unique");
       ok(Option.isSome(found));
       if (Option.isSome(found)) deepStrictEqual(found.value.id, subA);
     }).pipe(provide),
@@ -95,17 +95,17 @@ describe("SubscriptionRepositoryFake.findByStripeSubscriptionId", () => {
   it.effect("returns None when no subscription has the given Stripe id", () =>
     Effect.gen(function* () {
       const repo = yield* SubscriptionRepository;
-      const found = yield* repo.findByStripeSubscriptionId("sub_does_not_exist");
+      const found = yield* repo.findOneByStripeSubscriptionId("sub_does_not_exist");
       ok(Option.isNone(found));
     }).pipe(provide),
   );
 });
 
-describe("SubscriptionRepositoryFake.findByOrganizationId", () => {
+describe("SubscriptionRepositoryFake.findOneByOrganizationId", () => {
   it.effect("returns None for an org with no subscription", () =>
     Effect.gen(function* () {
       const repo = yield* SubscriptionRepository;
-      const found = yield* repo.findByOrganizationId(acme);
+      const found = yield* repo.findOneByOrganizationId(acme);
       ok(Option.isNone(found));
     }).pipe(provide),
   );

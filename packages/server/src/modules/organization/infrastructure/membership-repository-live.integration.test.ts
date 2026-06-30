@@ -57,14 +57,14 @@ suite("MembershipRepositoryLive (integration)", () => {
     );
   });
 
-  describe("insert + findByUserIdAndOrgId", () => {
+  describe("insert + findOneByUserIdAndOrgId", () => {
     it.effect("round-trips an inserted membership", () =>
       Effect.gen(function* () {
         yield* seedFks;
         const repo = yield* MembershipRepository;
         const { membership } = Membership.create({ userId, organizationId, now });
-        yield* repo.insert(membership);
-        const found = yield* repo.findByUserIdAndOrgId(userId, organizationId);
+        yield* repo.insertOne(membership);
+        const found = yield* repo.findOneByUserIdAndOrgId(userId, organizationId);
         deepStrictEqual(found.userId, userId);
         deepStrictEqual(found.organizationId, organizationId);
       }).pipe(Effect.provide(TestLayer)),
@@ -75,18 +75,18 @@ suite("MembershipRepositoryLive (integration)", () => {
         yield* seedFks;
         const repo = yield* MembershipRepository;
         const { membership } = Membership.create({ userId, organizationId, now });
-        yield* repo.insert(membership);
-        yield* repo.insert(membership);
-        const found = yield* repo.findByUserIdAndOrgId(userId, organizationId);
+        yield* repo.insertOne(membership);
+        yield* repo.insertOne(membership);
+        const found = yield* repo.findOneByUserIdAndOrgId(userId, organizationId);
         deepStrictEqual(found.userId, userId);
       }).pipe(Effect.provide(TestLayer)),
     );
 
-    it.effect("findByUserIdAndOrgId fails MembershipNotFound for an unknown pair", () =>
+    it.effect("findOneByUserIdAndOrgId fails MembershipNotFound for an unknown pair", () =>
       Effect.gen(function* () {
         yield* seedFks;
         const repo = yield* MembershipRepository;
-        const exit = yield* Effect.exit(repo.findByUserIdAndOrgId(otherUserId, organizationId));
+        const exit = yield* Effect.exit(repo.findOneByUserIdAndOrgId(otherUserId, organizationId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
           const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
@@ -102,9 +102,9 @@ suite("MembershipRepositoryLive (integration)", () => {
         yield* seedFks;
         const repo = yield* MembershipRepository;
         const { membership } = Membership.create({ userId, organizationId, now });
-        yield* repo.insert(membership);
-        yield* repo.delete(userId, organizationId);
-        const exit = yield* Effect.exit(repo.findByUserIdAndOrgId(userId, organizationId));
+        yield* repo.insertOne(membership);
+        yield* repo.deleteOne(userId, organizationId);
+        const exit = yield* Effect.exit(repo.findOneByUserIdAndOrgId(userId, organizationId));
         deepStrictEqual(Exit.isFailure(exit), true);
       }).pipe(Effect.provide(TestLayer)),
     );
@@ -113,7 +113,7 @@ suite("MembershipRepositoryLive (integration)", () => {
       Effect.gen(function* () {
         yield* seedFks;
         const repo = yield* MembershipRepository;
-        const exit = yield* Effect.exit(repo.delete(userId, organizationId));
+        const exit = yield* Effect.exit(repo.deleteOne(userId, organizationId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
           const error = exit.cause._tag === "Fail" ? exit.cause.error : null;

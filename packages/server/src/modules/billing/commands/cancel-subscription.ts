@@ -25,7 +25,7 @@ export const cancelSubscription = (cmd: CancelSubscriptionCommand): CancelSubscr
     const gateway = yield* BillingGateway;
     const bus = yield* DomainEventBus;
 
-    const found = yield* repo.findByOrganizationId(cmd.organizationId);
+    const found = yield* repo.findOneByOrganizationId(cmd.organizationId);
     if (Option.isNone(found)) {
       return yield* Effect.fail(new SubscriptionNotFound({ organizationId: cmd.organizationId }));
     }
@@ -39,7 +39,7 @@ export const cancelSubscription = (cmd: CancelSubscriptionCommand): CancelSubscr
     const { events, subscription } = Subscription.cancel(existing, now);
 
     yield* Effect.gen(function* () {
-      yield* repo.update(subscription);
+      yield* repo.updateOne(subscription);
       yield* bus.dispatch(events);
     }).pipe(withUnitOfWork);
 

@@ -16,7 +16,7 @@ export const SubscriptionRepositoryLive = Layer.effect(
   Effect.gen(function* () {
     const db = yield* Database.Database;
 
-    const insert = db.makeQuery((execute, sub: Subscription) => {
+    const insertOne = db.makeQuery((execute, sub: Subscription) => {
       const row = SubscriptionMapper.toPersistence(sub);
       return execute((client) =>
         client.query(sql.unsafe`
@@ -53,11 +53,11 @@ export const SubscriptionRepositoryLive = Layer.effect(
             : Effect.die(e),
         ),
         translatePersistenceUnavailable,
-        Effect.withSpan("SubscriptionRepository.insert"),
+        Effect.withSpan("SubscriptionRepository.insertOne"),
       );
     });
 
-    const update = db.makeQuery((execute, sub: Subscription) => {
+    const updateOne = db.makeQuery((execute, sub: Subscription) => {
       const row = SubscriptionMapper.toPersistence(sub);
       return execute((client) =>
         client.query(sql.unsafe`
@@ -74,11 +74,11 @@ export const SubscriptionRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("SubscriptionRepository.update"),
+        Effect.withSpan("SubscriptionRepository.updateOne"),
       );
     });
 
-    const findByOrganizationId = db.makeQuery((execute, organizationId: OrganizationId) =>
+    const findOneByOrganizationId = db.makeQuery((execute, organizationId: OrganizationId) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.SubscriptionRowStd)`
           SELECT * FROM billing.subscriptions WHERE organization_id = ${organizationId}
@@ -89,11 +89,11 @@ export const SubscriptionRepositoryLive = Layer.effect(
         ),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("SubscriptionRepository.findByOrganizationId"),
+        Effect.withSpan("SubscriptionRepository.findOneByOrganizationId"),
       ),
     );
 
-    const findByStripeSubscriptionId = db.makeQuery((execute, stripeSubscriptionId: string) =>
+    const findOneByStripeSubscriptionId = db.makeQuery((execute, stripeSubscriptionId: string) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.SubscriptionRowStd)`
           SELECT * FROM billing.subscriptions WHERE stripe_subscription_id = ${stripeSubscriptionId}
@@ -104,15 +104,15 @@ export const SubscriptionRepositoryLive = Layer.effect(
         ),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("SubscriptionRepository.findByStripeSubscriptionId"),
+        Effect.withSpan("SubscriptionRepository.findOneByStripeSubscriptionId"),
       ),
     );
 
     return SubscriptionRepository.of({
-      insert,
-      update,
-      findByOrganizationId,
-      findByStripeSubscriptionId,
+      insertOne,
+      updateOne,
+      findOneByOrganizationId,
+      findOneByStripeSubscriptionId,
     });
   }),
 );

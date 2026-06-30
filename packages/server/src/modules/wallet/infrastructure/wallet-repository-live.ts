@@ -16,7 +16,7 @@ export const WalletRepositoryLive = Layer.effect(
   Effect.gen(function* () {
     const db = yield* Database.Database;
 
-    const insert = db.makeQuery((execute, wallet: Wallet) => {
+    const insertOne = db.makeQuery((execute, wallet: Wallet) => {
       const row = WalletMapper.toPersistence(wallet);
       return execute((client) =>
         client.query(sql.unsafe`
@@ -41,11 +41,11 @@ export const WalletRepositoryLive = Layer.effect(
             : Effect.die(e),
         ),
         translatePersistenceUnavailable,
-        Effect.withSpan("WalletRepository.insert"),
+        Effect.withSpan("WalletRepository.insertOne"),
       );
     });
 
-    const findByOrganizationId = db.makeQuery((execute, organizationId: OrganizationId) =>
+    const findOneByOrganizationId = db.makeQuery((execute, organizationId: OrganizationId) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.WalletRowStd)`
           SELECT * FROM wallet.wallets WHERE organization_id = ${organizationId}
@@ -56,10 +56,10 @@ export const WalletRepositoryLive = Layer.effect(
         ),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("WalletRepository.findByOrganizationId"),
+        Effect.withSpan("WalletRepository.findOneByOrganizationId"),
       ),
     );
 
-    return WalletRepository.of({ insert, findByOrganizationId });
+    return WalletRepository.of({ insertOne, findOneByOrganizationId });
   }),
 );

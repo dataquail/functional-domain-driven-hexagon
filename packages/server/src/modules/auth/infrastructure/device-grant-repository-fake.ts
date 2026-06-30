@@ -14,7 +14,7 @@ export const DeviceGrantRepositoryFake = Layer.effect(
   Effect.gen(function* () {
     const store = yield* Ref.make(HashMap.empty<DeviceGrantId, DeviceGrant>());
 
-    const insert = (grant: DeviceGrant): Effect.Effect<void> =>
+    const insertOne = (grant: DeviceGrant): Effect.Effect<void> =>
       Ref.update(store, HashMap.set(grant.id, grant));
 
     const findBy = (
@@ -25,12 +25,12 @@ export const DeviceGrantRepositoryFake = Layer.effect(
         return match === undefined ? Effect.fail(new DeviceGrantNotFound()) : Effect.succeed(match);
       });
 
-    const findByCodeHash = (deviceCodeHash: string) =>
+    const findOneByCodeHash = (deviceCodeHash: string) =>
       findBy((g) => g.deviceCodeHash === deviceCodeHash);
 
-    const findByUserCode = (userCode: string) => findBy((g) => g.userCode === userCode);
+    const findOneByUserCode = (userCode: string) => findBy((g) => g.userCode === userCode);
 
-    const update = (grant: DeviceGrant): Effect.Effect<void, DeviceGrantNotFound> =>
+    const updateOne = (grant: DeviceGrant): Effect.Effect<void, DeviceGrantNotFound> =>
       Effect.gen(function* () {
         const m = yield* Ref.get(store);
         if (Option.isNone(HashMap.get(m, grant.id))) {
@@ -49,11 +49,11 @@ export const DeviceGrantRepositoryFake = Layer.effect(
       });
 
     return DeviceGrantRepository.of({
-      insert,
-      findByCodeHash,
-      findByUserCode,
-      update,
-      delete: deleteGrant,
+      insertOne,
+      findOneByCodeHash,
+      findOneByUserCode,
+      updateOne,
+      deleteOne: deleteGrant,
     });
   }),
 );

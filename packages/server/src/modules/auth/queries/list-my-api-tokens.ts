@@ -10,5 +10,5 @@ import {
 export const listMyApiTokens = (query: ListMyApiTokensQuery): ListMyApiTokensOutput =>
   Effect.gen(function* () {
     const repo = yield* ApiTokenRepository;
-    return yield* repo.listByUser(query.userId);
+    return yield* repo.findManyByUser(query.userId);
   });

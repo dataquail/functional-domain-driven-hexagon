@@ -69,9 +69,9 @@ export const createOrganization = (cmd: CreateOrganizationCommand): CreateOrgani
     }
     const grantResult = grantEither.right;
 
-    yield* orgRepo.insert(organization);
-    yield* memberRepo.insert(membership);
-    yield* orgRolesRepo.save(grantResult.organizationRoles);
+    yield* orgRepo.insertOne(organization);
+    yield* memberRepo.insertOne(membership);
+    yield* orgRolesRepo.upsertOne(grantResult.organizationRoles);
     yield* bus.dispatch([...orgEvents, ...memberEvents, ...grantResult.events]);
     return id;
   }).pipe(withUnitOfWork);

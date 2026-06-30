@@ -33,7 +33,7 @@ describe("mintApiToken", () => {
 
       // Round-trips: the minted token resolves by its hash.
       const repo = yield* ApiTokenRepository;
-      const found = yield* repo.findByHash(hashToken(token));
+      const found = yield* repo.findOneByHash(hashToken(token));
       deepStrictEqual(found.id, apiToken.id);
     }).pipe(Effect.provide(TestLayer)),
   );

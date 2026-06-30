@@ -40,7 +40,7 @@ describe("softDeleteOrganization", () => {
         CreateOrganizationCommand.make({ name: "Acme", actorUserId }),
       );
       yield* softDeleteOrganization(SoftDeleteOrganizationCommand.make({ organizationId: id }));
-      const stored = yield* repo.findByIdIncludingDeleted(id);
+      const stored = yield* repo.findOneByIdIncludingDeleted(id);
       deepStrictEqual(stored.deletedAt !== null, true);
       const events = yield* rec.byTag<OrganizationSoftDeleted>("OrganizationSoftDeleted");
       deepStrictEqual(events.length, 1);

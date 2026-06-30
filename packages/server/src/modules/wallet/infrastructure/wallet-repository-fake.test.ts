@@ -27,8 +27,8 @@ describe("WalletRepositoryFake", () => {
       Effect.gen(function* () {
         const repo = yield* WalletRepository;
         const { wallet } = Wallet.create({ id: walletA, organizationId: acmeId, now });
-        yield* repo.insert(wallet);
-        const found = yield* repo.findByOrganizationId(acmeId);
+        yield* repo.insertOne(wallet);
+        const found = yield* repo.findOneByOrganizationId(acmeId);
         ok(Option.isSome(found));
         if (Option.isSome(found)) {
           deepStrictEqual(found.value.id, walletA);
@@ -45,8 +45,8 @@ describe("WalletRepositoryFake", () => {
           const repo = yield* WalletRepository;
           const { wallet: first } = Wallet.create({ id: walletA, organizationId: acmeId, now });
           const { wallet: clashing } = Wallet.create({ id: walletB, organizationId: acmeId, now });
-          yield* repo.insert(first);
-          const exit = yield* Effect.exit(repo.insert(clashing));
+          yield* repo.insertOne(first);
+          const exit = yield* Effect.exit(repo.insertOne(clashing));
           ok(Exit.isFailure(exit));
           if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
             const err = exit.cause.error;
@@ -71,10 +71,10 @@ describe("WalletRepositoryFake", () => {
           organizationId: betaId,
           now,
         });
-        yield* repo.insert(acmeWallet);
-        yield* repo.insert(betaWallet);
-        const acmeFound = yield* repo.findByOrganizationId(acmeId);
-        const betaFound = yield* repo.findByOrganizationId(betaId);
+        yield* repo.insertOne(acmeWallet);
+        yield* repo.insertOne(betaWallet);
+        const acmeFound = yield* repo.findOneByOrganizationId(acmeId);
+        const betaFound = yield* repo.findOneByOrganizationId(betaId);
         ok(Option.isSome(acmeFound));
         ok(Option.isSome(betaFound));
         if (Option.isSome(acmeFound)) deepStrictEqual(acmeFound.value.id, walletA);
@@ -83,11 +83,11 @@ describe("WalletRepositoryFake", () => {
     );
   });
 
-  describe("findByOrganizationId", () => {
+  describe("findOneByOrganizationId", () => {
     it.effect("returns None when no wallet exists for the org", () =>
       Effect.gen(function* () {
         const repo = yield* WalletRepository;
-        const result = yield* repo.findByOrganizationId(acmeId);
+        const result = yield* repo.findOneByOrganizationId(acmeId);
         ok(Option.isNone(result));
       }).pipe(provide),
     );
@@ -98,15 +98,15 @@ describe("WalletRepositoryFake", () => {
       Effect.gen(function* () {
         const repo1 = yield* WalletRepository;
         const { wallet } = Wallet.create({ id: walletA, organizationId: acmeId, now });
-        yield* repo1.insert(wallet);
-        const exists = yield* repo1.findByOrganizationId(acmeId);
+        yield* repo1.insertOne(wallet);
+        const exists = yield* repo1.findOneByOrganizationId(acmeId);
         ok(Option.isSome(exists));
       }).pipe(provide, (first) =>
         Effect.zipRight(
           first,
           Effect.gen(function* () {
             const repo2 = yield* WalletRepository;
-            const empty = yield* repo2.findByOrganizationId(acmeId);
+            const empty = yield* repo2.findOneByOrganizationId(acmeId);
             ok(Option.isNone(empty));
           }).pipe(provide),
         ),

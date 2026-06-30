@@ -22,7 +22,7 @@ import { ApiTokenRepository } from "@/modules/auth/domain/ports/repositories/api
 export const touchApiToken = (cmd: TouchApiTokenCommand): TouchApiTokenOutput =>
   Effect.gen(function* () {
     const repo = yield* ApiTokenRepository;
-    const token = yield* repo.findById(cmd.apiTokenId).pipe(
+    const token = yield* repo.findOneById(cmd.apiTokenId).pipe(
       Effect.catchTag("ApiTokenNotFound", () => Effect.succeed(null)),
       Effect.catchTag("PersistenceUnavailable", () => Effect.succeed(null)),
     );
@@ -32,7 +32,7 @@ export const touchApiToken = (cmd: TouchApiTokenCommand): TouchApiTokenOutput =>
     const elapsed = DateTime.distanceDuration(token.lastUsedAt, now);
     if (Duration.lessThan(elapsed, Duration.seconds(cmd.thresholdSeconds))) return;
 
-    yield* repo.update(ApiToken.touch({ token, now })).pipe(
+    yield* repo.updateOne(ApiToken.touch({ token, now })).pipe(
       Effect.catchTag("ApiTokenNotFound", () => Effect.void),
       Effect.catchTag("PersistenceUnavailable", () => Effect.void),
     );

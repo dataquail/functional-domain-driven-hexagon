@@ -42,13 +42,13 @@ suite("DeviceGrantRepositoryLive (integration)", () => {
     );
   });
 
-  it.effect("insert + findByCodeHash + findByUserCode round-trip", () =>
+  it.effect("insert + findOneByCodeHash + findOneByUserCode round-trip", () =>
     Effect.gen(function* () {
       const repo = yield* DeviceGrantRepository;
       const now = yield* DateTime.now;
-      yield* repo.insert(start(now));
-      deepStrictEqual((yield* repo.findByCodeHash("dc-hash")).id, id);
-      const byUser = yield* repo.findByUserCode("ABCD-2345");
+      yield* repo.insertOne(start(now));
+      deepStrictEqual((yield* repo.findOneByCodeHash("dc-hash")).id, id);
+      const byUser = yield* repo.findOneByUserCode("ABCD-2345");
       deepStrictEqual(byUser.status, "pending");
       deepStrictEqual(byUser.userId, null);
     }).pipe(Effect.provide(TestLayer)),
@@ -60,9 +60,9 @@ suite("DeviceGrantRepositoryLive (integration)", () => {
       const repo = yield* DeviceGrantRepository;
       const now = yield* DateTime.now;
       const grant = start(now);
-      yield* repo.insert(grant);
-      yield* repo.update(DeviceGrant.approve({ grant, userId, now }));
-      const after = yield* repo.findByCodeHash("dc-hash");
+      yield* repo.insertOne(grant);
+      yield* repo.updateOne(DeviceGrant.approve({ grant, userId, now }));
+      const after = yield* repo.findOneByCodeHash("dc-hash");
       deepStrictEqual(after.status, "approved");
       deepStrictEqual(after.userId, userId);
       deepStrictEqual(after.approvedAt !== null, true);
@@ -73,15 +73,15 @@ suite("DeviceGrantRepositoryLive (integration)", () => {
     Effect.gen(function* () {
       const repo = yield* DeviceGrantRepository;
       const now = yield* DateTime.now;
-      yield* repo.insert(start(now));
-      yield* repo.delete(id);
-      const lookup = yield* Effect.exit(repo.findByCodeHash("dc-hash"));
+      yield* repo.insertOne(start(now));
+      yield* repo.deleteOne(id);
+      const lookup = yield* Effect.exit(repo.findOneByCodeHash("dc-hash"));
       deepStrictEqual(Exit.isFailure(lookup), true);
       if (Exit.isFailure(lookup)) {
         const error = lookup.cause._tag === "Fail" ? lookup.cause.error : null;
         deepStrictEqual(error instanceof DeviceGrantNotFound, true);
       }
-      const second = yield* Effect.exit(repo.delete(id));
+      const second = yield* Effect.exit(repo.deleteOne(id));
       deepStrictEqual(Exit.isFailure(second), true);
     }).pipe(Effect.provide(TestLayer)),
   );

@@ -29,15 +29,15 @@ export const acceptInvitation = (cmd: AcceptInvitationCommand): AcceptInvitation
     const bus = yield* DomainEventBus;
     const now = yield* DateTime.now;
 
-    const invitation = yield* invRepo.findByToken(cmd.token);
+    const invitation = yield* invRepo.findOneByToken(cmd.token);
     const result = yield* Invitation.accept(invitation, { userId: cmd.userId, now });
     yield* Effect.annotateCurrentSpan("invitation.id", invitation.id);
     yield* Effect.annotateCurrentSpan("organization.id", invitation.organizationId);
 
-    yield* invRepo.update(result.invitation);
-    yield* memberRepo.insert(result.membership);
+    yield* invRepo.updateOne(result.invitation);
+    yield* memberRepo.insertOne(result.membership);
     yield* bus.dispatch(result.events);
-    // Concurrent revoke between findByToken and update would surface as
+    // Concurrent revoke between findOneByToken and update would surface as
     // InvitationNotFound from `update` — treat as a defect (the token
     // was valid moments ago; the operator should look at the trace).
     // For normal use, the aggregate's accept() catches expired/revoked.

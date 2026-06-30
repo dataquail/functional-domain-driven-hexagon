@@ -21,6 +21,6 @@ export const createTodo = (cmd: CreateTodoCommand): CreateTodoOutput =>
       title: cmd.title,
       now,
     });
-    yield* repo.insert(todo);
+    yield* repo.insertOne(todo);
     return todo;
   });

@@ -27,7 +27,7 @@ import * as Session from "@/modules/auth/domain/session.aggregate.js";
 export const touchSession = (cmd: TouchSessionCommand): TouchSessionOutput =>
   Effect.gen(function* () {
     const repo = yield* SessionRepository;
-    const session = yield* repo.findById(cmd.sessionId).pipe(
+    const session = yield* repo.findOneById(cmd.sessionId).pipe(
       Effect.catchTag("SessionNotFound", () => Effect.succeed(null)),
       Effect.catchTag("PersistenceUnavailable", () => Effect.succeed(null)),
     );
@@ -38,7 +38,7 @@ export const touchSession = (cmd: TouchSessionCommand): TouchSessionOutput =>
     if (Duration.lessThan(elapsed, Duration.seconds(cmd.thresholdSeconds))) return;
 
     const touched = Session.touch({ session, now, ttlSeconds: cmd.ttlSeconds });
-    yield* repo.update(touched).pipe(
+    yield* repo.updateOne(touched).pipe(
       Effect.catchTag("SessionNotFound", () => Effect.void),
       Effect.catchTag("PersistenceUnavailable", () => Effect.void),
     );

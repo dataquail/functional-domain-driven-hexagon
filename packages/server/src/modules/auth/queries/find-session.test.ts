@@ -29,7 +29,7 @@ const farFuture = DateTime.unsafeMake(new Date("2099-01-01T00:00:00Z"));
 const farFutureLater = DateTime.unsafeMake(new Date("2099-12-31T00:00:00Z"));
 
 const insertSession = (session: Session) =>
-  Effect.flatMap(SessionRepository, (repo) => repo.insert(session));
+  Effect.flatMap(SessionRepository, (repo) => repo.insertOne(session));
 
 const baseFields = {
   id: sessionId,

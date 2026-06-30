@@ -20,7 +20,7 @@ const insert = (opts: { expiresAt: DateTime.Utc | null; revokedAt?: DateTime.Utc
   Effect.gen(function* () {
     const repo = yield* ApiTokenRepository;
     const now = yield* DateTime.now;
-    yield* repo.insert(
+    yield* repo.insertOne(
       ApiToken.make({
         id: apiTokenId,
         userId,

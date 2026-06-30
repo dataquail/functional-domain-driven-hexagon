@@ -50,7 +50,7 @@ describe("removeMember", () => {
         organizationId: orgId,
         now: DateTime.unsafeMake(new Date("2026-02-01T00:00:00Z")),
       });
-      yield* memberships.insert(secondMember);
+      yield* memberships.insertOne(secondMember);
 
       yield* removeMember(
         RemoveMemberCommand.make({
@@ -60,7 +60,7 @@ describe("removeMember", () => {
         }),
       );
 
-      const exit = yield* Effect.exit(memberships.findByUserIdAndOrgId(otherUserId, orgId));
+      const exit = yield* Effect.exit(memberships.findOneByUserIdAndOrgId(otherUserId, orgId));
       deepStrictEqual(Exit.isFailure(exit), true);
 
       const events = yield* rec.byTag<MembershipRevoked>("MembershipRevoked");

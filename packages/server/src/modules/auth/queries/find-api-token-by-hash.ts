@@ -15,7 +15,7 @@ import {
 export const findApiTokenByHash = (query: FindApiTokenByHashQuery): FindApiTokenByHashOutput =>
   Effect.gen(function* () {
     const repo = yield* ApiTokenRepository;
-    const token = yield* repo.findByHash(query.tokenHash);
+    const token = yield* repo.findOneByHash(query.tokenHash);
     if (token.revokedAt !== null) {
       return yield* Effect.fail(new ApiTokenRevoked());
     }

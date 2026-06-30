@@ -50,7 +50,7 @@ describe("revokeOrganizationRole", () => {
         }),
       );
 
-      const roles = yield* repo.findByUserIdAndOrgId(targetId, orgId);
+      const roles = yield* repo.findOneByUserIdAndOrgId(targetId, orgId);
       deepStrictEqual([...roles.roles], []);
 
       const events = yield* rec.byTag<OrganizationRoleRevoked>("OrganizationRoleRevoked");

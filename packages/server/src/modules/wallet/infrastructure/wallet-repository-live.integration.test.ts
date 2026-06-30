@@ -58,12 +58,12 @@ suite("WalletRepositoryLive (integration)", () => {
   });
 
   describe("insert", () => {
-    it.effect("persists the wallet and decodes it back via findByOrganizationId", () =>
+    it.effect("persists the wallet and decodes it back via findOneByOrganizationId", () =>
       Effect.gen(function* () {
         yield* seedOrgRow(organizationId);
         const repo = yield* WalletRepository;
-        yield* repo.insert(acmeWallet);
-        const found = yield* repo.findByOrganizationId(organizationId);
+        yield* repo.insertOne(acmeWallet);
+        const found = yield* repo.findOneByOrganizationId(organizationId);
         deepStrictEqual(Option.isSome(found), true);
         if (Option.isSome(found)) {
           deepStrictEqual(found.value.id, acmeWallet.id);
@@ -79,9 +79,9 @@ suite("WalletRepositoryLive (integration)", () => {
         Effect.gen(function* () {
           yield* seedOrgRow(organizationId);
           const repo = yield* WalletRepository;
-          yield* repo.insert(acmeWallet);
+          yield* repo.insertOne(acmeWallet);
           const clashing = Wallet.create({ id: otherWalletId, organizationId, now }).wallet;
-          const exit = yield* Effect.exit(repo.insert(clashing));
+          const exit = yield* Effect.exit(repo.insertOne(clashing));
           deepStrictEqual(Exit.isFailure(exit), true);
           if (Exit.isFailure(exit)) {
             const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
@@ -95,11 +95,11 @@ suite("WalletRepositoryLive (integration)", () => {
     );
   });
 
-  describe("findByOrganizationId", () => {
+  describe("findOneByOrganizationId", () => {
     it.effect("returns None when no wallet exists for the org", () =>
       Effect.gen(function* () {
         const repo = yield* WalletRepository;
-        const result = yield* repo.findByOrganizationId(otherOrgId);
+        const result = yield* repo.findOneByOrganizationId(otherOrgId);
         deepStrictEqual(Option.isNone(result), true);
       }).pipe(Effect.provide(TestLayer)),
     );

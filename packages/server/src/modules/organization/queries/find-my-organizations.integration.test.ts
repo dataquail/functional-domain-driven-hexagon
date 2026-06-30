@@ -60,13 +60,13 @@ suite("findMyOrganizations (integration)", () => {
       yield* seedUsers;
       const orgs = yield* OrganizationRepository;
       const memberships = yield* MembershipRepository;
-      yield* orgs.insert(Organization.create({ id: acmeId, name: "Acme", now }).organization);
-      yield* orgs.insert(Organization.create({ id: betaId, name: "Beta", now }).organization);
-      yield* memberships.insert(
+      yield* orgs.insertOne(Organization.create({ id: acmeId, name: "Acme", now }).organization);
+      yield* orgs.insertOne(Organization.create({ id: betaId, name: "Beta", now }).organization);
+      yield* memberships.insertOne(
         Membership.create({ userId: aliceId, organizationId: acmeId, now }).membership,
       );
       // Bob is a member of Beta, not Acme — must not leak into Alice's view.
-      yield* memberships.insert(
+      yield* memberships.insertOne(
         Membership.create({ userId: bobId, organizationId: betaId, now }).membership,
       );
 
@@ -83,12 +83,12 @@ suite("findMyOrganizations (integration)", () => {
       yield* seedUsers;
       const orgs = yield* OrganizationRepository;
       const memberships = yield* MembershipRepository;
-      yield* orgs.insert(Organization.create({ id: acmeId, name: "Acme", now }).organization);
-      yield* orgs.insert(Organization.create({ id: betaId, name: "Beta", now }).organization);
-      yield* memberships.insert(
+      yield* orgs.insertOne(Organization.create({ id: acmeId, name: "Acme", now }).organization);
+      yield* orgs.insertOne(Organization.create({ id: betaId, name: "Beta", now }).organization);
+      yield* memberships.insertOne(
         Membership.create({ userId: aliceId, organizationId: acmeId, now }).membership,
       );
-      yield* memberships.insert(
+      yield* memberships.insertOne(
         Membership.create({ userId: aliceId, organizationId: betaId, now }).membership,
       );
       // Alice holds the `admin` role in Acme only.
@@ -124,13 +124,13 @@ suite("findMyOrganizations (integration)", () => {
       const orgs = yield* OrganizationRepository;
       const memberships = yield* MembershipRepository;
       const { organization: acme } = Organization.create({ id: acmeId, name: "Acme", now });
-      yield* orgs.insert(acme);
-      yield* memberships.insert(
+      yield* orgs.insertOne(acme);
+      yield* memberships.insertOne(
         Membership.create({ userId: aliceId, organizationId: acmeId, now }).membership,
       );
       const deleted = Organization.softDelete(acme, { now });
       if (deleted._tag !== "Right") throw new Error("expected Right");
-      yield* orgs.update(deleted.right.organization);
+      yield* orgs.updateOne(deleted.right.organization);
 
       const result = yield* findMyOrganizations(FindMyOrganizationsQuery.make({ userId: aliceId }));
       deepStrictEqual([...result.organizations], []);

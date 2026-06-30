@@ -21,7 +21,7 @@ export const UserResolverEntryLive = Layer.effect(
   Effect.gen(function* () {
     const repo = yield* UserRepository;
     return (id) =>
-      repo.findById(id).pipe(
+      repo.findOneById(id).pipe(
         Effect.catchTag("UserNotFound", () => Effect.fail(new CustomHttpApiError.NotFound())),
         Effect.catchTag("PersistenceUnavailable", Effect.die),
       );

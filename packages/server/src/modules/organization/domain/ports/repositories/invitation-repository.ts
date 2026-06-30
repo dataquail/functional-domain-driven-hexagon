@@ -19,29 +19,31 @@ import { type OrganizationId } from "@/platform/ids/organization-id.js";
 // InvitationNotFound when the row is missing (likely a concurrent
 // delete; commands treat this as a 404).
 //
-// `findByToken` is the read path for the anonymous accept endpoint
+// `findOneByToken` is the read path for the anonymous accept endpoint
 // (the caller doesn't know the invitation id, only the token).
 //
-// `findByOrganizationId` backs the pending-invitations list (the handler
-// filters/derives status). `findOpenByOrganizationIdAndEmail` backs the
-// invite-again-becomes-resend dedup: at most one open invite per
-// (org, email) once dedup is in force; returns the most recent open one
-// (or null) so the command can reissue instead of creating a duplicate.
+// `findManyByOrganizationId` backs the pending-invitations list (the handler
+// filters/derives status). `findOneOpenByOrganizationIdAndEmail` backs the
+// invite-again-becomes-resend dedup: the `Open` qualifier (ADR-0024 permits a
+// qualifier in front of the `By<Key>` clause) says it returns only the OPEN
+// invitation — at most one open invite per (org, email) once dedup is in force —
+// i.e. the most recent open one (or null), so the command can reissue instead
+// of creating a duplicate.
 export type InvitationRepositoryShape = {
-  readonly insert: (invitation: Invitation) => Effect.Effect<void, PersistenceUnavailable>;
-  readonly update: (
+  readonly insertOne: (invitation: Invitation) => Effect.Effect<void, PersistenceUnavailable>;
+  readonly updateOne: (
     invitation: Invitation,
   ) => Effect.Effect<void, InvitationNotFound | PersistenceUnavailable>;
-  readonly findById: (
+  readonly findOneById: (
     id: InvitationId,
   ) => Effect.Effect<Invitation, InvitationNotFound | PersistenceUnavailable>;
-  readonly findByToken: (
+  readonly findOneByToken: (
     token: string,
   ) => Effect.Effect<Invitation, InvitationTokenNotFound | PersistenceUnavailable>;
-  readonly findByOrganizationId: (
+  readonly findManyByOrganizationId: (
     organizationId: OrganizationId,
   ) => Effect.Effect<ReadonlyArray<Invitation>, PersistenceUnavailable>;
-  readonly findOpenByOrganizationIdAndEmail: (
+  readonly findOneOpenByOrganizationIdAndEmail: (
     organizationId: OrganizationId,
     inviteeEmail: string,
   ) => Effect.Effect<Invitation | null, PersistenceUnavailable>;

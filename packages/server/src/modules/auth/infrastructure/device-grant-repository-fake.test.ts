@@ -26,7 +26,7 @@ const seed = () =>
       now,
       ttlSeconds: 600,
     });
-    yield* repo.insert(grant);
+    yield* repo.insertOne(grant);
     return grant;
   });
 
@@ -37,15 +37,15 @@ describe("DeviceGrantRepositoryFake", () => {
     Effect.gen(function* () {
       yield* seed();
       const repo = yield* DeviceGrantRepository;
-      deepStrictEqual((yield* repo.findByCodeHash("dc-hash")).id, id);
-      deepStrictEqual((yield* repo.findByUserCode("ABCD-2345")).id, id);
+      deepStrictEqual((yield* repo.findOneByCodeHash("dc-hash")).id, id);
+      deepStrictEqual((yield* repo.findOneByUserCode("ABCD-2345")).id, id);
     }).pipe(provide),
   );
 
   it.effect("lookups fail DeviceGrantNotFound when absent", () =>
     Effect.gen(function* () {
       const repo = yield* DeviceGrantRepository;
-      const exit = yield* Effect.exit(repo.findByUserCode("ZZZZ-9999"));
+      const exit = yield* Effect.exit(repo.findOneByUserCode("ZZZZ-9999"));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
@@ -58,8 +58,8 @@ describe("DeviceGrantRepositoryFake", () => {
     Effect.gen(function* () {
       const grant = yield* seed();
       const repo = yield* DeviceGrantRepository;
-      yield* repo.update(DeviceGrant.approve({ grant, userId, now }));
-      const after = yield* repo.findByCodeHash("dc-hash");
+      yield* repo.updateOne(DeviceGrant.approve({ grant, userId, now }));
+      const after = yield* repo.findOneByCodeHash("dc-hash");
       deepStrictEqual(after.status, "approved");
       deepStrictEqual(after.userId, userId);
     }).pipe(provide),
@@ -69,10 +69,10 @@ describe("DeviceGrantRepositoryFake", () => {
     Effect.gen(function* () {
       yield* seed();
       const repo = yield* DeviceGrantRepository;
-      yield* repo.delete(id);
-      const lookup = yield* Effect.exit(repo.findByCodeHash("dc-hash"));
+      yield* repo.deleteOne(id);
+      const lookup = yield* Effect.exit(repo.findOneByCodeHash("dc-hash"));
       deepStrictEqual(Exit.isFailure(lookup), true);
-      const second = yield* Effect.exit(repo.delete(id));
+      const second = yield* Effect.exit(repo.deleteOne(id));
       deepStrictEqual(Exit.isFailure(second), true);
     }).pipe(provide),
   );

@@ -6,8 +6,8 @@ import { type OrganizationNotFound } from "@/modules/organization/domain/organiz
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
-// Single-aggregate persistence port. `findById` filters out soft-deleted
-// rows by default; `findByIdIncludingDeleted` is the explicit opt-in for
+// Single-aggregate persistence port. `findOneById` filters out soft-deleted
+// rows by default; `findOneByIdIncludingDeleted` is the explicit opt-in for
 // the restore code path (the resource resolver registered for the
 // `organization` resource uses this so policy checks can see deleted
 // orgs without callers having to maintain two `resource` keys).
@@ -15,14 +15,14 @@ import { type OrganizationId } from "@/platform/ids/organization-id.js";
 // `update` covers both write paths (rename + soft-delete + restore) —
 // the aggregate produces the new state and the repo just persists.
 export type OrganizationRepositoryShape = {
-  readonly insert: (organization: Organization) => Effect.Effect<void, PersistenceUnavailable>;
-  readonly update: (
+  readonly insertOne: (organization: Organization) => Effect.Effect<void, PersistenceUnavailable>;
+  readonly updateOne: (
     organization: Organization,
   ) => Effect.Effect<void, OrganizationNotFound | PersistenceUnavailable>;
-  readonly findById: (
+  readonly findOneById: (
     id: OrganizationId,
   ) => Effect.Effect<Organization, OrganizationNotFound | PersistenceUnavailable>;
-  readonly findByIdIncludingDeleted: (
+  readonly findOneByIdIncludingDeleted: (
     id: OrganizationId,
   ) => Effect.Effect<Organization, OrganizationNotFound | PersistenceUnavailable>;
 };

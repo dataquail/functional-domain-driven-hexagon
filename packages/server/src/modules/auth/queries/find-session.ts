@@ -14,7 +14,7 @@ import {
 export const findSession = (query: FindSessionQuery): FindSessionOutput =>
   Effect.gen(function* () {
     const sessions = yield* SessionRepository;
-    const session = yield* sessions.findById(query.sessionId);
+    const session = yield* sessions.findOneById(query.sessionId);
     if (session.revokedAt !== null) {
       return yield* Effect.fail(new SessionRevoked({ sessionId: query.sessionId }));
     }

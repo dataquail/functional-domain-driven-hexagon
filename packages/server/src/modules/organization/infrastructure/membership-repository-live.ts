@@ -18,7 +18,7 @@ export const MembershipRepositoryLive = Layer.effect(
     // Idempotent: re-driving a create for an existing (userId, orgId)
     // pair is a no-op (PK conflict ignored). Lets upstream commands
     // treat membership creation as safe to retry.
-    const insert = db.makeQuery((execute, membership: Membership) => {
+    const insertOne = db.makeQuery((execute, membership: Membership) => {
       const row = MembershipMapper.toPersistence(membership);
       return execute((client) =>
         client.query(sql.unsafe`
@@ -34,7 +34,7 @@ export const MembershipRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("MembershipRepository.insert"),
+        Effect.withSpan("MembershipRepository.insertOne"),
       );
     });
 
@@ -61,11 +61,11 @@ export const MembershipRepositoryLive = Layer.effect(
           ),
           Effect.catchTag("DatabaseError", Effect.die),
           translatePersistenceUnavailable,
-          Effect.withSpan("MembershipRepository.delete"),
+          Effect.withSpan("MembershipRepository.deleteOne"),
         ),
     );
 
-    const findByUserIdAndOrgId = db.makeQuery(
+    const findOneByUserIdAndOrgId = db.makeQuery(
       (execute, args: { userId: UserId; organizationId: OrganizationId }) =>
         execute((client) =>
           client.maybeOne(sql.type(RowSchemas.MembershipRowStd)`
@@ -86,31 +86,32 @@ export const MembershipRepositoryLive = Layer.effect(
           ),
           Effect.catchTag("DatabaseError", Effect.die),
           translatePersistenceUnavailable,
-          Effect.withSpan("MembershipRepository.findByUserIdAndOrgId"),
+          Effect.withSpan("MembershipRepository.findOneByUserIdAndOrgId"),
         ),
     );
 
-    const findByOrganizationId = db.makeQuery((execute, args: { organizationId: OrganizationId }) =>
-      execute((client) =>
-        client.any(sql.type(RowSchemas.MembershipRowStd)`
+    const findManyByOrganizationId = db.makeQuery(
+      (execute, args: { organizationId: OrganizationId }) =>
+        execute((client) =>
+          client.any(sql.type(RowSchemas.MembershipRowStd)`
             SELECT * FROM "organization".memberships
             WHERE organization_id = ${args.organizationId}
             ORDER BY created_at ASC
           `),
-      ).pipe(
-        Effect.map((rows) => rows.map(MembershipMapper.toDomain)),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
-        Effect.withSpan("MembershipRepository.findByOrganizationId"),
-      ),
+        ).pipe(
+          Effect.map((rows) => rows.map(MembershipMapper.toDomain)),
+          Effect.catchTag("DatabaseError", Effect.die),
+          translatePersistenceUnavailable,
+          Effect.withSpan("MembershipRepository.findManyByOrganizationId"),
+        ),
     );
 
     return MembershipRepository.of({
-      insert,
-      delete: (userId, organizationId) => deleteRow({ userId, organizationId }),
-      findByUserIdAndOrgId: (userId, organizationId) =>
-        findByUserIdAndOrgId({ userId, organizationId }),
-      findByOrganizationId: (organizationId) => findByOrganizationId({ organizationId }),
+      insertOne,
+      deleteOne: (userId, organizationId) => deleteRow({ userId, organizationId }),
+      findOneByUserIdAndOrgId: (userId, organizationId) =>
+        findOneByUserIdAndOrgId({ userId, organizationId }),
+      findManyByOrganizationId: (organizationId) => findManyByOrganizationId({ organizationId }),
     });
   }),
 );

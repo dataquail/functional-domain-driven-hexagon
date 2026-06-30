@@ -13,8 +13,8 @@ export const removeMember = (cmd: RemoveMemberCommand): RemoveMemberOutput =>
   Effect.gen(function* () {
     const repo = yield* MembershipRepository;
     const bus = yield* DomainEventBus;
-    const membership = yield* repo.findByUserIdAndOrgId(cmd.targetUserId, cmd.organizationId);
+    const membership = yield* repo.findOneByUserIdAndOrgId(cmd.targetUserId, cmd.organizationId);
     const { events } = Membership.revoke(membership);
-    yield* repo.delete(cmd.targetUserId, cmd.organizationId);
+    yield* repo.deleteOne(cmd.targetUserId, cmd.organizationId);
     yield* bus.dispatch(events);
   }).pipe(withUnitOfWork);

@@ -47,11 +47,11 @@ describe("revokeInvitation", () => {
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
       const rec = yield* RecordedEvents;
-      yield* repo.insert(seed());
+      yield* repo.insertOne(seed());
 
       yield* revokeInvitation(RevokeInvitationCommand.make({ invitationId, actorUserId }));
 
-      const updated = yield* repo.findById(invitationId);
+      const updated = yield* repo.findOneById(invitationId);
       deepStrictEqual(updated.revokedAt !== null, true);
 
       const events = yield* rec.byTag<InvitationRevoked>("InvitationRevoked");
@@ -80,7 +80,7 @@ describe("revokeInvitation", () => {
       const repo = yield* InvitationRepository;
       const accepted = Invitation.accept(seed(), { userId, now });
       if (Either.isLeft(accepted)) throw new Error("expected Right");
-      yield* repo.insert(accepted.right.invitation);
+      yield* repo.insertOne(accepted.right.invitation);
 
       const exit = yield* Effect.exit(
         revokeInvitation(RevokeInvitationCommand.make({ invitationId, actorUserId })),
@@ -98,7 +98,7 @@ describe("revokeInvitation", () => {
       const repo = yield* InvitationRepository;
       const revoked = Invitation.revoke(seed(), { now });
       if (Either.isLeft(revoked)) throw new Error("expected Right");
-      yield* repo.insert(revoked.right.invitation);
+      yield* repo.insertOne(revoked.right.invitation);
 
       const exit = yield* Effect.exit(
         revokeInvitation(RevokeInvitationCommand.make({ invitationId, actorUserId })),

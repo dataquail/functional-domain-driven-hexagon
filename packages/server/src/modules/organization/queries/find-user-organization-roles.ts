@@ -15,7 +15,7 @@ export const findUserOrganizationRoles = (
 ): FindUserOrganizationRolesOutput =>
   Effect.gen(function* () {
     const repo = yield* OrganizationRolesRepository;
-    const aggregate = yield* repo.findByUserIdAndOrgId(query.userId, query.organizationId);
+    const aggregate = yield* repo.findOneByUserIdAndOrgId(query.userId, query.organizationId);
     return {
       userId: aggregate.userId,
       organizationId: aggregate.organizationId,

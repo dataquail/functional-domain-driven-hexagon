@@ -30,7 +30,7 @@ describe("approveDeviceGrant", () => {
       );
       yield* approveDeviceGrant(ApproveDeviceGrantCommand.make({ userCode, userId }));
       const repo = yield* DeviceGrantRepository;
-      const grant = yield* repo.findByUserCode(userCode);
+      const grant = yield* repo.findOneByUserCode(userCode);
       deepStrictEqual(grant.status, "approved");
       deepStrictEqual(grant.userId, userId);
     }).pipe(Effect.provide(TestLayer)),

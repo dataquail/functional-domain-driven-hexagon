@@ -27,9 +27,9 @@ export const resendInvitation = (cmd: ResendInvitationCommand): ResendInvitation
     const expiresAt = DateTime.add(now, { seconds: cmd.ttlSeconds });
 
     const reissued = yield* Effect.gen(function* () {
-      const invitation = yield* repo.findById(cmd.invitationId);
+      const invitation = yield* repo.findOneById(cmd.invitationId);
       const result = yield* Invitation.reissue(invitation, { token, expiresAt, now });
-      yield* repo.update(result.invitation);
+      yield* repo.updateOne(result.invitation);
       yield* bus.dispatch(result.events);
       return result.invitation;
     }).pipe(withUnitOfWork);

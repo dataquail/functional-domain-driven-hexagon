@@ -16,9 +16,9 @@ export const restoreOrganization = (cmd: RestoreOrganizationCommand): RestoreOrg
     const bus = yield* DomainEventBus;
     const now = yield* DateTime.now;
     // Restore is the one write path that needs to load the tombstoned
-    // row; the default `findById` filters it out.
-    const organization = yield* repo.findByIdIncludingDeleted(cmd.organizationId);
+    // row; the default `findOneById` filters it out.
+    const organization = yield* repo.findOneByIdIncludingDeleted(cmd.organizationId);
     const result = yield* Organization.restore(organization, { now });
-    yield* repo.update(result.organization);
+    yield* repo.updateOne(result.organization);
     yield* bus.dispatch(result.events);
   }).pipe(withUnitOfWork);

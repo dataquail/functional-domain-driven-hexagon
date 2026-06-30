@@ -44,7 +44,7 @@ export const RolesRepositoryLive = Layer.effect(
         }
       });
 
-    const save = (roles: Roles) =>
+    const upsertOne = (roles: Roles) =>
       Effect.serviceOption(Database.TransactionContext).pipe(
         Effect.flatMap((existing) =>
           Option.isSome(existing)
@@ -55,10 +55,10 @@ export const RolesRepositoryLive = Layer.effect(
         ),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("RolesRepository.save"),
+        Effect.withSpan("RolesRepository.upsertOne"),
       );
 
-    const findByUserId = db.makeQuery((execute, userId: UserId) =>
+    const findOneByUserId = db.makeQuery((execute, userId: UserId) =>
       execute((client) =>
         client.any(sql.type(RowSchemas.PlatformRoleRowStd)`
           SELECT user_id, role, granted_at FROM platform.roles WHERE user_id = ${userId}
@@ -67,10 +67,10 @@ export const RolesRepositoryLive = Layer.effect(
         Effect.map((rows) => RoleMapper.toDomain(userId, rows)),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("RolesRepository.findByUserId"),
+        Effect.withSpan("RolesRepository.findOneByUserId"),
       ),
     );
 
-    return RolesRepository.of({ save, findByUserId });
+    return RolesRepository.of({ upsertOne, findOneByUserId });
   }),
 );

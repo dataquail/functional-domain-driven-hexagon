@@ -12,27 +12,27 @@ import { type UserId } from "@/platform/ids/user-id.js";
 // aggregate; the soft-delete storage mechanism behind `delete` is an
 // implementation detail.
 export type ApiTokenRepositoryShape = {
-  readonly insert: (token: ApiToken) => Effect.Effect<void, PersistenceUnavailable>;
-  readonly findById: (
+  readonly insertOne: (token: ApiToken) => Effect.Effect<void, PersistenceUnavailable>;
+  readonly findOneById: (
     id: ApiTokenId,
   ) => Effect.Effect<ApiToken, ApiTokenNotFound | PersistenceUnavailable>;
   // Per-request lookup of the presented bearer (already hashed by the
   // caller — the raw secret never reaches the repository).
-  readonly findByHash: (
+  readonly findOneByHash: (
     tokenHash: string,
   ) => Effect.Effect<ApiToken, ApiTokenNotFound | PersistenceUnavailable>;
   // Active (non-revoked) tokens for the owner's management listing.
-  readonly listByUser: (
+  readonly findManyByUser: (
     userId: UserId,
   ) => Effect.Effect<ReadonlyArray<ApiToken>, PersistenceUnavailable>;
   // Soft-delete via `revoked_at` (SQL `WHERE revoked_at IS NULL`). A
   // re-revoke matches zero rows and surfaces as `ApiTokenNotFound`, same as
   // a genuine miss — both mean "no active token to revoke" to the caller.
   // (`ApiTokenRevoked` is produced by the find-by-hash query, not here.)
-  readonly delete: (
+  readonly deleteOne: (
     id: ApiTokenId,
   ) => Effect.Effect<void, ApiTokenNotFound | PersistenceUnavailable>;
-  readonly update: (
+  readonly updateOne: (
     token: ApiToken,
   ) => Effect.Effect<void, ApiTokenNotFound | PersistenceUnavailable>;
 };

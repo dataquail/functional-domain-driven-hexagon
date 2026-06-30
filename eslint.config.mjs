@@ -17,6 +17,7 @@ import sortDestructureKeys from "eslint-plugin-sort-destructure-keys";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import dumbRepositoryPorts from "./scripts/eslint-rules/dumb-repository-ports.mjs";
 import enforceReactNamespace from "./scripts/eslint-rules/enforce-react-namespace.mjs";
 import noDeepRelativeImports from "./scripts/eslint-rules/no-deep-relative-imports.mjs";
 import noEffectNamespaceImports from "./scripts/eslint-rules/no-effect-namespace-imports.mjs";
@@ -87,6 +88,12 @@ export default [
       "no-deep-relative-imports": {
         rules: {
           "no-deep-relative-imports": noDeepRelativeImports,
+        },
+      },
+
+      "dumb-repository-ports": {
+        rules: {
+          "dumb-repository-ports": dumbRepositoryPorts,
         },
       },
     },
@@ -405,6 +412,16 @@ export default [
     files: ["packages/server/**/*.{ts,tsx,js,jsx}"],
     rules: {
       "no-deep-relative-imports/no-deep-relative-imports": "error",
+    },
+  },
+  {
+    // ADR-0024: repository ports are dumb persistence. The `*RepositoryShape`
+    // type may only declare CRUD-shaped methods — domain verbs belong on the
+    // aggregate. Constraining the port transitively keeps Live/Fake dumb,
+    // since both must structurally satisfy it.
+    files: ["packages/server/src/modules/**/domain/ports/repositories/*-repository.ts"],
+    rules: {
+      "dumb-repository-ports/dumb-repository-ports": "error",
     },
   },
   {

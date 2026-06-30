@@ -21,20 +21,20 @@ describe("OrganizationRolesRepositoryFake", () => {
   it.effect("returns an empty aggregate for a previously-unseen (user, org) pair", () =>
     Effect.gen(function* () {
       const repo = yield* OrganizationRolesRepository;
-      const roles = yield* repo.findByUserIdAndOrgId(userId, orgId);
+      const roles = yield* repo.findOneByUserIdAndOrgId(userId, orgId);
       deepStrictEqual(roles.userId, userId);
       deepStrictEqual(roles.organizationId, orgId);
       deepStrictEqual([...roles.roles], []);
     }).pipe(Effect.provide(OrganizationRolesRepositoryFake)),
   );
 
-  it.effect("round-trips a saved aggregate via findByUserIdAndOrgId", () =>
+  it.effect("round-trips a saved aggregate via findOneByUserIdAndOrgId", () =>
     Effect.gen(function* () {
       const repo = yield* OrganizationRolesRepository;
       const granted = grantRole(emptyOrgRoles(userId, orgId), "admin", issuedBy);
       if (Either.isLeft(granted)) throw new Error("expected Right");
-      yield* repo.save(granted.right.organizationRoles);
-      const fetched = yield* repo.findByUserIdAndOrgId(userId, orgId);
+      yield* repo.upsertOne(granted.right.organizationRoles);
+      const fetched = yield* repo.findOneByUserIdAndOrgId(userId, orgId);
       deepStrictEqual(
         fetched.roles.map((r) => ({ role: r.role, issuedBy: r.issuedBy })),
         [{ role: "admin", issuedBy }],

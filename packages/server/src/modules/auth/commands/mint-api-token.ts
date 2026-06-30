@@ -46,7 +46,7 @@ export const mintApiTokenCore = (
       now,
       expiresAt: DateTime.add(now, { days: input.expiresInDays }),
     });
-    yield* repo.insert(apiToken);
+    yield* repo.insertOne(apiToken);
     yield* Effect.annotateCurrentSpan("user.id", input.userId);
     return { apiToken, token };
   });

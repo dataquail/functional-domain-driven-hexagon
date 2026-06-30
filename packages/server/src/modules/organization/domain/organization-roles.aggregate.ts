@@ -42,7 +42,7 @@ export type Result = {
 };
 
 // Factory for the "no roles yet" case — used by the command handler
-// when the repo's `findByUserIdAndOrgId` returns nothing.
+// when the repo's `findOneByUserIdAndOrgId` returns nothing.
 export const empty = (userId: UserId, organizationId: OrganizationId): OrganizationRoles =>
   OrganizationRoles.make({ userId, organizationId, roles: [] });
 

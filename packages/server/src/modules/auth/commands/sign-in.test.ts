@@ -46,7 +46,7 @@ describe("signIn", () => {
       const result = yield* signIn(command);
       deepStrictEqual(result.userId, userId);
       const sessions = yield* SessionRepository;
-      const stored = yield* sessions.findById(result.sessionId);
+      const stored = yield* sessions.findOneById(result.sessionId);
       deepStrictEqual(stored.userId, userId);
       deepStrictEqual(stored.subject, subject);
       deepStrictEqual(stored.revokedAt, null);
@@ -62,11 +62,11 @@ describe("signIn", () => {
       deepStrictEqual(result.userId, provisionedUserId);
       // …and the identity is now linked, so a subsequent lookup finds it.
       const identities = yield* AuthIdentityRepository;
-      const linked = yield* identities.findBySubject("new-subject");
+      const linked = yield* identities.findOneBySubject("new-subject");
       deepStrictEqual(linked.userId, provisionedUserId);
       deepStrictEqual(linked.provider, "zitadel");
       const sessions = yield* SessionRepository;
-      const stored = yield* sessions.findById(result.sessionId);
+      const stored = yield* sessions.findOneById(result.sessionId);
       deepStrictEqual(stored.userId, provisionedUserId);
     }).pipe(Effect.provide(TestLayer)),
   );

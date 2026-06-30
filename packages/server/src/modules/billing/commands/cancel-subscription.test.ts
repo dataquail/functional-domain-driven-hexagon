@@ -42,7 +42,7 @@ const seed = (status = "active") =>
       currentPeriodEnd: null,
       now,
     });
-    yield* repo.insert(subscription);
+    yield* repo.insertOne(subscription);
   });
 
 describe("cancelSubscription", () => {
@@ -57,7 +57,7 @@ describe("cancelSubscription", () => {
       );
       deepStrictEqual(result.status, "canceled");
 
-      const found = yield* repo.findByOrganizationId(acme);
+      const found = yield* repo.findOneByOrganizationId(acme);
       ok(Option.isSome(found));
       if (Option.isSome(found)) deepStrictEqual(found.value.status, "canceled");
 

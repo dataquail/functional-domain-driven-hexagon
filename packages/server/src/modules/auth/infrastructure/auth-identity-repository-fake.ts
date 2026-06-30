@@ -22,7 +22,9 @@ export const makeAuthIdentityRepositoryFake = (
       const initial = HashMap.fromIterable(seed.map((i) => [i.subject, i] as const));
       const store = yield* Ref.make(initial);
 
-      const findBySubject = (subject: string): Effect.Effect<AuthIdentity, AuthIdentityNotFound> =>
+      const findOneBySubject = (
+        subject: string,
+      ): Effect.Effect<AuthIdentity, AuthIdentityNotFound> =>
         Effect.flatMap(Ref.get(store), (m) =>
           Option.match(HashMap.get(m, subject), {
             onNone: () => Effect.fail(new AuthIdentityNotFound({ subject })),
@@ -30,10 +32,10 @@ export const makeAuthIdentityRepositoryFake = (
           }),
         );
 
-      const insert = (identity: AuthIdentity): Effect.Effect<void> =>
+      const insertOne = (identity: AuthIdentity): Effect.Effect<void> =>
         Ref.update(store, (m) => HashMap.set(m, identity.subject, identity));
 
-      return AuthIdentityRepository.of({ findBySubject, insert });
+      return AuthIdentityRepository.of({ findOneBySubject, insertOne });
     }),
   );
 

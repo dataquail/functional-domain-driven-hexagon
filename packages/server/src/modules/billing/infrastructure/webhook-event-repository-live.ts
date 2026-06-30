@@ -19,7 +19,7 @@ export const WebhookEventRepositoryLive = Layer.effect(
     // `WebhookEventAlreadyRecorded` to short-circuit duplicate
     // deliveries — same shape as wallet/subscription's
     // `*AlreadyExists` errors.
-    const insert = db.makeQuery((execute, stripeEventId: string) =>
+    const insertOne = db.makeQuery((execute, stripeEventId: string) =>
       execute((client) =>
         client.query(sql.unsafe`
           INSERT INTO billing.webhook_events (stripe_event_id)
@@ -33,11 +33,11 @@ export const WebhookEventRepositoryLive = Layer.effect(
             : Effect.die(e),
         ),
         translatePersistenceUnavailable,
-        Effect.withSpan("WebhookEventRepository.insert"),
+        Effect.withSpan("WebhookEventRepository.insertOne"),
       ),
     );
 
-    const findByStripeEventId = db.makeQuery((execute, stripeEventId: string) =>
+    const findOneByStripeEventId = db.makeQuery((execute, stripeEventId: string) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.WebhookEventRowStd)`
           SELECT * FROM billing.webhook_events WHERE stripe_event_id = ${stripeEventId}
@@ -48,10 +48,10 @@ export const WebhookEventRepositoryLive = Layer.effect(
         ),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("WebhookEventRepository.findByStripeEventId"),
+        Effect.withSpan("WebhookEventRepository.findOneByStripeEventId"),
       ),
     );
 
-    return WebhookEventRepository.of({ insert, findByStripeEventId });
+    return WebhookEventRepository.of({ insertOne, findOneByStripeEventId });
   }),
 );

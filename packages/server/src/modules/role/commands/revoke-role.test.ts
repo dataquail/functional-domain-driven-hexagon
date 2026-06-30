@@ -32,7 +32,7 @@ describe("revokeRole", () => {
       );
       yield* revokeRole(RevokeRoleCommand.make({ userId: targetId, role: "super_admin" }));
 
-      const roles = yield* repo.findByUserId(targetId);
+      const roles = yield* repo.findOneByUserId(targetId);
       deepStrictEqual([...roles.roles], []);
 
       const events = yield* rec.byTag<RoleRevoked>("RoleRevoked");

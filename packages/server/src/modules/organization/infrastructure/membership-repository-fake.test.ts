@@ -19,12 +19,12 @@ const now = DateTime.unsafeMake(new Date("2026-01-01T00:00:00Z"));
 const provide = Effect.provide(MembershipRepositoryFake);
 
 describe("MembershipRepositoryFake", () => {
-  it.effect("findByUserIdAndOrgId round-trips an inserted membership", () =>
+  it.effect("findOneByUserIdAndOrgId round-trips an inserted membership", () =>
     Effect.gen(function* () {
       const repo = yield* MembershipRepository;
       const { membership } = Membership.create({ userId, organizationId, now });
-      yield* repo.insert(membership);
-      const found = yield* repo.findByUserIdAndOrgId(userId, organizationId);
+      yield* repo.insertOne(membership);
+      const found = yield* repo.findOneByUserIdAndOrgId(userId, organizationId);
       deepStrictEqual(found.userId, userId);
       deepStrictEqual(found.organizationId, organizationId);
     }).pipe(provide),
@@ -34,17 +34,17 @@ describe("MembershipRepositoryFake", () => {
     Effect.gen(function* () {
       const repo = yield* MembershipRepository;
       const { membership } = Membership.create({ userId, organizationId, now });
-      yield* repo.insert(membership);
-      yield* repo.insert(membership);
-      const found = yield* repo.findByUserIdAndOrgId(userId, organizationId);
+      yield* repo.insertOne(membership);
+      yield* repo.insertOne(membership);
+      const found = yield* repo.findOneByUserIdAndOrgId(userId, organizationId);
       deepStrictEqual(found.userId, userId);
     }).pipe(provide),
   );
 
-  it.effect("findByUserIdAndOrgId fails MembershipNotFound when absent", () =>
+  it.effect("findOneByUserIdAndOrgId fails MembershipNotFound when absent", () =>
     Effect.gen(function* () {
       const repo = yield* MembershipRepository;
-      const exit = yield* Effect.exit(repo.findByUserIdAndOrgId(userId, organizationId));
+      const exit = yield* Effect.exit(repo.findOneByUserIdAndOrgId(userId, organizationId));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
@@ -57,9 +57,9 @@ describe("MembershipRepositoryFake", () => {
     Effect.gen(function* () {
       const repo = yield* MembershipRepository;
       const { membership } = Membership.create({ userId, organizationId, now });
-      yield* repo.insert(membership);
-      yield* repo.delete(userId, organizationId);
-      const exit = yield* Effect.exit(repo.findByUserIdAndOrgId(userId, organizationId));
+      yield* repo.insertOne(membership);
+      yield* repo.deleteOne(userId, organizationId);
+      const exit = yield* Effect.exit(repo.findOneByUserIdAndOrgId(userId, organizationId));
       deepStrictEqual(Exit.isFailure(exit), true);
     }).pipe(provide),
   );
@@ -67,7 +67,7 @@ describe("MembershipRepositoryFake", () => {
   it.effect("delete fails MembershipNotFound when no row exists", () =>
     Effect.gen(function* () {
       const repo = yield* MembershipRepository;
-      const exit = yield* Effect.exit(repo.delete(userId, organizationId));
+      const exit = yield* Effect.exit(repo.deleteOne(userId, organizationId));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
@@ -80,8 +80,8 @@ describe("MembershipRepositoryFake", () => {
     Effect.gen(function* () {
       const repo = yield* MembershipRepository;
       const { membership } = Membership.create({ userId, organizationId, now });
-      yield* repo.insert(membership);
-      const exit = yield* Effect.exit(repo.findByUserIdAndOrgId(otherUserId, organizationId));
+      yield* repo.insertOne(membership);
+      const exit = yield* Effect.exit(repo.findOneByUserIdAndOrgId(otherUserId, organizationId));
       deepStrictEqual(Exit.isFailure(exit), true);
     }).pipe(provide),
   );

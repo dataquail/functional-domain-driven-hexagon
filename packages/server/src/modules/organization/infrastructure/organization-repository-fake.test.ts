@@ -18,26 +18,26 @@ const later = DateTime.unsafeMake(new Date("2026-02-01T00:00:00Z"));
 const provide = Effect.provide(OrganizationRepositoryFake);
 
 describe("OrganizationRepositoryFake", () => {
-  it.effect("findById round-trips an inserted org", () =>
+  it.effect("findOneById round-trips an inserted org", () =>
     Effect.gen(function* () {
       const repo = yield* OrganizationRepository;
       const { organization } = Organization.create({ id, name: "Acme", now });
-      yield* repo.insert(organization);
-      const found = yield* repo.findById(id);
+      yield* repo.insertOne(organization);
+      const found = yield* repo.findOneById(id);
       deepStrictEqual(found.id, id);
       deepStrictEqual(found.name, "Acme");
     }).pipe(provide),
   );
 
-  it.effect("findById hides soft-deleted rows", () =>
+  it.effect("findOneById hides soft-deleted rows", () =>
     Effect.gen(function* () {
       const repo = yield* OrganizationRepository;
       const { organization } = Organization.create({ id, name: "Acme", now });
-      yield* repo.insert(organization);
+      yield* repo.insertOne(organization);
       const deletedEither = Organization.softDelete(organization, { now: later });
       if (Either.isLeft(deletedEither)) throw new Error("expected Right");
-      yield* repo.update(deletedEither.right.organization);
-      const exit = yield* Effect.exit(repo.findById(id));
+      yield* repo.updateOne(deletedEither.right.organization);
+      const exit = yield* Effect.exit(repo.findOneById(id));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
@@ -46,15 +46,15 @@ describe("OrganizationRepositoryFake", () => {
     }).pipe(provide),
   );
 
-  it.effect("findByIdIncludingDeleted returns soft-deleted rows", () =>
+  it.effect("findOneByIdIncludingDeleted returns soft-deleted rows", () =>
     Effect.gen(function* () {
       const repo = yield* OrganizationRepository;
       const { organization } = Organization.create({ id, name: "Acme", now });
-      yield* repo.insert(organization);
+      yield* repo.insertOne(organization);
       const deletedEither = Organization.softDelete(organization, { now: later });
       if (Either.isLeft(deletedEither)) throw new Error("expected Right");
-      yield* repo.update(deletedEither.right.organization);
-      const found = yield* repo.findByIdIncludingDeleted(id);
+      yield* repo.updateOne(deletedEither.right.organization);
+      const found = yield* repo.findOneByIdIncludingDeleted(id);
       deepStrictEqual(found.deletedAt !== null, true);
     }).pipe(provide),
   );
@@ -63,7 +63,7 @@ describe("OrganizationRepositoryFake", () => {
     Effect.gen(function* () {
       const repo = yield* OrganizationRepository;
       const { organization } = Organization.create({ id, name: "Acme", now });
-      const exit = yield* Effect.exit(repo.update(organization));
+      const exit = yield* Effect.exit(repo.updateOne(organization));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = exit.cause._tag === "Fail" ? exit.cause.error : null;

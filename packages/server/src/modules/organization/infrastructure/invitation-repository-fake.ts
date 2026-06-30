@@ -18,17 +18,17 @@ export const InvitationRepositoryFake = Layer.effect(
   Effect.gen(function* () {
     const store = yield* Ref.make(HashMap.empty<InvitationId, Invitation>());
 
-    const insert = (invitation: Invitation): Effect.Effect<void> =>
+    const insertOne = (invitation: Invitation): Effect.Effect<void> =>
       Ref.update(store, HashMap.set(invitation.id, invitation));
 
-    const update = (invitation: Invitation): Effect.Effect<void, InvitationNotFound> =>
+    const updateOne = (invitation: Invitation): Effect.Effect<void, InvitationNotFound> =>
       Effect.flatMap(Ref.get(store), (m) =>
         HashMap.has(m, invitation.id)
           ? Ref.update(store, HashMap.set(invitation.id, invitation))
           : Effect.fail(new InvitationNotFound({ invitationId: invitation.id })),
       );
 
-    const findById = (id: InvitationId): Effect.Effect<Invitation, InvitationNotFound> =>
+    const findOneById = (id: InvitationId): Effect.Effect<Invitation, InvitationNotFound> =>
       Effect.flatMap(Ref.get(store), (m) => {
         const found = HashMap.get(m, id);
         return found._tag === "Some"
@@ -36,7 +36,7 @@ export const InvitationRepositoryFake = Layer.effect(
           : Effect.fail(new InvitationNotFound({ invitationId: id }));
       });
 
-    const findByToken = (token: string): Effect.Effect<Invitation, InvitationTokenNotFound> =>
+    const findOneByToken = (token: string): Effect.Effect<Invitation, InvitationTokenNotFound> =>
       Effect.flatMap(Ref.get(store), (m) => {
         for (const inv of HashMap.values(m)) {
           if (inv.token === token) return Effect.succeed(inv);
@@ -48,7 +48,7 @@ export const InvitationRepositoryFake = Layer.effect(
     const byCreatedAtDesc = (a: Invitation, b: Invitation): number =>
       DateTime.toEpochMillis(b.createdAt) - DateTime.toEpochMillis(a.createdAt);
 
-    const findByOrganizationId = (
+    const findManyByOrganizationId = (
       organizationId: OrganizationId,
     ): Effect.Effect<ReadonlyArray<Invitation>> =>
       Effect.map(Ref.get(store), (m) =>
@@ -57,7 +57,7 @@ export const InvitationRepositoryFake = Layer.effect(
           .sort(byCreatedAtDesc),
       );
 
-    const findOpenByOrganizationIdAndEmail = (
+    const findOneOpenByOrganizationIdAndEmail = (
       organizationId: OrganizationId,
       inviteeEmail: string,
     ): Effect.Effect<Invitation | null> =>
@@ -74,12 +74,12 @@ export const InvitationRepositoryFake = Layer.effect(
       });
 
     return InvitationRepository.of({
-      insert,
-      update,
-      findById,
-      findByToken,
-      findByOrganizationId,
-      findOpenByOrganizationIdAndEmail,
+      insertOne,
+      updateOne,
+      findOneById,
+      findOneByToken,
+      findManyByOrganizationId,
+      findOneOpenByOrganizationIdAndEmail,
     });
   }),
 );

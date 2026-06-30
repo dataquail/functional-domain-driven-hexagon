@@ -46,7 +46,7 @@ describe("restoreOrganization", () => {
       );
       yield* softDeleteOrganization(SoftDeleteOrganizationCommand.make({ organizationId: id }));
       yield* restoreOrganization(RestoreOrganizationCommand.make({ organizationId: id }));
-      const stored = yield* repo.findById(id);
+      const stored = yield* repo.findOneById(id);
       deepStrictEqual(stored.deletedAt, null);
       const events = yield* rec.byTag<OrganizationRestored>("OrganizationRestored");
       deepStrictEqual(events.length, 1);

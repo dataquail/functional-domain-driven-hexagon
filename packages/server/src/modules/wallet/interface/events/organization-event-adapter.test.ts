@@ -45,7 +45,7 @@ describe("OrganizationEventAdapterLive", () => {
         } as unknown as OrganizationCreated;
         yield* bus.dispatch([event]);
 
-        const wallet = yield* repo.findByOrganizationId(organizationId);
+        const wallet = yield* repo.findOneByOrganizationId(organizationId);
         ok(Option.isSome(wallet));
         deepStrictEqual(Option.getOrThrow(wallet).organizationId, organizationId);
         // In production this dispatch runs inside `uow.run`; supply a no-op

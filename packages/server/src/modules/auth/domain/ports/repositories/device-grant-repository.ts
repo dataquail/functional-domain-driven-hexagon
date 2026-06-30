@@ -10,18 +10,18 @@ import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistenc
 // codes the flow keys on: device_code_hash (CLI poll) and user_code (browser
 // approve).
 export type DeviceGrantRepositoryShape = {
-  readonly insert: (grant: DeviceGrant) => Effect.Effect<void, PersistenceUnavailable>;
-  readonly findByCodeHash: (
+  readonly insertOne: (grant: DeviceGrant) => Effect.Effect<void, PersistenceUnavailable>;
+  readonly findOneByCodeHash: (
     deviceCodeHash: string,
   ) => Effect.Effect<DeviceGrant, DeviceGrantNotFound | PersistenceUnavailable>;
-  readonly findByUserCode: (
+  readonly findOneByUserCode: (
     userCode: string,
   ) => Effect.Effect<DeviceGrant, DeviceGrantNotFound | PersistenceUnavailable>;
-  readonly update: (
+  readonly updateOne: (
     grant: DeviceGrant,
   ) => Effect.Effect<void, DeviceGrantNotFound | PersistenceUnavailable>;
   // Consumes a grant (single-use) once its token has been issued.
-  readonly delete: (
+  readonly deleteOne: (
     id: DeviceGrantId,
   ) => Effect.Effect<void, DeviceGrantNotFound | PersistenceUnavailable>;
 };

@@ -61,17 +61,17 @@ describe("acceptInvitation", () => {
       const inv = yield* InvitationRepository;
       const members = yield* MembershipRepository;
       const rec = yield* RecordedEvents;
-      yield* inv.insert(seed());
+      yield* inv.insertOne(seed());
 
       const orgId = yield* acceptInvitation(
         AcceptInvitationCommand.make({ token: "tok-abc", userId }),
       );
       deepStrictEqual(orgId, organizationId);
 
-      const updated = yield* inv.findById(invitationId);
+      const updated = yield* inv.findOneById(invitationId);
       deepStrictEqual(updated.acceptedAt !== null, true);
 
-      const membership = yield* members.findByUserIdAndOrgId(userId, organizationId);
+      const membership = yield* members.findOneByUserIdAndOrgId(userId, organizationId);
       deepStrictEqual(membership.userId, userId);
 
       const tags = (yield* rec.all).map((e) => e._tag);
@@ -104,7 +104,7 @@ describe("acceptInvitation", () => {
       const inv = yield* InvitationRepository;
       const accepted = Invitation.accept(seed(), { userId, now });
       if (Either.isLeft(accepted)) throw new Error("expected Right");
-      yield* inv.insert(accepted.right.invitation);
+      yield* inv.insertOne(accepted.right.invitation);
 
       const exit = yield* Effect.exit(
         acceptInvitation(AcceptInvitationCommand.make({ token: "tok-abc", userId })),
@@ -122,7 +122,7 @@ describe("acceptInvitation", () => {
       const inv = yield* InvitationRepository;
       const revoked = Invitation.revoke(seed(), { now });
       if (Either.isLeft(revoked)) throw new Error("expected Right");
-      yield* inv.insert(revoked.right.invitation);
+      yield* inv.insertOne(revoked.right.invitation);
 
       const exit = yield* Effect.exit(
         acceptInvitation(AcceptInvitationCommand.make({ token: "tok-abc", userId })),
@@ -149,7 +149,7 @@ describe("acceptInvitation", () => {
         expiresAt: DateTime.unsafeMake(new Date("2020-01-01T00:00:00Z")),
         now: DateTime.unsafeMake(new Date("2019-12-01T00:00:00Z")),
       }).invitation;
-      yield* inv.insert(expired);
+      yield* inv.insertOne(expired);
 
       const exit = yield* Effect.exit(
         acceptInvitation(AcceptInvitationCommand.make({ token: "tok-abc", userId })),
@@ -165,7 +165,7 @@ describe("acceptInvitation", () => {
   it.effect("rejects with SuperAdminCannotOwnOrganization when caller is a super-admin", () =>
     Effect.gen(function* () {
       const inv = yield* InvitationRepository;
-      yield* inv.insert(seed());
+      yield* inv.insertOne(seed());
 
       const exit = yield* Effect.exit(
         acceptInvitation(

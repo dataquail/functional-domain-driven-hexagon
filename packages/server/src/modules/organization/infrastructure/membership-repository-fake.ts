@@ -20,7 +20,7 @@ export const MembershipRepositoryFake = Layer.effect(
     const store = yield* Ref.make(HashMap.empty<string, Membership>());
 
     // Idempotent — mirrors the Live's ON CONFLICT DO NOTHING.
-    const insert = (membership: Membership): Effect.Effect<void> =>
+    const insertOne = (membership: Membership): Effect.Effect<void> =>
       Ref.update(store, (m) => {
         const k = key(membership.userId, membership.organizationId);
         return HashMap.has(m, k) ? m : HashMap.set(m, k, membership);
@@ -38,7 +38,7 @@ export const MembershipRepositoryFake = Layer.effect(
         return Ref.update(store, HashMap.remove(k));
       });
 
-    const findByUserIdAndOrgId = (
+    const findOneByUserIdAndOrgId = (
       userId: UserId,
       organizationId: OrganizationId,
     ): Effect.Effect<Membership, MembershipNotFound> =>
@@ -49,7 +49,7 @@ export const MembershipRepositoryFake = Layer.effect(
           : Effect.fail(new MembershipNotFound({ userId, organizationId }));
       });
 
-    const findByOrganizationId = (
+    const findManyByOrganizationId = (
       organizationId: OrganizationId,
     ): Effect.Effect<ReadonlyArray<Membership>> =>
       Effect.map(Ref.get(store), (m) =>
@@ -57,10 +57,10 @@ export const MembershipRepositoryFake = Layer.effect(
       );
 
     return MembershipRepository.of({
-      insert,
-      delete: deleteRow,
-      findByUserIdAndOrgId,
-      findByOrganizationId,
+      insertOne,
+      deleteOne: deleteRow,
+      findOneByUserIdAndOrgId,
+      findManyByOrganizationId,
     });
   }),
 );

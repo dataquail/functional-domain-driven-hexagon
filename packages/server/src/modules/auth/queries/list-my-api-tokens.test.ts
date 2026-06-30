@@ -33,8 +33,8 @@ describe("listMyApiTokens", () => {
           now,
           expiresAt: DateTime.add(now, { days: 90 }),
         });
-      yield* repo.insert(mk(idA, userId));
-      yield* repo.insert(mk(idOther, otherUserId));
+      yield* repo.insertOne(mk(idA, userId));
+      yield* repo.insertOne(mk(idOther, otherUserId));
       const mine = yield* listMyApiTokens(ListMyApiTokensQuery.make({ userId }));
       deepStrictEqual(
         mine.map((t) => t.id),

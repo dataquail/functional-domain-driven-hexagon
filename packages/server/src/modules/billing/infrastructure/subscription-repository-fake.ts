@@ -35,7 +35,7 @@ export const SubscriptionRepositoryFake = Layer.effect(
   Effect.gen(function* () {
     const store = yield* Ref.make(HashMap.empty<SubscriptionId, Subscription>());
 
-    const insert = (
+    const insertOne = (
       sub: Subscription,
     ): Effect.Effect<void, SubscriptionAlreadyExistsForOrganization> =>
       Effect.flatMap(Ref.get(store), (m) =>
@@ -48,24 +48,24 @@ export const SubscriptionRepositoryFake = Layer.effect(
           : Ref.update(store, HashMap.set(sub.id, sub)),
       );
 
-    const update = (sub: Subscription): Effect.Effect<void> =>
+    const updateOne = (sub: Subscription): Effect.Effect<void> =>
       Ref.update(store, HashMap.set(sub.id, sub));
 
-    const findByOrganizationId = (
+    const findOneByOrganizationId = (
       organizationId: OrganizationId,
     ): Effect.Effect<Option.Option<Subscription>> =>
       Effect.map(Ref.get(store), (m) => findByOrgIn(m, organizationId));
 
-    const findByStripeSubscriptionId = (
+    const findOneByStripeSubscriptionId = (
       stripeSubscriptionId: string,
     ): Effect.Effect<Option.Option<Subscription>> =>
       Effect.map(Ref.get(store), (m) => findByStripeIdIn(m, stripeSubscriptionId));
 
     return SubscriptionRepository.of({
-      insert,
-      update,
-      findByOrganizationId,
-      findByStripeSubscriptionId,
+      insertOne,
+      updateOne,
+      findOneByOrganizationId,
+      findOneByStripeSubscriptionId,
     });
   }),
 );

@@ -13,8 +13,8 @@ export const deleteUser = (cmd: DeleteUserCommand): DeleteUserOutput =>
   Effect.gen(function* () {
     const repo = yield* UserRepository;
     const bus = yield* DomainEventBus;
-    const user = yield* repo.findById(cmd.userId);
+    const user = yield* repo.findOneById(cmd.userId);
     const { events } = User.markDeleted(user);
-    yield* repo.remove(user.id);
+    yield* repo.deleteOne(user.id);
     yield* bus.dispatch(events);
   }).pipe(withUnitOfWork);

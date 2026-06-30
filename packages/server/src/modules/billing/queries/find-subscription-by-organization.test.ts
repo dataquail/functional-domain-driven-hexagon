@@ -34,7 +34,7 @@ describe("findSubscriptionByOrganization", () => {
           currentPeriodEnd: null,
           now,
         });
-        yield* repo.insert(subscription);
+        yield* repo.insertOne(subscription);
 
         const result = yield* findSubscriptionByOrganization(
           FindSubscriptionByOrganizationQuery.make({ organizationId: acme }),

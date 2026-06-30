@@ -29,7 +29,7 @@ export const startSubscription = (cmd: StartSubscriptionCommand): StartSubscript
 
     // Idempotency check at the use-case layer: avoid a Stripe-side
     // double-charge if a caller retries POST after a network blip.
-    const existing = yield* repo.findByOrganizationId(cmd.organizationId);
+    const existing = yield* repo.findOneByOrganizationId(cmd.organizationId);
     if (Option.isSome(existing)) {
       return yield* Effect.fail(
         new SubscriptionAlreadyExistsForOrganization({ organizationId: cmd.organizationId }),
@@ -54,7 +54,7 @@ export const startSubscription = (cmd: StartSubscriptionCommand): StartSubscript
     });
 
     yield* Effect.gen(function* () {
-      yield* repo.insert(subscription);
+      yield* repo.insertOne(subscription);
       yield* bus.dispatch(events);
     }).pipe(withUnitOfWork);
 

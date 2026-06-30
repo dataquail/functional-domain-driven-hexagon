@@ -90,8 +90,8 @@ const probeName = "Rollback Probe Org";
 const FailingWalletRepository = Layer.succeed(
   WalletRepository,
   WalletRepository.of({
-    insert: () => Effect.die("simulated wallet subscriber failure"),
-    findByOrganizationId: () => Effect.succeed(Option.none()),
+    insertOne: () => Effect.die("simulated wallet subscriber failure"),
+    findOneByOrganizationId: () => Effect.succeed(Option.none()),
   }),
 );
 

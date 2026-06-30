@@ -59,11 +59,11 @@ describe("pollDeviceGrant", () => {
       deepStrictEqual(apiToken.userId, userId);
       // Minted token is resolvable by its hash…
       const apiTokens = yield* ApiTokenRepository;
-      deepStrictEqual((yield* apiTokens.findByHash(hashToken(token))).id, apiToken.id);
+      deepStrictEqual((yield* apiTokens.findOneByHash(hashToken(token))).id, apiToken.id);
       // …and the grant is consumed: a second poll finds nothing.
       const grants = yield* DeviceGrantRepository;
       deepStrictEqual(
-        Exit.isFailure(yield* Effect.exit(grants.findByCodeHash(hashToken(deviceCode)))),
+        Exit.isFailure(yield* Effect.exit(grants.findOneByCodeHash(hashToken(deviceCode)))),
         true,
       );
       deepStrictEqual(

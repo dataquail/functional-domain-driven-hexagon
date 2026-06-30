@@ -12,7 +12,7 @@ import {
 export const findMembership = (query: FindMembershipQuery): FindMembershipOutput =>
   Effect.gen(function* () {
     const repo = yield* MembershipRepository;
-    return yield* repo.findByUserIdAndOrgId(query.userId, query.organizationId).pipe(
+    return yield* repo.findOneByUserIdAndOrgId(query.userId, query.organizationId).pipe(
       Effect.map(() => ({ isMember: true })),
       Effect.catchTag("MembershipNotFound", () => Effect.succeed({ isMember: false })),
     );

@@ -18,7 +18,7 @@ export const InvitationRepositoryLive = Layer.effect(
   Effect.gen(function* () {
     const db = yield* Database.Database;
 
-    const insert = db.makeQuery((execute, invitation: Invitation) => {
+    const insertOne = db.makeQuery((execute, invitation: Invitation) => {
       const row = InvitationMapper.toPersistence(invitation);
       return execute((client) =>
         client.query(sql.unsafe`
@@ -41,11 +41,11 @@ export const InvitationRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("InvitationRepository.insert"),
+        Effect.withSpan("InvitationRepository.insertOne"),
       );
     });
 
-    const update = db.makeQuery((execute, invitation: Invitation) => {
+    const updateOne = db.makeQuery((execute, invitation: Invitation) => {
       const row = InvitationMapper.toPersistence(invitation);
       return execute((client) =>
         // Persist the whole mutable aggregate, not a hand-picked subset.
@@ -67,11 +67,11 @@ export const InvitationRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("InvitationRepository.update"),
+        Effect.withSpan("InvitationRepository.updateOne"),
       );
     });
 
-    const findById = db.makeQuery((execute, id: InvitationId) =>
+    const findOneById = db.makeQuery((execute, id: InvitationId) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.InvitationRowStd)`
           SELECT * FROM "organization".invitations WHERE id = ${id}
@@ -81,11 +81,11 @@ export const InvitationRepositoryLive = Layer.effect(
         Effect.map(InvitationMapper.toDomain),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("InvitationRepository.findById"),
+        Effect.withSpan("InvitationRepository.findOneById"),
       ),
     );
 
-    const findByToken = db.makeQuery((execute, token: string) =>
+    const findOneByToken = db.makeQuery((execute, token: string) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.InvitationRowStd)`
           SELECT * FROM "organization".invitations WHERE token = ${token}
@@ -95,11 +95,11 @@ export const InvitationRepositoryLive = Layer.effect(
         Effect.map(InvitationMapper.toDomain),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("InvitationRepository.findByToken"),
+        Effect.withSpan("InvitationRepository.findOneByToken"),
       ),
     );
 
-    const findByOrganizationId = db.makeQuery((execute, organizationId: OrganizationId) =>
+    const findManyByOrganizationId = db.makeQuery((execute, organizationId: OrganizationId) =>
       execute((client) =>
         client.any(sql.type(RowSchemas.InvitationRowStd)`
           SELECT * FROM "organization".invitations
@@ -110,11 +110,11 @@ export const InvitationRepositoryLive = Layer.effect(
         Effect.map((rows) => rows.map(InvitationMapper.toDomain)),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("InvitationRepository.findByOrganizationId"),
+        Effect.withSpan("InvitationRepository.findManyByOrganizationId"),
       ),
     );
 
-    const findOpenByOrganizationIdAndEmail = db.makeQuery(
+    const findOneOpenByOrganizationIdAndEmail = db.makeQuery(
       (execute, args: { organizationId: OrganizationId; inviteeEmail: string }) =>
         execute((client) =>
           client.maybeOne(sql.type(RowSchemas.InvitationRowStd)`
@@ -130,18 +130,18 @@ export const InvitationRepositoryLive = Layer.effect(
           Effect.map((row) => (row === null ? null : InvitationMapper.toDomain(row))),
           Effect.catchTag("DatabaseError", Effect.die),
           translatePersistenceUnavailable,
-          Effect.withSpan("InvitationRepository.findOpenByOrganizationIdAndEmail"),
+          Effect.withSpan("InvitationRepository.findOneOpenByOrganizationIdAndEmail"),
         ),
     );
 
     return InvitationRepository.of({
-      insert,
-      update,
-      findById,
-      findByToken,
-      findByOrganizationId,
-      findOpenByOrganizationIdAndEmail: (organizationId, inviteeEmail) =>
-        findOpenByOrganizationIdAndEmail({ organizationId, inviteeEmail }),
+      insertOne,
+      updateOne,
+      findOneById,
+      findOneByToken,
+      findManyByOrganizationId,
+      findOneOpenByOrganizationIdAndEmail: (organizationId, inviteeEmail) =>
+        findOneOpenByOrganizationIdAndEmail({ organizationId, inviteeEmail }),
     });
   }),
 );

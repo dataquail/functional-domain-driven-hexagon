@@ -43,7 +43,7 @@ describe("createOrganization", () => {
       const id = yield* createOrganization(
         CreateOrganizationCommand.make({ name: "Acme", actorUserId }),
       );
-      const stored = yield* repo.findById(id);
+      const stored = yield* repo.findOneById(id);
       deepStrictEqual(stored.name, "Acme");
       const events = yield* rec.byTag<OrganizationCreated>("OrganizationCreated");
       deepStrictEqual(events.length, 1);
@@ -61,7 +61,7 @@ describe("createOrganization", () => {
       const id = yield* createOrganization(
         CreateOrganizationCommand.make({ name: "Acme", actorUserId }),
       );
-      const membership = yield* memberships.findByUserIdAndOrgId(actorUserId, id);
+      const membership = yield* memberships.findOneByUserIdAndOrgId(actorUserId, id);
       deepStrictEqual(membership.userId, actorUserId);
       deepStrictEqual(membership.organizationId, id);
       const events = yield* rec.byTag<MembershipCreated>("MembershipCreated");
@@ -82,7 +82,7 @@ describe("createOrganization", () => {
         const id = yield* createOrganization(
           CreateOrganizationCommand.make({ name: "Acme", actorUserId }),
         );
-        const roles = yield* orgRolesRepo.findByUserIdAndOrgId(actorUserId, id);
+        const roles = yield* orgRolesRepo.findOneByUserIdAndOrgId(actorUserId, id);
         deepStrictEqual(
           roles.roles.map((r) => ({ role: r.role, issuedBy: r.issuedBy })),
           [{ role: "admin", issuedBy: actorUserId }],

@@ -33,20 +33,20 @@ const make = (id: ApiTokenId, opts: { userId?: UserId; hash?: string; createdAt?
 const provide = Effect.provide(ApiTokenRepositoryFake);
 
 describe("ApiTokenRepositoryFake", () => {
-  it.effect("insert + findById + findByHash round-trip", () =>
+  it.effect("insert + findOneById + findOneByHash round-trip", () =>
     Effect.gen(function* () {
       const repo = yield* ApiTokenRepository;
-      yield* repo.insert(make(idA, { hash: "hash-A" }));
-      deepStrictEqual((yield* repo.findById(idA)).id, idA);
-      deepStrictEqual((yield* repo.findByHash("hash-A")).id, idA);
+      yield* repo.insertOne(make(idA, { hash: "hash-A" }));
+      deepStrictEqual((yield* repo.findOneById(idA)).id, idA);
+      deepStrictEqual((yield* repo.findOneByHash("hash-A")).id, idA);
     }).pipe(provide),
   );
 
-  it.effect("findById / findByHash fail ApiTokenNotFound when absent", () =>
+  it.effect("findOneById / findOneByHash fail ApiTokenNotFound when absent", () =>
     Effect.gen(function* () {
       const repo = yield* ApiTokenRepository;
-      const byId = yield* Effect.exit(repo.findById(idMissing));
-      const byHash = yield* Effect.exit(repo.findByHash("nope"));
+      const byId = yield* Effect.exit(repo.findOneById(idMissing));
+      const byHash = yield* Effect.exit(repo.findOneByHash("nope"));
       deepStrictEqual(Exit.isFailure(byId), true);
       deepStrictEqual(Exit.isFailure(byHash), true);
       if (Exit.isFailure(byId)) {
@@ -56,13 +56,13 @@ describe("ApiTokenRepositoryFake", () => {
     }).pipe(provide),
   );
 
-  it.effect("listByUser returns only the caller's active tokens, newest first", () =>
+  it.effect("findManyByUser returns only the caller's active tokens, newest first", () =>
     Effect.gen(function* () {
       const repo = yield* ApiTokenRepository;
-      yield* repo.insert(make(idA, { hash: "a", createdAt: now }));
-      yield* repo.insert(make(idB, { hash: "b", createdAt: DateTime.add(now, { hours: 1 }) }));
-      yield* repo.insert(make(idMissing, { userId: otherUserId, hash: "c" }));
-      const mine = yield* repo.listByUser(userId);
+      yield* repo.insertOne(make(idA, { hash: "a", createdAt: now }));
+      yield* repo.insertOne(make(idB, { hash: "b", createdAt: DateTime.add(now, { hours: 1 }) }));
+      yield* repo.insertOne(make(idMissing, { userId: otherUserId, hash: "c" }));
+      const mine = yield* repo.findManyByUser(userId);
       deepStrictEqual(
         mine.map((t) => t.id),
         [idB, idA],
@@ -70,14 +70,14 @@ describe("ApiTokenRepositoryFake", () => {
     }).pipe(provide),
   );
 
-  it.effect("delete soft-revokes; a second delete fails NotFound; listByUser hides it", () =>
+  it.effect("delete soft-revokes; a second delete fails NotFound; findManyByUser hides it", () =>
     Effect.gen(function* () {
       const repo = yield* ApiTokenRepository;
-      yield* repo.insert(make(idA, { hash: "a" }));
-      yield* repo.delete(idA);
-      deepStrictEqual((yield* repo.findById(idA)).revokedAt !== null, true);
-      deepStrictEqual((yield* repo.listByUser(userId)).length, 0);
-      const second = yield* Effect.exit(repo.delete(idA));
+      yield* repo.insertOne(make(idA, { hash: "a" }));
+      yield* repo.deleteOne(idA);
+      deepStrictEqual((yield* repo.findOneById(idA)).revokedAt !== null, true);
+      deepStrictEqual((yield* repo.findManyByUser(userId)).length, 0);
+      const second = yield* Effect.exit(repo.deleteOne(idA));
       deepStrictEqual(Exit.isFailure(second), true);
     }).pipe(provide),
   );
@@ -86,13 +86,13 @@ describe("ApiTokenRepositoryFake", () => {
     Effect.gen(function* () {
       const repo = yield* ApiTokenRepository;
       const seed = make(idA, { hash: "a" });
-      yield* repo.insert(seed);
+      yield* repo.insertOne(seed);
       const later = DateTime.add(now, { hours: 2 });
-      yield* repo.update(ApiToken.touch({ token: seed, now: later }));
-      deepStrictEqual((yield* repo.findById(idA)).lastUsedAt, later);
+      yield* repo.updateOne(ApiToken.touch({ token: seed, now: later }));
+      deepStrictEqual((yield* repo.findOneById(idA)).lastUsedAt, later);
 
-      yield* repo.delete(idA);
-      const exit = yield* Effect.exit(repo.update(ApiToken.touch({ token: seed, now: later })));
+      yield* repo.deleteOne(idA);
+      const exit = yield* Effect.exit(repo.updateOne(ApiToken.touch({ token: seed, now: later })));
       deepStrictEqual(Exit.isFailure(exit), true);
     }).pipe(provide),
   );

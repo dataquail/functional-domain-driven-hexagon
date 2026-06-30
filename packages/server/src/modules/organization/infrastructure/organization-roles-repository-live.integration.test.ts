@@ -66,12 +66,12 @@ suite("OrganizationRolesRepositoryLive (integration)", () => {
     );
   });
 
-  describe("findByUserIdAndOrgId", () => {
+  describe("findOneByUserIdAndOrgId", () => {
     it.effect("returns an empty aggregate when no rows exist", () =>
       Effect.gen(function* () {
         yield* seedFixtures;
         const repo = yield* OrganizationRolesRepository;
-        const roles = yield* repo.findByUserIdAndOrgId(userId, orgId);
+        const roles = yield* repo.findOneByUserIdAndOrgId(userId, orgId);
         deepStrictEqual(roles.userId, userId);
         deepStrictEqual(roles.organizationId, orgId);
         deepStrictEqual([...roles.roles], []);
@@ -86,8 +86,8 @@ suite("OrganizationRolesRepositoryLive (integration)", () => {
         const repo = yield* OrganizationRolesRepository;
         const granted = grantRole(emptyOrgRoles(userId, orgId), "admin", issuedBy);
         if (Either.isLeft(granted)) throw new Error("expected Right");
-        yield* repo.save(granted.right.organizationRoles);
-        const fetched = yield* repo.findByUserIdAndOrgId(userId, orgId);
+        yield* repo.upsertOne(granted.right.organizationRoles);
+        const fetched = yield* repo.findOneByUserIdAndOrgId(userId, orgId);
         deepStrictEqual(
           fetched.roles.map((r) => ({ role: r.role, issuedBy: r.issuedBy })),
           [{ role: "admin", issuedBy }],
@@ -101,11 +101,11 @@ suite("OrganizationRolesRepositoryLive (integration)", () => {
         const repo = yield* OrganizationRolesRepository;
         const granted = grantRole(emptyOrgRoles(userId, orgId), "admin", issuedBy);
         if (Either.isLeft(granted)) throw new Error("expected Right");
-        yield* repo.save(granted.right.organizationRoles);
+        yield* repo.upsertOne(granted.right.organizationRoles);
         const revoked = revokeRole(granted.right.organizationRoles, "admin");
         if (Either.isLeft(revoked)) throw new Error("expected Right");
-        yield* repo.save(revoked.right.organizationRoles);
-        const fetched = yield* repo.findByUserIdAndOrgId(userId, orgId);
+        yield* repo.upsertOne(revoked.right.organizationRoles);
+        const fetched = yield* repo.findOneByUserIdAndOrgId(userId, orgId);
         deepStrictEqual([...fetched.roles], []);
       }).pipe(Effect.provide(TestLayer)),
     );

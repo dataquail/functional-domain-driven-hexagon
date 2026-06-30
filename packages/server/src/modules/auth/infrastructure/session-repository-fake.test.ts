@@ -30,20 +30,20 @@ const makeSession = (id: SessionId) =>
 const provide = Effect.provide(SessionRepositoryFake);
 
 describe("SessionRepositoryFake", () => {
-  it.effect("insert + findById round-trip", () =>
+  it.effect("insert + findOneById round-trip", () =>
     Effect.gen(function* () {
       const repo = yield* SessionRepository;
-      yield* repo.insert(makeSession(idA));
-      const found = yield* repo.findById(idA);
+      yield* repo.insertOne(makeSession(idA));
+      const found = yield* repo.findOneById(idA);
       deepStrictEqual(found.id, idA);
       deepStrictEqual(found.revokedAt, null);
     }).pipe(provide),
   );
 
-  it.effect("findById fails SessionNotFound for an unknown id", () =>
+  it.effect("findOneById fails SessionNotFound for an unknown id", () =>
     Effect.gen(function* () {
       const repo = yield* SessionRepository;
-      const exit = yield* Effect.exit(repo.findById(idMissing));
+      const exit = yield* Effect.exit(repo.findOneById(idMissing));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
@@ -55,9 +55,9 @@ describe("SessionRepositoryFake", () => {
   it.effect("delete marks the session as revoked (soft-delete)", () =>
     Effect.gen(function* () {
       const repo = yield* SessionRepository;
-      yield* repo.insert(makeSession(idA));
-      yield* repo.delete(idA);
-      const found = yield* repo.findById(idA);
+      yield* repo.insertOne(makeSession(idA));
+      yield* repo.deleteOne(idA);
+      const found = yield* repo.findOneById(idA);
       deepStrictEqual(found.revokedAt !== null, true);
     }).pipe(provide),
   );
@@ -65,7 +65,7 @@ describe("SessionRepositoryFake", () => {
   it.effect("delete fails SessionNotFound on a missing id", () =>
     Effect.gen(function* () {
       const repo = yield* SessionRepository;
-      const exit = yield* Effect.exit(repo.delete(idMissing));
+      const exit = yield* Effect.exit(repo.deleteOne(idMissing));
       deepStrictEqual(Exit.isFailure(exit), true);
     }).pipe(provide),
   );
@@ -73,9 +73,9 @@ describe("SessionRepositoryFake", () => {
   it.effect("delete: a second delete on the same row fails NotFound (matches live impl)", () =>
     Effect.gen(function* () {
       const repo = yield* SessionRepository;
-      yield* repo.insert(makeSession(idA));
-      yield* repo.delete(idA);
-      const exit = yield* Effect.exit(repo.delete(idA));
+      yield* repo.insertOne(makeSession(idA));
+      yield* repo.deleteOne(idA);
+      const exit = yield* Effect.exit(repo.deleteOne(idA));
       deepStrictEqual(Exit.isFailure(exit), true);
     }).pipe(provide),
   );
@@ -84,11 +84,11 @@ describe("SessionRepositoryFake", () => {
     Effect.gen(function* () {
       const repo = yield* SessionRepository;
       const seed = makeSession(idA);
-      yield* repo.insert(seed);
+      yield* repo.insertOne(seed);
       const later = DateTime.add(now, { seconds: 1800 });
       const touched = Session.touch({ session: seed, now: later, ttlSeconds: 3600 });
-      yield* repo.update(touched);
-      const found = yield* repo.findById(idA);
+      yield* repo.updateOne(touched);
+      const found = yield* repo.findOneById(idA);
       deepStrictEqual(found.expiresAt, touched.expiresAt);
       deepStrictEqual(found.lastUsedAt, touched.lastUsedAt);
       deepStrictEqual(found.createdAt, seed.createdAt);
@@ -99,7 +99,7 @@ describe("SessionRepositoryFake", () => {
   it.effect("update fails SessionNotFound on a missing id", () =>
     Effect.gen(function* () {
       const repo = yield* SessionRepository;
-      const exit = yield* Effect.exit(repo.update(makeSession(idMissing)));
+      const exit = yield* Effect.exit(repo.updateOne(makeSession(idMissing)));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
@@ -112,11 +112,11 @@ describe("SessionRepositoryFake", () => {
     Effect.gen(function* () {
       const repo = yield* SessionRepository;
       const seed = makeSession(idA);
-      yield* repo.insert(seed);
-      yield* repo.delete(idA);
+      yield* repo.insertOne(seed);
+      yield* repo.deleteOne(idA);
       const later = DateTime.add(now, { seconds: 1800 });
       const touched = Session.touch({ session: seed, now: later, ttlSeconds: 3600 });
-      const exit = yield* Effect.exit(repo.update(touched));
+      const exit = yield* Effect.exit(repo.updateOne(touched));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = exit.cause._tag === "Fail" ? exit.cause.error : null;

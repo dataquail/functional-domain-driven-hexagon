@@ -39,7 +39,7 @@ export const SyncSubscriptionFromStripeWebhookLive = Layer.effectDiscard(
           case "customer.subscription.created":
           case "customer.subscription.updated":
           case "customer.subscription.deleted": {
-            const found = yield* repo.findByStripeSubscriptionId(
+            const found = yield* repo.findOneByStripeSubscriptionId(
               stripeEvent.subscription.stripeSubscriptionId,
             );
             if (Option.isNone(found)) return;
@@ -53,7 +53,7 @@ export const SyncSubscriptionFromStripeWebhookLive = Layer.effectDiscard(
               currentPeriodEnd: stripeEvent.subscription.currentPeriodEnd,
               now,
             });
-            yield* repo.update(subscription);
+            yield* repo.updateOne(subscription);
             yield* eventBus.dispatch(events);
             return;
           }

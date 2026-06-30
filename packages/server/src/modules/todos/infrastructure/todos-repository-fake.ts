@@ -20,10 +20,10 @@ export const TodosRepositoryFake = Layer.effect(
   Effect.gen(function* () {
     const store = yield* Ref.make(HashMap.empty<TodoId, Todo>());
 
-    const insert = (todo: Todo): Effect.Effect<void> =>
+    const insertOne = (todo: Todo): Effect.Effect<void> =>
       Ref.update(store, HashMap.set(todo.id, todo));
 
-    const update = (todo: Todo): Effect.Effect<void, TodoNotFound> =>
+    const updateOne = (todo: Todo): Effect.Effect<void, TodoNotFound> =>
       Effect.flatMap(Ref.get(store), (m) => {
         const found = HashMap.get(m, todo.id);
         return found._tag === "Some" && found.value.organizationId === todo.organizationId
@@ -31,7 +31,7 @@ export const TodosRepositoryFake = Layer.effect(
           : Effect.fail(new TodoNotFound({ todoId: todo.id }));
       });
 
-    const remove = (
+    const deleteOne = (
       organizationId: OrganizationId,
       id: TodoId,
     ): Effect.Effect<void, TodoNotFound> =>
@@ -42,7 +42,7 @@ export const TodosRepositoryFake = Layer.effect(
           : Effect.fail(new TodoNotFound({ todoId: id }));
       });
 
-    const findById = (
+    const findOneById = (
       organizationId: OrganizationId,
       id: TodoId,
     ): Effect.Effect<Todo, TodoNotFound> =>
@@ -56,6 +56,6 @@ export const TodosRepositoryFake = Layer.effect(
         }),
       );
 
-    return TodosRepository.of({ insert, update, remove, findById });
+    return TodosRepository.of({ insertOne, updateOne, deleteOne, findOneById });
   }),
 );

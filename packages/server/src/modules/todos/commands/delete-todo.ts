@@ -9,5 +9,5 @@ import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todo-
 export const deleteTodo = (cmd: DeleteTodoCommand): DeleteTodoOutput =>
   Effect.gen(function* () {
     const repo = yield* TodosRepository;
-    yield* repo.remove(cmd.organizationId, cmd.todoId);
+    yield* repo.deleteOne(cmd.organizationId, cmd.todoId);
   });

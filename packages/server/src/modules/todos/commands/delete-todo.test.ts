@@ -25,13 +25,13 @@ describe("deleteTodo", () => {
   it.effect("removes the todo from the repository", () =>
     Effect.gen(function* () {
       const repo = yield* TodosRepository;
-      yield* repo.insert(
+      yield* repo.insertOne(
         Todo.create({ id: aliceId, organizationId: orgId, title: "Buy milk", now }),
       );
       yield* deleteTodo(
         DeleteTodoCommand.make({ todoId: aliceId, organizationId: orgId, userId: aliceUserId }),
       );
-      const exit = yield* Effect.exit(repo.findById(orgId, aliceId));
+      const exit = yield* Effect.exit(repo.findOneById(orgId, aliceId));
       deepStrictEqual(Exit.isFailure(exit), true);
     }).pipe(Effect.provide(TodosRepositoryFake)),
   );
@@ -54,7 +54,7 @@ describe("deleteTodo", () => {
   it.effect("fails TodoNotFound when the todo belongs to a different org (tenant isolation)", () =>
     Effect.gen(function* () {
       const repo = yield* TodosRepository;
-      yield* repo.insert(
+      yield* repo.insertOne(
         Todo.create({ id: aliceId, organizationId: orgId, title: "Buy milk", now }),
       );
       const exit = yield* Effect.exit(
@@ -72,7 +72,7 @@ describe("deleteTodo", () => {
         deepStrictEqual(error instanceof TodoNotFound, true);
       }
       // The original (correct-org) row is untouched.
-      const stillThere = yield* repo.findById(orgId, aliceId);
+      const stillThere = yield* repo.findOneById(orgId, aliceId);
       deepStrictEqual(stillThere.id, aliceId);
     }).pipe(Effect.provide(TodosRepositoryFake)),
   );

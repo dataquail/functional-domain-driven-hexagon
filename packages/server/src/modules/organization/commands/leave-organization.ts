@@ -13,8 +13,8 @@ export const leaveOrganization = (cmd: LeaveOrganizationCommand): LeaveOrganizat
   Effect.gen(function* () {
     const repo = yield* MembershipRepository;
     const bus = yield* DomainEventBus;
-    const membership = yield* repo.findByUserIdAndOrgId(cmd.userId, cmd.organizationId);
+    const membership = yield* repo.findOneByUserIdAndOrgId(cmd.userId, cmd.organizationId);
     const { events } = Membership.revoke(membership);
-    yield* repo.delete(cmd.userId, cmd.organizationId);
+    yield* repo.deleteOne(cmd.userId, cmd.organizationId);
     yield* bus.dispatch(events);
   }).pipe(withUnitOfWork);

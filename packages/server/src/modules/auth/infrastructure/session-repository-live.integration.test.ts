@@ -48,14 +48,14 @@ suite("SessionRepositoryLive (integration)", () => {
     await Effect.runPromise(truncate("user.users").pipe(Effect.provide(TestDatabaseLive)));
   });
 
-  it.effect("insert + findById round-trips a Session through the DB", () =>
+  it.effect("insert + findOneById round-trips a Session through the DB", () =>
     Effect.gen(function* () {
       yield* insertUserRow;
       const repo = yield* SessionRepository;
       const now = yield* DateTime.now;
       const session = makeSession(now);
-      yield* repo.insert(session);
-      const found = yield* repo.findById(sessionId);
+      yield* repo.insertOne(session);
+      const found = yield* repo.findOneById(sessionId);
       deepStrictEqual(found.id, sessionId);
       deepStrictEqual(found.userId, userId);
       deepStrictEqual(found.subject, subject);
@@ -63,10 +63,10 @@ suite("SessionRepositoryLive (integration)", () => {
     }).pipe(Effect.provide(TestLayer)),
   );
 
-  it.effect("findById fails SessionNotFound for an unknown id", () =>
+  it.effect("findOneById fails SessionNotFound for an unknown id", () =>
     Effect.gen(function* () {
       const repo = yield* SessionRepository;
-      const exit = yield* Effect.exit(repo.findById(sessionId));
+      const exit = yield* Effect.exit(repo.findOneById(sessionId));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
@@ -80,12 +80,12 @@ suite("SessionRepositoryLive (integration)", () => {
       yield* insertUserRow;
       const repo = yield* SessionRepository;
       const now = yield* DateTime.now;
-      yield* repo.insert(makeSession(now));
-      yield* repo.delete(sessionId);
-      const found = yield* repo.findById(sessionId);
+      yield* repo.insertOne(makeSession(now));
+      yield* repo.deleteOne(sessionId);
+      const found = yield* repo.findOneById(sessionId);
       deepStrictEqual(found.revokedAt !== null, true);
 
-      const second = yield* Effect.exit(repo.delete(sessionId));
+      const second = yield* Effect.exit(repo.deleteOne(sessionId));
       deepStrictEqual(Exit.isFailure(second), true);
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -96,11 +96,11 @@ suite("SessionRepositoryLive (integration)", () => {
       const repo = yield* SessionRepository;
       const now = yield* DateTime.now;
       const seed = makeSession(now);
-      yield* repo.insert(seed);
+      yield* repo.insertOne(seed);
       const later = DateTime.add(now, { seconds: 1800 });
       const touched = Session.touch({ session: seed, now: later, ttlSeconds: 3600 });
-      yield* repo.update(touched);
-      const found = yield* repo.findById(sessionId);
+      yield* repo.updateOne(touched);
+      const found = yield* repo.findOneById(sessionId);
       deepStrictEqual(found.expiresAt, touched.expiresAt);
       deepStrictEqual(found.lastUsedAt, touched.lastUsedAt);
       deepStrictEqual(found.absoluteExpiresAt, seed.absoluteExpiresAt);
@@ -113,11 +113,11 @@ suite("SessionRepositoryLive (integration)", () => {
       const repo = yield* SessionRepository;
       const now = yield* DateTime.now;
       const seed = makeSession(now);
-      yield* repo.insert(seed);
-      yield* repo.delete(sessionId);
+      yield* repo.insertOne(seed);
+      yield* repo.deleteOne(sessionId);
       const later = DateTime.add(now, { seconds: 1800 });
       const touched = Session.touch({ session: seed, now: later, ttlSeconds: 3600 });
-      const exit = yield* Effect.exit(repo.update(touched));
+      const exit = yield* Effect.exit(repo.updateOne(touched));
       deepStrictEqual(Exit.isFailure(exit), true);
     }).pipe(Effect.provide(TestLayer)),
   );
