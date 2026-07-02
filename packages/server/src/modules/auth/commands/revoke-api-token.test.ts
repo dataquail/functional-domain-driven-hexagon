@@ -28,7 +28,7 @@ describe("revokeApiToken", () => {
       const { apiToken } = yield* mint(userId);
       yield* revokeApiToken(RevokeApiTokenCommand.make({ apiTokenId: apiToken.id, userId }));
       const repo = yield* ApiTokenRepository;
-      deepStrictEqual((yield* repo.findById(apiToken.id)).revokedAt !== null, true);
+      deepStrictEqual((yield* repo.findOneById(apiToken.id)).revokedAt !== null, true);
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -44,7 +44,7 @@ describe("revokeApiToken", () => {
         deepStrictEqual(error instanceof ApiTokenNotFound, true);
       }
       const repo = yield* ApiTokenRepository;
-      deepStrictEqual((yield* repo.findById(apiToken.id)).revokedAt, null);
+      deepStrictEqual((yield* repo.findOneById(apiToken.id)).revokedAt, null);
     }).pipe(Effect.provide(TestLayer)),
   );
 

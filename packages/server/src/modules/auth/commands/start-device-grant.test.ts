@@ -22,7 +22,7 @@ describe("startDeviceGrant", () => {
       ok(/^[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(userCode));
 
       const repo = yield* DeviceGrantRepository;
-      const stored = yield* repo.findByCodeHash(hashToken(deviceCode));
+      const stored = yield* repo.findOneByCodeHash(hashToken(deviceCode));
       deepStrictEqual(stored.status, "pending");
       deepStrictEqual(stored.userId, null);
       deepStrictEqual(stored.userCode, userCode);

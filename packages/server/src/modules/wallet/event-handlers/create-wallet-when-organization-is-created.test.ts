@@ -26,7 +26,7 @@ const seedWallet = (organizationId: OrganizationId) =>
     const id = WalletId.make("99999999-9999-9999-9999-999999999999");
     const now = yield* DateTime.now;
     const { wallet } = Wallet.create({ id, organizationId, now });
-    yield* repo.insert(wallet);
+    yield* repo.insertOne(wallet);
   });
 
 describe("createWalletWhenOrganizationIsCreated (handleOrganizationCreated)", () => {
@@ -34,7 +34,7 @@ describe("createWalletWhenOrganizationIsCreated (handleOrganizationCreated)", ()
     Effect.gen(function* () {
       yield* handleOrganizationCreated(trigger(acmeId));
       const repo = yield* WalletRepository;
-      const stored = yield* repo.findByOrganizationId(acmeId);
+      const stored = yield* repo.findOneByOrganizationId(acmeId);
       ok(Option.isSome(stored));
       deepStrictEqual(stored.value.balance, 0);
       deepStrictEqual(stored.value.organizationId, acmeId);
@@ -56,8 +56,8 @@ describe("createWalletWhenOrganizationIsCreated (handleOrganizationCreated)", ()
     () =>
       Effect.gen(function* () {
         const FailingRepo = Effect.provideService(WalletRepository, {
-          insert: () => Effect.die("simulated infrastructure failure"),
-          findByOrganizationId: () => Effect.succeed(Option.none()),
+          insertOne: () => Effect.die("simulated infrastructure failure"),
+          findOneByOrganizationId: () => Effect.succeed(Option.none()),
         });
         const exit = yield* Effect.exit(
           handleOrganizationCreated(trigger(acmeId)).pipe(FailingRepo),

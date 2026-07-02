@@ -52,7 +52,7 @@ describe("ingestStripeWebhook", () => {
 
         yield* ingestStripeWebhook(cmd("evt_new"));
 
-        const seen = yield* repo.findByStripeEventId("evt_new");
+        const seen = yield* repo.findOneByStripeEventId("evt_new");
         ok(Option.isSome(seen));
 
         const events = yield* rec.byTag<StripeWebhookIngested>("StripeWebhookIngested");
@@ -74,7 +74,7 @@ describe("ingestStripeWebhook", () => {
         ok(exit.cause.error instanceof InvalidWebhookSignature);
       }
 
-      const seen = yield* repo.findByStripeEventId("evt_bad_sig");
+      const seen = yield* repo.findOneByStripeEventId("evt_bad_sig");
       ok(Option.isNone(seen));
       const events = yield* rec.byTag<StripeWebhookIngested>("StripeWebhookIngested");
       deepStrictEqual(events.length, 0);

@@ -13,17 +13,17 @@ export const OrganizationRepositoryFake = Layer.effect(
   Effect.gen(function* () {
     const store = yield* Ref.make(HashMap.empty<OrganizationId, Organization>());
 
-    const insert = (organization: Organization): Effect.Effect<void> =>
+    const insertOne = (organization: Organization): Effect.Effect<void> =>
       Ref.update(store, HashMap.set(organization.id, organization));
 
-    const update = (organization: Organization): Effect.Effect<void, OrganizationNotFound> =>
+    const updateOne = (organization: Organization): Effect.Effect<void, OrganizationNotFound> =>
       Effect.flatMap(Ref.get(store), (m) =>
         HashMap.has(m, organization.id)
           ? Ref.update(store, HashMap.set(organization.id, organization))
           : Effect.fail(new OrganizationNotFound({ organizationId: organization.id })),
       );
 
-    const findById = (id: OrganizationId): Effect.Effect<Organization, OrganizationNotFound> =>
+    const findOneById = (id: OrganizationId): Effect.Effect<Organization, OrganizationNotFound> =>
       Effect.flatMap(Ref.get(store), (m) => {
         const found = HashMap.get(m, id);
         if (found._tag === "None" || found.value.deletedAt !== null) {
@@ -32,7 +32,7 @@ export const OrganizationRepositoryFake = Layer.effect(
         return Effect.succeed(found.value);
       });
 
-    const findByIdIncludingDeleted = (
+    const findOneByIdIncludingDeleted = (
       id: OrganizationId,
     ): Effect.Effect<Organization, OrganizationNotFound> =>
       Effect.flatMap(Ref.get(store), (m) => {
@@ -42,6 +42,11 @@ export const OrganizationRepositoryFake = Layer.effect(
           : Effect.fail(new OrganizationNotFound({ organizationId: id }));
       });
 
-    return OrganizationRepository.of({ insert, update, findById, findByIdIncludingDeleted });
+    return OrganizationRepository.of({
+      insertOne,
+      updateOne,
+      findOneById,
+      findOneByIdIncludingDeleted,
+    });
   }),
 );

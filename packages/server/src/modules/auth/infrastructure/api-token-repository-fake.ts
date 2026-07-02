@@ -18,10 +18,10 @@ export const ApiTokenRepositoryFake = Layer.effect(
   Effect.gen(function* () {
     const store = yield* Ref.make(HashMap.empty<ApiTokenId, ApiToken>());
 
-    const insert = (token: ApiToken): Effect.Effect<void> =>
+    const insertOne = (token: ApiToken): Effect.Effect<void> =>
       Ref.update(store, HashMap.set(token.id, token));
 
-    const findById = (id: ApiTokenId): Effect.Effect<ApiToken, ApiTokenNotFound> =>
+    const findOneById = (id: ApiTokenId): Effect.Effect<ApiToken, ApiTokenNotFound> =>
       Effect.flatMap(Ref.get(store), (m) =>
         Option.match(HashMap.get(m, id), {
           onNone: () => Effect.fail(new ApiTokenNotFound()),
@@ -29,14 +29,14 @@ export const ApiTokenRepositoryFake = Layer.effect(
         }),
       );
 
-    const findByHash = (tokenHash: string): Effect.Effect<ApiToken, ApiTokenNotFound> =>
+    const findOneByHash = (tokenHash: string): Effect.Effect<ApiToken, ApiTokenNotFound> =>
       Effect.flatMap(Ref.get(store), (m) => {
         const match = Array.from(HashMap.values(m)).find((t) => t.tokenHash === tokenHash);
         return match === undefined ? Effect.fail(new ApiTokenNotFound()) : Effect.succeed(match);
       });
 
     // Active (non-revoked) tokens, newest first — mirrors the live SQL.
-    const listByUser = (userId: UserId): Effect.Effect<ReadonlyArray<ApiToken>> =>
+    const findManyByUser = (userId: UserId): Effect.Effect<ReadonlyArray<ApiToken>> =>
       Effect.map(Ref.get(store), (m) =>
         Array.from(HashMap.values(m))
           .filter((t) => t.userId === userId && t.revokedAt === null)
@@ -61,7 +61,7 @@ export const ApiTokenRepositoryFake = Layer.effect(
       });
 
     // Mirrors the live impl: only updates rows where revoked_at IS NULL.
-    const update = (token: ApiToken): Effect.Effect<void, ApiTokenNotFound> =>
+    const updateOne = (token: ApiToken): Effect.Effect<void, ApiTokenNotFound> =>
       Effect.gen(function* () {
         const m = yield* Ref.get(store);
         const existing = HashMap.get(m, token.id);
@@ -75,12 +75,12 @@ export const ApiTokenRepositoryFake = Layer.effect(
       });
 
     return ApiTokenRepository.of({
-      insert,
-      findById,
-      findByHash,
-      listByUser,
-      delete: deleteToken,
-      update,
+      insertOne,
+      findOneById,
+      findOneByHash,
+      findManyByUser,
+      deleteOne: deleteToken,
+      updateOne,
     });
   }),
 );

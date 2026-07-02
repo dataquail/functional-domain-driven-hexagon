@@ -36,29 +36,29 @@ const seed = (): Invitation.Invitation =>
 const provide = Effect.provide(InvitationRepositoryFake);
 
 describe("InvitationRepositoryFake", () => {
-  it.effect("findById round-trips an inserted invitation", () =>
+  it.effect("findOneById round-trips an inserted invitation", () =>
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
-      yield* repo.insert(seed());
-      const found = yield* repo.findById(invitationId);
+      yield* repo.insertOne(seed());
+      const found = yield* repo.findOneById(invitationId);
       deepStrictEqual(found.id, invitationId);
       deepStrictEqual(found.token, "tok-abc");
     }).pipe(provide),
   );
 
-  it.effect("findByToken returns the matching invitation", () =>
+  it.effect("findOneByToken returns the matching invitation", () =>
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
-      yield* repo.insert(seed());
-      const found = yield* repo.findByToken("tok-abc");
+      yield* repo.insertOne(seed());
+      const found = yield* repo.findOneByToken("tok-abc");
       deepStrictEqual(found.id, invitationId);
     }).pipe(provide),
   );
 
-  it.effect("findById fails InvitationNotFound when absent", () =>
+  it.effect("findOneById fails InvitationNotFound when absent", () =>
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
-      const exit = yield* Effect.exit(repo.findById(invitationId));
+      const exit = yield* Effect.exit(repo.findOneById(invitationId));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
@@ -67,10 +67,10 @@ describe("InvitationRepositoryFake", () => {
     }).pipe(provide),
   );
 
-  it.effect("findByToken fails InvitationTokenNotFound when no row matches", () =>
+  it.effect("findOneByToken fails InvitationTokenNotFound when no row matches", () =>
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
-      const exit = yield* Effect.exit(repo.findByToken("missing"));
+      const exit = yield* Effect.exit(repo.findOneByToken("missing"));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
@@ -82,11 +82,11 @@ describe("InvitationRepositoryFake", () => {
   it.effect("update persists state transitions", () =>
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
-      yield* repo.insert(seed());
+      yield* repo.insertOne(seed());
       const accepted = Invitation.accept(seed(), { userId, now });
       if (Either.isLeft(accepted)) throw new Error("expected Right");
-      yield* repo.update(accepted.right.invitation);
-      const found = yield* repo.findById(invitationId);
+      yield* repo.updateOne(accepted.right.invitation);
+      const found = yield* repo.findOneById(invitationId);
       deepStrictEqual(found.acceptedAt !== null, true);
     }).pipe(provide),
   );
@@ -94,7 +94,7 @@ describe("InvitationRepositoryFake", () => {
   it.effect("update fails InvitationNotFound when the row is missing", () =>
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
-      const exit = yield* Effect.exit(repo.update(seed()));
+      const exit = yield* Effect.exit(repo.updateOne(seed()));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = exit.cause._tag === "Fail" ? exit.cause.error : null;

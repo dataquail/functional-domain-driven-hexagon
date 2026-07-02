@@ -66,11 +66,11 @@ describe("resendInvitation", () => {
       const repo = yield* InvitationRepository;
       const rec = yield* RecordedEvents;
       const sent = yield* SentInvitations;
-      yield* repo.insert(seedInvitation());
+      yield* repo.insertOne(seedInvitation());
 
       yield* resendInvitation(cmd);
 
-      const stored = yield* repo.findById(invitationId);
+      const stored = yield* repo.findOneById(invitationId);
       ok(stored.token !== "tok-original", "token should be rotated");
       ok(DateTime.greaterThan(stored.expiresAt, originalExpiry), "expiry should be pushed out");
       deepStrictEqual(stored.acceptedAt, null);
@@ -94,7 +94,7 @@ describe("resendInvitation", () => {
       const repo = yield* InvitationRepository;
       const revoked = Invitation.revoke(seedInvitation(), { now: issuedAt });
       if (Either.isLeft(revoked)) throw new Error("expected Right");
-      yield* repo.insert(revoked.right.invitation);
+      yield* repo.insertOne(revoked.right.invitation);
 
       const exit = yield* Effect.exit(resendInvitation(cmd));
       deepStrictEqual(Exit.isFailure(exit), true);
@@ -110,7 +110,7 @@ describe("resendInvitation", () => {
       const repo = yield* InvitationRepository;
       const accepted = Invitation.accept(seedInvitation(), { userId: actorUserId, now: issuedAt });
       if (Either.isLeft(accepted)) throw new Error("expected Right");
-      yield* repo.insert(accepted.right.invitation);
+      yield* repo.insertOne(accepted.right.invitation);
 
       const exit = yield* Effect.exit(resendInvitation(cmd));
       deepStrictEqual(Exit.isFailure(exit), true);

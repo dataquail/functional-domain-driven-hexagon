@@ -16,7 +16,7 @@ export const AuthIdentityRepositoryLive = Layer.effect(
   Effect.gen(function* () {
     const db = yield* Database.Database;
 
-    const findBySubject = db.makeQuery((execute, subject: string) =>
+    const findOneBySubject = db.makeQuery((execute, subject: string) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.AuthIdentityRowStd)`
           SELECT * FROM auth.auth_identities WHERE subject = ${subject}
@@ -26,11 +26,11 @@ export const AuthIdentityRepositoryLive = Layer.effect(
         Effect.map(AuthIdentityMapper.toDomain),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("AuthIdentityRepository.findBySubject"),
+        Effect.withSpan("AuthIdentityRepository.findOneBySubject"),
       ),
     );
 
-    const insert = db.makeQuery((execute, identity: AuthIdentity) =>
+    const insertOne = db.makeQuery((execute, identity: AuthIdentity) =>
       execute((client) =>
         client.query(sql.unsafe`
           INSERT INTO auth.auth_identities (subject, user_id, provider, created_at)
@@ -40,10 +40,10 @@ export const AuthIdentityRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("AuthIdentityRepository.insert"),
+        Effect.withSpan("AuthIdentityRepository.insertOne"),
       ),
     );
 
-    return AuthIdentityRepository.of({ findBySubject, insert });
+    return AuthIdentityRepository.of({ findOneBySubject, insertOne });
   }),
 );

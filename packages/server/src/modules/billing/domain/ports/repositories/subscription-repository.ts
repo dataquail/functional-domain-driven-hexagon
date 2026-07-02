@@ -8,14 +8,14 @@ import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistenc
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 export type SubscriptionRepositoryShape = {
-  readonly insert: (
+  readonly insertOne: (
     subscription: Subscription,
   ) => Effect.Effect<void, SubscriptionAlreadyExistsForOrganization | PersistenceUnavailable>;
-  readonly update: (subscription: Subscription) => Effect.Effect<void, PersistenceUnavailable>;
-  readonly findByOrganizationId: (
+  readonly updateOne: (subscription: Subscription) => Effect.Effect<void, PersistenceUnavailable>;
+  readonly findOneByOrganizationId: (
     organizationId: OrganizationId,
   ) => Effect.Effect<Option.Option<Subscription>, PersistenceUnavailable>;
-  readonly findByStripeSubscriptionId: (
+  readonly findOneByStripeSubscriptionId: (
     stripeSubscriptionId: string,
   ) => Effect.Effect<Option.Option<Subscription>, PersistenceUnavailable>;
 };

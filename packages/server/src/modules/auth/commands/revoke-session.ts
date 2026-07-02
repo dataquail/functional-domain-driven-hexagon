@@ -14,7 +14,7 @@ import { SessionRepository } from "@/modules/auth/domain/ports/repositories/sess
 export const revokeSession = (cmd: RevokeSessionCommand): RevokeSessionOutput =>
   Effect.gen(function* () {
     const repo = yield* SessionRepository;
-    yield* repo.delete(cmd.sessionId).pipe(
+    yield* repo.deleteOne(cmd.sessionId).pipe(
       Effect.catchTag("SessionNotFound", () => Effect.void),
       Effect.catchTag("SessionRevoked", () => Effect.void),
       Effect.catchTag("PersistenceUnavailable", () => Effect.void),

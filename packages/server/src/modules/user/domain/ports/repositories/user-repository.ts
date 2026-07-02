@@ -15,11 +15,13 @@ import { type UserId } from "@/platform/ids/user-id.js";
 // this abstract port-level error at the boundary. Fakes never produce
 // this at runtime but match the channel for type compatibility.
 export type UserRepositoryShape = {
-  readonly insert: (user: User) => Effect.Effect<void, UserAlreadyExists | PersistenceUnavailable>;
-  readonly update: (user: User) => Effect.Effect<void, UserNotFound | PersistenceUnavailable>;
-  readonly remove: (id: UserId) => Effect.Effect<void, UserNotFound | PersistenceUnavailable>;
-  readonly findById: (id: UserId) => Effect.Effect<User, UserNotFound | PersistenceUnavailable>;
-  readonly findByEmail: (
+  readonly insertOne: (
+    user: User,
+  ) => Effect.Effect<void, UserAlreadyExists | PersistenceUnavailable>;
+  readonly updateOne: (user: User) => Effect.Effect<void, UserNotFound | PersistenceUnavailable>;
+  readonly deleteOne: (id: UserId) => Effect.Effect<void, UserNotFound | PersistenceUnavailable>;
+  readonly findOneById: (id: UserId) => Effect.Effect<User, UserNotFound | PersistenceUnavailable>;
+  readonly findOneByEmail: (
     email: string,
   ) => Effect.Effect<Option.Option<User>, PersistenceUnavailable>;
 };

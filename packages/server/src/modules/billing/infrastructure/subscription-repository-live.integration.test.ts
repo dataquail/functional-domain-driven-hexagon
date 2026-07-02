@@ -68,12 +68,12 @@ suite("SubscriptionRepositoryLive (integration)", () => {
   });
 
   describe("insert", () => {
-    it.effect("persists and decodes back via findByOrganizationId", () =>
+    it.effect("persists and decodes back via findOneByOrganizationId", () =>
       Effect.gen(function* () {
         yield* seedOrgRow(acme, "Acme");
         const repo = yield* SubscriptionRepository;
-        yield* repo.insert(mk(subA, acme, "sub_acme"));
-        const found = yield* repo.findByOrganizationId(acme);
+        yield* repo.insertOne(mk(subA, acme, "sub_acme"));
+        const found = yield* repo.findOneByOrganizationId(acme);
         ok(Option.isSome(found));
         if (Option.isSome(found)) {
           deepStrictEqual(found.value.id, subA);
@@ -87,8 +87,8 @@ suite("SubscriptionRepositoryLive (integration)", () => {
       Effect.gen(function* () {
         yield* seedOrgRow(acme, "Acme");
         const repo = yield* SubscriptionRepository;
-        yield* repo.insert(mk(subA, acme, "sub_a"));
-        const exit = yield* Effect.exit(repo.insert(mk(subB, acme, "sub_b")));
+        yield* repo.insertOne(mk(subA, acme, "sub_a"));
+        const exit = yield* Effect.exit(repo.insertOne(mk(subB, acme, "sub_b")));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
           ok(exit.cause.error instanceof SubscriptionAlreadyExistsForOrganization);
@@ -103,25 +103,25 @@ suite("SubscriptionRepositoryLive (integration)", () => {
         yield* seedOrgRow(acme, "Acme");
         const repo = yield* SubscriptionRepository;
         const sub = mk(subA, acme, "sub_acme");
-        yield* repo.insert(sub);
+        yield* repo.insertOne(sub);
         const { subscription: canceled } = Subscription.cancel(sub, now);
-        yield* repo.update(canceled);
-        const found = yield* repo.findByOrganizationId(acme);
+        yield* repo.updateOne(canceled);
+        const found = yield* repo.findOneByOrganizationId(acme);
         ok(Option.isSome(found));
         if (Option.isSome(found)) deepStrictEqual(found.value.status, "canceled");
       }).pipe(Effect.provide(TestLayer)),
     );
   });
 
-  describe("findByStripeSubscriptionId", () => {
+  describe("findOneByStripeSubscriptionId", () => {
     it.effect("returns the subscription that has the matching Stripe id (cross-tenant safe)", () =>
       Effect.gen(function* () {
         yield* seedOrgRow(acme, "Acme");
         yield* seedOrgRow(beta, "Beta");
         const repo = yield* SubscriptionRepository;
-        yield* repo.insert(mk(subA, acme, "sub_acme_id"));
-        yield* repo.insert(mk(subB, beta, "sub_beta_id"));
-        const found = yield* repo.findByStripeSubscriptionId("sub_beta_id");
+        yield* repo.insertOne(mk(subA, acme, "sub_acme_id"));
+        yield* repo.insertOne(mk(subB, beta, "sub_beta_id"));
+        const found = yield* repo.findOneByStripeSubscriptionId("sub_beta_id");
         ok(Option.isSome(found));
         if (Option.isSome(found)) {
           deepStrictEqual(found.value.id, subB);
@@ -133,7 +133,7 @@ suite("SubscriptionRepositoryLive (integration)", () => {
     it.effect("returns None when no subscription matches", () =>
       Effect.gen(function* () {
         const repo = yield* SubscriptionRepository;
-        const found = yield* repo.findByStripeSubscriptionId("sub_unknown");
+        const found = yield* repo.findOneByStripeSubscriptionId("sub_unknown");
         ok(Option.isNone(found));
       }).pipe(Effect.provide(TestLayer)),
     );

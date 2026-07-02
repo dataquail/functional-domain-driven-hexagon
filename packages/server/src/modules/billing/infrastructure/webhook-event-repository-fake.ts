@@ -16,7 +16,7 @@ export const WebhookEventRepositoryFake = Layer.effect(
   Effect.gen(function* () {
     const store = yield* Ref.make(HashMap.empty<string, WebhookEventRecord>());
 
-    const insert = (stripeEventId: string): Effect.Effect<void, WebhookEventAlreadyRecorded> =>
+    const insertOne = (stripeEventId: string): Effect.Effect<void, WebhookEventAlreadyRecorded> =>
       Effect.flatMap(Ref.get(store), (m) =>
         HashMap.has(m, stripeEventId)
           ? Effect.fail(new WebhookEventAlreadyRecorded({ stripeEventId }))
@@ -25,11 +25,11 @@ export const WebhookEventRepositoryFake = Layer.effect(
             ),
       );
 
-    const findByStripeEventId = (
+    const findOneByStripeEventId = (
       stripeEventId: string,
     ): Effect.Effect<Option.Option<WebhookEventRecord>> =>
       Effect.map(Ref.get(store), (m) => HashMap.get(m, stripeEventId));
 
-    return WebhookEventRepository.of({ insert, findByStripeEventId });
+    return WebhookEventRepository.of({ insertOne, findOneByStripeEventId });
   }),
 );

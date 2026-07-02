@@ -41,7 +41,7 @@ describe("inviteUser", () => {
           actorUserId,
         }),
       );
-      const stored = yield* repo.findById(id);
+      const stored = yield* repo.findOneById(id);
       deepStrictEqual(stored.organizationId, organizationId);
       deepStrictEqual(stored.inviteeEmail, "alice@example.com");
       ok(stored.token.length > 0);
@@ -79,13 +79,13 @@ describe("inviteUser", () => {
         });
 
       const firstId = yield* inviteUser(make());
-      const firstToken = (yield* repo.findById(firstId)).token;
+      const firstToken = (yield* repo.findOneById(firstId)).token;
 
       const secondId = yield* inviteUser(make());
 
       // Same invitation row (dedup), with a rotated token.
       deepStrictEqual(secondId, firstId);
-      const all = yield* repo.findByOrganizationId(organizationId);
+      const all = yield* repo.findManyByOrganizationId(organizationId);
       deepStrictEqual(all.length, 1);
       ok(all[0]?.token !== firstToken, "token should be rotated on reissue");
 

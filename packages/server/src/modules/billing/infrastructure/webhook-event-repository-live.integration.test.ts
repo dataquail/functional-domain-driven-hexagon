@@ -21,11 +21,11 @@ suite("WebhookEventRepositoryLive (integration)", () => {
     );
   });
 
-  it.effect("inserts an event id and decodes it back via findByStripeEventId", () =>
+  it.effect("inserts an event id and decodes it back via findOneByStripeEventId", () =>
     Effect.gen(function* () {
       const repo = yield* WebhookEventRepository;
-      yield* repo.insert("evt_test_1");
-      const found = yield* repo.findByStripeEventId("evt_test_1");
+      yield* repo.insertOne("evt_test_1");
+      const found = yield* repo.findOneByStripeEventId("evt_test_1");
       ok(Option.isSome(found));
       if (Option.isSome(found)) deepStrictEqual(found.value.stripeEventId, "evt_test_1");
     }).pipe(Effect.provide(TestLayer)),
@@ -36,8 +36,8 @@ suite("WebhookEventRepositoryLive (integration)", () => {
     () =>
       Effect.gen(function* () {
         const repo = yield* WebhookEventRepository;
-        yield* repo.insert("evt_test_dup");
-        const exit = yield* Effect.exit(repo.insert("evt_test_dup"));
+        yield* repo.insertOne("evt_test_dup");
+        const exit = yield* Effect.exit(repo.insertOne("evt_test_dup"));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
           ok(exit.cause.error instanceof WebhookEventAlreadyRecorded);
@@ -48,7 +48,7 @@ suite("WebhookEventRepositoryLive (integration)", () => {
   it.effect("returns None for an unrecorded event id", () =>
     Effect.gen(function* () {
       const repo = yield* WebhookEventRepository;
-      const found = yield* repo.findByStripeEventId("evt_does_not_exist");
+      const found = yield* repo.findOneByStripeEventId("evt_does_not_exist");
       ok(Option.isNone(found));
     }).pipe(Effect.provide(TestLayer)),
   );

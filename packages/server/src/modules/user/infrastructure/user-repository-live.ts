@@ -16,7 +16,7 @@ export const UserRepositoryLive = Layer.effect(
   Effect.gen(function* () {
     const db = yield* Database.Database;
 
-    const insert = db.makeQuery((execute, user: User) => {
+    const insertOne = db.makeQuery((execute, user: User) => {
       const row = UserMapper.toPersistence(user);
       return execute((client) =>
         client.query(sql.unsafe`
@@ -39,11 +39,11 @@ export const UserRepositoryLive = Layer.effect(
             : Effect.die(e),
         ),
         translatePersistenceUnavailable,
-        Effect.withSpan("UserRepository.insert"),
+        Effect.withSpan("UserRepository.insertOne"),
       );
     });
 
-    const update = db.makeQuery((execute, user: User) => {
+    const updateOne = db.makeQuery((execute, user: User) => {
       const row = UserMapper.toPersistence(user);
       return execute((client) =>
         client.maybeOne(sql.type(RowSchemas.UserRowStd)`
@@ -61,11 +61,11 @@ export const UserRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("UserRepository.update"),
+        Effect.withSpan("UserRepository.updateOne"),
       );
     });
 
-    const remove = db.makeQuery((execute, id: UserId) =>
+    const deleteOne = db.makeQuery((execute, id: UserId) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.UserRowStd)`
           DELETE FROM "user".users WHERE id = ${id} RETURNING *
@@ -75,11 +75,11 @@ export const UserRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("UserRepository.remove"),
+        Effect.withSpan("UserRepository.deleteOne"),
       ),
     );
 
-    const findById = db.makeQuery((execute, id: UserId) =>
+    const findOneById = db.makeQuery((execute, id: UserId) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.UserRowStd)`
           SELECT * FROM "user".users WHERE id = ${id}
@@ -89,11 +89,11 @@ export const UserRepositoryLive = Layer.effect(
         Effect.map(UserMapper.toDomain),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("UserRepository.findById"),
+        Effect.withSpan("UserRepository.findOneById"),
       ),
     );
 
-    const findByEmail = db.makeQuery((execute, email: string) =>
+    const findOneByEmail = db.makeQuery((execute, email: string) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.UserRowStd)`
           SELECT * FROM "user".users WHERE email = ${email}
@@ -102,10 +102,10 @@ export const UserRepositoryLive = Layer.effect(
         Effect.map((row) => (row === null ? Option.none() : Option.some(UserMapper.toDomain(row)))),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("UserRepository.findByEmail"),
+        Effect.withSpan("UserRepository.findOneByEmail"),
       ),
     );
 
-    return UserRepository.of({ insert, update, remove, findById, findByEmail });
+    return UserRepository.of({ insertOne, updateOne, deleteOne, findOneById, findOneByEmail });
   }),
 );

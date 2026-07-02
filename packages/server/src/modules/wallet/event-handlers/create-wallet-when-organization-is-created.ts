@@ -26,6 +26,6 @@ export const handleOrganizationCreated = (trigger: OrganizationCreatedTrigger) =
     const now = yield* DateTime.now;
     const { wallet } = Wallet.create({ id, organizationId: trigger.organizationId, now });
     yield* repo
-      .insert(wallet)
+      .insertOne(wallet)
       .pipe(Effect.catchTag("WalletAlreadyExistsForOrganization", () => Effect.void));
   });

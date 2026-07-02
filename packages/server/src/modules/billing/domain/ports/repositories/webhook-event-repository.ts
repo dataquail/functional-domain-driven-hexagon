@@ -20,10 +20,10 @@ export type WebhookEventRecord = {
 };
 
 export type WebhookEventRepositoryShape = {
-  readonly insert: (
+  readonly insertOne: (
     stripeEventId: string,
   ) => Effect.Effect<void, WebhookEventAlreadyRecorded | PersistenceUnavailable>;
-  readonly findByStripeEventId: (
+  readonly findOneByStripeEventId: (
     stripeEventId: string,
   ) => Effect.Effect<Option.Option<WebhookEventRecord>, PersistenceUnavailable>;
 };

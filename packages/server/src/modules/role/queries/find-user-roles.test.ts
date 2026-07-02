@@ -26,7 +26,7 @@ describe("findUserRoles", () => {
       const repo = yield* RolesRepository;
       const granted = grant(emptyRoles(userId), "super_admin");
       if (Either.isLeft(granted)) throw new Error("expected Right");
-      yield* repo.save(granted.right.roles);
+      yield* repo.upsertOne(granted.right.roles);
       const result = yield* findUserRoles(FindUserRolesQuery.make({ userId }));
       deepStrictEqual([...result.roles], ["super_admin"]);
     }).pipe(Effect.provide(RolesRepositoryFake)),

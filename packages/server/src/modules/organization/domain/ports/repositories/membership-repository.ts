@@ -16,16 +16,16 @@ import { type UserId } from "@/platform/ids/user-id.js";
 // — `RemoveMember`/`LeaveOrganization` rely on that to surface a 404 to
 // callers asking to remove a non-existent member.
 export type MembershipRepositoryShape = {
-  readonly insert: (membership: Membership) => Effect.Effect<void, PersistenceUnavailable>;
-  readonly delete: (
+  readonly insertOne: (membership: Membership) => Effect.Effect<void, PersistenceUnavailable>;
+  readonly deleteOne: (
     userId: UserId,
     organizationId: OrganizationId,
   ) => Effect.Effect<void, MembershipNotFound | PersistenceUnavailable>;
-  readonly findByUserIdAndOrgId: (
+  readonly findOneByUserIdAndOrgId: (
     userId: UserId,
     organizationId: OrganizationId,
   ) => Effect.Effect<Membership, MembershipNotFound | PersistenceUnavailable>;
-  readonly findByOrganizationId: (
+  readonly findManyByOrganizationId: (
     organizationId: OrganizationId,
   ) => Effect.Effect<ReadonlyArray<Membership>, PersistenceUnavailable>;
 };

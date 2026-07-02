@@ -16,9 +16,9 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 export const revokeApiToken = (cmd: RevokeApiTokenCommand): RevokeApiTokenOutput =>
   Effect.gen(function* () {
     const repo = yield* ApiTokenRepository;
-    const token = yield* repo.findById(cmd.apiTokenId);
+    const token = yield* repo.findOneById(cmd.apiTokenId);
     if (token.userId !== cmd.userId) {
       return yield* Effect.fail(new ApiTokenNotFound());
     }
-    yield* repo.delete(cmd.apiTokenId);
+    yield* repo.deleteOne(cmd.apiTokenId);
   }).pipe(withUnitOfWork);

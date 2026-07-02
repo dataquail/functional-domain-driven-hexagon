@@ -16,7 +16,7 @@ export const ApiTokenRepositoryLive = Layer.effect(
   Effect.gen(function* () {
     const db = yield* Database.Database;
 
-    const insert = db.makeQuery((execute, token: ApiToken) => {
+    const insertOne = db.makeQuery((execute, token: ApiToken) => {
       const row = ApiTokenMapper.toPersistence(token);
       return execute((client) =>
         client.query(sql.unsafe`
@@ -38,11 +38,11 @@ export const ApiTokenRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("ApiTokenRepository.insert"),
+        Effect.withSpan("ApiTokenRepository.insertOne"),
       );
     });
 
-    const findById = db.makeQuery((execute, id: ApiTokenId) =>
+    const findOneById = db.makeQuery((execute, id: ApiTokenId) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.ApiTokenRowStd)`
           SELECT * FROM auth.api_tokens WHERE id = ${id}
@@ -52,11 +52,11 @@ export const ApiTokenRepositoryLive = Layer.effect(
         Effect.map(ApiTokenMapper.toDomain),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("ApiTokenRepository.findById"),
+        Effect.withSpan("ApiTokenRepository.findOneById"),
       ),
     );
 
-    const findByHash = db.makeQuery((execute, tokenHash: string) =>
+    const findOneByHash = db.makeQuery((execute, tokenHash: string) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.ApiTokenRowStd)`
           SELECT * FROM auth.api_tokens WHERE token_hash = ${tokenHash}
@@ -66,11 +66,11 @@ export const ApiTokenRepositoryLive = Layer.effect(
         Effect.map(ApiTokenMapper.toDomain),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("ApiTokenRepository.findByHash"),
+        Effect.withSpan("ApiTokenRepository.findOneByHash"),
       ),
     );
 
-    const listByUser = db.makeQuery((execute, userId: UserId) =>
+    const findManyByUser = db.makeQuery((execute, userId: UserId) =>
       execute((client) =>
         client.any(sql.type(RowSchemas.ApiTokenRowStd)`
           SELECT * FROM auth.api_tokens
@@ -81,7 +81,7 @@ export const ApiTokenRepositoryLive = Layer.effect(
         Effect.map((rows) => rows.map(ApiTokenMapper.toDomain)),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("ApiTokenRepository.listByUser"),
+        Effect.withSpan("ApiTokenRepository.findManyByUser"),
       ),
     );
 
@@ -97,11 +97,11 @@ export const ApiTokenRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("ApiTokenRepository.delete"),
+        Effect.withSpan("ApiTokenRepository.deleteOne"),
       ),
     );
 
-    const update = db.makeQuery((execute, token: ApiToken) => {
+    const updateOne = db.makeQuery((execute, token: ApiToken) => {
       const row = ApiTokenMapper.toPersistence(token);
       return execute((client) =>
         client.maybeOne(sql.type(RowSchemas.ApiTokenRowStd)`
@@ -115,17 +115,17 @@ export const ApiTokenRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("ApiTokenRepository.update"),
+        Effect.withSpan("ApiTokenRepository.updateOne"),
       );
     });
 
     return ApiTokenRepository.of({
-      insert,
-      findById,
-      findByHash,
-      listByUser,
-      delete: deleteById,
-      update,
+      insertOne,
+      findOneById,
+      findOneByHash,
+      findManyByUser,
+      deleteOne: deleteById,
+      updateOne,
     });
   }),
 );

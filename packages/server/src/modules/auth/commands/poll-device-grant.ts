@@ -27,12 +27,12 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 export const pollDeviceGrant = (cmd: PollDeviceGrantCommand): PollDeviceGrantOutput =>
   Effect.gen(function* () {
     const grants = yield* DeviceGrantRepository;
-    const grant = yield* grants.findByCodeHash(hashToken(cmd.deviceCode));
+    const grant = yield* grants.findOneByCodeHash(hashToken(cmd.deviceCode));
     const now = yield* DateTime.now;
 
     if (DeviceGrant.isExpired(grant, now)) {
       yield* grants
-        .delete(grant.id)
+        .deleteOne(grant.id)
         .pipe(Effect.catchTag("DeviceGrantNotFound", () => Effect.void));
       return yield* Effect.fail(new DeviceGrantExpired());
     }
@@ -45,6 +45,6 @@ export const pollDeviceGrant = (cmd: PollDeviceGrantCommand): PollDeviceGrantOut
       label: "cli",
       expiresInDays: cmd.tokenExpiresInDays,
     });
-    yield* grants.delete(grant.id);
+    yield* grants.deleteOne(grant.id);
     return minted;
   }).pipe(withUnitOfWork);

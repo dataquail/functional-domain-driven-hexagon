@@ -48,7 +48,7 @@ export const OrganizationRolesRepositoryLive = Layer.effect(
         }
       });
 
-    const save = (organizationRoles: OrganizationRoles) =>
+    const upsertOne = (organizationRoles: OrganizationRoles) =>
       Effect.serviceOption(Database.TransactionContext).pipe(
         Effect.flatMap((existing) =>
           Option.isSome(existing)
@@ -61,10 +61,10 @@ export const OrganizationRolesRepositoryLive = Layer.effect(
         ),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("OrganizationRolesRepository.save"),
+        Effect.withSpan("OrganizationRolesRepository.upsertOne"),
       );
 
-    const findByUserIdAndOrgId = db.makeQuery(
+    const findOneByUserIdAndOrgId = db.makeQuery(
       (execute, args: { userId: UserId; organizationId: OrganizationId }) =>
         execute((client) =>
           client.any(sql.type(RowSchemas.OrganizationRoleRowStd)`
@@ -79,14 +79,14 @@ export const OrganizationRolesRepositoryLive = Layer.effect(
           ),
           Effect.catchTag("DatabaseError", Effect.die),
           translatePersistenceUnavailable,
-          Effect.withSpan("OrganizationRolesRepository.findByUserIdAndOrgId"),
+          Effect.withSpan("OrganizationRolesRepository.findOneByUserIdAndOrgId"),
         ),
     );
 
     return OrganizationRolesRepository.of({
-      save,
-      findByUserIdAndOrgId: (userId, organizationId) =>
-        findByUserIdAndOrgId({ userId, organizationId }),
+      upsertOne,
+      findOneByUserIdAndOrgId: (userId, organizationId) =>
+        findOneByUserIdAndOrgId({ userId, organizationId }),
     });
   }),
 );

@@ -66,7 +66,7 @@ export const TodoResolverEntryLive = Layer.effect(
   Effect.gen(function* () {
     const repo = yield* TodosRepository;
     return ({ organizationId, todoId }) =>
-      repo.findById(organizationId, todoId).pipe(
+      repo.findOneById(organizationId, todoId).pipe(
         Effect.map((todo) => ({ organizationId: todo.organizationId })),
         Effect.catchTag("TodoNotFound", () => Effect.fail(new CustomHttpApiError.NotFound())),
         Effect.catchTag("PersistenceUnavailable", Effect.die),

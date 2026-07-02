@@ -25,28 +25,28 @@ export const UserRepositoryFake = Layer.effect(
   Effect.gen(function* () {
     const store = yield* Ref.make(HashMap.empty<UserId, User>());
 
-    const insert = (user: User): Effect.Effect<void, UserAlreadyExists> =>
+    const insertOne = (user: User): Effect.Effect<void, UserAlreadyExists> =>
       Effect.flatMap(Ref.get(store), (m) =>
         Option.isSome(findUserByEmail(m, user.email))
           ? Effect.fail(new UserAlreadyExists({ email: user.email }))
           : Ref.update(store, HashMap.set(user.id, user)),
       );
 
-    const update = (user: User): Effect.Effect<void, UserNotFound> =>
+    const updateOne = (user: User): Effect.Effect<void, UserNotFound> =>
       Effect.flatMap(Ref.get(store), (m) =>
         HashMap.has(m, user.id)
           ? Ref.update(store, HashMap.set(user.id, user))
           : Effect.fail(new UserNotFound({ userId: user.id })),
       );
 
-    const remove = (id: UserId): Effect.Effect<void, UserNotFound> =>
+    const deleteOne = (id: UserId): Effect.Effect<void, UserNotFound> =>
       Effect.flatMap(Ref.get(store), (m) =>
         HashMap.has(m, id)
           ? Ref.update(store, HashMap.remove(id))
           : Effect.fail(new UserNotFound({ userId: id })),
       );
 
-    const findById = (id: UserId): Effect.Effect<User, UserNotFound> =>
+    const findOneById = (id: UserId): Effect.Effect<User, UserNotFound> =>
       Effect.flatMap(Ref.get(store), (m) =>
         Option.match(HashMap.get(m, id), {
           onNone: () => Effect.fail(new UserNotFound({ userId: id })),
@@ -54,9 +54,9 @@ export const UserRepositoryFake = Layer.effect(
         }),
       );
 
-    const findByEmail = (email: string): Effect.Effect<Option.Option<User>> =>
+    const findOneByEmail = (email: string): Effect.Effect<Option.Option<User>> =>
       Effect.map(Ref.get(store), (m) => findUserByEmail(m, email));
 
-    return UserRepository.of({ insert, update, remove, findById, findByEmail });
+    return UserRepository.of({ insertOne, updateOne, deleteOne, findOneById, findOneByEmail });
   }),
 );

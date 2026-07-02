@@ -23,7 +23,7 @@ const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
 
 const seed = Effect.gen(function* () {
   const repo = yield* TodosRepository;
-  yield* repo.insert(Todo.create({ id: todoId, organizationId: orgId, title: "Buy milk", now }));
+  yield* repo.insertOne(Todo.create({ id: todoId, organizationId: orgId, title: "Buy milk", now }));
 });
 
 describe("completeTodo", () => {
@@ -35,7 +35,7 @@ describe("completeTodo", () => {
       );
       deepStrictEqual(completed.completed, true);
       deepStrictEqual(completed.title, "Buy milk");
-      const stored = yield* (yield* TodosRepository).findById(orgId, todoId);
+      const stored = yield* (yield* TodosRepository).findOneById(orgId, todoId);
       deepStrictEqual(stored.completed, true);
     }).pipe(Effect.provide(TodosRepositoryFake)),
   );

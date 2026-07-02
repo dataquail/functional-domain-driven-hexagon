@@ -47,7 +47,7 @@ const seedOrgs = Effect.gen(function* () {
 const seed = (id: TodoId, organizationId: OrganizationId, title: string, now: DateTime.Utc) =>
   Effect.gen(function* () {
     const repo = yield* TodosRepository;
-    yield* repo.insert(Todo.create({ id, organizationId, title, now }));
+    yield* repo.insertOne(Todo.create({ id, organizationId, title, now }));
   });
 
 const suite = hasTestDatabase ? describe.sequential : describe.skip;

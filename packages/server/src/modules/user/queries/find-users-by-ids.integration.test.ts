@@ -35,9 +35,9 @@ suite("findUsersByIds (integration)", () => {
       const alice = User.create({ id: aliceId, email: "alice@example.com", address, now }).user;
       const bob = User.create({ id: bobId, email: "bob@example.com", address, now }).user;
       const carol = User.create({ id: carolId, email: "carol@example.com", address, now }).user;
-      yield* repo.insert(alice);
-      yield* repo.insert(bob);
-      yield* repo.insert(carol);
+      yield* repo.insertOne(alice);
+      yield* repo.insertOne(bob);
+      yield* repo.insertOne(carol);
 
       const result = yield* findUsersByIds(FindUsersByIdsQuery.make({ ids: [aliceId, carolId] }));
       deepStrictEqual(result.length, 2);

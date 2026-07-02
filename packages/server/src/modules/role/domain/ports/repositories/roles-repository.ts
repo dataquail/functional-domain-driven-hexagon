@@ -8,12 +8,12 @@ import { type UserId } from "@/platform/ids/user-id.js";
 // Dumb persistence port. The aggregate carries the invariants; the
 // repository only knows how to save and fetch the resulting state.
 //
-// `findByUserId` returns an empty `Roles` aggregate if no roles are
+// `findOneByUserId` returns an empty `Roles` aggregate if no roles are
 // stored — the absence of any rows is a valid "no roles granted yet"
 // state, not a NotFound condition.
 export type RolesRepositoryShape = {
-  readonly save: (roles: Roles) => Effect.Effect<void, PersistenceUnavailable>;
-  readonly findByUserId: (userId: UserId) => Effect.Effect<Roles, PersistenceUnavailable>;
+  readonly upsertOne: (roles: Roles) => Effect.Effect<void, PersistenceUnavailable>;
+  readonly findOneByUserId: (userId: UserId) => Effect.Effect<Roles, PersistenceUnavailable>;
 };
 
 export class RolesRepository extends Context.Tag("RolesRepository")<

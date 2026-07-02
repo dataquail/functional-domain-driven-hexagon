@@ -16,7 +16,7 @@ describe("AuthIdentityRepositoryFake", () => {
   it.effect("returns the seeded identity for a known subject", () =>
     Effect.gen(function* () {
       const repo = yield* AuthIdentityRepository;
-      const found = yield* repo.findBySubject(subject);
+      const found = yield* repo.findOneBySubject(subject);
       deepStrictEqual(found.subject, subject);
       deepStrictEqual(found.userId, userId);
       deepStrictEqual(found.provider, "zitadel");
@@ -28,7 +28,7 @@ describe("AuthIdentityRepositoryFake", () => {
   it.effect("fails AuthIdentityNotFound for an unknown subject", () =>
     Effect.gen(function* () {
       const repo = yield* AuthIdentityRepository;
-      const exit = yield* Effect.exit(repo.findBySubject("missing-sub"));
+      const exit = yield* Effect.exit(repo.findOneBySubject("missing-sub"));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = exit.cause._tag === "Fail" ? exit.cause.error : null;

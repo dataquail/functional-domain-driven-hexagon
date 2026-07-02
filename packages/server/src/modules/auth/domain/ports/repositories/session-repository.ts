@@ -7,8 +7,8 @@ import { type SessionId } from "@/modules/auth/domain/session-id.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
 export type SessionRepositoryShape = {
-  readonly insert: (session: Session) => Effect.Effect<void, PersistenceUnavailable>;
-  readonly findById: (
+  readonly insertOne: (session: Session) => Effect.Effect<void, PersistenceUnavailable>;
+  readonly findOneById: (
     id: SessionId,
   ) => Effect.Effect<Session, SessionNotFound | PersistenceUnavailable>;
   // Soft-deletes the session by stamping `revoked_at`. Named after the
@@ -19,10 +19,10 @@ export type SessionRepositoryShape = {
   // an implementation detail. `SessionRevoked` is reserved for the
   // already-soft-deleted case so the caller can preserve the original
   // `revoked_at` timestamp.
-  readonly delete: (
+  readonly deleteOne: (
     id: SessionId,
   ) => Effect.Effect<void, SessionNotFound | SessionRevoked | PersistenceUnavailable>;
-  readonly update: (
+  readonly updateOne: (
     session: Session,
   ) => Effect.Effect<void, SessionNotFound | PersistenceUnavailable>;
 };

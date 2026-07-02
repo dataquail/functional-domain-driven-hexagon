@@ -11,9 +11,9 @@ import * as Todo from "@/modules/todos/domain/todo.js";
 export const completeTodo = (cmd: CompleteTodoCommand): CompleteTodoOutput =>
   Effect.gen(function* () {
     const repo = yield* TodosRepository;
-    const existing = yield* repo.findById(cmd.organizationId, cmd.todoId);
+    const existing = yield* repo.findOneById(cmd.organizationId, cmd.todoId);
     const now = yield* DateTime.now;
     const completed = Todo.complete(existing, now);
-    yield* repo.update(completed);
+    yield* repo.updateOne(completed);
     return completed;
   });

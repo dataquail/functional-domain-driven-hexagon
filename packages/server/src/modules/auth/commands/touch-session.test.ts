@@ -27,7 +27,7 @@ const seedSession = (lastUsedAt: DateTime.Utc) =>
       ttlSeconds: 3600,
       absoluteTtlSeconds: 43200,
     });
-    yield* repo.insert(base);
+    yield* repo.insertOne(base);
     return base;
   });
 
@@ -44,7 +44,7 @@ describe("touchSession", () => {
       const seed = yield* seedSession(farPast);
       yield* touchSession(cmd);
       const repo = yield* SessionRepository;
-      const after = yield* repo.findById(sessionId);
+      const after = yield* repo.findOneById(sessionId);
       deepStrictEqual(DateTime.greaterThan(after.lastUsedAt, seed.lastUsedAt), true);
       deepStrictEqual(DateTime.greaterThan(after.expiresAt, seed.expiresAt), true);
     }).pipe(Effect.provide(SessionRepositoryFake)),
@@ -56,7 +56,7 @@ describe("touchSession", () => {
       const seed = yield* seedSession(justNow);
       yield* touchSession(cmd);
       const repo = yield* SessionRepository;
-      const after = yield* repo.findById(sessionId);
+      const after = yield* repo.findOneById(sessionId);
       deepStrictEqual(after.lastUsedAt, seed.lastUsedAt);
       deepStrictEqual(after.expiresAt, seed.expiresAt);
     }).pipe(Effect.provide(SessionRepositoryFake)),
@@ -73,9 +73,9 @@ describe("touchSession", () => {
       const farPast = DateTime.unsafeMake(new Date("2000-01-01T00:00:00Z"));
       const seed = yield* seedSession(farPast);
       const repo = yield* SessionRepository;
-      yield* repo.delete(sessionId);
+      yield* repo.deleteOne(sessionId);
       yield* touchSession(cmd);
-      const after = yield* repo.findById(sessionId);
+      const after = yield* repo.findOneById(sessionId);
       deepStrictEqual(after.expiresAt, seed.expiresAt);
       deepStrictEqual(after.lastUsedAt, seed.lastUsedAt);
     }).pipe(Effect.provide(SessionRepositoryFake)),

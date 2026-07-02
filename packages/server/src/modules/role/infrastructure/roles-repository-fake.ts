@@ -15,15 +15,15 @@ export const RolesRepositoryFake = Layer.effect(
   Effect.gen(function* () {
     const store = yield* Ref.make(HashMap.empty<UserId, Roles>());
 
-    const save = (roles: Roles): Effect.Effect<void> =>
+    const upsertOne = (roles: Roles): Effect.Effect<void> =>
       Ref.update(store, HashMap.set(roles.userId, roles));
 
-    const findByUserId = (userId: UserId): Effect.Effect<Roles> =>
+    const findOneByUserId = (userId: UserId): Effect.Effect<Roles> =>
       Effect.map(Ref.get(store), (m) => {
         const found = HashMap.get(m, userId);
         return found._tag === "Some" ? found.value : emptyRoles(userId);
       });
 
-    return RolesRepository.of({ save, findByUserId });
+    return RolesRepository.of({ upsertOne, findOneByUserId });
   }),
 );

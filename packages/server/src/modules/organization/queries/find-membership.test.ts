@@ -29,7 +29,7 @@ describe("findMembership", () => {
     Effect.gen(function* () {
       const repo = yield* MembershipRepository;
       const { membership } = Membership.create({ userId, organizationId: orgId, now });
-      yield* repo.insert(membership);
+      yield* repo.insertOne(membership);
       const result = yield* findMembership(
         FindMembershipQuery.make({ userId, organizationId: orgId }),
       );

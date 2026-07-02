@@ -15,7 +15,7 @@ export const DeviceGrantRepositoryLive = Layer.effect(
   Effect.gen(function* () {
     const db = yield* Database.Database;
 
-    const insert = db.makeQuery((execute, grant: DeviceGrant) => {
+    const insertOne = db.makeQuery((execute, grant: DeviceGrant) => {
       const row = DeviceGrantMapper.toPersistence(grant);
       return execute((client) =>
         client.query(sql.unsafe`
@@ -36,11 +36,11 @@ export const DeviceGrantRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("DeviceGrantRepository.insert"),
+        Effect.withSpan("DeviceGrantRepository.insertOne"),
       );
     });
 
-    const findByCodeHash = db.makeQuery((execute, deviceCodeHash: string) =>
+    const findOneByCodeHash = db.makeQuery((execute, deviceCodeHash: string) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.DeviceGrantRowStd)`
           SELECT * FROM auth.device_grants WHERE device_code_hash = ${deviceCodeHash}
@@ -50,11 +50,11 @@ export const DeviceGrantRepositoryLive = Layer.effect(
         Effect.map(DeviceGrantMapper.toDomain),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("DeviceGrantRepository.findByCodeHash"),
+        Effect.withSpan("DeviceGrantRepository.findOneByCodeHash"),
       ),
     );
 
-    const findByUserCode = db.makeQuery((execute, userCode: string) =>
+    const findOneByUserCode = db.makeQuery((execute, userCode: string) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.DeviceGrantRowStd)`
           SELECT * FROM auth.device_grants WHERE user_code = ${userCode}
@@ -64,11 +64,11 @@ export const DeviceGrantRepositoryLive = Layer.effect(
         Effect.map(DeviceGrantMapper.toDomain),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("DeviceGrantRepository.findByUserCode"),
+        Effect.withSpan("DeviceGrantRepository.findOneByUserCode"),
       ),
     );
 
-    const update = db.makeQuery((execute, grant: DeviceGrant) => {
+    const updateOne = db.makeQuery((execute, grant: DeviceGrant) => {
       const row = DeviceGrantMapper.toPersistence(grant);
       return execute((client) =>
         client.maybeOne(sql.type(RowSchemas.DeviceGrantRowStd)`
@@ -84,7 +84,7 @@ export const DeviceGrantRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("DeviceGrantRepository.update"),
+        Effect.withSpan("DeviceGrantRepository.updateOne"),
       );
     });
 
@@ -98,16 +98,16 @@ export const DeviceGrantRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("DeviceGrantRepository.delete"),
+        Effect.withSpan("DeviceGrantRepository.deleteOne"),
       ),
     );
 
     return DeviceGrantRepository.of({
-      insert,
-      findByCodeHash,
-      findByUserCode,
-      update,
-      delete: deleteById,
+      insertOne,
+      findOneByCodeHash,
+      findOneByUserCode,
+      updateOne,
+      deleteOne: deleteById,
     });
   }),
 );

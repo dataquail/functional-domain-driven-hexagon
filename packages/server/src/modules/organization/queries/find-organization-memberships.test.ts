@@ -53,7 +53,7 @@ const seedAdmin = (userId: UserId, organizationId: OrganizationId) =>
       issuer,
     );
     if (Either.isRight(granted)) {
-      yield* rolesRepo.save(granted.right.organizationRoles);
+      yield* rolesRepo.upsertOne(granted.right.organizationRoles);
     }
   });
 
@@ -61,9 +61,9 @@ describe("findOrganizationMemberships", () => {
   it.effect("returns only the requested org's members, enriched with email", () =>
     Effect.gen(function* () {
       const repo = yield* MembershipRepository;
-      yield* repo.insert(seed(userA, orgA));
-      yield* repo.insert(seed(userB, orgA));
-      yield* repo.insert(seed(userC, orgB));
+      yield* repo.insertOne(seed(userA, orgA));
+      yield* repo.insertOne(seed(userB, orgA));
+      yield* repo.insertOne(seed(userC, orgB));
 
       const result = yield* findOrganizationMemberships(
         FindOrganizationMembershipsQuery.make({ organizationId: orgA }),
@@ -79,8 +79,8 @@ describe("findOrganizationMemberships", () => {
   it.effect("flags admins via isAdmin and leaves plain members false", () =>
     Effect.gen(function* () {
       const repo = yield* MembershipRepository;
-      yield* repo.insert(seed(userA, orgA));
-      yield* repo.insert(seed(userB, orgA));
+      yield* repo.insertOne(seed(userA, orgA));
+      yield* repo.insertOne(seed(userB, orgA));
       yield* seedAdmin(userA, orgA);
 
       const result = yield* findOrganizationMemberships(
@@ -104,9 +104,9 @@ describe("findOrganizationMemberships", () => {
   it.effect("skips members whose user record is missing from the lookup", () =>
     Effect.gen(function* () {
       const repo = yield* MembershipRepository;
-      yield* repo.insert(seed(userA, orgA));
+      yield* repo.insertOne(seed(userA, orgA));
       const orphanedUser = UserId.make("99999999-9999-9999-9999-999999999999");
-      yield* repo.insert(seed(orphanedUser, orgA));
+      yield* repo.insertOne(seed(orphanedUser, orgA));
 
       const result = yield* findOrganizationMemberships(
         FindOrganizationMembershipsQuery.make({ organizationId: orgA }),

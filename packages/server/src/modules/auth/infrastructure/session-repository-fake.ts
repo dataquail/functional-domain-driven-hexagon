@@ -15,10 +15,10 @@ export const SessionRepositoryFake = Layer.effect(
   Effect.gen(function* () {
     const store = yield* Ref.make(HashMap.empty<SessionId, Session>());
 
-    const insert = (session: Session): Effect.Effect<void> =>
+    const insertOne = (session: Session): Effect.Effect<void> =>
       Ref.update(store, HashMap.set(session.id, session));
 
-    const findById = (id: SessionId): Effect.Effect<Session, SessionNotFound> =>
+    const findOneById = (id: SessionId): Effect.Effect<Session, SessionNotFound> =>
       Effect.flatMap(Ref.get(store), (m) =>
         Option.match(HashMap.get(m, id), {
           onNone: () => Effect.fail(new SessionNotFound({ sessionId: id })),
@@ -59,7 +59,7 @@ export const SessionRepositoryFake = Layer.effect(
     // Mirrors the live impl: only updates rows where revoked_at IS NULL.
     // A revoked or missing row fails SessionNotFound — callers on the touch
     // path catch and ignore (benign race).
-    const update = (session: Session): Effect.Effect<void, SessionNotFound> =>
+    const updateOne = (session: Session): Effect.Effect<void, SessionNotFound> =>
       Effect.gen(function* () {
         const m = yield* Ref.get(store);
         const existing = HashMap.get(m, session.id);
@@ -84,6 +84,6 @@ export const SessionRepositoryFake = Layer.effect(
         );
       });
 
-    return SessionRepository.of({ insert, findById, delete: deleteSession, update });
+    return SessionRepository.of({ insertOne, findOneById, deleteOne: deleteSession, updateOne });
   }),
 );

@@ -29,7 +29,7 @@ describe("grantRole", () => {
         GrantRoleCommand.make({ userId: targetId, role: "super_admin", actorUserId: actorId }),
       );
 
-      const roles = yield* repo.findByUserId(targetId);
+      const roles = yield* repo.findOneByUserId(targetId);
       deepStrictEqual([...roles.roles], ["super_admin"]);
 
       const events = yield* rec.byTag<RoleGranted>("RoleGranted");

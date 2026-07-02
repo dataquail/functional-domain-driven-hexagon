@@ -37,6 +37,6 @@ export const startDeviceGrant = (cmd: StartDeviceGrantCommand): StartDeviceGrant
       now,
       ttlSeconds: cmd.ttlSeconds,
     });
-    yield* repo.insert(grant);
+    yield* repo.insertOne(grant);
     return { deviceCode, userCode, expiresAt: grant.expiresAt };
   }).pipe(withUnitOfWork);

@@ -27,7 +27,7 @@ const seedSession = () =>
       ttlSeconds: 3600,
       absoluteTtlSeconds: 43200,
     });
-    yield* repo.insert(session);
+    yield* repo.insertOne(session);
   });
 
 const provide = Effect.provide(SessionRepositoryFake);
@@ -39,7 +39,7 @@ describe("revokeSession", () => {
       yield* revokeSession(RevokeSessionCommand.make({ sessionId }));
       const repo = yield* SessionRepository;
       const found = yield* repo
-        .findById(sessionId)
+        .findOneById(sessionId)
         .pipe(Effect.catchTag("SessionNotFound", () => Effect.succeed(null)));
       ok(found !== null);
       ok(Option.isSome(Option.fromNullable(found.revokedAt)));

@@ -28,7 +28,7 @@ describe("createUser", () => {
     Effect.gen(function* () {
       const repo = yield* UserRepository;
       const id = yield* createUser(CreateUserCommand.make(baseCmd));
-      const stored = yield* repo.findById(id);
+      const stored = yield* repo.findOneById(id);
       deepStrictEqual(stored.email, "alice@example.com");
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -50,7 +50,7 @@ describe("createUser", () => {
     Effect.gen(function* () {
       const repo = yield* UserRepository;
       const id = yield* createUser(CreateUserCommand.make({ email: "jit@example.com" }));
-      const stored = yield* repo.findById(id);
+      const stored = yield* repo.findOneById(id);
       deepStrictEqual(stored.email, "jit@example.com");
       deepStrictEqual(stored.address, null);
     }).pipe(Effect.provide(TestLayer)),

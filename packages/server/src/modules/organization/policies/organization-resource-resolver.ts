@@ -29,7 +29,7 @@ export const OrganizationResolverEntryLive = Layer.effect(
   Effect.gen(function* () {
     const repo = yield* OrganizationRepository;
     return (id) =>
-      repo.findByIdIncludingDeleted(id).pipe(
+      repo.findOneByIdIncludingDeleted(id).pipe(
         Effect.catchTag("OrganizationNotFound", () =>
           Effect.fail(new CustomHttpApiError.NotFound()),
         ),

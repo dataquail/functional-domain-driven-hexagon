@@ -16,7 +16,7 @@ export const TodosRepositoryLive = Layer.effect(
   Effect.gen(function* () {
     const db = yield* Database.Database;
 
-    const insert = db.makeQuery((execute, todo: Todo) => {
+    const insertOne = db.makeQuery((execute, todo: Todo) => {
       const row = TodoMapper.toPersistence(todo);
       return execute((client) =>
         client.query(sql.unsafe`
@@ -34,13 +34,13 @@ export const TodosRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("TodosRepository.insert"),
+        Effect.withSpan("TodosRepository.insertOne"),
       );
     });
 
     // Scoped on organization_id as well as id: an update aimed at a todo
     // in another org matches no row and surfaces as TodoNotFound.
-    const update = db.makeQuery((execute, todo: Todo) => {
+    const updateOne = db.makeQuery((execute, todo: Todo) => {
       const row = TodoMapper.toPersistence(todo);
       return execute((client) =>
         client.maybeOne(sql.type(RowSchemas.TodoRowStd)`
@@ -56,7 +56,7 @@ export const TodosRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("TodosRepository.update"),
+        Effect.withSpan("TodosRepository.updateOne"),
       );
     });
 
@@ -72,30 +72,31 @@ export const TodosRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("TodosRepository.remove"),
+        Effect.withSpan("TodosRepository.deleteOne"),
       ),
     );
 
-    const findById = db.makeQuery((execute, args: { organizationId: OrganizationId; id: TodoId }) =>
-      execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.TodoRowStd)`
+    const findOneById = db.makeQuery(
+      (execute, args: { organizationId: OrganizationId; id: TodoId }) =>
+        execute((client) =>
+          client.maybeOne(sql.type(RowSchemas.TodoRowStd)`
             SELECT * FROM todos.todos
             WHERE id = ${args.id} AND organization_id = ${args.organizationId}
           `),
-      ).pipe(
-        orFail(() => new TodoNotFound({ todoId: args.id })),
-        Effect.map(TodoMapper.toDomain),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
-        Effect.withSpan("TodosRepository.findById"),
-      ),
+        ).pipe(
+          orFail(() => new TodoNotFound({ todoId: args.id })),
+          Effect.map(TodoMapper.toDomain),
+          Effect.catchTag("DatabaseError", Effect.die),
+          translatePersistenceUnavailable,
+          Effect.withSpan("TodosRepository.findOneById"),
+        ),
     );
 
     return TodosRepository.of({
-      insert,
-      update,
-      remove: (organizationId, id) => remove({ organizationId, id }),
-      findById: (organizationId, id) => findById({ organizationId, id }),
+      insertOne,
+      updateOne,
+      deleteOne: (organizationId, id) => remove({ organizationId, id }),
+      findOneById: (organizationId, id) => findOneById({ organizationId, id }),
     });
   }),
 );

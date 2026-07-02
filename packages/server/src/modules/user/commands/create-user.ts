@@ -30,7 +30,7 @@ export const createUser = (cmd: CreateUserCommand): CreateUserOutput =>
           })
         : null;
     const { events, user } = User.create({ id, email: cmd.email, address, now });
-    yield* repo.insert(user);
+    yield* repo.insertOne(user);
     yield* bus.dispatch(events);
     return user.id;
   }).pipe(withUnitOfWork);

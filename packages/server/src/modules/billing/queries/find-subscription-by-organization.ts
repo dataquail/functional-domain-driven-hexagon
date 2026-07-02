@@ -16,7 +16,7 @@ export const findSubscriptionByOrganization = (
 ): FindSubscriptionByOrganizationOutput =>
   Effect.gen(function* () {
     const repo = yield* SubscriptionRepository;
-    const found = yield* repo.findByOrganizationId(query.organizationId);
+    const found = yield* repo.findOneByOrganizationId(query.organizationId);
     return Option.map(found, (sub) => ({
       id: sub.id,
       organizationId: sub.organizationId,

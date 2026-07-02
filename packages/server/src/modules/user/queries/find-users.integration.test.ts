@@ -34,7 +34,7 @@ const seed = (id: UserId, email: string, now: DateTime.Utc) =>
   Effect.gen(function* () {
     const repo = yield* UserRepository;
     const { user } = User.create({ id, email, address, now });
-    yield* repo.insert(user);
+    yield* repo.insertOne(user);
   });
 
 const suite = hasTestDatabase ? describe.sequential : describe.skip;

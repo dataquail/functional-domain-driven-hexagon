@@ -10,14 +10,14 @@ import { type UserId } from "@/platform/ids/user-id.js";
 // (uniqueness, "revoke only what's held"); the repository only knows
 // how to save and fetch the resulting state.
 //
-// `findByUserIdAndOrgId` returns an empty `OrganizationRoles` aggregate
+// `findOneByUserIdAndOrgId` returns an empty `OrganizationRoles` aggregate
 // if no rows are stored — the absence of any rows is a valid "no roles
 // yet" state, not a NotFound condition. Mirrors `RolesRepository`.
 export type OrganizationRolesRepositoryShape = {
-  readonly save: (
+  readonly upsertOne: (
     organizationRoles: OrganizationRoles,
   ) => Effect.Effect<void, PersistenceUnavailable>;
-  readonly findByUserIdAndOrgId: (
+  readonly findOneByUserIdAndOrgId: (
     userId: UserId,
     organizationId: OrganizationId,
   ) => Effect.Effect<OrganizationRoles, PersistenceUnavailable>;

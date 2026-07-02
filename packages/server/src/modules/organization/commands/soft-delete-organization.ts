@@ -17,14 +17,14 @@ export const softDeleteOrganization = (
     const repo = yield* OrganizationRepository;
     const bus = yield* DomainEventBus;
     const now = yield* DateTime.now;
-    // `findById` filters out tombstoned rows; if the org is already
+    // `findOneById` filters out tombstoned rows; if the org is already
     // soft-deleted the use case returns the same `OrganizationNotFound`
     // a missing org would — same outward contract, simpler invariant
     // surface. The aggregate's `OrganizationAlreadyDeleted` covers the
     // race where two concurrent soft-deletes both observe the row as
     // active and then race the update.
-    const organization = yield* repo.findById(cmd.organizationId);
+    const organization = yield* repo.findOneById(cmd.organizationId);
     const result = yield* Organization.softDelete(organization, { now });
-    yield* repo.update(result.organization);
+    yield* repo.updateOne(result.organization);
     yield* bus.dispatch(result.events);
   }).pipe(withUnitOfWork);

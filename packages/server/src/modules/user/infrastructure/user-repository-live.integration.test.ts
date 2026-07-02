@@ -41,11 +41,11 @@ suite("UserRepositoryLive (integration)", () => {
   });
 
   describe("insert", () => {
-    it.effect("persists the user and decodes it back via findById", () =>
+    it.effect("persists the user and decodes it back via findOneById", () =>
       Effect.gen(function* () {
         const repo = yield* UserRepository;
-        yield* repo.insert(alice);
-        const found = yield* repo.findById(alice.id);
+        yield* repo.insertOne(alice);
+        const found = yield* repo.findOneById(alice.id);
         deepStrictEqual(found.id, alice.id);
         deepStrictEqual(found.email, alice.email);
         if (found.address === null) throw new Error("expected a stored address");
@@ -58,14 +58,14 @@ suite("UserRepositoryLive (integration)", () => {
     it.effect("fails UserAlreadyExists on duplicate email (unique violation → domain error)", () =>
       Effect.gen(function* () {
         const repo = yield* UserRepository;
-        yield* repo.insert(alice);
+        yield* repo.insertOne(alice);
         const clashing = User.create({
           id: bobId,
           email: alice.email,
           address,
           now,
         }).user;
-        const exit = yield* Effect.exit(repo.insert(clashing));
+        const exit = yield* Effect.exit(repo.insertOne(clashing));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
           const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
@@ -76,11 +76,11 @@ suite("UserRepositoryLive (integration)", () => {
     );
   });
 
-  describe("findById", () => {
+  describe("findOneById", () => {
     it.effect("fails UserNotFound for an unknown id", () =>
       Effect.gen(function* () {
         const repo = yield* UserRepository;
-        const exit = yield* Effect.exit(repo.findById(aliceId));
+        const exit = yield* Effect.exit(repo.findOneById(aliceId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
           const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
@@ -90,12 +90,12 @@ suite("UserRepositoryLive (integration)", () => {
     );
   });
 
-  describe("findByEmail", () => {
+  describe("findOneByEmail", () => {
     it.effect("returns Some(user) when the email matches", () =>
       Effect.gen(function* () {
         const repo = yield* UserRepository;
-        yield* repo.insert(alice);
-        const result = yield* repo.findByEmail("alice@example.com");
+        yield* repo.insertOne(alice);
+        const result = yield* repo.findOneByEmail("alice@example.com");
         deepStrictEqual(Option.isSome(result), true);
         if (Option.isSome(result)) {
           deepStrictEqual(result.value.id, alice.id);
@@ -106,7 +106,7 @@ suite("UserRepositoryLive (integration)", () => {
     it.effect("returns None when no user has the email", () =>
       Effect.gen(function* () {
         const repo = yield* UserRepository;
-        const result = yield* repo.findByEmail("nobody@example.com");
+        const result = yield* repo.findOneByEmail("nobody@example.com");
         deepStrictEqual(Option.isNone(result), true);
       }).pipe(Effect.provide(TestLayer)),
     );
@@ -116,10 +116,10 @@ suite("UserRepositoryLive (integration)", () => {
     it.effect("overwrites address and updatedAt", () =>
       Effect.gen(function* () {
         const repo = yield* UserRepository;
-        yield* repo.insert(alice);
+        yield* repo.insertOne(alice);
         const { user: updated } = User.updateAddress(alice, { country: "Canada", now: later });
-        yield* repo.update(updated);
-        const found = yield* repo.findById(alice.id);
+        yield* repo.updateOne(updated);
+        const found = yield* repo.findOneById(alice.id);
         deepStrictEqual(found.address?.country, "Canada");
         deepStrictEqual(
           DateTime.toDate(found.updatedAt).toISOString(),
@@ -131,7 +131,7 @@ suite("UserRepositoryLive (integration)", () => {
     it.effect("fails UserNotFound when the user isn't stored", () =>
       Effect.gen(function* () {
         const repo = yield* UserRepository;
-        const exit = yield* Effect.exit(repo.update(alice));
+        const exit = yield* Effect.exit(repo.updateOne(alice));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
           const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
@@ -145,9 +145,9 @@ suite("UserRepositoryLive (integration)", () => {
     it.effect("deletes the row", () =>
       Effect.gen(function* () {
         const repo = yield* UserRepository;
-        yield* repo.insert(alice);
-        yield* repo.remove(alice.id);
-        const exit = yield* Effect.exit(repo.findById(alice.id));
+        yield* repo.insertOne(alice);
+        yield* repo.deleteOne(alice.id);
+        const exit = yield* Effect.exit(repo.findOneById(alice.id));
         deepStrictEqual(Exit.isFailure(exit), true);
       }).pipe(Effect.provide(TestLayer)),
     );
@@ -155,7 +155,7 @@ suite("UserRepositoryLive (integration)", () => {
     it.effect("fails UserNotFound when the user isn't stored", () =>
       Effect.gen(function* () {
         const repo = yield* UserRepository;
-        const exit = yield* Effect.exit(repo.remove(aliceId));
+        const exit = yield* Effect.exit(repo.deleteOne(aliceId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
           const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
@@ -171,9 +171,9 @@ suite("UserRepositoryLive (integration)", () => {
         const repo = yield* UserRepository;
         const db = yield* Database.Database;
         yield* db.transaction((tx) =>
-          repo.insert(alice).pipe(Database.TransactionContext.provide(tx)),
+          repo.insertOne(alice).pipe(Database.TransactionContext.provide(tx)),
         );
-        const found = yield* repo.findByEmail(alice.email);
+        const found = yield* repo.findOneByEmail(alice.email);
         deepStrictEqual(Option.isSome(found), true);
       }).pipe(Effect.provide(TestLayer)),
     );
@@ -185,7 +185,7 @@ suite("UserRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(
           db.transaction((tx) =>
             Effect.gen(function* () {
-              yield* repo.insert(alice).pipe(Database.TransactionContext.provide(tx));
+              yield* repo.insertOne(alice).pipe(Database.TransactionContext.provide(tx));
               return yield* Effect.fail(new UserNotFound({ userId: bobId }));
             }),
           ),
@@ -195,7 +195,7 @@ suite("UserRepositoryLive (integration)", () => {
           const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
           deepStrictEqual(error instanceof UserNotFound, true);
         }
-        const after = yield* repo.findByEmail(alice.email);
+        const after = yield* repo.findOneByEmail(alice.email);
         deepStrictEqual(Option.isNone(after), true);
       }).pipe(Effect.provide(TestLayer)),
     );

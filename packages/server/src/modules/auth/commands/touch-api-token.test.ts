@@ -26,7 +26,7 @@ const seed = (lastUsedAt: DateTime.Utc) =>
       now: lastUsedAt,
       expiresAt: DateTime.add(lastUsedAt, { days: 90 }),
     });
-    yield* repo.insert(token);
+    yield* repo.insertOne(token);
     return token;
   });
 
@@ -42,7 +42,7 @@ describe("touchApiToken", () => {
       const before = yield* seed(farPast);
       yield* touchApiToken(cmd);
       const repo = yield* ApiTokenRepository;
-      const after = yield* repo.findById(apiTokenId);
+      const after = yield* repo.findOneById(apiTokenId);
       deepStrictEqual(DateTime.greaterThan(after.lastUsedAt, before.lastUsedAt), true);
       // Fixed expiry: touch must NOT extend it.
       deepStrictEqual(after.expiresAt, before.expiresAt);
@@ -55,7 +55,7 @@ describe("touchApiToken", () => {
       const before = yield* seed(justNow);
       yield* touchApiToken(TouchApiTokenCommand.make({ apiTokenId, thresholdSeconds: 3600 }));
       const repo = yield* ApiTokenRepository;
-      const after = yield* repo.findById(apiTokenId);
+      const after = yield* repo.findOneById(apiTokenId);
       deepStrictEqual(after.lastUsedAt, before.lastUsedAt);
     }).pipe(provide),
   );

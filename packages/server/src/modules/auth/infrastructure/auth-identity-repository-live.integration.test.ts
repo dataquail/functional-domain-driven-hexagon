@@ -40,18 +40,18 @@ suite("AuthIdentityRepositoryLive (integration)", () => {
     await Effect.runPromise(truncate("user.users").pipe(Effect.provide(TestDatabaseLive)));
   });
 
-  it.effect("findBySubject returns the seeded identity", () =>
+  it.effect("findOneBySubject returns the seeded identity", () =>
     Effect.gen(function* () {
       yield* seedUserAndIdentity;
       const repo = yield* AuthIdentityRepository;
-      const found = yield* repo.findBySubject(subject);
+      const found = yield* repo.findOneBySubject(subject);
       deepStrictEqual(found.subject, subject);
       deepStrictEqual(found.userId, userId);
       deepStrictEqual(found.provider, "zitadel");
     }).pipe(Effect.provide(TestLayer)),
   );
 
-  it.effect("insert links a subject to a user, retrievable via findBySubject", () =>
+  it.effect("insert links a subject to a user, retrievable via findOneBySubject", () =>
     Effect.gen(function* () {
       // Seed only the user row (the FK target); the identity is created via
       // the repository's write path, mirroring JIT provisioning.
@@ -66,19 +66,19 @@ suite("AuthIdentityRepositoryLive (integration)", () => {
         .pipe(Effect.orDie);
 
       const repo = yield* AuthIdentityRepository;
-      yield* repo.insert({ subject: "jit-sub", userId, provider: "zitadel" });
+      yield* repo.insertOne({ subject: "jit-sub", userId, provider: "zitadel" });
 
-      const found = yield* repo.findBySubject("jit-sub");
+      const found = yield* repo.findOneBySubject("jit-sub");
       deepStrictEqual(found.subject, "jit-sub");
       deepStrictEqual(found.userId, userId);
       deepStrictEqual(found.provider, "zitadel");
     }).pipe(Effect.provide(TestLayer)),
   );
 
-  it.effect("findBySubject fails AuthIdentityNotFound for an unknown subject", () =>
+  it.effect("findOneBySubject fails AuthIdentityNotFound for an unknown subject", () =>
     Effect.gen(function* () {
       const repo = yield* AuthIdentityRepository;
-      const exit = yield* Effect.exit(repo.findBySubject("missing-sub"));
+      const exit = yield* Effect.exit(repo.findOneBySubject("missing-sub"));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = exit.cause._tag === "Fail" ? exit.cause.error : null;

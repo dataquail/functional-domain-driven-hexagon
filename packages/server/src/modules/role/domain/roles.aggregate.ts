@@ -23,7 +23,7 @@ export type Result = {
 };
 
 // Factory for the "no roles yet" case — used by the command handler
-// when `findByUserId` returns nothing and we still want to apply a
+// when `findOneByUserId` returns nothing and we still want to apply a
 // grant rather than fail.
 export const empty = (userId: UserId): Roles => Roles.make({ userId, roles: [] });
 

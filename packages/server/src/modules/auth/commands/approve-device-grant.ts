@@ -18,10 +18,10 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 export const approveDeviceGrant = (cmd: ApproveDeviceGrantCommand): ApproveDeviceGrantOutput =>
   Effect.gen(function* () {
     const repo = yield* DeviceGrantRepository;
-    const grant = yield* repo.findByUserCode(cmd.userCode);
+    const grant = yield* repo.findOneByUserCode(cmd.userCode);
     const now = yield* DateTime.now;
     if (DeviceGrant.isExpired(grant, now)) {
       return yield* Effect.fail(new DeviceGrantExpired());
     }
-    yield* repo.update(DeviceGrant.approve({ grant, userId: cmd.userId, now }));
+    yield* repo.updateOne(DeviceGrant.approve({ grant, userId: cmd.userId, now }));
   }).pipe(withUnitOfWork);

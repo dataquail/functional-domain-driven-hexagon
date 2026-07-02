@@ -23,7 +23,7 @@ describe("createTodo", () => {
       deepStrictEqual(todo.title, "Buy milk");
       deepStrictEqual(todo.completed, false);
       deepStrictEqual(todo.organizationId, orgId);
-      const stored = yield* repo.findById(orgId, todo.id);
+      const stored = yield* repo.findOneById(orgId, todo.id);
       deepStrictEqual(stored.title, "Buy milk");
     }).pipe(Effect.provide(TodosRepositoryFake)),
   );

@@ -35,7 +35,7 @@ export const softDeleteEndpoint = (
       ),
     ),
     // `OrganizationAlreadyDeleted` is unreachable in practice: the
-    // command's `findById` filters tombstoned rows, so a double-delete
+    // command's `findOneById` filters tombstoned rows, so a double-delete
     // surfaces as `OrganizationNotFound` above. The aggregate-level
     // invariant remains as defense in depth; if it does fire, treat it
     // as a not-found at the wire (same outward effect).

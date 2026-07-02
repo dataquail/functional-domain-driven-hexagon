@@ -41,7 +41,7 @@ describe("startSubscription", () => {
         ok(sub.stripeSubscriptionId.startsWith("sub_test_"));
         deepStrictEqual(sub.status, "active");
 
-        const stored = yield* repo.findByOrganizationId(acme);
+        const stored = yield* repo.findOneByOrganizationId(acme);
         ok(Option.isSome(stored));
 
         const events = yield* rec.byTag<SubscriptionStarted>("SubscriptionStarted");

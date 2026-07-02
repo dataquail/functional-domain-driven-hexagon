@@ -33,12 +33,12 @@ suite("findAllOrganizations (integration)", () => {
   it.effect("hides soft-deleted orgs by default", () =>
     Effect.gen(function* () {
       const repo = yield* OrganizationRepository;
-      yield* repo.insert(Organization.create({ id: acmeId, name: "Acme", now }).organization);
+      yield* repo.insertOne(Organization.create({ id: acmeId, name: "Acme", now }).organization);
       const { organization: betaOrg } = Organization.create({ id: beta, name: "Beta", now });
-      yield* repo.insert(betaOrg);
+      yield* repo.insertOne(betaOrg);
       const deletedEither = Organization.softDelete(betaOrg, { now: later });
       if (Either.isLeft(deletedEither)) throw new Error("expected Right");
-      yield* repo.update(deletedEither.right.organization);
+      yield* repo.updateOne(deletedEither.right.organization);
 
       const result = yield* findAllOrganizations(
         FindAllOrganizationsQuery.make({ page: 1, pageSize: 10, includeDeleted: false }),
@@ -51,12 +51,12 @@ suite("findAllOrganizations (integration)", () => {
   it.effect("returns tombstoned rows when includeDeleted is true", () =>
     Effect.gen(function* () {
       const repo = yield* OrganizationRepository;
-      yield* repo.insert(Organization.create({ id: acmeId, name: "Acme", now }).organization);
+      yield* repo.insertOne(Organization.create({ id: acmeId, name: "Acme", now }).organization);
       const { organization: betaOrg } = Organization.create({ id: beta, name: "Beta", now });
-      yield* repo.insert(betaOrg);
+      yield* repo.insertOne(betaOrg);
       const deletedEither = Organization.softDelete(betaOrg, { now: later });
       if (Either.isLeft(deletedEither)) throw new Error("expected Right");
-      yield* repo.update(deletedEither.right.organization);
+      yield* repo.updateOne(deletedEither.right.organization);
 
       const result = yield* findAllOrganizations(
         FindAllOrganizationsQuery.make({ page: 1, pageSize: 10, includeDeleted: true }),

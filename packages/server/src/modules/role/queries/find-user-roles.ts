@@ -13,6 +13,6 @@ import {
 export const findUserRoles = (query: FindUserRolesQuery): FindUserRolesOutput =>
   Effect.gen(function* () {
     const repo = yield* RolesRepository;
-    const aggregate = yield* repo.findByUserId(query.userId);
+    const aggregate = yield* repo.findOneByUserId(query.userId);
     return { userId: aggregate.userId, roles: aggregate.roles };
   });

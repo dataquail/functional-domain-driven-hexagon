@@ -53,19 +53,19 @@ describe("findPendingInvitations", () => {
         otherOrgId,
       );
 
-      yield* repo.insert(pending);
-      yield* repo.insert(expired);
-      yield* repo.insert(toRevoke);
-      yield* repo.insert(toAccept);
-      yield* repo.insert(otherOrg);
+      yield* repo.insertOne(pending);
+      yield* repo.insertOne(expired);
+      yield* repo.insertOne(toRevoke);
+      yield* repo.insertOne(toAccept);
+      yield* repo.insertOne(otherOrg);
 
       const revoked = Invitation.revoke(toRevoke, { now: issuedAt });
       if (Either.isLeft(revoked)) throw new Error("expected Right");
-      yield* repo.update(revoked.right.invitation);
+      yield* repo.updateOne(revoked.right.invitation);
 
       const accepted = Invitation.accept(toAccept, { userId, now: issuedAt });
       if (Either.isLeft(accepted)) throw new Error("expected Right");
-      yield* repo.update(accepted.right.invitation);
+      yield* repo.updateOne(accepted.right.invitation);
 
       const result = yield* findPendingInvitations(
         FindPendingInvitationsQuery.make({ organizationId: orgId }),

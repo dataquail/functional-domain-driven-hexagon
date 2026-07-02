@@ -23,7 +23,7 @@ export const OrganizationRoleServiceLive = Layer.effect(
     const repo = yield* OrganizationRolesRepository;
     return OrganizationRoleService.of({
       findOrganizationPermissions: (userId, organizationId) =>
-        repo.findByUserIdAndOrgId(userId, organizationId).pipe(
+        repo.findOneByUserIdAndOrgId(userId, organizationId).pipe(
           Effect.map((aggregate) => ({
             userId: aggregate.userId,
             organizationId: aggregate.organizationId,

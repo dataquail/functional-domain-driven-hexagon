@@ -245,6 +245,21 @@ module.exports = {
       },
       to: { path: "^packages/server/src/platform/[^/]+-live\\.ts$" },
     },
+    {
+      name: "dumb-repository-live-no-app-collaborators",
+      severity: "error",
+      comment:
+        "ADR-0024: repository Lives are dumb persistence. They map an aggregate to/from rows and nothing more — they must not import the command/query/event-handler use cases, nor the application-tier buses and unit-of-work (CommandBus, QueryBus, DomainEventBus, IntegrationEventBus, UnitOfWork). Publishing events, dispatching commands, and owning the transaction boundary are the use case's job, not the repository's. A repository that reaches for these is smuggling business logic into persistence — move it to the aggregate or the use case. (The eslint `dumb-repository-ports` rule guards the port's method names; this guards what the Live collaborates with.)",
+      from: {
+        path: "^packages/server/src/modules/[^/]+/infrastructure/[^/]+-repository-live\\.ts$",
+      },
+      to: {
+        path: [
+          "^packages/server/src/modules/[^/]+/(commands|queries|event-handlers)/",
+          "^packages/server/src/platform/ddd/ports/(command-bus|query-bus|domain-event-bus|integration-event-bus|unit-of-work|with-unit-of-work)\\.ts$",
+        ],
+      },
+    },
     // ── Web rules (ADR-0014, ADR-0015) ─────────────────────────────────
     // View-tiering and component-library guarantees, ported from the
     // pre-Next SPA (`packages/client/src/`) to the Next App Router

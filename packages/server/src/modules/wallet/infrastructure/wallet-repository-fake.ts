@@ -26,7 +26,7 @@ export const WalletRepositoryFake = Layer.effect(
   Effect.gen(function* () {
     const store = yield* Ref.make(HashMap.empty<WalletId, Wallet>());
 
-    const insert = (wallet: Wallet): Effect.Effect<void, WalletAlreadyExistsForOrganization> =>
+    const insertOne = (wallet: Wallet): Effect.Effect<void, WalletAlreadyExistsForOrganization> =>
       Effect.flatMap(Ref.get(store), (m) =>
         Option.isSome(findByOrganizationIdIn(m, wallet.organizationId))
           ? Effect.fail(
@@ -35,11 +35,11 @@ export const WalletRepositoryFake = Layer.effect(
           : Ref.update(store, HashMap.set(wallet.id, wallet)),
       );
 
-    const findByOrganizationId = (
+    const findOneByOrganizationId = (
       organizationId: OrganizationId,
     ): Effect.Effect<Option.Option<Wallet>> =>
       Effect.map(Ref.get(store), (m) => findByOrganizationIdIn(m, organizationId));
 
-    return WalletRepository.of({ insert, findByOrganizationId });
+    return WalletRepository.of({ insertOne, findOneByOrganizationId });
   }),
 );

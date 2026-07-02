@@ -29,7 +29,7 @@ export const inviteUser = (cmd: InviteUserCommand): InviteUserOutput =>
       // Invite-again-becomes-resend: if an open invite already exists for
       // this (org, email), reissue it (fresh token + expiry) instead of
       // creating a duplicate row, so the pending list stays one-per-email.
-      const existing = yield* repo.findOpenByOrganizationIdAndEmail(
+      const existing = yield* repo.findOneOpenByOrganizationIdAndEmail(
         cmd.organizationId,
         cmd.inviteeEmail,
       );
@@ -43,7 +43,7 @@ export const inviteUser = (cmd: InviteUserCommand): InviteUserOutput =>
         // concurrent delete — a defect, not a caller-visible error (keeps
         // InviteUser's failure channel to PersistenceUnavailable).
         yield* repo
-          .update(result.right.invitation)
+          .updateOne(result.right.invitation)
           .pipe(Effect.catchTag("InvitationNotFound", Effect.die));
         yield* bus.dispatch(result.right.events);
         return existing.id;
@@ -57,7 +57,7 @@ export const inviteUser = (cmd: InviteUserCommand): InviteUserOutput =>
         expiresAt,
         now,
       });
-      yield* repo.insert(invitation);
+      yield* repo.insertOne(invitation);
       yield* bus.dispatch(events);
       return id;
     }).pipe(withUnitOfWork);

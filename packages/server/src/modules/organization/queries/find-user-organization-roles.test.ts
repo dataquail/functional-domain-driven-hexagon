@@ -35,7 +35,7 @@ describe("findUserOrganizationRoles", () => {
       const repo = yield* OrganizationRolesRepository;
       const granted = grantRole(emptyOrgRoles(userId, orgId), "admin", issuedBy);
       if (Either.isLeft(granted)) throw new Error("expected Right");
-      yield* repo.save(granted.right.organizationRoles);
+      yield* repo.upsertOne(granted.right.organizationRoles);
       const result = yield* findUserOrganizationRoles(
         FindUserOrganizationRolesQuery.make({ userId, organizationId: orgId }),
       );

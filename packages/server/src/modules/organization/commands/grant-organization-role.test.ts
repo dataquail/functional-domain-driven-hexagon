@@ -43,7 +43,7 @@ describe("grantOrganizationRole", () => {
         }),
       );
 
-      const roles = yield* repo.findByUserIdAndOrgId(targetId, orgId);
+      const roles = yield* repo.findOneByUserIdAndOrgId(targetId, orgId);
       deepStrictEqual(
         roles.roles.map((r) => ({ role: r.role, issuedBy: r.issuedBy })),
         [{ role: "admin", issuedBy: actorId }],

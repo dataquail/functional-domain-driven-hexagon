@@ -8,10 +8,10 @@ import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistenc
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 export type WalletRepositoryShape = {
-  readonly insert: (
+  readonly insertOne: (
     wallet: Wallet,
   ) => Effect.Effect<void, WalletAlreadyExistsForOrganization | PersistenceUnavailable>;
-  readonly findByOrganizationId: (
+  readonly findOneByOrganizationId: (
     organizationId: OrganizationId,
   ) => Effect.Effect<Option.Option<Wallet>, PersistenceUnavailable>;
 };

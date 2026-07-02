@@ -14,7 +14,7 @@ export const OrganizationRepositoryLive = Layer.effect(
   Effect.gen(function* () {
     const db = yield* Database.Database;
 
-    const insert = db.makeQuery((execute, organization: Organization) => {
+    const insertOne = db.makeQuery((execute, organization: Organization) => {
       const row = OrganizationMapper.toPersistence(organization);
       return execute((client) =>
         client.query(sql.unsafe`
@@ -31,11 +31,11 @@ export const OrganizationRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("OrganizationRepository.insert"),
+        Effect.withSpan("OrganizationRepository.insertOne"),
       );
     });
 
-    const update = db.makeQuery((execute, organization: Organization) => {
+    const updateOne = db.makeQuery((execute, organization: Organization) => {
       const row = OrganizationMapper.toPersistence(organization);
       return execute((client) =>
         client.maybeOne(sql.type(RowSchemas.OrganizationRowStd)`
@@ -51,14 +51,14 @@ export const OrganizationRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("OrganizationRepository.update"),
+        Effect.withSpan("OrganizationRepository.updateOne"),
       );
     });
 
-    // findById hides soft-deleted rows so consumers (commands, the
+    // findOneById hides soft-deleted rows so consumers (commands, the
     // resource resolver registered for active-only flows) don't have to
     // remember to filter on `deleted_at IS NULL` themselves.
-    const findById = db.makeQuery((execute, id: OrganizationId) =>
+    const findOneById = db.makeQuery((execute, id: OrganizationId) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.OrganizationRowStd)`
           SELECT * FROM "organization".organizations
@@ -69,7 +69,7 @@ export const OrganizationRepositoryLive = Layer.effect(
         Effect.map(OrganizationMapper.toDomain),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("OrganizationRepository.findById"),
+        Effect.withSpan("OrganizationRepository.findOneById"),
       ),
     );
 
@@ -78,7 +78,7 @@ export const OrganizationRepositoryLive = Layer.effect(
     // port level documents that callers had to actively ask for
     // tombstones — same shape as the `with-deleted` boolean would
     // collapse to, but more discoverable.
-    const findByIdIncludingDeleted = db.makeQuery((execute, id: OrganizationId) =>
+    const findOneByIdIncludingDeleted = db.makeQuery((execute, id: OrganizationId) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.OrganizationRowStd)`
           SELECT * FROM "organization".organizations WHERE id = ${id}
@@ -88,10 +88,15 @@ export const OrganizationRepositoryLive = Layer.effect(
         Effect.map(OrganizationMapper.toDomain),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("OrganizationRepository.findByIdIncludingDeleted"),
+        Effect.withSpan("OrganizationRepository.findOneByIdIncludingDeleted"),
       ),
     );
 
-    return OrganizationRepository.of({ insert, update, findById, findByIdIncludingDeleted });
+    return OrganizationRepository.of({
+      insertOne,
+      updateOne,
+      findOneById,
+      findOneByIdIncludingDeleted,
+    });
   }),
 );

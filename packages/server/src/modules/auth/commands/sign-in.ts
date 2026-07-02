@@ -30,7 +30,7 @@ export const signIn = (cmd: SignInCommand): SignInOutput =>
     const sessions = yield* SessionRepository;
     const provisioning = yield* UserProvisioning;
 
-    const userId = yield* identities.findBySubject(cmd.subject).pipe(
+    const userId = yield* identities.findOneBySubject(cmd.subject).pipe(
       Effect.map((identity) => identity.userId),
       // First sign-in for this subject: JIT provision an ordinary user.
       // Requires an email (the `users` row needs one); a verified
@@ -54,7 +54,7 @@ export const signIn = (cmd: SignInCommand): SignInOutput =>
               ),
             ),
           );
-          yield* identities.insert({
+          yield* identities.insertOne({
             subject: cmd.subject,
             userId: newUserId,
             provider: "zitadel",
@@ -74,7 +74,7 @@ export const signIn = (cmd: SignInCommand): SignInOutput =>
       ttlSeconds: cmd.ttlSeconds,
       absoluteTtlSeconds: cmd.absoluteTtlSeconds,
     });
-    yield* sessions.insert(session);
+    yield* sessions.insertOne(session);
     yield* Effect.annotateCurrentSpan("user.id", userId);
     return { sessionId: id, userId };
   }).pipe(withUnitOfWork);

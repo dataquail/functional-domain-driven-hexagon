@@ -29,23 +29,23 @@ suite("OrganizationRepositoryLive (integration)", () => {
     );
   });
 
-  describe("insert + findById", () => {
+  describe("insert + findOneById", () => {
     it.effect("round-trips an inserted org", () =>
       Effect.gen(function* () {
         const repo = yield* OrganizationRepository;
         const { organization } = Organization.create({ id, name: "Acme", now });
-        yield* repo.insert(organization);
-        const found = yield* repo.findById(id);
+        yield* repo.insertOne(organization);
+        const found = yield* repo.findOneById(id);
         deepStrictEqual(found.id, id);
         deepStrictEqual(found.name, "Acme");
         deepStrictEqual(found.deletedAt, null);
       }).pipe(Effect.provide(TestLayer)),
     );
 
-    it.effect("findById fails OrganizationNotFound for an unknown id", () =>
+    it.effect("findOneById fails OrganizationNotFound for an unknown id", () =>
       Effect.gen(function* () {
         const repo = yield* OrganizationRepository;
-        const exit = yield* Effect.exit(repo.findById(id));
+        const exit = yield* Effect.exit(repo.findOneById(id));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
           const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
@@ -56,19 +56,19 @@ suite("OrganizationRepositoryLive (integration)", () => {
   });
 
   describe("update (soft-delete tombstone)", () => {
-    it.effect("findById hides a soft-deleted row; findByIdIncludingDeleted returns it", () =>
+    it.effect("findOneById hides a soft-deleted row; findOneByIdIncludingDeleted returns it", () =>
       Effect.gen(function* () {
         const repo = yield* OrganizationRepository;
         const { organization } = Organization.create({ id, name: "Acme", now });
-        yield* repo.insert(organization);
+        yield* repo.insertOne(organization);
         const deletedEither = Organization.softDelete(organization, { now: later });
         if (Either.isLeft(deletedEither)) throw new Error("expected Right");
-        yield* repo.update(deletedEither.right.organization);
+        yield* repo.updateOne(deletedEither.right.organization);
 
-        const hiddenExit = yield* Effect.exit(repo.findById(id));
+        const hiddenExit = yield* Effect.exit(repo.findOneById(id));
         deepStrictEqual(Exit.isFailure(hiddenExit), true);
 
-        const visible = yield* repo.findByIdIncludingDeleted(id);
+        const visible = yield* repo.findOneByIdIncludingDeleted(id);
         deepStrictEqual(visible.deletedAt !== null, true);
       }).pipe(Effect.provide(TestLayer)),
     );
@@ -77,7 +77,7 @@ suite("OrganizationRepositoryLive (integration)", () => {
       Effect.gen(function* () {
         const repo = yield* OrganizationRepository;
         const { organization } = Organization.create({ id, name: "Acme", now });
-        const exit = yield* Effect.exit(repo.update(organization));
+        const exit = yield* Effect.exit(repo.updateOne(organization));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
           const error = exit.cause._tag === "Fail" ? exit.cause.error : null;

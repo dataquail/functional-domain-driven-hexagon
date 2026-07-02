@@ -44,7 +44,7 @@ describe("leaveOrganization", () => {
 
       yield* leaveOrganization(LeaveOrganizationCommand.make({ userId, organizationId: orgId }));
 
-      const exit = yield* Effect.exit(memberships.findByUserIdAndOrgId(userId, orgId));
+      const exit = yield* Effect.exit(memberships.findOneByUserIdAndOrgId(userId, orgId));
       deepStrictEqual(Exit.isFailure(exit), true);
 
       const events = yield* rec.byTag<MembershipRevoked>("MembershipRevoked");

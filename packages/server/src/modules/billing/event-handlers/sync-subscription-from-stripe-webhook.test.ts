@@ -43,7 +43,7 @@ const seedSubscription = () =>
       currentPeriodEnd: null,
       now: seedNow,
     });
-    yield* repo.insert(subscription);
+    yield* repo.insertOne(subscription);
   });
 
 const subEvent = (
@@ -73,7 +73,7 @@ const dispatchAndReadStatus = (ingested: StripeWebhookIngested) =>
     const bus = yield* DomainEventBus;
     yield* bus.dispatch([ingested]);
     const repo = yield* SubscriptionRepository;
-    return yield* repo.findByOrganizationId(acme);
+    return yield* repo.findOneByOrganizationId(acme);
   }).pipe(Database.TransactionContext.provide(fakeTransaction), Effect.provide(TestLayer));
 
 describe("SyncSubscriptionFromStripeWebhookLive", () => {
@@ -142,7 +142,7 @@ describe("SyncSubscriptionFromStripeWebhookLive", () => {
       // the Stripe id → drops silently.
       yield* bus.dispatch([StripeWebhookIngested.make({ stripeEvent: subEvent("updated") })]);
       const repo = yield* SubscriptionRepository;
-      const found = yield* repo.findByOrganizationId(acme);
+      const found = yield* repo.findOneByOrganizationId(acme);
       ok(Option.isNone(found));
     }).pipe(Database.TransactionContext.provide(fakeTransaction), Effect.provide(TestLayer)),
   );

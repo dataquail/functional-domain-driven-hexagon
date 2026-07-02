@@ -15,7 +15,7 @@ export const SessionRepositoryLive = Layer.effect(
   Effect.gen(function* () {
     const db = yield* Database.Database;
 
-    const insert = db.makeQuery((execute, session: Session) => {
+    const insertOne = db.makeQuery((execute, session: Session) => {
       const row = SessionMapper.toPersistence(session);
       return execute((client) =>
         client.query(sql.unsafe`
@@ -36,11 +36,11 @@ export const SessionRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("SessionRepository.insert"),
+        Effect.withSpan("SessionRepository.insertOne"),
       );
     });
 
-    const findById = db.makeQuery((execute, id: SessionId) =>
+    const findOneById = db.makeQuery((execute, id: SessionId) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.SessionRowStd)`
           SELECT * FROM auth.sessions WHERE id = ${id}
@@ -50,7 +50,7 @@ export const SessionRepositoryLive = Layer.effect(
         Effect.map(SessionMapper.toDomain),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("SessionRepository.findById"),
+        Effect.withSpan("SessionRepository.findOneById"),
       ),
     );
 
@@ -66,11 +66,11 @@ export const SessionRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("SessionRepository.delete"),
+        Effect.withSpan("SessionRepository.deleteOne"),
       ),
     );
 
-    const update = db.makeQuery((execute, session: Session) => {
+    const updateOne = db.makeQuery((execute, session: Session) => {
       const row = SessionMapper.toPersistence(session);
       return execute((client) =>
         client.maybeOne(sql.type(RowSchemas.SessionRowStd)`
@@ -85,10 +85,10 @@ export const SessionRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("SessionRepository.update"),
+        Effect.withSpan("SessionRepository.updateOne"),
       );
     });
 
-    return SessionRepository.of({ insert, findById, delete: deleteById, update });
+    return SessionRepository.of({ insertOne, findOneById, deleteOne: deleteById, updateOne });
   }),
 );
