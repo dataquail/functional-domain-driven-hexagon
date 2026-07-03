@@ -8,8 +8,11 @@
 //     the typed bus (ADR-0006). Their existence announces "this command/query
 //     exists"; the test sits next to the handler implementation file (drop
 //     the suffix).
-//   - `*.aggregate.ts` is the explicit DDD signal for an aggregate root.
-//     Value objects, errors, and IDs in `domain/` are not subject to parity.
+//   - `*.root.ts` is the explicit DDD signal for an aggregate root (the root
+//     of a consistency boundary; invariants live here). Other domain
+//     stereotypes — `*.aggregate.ts` (a constituent aggregate, only a part of
+//     a root), `*.entity.ts`, `*.value-object.ts`, errors, events, and IDs —
+//     are NOT subject to parity.
 //   - `*-repository-live.ts` is the production repository implementation
 //     (ADR-0005). Each must have an integration test (live SQL behavior) and
 //     a fake counterpart (so use-case unit tests can run without a DB).
@@ -47,81 +50,128 @@ const rules = [
   {
     label: "Event adapter",
     requirement: "sibling test",
-    subject: "packages/server/src/modules/*/interface/events/*-event-adapter.ts",
+    subject: "packages/server/src/modules/*/interface/events/*.event-adapter.ts",
     candidates: [
-      (f) => f.replace(/-event-adapter\.ts$/, "-event-adapter.test.ts"),
-      (f) => f.replace(/-event-adapter\.ts$/, "-event-adapter.integration.test.ts"),
+      (f) => f.replace(/\.event-adapter\.ts$/, ".event-adapter.test.ts"),
+      (f) => f.replace(/\.event-adapter\.ts$/, ".event-adapter.integration.test.ts"),
     ],
   },
   {
+    // The schema announces the command; the test sits on the handler.
     label: "Command",
     requirement: "sibling test",
-    subject: "packages/server/src/modules/*/commands/*-command.ts",
+    subject: "packages/server/src/modules/*/commands/*.command.ts",
     candidates: [
-      (f) => f.replace(/-command\.ts$/, ".test.ts"),
-      (f) => f.replace(/-command\.ts$/, ".integration.test.ts"),
+      (f) => f.replace(/\.command\.ts$/, ".handler.test.ts"),
+      (f) => f.replace(/\.command\.ts$/, ".handler.integration.test.ts"),
     ],
   },
   {
     label: "Query",
     requirement: "sibling test",
-    subject: "packages/server/src/modules/*/queries/*-query.ts",
+    subject: "packages/server/src/modules/*/queries/*.query.ts",
     candidates: [
-      (f) => f.replace(/-query\.ts$/, ".integration.test.ts"),
-      (f) => f.replace(/-query\.ts$/, ".test.ts"),
+      (f) => f.replace(/\.query\.ts$/, ".handler.integration.test.ts"),
+      (f) => f.replace(/\.query\.ts$/, ".handler.test.ts"),
     ],
   },
   {
     label: "Event handler",
     requirement: "sibling test",
-    subject: "packages/server/src/modules/*/event-handlers/*.ts",
+    subject: "packages/server/src/modules/*/event-handlers/*.handler.ts",
     candidates: [
-      (f) => f.replace(/\.ts$/, ".integration.test.ts"),
-      (f) => f.replace(/\.ts$/, ".test.ts"),
+      (f) => f.replace(/\.handler\.ts$/, ".handler.integration.test.ts"),
+      (f) => f.replace(/\.handler\.ts$/, ".handler.test.ts"),
     ],
   },
   {
-    label: "Aggregate",
+    label: "Aggregate root",
     requirement: "sibling test",
-    subject: "packages/server/src/modules/*/domain/*.aggregate.ts",
+    subject: "packages/server/src/modules/*/domain/*.root.ts",
     candidates: [
-      (f) => f.replace(/\.aggregate\.ts$/, ".aggregate.test.ts"),
-      (f) => f.replace(/\.aggregate\.ts$/, ".aggregate.integration.test.ts"),
+      (f) => f.replace(/\.root\.ts$/, ".root.test.ts"),
+      (f) => f.replace(/\.root\.ts$/, ".root.integration.test.ts"),
+    ],
+  },
+  {
+    // ADR-0026: a domain service is stateless domain logic no aggregate owns.
+    // Because it's real domain logic (not an aggregate op), it carries a test
+    // obligation, unlike the other non-root domain stereotypes.
+    label: "Domain service",
+    requirement: "sibling test",
+    subject: "packages/server/src/modules/*/domain/*.domain-service.ts",
+    candidates: [(f) => f.replace(/\.domain-service\.ts$/, ".domain-service.test.ts")],
+  },
+  {
+    // ADR-0026: a *.util.ts is a pure, leaf, shared protocol/wire helper in an
+    // interface adapter. The sibling-test requirement is the anti-drift guard —
+    // extracting a helper must be justified by a unit test, which is what
+    // separates a deliberate extraction from a dumped utility.
+    label: "Interface util",
+    requirement: "sibling test",
+    subject: "packages/server/src/modules/*/interface/{http,cli}/*.util.ts",
+    candidates: [
+      (f) => f.replace(/\.util\.ts$/, ".util.test.ts"),
+      (f) => f.replace(/\.util\.ts$/, ".util.integration.test.ts"),
     ],
   },
   {
     label: "Live repository",
     requirement: "sibling integration test",
-    subject: "packages/server/src/modules/*/infrastructure/*-repository-live.ts",
-    candidates: [(f) => f.replace(/-repository-live\.ts$/, "-repository-live.integration.test.ts")],
+    subject: "packages/server/src/modules/*/infrastructure/repositories/*.repository-live.ts",
+    candidates: [
+      (f) => f.replace(/\.repository-live\.ts$/, ".repository-live.integration.test.ts"),
+    ],
   },
   {
     label: "Live repository",
     requirement: "fake counterpart",
-    subject: "packages/server/src/modules/*/infrastructure/*-repository-live.ts",
-    candidates: [(f) => f.replace(/-repository-live\.ts$/, "-repository-fake.ts")],
+    subject: "packages/server/src/modules/*/infrastructure/repositories/*.repository-live.ts",
+    candidates: [(f) => f.replace(/\.repository-live\.ts$/, ".repository-fake.ts")],
   },
   // ── Outbound adapters (ADR-0023) ────────────────────────────────────
-  // `infrastructure/external/*-live.ts` is the driven adapter behind a
-  // `domain/ports/external/` port — the one place a module imports another
-  // module's barrel. Like a live repository, each needs a test (the
-  // error-translation behavior is the adapter's whole job) and a fake
+  // A driven adapter behind a consumer-owned port, in one of two buckets:
+  //   - `infrastructure/clients/*.client-live.ts` — adapters to true
+  //     third-party systems (Stripe, the mailer), behind a
+  //     `domain/ports/clients/*.client.ts` port.
+  //   - `infrastructure/acl/*.acl-live.ts` — anti-corruption adapters to
+  //     another bounded context, behind a `domain/ports/acl/*.acl.ts` port;
+  //     the one place a module imports another module's barrel.
+  // Like a live repository, each needs a test (the error-translation /
+  // context-mapping behavior is the adapter's whole job) and a fake
   // counterpart (so consumer use-case unit tests run against a focused
-  // port double instead of faking the typed bus).
+  // port double instead of faking the typed bus). Self-contained clients
+  // that are their own Effect.Service (e.g. `*.client.ts`, no port, no
+  // `-live`/`-fake` split) are not subjects.
   {
-    label: "Outbound adapter",
+    label: "Client adapter",
     requirement: "sibling test",
-    subject: "packages/server/src/modules/*/infrastructure/external/*-live.ts",
+    subject: "packages/server/src/modules/*/infrastructure/clients/*.client-live.ts",
     candidates: [
-      (f) => f.replace(/-live\.ts$/, "-live.integration.test.ts"),
-      (f) => f.replace(/-live\.ts$/, "-live.test.ts"),
+      (f) => f.replace(/\.client-live\.ts$/, ".client-live.integration.test.ts"),
+      (f) => f.replace(/\.client-live\.ts$/, ".client-live.test.ts"),
     ],
   },
   {
-    label: "Outbound adapter",
+    label: "Client adapter",
     requirement: "fake counterpart",
-    subject: "packages/server/src/modules/*/infrastructure/external/*-live.ts",
-    candidates: [(f) => f.replace(/-live\.ts$/, "-fake.ts")],
+    subject: "packages/server/src/modules/*/infrastructure/clients/*.client-live.ts",
+    candidates: [(f) => f.replace(/\.client-live\.ts$/, ".client-fake.ts")],
+  },
+  {
+    label: "ACL adapter",
+    requirement: "sibling test",
+    subject: "packages/server/src/modules/*/infrastructure/acl/*.acl-live.ts",
+    candidates: [
+      (f) => f.replace(/\.acl-live\.ts$/, ".acl-live.integration.test.ts"),
+      (f) => f.replace(/\.acl-live\.ts$/, ".acl-live.test.ts"),
+    ],
+  },
+  {
+    label: "ACL adapter",
+    requirement: "fake counterpart",
+    subject: "packages/server/src/modules/*/infrastructure/acl/*.acl-live.ts",
+    candidates: [(f) => f.replace(/\.acl-live\.ts$/, ".acl-fake.ts")],
   },
   // ── Web (ADR-0014) ───────────────────────────────────────────────────
   // View-tiering parity for packages/web/. Component-library parity

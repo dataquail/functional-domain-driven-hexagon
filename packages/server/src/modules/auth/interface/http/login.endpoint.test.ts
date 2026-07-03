@@ -6,7 +6,7 @@ import {
   encodePkcePayload,
   PKCE_COOKIE_MAX_AGE_MS,
   PKCE_COOKIE_NAME,
-} from "./oidc-pkce-cookie.js";
+} from "./oidc-pkce-cookie.util.js";
 
 // The login endpoint's overall flow — building the Zitadel authorize URL,
 // signing the cookie, stamping the 302 — is exercised end-to-end by

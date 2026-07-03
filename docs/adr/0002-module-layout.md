@@ -23,16 +23,29 @@ Each feature module lives at `modules/<feature>/` with sibling subfolders, named
 
 ```
 modules/<feature>/
-  domain/          — pure data, ops, repository ports, errors, events, value objects (aggregate roots are named `*.aggregate.ts` as an explicit DDD signal)
-  commands/        — write-side use cases + their bus-registration map
-  queries/         — read-side projections (may bypass the domain) + their bus-registration map
-  event-handlers/  — write-side use cases reacting to internal triggers (event-handlers/triggers/*); same dependency shape as commands
-  infrastructure/  — repository Live + Fake implementations, mappers
+  domain/          — pure data, ops, ports, errors, events. Stereotypes are dot-delimited suffixes (ADR-0027): aggregate roots `*.root.ts` (`XRoot` data + `XRootOps` free-function bag), constituent aggregates `*.aggregate.ts`, entities `*.entity.ts` (`XEntity`), value objects `*.value-object.ts` (`XValueObject`), branded IDs `*.id.ts` (`XId`), errors `*.errors.ts`, events `*.events.ts`, domain services `*.domain-service.ts` (stateless logic no aggregate owns — ADR-0026). See ADR-0003.
+    ports/         — outbound ports, tiered by counterpart (see ADR-0023, ADR-0025)
+      repositories/ — the module's own datastore (`*.repository.ts`)
+      clients/      — true third-party systems (`*.client.ts`)
+      acl/          — other bounded contexts (`*.acl.ts`)
+  commands/        — `*.command.ts` schema + `*.handler.ts` handler + bus-registration map
+  queries/         — `*.query.ts` schema + `*.handler.ts` handler (may bypass the domain) + bus-registration map
+  event-handlers/  — write-side use cases (`*.handler.ts`) reacting to internal triggers (event-handlers/triggers/`*.triggers.ts`); same dependency shape as commands
+  infrastructure/  — driven adapters, tiered by counterpart to match domain/ports/ (see ADR-0025)
+    repositories/  — `*.repository-live.ts` + `*.repository-fake.ts` + `*.mapper.ts`
+    clients/       — third-party adapters (*.client-live.ts + *.client-fake.ts, self-contained *.client.ts, *.email.tsx templates)
+    acl/           — anti-corruption adapters to other modules (*.acl-live.ts + *.acl-fake.ts); only place that may import a foreign barrel
   interface/       — inbound adapters, one subfolder per protocol
-    http/          — one file per HTTP endpoint plus a thin group-registration file (see ADR-0013)
-    events/        — one *-event-adapter.ts per upstream module whose domain events this module consumes (see ADR-0007)
-  <feature>-event-span-attributes.ts  — per-event span-attribute extractors aggregated for this module
-  <feature>-module.ts                 — the composed Layer for the module
+    http/          — one *.endpoint.ts per HTTP endpoint plus an index.ts barrel that registers the endpoint groups (see ADR-0013); may also hold *.util.ts protocol helpers (ADR-0026)
+    cli/           — one *.endpoint.ts per CLI endpoint (ADR-0024) plus an index.ts barrel; may hold *.util.ts
+    events/        — one *.event-adapter.ts per upstream module whose domain events this module consumes (see ADR-0007)
+  policies/        — *.policies.ts registry, *.resource-resolver(s).ts, is-*.policy.ts checks
+    public/        — *.service-live.ts: this module's Lives of platform ACL service ports, published to the policy registry
+  # module root — a closed set of aggregation/composition files only (ADR-0027); feature code lives in the subfolders above
+  <feature>.module.ts                 — the composed Layer for the module
+  <feature>.command-handlers.ts / .query-handlers.ts  — bus-registration maps
+  <feature>.event-span-attributes.ts  — per-event span-attribute extractors aggregated for this module
+  <feature>.shared-deps.ts            — narrow shared-dependency Layer (when a module needs one)
   index.ts                            — barrel: re-exports only what other modules legitimately need
 ```
 

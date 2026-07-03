@@ -1,31 +1,25 @@
-export { billingCommandHandlers } from "./billing-command-handlers.js";
-export { billingEventSpanAttributes } from "./billing-event-span-attributes.js";
+export { billingCommandHandlers } from "./billing.command-handlers.js";
+export { billingEventSpanAttributes } from "./billing.event-span-attributes.js";
 // Two named module Lives ship the prod-vs-test gateway swap inside
-// the module: `BillingModuleLive` bundles `StripeBillingGatewayLive`,
-// `BillingModuleTestLive` bundles `FakeBillingGatewayLive`. The
+// the module: `BillingModuleLive` bundles `BillingGatewayLive`,
+// `BillingModuleTestLive` bundles `BillingGatewayFake`. The
 // `BillingGateway` Tag stays private to the module's use-case ring —
 // composition roots pick a module Live and don't see the Tag at all.
 // See `billing-module.ts` for the rationale.
-export { BillingModuleLive, BillingModuleTestLive } from "./billing-module.js";
-export { billingQueryHandlers } from "./billing-query-handlers.js";
-export { CancelSubscriptionCommand } from "./commands/cancel-subscription-command.js";
-export { IngestStripeWebhookCommand } from "./commands/ingest-stripe-webhook-command.js";
-export { StartSubscriptionCommand } from "./commands/start-subscription-command.js";
-export { StripeWebhookIngested } from "./domain/stripe-webhook-events.js";
+export { BillingModuleLive, BillingModuleTestLive } from "./billing.module.js";
+export { billingQueryHandlers } from "./billing.query-handlers.js";
+export { CancelSubscriptionCommand } from "./commands/cancel-subscription.command.js";
+export { IngestStripeWebhookCommand } from "./commands/ingest-stripe-webhook.command.js";
+export { StartSubscriptionCommand } from "./commands/start-subscription.command.js";
+export { StripeWebhookIngested } from "./domain/stripe-webhook.events.js";
 export {
   SubscriptionCanceled,
   SubscriptionStarted,
   SubscriptionStatusChanged,
-} from "./domain/subscription-events.js";
-// `FAKE_WEBHOOK_SIGNATURE` is the constant tests pass as the
-// `stripe-signature` header so `FakeBillingGatewayLive` accepts the
-// payload. The webhook endpoint integration test consumes it. The
-// re-export goes through `billing-module.ts`'s neighbour file so the
-// barrel doesn't reach into `infrastructure/` directly.
-export { billingPolicies, BillingResource } from "./policies/billing-policies.js";
+} from "./domain/subscription.events.js";
+export { billingPolicies, BillingResource } from "./policies/billing.policies.js";
 export {
   BillingResolverEntry,
   BillingResolverEntryLive,
-} from "./policies/billing-resource-resolver.js";
-export { FindSubscriptionByOrganizationQuery } from "./queries/find-subscription-by-organization-query.js";
-export { FAKE_WEBHOOK_SIGNATURE } from "./test-utils.js";
+} from "./policies/billing.resource-resolver.js";
+export { FindSubscriptionByOrganizationQuery } from "./queries/find-subscription-by-organization.query.js";

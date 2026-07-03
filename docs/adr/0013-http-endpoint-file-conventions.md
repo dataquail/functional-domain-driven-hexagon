@@ -1,7 +1,9 @@
 # ADR-0013: HTTP endpoint file conventions and test parity
 
-- Status: Accepted
+- Status: Accepted (group-file naming amended by ADR-0027)
 - Date: 2026-04-25
+
+> **Amendment (ADR-0027).** Wherever this document calls the group-registration file `<feature>-http-live.ts` (later `<feature>.live.ts`), it is now the folder's `index.ts` — a barrel that registers the endpoint groups. The endpoint files themselves are `<name>.endpoint.ts` as described.
 
 ## Context and Problem Statement
 

@@ -2,8 +2,8 @@ import { CliTodosContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { DeleteTodoCommand } from "@/modules/todos/commands/delete-todo-command.js";
-import { TodoResource } from "@/modules/todos/policies/todos-policies.js";
+import { DeleteTodoCommand } from "@/modules/todos/commands/delete-todo.command.js";
+import { TodoResource } from "@/modules/todos/policies/todos.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";

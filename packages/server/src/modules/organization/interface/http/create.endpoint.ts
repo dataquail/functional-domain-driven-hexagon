@@ -2,7 +2,7 @@ import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { CreateOrganizationCommand } from "@/modules/organization/commands/create-organization-command.js";
+import { CreateOrganizationCommand } from "@/modules/organization/commands/create-organization.command.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 

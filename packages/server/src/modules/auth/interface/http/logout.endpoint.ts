@@ -4,9 +4,9 @@ import * as cookie from "cookie";
 import * as Effect from "effect/Effect";
 
 import { EnvVars } from "@/common/env-vars.js";
-import { RevokeSessionCommand } from "@/modules/auth/commands/revoke-session-command.js";
-import { SessionId } from "@/modules/auth/domain/session-id.js";
-import { OidcClient } from "@/modules/auth/infrastructure/oidc-client.js";
+import { RevokeSessionCommand } from "@/modules/auth/commands/revoke-session.command.js";
+import { SessionId } from "@/modules/auth/domain/session.id.js";
+import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client.js";
 import { CookieCodec } from "@/platform/auth/cookie-codec.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 

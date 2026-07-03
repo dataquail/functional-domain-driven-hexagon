@@ -6,7 +6,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 
 import { Api } from "@/api.js";
-import { TodoId } from "@/modules/todos/domain/todo-id.js";
+import { TodoId } from "@/modules/todos/domain/todo.id.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { hasTestDatabase } from "@/test-utils/test-database.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";

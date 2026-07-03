@@ -36,7 +36,7 @@ type RegisteredCommand = CommandRegistry[keyof CommandRegistry] extends {
   ? C
   : never;
 
-export interface CommandBusShape {
+export type CommandBusShape = {
   readonly execute: <C extends RegisteredCommand>(
     cmd: C,
   ) => C extends { readonly _tag: infer T extends keyof CommandRegistry }
@@ -44,7 +44,7 @@ export interface CommandBusShape {
       ? O
       : never
     : never;
-}
+};
 
 export class CommandBus extends Context.Tag("CommandBus")<CommandBus, CommandBusShape>() {}
 

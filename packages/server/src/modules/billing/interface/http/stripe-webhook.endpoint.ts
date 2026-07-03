@@ -2,7 +2,7 @@ import * as HttpServerRequest from "@effect/platform/HttpServerRequest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Effect from "effect/Effect";
 
-import { IngestStripeWebhookCommand } from "@/modules/billing/commands/ingest-stripe-webhook-command.js";
+import { IngestStripeWebhookCommand } from "@/modules/billing/commands/ingest-stripe-webhook.command.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 

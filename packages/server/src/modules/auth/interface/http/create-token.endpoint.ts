@@ -3,7 +3,7 @@ import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
 import { EnvVars } from "@/common/env-vars.js";
-import { MintApiTokenCommand } from "@/modules/auth/commands/mint-api-token-command.js";
+import { MintApiTokenCommand } from "@/modules/auth/commands/mint-api-token.command.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 

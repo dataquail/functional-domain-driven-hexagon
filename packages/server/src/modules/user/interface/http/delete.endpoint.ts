@@ -1,7 +1,7 @@
 import { UserContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
-import { DeleteUserCommand } from "@/modules/user/commands/delete-user-command.js";
+import { DeleteUserCommand } from "@/modules/user/commands/delete-user.command.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 

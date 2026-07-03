@@ -2,8 +2,8 @@ import { BillingContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { BillingResource } from "@/modules/billing/policies/billing-policies.js";
-import { FindSubscriptionByOrganizationQuery } from "@/modules/billing/queries/find-subscription-by-organization-query.js";
+import { BillingResource } from "@/modules/billing/policies/billing.policies.js";
+import { FindSubscriptionByOrganizationQuery } from "@/modules/billing/queries/find-subscription-by-organization.query.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
 import { QueryBus } from "@/platform/ddd/ports/query-bus.js";

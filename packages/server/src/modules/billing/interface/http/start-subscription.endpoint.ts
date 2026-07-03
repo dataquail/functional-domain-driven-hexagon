@@ -2,8 +2,8 @@ import { BillingContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Effect from "effect/Effect";
 
-import { StartSubscriptionCommand } from "@/modules/billing/commands/start-subscription-command.js";
-import { BillingResource } from "@/modules/billing/policies/billing-policies.js";
+import { StartSubscriptionCommand } from "@/modules/billing/commands/start-subscription.command.js";
+import { BillingResource } from "@/modules/billing/policies/billing.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";

@@ -2,7 +2,7 @@ import { CliAuthContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
 import { EnvVars } from "@/common/env-vars.js";
-import { PollDeviceGrantCommand } from "@/modules/auth/commands/poll-device-grant-command.js";
+import { PollDeviceGrantCommand } from "@/modules/auth/commands/poll-device-grant.command.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 

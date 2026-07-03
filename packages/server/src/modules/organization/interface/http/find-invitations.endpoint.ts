@@ -1,8 +1,8 @@
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
-import { OrganizationResource } from "@/modules/organization/policies/organization-policies.js";
-import { FindPendingInvitationsQuery } from "@/modules/organization/queries/find-pending-invitations-query.js";
+import { OrganizationResource } from "@/modules/organization/policies/organization.policies.js";
+import { FindPendingInvitationsQuery } from "@/modules/organization/queries/find-pending-invitations.query.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
 import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
