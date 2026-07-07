@@ -2,7 +2,7 @@ import { CliAuthContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
 import { EnvVars } from "@/common/env-vars.js";
-import { StartDeviceGrantCommand } from "@/modules/auth/commands/start-device-grant-command.js";
+import { StartDeviceGrantCommand } from "@/modules/auth/commands/start-device-grant.command.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 

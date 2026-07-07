@@ -2,8 +2,8 @@ import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { ResendInvitationCommand } from "@/modules/organization/commands/resend-invitation-command.js";
-import { OrganizationResource } from "@/modules/organization/policies/organization-policies.js";
+import { ResendInvitationCommand } from "@/modules/organization/commands/resend-invitation.command.js";
+import { OrganizationResource } from "@/modules/organization/policies/organization.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";

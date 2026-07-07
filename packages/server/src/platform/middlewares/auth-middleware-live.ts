@@ -8,9 +8,9 @@ import * as Layer from "effect/Layer";
 
 import { EnvVars } from "@/common/env-vars.js";
 import {
+  CredentialHash,
   FindApiTokenByHashQuery,
   FindSessionQuery,
-  hashToken,
   SessionId,
   TouchApiTokenCommand,
   TouchSessionCommand,
@@ -62,7 +62,7 @@ export const UserAuthMiddlewareLive = Layer.effect(
       const bearer = readBearer(httpReq.headers.authorization);
       if (bearer !== null) {
         const apiToken = yield* queryBus
-          .execute(FindApiTokenByHashQuery.make({ tokenHash: hashToken(bearer) }))
+          .execute(FindApiTokenByHashQuery.make({ tokenHash: CredentialHash.of(bearer) }))
           .pipe(Effect.provideService(Database.Database, db), Effect.mapError(toAuthError));
         // Fire-and-forget last-used stamp; throttled + error-swallowing in the
         // handler, same rationale as the session touch below.

@@ -1,11 +1,11 @@
 import { CliTodosContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
-import { TodoCollectionResource } from "@/modules/todos/policies/todos-policies.js";
+import { TodoCollectionResource } from "@/modules/todos/policies/todos.policies.js";
 import {
   ListTodosQuery,
   type ListTodosTodoView,
-} from "@/modules/todos/queries/list-todos-query.js";
+} from "@/modules/todos/queries/list-todos.query.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
 import { QueryBus } from "@/platform/ddd/ports/query-bus.js";

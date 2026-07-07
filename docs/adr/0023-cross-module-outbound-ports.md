@@ -1,7 +1,9 @@
 # ADR-0023: Cross-module outbound calls via consumer-owned ports
 
-- Status: Accepted
+- Status: Accepted (folder taxonomy amended by ADR-0025)
 - Date: 2026-05-26
+
+> **Amendment (ADR-0025).** The `external/` folder this ADR introduces has since been split by counterpart: cross-context adapters moved to `domain/ports/acl/` + `infrastructure/acl/`, and true third-party adapters to `domain/ports/clients/` + `infrastructure/clients/`. Wherever this document says `external/`, read `acl/` for the cross-bounded-context case it describes (the `foreign-barrel-only-from-outbound-adapter` whitelist now names `infrastructure/acl/`). The consumer-owned-port principle, the load-bearing `domain/`-resident-port guarantee, and the error-translation mechanism below are unchanged.
 
 ## Context and Problem Statement
 

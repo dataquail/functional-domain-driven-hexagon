@@ -1,10 +1,14 @@
 import * as HttpServerResponse from "@effect/platform/HttpServerResponse";
 import * as Effect from "effect/Effect";
 
-import { OidcClient } from "@/modules/auth/infrastructure/oidc-client.js";
+import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client.js";
 import { CookieCodec } from "@/platform/auth/cookie-codec.js";
 
-import { encodePkcePayload, PKCE_COOKIE_MAX_AGE_MS, PKCE_COOKIE_NAME } from "./oidc-pkce-cookie.js";
+import {
+  encodePkcePayload,
+  PKCE_COOKIE_MAX_AGE_MS,
+  PKCE_COOKIE_NAME,
+} from "./oidc-pkce-cookie.util.js";
 
 export const loginEndpoint = () =>
   Effect.gen(function* () {

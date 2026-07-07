@@ -2,7 +2,7 @@ import { AuthContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { ListMyApiTokensQuery } from "@/modules/auth/queries/list-my-api-tokens-query.js";
+import { ListMyApiTokensQuery } from "@/modules/auth/queries/list-my-api-tokens.query.js";
 import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 

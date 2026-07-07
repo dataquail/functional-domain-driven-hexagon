@@ -1,0 +1,67 @@
+import type * as DateTime from "effect/DateTime";
+import * as Schema from "effect/Schema";
+
+import { OrganizationId } from "@/platform/ids/organization-id.js";
+
+import { TodoId } from "./todo.id.js";
+
+export class TodoRoot extends Schema.Class<TodoRoot>("TodoRoot")({
+  id: TodoId,
+  // Owning organization. Every todo is scoped to exactly one org
+  // (Phase 5 multi-tenancy); the repository requires it on every
+  // read/mutate so cross-tenant access can't leak.
+  organizationId: OrganizationId,
+  title: Schema.String,
+  completed: Schema.Boolean,
+  createdAt: Schema.DateTimeUtc,
+  updatedAt: Schema.DateTimeUtc,
+}) {}
+
+export type CreateInput = {
+  readonly id: TodoId;
+  readonly organizationId: OrganizationId;
+  readonly title: string;
+  readonly now: DateTime.Utc;
+};
+
+const create = (input: CreateInput): TodoRoot =>
+  TodoRoot.make({
+    id: input.id,
+    organizationId: input.organizationId,
+    title: input.title,
+    completed: false,
+    createdAt: input.now,
+    updatedAt: input.now,
+  });
+
+export type UpdateInput = {
+  readonly title: string;
+  readonly completed: boolean;
+  readonly now: DateTime.Utc;
+};
+
+const update = (todo: TodoRoot, input: UpdateInput): TodoRoot =>
+  TodoRoot.make({
+    id: todo.id,
+    organizationId: todo.organizationId,
+    title: input.title,
+    completed: input.completed,
+    createdAt: todo.createdAt,
+    updatedAt: input.now,
+  });
+
+// Marks the todo done. A first-class verb (not a generic `update`) because
+// the CLI exposes "complete" as its own command and there's no reason to
+// require the title to flip the flag. Idempotent: completing a done todo
+// just re-stamps `updatedAt`.
+const complete = (todo: TodoRoot, now: DateTime.Utc): TodoRoot =>
+  TodoRoot.make({
+    id: todo.id,
+    organizationId: todo.organizationId,
+    title: todo.title,
+    completed: true,
+    createdAt: todo.createdAt,
+    updatedAt: now,
+  });
+
+export const TodoRootOps = { create, update, complete } as const;

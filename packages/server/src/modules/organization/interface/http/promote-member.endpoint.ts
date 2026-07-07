@@ -3,8 +3,8 @@ import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { GrantOrganizationRoleCommand } from "@/modules/organization/commands/grant-organization-role-command.js";
-import { OrganizationResource } from "@/modules/organization/policies/organization-policies.js";
+import { GrantOrganizationRoleCommand } from "@/modules/organization/commands/grant-organization-role.command.js";
+import { OrganizationResource } from "@/modules/organization/policies/organization.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";

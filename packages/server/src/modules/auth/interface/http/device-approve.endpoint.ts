@@ -3,7 +3,7 @@ import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { ApproveDeviceGrantCommand } from "@/modules/auth/commands/approve-device-grant-command.js";
+import { ApproveDeviceGrantCommand } from "@/modules/auth/commands/approve-device-grant.command.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 

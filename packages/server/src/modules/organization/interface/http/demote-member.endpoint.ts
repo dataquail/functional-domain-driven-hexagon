@@ -1,8 +1,8 @@
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
-import { RevokeOrganizationRoleCommand } from "@/modules/organization/commands/revoke-organization-role-command.js";
-import { OrganizationResource } from "@/modules/organization/policies/organization-policies.js";
+import { RevokeOrganizationRoleCommand } from "@/modules/organization/commands/revoke-organization-role.command.js";
+import { OrganizationResource } from "@/modules/organization/policies/organization.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";

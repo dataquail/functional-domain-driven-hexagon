@@ -2,8 +2,8 @@ import { TodosContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { UpdateTodoCommand } from "@/modules/todos/commands/update-todo-command.js";
-import { TodoResource } from "@/modules/todos/policies/todos-policies.js";
+import { UpdateTodoCommand } from "@/modules/todos/commands/update-todo.command.js";
+import { TodoResource } from "@/modules/todos/policies/todos.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";

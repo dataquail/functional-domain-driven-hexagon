@@ -2,7 +2,7 @@
 // CurrentUser.userId; no Authz check (membership existence IS the
 // gate). Meaningful coverage lives in:
 //   - commands/leave-organization.test.ts (handler invariants)
-//   - infrastructure/membership-repository-live.integration.test.ts
+//   - infrastructure/repositories/membership-repository-live.integration.test.ts
 //     (the DELETE path against a real DB)
 //
 // This file is a parity-rule token per CLAUDE.md.

@@ -11,7 +11,7 @@
  * transitively keeps the implementations dumb too.
  *
  * Scoped (via eslint.config.mjs) to:
- *   packages/server/src/modules/<m>/domain/ports/repositories/*-repository.ts
+ *   packages/server/src/modules/<m>/domain/ports/repositories/*.repository.ts
  */
 
 //------------------------------------------------------------------------------

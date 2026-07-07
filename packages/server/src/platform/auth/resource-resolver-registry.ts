@@ -13,7 +13,7 @@ import * as Layer from "effect/Layer";
 
 // Modules contribute entries via declaration merging; this empty
 // declaration is the seam they extend.
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface, @typescript-eslint/no-empty-object-type
 export interface ResourceResolverMap {}
 
 export type ResourceName = keyof ResourceResolverMap;

@@ -5,14 +5,14 @@ import * as cookie from "cookie";
 import * as Effect from "effect/Effect";
 
 import { EnvVars } from "@/common/env-vars.js";
-import { SignInCommand } from "@/modules/auth/commands/sign-in-command.js";
-import { OidcClient } from "@/modules/auth/infrastructure/oidc-client.js";
+import { SignInCommand } from "@/modules/auth/commands/sign-in.command.js";
+import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client.js";
 import { CookieCodec } from "@/platform/auth/cookie-codec.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
-import { buildCallbackUrl } from "./callback-url.js";
-import { decodePkcePayload, PKCE_COOKIE_NAME } from "./oidc-pkce-cookie.js";
+import { buildCallbackUrl } from "./callback-url.util.js";
+import { decodePkcePayload, PKCE_COOKIE_NAME } from "./oidc-pkce-cookie.util.js";
 
 export const callbackEndpoint = () =>
   Effect.gen(function* () {

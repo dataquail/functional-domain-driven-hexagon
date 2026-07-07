@@ -3,8 +3,8 @@ import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { CreateTodoCommand } from "@/modules/todos/commands/create-todo-command.js";
-import { todoMemberCheck } from "@/modules/todos/policies/todos-policies.js";
+import { CreateTodoCommand } from "@/modules/todos/commands/create-todo.command.js";
+import { todoMemberCheck } from "@/modules/todos/policies/todos.policies.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 

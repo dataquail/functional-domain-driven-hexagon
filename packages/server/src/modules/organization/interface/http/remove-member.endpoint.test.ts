@@ -1,7 +1,7 @@
 // Endpoint thin: translates MembershipNotFound and Authz NotFound into
 // the wire shapes. Meaningful coverage lives in:
 //   - commands/remove-member.test.ts (handler invariants)
-//   - infrastructure/membership-repository-live.integration.test.ts
+//   - infrastructure/repositories/membership-repository-live.integration.test.ts
 //     (the DELETE path against a real DB)
 //
 // This file is a parity-rule token per CLAUDE.md.

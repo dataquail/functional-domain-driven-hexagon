@@ -6,14 +6,25 @@ Effect monorepo, hexagonal architecture, DDD. Full rationale in `docs/adr/`. The
 
 Each feature module lives at `packages/server/src/modules/<feature>/` with sibling folders. There is no `application/` umbrella — commands, queries, and event-handlers are siblings, each with its own dependency-cruiser isolation rule (see ADR-0008).
 
-- `domain/` — entities, value objects, events, errors, IDs, repository ports. Aggregate roots are named `*.aggregate.ts` as an explicit DDD signal.
-- `commands/` — write-side use cases. Each has a `<verb-noun>-command.ts` schema (registry-merges into `CommandRegistry`) plus a `<verb-noun>.ts` handler.
-- `queries/` — read-side projections. Same `-query.ts` schema + `<base>.ts` handler split. May import `@org/database` directly and bypass the domain — there's no aggregate to protect when nothing mutates.
-- `event-handlers/` — write-side use cases reacting to internal triggers (`event-handlers/triggers/<publisher>-events.ts`). Run in the publisher's fiber and inherit its transaction (ADR-0007). Same dependency shape as `commands/` — no cross-module barrel imports.
-- `infrastructure/` — repository `Live` + `Fake` implementations, mappers. Private to the module.
+- `domain/` — events, errors, ports (see `domain/ports/` below), and the DDD stereotypes below. Each stereotype carries an explicit filename suffix and a matching identifier-keyword suffix so its role is legible at a glance:
+  - **Aggregate roots** — `*.root.ts`. The root data type is `XRoot` (a `Schema.Class`). Operations are **pure free functions** collected into an `export const XRootOps = { … } as const` bag — the data stays a dumb value (no methods/statics on it). Consumers `import { XRoot, XRootOps }` — there is no `import * as`. Only `*.root.ts` carries a test-parity obligation. Lifecycle default: carry state in flag/nullable columns and let each op guard its own invariants and return `Either<Result, DomainError>` (so invariants are enforced in the domain once); model states as distinct variant classes unioned into `XRoot` only when states carry divergent data or a large transition matrix warrants it — see ADR-0003.
+  - **Constituent aggregates** — `*.aggregate.ts` (a collection of entities/VOs that is only a _part_ of a root, not itself a consistency-boundary root). No parity obligation.
+  - **Entities** — `*.entity.ts`, identifier `XEntity`.
+  - **Value objects** — `*.value-object.ts`, identifier `XValueObject` (attribute-bag, no identity of its own).
+  - **Branded IDs** — `*.id.ts`, identifier `XId`. An identifier is technically a value object, but it gets its own category: it already carries its keyword (`Id`) and denotes an entity's identity rather than being an attribute-bag.
+  - **Errors / events** — `*.errors.ts`, `*.events.ts`.
+  - **Filename convention (ADR-0027):** every stereotype is a dot-delimited suffix (`.command`, `.repository`, `.handler`, …); dashes appear only _within_ a concept name (`api-token.repository.ts`, `find-users.query.ts`). Compound stereotypes keep internal dashes as one segment (`.repository-live`, `.event-adapter`, `.value-object`).
+  - **Domain services** — `*.domain-service.ts`, a pure free-function bag (like `RootOps`, no DI Tag) for stateless domain logic **no single aggregate owns** (ADR-0026). Test-obligated. Guard against anemia: only for logic with no aggregate home (e.g. `CredentialHash`, applied to raw lookup input across aggregates); logic that operates on one aggregate stays on its `RootOps`. Randomness never lives here — it's impure, so it stays in the command (the shell).
+  - **Ports** — `domain/ports/`, tiered by counterpart (ADR-0023, ADR-0025); no port sits directly in `ports/`. `ports/repositories/*.repository.ts` (own datastore), `ports/clients/*.client.ts` (true third-party systems), `ports/acl/*.acl.ts` (other bounded contexts). The tier decides the anti-corruption obligation and, for `acl/`, which infrastructure adapter may import a foreign barrel.
+- `commands/` — write-side use cases. Each has a `<verb-noun>.command.ts` schema (registry-merges into `CommandRegistry`) plus a `<verb-noun>.handler.ts` handler.
+- `queries/` — read-side projections. Same `.query.ts` schema + `.handler.ts` handler split. May import `@org/database` directly and bypass the domain — there's no aggregate to protect when nothing mutates.
+- `event-handlers/` — write-side use cases (`*.handler.ts`) reacting to internal triggers (`event-handlers/triggers/<publisher>.triggers.ts`). Run in the publisher's fiber and inherit its transaction (ADR-0007). Same dependency shape as `commands/` — no cross-module barrel imports.
+- `infrastructure/` — driven adapters, tiered by counterpart to mirror `domain/ports/` (ADR-0025); private to the module. `infrastructure/repositories/` (`*.repository-live.ts` + `*.repository-fake.ts` + `*.mapper.ts`), `infrastructure/clients/` (third-party adapters: `*.client-live.ts` + `*.client-fake.ts` behind a `*.client.ts` port, self-contained `*.client.ts` clients, `*.email.tsx` templates), `infrastructure/acl/` (anti-corruption adapters to other modules: `*.acl-live.ts` + `*.acl-fake.ts` behind a `*.acl.ts` port — the only place, besides `interface/events/`, permitted to import a foreign barrel).
 - `interface/` — inbound adapters, one subfolder per protocol:
-  - `interface/http/` — one `<endpoint-name>.endpoint.ts` per HTTP endpoint (ADR-0013), plus a thin `<feature>-live.ts` group registration.
-  - `interface/events/` — one `<publisher>-event-adapter.ts` per upstream module whose domain events this module consumes (ADR-0007 ACL). The only place in the consumer module permitted to import another module's barrel.
+  - `interface/http/` — one `<endpoint-name>.endpoint.ts` per HTTP endpoint (ADR-0013), plus an `index.ts` barrel that registers the endpoint groups. May also hold `*.util.ts` — pure, leaf, test-obligated protocol/wire helpers shared between endpoints (ADR-0026). `*.util.ts` is allowed **only** in `interface/http/` and `interface/cli/` — never in the application layer (commands/queries/event-handlers), where a shared helper is a smell (it's domain logic → an aggregate op, or trivial → inline). A leaf rule bars utils from importing ports, use cases, infrastructure, buses, or barrels.
+  - `interface/events/` — one `<publisher>.event-adapter.ts` per upstream module whose domain events this module consumes (ADR-0007 ACL). The only place in the consumer module permitted to import another module's barrel.
+- `policies/` — `*.policies.ts` registry, `*.resource-resolver(s).ts`, and `is-*.policy.ts` checks. `policies/public/` holds `*.service-live.ts` — this module's Live implementations of platform ACL service ports (e.g. `RoleServiceLive`), published to the centralized policy registry and wired at the composition root.
+- **Module root** — a closed set of aggregation/composition files only (ADR-0027): `index.ts` (barrel), `<feature>.module.ts` (composed Layer), `<feature>.command-handlers.ts` / `<feature>.query-handlers.ts` (bus-registration maps), `<feature>.event-span-attributes.ts`, `<feature>.shared-deps.ts`. Any other file must move into a subfolder — enforced by `lint:layout`.
 
 Cross-module access goes through the module's `index.ts` barrel, which may not re-export from `infrastructure/` or `interface/`. The published surface is domain types (events, IDs, errors), command/query messages, handler-registration maps, and the module's `Live` layer.
 
@@ -21,35 +32,44 @@ Cross-module access goes through the module's `index.ts` barrel, which may not r
 
 If you create any of these without a sibling test, CI fails:
 
-| When you create…                      | Write a sibling…                                                                                          |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `domain/*.aggregate.ts`               | `domain/<base>.aggregate.test.ts`                                                                         |
-| `commands/*-command.ts`               | `commands/<base>.test.ts` (drop the `-command` suffix)                                                    |
-| `queries/*-query.ts`                  | `queries/<base>.integration.test.ts` (or `.test.ts`)                                                      |
-| `event-handlers/*.ts`                 | `event-handlers/<base>.integration.test.ts` (or `.test.ts`)                                               |
-| `interface/http/*.endpoint.ts`        | `interface/http/<base>.endpoint.integration.test.ts` (or `.endpoint.test.ts`)                             |
-| `interface/events/*-event-adapter.ts` | `interface/events/<base>-event-adapter.test.ts`                                                           |
-| `infrastructure/*-repository-live.ts` | `infrastructure/<base>-repository-live.integration.test.ts` AND a `<base>-repository-fake.ts` counterpart |
+| When you create…                                   | Write a sibling…                                                                                   |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `domain/*.root.ts`                                 | `domain/<base>.root.test.ts` (aggregate roots; the non-root domain stereotypes below need none)    |
+| `domain/*.domain-service.ts`                       | `domain/<base>.domain-service.test.ts` (domain services carry a test — they're real domain logic)  |
+| `commands/*.command.ts`                            | `commands/<base>.handler.test.ts` (the test sits on the handler)                                   |
+| `queries/*.query.ts`                               | `queries/<base>.handler.integration.test.ts` (or `.handler.test.ts`)                               |
+| `event-handlers/*.ts`                              | `event-handlers/<base>.integration.test.ts` (or `.test.ts`)                                        |
+| `interface/http/*.endpoint.ts`                     | `interface/http/<base>.endpoint.integration.test.ts` (or `.endpoint.test.ts`)                      |
+| `interface/{http,cli}/*.util.ts`                   | `<base>.util.test.ts` (the test obligation is the anti-drift guard — ADR-0026)                     |
+| `interface/events/*.event-adapter.ts`              | `interface/events/<base>.event-adapter.test.ts`                                                    |
+| `infrastructure/repositories/*.repository-live.ts` | `<base>.repository-live.integration.test.ts` AND a `<base>.repository-fake.ts` counterpart         |
+| `infrastructure/clients/*.client-live.ts`          | `<base>.client-live.integration.test.ts` (or `.test.ts`) AND a `<base>.client-fake.ts` counterpart |
+| `infrastructure/acl/*.acl-live.ts`                 | `<base>.acl-live.integration.test.ts` (or `.test.ts`) AND a `<base>.acl-fake.ts` counterpart       |
 
 The naming conventions are also the parity-rule detectors. Don't rename a file to dodge the rule — write the test.
+
+## Folder layout (enforced by `pnpm lint:layout`)
+
+Each stereotype folder admits a closed set of file kinds (ADR-0025); an unrecognized source file fails the build. This is the inverse of parity: parity asks whether a required sibling exists, layout asks whether a file is allowed to exist at all. It exists to stop convention drift — the stray `session-utils.ts` in `domain/` or `todo-helpers.ts` in `commands/` that should have been a method on an aggregate root or a named stereotype. Test files are exempt (governed by parity). `commands/` and `queries/` use a pairing rule: a bare `<base>.ts` handler is admitted only if its `<base>.command.ts` / `<base>.query.ts` schema sibling exists. **Container folders** (`domain/ports/`, `infrastructure/`, `interface/`) admit no direct files at all — content must live in a subfolder (e.g. `infrastructure/repositories/`, `interface/http/`). The checker also validates **subfolders**: the module root and each container admit only a closed set of nested directories (e.g. a module admits only `domain/ commands/ queries/ event-handlers/ infrastructure/ interface/ policies/`), so a stray `modules/x/helpers/` or `interface/grpc/` fails just like a stray file. To add a genuinely new file kind, declare it in the folder's allowlist in `scripts/check-folder-layout.mjs` — deliberately, not by working around the check.
 
 ## Test seams
 
 - **Use-case unit tests** (`commands/`, `event-handlers/`) compose three test-only services: `UserRepositoryFake`, `RecordingEventBus`, `IdentityUnitOfWork`. No DB, no docker.
-- **Integration tests** (`*-repository-live.integration.test.ts`, `<endpoint>.endpoint.integration.test.ts`, `<query>.integration.test.ts`) hit a real DB. They self-skip when `DATABASE_URL_TEST` is unset; `pnpm test` succeeds with no auxiliary services.
+- **Integration tests** (`*.repository-live.integration.test.ts`, `<endpoint>.endpoint.integration.test.ts`, `<query>.handler.integration.test.ts`) hit a real DB. They self-skip when `DATABASE_URL_TEST` is unset; `pnpm test` succeeds with no auxiliary services.
 - **HTTP integration tests** use `useServerTestRuntime(["table1", "table2"])` from `test-utils/`, which wires `ManagedRuntime.make(TestServerLive)` + `beforeAll`/`afterAll` + per-test `truncate`. Tests then exercise the contract via `HttpApiClient.make(Api)` and seed prior state by calling _other endpoints_, not by reaching into module internals.
 - **Query/repository integration tests** seed via the live repository (or other production-path code), not via raw SQL. Using the repository as the seeding seam keeps the test honest about what production paths look like.
 - **Endpoint test naming.** A test file ending in `*.endpoint.integration.test.ts` exercises the real HTTP layer against a live database via `useServerTestRuntime(...)`. A file ending in `*.endpoint.test.ts` is a true unit test — no DB, no HTTP round-trip — typically a parity-rule token for endpoints whose meaningful coverage lives elsewhere (e.g. the OIDC `login` / `callback` / `logout` flows, covered by Playwright + `SessionRepositoryLive` integration tests). Any `.endpoint.test.ts` file must carry a header comment naming where the meaningful coverage lives; if a test starts hitting real HTTP + DB, rename it to `.endpoint.integration.test.ts`.
 
 ## Commands
 
-| Command                                    | What it runs                                                      |
-| ------------------------------------------ | ----------------------------------------------------------------- |
-| `pnpm check:all`                           | lint + lint:deps + lint:tests + typecheck + tests (the full gate) |
-| `pnpm test`                                | vitest, no DB                                                     |
-| `DATABASE_URL_TEST=postgres://… pnpm test` | also runs integration tests                                       |
-| `pnpm lint:deps`                           | dependency-cruiser architecture rules                             |
-| `pnpm lint:tests`                          | test-parity check                                                 |
+| Command                                    | What it runs                                                                    |
+| ------------------------------------------ | ------------------------------------------------------------------------------- |
+| `pnpm check:all`                           | lint + lint:deps + lint:layout + lint:tests + typecheck + tests (the full gate) |
+| `pnpm test`                                | vitest, no DB                                                                   |
+| `DATABASE_URL_TEST=postgres://… pnpm test` | also runs integration tests                                                     |
+| `pnpm lint:deps`                           | dependency-cruiser architecture rules                                           |
+| `pnpm lint:layout`                         | folder-layout allowlist (file kinds per folder)                                 |
+| `pnpm lint:tests`                          | test-parity check                                                               |
 
 ## Conventions worth knowing
 

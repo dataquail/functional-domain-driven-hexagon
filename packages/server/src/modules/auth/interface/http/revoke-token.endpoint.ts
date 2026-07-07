@@ -3,7 +3,7 @@ import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { RevokeApiTokenCommand } from "@/modules/auth/commands/revoke-api-token-command.js";
+import { RevokeApiTokenCommand } from "@/modules/auth/commands/revoke-api-token.command.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 

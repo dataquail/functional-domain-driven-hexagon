@@ -5,7 +5,7 @@ import * as Effect from "effect/Effect";
 import {
   FindMyOrganizationsQuery,
   type FindMyOrganizationsView,
-} from "@/modules/organization/queries/find-my-organizations-query.js";
+} from "@/modules/organization/queries/find-my-organizations.query.js";
 import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
