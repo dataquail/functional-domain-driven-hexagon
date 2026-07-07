@@ -45,6 +45,7 @@ type CompleteTodoBusOutput = Effect.Effect<
 >;
 
 declare module "@/platform/ddd/ports/command-bus.js" {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- declaration merging requires `interface`
   interface CommandRegistry {
     CreateTodoCommand: {
       readonly command: CreateTodoCommand;

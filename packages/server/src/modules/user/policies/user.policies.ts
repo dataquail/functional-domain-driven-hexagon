@@ -17,12 +17,14 @@ import { type UserRoot } from "../domain/user.root.js";
 // command/aggregate, not here.
 
 declare module "@/platform/auth/resource-resolver-registry.js" {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- declaration merging requires `interface`
   interface ResourceResolverMap {
     user: { resourceType: UserRoot; idType: UserId };
   }
 }
 
 declare module "@/platform/auth/policy-registry.js" {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- declaration merging requires `interface`
   interface PolicyMap {
     user: {
       update: PolicyRegistry.CheckFor<"user", "update">;

@@ -14,6 +14,7 @@ import { type OrganizationId } from "@/platform/ids/organization-id.js";
 export type BillingResourceContext = { readonly organizationId: OrganizationId };
 
 declare module "@/platform/auth/resource-resolver-registry.js" {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- declaration merging requires `interface`
   interface ResourceResolverMap {
     billing: { resourceType: BillingResourceContext; idType: OrganizationId };
   }

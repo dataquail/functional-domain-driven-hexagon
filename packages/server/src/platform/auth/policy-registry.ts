@@ -32,7 +32,9 @@ export type PolicyErrors = PersistenceUnavailable;
 // root Layer-merges the per-module contributions into a single
 // registry.
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface, @typescript-eslint/no-empty-object-type
+// `consistent-type-definitions` is disabled too: as a `--fix`-able warn it
+// would rewrite this to `type`, which cannot be declaration-merged.
+// eslint-disable-next-line @typescript-eslint/no-empty-interface, @typescript-eslint/no-empty-object-type, @typescript-eslint/consistent-type-definitions
 export interface PolicyMap {}
 
 export type PolicyResource = keyof PolicyMap;

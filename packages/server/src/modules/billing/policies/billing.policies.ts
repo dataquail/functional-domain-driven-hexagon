@@ -20,6 +20,7 @@ import { IsBillingOrgMember } from "./is-billing-org-member.policy.js";
 // the endpoint.
 
 declare module "@/platform/auth/policy-registry.js" {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- declaration merging requires `interface`
   interface PolicyMap {
     billing: {
       read: PolicyRegistry.CheckFor<"billing", "read">;

@@ -13,6 +13,7 @@ import { IsTodoOrgMember } from "./is-todo-org-member.policy.js";
 // the path orgId, the same composed gate registered here.
 
 declare module "@/platform/auth/policy-registry.js" {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- declaration merging requires `interface`
   interface PolicyMap {
     todoCollection: {
       read: PolicyRegistry.CheckFor<"todoCollection", "read">;

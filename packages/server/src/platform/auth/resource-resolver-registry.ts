@@ -12,8 +12,10 @@ import * as Layer from "effect/Layer";
 // resolvers into a single registry. See `docs/scratch/authz-dsl-plan.md`.
 
 // Modules contribute entries via declaration merging; this empty
-// declaration is the seam they extend.
-// eslint-disable-next-line @typescript-eslint/no-empty-interface, @typescript-eslint/no-empty-object-type
+// declaration is the seam they extend. `consistent-type-definitions` is
+// disabled too: as a `--fix`-able warn it would rewrite this to `type`,
+// which cannot be declaration-merged.
+// eslint-disable-next-line @typescript-eslint/no-empty-interface, @typescript-eslint/no-empty-object-type, @typescript-eslint/consistent-type-definitions
 export interface ResourceResolverMap {}
 
 export type ResourceName = keyof ResourceResolverMap;

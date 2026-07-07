@@ -21,12 +21,14 @@ import { IsOrgAdmin } from "./is-org-admin.policy.js";
 // platform-level operation.
 
 declare module "@/platform/auth/resource-resolver-registry.js" {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- declaration merging requires `interface`
   interface ResourceResolverMap {
     organization: { resourceType: OrganizationRoot; idType: OrganizationId };
   }
 }
 
 declare module "@/platform/auth/policy-registry.js" {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- declaration merging requires `interface`
   interface PolicyMap {
     organization: {
       read: PolicyRegistry.CheckFor<"organization", "read">;

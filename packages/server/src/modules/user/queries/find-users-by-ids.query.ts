@@ -27,6 +27,7 @@ export type FindUsersByIdsOutput = Effect.Effect<
 >;
 
 declare module "@/platform/ddd/ports/query-bus.js" {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- declaration merging requires `interface`
   interface QueryRegistry {
     FindUsersByIdsQuery: {
       readonly query: FindUsersByIdsQuery;

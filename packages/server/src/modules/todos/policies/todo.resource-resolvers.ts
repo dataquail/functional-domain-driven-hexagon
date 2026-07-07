@@ -33,6 +33,7 @@ export type TodoResourceId = {
 };
 
 declare module "@/platform/auth/resource-resolver-registry.js" {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- declaration merging requires `interface`
   interface ResourceResolverMap {
     todoCollection: { resourceType: TodoOrgContext; idType: OrganizationId };
     todo: { resourceType: TodoOrgContext; idType: TodoResourceId };

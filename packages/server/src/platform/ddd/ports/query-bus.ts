@@ -9,9 +9,11 @@ import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attr
 // (`makeQueryBus` in `platform/query-bus-live.ts`) is wired only at the
 // composition root.
 // Intentionally empty — modules extend this via TypeScript declaration merging.
-/* eslint-disable @typescript-eslint/no-empty-interface, @typescript-eslint/no-empty-object-type */
+// `consistent-type-definitions` (a `--fix`-able warn) would rewrite this to
+// `type`, which cannot be declaration-merged — keep it an `interface`.
+/* eslint-disable @typescript-eslint/no-empty-interface, @typescript-eslint/no-empty-object-type, @typescript-eslint/consistent-type-definitions */
 export interface QueryRegistry {}
-/* eslint-enable @typescript-eslint/no-empty-interface, @typescript-eslint/no-empty-object-type */
+/* eslint-enable @typescript-eslint/no-empty-interface, @typescript-eslint/no-empty-object-type, @typescript-eslint/consistent-type-definitions */
 
 type RegisteredQuery = QueryRegistry[keyof QueryRegistry] extends {
   readonly query: infer Q;
