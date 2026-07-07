@@ -208,24 +208,9 @@ const rules = [
     ignore: ["**/*.test.ts", "**/*.test.tsx", "**/index.ts", "**/server-hydration-boundary.tsx"],
     candidates: [(f) => f.replace(/\.tsx?$/, ".test.ts"), (f) => f.replace(/\.tsx?$/, ".test.tsx")],
   },
-  // ── @org/components (ADR-0015) ──────────────────────────────────────
-  // Every primitive and pattern needs a Storybook story so the
-  // component library has a single navigable surface. Re-exports from
-  // index.ts and the icon registry (icons.ts) are not subjects.
-  {
-    label: "Primitive component",
-    requirement: "sibling Storybook story",
-    subject: "packages/components/primitives/**/*.tsx",
-    ignore: ["**/*.stories.tsx", "**/*.test.tsx", "**/index.tsx"],
-    candidates: [(f) => f.replace(/\.tsx$/, ".stories.tsx")],
-  },
-  {
-    label: "Pattern component",
-    requirement: "sibling Storybook story",
-    subject: "packages/components/patterns/**/*.tsx",
-    ignore: ["**/*.stories.tsx", "**/*.test.tsx", "**/index.tsx"],
-    candidates: [(f) => f.replace(/\.tsx$/, ".stories.tsx")],
-  },
+  // NOTE: @org/components story parity (ADR-0015) is now enforced by the
+  // `project-structure/folder-structure` rule (see eslint.project-structure.mjs,
+  // componentsPrimitives/componentsPatterns), run under `pnpm lint`.
 ];
 
 let missing = 0;

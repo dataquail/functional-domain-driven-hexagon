@@ -25,3 +25,6 @@ test-results/
 playwright-report/
 playwright/.cache/
 packages/acceptance/playwright/.auth/
+
+# eslint-plugin-project-structure cache
+projectStructure.cache.json

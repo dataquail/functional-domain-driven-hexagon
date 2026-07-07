@@ -2,6 +2,8 @@
 import storybook from "eslint-plugin-storybook";
 
 /* eslint-disable */
+import { projectStructurePlugin } from "eslint-plugin-project-structure";
+import { componentsPatterns, componentsPrimitives } from "./eslint.project-structure.mjs";
 import dataBoundaries from "@synapsestudios/eslint-plugin-data-boundaries";
 import { fixupPluginRules } from "@eslint/compat";
 import { FlatCompat } from "@eslint/eslintrc";
@@ -525,6 +527,24 @@ export default [
     rules: {
       "@typescript-eslint/no-empty-interface": "off",
       "@typescript-eslint/no-empty-object-type": "off",
+    },
+  },
+  // ADR-0015: component-library story parity, via the declarative taxonomy in
+  // eslint.project-structure.mjs. No dedicated parser — the folder-structure
+  // rule reads the filesystem, not the AST, so it coexists with the
+  // type-aware @typescript-eslint parser already configured for these files.
+  {
+    files: ["packages/components/primitives/**/*.{ts,tsx}"],
+    plugins: { "project-structure": projectStructurePlugin },
+    rules: {
+      "project-structure/folder-structure": ["error", componentsPrimitives],
+    },
+  },
+  {
+    files: ["packages/components/patterns/**/*.{ts,tsx}"],
+    plugins: { "project-structure": projectStructurePlugin },
+    rules: {
+      "project-structure/folder-structure": ["error", componentsPatterns],
     },
   },
 ];

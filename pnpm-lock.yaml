@@ -111,6 +111,9 @@ importers:
       eslint-plugin-import:
         specifier: ^2.32.0
         version: 2.32.0(@typescript-eslint/parser@8.59.1(eslint@9.13.0(jiti@2.7.0))(typescript@5.7.3))(eslint-import-resolver-typescript@4.4.4)(eslint@9.13.0(jiti@2.7.0))
+      eslint-plugin-project-structure:
+        specifier: file:vendor/eslint-plugin-project-structure-3.14.3.tgz
+        version: file:vendor/eslint-plugin-project-structure-3.14.3.tgz(eslint@9.13.0(jiti@2.7.0))(typescript@5.7.3)
       eslint-plugin-react:
         specifier: ^7.37.5
         version: 7.37.5(eslint@9.13.0(jiti@2.7.0))
@@ -3412,6 +3415,9 @@ packages:
     resolution: {integrity: sha512-FmeCCAenzH0KH381SPT5FZmiA/TmpndpcaShhfgEN9eCVjnFBqq3l1xrI42y8+PPLI6hypzou4GXw00WHmPBLQ==}
     engines: {node: '>= 0.4'}
 
+  array-timsort@1.0.3:
+    resolution: {integrity: sha512-/+3GRL7dDAGEfM6TseQk/U+mi18TU2Ms9I3UlLdUMhz2hbvGNTKdj9xniwXfUqgYhHxRx0+8UnKkvlNwVU+cWQ==}
+
   array.prototype.findlast@1.2.5:
     resolution: {integrity: sha512-CVvd6FHg1Z3POpBLxO6E6zr+rSKEQ9L6rZHAaY7lLfhKsWYUBBOuMs0e9o24oopj6H+geRCX0YJ+TJLBK2eHyQ==}
     engines: {node: '>= 0.4'}
@@ -3695,6 +3701,10 @@ packages:
   commander@7.2.0:
     resolution: {integrity: sha512-QrWXB+ZQSVPmIWIhtEO9H+gwHaMGYiF5ChvoJ+K9ZGHG/sVsa6yiesAD1GC/x46sET00Xlwo1u49RVVVzvcSkw==}
     engines: {node: '>= 10'}
+
+  comment-json@4.6.2:
+    resolution: {integrity: sha512-R2rze/hDX30uul4NZoIZ76ImSJLFxn/1/ZxtKC1L77y2X1k+yYu1joKbAtMA2Fg3hZrTOiw0I5mwVMo0cf250w==}
+    engines: {node: '>= 6'}
 
   commondir@1.0.1:
     resolution: {integrity: sha512-W9pAhw0ja1Edb5GVdIF1mjZw/ASI0AlShXM83UUGe2DVr5TdAPEA1OA8m/g8zWp9x6On7gqufY+FatDbC3MDQg==}
@@ -4201,6 +4211,11 @@ packages:
     deprecated: Please use @eslint/markdown instead
     peerDependencies:
       eslint: '>=8'
+
+  eslint-plugin-project-structure@file:vendor/eslint-plugin-project-structure-3.14.3.tgz:
+    resolution: {integrity: sha512-qVYJcO9fliyYWVazNqTwXQ2yXHSdqw6CU5ia4sc3UotDaEniiCsM8VFK6tqORuNRZZ9tPM4so0bkWiqshuSxIA==, tarball: file:vendor/eslint-plugin-project-structure-3.14.3.tgz}
+    version: 3.14.3
+    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
 
   eslint-plugin-react-hooks@5.1.0:
     resolution: {integrity: sha512-mpJRtPgHN2tNAvZ35AMfqeB3Xqeo273QxrHJsbBEPWODRM4r0yB6jfoROqKEYrOn27UtRPpcpHc2UqyBSuUNTw==}
@@ -5085,6 +5100,9 @@ packages:
     resolution: {integrity: sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==}
     engines: {node: '>=6'}
     hasBin: true
+
+  jsonschema@1.5.0:
+    resolution: {integrity: sha512-K+A9hhqbn0f3pJX17Q/7H6yQfD/5OXgdrR5UE12gMXCiN9D5Xq2o5mddV2QEcX/bjla99ASsAAQUyMCCRWAEhw==}
 
   jsx-ast-utils@3.3.5:
     resolution: {integrity: sha512-ZZow9HBI5O6EPgSJLUb8n2NKgmVWTwCvHGwFuJlMjvLFqlGG6pjirPhtdsseaLZjSibD8eegzmYpUZwoIlj2cQ==}
@@ -9915,6 +9933,8 @@ snapshots:
       is-string: 1.1.1
       math-intrinsics: 1.1.0
 
+  array-timsort@1.0.3: {}
+
   array.prototype.findlast@1.2.5:
     dependencies:
       call-bind: 1.0.8
@@ -10234,6 +10254,11 @@ snapshots:
   commander@6.2.1: {}
 
   commander@7.2.0: {}
+
+  comment-json@4.6.2:
+    dependencies:
+      array-timsort: 1.0.3
+      esprima: 4.0.1
 
   commondir@1.0.1: {}
 
@@ -10981,6 +11006,18 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  eslint-plugin-project-structure@file:vendor/eslint-plugin-project-structure-3.14.3.tgz(eslint@9.13.0(jiti@2.7.0))(typescript@5.7.3):
+    dependencies:
+      '@typescript-eslint/utils': 8.59.1(eslint@9.13.0(jiti@2.7.0))(typescript@5.7.3)
+      comment-json: 4.6.2
+      js-yaml: 4.1.1
+      jsonschema: 1.5.0
+      micromatch: 4.0.8
+    transitivePeerDependencies:
+      - eslint
+      - supports-color
+      - typescript
+
   eslint-plugin-react-hooks@5.1.0(eslint@9.13.0(jiti@2.7.0)):
     dependencies:
       eslint: 9.13.0(jiti@2.7.0)
@@ -11162,7 +11199,7 @@ snapshots:
     dependencies:
       acorn: 8.16.0
       acorn-jsx: 5.3.2(acorn@8.16.0)
-      eslint-visitor-keys: 4.2.0
+      eslint-visitor-keys: 4.2.1
 
   espree@10.4.0:
     dependencies:
@@ -12026,6 +12063,8 @@ snapshots:
       minimist: 1.2.8
 
   json5@2.2.3: {}
+
+  jsonschema@1.5.0: {}
 
   jsx-ast-utils@3.3.5:
     dependencies:
