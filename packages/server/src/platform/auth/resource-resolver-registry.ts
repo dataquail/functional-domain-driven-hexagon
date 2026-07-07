@@ -11,9 +11,11 @@ import * as Layer from "effect/Layer";
 // composition root (`server.ts` / `test-server.ts`) Layer-merges the
 // resolvers into a single registry. See `docs/scratch/authz-dsl-plan.md`.
 
-// Modules contribute entries via declaration merging; this empty
-// declaration is the seam they extend.
-// eslint-disable-next-line @typescript-eslint/no-empty-interface, @typescript-eslint/no-empty-object-type
+// Modules contribute entries via declaration merging; this empty declaration is
+// the seam they extend. It must stay an `interface` (declaration merging does not
+// work on `type`); the lint rules that would fight the empty interface and
+// rewrite it to `type` are disabled for the registry seam files in
+// eslint.config.mjs.
 export interface ResourceResolverMap {}
 
 export type ResourceName = keyof ResourceResolverMap;
