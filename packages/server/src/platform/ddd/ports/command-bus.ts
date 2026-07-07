@@ -26,9 +26,10 @@ import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attr
 // correct typed Effect at call sites, without the bus itself knowing about
 // individual commands.
 // Intentionally empty — modules extend this via TypeScript declaration merging.
-/* eslint-disable @typescript-eslint/no-empty-interface, @typescript-eslint/no-empty-object-type */
+// It must stay an `interface` (declaration merging does not work on `type`); the
+// lint rules that would fight the empty interface and rewrite it to `type` are
+// disabled for the registry seam files in eslint.config.mjs.
 export interface CommandRegistry {}
-/* eslint-enable @typescript-eslint/no-empty-interface, @typescript-eslint/no-empty-object-type */
 
 type RegisteredCommand = CommandRegistry[keyof CommandRegistry] extends {
   readonly command: infer C;

@@ -484,4 +484,47 @@ export default [
       "no-restricted-syntax": "off",
     },
   },
+  {
+    // ADR-0006 / ADR-0022: the type-safe Command/Query buses and the policy
+    // infrastructure are extended by modules via TypeScript **declaration
+    // merging**, which only works on `interface` (a merged `type` is a compile
+    // error). `consistent-type-definitions` is a `--fix`-able warn that would
+    // rewrite those `interface`s to `type` and silently break the merge, so it
+    // is turned off for the registry seam files and every file that augments
+    // them by convention. This is the Option-0 stopgap from
+    // docs/scratch/typesafe-registry-declaration-merging-spike.md — it replaces
+    // ~27 inline eslint-disable directives. The rule stays on everywhere else.
+    files: [
+      "packages/server/src/platform/ddd/ports/command-bus.ts",
+      "packages/server/src/platform/ddd/ports/query-bus.ts",
+      "packages/server/src/platform/auth/policy-registry.ts",
+      "packages/server/src/platform/auth/resource-resolver-registry.ts",
+      "packages/server/src/modules/**/*.command-handlers.ts",
+      "packages/server/src/modules/**/*.query-handlers.ts",
+      "packages/server/src/modules/**/queries/*.query.ts",
+      "packages/server/src/modules/**/policies/*.policies.ts",
+      "packages/server/src/modules/**/policies/*.resource-resolver*.ts",
+      // Test seam that declaration-merges a synthetic `test` resource into the
+      // policy registries (PolicyMap / ResourceResolverMap).
+      "packages/server/src/platform/auth/authz.test.ts",
+    ],
+    rules: {
+      "@typescript-eslint/consistent-type-definitions": "off",
+    },
+  },
+  {
+    // The four registry seams above are declared as intentionally-empty
+    // `interface`s (the merge target). Turn off the empty-interface rules for
+    // just those files so the empty declaration needs no inline disable.
+    files: [
+      "packages/server/src/platform/ddd/ports/command-bus.ts",
+      "packages/server/src/platform/ddd/ports/query-bus.ts",
+      "packages/server/src/platform/auth/policy-registry.ts",
+      "packages/server/src/platform/auth/resource-resolver-registry.ts",
+    ],
+    rules: {
+      "@typescript-eslint/no-empty-interface": "off",
+      "@typescript-eslint/no-empty-object-type": "off",
+    },
+  },
 ];
