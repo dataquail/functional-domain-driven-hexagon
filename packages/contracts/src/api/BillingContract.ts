@@ -57,7 +57,6 @@ export class StartSubscriptionPayload extends Schema.Class<StartSubscriptionPayl
 // + cancel) is org-admin-or-super-admin. The 403 surface is the policy
 // denial.
 export class PrivateGroup extends HttpApiGroup.make("billing")
-  .middleware(UserAuthMiddleware)
   .add(
     HttpApiEndpoint.post("startSubscription", "/:orgId/billing/subscriptions", {
       params: Schema.Struct({ orgId: OrganizationId }),
@@ -94,6 +93,7 @@ export class PrivateGroup extends HttpApiGroup.make("billing")
       ],
     }),
   )
+  .middleware(UserAuthMiddleware)
   .prefix("/orgs") {}
 
 // Public Stripe webhook ingress. No `UserAuthMiddleware` — the request

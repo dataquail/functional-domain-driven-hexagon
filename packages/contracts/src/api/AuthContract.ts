@@ -64,7 +64,6 @@ export class PublicGroup extends HttpApiGroup.make("auth")
 // ==========================================
 
 export class PrivateGroup extends HttpApiGroup.make("authSession")
-  .middleware(UserAuthMiddleware)
   .add(
     HttpApiEndpoint.get("me", "/me", {
       success: CurrentUserResponse,
@@ -72,6 +71,7 @@ export class PrivateGroup extends HttpApiGroup.make("authSession")
       error: CustomHttpApiError.ServiceUnavailable,
     }),
   )
+  .middleware(UserAuthMiddleware)
   .prefix("/auth") {}
 
 // ==========================================
@@ -121,7 +121,6 @@ export class DeviceApprovalPayload extends Schema.Class<DeviceApprovalPayload>(
 // On the GUI surface (the human is in the browser); the CLI's start/poll
 // endpoints live on `CliApi`.
 export class DeviceApprovalGroup extends HttpApiGroup.make("authDevice")
-  .middleware(UserAuthMiddleware)
   .add(
     HttpApiEndpoint.post("approve", "/approve", {
       payload: DeviceApprovalPayload,
@@ -133,13 +132,13 @@ export class DeviceApprovalGroup extends HttpApiGroup.make("authDevice")
       ],
     }),
   )
+  .middleware(UserAuthMiddleware)
   .prefix("/auth/device") {}
 
 // Token management is a human-in-the-browser concern (a user mints a CI
 // token); the CLI/MCP obtain tokens via the device flow or a pre-minted PAT.
 // Hence this lives on the GUI `DomainApi`, not the CLI surface (ADR-0024).
 export class TokensGroup extends HttpApiGroup.make("authTokens")
-  .middleware(UserAuthMiddleware)
   .add(
     HttpApiEndpoint.post("create", "/", {
       payload: CreateApiTokenPayload,
@@ -160,4 +159,5 @@ export class TokensGroup extends HttpApiGroup.make("authTokens")
       error: [CustomHttpApiError.NotFound, CustomHttpApiError.ServiceUnavailable],
     }),
   )
+  .middleware(UserAuthMiddleware)
   .prefix("/auth/tokens") {}

@@ -37,7 +37,6 @@ export class UpdateTodoPayload extends Schema.Class<UpdateTodoPayload>("UpdateTo
 // update/delete moves to the path (REST-shaped, matching the org
 // module's `/:orgId/members/:userId`).
 export class Group extends HttpApiGroup.make("todos")
-  .middleware(UserAuthMiddleware)
   .add(
     HttpApiEndpoint.get("get", "/:orgId/todos", {
       params: Schema.Struct({ orgId: OrganizationId }),
@@ -77,4 +76,5 @@ export class Group extends HttpApiGroup.make("todos")
     }),
   )
   // Group-wide 503 surface — see UserContract for rationale.
+  .middleware(UserAuthMiddleware)
   .prefix("/orgs") {}

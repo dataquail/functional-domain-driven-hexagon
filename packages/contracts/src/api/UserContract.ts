@@ -83,7 +83,6 @@ export class PaginatedUsers extends Schema.Class<PaginatedUsers>("PaginatedUsers
 // ==========================================
 
 export class Group extends HttpApiGroup.make("user")
-  .middleware(UserAuthMiddleware)
   .add(
     HttpApiEndpoint.get("find", "/", {
       query: FindUsersParams,
@@ -109,4 +108,5 @@ export class Group extends HttpApiGroup.make("user")
   // typed channel lets endpoint handlers `Effect.catchTag` the
   // `PersistenceUnavailable` use cases produce and surface the 503 to
   // the SPA without leaking infrastructure tags into the contract.
+  .middleware(UserAuthMiddleware)
   .prefix("/users") {}

@@ -174,8 +174,9 @@ const ApiLive = HttpApiBuilder.layer(Api).pipe(
   // The middleware impl is a build-time requirement of the API (groups declare
   // `.middleware(UserAuthMiddleware)`); providing it here applies the wrapper,
   // which supplies `CurrentUser` to every gated endpoint. Its own deps
-  // (buses, CookieCodec, Database) bubble up request-scoped and close below.
-  HttpRouter.provideRequest(UserAuthMiddlewareLive),
+  // (buses, CookieCodec, Database) bubble up as plain requirements and close
+  // below (post-serve).
+  Layer.provide(UserAuthMiddlewareLive),
 );
 
 

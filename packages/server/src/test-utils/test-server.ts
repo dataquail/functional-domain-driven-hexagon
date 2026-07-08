@@ -1,4 +1,5 @@
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
+import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import { type UserAuthMiddleware } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
@@ -155,7 +156,11 @@ const ResourceResolverRegistryLive = Layer.unwrap(
 // Live exported from billing's barrel) — no gateway Layer threads
 // through the composition root.
 export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddleware>) => {
-  const ApiLive = HttpApiBuilder.api(Api).pipe(
+  // Same v4 shape as server.ts: `HttpApiBuilder.layer` registers the group
+  // handlers + the auth middleware (build-time — the groups declare
+  // `.middleware(UserAuthMiddleware)`); the handlers' runtime deps are
+  // request-scoped and close post-serve below.
+  const ApiLive = HttpApiBuilder.layer(Api).pipe(
     Layer.provide([
       TodosModuleLive,
       UserModuleLive,
@@ -164,42 +169,32 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
       OrganizationModuleLive,
       BillingModuleTestLive,
     ]),
-    // Own step (mirrors server.ts): UserProvisioningLive depends on
-    // DomainEventBus + UnitOfWork (peers in the block below) + CommandBus, so
-    // those steps must provide TO it.
+    Layer.provide(authMiddleware),
+  );
+
+  // `HttpRouter.serve` binds the app to `NodeHttpServer.layerTest`'s in-memory
+  // transport (no port/network) and unwraps the endpoints' request-scoped
+  // requirements into plain ones, satisfied here in the same dependency order
+  // as server.ts. `CommandBus`/`QueryBus`/`Database`/`HttpClient` are kept in
+  // the runtime's SUCCESS channel via `provideMerge` so integration tests can
+  // `yield* CommandBus`/`QueryBus`, `yield* HttpApiClient.make(Api)`, and drive
+  // the DB directly.
+  return HttpRouter.serve(ApiLive).pipe(
+    // UserProvisioningLive depends on DomainEventBus + UnitOfWork + CommandBus,
+    // so those steps must provide TO it.
     Layer.provide([UserProvisioningLive]),
     Layer.provide([
-      authMiddleware,
       RoleServiceLive,
       MembershipServiceLive,
       OrganizationRoleServiceLive,
       DomainEventBusLive,
       UnitOfWorkLive,
     ]),
-    // CommandBus + QueryBus must provide TO the modules above (they dispatch
-    // via the buses) AND remain reachable from test runtimes — `provideMerge`
-    // keeps them in the runtime context so `yield* CommandBus`/`QueryBus`
-    // works in test bodies. IntegrationEventBusLive rides along in the same
-    // `provideMerge` so it lands in the SUCCESS channel rather than being
-    // `Exclude`d from requirements — the latter makes the inferred type and the
-    // emitted `.d.ts` diverge (and trips a `tsc -b` declaration-emit crash).
     Layer.provideMerge(Layer.mergeAll(CommandBusLive, QueryBusLive, IntegrationEventBusLive)),
-    // Authz registries — same shape as `server.ts`. Endpoints consume
-    // PolicyRegistry + ResourceResolverRegistry via Authz.requires*.
     Layer.provide([PolicyRegistryLive, ResourceResolverRegistryLive]),
     Layer.provide(AuthSharedDepsLive),
-    Layer.provide(EnvVars.layer),
-  );
-
-  // layerTest binds the server to an in-memory transport and exposes an
-  // HttpClient wired to it — no port, no network hop. provideMerge (instead
-  // of provide) keeps HttpClient + Database reachable in the test runtime so
-  // tests can `yield* HttpApiClient.make(Api)` and drive the DB directly.
-  // `provideMerge(ApiLive)` carries the bus exposure forward into the
-  // TestServerLive runtime context so tests can `yield* CommandBus`/`QueryBus`.
-  return HttpApiBuilder.serve().pipe(
-    Layer.provideMerge(ApiLive),
     Layer.provideMerge(TestDatabaseLive),
+    Layer.provide(EnvVars.layer),
     Layer.provideMerge(NodeHttpServer.layerTest),
   );
 };

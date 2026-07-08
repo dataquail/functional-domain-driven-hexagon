@@ -205,7 +205,6 @@ export class PendingInvitationsResponse extends Schema.Class<PendingInvitationsR
 // ==========================================
 
 export class Group extends HttpApiGroup.make("organization")
-  .middleware(UserAuthMiddleware)
   .add(
     HttpApiEndpoint.get("findMine", "/", {
       success: Schema.Array(MyOrganization),
@@ -356,6 +355,7 @@ export class Group extends HttpApiGroup.make("organization")
       error: [MembershipNotFoundError, CustomHttpApiError.ServiceUnavailable],
     }),
   )
+  .middleware(UserAuthMiddleware)
   .prefix("/orgs") {}
 
 // Admin-only listing of every org (including soft-deleted via the
@@ -364,7 +364,6 @@ export class Group extends HttpApiGroup.make("organization")
 // admins pass and members get rejected — same composition shape as
 // the user-module super-admin endpoints.
 export class AdminGroup extends HttpApiGroup.make("organizationAdmin")
-  .middleware(UserAuthMiddleware)
   .add(
     HttpApiEndpoint.get("findAll", "/", {
       query: FindAllOrganizationsParams,
@@ -375,6 +374,7 @@ export class AdminGroup extends HttpApiGroup.make("organizationAdmin")
   // Member listing moved to `Group.findMembers` (`/orgs/:orgId/members`,
   // `read`-gated) so members, org admins, and super-admins share one
   // endpoint via the OR chain.
+  .middleware(UserAuthMiddleware)
   .prefix("/admin/orgs") {}
 
 // The accept endpoint sits OUTSIDE the org/admin groups because the
@@ -383,7 +383,6 @@ export class AdminGroup extends HttpApiGroup.make("organizationAdmin")
 // to CurrentUser.userId), no `Authz.hasPermissions` check beyond that
 // — the token IS the authorization.
 export class InvitationGroup extends HttpApiGroup.make("invitations")
-  .middleware(UserAuthMiddleware)
   .add(
     HttpApiEndpoint.post("accept", "/:token/accept", {
       params: Schema.Struct({ token: Schema.String }),
@@ -396,4 +395,5 @@ export class InvitationGroup extends HttpApiGroup.make("invitations")
       ],
     }),
   )
+  .middleware(UserAuthMiddleware)
   .prefix("/invitations") {}

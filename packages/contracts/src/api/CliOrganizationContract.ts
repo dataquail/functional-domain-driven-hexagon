@@ -16,7 +16,6 @@ export class CliOrganization extends Schema.Class<CliOrganization>("CliOrganizat
 }) {}
 
 export class Group extends HttpApiGroup.make("cliOrganization")
-  .middleware(UserAuthMiddleware)
   .add(
     HttpApiEndpoint.get("listMine", "/", {
       success: Schema.Array(CliOrganization),
@@ -24,4 +23,5 @@ export class Group extends HttpApiGroup.make("cliOrganization")
       error: CustomHttpApiError.ServiceUnavailable,
     }),
   )
+  .middleware(UserAuthMiddleware)
   .prefix("/cli/orgs") {}

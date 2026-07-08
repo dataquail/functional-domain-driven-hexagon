@@ -27,7 +27,6 @@ export class CliCreateTodoPayload extends Schema.Class<CliCreateTodoPayload>(
 // CLI-facing todos surface. Same org-scoped paths as the GUI, but its own
 // shapes and a first-class `complete` verb (the GUI only has `update`).
 export class Group extends HttpApiGroup.make("cliTodos")
-  .middleware(UserAuthMiddleware)
   .add(
     HttpApiEndpoint.get("list", "/:orgId/todos", {
       params: Schema.Struct({ orgId: OrganizationId }),
@@ -65,4 +64,5 @@ export class Group extends HttpApiGroup.make("cliTodos")
       ],
     }),
   )
+  .middleware(UserAuthMiddleware)
   .prefix("/cli/orgs") {}
