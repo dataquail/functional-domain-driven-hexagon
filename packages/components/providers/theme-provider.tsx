@@ -4,10 +4,10 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import * as React from "react";
 
-const Theme = Schema.Literal("dark", "light", "system");
+const Theme = Schema.Literals(["dark", "light", "system"]);
 type Theme = typeof Theme.Type;
 
-const ActualTheme = Schema.Literal("dark", "light");
+const ActualTheme = Schema.Literals(["dark", "light"]);
 type ActualTheme = typeof ActualTheme.Type;
 
 type ThemeProviderProps = {
@@ -46,7 +46,7 @@ export const ThemeProvider = ({
   const [theme, setThemeState] = React.useState<Theme>(defaultTheme);
 
   React.useEffect(() => {
-    const stored = Option.fromNullable(window.localStorage.getItem(storageKey)).pipe(
+    const stored = Option.fromNullishOr(window.localStorage.getItem(storageKey)).pipe(
       Option.flatMap(Schema.decodeUnknownOption(Theme)),
     );
     if (Option.isSome(stored)) setThemeState(stored.value);
