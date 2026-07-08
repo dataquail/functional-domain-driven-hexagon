@@ -21,7 +21,7 @@ const WEBHOOK_SECRET = "whsec_test";
 
 // EnvVars only needs a config source, not real env. A fixed map satisfies
 // the required keys; the Stripe secret is a throwaway test value.
-const EnvVarsTest = EnvVars.Default.pipe(
+const EnvVarsTest = EnvVars.layer.pipe(
   Layer.provide(
     Layer.setConfigProvider(
       ConfigProvider.fromMap(

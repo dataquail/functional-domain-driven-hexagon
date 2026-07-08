@@ -17,4 +17,4 @@ export const DatabaseLive = Layer.unwrap(
       }),
     ),
   ),
-).pipe(Layer.provide(EnvVars.Default));
+).pipe(Layer.provide(EnvVars.layer));

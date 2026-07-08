@@ -34,5 +34,5 @@ export class CookieCodec extends Effect.Service<CookieCodec>()("CookieCodec", {
 
     return { sign, verify } as const;
   }),
-  dependencies: [EnvVars.Default],
+  dependencies: [EnvVars.layer],
 }) {}

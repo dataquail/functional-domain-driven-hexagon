@@ -200,11 +200,11 @@ const ApiLive = HttpApiBuilder.api(Api).pipe(
   // ResourceResolverRegistry via Authz.requires/requiresOn.
   Layer.provide([PolicyRegistryLive, ResourceResolverRegistryLive]),
   Layer.provide(AuthSharedDepsLive),
-  Layer.provide(EnvVars.Default),
+  Layer.provide(EnvVars.layer),
 );
 
 const NodeSdkLive = Layer.unwrap(
-  EnvVars.OTLP_URL.pipe(
+  Effect.map(EnvVars, (env) => env.OTLP_URL).pipe(
     Effect.map((url) =>
       NodeSdk.layer(() => ({
         resource: {
@@ -242,7 +242,7 @@ const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
   Layer.merge(Layer.effectDiscard(Database.Database.use((db) => db.setupConnectionListeners))),
   Layer.provide(DatabaseLive),
   Layer.provide(NodeSdkLive),
-  Layer.provide(EnvVars.Default),
+  Layer.provide(EnvVars.layer),
   Layer.provide(NodeHttpServer.layer(createServer, { port: 3001 })),
 );
 

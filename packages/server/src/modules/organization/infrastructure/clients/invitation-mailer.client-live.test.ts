@@ -17,7 +17,7 @@ const APP_URL = "https://app.example.com";
 // EnvVars only needs a config source here, not real env. A fixed map
 // provider satisfies the required keys (and pins APP_URL so the accept
 // URL is deterministic).
-const EnvVarsTest = EnvVars.Default.pipe(
+const EnvVarsTest = EnvVars.layer.pipe(
   Layer.provide(
     Layer.setConfigProvider(
       ConfigProvider.fromMap(

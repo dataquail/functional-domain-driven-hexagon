@@ -188,7 +188,7 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
     // PolicyRegistry + ResourceResolverRegistry via Authz.requires*.
     Layer.provide([PolicyRegistryLive, ResourceResolverRegistryLive]),
     Layer.provide(AuthSharedDepsLive),
-    Layer.provide(EnvVars.Default),
+    Layer.provide(EnvVars.layer),
   );
 
   // layerTest binds the server to an in-memory transport and exposes an

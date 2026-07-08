@@ -36,7 +36,7 @@ import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 // `SubscriptionRepositoryLive`. `BillingGateway` stays in R because
 // the composition root chooses Live (Stripe) vs Fake at runtime —
 // repos are owned-and-static; the gateway is the integration seam.
-// `EnvVars` stays in R because `EnvVars.Default` is provided at the
+// `EnvVars` stays in R because `EnvVars.layer` is provided at the
 // server boot level.
 
 type StartSubscriptionBusOutput = Effect.Effect<

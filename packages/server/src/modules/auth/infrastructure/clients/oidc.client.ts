@@ -153,5 +153,5 @@ export class OidcClient extends Effect.Service<OidcClient>()("OidcClient", {
 
     return { buildAuthorize, exchangeCode, buildEndSessionUrl } as const;
   }),
-  dependencies: [EnvVars.Default],
+  dependencies: [EnvVars.layer],
 }) {}

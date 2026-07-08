@@ -1,14 +1,14 @@
 import * as Config from "effect/Config";
+import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 import * as Redacted from "effect/Redacted";
 
-export class EnvVars extends Effect.Service<EnvVars>()("EnvVars", {
-  accessors: true,
-  effect: Effect.gen(function* () {
+const make = Effect.gen(function* () {
     return {
       // Server
-      PORT: yield* Config.integer("PORT").pipe(Config.withDefault(3001)),
-      ENV: yield* Config.literal("dev", "prod", "staging")("ENV").pipe(Config.withDefault("dev")),
+      PORT: yield* Config.int("PORT").pipe(Config.withDefault(3001)),
+      ENV: yield* Config.literals(["dev", "prod", "staging"], "ENV").pipe(Config.withDefault("dev")),
       APP_URL: yield* Config.url("APP_URL").pipe(
         Config.map((url) => url.origin),
         Config.withDefault("http://localhost:3000"),
@@ -39,35 +39,35 @@ export class EnvVars extends Effect.Service<EnvVars>()("EnvVars", {
         Config.withDefault("session"),
       ),
       SESSION_COOKIE_SECRET: yield* Config.redacted("SESSION_COOKIE_SECRET"),
-      SESSION_TTL_SECONDS: yield* Config.integer("SESSION_TTL_SECONDS").pipe(
+      SESSION_TTL_SECONDS: yield* Config.int("SESSION_TTL_SECONDS").pipe(
         Config.withDefault(3600),
       ),
-      SESSION_ABSOLUTE_TTL_SECONDS: yield* Config.integer("SESSION_ABSOLUTE_TTL_SECONDS").pipe(
+      SESSION_ABSOLUTE_TTL_SECONDS: yield* Config.int("SESSION_ABSOLUTE_TTL_SECONDS").pipe(
         Config.withDefault(43200),
       ),
       // Throttle for sliding-TTL writes: only `update` the session row when
       // the prior `lastUsedAt` is older than this many seconds. Prevents
       // every API call from issuing a write.
-      SESSION_TOUCH_THRESHOLD_SECONDS: yield* Config.integer(
+      SESSION_TOUCH_THRESHOLD_SECONDS: yield* Config.int(
         "SESSION_TOUCH_THRESHOLD_SECONDS",
       ).pipe(Config.withDefault(60)),
 
       // API tokens (ADR-0024). Default expiry applied when a mint request
       // omits `expiresInDays`. Touch threshold throttles the per-request
       // `last_used_at` write the bearer path issues, same as sessions.
-      API_TOKEN_DEFAULT_TTL_DAYS: yield* Config.integer("API_TOKEN_DEFAULT_TTL_DAYS").pipe(
+      API_TOKEN_DEFAULT_TTL_DAYS: yield* Config.int("API_TOKEN_DEFAULT_TTL_DAYS").pipe(
         Config.withDefault(90),
       ),
-      API_TOKEN_TOUCH_THRESHOLD_SECONDS: yield* Config.integer(
+      API_TOKEN_TOUCH_THRESHOLD_SECONDS: yield* Config.int(
         "API_TOKEN_TOUCH_THRESHOLD_SECONDS",
       ).pipe(Config.withDefault(60)),
 
       // Device authorization flow (ADR-0024). Grant TTL (how long the user
       // has to approve) and the poll interval the CLI is told to wait.
-      DEVICE_CODE_TTL_SECONDS: yield* Config.integer("DEVICE_CODE_TTL_SECONDS").pipe(
+      DEVICE_CODE_TTL_SECONDS: yield* Config.int("DEVICE_CODE_TTL_SECONDS").pipe(
         Config.withDefault(600),
       ),
-      DEVICE_POLL_INTERVAL_SECONDS: yield* Config.integer("DEVICE_POLL_INTERVAL_SECONDS").pipe(
+      DEVICE_POLL_INTERVAL_SECONDS: yield* Config.int("DEVICE_POLL_INTERVAL_SECONDS").pipe(
         Config.withDefault(5),
       ),
 
@@ -81,12 +81,12 @@ export class EnvVars extends Effect.Service<EnvVars>()("EnvVars", {
       // docker (where the host is the `mailpit` service name). The app server
       // runs on the host, so its default points at `localhost`. SES reads
       // region + credentials from the standard AWS chain (AWS_REGION, etc.).
-      MAILER: yield* Config.literal("log", "smtp", "ses")("MAILER").pipe(Config.withDefault("log")),
+      MAILER: yield* Config.literals(["log", "smtp", "ses"], "MAILER").pipe(Config.withDefault("log")),
       MAIL_FROM: yield* Config.string("MAIL_FROM").pipe(
         Config.withDefault("Effect Monorepo <noreply@localhost>"),
       ),
       MAIL_SMTP_HOST: yield* Config.string("MAIL_SMTP_HOST").pipe(Config.withDefault("localhost")),
-      MAIL_SMTP_PORT: yield* Config.integer("MAIL_SMTP_PORT").pipe(Config.withDefault(1025)),
+      MAIL_SMTP_PORT: yield* Config.int("MAIL_SMTP_PORT").pipe(Config.withDefault(1025)),
       MAIL_SMTP_SECURE: yield* Config.boolean("MAIL_SMTP_SECURE").pipe(Config.withDefault(false)),
       // Optional auth — Mailpit ignores credentials, so they default empty.
       MAIL_SMTP_USER: yield* Config.string("MAIL_SMTP_USER").pipe(Config.withDefault("")),
@@ -101,5 +101,8 @@ export class EnvVars extends Effect.Service<EnvVars>()("EnvVars", {
       // resolve this from a plans catalog; we ship one tier.
       STRIPE_PRICE_ID_DEFAULT: yield* Config.string("STRIPE_PRICE_ID_DEFAULT"),
     } as const;
-  }),
-}) {}
+});
+
+export class EnvVars extends Context.Service<EnvVars, Effect.Success<typeof make>>()("EnvVars") {
+  static readonly layer = Layer.effect(EnvVars, make);
+}
