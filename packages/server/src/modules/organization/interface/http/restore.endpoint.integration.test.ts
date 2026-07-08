@@ -54,7 +54,7 @@ suite("POST /orgs/:id/restore (integration)", () => {
       Effect.gen(function* () {
         yield* seedOrg(true);
         const client = yield* HttpApiClient.make(Api);
-        yield* client.organization.restore({ path: { id: orgId } });
+        yield* client.organization.restore({ params: { id: orgId } });
         const db = yield* Database.Database;
         const rows = yield* db
           .execute((c) =>
@@ -73,7 +73,7 @@ suite("POST /orgs/:id/restore (integration)", () => {
       Effect.gen(function* () {
         yield* seedOrg(false);
         const client = yield* HttpApiClient.make(Api);
-        const exit = yield* Effect.exit(client.organization.restore({ path: { id: orgId } }));
+        const exit = yield* Effect.exit(client.organization.restore({ params: { id: orgId } }));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof OrganizationContract.OrganizationNotDeletedError);
@@ -88,7 +88,7 @@ suite("POST /orgs/:id/restore (integration)", () => {
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
           client.organization.restore({
-            path: { id: "00000000-0000-0000-0000-000000000000" as never },
+            params: { id: "00000000-0000-0000-0000-000000000000" as never },
           }),
         );
         ok(Exit.isFailure(exit));
@@ -125,7 +125,7 @@ memberSuite("POST /orgs/:id/restore (integration, non-super-admin caller)", () =
           )
           .pipe(Effect.orDie);
         const client = yield* HttpApiClient.make(Api);
-        const exit = yield* Effect.exit(client.organization.restore({ path: { id: orgId } }));
+        const exit = yield* Effect.exit(client.organization.restore({ params: { id: orgId } }));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);

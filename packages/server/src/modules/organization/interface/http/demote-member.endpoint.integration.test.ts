@@ -79,9 +79,9 @@ suite("DELETE /orgs/:orgId/members/:userId/admin (integration, super-admin calle
         yield* seedTargetMember(true);
         const client = yield* HttpApiClient.make(Api);
 
-        yield* client.organization.demoteMember({ path: { orgId: ORG_ID, userId: TARGET_ID } });
+        yield* client.organization.demoteMember({ params: { orgId: ORG_ID, userId: TARGET_ID } });
 
-        const after = yield* client.organization.findMembers({ path: { orgId: ORG_ID } });
+        const after = yield* client.organization.findMembers({ params: { orgId: ORG_ID } });
         const target = after.members.find((m) => m.userId === TARGET_ID);
         ok(target !== undefined);
         deepStrictEqual(target.isAdmin, false);
@@ -96,7 +96,7 @@ suite("DELETE /orgs/:orgId/members/:userId/admin (integration, super-admin calle
         const client = yield* HttpApiClient.make(Api);
 
         const exit = yield* Effect.exit(
-          client.organization.demoteMember({ path: { orgId: ORG_ID, userId: TARGET_ID } }),
+          client.organization.demoteMember({ params: { orgId: ORG_ID, userId: TARGET_ID } }),
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
@@ -129,7 +129,7 @@ memberSuite("DELETE /orgs/:orgId/members/:userId/admin (integration, plain-membe
         yield* seedTargetMember(true);
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
-          client.organization.demoteMember({ path: { orgId: ORG_ID, userId: TARGET_ID } }),
+          client.organization.demoteMember({ params: { orgId: ORG_ID, userId: TARGET_ID } }),
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {

@@ -19,7 +19,7 @@ suite("DELETE /auth/tokens/:id (integration)", () => {
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         const created = yield* client.authTokens.create({ payload: { label: "ci" } });
-        yield* client.authTokens.revoke({ path: { id: created.id } });
+        yield* client.authTokens.revoke({ params: { id: created.id } });
         deepStrictEqual((yield* client.authTokens.list()).length, 0);
       }),
     );
@@ -30,9 +30,9 @@ suite("DELETE /auth/tokens/:id (integration)", () => {
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         const created = yield* client.authTokens.create({ payload: { label: "ci" } });
-        yield* client.authTokens.revoke({ path: { id: created.id } });
+        yield* client.authTokens.revoke({ params: { id: created.id } });
         const error = yield* client.authTokens
-          .revoke({ path: { id: created.id } })
+          .revoke({ params: { id: created.id } })
           .pipe(Effect.flip);
         deepStrictEqual(error._tag, "NotFound");
       }),
@@ -44,7 +44,7 @@ suite("DELETE /auth/tokens/:id (integration)", () => {
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         const error = yield* client.authTokens
-          .revoke({ path: { id: ApiTokenId.make("99999999-9999-9999-9999-999999999999") } })
+          .revoke({ params: { id: ApiTokenId.make("99999999-9999-9999-9999-999999999999") } })
           .pipe(Effect.flip);
         deepStrictEqual(error._tag, "NotFound");
       }),

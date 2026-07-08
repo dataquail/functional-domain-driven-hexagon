@@ -41,15 +41,15 @@ suite("DELETE /orgs/:orgId/invitations/:invitationId (integration, super-admin c
         yield* seedOrg;
         const client = yield* HttpApiClient.make(Api);
         const { invitationId } = yield* client.organization.inviteUser({
-          path: { orgId: ORG_ID },
+          params: { orgId: ORG_ID },
           payload: { email: "alice@example.com" },
         });
 
         yield* client.organization.revokeInvitation({
-          path: { orgId: ORG_ID, invitationId },
+          params: { orgId: ORG_ID, invitationId },
         });
 
-        const res = yield* client.organization.findInvitations({ path: { orgId: ORG_ID } });
+        const res = yield* client.organization.findInvitations({ params: { orgId: ORG_ID } });
         deepStrictEqual(res.invitations.length, 0);
       }),
     );
@@ -61,13 +61,13 @@ suite("DELETE /orgs/:orgId/invitations/:invitationId (integration, super-admin c
         yield* seedOrg;
         const client = yield* HttpApiClient.make(Api);
         const { invitationId } = yield* client.organization.inviteUser({
-          path: { orgId: ORG_ID },
+          params: { orgId: ORG_ID },
           payload: { email: "alice@example.com" },
         });
-        yield* client.organization.revokeInvitation({ path: { orgId: ORG_ID, invitationId } });
+        yield* client.organization.revokeInvitation({ params: { orgId: ORG_ID, invitationId } });
 
         const exit = yield* Effect.exit(
-          client.organization.revokeInvitation({ path: { orgId: ORG_ID, invitationId } }),
+          client.organization.revokeInvitation({ params: { orgId: ORG_ID, invitationId } }),
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
@@ -86,7 +86,7 @@ suite("DELETE /orgs/:orgId/invitations/:invitationId (integration, super-admin c
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
           client.organization.revokeInvitation({
-            path: { orgId: ORG_ID, invitationId: UNKNOWN_INVITATION_ID },
+            params: { orgId: ORG_ID, invitationId: UNKNOWN_INVITATION_ID },
           }),
         );
         ok(Exit.isFailure(exit));
@@ -127,7 +127,7 @@ suite(
           const client = yield* HttpApiClient.make(Api);
           const exit = yield* Effect.exit(
             client.organization.revokeInvitation({
-              path: { orgId: ORG_ID, invitationId: UNKNOWN_INVITATION_ID },
+              params: { orgId: ORG_ID, invitationId: UNKNOWN_INVITATION_ID },
             }),
           );
           ok(Exit.isFailure(exit));

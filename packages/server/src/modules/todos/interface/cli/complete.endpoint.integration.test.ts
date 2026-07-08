@@ -31,11 +31,11 @@ suite("POST /cli/orgs/:orgId/todos/:id/complete (integration)", () => {
         const client = yield* HttpApiClient.make(Api);
         const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
         const created = yield* client.cliTodos.create({
-          path: { orgId },
+          params: { orgId },
           payload: { title: "Buy milk" },
         });
         const completed = yield* client.cliTodos.complete({
-          path: { orgId, id: created.id },
+          params: { orgId, id: created.id },
         });
         deepStrictEqual(completed.completed, true);
         deepStrictEqual(completed.title, "Buy milk");
@@ -50,7 +50,7 @@ suite("POST /cli/orgs/:orgId/todos/:id/complete (integration)", () => {
         const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
         const ghost = TodoId.make("00000000-0000-0000-0000-000000000000");
         const error = yield* client.cliTodos
-          .complete({ path: { orgId, id: ghost } })
+          .complete({ params: { orgId, id: ghost } })
           .pipe(Effect.flip);
         deepStrictEqual(error._tag, "CliTodoNotFoundError");
       }),

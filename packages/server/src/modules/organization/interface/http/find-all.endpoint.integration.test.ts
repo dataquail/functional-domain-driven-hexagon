@@ -43,7 +43,7 @@ suite("GET /admin/orgs (integration)", () => {
         yield* seedOrgs;
         const client = yield* HttpApiClient.make(Api);
         const res = yield* client.organizationAdmin.findAll({
-          urlParams: { page: 1, pageSize: 10 },
+          query: { page: 1, pageSize: 10 },
         });
         deepStrictEqual(res.total, 1);
         deepStrictEqual(res.organizations[0]?.name, "Acme");
@@ -57,7 +57,7 @@ suite("GET /admin/orgs (integration)", () => {
         yield* seedOrgs;
         const client = yield* HttpApiClient.make(Api);
         const res = yield* client.organizationAdmin.findAll({
-          urlParams: { page: 1, pageSize: 10, includeDeleted: "true" },
+          query: { page: 1, pageSize: 10, includeDeleted: "true" },
         });
         deepStrictEqual(res.total, 2);
       }),
@@ -77,7 +77,7 @@ memberSuite("GET /admin/orgs (integration, non-super-admin caller)", () => {
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
-          client.organizationAdmin.findAll({ urlParams: { page: 1, pageSize: 10 } }),
+          client.organizationAdmin.findAll({ query: { page: 1, pageSize: 10 } }),
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {

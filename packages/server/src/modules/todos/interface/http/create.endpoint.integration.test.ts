@@ -34,7 +34,7 @@ suite("POST /orgs/:orgId/todos (integration)", () => {
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
-        const res = yield* client.todos.create({ path: { orgId }, payload: { title: "Buy milk" } });
+        const res = yield* client.todos.create({ params: { orgId }, payload: { title: "Buy milk" } });
         ok(typeof res.id === "string" && res.id.length > 0);
         deepStrictEqual(res.title, "Buy milk");
         deepStrictEqual(res.completed, false);
@@ -67,7 +67,7 @@ memberSuite("POST /orgs/:orgId/todos (integration, non-member caller)", () => {
 
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
-          client.todos.create({ path: { orgId }, payload: { title: "Buy milk" } }),
+          client.todos.create({ params: { orgId }, payload: { title: "Buy milk" } }),
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {

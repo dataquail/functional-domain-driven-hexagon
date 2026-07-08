@@ -35,15 +35,15 @@ suite("DELETE /orgs/:orgId/billing/subscriptions/current (integration)", () => {
         const client = yield* HttpApiClient.make(Api);
         const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
         yield* client.billing.startSubscription({
-          path: { orgId },
+          params: { orgId },
           payload: new BillingContract.StartSubscriptionPayload(),
         });
-        const res = yield* client.billing.cancelSubscription({ path: { orgId } });
+        const res = yield* client.billing.cancelSubscription({ params: { orgId } });
         deepStrictEqual(res.organizationId, orgId);
         deepStrictEqual(res.status, "canceled");
 
         // GET should now reflect the canceled state.
-        const current = yield* client.billing.getCurrentSubscription({ path: { orgId } });
+        const current = yield* client.billing.getCurrentSubscription({ params: { orgId } });
         deepStrictEqual(current.status, "canceled");
       }),
     );
@@ -54,7 +54,7 @@ suite("DELETE /orgs/:orgId/billing/subscriptions/current (integration)", () => {
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
-        const exit = yield* Effect.exit(client.billing.cancelSubscription({ path: { orgId } }));
+        const exit = yield* Effect.exit(client.billing.cancelSubscription({ params: { orgId } }));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof BillingContract.SubscriptionNotFoundError);

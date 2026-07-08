@@ -48,7 +48,7 @@ suite("DELETE /orgs/:id (integration)", () => {
       Effect.gen(function* () {
         yield* seedOrg(seededOrgId, "Acme");
         const client = yield* HttpApiClient.make(Api);
-        yield* client.organization.softDelete({ path: { id: seededOrgId } });
+        yield* client.organization.softDelete({ params: { id: seededOrgId } });
         const db = yield* Database.Database;
         const rows = yield* db
           .execute((c) =>
@@ -69,7 +69,7 @@ suite("DELETE /orgs/:id (integration)", () => {
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
           client.organization.softDelete({
-            path: { id: "00000000-0000-0000-0000-000000000000" as never },
+            params: { id: "00000000-0000-0000-0000-000000000000" as never },
           }),
         );
         ok(Exit.isFailure(exit));
@@ -94,7 +94,7 @@ memberSuite("DELETE /orgs/:id (integration, non-super-admin caller)", () => {
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         const { id } = yield* client.organization.create({ payload: { name: "Acme" } });
-        const exit = yield* Effect.exit(client.organization.softDelete({ path: { id } }));
+        const exit = yield* Effect.exit(client.organization.softDelete({ params: { id } }));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);

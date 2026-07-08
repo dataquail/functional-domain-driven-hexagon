@@ -24,7 +24,7 @@ suite("GET /users (integration)", () => {
         const client = yield* HttpApiClient.make(Api);
         yield* client.user.create({ payload: basePayload });
         yield* client.user.create({ payload: { ...basePayload, email: "bob@example.com" } });
-        const res = yield* client.user.find({ urlParams: { page: 1, pageSize: 10 } });
+        const res = yield* client.user.find({ query: { page: 1, pageSize: 10 } });
         deepStrictEqual(res.page, 1);
         deepStrictEqual(res.pageSize, 10);
         deepStrictEqual(res.total, 2);

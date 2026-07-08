@@ -52,9 +52,9 @@ suite("POST /orgs/:orgId/leave (integration)", () => {
         yield* seedCallerMembership;
         const client = yield* HttpApiClient.make(Api);
 
-        yield* client.organization.leave({ path: { orgId: ORG_ID } });
+        yield* client.organization.leave({ params: { orgId: ORG_ID } });
 
-        const after = yield* client.organization.findMembers({ path: { orgId: ORG_ID } });
+        const after = yield* client.organization.findMembers({ params: { orgId: ORG_ID } });
         const stillMember = after.members.some((m) => m.userId === SUPER_ADMIN_CALLER_ID);
         deepStrictEqual(stillMember, false);
       }),
@@ -66,7 +66,7 @@ suite("POST /orgs/:orgId/leave (integration)", () => {
       Effect.gen(function* () {
         yield* seedOrg;
         const client = yield* HttpApiClient.make(Api);
-        const exit = yield* Effect.exit(client.organization.leave({ path: { orgId: ORG_ID } }));
+        const exit = yield* Effect.exit(client.organization.leave({ params: { orgId: ORG_ID } }));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           deepStrictEqual(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag, "MembershipNotFoundError");

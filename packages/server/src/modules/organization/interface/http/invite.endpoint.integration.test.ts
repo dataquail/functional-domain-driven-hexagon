@@ -42,11 +42,11 @@ suite("POST /orgs/:orgId/invitations (integration, super-admin caller)", () => {
         const client = yield* HttpApiClient.make(Api);
 
         const { invitationId } = yield* client.organization.inviteUser({
-          path: { orgId: ORG_ID },
+          params: { orgId: ORG_ID },
           payload: { email: "alice@example.com" },
         });
 
-        const res = yield* client.organization.findInvitations({ path: { orgId: ORG_ID } });
+        const res = yield* client.organization.findInvitations({ params: { orgId: ORG_ID } });
         deepStrictEqual(res.invitations.length, 1);
         const invitation = res.invitations[0];
         ok(invitation !== undefined);
@@ -64,15 +64,15 @@ suite("POST /orgs/:orgId/invitations (integration, super-admin caller)", () => {
         const client = yield* HttpApiClient.make(Api);
 
         yield* client.organization.inviteUser({
-          path: { orgId: ORG_ID },
+          params: { orgId: ORG_ID },
           payload: { email: "alice@example.com" },
         });
         yield* client.organization.inviteUser({
-          path: { orgId: ORG_ID },
+          params: { orgId: ORG_ID },
           payload: { email: "alice@example.com" },
         });
 
-        const res = yield* client.organization.findInvitations({ path: { orgId: ORG_ID } });
+        const res = yield* client.organization.findInvitations({ params: { orgId: ORG_ID } });
         deepStrictEqual(res.invitations.length, 1);
       }),
     );
@@ -84,7 +84,7 @@ suite("POST /orgs/:orgId/invitations (integration, super-admin caller)", () => {
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
           client.organization.inviteUser({
-            path: { orgId: UNKNOWN_ORG_ID },
+            params: { orgId: UNKNOWN_ORG_ID },
             payload: { email: "alice@example.com" },
           }),
         );
@@ -110,7 +110,7 @@ suite("POST /orgs/:orgId/invitations (integration, non-admin member caller)", ()
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
           client.organization.inviteUser({
-            path: { orgId: ORG_ID },
+            params: { orgId: ORG_ID },
             payload: { email: "alice@example.com" },
           }),
         );

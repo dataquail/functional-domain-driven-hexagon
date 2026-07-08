@@ -35,11 +35,11 @@ suite("PUT /orgs/:orgId/todos/:id (integration)", () => {
         const client = yield* HttpApiClient.make(Api);
         const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
         const created = yield* client.todos.create({
-          path: { orgId },
+          params: { orgId },
           payload: { title: "Buy milk" },
         });
         const updated = yield* client.todos.update({
-          path: { orgId, id: created.id },
+          params: { orgId, id: created.id },
           payload: { title: "Buy oat milk", completed: true },
         });
         deepStrictEqual(updated.title, "Buy oat milk");
@@ -56,7 +56,7 @@ suite("PUT /orgs/:orgId/todos/:id (integration)", () => {
         const ghostId = TodoId.make("00000000-0000-0000-0000-000000000000");
         const exit = yield* Effect.exit(
           client.todos.update({
-            path: { orgId, id: ghostId },
+            params: { orgId, id: ghostId },
             payload: { title: "x", completed: false },
           }),
         );
@@ -77,7 +77,7 @@ suite("PUT /orgs/:orgId/todos/:id (integration)", () => {
         const { id: orgA } = yield* client.organization.create({ payload: { name: "Acme" } });
         const { id: orgB } = yield* client.organization.create({ payload: { name: "Beta" } });
         const created = yield* client.todos.create({
-          path: { orgId: orgA },
+          params: { orgId: orgA },
           payload: { title: "Buy milk" },
         });
         // Super-admin bypasses the membership gate for orgB, but the
@@ -85,7 +85,7 @@ suite("PUT /orgs/:orgId/todos/:id (integration)", () => {
         // orgA can't be reached through orgB's path.
         const exit = yield* Effect.exit(
           client.todos.update({
-            path: { orgId: orgB, id: created.id },
+            params: { orgId: orgB, id: created.id },
             payload: { title: "hijack", completed: true },
           }),
         );

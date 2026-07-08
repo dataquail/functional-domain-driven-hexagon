@@ -66,9 +66,9 @@ suite("POST /orgs/:orgId/members/:userId/admin (integration, super-admin caller)
         yield* seedOrgWithTarget;
         const client = yield* HttpApiClient.make(Api);
 
-        yield* client.organization.promoteMember({ path: { orgId: ORG_ID, userId: TARGET_ID } });
+        yield* client.organization.promoteMember({ params: { orgId: ORG_ID, userId: TARGET_ID } });
 
-        const after = yield* client.organization.findMembers({ path: { orgId: ORG_ID } });
+        const after = yield* client.organization.findMembers({ params: { orgId: ORG_ID } });
         const target = after.members.find((m) => m.userId === TARGET_ID);
         ok(target !== undefined);
         deepStrictEqual(target.isAdmin, true);
@@ -81,10 +81,10 @@ suite("POST /orgs/:orgId/members/:userId/admin (integration, super-admin caller)
       Effect.gen(function* () {
         yield* seedOrgWithTarget;
         const client = yield* HttpApiClient.make(Api);
-        yield* client.organization.promoteMember({ path: { orgId: ORG_ID, userId: TARGET_ID } });
+        yield* client.organization.promoteMember({ params: { orgId: ORG_ID, userId: TARGET_ID } });
 
         const exit = yield* Effect.exit(
-          client.organization.promoteMember({ path: { orgId: ORG_ID, userId: TARGET_ID } }),
+          client.organization.promoteMember({ params: { orgId: ORG_ID, userId: TARGET_ID } }),
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
@@ -113,7 +113,7 @@ suite("POST /orgs/:orgId/members/:userId/admin (integration, super-admin caller)
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
           client.organization.promoteMember({
-            path: { orgId: ORG_ID, userId: SUPER_ADMIN_CALLER_ID },
+            params: { orgId: ORG_ID, userId: SUPER_ADMIN_CALLER_ID },
           }),
         );
         ok(Exit.isFailure(exit));
@@ -165,9 +165,9 @@ orgAdminSuite("POST /orgs/:orgId/members/:userId/admin (integration, org-admin c
           )
           .pipe(Effect.orDie);
 
-        yield* client.organization.promoteMember({ path: { orgId, userId: TARGET_ID } });
+        yield* client.organization.promoteMember({ params: { orgId, userId: TARGET_ID } });
 
-        const after = yield* client.organization.findMembers({ path: { orgId } });
+        const after = yield* client.organization.findMembers({ params: { orgId } });
         const target = after.members.find((m) => m.userId === TARGET_ID);
         ok(target !== undefined);
         deepStrictEqual(target.isAdmin, true);
@@ -199,7 +199,7 @@ orgAdminSuite("POST /orgs/:orgId/members/:userId/admin (integration, org-admin c
           .pipe(Effect.orDie);
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
-          client.organization.promoteMember({ path: { orgId: ORG_ID, userId: TARGET_ID } }),
+          client.organization.promoteMember({ params: { orgId: ORG_ID, userId: TARGET_ID } }),
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {

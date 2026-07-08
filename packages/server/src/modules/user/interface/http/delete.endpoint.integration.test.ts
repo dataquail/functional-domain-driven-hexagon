@@ -27,8 +27,8 @@ suite("DELETE /users/:id (integration)", () => {
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         const { id } = yield* client.user.create({ payload: basePayload });
-        yield* client.user.delete({ path: { id } });
-        const after = yield* client.user.find({ urlParams: { page: 1, pageSize: 10 } });
+        yield* client.user.delete({ params: { id } });
+        const after = yield* client.user.find({ query: { page: 1, pageSize: 10 } });
         deepStrictEqual(after.total, 0);
       }),
     );
@@ -40,7 +40,7 @@ suite("DELETE /users/:id (integration)", () => {
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
           client.user.delete({
-            path: { id: "00000000-0000-0000-0000-000000000000" as never },
+            params: { id: "00000000-0000-0000-0000-000000000000" as never },
           }),
         );
         ok(Exit.isFailure(exit));

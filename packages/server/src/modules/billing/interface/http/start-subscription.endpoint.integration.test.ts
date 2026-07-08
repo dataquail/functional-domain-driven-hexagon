@@ -41,7 +41,7 @@ suite("POST /orgs/:orgId/billing/subscriptions (integration)", () => {
         const client = yield* HttpApiClient.make(Api);
         const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
         const res = yield* client.billing.startSubscription({
-          path: { orgId },
+          params: { orgId },
           payload: new BillingContract.StartSubscriptionPayload(),
         });
         deepStrictEqual(res.organizationId, orgId);
@@ -57,12 +57,12 @@ suite("POST /orgs/:orgId/billing/subscriptions (integration)", () => {
         const client = yield* HttpApiClient.make(Api);
         const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
         yield* client.billing.startSubscription({
-          path: { orgId },
+          params: { orgId },
           payload: new BillingContract.StartSubscriptionPayload(),
         });
         const exit = yield* Effect.exit(
           client.billing.startSubscription({
-            path: { orgId },
+            params: { orgId },
             payload: new BillingContract.StartSubscriptionPayload(),
           }),
         );
@@ -107,7 +107,7 @@ memberSuite("POST /orgs/:orgId/billing/subscriptions (non-admin caller)", () => 
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
           client.billing.startSubscription({
-            path: { orgId },
+            params: { orgId },
             payload: new BillingContract.StartSubscriptionPayload(),
           }),
         );

@@ -80,7 +80,7 @@ suite("POST /invitations/:token/accept (integration, member caller)", () => {
         const client = yield* HttpApiClient.make(Api);
 
         const { organizationId } = yield* client.invitations.accept({
-          path: { token: "accept-token-happy-path" },
+          params: { token: "accept-token-happy-path" },
         });
         deepStrictEqual(organizationId, ORG_ID);
 
@@ -103,7 +103,7 @@ suite("POST /invitations/:token/accept (integration, member caller)", () => {
       Effect.gen(function* () {
         yield* seedOrg;
         const client = yield* HttpApiClient.make(Api);
-        const exit = yield* Effect.exit(client.invitations.accept({ path: { token: "nope" } }));
+        const exit = yield* Effect.exit(client.invitations.accept({ params: { token: "nope" } }));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           deepStrictEqual(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag, "InvitationNotFoundError");
@@ -119,7 +119,7 @@ suite("POST /invitations/:token/accept (integration, member caller)", () => {
         yield* seedInvitation("accept-token-revoked", { revokedAt: "2020-01-01T00:00:00Z" });
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
-          client.invitations.accept({ path: { token: "accept-token-revoked" } }),
+          client.invitations.accept({ params: { token: "accept-token-revoked" } }),
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
@@ -138,7 +138,7 @@ suite("POST /invitations/:token/accept (integration, member caller)", () => {
         yield* seedInvitation("accept-token-expired", { expiresAt: iso(-SEVEN_DAYS_MS) });
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
-          client.invitations.accept({ path: { token: "accept-token-expired" } }),
+          client.invitations.accept({ params: { token: "accept-token-expired" } }),
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
@@ -170,7 +170,7 @@ suite("POST /invitations/:token/accept (integration, super-admin caller)", () =>
         yield* seedInvitation("accept-token-superadmin");
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
-          client.invitations.accept({ path: { token: "accept-token-superadmin" } }),
+          client.invitations.accept({ params: { token: "accept-token-superadmin" } }),
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {

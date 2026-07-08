@@ -29,12 +29,12 @@ suite("GET /cli/orgs/:orgId/todos (integration)", () => {
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
-        deepStrictEqual((yield* client.cliTodos.list({ path: { orgId } })).length, 0);
+        deepStrictEqual((yield* client.cliTodos.list({ params: { orgId } })).length, 0);
         const created = yield* client.cliTodos.create({
-          path: { orgId },
+          params: { orgId },
           payload: { title: "Buy milk" },
         });
-        const todos = yield* client.cliTodos.list({ path: { orgId } });
+        const todos = yield* client.cliTodos.list({ params: { orgId } });
         deepStrictEqual(
           todos.map((t) => t.id),
           [created.id],

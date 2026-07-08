@@ -30,7 +30,7 @@ suite("GET /auth/callback (integration)", () => {
         // request the endpoint must refuse before touching the IdP.
         const exit = yield* Effect.exit(
           client.auth.callback({
-            urlParams: { code: "authorization-code", state: "csrf-state" },
+            query: { code: "authorization-code", state: "csrf-state" },
           }),
         );
         ok(Exit.isFailure(exit));

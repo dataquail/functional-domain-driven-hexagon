@@ -35,14 +35,14 @@ suite("GET /orgs/:orgId/todos (integration)", () => {
         const client = yield* HttpApiClient.make(Api);
         const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
 
-        const empty = yield* client.todos.get({ path: { orgId } });
+        const empty = yield* client.todos.get({ params: { orgId } });
         deepStrictEqual(empty.length, 0);
 
-        yield* client.todos.create({ path: { orgId }, payload: { title: "first" } });
-        yield* client.todos.create({ path: { orgId }, payload: { title: "second" } });
-        yield* client.todos.create({ path: { orgId }, payload: { title: "third" } });
+        yield* client.todos.create({ params: { orgId }, payload: { title: "first" } });
+        yield* client.todos.create({ params: { orgId }, payload: { title: "second" } });
+        yield* client.todos.create({ params: { orgId }, payload: { title: "third" } });
 
-        const todos = yield* client.todos.get({ path: { orgId } });
+        const todos = yield* client.todos.get({ params: { orgId } });
         deepStrictEqual(
           todos.map((t) => t.title),
           ["third", "second", "first"],
@@ -77,7 +77,7 @@ memberSuite("GET /orgs/:orgId/todos (integration, non-member caller)", () => {
           .pipe(Effect.orDie);
 
         const client = yield* HttpApiClient.make(Api);
-        const exit = yield* Effect.exit(client.todos.get({ path: { orgId } }));
+        const exit = yield* Effect.exit(client.todos.get({ params: { orgId } }));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);

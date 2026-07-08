@@ -30,7 +30,7 @@ suite("POST /cli/orgs/:orgId/todos (integration)", () => {
         const client = yield* HttpApiClient.make(Api);
         const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
         const todo = yield* client.cliTodos.create({
-          path: { orgId },
+          params: { orgId },
           payload: { title: "Buy milk" },
         });
         deepStrictEqual(todo.title, "Buy milk");

@@ -35,11 +35,11 @@ suite("DELETE /orgs/:orgId/todos/:id (integration)", () => {
         const client = yield* HttpApiClient.make(Api);
         const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
         const created = yield* client.todos.create({
-          path: { orgId },
+          params: { orgId },
           payload: { title: "Buy milk" },
         });
-        yield* client.todos.delete({ path: { orgId, id: created.id } });
-        const todos = yield* client.todos.get({ path: { orgId } });
+        yield* client.todos.delete({ params: { orgId, id: created.id } });
+        const todos = yield* client.todos.get({ params: { orgId } });
         deepStrictEqual(todos.length, 0);
       }),
     );
@@ -51,7 +51,7 @@ suite("DELETE /orgs/:orgId/todos/:id (integration)", () => {
         const client = yield* HttpApiClient.make(Api);
         const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
         const ghostId = TodoId.make("00000000-0000-0000-0000-000000000000");
-        const exit = yield* Effect.exit(client.todos.delete({ path: { orgId, id: ghostId } }));
+        const exit = yield* Effect.exit(client.todos.delete({ params: { orgId, id: ghostId } }));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof TodosContract.TodoNotFoundError);
@@ -69,11 +69,11 @@ suite("DELETE /orgs/:orgId/todos/:id (integration)", () => {
         const { id: orgA } = yield* client.organization.create({ payload: { name: "Acme" } });
         const { id: orgB } = yield* client.organization.create({ payload: { name: "Beta" } });
         const created = yield* client.todos.create({
-          path: { orgId: orgA },
+          params: { orgId: orgA },
           payload: { title: "Buy milk" },
         });
         const exit = yield* Effect.exit(
-          client.todos.delete({ path: { orgId: orgB, id: created.id } }),
+          client.todos.delete({ params: { orgId: orgB, id: created.id } }),
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
@@ -82,7 +82,7 @@ suite("DELETE /orgs/:orgId/todos/:id (integration)", () => {
           throw new Error("expected a typed Fail, got " + JSON.stringify(exit));
         }
         // The todo is still present under its real org.
-        const todos = yield* client.todos.get({ path: { orgId: orgA } });
+        const todos = yield* client.todos.get({ params: { orgId: orgA } });
         deepStrictEqual(todos.length, 1);
       }),
     );

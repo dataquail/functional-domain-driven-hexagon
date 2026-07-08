@@ -36,11 +36,11 @@ suite("GET /orgs/:orgId/invitations (integration)", () => {
         const client = yield* HttpApiClient.make(Api);
         // Seed via the production invite path, not raw SQL.
         yield* client.organization.inviteUser({
-          path: { orgId: ORG_ID },
+          params: { orgId: ORG_ID },
           payload: { email: "alice@example.com" },
         });
 
-        const res = yield* client.organization.findInvitations({ path: { orgId: ORG_ID } });
+        const res = yield* client.organization.findInvitations({ params: { orgId: ORG_ID } });
         deepStrictEqual(res.invitations.length, 1);
         const invitation = res.invitations[0];
         if (invitation === undefined) throw new Error("expected one invitation");
@@ -55,7 +55,7 @@ suite("GET /orgs/:orgId/invitations (integration)", () => {
       Effect.gen(function* () {
         yield* seedOrg;
         const client = yield* HttpApiClient.make(Api);
-        const res = yield* client.organization.findInvitations({ path: { orgId: ORG_ID } });
+        const res = yield* client.organization.findInvitations({ params: { orgId: ORG_ID } });
         deepStrictEqual(res.invitations.length, 0);
       }),
     );
