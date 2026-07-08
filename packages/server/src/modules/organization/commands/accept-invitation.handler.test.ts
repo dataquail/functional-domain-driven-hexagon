@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
@@ -35,8 +37,8 @@ const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");
 const organizationId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const userId = UserId.make("33333333-3333-3333-3333-333333333333");
 const superAdminUserId = UserId.make("ssssssss-ssss-ssss-ssss-ssssssssssss");
-const now = DateTime.unsafeMake(new Date("2026-01-01T00:00:00Z"));
-const inOneWeek = DateTime.unsafeMake(new Date("2026-01-08T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
+const inOneWeek = DateTime.makeUnsafe(new Date("2026-01-08T00:00:00Z"));
 
 const seed = (): InvitationRoot =>
   InvitationRootOps.issue({
@@ -96,7 +98,7 @@ describe("acceptInvitation", () => {
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof InvitationTokenNotFound, true);
       }
     }).pipe(Effect.provide(TestLayer)),
@@ -107,14 +109,14 @@ describe("acceptInvitation", () => {
       const inv = yield* InvitationRepository;
       const accepted = InvitationRootOps.accept(seed(), { userId, now });
       if (Result.isFailure(accepted)) throw new Error("expected Right");
-      yield* inv.insertOne(accepted.right.invitation);
+      yield* inv.insertOne(accepted.success.invitation);
 
       const exit = yield* Effect.exit(
         acceptInvitation(AcceptInvitationCommand.make({ token: "tok-abc", userId })),
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof InvitationAlreadyAccepted, true);
       }
     }).pipe(Effect.provide(TestLayer)),
@@ -125,14 +127,14 @@ describe("acceptInvitation", () => {
       const inv = yield* InvitationRepository;
       const revoked = InvitationRootOps.revoke(seed(), { now });
       if (Result.isFailure(revoked)) throw new Error("expected Right");
-      yield* inv.insertOne(revoked.right.invitation);
+      yield* inv.insertOne(revoked.success.invitation);
 
       const exit = yield* Effect.exit(
         acceptInvitation(AcceptInvitationCommand.make({ token: "tok-abc", userId })),
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof InvitationRevoked, true);
       }
     }).pipe(Effect.provide(TestLayer)),
@@ -149,8 +151,8 @@ describe("acceptInvitation", () => {
         organizationId,
         inviteeEmail: "alice@example.com",
         token: "tok-abc",
-        expiresAt: DateTime.unsafeMake(new Date("2020-01-01T00:00:00Z")),
-        now: DateTime.unsafeMake(new Date("2019-12-01T00:00:00Z")),
+        expiresAt: DateTime.makeUnsafe(new Date("2020-01-01T00:00:00Z")),
+        now: DateTime.makeUnsafe(new Date("2019-12-01T00:00:00Z")),
       }).invitation;
       yield* inv.insertOne(expired);
 
@@ -159,7 +161,7 @@ describe("acceptInvitation", () => {
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof InvitationExpired, true);
       }
     }).pipe(Effect.provide(TestLayer)),
@@ -177,7 +179,7 @@ describe("acceptInvitation", () => {
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof SuperAdminCannotOwnOrganization, true);
       }
     }).pipe(

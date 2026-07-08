@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
@@ -13,8 +15,8 @@ import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { OrganizationRepositoryFake } from "./organization.repository-fake.js";
 
 const id = OrganizationId.make("11111111-1111-1111-1111-111111111111");
-const now = DateTime.unsafeMake(new Date("2026-01-01T00:00:00Z"));
-const later = DateTime.unsafeMake(new Date("2026-02-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
+const later = DateTime.makeUnsafe(new Date("2026-02-01T00:00:00Z"));
 const provide = Effect.provide(OrganizationRepositoryFake);
 
 describe("OrganizationRepositoryFake", () => {
@@ -36,11 +38,11 @@ describe("OrganizationRepositoryFake", () => {
       yield* repo.insertOne(organization);
       const deletedEither = OrganizationRootOps.softDelete(organization, { now: later });
       if (Result.isFailure(deletedEither)) throw new Error("expected Right");
-      yield* repo.updateOne(deletedEither.right.organization);
+      yield* repo.updateOne(deletedEither.success.organization);
       const exit = yield* Effect.exit(repo.findOneById(id));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof OrganizationNotFound, true);
       }
     }).pipe(provide),
@@ -53,7 +55,7 @@ describe("OrganizationRepositoryFake", () => {
       yield* repo.insertOne(organization);
       const deletedEither = OrganizationRootOps.softDelete(organization, { now: later });
       if (Result.isFailure(deletedEither)) throw new Error("expected Right");
-      yield* repo.updateOne(deletedEither.right.organization);
+      yield* repo.updateOne(deletedEither.success.organization);
       const found = yield* repo.findOneByIdIncludingDeleted(id);
       deepStrictEqual(found.deletedAt !== null, true);
     }).pipe(provide),
@@ -66,7 +68,7 @@ describe("OrganizationRepositoryFake", () => {
       const exit = yield* Effect.exit(repo.updateOne(organization));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof OrganizationNotFound, true);
       }
     }).pipe(provide),

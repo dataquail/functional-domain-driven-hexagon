@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
@@ -84,7 +86,7 @@ suite("DeviceGrantRepositoryLive (integration)", () => {
       const lookup = yield* Effect.exit(repo.findOneByCodeHash("dc-hash"));
       deepStrictEqual(Exit.isFailure(lookup), true);
       if (Exit.isFailure(lookup)) {
-        const error = lookup.cause._tag === "Fail" ? lookup.cause.error : null;
+        const error = Cause.hasFails(lookup.cause) ? Cause.findErrorOption(lookup.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof DeviceGrantNotFound, true);
       }
       const second = yield* Effect.exit(repo.deleteOne(id));

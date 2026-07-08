@@ -45,7 +45,7 @@ const toDomainSubscriptionState = (sub: Stripe.Subscription): SubscriptionState 
   return {
     stripeSubscriptionId: sub.id,
     status: sub.status,
-    currentPeriodEnd: epoch !== null ? DateTime.unsafeMake(new Date(epoch * 1000)) : null,
+    currentPeriodEnd: epoch !== null ? DateTime.makeUnsafe(new Date(epoch * 1000)) : null,
   };
 };
 
@@ -62,7 +62,7 @@ const toDomainStripeEvent = (event: Stripe.Event): StripeWebhookEvent => {
         subscription: {
           stripeSubscriptionId: sub.id,
           status: sub.status,
-          currentPeriodEnd: epoch !== null ? DateTime.unsafeMake(new Date(epoch * 1000)) : null,
+          currentPeriodEnd: epoch !== null ? DateTime.makeUnsafe(new Date(epoch * 1000)) : null,
         },
       };
     }

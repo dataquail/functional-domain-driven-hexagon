@@ -54,7 +54,7 @@ suite("findUserRoles (integration)", () => {
       const repo = yield* RolesRepository;
       const granted = RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin");
       if (Result.isFailure(granted)) throw new Error("expected Right");
-      yield* repo.upsertOne(granted.right.roles);
+      yield* repo.upsertOne(granted.success.roles);
       const result = yield* findUserRoles(FindUserRolesQuery.make({ userId }));
       deepStrictEqual([...result.roles], ["super_admin"]);
     }).pipe(Effect.provide(TestLayer)),

@@ -9,7 +9,7 @@ import { SessionRootOps } from "./session.root.js";
 
 const sessionId = SessionId.make("11111111-1111-1111-1111-111111111111");
 const userId = UserId.make("22222222-2222-2222-2222-222222222222");
-const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
 
 describe("SessionRootOps.create", () => {
   it("populates required fields and starts unrevoked", () => {

@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
@@ -32,8 +34,8 @@ suite("GET /auth/callback (integration)", () => {
           }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof CustomHttpApiError.Unauthorized);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Unauthorized);
         }
       }),
     );

@@ -26,7 +26,7 @@ describe("RolesRepositoryFake", () => {
       const repo = yield* RolesRepository;
       const granted = RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin");
       if (Result.isFailure(granted)) throw new Error("expected Right");
-      yield* repo.upsertOne(granted.right.roles);
+      yield* repo.upsertOne(granted.success.roles);
       const fetched = yield* repo.findOneByUserId(userId);
       deepStrictEqual([...fetched.roles], ["super_admin"]);
     }).pipe(Effect.provide(RolesRepositoryFake)),

@@ -22,7 +22,7 @@ import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const issuedBy = UserId.make("99999999-9999-9999-9999-999999999999");
-const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
 
 const TestLayer = Layer.mergeAll(OrganizationRolesRepositoryLive, OrganizationRepositoryLive).pipe(
   Layer.provideMerge(TestDatabaseLive),
@@ -81,7 +81,7 @@ suite("findUserOrganizationRoles (integration)", () => {
         issuedBy,
       );
       if (Result.isFailure(granted)) throw new Error("expected Right");
-      yield* repo.upsertOne(granted.right.organizationRoles);
+      yield* repo.upsertOne(granted.success.organizationRoles);
       const result = yield* findUserOrganizationRoles(
         FindUserOrganizationRolesQuery.make({ userId, organizationId: orgId }),
       );

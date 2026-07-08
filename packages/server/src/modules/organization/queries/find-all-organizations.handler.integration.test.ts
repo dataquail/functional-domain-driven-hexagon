@@ -16,8 +16,8 @@ import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const acmeId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const beta = OrganizationId.make("22222222-2222-2222-2222-222222222222");
-const now = DateTime.unsafeMake(new Date("2026-01-01T00:00:00Z"));
-const later = DateTime.unsafeMake(new Date("2026-02-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
+const later = DateTime.makeUnsafe(new Date("2026-02-01T00:00:00Z"));
 
 const TestLayer = OrganizationRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
@@ -40,7 +40,7 @@ suite("findAllOrganizations (integration)", () => {
       yield* repo.insertOne(betaOrg);
       const deletedEither = OrganizationRootOps.softDelete(betaOrg, { now: later });
       if (Result.isFailure(deletedEither)) throw new Error("expected Right");
-      yield* repo.updateOne(deletedEither.right.organization);
+      yield* repo.updateOne(deletedEither.success.organization);
 
       const result = yield* findAllOrganizations(
         FindAllOrganizationsQuery.make({ page: 1, pageSize: 10, includeDeleted: false }),
@@ -60,7 +60,7 @@ suite("findAllOrganizations (integration)", () => {
       yield* repo.insertOne(betaOrg);
       const deletedEither = OrganizationRootOps.softDelete(betaOrg, { now: later });
       if (Result.isFailure(deletedEither)) throw new Error("expected Right");
-      yield* repo.updateOne(deletedEither.right.organization);
+      yield* repo.updateOne(deletedEither.success.organization);
 
       const result = yield* findAllOrganizations(
         FindAllOrganizationsQuery.make({ page: 1, pageSize: 10, includeDeleted: true }),

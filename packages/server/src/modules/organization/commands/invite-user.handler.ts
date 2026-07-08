@@ -40,14 +40,14 @@ export const inviteUser = (cmd: InviteUserCommand): InviteUserOutput =>
         // `existing` is open by construction, so reissue can't reject it;
         // a Left here would mean a concurrent accept/revoke — treat as a
         // defect (same posture as the accept handler's concurrent-revoke).
-        if (Result.isFailure(result)) return yield* Effect.die(result.left);
+        if (Result.isFailure(result)) return yield* Effect.die(result.failure);
         // The row was found moments ago; a missing row on update means a
         // concurrent delete — a defect, not a caller-visible error (keeps
         // InviteUser's failure channel to PersistenceUnavailable).
         yield* repo
-          .updateOne(result.right.invitation)
+          .updateOne(result.success.invitation)
           .pipe(Effect.catchTag("InvitationNotFound", Effect.die));
-        yield* bus.dispatch(result.right.events);
+        yield* bus.dispatch(result.success.events);
         return existing.id;
       }
       const id = InvitationId.make(crypto.randomUUID());

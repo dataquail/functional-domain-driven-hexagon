@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
@@ -16,8 +18,8 @@ const aliceId = TodoId.make("11111111-1111-1111-1111-111111111111");
 const bobId = TodoId.make("22222222-2222-2222-2222-222222222222");
 const orgId = OrganizationId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const otherOrgId = OrganizationId.make("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
-const later = DateTime.unsafeMake(new Date("2025-02-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
+const later = DateTime.makeUnsafe(new Date("2025-02-01T00:00:00Z"));
 
 const buyMilk = TodoRootOps.create({ id: aliceId, organizationId: orgId, title: "Buy milk", now });
 
@@ -45,7 +47,7 @@ describe("TodosRepositoryFake", () => {
         const exit = yield* Effect.exit(repo.findOneById(orgId, bobId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
           deepStrictEqual(error instanceof TodoNotFound, true);
         }
       }).pipe(provide),
@@ -58,7 +60,7 @@ describe("TodosRepositoryFake", () => {
         const exit = yield* Effect.exit(repo.findOneById(otherOrgId, buyMilk.id));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
           deepStrictEqual(error instanceof TodoNotFound, true);
         }
       }).pipe(provide),
@@ -88,7 +90,7 @@ describe("TodosRepositoryFake", () => {
         const exit = yield* Effect.exit(repo.updateOne(buyMilk));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
           deepStrictEqual(error instanceof TodoNotFound, true);
         }
       }).pipe(provide),
@@ -112,7 +114,7 @@ describe("TodosRepositoryFake", () => {
         const exit = yield* Effect.exit(repo.deleteOne(orgId, bobId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
           deepStrictEqual(error instanceof TodoNotFound, true);
         }
       }).pipe(provide),

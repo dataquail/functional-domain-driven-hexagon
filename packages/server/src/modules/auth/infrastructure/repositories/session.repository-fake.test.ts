@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
@@ -15,7 +17,7 @@ import { SessionRepositoryFake } from "./session.repository-fake.js";
 const idA = SessionId.make("11111111-1111-1111-1111-111111111111");
 const idMissing = SessionId.make("99999999-9999-9999-9999-999999999999");
 const userId = UserId.make("22222222-2222-2222-2222-222222222222");
-const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
 
 const makeSession = (id: SessionId) =>
   SessionRootOps.create({
@@ -46,7 +48,7 @@ describe("SessionRepositoryFake", () => {
       const exit = yield* Effect.exit(repo.findOneById(idMissing));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof SessionNotFound, true);
       }
     }).pipe(provide),
@@ -102,7 +104,7 @@ describe("SessionRepositoryFake", () => {
       const exit = yield* Effect.exit(repo.updateOne(makeSession(idMissing)));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof SessionNotFound, true);
       }
     }).pipe(provide),
@@ -119,7 +121,7 @@ describe("SessionRepositoryFake", () => {
       const exit = yield* Effect.exit(repo.updateOne(touched));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof SessionNotFound, true);
       }
     }).pipe(provide),

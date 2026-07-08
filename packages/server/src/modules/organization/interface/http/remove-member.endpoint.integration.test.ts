@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
@@ -80,8 +82,8 @@ suite("DELETE /orgs/:orgId/members/:userId (integration, super-admin caller)", (
           client.organization.removeMember({ path: { orgId: ORG_ID, userId: TARGET_ID } }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          deepStrictEqual(exit.cause.error._tag, "MembershipNotFoundError");
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          deepStrictEqual(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag, "MembershipNotFoundError");
         }
       }),
     );
@@ -97,8 +99,8 @@ suite("DELETE /orgs/:orgId/members/:userId (integration, super-admin caller)", (
           }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          deepStrictEqual(exit.cause.error._tag, "OrganizationNotFoundError");
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          deepStrictEqual(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag, "OrganizationNotFoundError");
         }
       }),
     );
@@ -127,8 +129,8 @@ suite("DELETE /orgs/:orgId/members/:userId (integration, non-admin member caller
           client.organization.removeMember({ path: { orgId: ORG_ID, userId: TARGET_ID } }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof CustomHttpApiError.Forbidden);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);
         }
       }),
     );

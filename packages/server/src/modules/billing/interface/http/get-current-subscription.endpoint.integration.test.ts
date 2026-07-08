@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import { BillingContract } from "@org/contracts/api/Contracts";
@@ -52,8 +54,8 @@ suite("GET /orgs/:orgId/billing/subscriptions/current (integration)", () => {
         const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
         const exit = yield* Effect.exit(client.billing.getCurrentSubscription({ path: { orgId } }));
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof BillingContract.SubscriptionNotFoundError);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof BillingContract.SubscriptionNotFoundError);
         }
       }),
     );
@@ -85,8 +87,8 @@ memberSuite("GET /orgs/:orgId/billing/subscriptions/current (non-member caller)"
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(client.billing.getCurrentSubscription({ path: { orgId } }));
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof CustomHttpApiError.Forbidden);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);
         } else {
           throw new Error("expected typed Fail, got " + JSON.stringify(exit));
         }

@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
@@ -97,8 +99,8 @@ suite("DELETE /orgs/:orgId/members/:userId/admin (integration, super-admin calle
           client.organization.demoteMember({ path: { orgId: ORG_ID, userId: TARGET_ID } }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          const error = exit.cause.error;
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          const error = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
           ok(error instanceof OrganizationContract.OrganizationRoleConflictError);
           deepStrictEqual(error.reason, "not_admin");
         }
@@ -130,8 +132,8 @@ memberSuite("DELETE /orgs/:orgId/members/:userId/admin (integration, plain-membe
           client.organization.demoteMember({ path: { orgId: ORG_ID, userId: TARGET_ID } }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof CustomHttpApiError.Forbidden);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);
         }
       }),
     );

@@ -1,3 +1,4 @@
+import * as Cause from "effect/Cause";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
@@ -15,8 +16,8 @@ import { UserRepositoryFake } from "./user.repository-fake.js";
 
 const aliceId = UserId.make("11111111-1111-1111-1111-111111111111");
 const bobId = UserId.make("22222222-2222-2222-2222-222222222222");
-const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
-const later = DateTime.unsafeMake(new Date("2025-02-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
+const later = DateTime.makeUnsafe(new Date("2025-02-01T00:00:00Z"));
 
 const address = AddressValueObject.make({
   country: "USA",
@@ -53,7 +54,7 @@ describe("UserRepositoryFake", () => {
         const exit = yield* Effect.exit(repo.insertOne(clashing));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
           deepStrictEqual(error instanceof UserAlreadyExists, true);
           deepStrictEqual((error as UserAlreadyExists).email, alice.email);
         }
@@ -68,7 +69,7 @@ describe("UserRepositoryFake", () => {
         const exit = yield* Effect.exit(repo.findOneById(aliceId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
           deepStrictEqual(error instanceof UserNotFound, true);
         }
       }).pipe(provide),
@@ -119,7 +120,7 @@ describe("UserRepositoryFake", () => {
         const exit = yield* Effect.exit(repo.updateOne(alice));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
           deepStrictEqual(error instanceof UserNotFound, true);
         }
       }).pipe(provide),
@@ -143,7 +144,7 @@ describe("UserRepositoryFake", () => {
         const exit = yield* Effect.exit(repo.deleteOne(aliceId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
           deepStrictEqual(error instanceof UserNotFound, true);
         }
       }).pipe(provide),

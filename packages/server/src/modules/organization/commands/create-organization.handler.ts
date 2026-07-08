@@ -69,9 +69,9 @@ export const createOrganization = (cmd: CreateOrganizationCommand): CreateOrgani
     const seedRoles = OrganizationRolesRootOps.empty(cmd.actorUserId, id);
     const grantEither = OrganizationRolesRootOps.grantRole(seedRoles, "admin", cmd.actorUserId);
     if (Result.isFailure(grantEither)) {
-      return yield* Effect.die(grantEither.left);
+      return yield* Effect.die(grantEither.failure);
     }
-    const grantResult = grantEither.right;
+    const grantResult = grantEither.success;
 
     yield* orgRepo.insertOne(organization);
     yield* memberRepo.insertOne(membership);

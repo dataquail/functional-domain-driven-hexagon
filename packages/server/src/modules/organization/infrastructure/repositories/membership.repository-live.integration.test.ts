@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
@@ -18,7 +20,7 @@ import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const otherUserId = UserId.make("22222222-2222-2222-2222-222222222222");
 const organizationId = OrganizationId.make("33333333-3333-3333-3333-333333333333");
-const now = DateTime.unsafeMake(new Date("2026-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
 
 // organization.memberships FKs to "user".users(id) and
 // organization.organizations(id) — seed both via raw SQL since neither
@@ -89,7 +91,7 @@ suite("MembershipRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.findOneByUserIdAndOrgId(otherUserId, organizationId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
           deepStrictEqual(error instanceof MembershipNotFound, true);
         }
       }).pipe(Effect.provide(TestLayer)),
@@ -116,7 +118,7 @@ suite("MembershipRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.deleteOne(userId, organizationId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
           deepStrictEqual(error instanceof MembershipNotFound, true);
         }
       }).pipe(Effect.provide(TestLayer)),

@@ -34,7 +34,7 @@ describe("OrganizationRolesRepositoryFake", () => {
         issuedBy,
       );
       if (Result.isFailure(granted)) throw new Error("expected Right");
-      yield* repo.upsertOne(granted.right.organizationRoles);
+      yield* repo.upsertOne(granted.success.organizationRoles);
       const fetched = yield* repo.findOneByUserIdAndOrgId(userId, orgId);
       deepStrictEqual(
         fetched.roles.map((r) => ({ role: r.role, issuedBy: r.issuedBy })),

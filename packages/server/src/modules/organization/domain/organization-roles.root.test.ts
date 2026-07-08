@@ -52,7 +52,7 @@ describe("OrganizationRolesRootOps.hasRole", () => {
     );
     if (Result.isFailure(result)) throw new Error("expected Right");
     deepStrictEqual(
-      OrganizationRolesRootOps.hasRole(result.right.organizationRoles, "admin"),
+      OrganizationRolesRootOps.hasRole(result.success.organizationRoles, "admin"),
       true,
     );
   });
@@ -67,10 +67,10 @@ describe("OrganizationRolesRootOps.grantRole", () => {
     );
     if (Result.isFailure(result)) throw new Error("expected Right");
     deepStrictEqual(
-      result.right.organizationRoles.roles.map((r) => ({ role: r.role, issuedBy: r.issuedBy })),
+      result.success.organizationRoles.roles.map((r) => ({ role: r.role, issuedBy: r.issuedBy })),
       [{ role: "admin", issuedBy }],
     );
-    const event = expectEvent(result.right.events, "OrganizationRoleGranted");
+    const event = expectEvent(result.success.events, "OrganizationRoleGranted");
     deepStrictEqual(event.userId, userId);
     deepStrictEqual(event.organizationId, orgId);
     deepStrictEqual(event.role, "admin");
@@ -85,13 +85,13 @@ describe("OrganizationRolesRootOps.grantRole", () => {
     );
     if (Result.isFailure(first)) throw new Error("expected Right");
     const second = OrganizationRolesRootOps.grantRole(
-      first.right.organizationRoles,
+      first.success.organizationRoles,
       "admin",
       issuedBy,
     );
     deepStrictEqual(Result.isFailure(second), true);
     if (Result.isFailure(second)) {
-      deepStrictEqual(second.left instanceof AlreadyHasOrganizationRole, true);
+      deepStrictEqual(second.failure instanceof AlreadyHasOrganizationRole, true);
     }
   });
 });
@@ -104,10 +104,10 @@ describe("OrganizationRolesRootOps.revokeRole", () => {
       issuedBy,
     );
     if (Result.isFailure(granted)) throw new Error("expected Right");
-    const result = OrganizationRolesRootOps.revokeRole(granted.right.organizationRoles, "admin");
+    const result = OrganizationRolesRootOps.revokeRole(granted.success.organizationRoles, "admin");
     if (Result.isFailure(result)) throw new Error("expected Right");
-    deepStrictEqual([...result.right.organizationRoles.roles], []);
-    const event = expectEvent(result.right.events, "OrganizationRoleRevoked");
+    deepStrictEqual([...result.success.organizationRoles.roles], []);
+    const event = expectEvent(result.success.events, "OrganizationRoleRevoked");
     deepStrictEqual(event.userId, userId);
     deepStrictEqual(event.organizationId, orgId);
     deepStrictEqual(event.role, "admin");
@@ -120,7 +120,7 @@ describe("OrganizationRolesRootOps.revokeRole", () => {
     );
     deepStrictEqual(Result.isFailure(result), true);
     if (Result.isFailure(result)) {
-      deepStrictEqual(result.left instanceof DoesNotHaveOrganizationRole, true);
+      deepStrictEqual(result.failure instanceof DoesNotHaveOrganizationRole, true);
     }
   });
 });

@@ -34,7 +34,7 @@ const decodeWebhookEvent = Schema.decodeUnknownEffect(StripeWebhookEvent);
 export const FAKE_WEBHOOK_SIGNATURE = "t=fake,v1=fake";
 
 const periodEnd30Days = (now: Date): DateTime.Utc =>
-  DateTime.unsafeMake(new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000));
+  DateTime.makeUnsafe(new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000));
 
 type CustomerState = {
   readonly stripeCustomerId: string;

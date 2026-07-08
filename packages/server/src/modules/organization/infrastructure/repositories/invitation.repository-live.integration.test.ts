@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
@@ -26,8 +28,8 @@ import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 const invitationId = InvitationId.make("44444444-4444-4444-4444-444444444444");
 const orgId = OrganizationId.make("55555555-5555-5555-5555-555555555555");
 const userId = UserId.make("66666666-6666-6666-6666-666666666666");
-const now = DateTime.unsafeMake(new Date("2026-01-01T00:00:00Z"));
-const expiresAt = DateTime.unsafeMake(new Date("2026-01-08T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
+const expiresAt = DateTime.makeUnsafe(new Date("2026-01-08T00:00:00Z"));
 
 // organization.invitations FKs to organization.organizations — seed the
 // org row via raw SQL.
@@ -86,7 +88,7 @@ suite("InvitationRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.findOneById(invitationId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
           deepStrictEqual(error instanceof InvitationNotFound, true);
         }
       }).pipe(Effect.provide(TestLayer)),
@@ -99,7 +101,7 @@ suite("InvitationRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.findOneByToken("missing"));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
           deepStrictEqual(error instanceof InvitationTokenNotFound, true);
         }
       }).pipe(Effect.provide(TestLayer)),
@@ -114,7 +116,7 @@ suite("InvitationRepositoryLive (integration)", () => {
         yield* repo.insertOne(seed());
         const accepted = InvitationRootOps.accept(seed(), { userId, now });
         if (Result.isFailure(accepted)) throw new Error("expected Right");
-        yield* repo.updateOne(accepted.right.invitation);
+        yield* repo.updateOne(accepted.success.invitation);
         const found = yield* repo.findOneById(invitationId);
         deepStrictEqual(found.acceptedAt !== null, true);
       }).pipe(Effect.provide(TestLayer)),
@@ -125,14 +127,14 @@ suite("InvitationRepositoryLive (integration)", () => {
         yield* seedOrg;
         const repo = yield* InvitationRepository;
         yield* repo.insertOne(seed());
-        const newExpiresAt = DateTime.unsafeMake(new Date("2026-02-01T00:00:00Z"));
+        const newExpiresAt = DateTime.makeUnsafe(new Date("2026-02-01T00:00:00Z"));
         const reissued = InvitationRootOps.reissue(seed(), {
           token: "tok-rotated",
           expiresAt: newExpiresAt,
           now,
         });
         if (Result.isFailure(reissued)) throw new Error("expected Right");
-        yield* repo.updateOne(reissued.right.invitation);
+        yield* repo.updateOne(reissued.success.invitation);
 
         // The new token must resolve...
         const byNew = yield* repo.findOneByToken("tok-rotated");
@@ -146,7 +148,7 @@ suite("InvitationRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.findOneByToken("tok-abc"));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
           deepStrictEqual(error instanceof InvitationTokenNotFound, true);
         }
       }).pipe(Effect.provide(TestLayer)),
@@ -159,7 +161,7 @@ suite("InvitationRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.updateOne(seed()));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
           deepStrictEqual(error instanceof InvitationNotFound, true);
         }
       }).pipe(Effect.provide(TestLayer)),
@@ -180,7 +182,7 @@ suite("InvitationRepositoryLive (integration)", () => {
           inviteeEmail: "bob@example.com",
           token: "tok-bob",
           expiresAt,
-          now: DateTime.unsafeMake(new Date("2026-01-02T00:00:00Z")),
+          now: DateTime.makeUnsafe(new Date("2026-01-02T00:00:00Z")),
         }).invitation;
         yield* repo.insertOne(later);
         const all = yield* repo.findManyByOrganizationId(orgId);
@@ -219,7 +221,7 @@ suite("InvitationRepositoryLive (integration)", () => {
         yield* repo.insertOne(seed());
         const revoked = InvitationRootOps.revoke(seed(), { now });
         if (Result.isFailure(revoked)) throw new Error("expected Right");
-        yield* repo.updateOne(revoked.right.invitation);
+        yield* repo.updateOne(revoked.success.invitation);
         const found = yield* repo.findOneOpenByOrganizationIdAndEmail(orgId, "alice@example.com");
         deepStrictEqual(found, null);
       }).pipe(Effect.provide(TestLayer)),

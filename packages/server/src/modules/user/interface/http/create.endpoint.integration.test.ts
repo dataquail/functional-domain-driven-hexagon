@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import { UserContract } from "@org/contracts/api/Contracts";
@@ -49,8 +51,8 @@ suite("POST /users (integration)", () => {
         yield* client.user.create({ payload: basePayload });
         const exit = yield* Effect.exit(client.user.create({ payload: basePayload }));
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          const err = exit.cause.error;
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          const err = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
           ok(err instanceof UserContract.UserAlreadyExistsError);
           deepStrictEqual(err.email, basePayload.email);
         } else {

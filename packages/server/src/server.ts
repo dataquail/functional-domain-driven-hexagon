@@ -132,7 +132,7 @@ const PolicyRegistryLive = makePolicyRegistry([
 // repository Tags. Adding a module to the registry: import its
 // `*ResolverEntry` Tag + `*ResolverEntryLive` layer, yield the Tag,
 // and provide the layer below.
-const ResourceResolverRegistryLive = Layer.unwrapEffect(
+const ResourceResolverRegistryLive = Layer.unwrap(
   Effect.gen(function* () {
     const userResolver = yield* UserResolverEntry;
     const organizationResolver = yield* OrganizationResolverEntry;
@@ -203,7 +203,7 @@ const ApiLive = HttpApiBuilder.api(Api).pipe(
   Layer.provide(EnvVars.Default),
 );
 
-const NodeSdkLive = Layer.unwrapEffect(
+const NodeSdkLive = Layer.unwrap(
   EnvVars.OTLP_URL.pipe(
     Effect.map((url) =>
       NodeSdk.layer(() => ({

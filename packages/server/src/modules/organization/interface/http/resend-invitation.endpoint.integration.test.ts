@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
@@ -64,8 +66,8 @@ suite("POST /orgs/:orgId/invitations/:invitationId/resend (integration)", () => 
           }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          deepStrictEqual(exit.cause.error._tag, "InvitationNotFoundError");
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          deepStrictEqual(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag, "InvitationNotFoundError");
         }
       }),
     );

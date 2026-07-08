@@ -28,7 +28,7 @@ import { fakeTransaction } from "@/test-utils/fake-transaction-context.js";
 
 const acme = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const subId = SubscriptionId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
-const seedNow = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
+const seedNow = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
 const stripeSubId = "sub_test";
 
 const seedSubscription = () =>

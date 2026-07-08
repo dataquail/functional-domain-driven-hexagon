@@ -88,7 +88,7 @@ const seedAdmin = (userId: UserId, organizationId: OrganizationId) =>
       issuer,
     );
     if (Result.isFailure(granted)) throw new Error("expected Right");
-    yield* rolesRepo.upsertOne(granted.right.organizationRoles);
+    yield* rolesRepo.upsertOne(granted.success.organizationRoles);
   });
 
 const suite = describe.sequential;

@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
@@ -14,7 +16,7 @@ import { DeviceGrantRepositoryFake } from "./device-grant.repository-fake.js";
 
 const id = DeviceGrantId.make("11111111-1111-1111-1111-111111111111");
 const userId = UserId.make("22222222-2222-2222-2222-222222222222");
-const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
 
 const seed = () =>
   Effect.gen(function* () {
@@ -48,7 +50,7 @@ describe("DeviceGrantRepositoryFake", () => {
       const exit = yield* Effect.exit(repo.findOneByUserCode("ZZZZ-9999"));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof DeviceGrantNotFound, true);
       }
     }).pipe(provide),

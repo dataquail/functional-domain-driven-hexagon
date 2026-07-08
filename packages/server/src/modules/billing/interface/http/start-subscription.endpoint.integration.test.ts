@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import { BillingContract } from "@org/contracts/api/Contracts";
@@ -65,8 +67,8 @@ suite("POST /orgs/:orgId/billing/subscriptions (integration)", () => {
           }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof BillingContract.SubscriptionAlreadyExistsError);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof BillingContract.SubscriptionAlreadyExistsError);
         }
       }),
     );
@@ -110,8 +112,8 @@ memberSuite("POST /orgs/:orgId/billing/subscriptions (non-admin caller)", () => 
           }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof CustomHttpApiError.Forbidden);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);
         } else {
           throw new Error("expected typed Fail, got " + JSON.stringify(exit));
         }

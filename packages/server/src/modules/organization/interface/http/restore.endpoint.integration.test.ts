@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
@@ -73,8 +75,8 @@ suite("POST /orgs/:id/restore (integration)", () => {
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(client.organization.restore({ path: { id: orgId } }));
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof OrganizationContract.OrganizationNotDeletedError);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof OrganizationContract.OrganizationNotDeletedError);
         }
       }),
     );
@@ -90,8 +92,8 @@ suite("POST /orgs/:id/restore (integration)", () => {
           }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof OrganizationContract.OrganizationNotFoundError);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof OrganizationContract.OrganizationNotFoundError);
         }
       }),
     );
@@ -125,8 +127,8 @@ memberSuite("POST /orgs/:id/restore (integration, non-super-admin caller)", () =
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(client.organization.restore({ path: { id: orgId } }));
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof CustomHttpApiError.Forbidden);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);
         }
       }),
     );

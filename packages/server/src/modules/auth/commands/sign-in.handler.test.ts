@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import { describe, it } from "@effect/vitest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { deepStrictEqual } from "assert";
@@ -78,7 +80,7 @@ describe("signIn", () => {
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof CustomHttpApiError.Unauthorized, true);
       }
     }).pipe(Effect.provide(TestLayer)),
@@ -102,7 +104,7 @@ describe("signIn", () => {
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof CustomHttpApiError.Unauthorized, true);
       }
     }),

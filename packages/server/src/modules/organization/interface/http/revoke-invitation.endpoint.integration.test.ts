@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
@@ -68,8 +70,8 @@ suite("DELETE /orgs/:orgId/invitations/:invitationId (integration, super-admin c
           client.organization.revokeInvitation({ path: { orgId: ORG_ID, invitationId } }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          const error = exit.cause.error;
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          const error = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
           deepStrictEqual(error._tag, "InvitationGoneError");
           deepStrictEqual(error.reason, "revoked");
         }
@@ -88,8 +90,8 @@ suite("DELETE /orgs/:orgId/invitations/:invitationId (integration, super-admin c
           }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          deepStrictEqual(exit.cause.error._tag, "InvitationNotFoundError");
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          deepStrictEqual(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag, "InvitationNotFoundError");
         }
       }),
     );
@@ -129,8 +131,8 @@ suite(
             }),
           );
           ok(Exit.isFailure(exit));
-          if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-            ok(exit.cause.error instanceof CustomHttpApiError.Forbidden);
+          if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+            ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);
           }
         }),
       );

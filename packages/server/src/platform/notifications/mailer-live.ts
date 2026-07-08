@@ -13,7 +13,7 @@ import { SmtpMailerLive } from "./smtp-mailer-live.js";
 // boot (`log` default, `smtp` for Mailpit/relay, `ses` for prod). This
 // is the one place that names all three adapters — every consumer
 // depends only on the `Mailer` Tag.
-export const MailerLive: Layer.Layer<Mailer, never, EnvVars> = Layer.unwrapEffect(
+export const MailerLive: Layer.Layer<Mailer, never, EnvVars> = Layer.unwrap(
   Effect.gen(function* () {
     const env = yield* EnvVars;
     switch (env.MAILER) {

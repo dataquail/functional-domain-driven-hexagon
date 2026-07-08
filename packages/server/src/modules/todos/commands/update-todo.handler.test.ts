@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
@@ -19,7 +21,7 @@ const aliceId = TodoId.make("11111111-1111-1111-1111-111111111111");
 const aliceUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const otherOrgId = OrganizationId.make("33333333-3333-3333-3333-333333333333");
-const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
 
 const seed = Effect.gen(function* () {
   const repo = yield* TodosRepository;
@@ -65,7 +67,7 @@ describe("updateTodo", () => {
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof TodoNotFound, true);
       }
     }).pipe(Effect.provide(TodosRepositoryFake)),
@@ -87,7 +89,7 @@ describe("updateTodo", () => {
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof TodoNotFound, true);
       }
     }).pipe(Effect.provide(TodosRepositoryFake)),

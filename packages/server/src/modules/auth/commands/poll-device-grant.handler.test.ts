@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
@@ -32,7 +34,7 @@ const TestLayer = Layer.mergeAll(
 const poll = (deviceCode: string) =>
   pollDeviceGrant(PollDeviceGrantCommand.make({ deviceCode, tokenExpiresInDays: 90 }));
 const errorOf = (exit: Exit.Exit<unknown, unknown>) =>
-  Exit.isFailure(exit) && exit.cause._tag === "Fail" ? exit.cause.error : null;
+  Exit.isFailure(exit) && Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
 
 describe("pollDeviceGrant", () => {
   it.effect("fails DeviceGrantPending before approval", () =>

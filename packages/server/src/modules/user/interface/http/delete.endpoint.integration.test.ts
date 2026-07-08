@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import { UserContract } from "@org/contracts/api/Contracts";
@@ -42,8 +44,8 @@ suite("DELETE /users/:id (integration)", () => {
           }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof UserContract.UserNotFoundError);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof UserContract.UserNotFoundError);
         } else {
           throw new Error("expected a typed Fail");
         }

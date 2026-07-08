@@ -20,7 +20,7 @@ import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
-const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
 
 const TestLayer = Layer.mergeAll(MembershipRepositoryLive, OrganizationRepositoryLive).pipe(
   Layer.provideMerge(TestDatabaseLive),

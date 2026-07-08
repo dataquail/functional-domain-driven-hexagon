@@ -67,7 +67,7 @@ describe("createWalletWhenOrganizationIsCreated (handleOrganizationCreated)", ()
           // A defect (Die), not a typed Fail — the catchTag in the handler
           // does not match, so the failure propagates out and would reach
           // the surrounding `tx.run` to trigger rollback.
-          deepStrictEqual(exit.cause._tag, "Die");
+          deepStrictEqual(exit.cause.reasons[0]?._tag, "Die");
         }
       }),
   );

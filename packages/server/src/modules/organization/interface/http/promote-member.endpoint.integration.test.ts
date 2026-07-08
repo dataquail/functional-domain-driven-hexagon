@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
@@ -85,8 +87,8 @@ suite("POST /orgs/:orgId/members/:userId/admin (integration, super-admin caller)
           client.organization.promoteMember({ path: { orgId: ORG_ID, userId: TARGET_ID } }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          const error = exit.cause.error;
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          const error = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
           ok(error instanceof OrganizationContract.OrganizationRoleConflictError);
           deepStrictEqual(error.reason, "already_admin");
         }
@@ -115,8 +117,8 @@ suite("POST /orgs/:orgId/members/:userId/admin (integration, super-admin caller)
           }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof CustomHttpApiError.Forbidden);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);
         }
       }),
     );
@@ -200,8 +202,8 @@ orgAdminSuite("POST /orgs/:orgId/members/:userId/admin (integration, org-admin c
           client.organization.promoteMember({ path: { orgId: ORG_ID, userId: TARGET_ID } }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof CustomHttpApiError.Forbidden);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);
         }
       }),
     );

@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import { TodosContract } from "@org/contracts/api/Contracts";
@@ -59,8 +61,8 @@ suite("PUT /orgs/:orgId/todos/:id (integration)", () => {
           }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof TodosContract.TodoNotFoundError);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof TodosContract.TodoNotFoundError);
         } else {
           throw new Error("expected a typed Fail, got " + JSON.stringify(exit));
         }
@@ -88,8 +90,8 @@ suite("PUT /orgs/:orgId/todos/:id (integration)", () => {
           }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof TodosContract.TodoNotFoundError);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof TodosContract.TodoNotFoundError);
         } else {
           throw new Error("expected a typed Fail, got " + JSON.stringify(exit));
         }

@@ -21,9 +21,9 @@ const carolId = TodoId.make("33333333-3333-3333-3333-333333333333");
 const orgA = OrganizationId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const orgB = OrganizationId.make("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
 
-const aliceTime = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
-const bobTime = DateTime.unsafeMake(new Date("2025-02-01T00:00:00Z"));
-const carolTime = DateTime.unsafeMake(new Date("2025-03-01T00:00:00Z"));
+const aliceTime = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
+const bobTime = DateTime.makeUnsafe(new Date("2025-02-01T00:00:00Z"));
+const carolTime = DateTime.makeUnsafe(new Date("2025-03-01T00:00:00Z"));
 
 const TestLayer = TodosRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 

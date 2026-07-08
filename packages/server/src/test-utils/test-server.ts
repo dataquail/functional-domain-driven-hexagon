@@ -114,7 +114,7 @@ const PolicyRegistryLive = makePolicyRegistry([
   billingPolicies,
 ]);
 
-const ResourceResolverRegistryLive = Layer.unwrapEffect(
+const ResourceResolverRegistryLive = Layer.unwrap(
   Effect.gen(function* () {
     const userResolver = yield* UserResolverEntry;
     const organizationResolver = yield* OrganizationResolverEntry;

@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import { TodosContract } from "@org/contracts/api/Contracts";
@@ -51,8 +53,8 @@ suite("DELETE /orgs/:orgId/todos/:id (integration)", () => {
         const ghostId = TodoId.make("00000000-0000-0000-0000-000000000000");
         const exit = yield* Effect.exit(client.todos.delete({ path: { orgId, id: ghostId } }));
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof TodosContract.TodoNotFoundError);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof TodosContract.TodoNotFoundError);
         } else {
           throw new Error("expected a typed Fail, got " + JSON.stringify(exit));
         }
@@ -74,8 +76,8 @@ suite("DELETE /orgs/:orgId/todos/:id (integration)", () => {
           client.todos.delete({ path: { orgId: orgB, id: created.id } }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof TodosContract.TodoNotFoundError);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof TodosContract.TodoNotFoundError);
         } else {
           throw new Error("expected a typed Fail, got " + JSON.stringify(exit));
         }

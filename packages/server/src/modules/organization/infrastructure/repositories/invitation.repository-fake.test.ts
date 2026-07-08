@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
@@ -23,8 +25,8 @@ import { InvitationRepositoryFake } from "./invitation.repository-fake.js";
 const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const userId = UserId.make("33333333-3333-3333-3333-333333333333");
-const now = DateTime.unsafeMake(new Date("2026-01-01T00:00:00Z"));
-const expiresAt = DateTime.unsafeMake(new Date("2026-01-08T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
+const expiresAt = DateTime.makeUnsafe(new Date("2026-01-08T00:00:00Z"));
 
 const seed = (): InvitationRoot =>
   InvitationRootOps.issue({
@@ -64,7 +66,7 @@ describe("InvitationRepositoryFake", () => {
       const exit = yield* Effect.exit(repo.findOneById(invitationId));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof InvitationNotFound, true);
       }
     }).pipe(provide),
@@ -76,7 +78,7 @@ describe("InvitationRepositoryFake", () => {
       const exit = yield* Effect.exit(repo.findOneByToken("missing"));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof InvitationTokenNotFound, true);
       }
     }).pipe(provide),
@@ -88,7 +90,7 @@ describe("InvitationRepositoryFake", () => {
       yield* repo.insertOne(seed());
       const accepted = InvitationRootOps.accept(seed(), { userId, now });
       if (Result.isFailure(accepted)) throw new Error("expected Right");
-      yield* repo.updateOne(accepted.right.invitation);
+      yield* repo.updateOne(accepted.success.invitation);
       const found = yield* repo.findOneById(invitationId);
       deepStrictEqual(found.acceptedAt !== null, true);
     }).pipe(provide),
@@ -100,7 +102,7 @@ describe("InvitationRepositoryFake", () => {
       const exit = yield* Effect.exit(repo.updateOne(seed()));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof InvitationNotFound, true);
       }
     }).pipe(provide),

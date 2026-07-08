@@ -24,9 +24,9 @@ const aliceId = UserId.make("11111111-1111-1111-1111-111111111111");
 const bobId = UserId.make("22222222-2222-2222-2222-222222222222");
 const carolId = UserId.make("33333333-3333-3333-3333-333333333333");
 
-const aliceTime = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
-const bobTime = DateTime.unsafeMake(new Date("2025-02-01T00:00:00Z"));
-const carolTime = DateTime.unsafeMake(new Date("2025-03-01T00:00:00Z"));
+const aliceTime = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
+const bobTime = DateTime.makeUnsafe(new Date("2025-02-01T00:00:00Z"));
+const carolTime = DateTime.makeUnsafe(new Date("2025-03-01T00:00:00Z"));
 
 const TestLayer = UserRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 

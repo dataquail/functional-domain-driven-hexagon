@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
@@ -15,7 +17,7 @@ import { MembershipRepositoryFake } from "./membership.repository-fake.js";
 const userId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const otherUserId = UserId.make("cccccccc-cccc-cccc-cccc-cccccccccccc");
 const organizationId = OrganizationId.make("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-const now = DateTime.unsafeMake(new Date("2026-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
 const provide = Effect.provide(MembershipRepositoryFake);
 
 describe("MembershipRepositoryFake", () => {
@@ -47,7 +49,7 @@ describe("MembershipRepositoryFake", () => {
       const exit = yield* Effect.exit(repo.findOneByUserIdAndOrgId(userId, organizationId));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof MembershipNotFound, true);
       }
     }).pipe(provide),
@@ -70,7 +72,7 @@ describe("MembershipRepositoryFake", () => {
       const exit = yield* Effect.exit(repo.deleteOne(userId, organizationId));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof MembershipNotFound, true);
       }
     }).pipe(provide),

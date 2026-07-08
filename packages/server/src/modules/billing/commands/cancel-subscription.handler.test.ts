@@ -1,3 +1,4 @@
+import * as Cause from "effect/Cause";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual, ok } from "assert";
 import * as DateTime from "effect/DateTime";
@@ -21,7 +22,7 @@ import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-
 
 const acme = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const subId = SubscriptionId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
-const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
 
 const TestLayer = Layer.mergeAll(
   SubscriptionRepositoryFake,
@@ -72,8 +73,8 @@ describe("cancelSubscription", () => {
         cancelSubscription(CancelSubscriptionCommand.make({ organizationId: acme })),
       );
       ok(Exit.isFailure(exit));
-      if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-        ok(exit.cause.error instanceof SubscriptionNotFound);
+      if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+        ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof SubscriptionNotFound);
       }
     }).pipe(Effect.provide(TestLayer)),
   );

@@ -40,7 +40,7 @@ const cmd = TouchSessionCommand.make({
 describe("touchSession", () => {
   it.live("advances expiresAt and lastUsedAt when threshold has elapsed", () =>
     Effect.gen(function* () {
-      const farPast = DateTime.unsafeMake(new Date("2000-01-01T00:00:00Z"));
+      const farPast = DateTime.makeUnsafe(new Date("2000-01-01T00:00:00Z"));
       const seed = yield* seedSession(farPast);
       yield* touchSession(cmd);
       const repo = yield* SessionRepository;
@@ -70,7 +70,7 @@ describe("touchSession", () => {
 
   it.live("does not advance a revoked session", () =>
     Effect.gen(function* () {
-      const farPast = DateTime.unsafeMake(new Date("2000-01-01T00:00:00Z"));
+      const farPast = DateTime.makeUnsafe(new Date("2000-01-01T00:00:00Z"));
       const seed = yield* seedSession(farPast);
       const repo = yield* SessionRepository;
       yield* repo.deleteOne(sessionId);

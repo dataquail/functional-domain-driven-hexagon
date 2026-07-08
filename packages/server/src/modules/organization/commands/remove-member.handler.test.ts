@@ -1,3 +1,5 @@
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
@@ -48,7 +50,7 @@ describe("removeMember", () => {
       const { membership: secondMember } = MembershipRootOps.create({
         userId: otherUserId,
         organizationId: orgId,
-        now: DateTime.unsafeMake(new Date("2026-02-01T00:00:00Z")),
+        now: DateTime.makeUnsafe(new Date("2026-02-01T00:00:00Z")),
       });
       yield* memberships.insertOne(secondMember);
 
@@ -86,7 +88,7 @@ describe("removeMember", () => {
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
         deepStrictEqual(error instanceof MembershipNotFound, true);
       }
     }).pipe(Effect.provide(TestLayer)),

@@ -59,7 +59,7 @@ suite("RolesRepositoryLive (integration)", () => {
         const repo = yield* RolesRepository;
         const granted = RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin");
         if (Result.isFailure(granted)) throw new Error("expected Right");
-        yield* repo.upsertOne(granted.right.roles);
+        yield* repo.upsertOne(granted.success.roles);
         const fetched = yield* repo.findOneByUserId(userId);
         deepStrictEqual([...fetched.roles], ["super_admin"]);
       }).pipe(Effect.provide(TestLayer)),
@@ -71,10 +71,10 @@ suite("RolesRepositoryLive (integration)", () => {
         const repo = yield* RolesRepository;
         const granted = RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin");
         if (Result.isFailure(granted)) throw new Error("expected Right");
-        yield* repo.upsertOne(granted.right.roles);
-        const revoked = RolesRootOps.revoke(granted.right.roles, "super_admin");
+        yield* repo.upsertOne(granted.success.roles);
+        const revoked = RolesRootOps.revoke(granted.success.roles, "super_admin");
         if (Result.isFailure(revoked)) throw new Error("expected Right");
-        yield* repo.upsertOne(revoked.right.roles);
+        yield* repo.upsertOne(revoked.success.roles);
         const fetched = yield* repo.findOneByUserId(userId);
         deepStrictEqual([...fetched.roles], []);
       }).pipe(Effect.provide(TestLayer)),
