@@ -368,3 +368,68 @@ export const serverModules = createFolderStructure({
     },
   ],
 });
+
+// ---------------------------------------------------------------------------
+// Web features (packages/web/features) — view-tiering PARITY only (ADR-0014).
+// Layout is intentionally permissive (the scripts never enforced web layout):
+// every ViewModel and Presenter needs its sibling test; any other file is
+// allowed. Self-recursive `dir` so parity fires at any nesting depth.
+// ---------------------------------------------------------------------------
+
+const VIEW_MODEL_MSG =
+  " Every *.view-model.ts needs a sibling *.view-model.test.ts (ADR-0014 view tiering — the ViewModel is pure Effect and must be unit-tested).";
+const PRESENTER_MSG =
+  " Every *.presenter.{ts,tsx} needs a sibling *.presenter.test.tsx (ADR-0014 — the presenter binds a React-coupled library and is tested through a JSX wrapper).";
+
+// One folder's contents; the same shape applies at the structureRoot and every
+// nested folder. Parity rules first, then recurse into subfolders, then a
+// permissive catch-all for any other file (no layout enforcement).
+const webFeatureFolderChildren = [
+  {
+    name: "*.view-model.ts",
+    enforceExistence: "{node-name}.test.ts",
+    message: VIEW_MODEL_MSG,
+  },
+  {
+    name: "*.presenter.ts",
+    enforceExistence: "{node-name}.test.tsx",
+    message: PRESENTER_MSG,
+  },
+  {
+    name: "*.presenter.tsx",
+    enforceExistence: "{node-name}.test.tsx",
+    message: PRESENTER_MSG,
+  },
+  { name: "*", ruleId: "dir" }, // recurse into any subfolder
+  { name: "*" }, // permissive: allow any other file
+];
+
+export const webFeatures = createFolderStructure({
+  structureRoot: "packages/web/features",
+  rules: {
+    dir: { name: "*", children: webFeatureFolderChildren },
+  },
+  structure: webFeatureFolderChildren,
+});
+
+// ---------------------------------------------------------------------------
+// Web TanStack-query bridge (packages/web/lib/tanstack-query) — every
+// non-barrel source file bridges two runtimes and needs a sibling test; the
+// test extension mirrors the source (.ts→.test.ts, .tsx→.test.tsx). The barrel
+// (index.ts) and server-hydration-boundary.tsx are exempt.
+// ---------------------------------------------------------------------------
+
+const BRIDGE_MSG =
+  " Every tanstack-query bridge file needs a sibling test (it carries branch logic invisible to presenter tests: toast surfacing, defect extraction, RSC/CC JSON round-trip, ParseError formatting).";
+
+export const webTanstackBridge = createFolderStructure({
+  structureRoot: "packages/web/lib/tanstack-query",
+  structure: [
+    { name: "index.ts" },
+    { name: "server-hydration-boundary.tsx" },
+    { name: "*.test.ts" },
+    { name: "*.test.tsx" },
+    { name: "*.ts", enforceExistence: "{node-name}.test.ts", message: BRIDGE_MSG },
+    { name: "*.tsx", enforceExistence: "{node-name}.test.tsx", message: BRIDGE_MSG },
+  ],
+});

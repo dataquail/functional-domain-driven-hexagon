@@ -7,6 +7,8 @@ import {
   componentsPatterns,
   componentsPrimitives,
   serverModules,
+  webFeatures,
+  webTanstackBridge,
 } from "./eslint.project-structure.mjs";
 import dataBoundaries from "@synapsestudios/eslint-plugin-data-boundaries";
 import { fixupPluginRules } from "@eslint/compat";
@@ -50,7 +52,6 @@ export default [
       "**/vitest.workspace.ts",
       "reference/**",
       "scratchpad/**",
-      "scripts/check-test-parity.mjs",
       "**/routeTree.gen.ts",
       // Next.js dev bundle output. Source lives under packages/web/{app,services,lib}.
       "**/.next/**",
@@ -559,6 +560,23 @@ export default [
     plugins: { "project-structure": projectStructurePlugin },
     rules: {
       "project-structure/folder-structure": ["error", componentsPatterns],
+    },
+  },
+  {
+    // ADR-0014: web view-tiering parity (ViewModel / Presenter). Layout stays
+    // permissive; only the sibling-test parity fires. See eslint.project-structure.mjs.
+    files: ["packages/web/features/**/*.{ts,tsx}"],
+    plugins: { "project-structure": projectStructurePlugin },
+    rules: {
+      "project-structure/folder-structure": ["error", webFeatures],
+    },
+  },
+  {
+    // TanStack-query bridge parity: every non-barrel bridge file needs a test.
+    files: ["packages/web/lib/tanstack-query/**/*.{ts,tsx}"],
+    plugins: { "project-structure": projectStructurePlugin },
+    rules: {
+      "project-structure/folder-structure": ["error", webTanstackBridge],
     },
   },
 ];
