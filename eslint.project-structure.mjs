@@ -31,7 +31,7 @@ import { createFolderStructure } from "eslint-plugin-project-structure";
 // ---------------------------------------------------------------------------
 
 const STORY_MESSAGE =
-  " Every primitive/pattern component needs a sibling `*.stories.tsx` — the story is the component's living spec and visual test (ADR-0015). Add `<name>.stories.tsx` next to it.";
+  "Every primitive/pattern component needs a sibling `*.stories.tsx` — the story is the component's living spec and visual test (ADR-0015). Add `<name>.stories.tsx` next to it.";
 
 // A component folder's contents: story/test files pass through; every bare
 // `*.tsx` component must have a sibling story; subfolders recurse (`ruleId`);
@@ -77,39 +77,39 @@ const TEST_TS = { name: "*.test.ts" };
 // Didactic messages (appended to the default violation text by the fork).
 const MSG = {
   moduleRoot:
-    " The module root admits only aggregation files: index.ts (barrel), <feature>.module.ts (composed Layer), <feature>.command-handlers.ts / .query-handlers.ts (bus-registration maps), <feature>.event-span-attributes.ts, <feature>.shared-deps.ts. Feature code belongs in a stereotype subfolder (domain/, commands/, queries/, event-handlers/, infrastructure/, interface/, policies/).",
+    "The module root admits only aggregation files: index.ts (barrel), <feature>.module.ts (composed Layer), <feature>.command-handlers.ts / .query-handlers.ts (bus-registration maps), <feature>.event-span-attributes.ts, <feature>.shared-deps.ts. Feature code belongs in a stereotype subfolder (domain/, commands/, queries/, event-handlers/, infrastructure/, interface/, policies/).",
   domain:
-    " domain/ admits only named DDD stereotypes: *.root.ts, *.aggregate.ts, *.entity.ts, *.value-object.ts, *.id.ts, *.errors.ts, *.events.ts, *.domain-service.ts. A free-standing helper is a smell — model it as a method on the aggregate root, a *.value-object.ts, or (if it's stateless logic no aggregate owns) a *.domain-service.ts. A genuinely new *kind* of building block must be added to the taxonomy in eslint.project-structure.mjs — don't force-fit an existing stereotype.",
+    "domain/ admits only named DDD stereotypes: *.root.ts, *.aggregate.ts, *.entity.ts, *.value-object.ts, *.id.ts, *.errors.ts, *.events.ts, *.domain-service.ts. A free-standing helper is a smell — model it as a method on the aggregate root, a *.value-object.ts, or (if it's stateless logic no aggregate owns) a *.domain-service.ts. A genuinely new *kind* of building block must be added to the taxonomy in eslint.project-structure.mjs — don't force-fit an existing stereotype.",
   rootTest:
-    " Every aggregate root (*.root.ts) carries a test-parity obligation: add the sibling *.root.test.ts (roots own invariants, so they must be tested).",
+    "Every aggregate root (*.root.ts) carries a test-parity obligation: add the sibling *.root.test.ts (roots own invariants, so they must be tested).",
   domainServiceTest:
-    " A domain service is real domain logic (ADR-0026), so it needs a sibling *.domain-service.test.ts.",
+    "A domain service is real domain logic (ADR-0026), so it needs a sibling *.domain-service.test.ts.",
   repositoryPort:
-    " Every repository port (*.repository.ts) needs its infrastructure trio: a *.repository-live.ts, a *.repository-fake.ts, and a *.repository-live.integration.test.ts in ../../../infrastructure/repositories/.",
+    "Every repository port (*.repository.ts) needs its infrastructure trio: a *.repository-live.ts, a *.repository-fake.ts, and a *.repository-live.integration.test.ts in ../../../infrastructure/repositories/.",
   clientPort:
-    " Every client port (*.client.ts) needs a *.client-live.ts, a *.client-fake.ts, and a *.client-live.test.ts in ../../../infrastructure/clients/. (A self-contained client with no port lives directly in infrastructure/clients/ as *.client.ts and is not required here.)",
+    "Every client port (*.client.ts) needs a *.client-live.ts, a *.client-fake.ts, and a *.client-live.test.ts in ../../../infrastructure/clients/. (A self-contained client with no port lives directly in infrastructure/clients/ as *.client.ts and is not required here.)",
   aclPort:
-    " Every ACL port (*.acl.ts) needs a *.acl-live.ts, a *.acl-fake.ts, and a *.acl-live.test.ts in ../../../infrastructure/acl/.",
+    "Every ACL port (*.acl.ts) needs a *.acl-live.ts, a *.acl-fake.ts, and a *.acl-live.test.ts in ../../../infrastructure/acl/.",
   commands:
-    " commands/ holds a <verb-noun>.command.ts schema and its <verb-noun>.handler.ts handler. A shared helper here is a smell — domain logic belongs on an aggregate op (ADR-0026), trivial logic inlines.",
+    "commands/ holds a <verb-noun>.command.ts schema and its <verb-noun>.handler.ts handler. A shared helper here is a smell — domain logic belongs on an aggregate op (ADR-0026), trivial logic inlines.",
   commandHandlerTest:
-    " Every command handler (*.handler.ts) needs a sibling *.handler.test.ts (use-case unit test with the repository fakes).",
+    "Every command handler (*.handler.ts) needs a sibling *.handler.test.ts (use-case unit test with the repository fakes).",
   queries: " queries/ holds a <verb-noun>.query.ts schema and its <verb-noun>.handler.ts handler.",
   queryHandlerTest:
-    " Every query handler (*.handler.ts) needs a sibling *.handler.integration.test.ts — queries read real SQL projections, so the parity is on the integration test (seed via the live repository).",
+    "Every query handler (*.handler.ts) needs a sibling *.handler.integration.test.ts — queries read real SQL projections, so the parity is on the integration test (seed via the live repository).",
   eventHandlers:
-    " event-handlers/ holds one *.handler.ts per reaction (triggers live in triggers/). Shared logic belongs on an aggregate or domain service.",
+    "event-handlers/ holds one *.handler.ts per reaction (triggers live in triggers/). Shared logic belongs on an aggregate or domain service.",
   eventHandlerTest: " Every event handler (*.handler.ts) needs a sibling *.handler.test.ts.",
   endpointTest:
-    " Every endpoint (*.endpoint.ts) needs a real *.endpoint.integration.test.ts (ADR-0013) that exercises the HTTP layer against a live DB via useServerTestRuntime.",
+    "Every endpoint (*.endpoint.ts) needs a real *.endpoint.integration.test.ts (ADR-0013) that exercises the HTTP layer against a live DB via useServerTestRuntime.",
   utilTest:
-    " An interface *.util.ts is a pure leaf helper (ADR-0026); its sibling *.util.test.ts is the anti-drift guard — the extraction must be justified by a unit test.",
+    "An interface *.util.ts is a pure leaf helper (ADR-0026); its sibling *.util.test.ts is the anti-drift guard — the extraction must be justified by a unit test.",
   eventAdapterTest:
-    " Every event adapter (*.event-adapter.ts) needs a sibling *.event-adapter.test.ts (ADR-0007 ACL).",
+    "Every event adapter (*.event-adapter.ts) needs a sibling *.event-adapter.test.ts (ADR-0007 ACL).",
   oidcExempt:
-    " The OIDC flow endpoints (login/callback exchange with Zitadel, logout end-session) keep unit-token coverage: their happy path needs a live IdP and is covered by Playwright + the SessionRepositoryLive integration test. See CLAUDE.md 'Endpoint test naming'.",
+    "The OIDC flow endpoints (login/callback exchange with Zitadel, logout end-session) keep unit-token coverage: their happy path needs a live IdP and is covered by Playwright + the SessionRepositoryLive integration test. See CLAUDE.md 'Endpoint test naming'.",
   policies:
-    " policies/ admits *.policies.ts registries, *.resource-resolver(s).ts, and is-*.policy.ts checks; policies/public/ holds *.service-live.ts (published ACL service Lives).",
+    "policies/ admits *.policies.ts registries, *.resource-resolver(s).ts, and is-*.policy.ts checks; policies/public/ holds *.service-live.ts (published ACL service Lives).",
 };
 
 // enforceExistence paths for a domain/ports/<tier>/ port, resolved 3 levels up
@@ -377,9 +377,9 @@ export const serverModules = createFolderStructure({
 // ---------------------------------------------------------------------------
 
 const VIEW_MODEL_MSG =
-  " Every *.view-model.ts needs a sibling *.view-model.test.ts (ADR-0014 view tiering — the ViewModel is pure Effect and must be unit-tested).";
+  "Every *.view-model.ts needs a sibling *.view-model.test.ts (ADR-0014 view tiering — the ViewModel is pure Effect and must be unit-tested).";
 const PRESENTER_MSG =
-  " Every *.presenter.{ts,tsx} needs a sibling *.presenter.test.tsx (ADR-0014 — the presenter binds a React-coupled library and is tested through a JSX wrapper).";
+  "Every *.presenter.{ts,tsx} needs a sibling *.presenter.test.tsx (ADR-0014 — the presenter binds a React-coupled library and is tested through a JSX wrapper).";
 
 // One folder's contents; the same shape applies at the structureRoot and every
 // nested folder. Parity rules first, then recurse into subfolders, then a
@@ -420,7 +420,7 @@ export const webFeatures = createFolderStructure({
 // ---------------------------------------------------------------------------
 
 const BRIDGE_MSG =
-  " Every tanstack-query bridge file needs a sibling test (it carries branch logic invisible to presenter tests: toast surfacing, defect extraction, RSC/CC JSON round-trip, ParseError formatting).";
+  "Every tanstack-query bridge file needs a sibling test (it carries branch logic invisible to presenter tests: toast surfacing, defect extraction, RSC/CC JSON round-trip, ParseError formatting).";
 
 export const webTanstackBridge = createFolderStructure({
   structureRoot: "packages/web/lib/tanstack-query",
