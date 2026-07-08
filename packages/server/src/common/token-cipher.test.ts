@@ -141,7 +141,7 @@ describe("TokenCipher", () => {
           "unicode: 你好世界",
           "numbers: 12345",
           "mixed: abc123!@#",
-        ].map(Redacted.make);
+        ].map((value) => Redacted.make(value));
 
         for (const token of testCases) {
           const encrypted = yield* tokenCipher.encrypt(token);

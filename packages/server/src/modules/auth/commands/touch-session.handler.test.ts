@@ -45,8 +45,8 @@ describe("touchSession", () => {
       yield* touchSession(cmd);
       const repo = yield* SessionRepository;
       const after = yield* repo.findOneById(sessionId);
-      deepStrictEqual(DateTime.greaterThan(after.lastUsedAt, seed.lastUsedAt), true);
-      deepStrictEqual(DateTime.greaterThan(after.expiresAt, seed.expiresAt), true);
+      deepStrictEqual(DateTime.isGreaterThan(after.lastUsedAt, seed.lastUsedAt), true);
+      deepStrictEqual(DateTime.isGreaterThan(after.expiresAt, seed.expiresAt), true);
     }).pipe(Effect.provide(SessionRepositoryFake)),
   );
 

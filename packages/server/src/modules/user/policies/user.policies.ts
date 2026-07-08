@@ -32,7 +32,7 @@ declare module "@/platform/auth/policy-registry.js" {
 
 // Resource constant exposed for endpoint call sites. Pair with the
 // platform-wide `Actions` constants from `platform/auth/actions.ts`:
-//   Authz.hasPermissions(UserResource, Actions.Update, request.path.id);
+//   Authz.hasPermissions(UserResource, Actions.Update, request.params.id);
 export const UserResource = "user" as const;
 
 // The caller and the target are the same person. Used to allow

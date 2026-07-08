@@ -78,7 +78,7 @@ const issue = (input: IssueInput): IssueResult => {
 const isAccepted = (invitation: InvitationRoot): boolean => invitation.acceptedAt !== null;
 const isRevoked = (invitation: InvitationRoot): boolean => invitation.revokedAt !== null;
 const isExpiredAt = (invitation: InvitationRoot, now: DateTime.Utc): boolean =>
-  DateTime.lessThanOrEqualTo(invitation.expiresAt, now);
+  DateTime.isLessThanOrEqualTo(invitation.expiresAt, now);
 
 // "Open" = not yet accepted and not revoked — the set of invitations the
 // pending-list surfaces and that invite-again/resend re-issue. An open

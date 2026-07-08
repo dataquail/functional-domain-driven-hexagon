@@ -16,13 +16,13 @@ export const deleteEndpoint = (request: EndpointRequest<typeof TodosContract.Gro
     // TodoNotFoundError. Membership against the todo's real org is then
     // checked before the command runs.
     yield* Authz.hasPermissions(TodoResource, Actions.Delete, {
-      organizationId: request.path.orgId,
-      todoId: request.path.id,
+      organizationId: request.params.orgId,
+      todoId: request.params.id,
     }).pipe(
       Effect.catchTag("NotFound", () =>
         Effect.fail(
           new TodosContract.TodoNotFoundError({
-            message: `Todo with id ${request.path.id} not found`,
+            message: `Todo with id ${request.params.id} not found`,
           }),
         ),
       ),
@@ -31,8 +31,8 @@ export const deleteEndpoint = (request: EndpointRequest<typeof TodosContract.Gro
     const currentUser = yield* CurrentUser;
     yield* commandBus.execute(
       DeleteTodoCommand.make({
-        todoId: request.path.id,
-        organizationId: request.path.orgId,
+        todoId: request.params.id,
+        organizationId: request.params.orgId,
         userId: currentUser.userId,
       }),
     );

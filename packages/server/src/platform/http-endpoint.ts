@@ -10,10 +10,10 @@ import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistenc
 // sync with the contract automatically — adding a new field to the endpoint
 // declaration flows through to the implementation file's parameter type.
 export type EndpointRequest<
-  G extends HttpApiGroup.HttpApiGroup.Any,
+  G extends HttpApiGroup.Any,
   Name extends string,
-> = HttpApiEndpoint.HttpApiEndpoint.Request<
-  HttpApiEndpoint.HttpApiEndpoint.WithName<HttpApiGroup.HttpApiGroup.Endpoints<G>, Name>
+> = HttpApiEndpoint.Request<
+  HttpApiEndpoint.WithName<HttpApiGroup.Endpoints<G>, Name>
 >;
 
 // Standard endpoint translation for the transient-store signal. Every

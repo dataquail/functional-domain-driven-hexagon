@@ -39,7 +39,7 @@ declare module "./policy-registry.js" {
   }
 }
 
-const callerMember: CurrentUser["Type"] = {
+const callerMember: CurrentUser["Service"] = {
   sessionId: "s",
   userId: UserId.make("11111111-1111-1111-1111-111111111111"),
 };
@@ -78,7 +78,7 @@ const provideRegistries = (opts: {
     makeOrganizationRoleServiceFake(),
   );
 
-const provideCurrentUser = (caller: CurrentUser["Type"]) => Layer.succeed(CurrentUserTag, caller);
+const provideCurrentUser = (caller: CurrentUser["Service"]) => Layer.succeed(CurrentUserTag, caller);
 
 describe("makePolicyRegistry — array-of-checks AND composition", () => {
   it.effect("succeeds only when every check in the array returns true", () =>

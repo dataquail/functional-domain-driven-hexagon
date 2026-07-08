@@ -18,14 +18,14 @@ const toCli = (view: ListTodosTodoView): CliTodosContract.CliTodo =>
 // get endpoint, mapped to the CLI's own `CliTodo` shape.
 export const listEndpoint = (request: EndpointRequest<typeof CliTodosContract.Group, "list">) =>
   Effect.gen(function* () {
-    yield* Authz.hasPermissions(TodoCollectionResource, Actions.Read, request.path.orgId).pipe(
+    yield* Authz.hasPermissions(TodoCollectionResource, Actions.Read, request.params.orgId).pipe(
       Effect.catchTag("NotFound", () =>
         Effect.die("Unreachable: todoCollection resolver cannot surface NotFound"),
       ),
     );
     const queryBus = yield* QueryBus;
     const result = yield* queryBus.execute(
-      ListTodosQuery.make({ organizationId: request.path.orgId }),
+      ListTodosQuery.make({ organizationId: request.params.orgId }),
     );
     return result.todos.map(toCli);
   }).pipe(recoverPersistenceUnavailable, Effect.withSpan("CliTodosLive.list"));

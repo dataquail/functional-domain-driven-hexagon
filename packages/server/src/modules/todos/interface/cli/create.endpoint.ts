@@ -13,7 +13,7 @@ import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/
 export const createEndpoint = (request: EndpointRequest<typeof CliTodosContract.Group, "create">) =>
   Effect.gen(function* () {
     const currentUser = yield* CurrentUser;
-    const allowed = yield* todoMemberCheck(currentUser, { organizationId: request.path.orgId });
+    const allowed = yield* todoMemberCheck(currentUser, { organizationId: request.params.orgId });
     if (!allowed) {
       return yield* Effect.fail(
         new CustomHttpApiError.Forbidden({ message: "Not permitted: todoCollection.create" }),
@@ -23,7 +23,7 @@ export const createEndpoint = (request: EndpointRequest<typeof CliTodosContract.
     const todo = yield* commandBus.execute(
       CreateTodoCommand.make({
         title: request.payload.title,
-        organizationId: request.path.orgId,
+        organizationId: request.params.orgId,
         userId: currentUser.userId,
       }),
     );

@@ -10,7 +10,7 @@ import {
 import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
-const CountRowStd = Schema.standardSchemaV1(Schema.Struct({ value: Schema.Number }));
+const CountRowStd = Schema.toStandardSchemaV1(Schema.Struct({ value: Schema.Number }));
 
 const toView = (row: RowSchemas.OrganizationRow): FindAllOrganizationsView => ({
   id: OrganizationId.make(row.id),

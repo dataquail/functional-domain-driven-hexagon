@@ -10,4 +10,4 @@ import { CookieCodec } from "@/platform/auth/cookie-codec.js";
 // wrapping means the auth-module's command/query handlers self-discharge
 // it via `SessionRepositoryLive` — and Effect's Layer memoization
 // ensures the wrap and any future consumer see the same instance.
-export const AuthSharedDepsLive = CookieCodec.Default;
+export const AuthSharedDepsLive = CookieCodec.layer;

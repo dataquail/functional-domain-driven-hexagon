@@ -29,8 +29,8 @@ export const touchApiToken = (cmd: TouchApiTokenCommand): TouchApiTokenOutput =>
     if (token?.revokedAt !== null) return;
 
     const now = yield* DateTime.now;
-    const elapsed = DateTime.distanceDuration(token.lastUsedAt, now);
-    if (Duration.lessThan(elapsed, Duration.seconds(cmd.thresholdSeconds))) return;
+    const elapsed = DateTime.distance(token.lastUsedAt, now);
+    if (Duration.isLessThan(elapsed, Duration.seconds(cmd.thresholdSeconds))) return;
 
     yield* repo.updateOne(ApiTokenRootOps.touch({ token, now })).pipe(
       Effect.catchTag("ApiTokenNotFound", () => Effect.void),

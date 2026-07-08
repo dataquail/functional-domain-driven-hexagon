@@ -19,7 +19,7 @@ export const acceptInvitationEndpoint = (
     const commandBus = yield* CommandBus;
     const organizationId = yield* commandBus.execute(
       AcceptInvitationCommand.make({
-        token: request.path.token,
+        token: request.params.token,
         userId: currentUser.userId,
       }),
     );

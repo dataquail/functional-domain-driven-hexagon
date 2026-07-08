@@ -18,7 +18,7 @@ export const leaveEndpoint = (
     yield* commandBus.execute(
       LeaveOrganizationCommand.make({
         userId: currentUser.userId,
-        organizationId: request.path.orgId,
+        organizationId: request.params.orgId,
       }),
     );
   }).pipe(

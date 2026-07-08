@@ -15,7 +15,7 @@ import { AuthLive } from "./interface/http/index.js";
 // `AuthSharedDepsLive` because the platform middleware verifies the
 // session cookie with the same key the auth module signs with.
 export const AuthModuleLive = AuthLive.pipe(
-  Layer.provide(OidcClient.Default),
+  Layer.provide(OidcClient.layer),
   Layer.provide(AuthIdentityRepositoryLive),
   Layer.provide(SessionRepositoryLive),
 );

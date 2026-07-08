@@ -47,7 +47,7 @@ export const logoutEndpoint = () =>
 
     return HttpServerResponse.empty({ status: 302 }).pipe(
       HttpServerResponse.setHeader("location", endSessionUrl),
-      HttpServerResponse.unsafeSetCookies([
+      HttpServerResponse.setCookiesUnsafe([
         [
           env.SESSION_COOKIE_NAME,
           "",

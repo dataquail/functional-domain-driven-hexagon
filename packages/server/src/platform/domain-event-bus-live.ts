@@ -47,9 +47,7 @@ export const makeDomainEventBusLive = (
           // transaction.
           const tx = yield* Effect.serviceOption(Database.TransactionContext);
           if (Option.isNone(tx)) {
-            return yield* Effect.dieMessage(
-              "DomainEventBus.dispatch requires a unit of work: no TransactionContext in scope (did you forget withUnitOfWork?)",
-            );
+            return yield* Effect.die(new Error("DomainEventBus.dispatch requires a unit of work: no TransactionContext in scope (did you forget withUnitOfWork?)"));
           }
           const map = yield* Ref.get(handlers);
           for (const event of events) {

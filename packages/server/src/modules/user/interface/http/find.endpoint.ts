@@ -27,8 +27,8 @@ export const findEndpoint = (request: EndpointRequest<typeof UserContract.Group,
     const queryBus = yield* QueryBus;
     const result = yield* queryBus.execute(
       FindUsersQuery.make({
-        page: request.urlParams.page,
-        pageSize: request.urlParams.pageSize,
+        page: request.query.page,
+        pageSize: request.query.pageSize,
       }),
     );
     return toPaginatedUsersContract(result);

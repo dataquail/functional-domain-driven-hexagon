@@ -7,7 +7,7 @@ import * as Effect from "effect/Effect";
 // Forbidden happens at the `authz.ts` boundary.
 //
 // Resource is parameterised. The Phase-1.5 typed registry pins the
-// concrete `Caller` to `CurrentUser["Type"]` and the `Resource` to the
+// concrete `Caller` to `CurrentUser["Service"]` and the `Resource` to the
 // per-action type from the declaration-merged `PolicyMap`.
 
 export type Check<Caller, Resource, E = never, R = never> = (

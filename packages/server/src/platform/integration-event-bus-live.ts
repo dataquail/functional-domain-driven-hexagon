@@ -44,9 +44,7 @@ export const makeIntegrationEventBusLive = (): Layer.Layer<IntegrationEventBus> 
               // work would be silently dropped (nothing drains it). That almost
               // always means a missing `withUnitOfWork` — surface it as a defect.
               onNone: () =>
-                Effect.dieMessage(
-                  "IntegrationEventBus.dispatch requires a unit of work: no PostCommitBuffer in scope (did you forget withUnitOfWork?)",
-                ),
+                Effect.die(new Error("IntegrationEventBus.dispatch requires a unit of work: no PostCommitBuffer in scope (did you forget withUnitOfWork?)")),
               onSome: (buffer) => Ref.update(buffer, (prev) => [...prev, ...events]),
             }),
           ),

@@ -8,7 +8,7 @@ const DOMAIN_EVENT_BRAND = "@platform/DomainEvent";
 
 export type DomainEventBrand = { readonly __brand: typeof DOMAIN_EVENT_BRAND };
 
-export type AnyDomainEventSchema = Schema.Schema.Any & DomainEventBrand & { readonly tag: string };
+export type AnyDomainEventSchema = Schema.Top & DomainEventBrand & { readonly tag: string };
 
 // `DomainEvent` returns a `Schema.TaggedStruct` carrying the brand and a
 // static `tag` that `DomainEventBus.subscribe` and the dispatch loop rely

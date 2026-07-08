@@ -158,7 +158,7 @@ suite("UnitOfWorkLive re-entrancy (integration)", () => {
 // the transaction commits — each handler in its own transaction, its failure
 // isolated, and discarded entirely if the producer rolls back.
 suite("UnitOfWorkLive post-commit flush (integration)", () => {
-  const insert = (db: Database.Database["Type"], id: string, email: string) =>
+  const insert = (db: Database.Database["Service"], id: string, email: string) =>
     db.makeQuery((execute) =>
       execute((c) =>
         c.query(sql.unsafe`

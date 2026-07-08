@@ -53,7 +53,7 @@ describe("SessionRootOps.create", () => {
     });
     const expected = DateTime.add(now, { seconds: 43200 });
     deepStrictEqual(session.absoluteExpiresAt, expected);
-    deepStrictEqual(DateTime.lessThan(session.expiresAt, session.absoluteExpiresAt), true);
+    deepStrictEqual(DateTime.isLessThan(session.expiresAt, session.absoluteExpiresAt), true);
   });
 });
 

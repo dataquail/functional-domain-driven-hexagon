@@ -12,17 +12,17 @@ export const softDeleteEndpoint = (
   request: EndpointRequest<typeof OrganizationContract.Group, "softDelete">,
 ) =>
   Effect.gen(function* () {
-    yield* Authz.hasPermissions(OrganizationResource, Actions.Delete, request.path.id);
+    yield* Authz.hasPermissions(OrganizationResource, Actions.Delete, request.params.id);
     const commandBus = yield* CommandBus;
     yield* commandBus.execute(
-      SoftDeleteOrganizationCommand.make({ organizationId: request.path.id }),
+      SoftDeleteOrganizationCommand.make({ organizationId: request.params.id }),
     );
   }).pipe(
     Effect.catchTag("NotFound", () =>
       Effect.fail(
         new OrganizationContract.OrganizationNotFoundError({
-          organizationId: request.path.id,
-          message: `Organization ${request.path.id} not found`,
+          organizationId: request.params.id,
+          message: `Organization ${request.params.id} not found`,
         }),
       ),
     ),

@@ -15,7 +15,7 @@ import { Mailer } from "./mailer.js";
 // SCAFFOLD: this adapter is wired and type-checked, but is not exercised
 // by the test suite — there's no SES sandbox in CI. Verify against a real
 // SES identity (or LocalStack) before relying on it in an environment.
-export const SesMailerLive = Layer.scoped(
+export const SesMailerLive = Layer.effect(
   Mailer,
   Effect.gen(function* () {
     const env = yield* EnvVars;

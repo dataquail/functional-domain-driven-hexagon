@@ -14,7 +14,7 @@ import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
-const DeletedAtRowStd = Schema.standardSchemaV1(
+const DeletedAtRowStd = Schema.toStandardSchemaV1(
   Schema.Struct({ deleted_at: Schema.NullOr(Schema.DateTimeUtcFromDate) }),
 );
 

@@ -123,7 +123,7 @@ export const UnitOfWorkLive: Layer.Layer<UnitOfWork, never, Database.Database> =
                               )
                               .pipe(
                                 Database.TransactionContext.provide(existing.value),
-                                Effect.tapErrorCause(() =>
+                                Effect.tapCause(() =>
                                   Ref.update(buffer, (b) => b.slice(0, before.length)),
                                 ),
                               ),

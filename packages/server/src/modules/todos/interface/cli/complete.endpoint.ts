@@ -17,13 +17,13 @@ export const completeEndpoint = (
 ) =>
   Effect.gen(function* () {
     yield* Authz.hasPermissions(TodoResource, Actions.Update, {
-      organizationId: request.path.orgId,
-      todoId: request.path.id,
+      organizationId: request.params.orgId,
+      todoId: request.params.id,
     }).pipe(
       Effect.catchTag("NotFound", () =>
         Effect.fail(
           new CliTodosContract.CliTodoNotFoundError({
-            message: `Todo with id ${request.path.id} not found`,
+            message: `Todo with id ${request.params.id} not found`,
           }),
         ),
       ),
@@ -32,8 +32,8 @@ export const completeEndpoint = (
     const currentUser = yield* CurrentUser;
     const todo = yield* commandBus.execute(
       CompleteTodoCommand.make({
-        todoId: request.path.id,
-        organizationId: request.path.orgId,
+        todoId: request.params.id,
+        organizationId: request.params.orgId,
         userId: currentUser.userId,
       }),
     );

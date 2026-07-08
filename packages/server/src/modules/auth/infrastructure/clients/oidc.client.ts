@@ -1,5 +1,7 @@
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
+import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 import * as Redacted from "effect/Redacted";
 import * as openid from "openid-client";
 
@@ -20,9 +22,7 @@ export type CodeExchangeResult = {
   readonly email: string | null;
 };
 
-export class OidcClient extends Effect.Service<OidcClient>()("OidcClient", {
-  accessors: true,
-  effect: Effect.gen(function* () {
+const make = Effect.gen(function* () {
     const env = yield* EnvVars;
     const issuerUrl = new URL(env.ZITADEL_ISSUER);
     const allowHttp = issuerUrl.protocol === "http:";
@@ -152,6 +152,10 @@ export class OidcClient extends Effect.Service<OidcClient>()("OidcClient", {
       });
 
     return { buildAuthorize, exchangeCode, buildEndSessionUrl } as const;
-  }),
-  dependencies: [EnvVars.layer],
-}) {}
+});
+
+export class OidcClient extends Context.Service<OidcClient, Effect.Success<typeof make>>()(
+  "OidcClient",
+) {
+  static readonly layer = Layer.effect(OidcClient, make).pipe(Layer.provide(EnvVars.layer));
+}

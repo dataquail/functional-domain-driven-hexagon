@@ -29,14 +29,14 @@ export const getEndpoint = (request: EndpointRequest<typeof TodosContract.Group,
     // we don't leak org existence to non-members). `hasPermissions`
     // declares NotFound for resource-scoped calls, so collapse the
     // unreachable case to a defect.
-    yield* Authz.hasPermissions(TodoCollectionResource, Actions.Read, request.path.orgId).pipe(
+    yield* Authz.hasPermissions(TodoCollectionResource, Actions.Read, request.params.orgId).pipe(
       Effect.catchTag("NotFound", () =>
         Effect.die("Unreachable: todoCollection resolver cannot surface NotFound"),
       ),
     );
     const queryBus = yield* QueryBus;
     const result = yield* queryBus.execute(
-      ListTodosQuery.make({ organizationId: request.path.orgId }),
+      ListTodosQuery.make({ organizationId: request.params.orgId }),
     );
     return toResponse(result);
   }).pipe(recoverPersistenceUnavailable, Effect.withSpan("TodosLive.get"));

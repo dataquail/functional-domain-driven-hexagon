@@ -8,8 +8,8 @@ import { MEMBER_CALLER_ID, SUPER_ADMIN_CALLER_ID } from "@/test-utils/fake-auth-
 import { truncate } from "@/test-utils/test-database.js";
 import { TestServerLive } from "@/test-utils/test-server.js";
 
-type ServerContext = Layer.Layer.Success<typeof TestServerLive>;
-type ServerError = Layer.Layer.Error<typeof TestServerLive>;
+type ServerContext = Layer.Success<typeof TestServerLive>;
+type ServerError = Layer.Error<typeof TestServerLive>;
 
 export type ServerTestRuntime = {
   readonly run: <A, E>(effect: Effect.Effect<A, E, ServerContext>) => Promise<A>;

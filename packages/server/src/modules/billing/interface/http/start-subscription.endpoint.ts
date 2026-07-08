@@ -18,14 +18,14 @@ export const startSubscriptionEndpoint = (
   Effect.gen(function* () {
     // The billing resolver is a deliberate echo of the path orgId —
     // never NotFound — so the contract surface stays narrow.
-    yield* Authz.hasPermissions(BillingResource, Actions.Update, request.path.orgId).pipe(
+    yield* Authz.hasPermissions(BillingResource, Actions.Update, request.params.orgId).pipe(
       Effect.catchTag("NotFound", () =>
         Effect.die("Unreachable: billing resolver cannot surface NotFound"),
       ),
     );
     const commandBus = yield* CommandBus;
     const subscription = yield* commandBus.execute(
-      StartSubscriptionCommand.make({ organizationId: request.path.orgId }),
+      StartSubscriptionCommand.make({ organizationId: request.params.orgId }),
     );
     return new BillingContract.SubscriptionResponse({
       id: subscription.id,

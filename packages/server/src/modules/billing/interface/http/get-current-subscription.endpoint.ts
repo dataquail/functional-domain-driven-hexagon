@@ -16,20 +16,20 @@ export const getCurrentSubscriptionEndpoint = (
   request: EndpointRequest<typeof BillingContract.PrivateGroup, "getCurrentSubscription">,
 ) =>
   Effect.gen(function* () {
-    yield* Authz.hasPermissions(BillingResource, Actions.Read, request.path.orgId).pipe(
+    yield* Authz.hasPermissions(BillingResource, Actions.Read, request.params.orgId).pipe(
       Effect.catchTag("NotFound", () =>
         Effect.die("Unreachable: billing resolver cannot surface NotFound"),
       ),
     );
     const queryBus = yield* QueryBus;
     const result = yield* queryBus.execute(
-      FindSubscriptionByOrganizationQuery.make({ organizationId: request.path.orgId }),
+      FindSubscriptionByOrganizationQuery.make({ organizationId: request.params.orgId }),
     );
     if (Option.isNone(result)) {
       return yield* Effect.fail(
         new BillingContract.SubscriptionNotFoundError({
-          organizationId: request.path.orgId,
-          message: `No subscription found for organization ${request.path.orgId}`,
+          organizationId: request.params.orgId,
+          message: `No subscription found for organization ${request.params.orgId}`,
         }),
       );
     }

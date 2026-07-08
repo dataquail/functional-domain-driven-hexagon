@@ -14,7 +14,7 @@ import { UserId } from "@/platform/ids/user-id.js";
 // middleware lives in `platform/middlewares/auth-middleware-live.ts`
 // and is exercised by auth-module integration tests + Playwright.
 
-export const makeUserAuthMiddlewareFake = (currentUser: CurrentUser["Type"]) =>
+export const makeUserAuthMiddlewareFake = (currentUser: CurrentUser["Service"]) =>
   Layer.succeed(UserAuthMiddleware, Effect.succeed(currentUser));
 
 // The default fake's userId is paired with a `platform.roles` seed in

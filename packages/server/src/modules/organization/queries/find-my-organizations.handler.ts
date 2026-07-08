@@ -21,7 +21,7 @@ const MyOrganizationRow = Schema.Struct({
   deleted_at: Schema.NullOr(Schema.DateTimeUtcFromDate),
   is_admin: Schema.Boolean,
 });
-const MyOrganizationRowStd = Schema.standardSchemaV1(MyOrganizationRow);
+const MyOrganizationRowStd = Schema.toStandardSchemaV1(MyOrganizationRow);
 
 const toView = (row: typeof MyOrganizationRow.Type): FindMyOrganizationsView => ({
   id: OrganizationId.make(row.id),

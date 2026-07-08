@@ -74,7 +74,7 @@ describe("resendInvitation", () => {
 
       const stored = yield* repo.findOneById(invitationId);
       ok(stored.token !== "tok-original", "token should be rotated");
-      ok(DateTime.greaterThan(stored.expiresAt, originalExpiry), "expiry should be pushed out");
+      ok(DateTime.isGreaterThan(stored.expiresAt, originalExpiry), "expiry should be pushed out");
       deepStrictEqual(stored.acceptedAt, null);
       deepStrictEqual(stored.revokedAt, null);
 

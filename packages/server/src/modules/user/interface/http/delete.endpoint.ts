@@ -8,7 +8,7 @@ import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/
 export const deleteEndpoint = (request: EndpointRequest<typeof UserContract.Group, "delete">) =>
   Effect.gen(function* () {
     const commandBus = yield* CommandBus;
-    yield* commandBus.execute(DeleteUserCommand.make({ userId: request.path.id }));
+    yield* commandBus.execute(DeleteUserCommand.make({ userId: request.params.id }));
   }).pipe(
     Effect.catchTag("UserNotFound", (err) =>
       Effect.fail(

@@ -30,7 +30,7 @@ export const loginEndpoint = () =>
 
     return HttpServerResponse.empty({ status: 302 }).pipe(
       HttpServerResponse.setHeader("location", url.toString()),
-      HttpServerResponse.unsafeSetCookies([
+      HttpServerResponse.setCookiesUnsafe([
         [
           PKCE_COOKIE_NAME,
           signed,

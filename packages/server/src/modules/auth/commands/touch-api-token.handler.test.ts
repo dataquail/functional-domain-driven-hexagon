@@ -43,7 +43,7 @@ describe("touchApiToken", () => {
       yield* touchApiToken(cmd);
       const repo = yield* ApiTokenRepository;
       const after = yield* repo.findOneById(apiTokenId);
-      deepStrictEqual(DateTime.greaterThan(after.lastUsedAt, before.lastUsedAt), true);
+      deepStrictEqual(DateTime.isGreaterThan(after.lastUsedAt, before.lastUsedAt), true);
       // Fixed expiry: touch must NOT extend it.
       deepStrictEqual(after.expiresAt, before.expiresAt);
     }).pipe(provide),

@@ -19,10 +19,10 @@ export const findSession = (query: FindSessionQuery): FindSessionOutput =>
       return yield* Effect.fail(new SessionRevoked({ sessionId: query.sessionId }));
     }
     const now = yield* DateTime.now;
-    if (DateTime.lessThanOrEqualTo(session.expiresAt, now)) {
+    if (DateTime.isLessThanOrEqualTo(session.expiresAt, now)) {
       return yield* Effect.fail(new SessionExpired({ sessionId: query.sessionId }));
     }
-    if (DateTime.lessThanOrEqualTo(session.absoluteExpiresAt, now)) {
+    if (DateTime.isLessThanOrEqualTo(session.absoluteExpiresAt, now)) {
       return yield* Effect.fail(new SessionExpired({ sessionId: query.sessionId }));
     }
     return session;

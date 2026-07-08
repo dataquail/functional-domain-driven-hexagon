@@ -50,9 +50,9 @@ export const findAllEndpoint = (
     const queryBus = yield* QueryBus;
     const result = yield* queryBus.execute(
       FindAllOrganizationsQuery.make({
-        page: request.urlParams.page,
-        pageSize: request.urlParams.pageSize,
-        includeDeleted: request.urlParams.includeDeleted === "true",
+        page: request.query.page,
+        pageSize: request.query.pageSize,
+        includeDeleted: request.query.includeDeleted === "true",
       }),
     );
     return toPaginatedContract(result);

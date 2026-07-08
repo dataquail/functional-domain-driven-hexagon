@@ -58,7 +58,7 @@ export const callbackEndpoint = () =>
 
     return HttpServerResponse.empty({ status: 302 }).pipe(
       HttpServerResponse.setHeader("location", env.APP_URL),
-      HttpServerResponse.unsafeSetCookies([
+      HttpServerResponse.setCookiesUnsafe([
         [
           env.SESSION_COOKIE_NAME,
           sessionCookie,

@@ -20,12 +20,12 @@ export const findMembersEndpoint = (
   request: EndpointRequest<typeof OrganizationContract.Group, "findMembers">,
 ) =>
   Effect.gen(function* () {
-    yield* Authz.hasPermissions(OrganizationResource, Actions.Read, request.path.orgId).pipe(
+    yield* Authz.hasPermissions(OrganizationResource, Actions.Read, request.params.orgId).pipe(
       Effect.catchTag("NotFound", () =>
         Effect.fail(
           new OrganizationContract.OrganizationNotFoundError({
-            organizationId: request.path.orgId,
-            message: `Organization ${request.path.orgId} not found`,
+            organizationId: request.params.orgId,
+            message: `Organization ${request.params.orgId} not found`,
           }),
         ),
       ),
@@ -33,7 +33,7 @@ export const findMembersEndpoint = (
 
     const queryBus = yield* QueryBus;
     const members = yield* queryBus.execute(
-      FindOrganizationMembershipsQuery.make({ organizationId: request.path.orgId }),
+      FindOrganizationMembershipsQuery.make({ organizationId: request.params.orgId }),
     );
 
     return new OrganizationContract.OrganizationMembersResponse({

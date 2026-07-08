@@ -34,8 +34,8 @@ export const touchSession = (cmd: TouchSessionCommand): TouchSessionOutput =>
     if (session?.revokedAt !== null) return;
 
     const now = yield* DateTime.now;
-    const elapsed = DateTime.distanceDuration(session.lastUsedAt, now);
-    if (Duration.lessThan(elapsed, Duration.seconds(cmd.thresholdSeconds))) return;
+    const elapsed = DateTime.distance(session.lastUsedAt, now);
+    if (Duration.isLessThan(elapsed, Duration.seconds(cmd.thresholdSeconds))) return;
 
     const touched = SessionRootOps.touch({ session, now, ttlSeconds: cmd.ttlSeconds });
     yield* repo.updateOne(touched).pipe(

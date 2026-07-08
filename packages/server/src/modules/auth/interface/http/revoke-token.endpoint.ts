@@ -17,7 +17,7 @@ export const revokeTokenEndpoint = (
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
     yield* commandBus.execute(
-      RevokeApiTokenCommand.make({ apiTokenId: request.path.id, userId: currentUser.userId }),
+      RevokeApiTokenCommand.make({ apiTokenId: request.params.id, userId: currentUser.userId }),
     );
   }).pipe(
     Effect.catchTag("ApiTokenNotFound", () =>

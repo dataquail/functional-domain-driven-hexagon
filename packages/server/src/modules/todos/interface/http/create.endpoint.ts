@@ -16,7 +16,7 @@ export const createEndpoint = (request: EndpointRequest<typeof TodosContract.Gro
     // membership gate directly against the path orgId (defined once in
     // `todos-policies.ts` as `todoMemberCheck`).
     const allowed = yield* todoMemberCheck(currentUser, {
-      organizationId: request.path.orgId,
+      organizationId: request.params.orgId,
     });
     if (!allowed) {
       return yield* Effect.fail(
@@ -27,7 +27,7 @@ export const createEndpoint = (request: EndpointRequest<typeof TodosContract.Gro
     const todo = yield* commandBus.execute(
       CreateTodoCommand.make({
         title: request.payload.title,
-        organizationId: request.path.orgId,
+        organizationId: request.params.orgId,
         userId: currentUser.userId,
       }),
     );

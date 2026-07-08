@@ -13,14 +13,14 @@ export const cancelSubscriptionEndpoint = (
   request: EndpointRequest<typeof BillingContract.PrivateGroup, "cancelSubscription">,
 ) =>
   Effect.gen(function* () {
-    yield* Authz.hasPermissions(BillingResource, Actions.Update, request.path.orgId).pipe(
+    yield* Authz.hasPermissions(BillingResource, Actions.Update, request.params.orgId).pipe(
       Effect.catchTag("NotFound", () =>
         Effect.die("Unreachable: billing resolver cannot surface NotFound"),
       ),
     );
     const commandBus = yield* CommandBus;
     const subscription = yield* commandBus.execute(
-      CancelSubscriptionCommand.make({ organizationId: request.path.orgId }),
+      CancelSubscriptionCommand.make({ organizationId: request.params.orgId }),
     );
     return new BillingContract.SubscriptionResponse({
       id: subscription.id,

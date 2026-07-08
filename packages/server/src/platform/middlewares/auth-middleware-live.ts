@@ -1,6 +1,6 @@
 import * as HttpServerRequest from "effect/unstable/http/HttpServerRequest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
-import { UserAuthMiddleware } from "@org/contracts/Policy";
+import { CurrentUser, UserAuthMiddleware } from "@org/contracts/Policy";
 import { Database } from "@org/database/index";
 import * as cookie from "cookie";
 import * as Effect from "effect/Effect";
@@ -52,7 +52,10 @@ export const UserAuthMiddlewareLive = Layer.effect(
     // wrap their own SessionRepository (Stage B), leaving Database in R.
     const db = yield* Database.Database;
 
-    return Effect.gen(function* () {
+    // v4 HttpApiMiddleware is a wrapper: authenticate the request, then
+    // `provide` the resolved `CurrentUser` into the downstream endpoint
+    // effect. The auth failures (401/503) join the endpoint's error channel.
+    const authenticate = Effect.gen(function* () {
       const httpReq = yield* HttpServerRequest.HttpServerRequest;
 
       // Bearer path (CLI / MCP / CI — ADR-0024): an `Authorization: Bearer`
@@ -107,5 +110,12 @@ export const UserAuthMiddlewareLive = Layer.effect(
         userId: session.userId,
       };
     }).pipe(Effect.withSpan("auth.middleware"));
+
+    return (httpEffect) =>
+      authenticate.pipe(
+        Effect.flatMap((currentUser) =>
+          Effect.provideService(httpEffect, CurrentUser, currentUser),
+        ),
+      );
   }),
 );
