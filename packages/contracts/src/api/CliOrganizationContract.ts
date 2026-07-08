@@ -1,5 +1,5 @@
-import * as HttpApiEndpoint from "@effect/platform/HttpApiEndpoint";
-import * as HttpApiGroup from "@effect/platform/HttpApiGroup";
+import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
+import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 import * as Schema from "effect/Schema";
 
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
@@ -17,6 +17,11 @@ export class CliOrganization extends Schema.Class<CliOrganization>("CliOrganizat
 
 export class Group extends HttpApiGroup.make("cliOrganization")
   .middleware(UserAuthMiddleware)
-  .add(HttpApiEndpoint.get("listMine", "/").addSuccess(Schema.Array(CliOrganization)))
-  .addError(CustomHttpApiError.ServiceUnavailable)
+  .add(
+    HttpApiEndpoint.get("listMine", "/", {
+      success: Schema.Array(CliOrganization),
+      // group-wide error (v3 HttpApiGroup.addError) distributes onto each endpoint in v4
+      error: CustomHttpApiError.ServiceUnavailable,
+    }),
+  )
   .prefix("/cli/orgs") {}
