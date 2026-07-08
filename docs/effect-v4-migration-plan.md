@@ -6,22 +6,26 @@
 
 ---
 
-## 0. Session handoff — START HERE (last updated after the `@org/server` mechanical-pass commits)
+## 0. Session handoff — START HERE (updated after `@org/server` GREEN + downstream fan-out)
 
 **Goal:** migrate the whole monorepo from `effect@3.21.2` to `effect@4.0.0-beta.94` (effect-smol). Decisions locked: **full modernization** posture, **entire monorepo**, **pin `4.0.0-beta.94`**, **supersede ADR-0012** (use-case `Effect.fn` spans). Details in §1.
 
-**Where we are:** branch `chore/effect-v4-migration` (off `main`). Green + committed: **`@org/contracts`** (typecheck + built dist), **`@org/database`** (typecheck + unit tests 3/3), **`@org/api-client`** (typecheck). **`@org/server`** driven from **888 → ~218** errors via mechanical passes (committed as WIP `--no-verify` commits); the remainder is structural hand-migration.
+**Where we are:** branch `chore/effect-v4-migration` (off `main`). **Green + committed (typecheck + unit tests):** `@org/contracts`, `@org/database`, `@org/api-client`, **`@org/server` (888→0, 353 unit tests pass)**, `@org/jobs`, `@org/mcp`, `@org/components`. **In progress (background agents, uncommitted):** `@org/cli` (~29, `@effect/cli`→`effect/unstable/cli` redesign) and `@org/web` (214). `acceptance` was already 0.
 
-**Per-package error snapshot (as of handoff):** contracts 0 ✅ · database 0 ✅ · api-client 0 ✅ · server ~218 · jobs 6 · cli 30 · mcp 4 · components 9 · web 214 (typechecks against **built** contracts — already rebuilt) · acceptance 0.
+**Immediate next task:** land the `cli` + `web` agent diffs (verify `pnpm -F @org/<pkg> exec tsc -b … --force` = 0 + unit tests), commit each. Then **Phase 6 (modernization)** and **Phase 7 (docs + full verification)** remain — see below.
 
-**Immediate next task:** finish `@org/server`. The mechanical bulk is done; what's left is genuinely structural, concentrated in these files:
-- `common/token-cipher.ts` (14) — `effect/ParseResult` is **gone**, `Schema.transformOrFail`→`decodeTo`, `Effect.Tag`→`Context.Service`, `Schema.parseJson`→`Schema.fromJsonString`, `Schema.Schema<A,I,R>`→`Schema.Codec` (see §3.4/§3.5).
-- `platform/auth/cookie-codec.ts` + `modules/auth/infrastructure/clients/oidc.client.ts` — the 2 remaining `Effect.Service`→`Context.Service` conversions (recipe below).
-- `platform/request-context.ts` — `FiberRef`→`Context.Reference`.
-- `server.ts` (12) — `Layer.scoped`→`Layer.effect`, HttpServer `serve`/`Layer.launch`, and the `NodeSdk`→`effect/unstable/observability` Otlp swap (this is also Phase 6 — do it here).
-- Test files (billing-gateway client-live, logout.endpoint, unit-of-work, find-session, user.root, etc.) — mostly service-wiring + Config + small structural bits, no new patterns.
+### Big structural findings from the server migration (READ before touching interface/composition code)
 
-**Then fan out** in topological order: `jobs` → `cli` (`@effect/cli`→`effect/unstable/cli`) → `mcp` → `components` → `web` → `acceptance`. Green gate per package: `pnpm -F @org/<pkg> exec tsc -b tsconfig.json --force` exit 0, then its unit tests.
+- **v4 HttpApi serve model is a redesign.** `HttpApiBuilder.api(Api)`→`HttpApiBuilder.layer(Api)` (registers groups into an `HttpRouter`, requires `HttpRouter | Etag.Generator | FileSystem | HttpPlatform | Path` + the group services). Serving: `HttpApiBuilder.serve(mw)` → **`HttpRouter.serve(appLayer, { middleware })`** (from `effect/unstable/http/HttpRouter`). CORS: `HttpApiBuilder.middlewareCors(opts)` → **`HttpMiddleware.cors(opts)`** composed in the serve `middleware` fn. `NodeHttpServer.layer(createServer, {port})` unchanged and provides `HttpServer | NodeServices | HttpPlatform | Etag.Generator`.
+- **Request-scoped requirements.** In v4 an endpoint handler's deps are tracked as `HttpRouter.Request<"Requires", R>` and are only **unwrapped to plain requirements AFTER `HttpRouter.serve`** — so app-service layers (buses, UnitOfWork, registries, provisioning, EnvVars, DB) must be `Layer.provide`d **post-serve**, not onto the api layer. For a service a module provides **internally** yet an endpoint consumes (OidcClient, BillingGateway, InvitationMailer), use **`HttpRouter.provideRequest(layer)`** inside the module Live (it satisfies `Request<"Requires">`). The middleware impl (`UserAuthMiddleware`) is a **build-time** requirement of `HttpApiBuilder.layer` → plain `Layer.provide` onto the api layer.
+- **`HttpApiMiddleware` is now a wrapper function** `(httpEffect, options) => Effect<HttpServerResponse, …>`, not an Effect producing the provided value. The Live returns `(httpEffect) => authenticate.pipe(Effect.flatMap(user => Effect.provideService(httpEffect, CurrentUser, user)))`. `HttpApiMiddleware.Tag`→`HttpApiMiddleware.Service<Self, {provides}>()("Id", { error })`.
+- **Contract `.middleware(M)` must come AFTER all `.add(...)`** in a group chain — v4 `.middleware` applies to the endpoints present at call time only, and `.add` does NOT inherit it. Placing it first (the mechanical order) silently attaches the auth middleware to **zero** endpoints (type leak of `CurrentUser` + a real security regression). Fixed in all 11 gated groups.
+- **`Schema.isUUID()` is strict RFC** (checks version/variant nibbles) and `.make()` validates. v3's `Schema.UUID` was shape-only. The repo standardized on **`Schema.isGUID()`** (shape-only) for every ID/row-schema — strict `isUUID` rejects the non-RFC admin seed sentinel `00000000-…-01` used in production and every placeholder test UUID. Do NOT reintroduce `isUUID()`.
+- **`token-cipher`:** `Schema.RedactedFromValue(fromJsonString(schema))` (NOT `Schema.Redacted(...)`) — `Redacted` wraps both Type and Encoded and treats content as opaque, so the JSON transform never runs; `RedactedFromValue` keeps the encoded side plain. Transform via `EncryptedToken.pipe(Schema.decodeTo(To, { decode: SchemaGetter.transformOrFail(decrypt), encode: SchemaGetter.transformOrFail(encrypt) }))` (`effect/SchemaTransformation` is real but the getter API is `effect/SchemaGetter`; `effect/ParseResult` is gone → issues live in `effect/SchemaIssue`).
+
+**Deviation from the plan:** kept `@effect/opentelemetry/NodeSdk` (it still resolves + typechecks under the beta) rather than swapping to `effect/unstable/observability` Otlp — **deferred the Otlp swap to Phase 6** (it needs an `HttpClient` + `OtlpSerialization` wiring and a `baseUrl` semantics change). `server.ts` `NodeSdkLive` still uses NodeSdk.
+
+**Green gate per package:** `pnpm -F @org/<pkg> exec tsc -b tsconfig.json --force` exit 0, then its unit tests (`pnpm -F @org/<pkg> test`).
 
 ### v4 API map — VERIFIED against `4.0.0-beta.94` `.d.ts` (supersedes guesses in §3)
 
@@ -46,6 +50,21 @@ Read `node_modules/.pnpm/effect@4.0.0-beta.94/node_modules/effect/dist/**/*.d.ts
 - **Runtime bridge (run an Effect to Exit inside a Promise callback):** `Effect.runtime<R>()` + `Runtime.runPromiseExit` → `Effect.context<R>()` + `Effect.runPromiseExitWith(context)`.
 - **Layer:** `Layer.scoped`→`Layer.effect` (auto-scopes); `Layer.unwrapEffect`→`Layer.unwrap`.
 - **`DateTime.unsafeMake`→`DateTime.makeUnsafe`** (also `DateTime.fromDateUnsafe`, `DateTime.nowUnsafe`). `DateTime.make` now returns `Option`.
+
+**Additional renames verified this session (server/jobs/mcp/components downstream):**
+- **Comparison predicates gained an `is` prefix:** `Duration.lessThan`→`Duration.isLessThan`, `DateTime.lessThanOrEqualTo`→`DateTime.isLessThanOrEqualTo`, etc. `DateTime.distanceDuration`→`DateTime.distance` (still returns `Duration`). `Order.reverse`→`Order.flip`.
+- **`Schema.decodeUnknownEither`→`Schema.decodeUnknownResult`; `Schema.standardSchemaV1`→`Schema.toStandardSchemaV1`; `Schema.Schema.Any` (top schema type)→`Schema.Top`.**
+- **`Option.fromNullable`→`Option.fromNullishOr`.**
+- **`Effect.zipRight(a,b)`→`Effect.andThen(a,b)`; `Effect.dieMessage(s)`→`Effect.die(new Error(s))`; `Effect.tapErrorCause`→`Effect.tapCause`.**
+- **`Cause.isDie`→`Cause.hasDies`, `Cause.isFailure`→`Cause.hasFails`.**
+- **`Layer.scoped`→`Layer.effect`; `Layer.unwrapEffect`→`Layer.unwrap`; `Layer.die(e)` is gone → `Layer.effect(SomeTag, Effect.die(e))` (need a concrete output tag); `Layer.setConfigProvider(p)`→`ConfigProvider.layer(p)`; `ConfigProvider.fromMap(new Map([...]))`→`ConfigProvider.fromUnknown(Object.fromEntries([...]))`.**
+- **`FiberRef`→`Context.Reference`:** `Context.Reference<Shape>("Key", { defaultValue: () => … })` (a factory returning a value, NOT a class base — don't `extends` it). It IS an `Effect<Shape>` so `yield*`/`Effect.map` read it; set locally via `Effect.provideService`. `FiberRef.get`→ just the reference; `Effect.locally`→`Effect.provideService`.
+- **`ManagedRuntime.ManagedRuntime.Context<T>`→`ManagedRuntime.ManagedRuntime.Services<T>`** (type helper renamed; module+namespace `ManagedRuntime.ManagedRuntime.` prefix kept).
+- **`@effect/platform-node/NodeContext`→`@effect/platform-node/NodeServices`** (the beta `@effect/platform-node@4.0.0-beta.94` is installed alongside a transitive v3 copy — verify you read the beta dts).
+- **Schema filters run through `.check(...)`, not `.pipe(...)`** — a `.pipe(Schema.isMinLength(2), Schema.isMaxLength(50))` chain of pure filters becomes `.check(Schema.isMinLength(2), Schema.isMaxLength(50))`. A `.pipe()` still works for `Schema.brand`.
+- **Domain `Result` yields inside `Effect.gen`:** v4 `Effect.gen` no longer adapts a yielded `Result` (its iterator is a distinct `ResultIterator`, not Effect's `YieldWrap`) → wrap it: `yield* Effect.fromResult(SomeRootOps.verb(...))`.
+- **`Context.Service` shape-type accessor:** `X["Type"]`→`X["Service"]` (also `Database.Database["Type"]`→`["Service"]`). Test construction `new X({...})` → pass the plain shape object to `Layer.succeed(X, {...})`.
+- **`HttpApiClient`/endpoint request keys `path`/`urlParams`→`params`/`query`** (already noted; recurs in mcp + web client call sites).
 
 ### Dead code deleted (not migrated), user-approved — zero importers anywhere:
 `contracts/src/SchemaUtils.ts`, `contracts/src/Control.ts`, and the `ManualCache` trio (`ManualCache.ts` + `internal/manual-cache.ts` + `test/ManualCache.test.ts`). **Ignore §3.4 / the old "do SchemaUtils first" step — that file is gone.**
