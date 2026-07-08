@@ -49,4 +49,4 @@ Turbopack resolves workspace imports via tsconfig `paths`. The contracts source 
 
 ## Why top-level `app/` instead of `src/app/`
 
-`create-next-app`'s default layout has no `src/` wrapper, and we kept it that way. Root scripts (`lint`, `lint:deps`, `check-test-parity`) target `packages/web/{app,features,lib,services}/**` directly via explicit globs rather than relying on a `src/` convention.
+`create-next-app`'s default layout has no `src/` wrapper, and we kept it that way. Root tooling (`lint` — which now carries the `project-structure/folder-structure` view-tiering/bridge parity — and `lint:deps`) targets `packages/web/{app,features,lib,services}/**` directly via explicit globs rather than relying on a `src/` convention.

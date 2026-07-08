@@ -2,6 +2,14 @@
 import storybook from "eslint-plugin-storybook";
 
 /* eslint-disable */
+import { projectStructurePlugin } from "eslint-plugin-project-structure";
+import {
+  componentsPatterns,
+  componentsPrimitives,
+  serverModules,
+  webFeatures,
+  webTanstackBridge,
+} from "./eslint.project-structure.mjs";
 import dataBoundaries from "@synapsestudios/eslint-plugin-data-boundaries";
 import { fixupPluginRules } from "@eslint/compat";
 import { FlatCompat } from "@eslint/eslintrc";
@@ -44,7 +52,6 @@ export default [
       "**/vitest.workspace.ts",
       "reference/**",
       "scratchpad/**",
-      "scripts/check-test-parity.mjs",
       "**/routeTree.gen.ts",
       // Next.js dev bundle output. Source lives under packages/web/{app,services,lib}.
       "**/.next/**",
@@ -525,6 +532,51 @@ export default [
     rules: {
       "@typescript-eslint/no-empty-interface": "off",
       "@typescript-eslint/no-empty-object-type": "off",
+    },
+  },
+  // ADR-0015: component-library story parity, via the declarative taxonomy in
+  // eslint.project-structure.mjs. No dedicated parser — the folder-structure
+  // rule reads the filesystem, not the AST, so it coexists with the
+  // type-aware @typescript-eslint parser already configured for these files.
+  {
+    // The hexagonal/DDD file taxonomy (layout + sibling parity) for server
+    // modules — replaces scripts/check-folder-layout.mjs and the server rules
+    // of scripts/check-test-parity.mjs. See eslint.project-structure.mjs.
+    files: ["packages/server/src/modules/**/*.{ts,tsx}"],
+    plugins: { "project-structure": projectStructurePlugin },
+    rules: {
+      "project-structure/folder-structure": ["error", serverModules],
+    },
+  },
+  {
+    files: ["packages/components/primitives/**/*.{ts,tsx}"],
+    plugins: { "project-structure": projectStructurePlugin },
+    rules: {
+      "project-structure/folder-structure": ["error", componentsPrimitives],
+    },
+  },
+  {
+    files: ["packages/components/patterns/**/*.{ts,tsx}"],
+    plugins: { "project-structure": projectStructurePlugin },
+    rules: {
+      "project-structure/folder-structure": ["error", componentsPatterns],
+    },
+  },
+  {
+    // ADR-0014: web view-tiering parity (ViewModel / Presenter). Layout stays
+    // permissive; only the sibling-test parity fires. See eslint.project-structure.mjs.
+    files: ["packages/web/features/**/*.{ts,tsx}"],
+    plugins: { "project-structure": projectStructurePlugin },
+    rules: {
+      "project-structure/folder-structure": ["error", webFeatures],
+    },
+  },
+  {
+    // TanStack-query bridge parity: every non-barrel bridge file needs a test.
+    files: ["packages/web/lib/tanstack-query/**/*.{ts,tsx}"],
+    plugins: { "project-structure": projectStructurePlugin },
+    rules: {
+      "project-structure/folder-structure": ["error", webTanstackBridge],
     },
   },
 ];

@@ -4,7 +4,7 @@ import {
   type DeleteTodoCommand,
   type DeleteTodoOutput,
 } from "@/modules/todos/commands/delete-todo.command.js";
-import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todo.repository.js";
+import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todos.repository.js";
 
 export const deleteTodo = (cmd: DeleteTodoCommand): DeleteTodoOutput =>
   Effect.gen(function* () {

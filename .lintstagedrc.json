@@ -1,4 +1,7 @@
 {
   "*.{md,json,css,scss,yaml,yml,js,cjs,mjs}": ["prettier --write"],
-  "*.{ts,tsx}": ["eslint --fix --quiet", "prettier --write"]
+  "*.{ts,tsx}": [
+    "eslint --fix --quiet --cache --cache-location node_modules/.cache/eslint/",
+    "prettier --write"
+  ]
 }

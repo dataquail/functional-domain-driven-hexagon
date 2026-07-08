@@ -17,16 +17,16 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@effect/platform": "*",
-    "@effect/platform-node": "*",
+    "@effect/platform": "0.96.1",
+    "@effect/platform-node": "0.106.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@org/api-client": "workspace:^",
     "@org/contracts": "workspace:^",
-    "effect": "^3.20.0",
+    "effect": "3.21.2",
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/node": "^25.6.0",
-    "tsx": "^4.19.2"
+    "@types/node": "^25.9.4",
+    "tsx": "^4.23.0"
   }
 }

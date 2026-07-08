@@ -5,7 +5,7 @@ import {
   type UpdateTodoCommand,
   type UpdateTodoOutput,
 } from "@/modules/todos/commands/update-todo.command.js";
-import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todo.repository.js";
+import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todos.repository.js";
 import { TodoRootOps } from "@/modules/todos/domain/todo.root.js";
 
 export const updateTodo = (cmd: UpdateTodoCommand): UpdateTodoOutput =>

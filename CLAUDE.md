@@ -24,33 +24,59 @@ Each feature module lives at `packages/server/src/modules/<feature>/` with sibli
   - `interface/http/` — one `<endpoint-name>.endpoint.ts` per HTTP endpoint (ADR-0013), plus an `index.ts` barrel that registers the endpoint groups. May also hold `*.util.ts` — pure, leaf, test-obligated protocol/wire helpers shared between endpoints (ADR-0026). `*.util.ts` is allowed **only** in `interface/http/` and `interface/cli/` — never in the application layer (commands/queries/event-handlers), where a shared helper is a smell (it's domain logic → an aggregate op, or trivial → inline). A leaf rule bars utils from importing ports, use cases, infrastructure, buses, or barrels.
   - `interface/events/` — one `<publisher>.event-adapter.ts` per upstream module whose domain events this module consumes (ADR-0007 ACL). The only place in the consumer module permitted to import another module's barrel.
 - `policies/` — `*.policies.ts` registry, `*.resource-resolver(s).ts`, and `is-*.policy.ts` checks. `policies/public/` holds `*.service-live.ts` — this module's Live implementations of platform ACL service ports (e.g. `RoleServiceLive`), published to the centralized policy registry and wired at the composition root.
-- **Module root** — a closed set of aggregation/composition files only (ADR-0027): `index.ts` (barrel), `<feature>.module.ts` (composed Layer), `<feature>.command-handlers.ts` / `<feature>.query-handlers.ts` (bus-registration maps), `<feature>.event-span-attributes.ts`, `<feature>.shared-deps.ts`. Any other file must move into a subfolder — enforced by `lint:layout`.
+- **Module root** — a closed set of aggregation/composition files only (ADR-0027): `index.ts` (barrel), `<feature>.module.ts` (composed Layer), `<feature>.command-handlers.ts` / `<feature>.query-handlers.ts` (bus-registration maps), `<feature>.event-span-attributes.ts`, `<feature>.shared-deps.ts`. Any other file must move into a subfolder — enforced by the `project-structure/folder-structure` ESLint rule (see below).
 
 Cross-module access goes through the module's `index.ts` barrel, which may not re-export from `infrastructure/` or `interface/`. The published surface is domain types (events, IDs, errors), command/query messages, handler-registration maps, and the module's `Live` layer.
 
-## Test parity (enforced by `pnpm lint:tests`)
+## File taxonomy: layout + test parity (enforced by `pnpm lint`)
 
-If you create any of these without a sibling test, CI fails:
+The file taxonomy — layout (which file kinds a folder admits), sibling parity
+(required tests/fakes/stories), and subfolder allowlists — is one declarative
+config, `eslint.project-structure.mjs`, enforced by the
+`project-structure/folder-structure` ESLint rule under `pnpm lint` (in-editor + CI).
+It replaced the bespoke `check-folder-layout.mjs` / `check-test-parity.mjs`
+scripts (ADR-0028). Each rule carries a didactic `message` telling you _what to
+do_, not just that a file is misplaced. To add a genuinely new file kind or
+stereotype, declare it in `eslint.project-structure.mjs` — deliberately, not by
+working around the check.
 
-| When you create…                                   | Write a sibling…                                                                                   |
-| -------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `domain/*.root.ts`                                 | `domain/<base>.root.test.ts` (aggregate roots; the non-root domain stereotypes below need none)    |
-| `domain/*.domain-service.ts`                       | `domain/<base>.domain-service.test.ts` (domain services carry a test — they're real domain logic)  |
-| `commands/*.command.ts`                            | `commands/<base>.handler.test.ts` (the test sits on the handler)                                   |
-| `queries/*.query.ts`                               | `queries/<base>.handler.integration.test.ts` (or `.handler.test.ts`)                               |
-| `event-handlers/*.ts`                              | `event-handlers/<base>.integration.test.ts` (or `.test.ts`)                                        |
-| `interface/http/*.endpoint.ts`                     | `interface/http/<base>.endpoint.integration.test.ts` (or `.endpoint.test.ts`)                      |
-| `interface/{http,cli}/*.util.ts`                   | `<base>.util.test.ts` (the test obligation is the anti-drift guard — ADR-0026)                     |
-| `interface/events/*.event-adapter.ts`              | `interface/events/<base>.event-adapter.test.ts`                                                    |
-| `infrastructure/repositories/*.repository-live.ts` | `<base>.repository-live.integration.test.ts` AND a `<base>.repository-fake.ts` counterpart         |
-| `infrastructure/clients/*.client-live.ts`          | `<base>.client-live.integration.test.ts` (or `.test.ts`) AND a `<base>.client-fake.ts` counterpart |
-| `infrastructure/acl/*.acl-live.ts`                 | `<base>.acl-live.integration.test.ts` (or `.test.ts`) AND a `<base>.acl-fake.ts` counterpart       |
+**Parity.** If you create any of these without its sibling, `pnpm lint` fails:
 
-The naming conventions are also the parity-rule detectors. Don't rename a file to dodge the rule — write the test.
+| When you create…                            | Write a sibling…                                                                                            |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `domain/*.root.ts`                          | `domain/<base>.root.test.ts` (aggregate roots; the non-root domain stereotypes need none)                   |
+| `domain/*.domain-service.ts`                | `domain/<base>.domain-service.test.ts` (domain services carry a test — they're real domain logic)           |
+| `commands/*.handler.ts`                     | `commands/<base>.handler.test.ts` (the test sits on the handler)                                            |
+| `queries/*.handler.ts`                      | `queries/<base>.handler.integration.test.ts` (queries read real SQL — the parity is the integration test)   |
+| `event-handlers/*.handler.ts`               | `event-handlers/<base>.handler.test.ts`                                                                     |
+| `interface/{http,cli}/*.endpoint.ts`        | `<base>.endpoint.integration.test.ts` (login/logout OIDC endpoints are exempted — see Endpoint test naming) |
+| `interface/{http,cli}/*.util.ts`            | `<base>.util.test.ts` (the test obligation is the anti-drift guard — ADR-0026)                              |
+| `interface/events/*.event-adapter.ts`       | `interface/events/<base>.event-adapter.test.ts`                                                             |
+| `domain/ports/repositories/*.repository.ts` | in `infrastructure/repositories/`: `<base>-live.ts` + `<base>-fake.ts` + `<base>-live.integration.test.ts`  |
+| `domain/ports/clients/*.client.ts`          | in `infrastructure/clients/`: `<base>-live.ts` + `<base>-fake.ts` + `<base>-live.test.ts`                   |
+| `domain/ports/acl/*.acl.ts`                 | in `infrastructure/acl/`: `<base>-live.ts` + `<base>-fake.ts` + `<base>-live.test.ts`                       |
 
-## Folder layout (enforced by `pnpm lint:layout`)
+Adapter parity is anchored on the **port** (not the adapter), so a repository/client/acl
+port and its adapters must share a base name (a self-contained `infrastructure/clients/*.client.ts`
+with no port is not required to have a live/fake). The naming conventions are the
+parity detectors — don't rename a file to dodge the rule, write the test.
 
-Each stereotype folder admits a closed set of file kinds (ADR-0025); an unrecognized source file fails the build. This is the inverse of parity: parity asks whether a required sibling exists, layout asks whether a file is allowed to exist at all. It exists to stop convention drift — the stray `session-utils.ts` in `domain/` or `todo-helpers.ts` in `commands/` that should have been a method on an aggregate root or a named stereotype. Test files are exempt (governed by parity). `commands/` and `queries/` use a pairing rule: a bare `<base>.ts` handler is admitted only if its `<base>.command.ts` / `<base>.query.ts` schema sibling exists. **Container folders** (`domain/ports/`, `infrastructure/`, `interface/`) admit no direct files at all — content must live in a subfolder (e.g. `infrastructure/repositories/`, `interface/http/`). The checker also validates **subfolders**: the module root and each container admit only a closed set of nested directories (e.g. a module admits only `domain/ commands/ queries/ event-handlers/ infrastructure/ interface/ policies/`), so a stray `modules/x/helpers/` or `interface/grpc/` fails just like a stray file. To add a genuinely new file kind, declare it in the folder's allowlist in `scripts/check-folder-layout.mjs` — deliberately, not by working around the check.
+**Layout.** Each stereotype folder admits a closed set of file kinds (ADR-0025);
+an unrecognized source file fails. This is the inverse of parity: parity asks
+whether a required sibling exists, layout asks whether a file is allowed to exist
+at all. It stops convention drift — the stray `session-utils.ts` in `domain/` or
+`todo-helpers.ts` in `commands/` that should have been an aggregate op or a named
+stereotype. **Container folders** (`domain/ports/`, `infrastructure/`,
+`interface/`) admit no direct files — content lives in a tier subfolder. Subfolders
+are allowlisted too: a module admits only `domain/ commands/ queries/
+event-handlers/ infrastructure/ interface/ policies/`, so a stray
+`modules/x/helpers/` or `interface/grpc/` fails like a stray file.
+
+**Concessions** (ADR-0028): the old commands/queries "pair rule" (a `<base>.ts`
+handler admitted only if its schema sibling exists) is dropped — deny-by-default
+still blocks stray-named files, and an orphan handler still owes its test. A
+completely empty stray folder (no linted files) is not visited by the rule, so it
+escapes — low risk.
 
 ## Test seams
 
@@ -58,18 +84,17 @@ Each stereotype folder admits a closed set of file kinds (ADR-0025); an unrecogn
 - **Integration tests** (`*.repository-live.integration.test.ts`, `<endpoint>.endpoint.integration.test.ts`, `<query>.handler.integration.test.ts`) hit a real DB. They self-skip when `DATABASE_URL_TEST` is unset; `pnpm test` succeeds with no auxiliary services.
 - **HTTP integration tests** use `useServerTestRuntime(["table1", "table2"])` from `test-utils/`, which wires `ManagedRuntime.make(TestServerLive)` + `beforeAll`/`afterAll` + per-test `truncate`. Tests then exercise the contract via `HttpApiClient.make(Api)` and seed prior state by calling _other endpoints_, not by reaching into module internals.
 - **Query/repository integration tests** seed via the live repository (or other production-path code), not via raw SQL. Using the repository as the seeding seam keeps the test honest about what production paths look like.
-- **Endpoint test naming.** A test file ending in `*.endpoint.integration.test.ts` exercises the real HTTP layer against a live database via `useServerTestRuntime(...)`. A file ending in `*.endpoint.test.ts` is a true unit test — no DB, no HTTP round-trip — typically a parity-rule token for endpoints whose meaningful coverage lives elsewhere (e.g. the OIDC `login` / `callback` / `logout` flows, covered by Playwright + `SessionRepositoryLive` integration tests). Any `.endpoint.test.ts` file must carry a header comment naming where the meaningful coverage lives; if a test starts hitting real HTTP + DB, rename it to `.endpoint.integration.test.ts`.
+- **Endpoint test naming.** A test file ending in `*.endpoint.integration.test.ts` exercises the real HTTP layer against a live database via `useServerTestRuntime(...)`. A file ending in `*.endpoint.test.ts` is a true unit test — no DB, no HTTP round-trip — typically a parity-rule token for endpoints whose meaningful coverage lives elsewhere (the OIDC `login` / `logout` flows, covered by Playwright + `SessionRepositoryLive` integration tests; `callback`'s reachable no-IdP guard has a real `callback.endpoint.integration.test.ts`). The `login`/`logout` endpoints are the two named exemptions in the folder-structure rule; every other endpoint must have `*.endpoint.integration.test.ts`. Any `.endpoint.test.ts` file must carry a header comment naming where the meaningful coverage lives; if a test starts hitting real HTTP + DB, rename it to `.endpoint.integration.test.ts`.
 
 ## Commands
 
-| Command                                    | What it runs                                                                    |
-| ------------------------------------------ | ------------------------------------------------------------------------------- |
-| `pnpm check:all`                           | lint + lint:deps + lint:layout + lint:tests + typecheck + tests (the full gate) |
-| `pnpm test`                                | vitest, no DB                                                                   |
-| `DATABASE_URL_TEST=postgres://… pnpm test` | also runs integration tests                                                     |
-| `pnpm lint:deps`                           | dependency-cruiser architecture rules                                           |
-| `pnpm lint:layout`                         | folder-layout allowlist (file kinds per folder)                                 |
-| `pnpm lint:tests`                          | test-parity check                                                               |
+| Command                                    | What it runs                                                                                    |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `pnpm check:all`                           | lint + lint:deps + typecheck + tests (the full gate)                                            |
+| `pnpm lint`                                | ESLint — includes the `project-structure/folder-structure` file-taxonomy rule (layout + parity) |
+| `pnpm test`                                | vitest, no DB                                                                                   |
+| `DATABASE_URL_TEST=postgres://… pnpm test` | also runs integration tests                                                                     |
+| `pnpm lint:deps`                           | dependency-cruiser architecture rules                                                           |
 
 ## Conventions worth knowing
 
@@ -101,9 +126,9 @@ The frontend is a Next.js (App Router) renderer that proxies `/api/*` to the Eff
 
 **Data fetching default** (ADR-0018): each route's `page.tsx` runs `prefetchEffectQuery` server-side, dehydrates the cache into `<HydrationBoundary>`, and the leaf component reads via `useEffectSuspenseQuery`. Plain `useQuery` is allowed only for client-only side data (search-as-you-type, polling). Mutations stay client-side via `useEffectMutation`.
 
-**View tiering** (ADR-0014): naked component → `*.presenter.{ts,tsx}` (React-coupled libraries: TanStack Form, react-hook-form, etc.) → `*.view-model.ts` (pure Effect, framework-agnostic). Components in `features/` may not import Effect runtime primitives or `@tanstack/react-query` directly. Enforced by the `web-*` rules in `.dependency-cruiser.cjs` (web pass) and the ViewModel/Presenter parity rules in `scripts/check-test-parity.mjs`.
+**View tiering** (ADR-0014): naked component → `*.presenter.{ts,tsx}` (React-coupled libraries: TanStack Form, react-hook-form, etc.) → `*.view-model.ts` (pure Effect, framework-agnostic). Components in `features/` may not import Effect runtime primitives or `@tanstack/react-query` directly. Enforced by the `web-*` rules in `.dependency-cruiser.cjs` (web pass) and the ViewModel/Presenter parity rules in the `project-structure/folder-structure` config (`eslint.project-structure.mjs`, `webFeatures`). Presenter tests standardize on `.presenter.test.tsx`.
 
-**Component library** (`packages/components/`, ADR-0015). Two trees: `primitives/` (atoms) and `patterns/` (molecules + organisms). Dependency direction: `features (web) → patterns → primitives → third-party`. Only `primitives/` may import `@radix-ui/*`, `lucide-react`, `recharts`, or `sonner`. New icons: add a one-line `createIcon` wrapper to `primitives/icon/icons.ts`; never import `lucide-react` from outside `primitives/`. Every primitive and pattern needs a sibling `*.stories.tsx` (enforced by `lint:tests`). Storybook runs via `pnpm -F @org/components storybook`; a static build is part of `check:all`.
+**Component library** (`packages/components/`, ADR-0015). Two trees: `primitives/` (atoms) and `patterns/` (molecules + organisms). Dependency direction: `features (web) → patterns → primitives → third-party`. Only `primitives/` may import `@radix-ui/*`, `lucide-react`, `recharts`, or `sonner`. New icons: add a one-line `createIcon` wrapper to `primitives/icon/icons.ts`; never import `lucide-react` from outside `primitives/`. Every primitive and pattern needs a sibling `*.stories.tsx` (enforced by the `project-structure/folder-structure` rule — `eslint.project-structure.mjs`, `componentsPrimitives`/`componentsPatterns`). Storybook runs via `pnpm -F @org/components storybook`; a static build is part of `check:all`.
 
 **Run locally**:
 

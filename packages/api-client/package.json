@@ -12,11 +12,11 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@effect/platform": "*",
+    "@effect/platform": "0.96.1",
     "@org/contracts": "workspace:^",
-    "effect": "^3.20.0"
+    "effect": "3.21.2"
   },
   "devDependencies": {
-    "@types/node": "^25.6.0"
+    "@types/node": "^25.9.4"
   }
 }
