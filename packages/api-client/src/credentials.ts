@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 
-import * as FileSystem from "@effect/platform/FileSystem";
-import * as Path from "@effect/platform/Path";
+import * as FileSystem from "effect/FileSystem";
+import * as Path from "effect/Path";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
@@ -26,7 +26,7 @@ const credentialsPath = Effect.gen(function* () {
   return path.join(base, CONFIG_DIR, FILE_NAME);
 });
 
-const decode = Schema.decodeUnknown(Schema.parseJson(Credentials));
+const decode = Schema.decodeUnknownEffect(Schema.parseJson(Credentials));
 
 // Missing or unparseable file → empty credentials (first run, or a stale
 // hand-edit shouldn't crash the CLI). Genuine FS errors are defects.

@@ -1,4 +1,4 @@
-import * as HttpApiBuilder from "@effect/platform/HttpApiBuilder";
+import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 import * as Layer from "effect/Layer";
 
 import { Api } from "@/api.js";

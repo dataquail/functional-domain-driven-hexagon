@@ -16,7 +16,4 @@ export type RolesRepositoryShape = {
   readonly findOneByUserId: (userId: UserId) => Effect.Effect<RolesRoot, PersistenceUnavailable>;
 };
 
-export class RolesRepository extends Context.Tag("RolesRepository")<
-  RolesRepository,
-  RolesRepositoryShape
->() {}
+export class RolesRepository extends Context.Service<RolesRepository, RolesRepositoryShape>()("RolesRepository") {}

@@ -2,7 +2,7 @@ import * as crypto from "node:crypto";
 
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 
 import {
   type CreateOrganizationCommand,
@@ -68,7 +68,7 @@ export const createOrganization = (cmd: CreateOrganizationCommand): CreateOrgani
     // error channel stays clean for the bus signature.
     const seedRoles = OrganizationRolesRootOps.empty(cmd.actorUserId, id);
     const grantEither = OrganizationRolesRootOps.grantRole(seedRoles, "admin", cmd.actorUserId);
-    if (Either.isLeft(grantEither)) {
+    if (Result.isFailure(grantEither)) {
       return yield* Effect.die(grantEither.left);
     }
     const grantResult = grantEither.right;

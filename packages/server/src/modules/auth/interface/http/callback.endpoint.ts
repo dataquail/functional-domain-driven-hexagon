@@ -1,5 +1,5 @@
-import * as HttpServerRequest from "@effect/platform/HttpServerRequest";
-import * as HttpServerResponse from "@effect/platform/HttpServerResponse";
+import * as HttpServerRequest from "effect/unstable/http/HttpServerRequest";
+import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as cookie from "cookie";
 import * as Effect from "effect/Effect";

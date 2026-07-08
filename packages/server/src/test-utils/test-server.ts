@@ -1,4 +1,4 @@
-import * as HttpApiBuilder from "@effect/platform/HttpApiBuilder";
+import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import { type UserAuthMiddleware } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";

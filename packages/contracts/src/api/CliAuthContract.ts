@@ -1,6 +1,6 @@
-import * as HttpApiEndpoint from "@effect/platform/HttpApiEndpoint";
-import * as HttpApiGroup from "@effect/platform/HttpApiGroup";
-import * as HttpApiSchema from "@effect/platform/HttpApiSchema";
+import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
+import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
+import * as HttpApiSchema from "effect/unstable/httpapi/HttpApiSchema";
 import * as Schema from "effect/Schema";
 
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
@@ -35,21 +35,21 @@ export class DeviceTokenResponse extends Schema.Class<DeviceTokenResponse>("Devi
 
 // RFC 8628 token-endpoint errors. All 400; the tag is the discriminator the
 // CLI switches on (keep polling on pending; stop on the rest).
-export class DeviceAuthorizationPending extends Schema.TaggedError<DeviceAuthorizationPending>(
+export class DeviceAuthorizationPending extends Schema.TaggedErrorClass<DeviceAuthorizationPending>(
   "DeviceAuthorizationPending",
 )(
   "DeviceAuthorizationPending",
   { message: Schema.String },
-  HttpApiSchema.annotations({ status: 400 }),
+  { httpApiStatus: 400 },
 ) {}
 
-export class DeviceTokenExpired extends Schema.TaggedError<DeviceTokenExpired>(
+export class DeviceTokenExpired extends Schema.TaggedErrorClass<DeviceTokenExpired>(
   "DeviceTokenExpired",
-)("DeviceTokenExpired", { message: Schema.String }, HttpApiSchema.annotations({ status: 400 })) {}
+)("DeviceTokenExpired", { message: Schema.String }, { httpApiStatus: 400 }) {}
 
-export class DeviceCodeNotFound extends Schema.TaggedError<DeviceCodeNotFound>(
+export class DeviceCodeNotFound extends Schema.TaggedErrorClass<DeviceCodeNotFound>(
   "DeviceCodeNotFound",
-)("DeviceCodeNotFound", { message: Schema.String }, HttpApiSchema.annotations({ status: 400 })) {}
+)("DeviceCodeNotFound", { message: Schema.String }, { httpApiStatus: 400 }) {}
 
 export class DeviceGroup extends HttpApiGroup.make("cliAuth")
   .add(HttpApiEndpoint.post("deviceStart", "/start").addSuccess(DeviceStartResponse))

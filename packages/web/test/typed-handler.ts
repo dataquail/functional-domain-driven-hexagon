@@ -9,9 +9,9 @@
 // `HttpApiSchema` annotations (`@effect/platform`) so the wire encoding
 // matches what the real server does.
 
-import type * as HttpApiEndpoint from "@effect/platform/HttpApiEndpoint";
-import type * as HttpApiGroup from "@effect/platform/HttpApiGroup";
-import * as HttpApiSchema from "@effect/platform/HttpApiSchema";
+import type * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
+import type * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
+import * as HttpApiSchema from "effect/unstable/httpapi/HttpApiSchema";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -180,10 +180,10 @@ export const typedHandler = <E extends HttpApiEndpoint.HttpApiEndpoint.Any>(
 // ----- helpers -----
 
 const decodeUnknown = (schema: Schema.Schema.AnyNoContext, input: unknown) =>
-  Effect.runPromise(Schema.decodeUnknown(schema)(input) as Effect.Effect<unknown, unknown, never>);
+  Effect.runPromise(Schema.decodeUnknownEffect(schema)(input) as Effect.Effect<unknown, unknown, never>);
 
 const encodeUnknown = (schema: Schema.Schema.AnyNoContext, value: unknown) =>
-  Effect.runPromise(Schema.encodeUnknown(schema)(value) as Effect.Effect<unknown, unknown, never>);
+  Effect.runPromise(Schema.encodeUnknownEffect(schema)(value) as Effect.Effect<unknown, unknown, never>);
 
 const queryToRecord = (params: URLSearchParams): Record<string, string> => {
   const out: Record<string, string> = {};

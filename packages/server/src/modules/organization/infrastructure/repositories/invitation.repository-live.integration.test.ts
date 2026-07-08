@@ -3,7 +3,7 @@ import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
@@ -113,7 +113,7 @@ suite("InvitationRepositoryLive (integration)", () => {
         const repo = yield* InvitationRepository;
         yield* repo.insertOne(seed());
         const accepted = InvitationRootOps.accept(seed(), { userId, now });
-        if (Either.isLeft(accepted)) throw new Error("expected Right");
+        if (Result.isFailure(accepted)) throw new Error("expected Right");
         yield* repo.updateOne(accepted.right.invitation);
         const found = yield* repo.findOneById(invitationId);
         deepStrictEqual(found.acceptedAt !== null, true);
@@ -131,7 +131,7 @@ suite("InvitationRepositoryLive (integration)", () => {
           expiresAt: newExpiresAt,
           now,
         });
-        if (Either.isLeft(reissued)) throw new Error("expected Right");
+        if (Result.isFailure(reissued)) throw new Error("expected Right");
         yield* repo.updateOne(reissued.right.invitation);
 
         // The new token must resolve...
@@ -218,7 +218,7 @@ suite("InvitationRepositoryLive (integration)", () => {
         const repo = yield* InvitationRepository;
         yield* repo.insertOne(seed());
         const revoked = InvitationRootOps.revoke(seed(), { now });
-        if (Either.isLeft(revoked)) throw new Error("expected Right");
+        if (Result.isFailure(revoked)) throw new Error("expected Right");
         yield* repo.updateOne(revoked.right.invitation);
         const found = yield* repo.findOneOpenByOrganizationIdAndEmail(orgId, "alice@example.com");
         deepStrictEqual(found, null);

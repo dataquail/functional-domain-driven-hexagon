@@ -22,7 +22,4 @@ export type SubscriptionRepositoryShape = {
   ) => Effect.Effect<Option.Option<SubscriptionRoot>, PersistenceUnavailable>;
 };
 
-export class SubscriptionRepository extends Context.Tag("SubscriptionRepository")<
-  SubscriptionRepository,
-  SubscriptionRepositoryShape
->() {}
+export class SubscriptionRepository extends Context.Service<SubscriptionRepository, SubscriptionRepositoryShape>()("SubscriptionRepository") {}

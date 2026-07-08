@@ -2,7 +2,7 @@ import * as crypto from "node:crypto";
 
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 
 import {
   type InviteUserCommand,
@@ -40,7 +40,7 @@ export const inviteUser = (cmd: InviteUserCommand): InviteUserOutput =>
         // `existing` is open by construction, so reissue can't reject it;
         // a Left here would mean a concurrent accept/revoke — treat as a
         // defect (same posture as the accept handler's concurrent-revoke).
-        if (Either.isLeft(result)) return yield* Effect.die(result.left);
+        if (Result.isFailure(result)) return yield* Effect.die(result.left);
         // The row was found moments ago; a missing row on update means a
         // concurrent delete — a defect, not a caller-visible error (keeps
         // InviteUser's failure channel to PersistenceUnavailable).

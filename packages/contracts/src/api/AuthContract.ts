@@ -1,5 +1,5 @@
-import * as HttpApiEndpoint from "@effect/platform/HttpApiEndpoint";
-import * as HttpApiGroup from "@effect/platform/HttpApiGroup";
+import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
+import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 import * as Schema from "effect/Schema";
 
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
@@ -83,11 +83,11 @@ export class ApiTokenSummary extends Schema.Class<ApiTokenSummary>("ApiTokenSumm
 export class CreateApiTokenPayload extends Schema.Class<CreateApiTokenPayload>(
   "CreateApiTokenPayload",
 )({
-  label: Schema.String.pipe(Schema.minLength(1), Schema.maxLength(255)),
+  label: Schema.String.pipe(Schema.isMinLength(1), Schema.isMaxLength(255)),
   // Days until the token expires. Optional — the server falls back to its
   // configured default. Capped to keep CI tokens from living forever.
   expiresInDays: Schema.optional(
-    Schema.Int.pipe(Schema.greaterThanOrEqualTo(1), Schema.lessThanOrEqualTo(3650)),
+    Schema.Int.pipe(Schema.isGreaterThanOrEqualTo(1), Schema.isLessThanOrEqualTo(3650)),
   ),
 }) {}
 
@@ -104,7 +104,7 @@ export class CreateApiTokenResponse extends Schema.Class<CreateApiTokenResponse>
 export class DeviceApprovalPayload extends Schema.Class<DeviceApprovalPayload>(
   "DeviceApprovalPayload",
 )({
-  userCode: Schema.String.pipe(Schema.minLength(1), Schema.maxLength(32)),
+  userCode: Schema.String.pipe(Schema.isMinLength(1), Schema.isMaxLength(32)),
 }) {}
 
 // Browser-side approval of a CLI device grant (ADR-0024). The signed-in user

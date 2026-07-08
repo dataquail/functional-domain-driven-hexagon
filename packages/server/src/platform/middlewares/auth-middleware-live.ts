@@ -1,4 +1,4 @@
-import * as HttpServerRequest from "@effect/platform/HttpServerRequest";
+import * as HttpServerRequest from "effect/unstable/http/HttpServerRequest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { UserAuthMiddleware } from "@org/contracts/Policy";
 import { Database } from "@org/database/index";

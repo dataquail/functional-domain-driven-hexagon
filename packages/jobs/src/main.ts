@@ -38,7 +38,7 @@ const hourlyAtTopOfHour = Schedule.cron("0 * * * *");
 // via the Database layer's release and crash the process; the orchestrator
 // is expected to restart it.
 const safeRun = purgeExpiredSessions.pipe(
-  Effect.catchAllCause((cause) =>
+  Effect.catchCause((cause) =>
     Effect.logError("[jobs.purge-expired-sessions] iteration failed", cause),
   ),
 );

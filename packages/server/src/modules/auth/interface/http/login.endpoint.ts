@@ -1,4 +1,4 @@
-import * as HttpServerResponse from "@effect/platform/HttpServerResponse";
+import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
 import * as Effect from "effect/Effect";
 
 import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client.js";

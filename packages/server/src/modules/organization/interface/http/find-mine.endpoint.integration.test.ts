@@ -1,4 +1,4 @@
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";

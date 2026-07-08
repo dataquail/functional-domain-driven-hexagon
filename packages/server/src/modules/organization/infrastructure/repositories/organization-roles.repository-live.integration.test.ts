@@ -2,7 +2,7 @@ import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
 
@@ -85,7 +85,7 @@ suite("OrganizationRolesRepositoryLive (integration)", () => {
           "admin",
           issuedBy,
         );
-        if (Either.isLeft(granted)) throw new Error("expected Right");
+        if (Result.isFailure(granted)) throw new Error("expected Right");
         yield* repo.upsertOne(granted.right.organizationRoles);
         const fetched = yield* repo.findOneByUserIdAndOrgId(userId, orgId);
         deepStrictEqual(
@@ -104,13 +104,13 @@ suite("OrganizationRolesRepositoryLive (integration)", () => {
           "admin",
           issuedBy,
         );
-        if (Either.isLeft(granted)) throw new Error("expected Right");
+        if (Result.isFailure(granted)) throw new Error("expected Right");
         yield* repo.upsertOne(granted.right.organizationRoles);
         const revoked = OrganizationRolesRootOps.revokeRole(
           granted.right.organizationRoles,
           "admin",
         );
-        if (Either.isLeft(revoked)) throw new Error("expected Right");
+        if (Result.isFailure(revoked)) throw new Error("expected Right");
         yield* repo.upsertOne(revoked.right.organizationRoles);
         const fetched = yield* repo.findOneByUserIdAndOrgId(userId, orgId);
         deepStrictEqual([...fetched.roles], []);

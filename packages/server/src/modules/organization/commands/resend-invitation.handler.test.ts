@@ -2,7 +2,7 @@ import { describe, it } from "@effect/vitest";
 import { deepStrictEqual, ok } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as TestClock from "effect/TestClock";
@@ -93,7 +93,7 @@ describe("resendInvitation", () => {
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
       const revoked = InvitationRootOps.revoke(seedInvitation(), { now: issuedAt });
-      if (Either.isLeft(revoked)) throw new Error("expected Right");
+      if (Result.isFailure(revoked)) throw new Error("expected Right");
       yield* repo.insertOne(revoked.right.invitation);
 
       const exit = yield* Effect.exit(resendInvitation(cmd));
@@ -112,7 +112,7 @@ describe("resendInvitation", () => {
         userId: actorUserId,
         now: issuedAt,
       });
-      if (Either.isLeft(accepted)) throw new Error("expected Right");
+      if (Result.isFailure(accepted)) throw new Error("expected Right");
       yield* repo.insertOne(accepted.right.invitation);
 
       const exit = yield* Effect.exit(resendInvitation(cmd));

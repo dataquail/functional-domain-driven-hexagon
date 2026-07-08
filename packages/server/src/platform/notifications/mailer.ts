@@ -33,4 +33,4 @@ export type MailerShape = {
   readonly send: (message: MailMessage) => Effect.Effect<void, MailDeliveryError>;
 };
 
-export class Mailer extends Context.Tag("Mailer")<Mailer, MailerShape>() {}
+export class Mailer extends Context.Service<Mailer, MailerShape>()("Mailer") {}

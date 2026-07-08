@@ -10,7 +10,7 @@ import * as Schema from "effect/Schema";
 export const EncryptedToken = Schema.String.pipe(Schema.brand("encryptedToken"));
 export type EncryptedToken = typeof EncryptedToken.Type;
 
-export const EncryptedTokenEncoded = Schema.encodedSchema(EncryptedToken);
+export const EncryptedTokenEncoded = Schema.toEncoded(EncryptedToken);
 export type EncryptedTokenEncoded = typeof EncryptedTokenEncoded.Type;
 
 type MakeOpts = {
@@ -79,7 +79,7 @@ const makeSchemaTransform = <A, I, R>(
       cipher
         .decrypt(encryptedToken)
         .pipe(
-          Effect.catchAll(() =>
+          Effect.catch(() =>
             Effect.fail(new ParseResult.Type(ast, encryptedToken, "Failed to decrypt token")),
           ),
         ),

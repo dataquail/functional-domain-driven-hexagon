@@ -2,7 +2,7 @@ import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 import * as Layer from "effect/Layer";
 import * as TestClock from "effect/TestClock";
 import { beforeEach } from "vitest";
@@ -89,11 +89,11 @@ suite("findPendingInvitations (integration)", () => {
       yield* repo.insertOne(otherOrg);
 
       const revoked = InvitationRootOps.revoke(toRevoke, { now: issuedAt });
-      if (Either.isLeft(revoked)) throw new Error("expected Right");
+      if (Result.isFailure(revoked)) throw new Error("expected Right");
       yield* repo.updateOne(revoked.right.invitation);
 
       const accepted = InvitationRootOps.accept(toAccept, { userId, now: issuedAt });
-      if (Either.isLeft(accepted)) throw new Error("expected Right");
+      if (Result.isFailure(accepted)) throw new Error("expected Right");
       yield* repo.updateOne(accepted.right.invitation);
 
       const result = yield* findPendingInvitations(

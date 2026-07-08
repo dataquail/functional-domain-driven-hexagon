@@ -17,10 +17,7 @@ type TransactionContextShape = <U>(
   fn: (client: TxClient) => Promise<U>,
 ) => Effect.Effect<U, DatabaseError | DatabaseUnavailable>;
 
-export class TransactionContext extends Context.Tag("TransactionContext")<
-  TransactionContext,
-  TransactionContextShape
->() {
+export class TransactionContext extends Context.Service<TransactionContext, TransactionContextShape>()("TransactionContext") {
   public static readonly provide = (
     transaction: TransactionContextShape,
   ): (<A, E, R>(

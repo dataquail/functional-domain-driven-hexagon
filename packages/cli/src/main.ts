@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import * as Command from "@effect/cli/Command";
-import * as FetchHttpClient from "@effect/platform/FetchHttpClient";
+import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
 import * as NodeContext from "@effect/platform-node/NodeContext";
 import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
 import * as Console from "effect/Console";

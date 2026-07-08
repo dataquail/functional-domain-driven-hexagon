@@ -1,7 +1,7 @@
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
@@ -49,7 +49,7 @@ describe("InvitationRootOps.accept", () => {
 
   it("sets acceptedAt, returns the new Membership, emits both events", () => {
     const result = InvitationRootOps.accept(seed(), { userId, now: inOneDay });
-    if (Either.isLeft(result)) throw new Error("expected Right");
+    if (Result.isFailure(result)) throw new Error("expected Right");
     deepStrictEqual(result.right.invitation.acceptedAt, inOneDay);
     deepStrictEqual(result.right.membership.userId, userId);
     deepStrictEqual(result.right.membership.organizationId, organizationId);
@@ -59,20 +59,20 @@ describe("InvitationRootOps.accept", () => {
 
   it("fails InvitationAlreadyAccepted when accepted twice", () => {
     const first = InvitationRootOps.accept(seed(), { userId, now: inOneDay });
-    if (Either.isLeft(first)) throw new Error("expected Right");
+    if (Result.isFailure(first)) throw new Error("expected Right");
     const second = InvitationRootOps.accept(first.right.invitation, { userId, now: inOneDay });
-    deepStrictEqual(Either.isLeft(second), true);
-    if (Either.isLeft(second)) {
+    deepStrictEqual(Result.isFailure(second), true);
+    if (Result.isFailure(second)) {
       deepStrictEqual(second.left instanceof InvitationAlreadyAccepted, true);
     }
   });
 
   it("fails InvitationRevoked when the invitation was revoked", () => {
     const revoked = InvitationRootOps.revoke(seed(), { now: inOneDay });
-    if (Either.isLeft(revoked)) throw new Error("expected Right");
+    if (Result.isFailure(revoked)) throw new Error("expected Right");
     const result = InvitationRootOps.accept(revoked.right.invitation, { userId, now: inOneDay });
-    deepStrictEqual(Either.isLeft(result), true);
-    if (Either.isLeft(result)) {
+    deepStrictEqual(Result.isFailure(result), true);
+    if (Result.isFailure(result)) {
       deepStrictEqual(result.left instanceof InvitationRevoked, true);
     }
   });
@@ -80,8 +80,8 @@ describe("InvitationRootOps.accept", () => {
   it("fails InvitationExpired when now > expiresAt", () => {
     const past = DateTime.unsafeMake(new Date("2026-01-09T00:00:00Z"));
     const result = InvitationRootOps.accept(seed(), { userId, now: past });
-    deepStrictEqual(Either.isLeft(result), true);
-    if (Either.isLeft(result)) {
+    deepStrictEqual(Result.isFailure(result), true);
+    if (Result.isFailure(result)) {
       deepStrictEqual(result.left instanceof InvitationExpired, true);
     }
   });
@@ -92,27 +92,27 @@ describe("InvitationRootOps.revoke", () => {
 
   it("sets revokedAt and emits InvitationRevoked", () => {
     const result = InvitationRootOps.revoke(seed(), { now: inOneDay });
-    if (Either.isLeft(result)) throw new Error("expected Right");
+    if (Result.isFailure(result)) throw new Error("expected Right");
     deepStrictEqual(result.right.invitation.revokedAt, inOneDay);
     deepStrictEqual(result.right.events[0]?._tag, "InvitationRevoked");
   });
 
   it("fails InvitationAlreadyAccepted when the invitation was accepted", () => {
     const accepted = InvitationRootOps.accept(seed(), { userId, now: inOneDay });
-    if (Either.isLeft(accepted)) throw new Error("expected Right");
+    if (Result.isFailure(accepted)) throw new Error("expected Right");
     const result = InvitationRootOps.revoke(accepted.right.invitation, { now: inOneDay });
-    deepStrictEqual(Either.isLeft(result), true);
-    if (Either.isLeft(result)) {
+    deepStrictEqual(Result.isFailure(result), true);
+    if (Result.isFailure(result)) {
       deepStrictEqual(result.left instanceof InvitationAlreadyAccepted, true);
     }
   });
 
   it("fails InvitationAlreadyRevoked on a second revoke", () => {
     const first = InvitationRootOps.revoke(seed(), { now: inOneDay });
-    if (Either.isLeft(first)) throw new Error("expected Right");
+    if (Result.isFailure(first)) throw new Error("expected Right");
     const second = InvitationRootOps.revoke(first.right.invitation, { now: inOneDay });
-    deepStrictEqual(Either.isLeft(second), true);
-    if (Either.isLeft(second)) {
+    deepStrictEqual(Result.isFailure(second), true);
+    if (Result.isFailure(second)) {
       deepStrictEqual(second.left instanceof InvitationAlreadyRevoked, true);
     }
   });
@@ -128,7 +128,7 @@ describe("InvitationRootOps.reissue", () => {
       expiresAt: newExpiry,
       now: inOneDay,
     });
-    if (Either.isLeft(result)) throw new Error("expected Right");
+    if (Result.isFailure(result)) throw new Error("expected Right");
     deepStrictEqual(result.right.invitation.token, "tok-fresh");
     deepStrictEqual(result.right.invitation.expiresAt, newExpiry);
     deepStrictEqual(result.right.invitation.acceptedAt, null);
@@ -143,33 +143,33 @@ describe("InvitationRootOps.reissue", () => {
       expiresAt: newExpiry,
       now: past,
     });
-    deepStrictEqual(Either.isRight(result), true);
+    deepStrictEqual(Result.isSuccess(result), true);
   });
 
   it("fails InvitationAlreadyAccepted when the invitation was accepted", () => {
     const accepted = InvitationRootOps.accept(seed(), { userId, now: inOneDay });
-    if (Either.isLeft(accepted)) throw new Error("expected Right");
+    if (Result.isFailure(accepted)) throw new Error("expected Right");
     const result = InvitationRootOps.reissue(accepted.right.invitation, {
       token: "tok-fresh",
       expiresAt: newExpiry,
       now: inOneDay,
     });
-    deepStrictEqual(Either.isLeft(result), true);
-    if (Either.isLeft(result)) {
+    deepStrictEqual(Result.isFailure(result), true);
+    if (Result.isFailure(result)) {
       deepStrictEqual(result.left instanceof InvitationAlreadyAccepted, true);
     }
   });
 
   it("fails InvitationAlreadyRevoked when the invitation was revoked", () => {
     const revoked = InvitationRootOps.revoke(seed(), { now: inOneDay });
-    if (Either.isLeft(revoked)) throw new Error("expected Right");
+    if (Result.isFailure(revoked)) throw new Error("expected Right");
     const result = InvitationRootOps.reissue(revoked.right.invitation, {
       token: "tok-fresh",
       expiresAt: newExpiry,
       now: inOneDay,
     });
-    deepStrictEqual(Either.isLeft(result), true);
-    if (Either.isLeft(result)) {
+    deepStrictEqual(Result.isFailure(result), true);
+    if (Result.isFailure(result)) {
       deepStrictEqual(result.left instanceof InvitationAlreadyRevoked, true);
     }
   });
@@ -191,10 +191,10 @@ describe("InvitationRootOps.statusAt / isOpen", () => {
 
   it("accepted and revoked invitations are not open", () => {
     const accepted = InvitationRootOps.accept(seed(), { userId, now: inOneDay });
-    if (Either.isLeft(accepted)) throw new Error("expected Right");
+    if (Result.isFailure(accepted)) throw new Error("expected Right");
     deepStrictEqual(InvitationRootOps.isOpen(accepted.right.invitation), false);
     const revoked = InvitationRootOps.revoke(seed(), { now: inOneDay });
-    if (Either.isLeft(revoked)) throw new Error("expected Right");
+    if (Result.isFailure(revoked)) throw new Error("expected Right");
     deepStrictEqual(InvitationRootOps.isOpen(revoked.right.invitation), false);
   });
 });

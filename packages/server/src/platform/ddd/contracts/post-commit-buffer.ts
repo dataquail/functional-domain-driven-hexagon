@@ -17,7 +17,4 @@ import { type DomainEvent } from "@/platform/ddd/contracts/domain-event.js";
 // Lives in `contracts/` rather than `ports/`: it is a domain-safe carrier
 // (just a `Ref`), with no application-tier behavior. Both the integration
 // bus and the unit of work reference it without taking on a service dependency.
-export class PostCommitBuffer extends Context.Tag("PostCommitBuffer")<
-  PostCommitBuffer,
-  Ref.Ref<ReadonlyArray<DomainEvent>>
->() {}
+export class PostCommitBuffer extends Context.Service<PostCommitBuffer, Ref.Ref<ReadonlyArray<DomainEvent>>>()("PostCommitBuffer") {}

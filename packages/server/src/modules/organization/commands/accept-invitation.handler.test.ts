@@ -2,7 +2,7 @@ import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 
@@ -106,7 +106,7 @@ describe("acceptInvitation", () => {
     Effect.gen(function* () {
       const inv = yield* InvitationRepository;
       const accepted = InvitationRootOps.accept(seed(), { userId, now });
-      if (Either.isLeft(accepted)) throw new Error("expected Right");
+      if (Result.isFailure(accepted)) throw new Error("expected Right");
       yield* inv.insertOne(accepted.right.invitation);
 
       const exit = yield* Effect.exit(
@@ -124,7 +124,7 @@ describe("acceptInvitation", () => {
     Effect.gen(function* () {
       const inv = yield* InvitationRepository;
       const revoked = InvitationRootOps.revoke(seed(), { now });
-      if (Either.isLeft(revoked)) throw new Error("expected Right");
+      if (Result.isFailure(revoked)) throw new Error("expected Right");
       yield* inv.insertOne(revoked.right.invitation);
 
       const exit = yield* Effect.exit(

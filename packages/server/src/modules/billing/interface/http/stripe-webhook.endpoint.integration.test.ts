@@ -1,6 +1,6 @@
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
-import * as HttpClient from "@effect/platform/HttpClient";
-import * as HttpClientRequest from "@effect/platform/HttpClientRequest";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
+import * as HttpClient from "effect/unstable/http/HttpClient";
+import * as HttpClientRequest from "effect/unstable/http/HttpClientRequest";
 import { describe, it } from "@effect/vitest";
 import { BillingContract } from "@org/contracts/api/Contracts";
 import { Database, sql } from "@org/database/index";

@@ -37,4 +37,4 @@ export interface UnitOfWorkShape {
   >;
 }
 
-export class UnitOfWork extends Context.Tag("UnitOfWork")<UnitOfWork, UnitOfWorkShape>() {}
+export class UnitOfWork extends Context.Service<UnitOfWork, UnitOfWorkShape>()("UnitOfWork") {}

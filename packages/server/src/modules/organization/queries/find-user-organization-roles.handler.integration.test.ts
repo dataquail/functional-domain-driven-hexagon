@@ -3,7 +3,7 @@ import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
 
@@ -80,7 +80,7 @@ suite("findUserOrganizationRoles (integration)", () => {
         "admin",
         issuedBy,
       );
-      if (Either.isLeft(granted)) throw new Error("expected Right");
+      if (Result.isFailure(granted)) throw new Error("expected Right");
       yield* repo.upsertOne(granted.right.organizationRoles);
       const result = yield* findUserOrganizationRoles(
         FindUserOrganizationRolesQuery.make({ userId, organizationId: orgId }),

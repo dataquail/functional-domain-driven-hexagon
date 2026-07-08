@@ -28,7 +28,4 @@ export type WebhookEventRepositoryShape = {
   ) => Effect.Effect<Option.Option<WebhookEventRecord>, PersistenceUnavailable>;
 };
 
-export class WebhookEventRepository extends Context.Tag("WebhookEventRepository")<
-  WebhookEventRepository,
-  WebhookEventRepositoryShape
->() {}
+export class WebhookEventRepository extends Context.Service<WebhookEventRepository, WebhookEventRepositoryShape>()("WebhookEventRepository") {}

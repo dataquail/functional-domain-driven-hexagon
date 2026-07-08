@@ -2,7 +2,7 @@ import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
 
@@ -53,7 +53,7 @@ suite("findUserRoles (integration)", () => {
       yield* seedUser;
       const repo = yield* RolesRepository;
       const granted = RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin");
-      if (Either.isLeft(granted)) throw new Error("expected Right");
+      if (Result.isFailure(granted)) throw new Error("expected Right");
       yield* repo.upsertOne(granted.right.roles);
       const result = yield* findUserRoles(FindUserRolesQuery.make({ userId }));
       deepStrictEqual([...result.roles], ["super_admin"]);

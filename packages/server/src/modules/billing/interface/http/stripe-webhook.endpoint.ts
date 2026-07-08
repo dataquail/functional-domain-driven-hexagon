@@ -1,4 +1,4 @@
-import * as HttpServerRequest from "@effect/platform/HttpServerRequest";
+import * as HttpServerRequest from "effect/unstable/http/HttpServerRequest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Effect from "effect/Effect";
 
@@ -34,7 +34,7 @@ export const stripeWebhookEndpoint = () =>
       );
     }
     const payload = yield* httpReq.text.pipe(
-      Effect.catchAll((cause) =>
+      Effect.catch((cause) =>
         Effect.fail(
           new CustomHttpApiError.BadRequest({ message: `Failed to read body: ${String(cause)}` }),
         ),

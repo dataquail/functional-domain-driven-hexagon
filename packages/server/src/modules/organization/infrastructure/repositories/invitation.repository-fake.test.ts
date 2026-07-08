@@ -2,7 +2,7 @@ import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 import * as Exit from "effect/Exit";
 
 import {
@@ -87,7 +87,7 @@ describe("InvitationRepositoryFake", () => {
       const repo = yield* InvitationRepository;
       yield* repo.insertOne(seed());
       const accepted = InvitationRootOps.accept(seed(), { userId, now });
-      if (Either.isLeft(accepted)) throw new Error("expected Right");
+      if (Result.isFailure(accepted)) throw new Error("expected Right");
       yield* repo.updateOne(accepted.right.invitation);
       const found = yield* repo.findOneById(invitationId);
       deepStrictEqual(found.acceptedAt !== null, true);

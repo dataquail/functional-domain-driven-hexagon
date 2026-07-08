@@ -20,7 +20,7 @@ import {
 import { InvalidWebhookSignature } from "@/modules/billing/domain/subscription.errors.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
-const decodeWebhookEvent = Schema.decodeUnknown(StripeWebhookEvent);
+const decodeWebhookEvent = Schema.decodeUnknownEffect(StripeWebhookEvent);
 
 // In-memory simulator for tests. Mirrors Stripe's state machine at the
 // surface we depend on: customers, subscriptions, status transitions.

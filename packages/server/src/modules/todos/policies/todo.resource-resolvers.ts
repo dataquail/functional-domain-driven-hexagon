@@ -39,10 +39,7 @@ declare module "@/platform/auth/resource-resolver-registry.js" {
   }
 }
 
-export class TodoCollectionResolverEntry extends Context.Tag("TodoCollectionResolverEntry")<
-  TodoCollectionResolverEntry,
-  Resolver<"todoCollection">
->() {}
+export class TodoCollectionResolverEntry extends Context.Service<TodoCollectionResolverEntry, Resolver<"todoCollection">>()("TodoCollectionResolverEntry") {}
 
 // Echo: the collection's identity is the org id. No cross-module load —
 // non-members get 403 without learning whether the org exists.
@@ -51,10 +48,7 @@ export const TodoCollectionResolverEntryLive = Layer.succeed(
   (organizationId) => Effect.succeed({ organizationId }),
 );
 
-export class TodoResolverEntry extends Context.Tag("TodoResolverEntry")<
-  TodoResolverEntry,
-  Resolver<"todo">
->() {}
+export class TodoResolverEntry extends Context.Service<TodoResolverEntry, Resolver<"todo">>()("TodoResolverEntry") {}
 
 // Loads the todo scoped to its org. `TodoNotFound` (missing OR
 // cross-tenant) → `NotFound`, which the endpoint maps to

@@ -2,7 +2,7 @@ import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
 
@@ -39,7 +39,7 @@ suite("findAllOrganizations (integration)", () => {
       const { organization: betaOrg } = OrganizationRootOps.create({ id: beta, name: "Beta", now });
       yield* repo.insertOne(betaOrg);
       const deletedEither = OrganizationRootOps.softDelete(betaOrg, { now: later });
-      if (Either.isLeft(deletedEither)) throw new Error("expected Right");
+      if (Result.isFailure(deletedEither)) throw new Error("expected Right");
       yield* repo.updateOne(deletedEither.right.organization);
 
       const result = yield* findAllOrganizations(
@@ -59,7 +59,7 @@ suite("findAllOrganizations (integration)", () => {
       const { organization: betaOrg } = OrganizationRootOps.create({ id: beta, name: "Beta", now });
       yield* repo.insertOne(betaOrg);
       const deletedEither = OrganizationRootOps.softDelete(betaOrg, { now: later });
-      if (Either.isLeft(deletedEither)) throw new Error("expected Right");
+      if (Result.isFailure(deletedEither)) throw new Error("expected Right");
       yield* repo.updateOne(deletedEither.right.organization);
 
       const result = yield* findAllOrganizations(

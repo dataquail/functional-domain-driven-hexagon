@@ -15,7 +15,7 @@ const list = Command.make("list", {}, () =>
     for (const org of orgs) {
       yield* Console.log(`${org.id}  ${org.name}${org.isAdmin ? "  (admin)" : ""}`);
     }
-  }).pipe(Effect.catchAll((error) => Effect.fail(toCliError(error)))),
+  }).pipe(Effect.catch((error) => Effect.fail(toCliError(error)))),
 );
 
 export const orgsCommand = Command.make("orgs", {}, () => Console.log("Usage: org orgs list")).pipe(

@@ -1,6 +1,6 @@
 import { formOptions } from "@tanstack/react-form";
 import * as Array from "effect/Array";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 import { pipe } from "effect/Function";
 import * as Match from "effect/Match";
 import { ArrayFormatter } from "effect/ParseResult";
@@ -55,7 +55,7 @@ export const validateWithSchema =
     Schema.decodeEither(schema, { errors: "all", onExcessProperty: "ignore" })(
       submission.value,
     ).pipe(
-      Either.mapLeft((errors) =>
+      Result.mapError((errors) =>
         pipe(
           errors,
           ArrayFormatter.formatErrorSync,
@@ -71,8 +71,8 @@ export const validateWithSchema =
           (acc): SchemaValidatorResult<I> => (Object.keys(acc).length > 0 ? acc : null),
         ),
       ),
-      Either.flip,
-      Either.getOrNull,
+      Result.flip,
+      Result.getOrNull,
     );
 
 type HandledValidatorKey = "onSubmit" | "onChange" | "onBlur";

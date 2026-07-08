@@ -1,6 +1,6 @@
-import * as HttpApiEndpoint from "@effect/platform/HttpApiEndpoint";
-import * as HttpApiGroup from "@effect/platform/HttpApiGroup";
-import * as HttpApiSchema from "@effect/platform/HttpApiSchema";
+import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
+import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
+import * as HttpApiSchema from "effect/unstable/httpapi/HttpApiSchema";
 import * as Schema from "effect/Schema";
 
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
@@ -11,38 +11,38 @@ import { UserAuthMiddleware } from "../Policy.js";
 // Errors
 // ==========================================
 
-export class OrganizationNotFoundError extends Schema.TaggedError<OrganizationNotFoundError>(
+export class OrganizationNotFoundError extends Schema.TaggedErrorClass<OrganizationNotFoundError>(
   "OrganizationNotFoundError",
 )(
   "OrganizationNotFoundError",
   { organizationId: OrganizationId, message: Schema.String },
-  HttpApiSchema.annotations({ status: 404 }),
+  { httpApiStatus: 404 },
 ) {}
 
 // 409 Conflict: the request was understood and authorized but the
 // resource's current state contradicts it (restore on a non-deleted
 // org). Distinct status from `OrganizationNotFoundError` so clients
 // don't have to disambiguate "missing" vs. "wrong state."
-export class OrganizationNotDeletedError extends Schema.TaggedError<OrganizationNotDeletedError>(
+export class OrganizationNotDeletedError extends Schema.TaggedErrorClass<OrganizationNotDeletedError>(
   "OrganizationNotDeletedError",
 )(
   "OrganizationNotDeletedError",
   { organizationId: OrganizationId, message: Schema.String },
-  HttpApiSchema.annotations({ status: 409 }),
+  { httpApiStatus: 409 },
 ) {}
 
-export class InvitationNotFoundError extends Schema.TaggedError<InvitationNotFoundError>(
+export class InvitationNotFoundError extends Schema.TaggedErrorClass<InvitationNotFoundError>(
   "InvitationNotFoundError",
 )(
   "InvitationNotFoundError",
   { message: Schema.String },
-  HttpApiSchema.annotations({ status: 404 }),
+  { httpApiStatus: 404 },
 ) {}
 
 // 410 Gone covers the three terminal/expired states (accepted, revoked,
 // expired). Clients see one error variant; the `reason` discriminates
 // so a UI can render the right message.
-export class InvitationGoneError extends Schema.TaggedError<InvitationGoneError>(
+export class InvitationGoneError extends Schema.TaggedErrorClass<InvitationGoneError>(
   "InvitationGoneError",
 )(
   "InvitationGoneError",
@@ -50,15 +50,15 @@ export class InvitationGoneError extends Schema.TaggedError<InvitationGoneError>
     reason: Schema.Literal("accepted", "revoked", "expired"),
     message: Schema.String,
   },
-  HttpApiSchema.annotations({ status: 410 }),
+  { httpApiStatus: 410 },
 ) {}
 
-export class MembershipNotFoundError extends Schema.TaggedError<MembershipNotFoundError>(
+export class MembershipNotFoundError extends Schema.TaggedErrorClass<MembershipNotFoundError>(
   "MembershipNotFoundError",
 )(
   "MembershipNotFoundError",
   { message: Schema.String },
-  HttpApiSchema.annotations({ status: 404 }),
+  { httpApiStatus: 404 },
 ) {}
 
 // 409 Conflict: model invariant — super-admins are a separate user
@@ -70,7 +70,7 @@ export class MembershipNotFoundError extends Schema.TaggedError<MembershipNotFou
 // already an admin; `not_admin` from demote when they aren't one. One
 // error variant, a `reason` discriminator — same shape as
 // `InvitationGoneError`.
-export class OrganizationRoleConflictError extends Schema.TaggedError<OrganizationRoleConflictError>(
+export class OrganizationRoleConflictError extends Schema.TaggedErrorClass<OrganizationRoleConflictError>(
   "OrganizationRoleConflictError",
 )(
   "OrganizationRoleConflictError",
@@ -78,15 +78,15 @@ export class OrganizationRoleConflictError extends Schema.TaggedError<Organizati
     reason: Schema.Literal("already_admin", "not_admin"),
     message: Schema.String,
   },
-  HttpApiSchema.annotations({ status: 409 }),
+  { httpApiStatus: 409 },
 ) {}
 
-export class SuperAdminCannotOwnOrganizationError extends Schema.TaggedError<SuperAdminCannotOwnOrganizationError>(
+export class SuperAdminCannotOwnOrganizationError extends Schema.TaggedErrorClass<SuperAdminCannotOwnOrganizationError>(
   "SuperAdminCannotOwnOrganizationError",
 )(
   "SuperAdminCannotOwnOrganizationError",
   { message: Schema.String },
-  HttpApiSchema.annotations({ status: 409 }),
+  { httpApiStatus: 409 },
 ) {}
 
 // ==========================================
@@ -123,7 +123,7 @@ export class MyOrganization extends Schema.Class<MyOrganization>("MyOrganization
 export class CreateOrganizationPayload extends Schema.Class<CreateOrganizationPayload>(
   "CreateOrganizationPayload",
 )({
-  name: Schema.String.pipe(Schema.minLength(1), Schema.maxLength(255)),
+  name: Schema.String.pipe(Schema.isMinLength(1), Schema.isMaxLength(255)),
 }) {}
 
 export class CreateOrganizationResponse extends Schema.Class<CreateOrganizationResponse>(
@@ -135,8 +135,8 @@ export class CreateOrganizationResponse extends Schema.Class<CreateOrganizationR
 export class FindAllOrganizationsParams extends Schema.Class<FindAllOrganizationsParams>(
   "FindAllOrganizationsParams",
 )({
-  page: Schema.NumberFromString.pipe(Schema.int(), Schema.greaterThanOrEqualTo(1)),
-  pageSize: Schema.NumberFromString.pipe(Schema.int(), Schema.between(1, 100)),
+  page: Schema.NumberFromString.pipe(Schema.int(), Schema.isGreaterThanOrEqualTo(1)),
+  pageSize: Schema.NumberFromString.pipe(Schema.int(), Schema.isBetween(1, 100)),
   includeDeleted: Schema.optional(Schema.Literal("true", "false")),
 }) {}
 
@@ -150,7 +150,7 @@ export class PaginatedOrganizations extends Schema.Class<PaginatedOrganizations>
 }) {}
 
 export class InviteUserPayload extends Schema.Class<InviteUserPayload>("InviteUserPayload")({
-  email: Schema.String.pipe(Schema.minLength(3), Schema.maxLength(320)),
+  email: Schema.String.pipe(Schema.isMinLength(3), Schema.isMaxLength(320)),
 }) {}
 
 export class InviteUserResponse extends Schema.Class<InviteUserResponse>("InviteUserResponse")({

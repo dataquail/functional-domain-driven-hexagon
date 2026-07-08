@@ -19,10 +19,7 @@ import { OrganizationRepositoryLive } from "../infrastructure/repositories/organ
 // PersistenceUnavailable dies inside the resolver — the boundary that
 // converts it to a 503 is the endpoint's `recoverPersistenceUnavailable`,
 // same shape as the user resolver.
-export class OrganizationResolverEntry extends Context.Tag("OrganizationResolverEntry")<
-  OrganizationResolverEntry,
-  Resolver<"organization">
->() {}
+export class OrganizationResolverEntry extends Context.Service<OrganizationResolverEntry, Resolver<"organization">>()("OrganizationResolverEntry") {}
 
 export const OrganizationResolverEntryLive = Layer.effect(
   OrganizationResolverEntry,

@@ -1,20 +1,20 @@
-import * as HttpApiEndpoint from "@effect/platform/HttpApiEndpoint";
-import * as HttpApiGroup from "@effect/platform/HttpApiGroup";
-import * as HttpApiSchema from "@effect/platform/HttpApiSchema";
+import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
+import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
+import * as HttpApiSchema from "effect/unstable/httpapi/HttpApiSchema";
 import * as Schema from "effect/Schema";
 
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
 import { OrganizationId, TodoId } from "../EntityIds.js";
 import { UserAuthMiddleware } from "../Policy.js";
 
-export class TodoNotFoundError extends Schema.TaggedError<TodoNotFoundError>("TodoNotFoundError")(
+export class TodoNotFoundError extends Schema.TaggedErrorClass<TodoNotFoundError>("TodoNotFoundError")(
   "TodoNotFoundError",
   {
     message: Schema.String,
   },
-  HttpApiSchema.annotations({
-    status: 404,
-  }),
+  {
+      httpApiStatus: 404,
+    },
 ) {}
 
 export class Todo extends Schema.Class<Todo>("Todo")({

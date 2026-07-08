@@ -13,8 +13,8 @@ import { makeCreateUserPayload, makePaginatedUsers, makeUser } from "./user";
 
 const roundTrip = <A, I>(schema: Schema.Schema<A, I>, value: A) =>
   Effect.runPromise(
-    Effect.flatMap(Schema.encode(schema)(value), (encoded) =>
-      Schema.decodeUnknown(schema)(encoded),
+    Effect.flatMap(Schema.encodeEffect(schema)(value), (encoded) =>
+      Schema.decodeUnknownEffect(schema)(encoded),
     ),
   );
 

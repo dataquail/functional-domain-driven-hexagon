@@ -9,13 +9,10 @@ import { type DomainEvent, DomainEventBus } from "@/platform/ddd/ports/domain-ev
 // ignores `subscribe` calls. Use-case unit tests assert against the
 // recorded log without needing the real subscribers wired up. Integration
 // tests that need real subscribers use the real bus from `makeDomainEventBusLive` instead.
-export class RecordedEvents extends Context.Tag("RecordedEvents")<
-  RecordedEvents,
-  {
+export class RecordedEvents extends Context.Service<RecordedEvents, {
     readonly all: Effect.Effect<ReadonlyArray<DomainEvent>>;
     readonly byTag: <E extends DomainEvent>(tag: E["_tag"]) => Effect.Effect<ReadonlyArray<E>>;
-  }
->() {}
+  }>()("RecordedEvents") {}
 
 export const RecordingEventBus: Layer.Layer<DomainEventBus | RecordedEvents> = Layer.effectContext(
   Effect.gen(function* () {

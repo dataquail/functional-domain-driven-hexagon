@@ -12,10 +12,10 @@
 
 import "server-only";
 
-import * as FetchHttpClient from "@effect/platform/FetchHttpClient";
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
-import * as HttpClient from "@effect/platform/HttpClient";
-import * as HttpClientRequest from "@effect/platform/HttpClientRequest";
+import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
+import * as HttpClient from "effect/unstable/http/HttpClient";
+import * as HttpClientRequest from "effect/unstable/http/HttpClientRequest";
 import { DomainApi } from "@org/contracts/DomainApi";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";

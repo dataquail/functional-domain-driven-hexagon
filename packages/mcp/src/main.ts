@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import * as FetchHttpClient from "@effect/platform/FetchHttpClient";
+import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
 import * as NodeContext from "@effect/platform-node/NodeContext";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -68,7 +68,7 @@ const callTool = <A>(body: (client: CliClient) => Effect.Effect<A, unknown, neve
     const value = yield* body(client);
     return { ok: true as const, value };
   }).pipe(
-    Effect.catchAll((error) =>
+    Effect.catch((error) =>
       Effect.succeed({ ok: false as const, message: friendlyError(error) }),
     ),
   );

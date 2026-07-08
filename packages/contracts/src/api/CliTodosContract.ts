@@ -1,6 +1,6 @@
-import * as HttpApiEndpoint from "@effect/platform/HttpApiEndpoint";
-import * as HttpApiGroup from "@effect/platform/HttpApiGroup";
-import * as HttpApiSchema from "@effect/platform/HttpApiSchema";
+import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
+import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
+import * as HttpApiSchema from "effect/unstable/httpapi/HttpApiSchema";
 import * as Schema from "effect/Schema";
 
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
@@ -9,9 +9,9 @@ import { UserAuthMiddleware } from "../Policy.js";
 
 // CLI-specific error, distinct from the GUI's `TodosContract.TodoNotFoundError`
 // so the two contracts evolve independently (ADR-0024).
-export class CliTodoNotFoundError extends Schema.TaggedError<CliTodoNotFoundError>(
+export class CliTodoNotFoundError extends Schema.TaggedErrorClass<CliTodoNotFoundError>(
   "CliTodoNotFoundError",
-)("CliTodoNotFoundError", { message: Schema.String }, HttpApiSchema.annotations({ status: 404 })) {}
+)("CliTodoNotFoundError", { message: Schema.String }, { httpApiStatus: 404 }) {}
 
 export class CliTodo extends Schema.Class<CliTodo>("CliTodo")({
   id: TodoId,

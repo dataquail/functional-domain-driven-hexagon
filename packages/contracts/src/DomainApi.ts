@@ -1,4 +1,4 @@
-import * as HttpApi from "@effect/platform/HttpApi";
+import * as HttpApi from "effect/unstable/httpapi/HttpApi";
 
 import * as AuthContract from "./api/AuthContract.js";
 import * as BillingContract from "./api/BillingContract.js";

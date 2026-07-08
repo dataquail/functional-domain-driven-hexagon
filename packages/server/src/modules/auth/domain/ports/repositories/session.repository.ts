@@ -27,7 +27,4 @@ export type SessionRepositoryShape = {
   ) => Effect.Effect<void, SessionNotFound | PersistenceUnavailable>;
 };
 
-export class SessionRepository extends Context.Tag("SessionRepository")<
-  SessionRepository,
-  SessionRepositoryShape
->() {}
+export class SessionRepository extends Context.Service<SessionRepository, SessionRepositoryShape>()("SessionRepository") {}

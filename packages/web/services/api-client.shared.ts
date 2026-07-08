@@ -9,8 +9,8 @@
 // intentionally environment-agnostic — no `import "server-only"`, no
 // `next/headers`, no browser globals.
 
-import type * as HttpApi from "@effect/platform/HttpApi";
-import type * as HttpApiClient from "@effect/platform/HttpApiClient";
+import type * as HttpApi from "effect/unstable/httpapi/HttpApi";
+import type * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { type DomainApi } from "@org/contracts/DomainApi";
 import * as Context from "effect/Context";
 
@@ -27,8 +27,5 @@ type ClientShape<TApi> =
 // `Context.Tag`'s class self-reference is the canonical Effect pattern; the
 // recursion is purely type-level (the class IS the tag identity).
 /* eslint-disable no-use-before-define */
-export class ApiClient extends Context.Tag("@org/web/ApiClient")<
-  ApiClient,
-  { readonly client: ClientShape<typeof DomainApi> }
->() {}
+export class ApiClient extends Context.Service<ApiClient, { readonly client: ClientShape<typeof DomainApi> }>()("@org/web/ApiClient") {}
 /* eslint-enable no-use-before-define */

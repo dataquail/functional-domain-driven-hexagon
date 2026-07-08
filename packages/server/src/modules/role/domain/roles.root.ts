@@ -1,4 +1,4 @@
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
 import { UserId } from "@/platform/ids/user-id.js";
@@ -17,7 +17,7 @@ export class RolesRoot extends Schema.Class<RolesRoot>("RolesRoot")({
   roles: Schema.Array(RoleValueObject),
 }) {}
 
-export type Result = {
+export type Outcome = {
   readonly roles: RolesRoot;
   readonly events: ReadonlyArray<RoleEvent>;
 };
@@ -36,11 +36,11 @@ const hasRole = (aggregate: RolesRoot, role: RoleValueObject): boolean =>
 const grant = (
   aggregate: RolesRoot,
   role: RoleValueObject,
-): Either.Either<Result, AlreadyHasRole> => {
+): Result.Result<Outcome, AlreadyHasRole> => {
   if (hasRole(aggregate, role)) {
-    return Either.left(new AlreadyHasRole({ userId: aggregate.userId, role }));
+    return Result.fail(new AlreadyHasRole({ userId: aggregate.userId, role }));
   }
-  return Either.right({
+  return Result.succeed({
     roles: RolesRoot.make({
       userId: aggregate.userId,
       roles: [...aggregate.roles, role],
@@ -54,11 +54,11 @@ const grant = (
 const revoke = (
   aggregate: RolesRoot,
   role: RoleValueObject,
-): Either.Either<Result, DoesNotHaveRole> => {
+): Result.Result<Outcome, DoesNotHaveRole> => {
   if (!hasRole(aggregate, role)) {
-    return Either.left(new DoesNotHaveRole({ userId: aggregate.userId, role }));
+    return Result.fail(new DoesNotHaveRole({ userId: aggregate.userId, role }));
   }
-  return Either.right({
+  return Result.succeed({
     roles: RolesRoot.make({
       userId: aggregate.userId,
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- comparison is provably constant while `RoleValueObject` has a single literal; becomes a real filter once a second role lands.

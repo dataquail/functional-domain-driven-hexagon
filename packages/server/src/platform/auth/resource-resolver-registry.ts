@@ -38,15 +38,12 @@ export type Resolver<R extends ResourceName> = (
 
 type ResolversObject = { [R in ResourceName]: Resolver<R> };
 
-export class ResourceResolverRegistry extends Context.Tag("ResourceResolverRegistry")<
-  ResourceResolverRegistry,
-  {
+export class ResourceResolverRegistry extends Context.Service<ResourceResolverRegistry, {
     readonly resolve: <R extends ResourceName>(
       resource: R,
       id: IdFor<R>,
     ) => Effect.Effect<ResourceTypeFor<R>, CustomHttpApiError.NotFound, never>;
-  }
->() {}
+  }>()("ResourceResolverRegistry") {}
 
 // Builds a Layer that provides the registry from a plain object of
 // resolvers. The composition root calls this with the union of every

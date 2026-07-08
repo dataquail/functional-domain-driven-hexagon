@@ -30,7 +30,4 @@ export type MembershipRepositoryShape = {
   ) => Effect.Effect<ReadonlyArray<MembershipRoot>, PersistenceUnavailable>;
 };
 
-export class MembershipRepository extends Context.Tag("MembershipRepository")<
-  MembershipRepository,
-  MembershipRepositoryShape
->() {}
+export class MembershipRepository extends Context.Service<MembershipRepository, MembershipRepositoryShape>()("MembershipRepository") {}

@@ -102,7 +102,4 @@ export type BillingGatewayShape = {
   ) => Effect.Effect<StripeWebhookEvent, InvalidWebhookSignature>;
 };
 
-export class BillingGateway extends Context.Tag("BillingGateway")<
-  BillingGateway,
-  BillingGatewayShape
->() {}
+export class BillingGateway extends Context.Service<BillingGateway, BillingGatewayShape>()("BillingGateway") {}

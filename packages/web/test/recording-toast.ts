@@ -11,12 +11,9 @@ import { Toast } from "@/services/common/toast";
 
 export type ToastCall = { readonly kind: "success" | "error"; readonly message: string };
 
-export class RecordedToasts extends Context.Tag("RecordedToasts")<
-  RecordedToasts,
-  {
+export class RecordedToasts extends Context.Service<RecordedToasts, {
     readonly all: Effect.Effect<ReadonlyArray<ToastCall>>;
-  }
->() {}
+  }>()("RecordedToasts") {}
 
 export const RecordingToast: Layer.Layer<Toast | RecordedToasts> = Layer.effectContext(
   Effect.gen(function* () {

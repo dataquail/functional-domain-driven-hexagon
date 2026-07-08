@@ -1,9 +1,9 @@
 import { createServer } from "node:http";
 
 import * as NodeSdk from "@effect/opentelemetry/NodeSdk";
-import * as HttpApiBuilder from "@effect/platform/HttpApiBuilder";
-import * as HttpMiddleware from "@effect/platform/HttpMiddleware";
-import * as HttpServer from "@effect/platform/HttpServer";
+import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
+import * as HttpMiddleware from "effect/unstable/http/HttpMiddleware";
+import * as HttpServer from "effect/unstable/http/HttpServer";
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";

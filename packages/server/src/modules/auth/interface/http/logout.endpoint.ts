@@ -1,5 +1,5 @@
-import * as HttpServerRequest from "@effect/platform/HttpServerRequest";
-import * as HttpServerResponse from "@effect/platform/HttpServerResponse";
+import * as HttpServerRequest from "effect/unstable/http/HttpServerRequest";
+import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
 import * as cookie from "cookie";
 import * as Effect from "effect/Effect";
 
@@ -42,7 +42,7 @@ export const logoutEndpoint = () =>
       // If discovery fails (Zitadel down), fall back to landing on the app
       // root — local logout still completes; the SSO cookie sticks around
       // until next interaction.
-      Effect.catchAll(() => Effect.succeed(env.APP_URL)),
+      Effect.catch(() => Effect.succeed(env.APP_URL)),
     );
 
     return HttpServerResponse.empty({ status: 302 }).pipe(

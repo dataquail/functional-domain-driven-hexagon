@@ -6,7 +6,7 @@ import * as Schema from "effect/Schema";
 // backend, and consumers decide policy: the invite flow, for instance,
 // logs-and-swallows because the invitation row is already committed and
 // email is best-effort. `LogMailerLive` never produces this.
-export class MailDeliveryError extends Schema.TaggedError<MailDeliveryError>("MailDeliveryError")(
+export class MailDeliveryError extends Schema.TaggedErrorClass<MailDeliveryError>("MailDeliveryError")(
   "MailDeliveryError",
   { message: Schema.String },
 ) {}

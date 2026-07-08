@@ -1,4 +1,4 @@
-import * as HttpApi from "@effect/platform/HttpApi";
+import * as HttpApi from "effect/unstable/httpapi/HttpApi";
 import { CliApi } from "@org/contracts/CliApi";
 import { DomainApi } from "@org/contracts/DomainApi";
 

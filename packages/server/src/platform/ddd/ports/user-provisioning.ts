@@ -10,7 +10,7 @@ import { type UserId } from "@/platform/ids/user-id.js";
 // `UserAlreadyExists`) so consumers — e.g. `auth` sign-in — depend only on
 // this ACL and not on the user module's domain errors. The Live maps the
 // user module's `UserAlreadyExists` into this shape.
-export class UserProvisioningConflict extends Schema.TaggedError<UserProvisioningConflict>()(
+export class UserProvisioningConflict extends Schema.TaggedErrorClass<UserProvisioningConflict>()(
   "UserProvisioningConflict",
   {
     email: Schema.String,
@@ -32,7 +32,4 @@ export type UserProvisioningShape = {
   ) => Effect.Effect<UserId, PersistenceUnavailable | UserProvisioningConflict>;
 };
 
-export class UserProvisioning extends Context.Tag("UserProvisioning")<
-  UserProvisioning,
-  UserProvisioningShape
->() {}
+export class UserProvisioning extends Context.Service<UserProvisioning, UserProvisioningShape>()("UserProvisioning") {}

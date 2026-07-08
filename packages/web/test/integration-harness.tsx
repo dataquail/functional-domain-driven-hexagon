@@ -8,8 +8,8 @@
 // `server.use(...)` before calling `renderWithHarness(<RoutePage />)`,
 // then drive the UI through the RTL page driver in `packages/test-drivers`.
 
-import * as FetchHttpClient from "@effect/platform/FetchHttpClient";
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
+import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { Toaster } from "@org/components/primitives/toaster";
 import { ThemeProvider } from "@org/components/providers/theme-provider";
 import { DomainApi } from "@org/contracts/DomainApi";

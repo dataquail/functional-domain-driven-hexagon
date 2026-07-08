@@ -1,6 +1,6 @@
 import * as Array from "effect/Array";
 import * as Effect from "effect/Effect";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 import * as Equal from "effect/Equal";
 import { identity } from "effect/Function";
 import * as Hash from "effect/Hash";
@@ -20,16 +20,16 @@ import * as Struct from "effect/Struct";
  */
 export const Email = (opts?: { requiredMessage?: string; invalidMessage?: string }) =>
   Schema.Trim.pipe(
-    Schema.minLength(1, {
+    Schema.isMinLength(1, {
       message: () => opts?.requiredMessage ?? "Email is required",
     }),
-    Schema.pattern(
+    Schema.isPattern(
       /^(?!\.)(?!.*\.\.)([A-Z0-9_+-.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9-]*\.)+[A-Z]{2,}$/i,
       {
         message: () => opts?.invalidMessage ?? "Invalid email",
       },
     ),
-    Schema.annotations({
+    Schema.annotate({
       identifier: "Email",
     }),
   );
@@ -106,8 +106,8 @@ export const formatParseIssueMessages = (
  */
 export const NullOrFromFallible = <A, I, R>(schema: Schema.Schema<A, I, R>) =>
   Schema.NullOr(schema).pipe(
-    Schema.annotations({
-      decodingFallback: () => Either.right(null),
+    Schema.annotate({
+      decodingFallback: () => Result.succeed(null),
     }),
   );
 
@@ -118,7 +118,7 @@ export const NullOrFromFallible = <A, I, R>(schema: Schema.Schema<A, I, R>) =>
  */
 export const ArrayFromFallible = <A, I, R>(schema: Schema.Schema<A, I, R>) =>
   Schema.Array(
-    Schema.NullOr(schema).annotations({
+    Schema.NullOr(schema).annotate({
       decodingFallback: (issue) =>
         Effect.zipRight(
           Effect.logWarning(
@@ -130,7 +130,7 @@ export const ArrayFromFallible = <A, I, R>(schema: Schema.Schema<A, I, R>) =>
         ),
     }),
   ).pipe(
-    Schema.transform(Schema.typeSchema(Schema.Array(schema)), {
+    Schema.transform(Schema.toType(Schema.Array(schema)), {
       decode: (array) => array.filter(Predicate.isNotNull),
       encode: identity,
       strict: true,
@@ -144,7 +144,7 @@ export const ArrayFromFallible = <A, I, R>(schema: Schema.Schema<A, I, R>) =>
  */
 export const HashSetFromFallibleArray = <A, I, R>(schema: Schema.Schema<A, I, R>) =>
   ArrayFromFallible(schema).pipe(
-    Schema.transform(Schema.typeSchema(Schema.HashSet(schema)), {
+    Schema.transform(Schema.toType(Schema.HashSet(schema)), {
       decode: (array) => HashSet.fromIterable(array),
       encode: (hashSet) => Array.fromIterable(hashSet),
       strict: true,
@@ -158,7 +158,7 @@ export const HashSetFromFallibleArray = <A, I, R>(schema: Schema.Schema<A, I, R>
  */
 export const SetFromFallibleArray = <A, I, R>(schema: Schema.Schema<A, I, R>) =>
   ArrayFromFallible(schema).pipe(
-    Schema.transform(Schema.typeSchema(Schema.Set(schema)), {
+    Schema.transform(Schema.toType(Schema.Set(schema)), {
       decode: (array) => new Set(array),
       encode: (set) => Array.fromIterable(set),
       strict: true,
@@ -179,7 +179,7 @@ export const SetFromFallibleArray = <A, I, R>(schema: Schema.Schema<A, I, R>) =>
  * ```
  */
 export const HashSetFromIterable = <A, I, R>(schema: Schema.Schema<A, I, R>) =>
-  Schema.transform(Schema.Array(schema), Schema.typeSchema(Schema.HashSet(schema)), {
+  Schema.transform(Schema.Array(schema), Schema.toType(Schema.HashSet(schema)), {
     strict: true,
     decode: (array) => HashSet.fromIterable(array),
     encode: (hashSet) => Array.fromIterable(hashSet),
@@ -266,15 +266,15 @@ export const deriveAndAttachProperty =
   (
     self: Schema.Schema<FromA, FromI, FromR>,
   ): Schema.Schema<FromA & { readonly [K in Key]: ToA }, FromI, FromR | ToR | DecodeR> => {
-    const derivedSchema = Schema.typeSchema(
+    const derivedSchema = Schema.toType(
       Schema.Struct({
         [args.key]: args.typeSchema,
       } as const),
     );
 
-    const extendedSchema = Schema.extend(Schema.typeSchema(self), derivedSchema);
+    const extendedSchema = Schema.extend(Schema.toType(self), derivedSchema);
 
-    return Schema.transformOrFail(self, Schema.typeSchema(extendedSchema), {
+    return Schema.transformOrFail(self, Schema.toType(extendedSchema), {
       decode: (input) =>
         Effect.gen(function* () {
           const result = args.decode(input);
@@ -318,7 +318,7 @@ export const fromKey: <const K extends string>(
  * @category schema
  */
 export const reverseSchema = <A, I, R>(schema: Schema.Schema<A, I, R>): Schema.Schema<I, A, R> =>
-  Schema.transformOrFail(Schema.typeSchema(schema), Schema.encodedSchema(schema), {
+  Schema.transformOrFail(Schema.toType(schema), Schema.toEncoded(schema), {
     decode: ParseResult.encode(schema),
     encode: ParseResult.decode(schema),
   });

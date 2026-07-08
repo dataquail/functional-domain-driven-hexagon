@@ -1,4 +1,4 @@
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import { TodosContract } from "@org/contracts/api/Contracts";
 import { deepStrictEqual, ok } from "assert";

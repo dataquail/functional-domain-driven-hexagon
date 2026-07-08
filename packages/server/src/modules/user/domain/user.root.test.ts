@@ -1,7 +1,7 @@
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
 import { UserId } from "@/platform/ids/user-id.js";
@@ -47,7 +47,7 @@ describe("AddressValueObject", () => {
       street: "123 Main St",
       postalCode: "12345",
     });
-    deepStrictEqual(Either.isRight(result), true);
+    deepStrictEqual(Result.isSuccess(result), true);
   });
 
   it("rejects country shorter than 2 chars", () => {
@@ -56,7 +56,7 @@ describe("AddressValueObject", () => {
       street: "123 Main St",
       postalCode: "12345",
     });
-    deepStrictEqual(Either.isLeft(result), true);
+    deepStrictEqual(Result.isFailure(result), true);
   });
 
   it("rejects country longer than 50 chars", () => {
@@ -65,7 +65,7 @@ describe("AddressValueObject", () => {
       street: "123 Main St",
       postalCode: "12345",
     });
-    deepStrictEqual(Either.isLeft(result), true);
+    deepStrictEqual(Result.isFailure(result), true);
   });
 
   it("rejects street shorter than 2 chars", () => {
@@ -74,7 +74,7 @@ describe("AddressValueObject", () => {
       street: "X",
       postalCode: "12345",
     });
-    deepStrictEqual(Either.isLeft(result), true);
+    deepStrictEqual(Result.isFailure(result), true);
   });
 
   it("rejects postalCode longer than 10 chars", () => {
@@ -83,7 +83,7 @@ describe("AddressValueObject", () => {
       street: "123 Main St",
       postalCode: "12345678901",
     });
-    deepStrictEqual(Either.isLeft(result), true);
+    deepStrictEqual(Result.isFailure(result), true);
   });
 });
 

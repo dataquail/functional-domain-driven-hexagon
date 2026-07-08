@@ -1,4 +1,4 @@
-import * as HttpApi from "@effect/platform/HttpApi";
+import * as HttpApi from "effect/unstable/httpapi/HttpApi";
 
 import * as CliAuthContract from "./api/CliAuthContract.js";
 import * as CliOrganizationContract from "./api/CliOrganizationContract.js";

@@ -2,21 +2,21 @@ import * as Schema from "effect/Schema";
 
 import { SessionId } from "./session.id.js";
 
-export class SessionNotFound extends Schema.TaggedError<SessionNotFound>("SessionNotFound")(
+export class SessionNotFound extends Schema.TaggedErrorClass<SessionNotFound>("SessionNotFound")(
   "SessionNotFound",
   { sessionId: SessionId },
 ) {}
 
-export class SessionExpired extends Schema.TaggedError<SessionExpired>("SessionExpired")(
+export class SessionExpired extends Schema.TaggedErrorClass<SessionExpired>("SessionExpired")(
   "SessionExpired",
   { sessionId: SessionId },
 ) {}
 
-export class SessionRevoked extends Schema.TaggedError<SessionRevoked>("SessionRevoked")(
+export class SessionRevoked extends Schema.TaggedErrorClass<SessionRevoked>("SessionRevoked")(
   "SessionRevoked",
   { sessionId: SessionId },
 ) {}
 
-export class AuthIdentityNotFound extends Schema.TaggedError<AuthIdentityNotFound>(
+export class AuthIdentityNotFound extends Schema.TaggedErrorClass<AuthIdentityNotFound>(
   "AuthIdentityNotFound",
 )("AuthIdentityNotFound", { subject: Schema.String }) {}
