@@ -52,7 +52,7 @@ jobs:
       STRIPE_PRICE_ID_DEFAULT: price_test_ci_placeholder
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       - name: Run integration suite (server + jobs)
         run: pnpm test:integration
