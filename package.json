@@ -60,7 +60,7 @@
     "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-codegen": "^0.34.1",
     "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-project-structure": "file:vendor/eslint-plugin-project-structure-3.14.3.tgz",
+    "eslint-plugin-project-structure": "file:vendor/eslint-plugin-project-structure-3.14.3-perf.tgz",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "5.1.0",
     "eslint-plugin-react-refresh": "^0.4.26",

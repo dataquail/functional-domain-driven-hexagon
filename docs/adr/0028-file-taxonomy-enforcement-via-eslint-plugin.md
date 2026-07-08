@@ -96,10 +96,20 @@ The rule's stock error text is fixed and generic; the per-rule `message` field i
 a local addition. We therefore depend on a fork of the plugin, built and committed
 as a tarball under `vendor/` and referenced via a `file:` dependency (the upstream
 package's entry point is built output with no install-time build step, so a git
-dependency would not install cleanly). The fork also carries a small performance
-patch that memoizes the rule's per-file config validation. When the upstream
-custom-message contribution is released, the `file:` dependency is replaced with
-the published package and the vendored tarball removed.
+dependency would not install cleanly).
+
+The fork also carries a **required performance fix for a real upstream bug**. The
+stock wildcard pattern for `*` was `(([^/]*)+)` — a quantifier nested inside a
+group quantifier, which backtracks catastrophically. Every `*` in a rule compiled
+to it, and testing a long non-matching filename (e.g. a
+`*.repository-live.integration.test.ts` rule against
+`create-todo.handler.integration.test.ts`) against it took ~67 seconds for a
+single `.test()`. With our large taxonomy (many `*` rules) matched across hundreds
+of files, `pnpm lint` ran for hours. The fix — `([^/]*)`, identical glob semantics
+in linear time — takes the full-repo `pnpm lint` (type-aware rules included) to
+~30 seconds. Two upstream PRs are owed: the wildcard fix (priority) and the
+custom-message field. When both are released, the `file:` dependency is replaced
+with the published package and the vendored tarball removed.
 
 ## Consequences
 
@@ -112,11 +122,12 @@ the published package and the vendored tarball removed.
   orphan handler still owes its test. A completely empty stray folder (no linted
   files inside) is not visited by the file-triggered rule, so it escapes; low risk,
   since stray folders almost always contain files.
-- **Performance.** The rule runs per linted file; over the full server-module tree
-  this adds measurable time to a cold `pnpm lint`. The vendored memoization patch
-  mitigates the largest cost (per-file config re-validation). `lint-staged` lints
-  only staged files, so pre-commit is unaffected. If a cold CI lint approaches its
-  timeout, enabling ESLint's `--cache` (persisted across CI runs) is the mitigation.
+- **Performance.** Once the vendored wildcard fix is applied, whole-repo `pnpm lint`
+  (type-aware rules + folder-structure) runs in ~30s — well within CI's budget. The
+  rule runs per linted file but its per-file cost is a few ms. (Without the fix the
+  catastrophic-backtracking wildcard made `pnpm lint` run for hours; see Decisions →
+  Vendored fork. This is why we must not fall back to the stock upstream package
+  until the wildcard fix is released upstream.)
 - **Single-maintainer dependency.** The plugin is one maintainer's project. The
   fork is sha-pinned, built from source, and committed as a tarball, and the deleted
   scripts remain recoverable from git history — so a stall or abandonment upstream
