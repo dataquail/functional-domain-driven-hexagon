@@ -1,3 +1,4 @@
+import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import * as Layer from "effect/Layer";
 
 import { SyncSubscriptionFromStripeWebhookLive } from "@/modules/billing/event-handlers/sync-subscription-from-stripe-webhook.handler.js";
@@ -39,6 +40,14 @@ const BillingModuleBase = Layer.mergeAll(
   SyncSubscriptionFromStripeWebhookLive,
 ).pipe(Layer.provide(SubscriptionRepositoryLive), Layer.provide(WebhookEventRepositoryLive));
 
-export const BillingModuleLive = BillingModuleBase.pipe(Layer.provide(BillingGatewayLive));
+// `BillingGateway` is consumed by the billing command handlers, whose
+// requirement reaches the endpoints request-scoped via the typed bus, so it
+// is satisfied with `HttpRouter.provideRequest` (see auth.module for the
+// same v4 pattern).
+export const BillingModuleLive = BillingModuleBase.pipe(
+  HttpRouter.provideRequest(BillingGatewayLive),
+);
 
-export const BillingModuleTestLive = BillingModuleBase.pipe(Layer.provide(BillingGatewayFake));
+export const BillingModuleTestLive = BillingModuleBase.pipe(
+  HttpRouter.provideRequest(BillingGatewayFake),
+);

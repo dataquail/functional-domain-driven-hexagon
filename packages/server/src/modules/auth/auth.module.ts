@@ -1,3 +1,4 @@
+import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import * as Layer from "effect/Layer";
 
 import { OidcClient } from "./infrastructure/clients/oidc.client.js";
@@ -14,8 +15,12 @@ import { AuthLive } from "./interface/http/index.js";
 // CookieCodec is the only auth-infra service still hoisted via
 // `AuthSharedDepsLive` because the platform middleware verifies the
 // session cookie with the same key the auth module signs with.
+// `OidcClient` is consumed directly by the login/callback/logout endpoints
+// (not via the bus), so in v4 it's a request-scoped requirement and must be
+// satisfied with `HttpRouter.provideRequest`. The repositories are reached
+// through the bus, so their requirement is closed at build with `Layer.provide`.
 export const AuthModuleLive = AuthLive.pipe(
-  Layer.provide(OidcClient.layer),
+  HttpRouter.provideRequest(OidcClient.layer),
   Layer.provide(AuthIdentityRepositoryLive),
   Layer.provide(SessionRepositoryLive),
 );

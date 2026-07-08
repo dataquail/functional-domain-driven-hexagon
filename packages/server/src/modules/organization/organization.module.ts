@@ -1,3 +1,4 @@
+import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import * as Layer from "effect/Layer";
 
 import { MailerLive } from "@/platform/notifications/mailer-live.js";
@@ -22,4 +23,10 @@ export const OrganizationModuleLive = Layer.mergeAll(
   InvitationLive,
   // CLI-facing `listMine` (the `cliOrganization` group on CliApi).
   OrgCliLive,
-).pipe(Layer.provide(OrganizationRepositoryLive), Layer.provide(InvitationMailerProvided));
+).pipe(
+  Layer.provide(OrganizationRepositoryLive),
+  // `InvitationMailer` is consumed by the invite command handler, whose
+  // requirement reaches the endpoints request-scoped via the typed bus, so
+  // it is satisfied with `HttpRouter.provideRequest` (see auth.module).
+  HttpRouter.provideRequest(InvitationMailerProvided),
+);

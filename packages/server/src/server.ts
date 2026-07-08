@@ -3,7 +3,7 @@ import { createServer } from "node:http";
 import * as NodeSdk from "@effect/opentelemetry/NodeSdk";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 import * as HttpMiddleware from "effect/unstable/http/HttpMiddleware";
-import * as HttpServer from "effect/unstable/http/HttpServer";
+import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
@@ -157,7 +157,12 @@ const ResourceResolverRegistryLive = Layer.unwrap(
   ]),
 );
 
-const ApiLive = HttpApiBuilder.api(Api).pipe(
+// v4 model: `HttpApiBuilder.layer` registers the group handlers into the
+// `HttpRouter`; the handlers' runtime dependencies are tracked as
+// request-scoped requirements and are only satisfiable AFTER
+// `HttpRouter.serve` unwraps them (see `AppServicesLive` below). So this
+// layer provides only the module group implementations at build time.
+const ApiLive = HttpApiBuilder.layer(Api).pipe(
   Layer.provide([
     TodosModuleLive,
     UserModuleLive,
@@ -166,42 +171,13 @@ const ApiLive = HttpApiBuilder.api(Api).pipe(
     OrganizationModuleLive,
     BillingModuleLive,
   ]),
-  // UserProvisioning (JIT user creation for `auth` first sign-in) gets its
-  // own step rather than sitting in the service block below: its Live
-  // depends on DomainEventBus + UnitOfWork, which are peers in that block
-  // (peers don't satisfy each other). Placed here, the block below
-  // (DomainEventBus/UnitOfWork) and the buses two steps down (CommandBus —
-  // it fires CreateUserCommand) provide TO it.
-  Layer.provide([UserProvisioningLive]),
-  // RoleService is a peer of the auth middleware: both consume the
-  // buses provided just below, and both feed upstream consumers
-  // (endpoints + `SuperAdminOnly`). Placing it here means the same
-  // `Layer.provide([CommandBusLive, QueryBusLive])` step satisfies
-  // its QueryBus dependency too. The Stripe-vs-fake swap for
-  // `BillingGateway` lives INSIDE `BillingModuleLive` (this is the
-  // prod variant; `test-server.ts` uses `BillingModuleTestLive`),
-  // so no gateway Layer appears in this list.
-  Layer.provide([
-    UserAuthMiddlewareLive,
-    RoleServiceLive,
-    MembershipServiceLive,
-    OrganizationRoleServiceLive,
-    DomainEventBusLive,
-    UnitOfWorkLive,
-  ]),
-  // CommandBus + QueryBus must provide TO the middleware (not be its peers
-  // in the array above), since UserAuthMiddlewareLive now dispatches the
-  // FindSessionQuery via the bus. IntegrationEventBusLive sits here too (not as
-  // a peer of UnitOfWorkLive above): `UnitOfWorkLive` depends on it for the
-  // post-commit flush, so it must be provided TO that block rather than
-  // alongside it.
-  Layer.provide([CommandBusLive, QueryBusLive, IntegrationEventBusLive]),
-  // Authz registries — endpoints consume PolicyRegistry +
-  // ResourceResolverRegistry via Authz.requires/requiresOn.
-  Layer.provide([PolicyRegistryLive, ResourceResolverRegistryLive]),
-  Layer.provide(AuthSharedDepsLive),
-  Layer.provide(EnvVars.layer),
+  // The middleware impl is a build-time requirement of the API (groups declare
+  // `.middleware(UserAuthMiddleware)`); providing it here applies the wrapper,
+  // which supplies `CurrentUser` to every gated endpoint. Its own deps
+  // (buses, CookieCodec, Database) bubble up request-scoped and close below.
+  HttpRouter.provideRequest(UserAuthMiddlewareLive),
 );
+
 
 const NodeSdkLive = Layer.unwrap(
   Effect.map(EnvVars, (env) => env.OTLP_URL).pipe(
@@ -228,17 +204,45 @@ const NodeSdkLive = Layer.unwrap(
 // deleted) so a future operator who genuinely needs to expose the BFF
 // to a non-Next browser caller can add an entry without re-discovering
 // the wiring; the credentials/methods/headers shape is preserved.
-const CorsLive = HttpApiBuilder.middlewareCors({
+const corsMiddleware = HttpMiddleware.cors({
   allowedOrigins: [],
   allowedMethods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization", "B3", "traceparent"],
   credentials: true,
 });
 
-const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
-  HttpServer.withLogAddress,
-  Layer.provide(CorsLive),
-  Layer.provide(ApiLive),
+const HttpLive = HttpRouter.serve(ApiLive, {
+  // Applied to the whole server chain: log every request, then answer CORS
+  // preflight (empty allow-list — see CORS note above).
+  middleware: (httpApp) => corsMiddleware(HttpMiddleware.logger(httpApp)),
+}).pipe(
+  // The endpoints' per-request services, now unwrapped by `serve` into plain
+  // requirements. The provide ORDER encodes the dependency graph (peers don't
+  // satisfy each other) — it mirrors the pre-v4 ApiLive wiring.
+  //
+  // UserProvisioning (JIT user creation for `auth` first sign-in) depends on
+  // DomainEventBus + UnitOfWork (peers below) + CommandBus (fires
+  // CreateUserCommand two steps down), so it gets its own earlier step.
+  Layer.provide([UserProvisioningLive]),
+  // RoleService is a peer of the auth middleware: both consume the buses
+  // provided just below and feed upstream consumers (endpoints +
+  // `SuperAdminOnly`). The Stripe-vs-fake swap for `BillingGateway` lives
+  // INSIDE `BillingModuleLive` (prod variant; `test-server.ts` uses the fake),
+  // so no gateway Layer appears here.
+  Layer.provide([
+    RoleServiceLive,
+    MembershipServiceLive,
+    OrganizationRoleServiceLive,
+    DomainEventBusLive,
+    UnitOfWorkLive,
+  ]),
+  // CommandBus + QueryBus provide TO the middleware (which dispatches
+  // FindSessionQuery). IntegrationEventBus provides TO UnitOfWork (post-commit
+  // flush), so it sits here, not as a peer of UnitOfWork above.
+  Layer.provide([CommandBusLive, QueryBusLive, IntegrationEventBusLive]),
+  // Authz registries — endpoints consume these via Authz.requires/requiresOn.
+  Layer.provide([PolicyRegistryLive, ResourceResolverRegistryLive]),
+  Layer.provide(AuthSharedDepsLive),
   Layer.merge(Layer.effectDiscard(Database.Database.use((db) => db.setupConnectionListeners))),
   Layer.provide(DatabaseLive),
   Layer.provide(NodeSdkLive),
@@ -247,21 +251,25 @@ const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
 );
 
 Layer.launch(HttpLive).pipe(
-  Effect.tapErrorCause(Effect.logError),
+  Effect.tapCause(Effect.logError),
   Effect.retry({
-    while: (error) => error._tag === "DatabaseConnectionLostError",
+    while: (error: unknown) =>
+      typeof error === "object" &&
+      error !== null &&
+      "_tag" in error &&
+      error._tag === "DatabaseConnectionLostError",
+    // Capped, jittered exponential backoff. v4 folded `modifyDelayEffect`
+    // into `modifyDelay` (now always effectful), so the per-attempt log
+    // line and the 8s cap live in one step.
     schedule: Schedule.exponential("1 second", 2).pipe(
-      Schedule.modifyDelay(Duration.min("8 seconds")),
       Schedule.jittered,
-      Schedule.repetitions,
-      Schedule.modifyDelayEffect((count, delay) =>
-        Effect.as(
-          Effect.logError(
-            `[Server crashed]: Retrying in ${Duration.format(delay)} (attempt #${count + 1})`,
-          ),
-          delay,
-        ),
-      ),
+      Schedule.modifyDelay((_output, delay) => {
+        const capped = Duration.min(delay, Duration.seconds(8));
+        return Effect.as(
+          Effect.logError(`[Server crashed]: Retrying in ${Duration.format(capped)}`),
+          capped,
+        );
+      }),
     ),
   }),
   NodeRuntime.runMain(),
