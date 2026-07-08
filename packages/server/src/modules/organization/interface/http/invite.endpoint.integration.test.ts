@@ -48,6 +48,7 @@ suite("POST /orgs/:orgId/invitations (integration, super-admin caller)", () => {
         const res = yield* client.organization.findInvitations({ path: { orgId: ORG_ID } });
         deepStrictEqual(res.invitations.length, 1);
         const invitation = res.invitations[0];
+        ok(invitation !== undefined);
         deepStrictEqual(invitation.invitationId, invitationId);
         deepStrictEqual(invitation.inviteeEmail, "alice@example.com");
         deepStrictEqual(invitation.status, "pending");

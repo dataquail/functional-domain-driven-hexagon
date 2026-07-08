@@ -1,4 +1,5 @@
 import { describe, it } from "@effect/vitest";
+import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -12,9 +13,6 @@ import { SubscriptionRootOps } from "@/modules/billing/domain/subscription.root.
 import { SubscriptionRepositoryLive } from "@/modules/billing/infrastructure/repositories/subscription.repository-live.js";
 import { findSubscriptionByOrganization } from "@/modules/billing/queries/find-subscription-by-organization.handler.js";
 import { FindSubscriptionByOrganizationQuery } from "@/modules/billing/queries/find-subscription-by-organization.query.js";
-import { OrganizationRootOps } from "@/modules/organization/domain/organization.root.js";
-import { OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization.repository.js";
-import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
@@ -23,16 +21,24 @@ const beta = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const subId = SubscriptionId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
 
-// The subscription FKs org_id → organization.organizations, so seed the org
-// through its live repository first.
-const TestLayer = Layer.mergeAll(SubscriptionRepositoryLive, OrganizationRepositoryLive).pipe(
-  Layer.provideMerge(TestDatabaseLive),
-);
+const TestLayer = SubscriptionRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
+// The subscription FKs org_id → organization.organizations. Seed that FK
+// precondition with direct SQL — the smallest seam for a cross-module row,
+// and the same pattern as subscription.repository-live.integration.test.ts.
+// Importing the organization module's repository here would breach the
+// cross-module barrel rule (module-barrel-only-cross-module).
 const seedOrg = (id: OrganizationId, name: string) =>
   Effect.gen(function* () {
-    const orgs = yield* OrganizationRepository;
-    yield* orgs.insertOne(OrganizationRootOps.create({ id, name, now }).organization);
+    const db = yield* Database.Database;
+    yield* db
+      .execute((c) =>
+        c.query(sql.unsafe`
+          INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
+          VALUES (${id}, ${name}, NOW(), NOW(), null)
+        `),
+      )
+      .pipe(Effect.orDie);
   });
 
 const suite = hasTestDatabase ? describe.sequential : describe.skip;

@@ -164,7 +164,10 @@ suite("findOrganizationMemberships (integration)", () => {
         FindOrganizationMembershipsQuery.make({ organizationId: orgA }),
       );
       deepStrictEqual(result.length, 1);
-      deepStrictEqual(result[0].userId, userA);
+      deepStrictEqual(
+        result.map((r) => r.userId),
+        [userA],
+      );
     }).pipe(Effect.provide(TestLayer)),
   );
 });

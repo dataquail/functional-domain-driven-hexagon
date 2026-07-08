@@ -84,7 +84,7 @@ export const rtlUsersDriver = (
         if (parent === null) throw new Error(`no enclosing control for ${field}`);
         const errorSpan = parent.querySelector("span.text-red-500");
         const text = errorSpan?.textContent;
-        if (text === null || text === undefined || text.length === 0) {
+        if (text === undefined || text.length === 0) {
           throw new Error(`no error for ${field}`);
         }
       });
@@ -107,9 +107,7 @@ export const rtlUsersDriver = (
         // (e.g. error rendered as success) fails the assertion.
         const toasts = document.querySelectorAll(`[data-sonner-toast][data-type="${kind}"]`);
         const lowered = message.toLowerCase();
-        const match = Array.from(toasts).some((t) =>
-          (t.textContent ?? "").toLowerCase().includes(lowered),
-        );
+        const match = Array.from(toasts).some((t) => t.textContent.toLowerCase().includes(lowered));
         if (!match) {
           throw new Error(`expected ${kind} toast "${message}" in DOM, none found`);
         }
