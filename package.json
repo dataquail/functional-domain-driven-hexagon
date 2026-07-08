@@ -19,7 +19,7 @@
     "check": "tsc -b tsconfig.json",
     "check:recursive": "pnpm --recursive exec tsc -b tsconfig.json",
     "check:all": "pnpm lint && pnpm lint:deps && pnpm check && pnpm test && pnpm -F @org/components build-storybook",
-    "lint": "eslint \"**/{src,test,examples,dtslint}/**/*.{ts,mjs,tsx}\" \"packages/web/{app,features,lib,services}/**/*.{ts,tsx}\" \"packages/web/{instrumentation,next.config}.ts\" \"packages/components/{primitives,patterns,providers,lib}/**/*.{ts,tsx}\" \"packages/components/.storybook/**/*.{ts,tsx}\" \"packages/acceptance/{specs,drivers,test-utils,setup}/**/*.{ts,tsx}\" \"packages/acceptance/{playwright.config,global-setup}.ts\" --quiet",
+    "lint": "eslint \"**/{src,test,examples,dtslint}/**/*.{ts,mjs,tsx}\" \"packages/web/{app,features,lib,services}/**/*.{ts,tsx}\" \"packages/web/{instrumentation,next.config}.ts\" \"packages/components/{primitives,patterns,providers,lib}/**/*.{ts,tsx}\" \"packages/components/.storybook/**/*.{ts,tsx}\" \"packages/acceptance/{specs,drivers,test-utils,setup}/**/*.{ts,tsx}\" \"packages/acceptance/{playwright.config,global-setup}.ts\" --quiet --cache --cache-location node_modules/.cache/eslint/",
     "lint:fix": "pnpm lint --fix",
     "lint:deps": "depcruise --config .dependency-cruiser.cjs packages/server/src packages/contracts/src packages/jobs/src && depcruise --config .dependency-cruiser.cjs --ts-config tsconfig.depcruise-web.json packages/web packages/components",
     "test": "vitest run",
