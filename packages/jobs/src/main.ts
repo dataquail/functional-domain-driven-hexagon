@@ -10,14 +10,12 @@ import { purgeExpiredSessions } from "./jobs/purge-expired-sessions.js";
 
 dotenv.config({ path: "../../.env" });
 
-const DatabaseLive = Layer.unwrapEffect(
+const DatabaseLive = Layer.unwrap(
   Effect.gen(function* () {
     const url = yield* Config.redacted("DATABASE_URL");
-    const env = yield* Config.literal(
-      "dev",
-      "prod",
-      "staging",
-    )("ENV").pipe(Config.withDefault("dev"));
+    const env = yield* Config.literals(["dev", "prod", "staging"], "ENV").pipe(
+      Config.withDefault("dev"),
+    );
     return Database.layer({ url, ssl: env === "prod" });
   }),
 );
