@@ -9,7 +9,6 @@ import { Api } from "@/api.js";
 import { FindUsersQuery } from "@/modules/user/index.js";
 import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { hasTestDatabase } from "@/test-utils/test-database.js";
 
 const basePayload = {
   email: "alice@example.com",
@@ -18,7 +17,7 @@ const basePayload = {
   postalCode: "12345",
 };
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("POST /users (integration)", () => {
   const { run } = useServerTestRuntime(["user.users"]);

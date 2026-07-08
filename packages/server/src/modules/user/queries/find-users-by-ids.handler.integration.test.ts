@@ -12,7 +12,7 @@ import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/u
 import { findUsersByIds } from "@/modules/user/queries/find-users-by-ids.handler.js";
 import { FindUsersByIdsQuery } from "@/modules/user/queries/find-users-by-ids.query.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const address = AddressValueObject.make({
   country: "USA",
@@ -26,7 +26,7 @@ const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
 
 const TestLayer = UserRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("findUsersByIds (integration)", () => {
   beforeEach(async () => {

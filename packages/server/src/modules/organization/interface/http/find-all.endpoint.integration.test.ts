@@ -8,10 +8,9 @@ import * as Exit from "effect/Exit";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { hasTestDatabase } from "@/test-utils/test-database.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("GET /admin/orgs (integration)", () => {
   // Listing all orgs is super-admin-only (organizationPolicies.read =
@@ -64,7 +63,7 @@ suite("GET /admin/orgs (integration)", () => {
   });
 });
 
-const memberSuite = hasTestDatabase ? describe.sequential : describe.skip;
+const memberSuite = describe.sequential;
 
 memberSuite("GET /admin/orgs (integration, non-super-admin caller)", () => {
   const { run } = useServerTestRuntime(["organization.organizations", "platform.roles"], {

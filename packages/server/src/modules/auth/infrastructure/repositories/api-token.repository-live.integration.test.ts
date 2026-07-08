@@ -13,7 +13,7 @@ import { ApiTokenRootOps } from "@/modules/auth/domain/api-token.root.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/ports/repositories/api-token.repository.js";
 import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositories/api-token.repository-live.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const idA = ApiTokenId.make("22222222-2222-2222-2222-222222222222");
@@ -42,7 +42,7 @@ const make = (id: ApiTokenId, hash: string, now: DateTime.Utc, createdAt?: DateT
     expiresAt: DateTime.add(createdAt ?? now, { days: 90 }),
   });
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("ApiTokenRepositoryLive (integration)", () => {
   beforeEach(async () => {

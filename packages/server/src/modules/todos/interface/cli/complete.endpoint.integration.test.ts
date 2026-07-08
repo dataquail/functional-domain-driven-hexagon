@@ -6,7 +6,6 @@ import * as Effect from "effect/Effect";
 import { Api } from "@/api.js";
 import { TodoId } from "@/modules/todos/domain/todo.id.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { hasTestDatabase } from "@/test-utils/test-database.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 const TODO_TABLES = [
@@ -18,7 +17,7 @@ const TODO_TABLES = [
   "user.users",
 ] as const;
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("POST /cli/orgs/:orgId/todos/:id/complete (integration)", () => {
   const { run } = useServerTestRuntime(TODO_TABLES, {

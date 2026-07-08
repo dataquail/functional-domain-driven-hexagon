@@ -20,7 +20,7 @@ import { SessionRepositoryLive } from "@/modules/auth/infrastructure/repositorie
 import { findSession } from "@/modules/auth/queries/find-session.handler.js";
 import { FindSessionQuery } from "@/modules/auth/queries/find-session.query.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const sessionId = SessionId.make("22222222-2222-2222-2222-222222222222");
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
@@ -64,7 +64,7 @@ const insertSession = (session: SessionRoot) =>
 const errorOf = (exit: Exit.Exit<unknown, unknown>) =>
   Exit.isFailure(exit) && exit.cause._tag === "Fail" ? exit.cause.error : null;
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("findSession (integration)", () => {
   beforeEach(async () => {

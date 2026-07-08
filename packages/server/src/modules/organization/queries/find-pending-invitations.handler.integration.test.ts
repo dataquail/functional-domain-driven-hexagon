@@ -18,7 +18,7 @@ import { FindPendingInvitationsQuery } from "@/modules/organization/queries/find
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const orgId = OrganizationId.make("55555555-5555-5555-5555-555555555555");
 const otherOrgId = OrganizationId.make("99999999-9999-9999-9999-999999999999");
@@ -54,7 +54,7 @@ const seedOrgs = Effect.gen(function* () {
   );
 });
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("findPendingInvitations (integration)", () => {
   beforeEach(async () => {

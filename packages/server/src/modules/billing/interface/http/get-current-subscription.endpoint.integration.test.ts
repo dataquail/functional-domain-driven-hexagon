@@ -9,7 +9,6 @@ import * as Exit from "effect/Exit";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { hasTestDatabase } from "@/test-utils/test-database.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 const BILLING_TABLES = [
@@ -22,7 +21,7 @@ const BILLING_TABLES = [
   "user.users",
 ] as const;
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("GET /orgs/:orgId/billing/subscriptions/current (integration)", () => {
   const { run } = useServerTestRuntime(BILLING_TABLES, {
@@ -61,7 +60,7 @@ suite("GET /orgs/:orgId/billing/subscriptions/current (integration)", () => {
   });
 });
 
-const memberSuite = hasTestDatabase ? describe.sequential : describe.skip;
+const memberSuite = describe.sequential;
 
 memberSuite("GET /orgs/:orgId/billing/subscriptions/current (non-member caller)", () => {
   const { run } = useServerTestRuntime(BILLING_TABLES, {

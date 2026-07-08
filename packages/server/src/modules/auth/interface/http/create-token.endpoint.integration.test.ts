@@ -5,11 +5,9 @@ import * as Effect from "effect/Effect";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { hasTestDatabase } from "@/test-utils/test-database.js";
-
 // `TestServerLive` provides the super-admin fake CurrentUser; `seedSuperAdminCaller`
 // inserts that user row so the token's user_id FK resolves.
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("POST /auth/tokens (integration)", () => {
   const { run } = useServerTestRuntime(["auth.api_tokens", "user.users", "platform.roles"], {

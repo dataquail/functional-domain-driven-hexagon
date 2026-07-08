@@ -9,10 +9,10 @@ import { beforeEach } from "vitest";
 import { WebhookEventRepository } from "@/modules/billing/domain/ports/repositories/webhook-event.repository.js";
 import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event.errors.js";
 import { WebhookEventRepositoryLive } from "@/modules/billing/infrastructure/repositories/webhook-event.repository-live.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const TestLayer = WebhookEventRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("WebhookEventRepositoryLive (integration)", () => {
   beforeEach(async () => {

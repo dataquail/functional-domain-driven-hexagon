@@ -5,14 +5,12 @@ import * as Effect from "effect/Effect";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { hasTestDatabase } from "@/test-utils/test-database.js";
-
 // `TestServerLive` provides `UserAuthMiddlewareFake`, which always succeeds
 // with a deterministic admin CurrentUser. So `/auth/me` should always return
 // that fake identity here — no cookie required, no Zitadel involved. The
 // real cookie path is exercised by `auth-identity-repository-live` and by
 // the Playwright auth-setup project / login.spec.ts.
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("GET /auth/me (integration)", () => {
   const { run } = useServerTestRuntime(["user.users", "platform.roles"], {

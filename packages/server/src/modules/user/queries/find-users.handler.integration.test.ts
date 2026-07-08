@@ -12,7 +12,7 @@ import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/u
 import { findUsers } from "@/modules/user/queries/find-users.handler.js";
 import { FindUsersQuery } from "@/modules/user/queries/find-users.query.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const address = AddressValueObject.make({
   country: "USA",
@@ -37,7 +37,7 @@ const seed = (id: UserId, email: string, now: DateTime.Utc) =>
     yield* repo.insertOne(user);
   });
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("findUsers (integration)", () => {
   beforeEach(async () => {

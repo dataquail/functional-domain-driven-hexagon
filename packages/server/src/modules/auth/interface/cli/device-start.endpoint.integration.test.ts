@@ -5,10 +5,8 @@ import * as Effect from "effect/Effect";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { hasTestDatabase } from "@/test-utils/test-database.js";
-
 // Public endpoint — no caller identity needed.
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("POST /cli/device/start (integration)", () => {
   const { run } = useServerTestRuntime(["auth.device_grants"]);

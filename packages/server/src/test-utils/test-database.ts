@@ -12,7 +12,17 @@ const rawUrl = process.env.DATABASE_URL_TEST;
 export const TEST_DATABASE_URL: string | undefined =
   rawUrl !== undefined && rawUrl.length > 0 ? rawUrl : undefined;
 
-export const hasTestDatabase = TEST_DATABASE_URL !== undefined;
+// The integration suite must fail — never skip — when it has no database to
+// talk to. Called from the integration global-setup; throws a clear error if
+// `DATABASE_URL_TEST` is unset so the whole run aborts before any test loads.
+export const assertTestDatabaseConfigured = (): void => {
+  if (TEST_DATABASE_URL === undefined) {
+    throw new Error(
+      "[test-database] integration tests require DATABASE_URL_TEST to be set. " +
+        "Start the test database and export DATABASE_URL_TEST (its name must contain 'test').",
+    );
+  }
+};
 
 // Never point a truncate/migrate at a DB that isn't explicitly a test DB.
 const assertTestDbName = (url: string): string => {

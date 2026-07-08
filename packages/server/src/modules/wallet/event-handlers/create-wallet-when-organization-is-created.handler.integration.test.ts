@@ -19,7 +19,7 @@ import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { makeIntegrationEventBusLive } from "@/platform/integration-event-bus-live.js";
 import { UnitOfWorkLive } from "@/platform/unit-of-work-live.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 const WALLET_TABLES = [
@@ -31,7 +31,7 @@ const WALLET_TABLES = [
   "user.users",
 ] as const;
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("CreateWalletWhenOrganizationIsCreated (integration)", () => {
   // `seedSuperAdminCaller` is required: creating an org inserts a

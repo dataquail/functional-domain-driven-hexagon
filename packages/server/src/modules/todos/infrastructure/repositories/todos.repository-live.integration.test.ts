@@ -13,7 +13,7 @@ import { TodoId } from "@/modules/todos/domain/todo.id.js";
 import { TodoRootOps } from "@/modules/todos/domain/todo.root.js";
 import { TodosRepositoryLive } from "@/modules/todos/infrastructure/repositories/todos.repository-live.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const aliceId = TodoId.make("11111111-1111-1111-1111-111111111111");
 const bobId = TodoId.make("22222222-2222-2222-2222-222222222222");
@@ -46,7 +46,7 @@ const seedOrgs = Effect.gen(function* () {
 
 const TestLayer = TodosRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("TodosRepositoryLive (integration)", () => {
   beforeEach(async () => {

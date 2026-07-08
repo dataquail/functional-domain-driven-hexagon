@@ -7,8 +7,6 @@ import * as Exit from "effect/Exit";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { hasTestDatabase } from "@/test-utils/test-database.js";
-
 // The callback happy path (PKCE cookie present → Zitadel code exchange →
 // session issued) needs a live Zitadel and is covered end-to-end by Playwright
 // (`packages/acceptance/specs/login.spec.ts`) and at the persistence boundary
@@ -17,7 +15,7 @@ import { hasTestDatabase } from "@/test-utils/test-database.js";
 // arriving without our signed OIDC state cookie must be rejected with 401
 // before any code exchange is attempted. This is the CSRF/replay defense, and
 // it's reachable without an IdP because it fails before `OidcClient` is called.
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("GET /auth/callback (integration)", () => {
   const { run } = useServerTestRuntime(["auth.sessions", "user.users"]);

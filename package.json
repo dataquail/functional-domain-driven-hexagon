@@ -24,6 +24,7 @@
     "lint:deps": "depcruise --config .dependency-cruiser.cjs packages/server/src packages/contracts/src packages/jobs/src && depcruise --config .dependency-cruiser.cjs --ts-config tsconfig.depcruise-web.json packages/web packages/components",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:integration": "TEST_INTEGRATION=true pnpm --workspace-concurrency=1 --filter @org/server --filter @org/jobs run test --run",
     "test:acceptance": "pnpm -F @org/acceptance test",
     "bootstrap": "node scripts/dev-bootstrap.mjs",
     "auth:up": "docker compose up -d zitadel",

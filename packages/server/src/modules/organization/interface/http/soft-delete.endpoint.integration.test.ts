@@ -10,14 +10,13 @@ import * as Schema from "effect/Schema";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { hasTestDatabase } from "@/test-utils/test-database.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 const DeletedAtRowStd = Schema.standardSchemaV1(
   Schema.Struct({ deleted_at: Schema.NullOr(Schema.DateTimeUtcFromDate) }),
 );
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("DELETE /orgs/:id (integration)", () => {
   // Tombstoning an org is super-admin-only (organizationPolicies.delete =
@@ -80,7 +79,7 @@ suite("DELETE /orgs/:id (integration)", () => {
   });
 });
 
-const memberSuite = hasTestDatabase ? describe.sequential : describe.skip;
+const memberSuite = describe.sequential;
 
 memberSuite("DELETE /orgs/:id (integration, non-super-admin caller)", () => {
   const { run } = useServerTestRuntime(

@@ -6,10 +6,9 @@ import * as Effect from "effect/Effect";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { hasTestDatabase } from "@/test-utils/test-database.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("GET /orgs (integration — findMine)", () => {
   // findMine returns the caller's own orgs, so the caller must be able to own

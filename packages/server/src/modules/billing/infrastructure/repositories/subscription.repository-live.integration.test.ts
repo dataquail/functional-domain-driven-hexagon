@@ -17,7 +17,7 @@ import {
 } from "@/modules/billing/domain/subscription.root.js";
 import { SubscriptionRepositoryLive } from "@/modules/billing/infrastructure/repositories/subscription.repository-live.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const acme = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const beta = OrganizationId.make("22222222-2222-2222-2222-222222222222");
@@ -59,7 +59,7 @@ const seedOrgRow = (id: OrganizationId, name: string) =>
   });
 
 const TestLayer = SubscriptionRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("SubscriptionRepositoryLive (integration)", () => {
   beforeEach(async () => {

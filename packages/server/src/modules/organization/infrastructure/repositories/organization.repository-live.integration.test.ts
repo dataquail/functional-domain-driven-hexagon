@@ -12,7 +12,7 @@ import { OrganizationRootOps } from "@/modules/organization/domain/organization.
 import { OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization.repository.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const id = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const now = DateTime.unsafeMake(new Date("2026-01-01T00:00:00Z"));
@@ -20,7 +20,7 @@ const later = DateTime.unsafeMake(new Date("2026-02-01T00:00:00Z"));
 
 const TestLayer = OrganizationRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("OrganizationRepositoryLive (integration)", () => {
   beforeEach(async () => {
