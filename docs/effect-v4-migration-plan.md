@@ -10,9 +10,11 @@
 
 **Goal:** migrate the whole monorepo from `effect@3.21.2` to `effect@4.0.0-beta.94` (effect-smol). Decisions locked: **full modernization** posture, **entire monorepo**, **pin `4.0.0-beta.94`**, **supersede ADR-0012** (use-case `Effect.fn` spans). Details in §1.
 
-**Where we are:** branch `chore/effect-v4-migration` (off `main`). **Green + committed (typecheck + unit tests):** `@org/contracts`, `@org/database`, `@org/api-client`, **`@org/server` (888→0, 353 unit tests pass)**, `@org/jobs`, `@org/mcp`, `@org/components`. **In progress (background agents, uncommitted):** `@org/cli` (~29, `@effect/cli`→`effect/unstable/cli` redesign) and `@org/web` (214). `acceptance` was already 0.
+**Where we are:** branch `chore/effect-v4-migration` (off `main`). **ENTIRE MONOREPO COMPILES GREEN + committed.** Every package `tsc -b` = 0: `contracts`, `database`, `api-client`, `server` (888→0, **353 unit tests pass**), `jobs`, `mcp`, `components`, `cli`, `web` (**119 unit tests pass**), `acceptance`. Phases 1–5 done.
 
-**Immediate next task:** land the `cli` + `web` agent diffs (verify `pnpm -F @org/<pkg> exec tsc -b … --force` = 0 + unit tests), commit each. Then **Phase 6 (modernization)** and **Phase 7 (docs + full verification)** remain — see below.
+**Immediate next task:** **Phase 6 (modernization)** + **Phase 7 (docs + full verification)** — see below. Before Phase 7 integration/acceptance tests can pass, fix the **`Schema.Class` client-encoding blocker** (next paragraph).
+
+**⚠️ Phase-7 blocker found by the web migration — v4 `HttpApiClient` encodes `Schema.Class` payload/params/query STRICTLY:** a plain object throws at runtime (`SchemaError: Expected X, got {...}`); only a class **instance** passes. All contract request schemas are `Schema.Class`, but many callers pass plain objects — notably `@org/server`'s `*.integration.test.ts` (e.g. `client.organization.create({ payload: { name: "Acme" } })`) and any other `HttpApiClient` caller. These are green in the default gate only because they need a DB and don't run there; they will FAIL under `pnpm test:integration`. **Fix before Phase 7:** wrap args in the contract class (`new OrganizationContract.CreateOrganizationPayload({...})`) at every `HttpApiClient` call site (web `data-access/*` already done), OR move the contract request schemas from `Schema.Class` to `Schema.Struct`. Decide which; the wrap is lower-risk/local.
 
 ### Big structural findings from the server migration (READ before touching interface/composition code)
 
