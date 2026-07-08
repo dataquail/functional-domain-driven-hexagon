@@ -2,7 +2,7 @@ import type { StandardSchemaV1 } from "@standard-schema/spec";
 import * as Schema from "effect/Schema";
 
 export const UserRow = Schema.Struct({
-  id: Schema.String.check(Schema.isUUID()),
+  id: Schema.String.check(Schema.isGUID()),
   email: Schema.String,
   // Nullable since JIT provisioning: a user provisioned on first OIDC
   // sign-in has no address yet (only email + subject are known). The three

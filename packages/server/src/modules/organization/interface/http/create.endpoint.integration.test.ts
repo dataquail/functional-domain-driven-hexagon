@@ -11,7 +11,7 @@ import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 const NameRowStd = Schema.toStandardSchemaV1(Schema.Struct({ name: Schema.String }));
-const MembershipCountRowStd = Schema.toStandardSchemaV1(Schema.Struct({ user_id: Schema.String.check(Schema.isUUID()) }));
+const MembershipCountRowStd = Schema.toStandardSchemaV1(Schema.Struct({ user_id: Schema.String.check(Schema.isGUID()) }));
 
 const suite = describe.sequential;
 

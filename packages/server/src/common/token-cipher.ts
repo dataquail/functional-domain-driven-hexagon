@@ -72,13 +72,16 @@ const makeSchemaTransform = <A, I, RD, RE>(
   schema: Schema.Codec<A, I, RD, RE>,
   cipher: ReturnType<typeof make>,
 ) => {
-  const JsonSchema = Schema.Redacted(Schema.fromJsonString(schema));
+  // `RedactedFromValue` (not `Redacted`) so the decoded type is `Redacted<A>`
+  // while the *encoded* side stays the plain JSON string — `Redacted` would
+  // wrap both and treat its content as opaque, so `fromJsonString` never runs.
+  const JsonSchema = Schema.RedactedFromValue(Schema.fromJsonString(schema));
   return EncryptedToken.pipe(
     Schema.decodeTo(JsonSchema, {
-      decode: SchemaGetter.transformOrFail((encryptedToken) =>
-        cipher.decrypt(encryptedToken).pipe(Effect.map(Redacted.make)),
+      decode: SchemaGetter.transformOrFail((encryptedToken) => cipher.decrypt(encryptedToken)),
+      encode: SchemaGetter.transformOrFail((jsonString) =>
+        cipher.encrypt(Redacted.make(jsonString)),
       ),
-      encode: SchemaGetter.transformOrFail((redactedJson) => cipher.encrypt(redactedJson)),
     }),
   );
 };

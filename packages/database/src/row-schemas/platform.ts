@@ -2,7 +2,7 @@ import type { StandardSchemaV1 } from "@standard-schema/spec";
 import * as Schema from "effect/Schema";
 
 export const PlatformRoleRow = Schema.Struct({
-  user_id: Schema.String.check(Schema.isUUID()),
+  user_id: Schema.String.check(Schema.isGUID()),
   role: Schema.String,
   granted_at: Schema.DateTimeUtcFromDate,
 });

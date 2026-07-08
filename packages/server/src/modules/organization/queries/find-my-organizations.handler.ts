@@ -14,7 +14,7 @@ import { OrganizationId } from "@/platform/ids/organization-id.js";
 // below adds a column the standard `OrganizationRow` schema doesn't
 // carry, so this query defines its own row shape.
 const MyOrganizationRow = Schema.Struct({
-  id: Schema.String.check(Schema.isUUID()),
+  id: Schema.String.check(Schema.isGUID()),
   name: Schema.String,
   created_at: Schema.DateTimeUtcFromDate,
   updated_at: Schema.DateTimeUtcFromDate,

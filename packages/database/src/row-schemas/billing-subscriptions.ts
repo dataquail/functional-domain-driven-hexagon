@@ -2,8 +2,8 @@ import type { StandardSchemaV1 } from "@standard-schema/spec";
 import * as Schema from "effect/Schema";
 
 export const SubscriptionRow = Schema.Struct({
-  id: Schema.String.check(Schema.isUUID()),
-  organization_id: Schema.String.check(Schema.isUUID()),
+  id: Schema.String.check(Schema.isGUID()),
+  organization_id: Schema.String.check(Schema.isGUID()),
   stripe_customer_id: Schema.String,
   stripe_subscription_id: Schema.String,
   status: Schema.String,
