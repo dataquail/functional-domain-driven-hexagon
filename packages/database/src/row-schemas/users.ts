@@ -2,7 +2,7 @@ import type { StandardSchemaV1 } from "@standard-schema/spec";
 import * as Schema from "effect/Schema";
 
 export const UserRow = Schema.Struct({
-  id: Schema.UUID,
+  id: Schema.String.check(Schema.isUUID()),
   email: Schema.String,
   // Nullable since JIT provisioning: a user provisioned on first OIDC
   // sign-in has no address yet (only email + subject are known). The three
@@ -15,4 +15,4 @@ export const UserRow = Schema.Struct({
 });
 export type UserRow = typeof UserRow.Type;
 
-export const UserRowStd: StandardSchemaV1<unknown, UserRow> = Schema.standardSchemaV1(UserRow);
+export const UserRowStd: StandardSchemaV1<unknown, UserRow> = Schema.toStandardSchemaV1(UserRow);

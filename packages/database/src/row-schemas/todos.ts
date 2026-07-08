@@ -2,8 +2,8 @@ import type { StandardSchemaV1 } from "@standard-schema/spec";
 import * as Schema from "effect/Schema";
 
 export const TodoRow = Schema.Struct({
-  id: Schema.UUID,
-  organization_id: Schema.UUID,
+  id: Schema.String.check(Schema.isUUID()),
+  organization_id: Schema.String.check(Schema.isUUID()),
   title: Schema.String,
   completed: Schema.Boolean,
   created_at: Schema.DateTimeUtcFromDate,
@@ -11,4 +11,4 @@ export const TodoRow = Schema.Struct({
 });
 export type TodoRow = typeof TodoRow.Type;
 
-export const TodoRowStd: StandardSchemaV1<unknown, TodoRow> = Schema.standardSchemaV1(TodoRow);
+export const TodoRowStd: StandardSchemaV1<unknown, TodoRow> = Schema.toStandardSchemaV1(TodoRow);

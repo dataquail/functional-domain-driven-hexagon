@@ -2,8 +2,8 @@ import type { StandardSchemaV1 } from "@standard-schema/spec";
 import * as Schema from "effect/Schema";
 
 export const WalletRow = Schema.Struct({
-  id: Schema.UUID,
-  organization_id: Schema.UUID,
+  id: Schema.String.check(Schema.isUUID()),
+  organization_id: Schema.String.check(Schema.isUUID()),
   balance: Schema.Number,
   created_at: Schema.DateTimeUtcFromDate,
   updated_at: Schema.DateTimeUtcFromDate,
@@ -11,4 +11,4 @@ export const WalletRow = Schema.Struct({
 export type WalletRow = typeof WalletRow.Type;
 
 export const WalletRowStd: StandardSchemaV1<unknown, WalletRow> =
-  Schema.standardSchemaV1(WalletRow);
+  Schema.toStandardSchemaV1(WalletRow);
