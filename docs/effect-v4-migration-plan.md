@@ -104,6 +104,18 @@ State on branch `chore/effect-v4-migration` (uncommitted working tree):
 3. **Proven-clean so far:** `wallet.root.ts`, `CliOrganizationContract.ts`, `Policy.ts` (middleware). Contracts error count at last check: 179 → (Policy + CliOrganization fixed) → work remaining in `SchemaUtils.ts` (biggest), `OrganizationContract`, `AuthContract`, `UserContract`, `DomainApi`, others.
 4. Only after a package is green, run its tests (the parity-enforced suite is the safety net).
 
+### 3.4 Hardest file — `contracts/src/SchemaUtils.ts` (deep Schema-transform rewrite)
+
+This custom combinator library uses v3's low-level Schema internals, all reshaped in v4. **Do it first among the remaining contracts** (others use its `Email`/`URLString`/`ArrayFromFallible`/etc.) and with `packages/effect/SCHEMA.md` open. Verified v4 replacements:
+- **`Schema.Schema<A, I, R>` → `Schema.Codec<A, I, R>`.** In v4 `Schema.Schema<T>` takes **one** type arg (decoded type only); the full codec with encoded type + services is `Schema.Codec<T, E, RD, RE>`. Every 3-arg `Schema.Schema<A,I,R>` signature becomes `Schema.Codec<...>`.
+- **`Schema.transform(from, to, { decode, encode, strict })` → `from.pipe(Schema.decodeTo(to, transformation))`** and **`Schema.transformOrFail` → `Schema.decodeTo`** with an effectful `SchemaTransformation`. New composition model — `decodeTo`/`encodeTo` + `effect/SchemaTransformation` objects (not the old positional `{decode, encode}`).
+- **`effect/ParseResult` is gone.** Issue constructors (`ParseResult.Type`, `.Forbidden`), `ArrayFormatter`, `ParseIssue`, `ParseResult.try/fail/encode/decode` map onto **`effect/SchemaIssue`** + **`effect/SchemaTransformation`** + Result-returning parser APIs (`Schema.decodeResult`/`encodeResult`). Confirm exact names against those `.d.ts`.
+- **`Schema.extend` → `Schema.extendTo`; `Schema.PropertySignature` type + `Schema.propertySignature`/`Schema.fromKey`** — verify against v4 (the property-signature API changed shape).
+- **`decodingFallback` annotation** — confirm the v4 annotation key/shape (used by `NullOrFromFallible`/`ArrayFromFallible`).
+- **`Hash.symbol`/`Equal.symbol` custom-equality `WithEquality`** — the `Partial<Record<symbol, unknown>>` indexing errors are TS strictness; may just need typed symbol indexing, not an API change.
+
+After `SchemaUtils.ts`, the remaining contracts (`Auth`, `User`, `Organization`, `Billing`, `Todos`, `CliAuth`, `CliTodos`, `DomainApi`, `CliApi`) are the **already-proven §3.2 HttpApi recipe** applied repeatedly — consider a 5th codemod for the endpoint fluent→options-object collapse if doing it by hand proves too repetitive.
+
 ---
 
 ## 4. Phased plan
