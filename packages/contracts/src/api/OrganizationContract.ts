@@ -1,6 +1,5 @@
 import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
 import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
-import * as HttpApiSchema from "effect/unstable/httpapi/HttpApiSchema";
 import * as Schema from "effect/Schema";
 
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
@@ -47,7 +46,7 @@ export class InvitationGoneError extends Schema.TaggedErrorClass<InvitationGoneE
 )(
   "InvitationGoneError",
   {
-    reason: Schema.Literal("accepted", "revoked", "expired"),
+    reason: Schema.Literals(["accepted", "revoked", "expired"]),
     message: Schema.String,
   },
   { httpApiStatus: 410 },
@@ -75,7 +74,7 @@ export class OrganizationRoleConflictError extends Schema.TaggedErrorClass<Organ
 )(
   "OrganizationRoleConflictError",
   {
-    reason: Schema.Literal("already_admin", "not_admin"),
+    reason: Schema.Literals(["already_admin", "not_admin"]),
     message: Schema.String,
   },
   { httpApiStatus: 409 },
@@ -123,7 +122,7 @@ export class MyOrganization extends Schema.Class<MyOrganization>("MyOrganization
 export class CreateOrganizationPayload extends Schema.Class<CreateOrganizationPayload>(
   "CreateOrganizationPayload",
 )({
-  name: Schema.String.pipe(Schema.isMinLength(1), Schema.isMaxLength(255)),
+  name: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(255)),
 }) {}
 
 export class CreateOrganizationResponse extends Schema.Class<CreateOrganizationResponse>(
@@ -135,9 +134,9 @@ export class CreateOrganizationResponse extends Schema.Class<CreateOrganizationR
 export class FindAllOrganizationsParams extends Schema.Class<FindAllOrganizationsParams>(
   "FindAllOrganizationsParams",
 )({
-  page: Schema.NumberFromString.pipe(Schema.int(), Schema.isGreaterThanOrEqualTo(1)),
-  pageSize: Schema.NumberFromString.pipe(Schema.int(), Schema.isBetween(1, 100)),
-  includeDeleted: Schema.optional(Schema.Literal("true", "false")),
+  page: Schema.NumberFromString.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(1)),
+  pageSize: Schema.NumberFromString.check(Schema.isInt(), Schema.isBetween({ minimum: 1, maximum: 100 })),
+  includeDeleted: Schema.optional(Schema.Literals(["true", "false"])),
 }) {}
 
 export class PaginatedOrganizations extends Schema.Class<PaginatedOrganizations>(
@@ -150,7 +149,7 @@ export class PaginatedOrganizations extends Schema.Class<PaginatedOrganizations>
 }) {}
 
 export class InviteUserPayload extends Schema.Class<InviteUserPayload>("InviteUserPayload")({
-  email: Schema.String.pipe(Schema.isMinLength(3), Schema.isMaxLength(320)),
+  email: Schema.String.check(Schema.isMinLength(3), Schema.isMaxLength(320)),
 }) {}
 
 export class InviteUserResponse extends Schema.Class<InviteUserResponse>("InviteUserResponse")({
@@ -190,7 +189,7 @@ export class OrganizationMembersResponse extends Schema.Class<OrganizationMember
 export class PendingInvitation extends Schema.Class<PendingInvitation>("PendingInvitation")({
   invitationId: InvitationId,
   inviteeEmail: Schema.String,
-  status: Schema.Literal("pending", "expired"),
+  status: Schema.Literals(["pending", "expired"]),
   expiresAt: Schema.DateTimeUtc,
   createdAt: Schema.DateTimeUtc,
 }) {}
@@ -207,74 +206,108 @@ export class PendingInvitationsResponse extends Schema.Class<PendingInvitationsR
 
 export class Group extends HttpApiGroup.make("organization")
   .middleware(UserAuthMiddleware)
-  .add(HttpApiEndpoint.get("findMine", "/").addSuccess(Schema.Array(MyOrganization)))
   .add(
-    HttpApiEndpoint.post("create", "/")
-      .setPayload(CreateOrganizationPayload)
-      .addError(SuperAdminCannotOwnOrganizationError)
-      .addSuccess(CreateOrganizationResponse),
+    HttpApiEndpoint.get("findMine", "/", {
+      success: Schema.Array(MyOrganization),
+      error: CustomHttpApiError.ServiceUnavailable,
+    }),
   )
   .add(
-    HttpApiEndpoint.del("softDelete", "/:id")
-      .setPath(Schema.Struct({ id: OrganizationId }))
-      .addError(CustomHttpApiError.Forbidden)
-      .addError(OrganizationNotFoundError)
-      .addSuccess(Schema.Void),
+    HttpApiEndpoint.post("create", "/", {
+      payload: CreateOrganizationPayload,
+      success: CreateOrganizationResponse,
+      error: [SuperAdminCannotOwnOrganizationError, CustomHttpApiError.ServiceUnavailable],
+    }),
   )
   .add(
-    HttpApiEndpoint.post("restore", "/:id/restore")
-      .setPath(Schema.Struct({ id: OrganizationId }))
-      .addError(CustomHttpApiError.Forbidden)
-      .addError(OrganizationNotFoundError)
-      .addError(OrganizationNotDeletedError)
-      .addSuccess(Schema.Void),
+    HttpApiEndpoint.make("DELETE")("softDelete", "/:id", {
+      params: Schema.Struct({ id: OrganizationId }),
+      success: Schema.Void,
+      error: [
+        CustomHttpApiError.Forbidden,
+        OrganizationNotFoundError,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
   )
   .add(
-    HttpApiEndpoint.post("inviteUser", "/:orgId/invitations")
-      .setPath(Schema.Struct({ orgId: OrganizationId }))
-      .setPayload(InviteUserPayload)
-      .addError(CustomHttpApiError.Forbidden)
-      .addError(OrganizationNotFoundError)
-      .addSuccess(InviteUserResponse),
+    HttpApiEndpoint.post("restore", "/:id/restore", {
+      params: Schema.Struct({ id: OrganizationId }),
+      success: Schema.Void,
+      error: [
+        CustomHttpApiError.Forbidden,
+        OrganizationNotFoundError,
+        OrganizationNotDeletedError,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
   )
   .add(
-    HttpApiEndpoint.del("revokeInvitation", "/:orgId/invitations/:invitationId")
-      .setPath(Schema.Struct({ orgId: OrganizationId, invitationId: InvitationId }))
-      .addError(CustomHttpApiError.Forbidden)
-      .addError(OrganizationNotFoundError)
-      .addError(InvitationNotFoundError)
-      .addError(InvitationGoneError)
-      .addSuccess(Schema.Void),
+    HttpApiEndpoint.post("inviteUser", "/:orgId/invitations", {
+      params: Schema.Struct({ orgId: OrganizationId }),
+      payload: InviteUserPayload,
+      success: InviteUserResponse,
+      error: [
+        CustomHttpApiError.Forbidden,
+        OrganizationNotFoundError,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
+  )
+  .add(
+    HttpApiEndpoint.make("DELETE")("revokeInvitation", "/:orgId/invitations/:invitationId", {
+      params: Schema.Struct({ orgId: OrganizationId, invitationId: InvitationId }),
+      success: Schema.Void,
+      error: [
+        CustomHttpApiError.Forbidden,
+        OrganizationNotFoundError,
+        InvitationNotFoundError,
+        InvitationGoneError,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
   )
   // Pending-invitations roster for the member-management surface.
   // `update`-gated (org admin OR super-admin) — viewing who has been
   // invited is part of managing invitations, so unlike `findMembers`
   // (member-readable) this stays admin-only.
   .add(
-    HttpApiEndpoint.get("findInvitations", "/:orgId/invitations")
-      .setPath(Schema.Struct({ orgId: OrganizationId }))
-      .addError(CustomHttpApiError.Forbidden)
-      .addError(OrganizationNotFoundError)
-      .addSuccess(PendingInvitationsResponse),
+    HttpApiEndpoint.get("findInvitations", "/:orgId/invitations", {
+      params: Schema.Struct({ orgId: OrganizationId }),
+      success: PendingInvitationsResponse,
+      error: [
+        CustomHttpApiError.Forbidden,
+        OrganizationNotFoundError,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
   )
   // Resend = reissue (fresh token + expiry) + re-send the email. Reissue
   // refuses a terminal invitation, surfaced as 410 Gone like revoke.
   .add(
-    HttpApiEndpoint.post("resendInvitation", "/:orgId/invitations/:invitationId/resend")
-      .setPath(Schema.Struct({ orgId: OrganizationId, invitationId: InvitationId }))
-      .addError(CustomHttpApiError.Forbidden)
-      .addError(OrganizationNotFoundError)
-      .addError(InvitationNotFoundError)
-      .addError(InvitationGoneError)
-      .addSuccess(Schema.Void),
+    HttpApiEndpoint.post("resendInvitation", "/:orgId/invitations/:invitationId/resend", {
+      params: Schema.Struct({ orgId: OrganizationId, invitationId: InvitationId }),
+      success: Schema.Void,
+      error: [
+        CustomHttpApiError.Forbidden,
+        OrganizationNotFoundError,
+        InvitationNotFoundError,
+        InvitationGoneError,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
   )
   .add(
-    HttpApiEndpoint.del("removeMember", "/:orgId/members/:userId")
-      .setPath(Schema.Struct({ orgId: OrganizationId, userId: UserId }))
-      .addError(CustomHttpApiError.Forbidden)
-      .addError(OrganizationNotFoundError)
-      .addError(MembershipNotFoundError)
-      .addSuccess(Schema.Void),
+    HttpApiEndpoint.make("DELETE")("removeMember", "/:orgId/members/:userId", {
+      params: Schema.Struct({ orgId: OrganizationId, userId: UserId }),
+      success: Schema.Void,
+      error: [
+        CustomHttpApiError.Forbidden,
+        OrganizationNotFoundError,
+        MembershipNotFoundError,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
   )
   // Members roster. `read`-gated (`any(SuperAdminOnly, IsMember)`) so
   // any member of the org may view it — managing the roster (promote /
@@ -282,35 +315,47 @@ export class Group extends HttpApiGroup.make("organization")
   // page (read-only for plain members), the org-admin management UI,
   // and the super-admin drill-in.
   .add(
-    HttpApiEndpoint.get("findMembers", "/:orgId/members")
-      .setPath(Schema.Struct({ orgId: OrganizationId }))
-      .addError(CustomHttpApiError.Forbidden)
-      .addError(OrganizationNotFoundError)
-      .addSuccess(OrganizationMembersResponse),
+    HttpApiEndpoint.get("findMembers", "/:orgId/members", {
+      params: Schema.Struct({ orgId: OrganizationId }),
+      success: OrganizationMembersResponse,
+      error: [
+        CustomHttpApiError.Forbidden,
+        OrganizationNotFoundError,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
   )
   .add(
-    HttpApiEndpoint.post("promoteMember", "/:orgId/members/:userId/admin")
-      .setPath(Schema.Struct({ orgId: OrganizationId, userId: UserId }))
-      .addError(CustomHttpApiError.Forbidden)
-      .addError(OrganizationNotFoundError)
-      .addError(OrganizationRoleConflictError)
-      .addSuccess(Schema.Void),
+    HttpApiEndpoint.post("promoteMember", "/:orgId/members/:userId/admin", {
+      params: Schema.Struct({ orgId: OrganizationId, userId: UserId }),
+      success: Schema.Void,
+      error: [
+        CustomHttpApiError.Forbidden,
+        OrganizationNotFoundError,
+        OrganizationRoleConflictError,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
   )
   .add(
-    HttpApiEndpoint.del("demoteMember", "/:orgId/members/:userId/admin")
-      .setPath(Schema.Struct({ orgId: OrganizationId, userId: UserId }))
-      .addError(CustomHttpApiError.Forbidden)
-      .addError(OrganizationNotFoundError)
-      .addError(OrganizationRoleConflictError)
-      .addSuccess(Schema.Void),
+    HttpApiEndpoint.make("DELETE")("demoteMember", "/:orgId/members/:userId/admin", {
+      params: Schema.Struct({ orgId: OrganizationId, userId: UserId }),
+      success: Schema.Void,
+      error: [
+        CustomHttpApiError.Forbidden,
+        OrganizationNotFoundError,
+        OrganizationRoleConflictError,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
   )
   .add(
-    HttpApiEndpoint.post("leave", "/:orgId/leave")
-      .setPath(Schema.Struct({ orgId: OrganizationId }))
-      .addError(MembershipNotFoundError)
-      .addSuccess(Schema.Void),
+    HttpApiEndpoint.post("leave", "/:orgId/leave", {
+      params: Schema.Struct({ orgId: OrganizationId }),
+      success: Schema.Void,
+      error: [MembershipNotFoundError, CustomHttpApiError.ServiceUnavailable],
+    }),
   )
-  .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/orgs") {}
 
 // Admin-only listing of every org (including soft-deleted via the
@@ -321,15 +366,15 @@ export class Group extends HttpApiGroup.make("organization")
 export class AdminGroup extends HttpApiGroup.make("organizationAdmin")
   .middleware(UserAuthMiddleware)
   .add(
-    HttpApiEndpoint.get("findAll", "/")
-      .setUrlParams(FindAllOrganizationsParams)
-      .addError(CustomHttpApiError.Forbidden)
-      .addSuccess(PaginatedOrganizations),
+    HttpApiEndpoint.get("findAll", "/", {
+      query: FindAllOrganizationsParams,
+      success: PaginatedOrganizations,
+      error: [CustomHttpApiError.Forbidden, CustomHttpApiError.ServiceUnavailable],
+    }),
   )
   // Member listing moved to `Group.findMembers` (`/orgs/:orgId/members`,
   // `read`-gated) so members, org admins, and super-admins share one
   // endpoint via the OR chain.
-  .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/admin/orgs") {}
 
 // The accept endpoint sits OUTSIDE the org/admin groups because the
@@ -340,12 +385,15 @@ export class AdminGroup extends HttpApiGroup.make("organizationAdmin")
 export class InvitationGroup extends HttpApiGroup.make("invitations")
   .middleware(UserAuthMiddleware)
   .add(
-    HttpApiEndpoint.post("accept", "/:token/accept")
-      .setPath(Schema.Struct({ token: Schema.String }))
-      .addError(InvitationNotFoundError)
-      .addError(InvitationGoneError)
-      .addError(SuperAdminCannotOwnOrganizationError)
-      .addSuccess(AcceptInvitationResponse),
+    HttpApiEndpoint.post("accept", "/:token/accept", {
+      params: Schema.Struct({ token: Schema.String }),
+      success: AcceptInvitationResponse,
+      error: [
+        InvitationNotFoundError,
+        InvitationGoneError,
+        SuperAdminCannotOwnOrganizationError,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
   )
-  .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/invitations") {}

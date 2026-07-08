@@ -1,6 +1,5 @@
 import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
 import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
-import * as HttpApiSchema from "effect/unstable/httpapi/HttpApiSchema";
 import * as Schema from "effect/Schema";
 
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
@@ -60,30 +59,41 @@ export class StartSubscriptionPayload extends Schema.Class<StartSubscriptionPayl
 export class PrivateGroup extends HttpApiGroup.make("billing")
   .middleware(UserAuthMiddleware)
   .add(
-    HttpApiEndpoint.post("startSubscription", "/:orgId/billing/subscriptions")
-      .setPath(Schema.Struct({ orgId: OrganizationId }))
-      .setPayload(StartSubscriptionPayload)
-      .addError(CustomHttpApiError.Forbidden)
-      .addError(CustomHttpApiError.BadGateway)
-      .addError(SubscriptionAlreadyExistsError)
-      .addSuccess(SubscriptionResponse),
+    HttpApiEndpoint.post("startSubscription", "/:orgId/billing/subscriptions", {
+      params: Schema.Struct({ orgId: OrganizationId }),
+      payload: StartSubscriptionPayload,
+      success: SubscriptionResponse,
+      error: [
+        CustomHttpApiError.Forbidden,
+        CustomHttpApiError.BadGateway,
+        SubscriptionAlreadyExistsError,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
   )
   .add(
-    HttpApiEndpoint.get("getCurrentSubscription", "/:orgId/billing/subscriptions/current")
-      .setPath(Schema.Struct({ orgId: OrganizationId }))
-      .addError(CustomHttpApiError.Forbidden)
-      .addError(SubscriptionNotFoundError)
-      .addSuccess(SubscriptionResponse),
+    HttpApiEndpoint.get("getCurrentSubscription", "/:orgId/billing/subscriptions/current", {
+      params: Schema.Struct({ orgId: OrganizationId }),
+      success: SubscriptionResponse,
+      error: [
+        CustomHttpApiError.Forbidden,
+        SubscriptionNotFoundError,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
   )
   .add(
-    HttpApiEndpoint.del("cancelSubscription", "/:orgId/billing/subscriptions/current")
-      .setPath(Schema.Struct({ orgId: OrganizationId }))
-      .addError(CustomHttpApiError.Forbidden)
-      .addError(CustomHttpApiError.BadGateway)
-      .addError(SubscriptionNotFoundError)
-      .addSuccess(SubscriptionResponse),
+    HttpApiEndpoint.make("DELETE")("cancelSubscription", "/:orgId/billing/subscriptions/current", {
+      params: Schema.Struct({ orgId: OrganizationId }),
+      success: SubscriptionResponse,
+      error: [
+        CustomHttpApiError.Forbidden,
+        CustomHttpApiError.BadGateway,
+        SubscriptionNotFoundError,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
   )
-  .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/orgs") {}
 
 // Public Stripe webhook ingress. No `UserAuthMiddleware` — the request
@@ -97,10 +107,13 @@ export class PrivateGroup extends HttpApiGroup.make("billing")
 // is internal). Returns 401 on bad signature, 503 on persistence failure.
 export class PublicGroup extends HttpApiGroup.make("billingWebhooks")
   .add(
-    HttpApiEndpoint.post("handleStripeWebhook", "/stripe")
-      .addError(CustomHttpApiError.Unauthorized)
-      .addError(CustomHttpApiError.BadRequest)
-      .addSuccess(Schema.Void),
+    HttpApiEndpoint.post("handleStripeWebhook", "/stripe", {
+      success: Schema.Void,
+      error: [
+        CustomHttpApiError.Unauthorized,
+        CustomHttpApiError.BadRequest,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
   )
-  .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/webhooks") {}

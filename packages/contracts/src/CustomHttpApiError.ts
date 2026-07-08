@@ -1,4 +1,3 @@
-import * as HttpApiSchema from "effect/unstable/httpapi/HttpApiSchema";
 import * as Schema from "effect/Schema";
 
 // ==========================================

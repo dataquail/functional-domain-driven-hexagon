@@ -1,6 +1,5 @@
 import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
 import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
-import * as HttpApiSchema from "effect/unstable/httpapi/HttpApiSchema";
 import * as Schema from "effect/Schema";
 
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
@@ -52,16 +51,24 @@ export class DeviceCodeNotFound extends Schema.TaggedErrorClass<DeviceCodeNotFou
 )("DeviceCodeNotFound", { message: Schema.String }, { httpApiStatus: 400 }) {}
 
 export class DeviceGroup extends HttpApiGroup.make("cliAuth")
-  .add(HttpApiEndpoint.post("deviceStart", "/start").addSuccess(DeviceStartResponse))
   .add(
-    HttpApiEndpoint.post("deviceToken", "/token")
-      .setPayload(DeviceTokenPayload)
-      .addError(DeviceAuthorizationPending)
-      .addError(DeviceTokenExpired)
-      .addError(DeviceCodeNotFound)
-      .addSuccess(DeviceTokenResponse),
+    HttpApiEndpoint.post("deviceStart", "/start", {
+      success: DeviceStartResponse,
+      error: CustomHttpApiError.ServiceUnavailable,
+    }),
+  )
+  .add(
+    HttpApiEndpoint.post("deviceToken", "/token", {
+      payload: DeviceTokenPayload,
+      success: DeviceTokenResponse,
+      error: [
+        DeviceAuthorizationPending,
+        DeviceTokenExpired,
+        DeviceCodeNotFound,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
   )
   // Both endpoints persist (start inserts, token mints) — transient store
   // failure surfaces as 503.
-  .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/cli/device") {}
