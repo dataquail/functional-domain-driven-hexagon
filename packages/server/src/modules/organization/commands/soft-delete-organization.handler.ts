@@ -24,7 +24,7 @@ export const softDeleteOrganization = (
     // race where two concurrent soft-deletes both observe the row as
     // active and then race the update.
     const organization = yield* repo.findOneById(cmd.organizationId);
-    const result = yield* OrganizationRootOps.softDelete(organization, { now });
+    const result = yield* Effect.fromResult(OrganizationRootOps.softDelete(organization, { now }));
     yield* repo.updateOne(result.organization);
     yield* bus.dispatch(result.events);
   }).pipe(withUnitOfWork);

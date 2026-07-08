@@ -30,7 +30,7 @@ export const acceptInvitation = (cmd: AcceptInvitationCommand): AcceptInvitation
     const now = yield* DateTime.now;
 
     const invitation = yield* invRepo.findOneByToken(cmd.token);
-    const result = yield* InvitationRootOps.accept(invitation, { userId: cmd.userId, now });
+    const result = yield* Effect.fromResult(InvitationRootOps.accept(invitation, { userId: cmd.userId, now }));
     yield* Effect.annotateCurrentSpan("invitation.id", invitation.id);
     yield* Effect.annotateCurrentSpan("organization.id", invitation.organizationId);
 

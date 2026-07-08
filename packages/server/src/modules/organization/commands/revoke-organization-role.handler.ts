@@ -17,7 +17,7 @@ export const revokeOrganizationRole = (
     const bus = yield* DomainEventBus;
 
     const aggregate = yield* repo.findOneByUserIdAndOrgId(cmd.userId, cmd.organizationId);
-    const result = yield* OrganizationRolesRootOps.revokeRole(aggregate, cmd.role);
+    const result = yield* Effect.fromResult(OrganizationRolesRootOps.revokeRole(aggregate, cmd.role));
 
     yield* repo.upsertOne(result.organizationRoles);
     yield* bus.dispatch(result.events);

@@ -13,7 +13,7 @@ import { UserId } from "@/platform/ids/user-id.js";
 
 export const InviteUserCommand = Schema.TaggedStruct("InviteUserCommand", {
   organizationId: OrganizationId,
-  inviteeEmail: Schema.String.pipe(Schema.isMinLength(3), Schema.isMaxLength(320)),
+  inviteeEmail: Schema.String.check(Schema.isMinLength(3), Schema.isMaxLength(320)),
   ttlSeconds: Schema.Number,
   actorUserId: UserId,
 });

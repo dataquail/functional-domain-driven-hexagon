@@ -23,7 +23,7 @@ export const grantRole = (cmd: GrantRoleCommand): GrantRoleOutput =>
     const bus = yield* DomainEventBus;
 
     const aggregate = yield* repo.findOneByUserId(cmd.userId);
-    const result = yield* RolesRootOps.grant(aggregate, cmd.role);
+    const result = yield* Effect.fromResult(RolesRootOps.grant(aggregate, cmd.role));
 
     yield* repo.upsertOne(result.roles);
     yield* bus.dispatch(result.events);

@@ -1,4 +1,4 @@
-import { type CurrentUser, UserAuthMiddleware } from "@org/contracts/Policy";
+import { CurrentUser, UserAuthMiddleware } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
@@ -15,7 +15,9 @@ import { UserId } from "@/platform/ids/user-id.js";
 // and is exercised by auth-module integration tests + Playwright.
 
 export const makeUserAuthMiddlewareFake = (currentUser: CurrentUser["Service"]) =>
-  Layer.succeed(UserAuthMiddleware, Effect.succeed(currentUser));
+  Layer.succeed(UserAuthMiddleware, (httpEffect) =>
+    Effect.provideService(httpEffect, CurrentUser, currentUser),
+  );
 
 // The default fake's userId is paired with a `platform.roles` seed in
 // `useServerTestRuntime` so the `RoleService` ACL surfaces this caller

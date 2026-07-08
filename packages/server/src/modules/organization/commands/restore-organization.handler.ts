@@ -18,7 +18,7 @@ export const restoreOrganization = (cmd: RestoreOrganizationCommand): RestoreOrg
     // Restore is the one write path that needs to load the tombstoned
     // row; the default `findOneById` filters it out.
     const organization = yield* repo.findOneByIdIncludingDeleted(cmd.organizationId);
-    const result = yield* OrganizationRootOps.restore(organization, { now });
+    const result = yield* Effect.fromResult(OrganizationRootOps.restore(organization, { now }));
     yield* repo.updateOne(result.organization);
     yield* bus.dispatch(result.events);
   }).pipe(withUnitOfWork);

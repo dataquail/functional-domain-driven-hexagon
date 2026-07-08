@@ -31,7 +31,7 @@ export const resendInvitation = (cmd: ResendInvitationCommand): ResendInvitation
 
     const reissued = yield* Effect.gen(function* () {
       const invitation = yield* repo.findOneById(cmd.invitationId);
-      const result = yield* InvitationRootOps.reissue(invitation, { token, expiresAt, now });
+      const result = yield* Effect.fromResult(InvitationRootOps.reissue(invitation, { token, expiresAt, now }));
       yield* repo.updateOne(result.invitation);
       yield* bus.dispatch(result.events);
       return result.invitation;

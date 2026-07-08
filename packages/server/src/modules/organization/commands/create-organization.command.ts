@@ -14,7 +14,7 @@ import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 export const CreateOrganizationCommand = Schema.TaggedStruct("CreateOrganizationCommand", {
-  name: Schema.String.pipe(Schema.isMinLength(1), Schema.isMaxLength(255)),
+  name: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(255)),
   // The creator — recorded as the first Membership of the org and the
   // future Phase 4 default-bundle grant target. Carried explicitly so
   // the bus boundary stays uniform; the HTTP endpoint is the one place

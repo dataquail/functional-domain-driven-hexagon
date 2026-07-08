@@ -39,7 +39,7 @@ export const ApiTokenRepositoryFake = Layer.effect(
       Effect.map(Ref.get(store), (m) =>
         Array.from(HashMap.values(m))
           .filter((t) => t.userId === userId && t.revokedAt === null)
-          .sort(Order.reverse(Order.mapInput(DateTime.Order, (t: ApiTokenRoot) => t.createdAt))),
+          .sort(Order.flip(Order.mapInput(DateTime.Order, (t: ApiTokenRoot) => t.createdAt))),
       );
 
     // Mirrors the live impl: a re-delete on an already-revoked token is

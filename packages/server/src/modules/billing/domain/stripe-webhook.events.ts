@@ -27,11 +27,11 @@ export const stripeWebhookIngestedSpanAttributes: SpanAttributesExtractor<Stripe
 export const isStripeSubscriptionEvent = Schema.is(
   Schema.Struct({
     eventId: Schema.String,
-    type: Schema.Literal(
+    type: Schema.Literals([
       "customer.subscription.created",
       "customer.subscription.updated",
       "customer.subscription.deleted",
-    ),
+    ]),
     subscription: Schema.Struct({
       stripeSubscriptionId: Schema.String,
       status: Schema.String,

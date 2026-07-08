@@ -14,7 +14,7 @@ export class DeviceGrantRoot extends Schema.Class<DeviceGrantRoot>("DeviceGrantR
   id: DeviceGrantId,
   deviceCodeHash: Schema.String,
   userCode: Schema.String,
-  status: Schema.Literal("pending", "approved"),
+  status: Schema.Literals(["pending", "approved"]),
   userId: Schema.NullOr(UserId),
   createdAt: Schema.DateTimeUtc,
   expiresAt: Schema.DateTimeUtc,

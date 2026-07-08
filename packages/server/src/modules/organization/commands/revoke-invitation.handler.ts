@@ -16,7 +16,7 @@ export const revokeInvitation = (cmd: RevokeInvitationCommand): RevokeInvitation
     const bus = yield* DomainEventBus;
     const now = yield* DateTime.now;
     const invitation = yield* repo.findOneById(cmd.invitationId);
-    const result = yield* InvitationRootOps.revoke(invitation, { now });
+    const result = yield* Effect.fromResult(InvitationRootOps.revoke(invitation, { now }));
     yield* repo.updateOne(result.invitation);
     yield* bus.dispatch(result.events);
   }).pipe(withUnitOfWork);
