@@ -1,13 +1,13 @@
 import { createServer } from "node:http";
 
-import * as NodeSdk from "@effect/opentelemetry/NodeSdk";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
+import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
 import * as HttpMiddleware from "effect/unstable/http/HttpMiddleware";
 import * as HttpRouter from "effect/unstable/http/HttpRouter";
+import * as OtlpTracer from "effect/unstable/observability/OtlpTracer";
+import * as OtlpSerialization from "effect/unstable/observability/OtlpSerialization";
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
-import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
-import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { Database } from "@org/database/index";
 import * as dotenv from "dotenv";
 import * as Duration from "effect/Duration";
@@ -180,22 +180,24 @@ const ApiLive = HttpApiBuilder.layer(Api).pipe(
 );
 
 
-const NodeSdkLive = Layer.unwrap(
-  Effect.map(EnvVars, (env) => env.OTLP_URL).pipe(
-    Effect.map((url) =>
-      NodeSdk.layer(() => ({
-        resource: {
-          serviceName: "effect-monorepo-server",
-        },
-        spanProcessor: new BatchSpanProcessor(
-          new OTLPTraceExporter({
-            url: url.toString(),
-          }),
-        ),
-      })),
-    ),
+// v4 modernization (Phase 6): the `@effect/opentelemetry/NodeSdk` layer is
+// replaced by the first-party OTLP tracer from `effect/unstable/observability`.
+// `OtlpTracer.layer` provides a `Tracer.Tracer` that batches ended spans and
+// POSTs them (JSON-serialized) to the OTLP `/v1/traces` endpoint — `OTLP_URL`
+// already points there. Its two requirements close locally: JSON serialization
+// (`OtlpSerialization.layerJson`) and an `HttpClient` (`FetchHttpClient.layer`,
+// the platform-agnostic fetch client). This drops the `@effect/opentelemetry`
+// and `@opentelemetry/*` dependency set from the server.
+const TracerLive = Layer.unwrap(
+  Effect.map(EnvVars, (env) =>
+    OtlpTracer.layer({
+      url: env.OTLP_URL.toString(),
+      resource: {
+        serviceName: "effect-monorepo-server",
+      },
+    }),
   ),
-);
+).pipe(Layer.provide([OtlpSerialization.layerJson, FetchHttpClient.layer]));
 
 // CORS is a no-op in normal traffic post-ADR-0018: the Next renderer
 // is the only browser-facing surface and Next's `/api/*` rewrite calls
@@ -246,7 +248,7 @@ const HttpLive = HttpRouter.serve(ApiLive, {
   Layer.provide(AuthSharedDepsLive),
   Layer.merge(Layer.effectDiscard(Database.Database.use((db) => db.setupConnectionListeners))),
   Layer.provide(DatabaseLive),
-  Layer.provide(NodeSdkLive),
+  Layer.provide(TracerLive),
   Layer.provide(EnvVars.layer),
   Layer.provide(NodeHttpServer.layer(createServer, { port: 3001 })),
 );
