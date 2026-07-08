@@ -25,31 +25,31 @@
     "typecheck": "tsc -b"
   },
   "dependencies": {
-    "@aws-sdk/client-sesv2": "^3.1073.0",
-    "@effect/cluster": "*",
-    "@effect/experimental": "*",
-    "@effect/opentelemetry": "*",
-    "@effect/platform": "*",
-    "@effect/platform-node": "*",
-    "@effect/sql": "*",
+    "@aws-sdk/client-sesv2": "^3.1081.0",
+    "@effect/cluster": "0.58.2",
+    "@effect/experimental": "0.60.0",
+    "@effect/opentelemetry": "0.63.0",
+    "@effect/platform": "0.96.1",
+    "@effect/platform-node": "0.106.0",
+    "@effect/sql": "0.51.1",
     "@opentelemetry/exporter-trace-otlp-http": "^0.216.0",
-    "@opentelemetry/resources": "^2.7.1",
-    "@opentelemetry/sdk-trace-base": "^2.7.1",
-    "@opentelemetry/sdk-trace-node": "^2.7.1",
-    "@opentelemetry/sdk-trace-web": "^2.7.1",
+    "@opentelemetry/resources": "2.7.1",
+    "@opentelemetry/sdk-trace-base": "^2.9.0",
+    "@opentelemetry/sdk-trace-node": "^2.9.0",
+    "@opentelemetry/sdk-trace-web": "2.7.1",
     "@org/contracts": "workspace:^",
     "@org/database": "workspace:^",
     "@react-email/components": "^1.0.12",
-    "@react-email/render": "^2.0.9",
-    "cookie": "^1.0.2",
-    "effect": "^3.20.0",
-    "nodemailer": "^9.0.1",
-    "openid-client": "^6.1.7",
+    "@react-email/render": "^2.0.10",
+    "cookie": "^1.1.1",
+    "effect": "3.21.2",
+    "nodemailer": "^9.0.3",
+    "openid-client": "^6.8.4",
     "pg": "8.13.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "stripe": "^22.2.0",
-    "svix": "^1.45.1"
+    "stripe": "^22.3.0",
+    "svix": "^1.96.1"
   },
   "effect": {
     "generateExports": {
@@ -66,11 +66,11 @@
   "devDependencies": {
     "@types/cookie": "^0.6.0",
     "@types/nodemailer": "^8.0.1",
-    "@types/pg": "^8.11.11",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "dotenv": "^16.4.7",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "dotenv": "^16.6.1",
     "madge": "^8.0.0",
-    "tsx": "^4.19.2"
+    "tsx": "^4.23.0"
   }
 }

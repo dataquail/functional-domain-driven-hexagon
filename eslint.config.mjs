@@ -3,7 +3,11 @@ import storybook from "eslint-plugin-storybook";
 
 /* eslint-disable */
 import { projectStructurePlugin } from "eslint-plugin-project-structure";
-import { componentsPatterns, componentsPrimitives } from "./eslint.project-structure.mjs";
+import {
+  componentsPatterns,
+  componentsPrimitives,
+  serverModules,
+} from "./eslint.project-structure.mjs";
 import dataBoundaries from "@synapsestudios/eslint-plugin-data-boundaries";
 import { fixupPluginRules } from "@eslint/compat";
 import { FlatCompat } from "@eslint/eslintrc";
@@ -533,6 +537,16 @@ export default [
   // eslint.project-structure.mjs. No dedicated parser — the folder-structure
   // rule reads the filesystem, not the AST, so it coexists with the
   // type-aware @typescript-eslint parser already configured for these files.
+  {
+    // The hexagonal/DDD file taxonomy (layout + sibling parity) for server
+    // modules — replaces scripts/check-folder-layout.mjs and the server rules
+    // of scripts/check-test-parity.mjs. See eslint.project-structure.mjs.
+    files: ["packages/server/src/modules/**/*.{ts,tsx}"],
+    plugins: { "project-structure": projectStructurePlugin },
+    rules: {
+      "project-structure/folder-structure": ["error", serverModules],
+    },
+  },
   {
     files: ["packages/components/primitives/**/*.{ts,tsx}"],
     plugins: { "project-structure": projectStructurePlugin },

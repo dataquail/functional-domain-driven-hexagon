@@ -1,7 +1,7 @@
 import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import { type TodosRepository } from "@/modules/todos/domain/ports/repositories/todo.repository.js";
+import { type TodosRepository } from "@/modules/todos/domain/ports/repositories/todos.repository.js";
 import { type TodoNotFound } from "@/modules/todos/domain/todo.errors.js";
 import { TodoId } from "@/modules/todos/domain/todo.id.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";

@@ -5,7 +5,7 @@ import {
   type CreateTodoCommand,
   type CreateTodoOutput,
 } from "@/modules/todos/commands/create-todo.command.js";
-import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todo.repository.js";
+import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todos.repository.js";
 import { TodoId } from "@/modules/todos/domain/todo.id.js";
 import { TodoRootOps } from "@/modules/todos/domain/todo.root.js";
 

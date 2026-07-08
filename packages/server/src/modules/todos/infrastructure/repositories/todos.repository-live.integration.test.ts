@@ -7,7 +7,7 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
 
-import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todo.repository.js";
+import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todos.repository.js";
 import { TodoNotFound } from "@/modules/todos/domain/todo.errors.js";
 import { TodoId } from "@/modules/todos/domain/todo.id.js";
 import { TodoRootOps } from "@/modules/todos/domain/todo.root.js";

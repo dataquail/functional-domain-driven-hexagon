@@ -2,7 +2,7 @@ import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 
-import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todo.repository.js";
+import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todos.repository.js";
 import { TodosRepositoryFake } from "@/modules/todos/infrastructure/repositories/todos.repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";

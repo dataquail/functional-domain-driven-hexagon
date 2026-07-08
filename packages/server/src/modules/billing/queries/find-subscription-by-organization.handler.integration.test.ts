@@ -2,28 +2,55 @@ import { describe, it } from "@effect/vitest";
 import { deepStrictEqual, ok } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import { beforeEach } from "vitest";
 
 import { SubscriptionRepository } from "@/modules/billing/domain/ports/repositories/subscription.repository.js";
 import { SubscriptionId } from "@/modules/billing/domain/subscription.id.js";
 import { SubscriptionRootOps } from "@/modules/billing/domain/subscription.root.js";
-import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake.js";
+import { SubscriptionRepositoryLive } from "@/modules/billing/infrastructure/repositories/subscription.repository-live.js";
 import { findSubscriptionByOrganization } from "@/modules/billing/queries/find-subscription-by-organization.handler.js";
 import { FindSubscriptionByOrganizationQuery } from "@/modules/billing/queries/find-subscription-by-organization.query.js";
+import { OrganizationRootOps } from "@/modules/organization/domain/organization.root.js";
+import { OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization.repository.js";
+import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
+import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const acme = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const beta = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const subId = SubscriptionId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
 
-const provide = Effect.provide(SubscriptionRepositoryFake);
+// The subscription FKs org_id → organization.organizations, so seed the org
+// through its live repository first.
+const TestLayer = Layer.mergeAll(SubscriptionRepositoryLive, OrganizationRepositoryLive).pipe(
+  Layer.provideMerge(TestDatabaseLive),
+);
 
-describe("findSubscriptionByOrganization", () => {
+const seedOrg = (id: OrganizationId, name: string) =>
+  Effect.gen(function* () {
+    const orgs = yield* OrganizationRepository;
+    yield* orgs.insertOne(OrganizationRootOps.create({ id, name, now }).organization);
+  });
+
+const suite = hasTestDatabase ? describe.sequential : describe.skip;
+
+suite("findSubscriptionByOrganization (integration)", () => {
+  beforeEach(async () => {
+    await Effect.runPromise(
+      truncate("billing.subscriptions", "organization.organizations").pipe(
+        Effect.provide(TestDatabaseLive),
+      ),
+    );
+  });
+
   it.effect(
     "returns Some(view) when a subscription exists, mapping to the cross-boundary shape",
     () =>
       Effect.gen(function* () {
+        yield* seedOrg(acme, "Acme");
         const repo = yield* SubscriptionRepository;
         const { subscription } = SubscriptionRootOps.create({
           id: subId,
@@ -40,20 +67,20 @@ describe("findSubscriptionByOrganization", () => {
           FindSubscriptionByOrganizationQuery.make({ organizationId: acme }),
         );
         ok(Option.isSome(result));
-        if (Option.isSome(result)) {
-          deepStrictEqual(result.value.id, subId);
-          deepStrictEqual(result.value.organizationId, acme);
-          deepStrictEqual(result.value.status, "active");
-        }
-      }).pipe(provide),
+        const view = Option.getOrThrow(result);
+        deepStrictEqual(view.id, subId);
+        deepStrictEqual(view.organizationId, acme);
+        deepStrictEqual(view.status, "active");
+      }).pipe(Effect.provide(TestLayer)),
   );
 
   it.effect("returns None when no subscription exists for the org", () =>
     Effect.gen(function* () {
+      yield* seedOrg(beta, "Beta");
       const result = yield* findSubscriptionByOrganization(
         FindSubscriptionByOrganizationQuery.make({ organizationId: beta }),
       );
       ok(Option.isNone(result));
-    }).pipe(provide),
+    }).pipe(Effect.provide(TestLayer)),
   );
 });

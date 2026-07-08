@@ -5,7 +5,7 @@ import {
   type CompleteTodoCommand,
   type CompleteTodoOutput,
 } from "@/modules/todos/commands/complete-todo.command.js";
-import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todo.repository.js";
+import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todos.repository.js";
 import { TodoRootOps } from "@/modules/todos/domain/todo.root.js";
 
 export const completeTodo = (cmd: CompleteTodoCommand): CompleteTodoOutput =>

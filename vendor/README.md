@@ -9,11 +9,17 @@ pinned until our upstream contribution merges.
 - **Fork:** `github.com/zacharyweidenbach/eslint-plugin-project-structure`
 - **Branch / commit:** `feat/folder-structure-custom-message` @ `947ec958d7f9479ade9352b94e2651bb4b0e3de2`
 - **Upstream PR:** https://github.com/Igorkowalski94/eslint-plugin-project-structure/pull/56
-- **What the fork adds:** an optional per-rule `message` field on `folder-structure`
-  rules, emitted for name/node-type/deny-by-default violations and `enforceExistence`
-  misses. This didactic text is the steering surface that lets the plugin replace our
-  bespoke `check-folder-layout.mjs` / `check-test-parity.mjs` scripts without losing
-  their instructional hints. Fully backwards-compatible (no `message` → stock behavior).
+- **What the fork adds:**
+  1. An optional per-rule `message` field on `folder-structure` rules, emitted for
+     name/node-type/deny-by-default violations and `enforceExistence` misses. This
+     didactic text is the steering surface that lets the plugin replace our bespoke
+     `check-folder-layout.mjs` / `check-test-parity.mjs` scripts without losing their
+     instructional hints. Fully backwards-compatible (no `message` → stock behavior).
+  2. A local performance patch: `validateConfig` memoizes JSON-schema validation on
+     the config object reference (`src/helpers/validateConfig.ts`). The rule runs once
+     per linted file but the config never changes per file, so re-validating a large
+     config with `nestedErrors` on every file was O(files × config-size). Memoizing
+     validates it once per process. (Candidate for a separate upstream PR.)
 
 ### Why a tarball (not a `github:` dependency)
 
