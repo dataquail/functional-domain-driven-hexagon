@@ -6,6 +6,43 @@
 
 ---
 
+## 0. Session handoff — START HERE (last updated after commit `2d4886c`)
+
+**Goal:** migrate the whole monorepo from `effect@3.21.2` to `effect@4.0.0-beta.94` (effect-smol). Decisions locked: **full modernization** posture, **entire monorepo**, **pin `4.0.0-beta.94`**, **supersede ADR-0012** (use-case `Effect.fn` spans). Details in §1.
+
+**Where we are:** branch `chore/effect-v4-migration` (off `main`), working tree **clean**, 4 commits:
+
+1. `184bd79` chore — dep flip + codemod tooling + this plan
+2. `370a692` refactor — mechanical codemod diff (174 files; `--no-verify`, intentional WIP)
+3. `dab2dbd` refactor — hand-migrated HttpApi middleware + pilot contract (proven exemplars)
+4. `2d4886c` docs — recipe + resume guide + SchemaUtils findings
+
+**Done:** Phase 0 (spike, all APIs validated) + Phase 1 (dep flip + 4 codemods). **In progress:** Phase 2 (contracts → green). **Proven-clean under v4:** `wallet.root.ts`, `contracts/src/Policy.ts`, `contracts/src/api/CliOrganizationContract.ts`.
+
+**Immediate next task:** get `@org/contracts` to typecheck. Baseline **177 errors** across 13 files; do them in this order (SchemaUtils first — others depend on it):
+`SchemaUtils.ts` (61, hardest — see §3.4) → `OrganizationContract` (30) → `AuthContract` (15) → `UserContract` (14) → `DomainApi` (11) → `Todos`/`CliTodos`/`Billing` (7 each) → `CliAuth` (4) → `CliApi`/`ManualCache`/`CustomHttpApiError`/`Control` (1–2 each, likely unused-import cleanup).
+
+**How to work (per package, topological order — see §3.3):**
+
+```bash
+bash scripts/codemods/run-all.sh                              # regenerate the mechanical base (idempotent) if ever reset
+pnpm -F @org/contracts exec tsc -b tsconfig.json --force      # the green gate for contracts; then database → api-client → server → …
+```
+
+Apply the **verified v4 recipe** by hand: HttpApi options-object + middleware (§3.2), SchemaUtils transform/Codec (§3.4). Then remaining contracts are the same HttpApi recipe repeated — consider a 5th codemod for the endpoint fluent→options collapse if it gets tedious.
+
+**Gotchas (learned the hard way):**
+
+- **Don't** run a broad `eslint --fix` on mid-migration code — it strips imports the not-yet-migrated code still needs. Commit WIP with `git commit --no-verify` (the pre-commit hook runs `eslint --fix`).
+- `build/` dirs are stale compiled artifacts (gitignored); `tsc -b` regenerates them — ignore them.
+- `web` typechecks against the **built** `@org/contracts` — rebuild contracts before checking web.
+- Final verification needs a DB: `DATABASE_URL_TEST=… pnpm test:integration` (env recipe is in the assistant's project memory).
+- A throwaway sandbox with the beta installed (for reading `.d.ts`) may still be at `…/scratchpad/effect-v4-spike`; if gone, recreate with `npm i effect@4.0.0-beta.94 @effect/platform-node@4.0.0-beta.94 @effect/vitest@4.0.0-beta.94` in a temp dir and read `node_modules/effect/dist/**/*.d.ts` — the authoritative API source.
+
+**Manual (non-codemod) items still pending anywhere they appear:** 8 `Effect.Service`→`Context.Service` (`make:`+`static layer`), 2 `FiberRef`→`Context.Reference`, 4 `Schema.int`→`Schema.Int`, 2 `Schema.Union(a,b)`→`Schema.Union([a,b])`, 6 `Schema.Literal(a,b,…)`→`Schema.Literals([…])`.
+
+---
+
 ## 1. Goal & context
 
 Move the monorepo from `effect@3.21.2` (+ the `@effect/*` companion packages) to **`effect@4.0.0-beta.94`** (`effect-smol`). v4 is experimental but this is an example repo, so the beta is acceptable. The payoff: comprehensive tree-shaking (a minimal Effect program is ~6.3 KB gzipped, ~15 KB with Schema) and a consolidated, separately-installable ecosystem.
