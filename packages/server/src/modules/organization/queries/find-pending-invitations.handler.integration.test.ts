@@ -4,7 +4,7 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Result from "effect/Result";
 import * as Layer from "effect/Layer";
-import * as TestClock from "effect/TestClock";
+import * as TestClock from "effect/testing/TestClock";
 import { beforeEach } from "vitest";
 
 import { InvitationRootOps } from "@/modules/organization/domain/invitation.root.js";

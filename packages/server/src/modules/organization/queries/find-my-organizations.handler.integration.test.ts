@@ -137,7 +137,7 @@ suite("findMyOrganizations (integration)", () => {
         MembershipRootOps.create({ userId: aliceId, organizationId: acmeId, now }).membership,
       );
       const deleted = OrganizationRootOps.softDelete(acme, { now });
-      if (deleted._tag !== "Right") throw new Error("expected Right");
+      if (deleted._tag !== "Success") throw new Error("expected Right");
       yield* orgs.updateOne(deleted.success.organization);
 
       const result = yield* findMyOrganizations(FindMyOrganizationsQuery.make({ userId: aliceId }));

@@ -19,9 +19,9 @@ const APP_URL = "https://app.example.com";
 // URL is deterministic).
 const EnvVarsTest = EnvVars.layer.pipe(
   Layer.provide(
-    Layer.setConfigProvider(
-      ConfigProvider.fromMap(
-        new Map([
+    ConfigProvider.layer(
+      ConfigProvider.fromUnknown(
+        Object.fromEntries([
           ["APP_URL", APP_URL],
           ["DATABASE_URL", "postgres://test"],
           ["ZITADEL_ISSUER", "https://zitadel.test"],

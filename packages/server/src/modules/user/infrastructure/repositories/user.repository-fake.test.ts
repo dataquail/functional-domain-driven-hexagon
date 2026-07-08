@@ -159,7 +159,7 @@ describe("UserRepositoryFake", () => {
         const exists = yield* repo1.findOneByEmail(alice.email);
         deepStrictEqual(Option.isSome(exists), true);
       }).pipe(provide, (first) =>
-        Effect.zipRight(
+        Effect.andThen(
           first,
           Effect.gen(function* () {
             const repo2 = yield* UserRepository;

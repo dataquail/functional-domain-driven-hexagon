@@ -7,7 +7,7 @@ import * as Effect from "effect/Effect";
 import * as Result from "effect/Result";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import * as TestClock from "effect/TestClock";
+import * as TestClock from "effect/testing/TestClock";
 
 import { ResendInvitationCommand } from "@/modules/organization/commands/resend-invitation.command.js";
 import { resendInvitation } from "@/modules/organization/commands/resend-invitation.handler.js";

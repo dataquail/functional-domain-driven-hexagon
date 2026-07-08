@@ -42,7 +42,7 @@ describe("revokeSession", () => {
         .findOneById(sessionId)
         .pipe(Effect.catchTag("SessionNotFound", () => Effect.succeed(null)));
       ok(found !== null);
-      ok(Option.isSome(Option.fromNullable(found.revokedAt)));
+      ok(Option.isSome(Option.fromNullishOr(found.revokedAt)));
     }).pipe(provide),
   );
 

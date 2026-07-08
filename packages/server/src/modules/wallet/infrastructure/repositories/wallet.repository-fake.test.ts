@@ -111,7 +111,7 @@ describe("WalletRepositoryFake", () => {
         const exists = yield* repo1.findOneByOrganizationId(acmeId);
         ok(Option.isSome(exists));
       }).pipe(provide, (first) =>
-        Effect.zipRight(
+        Effect.andThen(
           first,
           Effect.gen(function* () {
             const repo2 = yield* WalletRepository;

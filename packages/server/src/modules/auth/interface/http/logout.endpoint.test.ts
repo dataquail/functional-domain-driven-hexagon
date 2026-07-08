@@ -28,7 +28,7 @@ import { logoutEndpoint } from "./logout.endpoint.js";
 const codecFor = (secret: string): Layer.Layer<CookieCodec> =>
   Layer.succeed(
     CookieCodec,
-    new CookieCodec({
+    {
       sign: (id: string) => {
         const sig = createHmac("sha256", secret).update(id).digest("base64url");
         return `${id}.${sig}`;
@@ -44,7 +44,7 @@ const codecFor = (secret: string): Layer.Layer<CookieCodec> =>
         if (a.length !== b.length) return null;
         return timingSafeEqual(a, b) ? id : null;
       },
-    }),
+    },
   );
 
 const withCodec = <A, E>(secret: string, eff: Effect.Effect<A, E, CookieCodec>): Promise<A> =>

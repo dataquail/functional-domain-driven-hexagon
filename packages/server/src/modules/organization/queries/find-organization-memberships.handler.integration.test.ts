@@ -31,7 +31,7 @@ const userB = UserId.make("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
 const userC = UserId.make("cccccccc-cccc-cccc-cccc-cccccccccccc");
 const orphanedUser = UserId.make("99999999-9999-9999-9999-999999999999");
 const issuer = UserId.make("99999999-9999-9999-9999-999999999990");
-const now = DateTime.unsafeFromDate(new Date("2026-01-01T00:00:00Z"));
+const now = DateTime.fromDateUnsafe(new Date("2026-01-01T00:00:00Z"));
 
 // The membership + roles reads hit the real DB. Email enrichment goes
 // through the `UsersLookup` ACL — a deliberately swappable cross-module

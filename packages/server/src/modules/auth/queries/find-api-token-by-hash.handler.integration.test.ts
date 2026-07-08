@@ -7,7 +7,7 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import * as TestClock from "effect/TestClock";
+import * as TestClock from "effect/testing/TestClock";
 import { beforeEach } from "vitest";
 
 import { ApiTokenExpired, ApiTokenRevoked } from "@/modules/auth/domain/api-token.errors.js";

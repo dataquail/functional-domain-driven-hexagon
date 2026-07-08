@@ -23,9 +23,9 @@ const WEBHOOK_SECRET = "whsec_test";
 // the required keys; the Stripe secret is a throwaway test value.
 const EnvVarsTest = EnvVars.layer.pipe(
   Layer.provide(
-    Layer.setConfigProvider(
-      ConfigProvider.fromMap(
-        new Map([
+    ConfigProvider.layer(
+      ConfigProvider.fromUnknown(
+        Object.fromEntries([
           ["APP_URL", "https://app.example.com"],
           ["DATABASE_URL", "postgres://test"],
           ["ZITADEL_ISSUER", "https://zitadel.test"],
