@@ -6,40 +6,54 @@
 
 ---
 
-## 0. Session handoff — START HERE (last updated after commit `2d4886c`)
+## 0. Session handoff — START HERE (last updated after the `@org/server` mechanical-pass commits)
 
 **Goal:** migrate the whole monorepo from `effect@3.21.2` to `effect@4.0.0-beta.94` (effect-smol). Decisions locked: **full modernization** posture, **entire monorepo**, **pin `4.0.0-beta.94`**, **supersede ADR-0012** (use-case `Effect.fn` spans). Details in §1.
 
-**Where we are:** branch `chore/effect-v4-migration` (off `main`), working tree **clean**, 4 commits:
+**Where we are:** branch `chore/effect-v4-migration` (off `main`). Green + committed: **`@org/contracts`** (typecheck + built dist), **`@org/database`** (typecheck + unit tests 3/3), **`@org/api-client`** (typecheck). **`@org/server`** driven from **888 → ~218** errors via mechanical passes (committed as WIP `--no-verify` commits); the remainder is structural hand-migration.
 
-1. `184bd79` chore — dep flip + codemod tooling + this plan
-2. `370a692` refactor — mechanical codemod diff (174 files; `--no-verify`, intentional WIP)
-3. `dab2dbd` refactor — hand-migrated HttpApi middleware + pilot contract (proven exemplars)
-4. `2d4886c` docs — recipe + resume guide + SchemaUtils findings
+**Per-package error snapshot (as of handoff):** contracts 0 ✅ · database 0 ✅ · api-client 0 ✅ · server ~218 · jobs 6 · cli 30 · mcp 4 · components 9 · web 214 (typechecks against **built** contracts — already rebuilt) · acceptance 0.
 
-**Done:** Phase 0 (spike, all APIs validated) + Phase 1 (dep flip + 4 codemods). **In progress:** Phase 2 (contracts → green). **Proven-clean under v4:** `wallet.root.ts`, `contracts/src/Policy.ts`, `contracts/src/api/CliOrganizationContract.ts`.
+**Immediate next task:** finish `@org/server`. The mechanical bulk is done; what's left is genuinely structural, concentrated in these files:
+- `common/token-cipher.ts` (14) — `effect/ParseResult` is **gone**, `Schema.transformOrFail`→`decodeTo`, `Effect.Tag`→`Context.Service`, `Schema.parseJson`→`Schema.fromJsonString`, `Schema.Schema<A,I,R>`→`Schema.Codec` (see §3.4/§3.5).
+- `platform/auth/cookie-codec.ts` + `modules/auth/infrastructure/clients/oidc.client.ts` — the 2 remaining `Effect.Service`→`Context.Service` conversions (recipe below).
+- `platform/request-context.ts` — `FiberRef`→`Context.Reference`.
+- `server.ts` (12) — `Layer.scoped`→`Layer.effect`, HttpServer `serve`/`Layer.launch`, and the `NodeSdk`→`effect/unstable/observability` Otlp swap (this is also Phase 6 — do it here).
+- Test files (billing-gateway client-live, logout.endpoint, unit-of-work, find-session, user.root, etc.) — mostly service-wiring + Config + small structural bits, no new patterns.
 
-**Immediate next task:** get `@org/contracts` to typecheck. Baseline **177 errors** across 13 files; do them in this order (SchemaUtils first — others depend on it):
-`SchemaUtils.ts` (61, hardest — see §3.4) → `OrganizationContract` (30) → `AuthContract` (15) → `UserContract` (14) → `DomainApi` (11) → `Todos`/`CliTodos`/`Billing` (7 each) → `CliAuth` (4) → `CliApi`/`ManualCache`/`CustomHttpApiError`/`Control` (1–2 each, likely unused-import cleanup).
+**Then fan out** in topological order: `jobs` → `cli` (`@effect/cli`→`effect/unstable/cli`) → `mcp` → `components` → `web` → `acceptance`. Green gate per package: `pnpm -F @org/<pkg> exec tsc -b tsconfig.json --force` exit 0, then its unit tests.
 
-**How to work (per package, topological order — see §3.3):**
+### v4 API map — VERIFIED against `4.0.0-beta.94` `.d.ts` (supersedes guesses in §3)
 
-```bash
-bash scripts/codemods/run-all.sh                              # regenerate the mechanical base (idempotent) if ever reset
-pnpm -F @org/contracts exec tsc -b tsconfig.json --force      # the green gate for contracts; then database → api-client → server → …
-```
+Read `node_modules/.pnpm/effect@4.0.0-beta.94/node_modules/effect/dist/**/*.d.ts` directly — it is the authoritative source. Mappings applied so far:
 
-Apply the **verified v4 recipe** by hand: HttpApi options-object + middleware (§3.2), SchemaUtils transform/Codec (§3.4). Then remaining contracts are the same HttpApi recipe repeated — consider a 5th codemod for the endpoint fluent→options collapse if it gets tedious.
+- **Schema filters via `.check(...)`, not `.pipe(...)`:** `S.pipe(Schema.isMinLength(1))` → `S.check(Schema.isMinLength(1), Schema.isMaxLength(255))`. Filter fns: `isMinLength/isMaxLength(n)`, `isInt()`, `isNonEmpty()`, `isUUID()`, `isGreaterThanOrEqualTo(n)`, `isLessThanOrEqualTo(n)`, **`isBetween({ minimum, maximum })`** (object arg!). Filter `message` is a **plain string**, not a thunk.
+- `Schema.int`→`Schema.isInt()` (a check); `Schema.nonEmptyString()`→`Schema.isNonEmpty()`; `Schema.UUID`→`Schema.String.check(Schema.isUUID())`; `Schema.Literal(a,b,…)`(multi)→`Schema.Literals([…])`; `Schema.parseJson(S)`→`Schema.fromJsonString(S)`; `Schema.standardSchemaV1`→`Schema.toStandardSchemaV1`; `Schema.Schema<A,I,R>`→`Schema.Codec<A,I,RD,RE>`.
+- **HttpApi endpoint options keys are `params` (path params) and `query` (querystring)** — NOT `path`/`urlParams` (the §3.2 recipe was wrong on this). DELETE: `HttpApiEndpoint.del` is unexported → `HttpApiEndpoint.make("DELETE")(name, path, opts)`. Group-wide `.addError` is gone → distribute onto each endpoint's `error: [...]`. Fluent `.addSuccess/.setPayload/.setPath/.setUrlParams/.addError`→options object `{ success, payload, params, query, error }`.
+- **`HttpApiClient` request keys mirror the endpoint:** call sites use `{ params, query, payload }` (was `{ path, urlParams }`).
+- **`Result` accessors:** `Success` has `.success`, `Failure` has `.failure` (were `.right`/`.left`).
+- **`Cause` is `{ reasons: ReadonlyArray<Reason> }`** (no top-level `_tag`/`.error`). In tests: `exit.cause._tag === "Fail"` → `Cause.hasFails(exit.cause)`; `exit.cause.error` → `Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)`; a specific reason is `exit.cause.reasons[0]` with `_tag` `"Fail"|"Die"|"Interrupt"`, `Fail` carries `.error`. (A one-off codemod for this ran over 73 files; the two regexes + auto-import are documented in the server commit message.)
+- **`Context.Service` is only the key** (no bundled `effect:`/`accessors:`/`.Default`). Pattern:
+  ```ts
+  const make = Effect.gen(function* () { return {…} as const; });
+  export class X extends Context.Service<X, Effect.Success<typeof make>>()("X") {
+    static readonly layer = Layer.effect(X, make);
+  }
+  ```
+  Consumers: `X.Default`→`X.layer`; accessor `X.PROP`→`Effect.map(X, (x) => x.PROP)`; `yield* X` still works.
+- **`Config` is a Schema-based redesign** (lowercase fns): `Config.integer`→`Config.int`, `Config.literal(a,b)(name)`→`Config.literals([a,b], name)`. `Config.string/number/boolean/redacted/url/date/port/map/withDefault` unchanged. Arbitrary schema: `Config.schema(codec, name)`.
+- **Effect renames:** `Effect.async`→`Effect.callback`; `Effect.zipRight(a,b,opts)`→`Effect.zip(a,b,opts).pipe(Effect.map(([,b])=>b))`; `Effect.timeoutFail({onTimeout})`→`Effect.timeoutOrElse({orElse: () => Effect.fail(…)})`; `Effect.Effect.Success`→`Effect.Success`; `Effect.Tag`→`Context.Service`; `Effect.fromEither`→`Effect.fromResult`; `Effect.catchAll`→`catch`; `catchAllCause`→`catchCause`. `Effect.tryPromise` still takes a bare thunk and fails with **`Cause.UnknownError`** (`_tag: "UnknownError"`, extends `Error` so `.cause` works).
+- **Runtime bridge (run an Effect to Exit inside a Promise callback):** `Effect.runtime<R>()` + `Runtime.runPromiseExit` → `Effect.context<R>()` + `Effect.runPromiseExitWith(context)`.
+- **Layer:** `Layer.scoped`→`Layer.effect` (auto-scopes); `Layer.unwrapEffect`→`Layer.unwrap`.
+- **`DateTime.unsafeMake`→`DateTime.makeUnsafe`** (also `DateTime.fromDateUnsafe`, `DateTime.nowUnsafe`). `DateTime.make` now returns `Option`.
 
-**Gotchas (learned the hard way):**
+### Dead code deleted (not migrated), user-approved — zero importers anywhere:
+`contracts/src/SchemaUtils.ts`, `contracts/src/Control.ts`, and the `ManualCache` trio (`ManualCache.ts` + `internal/manual-cache.ts` + `test/ManualCache.test.ts`). **Ignore §3.4 / the old "do SchemaUtils first" step — that file is gone.**
 
-- **Don't** run a broad `eslint --fix` on mid-migration code — it strips imports the not-yet-migrated code still needs. Commit WIP with `git commit --no-verify` (the pre-commit hook runs `eslint --fix`).
-- `build/` dirs are stale compiled artifacts (gitignored); `tsc -b` regenerates them — ignore them.
-- `web` typechecks against the **built** `@org/contracts` — rebuild contracts before checking web.
+**Gotchas:**
+- **Don't** run a broad `eslint --fix` on mid-migration code — it strips imports the not-yet-migrated code still needs. Commit WIP with `git commit --no-verify`.
+- `web` typechecks against the **built** `@org/contracts` — run `pnpm -F @org/contracts build` after contract edits before checking web.
 - Final verification needs a DB: `DATABASE_URL_TEST=… pnpm test:integration` (env recipe is in the assistant's project memory).
-- A throwaway sandbox with the beta installed (for reading `.d.ts`) may still be at `…/scratchpad/effect-v4-spike`; if gone, recreate with `npm i effect@4.0.0-beta.94 @effect/platform-node@4.0.0-beta.94 @effect/vitest@4.0.0-beta.94` in a temp dir and read `node_modules/effect/dist/**/*.d.ts` — the authoritative API source.
-
-**Manual (non-codemod) items still pending anywhere they appear:** 8 `Effect.Service`→`Context.Service` (`make:`+`static layer`), 2 `FiberRef`→`Context.Reference`, 4 `Schema.int`→`Schema.Int`, 2 `Schema.Union(a,b)`→`Schema.Union([a,b])`, 6 `Schema.Literal(a,b,…)`→`Schema.Literals([…])`.
 
 ---
 
