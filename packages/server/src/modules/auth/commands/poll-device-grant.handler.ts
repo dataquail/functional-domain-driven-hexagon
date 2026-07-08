@@ -2,10 +2,7 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
 import { mintApiTokenCore } from "@/modules/auth/commands/mint-api-token.handler.js";
-import {
-  type PollDeviceGrantCommand,
-  type PollDeviceGrantOutput,
-} from "@/modules/auth/commands/poll-device-grant.command.js";
+import { type PollDeviceGrantCommand } from "@/modules/auth/commands/poll-device-grant.command.js";
 import { CredentialHash } from "@/modules/auth/domain/credential-hash.domain-service.js";
 import {
   DeviceGrantExpired,
@@ -24,27 +21,28 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 // transaction rather than nesting a savepoint.
 //
 // Bus-boundary span (ADR-0012) wraps this at dispatch time.
-export const pollDeviceGrant = (cmd: PollDeviceGrantCommand): PollDeviceGrantOutput =>
-  Effect.gen(function* () {
-    const grants = yield* DeviceGrantRepository;
-    const grant = yield* grants.findOneByCodeHash(CredentialHash.of(cmd.deviceCode));
-    const now = yield* DateTime.now;
+export const pollDeviceGrant = Effect.fn("pollDeviceGrant")(function* (
+  cmd: PollDeviceGrantCommand,
+) {
+  const grants = yield* DeviceGrantRepository;
+  const grant = yield* grants.findOneByCodeHash(CredentialHash.of(cmd.deviceCode));
+  const now = yield* DateTime.now;
 
-    if (DeviceGrantRootOps.isExpired(grant, now)) {
-      yield* grants
-        .deleteOne(grant.id)
-        .pipe(Effect.catchTag("DeviceGrantNotFound", () => Effect.void));
-      return yield* Effect.fail(new DeviceGrantExpired());
-    }
-    if (grant.status === "pending" || grant.userId === null) {
-      return yield* Effect.fail(new DeviceGrantPending());
-    }
+  if (DeviceGrantRootOps.isExpired(grant, now)) {
+    yield* grants
+      .deleteOne(grant.id)
+      .pipe(Effect.catchTag("DeviceGrantNotFound", () => Effect.void));
+    return yield* Effect.fail(new DeviceGrantExpired());
+  }
+  if (grant.status === "pending" || grant.userId === null) {
+    return yield* Effect.fail(new DeviceGrantPending());
+  }
 
-    const minted = yield* mintApiTokenCore({
-      userId: grant.userId,
-      label: "cli",
-      expiresInDays: cmd.tokenExpiresInDays,
-    });
-    yield* grants.deleteOne(grant.id);
-    return minted;
-  }).pipe(withUnitOfWork);
+  const minted = yield* mintApiTokenCore({
+    userId: grant.userId,
+    label: "cli",
+    expiresInDays: cmd.tokenExpiresInDays,
+  });
+  yield* grants.deleteOne(grant.id);
+  return minted;
+}, withUnitOfWork);

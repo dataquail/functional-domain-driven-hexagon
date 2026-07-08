@@ -3,7 +3,6 @@ import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 import {
-  type FindMyOrganizationsOutput,
   type FindMyOrganizationsQuery,
   type FindMyOrganizationsView,
 } from "@/modules/organization/queries/find-my-organizations.query.js";
@@ -36,12 +35,13 @@ const toView = (row: typeof MyOrganizationRow.Type): FindMyOrganizationsView => 
 // `no-cross-schema-slonik-access` rule). Tombstoned orgs are filtered
 // out — a soft-deleted org should not appear in the caller's chooser.
 // `is_admin` is the caller's own `admin` OrganizationRole in each org.
-export const findMyOrganizations = (query: FindMyOrganizationsQuery): FindMyOrganizationsOutput =>
-  Effect.gen(function* () {
-    const db = yield* Database.Database;
-    const rows = yield* db
-      .execute((client) =>
-        client.any(sql.type(MyOrganizationRowStd)`
+export const findMyOrganizations = Effect.fn("findMyOrganizations")(function* (
+  query: FindMyOrganizationsQuery,
+) {
+  const db = yield* Database.Database;
+  const rows = yield* db
+    .execute((client) =>
+      client.any(sql.type(MyOrganizationRowStd)`
           SELECT
             o.*,
             EXISTS (
@@ -57,13 +57,13 @@ export const findMyOrganizations = (query: FindMyOrganizationsQuery): FindMyOrga
             AND o.deleted_at IS NULL
           ORDER BY o.created_at DESC
         `),
-      )
-      .pipe(
-        Effect.catchTag("DatabaseError", Effect.die),
-        Effect.catchTag("DatabaseUnavailable", (e) =>
-          Effect.fail(new PersistenceUnavailable({ message: e.message })),
-        ),
-      );
+    )
+    .pipe(
+      Effect.catchTag("DatabaseError", Effect.die),
+      Effect.catchTag("DatabaseUnavailable", (e) =>
+        Effect.fail(new PersistenceUnavailable({ message: e.message })),
+      ),
+    );
 
-    return { organizations: rows.map(toView) };
-  });
+  return { organizations: rows.map(toView) };
+});

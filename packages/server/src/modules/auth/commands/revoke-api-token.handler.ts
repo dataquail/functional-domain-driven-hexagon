@@ -1,9 +1,6 @@
 import * as Effect from "effect/Effect";
 
-import {
-  type RevokeApiTokenCommand,
-  type RevokeApiTokenOutput,
-} from "@/modules/auth/commands/revoke-api-token.command.js";
+import { type RevokeApiTokenCommand } from "@/modules/auth/commands/revoke-api-token.command.js";
 import { ApiTokenNotFound } from "@/modules/auth/domain/api-token.errors.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/ports/repositories/api-token.repository.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
@@ -13,12 +10,11 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 // avoids leaking the existence of other users' tokens.
 //
 // Bus-boundary span (ADR-0012) wraps this at dispatch time.
-export const revokeApiToken = (cmd: RevokeApiTokenCommand): RevokeApiTokenOutput =>
-  Effect.gen(function* () {
-    const repo = yield* ApiTokenRepository;
-    const token = yield* repo.findOneById(cmd.apiTokenId);
-    if (token.userId !== cmd.userId) {
-      return yield* Effect.fail(new ApiTokenNotFound());
-    }
-    yield* repo.deleteOne(cmd.apiTokenId);
-  }).pipe(withUnitOfWork);
+export const revokeApiToken = Effect.fn("revokeApiToken")(function* (cmd: RevokeApiTokenCommand) {
+  const repo = yield* ApiTokenRepository;
+  const token = yield* repo.findOneById(cmd.apiTokenId);
+  if (token.userId !== cmd.userId) {
+    return yield* Effect.fail(new ApiTokenNotFound());
+  }
+  yield* repo.deleteOne(cmd.apiTokenId);
+}, withUnitOfWork);

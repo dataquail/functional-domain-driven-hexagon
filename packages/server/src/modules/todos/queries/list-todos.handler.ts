@@ -3,7 +3,6 @@ import * as Effect from "effect/Effect";
 
 import { TodoId } from "@/modules/todos/domain/todo.id.js";
 import {
-  type ListTodosOutput,
   type ListTodosQuery,
   type ListTodosTodoView,
 } from "@/modules/todos/queries/list-todos.query.js";
@@ -15,22 +14,21 @@ const toView = (row: RowSchemas.TodoRow): ListTodosTodoView => ({
   completed: row.completed,
 });
 
-export const listTodos = (query: ListTodosQuery): ListTodosOutput =>
-  Effect.gen(function* () {
-    const db = yield* Database.Database;
-    const rows = yield* db
-      .execute((client) =>
-        client.any(sql.type(RowSchemas.TodoRowStd)`
+export const listTodos = Effect.fn("listTodos")(function* (query: ListTodosQuery) {
+  const db = yield* Database.Database;
+  const rows = yield* db
+    .execute((client) =>
+      client.any(sql.type(RowSchemas.TodoRowStd)`
           SELECT * FROM todos.todos
           WHERE organization_id = ${query.organizationId}
           ORDER BY created_at DESC
         `),
-      )
-      .pipe(
-        Effect.catchTag("DatabaseError", Effect.die),
-        Effect.catchTag("DatabaseUnavailable", (e) =>
-          Effect.fail(new PersistenceUnavailable({ message: e.message })),
-        ),
-      );
-    return { todos: rows.map(toView) };
-  });
+    )
+    .pipe(
+      Effect.catchTag("DatabaseError", Effect.die),
+      Effect.catchTag("DatabaseUnavailable", (e) =>
+        Effect.fail(new PersistenceUnavailable({ message: e.message })),
+      ),
+    );
+  return { todos: rows.map(toView) };
+});

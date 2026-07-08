@@ -6,7 +6,6 @@ import * as Effect from "effect/Effect";
 import {
   type MintApiTokenCommand,
   type MintApiTokenInput,
-  type MintApiTokenOutput,
   type MintApiTokenResult,
 } from "@/modules/auth/commands/mint-api-token.command.js";
 import { ApiTokenId } from "@/modules/auth/domain/api-token.id.js";
@@ -51,6 +50,11 @@ export const mintApiTokenCore = (
     return { apiToken, token };
   });
 
-// Bus-boundary span (ADR-0012) wraps this at dispatch time.
-export const mintApiToken = (cmd: MintApiTokenCommand): MintApiTokenOutput =>
-  mintApiTokenCore(cmd).pipe(withUnitOfWork);
+// The registered use case: `mintApiTokenCore` + the transaction boundary.
+// `Effect.fn` names the use-case span (`mintApiToken`) inside the command-bus
+// boundary span; `mintApiTokenCore` stays span-less (a shared sub-step below
+// use-case granularity) so its `annotateCurrentSpan` lands on whichever use
+// case invoked it (this one, or `pollDeviceGrant`).
+export const mintApiToken = Effect.fn("mintApiToken")(function* (cmd: MintApiTokenCommand) {
+  return yield* mintApiTokenCore(cmd);
+}, withUnitOfWork);

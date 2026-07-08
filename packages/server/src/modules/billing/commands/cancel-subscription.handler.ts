@@ -9,39 +9,37 @@ import { SubscriptionRootOps } from "@/modules/billing/domain/subscription.root.
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-import {
-  type CancelSubscriptionCommand,
-  type CancelSubscriptionOutput,
-} from "./cancel-subscription.command.js";
+import { type CancelSubscriptionCommand } from "./cancel-subscription.command.js";
 
 // Cancels upstream first, then flips local status. If Stripe cancel
 // succeeds but the local update fails, the subscription is canceled
 // from Stripe's POV — the periodic reconciliation job (out of scope
 // here) would catch the mismatch via the webhook that Stripe sends
 // on cancel anyway, which would call MarkSubscriptionStatusCommand.
-export const cancelSubscription = (cmd: CancelSubscriptionCommand): CancelSubscriptionOutput =>
-  Effect.gen(function* () {
-    const repo = yield* SubscriptionRepository;
-    const gateway = yield* BillingGateway;
-    const bus = yield* DomainEventBus;
+export const cancelSubscription = Effect.fn("cancelSubscription")(function* (
+  cmd: CancelSubscriptionCommand,
+) {
+  const repo = yield* SubscriptionRepository;
+  const gateway = yield* BillingGateway;
+  const bus = yield* DomainEventBus;
 
-    const found = yield* repo.findOneByOrganizationId(cmd.organizationId);
-    if (Option.isNone(found)) {
-      return yield* Effect.fail(new SubscriptionNotFound({ organizationId: cmd.organizationId }));
-    }
-    const existing = found.value;
+  const found = yield* repo.findOneByOrganizationId(cmd.organizationId);
+  if (Option.isNone(found)) {
+    return yield* Effect.fail(new SubscriptionNotFound({ organizationId: cmd.organizationId }));
+  }
+  const existing = found.value;
 
-    yield* gateway.cancelSubscription({
-      stripeSubscriptionId: existing.stripeSubscriptionId,
-    });
-
-    const now = yield* DateTime.now;
-    const { events, subscription } = SubscriptionRootOps.cancel(existing, now);
-
-    yield* Effect.gen(function* () {
-      yield* repo.updateOne(subscription);
-      yield* bus.dispatch(events);
-    }).pipe(withUnitOfWork);
-
-    return subscription;
+  yield* gateway.cancelSubscription({
+    stripeSubscriptionId: existing.stripeSubscriptionId,
   });
+
+  const now = yield* DateTime.now;
+  const { events, subscription } = SubscriptionRootOps.cancel(existing, now);
+
+  yield* Effect.gen(function* () {
+    yield* repo.updateOne(subscription);
+    yield* bus.dispatch(events);
+  }).pipe(withUnitOfWork);
+
+  return subscription;
+});
