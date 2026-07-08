@@ -26,7 +26,7 @@ const credentialsPath = Effect.gen(function* () {
   return path.join(base, CONFIG_DIR, FILE_NAME);
 });
 
-const decode = Schema.decodeUnknownEffect(Schema.parseJson(Credentials));
+const decode = Schema.decodeUnknownEffect(Schema.fromJsonString(Credentials));
 
 // Missing or unparseable file → empty credentials (first run, or a stale
 // hand-edit shouldn't crash the CLI). Genuine FS errors are defects.
