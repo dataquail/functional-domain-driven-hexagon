@@ -12,9 +12,8 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@effect/platform": "0.96.1",
     "@org/contracts": "workspace:^",
-    "effect": "3.21.2"
+    "effect": "4.0.0-beta.94"
   },
   "devDependencies": {
     "@types/node": "^25.9.4"

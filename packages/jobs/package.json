@@ -16,10 +16,9 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@effect/platform": "0.96.1",
-    "@effect/platform-node": "0.106.0",
+    "@effect/platform-node": "4.0.0-beta.94",
     "@org/database": "workspace:^",
-    "effect": "3.21.2",
+    "effect": "4.0.0-beta.94",
     "pg": "8.13.1",
     "slonik": "^48.19.0"
   },
