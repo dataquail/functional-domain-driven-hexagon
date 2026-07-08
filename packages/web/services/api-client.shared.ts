@@ -9,23 +9,18 @@
 // intentionally environment-agnostic — no `import "server-only"`, no
 // `next/headers`, no browser globals.
 
-import type * as HttpApi from "effect/unstable/httpapi/HttpApi";
 import type * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { type DomainApi } from "@org/contracts/DomainApi";
 import * as Context from "effect/Context";
 
 // Unwrap the inferred HttpApiClient client shape for `typeof DomainApi`.
-// `HttpApiClient.make` returns `Client<Groups, ApiError, never>`, but
-// `Client` is parametric over Groups/Err/R, not over the whole HttpApi
-// — pull the parts back out with conditional inference so the tag's
-// value type stays in sync with the contract automatically.
-type ClientShape<TApi> =
-  TApi extends HttpApi.HttpApi<infer _Id, infer Groups, infer Err, infer _R>
-    ? HttpApiClient.Client<Groups, Err, never>
-    : never;
+// `HttpApiClient.make` returns `Client<Groups>`; `ForApi` pulls the
+// Groups back out of the whole HttpApi so the tag's value type stays in
+// sync with the contract automatically.
+type ClientShape = HttpApiClient.ForApi<typeof DomainApi>;
 
 // `Context.Tag`'s class self-reference is the canonical Effect pattern; the
 // recursion is purely type-level (the class IS the tag identity).
 /* eslint-disable no-use-before-define */
-export class ApiClient extends Context.Service<ApiClient, { readonly client: ClientShape<typeof DomainApi> }>()("@org/web/ApiClient") {}
+export class ApiClient extends Context.Service<ApiClient, { readonly client: ClientShape }>()("@org/web/ApiClient") {}
 /* eslint-enable no-use-before-define */

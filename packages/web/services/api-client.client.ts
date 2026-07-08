@@ -33,6 +33,6 @@ export const ApiClientLive = Layer.effect(
       baseUrl: "/api",
       transformClient: (c) => c.pipe(HttpClient.retryTransient({ times: 3 })),
     });
-    return ApiClient.of({ client });
+    return { client };
   }),
 ).pipe(Layer.provide(FetchWithCredentials));

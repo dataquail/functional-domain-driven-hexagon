@@ -31,7 +31,7 @@ export const RecordingToast: Layer.Layer<Toast | RecordedToasts> = Layer.effectC
             recorded,
             (calls): ReadonlyArray<ToastCall> => [...calls, { kind: "error", message }],
           ),
-      } as unknown as Toast),
+      }),
       Context.add(RecordedToasts, {
         all: Ref.get(recorded),
       }),

@@ -8,7 +8,7 @@ import * as UserContract from "@org/contracts/api/UserContract";
 import { UserId } from "@org/contracts/EntityIds";
 import * as DateTime from "effect/DateTime";
 
-const FIXED_DATE = DateTime.unsafeMake(new Date("2026-01-01T00:00:00Z"));
+const FIXED_DATE = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
 
 const DEFAULT_USER_ID = UserId.make("11111111-1111-1111-1111-111111111111");
 

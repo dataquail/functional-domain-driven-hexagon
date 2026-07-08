@@ -8,7 +8,7 @@
 // folded into `null` here so the UI's empty state is plain data, not
 // an error-channel concern.
 
-import type { BillingContract } from "@org/contracts/api/Contracts";
+import { BillingContract } from "@org/contracts/api/Contracts";
 import type { OrganizationId } from "@org/contracts/EntityIds";
 import * as Effect from "effect/Effect";
 
@@ -25,7 +25,7 @@ export const billingQueryKey = billingKey;
 
 export const currentSubscriptionQuery = (orgId: OrganizationId) =>
   Effect.flatMap(ApiClient, ({ client }) =>
-    client.billing.getCurrentSubscription({ path: { orgId } }),
+    client.billing.getCurrentSubscription({ params: { orgId } }),
   ).pipe(
     Effect.map((sub): CurrentSubscription => sub),
     Effect.catchTag("SubscriptionNotFoundError", () => Effect.succeed<CurrentSubscription>(null)),
@@ -33,10 +33,13 @@ export const currentSubscriptionQuery = (orgId: OrganizationId) =>
 
 export const startSubscription = (args: { readonly orgId: OrganizationId }) =>
   Effect.flatMap(ApiClient, ({ client }) =>
-    client.billing.startSubscription({ path: { orgId: args.orgId }, payload: {} }),
+    client.billing.startSubscription({
+      params: { orgId: args.orgId },
+      payload: new BillingContract.StartSubscriptionPayload({}),
+    }),
   ).pipe(Effect.tap(() => billingHelpers.invalidateAllQueries()));
 
 export const cancelSubscription = (args: { readonly orgId: OrganizationId }) =>
   Effect.flatMap(ApiClient, ({ client }) =>
-    client.billing.cancelSubscription({ path: { orgId: args.orgId } }),
+    client.billing.cancelSubscription({ params: { orgId: args.orgId } }),
   ).pipe(Effect.tap(() => billingHelpers.invalidateAllQueries()));

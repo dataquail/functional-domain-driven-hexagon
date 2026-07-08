@@ -19,6 +19,7 @@ import * as Cause from "effect/Cause";
 import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
 import * as Predicate from "effect/Predicate";
 import * as React from "react";
 
@@ -30,10 +31,10 @@ export class QueryDefect extends Data.TaggedError("QueryDefect")<{
 }> {}
 
 const hasStringMessage = Predicate.compose(
-  Predicate.isRecord,
+  Predicate.isObject,
   Predicate.compose(
     Predicate.hasProperty("message"),
-    Predicate.struct({ message: Predicate.isString }),
+    Predicate.Struct({ message: Predicate.isString }),
   ),
 );
 
@@ -96,7 +97,7 @@ const useRunner = <A, E extends EffectfulError, R extends ClientRuntimeContext>(
                 ? Effect.flatMap(Toast, (toast) => toast.success(toastifySuccess(result)))
                 : Effect.void,
             ),
-            Effect.tapErrorCause(Effect.logError),
+            Effect.tapCause(Effect.logError),
             Effect.withSpan(span),
             runtime.runPromiseExit,
           )
@@ -104,8 +105,9 @@ const useRunner = <A, E extends EffectfulError, R extends ClientRuntimeContext>(
             Exit.match({
               onSuccess: (value) => Promise.resolve(value),
               onFailure: (cause) => {
-                if (Cause.isFailType(cause)) {
-                  throw cause.error satisfies E;
+                const failure = Cause.findErrorOption(cause);
+                if (Option.isSome(failure)) {
+                  throw failure.value satisfies E;
                 }
 
                 if (toastifyDefects !== false) {

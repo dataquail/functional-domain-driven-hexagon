@@ -2,6 +2,7 @@
 // layer in `use-device-queries.ts` wraps it as a mutation. There's nothing
 // to prefetch (the page just renders a form), so no `.server.ts` sibling.
 
+import { AuthContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
 import { ApiClient } from "@/services/api-client.shared";
@@ -10,5 +11,7 @@ import { ApiClient } from "@/services/api-client.shared";
 // identified by `userCode` to the signed-in caller.
 export const approveDevice = (args: { readonly userCode: string }) =>
   Effect.flatMap(ApiClient, ({ client }) =>
-    client.authDevice.approve({ payload: { userCode: args.userCode } }),
+    client.authDevice.approve({
+      payload: new AuthContract.DeviceApprovalPayload({ userCode: args.userCode }),
+    }),
   );

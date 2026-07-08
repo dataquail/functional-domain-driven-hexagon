@@ -24,7 +24,7 @@ const membersHelpers = QueryData.makeHelpers<
 export const orgMembersQueryKey = membersKey;
 
 export const orgMembersQuery = (orgId: OrganizationId) =>
-  Effect.flatMap(ApiClient, ({ client }) => client.organization.findMembers({ path: { orgId } }));
+  Effect.flatMap(ApiClient, ({ client }) => client.organization.findMembers({ params: { orgId } }));
 
 // Pending invitations (open: not yet accepted, not revoked) for the
 // member-management surface's "Pending invitations" section. Resend and
@@ -43,7 +43,7 @@ export const orgInvitationsQueryKey = invitationsKey;
 
 export const orgInvitationsQuery = (orgId: OrganizationId) =>
   Effect.flatMap(ApiClient, ({ client }) =>
-    client.organization.findInvitations({ path: { orgId } }),
+    client.organization.findInvitations({ params: { orgId } }),
   );
 
 export const resendOrgInvitation = (args: {
@@ -52,7 +52,7 @@ export const resendOrgInvitation = (args: {
 }) =>
   Effect.flatMap(ApiClient, ({ client }) =>
     client.organization.resendInvitation({
-      path: { orgId: args.orgId, invitationId: args.invitationId },
+      params: { orgId: args.orgId, invitationId: args.invitationId },
     }),
   ).pipe(Effect.tap(() => invitationsHelpers.invalidateAllQueries()));
 
@@ -62,7 +62,7 @@ export const revokeOrgInvitation = (args: {
 }) =>
   Effect.flatMap(ApiClient, ({ client }) =>
     client.organization.revokeInvitation({
-      path: { orgId: args.orgId, invitationId: args.invitationId },
+      params: { orgId: args.orgId, invitationId: args.invitationId },
     }),
   ).pipe(Effect.tap(() => invitationsHelpers.invalidateAllQueries()));
 
@@ -71,7 +71,7 @@ export const removeOrgMember = (args: {
   readonly userId: UserId;
 }) =>
   Effect.flatMap(ApiClient, ({ client }) =>
-    client.organization.removeMember({ path: { orgId: args.orgId, userId: args.userId } }),
+    client.organization.removeMember({ params: { orgId: args.orgId, userId: args.userId } }),
   ).pipe(Effect.tap(() => membersHelpers.invalidateAllQueries()));
 
 export const promoteOrgMember = (args: {
@@ -79,7 +79,7 @@ export const promoteOrgMember = (args: {
   readonly userId: UserId;
 }) =>
   Effect.flatMap(ApiClient, ({ client }) =>
-    client.organization.promoteMember({ path: { orgId: args.orgId, userId: args.userId } }),
+    client.organization.promoteMember({ params: { orgId: args.orgId, userId: args.userId } }),
   ).pipe(Effect.tap(() => membersHelpers.invalidateAllQueries()));
 
 export const demoteOrgMember = (args: {
@@ -87,5 +87,5 @@ export const demoteOrgMember = (args: {
   readonly userId: UserId;
 }) =>
   Effect.flatMap(ApiClient, ({ client }) =>
-    client.organization.demoteMember({ path: { orgId: args.orgId, userId: args.userId } }),
+    client.organization.demoteMember({ params: { orgId: args.orgId, userId: args.userId } }),
   ).pipe(Effect.tap(() => membersHelpers.invalidateAllQueries()));

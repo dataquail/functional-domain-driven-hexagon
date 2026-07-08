@@ -27,6 +27,7 @@ import {
 import * as Cause from "effect/Cause";
 import type * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
 import * as React from "react";
 
 import { type ClientRuntimeContext, useRuntime } from "@/services/runtime.client";
@@ -52,7 +53,8 @@ export const useEffectSuspenseQuery = <
         Exit.match({
           onSuccess: (value) => value,
           onFailure: (cause) => {
-            if (Cause.isFailType(cause)) throw cause.error satisfies E;
+            const failure = Cause.findErrorOption(cause);
+            if (Option.isSome(failure)) throw failure.value satisfies E;
             throw new QueryDefect({ cause: Cause.squash(cause) });
           },
         }),

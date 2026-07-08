@@ -19,7 +19,7 @@ vi.mock("next/navigation", () => ({
   usePathname: () => pathname.current,
 }));
 
-const now = DateTime.unsafeFromDate(new Date("2026-01-01T00:00:00Z"));
+const now = DateTime.fromDateUnsafe(new Date("2026-01-01T00:00:00Z"));
 
 const orgsData = [
   {

@@ -1,11 +1,10 @@
 import type { QueryClient as TanstackQueryClient } from "@tanstack/react-query";
-import * as Effect from "effect/Effect";
+import * as Context from "effect/Context";
 import * as Layer from "effect/Layer";
 
-export class QueryClient extends Effect.Tag("@/common/QueryClient")<
-  QueryClient,
-  TanstackQueryClient
->() {
+export class QueryClient extends Context.Service<QueryClient, TanstackQueryClient>()(
+  "@/common/QueryClient",
+) {
   public static readonly make = (queryClient: TanstackQueryClient) =>
-    Layer.succeed(this, this.of(queryClient));
+    Layer.succeed(QueryClient, queryClient);
 }

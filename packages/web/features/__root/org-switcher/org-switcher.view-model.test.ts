@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { computeOrgSwitcherView, extractActiveOrgId } from "./org-switcher.view-model";
 
-const now = DateTime.unsafeFromDate(new Date("2026-01-01T00:00:00Z"));
+const now = DateTime.fromDateUnsafe(new Date("2026-01-01T00:00:00Z"));
 
 const orgA = {
   id: OrganizationId.make("11111111-1111-1111-1111-111111111111"),

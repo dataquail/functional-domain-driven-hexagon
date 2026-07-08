@@ -14,7 +14,7 @@
 // client runtime); on the server we don't run mutations, so the
 // helper's R is satisfied only client-side.
 
-import type { TodosContract } from "@org/contracts/api/Contracts";
+import { TodosContract } from "@org/contracts/api/Contracts";
 import type { OrganizationId, TodoId } from "@org/contracts/EntityIds";
 import * as Effect from "effect/Effect";
 
@@ -29,14 +29,17 @@ const todosHelpers = QueryData.makeHelpers<Array<TodosContract.Todo>, TodosKeyVa
 export const todosQueryKey = todosKey;
 
 export const todosQuery = (orgId: OrganizationId) =>
-  Effect.flatMap(ApiClient, ({ client }) => client.todos.get({ path: { orgId } }));
+  Effect.flatMap(ApiClient, ({ client }) => client.todos.get({ params: { orgId } }));
 
 export const createTodo = (args: {
   readonly orgId: OrganizationId;
   readonly payload: TodosContract.CreateTodoPayload;
 }) =>
   Effect.flatMap(ApiClient, ({ client }) =>
-    client.todos.create({ path: { orgId: args.orgId }, payload: args.payload }),
+    client.todos.create({
+      params: { orgId: args.orgId },
+      payload: new TodosContract.CreateTodoPayload(args.payload),
+    }),
   ).pipe(Effect.tap(() => todosHelpers.invalidateAllQueries()));
 
 export const updateTodo = (args: {
@@ -45,10 +48,13 @@ export const updateTodo = (args: {
   readonly payload: TodosContract.UpdateTodoPayload;
 }) =>
   Effect.flatMap(ApiClient, ({ client }) =>
-    client.todos.update({ path: { orgId: args.orgId, id: args.id }, payload: args.payload }),
+    client.todos.update({
+      params: { orgId: args.orgId, id: args.id },
+      payload: new TodosContract.UpdateTodoPayload(args.payload),
+    }),
   ).pipe(Effect.tap(() => todosHelpers.invalidateAllQueries()));
 
 export const deleteTodo = (args: { readonly orgId: OrganizationId; readonly id: TodoId }) =>
   Effect.flatMap(ApiClient, ({ client }) =>
-    client.todos.delete({ path: { orgId: args.orgId, id: args.id } }),
+    client.todos.delete({ params: { orgId: args.orgId, id: args.id } }),
   ).pipe(Effect.tap(() => todosHelpers.invalidateAllQueries()));

@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest";
 
 import { makeCreateUserPayload, makePaginatedUsers, makeUser } from "./user";
 
-const roundTrip = <A, I>(schema: Schema.Schema<A, I>, value: A) =>
+const roundTrip = <A, I>(schema: Schema.Codec<A, I>, value: A) =>
   Effect.runPromise(
     Effect.flatMap(Schema.encodeEffect(schema)(value), (encoded) =>
       Schema.decodeUnknownEffect(schema)(encoded),

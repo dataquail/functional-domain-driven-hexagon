@@ -43,6 +43,6 @@ export const ApiClientLive = (cookieHeader: string) =>
             HttpClient.retryTransient({ times: 3 }),
           ),
       });
-      return ApiClient.of({ client });
+      return { client };
     }),
   ).pipe(Layer.provide(FetchHttpClient.layer));

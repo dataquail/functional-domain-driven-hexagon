@@ -39,7 +39,7 @@ const makeClient = () =>
 
 describe("typedHandler", () => {
   it("round-trips Users.find with urlParams + paginated success body", async () => {
-    const fixedDate = DateTime.unsafeMake(new Date("2026-01-01T00:00:00Z"));
+    const fixedDate = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
     const sampleUser = new UserContract.User({
       id: UserId.make("11111111-1111-1111-1111-111111111111"),
       email: "alice@example.com",
@@ -64,7 +64,9 @@ describe("typedHandler", () => {
     const result = await Effect.runPromise(
       Effect.gen(function* () {
         const client = yield* makeClient();
-        return yield* client.user.find({ urlParams: { page: 1, pageSize: 10 } });
+        return yield* client.user.find({
+          query: new UserContract.FindUsersParams({ page: 1, pageSize: 10 }),
+        });
       }),
     );
 
@@ -86,12 +88,12 @@ describe("typedHandler", () => {
       Effect.gen(function* () {
         const client = yield* makeClient();
         return yield* client.user.create({
-          payload: {
+          payload: new UserContract.CreateUserPayload({
             email: "bob@example.com",
             country: "US",
             street: "2 B St",
             postalCode: "10002",
-          },
+          }),
         });
       }),
     );
@@ -115,12 +117,12 @@ describe("typedHandler", () => {
       Effect.gen(function* () {
         const client = yield* makeClient();
         return yield* client.user.create({
-          payload: {
+          payload: new UserContract.CreateUserPayload({
             email: "duplicate@example.com",
             country: "US",
             street: "3 C St",
             postalCode: "10003",
-          },
+          }),
         });
       }),
     );

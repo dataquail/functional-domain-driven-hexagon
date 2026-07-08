@@ -32,12 +32,12 @@ const ApiClientTestLive = Layer.effect(
   ApiClient,
   Effect.gen(function* () {
     const client = yield* HttpApiClient.make(DomainApi, { baseUrl: TEST_API_BASE });
-    return ApiClient.of({ client });
+    return { client };
   }),
 ).pipe(Layer.provide(FetchHttpClient.layer));
 
 const buildTestLive = (queryClient: QueryClient) =>
-  Layer.mergeAll(ApiClientTestLive, Toast.Default, QueryClientService.make(queryClient)).pipe(
+  Layer.mergeAll(ApiClientTestLive, Toast.layer, QueryClientService.make(queryClient)).pipe(
     Layer.provide(WebSdkLive),
   );
 
