@@ -8,13 +8,12 @@ import * as Schema from "effect/Schema";
 import { Api } from "@/api.js";
 import { MEMBER_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { hasTestDatabase } from "@/test-utils/test-database.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 const NameRowStd = Schema.standardSchemaV1(Schema.Struct({ name: Schema.String }));
 const MembershipCountRowStd = Schema.standardSchemaV1(Schema.Struct({ user_id: Schema.UUID }));
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("POST /orgs (integration)", () => {
   // Super-admins can't own orgs (they're a disjoint user type), so org

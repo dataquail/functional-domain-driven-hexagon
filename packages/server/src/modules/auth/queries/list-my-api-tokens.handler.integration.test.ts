@@ -13,7 +13,7 @@ import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositori
 import { listMyApiTokens } from "@/modules/auth/queries/list-my-api-tokens.handler.js";
 import { ListMyApiTokensQuery } from "@/modules/auth/queries/list-my-api-tokens.query.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const otherUserId = UserId.make("22222222-2222-2222-2222-222222222222");
@@ -36,7 +36,7 @@ const seedUsers = Effect.gen(function* () {
     .pipe(Effect.orDie);
 });
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("listMyApiTokens (integration)", () => {
   beforeEach(async () => {

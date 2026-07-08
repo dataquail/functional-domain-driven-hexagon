@@ -9,7 +9,6 @@ import * as Exit from "effect/Exit";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { hasTestDatabase } from "@/test-utils/test-database.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 const BILLING_TABLES = [
@@ -22,7 +21,7 @@ const BILLING_TABLES = [
   "user.users",
 ] as const;
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("POST /orgs/:orgId/billing/subscriptions (integration)", () => {
   // The super-admin caller bypasses `IsBillingOrgAdmin` via the
@@ -78,7 +77,7 @@ suite("POST /orgs/:orgId/billing/subscriptions (integration)", () => {
 // as the CurrentUser. That user has no `super_admin` platform role and
 // no `admin` org-role on a foreign org — composed check returns false,
 // endpoint surfaces `Forbidden`.
-const memberSuite = hasTestDatabase ? describe.sequential : describe.skip;
+const memberSuite = describe.sequential;
 
 memberSuite("POST /orgs/:orgId/billing/subscriptions (non-admin caller)", () => {
   const { run } = useServerTestRuntime(BILLING_TABLES, {

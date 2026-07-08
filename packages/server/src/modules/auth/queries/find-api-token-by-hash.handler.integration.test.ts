@@ -16,7 +16,7 @@ import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositori
 import { findApiTokenByHash } from "@/modules/auth/queries/find-api-token-by-hash.handler.js";
 import { FindApiTokenByHashQuery } from "@/modules/auth/queries/find-api-token-by-hash.query.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const apiTokenId = ApiTokenId.make("11111111-1111-1111-1111-111111111111");
 const userId = UserId.make("22222222-2222-2222-2222-222222222222");
@@ -73,7 +73,7 @@ const insert = (opts: { expiresAt: DateTime.Utc | null; revokedAt?: DateTime.Utc
 const errorOf = (exit: Exit.Exit<unknown, unknown>) =>
   Exit.isFailure(exit) && exit.cause._tag === "Fail" ? exit.cause.error : null;
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("findApiTokenByHash (integration)", () => {
   beforeEach(async () => {

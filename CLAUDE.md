@@ -81,20 +81,21 @@ escapes — low risk.
 ## Test seams
 
 - **Use-case unit tests** (`commands/`, `event-handlers/`) compose three test-only services: `UserRepositoryFake`, `RecordingEventBus`, `IdentityUnitOfWork`. No DB, no docker.
-- **Integration tests** (`*.repository-live.integration.test.ts`, `<endpoint>.endpoint.integration.test.ts`, `<query>.handler.integration.test.ts`) hit a real DB. They self-skip when `DATABASE_URL_TEST` is unset; `pnpm test` succeeds with no auxiliary services.
+- **Two disjoint suites, selected by file suffix + the `TEST_INTEGRATION` env toggle** (in `vitest.shared.ts`). `pnpm test` runs the **unit** suite — every `*.test.ts` _except_ `*.integration.test.ts` — and needs no auxiliary services. `pnpm test:integration` (sets `TEST_INTEGRATION=true`, scoped to `@org/server` + `@org/jobs`) runs **only** `*.integration.test.ts`. The suites never overlap.
+- **Integration tests** (`*.repository-live.integration.test.ts`, `<endpoint>.endpoint.integration.test.ts`, `<query>.handler.integration.test.ts`) hit a real DB and are **dumb** — they do not self-skip. The integration global-setup hard-fails (asserts `DATABASE_URL_TEST` is set, then connects) so a missing or unreachable DB aborts the whole run rather than silently skipping. Provide `DATABASE_URL_TEST` (name must contain `test`) before running `pnpm test:integration`.
 - **HTTP integration tests** use `useServerTestRuntime(["table1", "table2"])` from `test-utils/`, which wires `ManagedRuntime.make(TestServerLive)` + `beforeAll`/`afterAll` + per-test `truncate`. Tests then exercise the contract via `HttpApiClient.make(Api)` and seed prior state by calling _other endpoints_, not by reaching into module internals.
 - **Query/repository integration tests** seed via the live repository (or other production-path code), not via raw SQL. Using the repository as the seeding seam keeps the test honest about what production paths look like.
 - **Endpoint test naming.** A test file ending in `*.endpoint.integration.test.ts` exercises the real HTTP layer against a live database via `useServerTestRuntime(...)`. A file ending in `*.endpoint.test.ts` is a true unit test — no DB, no HTTP round-trip — typically a parity-rule token for endpoints whose meaningful coverage lives elsewhere (the OIDC `login` / `logout` flows, covered by Playwright + `SessionRepositoryLive` integration tests; `callback`'s reachable no-IdP guard has a real `callback.endpoint.integration.test.ts`). The `login`/`logout` endpoints are the two named exemptions in the folder-structure rule; every other endpoint must have `*.endpoint.integration.test.ts`. Any `.endpoint.test.ts` file must carry a header comment naming where the meaningful coverage lives; if a test starts hitting real HTTP + DB, rename it to `.endpoint.integration.test.ts`.
 
 ## Commands
 
-| Command                                    | What it runs                                                                                    |
-| ------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| `pnpm check:all`                           | lint + lint:deps + typecheck + tests (the full gate)                                            |
-| `pnpm lint`                                | ESLint — includes the `project-structure/folder-structure` file-taxonomy rule (layout + parity) |
-| `pnpm test`                                | vitest, no DB                                                                                   |
-| `DATABASE_URL_TEST=postgres://… pnpm test` | also runs integration tests                                                                     |
-| `pnpm lint:deps`                           | dependency-cruiser architecture rules                                                           |
+| Command                                                | What it runs                                                                                    |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `pnpm check:all`                                       | lint + lint:deps + typecheck + tests (the full gate)                                            |
+| `pnpm lint`                                            | ESLint — includes the `project-structure/folder-structure` file-taxonomy rule (layout + parity) |
+| `pnpm test`                                            | vitest **unit** suite (excludes `*.integration.test.ts`), no DB                                 |
+| `DATABASE_URL_TEST=postgres://… pnpm test:integration` | **integration** suite only (`*.integration.test.ts`); hard-fails if no DB                       |
+| `pnpm lint:deps`                                       | dependency-cruiser architecture rules                                                           |
 
 ## Conventions worth knowing
 

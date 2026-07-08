@@ -11,7 +11,7 @@ import { OrganizationRolesRepository } from "@/modules/organization/domain/ports
 import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-live.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
@@ -51,7 +51,7 @@ const seedFixtures = Effect.gen(function* () {
 
 const TestLayer = OrganizationRolesRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("OrganizationRolesRepositoryLive (integration)", () => {
   beforeEach(async () => {

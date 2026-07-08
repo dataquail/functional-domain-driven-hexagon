@@ -9,10 +9,9 @@ import * as Exit from "effect/Exit";
 import { Api } from "@/api.js";
 import { MEMBER_CALLER_ID, SUPER_ADMIN_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { hasTestDatabase } from "@/test-utils/test-database.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 const ORG_ID = "11111111-1111-1111-1111-111111111111" as never;
 // A second, plain (non-admin) member, distinct from the seeded callers.
@@ -93,7 +92,7 @@ suite("GET /orgs/:orgId/members (integration, super-admin caller)", () => {
   });
 });
 
-const memberSuite = hasTestDatabase ? describe.sequential : describe.skip;
+const memberSuite = describe.sequential;
 
 memberSuite("GET /orgs/:orgId/members (integration, plain-member caller)", () => {
   const { run } = useServerTestRuntime(

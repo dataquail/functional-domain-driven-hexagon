@@ -22,7 +22,7 @@ import { findOrganizationMemberships } from "@/modules/organization/queries/find
 import { FindOrganizationMembershipsQuery } from "@/modules/organization/queries/find-organization-memberships.query.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const orgA = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const orgB = OrganizationId.make("22222222-2222-2222-2222-222222222222");
@@ -91,7 +91,7 @@ const seedAdmin = (userId: UserId, organizationId: OrganizationId) =>
     yield* rolesRepo.upsertOne(granted.right.organizationRoles);
   });
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("findOrganizationMemberships (integration)", () => {
   beforeEach(async () => {

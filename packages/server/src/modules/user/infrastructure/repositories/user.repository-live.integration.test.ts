@@ -14,7 +14,7 @@ import { UserRootOps } from "@/modules/user/domain/user.root.js";
 import { AddressValueObject } from "@/modules/user/domain/value-objects/address.value-object.js";
 import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const aliceId = UserId.make("11111111-1111-1111-1111-111111111111");
 const bobId = UserId.make("22222222-2222-2222-2222-222222222222");
@@ -33,7 +33,7 @@ const TestLayer = UserRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
 // Integration tests share one DB and truncate between cases, so they must run
 // sequentially — vitest.shared.ts sets sequence.concurrent: true globally.
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("UserRepositoryLive (integration)", () => {
   beforeEach(async () => {

@@ -13,7 +13,7 @@ import { TodosRepositoryLive } from "@/modules/todos/infrastructure/repositories
 import { listTodos } from "@/modules/todos/queries/list-todos.handler.js";
 import { ListTodosQuery } from "@/modules/todos/queries/list-todos.query.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const aliceId = TodoId.make("11111111-1111-1111-1111-111111111111");
 const bobId = TodoId.make("22222222-2222-2222-2222-222222222222");
@@ -50,7 +50,7 @@ const seed = (id: TodoId, organizationId: OrganizationId, title: string, now: Da
     yield* repo.insertOne(TodoRootOps.create({ id, organizationId, title, now }));
   });
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("listTodos (integration)", () => {
   beforeEach(async () => {

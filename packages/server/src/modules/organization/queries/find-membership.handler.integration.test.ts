@@ -16,7 +16,7 @@ import { findMembership } from "@/modules/organization/queries/find-membership.h
 import { FindMembershipQuery } from "@/modules/organization/queries/find-membership.query.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
@@ -43,7 +43,7 @@ const seedOrg = Effect.gen(function* () {
   yield* orgs.insertOne(OrganizationRootOps.create({ id: orgId, name: "Acme", now }).organization);
 });
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("findMembership (integration)", () => {
   beforeEach(async () => {

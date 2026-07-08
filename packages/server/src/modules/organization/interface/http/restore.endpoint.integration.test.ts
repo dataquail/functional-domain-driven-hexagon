@@ -10,14 +10,13 @@ import * as Schema from "effect/Schema";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { hasTestDatabase } from "@/test-utils/test-database.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 const DeletedAtRowStd = Schema.standardSchemaV1(
   Schema.Struct({ deleted_at: Schema.NullOr(Schema.DateTimeUtcFromDate) }),
 );
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("POST /orgs/:id/restore (integration)", () => {
   // Restore is super-admin-or-org-admin; this suite runs as the super-admin
@@ -99,7 +98,7 @@ suite("POST /orgs/:id/restore (integration)", () => {
   });
 });
 
-const memberSuite = hasTestDatabase ? describe.sequential : describe.skip;
+const memberSuite = describe.sequential;
 
 memberSuite("POST /orgs/:id/restore (integration, non-super-admin caller)", () => {
   const { run } = useServerTestRuntime(

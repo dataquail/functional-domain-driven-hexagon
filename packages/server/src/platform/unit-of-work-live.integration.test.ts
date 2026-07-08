@@ -12,8 +12,7 @@ import { IntegrationEventBus } from "@/platform/ddd/ports/integration-event-bus.
 import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 import { makeIntegrationEventBusLive } from "@/platform/integration-event-bus-live.js";
 import { UnitOfWorkLive } from "@/platform/unit-of-work-live.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
-
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 // `UnitOfWorkLive` now depends on `IntegrationEventBus` (for the post-commit
 // flush). Bundling them in one layer guarantees the test body's
 // `yield* IntegrationEventBus` and the unit of work's flush share the SAME bus
@@ -44,7 +43,7 @@ const countFlush = sql.type(RowSchemas.UserRowStd)`
   SELECT * FROM "user".users WHERE id IN (${outerId}, ${markerId})
 `;
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("UnitOfWorkLive re-entrancy (integration)", () => {
   beforeEach(async () => {

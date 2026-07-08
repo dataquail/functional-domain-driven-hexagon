@@ -10,7 +10,7 @@ import { RolesRepository } from "@/modules/role/domain/ports/repositories/roles.
 import { RolesRootOps } from "@/modules/role/domain/roles.root.js";
 import { RolesRepositoryLive } from "@/modules/role/infrastructure/repositories/roles.repository-live.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 
@@ -31,7 +31,7 @@ const seedUser = Effect.gen(function* () {
 
 const TestLayer = RolesRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("RolesRepositoryLive (integration)", () => {
   beforeEach(async () => {

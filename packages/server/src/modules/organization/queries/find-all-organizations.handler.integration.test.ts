@@ -12,7 +12,7 @@ import { OrganizationRepositoryLive } from "@/modules/organization/infrastructur
 import { findAllOrganizations } from "@/modules/organization/queries/find-all-organizations.handler.js";
 import { FindAllOrganizationsQuery } from "@/modules/organization/queries/find-all-organizations.query.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const acmeId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const beta = OrganizationId.make("22222222-2222-2222-2222-222222222222");
@@ -21,7 +21,7 @@ const later = DateTime.unsafeMake(new Date("2026-02-01T00:00:00Z"));
 
 const TestLayer = OrganizationRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("findAllOrganizations (integration)", () => {
   beforeEach(async () => {

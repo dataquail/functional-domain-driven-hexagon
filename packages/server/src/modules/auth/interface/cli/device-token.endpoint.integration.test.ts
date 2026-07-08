@@ -5,11 +5,9 @@ import * as Effect from "effect/Effect";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { hasTestDatabase } from "@/test-utils/test-database.js";
-
 // Drives the full device flow through the real HTTP surface: the fake auth
 // middleware supplies the super-admin caller for the browser `approve` step.
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("POST /cli/device/token (integration)", () => {
   const { run } = useServerTestRuntime(

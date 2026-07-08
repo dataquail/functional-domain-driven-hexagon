@@ -8,7 +8,6 @@ import * as Exit from "effect/Exit";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { hasTestDatabase } from "@/test-utils/test-database.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 const TODO_TABLES = [
@@ -20,7 +19,7 @@ const TODO_TABLES = [
   "user.users",
 ] as const;
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("POST /orgs/:orgId/todos (integration)", () => {
   const { run } = useServerTestRuntime(TODO_TABLES, {
@@ -42,7 +41,7 @@ suite("POST /orgs/:orgId/todos (integration)", () => {
   });
 });
 
-const memberSuite = hasTestDatabase ? describe.sequential : describe.skip;
+const memberSuite = describe.sequential;
 
 memberSuite("POST /orgs/:orgId/todos (integration, non-member caller)", () => {
   const { run } = useServerTestRuntime(TODO_TABLES, {

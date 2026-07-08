@@ -10,7 +10,7 @@ import { AuthIdentityRepository } from "@/modules/auth/domain/ports/repositories
 import { AuthIdentityNotFound } from "@/modules/auth/domain/session.errors.js";
 import { AuthIdentityRepositoryLive } from "@/modules/auth/infrastructure/repositories/auth-identity.repository-live.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const subject = "zitadel-sub-integration";
@@ -33,7 +33,7 @@ const seedUserAndIdentity = Effect.gen(function* () {
   );
 }).pipe(Effect.orDie);
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("AuthIdentityRepositoryLive (integration)", () => {
   beforeEach(async () => {

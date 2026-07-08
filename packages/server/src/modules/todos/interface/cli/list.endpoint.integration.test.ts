@@ -5,7 +5,6 @@ import * as Effect from "effect/Effect";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { hasTestDatabase } from "@/test-utils/test-database.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 const TODO_TABLES = [
@@ -17,7 +16,7 @@ const TODO_TABLES = [
   "user.users",
 ] as const;
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("GET /cli/orgs/:orgId/todos (integration)", () => {
   const { run } = useServerTestRuntime(TODO_TABLES, {

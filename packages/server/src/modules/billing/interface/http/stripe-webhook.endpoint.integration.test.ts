@@ -11,7 +11,6 @@ import { Api } from "@/api.js";
 import { FAKE_WEBHOOK_SIGNATURE } from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { hasTestDatabase } from "@/test-utils/test-database.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 // The fake billing gateway's `sub_test_N` counter persists across
@@ -47,7 +46,7 @@ const BILLING_TABLES = [
   "user.users",
 ] as const;
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 // The webhook endpoint reads raw bytes via `HttpServerRequest.text`
 // (Stripe's `constructEvent` requires the EXACT bytes the signature

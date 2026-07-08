@@ -13,7 +13,7 @@ import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant.root.js";
 import { DeviceGrantRepository } from "@/modules/auth/domain/ports/repositories/device-grant.repository.js";
 import { DeviceGrantRepositoryLive } from "@/modules/auth/infrastructure/repositories/device-grant.repository-live.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const id = DeviceGrantId.make("22222222-2222-2222-2222-222222222222");
@@ -39,7 +39,7 @@ const start = (now: DateTime.Utc) =>
     ttlSeconds: 600,
   });
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("DeviceGrantRepositoryLive (integration)", () => {
   beforeEach(async () => {

@@ -8,8 +8,8 @@ permissions:
   contents: read
 
 jobs:
-  server-integration:
-    name: Server integration
+  integration:
+    name: Integration (server + jobs)
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -54,5 +54,5 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup
-      - name: Run server integration tests
-        run: pnpm -F @org/server test --run integration.test
+      - name: Run integration suite (server + jobs)
+        run: pnpm test:integration

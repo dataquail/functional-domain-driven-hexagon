@@ -12,7 +12,7 @@ import { RolesRepositoryLive } from "@/modules/role/infrastructure/repositories/
 import { findUserRoles } from "@/modules/role/queries/find-user-roles.handler.js";
 import { FindUserRolesQuery } from "@/modules/role/queries/find-user-roles.query.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 
@@ -30,7 +30,7 @@ const seedUser = Effect.gen(function* () {
     .pipe(Effect.orDie);
 });
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("findUserRoles (integration)", () => {
   beforeEach(async () => {

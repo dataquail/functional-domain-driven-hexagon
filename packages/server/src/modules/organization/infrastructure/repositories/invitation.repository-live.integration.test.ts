@@ -21,7 +21,7 @@ import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { hasTestDatabase, TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const invitationId = InvitationId.make("44444444-4444-4444-4444-444444444444");
 const orgId = OrganizationId.make("55555555-5555-5555-5555-555555555555");
@@ -55,7 +55,7 @@ const seed = (): InvitationRoot =>
 
 const TestLayer = InvitationRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("InvitationRepositoryLive (integration)", () => {
   beforeEach(async () => {

@@ -5,7 +5,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
 
-import { hasTestDatabase, TestDatabaseLive, truncate } from "../test-utils/test-database.js";
+import { TestDatabaseLive, truncate } from "../test-utils/test-database.js";
 import { purgeExpiredSessions } from "./purge-expired-sessions.js";
 
 const userId = "11111111-1111-1111-1111-111111111111";
@@ -58,7 +58,7 @@ const findSessionIds = Effect.flatMap(Database.Database, (db) =>
 
 const TestLayer = Layer.provideMerge(Layer.empty, TestDatabaseLive);
 
-const suite = hasTestDatabase ? describe.sequential : describe.skip;
+const suite = describe.sequential;
 
 suite("purgeExpiredSessions (integration)", () => {
   beforeEach(async () => {
