@@ -107,8 +107,14 @@ runs Jaeger via `docker-compose`.
 
 This drops the `@effect/opentelemetry` and `@opentelemetry/*` dependency set from the
 server, consistent with the v4 migration's goal of consolidating on the single `effect`
-package. (The browser SDK in the frontend still uses the companion package; porting the
-browser tracer to the first-party exporter is a tracked follow-up.)
+package. The browser tracer was ported the same way — `web-sdk.client.ts` now provides
+`OtlpTracer.layer` (over `FetchHttpClient` + `OtlpSerialization.layerJson`) into the client
+`ManagedRuntime` instead of `@effect/opentelemetry`'s `WebSdk` — so `@effect/opentelemetry`
+is gone from the whole monorepo. The browser keeps Effect's `HttpClient` trace propagation
+enabled (it is the propagator on the client, whereas the Next server disables it and lets
+`@vercel/otel` own propagation), so a browser span propagates `traceparent` on `/api/*`
+fetches and Jaeger stitches browser → Next → BFF into one trace. `@vercel/otel` remains the
+Next-server (Node) tracer; replacing it with a first-party Node equivalent is out of scope.
 
 ### Two kinds of correlation — unchanged
 

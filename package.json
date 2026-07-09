@@ -83,7 +83,6 @@
     "overrides": {
       "vitest": "^3.2.0",
       "effect": "4.0.0-beta.94",
-      "@effect/opentelemetry": "4.0.0-beta.94",
       "@effect/platform-node": "4.0.0-beta.94",
       "@effect/build-utils": "0.8.9",
       "@effect/eslint-plugin": "0.3.2",

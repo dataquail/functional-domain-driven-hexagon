@@ -13,10 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@effect/opentelemetry": "4.0.0-beta.94",
-    "@opentelemetry/exporter-trace-otlp-http": "^0.216.0",
     "@opentelemetry/sdk-trace-base": "^2.9.0",
-    "@opentelemetry/sdk-trace-web": "2.7.1",
     "@org/components": "workspace:^",
     "@org/contracts": "workspace:^",
     "@tanstack/react-form": "^0.43.2",
