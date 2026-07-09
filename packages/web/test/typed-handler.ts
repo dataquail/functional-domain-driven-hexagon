@@ -9,14 +9,14 @@
 // `HttpApiSchema` annotations (`@effect/platform`) so the wire encoding
 // matches what the real server does.
 
-import type * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
-import type * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import * as SchemaAST from "effect/SchemaAST";
+import type * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
+import type * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 import {
   type DefaultBodyType,
   http,
@@ -120,8 +120,8 @@ export const typedHandler = <E extends HttpApiEndpoint.Any>(
   // (path params) and `query` (querystring) are `Schema.Top | undefined`,
   // while `payload` is a content-type-keyed map whose first entry carries
   // the body schema.
-  const paramsSchema = ep.params as Schema.Top | undefined;
-  const querySchema = ep.query as Schema.Top | undefined;
+  const paramsSchema = ep.params;
+  const querySchema = ep.query;
   const payloadSchema = [...ep.payload.values()][0]?.schemas[0] as Schema.Top | undefined;
 
   return verb(fullPath, async ({ params, request }) => {
@@ -153,7 +153,7 @@ export const typedHandler = <E extends HttpApiEndpoint.Any>(
     if (Exit.isSuccess(exit)) {
       // `success`/`error` are now `ReadonlySet<Schema.Top>`; the buffered
       // JSON endpoints in this contract carry exactly one success schema.
-      const successSchema = [...ep.success][0] as Schema.Top;
+      const successSchema = [...ep.success][0];
       const status = getStatus(successSchema.ast, 200);
       const encoded = await encodeUnknown(successSchema, exit.value);
       return encoded === undefined
@@ -177,7 +177,7 @@ export const typedHandler = <E extends HttpApiEndpoint.Any>(
     const variantSchema =
       typeof error.constructor === "function" && "ast" in (error.constructor as object)
         ? (error.constructor as unknown as Schema.Top)
-        : ([...ep.error][0] as Schema.Top);
+        : ([...ep.error][0]);
     const status = getStatus(variantSchema.ast, 500);
     const encoded = await encodeUnknown(variantSchema, error);
     return HttpResponse.json(encoded as JsonValue, { status });

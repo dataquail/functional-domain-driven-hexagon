@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -8,6 +7,7 @@ import { OrganizationId, TodoId } from "@org/contracts/EntityIds";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
+import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
 import { z } from "zod";
 
 // MCP (stdio) server exposing the CLI surface as tools (ADR-0024). It reuses

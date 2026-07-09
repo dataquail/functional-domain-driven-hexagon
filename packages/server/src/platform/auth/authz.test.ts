@@ -1,12 +1,12 @@
-import * as Cause from "effect/Cause";
-import * as Option from "effect/Option";
 import { describe, it } from "@effect/vitest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { type CurrentUser, CurrentUser as CurrentUserTag } from "@org/contracts/Policy";
 import { deepStrictEqual } from "assert";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { UserId } from "@/platform/ids/user-id.js";
 import { makeMembershipServiceFake } from "@/test-utils/membership-service-fake.js";

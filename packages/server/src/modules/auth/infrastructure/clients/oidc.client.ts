@@ -157,5 +157,5 @@ const make = Effect.gen(function* () {
 export class OidcClient extends Context.Service<OidcClient, Effect.Success<typeof make>>()(
   "OidcClient",
 ) {
-  static readonly layer = Layer.effect(OidcClient, make).pipe(Layer.provide(EnvVars.layer));
+  public static readonly layer = Layer.effect(OidcClient, make).pipe(Layer.provide(EnvVars.layer));
 }

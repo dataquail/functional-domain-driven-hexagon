@@ -3,8 +3,8 @@ import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Result from "effect/Result";
 import * as Layer from "effect/Layer";
+import * as Result from "effect/Result";
 import { beforeEach } from "vitest";
 
 import { MembershipRootOps } from "@/modules/organization/domain/membership.root.js";

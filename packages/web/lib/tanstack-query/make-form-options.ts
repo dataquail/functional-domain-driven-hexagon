@@ -73,7 +73,7 @@ export const validateWithSchema = <A, I extends Record<PropertyKey, any>>(
       acc[key] = issue.message;
     }
 
-    return (Object.keys(acc).length > 0 ? acc : null) as SchemaValidatorResult<I>;
+    return (Object.keys(acc).length > 0 ? acc : null);
   };
 };
 

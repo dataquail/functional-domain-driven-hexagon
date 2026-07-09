@@ -13,12 +13,12 @@
 // inbound cookie injected; this variant talks to a relative path with
 // the browser's cookie jar handling attachment.
 
-import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
-import * as HttpClient from "effect/unstable/http/HttpClient";
 import { DomainApi } from "@org/contracts/DomainApi";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
+import * as HttpClient from "effect/unstable/http/HttpClient";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { ApiClient } from "./api-client.shared";
 

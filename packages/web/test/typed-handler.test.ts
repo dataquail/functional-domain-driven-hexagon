@@ -3,13 +3,13 @@
 // `Users.find` (GET with `urlParams` + paginated success body) and
 // `Users.create` (POST with `payload` + tagged-error union).
 
-import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import * as UserContract from "@org/contracts/api/UserContract";
 import { DomainApi } from "@org/contracts/DomainApi";
 import { UserId } from "@org/contracts/EntityIds";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 

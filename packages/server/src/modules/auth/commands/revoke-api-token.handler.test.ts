@@ -1,10 +1,10 @@
-import * as Cause from "effect/Cause";
-import * as Option from "effect/Option";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { MintApiTokenCommand } from "@/modules/auth/commands/mint-api-token.command.js";
 import { mintApiToken } from "@/modules/auth/commands/mint-api-token.handler.js";

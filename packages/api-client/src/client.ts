@@ -1,7 +1,7 @@
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
+import { CliApi } from "@org/contracts/CliApi";
 import * as HttpClient from "effect/unstable/http/HttpClient";
 import * as HttpClientRequest from "effect/unstable/http/HttpClientRequest";
-import { CliApi } from "@org/contracts/CliApi";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 // Builds the typed client over `CliApi` (ADR-0024). When a token is present
 // it's injected as `Authorization: Bearer …`; the device-auth endpoints are

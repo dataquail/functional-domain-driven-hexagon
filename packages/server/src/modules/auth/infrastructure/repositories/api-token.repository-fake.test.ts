@@ -1,10 +1,10 @@
-import * as Cause from "effect/Cause";
-import * as Option from "effect/Option";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
+import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
 
 import { ApiTokenNotFound } from "@/modules/auth/domain/api-token.errors.js";
 import { ApiTokenId } from "@/modules/auth/domain/api-token.id.js";

@@ -1,5 +1,3 @@
-import * as Command from "effect/unstable/cli/Command";
-import * as Flag from "effect/unstable/cli/Flag";
 import {
   clearToken,
   makeCliClient,
@@ -13,6 +11,8 @@ import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schedule from "effect/Schedule";
+import * as Command from "effect/unstable/cli/Command";
+import * as Flag from "effect/unstable/cli/Flag";
 
 import { CliError, maskToken, openBrowser, toCliError } from "../internal.js";
 

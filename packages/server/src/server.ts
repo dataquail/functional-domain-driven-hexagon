@@ -1,11 +1,5 @@
 import { createServer } from "node:http";
 
-import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
-import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
-import * as HttpMiddleware from "effect/unstable/http/HttpMiddleware";
-import * as HttpRouter from "effect/unstable/http/HttpRouter";
-import * as OtlpTracer from "effect/unstable/observability/OtlpTracer";
-import * as OtlpSerialization from "effect/unstable/observability/OtlpSerialization";
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
 import { Database } from "@org/database/index";
@@ -14,6 +8,12 @@ import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schedule from "effect/Schedule";
+import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
+import * as HttpMiddleware from "effect/unstable/http/HttpMiddleware";
+import * as HttpRouter from "effect/unstable/http/HttpRouter";
+import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
+import * as OtlpSerialization from "effect/unstable/observability/OtlpSerialization";
+import * as OtlpTracer from "effect/unstable/observability/OtlpTracer";
 
 import { Api } from "./api.js";
 import { EnvVars } from "./common/env-vars.js";

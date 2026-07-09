@@ -1,10 +1,10 @@
-import * as Cause from "effect/Cause";
-import * as Option from "effect/Option";
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
+import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
 
 import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todos.repository.js";
 import { TodoNotFound } from "@/modules/todos/domain/todo.errors.js";

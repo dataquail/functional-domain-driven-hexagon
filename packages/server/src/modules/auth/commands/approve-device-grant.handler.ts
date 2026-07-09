@@ -19,7 +19,7 @@ export const approveDeviceGrant = Effect.fn("approveDeviceGrant")(function* (
   const grant = yield* repo.findOneByUserCode(cmd.userCode);
   const now = yield* DateTime.now;
   if (DeviceGrantRootOps.isExpired(grant, now)) {
-    return yield* Effect.fail(new DeviceGrantExpired());
+    return yield* new DeviceGrantExpired();
   }
   yield* repo.updateOne(DeviceGrantRootOps.approve({ grant, userId: cmd.userId, now }));
 }, withUnitOfWork);

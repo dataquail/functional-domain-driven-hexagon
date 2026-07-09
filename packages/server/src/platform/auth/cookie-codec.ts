@@ -38,5 +38,5 @@ const make = Effect.gen(function* () {
 export class CookieCodec extends Context.Service<CookieCodec, Effect.Success<typeof make>>()(
   "CookieCodec",
 ) {
-  static readonly layer = Layer.effect(CookieCodec, make).pipe(Layer.provide(EnvVars.layer));
+  public static readonly layer = Layer.effect(CookieCodec, make).pipe(Layer.provide(EnvVars.layer));
 }

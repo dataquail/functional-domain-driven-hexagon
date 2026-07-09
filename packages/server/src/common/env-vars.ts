@@ -104,5 +104,5 @@ const make = Effect.gen(function* () {
 });
 
 export class EnvVars extends Context.Service<EnvVars, Effect.Success<typeof make>>()("EnvVars") {
-  static readonly layer = Layer.effect(EnvVars, make);
+  public static readonly layer = Layer.effect(EnvVars, make);
 }

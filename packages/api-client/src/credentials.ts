@@ -1,8 +1,8 @@
 import { homedir } from "node:os";
 
+import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Path from "effect/Path";
-import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 import { tokenFromEnv } from "./config.js";

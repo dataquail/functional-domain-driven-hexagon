@@ -9,9 +9,9 @@
 // intentionally environment-agnostic — no `import "server-only"`, no
 // `next/headers`, no browser globals.
 
-import type * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { type DomainApi } from "@org/contracts/DomainApi";
 import * as Context from "effect/Context";
+import type * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 // Unwrap the inferred HttpApiClient client shape for `typeof DomainApi`.
 // `HttpApiClient.make` returns `Client<Groups>`; `ForApi` pulls the
