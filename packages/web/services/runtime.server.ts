@@ -9,12 +9,24 @@
 // Next process boundary rather than per-request.
 import "server-only";
 
+import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
+import * as HttpClient from "effect/unstable/http/HttpClient";
 import { cookies } from "next/headers";
 import React from "react";
 
 import { ApiClientLive } from "./api-client.server";
 import { type ApiClient } from "./api-client.shared";
+
+// `@vercel/otel` (instrumentation.ts) owns trace-context propagation on the
+// Next server: it auto-instruments `fetch` and injects one consistent W3C
+// `traceparent` from the active request context, so browser → Next → BFF is a
+// single trace (ADR-0012). Effect's own `HttpClient` would ALSO inject its
+// per-call span as a `b3` header — a second, conflicting context on the same
+// request. The BFF honors `traceparent`, so that `b3` is dead weight that only
+// muddies the headers. Disable Effect's propagation so `@vercel/otel` is the
+// sole source of truth.
+const NoEffectTracePropagation = Layer.succeed(HttpClient.TracerPropagationEnabled, false);
 
 export const getServerRuntime = React.cache(async () => {
   const cookieStore = await cookies();
@@ -22,7 +34,7 @@ export const getServerRuntime = React.cache(async () => {
     .getAll()
     .map((c) => `${c.name}=${c.value}`)
     .join("; ");
-  return ManagedRuntime.make(ApiClientLive(cookieHeader));
+  return ManagedRuntime.make(Layer.merge(ApiClientLive(cookieHeader), NoEffectTracePropagation));
 });
 
 export type ServerRuntime = ManagedRuntime.ManagedRuntime<ApiClient, never>;
