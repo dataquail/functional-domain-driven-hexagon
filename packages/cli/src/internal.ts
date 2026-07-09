@@ -55,7 +55,7 @@ export const maskToken = (token: string): string =>
   token.length <= 16 ? `${token.slice(0, 4)}…` : `${token.slice(0, 12)}…${token.slice(-4)}`;
 
 // Maps any wire/domain failure to a single friendly `CliError`. Wrap a
-// command's body with `Effect.catchAll(toCliError)` so the entrypoint only
+// command's body with `Effect.catch(toCliError)` so the entrypoint only
 // ever sees `CliError`.
 export const toCliError = (error: unknown): CliError => {
   if (error instanceof CliError) return error;

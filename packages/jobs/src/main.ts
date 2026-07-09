@@ -31,7 +31,7 @@ const hourlyAtTopOfHour = Schedule.cron("0 * * * *");
 //
 // `purgeExpiredSessions` already has `Effect.orDie` on the DB call, so
 // expected DB errors become defects. Wrap the per-tick run with
-// `catchAllCause` so a single tick's panic logs but doesn't end the loop —
+// `Effect.catchCause` so a single tick's panic logs but doesn't end the loop —
 // the next cron fire gets a fresh attempt. Lost-connection errors propagate
 // via the Database layer's release and crash the process; the orchestrator
 // is expected to restart it.
