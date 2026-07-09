@@ -1,4 +1,5 @@
 import { describe, it } from "@effect/vitest";
+import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
@@ -43,7 +44,7 @@ suite("POST /orgs/:orgId/invitations (integration, super-admin caller)", () => {
 
         const { invitationId } = yield* client.organization.inviteUser({
           params: { orgId: ORG_ID },
-          payload: { email: "alice@example.com" },
+          payload: new OrganizationContract.InviteUserPayload({ email: "alice@example.com" }),
         });
 
         const res = yield* client.organization.findInvitations({ params: { orgId: ORG_ID } });
@@ -65,11 +66,11 @@ suite("POST /orgs/:orgId/invitations (integration, super-admin caller)", () => {
 
         yield* client.organization.inviteUser({
           params: { orgId: ORG_ID },
-          payload: { email: "alice@example.com" },
+          payload: new OrganizationContract.InviteUserPayload({ email: "alice@example.com" }),
         });
         yield* client.organization.inviteUser({
           params: { orgId: ORG_ID },
-          payload: { email: "alice@example.com" },
+          payload: new OrganizationContract.InviteUserPayload({ email: "alice@example.com" }),
         });
 
         const res = yield* client.organization.findInvitations({ params: { orgId: ORG_ID } });
@@ -85,12 +86,15 @@ suite("POST /orgs/:orgId/invitations (integration, super-admin caller)", () => {
         const exit = yield* Effect.exit(
           client.organization.inviteUser({
             params: { orgId: UNKNOWN_ORG_ID },
-            payload: { email: "alice@example.com" },
+            payload: new OrganizationContract.InviteUserPayload({ email: "alice@example.com" }),
           }),
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          deepStrictEqual(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag, "OrganizationNotFoundError");
+          deepStrictEqual(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag,
+            "OrganizationNotFoundError",
+          );
         }
       }),
     );
@@ -111,12 +115,15 @@ suite("POST /orgs/:orgId/invitations (integration, non-admin member caller)", ()
         const exit = yield* Effect.exit(
           client.organization.inviteUser({
             params: { orgId: ORG_ID },
-            payload: { email: "alice@example.com" },
+            payload: new OrganizationContract.InviteUserPayload({ email: "alice@example.com" }),
           }),
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              CustomHttpApiError.Forbidden,
+          );
         }
       }),
     );

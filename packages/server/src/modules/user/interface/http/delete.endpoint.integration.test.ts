@@ -10,12 +10,12 @@ import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 
-const basePayload = {
+const basePayload = new UserContract.CreateUserPayload({
   email: "alice@example.com",
   country: "USA",
   street: "123 Main St",
   postalCode: "12345",
-};
+});
 
 const suite = describe.sequential;
 
@@ -28,7 +28,9 @@ suite("DELETE /users/:id (integration)", () => {
         const client = yield* HttpApiClient.make(Api);
         const { id } = yield* client.user.create({ payload: basePayload });
         yield* client.user.delete({ params: { id } });
-        const after = yield* client.user.find({ query: { page: 1, pageSize: 10 } });
+        const after = yield* client.user.find({
+          query: new UserContract.FindUsersParams({ page: 1, pageSize: 10 }),
+        });
         deepStrictEqual(after.total, 0);
       }),
     );
@@ -45,7 +47,10 @@ suite("DELETE /users/:id (integration)", () => {
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof UserContract.UserNotFoundError);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              UserContract.UserNotFoundError,
+          );
         } else {
           throw new Error("expected a typed Fail");
         }

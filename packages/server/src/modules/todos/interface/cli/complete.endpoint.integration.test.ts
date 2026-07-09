@@ -1,4 +1,5 @@
 import { describe, it } from "@effect/vitest";
+import { CliTodosContract, OrganizationContract } from "@org/contracts/api/Contracts";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
@@ -29,10 +30,12 @@ suite("POST /cli/orgs/:orgId/todos/:id/complete (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         const created = yield* client.cliTodos.create({
           params: { orgId },
-          payload: { title: "Buy milk" },
+          payload: new CliTodosContract.CliCreateTodoPayload({ title: "Buy milk" }),
         });
         const completed = yield* client.cliTodos.complete({
           params: { orgId, id: created.id },
@@ -47,7 +50,9 @@ suite("POST /cli/orgs/:orgId/todos/:id/complete (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         const ghost = TodoId.make("00000000-0000-0000-0000-000000000000");
         const error = yield* client.cliTodos
           .complete({ params: { orgId, id: ghost } })

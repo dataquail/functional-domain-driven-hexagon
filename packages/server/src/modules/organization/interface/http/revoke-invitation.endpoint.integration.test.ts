@@ -1,4 +1,5 @@
 import { describe, it } from "@effect/vitest";
+import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
@@ -42,7 +43,7 @@ suite("DELETE /orgs/:orgId/invitations/:invitationId (integration, super-admin c
         const client = yield* HttpApiClient.make(Api);
         const { invitationId } = yield* client.organization.inviteUser({
           params: { orgId: ORG_ID },
-          payload: { email: "alice@example.com" },
+          payload: new OrganizationContract.InviteUserPayload({ email: "alice@example.com" }),
         });
 
         yield* client.organization.revokeInvitation({
@@ -62,7 +63,7 @@ suite("DELETE /orgs/:orgId/invitations/:invitationId (integration, super-admin c
         const client = yield* HttpApiClient.make(Api);
         const { invitationId } = yield* client.organization.inviteUser({
           params: { orgId: ORG_ID },
-          payload: { email: "alice@example.com" },
+          payload: new OrganizationContract.InviteUserPayload({ email: "alice@example.com" }),
         });
         yield* client.organization.revokeInvitation({ params: { orgId: ORG_ID, invitationId } });
 
@@ -91,7 +92,10 @@ suite("DELETE /orgs/:orgId/invitations/:invitationId (integration, super-admin c
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          deepStrictEqual(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag, "InvitationNotFoundError");
+          deepStrictEqual(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag,
+            "InvitationNotFoundError",
+          );
         }
       }),
     );
@@ -132,7 +136,10 @@ suite(
           );
           ok(Exit.isFailure(exit));
           if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-            ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);
+            ok(
+              Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+                CustomHttpApiError.Forbidden,
+            );
           }
         }),
       );

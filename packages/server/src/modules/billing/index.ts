@@ -1,12 +1,12 @@
 export { billingCommandHandlers } from "./billing.command-handlers.js";
 export { billingEventSpanAttributes } from "./billing.event-span-attributes.js";
-// Two named module Lives ship the prod-vs-test gateway swap inside
-// the module: `BillingModuleLive` bundles `BillingGatewayLive`,
-// `BillingModuleTestLive` bundles `BillingGatewayFake`. The
+// One module Live registers the HTTP groups + infra; the prod-vs-test
+// `BillingGateway` swap ships as two opaque bundled layers the composition
+// root provides post-serve (`HttpRouter.provideRequest` can't reach
+// `HttpApiBuilder`'s routes in v4 — see billing.module.ts). The
 // `BillingGateway` Tag stays private to the module's use-case ring —
-// composition roots pick a module Live and don't see the Tag at all.
-// See `billing-module.ts` for the rationale.
-export { BillingModuleLive, BillingModuleTestLive } from "./billing.module.js";
+// composition roots pick a bundle and don't see the Tag at all.
+export { BillingHttpDepsFake, BillingHttpDepsLive, BillingModuleLive } from "./billing.module.js";
 export { billingQueryHandlers } from "./billing.query-handlers.js";
 export { CancelSubscriptionCommand } from "./commands/cancel-subscription.command.js";
 export { IngestStripeWebhookCommand } from "./commands/ingest-stripe-webhook.command.js";

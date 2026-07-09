@@ -1,4 +1,5 @@
 import { describe, it } from "@effect/vitest";
+import { AuthContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { ok } from "assert";
 import * as Cause from "effect/Cause";
@@ -9,6 +10,7 @@ import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
+
 // The callback happy path (PKCE cookie present → Zitadel code exchange →
 // session issued) needs a live Zitadel and is covered end-to-end by Playwright
 // (`packages/acceptance/specs/login.spec.ts`) and at the persistence boundary
@@ -30,12 +32,18 @@ suite("GET /auth/callback (integration)", () => {
         // request the endpoint must refuse before touching the IdP.
         const exit = yield* Effect.exit(
           client.auth.callback({
-            query: { code: "authorization-code", state: "csrf-state" },
+            query: new AuthContract.CallbackParams({
+              code: "authorization-code",
+              state: "csrf-state",
+            }),
           }),
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Unauthorized);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              CustomHttpApiError.Unauthorized,
+          );
         }
       }),
     );

@@ -34,7 +34,7 @@ export {
 // the generalized shape without importing the repos.
 export { organizationCommandHandlers } from "./organization.command-handlers.js";
 export { organizationEventSpanAttributes } from "./organization.event-span-attributes.js";
-export { OrganizationModuleLive } from "./organization.module.js";
+export { OrganizationHttpDepsLive, OrganizationModuleLive } from "./organization.module.js";
 export { organizationQueryHandlers } from "./organization.query-handlers.js";
 export { organizationPolicies, OrganizationResource } from "./policies/organization.policies.js";
 export {

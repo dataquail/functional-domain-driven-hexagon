@@ -1,4 +1,5 @@
 import { describe, it } from "@effect/vitest";
+import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
@@ -43,7 +44,7 @@ suite("GET /admin/orgs (integration)", () => {
         yield* seedOrgs;
         const client = yield* HttpApiClient.make(Api);
         const res = yield* client.organizationAdmin.findAll({
-          query: { page: 1, pageSize: 10 },
+          query: new OrganizationContract.FindAllOrganizationsParams({ page: 1, pageSize: 10 }),
         });
         deepStrictEqual(res.total, 1);
         deepStrictEqual(res.organizations[0]?.name, "Acme");
@@ -57,7 +58,11 @@ suite("GET /admin/orgs (integration)", () => {
         yield* seedOrgs;
         const client = yield* HttpApiClient.make(Api);
         const res = yield* client.organizationAdmin.findAll({
-          query: { page: 1, pageSize: 10, includeDeleted: "true" },
+          query: new OrganizationContract.FindAllOrganizationsParams({
+            page: 1,
+            pageSize: 10,
+            includeDeleted: "true",
+          }),
         });
         deepStrictEqual(res.total, 2);
       }),
@@ -77,11 +82,16 @@ memberSuite("GET /admin/orgs (integration, non-super-admin caller)", () => {
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
-          client.organizationAdmin.findAll({ query: { page: 1, pageSize: 10 } }),
+          client.organizationAdmin.findAll({
+            query: new OrganizationContract.FindAllOrganizationsParams({ page: 1, pageSize: 10 }),
+          }),
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              CustomHttpApiError.Forbidden,
+          );
         }
       }),
     );

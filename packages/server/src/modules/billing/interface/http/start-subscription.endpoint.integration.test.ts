@@ -1,5 +1,5 @@
 import { describe, it } from "@effect/vitest";
-import { BillingContract } from "@org/contracts/api/Contracts";
+import { BillingContract, OrganizationContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
@@ -39,7 +39,9 @@ suite("POST /orgs/:orgId/billing/subscriptions (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         const res = yield* client.billing.startSubscription({
           params: { orgId },
           payload: new BillingContract.StartSubscriptionPayload(),
@@ -55,7 +57,9 @@ suite("POST /orgs/:orgId/billing/subscriptions (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         yield* client.billing.startSubscription({
           params: { orgId },
           payload: new BillingContract.StartSubscriptionPayload(),
@@ -68,7 +72,10 @@ suite("POST /orgs/:orgId/billing/subscriptions (integration)", () => {
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof BillingContract.SubscriptionAlreadyExistsError);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              BillingContract.SubscriptionAlreadyExistsError,
+          );
         }
       }),
     );
@@ -113,7 +120,10 @@ memberSuite("POST /orgs/:orgId/billing/subscriptions (non-admin caller)", () => 
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              CustomHttpApiError.Forbidden,
+          );
         } else {
           throw new Error("expected typed Fail, got " + JSON.stringify(exit));
         }

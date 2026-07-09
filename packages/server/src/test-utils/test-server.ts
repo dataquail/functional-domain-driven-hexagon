@@ -9,6 +9,7 @@ import { Api } from "@/api.js";
 import { EnvVars } from "@/common/env-vars.js";
 import {
   authCommandHandlers,
+  AuthHttpDepsLive,
   AuthModuleLive,
   authQueryHandlers,
   AuthSharedDepsLive,
@@ -16,7 +17,8 @@ import {
 import {
   billingCommandHandlers,
   billingEventSpanAttributes,
-  BillingModuleTestLive,
+  BillingHttpDepsFake,
+  BillingModuleLive,
   billingPolicies,
   billingQueryHandlers,
   BillingResolverEntry,
@@ -26,6 +28,7 @@ import {
   MembershipServiceLive,
   organizationCommandHandlers,
   organizationEventSpanAttributes,
+  OrganizationHttpDepsLive,
   OrganizationModuleLive,
   organizationPolicies,
   organizationQueryHandlers,
@@ -167,7 +170,7 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
       WalletModuleLive,
       AuthModuleLive,
       OrganizationModuleLive,
-      BillingModuleTestLive,
+      BillingModuleLive,
     ]),
     Layer.provide(authMiddleware),
   );
@@ -189,6 +192,13 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
       OrganizationRoleServiceLive,
       DomainEventBusLive,
       UnitOfWorkLive,
+      // Endpoint-consumed, module-owned services that `serve` unwrapped from
+      // request-scoped into plain requirements (see the module Lives). The
+      // billing gateway swaps to the fake here; prod uses the live in
+      // server.ts. Their deps (EnvVars, etc.) close below.
+      OrganizationHttpDepsLive,
+      AuthHttpDepsLive,
+      BillingHttpDepsFake,
     ]),
     Layer.provideMerge(Layer.mergeAll(CommandBusLive, QueryBusLive, IntegrationEventBusLive)),
     Layer.provide([PolicyRegistryLive, ResourceResolverRegistryLive]),

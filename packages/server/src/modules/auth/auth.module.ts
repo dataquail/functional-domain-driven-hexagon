@@ -1,5 +1,4 @@
 import * as Layer from "effect/Layer";
-import * as HttpRouter from "effect/unstable/http/HttpRouter";
 
 import { OidcClient } from "./infrastructure/clients/oidc.client.js";
 import { AuthIdentityRepositoryLive } from "./infrastructure/repositories/auth-identity.repository-live.js";
@@ -15,12 +14,19 @@ import { AuthLive } from "./interface/http/index.js";
 // CookieCodec is the only auth-infra service still hoisted via
 // `AuthSharedDepsLive` because the platform middleware verifies the
 // session cookie with the same key the auth module signs with.
-// `OidcClient` is consumed directly by the login/callback/logout endpoints
-// (not via the bus), so in v4 it's a request-scoped requirement and must be
-// satisfied with `HttpRouter.provideRequest`. The repositories are reached
-// through the bus, so their requirement is closed at build with `Layer.provide`.
+//
+// `OidcClient` is consumed directly by the login/callback/logout endpoints,
+// so `HttpApiBuilder` tracks it as a request-scoped requirement. In v4 that
+// requirement is only satisfiable AFTER `HttpRouter.serve` unwraps it into a
+// plain one — `HttpRouter.provideRequest` cannot reach routes registered
+// through `HttpApiBuilder`'s group indirection (see OrganizationModuleLive
+// for the full rationale). So the module publishes it as `AuthHttpDepsLive`
+// and the composition root provides it post-serve. The repositories are
+// reached through the bus, so their requirement is closed at build with
+// `Layer.provide`.
+export const AuthHttpDepsLive = OidcClient.layer;
+
 export const AuthModuleLive = AuthLive.pipe(
-  HttpRouter.provideRequest(OidcClient.layer),
   Layer.provide(AuthIdentityRepositoryLive),
   Layer.provide(SessionRepositoryLive),
 );

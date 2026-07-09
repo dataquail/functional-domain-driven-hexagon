@@ -118,7 +118,10 @@ suite("POST /orgs/:orgId/members/:userId/admin (integration, super-admin caller)
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              CustomHttpApiError.Forbidden,
+          );
         }
       }),
     );
@@ -144,7 +147,9 @@ orgAdminSuite("POST /orgs/:orgId/members/:userId/admin (integration, org-admin c
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         // The member caller creates the org and is auto-granted `admin`.
-        const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         // Seed a second member to promote (no single-caller HTTP path adds one).
         const db = yield* Database.Database;
         yield* db
@@ -203,7 +208,10 @@ orgAdminSuite("POST /orgs/:orgId/members/:userId/admin (integration, org-admin c
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              CustomHttpApiError.Forbidden,
+          );
         }
       }),
     );

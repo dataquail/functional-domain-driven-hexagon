@@ -1,4 +1,5 @@
 import { describe, it } from "@effect/vitest";
+import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
@@ -50,7 +51,9 @@ suite("CreateWalletWhenOrganizationIsCreated (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id } = yield* client.organization.create({ payload: { name: "Acme" } });
+        const { id } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
 
         // Synchronous in-fiber dispatch: the wallet must be visible
         // immediately after the create-organization response returns. The

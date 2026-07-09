@@ -1,4 +1,5 @@
 import { describe, it } from "@effect/vitest";
+import { OrganizationContract, TodosContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
@@ -33,14 +34,25 @@ suite("GET /orgs/:orgId/todos (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
 
         const empty = yield* client.todos.get({ params: { orgId } });
         deepStrictEqual(empty.length, 0);
 
-        yield* client.todos.create({ params: { orgId }, payload: { title: "first" } });
-        yield* client.todos.create({ params: { orgId }, payload: { title: "second" } });
-        yield* client.todos.create({ params: { orgId }, payload: { title: "third" } });
+        yield* client.todos.create({
+          params: { orgId },
+          payload: new TodosContract.CreateTodoPayload({ title: "first" }),
+        });
+        yield* client.todos.create({
+          params: { orgId },
+          payload: new TodosContract.CreateTodoPayload({ title: "second" }),
+        });
+        yield* client.todos.create({
+          params: { orgId },
+          payload: new TodosContract.CreateTodoPayload({ title: "third" }),
+        });
 
         const todos = yield* client.todos.get({ params: { orgId } });
         deepStrictEqual(
@@ -80,7 +92,10 @@ memberSuite("GET /orgs/:orgId/todos (integration, non-member caller)", () => {
         const exit = yield* Effect.exit(client.todos.get({ params: { orgId } }));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              CustomHttpApiError.Forbidden,
+          );
         } else {
           throw new Error("expected a typed Fail, got " + JSON.stringify(exit));
         }

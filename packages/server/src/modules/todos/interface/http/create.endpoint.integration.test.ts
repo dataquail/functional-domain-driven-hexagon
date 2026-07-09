@@ -1,4 +1,5 @@
 import { describe, it } from "@effect/vitest";
+import { OrganizationContract, TodosContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
@@ -33,8 +34,13 @@ suite("POST /orgs/:orgId/todos (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
-        const res = yield* client.todos.create({ params: { orgId }, payload: { title: "Buy milk" } });
+        const { id: orgId } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
+        const res = yield* client.todos.create({
+          params: { orgId },
+          payload: new TodosContract.CreateTodoPayload({ title: "Buy milk" }),
+        });
         ok(typeof res.id === "string" && res.id.length > 0);
         deepStrictEqual(res.title, "Buy milk");
         deepStrictEqual(res.completed, false);
@@ -67,11 +73,17 @@ memberSuite("POST /orgs/:orgId/todos (integration, non-member caller)", () => {
 
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
-          client.todos.create({ params: { orgId }, payload: { title: "Buy milk" } }),
+          client.todos.create({
+            params: { orgId },
+            payload: new TodosContract.CreateTodoPayload({ title: "Buy milk" }),
+          }),
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              CustomHttpApiError.Forbidden,
+          );
         } else {
           throw new Error("expected a typed Fail, got " + JSON.stringify(exit));
         }

@@ -1,5 +1,5 @@
 import { describe, it } from "@effect/vitest";
-import { BillingContract } from "@org/contracts/api/Contracts";
+import { BillingContract, OrganizationContract } from "@org/contracts/api/Contracts";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
@@ -65,7 +65,9 @@ suite("POST /webhooks/stripe (integration)", () => {
     await run(
       Effect.gen(function* () {
         const apiClient = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* apiClient.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* apiClient.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         const sub = yield* apiClient.billing.startSubscription({
           params: { orgId },
           payload: new BillingContract.StartSubscriptionPayload(),
@@ -87,7 +89,10 @@ suite("POST /webhooks/stripe (integration)", () => {
             HttpClientRequest.bodyText(JSON.stringify(event)),
           ),
         );
-        deepStrictEqual(res.status, 204);
+        // `Schema.Void` success responds 200 in effect v4 (v3 defaulted
+        // empty-body success to 204). Any 2xx satisfies Stripe; the
+        // contract documents 200 as the intended status.
+        deepStrictEqual(res.status, 200);
 
         // The GET endpoint reflects the new status.
         const after = yield* apiClient.billing.getCurrentSubscription({ params: { orgId } });
@@ -102,7 +107,9 @@ suite("POST /webhooks/stripe (integration)", () => {
     await run(
       Effect.gen(function* () {
         const apiClient = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* apiClient.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* apiClient.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         yield* apiClient.billing.startSubscription({
           params: { orgId },
           payload: new BillingContract.StartSubscriptionPayload(),
@@ -136,7 +143,9 @@ suite("POST /webhooks/stripe (integration)", () => {
     await run(
       Effect.gen(function* () {
         const apiClient = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* apiClient.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* apiClient.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         yield* apiClient.billing.startSubscription({
           params: { orgId },
           payload: new BillingContract.StartSubscriptionPayload(),
@@ -162,7 +171,7 @@ suite("POST /webhooks/stripe (integration)", () => {
           );
 
         const first = yield* send("past_due");
-        deepStrictEqual(first.status, 204);
+        deepStrictEqual(first.status, 200);
         const afterFirst = yield* apiClient.billing.getCurrentSubscription({ params: { orgId } });
         deepStrictEqual(afterFirst.status, "past_due");
 
@@ -170,7 +179,7 @@ suite("POST /webhooks/stripe (integration)", () => {
         // Idempotency must short-circuit before the command dispatch,
         // so the subscription stays at `past_due`.
         const second = yield* send("canceled");
-        deepStrictEqual(second.status, 204);
+        deepStrictEqual(second.status, 200);
         const afterSecond = yield* apiClient.billing.getCurrentSubscription({ params: { orgId } });
         deepStrictEqual(afterSecond.status, "past_due");
       }),
@@ -181,7 +190,9 @@ suite("POST /webhooks/stripe (integration)", () => {
     await run(
       Effect.gen(function* () {
         const apiClient = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* apiClient.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* apiClient.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         yield* apiClient.billing.startSubscription({
           params: { orgId },
           payload: new BillingContract.StartSubscriptionPayload(),
@@ -195,7 +206,7 @@ suite("POST /webhooks/stripe (integration)", () => {
             ),
           ),
         );
-        deepStrictEqual(res.status, 204);
+        deepStrictEqual(res.status, 200);
         const after = yield* apiClient.billing.getCurrentSubscription({ params: { orgId } });
         deepStrictEqual(after.status, "active");
         ok(after.id.length > 0);

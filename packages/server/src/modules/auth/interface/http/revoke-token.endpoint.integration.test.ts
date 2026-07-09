@@ -1,4 +1,5 @@
 import { describe, it } from "@effect/vitest";
+import { AuthContract } from "@org/contracts/api/Contracts";
 import { ApiTokenId } from "@org/contracts/EntityIds";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
@@ -18,7 +19,9 @@ suite("DELETE /auth/tokens/:id (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const created = yield* client.authTokens.create({ payload: { label: "ci" } });
+        const created = yield* client.authTokens.create({
+          payload: new AuthContract.CreateApiTokenPayload({ label: "ci" }),
+        });
         yield* client.authTokens.revoke({ params: { id: created.id } });
         deepStrictEqual((yield* client.authTokens.list()).length, 0);
       }),
@@ -29,7 +32,9 @@ suite("DELETE /auth/tokens/:id (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const created = yield* client.authTokens.create({ payload: { label: "ci" } });
+        const created = yield* client.authTokens.create({
+          payload: new AuthContract.CreateApiTokenPayload({ label: "ci" }),
+        });
         yield* client.authTokens.revoke({ params: { id: created.id } });
         const error = yield* client.authTokens
           .revoke({ params: { id: created.id } })

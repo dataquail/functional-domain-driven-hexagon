@@ -19,6 +19,7 @@ import { Api } from "./api.js";
 import { EnvVars } from "./common/env-vars.js";
 import {
   authCommandHandlers,
+  AuthHttpDepsLive,
   AuthModuleLive,
   authQueryHandlers,
   AuthSharedDepsLive,
@@ -26,6 +27,7 @@ import {
 import {
   billingCommandHandlers,
   billingEventSpanAttributes,
+  BillingHttpDepsLive,
   BillingModuleLive,
   billingPolicies,
   billingQueryHandlers,
@@ -36,6 +38,7 @@ import {
   MembershipServiceLive,
   organizationCommandHandlers,
   organizationEventSpanAttributes,
+  OrganizationHttpDepsLive,
   OrganizationModuleLive,
   organizationPolicies,
   organizationQueryHandlers,
@@ -179,7 +182,6 @@ const ApiLive = HttpApiBuilder.layer(Api).pipe(
   Layer.provide(UserAuthMiddlewareLive),
 );
 
-
 // v4 modernization (Phase 6): the `@effect/opentelemetry/NodeSdk` layer is
 // replaced by the first-party OTLP tracer from `effect/unstable/observability`.
 // `OtlpTracer.layer` provides a `Tracer.Tracer` that batches ended spans and
@@ -229,15 +231,23 @@ const HttpLive = HttpRouter.serve(ApiLive, {
   Layer.provide([UserProvisioningLive]),
   // RoleService is a peer of the auth middleware: both consume the buses
   // provided just below and feed upstream consumers (endpoints +
-  // `SuperAdminOnly`). The Stripe-vs-fake swap for `BillingGateway` lives
-  // INSIDE `BillingModuleLive` (prod variant; `test-server.ts` uses the fake),
-  // so no gateway Layer appears here.
+  // `SuperAdminOnly`). The Stripe-vs-fake `BillingGateway` swap ships as the
+  // module's `BillingHttpDeps{Live,Fake}` bundles: prod provides the live
+  // one here; `test-server.ts` provides the fake. The `BillingGateway` Tag
+  // stays private to the module — only the opaque bundle appears here.
   Layer.provide([
     RoleServiceLive,
     MembershipServiceLive,
     OrganizationRoleServiceLive,
     DomainEventBusLive,
     UnitOfWorkLive,
+    // Endpoint-consumed, module-owned services that `serve` unwrapped from
+    // request-scoped into plain requirements (see the module Lives). Prod
+    // uses the live billing gateway; test-server.ts swaps the fake. Their
+    // deps (EnvVars, etc.) close below.
+    OrganizationHttpDepsLive,
+    AuthHttpDepsLive,
+    BillingHttpDepsLive,
   ]),
   // CommandBus + QueryBus provide TO the middleware (which dispatches
   // FindSessionQuery). IntegrationEventBus provides TO UnitOfWork (post-commit

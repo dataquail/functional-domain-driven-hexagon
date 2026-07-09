@@ -1,4 +1,5 @@
 import { describe, it } from "@effect/vitest";
+import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
@@ -28,8 +29,12 @@ suite("GET /orgs (integration — findMine)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        yield* client.organization.create({ payload: { name: "Acme" } });
-        yield* client.organization.create({ payload: { name: "Beta" } });
+        yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
+        yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Beta" }),
+        });
 
         const orgs = yield* client.organization.findMine();
         deepStrictEqual(
@@ -60,8 +65,12 @@ suite("GET /orgs (integration — findMine)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        yield* client.organization.create({ payload: { name: "Acme" } });
-        const { id: betaId } = yield* client.organization.create({ payload: { name: "Beta" } });
+        yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
+        const { id: betaId } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Beta" }),
+        });
         // Soft-delete is super-admin-only, so the member can't tombstone via
         // the endpoint; set the tombstone directly to exercise findMine's filter.
         const db = yield* Database.Database;

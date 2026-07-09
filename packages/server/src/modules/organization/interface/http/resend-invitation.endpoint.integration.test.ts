@@ -1,4 +1,5 @@
 import { describe, it } from "@effect/vitest";
+import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
 import * as Cause from "effect/Cause";
@@ -40,7 +41,7 @@ suite("POST /orgs/:orgId/invitations/:invitationId/resend (integration)", () => 
         const client = yield* HttpApiClient.make(Api);
         const { invitationId } = yield* client.organization.inviteUser({
           params: { orgId: ORG_ID },
-          payload: { email: "alice@example.com" },
+          payload: new OrganizationContract.InviteUserPayload({ email: "alice@example.com" }),
         });
 
         yield* client.organization.resendInvitation({
@@ -67,7 +68,10 @@ suite("POST /orgs/:orgId/invitations/:invitationId/resend (integration)", () => 
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          deepStrictEqual(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag, "InvitationNotFoundError");
+          deepStrictEqual(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag,
+            "InvitationNotFoundError",
+          );
         }
       }),
     );

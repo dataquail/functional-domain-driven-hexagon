@@ -1,4 +1,5 @@
 import { describe, it } from "@effect/vitest";
+import { AuthContract } from "@org/contracts/api/Contracts";
 import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
@@ -17,7 +18,9 @@ suite("GET /auth/tokens (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const created = yield* client.authTokens.create({ payload: { label: "ci" } });
+        const created = yield* client.authTokens.create({
+          payload: new AuthContract.CreateApiTokenPayload({ label: "ci" }),
+        });
         const tokens = yield* client.authTokens.list();
         deepStrictEqual(tokens.length, 1);
         const [first] = tokens;

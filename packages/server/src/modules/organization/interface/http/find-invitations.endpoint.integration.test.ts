@@ -1,4 +1,5 @@
 import { describe, it } from "@effect/vitest";
+import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
@@ -37,7 +38,7 @@ suite("GET /orgs/:orgId/invitations (integration)", () => {
         // Seed via the production invite path, not raw SQL.
         yield* client.organization.inviteUser({
           params: { orgId: ORG_ID },
-          payload: { email: "alice@example.com" },
+          payload: new OrganizationContract.InviteUserPayload({ email: "alice@example.com" }),
         });
 
         const res = yield* client.organization.findInvitations({ params: { orgId: ORG_ID } });

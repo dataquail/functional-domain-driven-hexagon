@@ -1,4 +1,5 @@
 import { describe, it } from "@effect/vitest";
+import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
@@ -11,7 +12,9 @@ import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 const NameRowStd = Schema.toStandardSchemaV1(Schema.Struct({ name: Schema.String }));
-const MembershipCountRowStd = Schema.toStandardSchemaV1(Schema.Struct({ user_id: Schema.String.check(Schema.isGUID()) }));
+const MembershipCountRowStd = Schema.toStandardSchemaV1(
+  Schema.Struct({ user_id: Schema.String.check(Schema.isGUID()) }),
+);
 
 const suite = describe.sequential;
 
@@ -27,7 +30,9 @@ suite("POST /orgs (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id } = yield* client.organization.create({ payload: { name: "Acme" } });
+        const { id } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         ok(typeof id === "string" && id.length > 0);
 
         const db = yield* Database.Database;

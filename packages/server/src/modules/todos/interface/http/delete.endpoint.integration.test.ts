@@ -1,5 +1,5 @@
 import { describe, it } from "@effect/vitest";
-import { TodosContract } from "@org/contracts/api/Contracts";
+import { OrganizationContract, TodosContract } from "@org/contracts/api/Contracts";
 import { deepStrictEqual, ok } from "assert";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
@@ -33,10 +33,12 @@ suite("DELETE /orgs/:orgId/todos/:id (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         const created = yield* client.todos.create({
           params: { orgId },
-          payload: { title: "Buy milk" },
+          payload: new TodosContract.CreateTodoPayload({ title: "Buy milk" }),
         });
         yield* client.todos.delete({ params: { orgId, id: created.id } });
         const todos = yield* client.todos.get({ params: { orgId } });
@@ -49,12 +51,17 @@ suite("DELETE /orgs/:orgId/todos/:id (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         const ghostId = TodoId.make("00000000-0000-0000-0000-000000000000");
         const exit = yield* Effect.exit(client.todos.delete({ params: { orgId, id: ghostId } }));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof TodosContract.TodoNotFoundError);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              TodosContract.TodoNotFoundError,
+          );
         } else {
           throw new Error("expected a typed Fail, got " + JSON.stringify(exit));
         }
@@ -66,18 +73,25 @@ suite("DELETE /orgs/:orgId/todos/:id (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id: orgA } = yield* client.organization.create({ payload: { name: "Acme" } });
-        const { id: orgB } = yield* client.organization.create({ payload: { name: "Beta" } });
+        const { id: orgA } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
+        const { id: orgB } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Beta" }),
+        });
         const created = yield* client.todos.create({
           params: { orgId: orgA },
-          payload: { title: "Buy milk" },
+          payload: new TodosContract.CreateTodoPayload({ title: "Buy milk" }),
         });
         const exit = yield* Effect.exit(
           client.todos.delete({ params: { orgId: orgB, id: created.id } }),
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof TodosContract.TodoNotFoundError);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              TodosContract.TodoNotFoundError,
+          );
         } else {
           throw new Error("expected a typed Fail, got " + JSON.stringify(exit));
         }

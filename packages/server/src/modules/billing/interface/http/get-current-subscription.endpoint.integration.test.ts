@@ -1,5 +1,5 @@
 import { describe, it } from "@effect/vitest";
-import { BillingContract } from "@org/contracts/api/Contracts";
+import { BillingContract, OrganizationContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
@@ -35,7 +35,9 @@ suite("GET /orgs/:orgId/billing/subscriptions/current (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         yield* client.billing.startSubscription({
           params: { orgId },
           payload: new BillingContract.StartSubscriptionPayload(),
@@ -51,11 +53,18 @@ suite("GET /orgs/:orgId/billing/subscriptions/current (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
-        const exit = yield* Effect.exit(client.billing.getCurrentSubscription({ params: { orgId } }));
+        const { id: orgId } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
+        const exit = yield* Effect.exit(
+          client.billing.getCurrentSubscription({ params: { orgId } }),
+        );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof BillingContract.SubscriptionNotFoundError);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              BillingContract.SubscriptionNotFoundError,
+          );
         }
       }),
     );
@@ -85,10 +94,15 @@ memberSuite("GET /orgs/:orgId/billing/subscriptions/current (non-member caller)"
           .pipe(Effect.orDie);
 
         const client = yield* HttpApiClient.make(Api);
-        const exit = yield* Effect.exit(client.billing.getCurrentSubscription({ params: { orgId } }));
+        const exit = yield* Effect.exit(
+          client.billing.getCurrentSubscription({ params: { orgId } }),
+        );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              CustomHttpApiError.Forbidden,
+          );
         } else {
           throw new Error("expected typed Fail, got " + JSON.stringify(exit));
         }

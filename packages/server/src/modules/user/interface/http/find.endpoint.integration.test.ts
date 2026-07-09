@@ -1,4 +1,5 @@
 import { describe, it } from "@effect/vitest";
+import { UserContract } from "@org/contracts/api/Contracts";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
@@ -6,12 +7,12 @@ import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 
-const basePayload = {
+const basePayload = new UserContract.CreateUserPayload({
   email: "alice@example.com",
   country: "USA",
   street: "123 Main St",
   postalCode: "12345",
-};
+});
 
 const suite = describe.sequential;
 
@@ -23,8 +24,12 @@ suite("GET /users (integration)", () => {
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         yield* client.user.create({ payload: basePayload });
-        yield* client.user.create({ payload: { ...basePayload, email: "bob@example.com" } });
-        const res = yield* client.user.find({ query: { page: 1, pageSize: 10 } });
+        yield* client.user.create({
+          payload: new UserContract.CreateUserPayload({ ...basePayload, email: "bob@example.com" }),
+        });
+        const res = yield* client.user.find({
+          query: new UserContract.FindUsersParams({ page: 1, pageSize: 10 }),
+        });
         deepStrictEqual(res.page, 1);
         deepStrictEqual(res.pageSize, 10);
         deepStrictEqual(res.total, 2);

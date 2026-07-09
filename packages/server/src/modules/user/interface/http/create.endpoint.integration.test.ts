@@ -12,12 +12,12 @@ import { FindUsersQuery } from "@/modules/user/index.js";
 import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 
-const basePayload = {
+const basePayload = new UserContract.CreateUserPayload({
   email: "alice@example.com",
   country: "USA",
   street: "123 Main St",
   postalCode: "12345",
-};
+});
 
 const suite = describe.sequential;
 
