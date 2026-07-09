@@ -8,7 +8,7 @@ import { OrgCliLive } from "./interface/cli/index.js";
 import { InvitationLive, OrganizationAdminLive, OrganizationLive } from "./interface/http/index.js";
 
 // `InvitationMailer` is the org module's outbound notification port
-// (ADR-0023): the invite use case depends on it, and the adapter renders
+// (ADR-0022): the invite use case depends on it, and the adapter renders
 // the React Email template + forwards to the platform `Mailer`. The
 // env-selected transport (`MailerLive`: log/smtp/ses) is wired behind it
 // here, so the `Mailer` Tag never leaves the module. `MailerLive` still

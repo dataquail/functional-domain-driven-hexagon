@@ -6,7 +6,7 @@ import { StartDeviceGrantCommand } from "@/modules/auth/commands/start-device-gr
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
-// CLI adapter (ADR-0024): starts a device grant and returns the codes plus
+// CLI adapter (ADR-0005): starts a device grant and returns the codes plus
 // the verification URL the user should open. Dispatches the same
 // `StartDeviceGrantCommand` the bus exposes — no GUI coupling.
 export const deviceStartEndpoint = Effect.fn("CliAuthLive.deviceStart")(function* (

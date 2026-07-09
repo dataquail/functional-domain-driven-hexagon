@@ -6,7 +6,7 @@ import { PollDeviceGrantCommand } from "@/modules/auth/commands/poll-device-gran
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
-// CLI adapter (ADR-0024): the poll/exchange endpoint. Maps the device-grant
+// CLI adapter (ADR-0005): the poll/exchange endpoint. Maps the device-grant
 // domain errors to the RFC-8628-shaped contract errors the CLI switches on
 // (keep polling on pending; stop on expired/unknown).
 export const deviceTokenEndpoint = Effect.fn("CliAuthLive.deviceToken")(

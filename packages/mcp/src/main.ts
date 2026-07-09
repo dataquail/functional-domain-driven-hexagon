@@ -10,7 +10,7 @@ import * as ManagedRuntime from "effect/ManagedRuntime";
 import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
 import { z } from "zod";
 
-// MCP (stdio) server exposing the CLI surface as tools (ADR-0024). It reuses
+// MCP (stdio) server exposing the CLI surface as tools (ADR-0005). It reuses
 // `@org/api-client` over `CliApi`, so the MCP tools and the CLI run the exact
 // same authenticated requests. Auth comes from `APP_API_TOKEN` or the stored
 // credential (resolved per call). stdout is the JSON-RPC channel — all

@@ -2,7 +2,7 @@ import * as Context from "effect/Context";
 import type * as DateTime from "effect/DateTime";
 import type * as Effect from "effect/Effect";
 
-// ADR-0023 outbound port. The invite use case asks "send the invitation
+// ADR-0022 outbound port. The invite use case asks "send the invitation
 // email" without knowing how the link is shaped, what the message looks
 // like, or which transport carries it — the adapter in
 // `infrastructure/clients/` owns all of that (it builds the accept URL

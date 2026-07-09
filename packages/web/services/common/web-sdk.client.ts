@@ -3,7 +3,7 @@
 // Browser-side tracing. First-party OTLP tracer from
 // `effect/unstable/observability` (mirrors server.ts's `TracerLive`),
 // replacing the `@effect/opentelemetry` WebSdk — the last consumer of that
-// companion package, so it drops out of the monorepo entirely (ADR-0029).
+// companion package, so it drops out of the monorepo entirely (ADR-0012).
 //
 // Provided into `runtime.client.tsx`'s layer composition, so any Effect run on
 // the client runtime (queries, mutations, view-models) emits spans against it.

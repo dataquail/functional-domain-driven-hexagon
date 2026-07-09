@@ -9,7 +9,7 @@ import * as Authz from "@/platform/auth/authz.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
-// CLI adapter (ADR-0024): completing is an update-gated action. The `todo`
+// CLI adapter (ADR-0005): completing is an update-gated action. The `todo`
 // resolver scopes by (orgId, id), so a missing or cross-tenant todo is
 // NotFound → the CLI's CliTodoNotFoundError.
 export const completeEndpoint = Effect.fn("CliTodosLive.complete")(

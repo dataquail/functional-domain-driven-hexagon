@@ -97,7 +97,7 @@ type RevokeApiTokenOutput = Effect.Effect<
 // Fire-and-forget last-used stamp; swallows its own errors (no uow).
 type TouchApiTokenOutput = Effect.Effect<void, never, Database.Database>;
 
-// Device flow (ADR-0024). Start/approve run in a uow over the grant repo;
+// Device flow (ADR-0005). Start/approve run in a uow over the grant repo;
 // poll additionally mints (ApiToken repo), all in one transaction.
 type StartDeviceGrantOutput = Effect.Effect<
   StartDeviceGrantResult,

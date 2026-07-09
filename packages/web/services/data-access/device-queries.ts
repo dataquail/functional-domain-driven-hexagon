@@ -7,7 +7,7 @@ import * as Effect from "effect/Effect";
 
 import { ApiClient } from "@/services/api-client.shared";
 
-// Browser-side approval of a CLI device grant (ADR-0024): bind the grant
+// Browser-side approval of a CLI device grant (ADR-0005): bind the grant
 // identified by `userCode` to the signed-in caller.
 export const approveDevice = (args: { readonly userCode: string }) =>
   Effect.flatMap(ApiClient, ({ client }) =>

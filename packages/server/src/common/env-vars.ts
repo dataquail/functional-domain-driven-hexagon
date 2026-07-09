@@ -50,7 +50,7 @@ const make = Effect.gen(function* () {
       Config.withDefault(60),
     ),
 
-    // API tokens (ADR-0024). Default expiry applied when a mint request
+    // API tokens (ADR-0005). Default expiry applied when a mint request
     // omits `expiresInDays`. Touch threshold throttles the per-request
     // `last_used_at` write the bearer path issues, same as sessions.
     API_TOKEN_DEFAULT_TTL_DAYS: yield* Config.int("API_TOKEN_DEFAULT_TTL_DAYS").pipe(
@@ -60,7 +60,7 @@ const make = Effect.gen(function* () {
       Config.withDefault(60),
     ),
 
-    // Device authorization flow (ADR-0024). Grant TTL (how long the user
+    // Device authorization flow (ADR-0005). Grant TTL (how long the user
     // has to approve) and the poll interval the CLI is told to wait.
     DEVICE_CODE_TTL_SECONDS: yield* Config.int("DEVICE_CODE_TTL_SECONDS").pipe(
       Config.withDefault(600),

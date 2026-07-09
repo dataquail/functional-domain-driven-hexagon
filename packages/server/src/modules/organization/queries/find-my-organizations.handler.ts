@@ -31,7 +31,7 @@ const toView = (row: typeof MyOrganizationRow.Type): FindMyOrganizationsView => 
 });
 
 // All three tables live in the `organization` schema, so the joins/
-// subquery are intra-schema (allowed by ADR-0021's
+// subquery are intra-schema (allowed by ADR-0020's
 // `no-cross-schema-slonik-access` rule). Tombstoned orgs are filtered
 // out — a soft-deleted org should not appear in the caller's chooser.
 // `is_admin` is the caller's own `admin` OrganizationRole in each org.

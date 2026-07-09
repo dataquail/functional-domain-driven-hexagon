@@ -52,20 +52,20 @@ The architecture does not name the whole — it names the parts. Hexagonal at th
 
 ### Enforcement
 
-Per ADR-0008, layering is enforced by `pnpm lint:deps` (dependency-cruiser) and `pnpm lint:tests` (file-existence parity). This ADR adds the following rules to that configuration; their implementation lands alongside this ADR.
+Per ADR-0008, layering is enforced by `pnpm lint:deps` (the dependency-cruiser web pass) and the `project-structure/folder-structure` ESLint rule (`eslint.project-structure.mjs`, `webFeatures`, run under `pnpm lint`) for file-existence parity.
 
 **Dependency-cruiser:**
 
-- `client-tanstack-allowlist` — `@tanstack/react-query` and `@tanstack/query-core` may only be imported by `services/data-access/**`, `services/common/query-client.ts`, `lib/tanstack-query/**`, and `global-providers.tsx`. Anywhere else fails CI.
+- `client-tanstack-allowlist` — `@tanstack/react-query` and `@tanstack/query-core` may only be imported by `services/data-access/**`, `lib/tanstack-query/**`, and `app/providers.tsx`. Anywhere else fails CI.
 - `client-component-no-effect-runtime` — files matching `features/**/*.tsx` (and excluding `*.presenter.tsx`) may not import `effect/Effect`, `effect/Stream`, `effect/Fiber`, `effect/Ref`, `effect/SubscriptionRef`, `effect/Layer`, `effect/Scope`, `effect/Runtime`, `effect/ManagedRuntime`, `effect/Cause`, `effect/Exit`, or `effect/Match`. Allowed effect modules in components: `effect/Schema`, `effect/Function`, `effect/Either`, `effect/Option`, `effect/Predicate`, `effect/Duration`. The moment a component reaches for `Effect.gen` or similar, the violation surfaces and the contributor must extract to a Presenter or ViewModel.
 - `client-react-form-presenter-only` — `@tanstack/react-form` and `react-hook-form` may only be imported by `features/**/*.presenter.{ts,tsx}` and the shared `lib/tanstack-query/` helpers (e.g. `make-form-options.ts`). The Effect-runtime rule above doesn't catch React-coupled libraries because their hooks live entirely outside `effect/`; this rule closes that gap so `useForm` cannot leak back into a `.tsx` component without a Presenter. Test files exempted.
 - `client-view-model-no-react` — `features/**/*.view-model.ts` may not import `react`, `react-dom`, `@tanstack/react-*`, `react-hook-form`, or any package matching `react-*` / `*-react`. ViewModels are framework-agnostic.
 - `client-presenter-allowed` — `features/**/*.presenter.{ts,tsx}` is the kitchen-sink tier; it may import React, React-coupled libraries, Effect runtime primitives, sibling ViewModels, and data-access hooks/Effects.
 
-**Test parity (`scripts/check-test-parity.mjs`):**
+**Test parity (`project-structure/folder-structure`, `webFeatures`):**
 
 - `features/**/*.view-model.ts` requires sibling `*.view-model.test.ts`.
-- `features/**/*.presenter.{ts,tsx}` requires sibling `*.presenter.test.ts` _or_ `*.presenter.test.tsx`. The presenter's extension and the test's extension are independent: a presenter that only exports a hook is fine to test from `.test.ts` (the JSX wrapper comes from a shared test harness); a presenter that exports JSX itself (a provider, a wrapper component) or whose test renders JSX inline picks `.test.tsx`. Either satisfies parity.
+- `features/**/*.presenter.{ts,tsx}` requires sibling `*.presenter.test.tsx`. Presenter tests standardize on the `.tsx` extension (a shared test harness supplies the JSX wrapper for hook-only presenters), so the parity rule has one canonical requirement rather than an inexpressible "either sibling".
 - Components are not subject to parity. Components that consume a Presenter or ViewModel are dumb projection; the test value is captured at the abstraction.
 
 The two filename suffixes (`*.view-model.ts`, `*.presenter.ts`) double as detector and documentation. A reader can tell at a filename glance which tier a file belongs to and what testing approach applies. They are bypassable (a contributor could put orchestration in a non-suffixed file), but bypass is the kind of thing review catches; the rules' job is to catch _forgetfulness_, not malice.

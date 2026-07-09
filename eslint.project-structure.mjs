@@ -83,7 +83,7 @@ const MSG = {
   rootTest:
     "Every aggregate root (*.root.ts) carries a test-parity obligation: add the sibling *.root.test.ts (roots own invariants, so they must be tested).",
   domainServiceTest:
-    "A domain service is real domain logic (ADR-0026), so it needs a sibling *.domain-service.test.ts.",
+    "A domain service is real domain logic (ADR-0023), so it needs a sibling *.domain-service.test.ts.",
   repositoryPort:
     "Every repository port (*.repository.ts) needs its infrastructure trio: a *.repository-live.ts, a *.repository-fake.ts, and a *.repository-live.integration.test.ts in ../../../infrastructure/repositories/.",
   clientPort:
@@ -91,7 +91,7 @@ const MSG = {
   aclPort:
     "Every ACL port (*.acl.ts) needs a *.acl-live.ts, a *.acl-fake.ts, and a *.acl-live.test.ts in ../../../infrastructure/acl/.",
   commands:
-    "commands/ holds a <verb-noun>.command.ts schema and its <verb-noun>.handler.ts handler. A shared helper here is a smell — domain logic belongs on an aggregate op (ADR-0026), trivial logic inlines.",
+    "commands/ holds a <verb-noun>.command.ts schema and its <verb-noun>.handler.ts handler. A shared helper here is a smell — domain logic belongs on an aggregate op (ADR-0023), trivial logic inlines.",
   commandHandlerTest:
     "Every command handler (*.handler.ts) needs a sibling *.handler.test.ts (use-case unit test with the repository fakes).",
   queries: " queries/ holds a <verb-noun>.query.ts schema and its <verb-noun>.handler.ts handler.",
@@ -103,7 +103,7 @@ const MSG = {
   endpointTest:
     "Every endpoint (*.endpoint.ts) needs a real *.endpoint.integration.test.ts (ADR-0013) that exercises the HTTP layer against a live DB via useServerTestRuntime.",
   utilTest:
-    "An interface *.util.ts is a pure leaf helper (ADR-0026); its sibling *.util.test.ts is the anti-drift guard — the extraction must be justified by a unit test.",
+    "An interface *.util.ts is a pure leaf helper (ADR-0023); its sibling *.util.test.ts is the anti-drift guard — the extraction must be justified by a unit test.",
   eventAdapterTest:
     "Every event adapter (*.event-adapter.ts) needs a sibling *.event-adapter.test.ts (ADR-0007 ACL).",
   oidcExempt:

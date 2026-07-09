@@ -1,125 +1,103 @@
-# ADR-0008: Architecture enforcement via dependency-cruiser
+# ADR-0008: Architecture enforcement via dependency-cruiser and the folder-structure ESLint rule
 
 - Status: Accepted
 - Date: 2026-04-25
 
 ## Context and Problem Statement
 
-ADR-0001 through ADR-0005 prescribe a layered architecture: domain at the center, then the orchestration layer, then infrastructure and interface. ADR-0002 prescribes a per-module folder layout. None of that holds without tooling.
+The earlier ADRs prescribe a layered architecture (domain at the center, then the orchestration layer, then infrastructure and interface) and a per-module folder layout (ADR-0002). None of that holds without tooling.
 
 A code-review-only enforcement strategy fails predictably. The first time someone imports `infrastructure/` from `domain/` to fix a bug "just this once," the convention erodes. The reviewer who would have caught it is on vacation, or didn't notice, or didn't want to delay the merge. Six months later the rules exist on paper and not in the code.
 
-The forces:
+Two distinct properties need enforcing, and they call for two tools:
 
-- Rules need to fail fast, in CI, and with a clear error message that says which rule was violated and how.
-- Rule authoring should be cheap enough that adding a new rule for a new module is mechanical, not a design exercise.
-- Rules should be auditable as a single artifact, not scattered across linter configurations.
-- Tests need narrowly-scoped exemptions (e.g. unit tests must be allowed to import fakes from `infrastructure/`); the exemption mechanism should make the exemption obvious, not hide it.
+- **Import-graph rules** — "this set of paths may not depend on this other set." This is edge reachability; dependency-cruiser is built for it.
+- **File-taxonomy rules** — which file _kinds_ a folder admits (layout), which sibling files a stereotype requires (parity: tests, fakes, stories), and which subfolders a container admits. These are about file _existence_, not edges — dependency-cruiser cannot express them. The `project-structure/folder-structure` ESLint rule expresses exactly this as declarative config.
+
+The forces: rules need to fail fast in CI with a clear message that says which rule was violated and how; rule authoring should be cheap; rules should be auditable as a single artifact; and tests need narrowly-scoped, obvious exemptions.
 
 ## Decision
 
-A repo-root dependency-cruiser configuration defines forbidden-edge rules. A package script (`pnpm lint:deps`) runs the cruiser over the relevant source roots. The configuration is a single CommonJS file at the repository root, kept under version control and reviewed alongside source changes.
+### Import-graph rules — dependency-cruiser (`pnpm lint:deps`)
 
-The rules currently enforced fall into the following categories.
+A repo-root `.dependency-cruiser.cjs` defines forbidden-edge rules, run over the relevant source roots. It is a single CommonJS file, version-controlled and reviewed alongside source changes.
 
-### Per-folder isolation (per module)
+**Per-folder isolation (per module).** Each module folder has a positive-allowlist rule naming exactly which paths it may import. The module folders are siblings — `domain/`, `commands/`, `queries/`, `event-handlers/`, `infrastructure/`, `interface/` — with no `application/` umbrella (see below).
 
-Each module folder has a positive-allowlist rule that names exactly which paths it may import. Outer folders cannot reach further outward; inner folders are protected from outer ones.
-
-The module folders are siblings: `domain/`, `commands/`, `queries/`, `event-handlers/`, `infrastructure/`, `interface/`. There is no `application/` umbrella — the conceptual "application layer" of hexagonal architecture is split across `commands/` (write-side use cases), `event-handlers/` (write-side reactions to events), and `queries/` (read-side projections), and is expressed as a rule set rather than a folder. See "Why no `application/` folder" below.
-
-The per-folder rules:
-
-- `commands-isolation`: commands may import only their own module's `domain/` and sibling `commands/`, the platform shared-kernel facades (command/query/event buses, transaction runner, `span-attributable`, `domain-event`), and other modules' barrels (events). No infrastructure, interface, queries, or event-handlers. No `@org/contracts`. No `@org/database`. Test files excluded.
-- `event-handlers-isolation`: identical constraints to commands. Event handlers are write-side reactions; their dependency profile is the same.
-- `queries-isolation`: queries may import their own module's `domain/` (for IDs and value objects) and sibling `queries/`, the platform shared-kernel facades, other modules' barrels, and `@org/database` for direct SQL projection. Queries are read-side and explicitly bypass the domain — there is no aggregate to protect when nothing mutates. They may NOT import commands, event-handlers, infrastructure, interface, or `@org/contracts` (wire types belong in `interface/`). Test files excluded.
-- `commands-no-external-beyond-effect`, `event-handlers-no-external-beyond-effect`: only `effect` allowed externally. No drivers, clients, or framework code in write-side use cases.
-- `queries-no-external-beyond-effect-and-database`: only `effect` and the workspace `@org/database` package allowed externally.
+- `commands-isolation`: commands may import only their own module's `domain/` and sibling `commands/`, and the platform DDD kernel (command/query/event buses, unit of work, `span-attributable`, `domain-event`). No infrastructure, interface, queries, or event-handlers. No `@org/contracts`, no `@org/database`. **Foreign module barrels are not importable directly** — a call into another module goes through the consumer's `infrastructure/acl/` adapter (ADR-0022). Test files excluded.
+- `event-handlers-isolation`: identical constraints to commands.
+- `queries-isolation`: queries may import their own module's `domain/` (IDs, value objects) and sibling `queries/`, the platform kernel, and `@org/database` for direct SQL projection. They may NOT import commands, event-handlers, infrastructure, interface, `@org/contracts`, or foreign barrels. Test files excluded.
+- `commands-no-external-beyond-effect`, `event-handlers-no-external-beyond-effect`: only `effect` allowed externally.
+- `queries-no-external-beyond-effect-and-database`: only `effect` and `@org/database`.
 - `no-infrastructure-to-interface`: infrastructure may not depend on its interface.
 
-The test-file exclusion (`pathNot: "\\.test\\.ts$"`) is encoded inline in each isolation rule so unit tests can pull in fakes from `infrastructure/` and integration tests can use the database directly. The exemption is obvious in each rule body, not hidden in a separate ignore list.
+The test-file exclusion (`pathNot: "\\.test\\.ts$"`) is encoded inline in each isolation rule so unit tests can pull fakes from `infrastructure/` and integration tests can use the database directly. The exemption is obvious in each rule body, not hidden in a separate ignore list.
 
-### Domain isolation
+**Domain isolation.** Domain code is held to stricter standards:
 
-Domain code is held to stricter standards than the outer-folder rules require:
+- `domain-isolation`: a module's domain may import from itself, the `effect` package, the DDD kernel's **contracts** tier (`platform/ddd/contracts/`), and `platform/ids/`. Nothing else.
+- `domain-no-external-beyond-effect`: no external npm package other than `effect`.
 
-- `domain-isolation`: a module's domain may import from itself, the `effect` package, the DDD kernel's **contracts** tier (`platform/ddd/contracts/`), and `platform/ids/` for branded entity IDs. Nothing else.
-- `domain-no-external-beyond-effect`: domain code may not depend on any external npm package other than `effect`. No SQL client, no PG bindings, no HTTP framework, no ORM. The domain runtime is pure data and Effect types.
+The shared kernel under `platform/ddd/` is tiered by the principle that decides what the domain may touch: **the domain may depend on shared _types/contracts_, but not acquire and invoke shared _services_.** `platform/ddd/contracts/` holds `DomainEvent`, the `SpanAttributesExtractor` type, and `PersistenceUnavailable` — types the domain merely references; `domain-isolation` allows this folder wholesale. `platform/ddd/ports/` holds `UnitOfWork`, `CommandBus`, `QueryBus`, the event buses, and the cross-module ACL services — services the application ring `yield*`s. A companion rule `ddd-contracts-no-ports` forbids `contracts/` from importing `ports/`, so the contracts tier stays transitively domain-safe.
 
-#### The DDD kernel is tiered: contracts vs ports
+**Module barrel access.** `module-barrel-only-cross-module` and `module-barrel-only-from-outside` enforce barrel-only import of any module under `src/modules/<name>`; new modules are covered automatically. `barrel-content-discipline` forbids `index.ts` from re-exporting `infrastructure/` or `interface/`. `foreign-barrel-only-from-outbound-adapter` (ADR-0022) restricts which _folders_ may aim at a foreign barrel — only `infrastructure/acl/` and `interface/events/`.
 
-The shared kernel under `platform/ddd/` is split into two tiers by the principle that decides what the domain may touch: **the domain may depend on shared _types/contracts_, but it may not acquire and invoke shared _services_.**
+**Repository dumbness.** `dumb-repository-live-no-app-collaborators` keeps `infrastructure/repositories/*.repository-live.ts` from importing use cases or application-tier buses/unit-of-work (ADR-0005).
 
-- `platform/ddd/contracts/` — the `DomainEvent` factory/base, the `SpanAttributesExtractor` type used by per-event extractor signatures, and `PersistenceUnavailable`, the abstract transient-store error every repository port's channel includes. These are types and contracts the domain merely _references_. `domain-isolation` allows this folder wholesale.
-- `platform/ddd/ports/` — `UnitOfWork`, `CommandBus`, `QueryBus`, `DomainEventBus`, and the cross-module ACL services. These are `Context.Tag` services the **application ring** (commands, queries, event-handlers, interface) `yield*`s and calls. The domain may not — an aggregate that opened a transaction or dispatched on a bus would stop being pure data (ADR-0001/0003).
+**Cross-package boundaries.** The contracts package may not depend on the server or database packages, keeping the public schema definitions self-contained and shareable.
 
-Tiering the kernel by folder is what lets `domain-isolation` name a directory (`platform/ddd/contracts/`) instead of maintaining a hand-curated allowlist of individual filenames — which it did before, precisely because the domain-safe primitives were mixed into one flat folder with the application-tier ports. A companion rule, `ddd-contracts-no-ports`, forbids `contracts/` from importing `ports/`, so the contracts tier stays transitively domain-safe (dependencies run ports → contracts only). The application-ring folder rules (`commands-isolation`, etc.) allow `platform/ddd/` as a whole — the application ring legitimately uses both tiers.
+**General hygiene.** `no-circular` (no circular dependencies); `not-to-spec` (production code may not depend on test files).
+
+### File-taxonomy rules — the folder-structure ESLint rule (`pnpm lint`)
+
+The hexagonal/DDD file taxonomy — layout, sibling parity, and subfolder allowlists — is one declarative config, `eslint.project-structure.mjs`, enforced by the `project-structure/folder-structure` rule under `pnpm lint` (in-editor + CI). A single config file is the machine-readable specification of layout + parity for server modules, web features, the TanStack-query bridge, and the component library.
+
+- **Layout is deny-by-default.** A folder that enumerates its `children` rejects any file or subfolder not matched — the layout allowlist. This is the inverse of parity: parity asks whether a required sibling exists; layout asks whether a file is allowed to exist at all. It stops convention drift — the stray `session-utils.ts` in `domain/` or `todo-helpers.ts` in `commands/` that should have been an aggregate op or a named stereotype. **Container folders** (`domain/ports/`, `infrastructure/`, `interface/`) list only folder-typed child rules, so they admit no direct files. Subfolders are allowlisted too, so a stray `modules/x/helpers/` or `interface/grpc/` fails like a stray file.
+- **Parity is `enforceExistence`.** A rule node requires sibling files, resolved against the real filesystem. The requirement is an append onto the matched file's base name, so **adapter parity is anchored on the port**: `domain/ports/repositories/*.repository.ts` requires its `-live` / `-fake` / `-live.integration.test.ts` under `infrastructure/repositories/`. A consequence and a benefit: a port and its adapters must share a base name; a self-contained client with no port is correctly not required to have a live/fake.
+- **Didactic messages.** Each rule carries a `message` — a pedagogical hint that tells a contributor (human or agent) _what to do_ ("model this as a method on the aggregate root, or add a new stereotype to the taxonomy"), not just that a file is misplaced. This is the steering surface that stops a file being force-fit into the nearest allowed stereotype.
+
+The required-sibling obligations enforced (create one without its sibling and `pnpm lint` fails):
+
+| When you create…                            | Sibling required                                                                                                                            |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `domain/*.root.ts`                          | `domain/<base>.root.test.ts`                                                                                                                |
+| `domain/*.domain-service.ts`                | `domain/<base>.domain-service.test.ts`                                                                                                      |
+| `commands/*.handler.ts`                     | `commands/<base>.handler.test.ts`                                                                                                           |
+| `queries/*.handler.ts`                      | `queries/<base>.handler.integration.test.ts` (queries read real SQL)                                                                        |
+| `event-handlers/*.handler.ts`               | `event-handlers/<base>.handler.test.ts`                                                                                                     |
+| `interface/{http,cli}/*.endpoint.ts`        | `<base>.endpoint.integration.test.ts` (login/logout OIDC endpoints exempted — ADR-0013)                                                     |
+| `interface/{http,cli}/*.util.ts`            | `<base>.util.test.ts`                                                                                                                       |
+| `interface/events/*.event-adapter.ts`       | `<base>.event-adapter.test.ts`                                                                                                              |
+| `domain/ports/repositories/*.repository.ts` | in `infrastructure/repositories/`: `<base>.repository-live.ts` + `<base>.repository-fake.ts` + `<base>.repository-live.integration.test.ts` |
+| `domain/ports/clients/*.client.ts`          | in `infrastructure/clients/`: `<base>.client-live.ts` + `<base>.client-fake.ts` + `<base>.client-live.test.ts`                              |
+| `domain/ports/acl/*.acl.ts`                 | in `infrastructure/acl/`: `<base>.acl-live.ts` + `<base>.acl-fake.ts` + `<base>.acl-live.test.ts`                                           |
+
+The naming conventions (ADR-0024) are the parity detectors — don't rename a file to dodge the rule, write the test. Because `enforceExistence` is AND-only (no "either sibling"), the taxonomy standardizes on one canonical requirement per stereotype: endpoints require `*.endpoint.integration.test.ts`; query handlers require the integration test (they read real SQL projections); event handlers require the unit test. The old commands/queries "pair rule" (a bare handler admitted only if its schema sibling exists) is dropped as inexpressible — deny-by-default still blocks stray-named files, and an orphan handler still owes its test.
+
+**Vendored fork.** The rule's stock error text is generic; the per-rule `message` field is a local addition, so we depend on a fork built and committed as a tarball under `vendor/` (`file:` dependency). The fork also carries a required upstream performance fix: the stock `*` wildcard compiled to `(([^/]*)+)` — a nested-quantifier that backtracks catastrophically (a single non-matching `.test()` took ~67s); the fix `([^/]*)` has identical glob semantics in linear time and takes whole-repo `pnpm lint` to ~30s. Do not fall back to the stock upstream package until the wildcard fix is released upstream.
 
 ### Why no `application/` folder
 
-In strict hexagonal architecture the application layer is "use cases that orchestrate the domain." Once you carve out the read-side (queries, which legitimately bypass the domain — see `queries-isolation` above), the remaining contents of an application folder are commands and event handlers. Both have identical dependency constraints. An umbrella folder over them adds nesting without distinguishing them from anything else.
-
-Flattening to siblings (`commands/`, `queries/`, `event-handlers/`) buys two things:
-
-1. Rules align with folders 1:1. Each folder name maps to a single isolation rule. Reading `commands-isolation` tells you exactly what `commands/` may depend on. The conceptual write-side / read-side split is enforced at the file-system level rather than via convention.
-2. The architectural reality is explicit: queries genuinely aren't part of the same layer as commands. Putting them under `application/queries/` implied a kinship that doesn't exist constraint-wise — queries can touch `@org/database`, commands can't. Sibling folders make this visible.
-
-If long-running orchestrations (sagas, process managers) appear, they get their own sibling folder and their own isolation rule.
-
-### Module barrel-only and barrel content
-
-Two generalized rules enforce barrel-only access for any folder under `src/modules/<name>`:
-
-- `module-barrel-only-cross-module` — when the importer is itself inside a module, it may import another module only via that module's `index.ts`. Same-module imports are allowed via a backreference in `pathNot` (`^packages/server/src/modules/$1/`).
-- `module-barrel-only-from-outside` — when the importer is outside `src/modules/` (e.g. composition root, contracts package, platform), it may import any module only via that module's `index.ts`.
-
-Together these subsume what was previously a per-module rule (`module-user-barrel-only`, `module-wallet-barrel-only`, …). New modules under `src/modules/` are covered automatically with no config change.
-
-`barrel-content-discipline` constrains the barrel itself: `index.ts` may not re-export anything from `infrastructure/` or `interface/` — those are private. The published cross-module surface is therefore: domain types (events, IDs, errors), command/query types (messages dispatched via the bus), handler-registration maps and span-attribute aggregators, and the module's `Live` layer for composition. Other modules see messages and notifications, never raw use case functions or repositories.
-
-### Cross-package boundaries
-
-The contracts package (which is consumable by clients as well as the server) has rules forbidding it from depending on the server or database packages. This keeps the public schema definitions self-contained and shareable.
-
-### General hygiene
-
-- `no-circular`: no circular dependencies.
-- `not-to-spec`: production code may not depend on test files.
-
-### Test-parity check (`pnpm lint:tests`)
-
-dependency-cruiser checks edges in the import graph; some architectural rules are about file _existence_, not edges. "Every HTTP endpoint must have a sibling integration test" (ADR-0013) is one such rule — the integration test does not import the endpoint (it goes through `HttpApiClient`), so reachability isn't the right property.
-
-A small repository-root script `scripts/check-test-parity.mjs` covers these cases. It globs subjects defined in a `rules` array and asserts that each has a sibling test file. It is wired as `pnpm lint:tests` and runs in `pnpm check:all` alongside `lint:deps`. The current rules cover:
-
-- HTTP endpoints — `interface/*.endpoint.ts` requires a sibling `*.endpoint.integration.test.ts` (or `*.endpoint.test.ts`)
-- Commands — `commands/*-command.ts` requires a sibling `<base>.test.ts` (drop the `-command` suffix). The schema file is the detector because its registry-merge `declare module` is the authoritative "this command exists" announcement (ADR-0006).
-- Queries — `queries/*-query.ts` requires a sibling `<base>.integration.test.ts` (or `<base>.test.ts`). Queries naturally hit the database directly, so integration is the default form.
-- Event handlers — every non-test `event-handlers/*.ts` requires a sibling `<base>.integration.test.ts` (or `<base>.test.ts`).
-- Aggregate roots — `domain/*.root.ts` requires a sibling `*.root.test.ts`. The `.root.ts` suffix is an explicit DDD signal: "this is the root of a consistency boundary; invariants live here." Other domain stereotypes carry their own suffix but no parity obligation: `*.aggregate.ts` (a _constituent_ aggregate — a collection of entities that is only a part of a root, not itself a consistency-boundary root), `*.entity.ts`, `*.value-object.ts`, and the errors/events/IDs alongside them.
-- Live repositories — `infrastructure/repositories/*-repository-live.ts` (ADR-0025 tiering) requires (1) a sibling `*-repository-live.integration.test.ts` exercising the live SQL behavior (mapping, unique-violation translation, transaction-context joining), and (2) a sibling `*-repository-fake.ts` counterpart so use-case unit tests can run without a database (ADR-0005). The fake itself is not subject to parity — testing the fake is opt-in.
-
-The naming conventions chosen as detectors do double duty — they enforce the rule and document the architectural role of the file at a filename glance. They are bypassable (a contributor could name an aggregate root `user.ts` instead of `user.root.ts`), but bypass is the kind of thing a reviewer catches; the rule's job is to catch _forgetfulness_, not malice. Empty test files would similarly pass parity but fail review.
-
-The two tools are complementary: depcruise enforces _what_ a file may depend on; the parity script enforces _that a sibling file exists_. Both fail CI; both produce explicit error output that points at the missing artifact.
+Once you carve out the read-side (queries, which legitimately bypass the domain), the remaining contents of an application folder are commands and event handlers, which have identical dependency constraints. An umbrella folder over them adds nesting without distinguishing them. Flattening to siblings buys 1:1 rule↔folder alignment and makes the write-side/read-side split explicit at the file system. If long-running orchestrations (sagas, process managers) appear, they get their own sibling folder and isolation rule.
 
 ## Consequences
 
-- Architecture violations fail CI, not code review. The cost of repeatedly explaining the rules drops to zero, and the rules cannot be silently weakened.
-- Adding a new module under `src/modules/` requires no dependency-cruiser config change — the two generalized barrel rules cover any new folder automatically. The "is this really a module?" question still has to be asked, but the prompt now lives in code review and ADR-0002, not in a forced edit to `.dependency-cruiser.cjs`.
-- Rules are tightened over time as patterns stabilize. Don't fight a rule by widening it; fight it by changing the design. If a command legitimately needs to reach into infrastructure, that is a smell to investigate (probably a missing port in `domain/`), not a rule to relax.
-- Test code is exempt from the per-folder isolation rules (`commands-isolation`, `queries-isolation`, `event-handlers-isolation`). The exemption is encoded inline in each rule (`pathNot: "\\.test\\.ts$"`), not in a separate ignore list — easier to audit and harder to abuse. Tests can therefore pull fakes from `infrastructure/` and use the database directly in integration tests.
-- The dependency-cruiser TypeScript resolver requires its own `tsconfig` so that path aliases resolve correctly during analysis. This is a minor maintenance cost; the alternative is silently-passing rules because the cruiser couldn't follow imports.
-- The configuration is intentionally one file, not a per-package distribution. A single artifact is easier to read end-to-end than rules scattered across many configs.
+- Architecture violations fail CI, not code review. The rules cannot be silently weakened.
+- Adding a new module under `src/modules/` requires no dependency-cruiser config change — the generalized barrel rules cover any new folder automatically.
+- Layout, parity, and subfolder allowlists are one declarative file that reads as a specification and gives in-editor feedback.
+- Don't fight a rule by widening it; fight it by changing the design. If a command legitimately needs infrastructure, that is a smell (probably a missing port), not a rule to relax.
+- Test code is exempt from the per-folder isolation rules via an inline `pathNot`, easier to audit than a separate ignore list.
+- A completely empty stray folder (no linted files) is not visited by the file-triggered rule, so it escapes; low risk, since stray folders almost always contain files.
 
 ## Alternatives considered
 
-- **ESLint custom rules.** Possible, but ESLint's import-resolution story is less robust for monorepos with TypeScript path aliases, and the rule expressivity for "this set of paths may not depend on this other set of paths" is awkward.
-- **Build-system enforcement** (e.g. separate TypeScript projects per layer with `references`). Adds significant build complexity and forces the layering to be expressible as a project graph, which it isn't always (the test exemption alone is a problem).
-- **No enforcement, rely on code review.** Rejected — discussed above; rules exist on paper, not in the code.
+- **A hand-rolled `check-test-parity` / `check-layout` script.** The taxonomy is a natural fit for a general-purpose tool; imperative script logic (glob arrays, regex allowlists) is hard to read as a specification and invisible in the editor. The declarative rule reads as the spec and its didactic messages are the most valuable output for an AI-agent contributor.
+- **ESLint custom rules for the import graph.** ESLint's import-resolution story is less robust for monorepos with TS path aliases, and "this set of paths may not depend on that set" is awkward to express. dependency-cruiser is the better tool for edges; ESLint owns the file taxonomy.
+- **Build-system enforcement** (separate TS projects per layer). Adds significant build complexity and can't express the test exemption.
+- **No enforcement, rely on code review.** Rejected — rules exist on paper, not in the code.
 
 ## Related
 
 - ADR-0001 (functional core) and ADR-0002 (module layout) define what the rules enforce.
-- ADR-0005 (repository pattern) explains why the test exemption is needed.
+- ADR-0005 (repository pattern) explains why the test exemption is needed and the dumb-repository rules.
 - ADR-0009 (testing pyramid) documents the test conventions that interact with the exemption.

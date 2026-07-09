@@ -5,7 +5,7 @@ import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attr
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-// First-class "mark done" verb (ADR-0024) — distinct from `UpdateTodoCommand`
+// First-class "mark done" verb (ADR-0005) — distinct from `UpdateTodoCommand`
 // so the CLI can complete a todo without resupplying its title.
 export const CompleteTodoCommand = Schema.TaggedStruct("CompleteTodoCommand", {
   todoId: TodoId,

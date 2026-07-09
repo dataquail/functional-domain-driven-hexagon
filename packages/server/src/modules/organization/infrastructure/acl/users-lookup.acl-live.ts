@@ -6,7 +6,7 @@ import { UsersLookup } from "@/modules/organization/domain/ports/acl/users-looku
 import { FindUsersByIdsQuery } from "@/modules/user/index.js";
 import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 
-// ADR-0023 outbound adapter. The one place in the org module where
+// ADR-0022 outbound adapter. The one place in the org module where
 // the user module's barrel is imported — every other folder
 // (commands, queries, interface/http) goes through `UsersLookup`.
 // Dispatches the user-module's `FindUsersByIdsQuery` through the

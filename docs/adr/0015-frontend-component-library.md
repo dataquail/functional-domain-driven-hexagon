@@ -51,7 +51,7 @@ A component starts where it is used. When a second feature wants the same shape,
 
 ### Discoverability
 
-Storybook is the canonical index. Every primitive and pattern ships a sibling `*.stories.tsx` showing default rendering, variant matrix, light/dark theming, and interactive states. Run `pnpm -F @org/components storybook` to open it locally. The `lint:tests` parity check fails CI if a primitive or pattern lands without a sibling story.
+Storybook is the canonical index. Every primitive and pattern ships a sibling `*.stories.tsx` showing default rendering, variant matrix, light/dark theming, and interactive states. Run `pnpm -F @org/components storybook` to open it locally. The folder-structure ESLint parity rule (ADR-0008) fails CI if a primitive or pattern lands without a sibling story.
 
 CLAUDE.md points future agents at Storybook (and the README as a fallback), so the question "is there already a component for this?" is the cheap first check rather than a missed step.
 
@@ -66,13 +66,13 @@ ESLint (`pnpm lint`) adds:
 
 - `react/forbid-elements` scoped to `features/**/*.tsx` and `patterns/**/*.tsx` — bans the raw HTML elements that have a primitive equivalent (`<button>`, `<input>`, `<label>`, `<select>`, `<form>`). Layout and text elements (`<div>`, `<span>`, `<section>`, headings, `<p>`, `<ul>`, `<li>`, `<a>`, `<img>`, `<textarea>`) remain free until they get a bespoke wrapper. The forbid-list grows when a new primitive is added; that growth is the design-system signal, not a maintenance burden — the moment a primitive replaces a raw element is also the moment to add the corresponding entry. Test and story files exempted.
 
-Test parity (`pnpm lint:tests`) adds:
+Test parity (`project-structure/folder-structure`, `componentsPrimitives` / `componentsPatterns`) adds:
 
 - Every `components/primitives/**/*.tsx` and `components/patterns/**/*.tsx` requires a sibling `*.stories.tsx`. The detector and the discoverability surface are the same artifact: if Storybook can't see it, neither can the next contributor.
 
 CI gate (`pnpm check:all`) adds:
 
-- `pnpm build:storybook` runs after the test suite. Broken stories — bad imports, type errors in story bodies, missing decorators — fail the build before merge. Storybook drift is mechanically prevented, not policed in review.
+- `pnpm -F @org/components build-storybook` runs after the test suite. Broken stories — bad imports, type errors in story bodies, missing decorators — fail the build before merge. Storybook drift is mechanically prevented, not policed in review.
 
 What is _not_ enforced: raw `<div>`/`<span>`/heading usage. Banning these is unworkable — layout containers and text legitimately need them. The rule covers the elements where the wrapper-vs-raw choice is mechanical; everything else is left to design judgment.
 

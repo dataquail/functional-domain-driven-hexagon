@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-// Domain service (ADR-0026): the rule that auth credentials are stored and
+// Domain service (ADR-0023): the rule that auth credentials are stored and
 // compared by their sha256 hash, never in plaintext. It has no aggregate
 // home — it applies to API-token secrets, device-grant codes, AND an
 // arbitrary incoming bearer at lookup time (the auth middleware), where

@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
 // Page Object for an organization's tasks page (route: /orgs/:orgId, the
-// "Tasks" tab). Todos are org-scoped (ADR-0021), so the add-todo surface
+// "Tasks" tab). Todos are org-scoped (ADR-0020), so the add-todo surface
 // lives here rather than at the old `/` index. Only this file knows about
 // data-testid="add-todo-input" etc.
 export class OrgTasksPage {

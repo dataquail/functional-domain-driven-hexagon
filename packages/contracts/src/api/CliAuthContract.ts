@@ -6,7 +6,7 @@ import * as CustomHttpApiError from "../CustomHttpApiError.js";
 
 // ==========================================
 // Device authorization grant (RFC 8628), app-native — the CLI/MCP wire
-// surface for sign-in. Public: the caller has no credential yet (ADR-0024).
+// surface for sign-in. Public: the caller has no credential yet (ADR-0005).
 // ==========================================
 
 export class DeviceStartResponse extends Schema.Class<DeviceStartResponse>("DeviceStartResponse")({

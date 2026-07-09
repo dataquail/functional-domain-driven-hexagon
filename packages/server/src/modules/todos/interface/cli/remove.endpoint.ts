@@ -9,7 +9,7 @@ import * as Authz from "@/platform/auth/authz.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
-// CLI adapter (ADR-0024): same delete-gated resource + DeleteTodoCommand as
+// CLI adapter (ADR-0005): same delete-gated resource + DeleteTodoCommand as
 // the GUI's delete endpoint, with the CLI's own NotFound shape.
 export const removeEndpoint = Effect.fn("CliTodosLive.remove")(
   function* (request: EndpointRequest<typeof CliTodosContract.Group, "remove">) {

@@ -155,7 +155,7 @@ export class AcceptInvitationResponse extends Schema.Class<AcceptInvitationRespo
 
 // Joined view returned by the SA admin "list members of org" endpoint.
 // The handler composes the org-module's membership query with the
-// user-module's `FindUsersByIdsQuery` (ADR-0021 forbids cross-schema
+// user-module's `FindUsersByIdsQuery` (ADR-0020 forbids cross-schema
 // SQL) — both are reads, so no transactional concern.
 export class OrganizationMember extends Schema.Class<OrganizationMember>("OrganizationMember")({
   userId: UserId,

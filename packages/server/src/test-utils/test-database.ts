@@ -59,7 +59,7 @@ export const TestDatabaseLive =
 let migrationsPromise: Promise<void> | undefined;
 
 // Kept in sync with packages/database/migrations/V00*__create_schema_*.sql.
-// Each module owns its own schema (ADR-0021).
+// Each module owns its own schema (ADR-0020).
 const MODULE_SCHEMAS = [
   "user",
   "todos",
