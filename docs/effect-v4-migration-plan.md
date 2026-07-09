@@ -56,6 +56,7 @@ Read `node_modules/.pnpm/effect@4.0.0-beta.94/node_modules/effect/dist/**/*.d.ts
 - **`DateTime.unsafeMake`→`DateTime.makeUnsafe`** (also `DateTime.fromDateUnsafe`, `DateTime.nowUnsafe`). `DateTime.make` now returns `Option`.
 
 **Additional renames verified this session (server/jobs/mcp/components downstream):**
+
 - **Comparison predicates gained an `is` prefix:** `Duration.lessThan`→`Duration.isLessThan`, `DateTime.lessThanOrEqualTo`→`DateTime.isLessThanOrEqualTo`, etc. `DateTime.distanceDuration`→`DateTime.distance` (still returns `Duration`). `Order.reverse`→`Order.flip`.
 - **`Schema.decodeUnknownEither`→`Schema.decodeUnknownResult`; `Schema.standardSchemaV1`→`Schema.toStandardSchemaV1`; `Schema.Schema.Any` (top schema type)→`Schema.Top`.**
 - **`Option.fromNullable`→`Option.fromNullishOr`.**
@@ -71,9 +72,11 @@ Read `node_modules/.pnpm/effect@4.0.0-beta.94/node_modules/effect/dist/**/*.d.ts
 - **`HttpApiClient`/endpoint request keys `path`/`urlParams`→`params`/`query`** (already noted; recurs in mcp + web client call sites).
 
 ### Dead code deleted (not migrated), user-approved — zero importers anywhere:
+
 `contracts/src/SchemaUtils.ts`, `contracts/src/Control.ts`, and the `ManualCache` trio (`ManualCache.ts` + `internal/manual-cache.ts` + `test/ManualCache.test.ts`). **Ignore §3.4 / the old "do SchemaUtils first" step — that file is gone.**
 
 **Gotchas:**
+
 - **Don't** run a broad `eslint --fix` on mid-migration code — it strips imports the not-yet-migrated code still needs. Commit WIP with `git commit --no-verify`.
 - `web` typechecks against the **built** `@org/contracts` — run `pnpm -F @org/contracts build` after contract edits before checking web.
 - Final verification needs a DB: `DATABASE_URL_TEST=… pnpm test:integration` (env recipe is in the assistant's project memory).
@@ -181,6 +184,7 @@ State on branch `chore/effect-v4-migration` (uncommitted working tree):
 ### 3.4 Hardest file — `contracts/src/SchemaUtils.ts` (deep Schema-transform rewrite)
 
 This custom combinator library uses v3's low-level Schema internals, all reshaped in v4. **Do it first among the remaining contracts** (others use its `Email`/`URLString`/`ArrayFromFallible`/etc.) and with `packages/effect/SCHEMA.md` open. Verified v4 replacements:
+
 - **`Schema.Schema<A, I, R>` → `Schema.Codec<A, I, R>`.** In v4 `Schema.Schema<T>` takes **one** type arg (decoded type only); the full codec with encoded type + services is `Schema.Codec<T, E, RD, RE>`. Every 3-arg `Schema.Schema<A,I,R>` signature becomes `Schema.Codec<...>`.
 - **`Schema.transform(from, to, { decode, encode, strict })` → `from.pipe(Schema.decodeTo(to, transformation))`** and **`Schema.transformOrFail` → `Schema.decodeTo`** with an effectful `SchemaTransformation`. New composition model — `decodeTo`/`encodeTo` + `effect/SchemaTransformation` objects (not the old positional `{decode, encode}`).
 - **`effect/ParseResult` is gone.** Issue constructors (`ParseResult.Type`, `.Forbidden`), `ArrayFormatter`, `ParseIssue`, `ParseResult.try/fail/encode/decode` map onto **`effect/SchemaIssue`** + **`effect/SchemaTransformation`** + Result-returning parser APIs (`Schema.decodeResult`/`encodeResult`). Confirm exact names against those `.d.ts`.
@@ -297,10 +301,10 @@ _Gate:_ `pnpm check:all` + integration + acceptance all green; app verified live
 
 ## 7. Definition of done
 
-- [ ] `pnpm check:all` green on the branch.
-- [ ] `pnpm test:integration` (real DB) green.
-- [ ] `pnpm test:acceptance` green.
-- [ ] App runs; sign-in + one endpoint + Jaeger trace verified live.
-- [ ] No `@effect/platform`/`@effect/cli`/`Either`/`catchAll`/commented v3 code remains; overrides cleaned.
-- [ ] ADR added; CLAUDE.md updated.
-- [ ] Web bundle-size delta recorded in the PR.
+- [x] `pnpm check:all` green on the branch.
+- [x] `pnpm test:integration` (real DB) green — 218 server + 3 jobs. Two v4 runtime issues fixed here (never exercised before, since the default gate has no DB): `HttpApiClient` strict `Schema.Class` request encoding (wrap args in the contract class), and endpoint-consumed module-owned services (OidcClient/InvitationMailer/BillingGateway) that `HttpRouter.provideRequest` fails to deliver at runtime under `HttpApiBuilder` — moved to post-serve opaque bundles. Also `Schema.Void` success is 200 in v4 (was 204).
+- [ ] `pnpm test:acceptance` green. **BLOCKED on this dev machine** — the co-tenant `synapse/helia` project persistently holds ports 3000/3001/5432 and `server.ts` hardcodes port 3001, so Playwright's `webServer` can't bind. Not run rather than kill the user's processes or hack the committed config. Re-run once those ports are free (this repo's postgres is on host 5433; `docker-compose.override.yml` with `ports: !override ["5433:5432"]` avoids the 5432 clash).
+- [ ] App runs; sign-in + one endpoint + Jaeger trace verified live. **Same environment block** (BFF can't bind 3001). The server serve-path + v4 Otlp wiring are otherwise exercised: the integration suite runs the full v4 HttpApi stack via `NodeHttpServer.layerTest`, and the OTLP tracer layer compiles/wires (Phase 6).
+- [x] No `@effect/platform`/`@effect/cli`/`Either`/`catchAll`/commented v3 code remains; overrides cleaned (absorbed-package overrides gone; the 3 remaining `@effect` dev-tool overrides are pre-existing, live tooling). Codemod scripts deleted.
+- [x] ADR added (ADR-0030); CLAUDE.md updated. ADR-0012 superseded by ADR-0029 (Phase 6).
+- [x] Web bundle-size delta recorded (`docs/effect-v4-bundle-size.md`, −17.9% gzipped).
