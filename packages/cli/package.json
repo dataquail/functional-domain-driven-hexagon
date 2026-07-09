@@ -18,13 +18,13 @@
   },
   "dependencies": {
     "@effect/cli": "0.75.2",
-    "@effect/platform": "0.96.1",
-    "@effect/platform-node": "0.106.0",
+    "@effect/platform": "0.96.2",
+    "@effect/platform-node": "0.107.0",
     "@effect/printer": "0.49.0",
     "@effect/printer-ansi": "0.49.0",
     "@org/api-client": "workspace:^",
     "@org/contracts": "workspace:^",
-    "effect": "3.21.2"
+    "effect": "3.21.4"
   },
   "devDependencies": {
     "@types/node": "^25.9.4",

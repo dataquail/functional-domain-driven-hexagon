@@ -10,14 +10,14 @@
     "check": "tsc --noEmit"
   },
   "devDependencies": {
-    "@effect/platform": "0.96.1",
+    "@effect/platform": "0.96.2",
     "@org/contracts": "workspace:^",
     "@org/test-drivers": "workspace:^",
     "@playwright/test": "^1.61.1",
     "@types/node": "^25.9.4",
     "@types/pg": "^8.20.0",
     "dotenv": "^16.6.1",
-    "effect": "3.21.2",
+    "effect": "3.21.4",
     "pg": "8.13.1",
     "typescript": "~5.7.3"
   }

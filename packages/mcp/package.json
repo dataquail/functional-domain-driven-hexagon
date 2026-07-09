@@ -17,12 +17,12 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@effect/platform": "0.96.1",
-    "@effect/platform-node": "0.106.0",
+    "@effect/platform": "0.96.2",
+    "@effect/platform-node": "0.107.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@org/api-client": "workspace:^",
     "@org/contracts": "workspace:^",
-    "effect": "3.21.2",
+    "effect": "3.21.4",
     "zod": "^3.25.76"
   },
   "devDependencies": {
