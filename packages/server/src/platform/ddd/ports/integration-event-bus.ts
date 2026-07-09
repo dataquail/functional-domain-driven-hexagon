@@ -41,7 +41,7 @@ export interface IntegrationEventBusShape {
   ) => Effect.Effect<ReadonlyArray<(event: DomainEvent) => Effect.Effect<void>>>;
 }
 
-export class IntegrationEventBus extends Context.Tag("IntegrationEventBus")<
+export class IntegrationEventBus extends Context.Service<
   IntegrationEventBus,
   IntegrationEventBusShape
->() {}
+>()("IntegrationEventBus") {}

@@ -2,9 +2,11 @@ import { describe, it } from "@effect/vitest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { type CurrentUser, CurrentUser as CurrentUserTag } from "@org/contracts/Policy";
 import { deepStrictEqual } from "assert";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { UserId } from "@/platform/ids/user-id.js";
 import { makeMembershipServiceFake } from "@/test-utils/membership-service-fake.js";
@@ -37,7 +39,7 @@ declare module "./policy-registry.js" {
   }
 }
 
-const callerMember: CurrentUser["Type"] = {
+const callerMember: CurrentUser["Service"] = {
   sessionId: "s",
   userId: UserId.make("11111111-1111-1111-1111-111111111111"),
 };
@@ -76,31 +78,34 @@ const provideRegistries = (opts: {
     makeOrganizationRoleServiceFake(),
   );
 
-const provideCurrentUser = (caller: CurrentUser["Type"]) => Layer.succeed(CurrentUserTag, caller);
+const provideCurrentUser = (caller: CurrentUser["Service"]) =>
+  Layer.succeed(CurrentUserTag, caller);
 
 describe("makePolicyRegistry — array-of-checks AND composition", () => {
   it.effect("succeeds only when every check in the array returns true", () =>
     Authz.hasPermissions("test", Actions.Read, knownThing.id).pipe(
       Effect.provide(
         Layer.mergeAll(
-          makePolicyRegistry([
-            {
-              test: {
-                read: [() => Effect.succeed(true), () => Effect.succeed(true)],
-                update: () => Effect.succeed(false),
-                create: () => Effect.succeed(false),
+          Layer.mergeAll(
+            makePolicyRegistry([
+              {
+                test: {
+                  read: [() => Effect.succeed(true), () => Effect.succeed(true)],
+                  update: () => Effect.succeed(false),
+                  create: () => Effect.succeed(false),
+                },
               },
-            },
-          ]),
-          makeResourceResolverRegistry({
-            test: () => Effect.succeed(knownThing),
-          }),
-          makeRoleServiceFake(new Map()),
-          makeMembershipServiceFake(),
-          makeOrganizationRoleServiceFake(),
+            ]),
+            makeResourceResolverRegistry({
+              test: () => Effect.succeed(knownThing),
+            }),
+            makeRoleServiceFake(new Map()),
+            makeMembershipServiceFake(),
+            makeOrganizationRoleServiceFake(),
+          ),
+          provideCurrentUser(callerMember),
         ),
       ),
-      Effect.provide(provideCurrentUser(callerMember)),
     ),
   );
 
@@ -109,34 +114,38 @@ describe("makePolicyRegistry — array-of-checks AND composition", () => {
       const exit = yield* Effect.exit(Authz.hasPermissions("test", Actions.Read, knownThing.id));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof CustomHttpApiError.Forbidden, true);
       }
     }).pipe(
       Effect.provide(
         Layer.mergeAll(
-          makePolicyRegistry([
-            {
-              test: {
-                read: [
-                  () => Effect.succeed(true),
-                  () => Effect.succeed(false), // second check fails — overall denial
-                  () => Effect.die("should have short-circuited"),
-                ],
-                update: () => Effect.succeed(false),
-                create: () => Effect.succeed(false),
+          Layer.mergeAll(
+            makePolicyRegistry([
+              {
+                test: {
+                  read: [
+                    () => Effect.succeed(true),
+                    () => Effect.succeed(false), // second check fails — overall denial
+                    () => Effect.die("should have short-circuited"),
+                  ],
+                  update: () => Effect.succeed(false),
+                  create: () => Effect.succeed(false),
+                },
               },
-            },
-          ]),
-          makeResourceResolverRegistry({
-            test: () => Effect.succeed(knownThing),
-          }),
-          makeRoleServiceFake(new Map()),
-          makeMembershipServiceFake(),
-          makeOrganizationRoleServiceFake(),
+            ]),
+            makeResourceResolverRegistry({
+              test: () => Effect.succeed(knownThing),
+            }),
+            makeRoleServiceFake(new Map()),
+            makeMembershipServiceFake(),
+            makeOrganizationRoleServiceFake(),
+          ),
+          provideCurrentUser(callerMember),
         ),
       ),
-      Effect.provide(provideCurrentUser(callerMember)),
     ),
   );
 });
@@ -145,13 +154,15 @@ describe("Authz.hasPermissions (flat — CREATE, no resource)", () => {
   it.effect("succeeds when the registered policy returns true", () =>
     Authz.hasPermissions("test", Actions.Create).pipe(
       Effect.provide(
-        provideRegistries({
-          read: () => Effect.succeed(false),
-          update: () => Effect.succeed(false),
-          create: () => Effect.succeed(true),
-        }),
+        Layer.mergeAll(
+          provideRegistries({
+            read: () => Effect.succeed(false),
+            update: () => Effect.succeed(false),
+            create: () => Effect.succeed(true),
+          }),
+          provideCurrentUser(callerMember),
+        ),
       ),
-      Effect.provide(provideCurrentUser(callerMember)),
     ),
   );
 
@@ -160,18 +171,22 @@ describe("Authz.hasPermissions (flat — CREATE, no resource)", () => {
       const exit = yield* Effect.exit(Authz.hasPermissions("test", Actions.Create));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof CustomHttpApiError.Forbidden, true);
       }
     }).pipe(
       Effect.provide(
-        provideRegistries({
-          read: () => Effect.succeed(true),
-          update: () => Effect.succeed(true),
-          create: () => Effect.succeed(false),
-        }),
+        Layer.mergeAll(
+          provideRegistries({
+            read: () => Effect.succeed(true),
+            update: () => Effect.succeed(true),
+            create: () => Effect.succeed(false),
+          }),
+          provideCurrentUser(callerMember),
+        ),
       ),
-      Effect.provide(provideCurrentUser(callerMember)),
     ),
   );
 });
@@ -180,13 +195,15 @@ describe("Authz.hasPermissions (resource-scoped — READ/UPDATE/DELETE)", () => 
   it.effect("resolves the resource and threads it to the registered policy", () =>
     Authz.hasPermissions("test", Actions.Read, knownThing.id).pipe(
       Effect.provide(
-        provideRegistries({
-          read: (_caller, resource) => Effect.succeed(resource.id === knownThing.id),
-          update: () => Effect.succeed(false),
-          create: () => Effect.succeed(false),
-        }),
+        Layer.mergeAll(
+          provideRegistries({
+            read: (_caller, resource) => Effect.succeed(resource.id === knownThing.id),
+            update: () => Effect.succeed(false),
+            create: () => Effect.succeed(false),
+          }),
+          provideCurrentUser(callerMember),
+        ),
       ),
-      Effect.provide(provideCurrentUser(callerMember)),
     ),
   );
 
@@ -197,18 +214,22 @@ describe("Authz.hasPermissions (resource-scoped — READ/UPDATE/DELETE)", () => 
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof CustomHttpApiError.NotFound, true);
       }
     }).pipe(
       Effect.provide(
-        provideRegistries({
-          read: () => Effect.succeed(true),
-          update: () => Effect.succeed(true),
-          create: () => Effect.succeed(true),
-        }),
+        Layer.mergeAll(
+          provideRegistries({
+            read: () => Effect.succeed(true),
+            update: () => Effect.succeed(true),
+            create: () => Effect.succeed(true),
+          }),
+          provideCurrentUser(callerMember),
+        ),
       ),
-      Effect.provide(provideCurrentUser(callerMember)),
     ),
   );
 
@@ -217,18 +238,22 @@ describe("Authz.hasPermissions (resource-scoped — READ/UPDATE/DELETE)", () => 
       const exit = yield* Effect.exit(Authz.hasPermissions("test", Actions.Update, knownThing.id));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof CustomHttpApiError.Forbidden, true);
       }
     }).pipe(
       Effect.provide(
-        provideRegistries({
-          read: () => Effect.succeed(true),
-          update: () => Effect.succeed(false),
-          create: () => Effect.succeed(false),
-        }),
+        Layer.mergeAll(
+          provideRegistries({
+            read: () => Effect.succeed(true),
+            update: () => Effect.succeed(false),
+            create: () => Effect.succeed(false),
+          }),
+          provideCurrentUser(callerMember),
+        ),
       ),
-      Effect.provide(provideCurrentUser(callerMember)),
     ),
   );
 });

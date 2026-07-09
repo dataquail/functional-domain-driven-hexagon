@@ -1,9 +1,11 @@
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
-import { TodosContract } from "@org/contracts/api/Contracts";
+import { OrganizationContract, TodosContract } from "@org/contracts/api/Contracts";
 import { deepStrictEqual, ok } from "assert";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/api.js";
 import { TodoId } from "@/modules/todos/domain/todo.id.js";
@@ -31,14 +33,16 @@ suite("PUT /orgs/:orgId/todos/:id (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         const created = yield* client.todos.create({
-          path: { orgId },
-          payload: { title: "Buy milk" },
+          params: { orgId },
+          payload: new TodosContract.CreateTodoPayload({ title: "Buy milk" }),
         });
         const updated = yield* client.todos.update({
-          path: { orgId, id: created.id },
-          payload: { title: "Buy oat milk", completed: true },
+          params: { orgId, id: created.id },
+          payload: new TodosContract.UpdateTodoPayload({ title: "Buy oat milk", completed: true }),
         });
         deepStrictEqual(updated.title, "Buy oat milk");
         deepStrictEqual(updated.completed, true);
@@ -50,17 +54,22 @@ suite("PUT /orgs/:orgId/todos/:id (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         const ghostId = TodoId.make("00000000-0000-0000-0000-000000000000");
         const exit = yield* Effect.exit(
           client.todos.update({
-            path: { orgId, id: ghostId },
-            payload: { title: "x", completed: false },
+            params: { orgId, id: ghostId },
+            payload: new TodosContract.UpdateTodoPayload({ title: "x", completed: false }),
           }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof TodosContract.TodoNotFoundError);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              TodosContract.TodoNotFoundError,
+          );
         } else {
           throw new Error("expected a typed Fail, got " + JSON.stringify(exit));
         }
@@ -72,24 +81,31 @@ suite("PUT /orgs/:orgId/todos/:id (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id: orgA } = yield* client.organization.create({ payload: { name: "Acme" } });
-        const { id: orgB } = yield* client.organization.create({ payload: { name: "Beta" } });
+        const { id: orgA } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
+        const { id: orgB } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Beta" }),
+        });
         const created = yield* client.todos.create({
-          path: { orgId: orgA },
-          payload: { title: "Buy milk" },
+          params: { orgId: orgA },
+          payload: new TodosContract.CreateTodoPayload({ title: "Buy milk" }),
         });
         // Super-admin bypasses the membership gate for orgB, but the
         // repository is scoped by (orgId, todoId), so the todo created in
         // orgA can't be reached through orgB's path.
         const exit = yield* Effect.exit(
           client.todos.update({
-            path: { orgId: orgB, id: created.id },
-            payload: { title: "hijack", completed: true },
+            params: { orgId: orgB, id: created.id },
+            payload: new TodosContract.UpdateTodoPayload({ title: "hijack", completed: true }),
           }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof TodosContract.TodoNotFoundError);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              TodosContract.TodoNotFoundError,
+          );
         } else {
           throw new Error("expected a typed Fail, got " + JSON.stringify(exit));
         }

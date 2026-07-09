@@ -74,7 +74,7 @@ suite("UnitOfWorkLive re-entrancy (integration)", () => {
       );
       const rows = yield* db.execute((c) => c.any(countSeeded));
       deepStrictEqual(rows.length, 2);
-    }).pipe(Effect.provide(UoWTestLive), Effect.provide(TestDatabaseLive)),
+    }).pipe(Effect.provide(UoWTestLive.pipe(Layer.provideMerge(TestDatabaseLive)))),
   );
 
   it.effect("a failure after a nested run rolls back the nested write too", () =>
@@ -106,7 +106,7 @@ suite("UnitOfWorkLive re-entrancy (integration)", () => {
       deepStrictEqual(Exit.isFailure(exit), true);
       const rows = yield* db.execute((c) => c.any(countSeeded));
       deepStrictEqual(rows.length, 0);
-    }).pipe(Effect.provide(UoWTestLive), Effect.provide(TestDatabaseLive)),
+    }).pipe(Effect.provide(UoWTestLive.pipe(Layer.provideMerge(TestDatabaseLive)))),
   );
 
   // Proves the savepoint contract: a nested `run` opens a real SAVEPOINT, so a
@@ -149,7 +149,7 @@ suite("UnitOfWorkLive re-entrancy (integration)", () => {
       const rows = yield* db.execute((c) => c.any(countSeeded));
       deepStrictEqual(rows.length, 1);
       deepStrictEqual(rows[0]?.id, outerId);
-    }).pipe(Effect.provide(UoWTestLive), Effect.provide(TestDatabaseLive)),
+    }).pipe(Effect.provide(UoWTestLive.pipe(Layer.provideMerge(TestDatabaseLive)))),
   );
 });
 
@@ -158,7 +158,7 @@ suite("UnitOfWorkLive re-entrancy (integration)", () => {
 // the transaction commits — each handler in its own transaction, its failure
 // isolated, and discarded entirely if the producer rolls back.
 suite("UnitOfWorkLive post-commit flush (integration)", () => {
-  const insert = (db: Database.Database["Type"], id: string, email: string) =>
+  const insert = (db: Database.Database["Service"], id: string, email: string) =>
     db.makeQuery((execute) =>
       execute((c) =>
         c.query(sql.unsafe`
@@ -191,7 +191,7 @@ suite("UnitOfWorkLive post-commit flush (integration)", () => {
       // Both the producer row and the post-commit handler's marker row exist.
       const rows = yield* db.execute((c) => c.any(countFlush));
       deepStrictEqual(rows.length, 2);
-    }).pipe(Effect.provide(UoWTestLive), Effect.provide(TestDatabaseLive)),
+    }).pipe(Effect.provide(UoWTestLive.pipe(Layer.provideMerge(TestDatabaseLive)))),
   );
 
   it.effect("a failing handler does not roll back the producer (failure isolated)", () =>
@@ -216,7 +216,7 @@ suite("UnitOfWorkLive post-commit flush (integration)", () => {
       const rows = yield* db.execute((c) => c.any(countFlush));
       deepStrictEqual(rows.length, 1);
       deepStrictEqual(rows[0]?.id, outerId);
-    }).pipe(Effect.provide(UoWTestLive), Effect.provide(TestDatabaseLive)),
+    }).pipe(Effect.provide(UoWTestLive.pipe(Layer.provideMerge(TestDatabaseLive)))),
   );
 
   it.effect("a producer rollback discards the buffered events (no flush)", () =>
@@ -242,7 +242,7 @@ suite("UnitOfWorkLive post-commit flush (integration)", () => {
       // Producer rolled back AND the handler never ran (buffer discarded).
       const rows = yield* db.execute((c) => c.any(countFlush));
       deepStrictEqual(rows.length, 0);
-    }).pipe(Effect.provide(UoWTestLive), Effect.provide(TestDatabaseLive)),
+    }).pipe(Effect.provide(UoWTestLive.pipe(Layer.provideMerge(TestDatabaseLive)))),
   );
 
   it.effect("a rolled-back savepoint discards integration events emitted inside it", () =>
@@ -275,6 +275,6 @@ suite("UnitOfWorkLive post-commit flush (integration)", () => {
       const rows = yield* db.execute((c) => c.any(countFlush));
       deepStrictEqual(rows.length, 1);
       deepStrictEqual(rows[0]?.id, outerId);
-    }).pipe(Effect.provide(UoWTestLive), Effect.provide(TestDatabaseLive)),
+    }).pipe(Effect.provide(UoWTestLive.pipe(Layer.provideMerge(TestDatabaseLive)))),
   );
 });

@@ -26,7 +26,7 @@ export type DeviceGrantRepositoryShape = {
   ) => Effect.Effect<void, DeviceGrantNotFound | PersistenceUnavailable>;
 };
 
-export class DeviceGrantRepository extends Context.Tag("DeviceGrantRepository")<
+export class DeviceGrantRepository extends Context.Service<
   DeviceGrantRepository,
   DeviceGrantRepositoryShape
->() {}
+>()("DeviceGrantRepository") {}

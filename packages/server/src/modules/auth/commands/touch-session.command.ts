@@ -1,7 +1,5 @@
-import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import { type SessionRepository } from "@/modules/auth/domain/ports/repositories/session.repository.js";
 import { SessionId } from "@/modules/auth/domain/session.id.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 
@@ -21,7 +19,3 @@ export const touchSessionCommandSpanAttributes: SpanAttributesExtractor<TouchSes
 ) => ({
   "auth.session.id": c.sessionId,
 });
-
-// Raw handler effect — `SessionRepository` is discharged by the wrap in
-// `auth-command-handlers.ts`; the bus-registered output type lives there.
-export type TouchSessionOutput = Effect.Effect<void, never, SessionRepository>;

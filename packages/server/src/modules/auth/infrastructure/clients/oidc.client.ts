@@ -1,5 +1,7 @@
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
+import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 import * as Redacted from "effect/Redacted";
 import * as openid from "openid-client";
 
@@ -20,138 +22,140 @@ export type CodeExchangeResult = {
   readonly email: string | null;
 };
 
-export class OidcClient extends Effect.Service<OidcClient>()("OidcClient", {
-  accessors: true,
-  effect: Effect.gen(function* () {
-    const env = yield* EnvVars;
-    const issuerUrl = new URL(env.ZITADEL_ISSUER);
-    const allowHttp = issuerUrl.protocol === "http:";
+const make = Effect.gen(function* () {
+  const env = yield* EnvVars;
+  const issuerUrl = new URL(env.ZITADEL_ISSUER);
+  const allowHttp = issuerUrl.protocol === "http:";
 
-    // Lazy discovery — fetched on first use, cached afterward. This lets the
-    // server boot when Zitadel is briefly unreachable (and lets tests build
-    // without a live Zitadel).
-    let cached: openid.Configuration | null = null;
-    const getConfig = async (): Promise<openid.Configuration> => {
-      if (cached !== null) return cached;
-      cached = await openid.discovery(
-        issuerUrl,
-        env.ZITADEL_CLIENT_ID,
-        Redacted.value(env.ZITADEL_CLIENT_SECRET),
-        undefined,
-        allowHttp ? { execute: [openid.allowInsecureRequests] } : undefined,
-      );
-      return cached;
-    };
+  // Lazy discovery — fetched on first use, cached afterward. This lets the
+  // server boot when Zitadel is briefly unreachable (and lets tests build
+  // without a live Zitadel).
+  let cached: openid.Configuration | null = null;
+  const getConfig = async (): Promise<openid.Configuration> => {
+    if (cached !== null) return cached;
+    cached = await openid.discovery(
+      issuerUrl,
+      env.ZITADEL_CLIENT_ID,
+      Redacted.value(env.ZITADEL_CLIENT_SECRET),
+      undefined,
+      allowHttp ? { execute: [openid.allowInsecureRequests] } : undefined,
+    );
+    return cached;
+  };
 
-    const buildAuthorize = (): Effect.Effect<
-      AuthorizeRequest,
-      CustomHttpApiError.InternalServerError
-    > =>
-      Effect.tryPromise({
-        try: async () => {
-          const config = await getConfig();
-          const codeVerifier = openid.randomPKCECodeVerifier();
-          const codeChallenge = await openid.calculatePKCECodeChallenge(codeVerifier);
-          const state = openid.randomState();
-          const url = openid.buildAuthorizationUrl(config, {
-            redirect_uri: env.ZITADEL_REDIRECT_URI,
-            scope: "openid email profile offline_access",
-            code_challenge: codeChallenge,
-            code_challenge_method: "S256",
-            state,
-            // Skip Zitadel's account picker. Without `id_token_hint` on
-            // logout (we discard the id_token at callback time), Zitadel
-            // can still surface previously-signed-in accounts (e.g. the
-            // IAM-level `zitadel-admin@zitadel.localhost` from the PAT
-            // bootstrap step). `prompt=login` forces the login form, which
-            // is the expected post-logout UX.
-            prompt: "login",
-          });
-          return { url, state, codeVerifier };
-        },
-        catch: (cause) =>
-          new CustomHttpApiError.InternalServerError({
-            message: `Failed to build authorize URL: ${String(cause)}`,
-          }),
-      });
+  const buildAuthorize = (): Effect.Effect<
+    AuthorizeRequest,
+    CustomHttpApiError.InternalServerError
+  > =>
+    Effect.tryPromise({
+      try: async () => {
+        const config = await getConfig();
+        const codeVerifier = openid.randomPKCECodeVerifier();
+        const codeChallenge = await openid.calculatePKCECodeChallenge(codeVerifier);
+        const state = openid.randomState();
+        const url = openid.buildAuthorizationUrl(config, {
+          redirect_uri: env.ZITADEL_REDIRECT_URI,
+          scope: "openid email profile offline_access",
+          code_challenge: codeChallenge,
+          code_challenge_method: "S256",
+          state,
+          // Skip Zitadel's account picker. Without `id_token_hint` on
+          // logout (we discard the id_token at callback time), Zitadel
+          // can still surface previously-signed-in accounts (e.g. the
+          // IAM-level `zitadel-admin@zitadel.localhost` from the PAT
+          // bootstrap step). `prompt=login` forces the login form, which
+          // is the expected post-logout UX.
+          prompt: "login",
+        });
+        return { url, state, codeVerifier };
+      },
+      catch: (cause) =>
+        new CustomHttpApiError.InternalServerError({
+          message: `Failed to build authorize URL: ${String(cause)}`,
+        }),
+    });
 
-    const exchangeCode = (
-      callbackUrl: URL,
-      expectedState: string,
-      codeVerifier: string,
-    ): Effect.Effect<CodeExchangeResult, CustomHttpApiError.Unauthorized> =>
-      Effect.tryPromise({
-        try: async () => {
-          const config = await getConfig();
-          const tokens = await openid.authorizationCodeGrant(config, callbackUrl, {
-            expectedState,
-            pkceCodeVerifier: codeVerifier,
-          });
-          const claims = tokens.claims();
-          if (claims === undefined || typeof claims.sub !== "string") {
-            throw new Error("id_token missing subject");
+  const exchangeCode = (
+    callbackUrl: URL,
+    expectedState: string,
+    codeVerifier: string,
+  ): Effect.Effect<CodeExchangeResult, CustomHttpApiError.Unauthorized> =>
+    Effect.tryPromise({
+      try: async () => {
+        const config = await getConfig();
+        const tokens = await openid.authorizationCodeGrant(config, callbackUrl, {
+          expectedState,
+          pkceCodeVerifier: codeVerifier,
+        });
+        const claims = tokens.claims();
+        if (claims === undefined || typeof claims.sub !== "string") {
+          throw new Error("id_token missing subject");
+        }
+        const readEmail = (source: { email?: unknown }): string | null =>
+          typeof source.email === "string" ? (source.email ?? null) : null;
+        let email = readEmail(claims as { email?: unknown });
+        // Zitadel omits the `email` claim from the id_token by default —
+        // it's only guaranteed at the userinfo endpoint. Pre-seeded users
+        // (e.g. the admin) already have an `auth_identities` row so sign-in
+        // never needs their email; but a self-registered user's first
+        // sign-in must provision a `users` row, which requires the email.
+        // Fall back to userinfo when the id_token didn't carry it. Best
+        // effort: a userinfo failure must not break sign-in for users who
+        // are already provisioned, so we swallow it and leave email null.
+        if (email === null) {
+          try {
+            const userinfo = await openid.fetchUserInfo(config, tokens.access_token, claims.sub);
+            email = readEmail(userinfo);
+          } catch {
+            email = null;
           }
-          const readEmail = (source: { email?: unknown }): string | null =>
-            typeof source.email === "string" ? (source.email ?? null) : null;
-          let email = readEmail(claims as { email?: unknown });
-          // Zitadel omits the `email` claim from the id_token by default —
-          // it's only guaranteed at the userinfo endpoint. Pre-seeded users
-          // (e.g. the admin) already have an `auth_identities` row so sign-in
-          // never needs their email; but a self-registered user's first
-          // sign-in must provision a `users` row, which requires the email.
-          // Fall back to userinfo when the id_token didn't carry it. Best
-          // effort: a userinfo failure must not break sign-in for users who
-          // are already provisioned, so we swallow it and leave email null.
-          if (email === null) {
-            try {
-              const userinfo = await openid.fetchUserInfo(config, tokens.access_token, claims.sub);
-              email = readEmail(userinfo);
-            } catch {
-              email = null;
-            }
-          }
-          return { subject: claims.sub, email };
-        },
-        catch: (cause) => {
-          // openid-client v6 surfaces Zitadel's response body on
-          // ResponseBodyError as `error` / `error_description` / `code`.
-          // Without unpacking, every failure looks like the same generic
-          // "ResponseBodyError" string and you can't tell a bad client
-          // secret from a stale code from a redirect URI mismatch.
-          const detail =
-            cause !== null && typeof cause === "object"
-              ? [
-                  (cause as { error?: unknown }).error,
-                  (cause as { error_description?: unknown }).error_description,
-                  (cause as { code?: unknown }).code,
-                ]
-                  .filter((v) => v !== undefined && v !== null && v !== "")
-                  .join(" — ")
-              : "";
-          return new CustomHttpApiError.Unauthorized({
-            message:
-              detail !== ""
-                ? `OIDC code exchange failed: ${String(cause)} [${detail}]`
-                : `OIDC code exchange failed: ${String(cause)}`,
-          });
-        },
-      });
+        }
+        return { subject: claims.sub, email };
+      },
+      catch: (cause) => {
+        // openid-client v6 surfaces Zitadel's response body on
+        // ResponseBodyError as `error` / `error_description` / `code`.
+        // Without unpacking, every failure looks like the same generic
+        // "ResponseBodyError" string and you can't tell a bad client
+        // secret from a stale code from a redirect URI mismatch.
+        const detail =
+          cause !== null && typeof cause === "object"
+            ? [
+                (cause as { error?: unknown }).error,
+                (cause as { error_description?: unknown }).error_description,
+                (cause as { code?: unknown }).code,
+              ]
+                .filter((v) => v !== undefined && v !== null && v !== "")
+                .join(" — ")
+            : "";
+        return new CustomHttpApiError.Unauthorized({
+          message:
+            detail !== ""
+              ? `OIDC code exchange failed: ${String(cause)} [${detail}]`
+              : `OIDC code exchange failed: ${String(cause)}`,
+        });
+      },
+    });
 
-    const buildEndSessionUrl = (): Effect.Effect<URL, CustomHttpApiError.InternalServerError> =>
-      Effect.tryPromise({
-        try: async () => {
-          const config = await getConfig();
-          return openid.buildEndSessionUrl(config, {
-            post_logout_redirect_uri: env.ZITADEL_POST_LOGOUT_REDIRECT_URI,
-          });
-        },
-        catch: (cause) =>
-          new CustomHttpApiError.InternalServerError({
-            message: `Failed to build end session URL: ${String(cause)}`,
-          }),
-      });
+  const buildEndSessionUrl = (): Effect.Effect<URL, CustomHttpApiError.InternalServerError> =>
+    Effect.tryPromise({
+      try: async () => {
+        const config = await getConfig();
+        return openid.buildEndSessionUrl(config, {
+          post_logout_redirect_uri: env.ZITADEL_POST_LOGOUT_REDIRECT_URI,
+        });
+      },
+      catch: (cause) =>
+        new CustomHttpApiError.InternalServerError({
+          message: `Failed to build end session URL: ${String(cause)}`,
+        }),
+    });
 
-    return { buildAuthorize, exchangeCode, buildEndSessionUrl } as const;
-  }),
-  dependencies: [EnvVars.Default],
-}) {}
+  return { buildAuthorize, exchangeCode, buildEndSessionUrl } as const;
+});
+
+export class OidcClient extends Context.Service<OidcClient, Effect.Success<typeof make>>()(
+  "OidcClient",
+) {
+  public static readonly layer = Layer.effect(OidcClient, make).pipe(Layer.provide(EnvVars.layer));
+}

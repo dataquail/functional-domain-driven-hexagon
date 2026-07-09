@@ -46,7 +46,10 @@ export const TestDatabaseLive =
         url: Redacted.make(assertTestDbName(TEST_DATABASE_URL)),
         ssl: false,
       })
-    : (Layer.die(new Error("DATABASE_URL_TEST is not set")) as ReturnType<typeof Database.layer>);
+    : (Layer.effect(
+        Database.Database,
+        Effect.die(new Error("DATABASE_URL_TEST is not set")),
+      ) as ReturnType<typeof Database.layer>);
 
 // Tests always migrate from scratch, so we drop every module schema and replay
 // the Flyway-named migration files in order. This intentionally avoids

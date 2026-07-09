@@ -1,10 +1,12 @@
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/api.js";
 import { MEMBER_CALLER_ID, SUPER_ADMIN_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
@@ -76,7 +78,7 @@ suite("GET /orgs/:orgId/members (integration, super-admin caller)", () => {
       Effect.gen(function* () {
         yield* seedOrgWithMembers;
         const client = yield* HttpApiClient.make(Api);
-        const res = yield* client.organization.findMembers({ path: { orgId: ORG_ID } });
+        const res = yield* client.organization.findMembers({ params: { orgId: ORG_ID } });
 
         deepStrictEqual(res.members.length, 2);
         const byId = new Map(res.members.map((m) => [m.userId, m]));
@@ -134,7 +136,7 @@ memberSuite("GET /orgs/:orgId/members (integration, plain-member caller)", () =>
           .pipe(Effect.orDie);
 
         const client = yield* HttpApiClient.make(Api);
-        const res = yield* client.organization.findMembers({ path: { orgId: ORG_ID } });
+        const res = yield* client.organization.findMembers({ params: { orgId: ORG_ID } });
 
         deepStrictEqual(res.members.length, 1);
         const self = res.members[0];
@@ -152,11 +154,14 @@ memberSuite("GET /orgs/:orgId/members (integration, plain-member caller)", () =>
         yield* seedOrg;
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
-          client.organization.findMembers({ path: { orgId: ORG_ID } }),
+          client.organization.findMembers({ params: { orgId: ORG_ID } }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof CustomHttpApiError.Forbidden);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              CustomHttpApiError.Forbidden,
+          );
         }
       }),
     );

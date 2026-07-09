@@ -1,6 +1,7 @@
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
+import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -20,7 +21,7 @@ const organizationId = OrganizationId.make("11111111-1111-1111-1111-111111111111
 const otherOrgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const walletId = WalletId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const otherWalletId = WalletId.make("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
 
 const acmeWallet = WalletRootOps.create({ id: walletId, organizationId, now }).wallet;
 
@@ -84,7 +85,9 @@ suite("WalletRepositoryLive (integration)", () => {
           const exit = yield* Effect.exit(repo.insertOne(clashing));
           deepStrictEqual(Exit.isFailure(exit), true);
           if (Exit.isFailure(exit)) {
-            const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+            const error = Cause.hasFails(exit.cause)
+              ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+              : null;
             deepStrictEqual(error instanceof WalletAlreadyExistsForOrganization, true);
             deepStrictEqual(
               (error as WalletAlreadyExistsForOrganization).organizationId,

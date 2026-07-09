@@ -1,10 +1,12 @@
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
+import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 import { beforeEach } from "vitest";
 
 import { DeviceGrantNotFound } from "@/modules/auth/domain/device-grant.errors.js";
@@ -84,7 +86,9 @@ suite("DeviceGrantRepositoryLive (integration)", () => {
       const lookup = yield* Effect.exit(repo.findOneByCodeHash("dc-hash"));
       deepStrictEqual(Exit.isFailure(lookup), true);
       if (Exit.isFailure(lookup)) {
-        const error = lookup.cause._tag === "Fail" ? lookup.cause.error : null;
+        const error = Cause.hasFails(lookup.cause)
+          ? Cause.findErrorOption(lookup.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof DeviceGrantNotFound, true);
       }
       const second = yield* Effect.exit(repo.deleteOne(id));

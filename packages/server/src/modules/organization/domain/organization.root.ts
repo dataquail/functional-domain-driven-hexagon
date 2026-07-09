@@ -1,5 +1,5 @@
 import type * as DateTime from "effect/DateTime";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
 import { OrganizationId } from "@/platform/ids/organization-id.js";
@@ -24,7 +24,7 @@ export class OrganizationRoot extends Schema.Class<OrganizationRoot>("Organizati
   deletedAt: Schema.NullOr(Schema.DateTimeUtc),
 }) {}
 
-export type Result = {
+export type Outcome = {
   readonly organization: OrganizationRoot;
   readonly events: ReadonlyArray<OrganizationEvent>;
 };
@@ -35,7 +35,7 @@ export type CreateInput = {
   readonly now: DateTime.Utc;
 };
 
-const create = (input: CreateInput): Result => {
+const create = (input: CreateInput): Outcome => {
   const organization = OrganizationRoot.make({
     id: input.id,
     name: input.name,
@@ -59,11 +59,11 @@ export type SoftDeleteInput = { readonly now: DateTime.Utc };
 const softDelete = (
   organization: OrganizationRoot,
   input: SoftDeleteInput,
-): Either.Either<Result, OrganizationAlreadyDeleted> => {
+): Result.Result<Outcome, OrganizationAlreadyDeleted> => {
   if (isDeleted(organization)) {
-    return Either.left(new OrganizationAlreadyDeleted({ organizationId: organization.id }));
+    return Result.fail(new OrganizationAlreadyDeleted({ organizationId: organization.id }));
   }
-  return Either.right({
+  return Result.succeed({
     organization: OrganizationRoot.make({
       id: organization.id,
       name: organization.name,
@@ -81,11 +81,11 @@ export type RestoreInput = { readonly now: DateTime.Utc };
 const restore = (
   organization: OrganizationRoot,
   input: RestoreInput,
-): Either.Either<Result, OrganizationNotDeleted> => {
+): Result.Result<Outcome, OrganizationNotDeleted> => {
   if (!isDeleted(organization)) {
-    return Either.left(new OrganizationNotDeleted({ organizationId: organization.id }));
+    return Result.fail(new OrganizationNotDeleted({ organizationId: organization.id }));
   }
-  return Either.right({
+  return Result.succeed({
     organization: OrganizationRoot.make({
       id: organization.id,
       name: organization.name,

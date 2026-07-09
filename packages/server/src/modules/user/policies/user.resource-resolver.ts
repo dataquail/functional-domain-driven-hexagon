@@ -11,10 +11,9 @@ import { UserRepositoryLive } from "../infrastructure/repositories/user.reposito
 // PersistenceUnavailable is treated as an unrecoverable failure here
 // (die) — the two known callers run in scope of the HTTP middleware
 // which already maps 503 via the group's error channel.
-export class UserResolverEntry extends Context.Tag("UserResolverEntry")<
-  UserResolverEntry,
-  Resolver<"user">
->() {}
+export class UserResolverEntry extends Context.Service<UserResolverEntry, Resolver<"user">>()(
+  "UserResolverEntry",
+) {}
 
 export const UserResolverEntryLive = Layer.effect(
   UserResolverEntry,

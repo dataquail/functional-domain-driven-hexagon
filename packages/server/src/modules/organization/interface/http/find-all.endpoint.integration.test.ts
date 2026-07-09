@@ -1,10 +1,13 @@
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
+import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
@@ -41,7 +44,7 @@ suite("GET /admin/orgs (integration)", () => {
         yield* seedOrgs;
         const client = yield* HttpApiClient.make(Api);
         const res = yield* client.organizationAdmin.findAll({
-          urlParams: { page: 1, pageSize: 10 },
+          query: new OrganizationContract.FindAllOrganizationsParams({ page: 1, pageSize: 10 }),
         });
         deepStrictEqual(res.total, 1);
         deepStrictEqual(res.organizations[0]?.name, "Acme");
@@ -55,7 +58,11 @@ suite("GET /admin/orgs (integration)", () => {
         yield* seedOrgs;
         const client = yield* HttpApiClient.make(Api);
         const res = yield* client.organizationAdmin.findAll({
-          urlParams: { page: 1, pageSize: 10, includeDeleted: "true" },
+          query: new OrganizationContract.FindAllOrganizationsParams({
+            page: 1,
+            pageSize: 10,
+            includeDeleted: "true",
+          }),
         });
         deepStrictEqual(res.total, 2);
       }),
@@ -75,11 +82,16 @@ memberSuite("GET /admin/orgs (integration, non-super-admin caller)", () => {
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
-          client.organizationAdmin.findAll({ urlParams: { page: 1, pageSize: 10 } }),
+          client.organizationAdmin.findAll({
+            query: new OrganizationContract.FindAllOrganizationsParams({ page: 1, pageSize: 10 }),
+          }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof CustomHttpApiError.Forbidden);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              CustomHttpApiError.Forbidden,
+          );
         }
       }),
     );

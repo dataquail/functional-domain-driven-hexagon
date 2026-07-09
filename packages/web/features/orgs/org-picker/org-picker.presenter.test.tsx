@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { useOrgPickerPresenter } from "./org-picker.presenter";
 
-const now = DateTime.unsafeFromDate(new Date("2026-01-01T00:00:00Z"));
+const now = DateTime.fromDateUnsafe(new Date("2026-01-01T00:00:00Z"));
 
 const orgsData = [
   {

@@ -33,19 +33,19 @@ import {
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { queryHandlers } from "@/platform/ddd/ports/query-bus.js";
 
-type FindSessionBusOutput = Effect.Effect<
+type FindSessionOutput = Effect.Effect<
   SessionRoot,
   SessionNotFound | SessionExpired | SessionRevoked | PersistenceUnavailable,
   Database.Database
 >;
 
-type FindApiTokenByHashBusOutput = Effect.Effect<
+type FindApiTokenByHashOutput = Effect.Effect<
   ApiTokenRoot,
   ApiTokenNotFound | ApiTokenExpired | ApiTokenRevoked | PersistenceUnavailable,
   Database.Database
 >;
 
-type ListMyApiTokensBusOutput = Effect.Effect<
+type ListMyApiTokensOutput = Effect.Effect<
   ReadonlyArray<ApiTokenRoot>,
   PersistenceUnavailable,
   Database.Database
@@ -55,31 +55,31 @@ declare module "@/platform/ddd/ports/query-bus.js" {
   interface QueryRegistry {
     FindSessionQuery: {
       readonly query: FindSessionQuery;
-      readonly output: FindSessionBusOutput;
+      readonly output: FindSessionOutput;
     };
     FindApiTokenByHashQuery: {
       readonly query: FindApiTokenByHashQuery;
-      readonly output: FindApiTokenByHashBusOutput;
+      readonly output: FindApiTokenByHashOutput;
     };
     ListMyApiTokensQuery: {
       readonly query: ListMyApiTokensQuery;
-      readonly output: ListMyApiTokensBusOutput;
+      readonly output: ListMyApiTokensOutput;
     };
   }
 }
 
 export const authQueryHandlers = queryHandlers({
   FindSessionQuery: {
-    handle: (q): FindSessionBusOutput => findSession(q).pipe(Effect.provide(SessionRepositoryLive)),
+    handle: (q): FindSessionOutput => findSession(q).pipe(Effect.provide(SessionRepositoryLive)),
     spanAttributes: findSessionQuerySpanAttributes,
   },
   FindApiTokenByHashQuery: {
-    handle: (q): FindApiTokenByHashBusOutput =>
+    handle: (q): FindApiTokenByHashOutput =>
       findApiTokenByHash(q).pipe(Effect.provide(ApiTokenRepositoryLive)),
     spanAttributes: findApiTokenByHashQuerySpanAttributes,
   },
   ListMyApiTokensQuery: {
-    handle: (q): ListMyApiTokensBusOutput =>
+    handle: (q): ListMyApiTokensOutput =>
       listMyApiTokens(q).pipe(Effect.provide(ApiTokenRepositoryLive)),
     spanAttributes: listMyApiTokensQuerySpanAttributes,
   },

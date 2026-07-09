@@ -17,12 +17,12 @@ export const resendInvitationEndpoint = (
   request: EndpointRequest<typeof OrganizationContract.Group, "resendInvitation">,
 ) =>
   Effect.gen(function* () {
-    yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.path.orgId);
+    yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.params.orgId);
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
     yield* commandBus.execute(
       ResendInvitationCommand.make({
-        invitationId: request.path.invitationId,
+        invitationId: request.params.invitationId,
         ttlSeconds: DEFAULT_INVITATION_TTL_SECONDS,
         actorUserId: currentUser.userId,
       }),
@@ -31,8 +31,8 @@ export const resendInvitationEndpoint = (
     Effect.catchTag("NotFound", () =>
       Effect.fail(
         new OrganizationContract.OrganizationNotFoundError({
-          organizationId: request.path.orgId,
-          message: `Organization ${request.path.orgId} not found`,
+          organizationId: request.params.orgId,
+          message: `Organization ${request.params.orgId} not found`,
         }),
       ),
     ),

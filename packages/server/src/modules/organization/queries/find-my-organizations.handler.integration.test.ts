@@ -22,7 +22,7 @@ const aliceId = UserId.make("11111111-1111-1111-1111-111111111111");
 const bobId = UserId.make("22222222-2222-2222-2222-222222222222");
 const acmeId = OrganizationId.make("33333333-3333-3333-3333-333333333333");
 const betaId = OrganizationId.make("44444444-4444-4444-4444-444444444444");
-const now = DateTime.unsafeMake(new Date("2026-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
 
 const TestLayer = Layer.mergeAll(OrganizationRepositoryLive, MembershipRepositoryLive).pipe(
   Layer.provideMerge(TestDatabaseLive),
@@ -137,8 +137,8 @@ suite("findMyOrganizations (integration)", () => {
         MembershipRootOps.create({ userId: aliceId, organizationId: acmeId, now }).membership,
       );
       const deleted = OrganizationRootOps.softDelete(acme, { now });
-      if (deleted._tag !== "Right") throw new Error("expected Right");
-      yield* orgs.updateOne(deleted.right.organization);
+      if (deleted._tag !== "Success") throw new Error("expected Right");
+      yield* orgs.updateOne(deleted.success.organization);
 
       const result = yield* findMyOrganizations(FindMyOrganizationsQuery.make({ userId: aliceId }));
       deepStrictEqual([...result.organizations], []);

@@ -1,18 +1,20 @@
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
-const DeletedAtRowStd = Schema.standardSchemaV1(
+const DeletedAtRowStd = Schema.toStandardSchemaV1(
   Schema.Struct({ deleted_at: Schema.NullOr(Schema.DateTimeUtcFromDate) }),
 );
 
@@ -46,7 +48,7 @@ suite("DELETE /orgs/:id (integration)", () => {
       Effect.gen(function* () {
         yield* seedOrg(seededOrgId, "Acme");
         const client = yield* HttpApiClient.make(Api);
-        yield* client.organization.softDelete({ path: { id: seededOrgId } });
+        yield* client.organization.softDelete({ params: { id: seededOrgId } });
         const db = yield* Database.Database;
         const rows = yield* db
           .execute((c) =>
@@ -67,12 +69,15 @@ suite("DELETE /orgs/:id (integration)", () => {
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
           client.organization.softDelete({
-            path: { id: "00000000-0000-0000-0000-000000000000" as never },
+            params: { id: "00000000-0000-0000-0000-000000000000" as never },
           }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof OrganizationContract.OrganizationNotFoundError);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              OrganizationContract.OrganizationNotFoundError,
+          );
         }
       }),
     );
@@ -91,11 +96,16 @@ memberSuite("DELETE /orgs/:id (integration, non-super-admin caller)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id } = yield* client.organization.create({ payload: { name: "Acme" } });
-        const exit = yield* Effect.exit(client.organization.softDelete({ path: { id } }));
+        const { id } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
+        const exit = yield* Effect.exit(client.organization.softDelete({ params: { id } }));
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof CustomHttpApiError.Forbidden);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              CustomHttpApiError.Forbidden,
+          );
         }
       }),
     );

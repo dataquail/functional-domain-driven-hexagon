@@ -17,11 +17,11 @@ const APP_URL = "https://app.example.com";
 // EnvVars only needs a config source here, not real env. A fixed map
 // provider satisfies the required keys (and pins APP_URL so the accept
 // URL is deterministic).
-const EnvVarsTest = EnvVars.Default.pipe(
+const EnvVarsTest = EnvVars.layer.pipe(
   Layer.provide(
-    Layer.setConfigProvider(
-      ConfigProvider.fromMap(
-        new Map([
+    ConfigProvider.layer(
+      ConfigProvider.fromUnknown(
+        Object.fromEntries([
           ["APP_URL", APP_URL],
           ["DATABASE_URL", "postgres://test"],
           ["ZITADEL_ISSUER", "https://zitadel.test"],
@@ -64,8 +64,9 @@ describe("InvitationMailerLive", () => {
       ok(mail.html.includes(expectedUrl), "html should contain the accept URL");
       ok(mail.text.includes(expectedUrl), "text should contain the accept URL");
     }).pipe(
-      Effect.provide(InvitationMailerLive.pipe(Layer.provideMerge(MailerFake))),
-      Effect.provide(EnvVarsTest),
+      Effect.provide(
+        InvitationMailerLive.pipe(Layer.provideMerge(MailerFake), Layer.provide(EnvVarsTest)),
+      ),
     ),
   );
 
@@ -92,9 +93,9 @@ describe("InvitationMailerLive", () => {
               }),
             ),
           ),
+          Layer.provide(EnvVarsTest),
         ),
       ),
-      Effect.provide(EnvVarsTest),
     ),
   );
 });

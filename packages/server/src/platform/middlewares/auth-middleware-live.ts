@@ -1,10 +1,10 @@
-import * as HttpServerRequest from "@effect/platform/HttpServerRequest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
-import { UserAuthMiddleware } from "@org/contracts/Policy";
+import { CurrentUser, UserAuthMiddleware } from "@org/contracts/Policy";
 import { Database } from "@org/database/index";
 import * as cookie from "cookie";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as HttpServerRequest from "effect/unstable/http/HttpServerRequest";
 
 import { EnvVars } from "@/common/env-vars.js";
 import {
@@ -52,7 +52,10 @@ export const UserAuthMiddlewareLive = Layer.effect(
     // wrap their own SessionRepository (Stage B), leaving Database in R.
     const db = yield* Database.Database;
 
-    return Effect.gen(function* () {
+    // v4 HttpApiMiddleware is a wrapper: authenticate the request, then
+    // `provide` the resolved `CurrentUser` into the downstream endpoint
+    // effect. The auth failures (401/503) join the endpoint's error channel.
+    const authenticate = Effect.gen(function* () {
       const httpReq = yield* HttpServerRequest.HttpServerRequest;
 
       // Bearer path (CLI / MCP / CI — ADR-0024): an `Authorization: Bearer`
@@ -81,10 +84,9 @@ export const UserAuthMiddlewareLive = Layer.effect(
 
       const cookies = cookie.parse(httpReq.headers.cookie ?? "");
       const raw = cookies[env.SESSION_COOKIE_NAME];
-      if (raw === undefined || raw === "")
-        return yield* Effect.fail(new CustomHttpApiError.Unauthorized());
+      if (raw === undefined || raw === "") return yield* new CustomHttpApiError.Unauthorized();
       const verified = codec.verify(raw);
-      if (verified === null) return yield* Effect.fail(new CustomHttpApiError.Unauthorized());
+      if (verified === null) return yield* new CustomHttpApiError.Unauthorized();
       const sessionId = SessionId.make(verified);
       const session = yield* queryBus
         .execute(FindSessionQuery.make({ sessionId }))
@@ -107,5 +109,12 @@ export const UserAuthMiddlewareLive = Layer.effect(
         userId: session.userId,
       };
     }).pipe(Effect.withSpan("auth.middleware"));
+
+    return (httpEffect) =>
+      authenticate.pipe(
+        Effect.flatMap((currentUser) =>
+          Effect.provideService(httpEffect, CurrentUser, currentUser),
+        ),
+      );
   }),
 );

@@ -41,7 +41,7 @@ describe("makeDomainEventBusLive dispatch guard", () => {
       const exit = yield* Effect.exit(bus.dispatch([TestEvent.make({ value: "a" })]));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        deepStrictEqual(Cause.isDie(exit.cause), true);
+        deepStrictEqual(Cause.hasDies(exit.cause), true);
       }
     }).pipe(Effect.provide(makeDomainEventBusLive())),
   );

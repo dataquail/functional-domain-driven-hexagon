@@ -1,7 +1,8 @@
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
+import { CliTodosContract, OrganizationContract } from "@org/contracts/api/Contracts";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/api.js";
 import { TodoId } from "@/modules/todos/domain/todo.id.js";
@@ -29,13 +30,15 @@ suite("DELETE /cli/orgs/:orgId/todos/:id (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
-        const created = yield* client.cliTodos.create({
-          path: { orgId },
-          payload: { title: "Buy milk" },
+        const { id: orgId } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
         });
-        yield* client.cliTodos.remove({ path: { orgId, id: created.id } });
-        deepStrictEqual((yield* client.cliTodos.list({ path: { orgId } })).length, 0);
+        const created = yield* client.cliTodos.create({
+          params: { orgId },
+          payload: new CliTodosContract.CliCreateTodoPayload({ title: "Buy milk" }),
+        });
+        yield* client.cliTodos.remove({ params: { orgId, id: created.id } });
+        deepStrictEqual((yield* client.cliTodos.list({ params: { orgId } })).length, 0);
       }),
     );
   });
@@ -44,10 +47,12 @@ suite("DELETE /cli/orgs/:orgId/todos/:id (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         const ghost = TodoId.make("00000000-0000-0000-0000-000000000000");
         const error = yield* client.cliTodos
-          .remove({ path: { orgId, id: ghost } })
+          .remove({ params: { orgId, id: ghost } })
           .pipe(Effect.flip);
         deepStrictEqual(error._tag, "CliTodoNotFoundError");
       }),

@@ -12,8 +12,8 @@ dotenv({
   path: "../../.env",
 });
 
-const TypeRow = Schema.standardSchemaV1(Schema.Struct({ typname: Schema.String }));
-const TableRow = Schema.standardSchemaV1(Schema.Struct({ table_name: Schema.String }));
+const TypeRow = Schema.toStandardSchemaV1(Schema.Struct({ typname: Schema.String }));
+const TableRow = Schema.toStandardSchemaV1(Schema.Struct({ table_name: Schema.String }));
 
 const resetDatabase = Effect.gen(function* () {
   const db = yield* Database.Database;
@@ -59,7 +59,7 @@ const resetDatabase = Effect.gen(function* () {
   );
 }).pipe(
   Effect.provide(
-    Layer.unwrapEffect(
+    Layer.unwrap(
       Effect.gen(function* () {
         const url = yield* Config.redacted("DATABASE_URL");
         return Database.layer({

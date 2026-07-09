@@ -1,7 +1,7 @@
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual, ok } from "assert";
 import * as DateTime from "effect/DateTime";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 
 import {
   WalletInsufficientFunds,
@@ -13,8 +13,8 @@ import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 const walletId = WalletId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const organizationId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
-const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
-const later = DateTime.unsafeMake(new Date("2025-02-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
+const later = DateTime.makeUnsafe(new Date("2025-02-01T00:00:00Z"));
 
 const fresh = () => WalletRootOps.create({ id: walletId, organizationId, now }).wallet;
 
@@ -45,9 +45,9 @@ describe("WalletRootOps.create", () => {
 describe("WalletRootOps.credit", () => {
   it("increases balance by amount and emits WalletCredited with the new balance", () => {
     const result = WalletRootOps.credit(fresh(), { amount: 100, now: later });
-    ok(Either.isRight(result));
-    if (!Either.isRight(result)) throw new Error("unreachable");
-    const { events, wallet } = result.right;
+    ok(Result.isSuccess(result));
+    if (!Result.isSuccess(result)) throw new Error("unreachable");
+    const { events, wallet } = result.success;
     deepStrictEqual(wallet.balance, 100);
     deepStrictEqual(wallet.updatedAt, later);
     deepStrictEqual(events.length, 1);
@@ -61,32 +61,32 @@ describe("WalletRootOps.credit", () => {
   it("rejects zero or negative amounts (invariant: amount must be positive)", () => {
     const zero = WalletRootOps.credit(fresh(), { amount: 0, now: later });
     const negative = WalletRootOps.credit(fresh(), { amount: -10, now: later });
-    ok(Either.isLeft(zero));
-    ok(Either.isLeft(negative));
-    if (Either.isLeft(zero)) ok(zero.left instanceof WalletInvalidAmount);
-    if (Either.isLeft(negative)) ok(negative.left instanceof WalletInvalidAmount);
+    ok(Result.isFailure(zero));
+    ok(Result.isFailure(negative));
+    if (Result.isFailure(zero)) ok(zero.failure instanceof WalletInvalidAmount);
+    if (Result.isFailure(negative)) ok(negative.failure instanceof WalletInvalidAmount);
   });
 
   it("rejects non-finite amounts (NaN, Infinity)", () => {
     const nan = WalletRootOps.credit(fresh(), { amount: NaN, now: later });
     const inf = WalletRootOps.credit(fresh(), { amount: Infinity, now: later });
-    ok(Either.isLeft(nan));
-    ok(Either.isLeft(inf));
+    ok(Result.isFailure(nan));
+    ok(Result.isFailure(inf));
   });
 });
 
 describe("WalletRootOps.debit", () => {
   const funded = (): WalletRoot => {
     const credited = WalletRootOps.credit(fresh(), { amount: 100, now });
-    if (!Either.isRight(credited)) throw new Error("setup credit failed");
-    return credited.right.wallet;
+    if (!Result.isSuccess(credited)) throw new Error("setup credit failed");
+    return credited.success.wallet;
   };
 
   it("decreases balance by amount and emits WalletDebited with the new balance", () => {
     const result = WalletRootOps.debit(funded(), { amount: 30, now: later });
-    ok(Either.isRight(result));
-    if (!Either.isRight(result)) throw new Error("unreachable");
-    const { events, wallet } = result.right;
+    ok(Result.isSuccess(result));
+    if (!Result.isSuccess(result)) throw new Error("unreachable");
+    const { events, wallet } = result.success;
     deepStrictEqual(wallet.balance, 70);
     deepStrictEqual(wallet.updatedAt, later);
     const event = events[0];
@@ -98,35 +98,35 @@ describe("WalletRootOps.debit", () => {
 
   it("rejects a debit that would overdraft (invariant: balance never goes negative)", () => {
     const result = WalletRootOps.debit(funded(), { amount: 101, now: later });
-    ok(Either.isLeft(result));
-    if (!Either.isLeft(result)) throw new Error("unreachable");
-    ok(result.left instanceof WalletInsufficientFunds);
-    if (result.left instanceof WalletInsufficientFunds) {
-      deepStrictEqual(result.left.balance, 100);
-      deepStrictEqual(result.left.attemptedDebit, 101);
+    ok(Result.isFailure(result));
+    if (!Result.isFailure(result)) throw new Error("unreachable");
+    ok(result.failure instanceof WalletInsufficientFunds);
+    if (result.failure instanceof WalletInsufficientFunds) {
+      deepStrictEqual(result.failure.balance, 100);
+      deepStrictEqual(result.failure.attemptedDebit, 101);
     }
   });
 
   it("allows debiting the exact balance (drains to zero)", () => {
     const result = WalletRootOps.debit(funded(), { amount: 100, now: later });
-    ok(Either.isRight(result));
-    if (!Either.isRight(result)) throw new Error("unreachable");
-    deepStrictEqual(result.right.wallet.balance, 0);
+    ok(Result.isSuccess(result));
+    if (!Result.isSuccess(result)) throw new Error("unreachable");
+    deepStrictEqual(result.success.wallet.balance, 0);
   });
 
   it("rejects zero or negative amounts (invariant: amount must be positive)", () => {
     const zero = WalletRootOps.debit(funded(), { amount: 0, now: later });
     const negative = WalletRootOps.debit(funded(), { amount: -1, now: later });
-    ok(Either.isLeft(zero));
-    ok(Either.isLeft(negative));
-    if (Either.isLeft(zero)) ok(zero.left instanceof WalletInvalidAmount);
-    if (Either.isLeft(negative)) ok(negative.left instanceof WalletInvalidAmount);
+    ok(Result.isFailure(zero));
+    ok(Result.isFailure(negative));
+    if (Result.isFailure(zero)) ok(zero.failure instanceof WalletInvalidAmount);
+    if (Result.isFailure(negative)) ok(negative.failure instanceof WalletInvalidAmount);
   });
 
   it("rejects a debit from a freshly-created wallet (balance is 0)", () => {
     const result = WalletRootOps.debit(fresh(), { amount: 1, now: later });
-    ok(Either.isLeft(result));
-    if (Either.isLeft(result)) ok(result.left instanceof WalletInsufficientFunds);
+    ok(Result.isFailure(result));
+    if (Result.isFailure(result)) ok(result.failure instanceof WalletInsufficientFunds);
   });
 });
 

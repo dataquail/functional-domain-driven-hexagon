@@ -16,7 +16,6 @@ export type WalletRepositoryShape = {
   ) => Effect.Effect<Option.Option<WalletRoot>, PersistenceUnavailable>;
 };
 
-export class WalletRepository extends Context.Tag("WalletRepository")<
-  WalletRepository,
-  WalletRepositoryShape
->() {}
+export class WalletRepository extends Context.Service<WalletRepository, WalletRepositoryShape>()(
+  "WalletRepository",
+) {}

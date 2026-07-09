@@ -1,5 +1,6 @@
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual, ok } from "assert";
+import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -16,7 +17,7 @@ const acme = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const beta = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const subA = SubscriptionId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const subB = SubscriptionId.make("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
 
 const provide = Effect.provide(SubscriptionRepositoryFake);
 
@@ -48,8 +49,11 @@ describe("SubscriptionRepositoryFake.insert", () => {
       yield* repo.insertOne(mk(subA, acme));
       const exit = yield* Effect.exit(repo.insertOne(mk(subB, acme, "sub_y")));
       ok(Exit.isFailure(exit));
-      if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-        ok(exit.cause.error instanceof SubscriptionAlreadyExistsForOrganization);
+      if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+        ok(
+          Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+            SubscriptionAlreadyExistsForOrganization,
+        );
       }
     }).pipe(provide),
   );

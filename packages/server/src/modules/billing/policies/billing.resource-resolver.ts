@@ -19,10 +19,10 @@ declare module "@/platform/auth/resource-resolver-registry.js" {
   }
 }
 
-export class BillingResolverEntry extends Context.Tag("BillingResolverEntry")<
+export class BillingResolverEntry extends Context.Service<
   BillingResolverEntry,
   Resolver<"billing">
->() {}
+>()("BillingResolverEntry") {}
 
 export const BillingResolverEntryLive = Layer.succeed(BillingResolverEntry, (organizationId) =>
   Effect.succeed({ organizationId }),

@@ -1,7 +1,14 @@
 # ADR-0012: Observability — Effect spans + OTLP export
 
-- Status: Accepted
+- Status: Superseded by ADR-0029
 - Date: 2026-04-24 (revised 2026-04-25: span discipline moved from per-handler to bus boundaries; span attributes attached via sibling extractor functions composed at registration time, not via methods on class instances)
+
+> **Superseded by [ADR-0029](0029-use-case-spans-and-first-party-otlp.md) (2026-07-08).**
+> The bus-boundary-only span discipline below is replaced by use-case-level spans
+> declared with `Effect.fn`, composed inside the retained bus/endpoint boundary spans;
+> OTLP export moved from `@effect/opentelemetry`'s `NodeSdk` to Effect v4's first-party
+> OTLP tracer. The span-attributes mechanism and the two-kinds-of-correlation distinction
+> below carry forward unchanged.
 
 ## Context and Problem Statement
 

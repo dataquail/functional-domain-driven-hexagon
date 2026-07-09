@@ -87,10 +87,8 @@ export const hasPermissions = <R extends PolicyResource, A extends ActionFor<R>>
 
     const allowed = yield* check(caller, loaded);
     if (!allowed) {
-      return yield* Effect.fail(
-        new CustomHttpApiError.Forbidden({
-          message: `Not permitted: ${String(resource)}.${String(action)}`,
-        }),
-      );
+      return yield* new CustomHttpApiError.Forbidden({
+        message: `Not permitted: ${String(resource)}.${String(action)}`,
+      });
     }
   }).pipe(Effect.withSpan(`authz.hasPermissions.${String(resource)}.${String(action)}`));

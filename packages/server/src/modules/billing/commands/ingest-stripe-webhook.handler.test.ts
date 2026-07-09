@@ -1,5 +1,6 @@
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual, ok } from "assert";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
@@ -70,8 +71,11 @@ describe("ingestStripeWebhook", () => {
 
       const exit = yield* Effect.exit(ingestStripeWebhook(cmd("evt_bad_sig", "wrong-signature")));
       ok(Exit.isFailure(exit));
-      if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-        ok(exit.cause.error instanceof InvalidWebhookSignature);
+      if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+        ok(
+          Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+            InvalidWebhookSignature,
+        );
       }
 
       const seen = yield* repo.findOneByStripeEventId("evt_bad_sig");

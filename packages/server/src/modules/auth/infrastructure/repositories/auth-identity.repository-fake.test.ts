@@ -1,7 +1,9 @@
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
 
 import { AuthIdentityRepository } from "@/modules/auth/domain/ports/repositories/auth-identity.repository.js";
 import { AuthIdentityNotFound } from "@/modules/auth/domain/session.errors.js";
@@ -31,7 +33,9 @@ describe("AuthIdentityRepositoryFake", () => {
       const exit = yield* Effect.exit(repo.findOneBySubject("missing-sub"));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof AuthIdentityNotFound, true);
       }
     }).pipe(Effect.provide(makeAuthIdentityRepositoryFake())),

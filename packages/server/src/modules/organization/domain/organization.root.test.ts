@@ -1,7 +1,7 @@
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
@@ -10,8 +10,8 @@ import { type OrganizationEvent } from "./organization.events.js";
 import { OrganizationRootOps } from "./organization.root.js";
 
 const id = OrganizationId.make("11111111-1111-1111-1111-111111111111");
-const now = DateTime.unsafeMake(new Date("2026-01-01T00:00:00Z"));
-const later = DateTime.unsafeMake(new Date("2026-02-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
+const later = DateTime.makeUnsafe(new Date("2026-02-01T00:00:00Z"));
 
 const expectEvent = <T extends OrganizationEvent["_tag"]>(
   events: ReadonlyArray<OrganizationEvent>,
@@ -48,20 +48,20 @@ describe("OrganizationRootOps.softDelete", () => {
 
   it("sets deletedAt and updatedAt; emits OrganizationSoftDeleted", () => {
     const result = OrganizationRootOps.softDelete(seed(), { now: later });
-    if (Either.isLeft(result)) throw new Error("expected Right");
-    deepStrictEqual(result.right.organization.deletedAt, later);
-    deepStrictEqual(result.right.organization.updatedAt, later);
-    const event = expectEvent(result.right.events, "OrganizationSoftDeleted");
+    if (Result.isFailure(result)) throw new Error("expected Right");
+    deepStrictEqual(result.success.organization.deletedAt, later);
+    deepStrictEqual(result.success.organization.updatedAt, later);
+    const event = expectEvent(result.success.events, "OrganizationSoftDeleted");
     deepStrictEqual(event.organizationId, id);
   });
 
   it("fails OrganizationAlreadyDeleted when the org is already soft-deleted", () => {
     const first = OrganizationRootOps.softDelete(seed(), { now: later });
-    if (Either.isLeft(first)) throw new Error("expected Right");
-    const second = OrganizationRootOps.softDelete(first.right.organization, { now: later });
-    deepStrictEqual(Either.isLeft(second), true);
-    if (Either.isLeft(second)) {
-      deepStrictEqual(second.left instanceof OrganizationAlreadyDeleted, true);
+    if (Result.isFailure(first)) throw new Error("expected Right");
+    const second = OrganizationRootOps.softDelete(first.success.organization, { now: later });
+    deepStrictEqual(Result.isFailure(second), true);
+    if (Result.isFailure(second)) {
+      deepStrictEqual(second.failure instanceof OrganizationAlreadyDeleted, true);
     }
   });
 });
@@ -70,23 +70,23 @@ describe("OrganizationRootOps.restore", () => {
   const seed = () => OrganizationRootOps.create({ id, name: "Acme", now }).organization;
   const deleted = () => {
     const result = OrganizationRootOps.softDelete(seed(), { now: later });
-    if (Either.isLeft(result)) throw new Error("expected Right");
-    return result.right.organization;
+    if (Result.isFailure(result)) throw new Error("expected Right");
+    return result.success.organization;
   };
 
   it("clears deletedAt and emits OrganizationRestored", () => {
     const restored = OrganizationRootOps.restore(deleted(), { now: later });
-    if (Either.isLeft(restored)) throw new Error("expected Right");
-    deepStrictEqual(restored.right.organization.deletedAt, null);
-    const event = expectEvent(restored.right.events, "OrganizationRestored");
+    if (Result.isFailure(restored)) throw new Error("expected Right");
+    deepStrictEqual(restored.success.organization.deletedAt, null);
+    const event = expectEvent(restored.success.events, "OrganizationRestored");
     deepStrictEqual(event.organizationId, id);
   });
 
   it("fails OrganizationNotDeleted when the org isn't deleted", () => {
     const result = OrganizationRootOps.restore(seed(), { now: later });
-    deepStrictEqual(Either.isLeft(result), true);
-    if (Either.isLeft(result)) {
-      deepStrictEqual(result.left instanceof OrganizationNotDeleted, true);
+    deepStrictEqual(Result.isFailure(result), true);
+    if (Result.isFailure(result)) {
+      deepStrictEqual(result.failure instanceof OrganizationNotDeleted, true);
     }
   });
 });
@@ -96,7 +96,7 @@ describe("OrganizationRootOps.isDeleted", () => {
     const { organization } = OrganizationRootOps.create({ id, name: "Acme", now });
     deepStrictEqual(OrganizationRootOps.isDeleted(organization), false);
     const result = OrganizationRootOps.softDelete(organization, { now: later });
-    if (Either.isLeft(result)) throw new Error("expected Right");
-    deepStrictEqual(OrganizationRootOps.isDeleted(result.right.organization), true);
+    if (Result.isFailure(result)) throw new Error("expected Right");
+    deepStrictEqual(OrganizationRootOps.isDeleted(result.success.organization), true);
   });
 });

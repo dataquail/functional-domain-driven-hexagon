@@ -19,13 +19,13 @@ export const promoteMemberEndpoint = (
   request: EndpointRequest<typeof OrganizationContract.Group, "promoteMember">,
 ) =>
   Effect.gen(function* () {
-    yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.path.orgId);
+    yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.params.orgId);
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
     yield* commandBus.execute(
       GrantOrganizationRoleCommand.make({
-        userId: request.path.userId,
-        organizationId: request.path.orgId,
+        userId: request.params.userId,
+        organizationId: request.params.orgId,
         role: "admin",
         actorUserId: currentUser.userId,
       }),
@@ -34,8 +34,8 @@ export const promoteMemberEndpoint = (
     Effect.catchTag("NotFound", () =>
       Effect.fail(
         new OrganizationContract.OrganizationNotFoundError({
-          organizationId: request.path.orgId,
-          message: `Organization ${request.path.orgId} not found`,
+          organizationId: request.params.orgId,
+          message: `Organization ${request.params.orgId} not found`,
         }),
       ),
     ),

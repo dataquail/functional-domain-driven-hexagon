@@ -29,7 +29,7 @@ export type OrganizationRepositoryShape = {
   ) => Effect.Effect<OrganizationRoot, OrganizationNotFound | PersistenceUnavailable>;
 };
 
-export class OrganizationRepository extends Context.Tag("OrganizationRepository")<
+export class OrganizationRepository extends Context.Service<
   OrganizationRepository,
   OrganizationRepositoryShape
->() {}
+>()("OrganizationRepository") {}

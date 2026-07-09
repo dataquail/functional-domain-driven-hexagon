@@ -1,6 +1,6 @@
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 
 import { UserId } from "@/platform/ids/user-id.js";
 
@@ -36,29 +36,29 @@ describe("RolesRootOps.hasRole", () => {
 
   it("returns true after the role is granted", () => {
     const result = RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin");
-    if (Either.isLeft(result)) throw new Error("expected Right");
-    deepStrictEqual(RolesRootOps.hasRole(result.right.roles, "super_admin"), true);
+    if (Result.isFailure(result)) throw new Error("expected Right");
+    deepStrictEqual(RolesRootOps.hasRole(result.success.roles, "super_admin"), true);
   });
 });
 
 describe("RolesRootOps.grant", () => {
   it("adds the role and emits RoleGranted", () => {
     const result = RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin");
-    if (Either.isLeft(result)) throw new Error("expected Right");
-    deepStrictEqual([...result.right.roles.roles], ["super_admin"]);
-    const event = expectEvent(result.right.events, "RoleGranted");
+    if (Result.isFailure(result)) throw new Error("expected Right");
+    deepStrictEqual([...result.success.roles.roles], ["super_admin"]);
+    const event = expectEvent(result.success.events, "RoleGranted");
     deepStrictEqual(event.userId, userId);
     deepStrictEqual(event.role, "super_admin");
   });
 
   it("fails AlreadyHasRole when the role is already held", () => {
     const first = RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin");
-    if (Either.isLeft(first)) throw new Error("expected Right");
-    const second = RolesRootOps.grant(first.right.roles, "super_admin");
-    deepStrictEqual(Either.isLeft(second), true);
-    if (Either.isLeft(second)) {
-      deepStrictEqual(second.left instanceof AlreadyHasRole, true);
-      deepStrictEqual(second.left.role, "super_admin");
+    if (Result.isFailure(first)) throw new Error("expected Right");
+    const second = RolesRootOps.grant(first.success.roles, "super_admin");
+    deepStrictEqual(Result.isFailure(second), true);
+    if (Result.isFailure(second)) {
+      deepStrictEqual(second.failure instanceof AlreadyHasRole, true);
+      deepStrictEqual(second.failure.role, "super_admin");
     }
   });
 });
@@ -66,20 +66,20 @@ describe("RolesRootOps.grant", () => {
 describe("RolesRootOps.revoke", () => {
   it("removes the role and emits RoleRevoked", () => {
     const granted = RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin");
-    if (Either.isLeft(granted)) throw new Error("expected Right");
-    const result = RolesRootOps.revoke(granted.right.roles, "super_admin");
-    if (Either.isLeft(result)) throw new Error("expected Right");
-    deepStrictEqual([...result.right.roles.roles], []);
-    const event = expectEvent(result.right.events, "RoleRevoked");
+    if (Result.isFailure(granted)) throw new Error("expected Right");
+    const result = RolesRootOps.revoke(granted.success.roles, "super_admin");
+    if (Result.isFailure(result)) throw new Error("expected Right");
+    deepStrictEqual([...result.success.roles.roles], []);
+    const event = expectEvent(result.success.events, "RoleRevoked");
     deepStrictEqual(event.userId, userId);
     deepStrictEqual(event.role, "super_admin");
   });
 
   it("fails DoesNotHaveRole when the role isn't held", () => {
     const result = RolesRootOps.revoke(RolesRootOps.empty(userId), "super_admin");
-    deepStrictEqual(Either.isLeft(result), true);
-    if (Either.isLeft(result)) {
-      deepStrictEqual(result.left instanceof DoesNotHaveRole, true);
+    deepStrictEqual(Result.isFailure(result), true);
+    if (Result.isFailure(result)) {
+      deepStrictEqual(result.failure instanceof DoesNotHaveRole, true);
     }
   });
 });

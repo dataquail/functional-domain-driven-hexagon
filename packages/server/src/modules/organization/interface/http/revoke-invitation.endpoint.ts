@@ -13,12 +13,12 @@ export const revokeInvitationEndpoint = (
   request: EndpointRequest<typeof OrganizationContract.Group, "revokeInvitation">,
 ) =>
   Effect.gen(function* () {
-    yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.path.orgId);
+    yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.params.orgId);
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
     yield* commandBus.execute(
       RevokeInvitationCommand.make({
-        invitationId: request.path.invitationId,
+        invitationId: request.params.invitationId,
         actorUserId: currentUser.userId,
       }),
     );
@@ -26,8 +26,8 @@ export const revokeInvitationEndpoint = (
     Effect.catchTag("NotFound", () =>
       Effect.fail(
         new OrganizationContract.OrganizationNotFoundError({
-          organizationId: request.path.orgId,
-          message: `Organization ${request.path.orgId} not found`,
+          organizationId: request.params.orgId,
+          message: `Organization ${request.params.orgId} not found`,
         }),
       ),
     ),

@@ -1,5 +1,3 @@
-import * as Command from "@effect/cli/Command";
-import * as Options from "@effect/cli/Options";
 import {
   clearToken,
   makeCliClient,
@@ -13,6 +11,8 @@ import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schedule from "effect/Schedule";
+import * as Command from "effect/unstable/cli/Command";
+import * as Flag from "effect/unstable/cli/Flag";
 
 import { CliError, maskToken, openBrowser, toCliError } from "../internal.js";
 
@@ -20,9 +20,9 @@ import { CliError, maskToken, openBrowser, toCliError } from "../internal.js";
 //   - with a token: store it (CI / paste path) and validate it.
 //   - without: run the app-native device flow (RFC 8628) — print + open the
 //     verification URL, then poll until the browser approves.
-const withTokenOption = Options.text("with-token").pipe(
-  Options.optional,
-  Options.withDescription("Store a pre-minted personal access token instead of the device flow"),
+const withTokenOption = Flag.string("with-token").pipe(
+  Flag.optional,
+  Flag.withDescription("Store a pre-minted personal access token instead of the device flow"),
 );
 
 const validate = (token: string) =>
@@ -64,16 +64,18 @@ const login = Command.make("login", { withToken: withTokenOption }, ({ withToken
           while: (error) => error._tag === "DeviceAuthorizationPending",
           schedule: Schedule.spaced(Duration.seconds(start.interval)),
         }),
-        Effect.timeoutFail({
+        Effect.timeoutOrElse({
           duration: Duration.seconds(start.expires_in + 5),
-          onTimeout: () =>
-            new CliError({ message: "Timed out waiting for device approval. Try again." }),
+          orElse: () =>
+            Effect.fail(
+              new CliError({ message: "Timed out waiting for device approval. Try again." }),
+            ),
         }),
       );
 
     yield* saveToken(token.access_token);
     yield* Console.log("✓ Authenticated! You're signed in.");
-  }).pipe(Effect.catchAll((error) => Effect.fail(toCliError(error)))),
+  }).pipe(Effect.mapError(toCliError)),
 );
 
 const status = Command.make("status", {}, () =>

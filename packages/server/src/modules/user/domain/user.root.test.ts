@@ -1,7 +1,7 @@
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
 import { UserId } from "@/platform/ids/user-id.js";
@@ -11,8 +11,8 @@ import { type UserRoot, UserRootOps } from "./user.root.js";
 import { AddressValueObject } from "./value-objects/address.value-object.js";
 
 const id = UserId.make("11111111-1111-1111-1111-111111111111");
-const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
-const later = DateTime.unsafeMake(new Date("2025-02-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
+const later = DateTime.makeUnsafe(new Date("2025-02-01T00:00:00Z"));
 
 const address = AddressValueObject.make({
   country: "USA",
@@ -42,48 +42,48 @@ const expectEvent = <T extends UserEvent["_tag"]>(
 
 describe("AddressValueObject", () => {
   it("accepts valid lengths", () => {
-    const result = Schema.decodeUnknownEither(AddressValueObject)({
+    const result = Schema.decodeUnknownResult(AddressValueObject)({
       country: "USA",
       street: "123 Main St",
       postalCode: "12345",
     });
-    deepStrictEqual(Either.isRight(result), true);
+    deepStrictEqual(Result.isSuccess(result), true);
   });
 
   it("rejects country shorter than 2 chars", () => {
-    const result = Schema.decodeUnknownEither(AddressValueObject)({
+    const result = Schema.decodeUnknownResult(AddressValueObject)({
       country: "X",
       street: "123 Main St",
       postalCode: "12345",
     });
-    deepStrictEqual(Either.isLeft(result), true);
+    deepStrictEqual(Result.isFailure(result), true);
   });
 
   it("rejects country longer than 50 chars", () => {
-    const result = Schema.decodeUnknownEither(AddressValueObject)({
+    const result = Schema.decodeUnknownResult(AddressValueObject)({
       country: "X".repeat(51),
       street: "123 Main St",
       postalCode: "12345",
     });
-    deepStrictEqual(Either.isLeft(result), true);
+    deepStrictEqual(Result.isFailure(result), true);
   });
 
   it("rejects street shorter than 2 chars", () => {
-    const result = Schema.decodeUnknownEither(AddressValueObject)({
+    const result = Schema.decodeUnknownResult(AddressValueObject)({
       country: "USA",
       street: "X",
       postalCode: "12345",
     });
-    deepStrictEqual(Either.isLeft(result), true);
+    deepStrictEqual(Result.isFailure(result), true);
   });
 
   it("rejects postalCode longer than 10 chars", () => {
-    const result = Schema.decodeUnknownEither(AddressValueObject)({
+    const result = Schema.decodeUnknownResult(AddressValueObject)({
       country: "USA",
       street: "123 Main St",
       postalCode: "12345678901",
     });
-    deepStrictEqual(Either.isLeft(result), true);
+    deepStrictEqual(Result.isFailure(result), true);
   });
 });
 

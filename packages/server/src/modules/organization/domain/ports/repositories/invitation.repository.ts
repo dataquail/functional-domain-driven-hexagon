@@ -49,7 +49,7 @@ export type InvitationRepositoryShape = {
   ) => Effect.Effect<InvitationRoot | null, PersistenceUnavailable>;
 };
 
-export class InvitationRepository extends Context.Tag("InvitationRepository")<
+export class InvitationRepository extends Context.Service<
   InvitationRepository,
   InvitationRepositoryShape
->() {}
+>()("InvitationRepository") {}

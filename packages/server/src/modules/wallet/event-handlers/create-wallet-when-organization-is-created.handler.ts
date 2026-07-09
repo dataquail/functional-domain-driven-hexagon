@@ -19,13 +19,14 @@ import { WalletRootOps } from "@/modules/wallet/domain/wallet.root.js";
 
 import { type OrganizationCreatedTrigger } from "./triggers/organization.triggers.js";
 
-export const handleOrganizationCreated = (trigger: OrganizationCreatedTrigger) =>
-  Effect.gen(function* () {
-    const repo = yield* WalletRepository;
-    const id = WalletId.make(yield* Effect.sync(() => crypto.randomUUID()));
-    const now = yield* DateTime.now;
-    const { wallet } = WalletRootOps.create({ id, organizationId: trigger.organizationId, now });
-    yield* repo
-      .insertOne(wallet)
-      .pipe(Effect.catchTag("WalletAlreadyExistsForOrganization", () => Effect.void));
-  });
+export const handleOrganizationCreated = Effect.fn("handleOrganizationCreated")(function* (
+  trigger: OrganizationCreatedTrigger,
+) {
+  const repo = yield* WalletRepository;
+  const id = WalletId.make(yield* Effect.sync(() => crypto.randomUUID()));
+  const now = yield* DateTime.now;
+  const { wallet } = WalletRootOps.create({ id, organizationId: trigger.organizationId, now });
+  yield* repo
+    .insertOne(wallet)
+    .pipe(Effect.catchTag("WalletAlreadyExistsForOrganization", () => Effect.void));
+});

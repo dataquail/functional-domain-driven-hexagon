@@ -14,7 +14,7 @@ import { UserId } from "@/platform/ids/user-id.js";
 
 const sessionId = SessionId.make("33333333-3333-3333-3333-333333333333");
 const userId = UserId.make("44444444-4444-4444-4444-444444444444");
-const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
 
 const seedSession = () =>
   Effect.gen(function* () {
@@ -42,7 +42,7 @@ describe("revokeSession", () => {
         .findOneById(sessionId)
         .pipe(Effect.catchTag("SessionNotFound", () => Effect.succeed(null)));
       ok(found !== null);
-      ok(Option.isSome(Option.fromNullable(found.revokedAt)));
+      ok(Option.isSome(Option.fromNullishOr(found.revokedAt)));
     }).pipe(provide),
   );
 

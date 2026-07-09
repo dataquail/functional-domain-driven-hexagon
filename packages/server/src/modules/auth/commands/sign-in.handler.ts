@@ -2,7 +2,7 @@ import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { type SignInCommand, type SignInOutput } from "@/modules/auth/commands/sign-in.command.js";
+import { type SignInCommand } from "@/modules/auth/commands/sign-in.command.js";
 import { AuthIdentityRepository } from "@/modules/auth/domain/ports/repositories/auth-identity.repository.js";
 import { SessionRepository } from "@/modules/auth/domain/ports/repositories/session.repository.js";
 import { SessionId } from "@/modules/auth/domain/session.id.js";
@@ -24,57 +24,54 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 //
 // Bus-boundary span (ADR-0012) wraps this at dispatch time, so no inline
 // `withSpan` here.
-export const signIn = (cmd: SignInCommand): SignInOutput =>
-  Effect.gen(function* () {
-    const identities = yield* AuthIdentityRepository;
-    const sessions = yield* SessionRepository;
-    const provisioning = yield* UserProvisioning;
+export const signIn = Effect.fn("signIn")(function* (cmd: SignInCommand) {
+  const identities = yield* AuthIdentityRepository;
+  const sessions = yield* SessionRepository;
+  const provisioning = yield* UserProvisioning;
 
-    const userId = yield* identities.findOneBySubject(cmd.subject).pipe(
-      Effect.map((identity) => identity.userId),
-      // First sign-in for this subject: JIT provision an ordinary user.
-      // Requires an email (the `users` row needs one); a verified
-      // identity with no email can't be provisioned. The provisioning
-      // command runs in this same transaction.
-      Effect.catchTag("AuthIdentityNotFound", () =>
-        Effect.gen(function* () {
-          if (cmd.email === null) {
-            return yield* Effect.fail(
-              new CustomHttpApiError.Unauthorized({
-                message: "Cannot provision a user: the identity has no email.",
-              }),
-            );
-          }
-          const newUserId = yield* provisioning.provision(cmd.email).pipe(
-            Effect.catchTag("UserProvisioningConflict", (e) =>
-              Effect.fail(
-                new CustomHttpApiError.Unauthorized({
-                  message: `Cannot provision a user: email ${e.email} is already registered.`,
-                }),
-              ),
-            ),
-          );
-          yield* identities.insertOne({
-            subject: cmd.subject,
-            userId: newUserId,
-            provider: "zitadel",
+  const userId = yield* identities.findOneBySubject(cmd.subject).pipe(
+    Effect.map((identity) => identity.userId),
+    // First sign-in for this subject: JIT provision an ordinary user.
+    // Requires an email (the `users` row needs one); a verified
+    // identity with no email can't be provisioned. The provisioning
+    // command runs in this same transaction.
+    Effect.catchTag("AuthIdentityNotFound", () =>
+      Effect.gen(function* () {
+        if (cmd.email === null) {
+          return yield* new CustomHttpApiError.Unauthorized({
+            message: "Cannot provision a user: the identity has no email.",
           });
-          return newUserId;
-        }),
-      ),
-    );
+        }
+        const newUserId = yield* provisioning.provision(cmd.email).pipe(
+          Effect.catchTag("UserProvisioningConflict", (e) =>
+            Effect.fail(
+              new CustomHttpApiError.Unauthorized({
+                message: `Cannot provision a user: email ${e.email} is already registered.`,
+              }),
+            ),
+          ),
+        );
+        yield* identities.insertOne({
+          subject: cmd.subject,
+          userId: newUserId,
+          provider: "zitadel",
+        });
+        return newUserId;
+      }),
+    ),
+  );
 
-    const id = SessionId.make(yield* Effect.sync(() => crypto.randomUUID()));
-    const now = yield* DateTime.now;
-    const session = SessionRootOps.create({
-      id,
-      userId,
-      subject: cmd.subject,
-      now,
-      ttlSeconds: cmd.ttlSeconds,
-      absoluteTtlSeconds: cmd.absoluteTtlSeconds,
-    });
-    yield* sessions.insertOne(session);
-    yield* Effect.annotateCurrentSpan("user.id", userId);
-    return { sessionId: id, userId };
-  }).pipe(withUnitOfWork);
+  const id = SessionId.make(yield* Effect.sync(() => crypto.randomUUID()));
+  const now = yield* DateTime.now;
+  const session = SessionRootOps.create({
+    id,
+    userId,
+    subject: cmd.subject,
+    now,
+    ttlSeconds: cmd.ttlSeconds,
+    absoluteTtlSeconds: cmd.absoluteTtlSeconds,
+  });
+  yield* sessions.insertOne(session);
+  yield* Effect.annotateCurrentSpan("user.id", userId);
+  return { sessionId: id, userId };
+}, withUnitOfWork);

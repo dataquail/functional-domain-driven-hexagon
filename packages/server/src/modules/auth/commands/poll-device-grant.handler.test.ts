@@ -1,8 +1,10 @@
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual, ok } from "assert";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { ApproveDeviceGrantCommand } from "@/modules/auth/commands/approve-device-grant.command.js";
 import { approveDeviceGrant } from "@/modules/auth/commands/approve-device-grant.handler.js";
@@ -32,7 +34,9 @@ const TestLayer = Layer.mergeAll(
 const poll = (deviceCode: string) =>
   pollDeviceGrant(PollDeviceGrantCommand.make({ deviceCode, tokenExpiresInDays: 90 }));
 const errorOf = (exit: Exit.Exit<unknown, unknown>) =>
-  Exit.isFailure(exit) && exit.cause._tag === "Fail" ? exit.cause.error : null;
+  Exit.isFailure(exit) && Cause.hasFails(exit.cause)
+    ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+    : null;
 
 describe("pollDeviceGrant", () => {
   it.effect("fails DeviceGrantPending before approval", () =>

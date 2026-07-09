@@ -1,9 +1,11 @@
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/api.js";
 import { SUPER_ADMIN_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
@@ -50,9 +52,9 @@ suite("POST /orgs/:orgId/leave (integration)", () => {
         yield* seedCallerMembership;
         const client = yield* HttpApiClient.make(Api);
 
-        yield* client.organization.leave({ path: { orgId: ORG_ID } });
+        yield* client.organization.leave({ params: { orgId: ORG_ID } });
 
-        const after = yield* client.organization.findMembers({ path: { orgId: ORG_ID } });
+        const after = yield* client.organization.findMembers({ params: { orgId: ORG_ID } });
         const stillMember = after.members.some((m) => m.userId === SUPER_ADMIN_CALLER_ID);
         deepStrictEqual(stillMember, false);
       }),
@@ -64,10 +66,13 @@ suite("POST /orgs/:orgId/leave (integration)", () => {
       Effect.gen(function* () {
         yield* seedOrg;
         const client = yield* HttpApiClient.make(Api);
-        const exit = yield* Effect.exit(client.organization.leave({ path: { orgId: ORG_ID } }));
+        const exit = yield* Effect.exit(client.organization.leave({ params: { orgId: ORG_ID } }));
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          deepStrictEqual(exit.cause.error._tag, "MembershipNotFoundError");
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          deepStrictEqual(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag,
+            "MembershipNotFoundError",
+          );
         }
       }),
     );

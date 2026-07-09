@@ -13,12 +13,12 @@
 // inbound cookie injected; this variant talks to a relative path with
 // the browser's cookie jar handling attachment.
 
-import * as FetchHttpClient from "@effect/platform/FetchHttpClient";
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
-import * as HttpClient from "@effect/platform/HttpClient";
 import { DomainApi } from "@org/contracts/DomainApi";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
+import * as HttpClient from "effect/unstable/http/HttpClient";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { ApiClient } from "./api-client.shared";
 
@@ -33,6 +33,6 @@ export const ApiClientLive = Layer.effect(
       baseUrl: "/api",
       transformClient: (c) => c.pipe(HttpClient.retryTransient({ times: 3 })),
     });
-    return ApiClient.of({ client });
+    return { client };
   }),
 ).pipe(Layer.provide(FetchWithCredentials));

@@ -49,7 +49,7 @@ export type TouchInput = {
 // the use case, and revocation is enforced by the repository's WHERE clause.
 const touch = (input: TouchInput): SessionRoot => {
   const candidate = DateTime.add(input.now, { seconds: input.ttlSeconds });
-  const expiresAt = DateTime.lessThan(candidate, input.session.absoluteExpiresAt)
+  const expiresAt = DateTime.isLessThan(candidate, input.session.absoluteExpiresAt)
     ? candidate
     : input.session.absoluteExpiresAt;
   return SessionRoot.make({

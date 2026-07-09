@@ -2,9 +2,9 @@ import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Either from "effect/Either";
 import * as Layer from "effect/Layer";
-import * as TestClock from "effect/TestClock";
+import * as Result from "effect/Result";
+import * as TestClock from "effect/testing/TestClock";
 import { beforeEach } from "vitest";
 
 import { InvitationRootOps } from "@/modules/organization/domain/invitation.root.js";
@@ -23,12 +23,12 @@ import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 const orgId = OrganizationId.make("55555555-5555-5555-5555-555555555555");
 const otherOrgId = OrganizationId.make("99999999-9999-9999-9999-999999999999");
 const userId = UserId.make("66666666-6666-6666-6666-666666666666");
-const issuedAt = DateTime.unsafeMake(new Date("2026-01-01T00:00:00Z"));
+const issuedAt = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
 // The handler reads `DateTime.now`; pin the TestClock so the pending-vs-expired
 // split is deterministic, with expiries placed on either side of "now".
-const clockNow = DateTime.unsafeMake(new Date("2026-06-01T00:00:00Z"));
-const farFuture = DateTime.unsafeMake(new Date("2099-01-01T00:00:00Z"));
-const farPast = DateTime.unsafeMake(new Date("2020-01-01T00:00:00Z"));
+const clockNow = DateTime.makeUnsafe(new Date("2026-06-01T00:00:00Z"));
+const farFuture = DateTime.makeUnsafe(new Date("2099-01-01T00:00:00Z"));
+const farPast = DateTime.makeUnsafe(new Date("2020-01-01T00:00:00Z"));
 
 const TestLayer = Layer.mergeAll(InvitationRepositoryLive, OrganizationRepositoryLive).pipe(
   Layer.provideMerge(TestDatabaseLive),
@@ -89,12 +89,12 @@ suite("findPendingInvitations (integration)", () => {
       yield* repo.insertOne(otherOrg);
 
       const revoked = InvitationRootOps.revoke(toRevoke, { now: issuedAt });
-      if (Either.isLeft(revoked)) throw new Error("expected Right");
-      yield* repo.updateOne(revoked.right.invitation);
+      if (Result.isFailure(revoked)) throw new Error("expected Right");
+      yield* repo.updateOne(revoked.success.invitation);
 
       const accepted = InvitationRootOps.accept(toAccept, { userId, now: issuedAt });
-      if (Either.isLeft(accepted)) throw new Error("expected Right");
-      yield* repo.updateOne(accepted.right.invitation);
+      if (Result.isFailure(accepted)) throw new Error("expected Right");
+      yield* repo.updateOne(accepted.success.invitation);
 
       const result = yield* findPendingInvitations(
         FindPendingInvitationsQuery.make({ organizationId: orgId }),

@@ -1,5 +1,6 @@
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual, ok } from "assert";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
@@ -27,8 +28,11 @@ describe("WebhookEventRepositoryFake.insert", () => {
       yield* repo.insertOne("evt_abc");
       const exit = yield* Effect.exit(repo.insertOne("evt_abc"));
       ok(Exit.isFailure(exit));
-      if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-        ok(exit.cause.error instanceof WebhookEventAlreadyRecorded);
+      if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+        ok(
+          Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+            WebhookEventAlreadyRecorded,
+        );
       }
     }).pipe(provide),
   );

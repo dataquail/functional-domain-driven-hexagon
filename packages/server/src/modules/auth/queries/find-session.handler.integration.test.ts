@@ -1,11 +1,13 @@
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
+import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import * as TestClock from "effect/TestClock";
+import * as Option from "effect/Option";
+import * as TestClock from "effect/testing/TestClock";
 import { beforeEach } from "vitest";
 
 import { SessionRepository } from "@/modules/auth/domain/ports/repositories/session.repository.js";
@@ -27,10 +29,10 @@ const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 
 // The handler reads `DateTime.now`; pin the TestClock so the lifecycle checks
 // against `expiresAt` / `absoluteExpiresAt` are deterministic.
-const clockNow = DateTime.unsafeMake(new Date("2026-06-01T00:00:00Z"));
-const farPast = DateTime.unsafeMake(new Date("2000-01-01T00:00:00Z"));
-const farFuture = DateTime.unsafeMake(new Date("2099-01-01T00:00:00Z"));
-const farFutureLater = DateTime.unsafeMake(new Date("2099-12-31T00:00:00Z"));
+const clockNow = DateTime.makeUnsafe(new Date("2026-06-01T00:00:00Z"));
+const farPast = DateTime.makeUnsafe(new Date("2000-01-01T00:00:00Z"));
+const farFuture = DateTime.makeUnsafe(new Date("2099-01-01T00:00:00Z"));
+const farFutureLater = DateTime.makeUnsafe(new Date("2099-12-31T00:00:00Z"));
 
 const TestLayer = SessionRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
@@ -62,7 +64,9 @@ const insertSession = (session: SessionRoot) =>
   });
 
 const errorOf = (exit: Exit.Exit<unknown, unknown>) =>
-  Exit.isFailure(exit) && exit.cause._tag === "Fail" ? exit.cause.error : null;
+  Exit.isFailure(exit) && Cause.hasFails(exit.cause)
+    ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+    : null;
 
 const suite = describe.sequential;
 

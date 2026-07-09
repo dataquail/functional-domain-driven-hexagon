@@ -27,18 +27,18 @@ import { TodosRepositoryLive } from "@/modules/todos/infrastructure/repositories
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { commandHandlers } from "@/platform/ddd/ports/command-bus.js";
 
-type CreateTodoBusOutput = Effect.Effect<TodoRoot, PersistenceUnavailable, Database.Database>;
-type DeleteTodoBusOutput = Effect.Effect<
+type CreateTodoOutput = Effect.Effect<TodoRoot, PersistenceUnavailable, Database.Database>;
+type DeleteTodoOutput = Effect.Effect<
   void,
   TodoNotFound | PersistenceUnavailable,
   Database.Database
 >;
-type UpdateTodoBusOutput = Effect.Effect<
+type UpdateTodoOutput = Effect.Effect<
   TodoRoot,
   TodoNotFound | PersistenceUnavailable,
   Database.Database
 >;
-type CompleteTodoBusOutput = Effect.Effect<
+type CompleteTodoOutput = Effect.Effect<
   TodoRoot,
   TodoNotFound | PersistenceUnavailable,
   Database.Database
@@ -48,39 +48,39 @@ declare module "@/platform/ddd/ports/command-bus.js" {
   interface CommandRegistry {
     CreateTodoCommand: {
       readonly command: CreateTodoCommand;
-      readonly output: CreateTodoBusOutput;
+      readonly output: CreateTodoOutput;
     };
     UpdateTodoCommand: {
       readonly command: UpdateTodoCommand;
-      readonly output: UpdateTodoBusOutput;
+      readonly output: UpdateTodoOutput;
     };
     CompleteTodoCommand: {
       readonly command: CompleteTodoCommand;
-      readonly output: CompleteTodoBusOutput;
+      readonly output: CompleteTodoOutput;
     };
     DeleteTodoCommand: {
       readonly command: DeleteTodoCommand;
-      readonly output: DeleteTodoBusOutput;
+      readonly output: DeleteTodoOutput;
     };
   }
 }
 
 export const todoCommandHandlers = commandHandlers({
   CreateTodoCommand: {
-    handle: (cmd): CreateTodoBusOutput => createTodo(cmd).pipe(Effect.provide(TodosRepositoryLive)),
+    handle: (cmd): CreateTodoOutput => createTodo(cmd).pipe(Effect.provide(TodosRepositoryLive)),
     spanAttributes: createTodoCommandSpanAttributes,
   },
   UpdateTodoCommand: {
-    handle: (cmd): UpdateTodoBusOutput => updateTodo(cmd).pipe(Effect.provide(TodosRepositoryLive)),
+    handle: (cmd): UpdateTodoOutput => updateTodo(cmd).pipe(Effect.provide(TodosRepositoryLive)),
     spanAttributes: updateTodoCommandSpanAttributes,
   },
   CompleteTodoCommand: {
-    handle: (cmd): CompleteTodoBusOutput =>
+    handle: (cmd): CompleteTodoOutput =>
       completeTodo(cmd).pipe(Effect.provide(TodosRepositoryLive)),
     spanAttributes: completeTodoCommandSpanAttributes,
   },
   DeleteTodoCommand: {
-    handle: (cmd): DeleteTodoBusOutput => deleteTodo(cmd).pipe(Effect.provide(TodosRepositoryLive)),
+    handle: (cmd): DeleteTodoOutput => deleteTodo(cmd).pipe(Effect.provide(TodosRepositoryLive)),
     spanAttributes: deleteTodoCommandSpanAttributes,
   },
 });

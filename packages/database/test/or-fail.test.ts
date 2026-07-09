@@ -21,8 +21,9 @@ describe("orFail", () => {
       Effect.succeed(null as string | null).pipe(orFail(() => new NotFound())),
     );
     expect(Exit.isFailure(exit)).toBe(true);
-    if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-      expect(exit.cause.error).toBeInstanceOf(NotFound);
+    const reason = Exit.isFailure(exit) ? exit.cause.reasons[0] : undefined;
+    if (reason?._tag === "Fail") {
+      expect(reason.error).toBeInstanceOf(NotFound);
     } else {
       throw new Error("expected typed Fail");
     }
@@ -36,8 +37,9 @@ describe("orFail", () => {
       Effect.fail(new DatabaseError()).pipe(orFail(() => new NotFound())),
     );
     expect(Exit.isFailure(exit)).toBe(true);
-    if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-      expect(exit.cause.error._tag).toBe("DatabaseError");
+    const reason = Exit.isFailure(exit) ? exit.cause.reasons[0] : undefined;
+    if (reason?._tag === "Fail") {
+      expect(reason.error._tag).toBe("DatabaseError");
     } else {
       throw new Error("expected typed Fail");
     }

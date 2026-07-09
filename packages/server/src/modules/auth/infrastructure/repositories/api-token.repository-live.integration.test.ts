@@ -1,10 +1,12 @@
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
+import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 import { beforeEach } from "vitest";
 
 import { ApiTokenNotFound } from "@/modules/auth/domain/api-token.errors.js";
@@ -72,7 +74,9 @@ suite("ApiTokenRepositoryLive (integration)", () => {
       const exit = yield* Effect.exit(repo.findOneByHash("missing"));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof ApiTokenNotFound, true);
       }
     }).pipe(Effect.provide(TestLayer)),

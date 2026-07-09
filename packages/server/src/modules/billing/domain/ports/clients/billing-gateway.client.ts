@@ -59,14 +59,14 @@ export type VerifyWebhookInput = {
 // switches on it. `unknown` is the safety bucket for event types we
 // haven't modeled yet — we still want to record-and-200 the delivery
 // so Stripe doesn't keep retrying.
-export const StripeWebhookEvent = Schema.Union(
+export const StripeWebhookEvent = Schema.Union([
   Schema.Struct({
     eventId: Schema.String,
-    type: Schema.Literal(
+    type: Schema.Literals([
       "customer.subscription.created",
       "customer.subscription.updated",
       "customer.subscription.deleted",
-    ),
+    ]),
     subscription: Schema.Struct({
       stripeSubscriptionId: Schema.String,
       status: Schema.String,
@@ -75,7 +75,7 @@ export const StripeWebhookEvent = Schema.Union(
   }),
   Schema.Struct({
     eventId: Schema.String,
-    type: Schema.Literal("invoice.paid", "invoice.payment_failed"),
+    type: Schema.Literals(["invoice.paid", "invoice.payment_failed"]),
     invoice: Schema.Struct({
       stripeSubscriptionId: Schema.NullOr(Schema.String),
     }),
@@ -84,7 +84,7 @@ export const StripeWebhookEvent = Schema.Union(
     eventId: Schema.String,
     type: Schema.Literal("unknown"),
   }),
-);
+]);
 export type StripeWebhookEvent = typeof StripeWebhookEvent.Type;
 
 export type BillingGatewayShape = {
@@ -102,7 +102,6 @@ export type BillingGatewayShape = {
   ) => Effect.Effect<StripeWebhookEvent, InvalidWebhookSignature>;
 };
 
-export class BillingGateway extends Context.Tag("BillingGateway")<
-  BillingGateway,
-  BillingGatewayShape
->() {}
+export class BillingGateway extends Context.Service<BillingGateway, BillingGatewayShape>()(
+  "BillingGateway",
+) {}

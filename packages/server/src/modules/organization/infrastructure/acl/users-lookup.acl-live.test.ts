@@ -37,7 +37,7 @@ const stubQueryBus = Layer.succeed(
 
 // The Live re-provides Database to the bus-dispatched effect; our
 // stub bus doesn't actually use it, so an opaque placeholder is fine.
-const stubDatabase = Layer.succeed(Database.Database, {} as Database.Database["Type"]);
+const stubDatabase = Layer.succeed(Database.Database, {} as Database.Database["Service"]);
 
 const TestLayer = UsersLookupLive.pipe(Layer.provide(stubQueryBus), Layer.provide(stubDatabase));
 

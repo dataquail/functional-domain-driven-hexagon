@@ -33,27 +33,26 @@ const toPaginatedContract = (
     total: result.total,
   });
 
-export const findAllEndpoint = (
+export const findAllEndpoint = Effect.fn("OrganizationAdminLive.findAll")(function* (
   request: EndpointRequest<typeof OrganizationContract.AdminGroup, "findAll">,
-) =>
-  Effect.gen(function* () {
-    // Flat `Read` action — no id, no resource resolver. The registered
-    // policy is `SuperAdminOnly`; members get a 403 before the query
-    // fires. `Authz.hasPermissions` declares `NotFound` in its error
-    // channel for resource-scoped calls; with no id passed it can't
-    // surface, so we collapse it to a defect at the boundary.
-    yield* Authz.hasPermissions(OrganizationResource, Actions.Read).pipe(
-      Effect.catchTag("NotFound", () =>
-        Effect.die("Unreachable: flat Authz.hasPermissions cannot surface NotFound"),
-      ),
-    );
-    const queryBus = yield* QueryBus;
-    const result = yield* queryBus.execute(
-      FindAllOrganizationsQuery.make({
-        page: request.urlParams.page,
-        pageSize: request.urlParams.pageSize,
-        includeDeleted: request.urlParams.includeDeleted === "true",
-      }),
-    );
-    return toPaginatedContract(result);
-  }).pipe(recoverPersistenceUnavailable, Effect.withSpan("OrganizationAdminLive.findAll"));
+) {
+  // Flat `Read` action — no id, no resource resolver. The registered
+  // policy is `SuperAdminOnly`; members get a 403 before the query
+  // fires. `Authz.hasPermissions` declares `NotFound` in its error
+  // channel for resource-scoped calls; with no id passed it can't
+  // surface, so we collapse it to a defect at the boundary.
+  yield* Authz.hasPermissions(OrganizationResource, Actions.Read).pipe(
+    Effect.catchTag("NotFound", () =>
+      Effect.die("Unreachable: flat Authz.hasPermissions cannot surface NotFound"),
+    ),
+  );
+  const queryBus = yield* QueryBus;
+  const result = yield* queryBus.execute(
+    FindAllOrganizationsQuery.make({
+      page: request.query.page,
+      pageSize: request.query.pageSize,
+      includeDeleted: request.query.includeDeleted === "true",
+    }),
+  );
+  return toPaginatedContract(result);
+}, recoverPersistenceUnavailable);

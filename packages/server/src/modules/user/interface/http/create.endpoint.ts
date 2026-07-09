@@ -5,8 +5,8 @@ import { CreateUserCommand } from "@/modules/user/commands/create-user.command.j
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
-export const createEndpoint = (request: EndpointRequest<typeof UserContract.Group, "create">) =>
-  Effect.gen(function* () {
+export const createEndpoint = Effect.fn("UserLive.create")(
+  function* (request: EndpointRequest<typeof UserContract.Group, "create">) {
     const commandBus = yield* CommandBus;
     const id = yield* commandBus.execute(
       CreateUserCommand.make({
@@ -17,15 +17,14 @@ export const createEndpoint = (request: EndpointRequest<typeof UserContract.Grou
       }),
     );
     return new UserContract.CreateUserResponse({ id });
-  }).pipe(
-    Effect.catchTag("UserAlreadyExists", (err) =>
-      Effect.fail(
-        new UserContract.UserAlreadyExistsError({
-          email: err.email,
-          message: `A user with email ${err.email} already exists`,
-        }),
-      ),
+  },
+  Effect.catchTag("UserAlreadyExists", (err) =>
+    Effect.fail(
+      new UserContract.UserAlreadyExistsError({
+        email: err.email,
+        message: `A user with email ${err.email} already exists`,
+      }),
     ),
-    recoverPersistenceUnavailable,
-    Effect.withSpan("UserLive.create"),
-  );
+  ),
+  recoverPersistenceUnavailable,
+);

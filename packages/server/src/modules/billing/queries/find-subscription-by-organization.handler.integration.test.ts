@@ -19,7 +19,7 @@ import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 const acme = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const beta = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const subId = SubscriptionId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
-const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
 
 const TestLayer = SubscriptionRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 

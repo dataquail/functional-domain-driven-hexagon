@@ -24,7 +24,6 @@ export type UsersLookupShape = {
   ) => Effect.Effect<ReadonlyArray<UserLookupView>, PersistenceUnavailable>;
 };
 
-export class UsersLookup extends Context.Tag("@org/server/organization/UsersLookup")<
-  UsersLookup,
-  UsersLookupShape
->() {}
+export class UsersLookup extends Context.Service<UsersLookup, UsersLookupShape>()(
+  "@org/server/organization/UsersLookup",
+) {}

@@ -1,7 +1,6 @@
-import * as HttpApiEndpoint from "@effect/platform/HttpApiEndpoint";
-import * as HttpApiGroup from "@effect/platform/HttpApiGroup";
-import * as HttpApiSchema from "@effect/platform/HttpApiSchema";
 import * as Schema from "effect/Schema";
+import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
+import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
 import { OrganizationId, TodoId } from "../EntityIds.js";
@@ -9,9 +8,9 @@ import { UserAuthMiddleware } from "../Policy.js";
 
 // CLI-specific error, distinct from the GUI's `TodosContract.TodoNotFoundError`
 // so the two contracts evolve independently (ADR-0024).
-export class CliTodoNotFoundError extends Schema.TaggedError<CliTodoNotFoundError>(
+export class CliTodoNotFoundError extends Schema.TaggedErrorClass<CliTodoNotFoundError>(
   "CliTodoNotFoundError",
-)("CliTodoNotFoundError", { message: Schema.String }, HttpApiSchema.annotations({ status: 404 })) {}
+)("CliTodoNotFoundError", { message: Schema.String }, { httpApiStatus: 404 }) {}
 
 export class CliTodo extends Schema.Class<CliTodo>("CliTodo")({
   id: TodoId,
@@ -22,39 +21,48 @@ export class CliTodo extends Schema.Class<CliTodo>("CliTodo")({
 export class CliCreateTodoPayload extends Schema.Class<CliCreateTodoPayload>(
   "CliCreateTodoPayload",
 )({
-  title: Schema.Trim.pipe(Schema.nonEmptyString()),
+  title: Schema.Trim.check(Schema.isNonEmpty()),
 }) {}
 
 // CLI-facing todos surface. Same org-scoped paths as the GUI, but its own
 // shapes and a first-class `complete` verb (the GUI only has `update`).
 export class Group extends HttpApiGroup.make("cliTodos")
+  .add(
+    HttpApiEndpoint.get("list", "/:orgId/todos", {
+      params: Schema.Struct({ orgId: OrganizationId }),
+      success: Schema.Array(CliTodo),
+      error: [CustomHttpApiError.Forbidden, CustomHttpApiError.ServiceUnavailable],
+    }),
+  )
+  .add(
+    HttpApiEndpoint.post("create", "/:orgId/todos", {
+      params: Schema.Struct({ orgId: OrganizationId }),
+      payload: CliCreateTodoPayload,
+      success: CliTodo,
+      error: [CustomHttpApiError.Forbidden, CustomHttpApiError.ServiceUnavailable],
+    }),
+  )
+  .add(
+    HttpApiEndpoint.post("complete", "/:orgId/todos/:id/complete", {
+      params: Schema.Struct({ orgId: OrganizationId, id: TodoId }),
+      success: CliTodo,
+      error: [
+        CustomHttpApiError.Forbidden,
+        CliTodoNotFoundError,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
+  )
+  .add(
+    HttpApiEndpoint.make("DELETE")("remove", "/:orgId/todos/:id", {
+      params: Schema.Struct({ orgId: OrganizationId, id: TodoId }),
+      success: Schema.Void,
+      error: [
+        CustomHttpApiError.Forbidden,
+        CliTodoNotFoundError,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
+  )
   .middleware(UserAuthMiddleware)
-  .add(
-    HttpApiEndpoint.get("list", "/:orgId/todos")
-      .setPath(Schema.Struct({ orgId: OrganizationId }))
-      .addError(CustomHttpApiError.Forbidden)
-      .addSuccess(Schema.Array(CliTodo)),
-  )
-  .add(
-    HttpApiEndpoint.post("create", "/:orgId/todos")
-      .setPath(Schema.Struct({ orgId: OrganizationId }))
-      .setPayload(CliCreateTodoPayload)
-      .addError(CustomHttpApiError.Forbidden)
-      .addSuccess(CliTodo),
-  )
-  .add(
-    HttpApiEndpoint.post("complete", "/:orgId/todos/:id/complete")
-      .setPath(Schema.Struct({ orgId: OrganizationId, id: TodoId }))
-      .addError(CustomHttpApiError.Forbidden)
-      .addError(CliTodoNotFoundError)
-      .addSuccess(CliTodo),
-  )
-  .add(
-    HttpApiEndpoint.del("remove", "/:orgId/todos/:id")
-      .setPath(Schema.Struct({ orgId: OrganizationId, id: TodoId }))
-      .addError(CustomHttpApiError.Forbidden)
-      .addError(CliTodoNotFoundError)
-      .addSuccess(Schema.Void),
-  )
-  .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/cli/orgs") {}

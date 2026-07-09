@@ -1,6 +1,6 @@
-import * as HttpApi from "@effect/platform/HttpApi";
 import { CliApi } from "@org/contracts/CliApi";
 import { DomainApi } from "@org/contracts/DomainApi";
+import * as HttpApi from "effect/unstable/httpapi/HttpApi";
 
 // Two API products on one server (ADR-0024): the GUI BFF (`DomainApi`) and
 // the CLI/MCP surface (`CliApi`, under `/cli`). Distinct group names + path

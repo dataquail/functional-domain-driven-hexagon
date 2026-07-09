@@ -1,19 +1,21 @@
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import { UserContract } from "@org/contracts/api/Contracts";
 import { deepStrictEqual, ok } from "assert";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 
-const basePayload = {
+const basePayload = new UserContract.CreateUserPayload({
   email: "alice@example.com",
   country: "USA",
   street: "123 Main St",
   postalCode: "12345",
-};
+});
 
 const suite = describe.sequential;
 
@@ -25,8 +27,10 @@ suite("DELETE /users/:id (integration)", () => {
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         const { id } = yield* client.user.create({ payload: basePayload });
-        yield* client.user.delete({ path: { id } });
-        const after = yield* client.user.find({ urlParams: { page: 1, pageSize: 10 } });
+        yield* client.user.delete({ params: { id } });
+        const after = yield* client.user.find({
+          query: new UserContract.FindUsersParams({ page: 1, pageSize: 10 }),
+        });
         deepStrictEqual(after.total, 0);
       }),
     );
@@ -38,12 +42,15 @@ suite("DELETE /users/:id (integration)", () => {
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
           client.user.delete({
-            path: { id: "00000000-0000-0000-0000-000000000000" as never },
+            params: { id: "00000000-0000-0000-0000-000000000000" as never },
           }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof UserContract.UserNotFoundError);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              UserContract.UserNotFoundError,
+          );
         } else {
           throw new Error("expected a typed Fail");
         }

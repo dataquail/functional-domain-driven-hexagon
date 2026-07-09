@@ -27,7 +27,6 @@ export type TodosRepositoryShape = {
   ) => Effect.Effect<TodoRoot, TodoNotFound | PersistenceUnavailable>;
 };
 
-export class TodosRepository extends Context.Tag("TodosRepository")<
-  TodosRepository,
-  TodosRepositoryShape
->() {}
+export class TodosRepository extends Context.Service<TodosRepository, TodosRepositoryShape>()(
+  "TodosRepository",
+) {}

@@ -14,7 +14,7 @@ export class DeviceGrantRoot extends Schema.Class<DeviceGrantRoot>("DeviceGrantR
   id: DeviceGrantId,
   deviceCodeHash: Schema.String,
   userCode: Schema.String,
-  status: Schema.Literal("pending", "approved"),
+  status: Schema.Literals(["pending", "approved"]),
   userId: Schema.NullOr(UserId),
   createdAt: Schema.DateTimeUtc,
   expiresAt: Schema.DateTimeUtc,
@@ -63,7 +63,7 @@ const approve = (input: ApproveInput): DeviceGrantRoot =>
   });
 
 const isExpired = (grant: DeviceGrantRoot, now: DateTime.Utc): boolean =>
-  DateTime.lessThanOrEqualTo(grant.expiresAt, now);
+  DateTime.isLessThanOrEqualTo(grant.expiresAt, now);
 
 // The human-typable user code. Entropy generation (impure) stays in the start
 // command; this is the pure formatter it composes — mapping random bytes onto

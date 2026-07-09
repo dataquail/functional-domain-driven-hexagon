@@ -41,11 +41,11 @@ const makeApiClient = (opts?: {
     // (`.id` / `.completed`) continue to work without each test having
     // to know the path shape.
     update: (args: {
-      path: { orgId: OrganizationId; id: TodoId };
+      params: { orgId: OrganizationId; id: TodoId };
       payload: { title: string; completed: boolean };
     }) => {
       const stamped = new TodosContract.Todo({
-        id: args.path.id,
+        id: args.params.id,
         title: args.payload.title,
         completed: args.payload.completed,
       });
@@ -54,11 +54,11 @@ const makeApiClient = (opts?: {
       }
       return opts?.update?.(stamped) ?? Effect.succeed(stamped);
     },
-    delete: (args: { path: { orgId: OrganizationId; id: TodoId } }) => {
+    delete: (args: { params: { orgId: OrganizationId; id: TodoId } }) => {
       if (opts?.deleteCalls !== undefined) {
-        opts.deleteCalls.current = [...opts.deleteCalls.current, args.path.id];
+        opts.deleteCalls.current = [...opts.deleteCalls.current, args.params.id];
       }
-      return opts?.delete?.(args.path.id) ?? Effect.void;
+      return opts?.delete?.(args.params.id) ?? Effect.void;
     },
   },
 });

@@ -3,18 +3,13 @@ import * as Option from "effect/Option";
 
 import { SubscriptionRepository } from "@/modules/billing/domain/ports/repositories/subscription.repository.js";
 
-import {
-  type FindSubscriptionByOrganizationOutput,
-  type FindSubscriptionByOrganizationQuery,
-} from "./find-subscription-by-organization.query.js";
+import { type FindSubscriptionByOrganizationQuery } from "./find-subscription-by-organization.query.js";
 
 // Maps the domain `Subscription` aggregate down to the cross-boundary
 // `SubscriptionView` shape — clients don't need the Stripe id columns,
 // and exposing them needlessly couples consumers to the gateway.
-export const findSubscriptionByOrganization = (
-  query: FindSubscriptionByOrganizationQuery,
-): FindSubscriptionByOrganizationOutput =>
-  Effect.gen(function* () {
+export const findSubscriptionByOrganization = Effect.fn("findSubscriptionByOrganization")(
+  function* (query: FindSubscriptionByOrganizationQuery) {
     const repo = yield* SubscriptionRepository;
     const found = yield* repo.findOneByOrganizationId(query.organizationId);
     return Option.map(found, (sub) => ({
@@ -23,4 +18,5 @@ export const findSubscriptionByOrganization = (
       status: sub.status,
       currentPeriodEnd: sub.currentPeriodEnd,
     }));
-  });
+  },
+);

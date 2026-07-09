@@ -8,7 +8,7 @@ import { EnvVars } from "@/common/env-vars.js";
 // (not inline in server.ts) so module-root handler-registration files
 // can compose it into their wrapping chains when discharging persistence
 // dependencies upfront (ADR pending — Stage D-α handler encapsulation).
-export const DatabaseLive = Layer.unwrapEffect(
+export const DatabaseLive = Layer.unwrap(
   EnvVars.pipe(
     Effect.map((envVars) =>
       Database.layer({
@@ -17,4 +17,4 @@ export const DatabaseLive = Layer.unwrapEffect(
       }),
     ),
   ),
-).pipe(Layer.provide(EnvVars.Default));
+).pipe(Layer.provide(EnvVars.layer));

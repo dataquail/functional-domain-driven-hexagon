@@ -1,9 +1,11 @@
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/api.js";
 import { MEMBER_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
@@ -78,7 +80,7 @@ suite("POST /invitations/:token/accept (integration, member caller)", () => {
         const client = yield* HttpApiClient.make(Api);
 
         const { organizationId } = yield* client.invitations.accept({
-          path: { token: "accept-token-happy-path" },
+          params: { token: "accept-token-happy-path" },
         });
         deepStrictEqual(organizationId, ORG_ID);
 
@@ -101,10 +103,13 @@ suite("POST /invitations/:token/accept (integration, member caller)", () => {
       Effect.gen(function* () {
         yield* seedOrg;
         const client = yield* HttpApiClient.make(Api);
-        const exit = yield* Effect.exit(client.invitations.accept({ path: { token: "nope" } }));
+        const exit = yield* Effect.exit(client.invitations.accept({ params: { token: "nope" } }));
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          deepStrictEqual(exit.cause.error._tag, "InvitationNotFoundError");
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          deepStrictEqual(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag,
+            "InvitationNotFoundError",
+          );
         }
       }),
     );
@@ -117,11 +122,11 @@ suite("POST /invitations/:token/accept (integration, member caller)", () => {
         yield* seedInvitation("accept-token-revoked", { revokedAt: "2020-01-01T00:00:00Z" });
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
-          client.invitations.accept({ path: { token: "accept-token-revoked" } }),
+          client.invitations.accept({ params: { token: "accept-token-revoked" } }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          const error = exit.cause.error;
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          const error = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
           deepStrictEqual(error._tag, "InvitationGoneError");
           deepStrictEqual(error.reason, "revoked");
         }
@@ -136,11 +141,11 @@ suite("POST /invitations/:token/accept (integration, member caller)", () => {
         yield* seedInvitation("accept-token-expired", { expiresAt: iso(-SEVEN_DAYS_MS) });
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
-          client.invitations.accept({ path: { token: "accept-token-expired" } }),
+          client.invitations.accept({ params: { token: "accept-token-expired" } }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          const error = exit.cause.error;
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          const error = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
           deepStrictEqual(error._tag, "InvitationGoneError");
           deepStrictEqual(error.reason, "expired");
         }
@@ -168,11 +173,14 @@ suite("POST /invitations/:token/accept (integration, super-admin caller)", () =>
         yield* seedInvitation("accept-token-superadmin");
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
-          client.invitations.accept({ path: { token: "accept-token-superadmin" } }),
+          client.invitations.accept({ params: { token: "accept-token-superadmin" } }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          deepStrictEqual(exit.cause.error._tag, "SuperAdminCannotOwnOrganizationError");
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          deepStrictEqual(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag,
+            "SuperAdminCannotOwnOrganizationError",
+          );
         }
       }),
     );

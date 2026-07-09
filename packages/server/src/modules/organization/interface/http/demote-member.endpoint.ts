@@ -18,12 +18,12 @@ export const demoteMemberEndpoint = (
   request: EndpointRequest<typeof OrganizationContract.Group, "demoteMember">,
 ) =>
   Effect.gen(function* () {
-    yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.path.orgId);
+    yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.params.orgId);
     const commandBus = yield* CommandBus;
     yield* commandBus.execute(
       RevokeOrganizationRoleCommand.make({
-        userId: request.path.userId,
-        organizationId: request.path.orgId,
+        userId: request.params.userId,
+        organizationId: request.params.orgId,
         role: "admin",
       }),
     );
@@ -31,8 +31,8 @@ export const demoteMemberEndpoint = (
     Effect.catchTag("NotFound", () =>
       Effect.fail(
         new OrganizationContract.OrganizationNotFoundError({
-          organizationId: request.path.orgId,
-          message: `Organization ${request.path.orgId} not found`,
+          organizationId: request.params.orgId,
+          message: `Organization ${request.params.orgId} not found`,
         }),
       ),
     ),

@@ -39,7 +39,7 @@ export const ApiTokenRepositoryFake = Layer.effect(
       Effect.map(Ref.get(store), (m) =>
         Array.from(HashMap.values(m))
           .filter((t) => t.userId === userId && t.revokedAt === null)
-          .sort(Order.reverse(Order.mapInput(DateTime.Order, (t: ApiTokenRoot) => t.createdAt))),
+          .sort(Order.flip(Order.mapInput(DateTime.Order, (t: ApiTokenRoot) => t.createdAt))),
       );
 
     // Mirrors the live impl: a re-delete on an already-revoked token is
@@ -50,7 +50,7 @@ export const ApiTokenRepositoryFake = Layer.effect(
         const m = yield* Ref.get(store);
         const existing = HashMap.get(m, id);
         if (Option.isNone(existing) || existing.value.revokedAt !== null) {
-          return yield* Effect.fail(new ApiTokenNotFound());
+          return yield* new ApiTokenNotFound();
         }
         const now = yield* DateTime.now;
         yield* Ref.update(
@@ -65,7 +65,7 @@ export const ApiTokenRepositoryFake = Layer.effect(
         const m = yield* Ref.get(store);
         const existing = HashMap.get(m, token.id);
         if (Option.isNone(existing) || existing.value.revokedAt !== null) {
-          return yield* Effect.fail(new ApiTokenNotFound());
+          return yield* new ApiTokenNotFound();
         }
         yield* Ref.update(
           store,

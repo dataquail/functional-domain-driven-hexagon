@@ -1,10 +1,7 @@
 import type * as DateTime from "effect/DateTime";
-import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 import { type InvitationStatus } from "@/modules/organization/domain/invitation.root.js";
-import { type InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation.repository.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 import { type InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
@@ -30,9 +27,3 @@ export type PendingInvitationView = {
   readonly expiresAt: DateTime.Utc;
   readonly createdAt: DateTime.Utc;
 };
-
-export type FindPendingInvitationsOutput = Effect.Effect<
-  ReadonlyArray<PendingInvitationView>,
-  PersistenceUnavailable,
-  InvitationRepository
->;

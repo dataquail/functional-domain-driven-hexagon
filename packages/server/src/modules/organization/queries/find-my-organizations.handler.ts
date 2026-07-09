@@ -3,7 +3,6 @@ import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 import {
-  type FindMyOrganizationsOutput,
   type FindMyOrganizationsQuery,
   type FindMyOrganizationsView,
 } from "@/modules/organization/queries/find-my-organizations.query.js";
@@ -14,14 +13,14 @@ import { OrganizationId } from "@/platform/ids/organization-id.js";
 // below adds a column the standard `OrganizationRow` schema doesn't
 // carry, so this query defines its own row shape.
 const MyOrganizationRow = Schema.Struct({
-  id: Schema.UUID,
+  id: Schema.String.check(Schema.isGUID()),
   name: Schema.String,
   created_at: Schema.DateTimeUtcFromDate,
   updated_at: Schema.DateTimeUtcFromDate,
   deleted_at: Schema.NullOr(Schema.DateTimeUtcFromDate),
   is_admin: Schema.Boolean,
 });
-const MyOrganizationRowStd = Schema.standardSchemaV1(MyOrganizationRow);
+const MyOrganizationRowStd = Schema.toStandardSchemaV1(MyOrganizationRow);
 
 const toView = (row: typeof MyOrganizationRow.Type): FindMyOrganizationsView => ({
   id: OrganizationId.make(row.id),
@@ -36,12 +35,13 @@ const toView = (row: typeof MyOrganizationRow.Type): FindMyOrganizationsView => 
 // `no-cross-schema-slonik-access` rule). Tombstoned orgs are filtered
 // out — a soft-deleted org should not appear in the caller's chooser.
 // `is_admin` is the caller's own `admin` OrganizationRole in each org.
-export const findMyOrganizations = (query: FindMyOrganizationsQuery): FindMyOrganizationsOutput =>
-  Effect.gen(function* () {
-    const db = yield* Database.Database;
-    const rows = yield* db
-      .execute((client) =>
-        client.any(sql.type(MyOrganizationRowStd)`
+export const findMyOrganizations = Effect.fn("findMyOrganizations")(function* (
+  query: FindMyOrganizationsQuery,
+) {
+  const db = yield* Database.Database;
+  const rows = yield* db
+    .execute((client) =>
+      client.any(sql.type(MyOrganizationRowStd)`
           SELECT
             o.*,
             EXISTS (
@@ -57,13 +57,13 @@ export const findMyOrganizations = (query: FindMyOrganizationsQuery): FindMyOrga
             AND o.deleted_at IS NULL
           ORDER BY o.created_at DESC
         `),
-      )
-      .pipe(
-        Effect.catchTag("DatabaseError", Effect.die),
-        Effect.catchTag("DatabaseUnavailable", (e) =>
-          Effect.fail(new PersistenceUnavailable({ message: e.message })),
-        ),
-      );
+    )
+    .pipe(
+      Effect.catchTag("DatabaseError", Effect.die),
+      Effect.catchTag("DatabaseUnavailable", (e) =>
+        Effect.fail(new PersistenceUnavailable({ message: e.message })),
+      ),
+    );
 
-    return { organizations: rows.map(toView) };
-  });
+  return { organizations: rows.map(toView) };
+});

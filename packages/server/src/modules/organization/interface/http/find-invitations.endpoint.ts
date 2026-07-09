@@ -12,36 +12,35 @@ import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/
 // org's open invitations (pending + expired) for the member-management
 // surface's "Pending invitations" section. Thin dispatch — the status
 // derivation lives in the query handler.
-export const findInvitationsEndpoint = (
+export const findInvitationsEndpoint = Effect.fn("OrganizationLive.findInvitations")(function* (
   request: EndpointRequest<typeof OrganizationContract.Group, "findInvitations">,
-) =>
-  Effect.gen(function* () {
-    yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.path.orgId).pipe(
-      Effect.catchTag("NotFound", () =>
-        Effect.fail(
-          new OrganizationContract.OrganizationNotFoundError({
-            organizationId: request.path.orgId,
-            message: `Organization ${request.path.orgId} not found`,
-          }),
-        ),
+) {
+  yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.params.orgId).pipe(
+    Effect.catchTag("NotFound", () =>
+      Effect.fail(
+        new OrganizationContract.OrganizationNotFoundError({
+          organizationId: request.params.orgId,
+          message: `Organization ${request.params.orgId} not found`,
+        }),
       ),
-    );
+    ),
+  );
 
-    const queryBus = yield* QueryBus;
-    const invitations = yield* queryBus.execute(
-      FindPendingInvitationsQuery.make({ organizationId: request.path.orgId }),
-    );
+  const queryBus = yield* QueryBus;
+  const invitations = yield* queryBus.execute(
+    FindPendingInvitationsQuery.make({ organizationId: request.params.orgId }),
+  );
 
-    return new OrganizationContract.PendingInvitationsResponse({
-      invitations: invitations.map(
-        (invitation) =>
-          new OrganizationContract.PendingInvitation({
-            invitationId: invitation.invitationId,
-            inviteeEmail: invitation.inviteeEmail,
-            status: invitation.status,
-            expiresAt: invitation.expiresAt,
-            createdAt: invitation.createdAt,
-          }),
-      ),
-    });
-  }).pipe(recoverPersistenceUnavailable, Effect.withSpan("OrganizationLive.findInvitations"));
+  return new OrganizationContract.PendingInvitationsResponse({
+    invitations: invitations.map(
+      (invitation) =>
+        new OrganizationContract.PendingInvitation({
+          invitationId: invitation.invitationId,
+          inviteeEmail: invitation.inviteeEmail,
+          status: invitation.status,
+          expiresAt: invitation.expiresAt,
+          createdAt: invitation.createdAt,
+        }),
+    ),
+  });
+}, recoverPersistenceUnavailable);

@@ -1,7 +1,8 @@
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
+import { CliTodosContract, OrganizationContract } from "@org/contracts/api/Contracts";
 import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
@@ -28,10 +29,12 @@ suite("POST /cli/orgs/:orgId/todos (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         const todo = yield* client.cliTodos.create({
-          path: { orgId },
-          payload: { title: "Buy milk" },
+          params: { orgId },
+          payload: new CliTodosContract.CliCreateTodoPayload({ title: "Buy milk" }),
         });
         deepStrictEqual(todo.title, "Buy milk");
         deepStrictEqual(todo.completed, false);

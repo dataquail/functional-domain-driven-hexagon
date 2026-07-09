@@ -11,7 +11,7 @@ import {
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { queryHandlers } from "@/platform/ddd/ports/query-bus.js";
 
-type FindUserRolesBusOutput = Effect.Effect<
+type FindUserRolesOutput = Effect.Effect<
   FindUserRolesResult,
   PersistenceUnavailable,
   Database.Database
@@ -21,15 +21,14 @@ declare module "@/platform/ddd/ports/query-bus.js" {
   interface QueryRegistry {
     FindUserRolesQuery: {
       readonly query: FindUserRolesQuery;
-      readonly output: FindUserRolesBusOutput;
+      readonly output: FindUserRolesOutput;
     };
   }
 }
 
 export const roleQueryHandlers = queryHandlers({
   FindUserRolesQuery: {
-    handle: (q): FindUserRolesBusOutput =>
-      findUserRoles(q).pipe(Effect.provide(RolesRepositoryLive)),
+    handle: (q): FindUserRolesOutput => findUserRoles(q).pipe(Effect.provide(RolesRepositoryLive)),
     spanAttributes: findUserRolesQuerySpanAttributes,
   },
 });

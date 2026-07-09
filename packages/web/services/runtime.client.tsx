@@ -32,16 +32,16 @@ import { ApiClientLive } from "./api-client.client";
 // outbound `/api/*` fetches, so Jaeger stitches browser → Next →
 // Effect into a single trace.
 const buildClientLive = (queryClient: TanstackQueryClient) =>
-  Layer.mergeAll(ApiClientLive, Toast.Default, QueryClient.make(queryClient)).pipe(
+  Layer.mergeAll(ApiClientLive, Toast.layer, QueryClient.make(queryClient)).pipe(
     Layer.provide(WebSdkLive),
   );
 
 export type ClientManagedRuntime = ManagedRuntime.ManagedRuntime<
-  Layer.Layer.Success<ReturnType<typeof buildClientLive>>,
+  Layer.Success<ReturnType<typeof buildClientLive>>,
   never
 >;
 
-export type ClientRuntimeContext = ManagedRuntime.ManagedRuntime.Context<ClientManagedRuntime>;
+export type ClientRuntimeContext = ManagedRuntime.ManagedRuntime.Services<ClientManagedRuntime>;
 
 // Exported so test harnesses can mount a substitute runtime (e.g.
 // a FakeApiClient + RecordingToast layer) without going through the

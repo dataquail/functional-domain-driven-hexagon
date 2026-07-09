@@ -1,6 +1,6 @@
-import * as HttpApiEndpoint from "@effect/platform/HttpApiEndpoint";
-import * as HttpApiGroup from "@effect/platform/HttpApiGroup";
 import * as Schema from "effect/Schema";
+import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
+import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
 import { ApiTokenId, UserId } from "../EntityIds.js";
@@ -28,16 +28,21 @@ export class CallbackParams extends Schema.Class<CallbackParams>("CallbackParams
 
 export class PublicGroup extends HttpApiGroup.make("auth")
   .add(
-    HttpApiEndpoint.get("login", "/login")
-      .addSuccess(Schema.Void)
-      .addError(CustomHttpApiError.InternalServerError),
+    HttpApiEndpoint.get("login", "/login", {
+      success: Schema.Void,
+      error: [CustomHttpApiError.InternalServerError, CustomHttpApiError.ServiceUnavailable],
+    }),
   )
   .add(
-    HttpApiEndpoint.get("callback", "/callback")
-      .setUrlParams(CallbackParams)
-      .addSuccess(Schema.Void)
-      .addError(CustomHttpApiError.Unauthorized)
-      .addError(CustomHttpApiError.InternalServerError),
+    HttpApiEndpoint.get("callback", "/callback", {
+      query: CallbackParams,
+      success: Schema.Void,
+      error: [
+        CustomHttpApiError.Unauthorized,
+        CustomHttpApiError.InternalServerError,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
   )
   // GET (idempotent, no body): server reads our session cookie inline, revokes
   // the row if present, clears the cookie, and 302s to Zitadel's
@@ -45,13 +50,13 @@ export class PublicGroup extends HttpApiGroup.make("auth")
   // works even when our session is already gone (e.g., expired) — logout
   // must always succeed.
   .add(
-    HttpApiEndpoint.get("logout", "/logout")
-      .addSuccess(Schema.Void)
-      .addError(CustomHttpApiError.InternalServerError),
+    HttpApiEndpoint.get("logout", "/logout", {
+      success: Schema.Void,
+      error: [CustomHttpApiError.InternalServerError, CustomHttpApiError.ServiceUnavailable],
+    }),
   )
   // Callback talks to the DB (SignInCommand persists a session). Transient
   // store failure surfaces here as 503 — see UserContract for rationale.
-  .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/auth") {}
 
 // ==========================================
@@ -59,10 +64,14 @@ export class PublicGroup extends HttpApiGroup.make("auth")
 // ==========================================
 
 export class PrivateGroup extends HttpApiGroup.make("authSession")
+  .add(
+    HttpApiEndpoint.get("me", "/me", {
+      success: CurrentUserResponse,
+      // Group-wide 503 surface — see UserContract for rationale.
+      error: CustomHttpApiError.ServiceUnavailable,
+    }),
+  )
   .middleware(UserAuthMiddleware)
-  .add(HttpApiEndpoint.get("me", "/me").addSuccess(CurrentUserResponse))
-  // Group-wide 503 surface — see UserContract for rationale.
-  .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/auth") {}
 
 // ==========================================
@@ -83,11 +92,11 @@ export class ApiTokenSummary extends Schema.Class<ApiTokenSummary>("ApiTokenSumm
 export class CreateApiTokenPayload extends Schema.Class<CreateApiTokenPayload>(
   "CreateApiTokenPayload",
 )({
-  label: Schema.String.pipe(Schema.minLength(1), Schema.maxLength(255)),
+  label: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(255)),
   // Days until the token expires. Optional — the server falls back to its
   // configured default. Capped to keep CI tokens from living forever.
   expiresInDays: Schema.optional(
-    Schema.Int.pipe(Schema.greaterThanOrEqualTo(1), Schema.lessThanOrEqualTo(3650)),
+    Schema.Int.check(Schema.isGreaterThanOrEqualTo(1), Schema.isLessThanOrEqualTo(3650)),
   ),
 }) {}
 
@@ -104,7 +113,7 @@ export class CreateApiTokenResponse extends Schema.Class<CreateApiTokenResponse>
 export class DeviceApprovalPayload extends Schema.Class<DeviceApprovalPayload>(
   "DeviceApprovalPayload",
 )({
-  userCode: Schema.String.pipe(Schema.minLength(1), Schema.maxLength(32)),
+  userCode: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(32)),
 }) {}
 
 // Browser-side approval of a CLI device grant (ADR-0024). The signed-in user
@@ -112,33 +121,43 @@ export class DeviceApprovalPayload extends Schema.Class<DeviceApprovalPayload>(
 // On the GUI surface (the human is in the browser); the CLI's start/poll
 // endpoints live on `CliApi`.
 export class DeviceApprovalGroup extends HttpApiGroup.make("authDevice")
-  .middleware(UserAuthMiddleware)
   .add(
-    HttpApiEndpoint.post("approve", "/approve")
-      .setPayload(DeviceApprovalPayload)
-      .addError(CustomHttpApiError.NotFound)
-      .addError(CustomHttpApiError.Gone)
-      .addSuccess(Schema.Void),
+    HttpApiEndpoint.post("approve", "/approve", {
+      payload: DeviceApprovalPayload,
+      success: Schema.Void,
+      error: [
+        CustomHttpApiError.NotFound,
+        CustomHttpApiError.Gone,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
   )
-  .addError(CustomHttpApiError.ServiceUnavailable)
+  .middleware(UserAuthMiddleware)
   .prefix("/auth/device") {}
 
 // Token management is a human-in-the-browser concern (a user mints a CI
 // token); the CLI/MCP obtain tokens via the device flow or a pre-minted PAT.
 // Hence this lives on the GUI `DomainApi`, not the CLI surface (ADR-0024).
 export class TokensGroup extends HttpApiGroup.make("authTokens")
+  .add(
+    HttpApiEndpoint.post("create", "/", {
+      payload: CreateApiTokenPayload,
+      success: CreateApiTokenResponse,
+      error: CustomHttpApiError.ServiceUnavailable,
+    }),
+  )
+  .add(
+    HttpApiEndpoint.get("list", "/", {
+      success: Schema.Array(ApiTokenSummary),
+      error: CustomHttpApiError.ServiceUnavailable,
+    }),
+  )
+  .add(
+    HttpApiEndpoint.make("DELETE")("revoke", "/:id", {
+      params: Schema.Struct({ id: ApiTokenId }),
+      success: Schema.Void,
+      error: [CustomHttpApiError.NotFound, CustomHttpApiError.ServiceUnavailable],
+    }),
+  )
   .middleware(UserAuthMiddleware)
-  .add(
-    HttpApiEndpoint.post("create", "/")
-      .setPayload(CreateApiTokenPayload)
-      .addSuccess(CreateApiTokenResponse),
-  )
-  .add(HttpApiEndpoint.get("list", "/").addSuccess(Schema.Array(ApiTokenSummary)))
-  .add(
-    HttpApiEndpoint.del("revoke", "/:id")
-      .setPath(Schema.Struct({ id: ApiTokenId }))
-      .addError(CustomHttpApiError.NotFound)
-      .addSuccess(Schema.Void),
-  )
-  .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/auth/tokens") {}

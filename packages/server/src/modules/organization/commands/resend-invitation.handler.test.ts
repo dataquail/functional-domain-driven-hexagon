@@ -1,11 +1,13 @@
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual, ok } from "assert";
+import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Either from "effect/Either";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import * as TestClock from "effect/TestClock";
+import * as Option from "effect/Option";
+import * as Result from "effect/Result";
+import * as TestClock from "effect/testing/TestClock";
 
 import { ResendInvitationCommand } from "@/modules/organization/commands/resend-invitation.command.js";
 import { resendInvitation } from "@/modules/organization/commands/resend-invitation.handler.js";
@@ -30,11 +32,11 @@ import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-
 const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");
 const organizationId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const actorUserId = UserId.make("33333333-3333-3333-3333-333333333333");
-const issuedAt = DateTime.unsafeMake(new Date("2026-01-01T00:00:00Z"));
-const originalExpiry = DateTime.unsafeMake(new Date("2026-01-08T00:00:00Z"));
+const issuedAt = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
+const originalExpiry = DateTime.makeUnsafe(new Date("2026-01-08T00:00:00Z"));
 // `it.effect` runs on a TestClock starting at epoch 0; pin it past the
 // original expiry so the reissued expiry is demonstrably pushed out.
-const clockNow = DateTime.unsafeMake(new Date("2026-06-01T00:00:00Z"));
+const clockNow = DateTime.makeUnsafe(new Date("2026-06-01T00:00:00Z"));
 
 const seedInvitation = () =>
   InvitationRootOps.issue({
@@ -72,7 +74,7 @@ describe("resendInvitation", () => {
 
       const stored = yield* repo.findOneById(invitationId);
       ok(stored.token !== "tok-original", "token should be rotated");
-      ok(DateTime.greaterThan(stored.expiresAt, originalExpiry), "expiry should be pushed out");
+      ok(DateTime.isGreaterThan(stored.expiresAt, originalExpiry), "expiry should be pushed out");
       deepStrictEqual(stored.acceptedAt, null);
       deepStrictEqual(stored.revokedAt, null);
 
@@ -93,13 +95,15 @@ describe("resendInvitation", () => {
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
       const revoked = InvitationRootOps.revoke(seedInvitation(), { now: issuedAt });
-      if (Either.isLeft(revoked)) throw new Error("expected Right");
-      yield* repo.insertOne(revoked.right.invitation);
+      if (Result.isFailure(revoked)) throw new Error("expected Right");
+      yield* repo.insertOne(revoked.success.invitation);
 
       const exit = yield* Effect.exit(resendInvitation(cmd));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof InvitationAlreadyRevoked, true);
       }
     }).pipe(Effect.provide(TestLayer)),
@@ -112,13 +116,15 @@ describe("resendInvitation", () => {
         userId: actorUserId,
         now: issuedAt,
       });
-      if (Either.isLeft(accepted)) throw new Error("expected Right");
-      yield* repo.insertOne(accepted.right.invitation);
+      if (Result.isFailure(accepted)) throw new Error("expected Right");
+      yield* repo.insertOne(accepted.success.invitation);
 
       const exit = yield* Effect.exit(resendInvitation(cmd));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof InvitationAlreadyAccepted, true);
       }
     }).pipe(Effect.provide(TestLayer)),

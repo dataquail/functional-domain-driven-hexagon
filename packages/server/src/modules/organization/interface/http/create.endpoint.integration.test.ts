@@ -1,17 +1,20 @@
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
+import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/api.js";
 import { MEMBER_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
-const NameRowStd = Schema.standardSchemaV1(Schema.Struct({ name: Schema.String }));
-const MembershipCountRowStd = Schema.standardSchemaV1(Schema.Struct({ user_id: Schema.UUID }));
+const NameRowStd = Schema.toStandardSchemaV1(Schema.Struct({ name: Schema.String }));
+const MembershipCountRowStd = Schema.toStandardSchemaV1(
+  Schema.Struct({ user_id: Schema.String.check(Schema.isGUID()) }),
+);
 
 const suite = describe.sequential;
 
@@ -27,7 +30,9 @@ suite("POST /orgs (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id } = yield* client.organization.create({ payload: { name: "Acme" } });
+        const { id } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         ok(typeof id === "string" && id.length > 0);
 
         const db = yield* Database.Database;

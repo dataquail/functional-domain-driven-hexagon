@@ -1,5 +1,6 @@
 import { type Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 
 import {
   type AcceptInvitationCommand,
@@ -92,31 +93,31 @@ import { type OrganizationId } from "@/platform/ids/organization-id.js";
 // `RoleService` stays in the bus output's R because the model-invariant
 // check (super-admins can't own orgs) needs the platform-role ACL. The
 // composition root wires `RoleServiceLive` alongside the module Live.
-type CreateOrganizationBusOutput = Effect.Effect<
+type CreateOrganizationOutput = Effect.Effect<
   OrganizationId,
   PersistenceUnavailable | SuperAdminCannotOwnOrganization,
   DomainEventBus | UnitOfWork | Database.Database | RoleService
 >;
 
-type RestoreOrganizationBusOutput = Effect.Effect<
+type RestoreOrganizationOutput = Effect.Effect<
   void,
   OrganizationNotFound | OrganizationNotDeleted | PersistenceUnavailable,
   DomainEventBus | UnitOfWork | Database.Database
 >;
 
-type SoftDeleteOrganizationBusOutput = Effect.Effect<
+type SoftDeleteOrganizationOutput = Effect.Effect<
   void,
   OrganizationNotFound | OrganizationAlreadyDeleted | PersistenceUnavailable,
   DomainEventBus | UnitOfWork | Database.Database
 >;
 
-type RemoveMemberBusOutput = Effect.Effect<
+type RemoveMemberOutput = Effect.Effect<
   void,
   MembershipNotFound | PersistenceUnavailable,
   DomainEventBus | UnitOfWork | Database.Database
 >;
 
-type LeaveOrganizationBusOutput = Effect.Effect<
+type LeaveOrganizationOutput = Effect.Effect<
   void,
   MembershipNotFound | PersistenceUnavailable,
   DomainEventBus | UnitOfWork | Database.Database
@@ -125,13 +126,13 @@ type LeaveOrganizationBusOutput = Effect.Effect<
 // `InvitationMailer` stays in R (provided by `OrganizationModuleLive`,
 // which wires the env-selected transport behind it) — the same shape as
 // the `UsersLookup` outbound adapter on the query side.
-type InviteUserBusOutput = Effect.Effect<
+type InviteUserOutput = Effect.Effect<
   InvitationId,
   PersistenceUnavailable,
   DomainEventBus | UnitOfWork | Database.Database | InvitationMailer
 >;
 
-type AcceptInvitationBusOutput = Effect.Effect<
+type AcceptInvitationOutput = Effect.Effect<
   OrganizationId,
   | InvitationTokenNotFound
   | InvitationAlreadyAccepted
@@ -142,7 +143,7 @@ type AcceptInvitationBusOutput = Effect.Effect<
   DomainEventBus | UnitOfWork | Database.Database | RoleService
 >;
 
-type RevokeInvitationBusOutput = Effect.Effect<
+type RevokeInvitationOutput = Effect.Effect<
   void,
   | InvitationNotFound
   | InvitationAlreadyAccepted
@@ -153,7 +154,7 @@ type RevokeInvitationBusOutput = Effect.Effect<
 
 // `InvitationMailer` stays in R (provided by `OrganizationModuleLive`) —
 // resend re-sends the email after the reissue commits.
-type ResendInvitationBusOutput = Effect.Effect<
+type ResendInvitationOutput = Effect.Effect<
   void,
   | InvitationNotFound
   | InvitationAlreadyAccepted
@@ -162,13 +163,13 @@ type ResendInvitationBusOutput = Effect.Effect<
   DomainEventBus | UnitOfWork | Database.Database | InvitationMailer
 >;
 
-type GrantOrganizationRoleBusOutput = Effect.Effect<
+type GrantOrganizationRoleOutput = Effect.Effect<
   void,
   AlreadyHasOrganizationRole | CannotPromoteSelfInOrganization | PersistenceUnavailable,
   DomainEventBus | UnitOfWork | Database.Database
 >;
 
-type RevokeOrganizationRoleBusOutput = Effect.Effect<
+type RevokeOrganizationRoleOutput = Effect.Effect<
   void,
   DoesNotHaveOrganizationRole | PersistenceUnavailable,
   DomainEventBus | UnitOfWork | Database.Database
@@ -178,111 +179,114 @@ declare module "@/platform/ddd/ports/command-bus.js" {
   interface CommandRegistry {
     CreateOrganizationCommand: {
       readonly command: CreateOrganizationCommand;
-      readonly output: CreateOrganizationBusOutput;
+      readonly output: CreateOrganizationOutput;
     };
     RestoreOrganizationCommand: {
       readonly command: RestoreOrganizationCommand;
-      readonly output: RestoreOrganizationBusOutput;
+      readonly output: RestoreOrganizationOutput;
     };
     SoftDeleteOrganizationCommand: {
       readonly command: SoftDeleteOrganizationCommand;
-      readonly output: SoftDeleteOrganizationBusOutput;
+      readonly output: SoftDeleteOrganizationOutput;
     };
     RemoveMemberCommand: {
       readonly command: RemoveMemberCommand;
-      readonly output: RemoveMemberBusOutput;
+      readonly output: RemoveMemberOutput;
     };
     LeaveOrganizationCommand: {
       readonly command: LeaveOrganizationCommand;
-      readonly output: LeaveOrganizationBusOutput;
+      readonly output: LeaveOrganizationOutput;
     };
     InviteUserCommand: {
       readonly command: InviteUserCommand;
-      readonly output: InviteUserBusOutput;
+      readonly output: InviteUserOutput;
     };
     AcceptInvitationCommand: {
       readonly command: AcceptInvitationCommand;
-      readonly output: AcceptInvitationBusOutput;
+      readonly output: AcceptInvitationOutput;
     };
     RevokeInvitationCommand: {
       readonly command: RevokeInvitationCommand;
-      readonly output: RevokeInvitationBusOutput;
+      readonly output: RevokeInvitationOutput;
     };
     ResendInvitationCommand: {
       readonly command: ResendInvitationCommand;
-      readonly output: ResendInvitationBusOutput;
+      readonly output: ResendInvitationOutput;
     };
     GrantOrganizationRoleCommand: {
       readonly command: GrantOrganizationRoleCommand;
-      readonly output: GrantOrganizationRoleBusOutput;
+      readonly output: GrantOrganizationRoleOutput;
     };
     RevokeOrganizationRoleCommand: {
       readonly command: RevokeOrganizationRoleCommand;
-      readonly output: RevokeOrganizationRoleBusOutput;
+      readonly output: RevokeOrganizationRoleOutput;
     };
   }
 }
 
 export const organizationCommandHandlers = commandHandlers({
   CreateOrganizationCommand: {
-    handle: (cmd): CreateOrganizationBusOutput =>
+    handle: (cmd): CreateOrganizationOutput =>
       createOrganization(cmd).pipe(
-        Effect.provide(OrganizationRepositoryLive),
-        Effect.provide(MembershipRepositoryLive),
-        Effect.provide(OrganizationRolesRepositoryLive),
+        Effect.provide(
+          Layer.mergeAll(
+            OrganizationRepositoryLive,
+            MembershipRepositoryLive,
+            OrganizationRolesRepositoryLive,
+          ),
+        ),
       ),
     spanAttributes: createOrganizationCommandSpanAttributes,
   },
   SoftDeleteOrganizationCommand: {
-    handle: (cmd): SoftDeleteOrganizationBusOutput =>
+    handle: (cmd): SoftDeleteOrganizationOutput =>
       softDeleteOrganization(cmd).pipe(Effect.provide(OrganizationRepositoryLive)),
     spanAttributes: softDeleteOrganizationCommandSpanAttributes,
   },
   RestoreOrganizationCommand: {
-    handle: (cmd): RestoreOrganizationBusOutput =>
+    handle: (cmd): RestoreOrganizationOutput =>
       restoreOrganization(cmd).pipe(Effect.provide(OrganizationRepositoryLive)),
     spanAttributes: restoreOrganizationCommandSpanAttributes,
   },
   RemoveMemberCommand: {
-    handle: (cmd): RemoveMemberBusOutput =>
+    handle: (cmd): RemoveMemberOutput =>
       removeMember(cmd).pipe(Effect.provide(MembershipRepositoryLive)),
     spanAttributes: removeMemberCommandSpanAttributes,
   },
   LeaveOrganizationCommand: {
-    handle: (cmd): LeaveOrganizationBusOutput =>
+    handle: (cmd): LeaveOrganizationOutput =>
       leaveOrganization(cmd).pipe(Effect.provide(MembershipRepositoryLive)),
     spanAttributes: leaveOrganizationCommandSpanAttributes,
   },
   InviteUserCommand: {
-    handle: (cmd): InviteUserBusOutput =>
+    handle: (cmd): InviteUserOutput =>
       inviteUser(cmd).pipe(Effect.provide(InvitationRepositoryLive)),
     spanAttributes: inviteUserCommandSpanAttributes,
   },
   AcceptInvitationCommand: {
-    handle: (cmd): AcceptInvitationBusOutput =>
+    handle: (cmd): AcceptInvitationOutput =>
       acceptInvitation(cmd).pipe(
-        Effect.provide(InvitationRepositoryLive),
-        Effect.provide(MembershipRepositoryLive),
+        Effect.provide(Layer.mergeAll(InvitationRepositoryLive, MembershipRepositoryLive)),
       ),
     spanAttributes: acceptInvitationCommandSpanAttributes,
   },
   RevokeInvitationCommand: {
-    handle: (cmd): RevokeInvitationBusOutput =>
+    handle: (cmd): RevokeInvitationOutput =>
       revokeInvitation(cmd).pipe(Effect.provide(InvitationRepositoryLive)),
     spanAttributes: revokeInvitationCommandSpanAttributes,
   },
   ResendInvitationCommand: {
-    handle: (cmd): ResendInvitationBusOutput =>
+    handle: (cmd): ResendInvitationOutput =>
       resendInvitation(cmd).pipe(Effect.provide(InvitationRepositoryLive)),
     spanAttributes: resendInvitationCommandSpanAttributes,
   },
   GrantOrganizationRoleCommand: {
-    handle: (cmd): GrantOrganizationRoleBusOutput =>
+    handle: (cmd): GrantOrganizationRoleOutput =>
       grantOrganizationRole(cmd).pipe(Effect.provide(OrganizationRolesRepositoryLive)),
     spanAttributes: grantOrganizationRoleCommandSpanAttributes,
   },
   RevokeOrganizationRoleCommand: {
-    handle: (cmd): RevokeOrganizationRoleBusOutput =>
+    handle: (cmd): RevokeOrganizationRoleOutput =>
       revokeOrganizationRole(cmd).pipe(Effect.provide(OrganizationRolesRepositoryLive)),
     spanAttributes: revokeOrganizationRoleCommandSpanAttributes,
   },

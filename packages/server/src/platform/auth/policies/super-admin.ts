@@ -11,7 +11,7 @@ import { RoleService } from "@/platform/ddd/ports/role-service.js";
 // reaches in here. Use as `Authz.any(SuperAdminOnly, ...)` to give
 // super admins a bypass for every action.
 export const SuperAdminOnly: Check<
-  CurrentUser["Type"],
+  CurrentUser["Service"],
   unknown,
   PersistenceUnavailable,
   RoleService

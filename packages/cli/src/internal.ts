@@ -15,11 +15,9 @@ export const authedClient = Effect.gen(function* () {
   const creds = yield* readCredentials;
   const token = resolveToken(creds);
   if (token === null) {
-    return yield* Effect.fail(
-      new CliError({
-        message: "Not authenticated. Run `org auth login`, or set APP_API_TOKEN.",
-      }),
-    );
+    return yield* new CliError({
+      message: "Not authenticated. Run `org auth login`, or set APP_API_TOKEN.",
+    });
   }
   return yield* makeCliClient({ baseUrl: resolveBaseUrl(), token });
 });
@@ -31,11 +29,9 @@ export const resolveOrg = (explicit: Option.Option<string>) =>
     if (Option.isSome(explicit)) return explicit.value;
     const creds = yield* readCredentials;
     if (creds.defaultOrgId !== undefined) return creds.defaultOrgId;
-    return yield* Effect.fail(
-      new CliError({
-        message: "No organization selected. Pass --org <id> or run `org config set-org <id>`.",
-      }),
-    );
+    return yield* new CliError({
+      message: "No organization selected. Pass --org <id> or run `org config set-org <id>`.",
+    });
   });
 
 // Best-effort: open the verification URL in the user's browser. Failure is
@@ -55,7 +51,7 @@ export const maskToken = (token: string): string =>
   token.length <= 16 ? `${token.slice(0, 4)}…` : `${token.slice(0, 12)}…${token.slice(-4)}`;
 
 // Maps any wire/domain failure to a single friendly `CliError`. Wrap a
-// command's body with `Effect.catchAll(toCliError)` so the entrypoint only
+// command's body with `Effect.catch(toCliError)` so the entrypoint only
 // ever sees `CliError`.
 export const toCliError = (error: unknown): CliError => {
   if (error instanceof CliError) return error;

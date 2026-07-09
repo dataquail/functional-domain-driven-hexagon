@@ -36,22 +36,22 @@ import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 // `SubscriptionRepositoryLive`. `BillingGateway` stays in R because
 // the composition root chooses Live (Stripe) vs Fake at runtime —
 // repos are owned-and-static; the gateway is the integration seam.
-// `EnvVars` stays in R because `EnvVars.Default` is provided at the
+// `EnvVars` stays in R because `EnvVars.layer` is provided at the
 // server boot level.
 
-type StartSubscriptionBusOutput = Effect.Effect<
+type StartSubscriptionOutput = Effect.Effect<
   SubscriptionRoot,
   SubscriptionAlreadyExistsForOrganization | BillingGatewayUnavailable | PersistenceUnavailable,
   BillingGateway | DomainEventBus | UnitOfWork | Database.Database
 >;
 
-type CancelSubscriptionBusOutput = Effect.Effect<
+type CancelSubscriptionOutput = Effect.Effect<
   SubscriptionRoot,
   SubscriptionNotFound | BillingGatewayUnavailable | PersistenceUnavailable,
   BillingGateway | DomainEventBus | UnitOfWork | Database.Database
 >;
 
-type IngestStripeWebhookBusOutput = Effect.Effect<
+type IngestStripeWebhookOutput = Effect.Effect<
   void,
   InvalidWebhookSignature | PersistenceUnavailable,
   BillingGateway | DomainEventBus | UnitOfWork | Database.Database
@@ -61,32 +61,32 @@ declare module "@/platform/ddd/ports/command-bus.js" {
   interface CommandRegistry {
     StartSubscriptionCommand: {
       readonly command: StartSubscriptionCommand;
-      readonly output: StartSubscriptionBusOutput;
+      readonly output: StartSubscriptionOutput;
     };
     CancelSubscriptionCommand: {
       readonly command: CancelSubscriptionCommand;
-      readonly output: CancelSubscriptionBusOutput;
+      readonly output: CancelSubscriptionOutput;
     };
     IngestStripeWebhookCommand: {
       readonly command: IngestStripeWebhookCommand;
-      readonly output: IngestStripeWebhookBusOutput;
+      readonly output: IngestStripeWebhookOutput;
     };
   }
 }
 
 export const billingCommandHandlers = commandHandlers({
   StartSubscriptionCommand: {
-    handle: (cmd): StartSubscriptionBusOutput =>
+    handle: (cmd): StartSubscriptionOutput =>
       startSubscription(cmd).pipe(Effect.provide(SubscriptionRepositoryLive)),
     spanAttributes: startSubscriptionCommandSpanAttributes,
   },
   CancelSubscriptionCommand: {
-    handle: (cmd): CancelSubscriptionBusOutput =>
+    handle: (cmd): CancelSubscriptionOutput =>
       cancelSubscription(cmd).pipe(Effect.provide(SubscriptionRepositoryLive)),
     spanAttributes: cancelSubscriptionCommandSpanAttributes,
   },
   IngestStripeWebhookCommand: {
-    handle: (cmd): IngestStripeWebhookBusOutput =>
+    handle: (cmd): IngestStripeWebhookOutput =>
       ingestStripeWebhook(cmd).pipe(Effect.provide(WebhookEventRepositoryLive)),
     spanAttributes: ingestStripeWebhookCommandSpanAttributes,
   },

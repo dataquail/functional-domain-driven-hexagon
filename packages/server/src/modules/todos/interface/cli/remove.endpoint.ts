@@ -11,16 +11,16 @@ import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/
 
 // CLI adapter (ADR-0024): same delete-gated resource + DeleteTodoCommand as
 // the GUI's delete endpoint, with the CLI's own NotFound shape.
-export const removeEndpoint = (request: EndpointRequest<typeof CliTodosContract.Group, "remove">) =>
-  Effect.gen(function* () {
+export const removeEndpoint = Effect.fn("CliTodosLive.remove")(
+  function* (request: EndpointRequest<typeof CliTodosContract.Group, "remove">) {
     yield* Authz.hasPermissions(TodoResource, Actions.Delete, {
-      organizationId: request.path.orgId,
-      todoId: request.path.id,
+      organizationId: request.params.orgId,
+      todoId: request.params.id,
     }).pipe(
       Effect.catchTag("NotFound", () =>
         Effect.fail(
           new CliTodosContract.CliTodoNotFoundError({
-            message: `Todo with id ${request.path.id} not found`,
+            message: `Todo with id ${request.params.id} not found`,
           }),
         ),
       ),
@@ -29,19 +29,18 @@ export const removeEndpoint = (request: EndpointRequest<typeof CliTodosContract.
     const currentUser = yield* CurrentUser;
     yield* commandBus.execute(
       DeleteTodoCommand.make({
-        todoId: request.path.id,
-        organizationId: request.path.orgId,
+        todoId: request.params.id,
+        organizationId: request.params.orgId,
         userId: currentUser.userId,
       }),
     );
-  }).pipe(
-    Effect.catchTag("TodoNotFound", (err) =>
-      Effect.fail(
-        new CliTodosContract.CliTodoNotFoundError({
-          message: `Todo with id ${err.todoId} not found`,
-        }),
-      ),
+  },
+  Effect.catchTag("TodoNotFound", (err) =>
+    Effect.fail(
+      new CliTodosContract.CliTodoNotFoundError({
+        message: `Todo with id ${err.todoId} not found`,
+      }),
     ),
-    recoverPersistenceUnavailable,
-    Effect.withSpan("CliTodosLive.remove"),
-  );
+  ),
+  recoverPersistenceUnavailable,
+);

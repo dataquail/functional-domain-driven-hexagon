@@ -95,13 +95,13 @@ export function makeHelpers<Data, Variables = void>(
 
   return {
     getData: (...variables: QueryParams) =>
-      Effect.andThen(QueryClient, (client) =>
+      Effect.map(QueryClient, (client) =>
         client.getQueryData<Data>(
           variables.length === 0 ? (queryKey as () => readonly [string])() : queryKey(variables[0]),
         ),
       ),
     removeQuery: (...variables: QueryParams) =>
-      Effect.andThen(QueryClient, (client) => {
+      Effect.map(QueryClient, (client) => {
         client.removeQueries({
           queryKey:
             variables.length === 0
@@ -110,11 +110,11 @@ export function makeHelpers<Data, Variables = void>(
         });
       }),
     removeAllQueries: () =>
-      Effect.andThen(QueryClient, (client) => {
+      Effect.map(QueryClient, (client) => {
         client.removeQueries({ queryKey: [namespaceKey], exact: false });
       }),
     setData: (...params: SetDataParams) =>
-      Effect.andThen(QueryClient, (client) =>
+      Effect.map(QueryClient, (client) =>
         client.setQueryData<Data>(
           params.length === 1 ? (queryKey as () => readonly [string])() : queryKey(params[0]),
           (oldData) => {
@@ -134,30 +134,34 @@ export function makeHelpers<Data, Variables = void>(
         ),
       ),
     invalidateQuery: (...variables: QueryParams) =>
-      Effect.andThen(QueryClient, (client) =>
-        client.invalidateQueries({
-          queryKey:
-            variables.length === 0
-              ? (queryKey as () => readonly [string])()
-              : queryKey(variables[0]),
-        }),
+      Effect.flatMap(QueryClient, (client) =>
+        Effect.promise(() =>
+          client.invalidateQueries({
+            queryKey:
+              variables.length === 0
+                ? (queryKey as () => readonly [string])()
+                : queryKey(variables[0]),
+          }),
+        ),
       ).pipe(Effect.orDie),
     invalidateAllQueries: () =>
-      Effect.andThen(QueryClient, (client) =>
-        client.invalidateQueries({ queryKey: [namespaceKey], exact: false }),
+      Effect.flatMap(QueryClient, (client) =>
+        Effect.promise(() => client.invalidateQueries({ queryKey: [namespaceKey], exact: false })),
       ).pipe(Effect.orDie),
     refetchQuery: (...variables: QueryParams) =>
-      Effect.andThen(QueryClient, (client) =>
-        client.refetchQueries({
-          queryKey:
-            variables.length === 0
-              ? (queryKey as () => readonly [string])()
-              : queryKey(variables[0]),
-        }),
+      Effect.flatMap(QueryClient, (client) =>
+        Effect.promise(() =>
+          client.refetchQueries({
+            queryKey:
+              variables.length === 0
+                ? (queryKey as () => readonly [string])()
+                : queryKey(variables[0]),
+          }),
+        ),
       ).pipe(Effect.orDie),
     refetchAllQueries: () =>
-      Effect.andThen(QueryClient, (client) =>
-        client.refetchQueries({ queryKey: [namespaceKey], exact: false }),
+      Effect.flatMap(QueryClient, (client) =>
+        Effect.promise(() => client.refetchQueries({ queryKey: [namespaceKey], exact: false })),
       ).pipe(Effect.orDie),
   };
 }

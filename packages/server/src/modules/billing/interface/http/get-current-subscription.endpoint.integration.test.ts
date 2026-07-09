@@ -1,11 +1,13 @@
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
-import { BillingContract } from "@org/contracts/api/Contracts";
+import { BillingContract, OrganizationContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
@@ -33,12 +35,14 @@ suite("GET /orgs/:orgId/billing/subscriptions/current (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         yield* client.billing.startSubscription({
-          path: { orgId },
+          params: { orgId },
           payload: new BillingContract.StartSubscriptionPayload(),
         });
-        const res = yield* client.billing.getCurrentSubscription({ path: { orgId } });
+        const res = yield* client.billing.getCurrentSubscription({ params: { orgId } });
         deepStrictEqual(res.organizationId, orgId);
         deepStrictEqual(res.status, "active");
       }),
@@ -49,11 +53,18 @@ suite("GET /orgs/:orgId/billing/subscriptions/current (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* client.organization.create({ payload: { name: "Acme" } });
-        const exit = yield* Effect.exit(client.billing.getCurrentSubscription({ path: { orgId } }));
+        const { id: orgId } = yield* client.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
+        const exit = yield* Effect.exit(
+          client.billing.getCurrentSubscription({ params: { orgId } }),
+        );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof BillingContract.SubscriptionNotFoundError);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              BillingContract.SubscriptionNotFoundError,
+          );
         }
       }),
     );
@@ -83,10 +94,15 @@ memberSuite("GET /orgs/:orgId/billing/subscriptions/current (non-member caller)"
           .pipe(Effect.orDie);
 
         const client = yield* HttpApiClient.make(Api);
-        const exit = yield* Effect.exit(client.billing.getCurrentSubscription({ path: { orgId } }));
+        const exit = yield* Effect.exit(
+          client.billing.getCurrentSubscription({ params: { orgId } }),
+        );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof CustomHttpApiError.Forbidden);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              CustomHttpApiError.Forbidden,
+          );
         } else {
           throw new Error("expected typed Fail, got " + JSON.stringify(exit));
         }

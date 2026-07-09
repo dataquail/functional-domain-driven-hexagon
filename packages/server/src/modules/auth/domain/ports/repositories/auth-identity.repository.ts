@@ -20,7 +20,7 @@ export type AuthIdentityRepositoryShape = {
   readonly insertOne: (identity: AuthIdentity) => Effect.Effect<void, PersistenceUnavailable>;
 };
 
-export class AuthIdentityRepository extends Context.Tag("AuthIdentityRepository")<
+export class AuthIdentityRepository extends Context.Service<
   AuthIdentityRepository,
   AuthIdentityRepositoryShape
->() {}
+>()("AuthIdentityRepository") {}

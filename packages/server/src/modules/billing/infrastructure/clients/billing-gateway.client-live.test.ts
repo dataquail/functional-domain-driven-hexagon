@@ -21,11 +21,11 @@ const WEBHOOK_SECRET = "whsec_test";
 
 // EnvVars only needs a config source, not real env. A fixed map satisfies
 // the required keys; the Stripe secret is a throwaway test value.
-const EnvVarsTest = EnvVars.Default.pipe(
+const EnvVarsTest = EnvVars.layer.pipe(
   Layer.provide(
-    Layer.setConfigProvider(
-      ConfigProvider.fromMap(
-        new Map([
+    ConfigProvider.layer(
+      ConfigProvider.fromUnknown(
+        Object.fromEntries([
           ["APP_URL", "https://app.example.com"],
           ["DATABASE_URL", "postgres://test"],
           ["ZITADEL_ISSUER", "https://zitadel.test"],
@@ -51,7 +51,7 @@ const sign = (payload: string): string =>
 
 // Return type inferred: EnvVarsTest adds ConfigError to the error channel.
 const provide = <A, E>(effect: Effect.Effect<A, E, BillingGateway>) =>
-  effect.pipe(Effect.provide(BillingGatewayLive), Effect.provide(EnvVarsTest));
+  effect.pipe(Effect.provide(BillingGatewayLive.pipe(Layer.provideMerge(EnvVarsTest))));
 
 describe("BillingGatewayLive.verifyAndParseWebhook", () => {
   it.effect("rejects a payload whose signature doesn't verify as InvalidWebhookSignature", () =>

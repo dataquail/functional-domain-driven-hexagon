@@ -1,9 +1,5 @@
 import { formOptions } from "@tanstack/react-form";
-import * as Array from "effect/Array";
-import * as Either from "effect/Either";
-import { pipe } from "effect/Function";
 import * as Match from "effect/Match";
-import { ArrayFormatter } from "effect/ParseResult";
 import * as Schema from "effect/Schema";
 
 type BuildTuple<N extends number, Acc extends ReadonlyArray<unknown> = []> = Acc["length"] extends N
@@ -49,31 +45,37 @@ type SchemaValidatorFn<SchemaInput extends Record<PropertyKey, any>> = (submissi
   value: SchemaInput;
 }) => SchemaValidatorResult<SchemaInput>;
 
-export const validateWithSchema =
-  <A, I extends Record<PropertyKey, any>>(schema: Schema.Schema<A, I>): SchemaValidatorFn<I> =>
-  (submission: { value: I }): SchemaValidatorResult<I> =>
-    Schema.decodeEither(schema, { errors: "all", onExcessProperty: "ignore" })(
-      submission.value,
-    ).pipe(
-      Either.mapLeft((errors) =>
-        pipe(
-          errors,
-          ArrayFormatter.formatErrorSync,
-          Array.reduce({} as Record<string, string>, (acc, error) => {
-            if (error.path.length === 0) {
-              acc[""] = error.message;
-            } else if (error.path.length > 0) {
-              const key = error.path.join(".");
-              acc[key] = error.message;
-            }
-            return acc;
-          }),
-          (acc): SchemaValidatorResult<I> => (Object.keys(acc).length > 0 ? acc : null),
-        ),
-      ),
-      Either.flip,
-      Either.getOrNull,
-    );
+export const validateWithSchema = <A, I extends Record<PropertyKey, any>>(
+  schema: Schema.Codec<A, I>,
+): SchemaValidatorFn<I> => {
+  // Standard Schema v1 surfaces validation issues as a flat
+  // `{ path, message }[]`, which is exactly the shape this validator
+  // reduces into TanStack Form's dotted-path error map. Synchronous
+  // input schemas never return a Promise here.
+  const standard = Schema.toStandardSchemaV1(schema, {
+    parseOptions: { errors: "all", onExcessProperty: "ignore" },
+  });
+
+  return (submission: { value: I }): SchemaValidatorResult<I> => {
+    const result = standard["~standard"].validate(submission.value);
+    if (result instanceof Promise) {
+      throw new Error("validateWithSchema expects a synchronous schema");
+    }
+    if (result.issues === undefined) {
+      return null;
+    }
+
+    const acc: Record<string, string> = {};
+    for (const issue of result.issues) {
+      const key = (issue.path ?? [])
+        .map((segment) => (typeof segment === "object" ? segment.key : segment))
+        .join(".");
+      acc[key] = issue.message;
+    }
+
+    return Object.keys(acc).length > 0 ? acc : null;
+  };
+};
 
 type HandledValidatorKey = "onSubmit" | "onChange" | "onBlur";
 
@@ -82,7 +84,7 @@ export const makeFormOptions = <
   SchemaI extends Record<PropertyKey, any>,
   ValidatorKey extends HandledValidatorKey,
 >(opts: {
-  schema: Schema.Schema<SchemaA, SchemaI>;
+  schema: Schema.Codec<SchemaA, SchemaI>;
   defaultValues: SchemaI;
   validator: ValidatorKey;
 }) => {

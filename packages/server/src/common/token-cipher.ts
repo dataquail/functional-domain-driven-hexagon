@@ -1,16 +1,17 @@
 import * as crypto from "node:crypto";
 
+import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import { flow } from "effect/Function";
 import * as Layer from "effect/Layer";
-import * as ParseResult from "effect/ParseResult";
 import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
+import * as SchemaGetter from "effect/SchemaGetter";
 
 export const EncryptedToken = Schema.String.pipe(Schema.brand("encryptedToken"));
 export type EncryptedToken = typeof EncryptedToken.Type;
 
-export const EncryptedTokenEncoded = Schema.encodedSchema(EncryptedToken);
+export const EncryptedTokenEncoded = Schema.toEncoded(EncryptedToken);
 export type EncryptedTokenEncoded = typeof EncryptedTokenEncoded.Type;
 
 type MakeOpts = {
@@ -61,37 +62,35 @@ const make = (opts: MakeOpts) => {
   };
 };
 
-export class TokenCipher extends Effect.Tag("TokenCipher")<
-  TokenCipher,
-  ReturnType<typeof make>
->() {}
+export class TokenCipher extends Context.Service<TokenCipher, ReturnType<typeof make>>()(
+  "TokenCipher",
+) {}
 
 export const layer = flow(make, Layer.succeed(TokenCipher));
 
-const makeSchemaTransform = <A, I, R>(
-  schema: Schema.Schema<A, I, R>,
+const makeSchemaTransform = <A, I, RD, RE>(
+  schema: Schema.Codec<A, I, RD, RE>,
   cipher: ReturnType<typeof make>,
 ) => {
-  const JsonSchema = Schema.Redacted(Schema.parseJson(schema));
-  return Schema.transformOrFail(EncryptedToken, JsonSchema, {
-    strict: true,
-    decode: (encryptedToken, _, ast) =>
-      cipher
-        .decrypt(encryptedToken)
-        .pipe(
-          Effect.catchAll(() =>
-            Effect.fail(new ParseResult.Type(ast, encryptedToken, "Failed to decrypt token")),
-          ),
-        ),
-    encode: (jsonString) => cipher.encrypt(Redacted.make(jsonString)),
-  });
+  // `RedactedFromValue` (not `Redacted`) so the decoded type is `Redacted<A>`
+  // while the *encoded* side stays the plain JSON string — `Redacted` would
+  // wrap both and treat its content as opaque, so `fromJsonString` never runs.
+  const JsonSchema = Schema.RedactedFromValue(Schema.fromJsonString(schema));
+  return EncryptedToken.pipe(
+    Schema.decodeTo(JsonSchema, {
+      decode: SchemaGetter.transformOrFail((encryptedToken) => cipher.decrypt(encryptedToken)),
+      encode: SchemaGetter.transformOrFail((jsonString) =>
+        cipher.encrypt(Redacted.make(jsonString)),
+      ),
+    }),
+  );
 };
 
-export const makeSchema = <A, I, R>(schema: Schema.Schema<A, I, R>, opts: MakeOpts) =>
+export const makeSchema = <A, I, RD, RE>(schema: Schema.Codec<A, I, RD, RE>, opts: MakeOpts) =>
   Effect.sync(() => {
     const cipher = make(opts);
     return makeSchemaTransform(schema, cipher);
   });
 
-export const makeSchemaWithContext = <A, I, R>(schema: Schema.Schema<A, I, R>) =>
-  TokenCipher.use((cipher) => makeSchemaTransform(schema, cipher));
+export const makeSchemaWithContext = <A, I, RD, RE>(schema: Schema.Codec<A, I, RD, RE>) =>
+  Effect.map(TokenCipher, (cipher) => makeSchemaTransform(schema, cipher));

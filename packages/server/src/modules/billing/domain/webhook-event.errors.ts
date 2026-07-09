@@ -5,6 +5,6 @@ import * as Schema from "effect/Schema";
 // about it. Mirrors `SubscriptionAlreadyExistsForOrganization` — a
 // unique-violation in the underlying table lifted into the typed
 // error channel so the use case decides what to do.
-export class WebhookEventAlreadyRecorded extends Schema.TaggedError<WebhookEventAlreadyRecorded>(
+export class WebhookEventAlreadyRecorded extends Schema.TaggedErrorClass<WebhookEventAlreadyRecorded>(
   "WebhookEventAlreadyRecorded",
 )("WebhookEventAlreadyRecorded", { stripeEventId: Schema.String }) {}

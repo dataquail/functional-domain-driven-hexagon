@@ -23,7 +23,7 @@ export type OrganizationRolesRepositoryShape = {
   ) => Effect.Effect<OrganizationRolesRoot, PersistenceUnavailable>;
 };
 
-export class OrganizationRolesRepository extends Context.Tag("OrganizationRolesRepository")<
+export class OrganizationRolesRepository extends Context.Service<
   OrganizationRolesRepository,
   OrganizationRolesRepositoryShape
->() {}
+>()("OrganizationRolesRepository") {}

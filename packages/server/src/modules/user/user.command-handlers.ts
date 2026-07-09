@@ -19,13 +19,13 @@ import { type DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 
-type CreateUserBusOutput = Effect.Effect<
+type CreateUserOutput = Effect.Effect<
   UserId,
   UserAlreadyExists | PersistenceUnavailable,
   DomainEventBus | UnitOfWork | Database.Database
 >;
 
-type DeleteUserBusOutput = Effect.Effect<
+type DeleteUserOutput = Effect.Effect<
   void,
   UserNotFound | PersistenceUnavailable,
   DomainEventBus | UnitOfWork | Database.Database
@@ -35,22 +35,22 @@ declare module "@/platform/ddd/ports/command-bus.js" {
   interface CommandRegistry {
     CreateUserCommand: {
       readonly command: CreateUserCommand;
-      readonly output: CreateUserBusOutput;
+      readonly output: CreateUserOutput;
     };
     DeleteUserCommand: {
       readonly command: DeleteUserCommand;
-      readonly output: DeleteUserBusOutput;
+      readonly output: DeleteUserOutput;
     };
   }
 }
 
 export const userCommandHandlers = commandHandlers({
   CreateUserCommand: {
-    handle: (cmd): CreateUserBusOutput => createUser(cmd).pipe(Effect.provide(UserRepositoryLive)),
+    handle: (cmd): CreateUserOutput => createUser(cmd).pipe(Effect.provide(UserRepositoryLive)),
     spanAttributes: createUserCommandSpanAttributes,
   },
   DeleteUserCommand: {
-    handle: (cmd): DeleteUserBusOutput => deleteUser(cmd).pipe(Effect.provide(UserRepositoryLive)),
+    handle: (cmd): DeleteUserOutput => deleteUser(cmd).pipe(Effect.provide(UserRepositoryLive)),
     spanAttributes: deleteUserCommandSpanAttributes,
   },
 });

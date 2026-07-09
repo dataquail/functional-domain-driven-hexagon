@@ -9,10 +9,8 @@ import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/
 // CLI adapter (ADR-0024): the poll/exchange endpoint. Maps the device-grant
 // domain errors to the RFC-8628-shaped contract errors the CLI switches on
 // (keep polling on pending; stop on expired/unknown).
-export const deviceTokenEndpoint = (
-  request: EndpointRequest<typeof CliAuthContract.DeviceGroup, "deviceToken">,
-) =>
-  Effect.gen(function* () {
+export const deviceTokenEndpoint = Effect.fn("CliAuthLive.deviceToken")(
+  function* (request: EndpointRequest<typeof CliAuthContract.DeviceGroup, "deviceToken">) {
     const env = yield* EnvVars;
     const commandBus = yield* CommandBus;
     const { apiToken, token } = yield* commandBus.execute(
@@ -26,18 +24,17 @@ export const deviceTokenEndpoint = (
       token_type: "Bearer",
       expires_at: apiToken.expiresAt,
     });
-  }).pipe(
-    Effect.catchTag("DeviceGrantPending", () =>
-      Effect.fail(
-        new CliAuthContract.DeviceAuthorizationPending({ message: "authorization_pending" }),
-      ),
+  },
+  Effect.catchTag("DeviceGrantPending", () =>
+    Effect.fail(
+      new CliAuthContract.DeviceAuthorizationPending({ message: "authorization_pending" }),
     ),
-    Effect.catchTag("DeviceGrantExpired", () =>
-      Effect.fail(new CliAuthContract.DeviceTokenExpired({ message: "expired_token" })),
-    ),
-    Effect.catchTag("DeviceGrantNotFound", () =>
-      Effect.fail(new CliAuthContract.DeviceCodeNotFound({ message: "invalid device code" })),
-    ),
-    recoverPersistenceUnavailable,
-    Effect.withSpan("CliAuthLive.deviceToken"),
-  );
+  ),
+  Effect.catchTag("DeviceGrantExpired", () =>
+    Effect.fail(new CliAuthContract.DeviceTokenExpired({ message: "expired_token" })),
+  ),
+  Effect.catchTag("DeviceGrantNotFound", () =>
+    Effect.fail(new CliAuthContract.DeviceCodeNotFound({ message: "invalid device code" })),
+  ),
+  recoverPersistenceUnavailable,
+);

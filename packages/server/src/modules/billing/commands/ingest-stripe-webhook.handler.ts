@@ -6,10 +6,7 @@ import { StripeWebhookIngested } from "@/modules/billing/domain/stripe-webhook.e
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-import {
-  type IngestStripeWebhookCommand,
-  type IngestStripeWebhookOutput,
-} from "./ingest-stripe-webhook.command.js";
+import { type IngestStripeWebhookCommand } from "./ingest-stripe-webhook.command.js";
 
 // Signature verification + parsing + idempotency claim + domain event
 // dispatch in one transactional unit. Verifies OUTSIDE the unit of
@@ -27,23 +24,24 @@ import {
 // read paths; the write path here intentionally skips it because
 // "find then insert" introduces a race window. Postgres' unique
 // constraint is the arbiter.
-export const ingestStripeWebhook = (cmd: IngestStripeWebhookCommand): IngestStripeWebhookOutput =>
-  Effect.gen(function* () {
-    const gateway = yield* BillingGateway;
-    const repo = yield* WebhookEventRepository;
-    const bus = yield* DomainEventBus;
+export const ingestStripeWebhook = Effect.fn("ingestStripeWebhook")(function* (
+  cmd: IngestStripeWebhookCommand,
+) {
+  const gateway = yield* BillingGateway;
+  const repo = yield* WebhookEventRepository;
+  const bus = yield* DomainEventBus;
 
-    const stripeEvent = yield* gateway.verifyAndParseWebhook({
-      payload: cmd.payload,
-      signature: cmd.signature,
-    });
-
-    yield* Effect.gen(function* () {
-      const claimed = yield* repo.insertOne(stripeEvent.eventId).pipe(
-        Effect.as(true),
-        Effect.catchTag("WebhookEventAlreadyRecorded", () => Effect.succeed(false)),
-      );
-      if (!claimed) return;
-      yield* bus.dispatch([StripeWebhookIngested.make({ stripeEvent })]);
-    }).pipe(withUnitOfWork);
+  const stripeEvent = yield* gateway.verifyAndParseWebhook({
+    payload: cmd.payload,
+    signature: cmd.signature,
   });
+
+  yield* Effect.gen(function* () {
+    const claimed = yield* repo.insertOne(stripeEvent.eventId).pipe(
+      Effect.as(true),
+      Effect.catchTag("WebhookEventAlreadyRecorded", () => Effect.succeed(false)),
+    );
+    if (!claimed) return;
+    yield* bus.dispatch([StripeWebhookIngested.make({ stripeEvent })]);
+  }).pipe(withUnitOfWork);
+});

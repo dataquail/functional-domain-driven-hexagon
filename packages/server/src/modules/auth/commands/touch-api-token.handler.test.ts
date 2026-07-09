@@ -38,12 +38,12 @@ describe("touchApiToken", () => {
   // making the throttle window meaningful (the TestClock sits at epoch 0).
   it.live("stamps lastUsedAt once the throttle window has elapsed", () =>
     Effect.gen(function* () {
-      const farPast = DateTime.unsafeMake(new Date("2000-01-01T00:00:00Z"));
+      const farPast = DateTime.makeUnsafe(new Date("2000-01-01T00:00:00Z"));
       const before = yield* seed(farPast);
       yield* touchApiToken(cmd);
       const repo = yield* ApiTokenRepository;
       const after = yield* repo.findOneById(apiTokenId);
-      deepStrictEqual(DateTime.greaterThan(after.lastUsedAt, before.lastUsedAt), true);
+      deepStrictEqual(DateTime.isGreaterThan(after.lastUsedAt, before.lastUsedAt), true);
       // Fixed expiry: touch must NOT extend it.
       deepStrictEqual(after.expiresAt, before.expiresAt);
     }).pipe(provide),

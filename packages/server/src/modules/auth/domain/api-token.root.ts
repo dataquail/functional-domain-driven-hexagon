@@ -71,7 +71,7 @@ const touch = (input: TouchInput): ApiTokenRoot =>
 // A null `expiresAt` means non-expiring (reserved for later); such a token
 // never lapses on time alone.
 const isExpired = (token: ApiTokenRoot, now: DateTime.Utc): boolean =>
-  token.expiresAt !== null && DateTime.lessThanOrEqualTo(token.expiresAt, now);
+  token.expiresAt !== null && DateTime.isLessThanOrEqualTo(token.expiresAt, now);
 
 // Wire format of the credential this aggregate protects: `pat_<publicId>_<secret>`.
 //   - `publicId` is a short, NON-secret random id surfaced as the display

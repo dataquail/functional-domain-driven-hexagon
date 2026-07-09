@@ -20,12 +20,12 @@ export const inviteEndpoint = (
   request: EndpointRequest<typeof OrganizationContract.Group, "inviteUser">,
 ) =>
   Effect.gen(function* () {
-    yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.path.orgId);
+    yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.params.orgId);
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
     const invitationId = yield* commandBus.execute(
       InviteUserCommand.make({
-        organizationId: request.path.orgId,
+        organizationId: request.params.orgId,
         inviteeEmail: request.payload.email,
         ttlSeconds: DEFAULT_INVITATION_TTL_SECONDS,
         actorUserId: currentUser.userId,
@@ -36,8 +36,8 @@ export const inviteEndpoint = (
     Effect.catchTag("NotFound", () =>
       Effect.fail(
         new OrganizationContract.OrganizationNotFoundError({
-          organizationId: request.path.orgId,
-          message: `Organization ${request.path.orgId} not found`,
+          organizationId: request.params.orgId,
+          message: `Organization ${request.params.orgId} not found`,
         }),
       ),
     ),

@@ -1,6 +1,7 @@
 import { describe, it } from "@effect/vitest";
 import { Database } from "@org/database/index";
 import { deepStrictEqual } from "assert";
+import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -18,8 +19,8 @@ import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const aliceId = UserId.make("11111111-1111-1111-1111-111111111111");
 const bobId = UserId.make("22222222-2222-2222-2222-222222222222");
-const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
-const later = DateTime.unsafeMake(new Date("2025-02-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
+const later = DateTime.makeUnsafe(new Date("2025-02-01T00:00:00Z"));
 
 const address = AddressValueObject.make({
   country: "USA",
@@ -68,7 +69,9 @@ suite("UserRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.insertOne(clashing));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof UserAlreadyExists, true);
           deepStrictEqual((error as UserAlreadyExists).email, alice.email);
         }
@@ -83,7 +86,9 @@ suite("UserRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.findOneById(aliceId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof UserNotFound, true);
         }
       }).pipe(Effect.provide(TestLayer)),
@@ -137,7 +142,9 @@ suite("UserRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.updateOne(alice));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof UserNotFound, true);
         }
       }).pipe(Effect.provide(TestLayer)),
@@ -161,7 +168,9 @@ suite("UserRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.deleteOne(aliceId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof UserNotFound, true);
         }
       }).pipe(Effect.provide(TestLayer)),
@@ -189,13 +198,15 @@ suite("UserRepositoryLive (integration)", () => {
           db.transaction((tx) =>
             Effect.gen(function* () {
               yield* repo.insertOne(alice).pipe(Database.TransactionContext.provide(tx));
-              return yield* Effect.fail(new UserNotFound({ userId: bobId }));
+              return yield* new UserNotFound({ userId: bobId });
             }),
           ),
         );
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof UserNotFound, true);
         }
         const after = yield* repo.findOneByEmail(alice.email);

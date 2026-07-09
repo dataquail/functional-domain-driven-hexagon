@@ -10,14 +10,12 @@ import { purgeExpiredSessions } from "./jobs/purge-expired-sessions.js";
 
 dotenv.config({ path: "../../.env" });
 
-const DatabaseLive = Layer.unwrapEffect(
+const DatabaseLive = Layer.unwrap(
   Effect.gen(function* () {
     const url = yield* Config.redacted("DATABASE_URL");
-    const env = yield* Config.literal(
-      "dev",
-      "prod",
-      "staging",
-    )("ENV").pipe(Config.withDefault("dev"));
+    const env = yield* Config.literals(["dev", "prod", "staging"], "ENV").pipe(
+      Config.withDefault("dev"),
+    );
     return Database.layer({ url, ssl: env === "prod" });
   }),
 );
@@ -33,12 +31,12 @@ const hourlyAtTopOfHour = Schedule.cron("0 * * * *");
 //
 // `purgeExpiredSessions` already has `Effect.orDie` on the DB call, so
 // expected DB errors become defects. Wrap the per-tick run with
-// `catchAllCause` so a single tick's panic logs but doesn't end the loop —
+// `Effect.catchCause` so a single tick's panic logs but doesn't end the loop —
 // the next cron fire gets a fresh attempt. Lost-connection errors propagate
 // via the Database layer's release and crash the process; the orchestrator
 // is expected to restart it.
 const safeRun = purgeExpiredSessions.pipe(
-  Effect.catchAllCause((cause) =>
+  Effect.catchCause((cause) =>
     Effect.logError("[jobs.purge-expired-sessions] iteration failed", cause),
   ),
 );

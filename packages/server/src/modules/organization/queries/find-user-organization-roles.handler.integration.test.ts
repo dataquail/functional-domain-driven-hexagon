@@ -3,8 +3,8 @@ import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Either from "effect/Either";
 import * as Layer from "effect/Layer";
+import * as Result from "effect/Result";
 import { beforeEach } from "vitest";
 
 import { OrganizationRootOps } from "@/modules/organization/domain/organization.root.js";
@@ -22,7 +22,7 @@ import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const issuedBy = UserId.make("99999999-9999-9999-9999-999999999999");
-const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
 
 const TestLayer = Layer.mergeAll(OrganizationRolesRepositoryLive, OrganizationRepositoryLive).pipe(
   Layer.provideMerge(TestDatabaseLive),
@@ -80,8 +80,8 @@ suite("findUserOrganizationRoles (integration)", () => {
         "admin",
         issuedBy,
       );
-      if (Either.isLeft(granted)) throw new Error("expected Right");
-      yield* repo.upsertOne(granted.right.organizationRoles);
+      if (Result.isFailure(granted)) throw new Error("expected Right");
+      yield* repo.upsertOne(granted.success.organizationRoles);
       const result = yield* findUserOrganizationRoles(
         FindUserOrganizationRolesQuery.make({ userId, organizationId: orgId }),
       );

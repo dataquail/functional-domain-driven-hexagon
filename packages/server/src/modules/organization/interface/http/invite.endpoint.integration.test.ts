@@ -1,10 +1,13 @@
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
+import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
@@ -40,11 +43,11 @@ suite("POST /orgs/:orgId/invitations (integration, super-admin caller)", () => {
         const client = yield* HttpApiClient.make(Api);
 
         const { invitationId } = yield* client.organization.inviteUser({
-          path: { orgId: ORG_ID },
-          payload: { email: "alice@example.com" },
+          params: { orgId: ORG_ID },
+          payload: new OrganizationContract.InviteUserPayload({ email: "alice@example.com" }),
         });
 
-        const res = yield* client.organization.findInvitations({ path: { orgId: ORG_ID } });
+        const res = yield* client.organization.findInvitations({ params: { orgId: ORG_ID } });
         deepStrictEqual(res.invitations.length, 1);
         const invitation = res.invitations[0];
         ok(invitation !== undefined);
@@ -62,15 +65,15 @@ suite("POST /orgs/:orgId/invitations (integration, super-admin caller)", () => {
         const client = yield* HttpApiClient.make(Api);
 
         yield* client.organization.inviteUser({
-          path: { orgId: ORG_ID },
-          payload: { email: "alice@example.com" },
+          params: { orgId: ORG_ID },
+          payload: new OrganizationContract.InviteUserPayload({ email: "alice@example.com" }),
         });
         yield* client.organization.inviteUser({
-          path: { orgId: ORG_ID },
-          payload: { email: "alice@example.com" },
+          params: { orgId: ORG_ID },
+          payload: new OrganizationContract.InviteUserPayload({ email: "alice@example.com" }),
         });
 
-        const res = yield* client.organization.findInvitations({ path: { orgId: ORG_ID } });
+        const res = yield* client.organization.findInvitations({ params: { orgId: ORG_ID } });
         deepStrictEqual(res.invitations.length, 1);
       }),
     );
@@ -82,13 +85,16 @@ suite("POST /orgs/:orgId/invitations (integration, super-admin caller)", () => {
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
           client.organization.inviteUser({
-            path: { orgId: UNKNOWN_ORG_ID },
-            payload: { email: "alice@example.com" },
+            params: { orgId: UNKNOWN_ORG_ID },
+            payload: new OrganizationContract.InviteUserPayload({ email: "alice@example.com" }),
           }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          deepStrictEqual(exit.cause.error._tag, "OrganizationNotFoundError");
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          deepStrictEqual(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag,
+            "OrganizationNotFoundError",
+          );
         }
       }),
     );
@@ -108,13 +114,16 @@ suite("POST /orgs/:orgId/invitations (integration, non-admin member caller)", ()
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
           client.organization.inviteUser({
-            path: { orgId: ORG_ID },
-            payload: { email: "alice@example.com" },
+            params: { orgId: ORG_ID },
+            payload: new OrganizationContract.InviteUserPayload({ email: "alice@example.com" }),
           }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof CustomHttpApiError.Forbidden);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              CustomHttpApiError.Forbidden,
+          );
         }
       }),
     );

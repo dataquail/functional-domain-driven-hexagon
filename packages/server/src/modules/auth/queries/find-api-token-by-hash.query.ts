@@ -1,14 +1,5 @@
-import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import {
-  type ApiTokenExpired,
-  type ApiTokenNotFound,
-  type ApiTokenRevoked,
-} from "@/modules/auth/domain/api-token.errors.js";
-import { type ApiTokenRoot } from "@/modules/auth/domain/api-token.root.js";
-import { type ApiTokenRepository } from "@/modules/auth/domain/ports/repositories/api-token.repository.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 
 // Per-request bearer lookup, dispatched by the auth middleware. The caller
@@ -24,11 +15,3 @@ export type FindApiTokenByHashQuery = typeof FindApiTokenByHashQuery.Type;
 export const findApiTokenByHashQuerySpanAttributes: SpanAttributesExtractor<
   FindApiTokenByHashQuery
 > = () => ({});
-
-// Raw handler effect — `ApiTokenRepository` is discharged by the wrap in
-// `auth-query-handlers.ts`.
-export type FindApiTokenByHashOutput = Effect.Effect<
-  ApiTokenRoot,
-  ApiTokenNotFound | ApiTokenExpired | ApiTokenRevoked | PersistenceUnavailable,
-  ApiTokenRepository
->;

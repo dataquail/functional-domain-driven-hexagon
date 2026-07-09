@@ -22,14 +22,15 @@ const toPaginatedUsersContract = (result: FindUsersResult): UserContract.Paginat
     total: result.total,
   });
 
-export const findEndpoint = (request: EndpointRequest<typeof UserContract.Group, "find">) =>
-  Effect.gen(function* () {
-    const queryBus = yield* QueryBus;
-    const result = yield* queryBus.execute(
-      FindUsersQuery.make({
-        page: request.urlParams.page,
-        pageSize: request.urlParams.pageSize,
-      }),
-    );
-    return toPaginatedUsersContract(result);
-  }).pipe(recoverPersistenceUnavailable, Effect.withSpan("UserLive.find"));
+export const findEndpoint = Effect.fn("UserLive.find")(function* (
+  request: EndpointRequest<typeof UserContract.Group, "find">,
+) {
+  const queryBus = yield* QueryBus;
+  const result = yield* queryBus.execute(
+    FindUsersQuery.make({
+      page: request.query.page,
+      pageSize: request.query.pageSize,
+    }),
+  );
+  return toPaginatedUsersContract(result);
+}, recoverPersistenceUnavailable);

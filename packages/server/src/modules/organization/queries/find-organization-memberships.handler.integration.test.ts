@@ -3,8 +3,8 @@ import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Either from "effect/Either";
 import * as Layer from "effect/Layer";
+import * as Result from "effect/Result";
 import { beforeEach } from "vitest";
 
 import { MembershipRootOps } from "@/modules/organization/domain/membership.root.js";
@@ -31,7 +31,7 @@ const userB = UserId.make("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
 const userC = UserId.make("cccccccc-cccc-cccc-cccc-cccccccccccc");
 const orphanedUser = UserId.make("99999999-9999-9999-9999-999999999999");
 const issuer = UserId.make("99999999-9999-9999-9999-999999999990");
-const now = DateTime.unsafeFromDate(new Date("2026-01-01T00:00:00Z"));
+const now = DateTime.fromDateUnsafe(new Date("2026-01-01T00:00:00Z"));
 
 // The membership + roles reads hit the real DB. Email enrichment goes
 // through the `UsersLookup` ACL — a deliberately swappable cross-module
@@ -87,8 +87,8 @@ const seedAdmin = (userId: UserId, organizationId: OrganizationId) =>
       "admin",
       issuer,
     );
-    if (Either.isLeft(granted)) throw new Error("expected Right");
-    yield* rolesRepo.upsertOne(granted.right.organizationRoles);
+    if (Result.isFailure(granted)) throw new Error("expected Right");
+    yield* rolesRepo.upsertOne(granted.success.organizationRoles);
   });
 
 const suite = describe.sequential;

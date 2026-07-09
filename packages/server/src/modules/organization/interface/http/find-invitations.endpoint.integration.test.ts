@@ -1,8 +1,9 @@
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
+import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
@@ -36,11 +37,11 @@ suite("GET /orgs/:orgId/invitations (integration)", () => {
         const client = yield* HttpApiClient.make(Api);
         // Seed via the production invite path, not raw SQL.
         yield* client.organization.inviteUser({
-          path: { orgId: ORG_ID },
-          payload: { email: "alice@example.com" },
+          params: { orgId: ORG_ID },
+          payload: new OrganizationContract.InviteUserPayload({ email: "alice@example.com" }),
         });
 
-        const res = yield* client.organization.findInvitations({ path: { orgId: ORG_ID } });
+        const res = yield* client.organization.findInvitations({ params: { orgId: ORG_ID } });
         deepStrictEqual(res.invitations.length, 1);
         const invitation = res.invitations[0];
         if (invitation === undefined) throw new Error("expected one invitation");
@@ -55,7 +56,7 @@ suite("GET /orgs/:orgId/invitations (integration)", () => {
       Effect.gen(function* () {
         yield* seedOrg;
         const client = yield* HttpApiClient.make(Api);
-        const res = yield* client.organization.findInvitations({ path: { orgId: ORG_ID } });
+        const res = yield* client.organization.findInvitations({ params: { orgId: ORG_ID } });
         deepStrictEqual(res.invitations.length, 0);
       }),
     );

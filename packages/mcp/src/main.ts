@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-import * as FetchHttpClient from "@effect/platform/FetchHttpClient";
-import * as NodeContext from "@effect/platform-node/NodeContext";
+import * as NodeServices from "@effect/platform-node/NodeServices";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { makeCliClient, readCredentials, resolveBaseUrl, resolveToken } from "@org/api-client";
@@ -8,6 +7,7 @@ import { OrganizationId, TodoId } from "@org/contracts/EntityIds";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
+import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
 import { z } from "zod";
 
 // MCP (stdio) server exposing the CLI surface as tools (ADR-0024). It reuses
@@ -16,7 +16,7 @@ import { z } from "zod";
 // credential (resolved per call). stdout is the JSON-RPC channel — all
 // diagnostics go to stderr only.
 
-type CliClient = Effect.Effect.Success<ReturnType<typeof makeCliClient>>;
+type CliClient = Effect.Success<ReturnType<typeof makeCliClient>>;
 
 type ToolOutcome<A> =
   | { readonly ok: true; readonly value: A }
@@ -68,12 +68,10 @@ const callTool = <A>(body: (client: CliClient) => Effect.Effect<A, unknown, neve
     const value = yield* body(client);
     return { ok: true as const, value };
   }).pipe(
-    Effect.catchAll((error) =>
-      Effect.succeed({ ok: false as const, message: friendlyError(error) }),
-    ),
+    Effect.catch((error) => Effect.succeed({ ok: false as const, message: friendlyError(error) })),
   );
 
-const runtime = ManagedRuntime.make(Layer.mergeAll(NodeContext.layer, FetchHttpClient.layer));
+const runtime = ManagedRuntime.make(Layer.mergeAll(NodeServices.layer, FetchHttpClient.layer));
 
 const textResult = (text: string) => ({ content: [{ type: "text" as const, text }] });
 const errorResult = (message: string) => ({
@@ -88,7 +86,7 @@ const dispatch = async <A>(
   effect: Effect.Effect<
     ToolOutcome<A>,
     never,
-    ManagedRuntime.ManagedRuntime.Context<typeof runtime>
+    ManagedRuntime.ManagedRuntime.Services<typeof runtime>
   >,
   format: (value: A) => ReturnType<typeof textResult>,
 ) => {
@@ -124,7 +122,7 @@ server.registerTool(
   },
   ({ orgId }) =>
     dispatch(
-      callTool((client) => client.cliTodos.list({ path: { orgId: OrganizationId.make(orgId) } })),
+      callTool((client) => client.cliTodos.list({ params: { orgId: OrganizationId.make(orgId) } })),
       jsonResult,
     ),
 );
@@ -142,7 +140,10 @@ server.registerTool(
   ({ orgId, title }) =>
     dispatch(
       callTool((client) =>
-        client.cliTodos.create({ path: { orgId: OrganizationId.make(orgId) }, payload: { title } }),
+        client.cliTodos.create({
+          params: { orgId: OrganizationId.make(orgId) },
+          payload: { title },
+        }),
       ),
       jsonResult,
     ),
@@ -162,7 +163,7 @@ server.registerTool(
     dispatch(
       callTool((client) =>
         client.cliTodos.complete({
-          path: { orgId: OrganizationId.make(orgId), id: TodoId.make(todoId) },
+          params: { orgId: OrganizationId.make(orgId), id: TodoId.make(todoId) },
         }),
       ),
       jsonResult,
@@ -183,7 +184,7 @@ server.registerTool(
     dispatch(
       callTool((client) =>
         client.cliTodos.remove({
-          path: { orgId: OrganizationId.make(orgId), id: TodoId.make(todoId) },
+          params: { orgId: OrganizationId.make(orgId), id: TodoId.make(todoId) },
         }),
       ),
       () => textResult(`Removed todo ${todoId}.`),

@@ -1,4 +1,5 @@
 import { QueryClient as TanstackQueryClient } from "@tanstack/react-query";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import { describe, expect, it } from "vitest";
@@ -159,7 +160,7 @@ describe("makeHelpers — Effect.orDie surfaces QueryClient failures as defects"
     expect(Exit.isFailure(exit)).toBe(true);
     if (Exit.isFailure(exit)) {
       // orDie converts to a defect, not a typed failure
-      expect(exit.cause._tag).toBe("Die");
+      expect(Cause.hasDies(exit.cause)).toBe(true);
     }
   });
 
@@ -176,7 +177,7 @@ describe("makeHelpers — Effect.orDie surfaces QueryClient failures as defects"
     const exit = await runExitWithClient(failingClient, helpers.refetchAllQueries());
     expect(Exit.isFailure(exit)).toBe(true);
     if (Exit.isFailure(exit)) {
-      expect(exit.cause._tag).toBe("Die");
+      expect(Cause.hasDies(exit.cause)).toBe(true);
     }
   });
 });

@@ -1,11 +1,8 @@
 import type * as DateTime from "effect/DateTime";
-import type * as Effect from "effect/Effect";
 import type * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { type SubscriptionRepository } from "@/modules/billing/domain/ports/repositories/subscription.repository.js";
 import { type SubscriptionId } from "@/modules/billing/domain/subscription.id.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
@@ -27,9 +24,3 @@ export type FindSubscriptionByOrganizationResult = Option.Option<SubscriptionVie
 export const findSubscriptionByOrganizationQuerySpanAttributes: SpanAttributesExtractor<
   FindSubscriptionByOrganizationQuery
 > = (q) => ({ "organization.id": q.organizationId });
-
-export type FindSubscriptionByOrganizationOutput = Effect.Effect<
-  FindSubscriptionByOrganizationResult,
-  PersistenceUnavailable,
-  SubscriptionRepository
->;

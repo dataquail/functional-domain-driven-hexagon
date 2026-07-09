@@ -1,11 +1,13 @@
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
+import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import * as TestClock from "effect/TestClock";
+import * as Option from "effect/Option";
+import * as TestClock from "effect/testing/TestClock";
 import { beforeEach } from "vitest";
 
 import { ApiTokenExpired, ApiTokenRevoked } from "@/modules/auth/domain/api-token.errors.js";
@@ -22,9 +24,9 @@ const apiTokenId = ApiTokenId.make("11111111-1111-1111-1111-111111111111");
 const userId = UserId.make("22222222-2222-2222-2222-222222222222");
 // The handler reads `DateTime.now`; pin the TestClock to a fixed instant so
 // expiry assertions ("future"/"past") are deterministic.
-const clockNow = DateTime.unsafeMake(new Date("2026-06-01T00:00:00Z"));
-const future = DateTime.unsafeMake(new Date("2099-01-01T00:00:00Z"));
-const past = DateTime.unsafeMake(new Date("2020-01-01T00:00:00Z"));
+const clockNow = DateTime.makeUnsafe(new Date("2026-06-01T00:00:00Z"));
+const future = DateTime.makeUnsafe(new Date("2099-01-01T00:00:00Z"));
+const past = DateTime.makeUnsafe(new Date("2020-01-01T00:00:00Z"));
 
 const TestLayer = ApiTokenRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
@@ -71,7 +73,9 @@ const insert = (opts: { expiresAt: DateTime.Utc | null; revokedAt?: DateTime.Utc
   });
 
 const errorOf = (exit: Exit.Exit<unknown, unknown>) =>
-  Exit.isFailure(exit) && exit.cause._tag === "Fail" ? exit.cause.error : null;
+  Exit.isFailure(exit) && Cause.hasFails(exit.cause)
+    ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+    : null;
 
 const suite = describe.sequential;
 

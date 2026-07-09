@@ -30,7 +30,7 @@ export interface QueryBusShape {
     : never;
 }
 
-export class QueryBus extends Context.Tag("QueryBus")<QueryBus, QueryBusShape>() {}
+export class QueryBus extends Context.Service<QueryBus, QueryBusShape>()("QueryBus") {}
 
 type QueryFor<T extends keyof QueryRegistry> = QueryRegistry[T] extends {
   readonly query: infer Q;

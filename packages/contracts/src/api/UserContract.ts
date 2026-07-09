@@ -1,7 +1,6 @@
-import * as HttpApiEndpoint from "@effect/platform/HttpApiEndpoint";
-import * as HttpApiGroup from "@effect/platform/HttpApiGroup";
-import * as HttpApiSchema from "@effect/platform/HttpApiSchema";
 import * as Schema from "effect/Schema";
+import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
+import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
 import { UserId } from "../EntityIds.js";
@@ -11,7 +10,7 @@ import { UserAuthMiddleware } from "../Policy.js";
 // Errors
 // ==========================================
 
-export class UserAlreadyExistsError extends Schema.TaggedError<UserAlreadyExistsError>(
+export class UserAlreadyExistsError extends Schema.TaggedErrorClass<UserAlreadyExistsError>(
   "UserAlreadyExistsError",
 )(
   "UserAlreadyExistsError",
@@ -19,16 +18,18 @@ export class UserAlreadyExistsError extends Schema.TaggedError<UserAlreadyExists
     email: Schema.String,
     message: Schema.String,
   },
-  HttpApiSchema.annotations({ status: 409 }),
+  { httpApiStatus: 409 },
 ) {}
 
-export class UserNotFoundError extends Schema.TaggedError<UserNotFoundError>("UserNotFoundError")(
+export class UserNotFoundError extends Schema.TaggedErrorClass<UserNotFoundError>(
+  "UserNotFoundError",
+)(
   "UserNotFoundError",
   {
     userId: UserId,
     message: Schema.String,
   },
-  HttpApiSchema.annotations({ status: 404 }),
+  { httpApiStatus: 404 },
 ) {}
 
 // ==========================================
@@ -57,10 +58,10 @@ export class User extends Schema.Class<User>("User")({
 // ==========================================
 
 export class CreateUserPayload extends Schema.Class<CreateUserPayload>("CreateUserPayload")({
-  email: Schema.String.pipe(Schema.minLength(3), Schema.maxLength(255)),
-  country: Schema.String.pipe(Schema.minLength(2), Schema.maxLength(50)),
-  street: Schema.String.pipe(Schema.minLength(2), Schema.maxLength(50)),
-  postalCode: Schema.String.pipe(Schema.minLength(2), Schema.maxLength(10)),
+  email: Schema.String.check(Schema.isMinLength(3), Schema.isMaxLength(255)),
+  country: Schema.String.check(Schema.isMinLength(2), Schema.isMaxLength(50)),
+  street: Schema.String.check(Schema.isMinLength(2), Schema.isMaxLength(50)),
+  postalCode: Schema.String.check(Schema.isMinLength(2), Schema.isMaxLength(10)),
 }) {}
 
 export class CreateUserResponse extends Schema.Class<CreateUserResponse>("CreateUserResponse")({
@@ -68,8 +69,11 @@ export class CreateUserResponse extends Schema.Class<CreateUserResponse>("Create
 }) {}
 
 export class FindUsersParams extends Schema.Class<FindUsersParams>("FindUsersParams")({
-  page: Schema.NumberFromString.pipe(Schema.int(), Schema.greaterThanOrEqualTo(1)),
-  pageSize: Schema.NumberFromString.pipe(Schema.int(), Schema.between(1, 100)),
+  page: Schema.NumberFromString.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(1)),
+  pageSize: Schema.NumberFromString.check(
+    Schema.isInt(),
+    Schema.isBetween({ minimum: 1, maximum: 100 }),
+  ),
 }) {}
 
 export class PaginatedUsers extends Schema.Class<PaginatedUsers>("PaginatedUsers")({
@@ -84,23 +88,30 @@ export class PaginatedUsers extends Schema.Class<PaginatedUsers>("PaginatedUsers
 // ==========================================
 
 export class Group extends HttpApiGroup.make("user")
-  .middleware(UserAuthMiddleware)
-  .add(HttpApiEndpoint.get("find", "/").setUrlParams(FindUsersParams).addSuccess(PaginatedUsers))
   .add(
-    HttpApiEndpoint.post("create", "/")
-      .setPayload(CreateUserPayload)
-      .addSuccess(CreateUserResponse)
-      .addError(UserAlreadyExistsError),
+    HttpApiEndpoint.get("find", "/", {
+      query: FindUsersParams,
+      success: PaginatedUsers,
+      error: CustomHttpApiError.ServiceUnavailable,
+    }),
   )
   .add(
-    HttpApiEndpoint.del("delete", "/:id")
-      .setPath(Schema.Struct({ id: UserId }))
-      .addSuccess(Schema.Void)
-      .addError(UserNotFoundError),
+    HttpApiEndpoint.post("create", "/", {
+      payload: CreateUserPayload,
+      success: CreateUserResponse,
+      error: [UserAlreadyExistsError, CustomHttpApiError.ServiceUnavailable],
+    }),
+  )
+  .add(
+    HttpApiEndpoint.make("DELETE")("delete", "/:id", {
+      params: Schema.Struct({ id: UserId }),
+      success: Schema.Void,
+      error: [UserNotFoundError, CustomHttpApiError.ServiceUnavailable],
+    }),
   )
   // Group-wide: every endpoint here can 503 on transient DB failure. The
   // typed channel lets endpoint handlers `Effect.catchTag` the
   // `PersistenceUnavailable` use cases produce and surface the 503 to
   // the SPA without leaking infrastructure tags into the contract.
-  .addError(CustomHttpApiError.ServiceUnavailable)
+  .middleware(UserAuthMiddleware)
   .prefix("/users") {}

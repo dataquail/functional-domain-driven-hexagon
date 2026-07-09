@@ -2,8 +2,8 @@ import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
-import * as Either from "effect/Either";
 import * as Layer from "effect/Layer";
+import * as Result from "effect/Result";
 import { beforeEach } from "vitest";
 
 import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles.root.js";
@@ -85,8 +85,8 @@ suite("OrganizationRolesRepositoryLive (integration)", () => {
           "admin",
           issuedBy,
         );
-        if (Either.isLeft(granted)) throw new Error("expected Right");
-        yield* repo.upsertOne(granted.right.organizationRoles);
+        if (Result.isFailure(granted)) throw new Error("expected Right");
+        yield* repo.upsertOne(granted.success.organizationRoles);
         const fetched = yield* repo.findOneByUserIdAndOrgId(userId, orgId);
         deepStrictEqual(
           fetched.roles.map((r) => ({ role: r.role, issuedBy: r.issuedBy })),
@@ -104,14 +104,14 @@ suite("OrganizationRolesRepositoryLive (integration)", () => {
           "admin",
           issuedBy,
         );
-        if (Either.isLeft(granted)) throw new Error("expected Right");
-        yield* repo.upsertOne(granted.right.organizationRoles);
+        if (Result.isFailure(granted)) throw new Error("expected Right");
+        yield* repo.upsertOne(granted.success.organizationRoles);
         const revoked = OrganizationRolesRootOps.revokeRole(
-          granted.right.organizationRoles,
+          granted.success.organizationRoles,
           "admin",
         );
-        if (Either.isLeft(revoked)) throw new Error("expected Right");
-        yield* repo.upsertOne(revoked.right.organizationRoles);
+        if (Result.isFailure(revoked)) throw new Error("expected Right");
+        yield* repo.upsertOne(revoked.success.organizationRoles);
         const fetched = yield* repo.findOneByUserIdAndOrgId(userId, orgId);
         deepStrictEqual([...fetched.roles], []);
       }).pipe(Effect.provide(TestLayer)),

@@ -9,7 +9,7 @@ import { OrganizationRoleValueObject } from "./organization-role.value-object.js
 // organization). Surfaces from `OrganizationRoles.grantRole` and is
 // translated to a 409-style conflict (or absorbed as idempotent) at
 // the command boundary.
-export class AlreadyHasOrganizationRole extends Schema.TaggedError<AlreadyHasOrganizationRole>(
+export class AlreadyHasOrganizationRole extends Schema.TaggedErrorClass<AlreadyHasOrganizationRole>(
   "AlreadyHasOrganizationRole",
 )("AlreadyHasOrganizationRole", {
   userId: UserId,
@@ -19,7 +19,7 @@ export class AlreadyHasOrganizationRole extends Schema.TaggedError<AlreadyHasOrg
 
 // Aggregate invariant: a role can only be revoked if it is currently
 // held. Surfaces from `OrganizationRoles.revokeRole`.
-export class DoesNotHaveOrganizationRole extends Schema.TaggedError<DoesNotHaveOrganizationRole>(
+export class DoesNotHaveOrganizationRole extends Schema.TaggedErrorClass<DoesNotHaveOrganizationRole>(
   "DoesNotHaveOrganizationRole",
 )("DoesNotHaveOrganizationRole", {
   userId: UserId,
@@ -31,7 +31,7 @@ export class DoesNotHaveOrganizationRole extends Schema.TaggedError<DoesNotHaveO
 // the target. Mirrors the role module's `CannotPromoteSelf` — prevents
 // an actor from promoting themselves regardless of the policy layer's
 // decision. The HTTP endpoint translates this to a 403 Forbidden.
-export class CannotPromoteSelfInOrganization extends Schema.TaggedError<CannotPromoteSelfInOrganization>(
+export class CannotPromoteSelfInOrganization extends Schema.TaggedErrorClass<CannotPromoteSelfInOrganization>(
   "CannotPromoteSelfInOrganization",
 )("CannotPromoteSelfInOrganization", {
   userId: UserId,

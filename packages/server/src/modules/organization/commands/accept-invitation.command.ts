@@ -1,21 +1,6 @@
-import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import {
-  type InvitationAlreadyAccepted,
-  type InvitationExpired,
-  type InvitationRevoked,
-  type InvitationTokenNotFound,
-} from "@/modules/organization/domain/invitation.errors.js";
-import { type SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization.errors.js";
-import { type InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation.repository.js";
-import { type MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership.repository.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
-import { type DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { type RoleService } from "@/platform/ddd/ports/role-service.js";
-import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 export const AcceptInvitationCommand = Schema.TaggedStruct("AcceptInvitationCommand", {
@@ -29,17 +14,3 @@ export type AcceptInvitationCommand = typeof AcceptInvitationCommand.Type;
 export const acceptInvitationCommandSpanAttributes: SpanAttributesExtractor<
   AcceptInvitationCommand
 > = (cmd) => ({ "user.id": cmd.userId });
-
-// Raw handler effect — repositories are discharged by the wrap in
-// `organization-command-handlers.ts`. Returns the organizationId so the
-// HTTP endpoint can redirect the invitee into their new org.
-export type AcceptInvitationOutput = Effect.Effect<
-  OrganizationId,
-  | InvitationTokenNotFound
-  | InvitationAlreadyAccepted
-  | InvitationRevoked
-  | InvitationExpired
-  | SuperAdminCannotOwnOrganization
-  | PersistenceUnavailable,
-  InvitationRepository | MembershipRepository | DomainEventBus | UnitOfWork | RoleService
->;

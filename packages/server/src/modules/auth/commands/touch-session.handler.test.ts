@@ -40,13 +40,13 @@ const cmd = TouchSessionCommand.make({
 describe("touchSession", () => {
   it.live("advances expiresAt and lastUsedAt when threshold has elapsed", () =>
     Effect.gen(function* () {
-      const farPast = DateTime.unsafeMake(new Date("2000-01-01T00:00:00Z"));
+      const farPast = DateTime.makeUnsafe(new Date("2000-01-01T00:00:00Z"));
       const seed = yield* seedSession(farPast);
       yield* touchSession(cmd);
       const repo = yield* SessionRepository;
       const after = yield* repo.findOneById(sessionId);
-      deepStrictEqual(DateTime.greaterThan(after.lastUsedAt, seed.lastUsedAt), true);
-      deepStrictEqual(DateTime.greaterThan(after.expiresAt, seed.expiresAt), true);
+      deepStrictEqual(DateTime.isGreaterThan(after.lastUsedAt, seed.lastUsedAt), true);
+      deepStrictEqual(DateTime.isGreaterThan(after.expiresAt, seed.expiresAt), true);
     }).pipe(Effect.provide(SessionRepositoryFake)),
   );
 
@@ -63,14 +63,12 @@ describe("touchSession", () => {
   );
 
   it.effect("does not fail when the session does not exist (benign race)", () =>
-    Effect.gen(function* () {
-      yield* touchSession(cmd);
-    }).pipe(Effect.provide(SessionRepositoryFake)),
+    touchSession(cmd).pipe(Effect.provide(SessionRepositoryFake)),
   );
 
   it.live("does not advance a revoked session", () =>
     Effect.gen(function* () {
-      const farPast = DateTime.unsafeMake(new Date("2000-01-01T00:00:00Z"));
+      const farPast = DateTime.makeUnsafe(new Date("2000-01-01T00:00:00Z"));
       const seed = yield* seedSession(farPast);
       const repo = yield* SessionRepository;
       yield* repo.deleteOne(sessionId);

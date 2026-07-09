@@ -1,5 +1,6 @@
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual, ok } from "assert";
+import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -17,7 +18,7 @@ const acmeId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const betaId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const walletA = WalletId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const walletB = WalletId.make("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
 
 const provide = Effect.provide(WalletRepositoryFake);
 
@@ -56,8 +57,8 @@ describe("WalletRepositoryFake", () => {
           yield* repo.insertOne(first);
           const exit = yield* Effect.exit(repo.insertOne(clashing));
           ok(Exit.isFailure(exit));
-          if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-            const err = exit.cause.error;
+          if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+            const err = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
             ok(err instanceof WalletAlreadyExistsForOrganization);
             if (err instanceof WalletAlreadyExistsForOrganization) {
               deepStrictEqual(err.organizationId, acmeId);
@@ -110,7 +111,7 @@ describe("WalletRepositoryFake", () => {
         const exists = yield* repo1.findOneByOrganizationId(acmeId);
         ok(Option.isSome(exists));
       }).pipe(provide, (first) =>
-        Effect.zipRight(
+        Effect.andThen(
           first,
           Effect.gen(function* () {
             const repo2 = yield* WalletRepository;

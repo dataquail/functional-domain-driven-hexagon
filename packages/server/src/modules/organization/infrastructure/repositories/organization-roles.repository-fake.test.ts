@@ -1,7 +1,7 @@
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 
 import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles.root.js";
 import { OrganizationRolesRepository } from "@/modules/organization/domain/ports/repositories/organization-roles.repository.js";
@@ -33,8 +33,8 @@ describe("OrganizationRolesRepositoryFake", () => {
         "admin",
         issuedBy,
       );
-      if (Either.isLeft(granted)) throw new Error("expected Right");
-      yield* repo.upsertOne(granted.right.organizationRoles);
+      if (Result.isFailure(granted)) throw new Error("expected Right");
+      yield* repo.upsertOne(granted.success.organizationRoles);
       const fetched = yield* repo.findOneByUserIdAndOrgId(userId, orgId);
       deepStrictEqual(
         fetched.roles.map((r) => ({ role: r.role, issuedBy: r.issuedBy })),

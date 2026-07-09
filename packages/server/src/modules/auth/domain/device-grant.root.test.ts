@@ -9,7 +9,7 @@ import { DeviceGrantRootOps, USER_CODE_ALPHABET } from "./device-grant.root.js";
 
 const id = DeviceGrantId.make("11111111-1111-1111-1111-111111111111");
 const userId = UserId.make("22222222-2222-2222-2222-222222222222");
-const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
 
 const start = () =>
   DeviceGrantRootOps.start({

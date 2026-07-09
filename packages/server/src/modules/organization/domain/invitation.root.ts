@@ -1,5 +1,5 @@
 import * as DateTime from "effect/DateTime";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
 import { type DomainEvent } from "@/platform/ddd/contracts/domain-event.js";
@@ -78,7 +78,7 @@ const issue = (input: IssueInput): IssueResult => {
 const isAccepted = (invitation: InvitationRoot): boolean => invitation.acceptedAt !== null;
 const isRevoked = (invitation: InvitationRoot): boolean => invitation.revokedAt !== null;
 const isExpiredAt = (invitation: InvitationRoot, now: DateTime.Utc): boolean =>
-  DateTime.lessThanOrEqualTo(invitation.expiresAt, now);
+  DateTime.isLessThanOrEqualTo(invitation.expiresAt, now);
 
 // "Open" = not yet accepted and not revoked — the set of invitations the
 // pending-list surfaces and that invite-again/resend re-issue. An open
@@ -116,18 +116,18 @@ export type AcceptResult = {
 const accept = (
   invitation: InvitationRoot,
   input: AcceptInput,
-): Either.Either<
+): Result.Result<
   AcceptResult,
   InvitationAlreadyAccepted | InvitationRevokedError | InvitationExpired
 > => {
   if (isAccepted(invitation)) {
-    return Either.left(new InvitationAlreadyAccepted({ invitationId: invitation.id }));
+    return Result.fail(new InvitationAlreadyAccepted({ invitationId: invitation.id }));
   }
   if (isRevoked(invitation)) {
-    return Either.left(new InvitationRevokedError({ invitationId: invitation.id }));
+    return Result.fail(new InvitationRevokedError({ invitationId: invitation.id }));
   }
   if (isExpiredAt(invitation, input.now)) {
-    return Either.left(new InvitationExpired({ invitationId: invitation.id }));
+    return Result.fail(new InvitationExpired({ invitationId: invitation.id }));
   }
   const updated = InvitationRoot.make({
     id: invitation.id,
@@ -144,7 +144,7 @@ const accept = (
     organizationId: invitation.organizationId,
     now: input.now,
   });
-  return Either.right({
+  return Result.succeed({
     invitation: updated,
     membership,
     events: [
@@ -172,12 +172,12 @@ export type RevokeResult = {
 const revoke = (
   invitation: InvitationRoot,
   input: RevokeInput,
-): Either.Either<RevokeResult, InvitationAlreadyAccepted | InvitationAlreadyRevoked> => {
+): Result.Result<RevokeResult, InvitationAlreadyAccepted | InvitationAlreadyRevoked> => {
   if (isAccepted(invitation)) {
-    return Either.left(new InvitationAlreadyAccepted({ invitationId: invitation.id }));
+    return Result.fail(new InvitationAlreadyAccepted({ invitationId: invitation.id }));
   }
   if (isRevoked(invitation)) {
-    return Either.left(new InvitationAlreadyRevoked({ invitationId: invitation.id }));
+    return Result.fail(new InvitationAlreadyRevoked({ invitationId: invitation.id }));
   }
   const updated = InvitationRoot.make({
     id: invitation.id,
@@ -189,7 +189,7 @@ const revoke = (
     revokedAt: input.now,
     createdAt: invitation.createdAt,
   });
-  return Either.right({
+  return Result.succeed({
     invitation: updated,
     events: [
       InvitationRevoked.make({
@@ -220,12 +220,12 @@ export type ReissueResult = {
 const reissue = (
   invitation: InvitationRoot,
   input: ReissueInput,
-): Either.Either<ReissueResult, InvitationAlreadyAccepted | InvitationAlreadyRevoked> => {
+): Result.Result<ReissueResult, InvitationAlreadyAccepted | InvitationAlreadyRevoked> => {
   if (isAccepted(invitation)) {
-    return Either.left(new InvitationAlreadyAccepted({ invitationId: invitation.id }));
+    return Result.fail(new InvitationAlreadyAccepted({ invitationId: invitation.id }));
   }
   if (isRevoked(invitation)) {
-    return Either.left(new InvitationAlreadyRevoked({ invitationId: invitation.id }));
+    return Result.fail(new InvitationAlreadyRevoked({ invitationId: invitation.id }));
   }
   const updated = InvitationRoot.make({
     id: invitation.id,
@@ -237,7 +237,7 @@ const reissue = (
     revokedAt: null,
     createdAt: invitation.createdAt,
   });
-  return Either.right({
+  return Result.succeed({
     invitation: updated,
     events: [
       InvitationReissued.make({

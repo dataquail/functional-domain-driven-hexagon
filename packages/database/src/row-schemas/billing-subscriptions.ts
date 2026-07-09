@@ -2,8 +2,8 @@ import type { StandardSchemaV1 } from "@standard-schema/spec";
 import * as Schema from "effect/Schema";
 
 export const SubscriptionRow = Schema.Struct({
-  id: Schema.UUID,
-  organization_id: Schema.UUID,
+  id: Schema.String.check(Schema.isGUID()),
+  organization_id: Schema.String.check(Schema.isGUID()),
   stripe_customer_id: Schema.String,
   stripe_subscription_id: Schema.String,
   status: Schema.String,
@@ -14,4 +14,4 @@ export const SubscriptionRow = Schema.Struct({
 export type SubscriptionRow = typeof SubscriptionRow.Type;
 
 export const SubscriptionRowStd: StandardSchemaV1<unknown, SubscriptionRow> =
-  Schema.standardSchemaV1(SubscriptionRow);
+  Schema.toStandardSchemaV1(SubscriptionRow);

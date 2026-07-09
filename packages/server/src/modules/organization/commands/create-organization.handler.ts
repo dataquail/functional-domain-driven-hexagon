@@ -2,12 +2,9 @@ import * as crypto from "node:crypto";
 
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 
-import {
-  type CreateOrganizationCommand,
-  type CreateOrganizationOutput,
-} from "@/modules/organization/commands/create-organization.command.js";
+import { type CreateOrganizationCommand } from "@/modules/organization/commands/create-organization.command.js";
 import { MembershipRootOps } from "@/modules/organization/domain/membership.root.js";
 import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization.errors.js";
 import { OrganizationRootOps } from "@/modules/organization/domain/organization.root.js";
@@ -34,48 +31,49 @@ import { OrganizationId } from "@/platform/ids/organization-id.js";
 // invariant on the explicit `GrantOrganizationRoleCommand` path
 // because that invariant guards interactive self-elevation through the
 // bus, not the system-level seed.
-export const createOrganization = (cmd: CreateOrganizationCommand): CreateOrganizationOutput =>
-  Effect.gen(function* () {
-    // Model invariant: super-admins are a separate user type — they
-    // don't own or join organizations. The check sits at the use-case
-    // level (not at HTTP authz) because the rule is a fact about the
-    // role model, not a per-resource permission decision.
-    const roles = yield* RoleService;
-    const perms = yield* roles.findPlatformPermissions(cmd.actorUserId);
-    if (perms.roles.includes("super_admin")) {
-      return yield* Effect.fail(new SuperAdminCannotOwnOrganization({ userId: cmd.actorUserId }));
-    }
+export const createOrganization = Effect.fn("createOrganization")(function* (
+  cmd: CreateOrganizationCommand,
+) {
+  // Model invariant: super-admins are a separate user type — they
+  // don't own or join organizations. The check sits at the use-case
+  // level (not at HTTP authz) because the rule is a fact about the
+  // role model, not a per-resource permission decision.
+  const roles = yield* RoleService;
+  const perms = yield* roles.findPlatformPermissions(cmd.actorUserId);
+  if (perms.roles.includes("super_admin")) {
+    return yield* new SuperAdminCannotOwnOrganization({ userId: cmd.actorUserId });
+  }
 
-    const orgRepo = yield* OrganizationRepository;
-    const memberRepo = yield* MembershipRepository;
-    const orgRolesRepo = yield* OrganizationRolesRepository;
-    const bus = yield* DomainEventBus;
-    const now = yield* DateTime.now;
-    const id = OrganizationId.make(crypto.randomUUID());
-    const { events: orgEvents, organization } = OrganizationRootOps.create({
-      id,
-      name: cmd.name,
-      now,
-    });
-    const { events: memberEvents, membership } = MembershipRootOps.create({
-      userId: cmd.actorUserId,
-      organizationId: id,
-      now,
-    });
-    // `grantRole` returns `Either<Result, AlreadyHasOrganizationRole>`.
-    // We just constructed `empty(...)` so the only way this could be a
-    // Left is a domain-model defect — die explicitly so the typed
-    // error channel stays clean for the bus signature.
-    const seedRoles = OrganizationRolesRootOps.empty(cmd.actorUserId, id);
-    const grantEither = OrganizationRolesRootOps.grantRole(seedRoles, "admin", cmd.actorUserId);
-    if (Either.isLeft(grantEither)) {
-      return yield* Effect.die(grantEither.left);
-    }
-    const grantResult = grantEither.right;
+  const orgRepo = yield* OrganizationRepository;
+  const memberRepo = yield* MembershipRepository;
+  const orgRolesRepo = yield* OrganizationRolesRepository;
+  const bus = yield* DomainEventBus;
+  const now = yield* DateTime.now;
+  const id = OrganizationId.make(crypto.randomUUID());
+  const { events: orgEvents, organization } = OrganizationRootOps.create({
+    id,
+    name: cmd.name,
+    now,
+  });
+  const { events: memberEvents, membership } = MembershipRootOps.create({
+    userId: cmd.actorUserId,
+    organizationId: id,
+    now,
+  });
+  // `grantRole` returns `Either<Result, AlreadyHasOrganizationRole>`.
+  // We just constructed `empty(...)` so the only way this could be a
+  // Left is a domain-model defect — die explicitly so the typed
+  // error channel stays clean for the bus signature.
+  const seedRoles = OrganizationRolesRootOps.empty(cmd.actorUserId, id);
+  const grantEither = OrganizationRolesRootOps.grantRole(seedRoles, "admin", cmd.actorUserId);
+  if (Result.isFailure(grantEither)) {
+    return yield* Effect.die(grantEither.failure);
+  }
+  const grantResult = grantEither.success;
 
-    yield* orgRepo.insertOne(organization);
-    yield* memberRepo.insertOne(membership);
-    yield* orgRolesRepo.upsertOne(grantResult.organizationRoles);
-    yield* bus.dispatch([...orgEvents, ...memberEvents, ...grantResult.events]);
-    return id;
-  }).pipe(withUnitOfWork);
+  yield* orgRepo.insertOne(organization);
+  yield* memberRepo.insertOne(membership);
+  yield* orgRolesRepo.upsertOne(grantResult.organizationRoles);
+  yield* bus.dispatch([...orgEvents, ...memberEvents, ...grantResult.events]);
+  return id;
+}, withUnitOfWork);

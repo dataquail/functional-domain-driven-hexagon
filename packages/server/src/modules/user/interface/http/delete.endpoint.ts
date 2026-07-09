@@ -5,19 +5,18 @@ import { DeleteUserCommand } from "@/modules/user/commands/delete-user.command.j
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
-export const deleteEndpoint = (request: EndpointRequest<typeof UserContract.Group, "delete">) =>
-  Effect.gen(function* () {
+export const deleteEndpoint = Effect.fn("UserLive.delete")(
+  function* (request: EndpointRequest<typeof UserContract.Group, "delete">) {
     const commandBus = yield* CommandBus;
-    yield* commandBus.execute(DeleteUserCommand.make({ userId: request.path.id }));
-  }).pipe(
-    Effect.catchTag("UserNotFound", (err) =>
-      Effect.fail(
-        new UserContract.UserNotFoundError({
-          userId: err.userId,
-          message: `User ${err.userId} not found`,
-        }),
-      ),
+    yield* commandBus.execute(DeleteUserCommand.make({ userId: request.params.id }));
+  },
+  Effect.catchTag("UserNotFound", (err) =>
+    Effect.fail(
+      new UserContract.UserNotFoundError({
+        userId: err.userId,
+        message: `User ${err.userId} not found`,
+      }),
     ),
-    recoverPersistenceUnavailable,
-    Effect.withSpan("UserLive.delete"),
-  );
+  ),
+  recoverPersistenceUnavailable,
+);

@@ -11,9 +11,9 @@ import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 const subscriptionId = SubscriptionId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const organizationId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
-const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
-const later = DateTime.unsafeMake(new Date("2025-02-01T00:00:00Z"));
-const periodEnd = DateTime.unsafeMake(new Date("2025-02-15T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
+const later = DateTime.makeUnsafe(new Date("2025-02-01T00:00:00Z"));
+const periodEnd = DateTime.makeUnsafe(new Date("2025-02-15T00:00:00Z"));
 
 const fresh = (status = "active"): SubscriptionRoot =>
   SubscriptionRootOps.create({
@@ -84,7 +84,7 @@ describe("SubscriptionRootOps.create", () => {
 describe("SubscriptionRootOps.applyStatus", () => {
   it("replaces status + currentPeriodEnd + updatedAt and preserves identity columns", () => {
     const sub = fresh("trialing");
-    const newPeriodEnd = DateTime.unsafeMake(new Date("2025-03-01T00:00:00Z"));
+    const newPeriodEnd = DateTime.makeUnsafe(new Date("2025-03-01T00:00:00Z"));
     const { events, subscription } = SubscriptionRootOps.applyStatus(sub, {
       status: "active",
       currentPeriodEnd: newPeriodEnd,

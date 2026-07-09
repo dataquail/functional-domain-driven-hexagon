@@ -9,20 +9,20 @@ import * as Authz from "@/platform/auth/authz.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
-export const deleteEndpoint = (request: EndpointRequest<typeof TodosContract.Group, "delete">) =>
-  Effect.gen(function* () {
+export const deleteEndpoint = Effect.fn("TodosLive.delete")(
+  function* (request: EndpointRequest<typeof TodosContract.Group, "delete">) {
     // The `todo` resolver loads the row scoped to (orgId, id); a missing
     // or cross-tenant todo surfaces as NotFound, mapped to the contract's
     // TodoNotFoundError. Membership against the todo's real org is then
     // checked before the command runs.
     yield* Authz.hasPermissions(TodoResource, Actions.Delete, {
-      organizationId: request.path.orgId,
-      todoId: request.path.id,
+      organizationId: request.params.orgId,
+      todoId: request.params.id,
     }).pipe(
       Effect.catchTag("NotFound", () =>
         Effect.fail(
           new TodosContract.TodoNotFoundError({
-            message: `Todo with id ${request.path.id} not found`,
+            message: `Todo with id ${request.params.id} not found`,
           }),
         ),
       ),
@@ -31,19 +31,18 @@ export const deleteEndpoint = (request: EndpointRequest<typeof TodosContract.Gro
     const currentUser = yield* CurrentUser;
     yield* commandBus.execute(
       DeleteTodoCommand.make({
-        todoId: request.path.id,
-        organizationId: request.path.orgId,
+        todoId: request.params.id,
+        organizationId: request.params.orgId,
         userId: currentUser.userId,
       }),
     );
-  }).pipe(
-    Effect.catchTag("TodoNotFound", (err) =>
-      Effect.fail(
-        new TodosContract.TodoNotFoundError({
-          message: `Todo with id ${err.todoId} not found`,
-        }),
-      ),
+  },
+  Effect.catchTag("TodoNotFound", (err) =>
+    Effect.fail(
+      new TodosContract.TodoNotFoundError({
+        message: `Todo with id ${err.todoId} not found`,
+      }),
     ),
-    recoverPersistenceUnavailable,
-    Effect.withSpan("TodosLive.delete"),
-  );
+  ),
+  recoverPersistenceUnavailable,
+);

@@ -10,10 +10,8 @@ import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/
 // GUI adapter: the signed-in user approves a CLI device grant by submitting
 // the code they were shown. Maps the device-grant domain errors to HTTP:
 // unknown code → 404, lapsed → 410 Gone.
-export const deviceApproveEndpoint = (
-  request: EndpointRequest<typeof AuthContract.DeviceApprovalGroup, "approve">,
-) =>
-  Effect.gen(function* () {
+export const deviceApproveEndpoint = Effect.fn("AuthLive.device.approve")(
+  function* (request: EndpointRequest<typeof AuthContract.DeviceApprovalGroup, "approve">) {
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
     yield* commandBus.execute(
@@ -22,15 +20,14 @@ export const deviceApproveEndpoint = (
         userId: currentUser.userId,
       }),
     );
-  }).pipe(
-    Effect.catchTag("DeviceGrantNotFound", () =>
-      Effect.fail(
-        new CustomHttpApiError.NotFound({ message: "No pending device request for that code" }),
-      ),
+  },
+  Effect.catchTag("DeviceGrantNotFound", () =>
+    Effect.fail(
+      new CustomHttpApiError.NotFound({ message: "No pending device request for that code" }),
     ),
-    Effect.catchTag("DeviceGrantExpired", () =>
-      Effect.fail(new CustomHttpApiError.Gone({ message: "That device code has expired" })),
-    ),
-    recoverPersistenceUnavailable,
-    Effect.withSpan("AuthLive.device.approve"),
-  );
+  ),
+  Effect.catchTag("DeviceGrantExpired", () =>
+    Effect.fail(new CustomHttpApiError.Gone({ message: "That device code has expired" })),
+  ),
+  recoverPersistenceUnavailable,
+);

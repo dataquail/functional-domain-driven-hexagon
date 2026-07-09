@@ -7,7 +7,7 @@
 // super-admin "all orgs" list. Mutations invalidate the namespaces the
 // write affects.
 
-import type { OrganizationContract } from "@org/contracts/api/Contracts";
+import { OrganizationContract } from "@org/contracts/api/Contracts";
 import type { InvitationId, OrganizationId, UserId } from "@org/contracts/EntityIds";
 import * as Effect from "effect/Effect";
 
@@ -44,21 +44,25 @@ export const adminOrgsQueryKey = adminOrgsKey;
 
 export const adminOrgsQuery = (variables: AdminOrgsVariables) =>
   Effect.flatMap(ApiClient, ({ client }) =>
-    client.organizationAdmin.findAll({ urlParams: variables }),
+    client.organizationAdmin.findAll({
+      query: new OrganizationContract.FindAllOrganizationsParams(variables),
+    }),
   );
 
 // ─── create ───────────────────────────────────────────────────────────
 
 export const createOrganization = (payload: OrganizationContract.CreateOrganizationPayload) =>
-  Effect.flatMap(ApiClient, ({ client }) => client.organization.create({ payload })).pipe(
-    Effect.tap(() => myOrgsHelpers.invalidateAllQueries()),
-  );
+  Effect.flatMap(ApiClient, ({ client }) =>
+    client.organization.create({
+      payload: new OrganizationContract.CreateOrganizationPayload(payload),
+    }),
+  ).pipe(Effect.tap(() => myOrgsHelpers.invalidateAllQueries()));
 
 // ─── softDelete / restore (admin) ────────────────────────────────────
 
 export const softDeleteOrganization = (args: { readonly id: OrganizationId }) =>
   Effect.flatMap(ApiClient, ({ client }) =>
-    client.organization.softDelete({ path: { id: args.id } }),
+    client.organization.softDelete({ params: { id: args.id } }),
   ).pipe(
     Effect.tap(() => adminOrgsHelpers.invalidateAllQueries()),
     Effect.tap(() => myOrgsHelpers.invalidateAllQueries()),
@@ -66,7 +70,7 @@ export const softDeleteOrganization = (args: { readonly id: OrganizationId }) =>
 
 export const restoreOrganization = (args: { readonly id: OrganizationId }) =>
   Effect.flatMap(ApiClient, ({ client }) =>
-    client.organization.restore({ path: { id: args.id } }),
+    client.organization.restore({ params: { id: args.id } }),
   ).pipe(
     Effect.tap(() => adminOrgsHelpers.invalidateAllQueries()),
     Effect.tap(() => myOrgsHelpers.invalidateAllQueries()),
@@ -79,7 +83,10 @@ export const inviteUser = (args: {
   readonly payload: OrganizationContract.InviteUserPayload;
 }) =>
   Effect.flatMap(ApiClient, ({ client }) =>
-    client.organization.inviteUser({ path: { orgId: args.orgId }, payload: args.payload }),
+    client.organization.inviteUser({
+      params: { orgId: args.orgId },
+      payload: new OrganizationContract.InviteUserPayload(args.payload),
+    }),
   );
 
 export const revokeInvitation = (args: {
@@ -88,23 +95,23 @@ export const revokeInvitation = (args: {
 }) =>
   Effect.flatMap(ApiClient, ({ client }) =>
     client.organization.revokeInvitation({
-      path: { orgId: args.orgId, invitationId: args.invitationId },
+      params: { orgId: args.orgId, invitationId: args.invitationId },
     }),
   );
 
 export const acceptInvitation = (args: { readonly token: string }) =>
   Effect.flatMap(ApiClient, ({ client }) =>
-    client.invitations.accept({ path: { token: args.token } }),
+    client.invitations.accept({ params: { token: args.token } }),
   ).pipe(Effect.tap(() => myOrgsHelpers.invalidateAllQueries()));
 
 // ─── membership ───────────────────────────────────────────────────────
 
 export const removeMember = (args: { readonly orgId: OrganizationId; readonly userId: UserId }) =>
   Effect.flatMap(ApiClient, ({ client }) =>
-    client.organization.removeMember({ path: { orgId: args.orgId, userId: args.userId } }),
+    client.organization.removeMember({ params: { orgId: args.orgId, userId: args.userId } }),
   );
 
 export const leaveOrganization = (args: { readonly orgId: OrganizationId }) =>
   Effect.flatMap(ApiClient, ({ client }) =>
-    client.organization.leave({ path: { orgId: args.orgId } }),
+    client.organization.leave({ params: { orgId: args.orgId } }),
   ).pipe(Effect.tap(() => myOrgsHelpers.invalidateAllQueries()));

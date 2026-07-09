@@ -1,4 +1,4 @@
-import * as Either from "effect/Either";
+import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
 import { OrganizationId } from "@/platform/ids/organization-id.js";
@@ -40,7 +40,7 @@ export class OrganizationRolesRoot extends Schema.Class<OrganizationRolesRoot>(
   roles: Schema.Array(IssuedRoleValueObject),
 }) {}
 
-export type Result = {
+export type Outcome = {
   readonly organizationRoles: OrganizationRolesRoot;
   readonly events: ReadonlyArray<OrganizationRoleEvent>;
 };
@@ -59,9 +59,9 @@ const grantRole = (
   aggregate: OrganizationRolesRoot,
   role: OrganizationRoleValueObject,
   issuedBy: UserId,
-): Either.Either<Result, AlreadyHasOrganizationRole> => {
+): Result.Result<Outcome, AlreadyHasOrganizationRole> => {
   if (hasRole(aggregate, role)) {
-    return Either.left(
+    return Result.fail(
       new AlreadyHasOrganizationRole({
         userId: aggregate.userId,
         organizationId: aggregate.organizationId,
@@ -69,7 +69,7 @@ const grantRole = (
       }),
     );
   }
-  return Either.right({
+  return Result.succeed({
     organizationRoles: OrganizationRolesRoot.make({
       userId: aggregate.userId,
       organizationId: aggregate.organizationId,
@@ -91,9 +91,9 @@ const grantRole = (
 const revokeRole = (
   aggregate: OrganizationRolesRoot,
   role: OrganizationRoleValueObject,
-): Either.Either<Result, DoesNotHaveOrganizationRole> => {
+): Result.Result<Outcome, DoesNotHaveOrganizationRole> => {
   if (!hasRole(aggregate, role)) {
-    return Either.left(
+    return Result.fail(
       new DoesNotHaveOrganizationRole({
         userId: aggregate.userId,
         organizationId: aggregate.organizationId,
@@ -101,7 +101,7 @@ const revokeRole = (
       }),
     );
   }
-  return Either.right({
+  return Result.succeed({
     organizationRoles: OrganizationRolesRoot.make({
       userId: aggregate.userId,
       organizationId: aggregate.organizationId,

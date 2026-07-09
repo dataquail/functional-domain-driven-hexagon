@@ -6,7 +6,6 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
-import * as Runtime from "effect/Runtime";
 import * as Slonik from "slonik";
 
 export type Client = Slonik.DatabasePool;
@@ -17,10 +16,10 @@ type TransactionContextShape = <U>(
   fn: (client: TxClient) => Promise<U>,
 ) => Effect.Effect<U, DatabaseError | DatabaseUnavailable>;
 
-export class TransactionContext extends Context.Tag("TransactionContext")<
+export class TransactionContext extends Context.Service<
   TransactionContext,
   TransactionContextShape
->() {
+>()("TransactionContext") {
   public static readonly provide = (
     transaction: TransactionContextShape,
   ): (<A, E, R>(
@@ -180,16 +179,18 @@ const makeService = (config: Config) =>
     );
 
     yield* Effect.tryPromise(() => pool.query(Slonik.sql.unsafe`SELECT 1`)).pipe(
-      Effect.timeoutFail({
+      Effect.timeoutOrElse({
         duration: "10 seconds",
-        onTimeout: () =>
-          new DatabaseConnectionLostError({
-            cause: new Error("[Database] Failed to connect: timeout"),
-            message: "[Database] Failed to connect: timeout",
-          }),
+        orElse: () =>
+          Effect.fail(
+            new DatabaseConnectionLostError({
+              cause: new Error("[Database] Failed to connect: timeout"),
+              message: "[Database] Failed to connect: timeout",
+            }),
+          ),
       }),
       Effect.catchTag(
-        "UnknownException",
+        "UnknownError",
         (error) =>
           new DatabaseConnectionLostError({
             cause: error.cause,
@@ -201,8 +202,8 @@ const makeService = (config: Config) =>
       ),
     );
 
-    const setupConnectionListeners = Effect.zipRight(
-      Effect.async<void, DatabaseConnectionLostError>((resume) => {
+    const setupConnectionListeners = Effect.zip(
+      Effect.callback<void, DatabaseConnectionLostError>((resume) => {
         pool.on("error", (error) => {
           // Slonik emits pool 'error' for every query error, not just connection
           // loss. Only tear the pool down on actual connection failures —
@@ -237,7 +238,7 @@ const makeService = (config: Config) =>
       {
         concurrent: true,
       },
-    );
+    ).pipe(Effect.map(([, initialized]) => initialized));
 
     const execute = Effect.fn(<T>(fn: (client: Client) => Promise<T>) =>
       Effect.tryPromise({
@@ -274,10 +275,10 @@ const makeService = (config: Config) =>
       open: (handler: (client: TxClient) => Promise<T>) => Promise<T>,
       txExecute: (tx: TransactionContextShape) => Effect.Effect<T, E, R>,
     ): Effect.Effect<T, DatabaseError | DatabaseUnavailable | E, R> =>
-      Effect.runtime<R>().pipe(
-        Effect.map((runtime) => Runtime.runPromiseExit(runtime)),
+      Effect.context<R>().pipe(
+        Effect.map((context) => Effect.runPromiseExitWith(context)),
         Effect.flatMap((runPromiseExit) =>
-          Effect.async<T, DatabaseError | DatabaseUnavailable | E, R>((resume) => {
+          Effect.callback<T, DatabaseError | DatabaseUnavailable | E, R>((resume) => {
             open(async (client: TxClient) => {
               const txWrapper = (fn: (c: TxClient) => Promise<any>) =>
                 Effect.tryPromise({
@@ -360,8 +361,8 @@ const makeService = (config: Config) =>
     } as const;
   });
 
-type Shape = Effect.Effect.Success<ReturnType<typeof makeService>>;
+type Shape = Effect.Success<ReturnType<typeof makeService>>;
 
-export class Database extends Effect.Tag("Database")<Database, Shape>() {}
+export class Database extends Context.Service<Database, Shape>()("Database") {}
 
-export const layer = (config: Config) => Layer.scoped(Database, makeService(config));
+export const layer = (config: Config) => Layer.effect(Database, makeService(config));

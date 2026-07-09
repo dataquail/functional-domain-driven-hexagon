@@ -6,7 +6,7 @@
 // hook). Both runtimes provide the shared `ApiClient` tag, so the
 // same Effect runs in either context — only the transport differs.
 
-import type { UserContract } from "@org/contracts/api/Contracts";
+import { UserContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
 import { QueryData } from "@/lib/tanstack-query";
@@ -27,9 +27,11 @@ export const usersQueryKey = usersKey;
 // `Effect.catchTag`/`useSuspenseQuery`'s error boundary can match on
 // the tagged variants.
 export const usersQuery = (variables: UsersListVariables) =>
-  Effect.flatMap(ApiClient, ({ client }) => client.user.find({ urlParams: variables }));
+  Effect.flatMap(ApiClient, ({ client }) =>
+    client.user.find({ query: new UserContract.FindUsersParams(variables) }),
+  );
 
 export const createUser = (payload: UserContract.CreateUserPayload) =>
-  Effect.flatMap(ApiClient, ({ client }) => client.user.create({ payload })).pipe(
-    Effect.tap(() => usersHelpers.invalidateAllQueries()),
-  );
+  Effect.flatMap(ApiClient, ({ client }) =>
+    client.user.create({ payload: new UserContract.CreateUserPayload(payload) }),
+  ).pipe(Effect.tap(() => usersHelpers.invalidateAllQueries()));

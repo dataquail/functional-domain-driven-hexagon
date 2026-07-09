@@ -17,7 +17,7 @@ import * as Schema from "effect/Schema";
 // repository (e.g. unique violation → `UserAlreadyExists`) or die as
 // programmer-error defects. `PersistenceUnavailable` is the
 // transient-retry case.
-export class PersistenceUnavailable extends Schema.TaggedError<PersistenceUnavailable>(
+export class PersistenceUnavailable extends Schema.TaggedErrorClass<PersistenceUnavailable>(
   "PersistenceUnavailable",
 )("PersistenceUnavailable", {
   message: Schema.String,

@@ -1,8 +1,10 @@
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { UserRepository } from "@/modules/user/domain/ports/repositories/user.repository.js";
 import { UserAlreadyExists } from "@/modules/user/domain/user.errors.js";
@@ -62,7 +64,9 @@ describe("createUser", () => {
       const exit = yield* Effect.exit(createUser(CreateUserCommand.make(baseCmd)));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof UserAlreadyExists, true);
       }
     }).pipe(Effect.provide(TestLayer)),

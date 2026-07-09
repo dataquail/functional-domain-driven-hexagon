@@ -1,11 +1,11 @@
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
-import * as HttpClient from "@effect/platform/HttpClient";
-import * as HttpClientRequest from "@effect/platform/HttpClientRequest";
 import { describe, it } from "@effect/vitest";
-import { BillingContract } from "@org/contracts/api/Contracts";
+import { BillingContract, OrganizationContract } from "@org/contracts/api/Contracts";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
+import * as HttpClient from "effect/unstable/http/HttpClient";
+import * as HttpClientRequest from "effect/unstable/http/HttpClientRequest";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/api.js";
 import { FAKE_WEBHOOK_SIGNATURE } from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake.js";
@@ -65,9 +65,11 @@ suite("POST /webhooks/stripe (integration)", () => {
     await run(
       Effect.gen(function* () {
         const apiClient = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* apiClient.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* apiClient.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         const sub = yield* apiClient.billing.startSubscription({
-          path: { orgId },
+          params: { orgId },
           payload: new BillingContract.StartSubscriptionPayload(),
         });
         const stripeSubId = yield* readStripeSubId(orgId);
@@ -87,10 +89,13 @@ suite("POST /webhooks/stripe (integration)", () => {
             HttpClientRequest.bodyText(JSON.stringify(event)),
           ),
         );
-        deepStrictEqual(res.status, 204);
+        // `Schema.Void` success responds 200 in effect v4 (v3 defaulted
+        // empty-body success to 204). Any 2xx satisfies Stripe; the
+        // contract documents 200 as the intended status.
+        deepStrictEqual(res.status, 200);
 
         // The GET endpoint reflects the new status.
-        const after = yield* apiClient.billing.getCurrentSubscription({ path: { orgId } });
+        const after = yield* apiClient.billing.getCurrentSubscription({ params: { orgId } });
         deepStrictEqual(after.status, "past_due");
         // Sanity: the original subscribed sub id is unchanged.
         deepStrictEqual(after.id, sub.id);
@@ -102,9 +107,11 @@ suite("POST /webhooks/stripe (integration)", () => {
     await run(
       Effect.gen(function* () {
         const apiClient = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* apiClient.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* apiClient.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         yield* apiClient.billing.startSubscription({
-          path: { orgId },
+          params: { orgId },
           payload: new BillingContract.StartSubscriptionPayload(),
         });
         const stripeSubId = yield* readStripeSubId(orgId);
@@ -126,7 +133,7 @@ suite("POST /webhooks/stripe (integration)", () => {
         );
         deepStrictEqual(res.status, 401);
         // Subscription status unchanged.
-        const after = yield* apiClient.billing.getCurrentSubscription({ path: { orgId } });
+        const after = yield* apiClient.billing.getCurrentSubscription({ params: { orgId } });
         deepStrictEqual(after.status, "active");
       }),
     );
@@ -136,9 +143,11 @@ suite("POST /webhooks/stripe (integration)", () => {
     await run(
       Effect.gen(function* () {
         const apiClient = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* apiClient.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* apiClient.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         yield* apiClient.billing.startSubscription({
-          path: { orgId },
+          params: { orgId },
           payload: new BillingContract.StartSubscriptionPayload(),
         });
         const stripeSubId = yield* readStripeSubId(orgId);
@@ -162,16 +171,16 @@ suite("POST /webhooks/stripe (integration)", () => {
           );
 
         const first = yield* send("past_due");
-        deepStrictEqual(first.status, 204);
-        const afterFirst = yield* apiClient.billing.getCurrentSubscription({ path: { orgId } });
+        deepStrictEqual(first.status, 200);
+        const afterFirst = yield* apiClient.billing.getCurrentSubscription({ params: { orgId } });
         deepStrictEqual(afterFirst.status, "past_due");
 
         // Second delivery uses the SAME event id but a DIFFERENT status.
         // Idempotency must short-circuit before the command dispatch,
         // so the subscription stays at `past_due`.
         const second = yield* send("canceled");
-        deepStrictEqual(second.status, 204);
-        const afterSecond = yield* apiClient.billing.getCurrentSubscription({ path: { orgId } });
+        deepStrictEqual(second.status, 200);
+        const afterSecond = yield* apiClient.billing.getCurrentSubscription({ params: { orgId } });
         deepStrictEqual(afterSecond.status, "past_due");
       }),
     );
@@ -181,9 +190,11 @@ suite("POST /webhooks/stripe (integration)", () => {
     await run(
       Effect.gen(function* () {
         const apiClient = yield* HttpApiClient.make(Api);
-        const { id: orgId } = yield* apiClient.organization.create({ payload: { name: "Acme" } });
+        const { id: orgId } = yield* apiClient.organization.create({
+          payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
+        });
         yield* apiClient.billing.startSubscription({
-          path: { orgId },
+          params: { orgId },
           payload: new BillingContract.StartSubscriptionPayload(),
         });
         const httpClient = yield* HttpClient.HttpClient;
@@ -195,8 +206,8 @@ suite("POST /webhooks/stripe (integration)", () => {
             ),
           ),
         );
-        deepStrictEqual(res.status, 204);
-        const after = yield* apiClient.billing.getCurrentSubscription({ path: { orgId } });
+        deepStrictEqual(res.status, 200);
+        const after = yield* apiClient.billing.getCurrentSubscription({ params: { orgId } });
         deepStrictEqual(after.status, "active");
         ok(after.id.length > 0);
       }),

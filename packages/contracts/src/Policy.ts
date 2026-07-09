@@ -1,6 +1,6 @@
-import * as HttpApiMiddleware from "@effect/platform/HttpApiMiddleware";
 import * as Context from "effect/Context";
 import * as Schema from "effect/Schema";
+import * as HttpApiMiddleware from "effect/unstable/httpapi/HttpApiMiddleware";
 
 import * as CustomHttpApiError from "./CustomHttpApiError.js";
 import { type UserId } from "./EntityIds.js";
@@ -12,23 +12,22 @@ import { type UserId } from "./EntityIds.js";
 // by policies, not on this tag. Endpoints consume it via `yield*
 // CurrentUser`; per-route authz decisions go through
 // `Authz.hasPermissions(...)` in the server package.
-export class CurrentUser extends Context.Tag("CurrentUser")<
+export class CurrentUser extends Context.Service<
   CurrentUser,
   {
     readonly sessionId: string;
     readonly userId: UserId;
   }
->() {}
+>()("CurrentUser") {}
 
 // The middleware fails with `Unauthorized` for normal auth failures
 // (missing/invalid cookie, expired session) and `ServiceUnavailable`
 // when the auth store is transiently down. Without the second case in
 // the failure union, a DB outage would surface as 401 and trigger a
 // client-side re-auth loop instead of a backoff-and-retry 503.
-export class UserAuthMiddleware extends HttpApiMiddleware.Tag<UserAuthMiddleware>()(
-  "UserAuthMiddleware",
-  {
-    failure: Schema.Union(CustomHttpApiError.Unauthorized, CustomHttpApiError.ServiceUnavailable),
-    provides: CurrentUser,
-  },
-) {}
+export class UserAuthMiddleware extends HttpApiMiddleware.Service<
+  UserAuthMiddleware,
+  { provides: CurrentUser }
+>()("UserAuthMiddleware", {
+  error: Schema.Union([CustomHttpApiError.Unauthorized, CustomHttpApiError.ServiceUnavailable]),
+}) {}

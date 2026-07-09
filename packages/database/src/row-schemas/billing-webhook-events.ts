@@ -8,4 +8,4 @@ export const WebhookEventRow = Schema.Struct({
 export type WebhookEventRow = typeof WebhookEventRow.Type;
 
 export const WebhookEventRowStd: StandardSchemaV1<unknown, WebhookEventRow> =
-  Schema.standardSchemaV1(WebhookEventRow);
+  Schema.toStandardSchemaV1(WebhookEventRow);

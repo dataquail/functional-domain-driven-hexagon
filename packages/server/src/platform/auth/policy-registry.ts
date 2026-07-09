@@ -45,12 +45,12 @@ export type ActionFor<R extends PolicyResource> = keyof PolicyMap[R] & Action;
 // `PolicyDeps` set (RoleService etc.) and fail with `PolicyErrors`
 // (PersistenceUnavailable).
 export type ResourceCheck<R> = (
-  caller: CurrentUser["Type"],
+  caller: CurrentUser["Service"],
   resource: R,
 ) => Effect.Effect<boolean, PolicyErrors, PolicyDeps>;
 
 export type FlatCheck = (
-  caller: CurrentUser["Type"],
+  caller: CurrentUser["Service"],
 ) => Effect.Effect<boolean, PolicyErrors, PolicyDeps>;
 
 // Per-(resource, action) callback type. CREATE is flat (no resource
@@ -84,11 +84,11 @@ export type PolicyContribution = {
 // for `(resource, action)`. The Authz API narrows the result to the
 // correct shape based on whether the action is flat or scoped.
 type AnyRegisteredCheck = (
-  caller: CurrentUser["Type"],
+  caller: CurrentUser["Service"],
   resource?: unknown,
 ) => Effect.Effect<boolean, PolicyErrors, PolicyDeps>;
 
-export class PolicyRegistry extends Context.Tag("PolicyRegistry")<
+export class PolicyRegistry extends Context.Service<
   PolicyRegistry,
   {
     readonly get: <R extends PolicyResource, A extends ActionFor<R>>(
@@ -96,7 +96,7 @@ export class PolicyRegistry extends Context.Tag("PolicyRegistry")<
       action: A,
     ) => AnyRegisteredCheck | undefined;
   }
->() {}
+>()("PolicyRegistry") {}
 
 // Compose an array of checks into a single AND-composed check.
 // Variadic across flat (1-arg) and resource-scoped (2-arg) shapes —

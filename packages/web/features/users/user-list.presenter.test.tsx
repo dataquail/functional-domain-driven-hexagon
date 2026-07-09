@@ -14,24 +14,24 @@ const mkUser = (i: number): UserContract.User =>
     id: UserId.make(`11111111-1111-1111-1111-${i.toString().padStart(12, "0")}`),
     email: `u${i}@example.com`,
     address: { country: "USA", street: "Main", postalCode: "12345" },
-    createdAt: DateTime.unsafeFromDate(new Date("2026-01-01T00:00:00Z")),
-    updatedAt: DateTime.unsafeFromDate(new Date("2026-01-01T00:00:00Z")),
+    createdAt: DateTime.fromDateUnsafe(new Date("2026-01-01T00:00:00Z")),
+    updatedAt: DateTime.fromDateUnsafe(new Date("2026-01-01T00:00:00Z")),
   });
 
 const makeApiClient = (opts: {
-  readonly find?: (urlParams: {
+  readonly find?: (query: {
     page: number;
     pageSize: number;
   }) => Effect.Effect<UserContract.PaginatedUsers>;
 }) => ({
   user: {
-    find: (args: { urlParams: { page: number; pageSize: number } }) =>
-      opts.find?.(args.urlParams) ??
+    find: (args: { query: { page: number; pageSize: number } }) =>
+      opts.find?.(args.query) ??
       Effect.succeed(
         new UserContract.PaginatedUsers({
           users: [],
-          page: args.urlParams.page,
-          pageSize: args.urlParams.pageSize,
+          page: args.query.page,
+          pageSize: args.query.pageSize,
           total: 0,
         }),
       ),

@@ -1,7 +1,6 @@
-import * as HttpApiEndpoint from "@effect/platform/HttpApiEndpoint";
-import * as HttpApiGroup from "@effect/platform/HttpApiGroup";
-import * as HttpApiSchema from "@effect/platform/HttpApiSchema";
 import * as Schema from "effect/Schema";
+import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
+import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
 import { OrganizationId, SubscriptionId } from "../EntityIds.js";
@@ -11,20 +10,20 @@ import { UserAuthMiddleware } from "../Policy.js";
 // Errors
 // ==========================================
 
-export class SubscriptionNotFoundError extends Schema.TaggedError<SubscriptionNotFoundError>(
+export class SubscriptionNotFoundError extends Schema.TaggedErrorClass<SubscriptionNotFoundError>(
   "SubscriptionNotFoundError",
 )(
   "SubscriptionNotFoundError",
   { organizationId: OrganizationId, message: Schema.String },
-  HttpApiSchema.annotations({ status: 404 }),
+  { httpApiStatus: 404 },
 ) {}
 
-export class SubscriptionAlreadyExistsError extends Schema.TaggedError<SubscriptionAlreadyExistsError>(
+export class SubscriptionAlreadyExistsError extends Schema.TaggedErrorClass<SubscriptionAlreadyExistsError>(
   "SubscriptionAlreadyExistsError",
 )(
   "SubscriptionAlreadyExistsError",
   { organizationId: OrganizationId, message: Schema.String },
-  HttpApiSchema.annotations({ status: 409 }),
+  { httpApiStatus: 409 },
 ) {}
 
 // ==========================================
@@ -58,32 +57,43 @@ export class StartSubscriptionPayload extends Schema.Class<StartSubscriptionPayl
 // + cancel) is org-admin-or-super-admin. The 403 surface is the policy
 // denial.
 export class PrivateGroup extends HttpApiGroup.make("billing")
+  .add(
+    HttpApiEndpoint.post("startSubscription", "/:orgId/billing/subscriptions", {
+      params: Schema.Struct({ orgId: OrganizationId }),
+      payload: StartSubscriptionPayload,
+      success: SubscriptionResponse,
+      error: [
+        CustomHttpApiError.Forbidden,
+        CustomHttpApiError.BadGateway,
+        SubscriptionAlreadyExistsError,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
+  )
+  .add(
+    HttpApiEndpoint.get("getCurrentSubscription", "/:orgId/billing/subscriptions/current", {
+      params: Schema.Struct({ orgId: OrganizationId }),
+      success: SubscriptionResponse,
+      error: [
+        CustomHttpApiError.Forbidden,
+        SubscriptionNotFoundError,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
+  )
+  .add(
+    HttpApiEndpoint.make("DELETE")("cancelSubscription", "/:orgId/billing/subscriptions/current", {
+      params: Schema.Struct({ orgId: OrganizationId }),
+      success: SubscriptionResponse,
+      error: [
+        CustomHttpApiError.Forbidden,
+        CustomHttpApiError.BadGateway,
+        SubscriptionNotFoundError,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
+  )
   .middleware(UserAuthMiddleware)
-  .add(
-    HttpApiEndpoint.post("startSubscription", "/:orgId/billing/subscriptions")
-      .setPath(Schema.Struct({ orgId: OrganizationId }))
-      .setPayload(StartSubscriptionPayload)
-      .addError(CustomHttpApiError.Forbidden)
-      .addError(CustomHttpApiError.BadGateway)
-      .addError(SubscriptionAlreadyExistsError)
-      .addSuccess(SubscriptionResponse),
-  )
-  .add(
-    HttpApiEndpoint.get("getCurrentSubscription", "/:orgId/billing/subscriptions/current")
-      .setPath(Schema.Struct({ orgId: OrganizationId }))
-      .addError(CustomHttpApiError.Forbidden)
-      .addError(SubscriptionNotFoundError)
-      .addSuccess(SubscriptionResponse),
-  )
-  .add(
-    HttpApiEndpoint.del("cancelSubscription", "/:orgId/billing/subscriptions/current")
-      .setPath(Schema.Struct({ orgId: OrganizationId }))
-      .addError(CustomHttpApiError.Forbidden)
-      .addError(CustomHttpApiError.BadGateway)
-      .addError(SubscriptionNotFoundError)
-      .addSuccess(SubscriptionResponse),
-  )
-  .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/orgs") {}
 
 // Public Stripe webhook ingress. No `UserAuthMiddleware` — the request
@@ -97,10 +107,13 @@ export class PrivateGroup extends HttpApiGroup.make("billing")
 // is internal). Returns 401 on bad signature, 503 on persistence failure.
 export class PublicGroup extends HttpApiGroup.make("billingWebhooks")
   .add(
-    HttpApiEndpoint.post("handleStripeWebhook", "/stripe")
-      .addError(CustomHttpApiError.Unauthorized)
-      .addError(CustomHttpApiError.BadRequest)
-      .addSuccess(Schema.Void),
+    HttpApiEndpoint.post("handleStripeWebhook", "/stripe", {
+      success: Schema.Void,
+      error: [
+        CustomHttpApiError.Unauthorized,
+        CustomHttpApiError.BadRequest,
+        CustomHttpApiError.ServiceUnavailable,
+      ],
+    }),
   )
-  .addError(CustomHttpApiError.ServiceUnavailable)
   .prefix("/webhooks") {}

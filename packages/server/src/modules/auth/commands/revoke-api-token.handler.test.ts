@@ -1,8 +1,10 @@
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { MintApiTokenCommand } from "@/modules/auth/commands/mint-api-token.command.js";
 import { mintApiToken } from "@/modules/auth/commands/mint-api-token.handler.js";
@@ -40,7 +42,9 @@ describe("revokeApiToken", () => {
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof ApiTokenNotFound, true);
       }
       const repo = yield* ApiTokenRepository;

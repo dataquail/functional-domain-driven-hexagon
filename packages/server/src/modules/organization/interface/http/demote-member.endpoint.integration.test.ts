@@ -1,11 +1,13 @@
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/api.js";
 import { SUPER_ADMIN_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
@@ -77,9 +79,9 @@ suite("DELETE /orgs/:orgId/members/:userId/admin (integration, super-admin calle
         yield* seedTargetMember(true);
         const client = yield* HttpApiClient.make(Api);
 
-        yield* client.organization.demoteMember({ path: { orgId: ORG_ID, userId: TARGET_ID } });
+        yield* client.organization.demoteMember({ params: { orgId: ORG_ID, userId: TARGET_ID } });
 
-        const after = yield* client.organization.findMembers({ path: { orgId: ORG_ID } });
+        const after = yield* client.organization.findMembers({ params: { orgId: ORG_ID } });
         const target = after.members.find((m) => m.userId === TARGET_ID);
         ok(target !== undefined);
         deepStrictEqual(target.isAdmin, false);
@@ -94,11 +96,11 @@ suite("DELETE /orgs/:orgId/members/:userId/admin (integration, super-admin calle
         const client = yield* HttpApiClient.make(Api);
 
         const exit = yield* Effect.exit(
-          client.organization.demoteMember({ path: { orgId: ORG_ID, userId: TARGET_ID } }),
+          client.organization.demoteMember({ params: { orgId: ORG_ID, userId: TARGET_ID } }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          const error = exit.cause.error;
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          const error = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
           ok(error instanceof OrganizationContract.OrganizationRoleConflictError);
           deepStrictEqual(error.reason, "not_admin");
         }
@@ -127,11 +129,14 @@ memberSuite("DELETE /orgs/:orgId/members/:userId/admin (integration, plain-membe
         yield* seedTargetMember(true);
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(
-          client.organization.demoteMember({ path: { orgId: ORG_ID, userId: TARGET_ID } }),
+          client.organization.demoteMember({ params: { orgId: ORG_ID, userId: TARGET_ID } }),
         );
         ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && exit.cause._tag === "Fail") {
-          ok(exit.cause.error instanceof CustomHttpApiError.Forbidden);
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              CustomHttpApiError.Forbidden,
+          );
         }
       }),
     );

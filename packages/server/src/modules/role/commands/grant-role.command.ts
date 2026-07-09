@@ -1,13 +1,7 @@
-import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import { type RolesRepository } from "@/modules/role/domain/ports/repositories/roles.repository.js";
-import { type AlreadyHasRole, type CannotPromoteSelf } from "@/modules/role/domain/role.errors.js";
 import { RoleValueObject } from "@/modules/role/domain/role.value-object.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
-import { type DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 export const GrantRoleCommand = Schema.TaggedStruct("GrantRoleCommand", {
@@ -27,11 +21,3 @@ export const grantRoleCommandSpanAttributes: SpanAttributesExtractor<GrantRoleCo
   "role.name": cmd.role,
   "actor.user.id": cmd.actorUserId,
 });
-
-// Raw handler effect — `RolesRepository` is discharged by the wrap in
-// `role-command-handlers.ts`; the bus-registered output type lives there.
-export type GrantRoleOutput = Effect.Effect<
-  void,
-  AlreadyHasRole | CannotPromoteSelf | PersistenceUnavailable,
-  RolesRepository | DomainEventBus | UnitOfWork
->;

@@ -1,8 +1,10 @@
 import { describe, it } from "@effect/vitest";
 import { deepStrictEqual } from "assert";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { GrantOrganizationRoleCommand } from "@/modules/organization/commands/grant-organization-role.command.js";
 import { grantOrganizationRole } from "@/modules/organization/commands/grant-organization-role.handler.js";
@@ -74,7 +76,9 @@ describe("grantOrganizationRole", () => {
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof CannotPromoteSelfInOrganization, true);
       }
     }).pipe(Effect.provide(TestLayer)),
@@ -92,7 +96,9 @@ describe("grantOrganizationRole", () => {
       const exit = yield* Effect.exit(grantOrganizationRole(cmd));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === "Fail" ? exit.cause.error : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof AlreadyHasOrganizationRole, true);
       }
     }).pipe(Effect.provide(TestLayer)),

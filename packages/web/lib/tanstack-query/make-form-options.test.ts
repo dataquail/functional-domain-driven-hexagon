@@ -16,9 +16,11 @@ const AddressField = Schema.Struct({
 const RefinedPositive = Schema.Struct({
   count: Schema.Number,
 }).pipe(
-  Schema.filter((s) => (s.count > 0 ? undefined : "count must be positive"), {
-    identifier: "PositiveCount",
-  }),
+  Schema.check(
+    Schema.makeFilter((s) => (s.count > 0 ? undefined : "count must be positive"), {
+      identifier: "PositiveCount",
+    }),
+  ),
 );
 
 const MultiField = Schema.Struct({

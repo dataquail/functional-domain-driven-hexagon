@@ -13,7 +13,7 @@ import { Mailer } from "./mailer.js";
 // at http://localhost:8025. The same adapter works against any SMTP
 // relay by changing the MAIL_SMTP_* env. The transporter is built once
 // per layer and closed when the layer's scope ends.
-export const SmtpMailerLive = Layer.scoped(
+export const SmtpMailerLive = Layer.effect(
   Mailer,
   Effect.gen(function* () {
     const env = yield* EnvVars;

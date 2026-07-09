@@ -47,7 +47,7 @@ export type CommandBusShape = {
     : never;
 };
 
-export class CommandBus extends Context.Tag("CommandBus")<CommandBus, CommandBusShape>() {}
+export class CommandBus extends Context.Service<CommandBus, CommandBusShape>()("CommandBus") {}
 
 type CommandFor<T extends keyof CommandRegistry> = CommandRegistry[T] extends {
   readonly command: infer C;

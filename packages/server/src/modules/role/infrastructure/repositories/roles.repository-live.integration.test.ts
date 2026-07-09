@@ -2,8 +2,8 @@ import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
-import * as Either from "effect/Either";
 import * as Layer from "effect/Layer";
+import * as Result from "effect/Result";
 import { beforeEach } from "vitest";
 
 import { RolesRepository } from "@/modules/role/domain/ports/repositories/roles.repository.js";
@@ -58,8 +58,8 @@ suite("RolesRepositoryLive (integration)", () => {
         yield* seedUser;
         const repo = yield* RolesRepository;
         const granted = RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin");
-        if (Either.isLeft(granted)) throw new Error("expected Right");
-        yield* repo.upsertOne(granted.right.roles);
+        if (Result.isFailure(granted)) throw new Error("expected Right");
+        yield* repo.upsertOne(granted.success.roles);
         const fetched = yield* repo.findOneByUserId(userId);
         deepStrictEqual([...fetched.roles], ["super_admin"]);
       }).pipe(Effect.provide(TestLayer)),
@@ -70,11 +70,11 @@ suite("RolesRepositoryLive (integration)", () => {
         yield* seedUser;
         const repo = yield* RolesRepository;
         const granted = RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin");
-        if (Either.isLeft(granted)) throw new Error("expected Right");
-        yield* repo.upsertOne(granted.right.roles);
-        const revoked = RolesRootOps.revoke(granted.right.roles, "super_admin");
-        if (Either.isLeft(revoked)) throw new Error("expected Right");
-        yield* repo.upsertOne(revoked.right.roles);
+        if (Result.isFailure(granted)) throw new Error("expected Right");
+        yield* repo.upsertOne(granted.success.roles);
+        const revoked = RolesRootOps.revoke(granted.success.roles, "super_admin");
+        if (Result.isFailure(revoked)) throw new Error("expected Right");
+        yield* repo.upsertOne(revoked.success.roles);
         const fetched = yield* repo.findOneByUserId(userId);
         deepStrictEqual([...fetched.roles], []);
       }).pipe(Effect.provide(TestLayer)),

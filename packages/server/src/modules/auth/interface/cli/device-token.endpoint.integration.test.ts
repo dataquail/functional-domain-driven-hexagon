@@ -1,10 +1,12 @@
-import * as HttpApiClient from "@effect/platform/HttpApiClient";
 import { describe, it } from "@effect/vitest";
+import { AuthContract, CliAuthContract } from "@org/contracts/api/Contracts";
 import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
+import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
+
 // Drives the full device flow through the real HTTP surface: the fake auth
 // middleware supplies the super-admin caller for the browser `approve` step.
 const suite = describe.sequential;
@@ -21,7 +23,9 @@ suite("POST /cli/device/token (integration)", () => {
         const client = yield* HttpApiClient.make(Api);
         const { device_code: deviceCode } = yield* client.cliAuth.deviceStart();
         const error = yield* client.cliAuth
-          .deviceToken({ payload: { device_code: deviceCode } })
+          .deviceToken({
+            payload: new CliAuthContract.DeviceTokenPayload({ device_code: deviceCode }),
+          })
           .pipe(Effect.flip);
         deepStrictEqual(error._tag, "DeviceAuthorizationPending");
       }),
@@ -35,9 +39,13 @@ suite("POST /cli/device/token (integration)", () => {
         const { device_code: deviceCode, user_code: userCode } =
           yield* client.cliAuth.deviceStart();
         // Browser approves (fake super-admin caller)…
-        yield* client.authDevice.approve({ payload: { userCode } });
+        yield* client.authDevice.approve({
+          payload: new AuthContract.DeviceApprovalPayload({ userCode }),
+        });
         // …CLI exchanges the device code for a token.
-        const res = yield* client.cliAuth.deviceToken({ payload: { device_code: deviceCode } });
+        const res = yield* client.cliAuth.deviceToken({
+          payload: new CliAuthContract.DeviceTokenPayload({ device_code: deviceCode }),
+        });
         ok(res.access_token.startsWith("pat_"));
         deepStrictEqual(res.token_type, "Bearer");
         // (That the bearer token authenticates the real middleware is covered
@@ -45,7 +53,9 @@ suite("POST /cli/device/token (integration)", () => {
 
         // Grant is consumed: a second poll is rejected.
         const error = yield* client.cliAuth
-          .deviceToken({ payload: { device_code: deviceCode } })
+          .deviceToken({
+            payload: new CliAuthContract.DeviceTokenPayload({ device_code: deviceCode }),
+          })
           .pipe(Effect.flip);
         deepStrictEqual(error._tag, "DeviceCodeNotFound");
       }),
@@ -57,7 +67,9 @@ suite("POST /cli/device/token (integration)", () => {
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         const error = yield* client.cliAuth
-          .deviceToken({ payload: { device_code: "not-a-real-code" } })
+          .deviceToken({
+            payload: new CliAuthContract.DeviceTokenPayload({ device_code: "not-a-real-code" }),
+          })
           .pipe(Effect.flip);
         deepStrictEqual(error._tag, "DeviceCodeNotFound");
       }),

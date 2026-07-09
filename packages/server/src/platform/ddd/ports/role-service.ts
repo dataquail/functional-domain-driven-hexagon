@@ -30,4 +30,4 @@ export type RoleServiceShape = {
   ) => Effect.Effect<PlatformPermissions, PersistenceUnavailable>;
 };
 
-export class RoleService extends Context.Tag("RoleService")<RoleService, RoleServiceShape>() {}
+export class RoleService extends Context.Service<RoleService, RoleServiceShape>()("RoleService") {}

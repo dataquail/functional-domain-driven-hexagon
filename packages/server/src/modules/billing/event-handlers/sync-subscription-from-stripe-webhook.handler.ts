@@ -32,8 +32,11 @@ export const SyncSubscriptionFromStripeWebhookLive = Layer.effectDiscard(
   Effect.gen(function* () {
     const eventBus = yield* DomainEventBus;
     const repo = yield* SubscriptionRepository;
-    yield* eventBus.subscribe(StripeWebhookIngested, (event) =>
-      Effect.gen(function* () {
+    yield* eventBus.subscribe(
+      StripeWebhookIngested,
+      // `Effect.fn` names the use-case span (`syncSubscriptionFromStripeWebhook`)
+      // under the `domainEvent:StripeWebhookIngested` bus-boundary span.
+      Effect.fn("syncSubscriptionFromStripeWebhook")(function* (event) {
         const stripeEvent = event.stripeEvent;
         switch (stripeEvent.type) {
           case "customer.subscription.created":
@@ -65,7 +68,7 @@ export const SyncSubscriptionFromStripeWebhookLive = Layer.effectDiscard(
             // payment_failed) lands when a product surface needs it.
             return;
         }
-      }).pipe(Effect.orDie),
+      }, Effect.orDie),
     );
   }),
 );

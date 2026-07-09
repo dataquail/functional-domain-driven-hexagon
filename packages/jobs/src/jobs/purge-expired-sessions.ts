@@ -25,7 +25,7 @@ export type PurgeResult = {
   readonly skipped: boolean;
 };
 
-const LockRow = Schema.standardSchemaV1(Schema.Struct({ acquired: Schema.Boolean }));
+const LockRow = Schema.toStandardSchemaV1(Schema.Struct({ acquired: Schema.Boolean }));
 
 export const purgeExpiredSessions: Effect.Effect<PurgeResult, never, Database.Database> =
   Effect.gen(function* () {

@@ -8,8 +8,8 @@ import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 const todoId = TodoId.make("todo-1");
 const organizationId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
-const now = DateTime.unsafeMake(new Date("2025-01-01T00:00:00Z"));
-const later = DateTime.unsafeMake(new Date("2025-02-01T00:00:00Z"));
+const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
+const later = DateTime.makeUnsafe(new Date("2025-02-01T00:00:00Z"));
 
 const fresh = () => TodoRootOps.create({ id: todoId, organizationId, title: "Buy milk", now });
 
