@@ -75,7 +75,7 @@ export class PrivateGroup extends HttpApiGroup.make("authSession")
   .prefix("/auth") {}
 
 // ==========================================
-// API tokens: GUI-managed personal access tokens (ADR-0024)
+// API tokens: GUI-managed personal access tokens (ADR-0005)
 // ==========================================
 
 // Owner-facing summary of an active token. Carries no secret — `prefix` is
@@ -116,7 +116,7 @@ export class DeviceApprovalPayload extends Schema.Class<DeviceApprovalPayload>(
   userCode: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(32)),
 }) {}
 
-// Browser-side approval of a CLI device grant (ADR-0024). The signed-in user
+// Browser-side approval of a CLI device grant (ADR-0005). The signed-in user
 // submits the code the CLI showed them; the server binds the grant to them.
 // On the GUI surface (the human is in the browser); the CLI's start/poll
 // endpoints live on `CliApi`.
@@ -137,7 +137,7 @@ export class DeviceApprovalGroup extends HttpApiGroup.make("authDevice")
 
 // Token management is a human-in-the-browser concern (a user mints a CI
 // token); the CLI/MCP obtain tokens via the device flow or a pre-minted PAT.
-// Hence this lives on the GUI `DomainApi`, not the CLI surface (ADR-0024).
+// Hence this lives on the GUI `DomainApi`, not the CLI surface (ADR-0005).
 export class TokensGroup extends HttpApiGroup.make("authTokens")
   .add(
     HttpApiEndpoint.post("create", "/", {

@@ -12,7 +12,7 @@ import { InvitationEmail } from "./invitation.email.js";
 
 const SUBJECT = "You're invited to join an organization";
 
-// ADR-0023 outbound adapter for `InvitationMailer`. Owns everything the
+// ADR-0022 outbound adapter for `InvitationMailer`. Owns everything the
 // use case shouldn't know: the accept-URL shape (`APP_URL` + token), the
 // React Email template, and the decision to treat delivery as
 // best-effort. A transport `MailDeliveryError` is logged and swallowed

@@ -3,13 +3,6 @@
 - Status: Accepted
 - Date: 2026-04-24
 
-> The unit of work was originally introduced as `TransactionRunner`; it was renamed to
-> `UnitOfWork` and split into a port (`platform/ddd/ports/unit-of-work.ts`) + a Live
-> (`platform/unit-of-work-live.ts`). The other DDD shared-kernel ports (`CommandBus`, `QueryBus`,
-> `DomainEventBus`, `IntegrationEventBus`, `DomainEvent`, `SpanAttributesExtractor`) received the
-> same port/Live split; their Lives are `command-bus-live.ts`, `query-bus-live.ts`,
-> `domain-event-bus-live.ts`, and `integration-event-bus-live.ts` in `platform/`.
-
 ## Context and Problem Statement
 
 A domain event published by one aggregate can require a write to another. The canonical example: creating an organization emits an `OrganizationCreated` event; the wallet module subscribes and creates a wallet for the new organization. Two aggregates, two writes, one logical operation.

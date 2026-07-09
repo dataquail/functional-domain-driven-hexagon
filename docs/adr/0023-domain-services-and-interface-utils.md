@@ -1,11 +1,11 @@
-# ADR-0026: Domain services and interface utility helpers
+# ADR-0023: Domain services and interface utility helpers
 
 - Status: Accepted
 - Date: 2026-07-02
 
 ## Context and Problem Statement
 
-The folder-layout allowlist (ADR-0025) shipped with a `PENDING_DECISION` list: a handful of real files that fit no sanctioned stereotype and were parked pending a decision. Scrutinizing them surfaced two genuinely distinct gaps in the vocabulary — one in the domain, one in the interface layer — rather than a single "misc helper" category.
+Two genuinely distinct gaps in the stereotype vocabulary — one in the domain, one in the interface layer — need filling, rather than a single "misc helper" category that the folder-layout allowlist (ADR-0008) would otherwise reject with no sanctioned home.
 
 **Gap 1 — shared domain logic with no aggregate home.** `hashToken` (sha256-hex a credential) was defined in a file named after API tokens, but it is applied to API-token secrets, device-grant codes, _and_ an arbitrary incoming bearer in the auth middleware, where there is no aggregate instance at all. It encodes a real bounded-context rule — "auth credentials are stored and compared by their hash, never in plaintext" — that belongs to no single aggregate. Folding it onto one aggregate's `RootOps` would force the other aggregate and the middleware to reach into that aggregate arbitrarily. The codebase had no stereotype for "stateless domain logic that spans aggregates."
 
@@ -43,14 +43,14 @@ Two guards keep `*.util.ts` from drifting even within the interface layer:
 
 ## Enforcement
 
-- Layout checker (`lint:layout`): `*.domain-service.ts` added to the `domain/` allowlist; `*.util.ts` added to the `interface/http` and `interface/cli` allowlists only. The `PENDING_DECISION` list is removed — every file now has a real home.
-- Test parity (`lint:tests`): `*.domain-service.ts` → `*.domain-service.test.ts`; `*.util.ts` → `*.util.test.ts`.
+- Folder-structure rule layout (ADR-0008): `*.domain-service.ts` is in the `domain/` allowlist; `*.util.ts` is in the `interface/http` and `interface/cli` allowlists only.
+- Folder-structure rule parity: `*.domain-service.ts` → `*.domain-service.test.ts`; `*.util.ts` → `*.util.test.ts`.
 - Dependency-cruiser: `interface-util-files-are-leaves` enforces the leaf constraint. Domain services need no new rule — `domain-isolation` + `domain-no-external-beyond-effect` already govern them (`node:crypto` is a core module, exempt).
 
 ## Consequences
 
 - The auth bounded context's "credentials are compared by hash" rule has one named, tested, discoverable home, and the middleware + both device-grant commands import a _service_ rather than a hash from a file named after API tokens.
-- The `PENDING_DECISION` list is emptied without loosening the domain vocabulary into a junk drawer: one new domain stereotype (added consciously, tested) and one tightly-scoped interface convention.
+- The vocabulary gains exactly what it needed without loosening into a junk drawer: one new domain stereotype (added consciously, tested) and one tightly-scoped interface convention.
 - The application layer is provably free of shared-helper escape hatches — a design pressure, not just a guideline.
 - Cost: two more sanctioned suffixes and their parity/dep rules. The domain-service stereotype must be policed against anemia in review; the "no aggregate home" test is the standard to apply.
 
@@ -67,4 +67,5 @@ Two guards keep `*.util.ts` from drifting even within the interface layer:
 - ADR-0001 (functional core / imperative shell) — why credential generation (impure) stays in the command and only pure logic is domain.
 - ADR-0003 (aggregates) — `RootOps`, the free-function-bag style domain services mirror.
 - ADR-0016/0017 (Zitadel BFF) — why OIDC protocol state is interface-layer, not domain.
-- ADR-0025 (adapter taxonomy and folder-layout enforcement) — the layout/parity machinery these two stereotypes extend, and the `PENDING_DECISION` list this decision empties.
+- ADR-0008 (architecture enforcement) — the folder-structure layout/parity machinery these two stereotypes extend.
+- ADR-0022 (adapter taxonomy) — the clients/acl tiering alongside which these interface/domain stereotypes sit.

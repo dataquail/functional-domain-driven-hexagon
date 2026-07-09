@@ -1,4 +1,4 @@
-# ADR-0004: Errors as Schema.TaggedError; no Result wrappers
+# ADR-0004: Errors as Schema.TaggedErrorClass; no Result wrappers
 
 - Status: Accepted
 - Date: 2026-04-24
@@ -7,7 +7,7 @@
 
 Errors in TypeScript are conventionally thrown, which makes them invisible at the type level: a function's signature says nothing about what it can fail with. Many architectures address this by wrapping return values in a `Result<T, E>` (or `Either<E, T>`) type, so that errors become part of the function's signature.
 
-Effect's `Effect<A, E, R>` already encodes the failure type as the second type parameter. Adding a `Result` wrapper on top of an Effect would be redundant — both mechanisms exist to surface errors to the type system, and Effect's is first-class.
+Effect's `Effect<A, E, R>` already encodes the failure type as the second type parameter. Adding a wrapper on top of an Effect would be redundant — both mechanisms exist to surface errors to the type system, and Effect's is first-class.
 
 We also need:
 
@@ -19,21 +19,20 @@ We also need:
 
 ### Domain errors
 
-Domain errors are `Schema.TaggedError` classes co-located with the aggregate they belong to. They appear in the use-case's `E` channel.
+Domain errors are `Schema.TaggedErrorClass` classes co-located with the aggregate they belong to. They appear in the use-case's `E` channel.
 
 ```ts
-export class UserAlreadyExists extends Schema.TaggedError<UserAlreadyExists>("UserAlreadyExists")(
+export class UserAlreadyExists extends Schema.TaggedErrorClass<UserAlreadyExists>(
   "UserAlreadyExists",
-  { email: Schema.String },
-) {}
+)("UserAlreadyExists", { email: Schema.String }) {}
 ```
 
 ### Contract errors
 
-HTTP-facing errors are _separate_ `Schema.TaggedError` classes declared as part of the public contract package, annotated with `HttpApiSchema.annotations({ status })` so that the API serializer assigns the correct HTTP status automatically.
+HTTP-facing errors are _separate_ `Schema.TaggedErrorClass` classes declared as part of the public contract package, annotated with `HttpApiSchema.annotations({ status })` so that the API serializer assigns the correct HTTP status automatically.
 
 ```ts
-export class UserAlreadyExistsError extends Schema.TaggedError<UserAlreadyExistsError>(
+export class UserAlreadyExistsError extends Schema.TaggedErrorClass<UserAlreadyExistsError>(
   "UserAlreadyExistsError",
 )(
   "UserAlreadyExistsError",
@@ -44,17 +43,15 @@ export class UserAlreadyExistsError extends Schema.TaggedError<UserAlreadyExists
 
 ### Translation at the boundary
 
-The interface layer (the HTTP handler) catches each domain error and re-throws as the contract's HTTP error variant via `Effect.catchTag`. This is the only place those two error sets meet:
+The interface layer (the HTTP endpoint) catches each domain error and re-throws as the contract's HTTP error variant via `Effect.catchTag`. This is the only place those two error sets meet:
 
 ```ts
-.handle("create", (request) =>
-  createUser(...).pipe(
-    Effect.catchTag("UserAlreadyExists", (e) =>
-      Effect.fail(new UserContract.UserAlreadyExistsError({
-        email: e.email,
-        message: `A user with email ${e.email} already exists`,
-      })),
-    ),
+createUser(...).pipe(
+  Effect.catchTag("UserAlreadyExists", (e) =>
+    new UserContract.UserAlreadyExistsError({
+      email: e.email,
+      message: `A user with email ${e.email} already exists`,
+    }),
   ),
 )
 ```
@@ -65,11 +62,11 @@ Defects (unrecoverable failures: connection errors at the wrong moment, schema d
 
 ## Consequences
 
-- No `Ok`/`Err` wrapping anywhere. Effect's error channel does the same job inline, with first-class composition (`Effect.catchTag`, `Effect.catchTags`, `Effect.mapError`).
+- No `Ok`/`Err` wrapping on use-case return values. Effect's error channel does the same job inline, with first-class composition (`Effect.catchTag`, `Effect.catchTags`, `Effect.mapError`). (The domain _does_ use `effect/Result` for aggregate-op outcomes — ADR-0003 — but that is a domain-internal value, not a use-case return wrapper.)
 - Two error classes per error case (domain + contract). Real boilerplate. Accepted in exchange for not leaking internal types into the public API: a domain error can be renamed without affecting any client.
 - HTTP serialization is automatic via `HttpApiSchema.annotations({ status })`. No exception interceptor or error mapper layer needed.
-- Exhaustive error handling at the boundary is checked by the type system. If a use case adds a new error variant to its `E` channel, the HTTP handler fails to compile until it catches the new tag.
-- The distinction between domain errors (typed in `E`) and defects (`Effect.die`) forces a deliberate choice every time an error case is added: is this a known business outcome or an indication that something's broken? That's the right question to be asking.
+- Exhaustive error handling at the boundary is checked by the type system. If a use case adds a new error variant to its `E` channel, the HTTP endpoint fails to compile until it catches the new tag.
+- The distinction between domain errors (typed in `E`) and defects (`Effect.die`) forces a deliberate choice every time an error case is added: is this a known business outcome or an indication that something's broken?
 
 ## Alternatives considered
 

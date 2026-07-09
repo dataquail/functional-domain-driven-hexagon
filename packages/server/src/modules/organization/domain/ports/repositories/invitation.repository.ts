@@ -24,7 +24,7 @@ import { type OrganizationId } from "@/platform/ids/organization-id.js";
 //
 // `findManyByOrganizationId` backs the pending-invitations list (the handler
 // filters/derives status). `findOneOpenByOrganizationIdAndEmail` backs the
-// invite-again-becomes-resend dedup: the `Open` qualifier (ADR-0024 permits a
+// invite-again-becomes-resend dedup: the `Open` qualifier (ADR-0005 permits a
 // qualifier in front of the `By<Key>` clause) says it returns only the OPEN
 // invitation — at most one open invite per (org, email) once dedup is in force —
 // i.e. the most recent open one (or null), so the command can reissue instead

@@ -58,7 +58,7 @@ export const UserAuthMiddlewareLive = Layer.effect(
     const authenticate = Effect.gen(function* () {
       const httpReq = yield* HttpServerRequest.HttpServerRequest;
 
-      // Bearer path (CLI / MCP / CI — ADR-0024): an `Authorization: Bearer`
+      // Bearer path (CLI / MCP / CI — ADR-0005): an `Authorization: Bearer`
       // token takes precedence over the cookie. We hash the presented token
       // here so the raw secret never travels through the bus or a span,
       // then resolve it to the same `CurrentUser` the cookie path produces.

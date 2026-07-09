@@ -9,7 +9,7 @@ export { MintApiTokenCommand } from "./commands/mint-api-token.command.js";
 export { RevokeApiTokenCommand } from "./commands/revoke-api-token.command.js";
 export { RevokeSessionCommand } from "./commands/revoke-session.command.js";
 export { SignInCommand } from "./commands/sign-in.command.js";
-// Dispatched by the auth middleware on the bearer path (ADR-0024).
+// Dispatched by the auth middleware on the bearer path (ADR-0005).
 export { TouchApiTokenCommand } from "./commands/touch-api-token.command.js";
 export { TouchSessionCommand } from "./commands/touch-session.command.js";
 export { ApiTokenExpired, ApiTokenNotFound, ApiTokenRevoked } from "./domain/api-token.errors.js";

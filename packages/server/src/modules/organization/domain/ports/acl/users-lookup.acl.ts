@@ -4,9 +4,9 @@ import type * as Effect from "effect/Effect";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 
-// ADR-0023 outbound port. The org module needs to enrich its
+// ADR-0022 outbound port. The org module needs to enrich its
 // membership rows with each user's email for the SA admin "list
-// members" surface, but ADR-0021 forbids cross-schema SQL. This port
+// members" surface, but ADR-0020 forbids cross-schema SQL. This port
 // generalizes the cross-module read so the org-module consumer
 // doesn't know about the user module's query vocabulary; only the
 // Live adapter in `infrastructure/acl/` does. The Live captures

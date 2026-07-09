@@ -6,7 +6,7 @@ import * as CustomHttpApiError from "../CustomHttpApiError.js";
 import { OrganizationId } from "../EntityIds.js";
 import { UserAuthMiddleware } from "../Policy.js";
 
-// CLI-facing organization surface (ADR-0024). Deliberately leaner than the
+// CLI-facing organization surface (ADR-0005). Deliberately leaner than the
 // GUI's `MyOrganization` — the CLI only needs to name an org and know
 // whether the caller administers it — so the two contracts diverge.
 export class CliOrganization extends Schema.Class<CliOrganization>("CliOrganization")({

@@ -1,13 +1,13 @@
-# ADR-0027: Dot-delimited stereotype filenames
+# ADR-0024: Dot-delimited stereotype filenames
 
 - Status: Accepted
 - Date: 2026-07-02
 
 ## Context and Problem Statement
 
-Stereotype signifiers had accreted in two incompatible shapes. The DDD stereotypes added deliberately over time — `*.root.ts`, `*.value-object.ts`, `*.domain-service.ts`, `*.endpoint.ts`, `*.util.ts` — used a **dot** to separate the concept from its stereotype. But the older stereotypes used a **dash**: `*-command.ts`, `*-query.ts`, `*-repository.ts`, `*-repository-live.ts`, `*-mapper.ts`, `*-id.ts`, `*-errors.ts`, `*-events.ts`, `*-event-adapter.ts`, `*-policies.ts`. Worse, command/query/event **handlers** carried _no_ signifier at all — `approve-device-grant.ts` was a handler only by process of elimination (it sat next to `approve-device-grant-command.ts`).
+A stereotype signifier in a filename must be machine-parseable — the layout and parity checkers (ADR-0008) key off it, and a reader (or an agent) should be able to name a file's role without a lookup table. A dash separator is ambiguous: in `api-token-repository.ts` the dashes between `api`, `token`, and `repository` are indistinguishable, so nothing marks where the concept ends and the role begins. Handlers were the worst case — with no signifier at all, a handler was a handler only by process of elimination (sitting next to a `*-command.ts`).
 
-The dash form is ambiguous: in `api-token-repository.ts` the dashes between `api`, `token`, and `repository` are indistinguishable, so nothing in the name marks where the concept ends and the role begins. A reader (or a tool, or an agent) can't parse the stereotype without a lookup table. The dot form makes the seam explicit and machine-parseable, and the two conventions coexisting in one tree was itself a smell the layout work (ADR-0025/0026) kept bumping into.
+A dot makes the seam explicit and machine-parseable, and matches the pre-existing `*.root.test.ts` / `*.endpoint.integration.test.ts` pattern where a stereotype and its qualifier are successive dots.
 
 ## Decision
 
@@ -47,14 +47,13 @@ The `platform/`, `common/`, and `test-utils/` trees remain deliberately **exclud
 
 ## Enforcement
 
-The layout checker (`lint:layout`) and test-parity checker (`lint:tests`) allowlists and subject globs are expressed in dot-form; the commands/queries pairing rule is now `<base>.handler.ts` ↔ `<base>.command.ts`/`.query.ts`. The dependency-cruiser `dumb-repository-live-no-app-collaborators` path regex and the eslint `dumb-repository-ports` files glob were retargeted from `-repository`/`-repository-live` to `.repository`/`.repository-live`. Because the naming _is_ the detector for both checkers, a file that reverts to a dash suffix fails the build.
+The `project-structure/folder-structure` layout and parity allowlists (ADR-0008) are expressed in dot-form; the commands/queries handler is `<base>.handler.ts` beside its `<base>.command.ts`/`.query.ts` schema. The dependency-cruiser `dumb-repository-live-no-app-collaborators` path regex and the eslint `dumb-repository-ports` files glob key on `.repository`/`.repository-live`. Because the naming _is_ the detector for these checkers, a file that uses a dash suffix for a stereotype fails the build.
 
 ## Consequences
 
 - Every file's role is legible from its name without a lookup table, and uniformly so — the dot always precedes the stereotype.
-- Handlers are now first-class stereotypes rather than the unmarked residue of a folder.
-- The change was a pure rename (~293 files) with no behavior change; correctness rests on typecheck + the test suite + the three checkers, all green.
-- Two hazards surfaced and were handled: (1) same-basename files that map to _different_ stereotypes (`organization-events` was both a domain `.events` and a trigger `.triggers`) — the import rewrite had to disambiguate by folder, not basename; (2) a module concept that also names an out-of-scope `platform/` file (`is-org-admin`) — the rewrite must not follow the basename into an untouched tree. Both are inherent to basename-keyed refactors and worth remembering for the next one.
+- Handlers are first-class stereotypes rather than the unmarked residue of a folder.
+- Same-basename files that map to _different_ stereotypes are disambiguated by folder, not basename (`organization.events` in `domain/` vs `organization.triggers` in `event-handlers/triggers/`).
 
 ## Alternatives considered
 
@@ -67,4 +66,5 @@ The layout checker (`lint:layout`) and test-parity checker (`lint:tests`) allowl
 
 - ADR-0002 (module layout) — the folder vocabulary these filenames populate.
 - ADR-0003 (aggregates) — the `.root`/`RootOps` stereotype the dot convention started from.
-- ADR-0025 / ADR-0026 (folder-layout enforcement, domain services & interface utils) — the checkers whose allowlists this decision converts to dot-form.
+- ADR-0008 (architecture enforcement) — the folder-structure checker whose allowlists are expressed in this dot-form.
+- ADR-0022 (adapter taxonomy) and ADR-0023 (domain services & interface utils) — stereotypes this vocabulary names.

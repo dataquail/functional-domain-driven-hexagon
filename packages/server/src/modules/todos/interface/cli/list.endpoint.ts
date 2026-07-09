@@ -14,7 +14,7 @@ import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/
 const toCli = (view: ListTodosTodoView): CliTodosContract.CliTodo =>
   new CliTodosContract.CliTodo({ id: view.id, title: view.title, completed: view.completed });
 
-// CLI adapter (ADR-0024): same membership gate + ListTodosQuery as the GUI's
+// CLI adapter (ADR-0005): same membership gate + ListTodosQuery as the GUI's
 // get endpoint, mapped to the CLI's own `CliTodo` shape.
 export const listEndpoint = Effect.fn("CliTodosLive.list")(function* (
   request: EndpointRequest<typeof CliTodosContract.Group, "list">,

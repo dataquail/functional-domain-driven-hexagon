@@ -16,7 +16,7 @@ const toCli = (view: FindMyOrganizationsView): CliOrganizationContract.CliOrgani
     isAdmin: view.isAdmin,
   });
 
-// CLI adapter (ADR-0024): same `FindMyOrganizationsQuery` as the GUI's
+// CLI adapter (ADR-0005): same `FindMyOrganizationsQuery` as the GUI's
 // findMine (filters by CurrentUser server-side), mapped to the leaner
 // `CliOrganization` shape.
 export const findMineEndpoint = Effect.fn("CliOrganizationLive.listMine")(function* (

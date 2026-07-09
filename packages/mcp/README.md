@@ -2,7 +2,7 @@
 
 A [Model Context Protocol](https://modelcontextprotocol.io) server (stdio transport) that exposes the application's CLI surface as tools, so an MCP client (Claude Desktop, IDE agents, etc.) can manage todos and organizations.
 
-It reuses `@org/api-client` over the same `CliApi` the CLI uses (ADR-0024), so MCP tool calls run the exact same authenticated requests as `org …` CLI commands.
+It reuses `@org/api-client` over the same `CliApi` the CLI uses (ADR-0010), so MCP tool calls run the exact same authenticated requests as `org …` CLI commands.
 
 ## Tools
 

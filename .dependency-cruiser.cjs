@@ -46,7 +46,7 @@ module.exports = {
       name: "foreign-barrel-only-from-outbound-adapter",
       severity: "error",
       comment:
-        "ADR-0023. Within a module, only cross-context ACL adapters (`infrastructure/acl/`) and inbound event adapters (`interface/events/`) may import another module's `index.ts` barrel. Everywhere else — commands, queries, event-handlers, domain, interface, and the third-party `infrastructure/clients/` adapters — depends on a consumer-owned port in `domain/ports/acl/`, whose adapter in `infrastructure/acl/` is the one place the foreign command/query/error vocabulary appears. Note `infrastructure/clients/` (adapters to true third-party systems) is deliberately NOT whitelisted: a client that reaches into a sibling module is a miscategorized ACL. This narrows (does not replace) `module-barrel-only-cross-module`: the barrel is still the only legal target; this restricts which consumer folders may aim at a *foreign* one. Same-module barrel imports and test files are exempt.",
+        "ADR-0022. Within a module, only cross-context ACL adapters (`infrastructure/acl/`) and inbound event adapters (`interface/events/`) may import another module's `index.ts` barrel. Everywhere else — commands, queries, event-handlers, domain, interface, and the third-party `infrastructure/clients/` adapters — depends on a consumer-owned port in `domain/ports/acl/`, whose adapter in `infrastructure/acl/` is the one place the foreign command/query/error vocabulary appears. Note `infrastructure/clients/` (adapters to true third-party systems) is deliberately NOT whitelisted: a client that reaches into a sibling module is a miscategorized ACL. This narrows (does not replace) `module-barrel-only-cross-module`: the barrel is still the only legal target; this restricts which consumer folders may aim at a *foreign* one. Same-module barrel imports and test files are exempt.",
       from: {
         // The whitelist is folder-type-based, so it uses `[^/]+` rather than
         // a `$1` backreference: a `$1` in `from.pathNot` does not resolve
@@ -99,7 +99,7 @@ module.exports = {
       name: "commands-isolation",
       severity: "error",
       comment:
-        "Module commands (write-side use cases) may only import: own module's domain and sibling commands, the DDD shared kernel ports under platform/ddd/ (CommandBus, QueryBus, DomainEventBus, UnitOfWork, DomainEvent, SpanAttributesExtractor), platform/ids/, and platform/notifications/ port files (e.g. Mailer Tag — same shape as platform/ddd/, just a different infrastructure surface). No platform/*-live.ts (Lives are wired at the composition root), no infrastructure, no interface, no queries, no event-handlers, no @org/contracts, no @org/database, and (ADR-0023) no other modules' barrels — cross-module calls go through a `domain/ports/acl/` port whose adapter lives in `infrastructure/acl/`. Test files excluded.",
+        "Module commands (write-side use cases) may only import: own module's domain and sibling commands, the DDD shared kernel ports under platform/ddd/ (CommandBus, QueryBus, DomainEventBus, UnitOfWork, DomainEvent, SpanAttributesExtractor), platform/ids/, and platform/notifications/ port files (e.g. Mailer Tag — same shape as platform/ddd/, just a different infrastructure surface). No platform/*-live.ts (Lives are wired at the composition root), no infrastructure, no interface, no queries, no event-handlers, no @org/contracts, no @org/database, and (ADR-0022) no other modules' barrels — cross-module calls go through a `domain/ports/acl/` port whose adapter lives in `infrastructure/acl/`. Test files excluded.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/commands/",
         pathNot: "\\.test\\.ts$",
@@ -164,7 +164,7 @@ module.exports = {
       name: "queries-isolation",
       severity: "error",
       comment:
-        "Module queries are read-side: may import own module's domain (for IDs/value objects) and sibling queries, the DDD shared kernel ports under platform/ddd/, platform/ids/, and @org/database for direct SQL projection. May NOT import platform/*-live.ts, own commands, event-handlers, infrastructure, interface, @org/contracts (wire types belong in interface), or (ADR-0023) other modules' barrels — cross-module reads go through a `domain/ports/acl/` port whose adapter lives in `infrastructure/acl/`. Test files excluded.",
+        "Module queries are read-side: may import own module's domain (for IDs/value objects) and sibling queries, the DDD shared kernel ports under platform/ddd/, platform/ids/, and @org/database for direct SQL projection. May NOT import platform/*-live.ts, own commands, event-handlers, infrastructure, interface, @org/contracts (wire types belong in interface), or (ADR-0022) other modules' barrels — cross-module reads go through a `domain/ports/acl/` port whose adapter lives in `infrastructure/acl/`. Test files excluded.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/queries/",
         pathNot: "\\.test\\.ts$",
@@ -249,7 +249,7 @@ module.exports = {
       name: "dumb-repository-live-no-app-collaborators",
       severity: "error",
       comment:
-        "ADR-0024: repository Lives are dumb persistence. They map an aggregate to/from rows and nothing more — they must not import the command/query/event-handler use cases, nor the application-tier buses and unit-of-work (CommandBus, QueryBus, DomainEventBus, IntegrationEventBus, UnitOfWork). Publishing events, dispatching commands, and owning the transaction boundary are the use case's job, not the repository's. A repository that reaches for these is smuggling business logic into persistence — move it to the aggregate or the use case. (The eslint `dumb-repository-ports` rule guards the port's method names; this guards what the Live collaborates with.)",
+        "ADR-0005: repository Lives are dumb persistence. They map an aggregate to/from rows and nothing more — they must not import the command/query/event-handler use cases, nor the application-tier buses and unit-of-work (CommandBus, QueryBus, DomainEventBus, IntegrationEventBus, UnitOfWork). Publishing events, dispatching commands, and owning the transaction boundary are the use case's job, not the repository's. A repository that reaches for these is smuggling business logic into persistence — move it to the aggregate or the use case. (The eslint `dumb-repository-ports` rule guards the port's method names; this guards what the Live collaborates with.)",
       from: {
         path: "^packages/server/src/modules/[^/]+/infrastructure/repositories/[^/]+\\.repository-live\\.ts$",
       },
@@ -264,7 +264,7 @@ module.exports = {
       name: "interface-util-files-are-leaves",
       severity: "error",
       comment:
-        "ADR-0026: an interface `*.util.ts` is a pure, leaf protocol/wire helper extracted from an endpoint for testability. It must not import ports (`domain/ports/`), use cases (`commands`/`queries`/`event-handlers`), infrastructure adapters, the application buses/unit-of-work (`platform/ddd/ports/`), or a module barrel. Orchestration and domain access belong in the endpoint or a use case, not a util — this keeps the util mechanical and denies it as a backdoor around the architecture. Test files excluded.",
+        "ADR-0023: an interface `*.util.ts` is a pure, leaf protocol/wire helper extracted from an endpoint for testability. It must not import ports (`domain/ports/`), use cases (`commands`/`queries`/`event-handlers`), infrastructure adapters, the application buses/unit-of-work (`platform/ddd/ports/`), or a module barrel. Orchestration and domain access belong in the endpoint or a use case, not a util — this keeps the util mechanical and denies it as a backdoor around the architecture. Test files excluded.",
       from: {
         path: "^packages/server/src/modules/[^/]+/interface/[^/]+/[^/]+\\.util\\.ts$",
         pathNot: "\\.test\\.ts$",
@@ -433,7 +433,7 @@ module.exports = {
       severity: "error",
       comment:
         "platform/ids/ is the minimal shared kernel for cross-module branded entity " +
-        "IDs (ADR-0020). It may only depend on `effect` from third-party packages. " +
+        "IDs (ADR-0002). It may only depend on `effect` from third-party packages. " +
         "Drizzle column types, validation libs, contract schemas, etc. do not belong " +
         "here — they leak module-internal shape into the shared kernel.",
       from: { path: "^packages/server/src/platform/ids/" },

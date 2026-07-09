@@ -5,7 +5,7 @@ import { TodosCliLive } from "./interface/cli/index.js";
 import { TodosLive } from "./interface/http/index.js";
 
 // Both inbound adapters (GUI HTTP + CLI) dispatch to the same bus; the
-// module wires both groups and the repository they share (ADR-0024).
+// module wires both groups and the repository they share (ADR-0005).
 export const TodosModuleLive = Layer.mergeAll(TodosLive, TodosCliLive).pipe(
   Layer.provide(TodosRepositoryLive),
 );

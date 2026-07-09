@@ -1,30 +1,18 @@
-# ADR-0022 — Per-route authorization DSL (PolicyRegistry + ResourceResolverRegistry)
+# ADR-0021 — Per-route authorization DSL (PolicyRegistry + ResourceResolverRegistry)
 
 Date: 2026-05-19
 Status: Accepted
 
 ## Context
 
-Prior to this ADR the codebase had:
-
-- A thin set of policy combinators (`policy`, `permission`, `withPolicy`,
-  `any`, `all`) in the contracts package that _no endpoint actually
-  used_. Removed by this ADR; replaced by the Authz DSL described
-  below.
-- A placeholder `PermissionsResolver` service in the platform layer
-  mapping a user's role flag to a `__test:*` permission set on
-  `CurrentUser`. Removed by this ADR; the super-admin flag now lives
-  directly on `CurrentUser` and is populated by a one-line DB lookup
-  inside the auth middleware.
-- A `UserAuthMiddleware` that authenticates the request and attaches
-  `CurrentUser` to the Effect environment, but performs no
-  authorization.
-
-That left every endpoint with the same authorization story:
-_"must be authenticated."_ The first endpoints to introduce a real
-privilege distinction — promote / demote to super-admin — needed a
-place to declare _who_ may invoke them. Two failure modes if we
-shipped without a DSL:
+The auth middleware (ADR-0016) authenticates a request and attaches
+`CurrentUser` — `userId` plus an `isSuperAdmin` flag populated by a
+one-line `users.role` lookup — to the Effect environment, but performs
+no authorization. Authentication alone leaves every endpoint with the
+same story: _"must be authenticated."_ Endpoints that introduce a real
+privilege distinction — promote / demote to super-admin — need a place
+to declare _who_ may invoke them. Two failure modes if we shipped
+without a DSL:
 
 1. **Inline `if (!currentUser.isSuperAdmin) ...` in every endpoint.**
    Each endpoint reinvents authz; testing per endpoint is mechanical;

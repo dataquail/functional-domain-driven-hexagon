@@ -1,7 +1,7 @@
 /* eslint-disable */
 /**
  * @fileoverview Repository ports are dumb persistence with a cardinality-explicit
- * vocabulary (ADR-0024). The `*RepositoryShape` type may only declare methods of
+ * vocabulary (ADR-0005). The `*RepositoryShape` type may only declare methods of
  * the form <verb><One|Many>, where verb is insert/update/delete/upsert, plus
  * findOne / findMany (each optionally suffixed with a `By<Key>` lookup). Every
  * operation names its size — one row or many — so callers read intent off the
@@ -53,7 +53,7 @@ export default {
     type: "problem",
     docs: {
       description:
-        "Repository ports may only declare CRUD-shaped methods; domain verbs belong on the aggregate (ADR-0024)",
+        "Repository ports may only declare CRUD-shaped methods; domain verbs belong on the aggregate (ADR-0005)",
       category: "Best Practices",
       recommended: true,
     },
@@ -73,7 +73,7 @@ export default {
         context.report({
           node: member.key,
           message:
-            `Repository port method "${name}" is not in the cardinality-explicit vocabulary — repositories are dumb persistence (ADR-0024). ` +
+            `Repository port method "${name}" is not in the cardinality-explicit vocabulary — repositories are dumb persistence (ADR-0005). ` +
             `Either it reads like a domain verb (put that behaviour on the aggregate and have the use case persist the result), ` +
             `or it omits the One/Many size (rename to e.g. ${name.startsWith("find") ? "findOne…/findMany…" : "…One/…Many"}). ` +
             `Allowed: ${describeAllowed()}.`,

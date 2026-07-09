@@ -1,4 +1,4 @@
-// Device-approval page (ADR-0024). The CLI's `verification_uri_complete`
+// Device-approval page (ADR-0005). The CLI's `verification_uri_complete`
 // links here with `?code=XXXX-XXXX`; the (authed) layout guard guarantees a
 // signed-in caller, so approving binds the grant to the right user. Pure
 // client interaction from here — the form posts to `/auth/device/approve`.

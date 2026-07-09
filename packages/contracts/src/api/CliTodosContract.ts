@@ -7,7 +7,7 @@ import { OrganizationId, TodoId } from "../EntityIds.js";
 import { UserAuthMiddleware } from "../Policy.js";
 
 // CLI-specific error, distinct from the GUI's `TodosContract.TodoNotFoundError`
-// so the two contracts evolve independently (ADR-0024).
+// so the two contracts evolve independently (ADR-0005).
 export class CliTodoNotFoundError extends Schema.TaggedErrorClass<CliTodoNotFoundError>(
   "CliTodoNotFoundError",
 )("CliTodoNotFoundError", { message: Schema.String }, { httpApiStatus: 404 }) {}

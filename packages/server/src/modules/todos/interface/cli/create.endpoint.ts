@@ -8,7 +8,7 @@ import { todoMemberCheck } from "@/modules/todos/policies/todos.policies.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
-// CLI adapter (ADR-0024): same flat membership gate + CreateTodoCommand as
+// CLI adapter (ADR-0005): same flat membership gate + CreateTodoCommand as
 // the GUI's create endpoint.
 export const createEndpoint = Effect.fn("CliTodosLive.create")(function* (
   request: EndpointRequest<typeof CliTodosContract.Group, "create">,

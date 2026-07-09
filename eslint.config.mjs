@@ -422,7 +422,7 @@ export default [
     },
   },
   {
-    // ADR-0024: repository ports are dumb persistence. The `*RepositoryShape`
+    // ADR-0005: repository ports are dumb persistence. The `*RepositoryShape`
     // type may only declare CRUD-shaped methods — domain verbs belong on the
     // aggregate. Constraining the port transitively keeps Live/Fake dumb,
     // since both must structurally satisfy it.
@@ -432,7 +432,7 @@ export default [
     },
   },
   {
-    // ADR-0021: each module owns its DB schema. App SQL must address its own
+    // ADR-0020: each module owns its DB schema. App SQL must address its own
     // schema only ("user".users, todos.todos, etc). Cross-schema reads belong
     // in the synchronous event-bus seam, not in repository SQL.
     // The plugin uses `/modules/<name>/` to derive the schema for a given file.
@@ -492,7 +492,7 @@ export default [
     },
   },
   {
-    // ADR-0006 / ADR-0022: the type-safe Command/Query buses and the policy
+    // ADR-0006 / ADR-0021: the type-safe Command/Query buses and the policy
     // infrastructure are extended by modules via TypeScript **declaration
     // merging**, which only works on `interface` (a merged `type` is a compile
     // error). `consistent-type-definitions` is a `--fix`-able warn that would

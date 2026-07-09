@@ -24,7 +24,7 @@ const AuthPrivateLive = HttpApiBuilder.group(Api, "authSession", (handlers) =>
   handlers.handle("me", meEndpoint),
 );
 
-// GUI-managed personal access tokens (ADR-0024). Mint/list/revoke are a
+// GUI-managed personal access tokens (ADR-0005). Mint/list/revoke are a
 // human-in-the-browser concern, so they live on the GUI surface alongside
 // `me`, all behind `UserAuthMiddleware`.
 const AuthTokensLive = HttpApiBuilder.group(Api, "authTokens", (handlers) =>
