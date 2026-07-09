@@ -1,5 +1,4 @@
 import * as Context from "effect/Context";
-import * as Schema from "effect/Schema";
 import * as HttpApiMiddleware from "effect/unstable/httpapi/HttpApiMiddleware";
 
 import * as CustomHttpApiError from "./CustomHttpApiError.js";
@@ -29,5 +28,13 @@ export class UserAuthMiddleware extends HttpApiMiddleware.Service<
   UserAuthMiddleware,
   { provides: CurrentUser }
 >()("UserAuthMiddleware", {
-  error: Schema.Union([CustomHttpApiError.Unauthorized, CustomHttpApiError.ServiceUnavailable]),
+  // Declare the errors as an ARRAY, not `Schema.Union([...])`. The
+  // middleware stores `error` as a `Set` of individual schemas
+  // (`getError` wraps a non-array in a one-element set), and
+  // `HttpApiBuilder` reads each member's `httpApiStatus` annotation to
+  // pick the response status. A single union schema has no status
+  // annotation on its own node, so every auth failure collapses to 500
+  // (the `getStatusError` fallback) — e.g. `/auth/me` returns 500 instead
+  // of 401. Passing the array keeps each error's status (401 / 503).
+  error: [CustomHttpApiError.Unauthorized, CustomHttpApiError.ServiceUnavailable],
 }) {}
