@@ -1,12 +1,6 @@
-import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import { type MembershipNotFound } from "@/modules/organization/domain/membership.errors.js";
-import { type MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership.repository.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
-import { type DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
@@ -29,11 +23,3 @@ export const removeMemberCommandSpanAttributes: SpanAttributesExtractor<RemoveMe
   "organization.id": cmd.organizationId,
   "actor.user.id": cmd.actorUserId,
 });
-
-// Raw handler effect — `MembershipRepository` is discharged by the wrap
-// in `organization-command-handlers.ts`.
-export type RemoveMemberOutput = Effect.Effect<
-  void,
-  MembershipNotFound | PersistenceUnavailable,
-  MembershipRepository | DomainEventBus | UnitOfWork
->;

@@ -1,9 +1,6 @@
-import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import { type RolesRepository } from "@/modules/role/domain/ports/repositories/roles.repository.js";
 import { type RoleValueObject } from "@/modules/role/domain/role.value-object.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
@@ -25,11 +22,3 @@ export type FindUserRolesResult = {
 export const findUserRolesQuerySpanAttributes: SpanAttributesExtractor<FindUserRolesQuery> = (
   query,
 ) => ({ "query.userId": query.userId });
-
-// Raw handler effect — `RolesRepository` is discharged by the wrap in
-// `role-query-handlers.ts`; the bus-registered output type lives there.
-export type FindUserRolesOutput = Effect.Effect<
-  FindUserRolesResult,
-  PersistenceUnavailable,
-  RolesRepository
->;

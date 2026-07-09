@@ -26,13 +26,13 @@ import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 // `RolesRepository` in R; the wraps below discharge that via
 // `RolesRepositoryLive`, leaving the platform-shared deps
 // (`Database`, `DomainEventBus`, `UnitOfWork`) in R for runtime swap.
-type GrantRoleBusOutput = Effect.Effect<
+type GrantRoleOutput = Effect.Effect<
   void,
   AlreadyHasRole | CannotPromoteSelf | PersistenceUnavailable,
   DomainEventBus | UnitOfWork | Database.Database
 >;
 
-type RevokeRoleBusOutput = Effect.Effect<
+type RevokeRoleOutput = Effect.Effect<
   void,
   DoesNotHaveRole | PersistenceUnavailable,
   DomainEventBus | UnitOfWork | Database.Database
@@ -42,22 +42,22 @@ declare module "@/platform/ddd/ports/command-bus.js" {
   interface CommandRegistry {
     GrantRoleCommand: {
       readonly command: GrantRoleCommand;
-      readonly output: GrantRoleBusOutput;
+      readonly output: GrantRoleOutput;
     };
     RevokeRoleCommand: {
       readonly command: RevokeRoleCommand;
-      readonly output: RevokeRoleBusOutput;
+      readonly output: RevokeRoleOutput;
     };
   }
 }
 
 export const roleCommandHandlers = commandHandlers({
   GrantRoleCommand: {
-    handle: (cmd): GrantRoleBusOutput => grantRole(cmd).pipe(Effect.provide(RolesRepositoryLive)),
+    handle: (cmd): GrantRoleOutput => grantRole(cmd).pipe(Effect.provide(RolesRepositoryLive)),
     spanAttributes: grantRoleCommandSpanAttributes,
   },
   RevokeRoleCommand: {
-    handle: (cmd): RevokeRoleBusOutput => revokeRole(cmd).pipe(Effect.provide(RolesRepositoryLive)),
+    handle: (cmd): RevokeRoleOutput => revokeRole(cmd).pipe(Effect.provide(RolesRepositoryLive)),
     spanAttributes: revokeRoleCommandSpanAttributes,
   },
 });

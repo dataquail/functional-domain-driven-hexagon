@@ -1,11 +1,7 @@
-import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 import { type ApiTokenRoot } from "@/modules/auth/domain/api-token.root.js";
-import { type ApiTokenRepository } from "@/modules/auth/domain/ports/repositories/api-token.repository.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
-import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // Mints a new API token for the caller. `expiresInDays` is resolved by the
@@ -36,11 +32,3 @@ export type MintApiTokenResult = {
   readonly apiToken: ApiTokenRoot;
   readonly token: string;
 };
-
-// Raw handler effect — `ApiTokenRepository` is discharged by the wrap in
-// `auth-command-handlers.ts`; `UnitOfWork` is reintroduced by `withUnitOfWork`.
-export type MintApiTokenOutput = Effect.Effect<
-  MintApiTokenResult,
-  PersistenceUnavailable,
-  ApiTokenRepository | UnitOfWork
->;

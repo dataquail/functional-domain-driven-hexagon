@@ -1,8 +1,5 @@
-import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import { type MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership.repository.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
@@ -25,12 +22,3 @@ export type FindMembershipResult = {
 export const findMembershipQuerySpanAttributes: SpanAttributesExtractor<FindMembershipQuery> = (
   query,
 ) => ({ "query.userId": query.userId, "query.organizationId": query.organizationId });
-
-// Raw handler effect — `MembershipRepository` is discharged by the wrap
-// in `organization-query-handlers.ts`; the bus-registered output type
-// lives there.
-export type FindMembershipOutput = Effect.Effect<
-  FindMembershipResult,
-  PersistenceUnavailable,
-  MembershipRepository
->;

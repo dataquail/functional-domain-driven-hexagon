@@ -70,48 +70,48 @@ import { type UserProvisioning } from "@/platform/ddd/ports/user-provisioning.js
 // (only the two repositories are); they're satisfied from the composition-
 // root context, so they remain in the bus output's residual R alongside
 // `Database`.
-type SignInBusOutput = Effect.Effect<
+type SignInOutput = Effect.Effect<
   SignInResult,
   CustomHttpApiError.Unauthorized | PersistenceUnavailable,
   Database.Database | UnitOfWork | UserProvisioning
 >;
 
-type TouchSessionBusOutput = Effect.Effect<void, never, Database.Database>;
+type TouchSessionOutput = Effect.Effect<void, never, Database.Database>;
 
-type RevokeSessionBusOutput = Effect.Effect<void, never, Database.Database>;
+type RevokeSessionOutput = Effect.Effect<void, never, Database.Database>;
 
 // Mint/revoke run in a unit of work; the repository wrap discharges
 // `ApiTokenRepository`, leaving `Database` (its dependency) + `UnitOfWork`.
-type MintApiTokenBusOutput = Effect.Effect<
+type MintApiTokenOutput = Effect.Effect<
   MintApiTokenResult,
   PersistenceUnavailable,
   Database.Database | UnitOfWork
 >;
 
-type RevokeApiTokenBusOutput = Effect.Effect<
+type RevokeApiTokenOutput = Effect.Effect<
   void,
   ApiTokenNotFound | PersistenceUnavailable,
   Database.Database | UnitOfWork
 >;
 
 // Fire-and-forget last-used stamp; swallows its own errors (no uow).
-type TouchApiTokenBusOutput = Effect.Effect<void, never, Database.Database>;
+type TouchApiTokenOutput = Effect.Effect<void, never, Database.Database>;
 
 // Device flow (ADR-0024). Start/approve run in a uow over the grant repo;
 // poll additionally mints (ApiToken repo), all in one transaction.
-type StartDeviceGrantBusOutput = Effect.Effect<
+type StartDeviceGrantOutput = Effect.Effect<
   StartDeviceGrantResult,
   PersistenceUnavailable,
   Database.Database | UnitOfWork
 >;
 
-type ApproveDeviceGrantBusOutput = Effect.Effect<
+type ApproveDeviceGrantOutput = Effect.Effect<
   void,
   DeviceGrantNotFound | DeviceGrantExpired | PersistenceUnavailable,
   Database.Database | UnitOfWork
 >;
 
-type PollDeviceGrantBusOutput = Effect.Effect<
+type PollDeviceGrantOutput = Effect.Effect<
   MintApiTokenResult,
   DeviceGrantNotFound | DeviceGrantExpired | DeviceGrantPending | PersistenceUnavailable,
   Database.Database | UnitOfWork
@@ -121,88 +121,88 @@ declare module "@/platform/ddd/ports/command-bus.js" {
   interface CommandRegistry {
     SignInCommand: {
       readonly command: SignInCommand;
-      readonly output: SignInBusOutput;
+      readonly output: SignInOutput;
     };
     TouchSessionCommand: {
       readonly command: TouchSessionCommand;
-      readonly output: TouchSessionBusOutput;
+      readonly output: TouchSessionOutput;
     };
     RevokeSessionCommand: {
       readonly command: RevokeSessionCommand;
-      readonly output: RevokeSessionBusOutput;
+      readonly output: RevokeSessionOutput;
     };
     MintApiTokenCommand: {
       readonly command: MintApiTokenCommand;
-      readonly output: MintApiTokenBusOutput;
+      readonly output: MintApiTokenOutput;
     };
     RevokeApiTokenCommand: {
       readonly command: RevokeApiTokenCommand;
-      readonly output: RevokeApiTokenBusOutput;
+      readonly output: RevokeApiTokenOutput;
     };
     TouchApiTokenCommand: {
       readonly command: TouchApiTokenCommand;
-      readonly output: TouchApiTokenBusOutput;
+      readonly output: TouchApiTokenOutput;
     };
     StartDeviceGrantCommand: {
       readonly command: StartDeviceGrantCommand;
-      readonly output: StartDeviceGrantBusOutput;
+      readonly output: StartDeviceGrantOutput;
     };
     ApproveDeviceGrantCommand: {
       readonly command: ApproveDeviceGrantCommand;
-      readonly output: ApproveDeviceGrantBusOutput;
+      readonly output: ApproveDeviceGrantOutput;
     };
     PollDeviceGrantCommand: {
       readonly command: PollDeviceGrantCommand;
-      readonly output: PollDeviceGrantBusOutput;
+      readonly output: PollDeviceGrantOutput;
     };
   }
 }
 
 export const authCommandHandlers = commandHandlers({
   SignInCommand: {
-    handle: (cmd): SignInBusOutput =>
+    handle: (cmd): SignInOutput =>
       signIn(cmd).pipe(
         Effect.provide(Layer.mergeAll(AuthIdentityRepositoryLive, SessionRepositoryLive)),
       ),
     spanAttributes: signInCommandSpanAttributes,
   },
   TouchSessionCommand: {
-    handle: (cmd): TouchSessionBusOutput =>
+    handle: (cmd): TouchSessionOutput =>
       touchSession(cmd).pipe(Effect.provide(SessionRepositoryLive)),
     spanAttributes: touchSessionCommandSpanAttributes,
   },
   RevokeSessionCommand: {
-    handle: (cmd): RevokeSessionBusOutput =>
+    handle: (cmd): RevokeSessionOutput =>
       revokeSession(cmd).pipe(Effect.provide(SessionRepositoryLive)),
     spanAttributes: revokeSessionCommandSpanAttributes,
   },
   MintApiTokenCommand: {
-    handle: (cmd): MintApiTokenBusOutput =>
+    handle: (cmd): MintApiTokenOutput =>
       mintApiToken(cmd).pipe(Effect.provide(ApiTokenRepositoryLive)),
     spanAttributes: mintApiTokenCommandSpanAttributes,
   },
   RevokeApiTokenCommand: {
-    handle: (cmd): RevokeApiTokenBusOutput =>
+    handle: (cmd): RevokeApiTokenOutput =>
       revokeApiToken(cmd).pipe(Effect.provide(ApiTokenRepositoryLive)),
     spanAttributes: revokeApiTokenCommandSpanAttributes,
   },
   TouchApiTokenCommand: {
-    handle: (cmd): TouchApiTokenBusOutput =>
+    handle: (cmd): TouchApiTokenOutput =>
       touchApiToken(cmd).pipe(Effect.provide(ApiTokenRepositoryLive)),
     spanAttributes: touchApiTokenCommandSpanAttributes,
   },
   StartDeviceGrantCommand: {
-    handle: (cmd): StartDeviceGrantBusOutput =>
+    handle: (cmd): StartDeviceGrantOutput =>
       startDeviceGrant(cmd).pipe(Effect.provide(DeviceGrantRepositoryLive)),
     spanAttributes: startDeviceGrantCommandSpanAttributes,
   },
   ApproveDeviceGrantCommand: {
-    handle: (cmd): ApproveDeviceGrantBusOutput =>
+    handle: (cmd): ApproveDeviceGrantOutput =>
       approveDeviceGrant(cmd).pipe(Effect.provide(DeviceGrantRepositoryLive)),
     spanAttributes: approveDeviceGrantCommandSpanAttributes,
   },
   PollDeviceGrantCommand: {
-    handle: (cmd): PollDeviceGrantBusOutput =>
+    handle: (cmd): PollDeviceGrantOutput =>
       pollDeviceGrant(cmd).pipe(
         Effect.provide(Layer.mergeAll(DeviceGrantRepositoryLive, ApiTokenRepositoryLive)),
       ),

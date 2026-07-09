@@ -1,9 +1,6 @@
-import { type Database } from "@org/database/index";
 import type * as DateTime from "effect/DateTime";
-import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 
@@ -37,18 +34,3 @@ export type FindUsersResult = {
   readonly pageSize: number;
   readonly total: number;
 };
-
-export type FindUsersOutput = Effect.Effect<
-  FindUsersResult,
-  PersistenceUnavailable,
-  Database.Database
->;
-
-declare module "@/platform/ddd/ports/query-bus.js" {
-  interface QueryRegistry {
-    FindUsersQuery: {
-      readonly query: FindUsersQuery;
-      readonly output: FindUsersOutput;
-    };
-  }
-}

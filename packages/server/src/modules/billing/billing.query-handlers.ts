@@ -11,7 +11,7 @@ import {
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { queryHandlers } from "@/platform/ddd/ports/query-bus.js";
 
-type FindSubscriptionByOrganizationBusOutput = Effect.Effect<
+type FindSubscriptionByOrganizationOutput = Effect.Effect<
   FindSubscriptionByOrganizationResult,
   PersistenceUnavailable,
   Database.Database
@@ -21,14 +21,14 @@ declare module "@/platform/ddd/ports/query-bus.js" {
   interface QueryRegistry {
     FindSubscriptionByOrganizationQuery: {
       readonly query: FindSubscriptionByOrganizationQuery;
-      readonly output: FindSubscriptionByOrganizationBusOutput;
+      readonly output: FindSubscriptionByOrganizationOutput;
     };
   }
 }
 
 export const billingQueryHandlers = queryHandlers({
   FindSubscriptionByOrganizationQuery: {
-    handle: (q): FindSubscriptionByOrganizationBusOutput =>
+    handle: (q): FindSubscriptionByOrganizationOutput =>
       findSubscriptionByOrganization(q).pipe(Effect.provide(SubscriptionRepositoryLive)),
     spanAttributes: findSubscriptionByOrganizationQuerySpanAttributes,
   },

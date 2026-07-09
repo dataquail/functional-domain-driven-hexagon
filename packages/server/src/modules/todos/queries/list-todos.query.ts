@@ -1,9 +1,6 @@
-import { type Database } from "@org/database/index";
-import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 import { type TodoId } from "@/modules/todos/domain/todo.id.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
@@ -25,18 +22,3 @@ export type ListTodosTodoView = {
 export type ListTodosResult = {
   readonly todos: ReadonlyArray<ListTodosTodoView>;
 };
-
-export type ListTodosOutput = Effect.Effect<
-  ListTodosResult,
-  PersistenceUnavailable,
-  Database.Database
->;
-
-declare module "@/platform/ddd/ports/query-bus.js" {
-  interface QueryRegistry {
-    ListTodosQuery: {
-      readonly query: ListTodosQuery;
-      readonly output: ListTodosOutput;
-    };
-  }
-}

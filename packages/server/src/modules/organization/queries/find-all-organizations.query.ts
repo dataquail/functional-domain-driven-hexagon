@@ -1,9 +1,6 @@
-import { type Database } from "@org/database/index";
 import type * as DateTime from "effect/DateTime";
-import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
@@ -40,18 +37,3 @@ export type FindAllOrganizationsResult = {
   readonly pageSize: number;
   readonly total: number;
 };
-
-export type FindAllOrganizationsOutput = Effect.Effect<
-  FindAllOrganizationsResult,
-  PersistenceUnavailable,
-  Database.Database
->;
-
-declare module "@/platform/ddd/ports/query-bus.js" {
-  interface QueryRegistry {
-    FindAllOrganizationsQuery: {
-      readonly query: FindAllOrganizationsQuery;
-      readonly output: FindAllOrganizationsOutput;
-    };
-  }
-}
