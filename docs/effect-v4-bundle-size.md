@@ -12,10 +12,10 @@ find packages/web/.next/static/chunks -name "*.js" -exec cat {} + | wc -c       
 find packages/web/.next/static/chunks -name "*.js" -exec cat {} + | gzip -c | wc -c  # gzipped
 ```
 
-| Branch                              | effect version  | Client JS (raw)     | Client JS (gzipped) |
-| ----------------------------------- | --------------- | ------------------- | ------------------- |
-| `main` (before)                     | `3.21.2`        | 1749.3 KB           | 510.1 KB            |
-| `chore/effect-v4-migration` (after) | `4.0.0-beta.94` | 1407.0 KB           | 418.8 KB            |
+| Branch                              | effect version  | Client JS (raw)        | Client JS (gzipped)   |
+| ----------------------------------- | --------------- | ---------------------- | --------------------- |
+| `main` (before)                     | `3.21.2`        | 1749.3 KB              | 510.1 KB              |
+| `chore/effect-v4-migration` (after) | `4.0.0-beta.94` | 1407.0 KB              | 418.8 KB              |
 | **delta**                           |                 | **−342.3 KB (−19.6%)** | **−91.3 KB (−17.9%)** |
 
 The v3 baseline was produced from a clean `next build` in a `git worktree` checkout of

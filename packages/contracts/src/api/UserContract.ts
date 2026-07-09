@@ -21,7 +21,9 @@ export class UserAlreadyExistsError extends Schema.TaggedErrorClass<UserAlreadyE
   { httpApiStatus: 409 },
 ) {}
 
-export class UserNotFoundError extends Schema.TaggedErrorClass<UserNotFoundError>("UserNotFoundError")(
+export class UserNotFoundError extends Schema.TaggedErrorClass<UserNotFoundError>(
+  "UserNotFoundError",
+)(
   "UserNotFoundError",
   {
     userId: UserId,
@@ -68,7 +70,10 @@ export class CreateUserResponse extends Schema.Class<CreateUserResponse>("Create
 
 export class FindUsersParams extends Schema.Class<FindUsersParams>("FindUsersParams")({
   page: Schema.NumberFromString.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(1)),
-  pageSize: Schema.NumberFromString.check(Schema.isInt(), Schema.isBetween({ minimum: 1, maximum: 100 })),
+  pageSize: Schema.NumberFromString.check(
+    Schema.isInt(),
+    Schema.isBetween({ minimum: 1, maximum: 100 }),
+  ),
 }) {}
 
 export class PaginatedUsers extends Schema.Class<PaginatedUsers>("PaginatedUsers")({

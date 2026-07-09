@@ -64,7 +64,9 @@ describe("createUser", () => {
       const exit = yield* Effect.exit(createUser(CreateUserCommand.make(baseCmd)));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof UserAlreadyExists, true);
       }
     }).pipe(Effect.provide(TestLayer)),

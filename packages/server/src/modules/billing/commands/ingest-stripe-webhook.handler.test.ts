@@ -72,7 +72,10 @@ describe("ingestStripeWebhook", () => {
       const exit = yield* Effect.exit(ingestStripeWebhook(cmd("evt_bad_sig", "wrong-signature")));
       ok(Exit.isFailure(exit));
       if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-        ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof InvalidWebhookSignature);
+        ok(
+          Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+            InvalidWebhookSignature,
+        );
       }
 
       const seen = yield* repo.findOneByStripeEventId("evt_bad_sig");

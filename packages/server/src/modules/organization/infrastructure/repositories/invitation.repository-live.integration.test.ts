@@ -88,7 +88,9 @@ suite("InvitationRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.findOneById(invitationId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof InvitationNotFound, true);
         }
       }).pipe(Effect.provide(TestLayer)),
@@ -101,7 +103,9 @@ suite("InvitationRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.findOneByToken("missing"));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof InvitationTokenNotFound, true);
         }
       }).pipe(Effect.provide(TestLayer)),
@@ -148,7 +152,9 @@ suite("InvitationRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.findOneByToken("tok-abc"));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof InvitationTokenNotFound, true);
         }
       }).pipe(Effect.provide(TestLayer)),
@@ -161,7 +167,9 @@ suite("InvitationRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.updateOne(seed()));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof InvitationNotFound, true);
         }
       }).pipe(Effect.provide(TestLayer)),

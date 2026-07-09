@@ -83,7 +83,10 @@ suite("DELETE /orgs/:orgId/members/:userId (integration, super-admin caller)", (
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          deepStrictEqual(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag, "MembershipNotFoundError");
+          deepStrictEqual(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag,
+            "MembershipNotFoundError",
+          );
         }
       }),
     );
@@ -100,7 +103,10 @@ suite("DELETE /orgs/:orgId/members/:userId (integration, super-admin caller)", (
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          deepStrictEqual(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag, "OrganizationNotFoundError");
+          deepStrictEqual(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag,
+            "OrganizationNotFoundError",
+          );
         }
       }),
     );
@@ -130,7 +136,10 @@ suite("DELETE /orgs/:orgId/members/:userId (integration, non-admin member caller
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              CustomHttpApiError.Forbidden,
+          );
         }
       }),
     );

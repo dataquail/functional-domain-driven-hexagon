@@ -26,26 +26,23 @@ import { logoutEndpoint } from "./logout.endpoint.js";
 // plumbing (which would otherwise demand a full process-env scenario).
 
 const codecFor = (secret: string): Layer.Layer<CookieCodec> =>
-  Layer.succeed(
-    CookieCodec,
-    {
-      sign: (id: string) => {
-        const sig = createHmac("sha256", secret).update(id).digest("base64url");
-        return `${id}.${sig}`;
-      },
-      verify: (raw: string) => {
-        const dot = raw.lastIndexOf(".");
-        if (dot <= 0) return null;
-        const id = raw.slice(0, dot);
-        const sig = raw.slice(dot + 1);
-        const expected = createHmac("sha256", secret).update(id).digest("base64url");
-        const a = Buffer.from(sig);
-        const b = Buffer.from(expected);
-        if (a.length !== b.length) return null;
-        return timingSafeEqual(a, b) ? id : null;
-      },
+  Layer.succeed(CookieCodec, {
+    sign: (id: string) => {
+      const sig = createHmac("sha256", secret).update(id).digest("base64url");
+      return `${id}.${sig}`;
     },
-  );
+    verify: (raw: string) => {
+      const dot = raw.lastIndexOf(".");
+      if (dot <= 0) return null;
+      const id = raw.slice(0, dot);
+      const sig = raw.slice(dot + 1);
+      const expected = createHmac("sha256", secret).update(id).digest("base64url");
+      const a = Buffer.from(sig);
+      const b = Buffer.from(expected);
+      if (a.length !== b.length) return null;
+      return timingSafeEqual(a, b) ? id : null;
+    },
+  });
 
 const withCodec = <A, E>(secret: string, eff: Effect.Effect<A, E, CookieCodec>): Promise<A> =>
   Effect.runPromise(Effect.provide(eff, codecFor(secret)));

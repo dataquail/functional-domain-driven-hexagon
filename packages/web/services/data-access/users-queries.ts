@@ -34,6 +34,4 @@ export const usersQuery = (variables: UsersListVariables) =>
 export const createUser = (payload: UserContract.CreateUserPayload) =>
   Effect.flatMap(ApiClient, ({ client }) =>
     client.user.create({ payload: new UserContract.CreateUserPayload(payload) }),
-  ).pipe(
-    Effect.tap(() => usersHelpers.invalidateAllQueries()),
-  );
+  ).pipe(Effect.tap(() => usersHelpers.invalidateAllQueries()));

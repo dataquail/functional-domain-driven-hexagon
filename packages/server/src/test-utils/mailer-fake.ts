@@ -11,9 +11,12 @@ import { Mailer, type MailMessage } from "@/platform/notifications/mailer.js";
 // Mirrors the `RecordingEventBus` / `RecordedEvents` pair shape — provide
 // `MailerFake` in the test layer, then yield `SentMails` to read what was
 // captured.
-export class SentMails extends Context.Service<SentMails, {
+export class SentMails extends Context.Service<
+  SentMails,
+  {
     readonly all: Effect.Effect<ReadonlyArray<MailMessage>>;
-  }>()("SentMails") {}
+  }
+>()("SentMails") {}
 
 export const MailerFake: Layer.Layer<Mailer | SentMails> = Layer.effectContext(
   Effect.gen(function* () {

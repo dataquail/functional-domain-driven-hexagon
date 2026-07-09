@@ -52,7 +52,9 @@ describe("ApiTokenRepositoryFake", () => {
       deepStrictEqual(Exit.isFailure(byId), true);
       deepStrictEqual(Exit.isFailure(byHash), true);
       if (Exit.isFailure(byId)) {
-        const error = Cause.hasFails(byId.cause) ? Cause.findErrorOption(byId.cause).pipe(Option.getOrThrow) : null;
+        const error = Cause.hasFails(byId.cause)
+          ? Cause.findErrorOption(byId.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof ApiTokenNotFound, true);
       }
     }).pipe(provide),

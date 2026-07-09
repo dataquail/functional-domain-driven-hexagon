@@ -74,7 +74,9 @@ describe("cancelSubscription", () => {
       );
       ok(Exit.isFailure(exit));
       if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-        ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof SubscriptionNotFound);
+        ok(
+          Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof SubscriptionNotFound,
+        );
       }
     }).pipe(Effect.provide(TestLayer)),
   );

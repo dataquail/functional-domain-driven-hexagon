@@ -22,7 +22,9 @@ import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const TestLayer = Layer.mergeAll(DeviceGrantRepositoryFake, IdentityUnitOfWork);
 const errorOf = (exit: Exit.Exit<unknown, unknown>) =>
-  Exit.isFailure(exit) && Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+  Exit.isFailure(exit) && Cause.hasFails(exit.cause)
+    ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+    : null;
 
 describe("approveDeviceGrant", () => {
   it.effect("binds a pending grant to the approving user", () =>

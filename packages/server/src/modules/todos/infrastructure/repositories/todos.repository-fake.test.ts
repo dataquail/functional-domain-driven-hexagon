@@ -47,7 +47,9 @@ describe("TodosRepositoryFake", () => {
         const exit = yield* Effect.exit(repo.findOneById(orgId, bobId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof TodoNotFound, true);
         }
       }).pipe(provide),
@@ -60,7 +62,9 @@ describe("TodosRepositoryFake", () => {
         const exit = yield* Effect.exit(repo.findOneById(otherOrgId, buyMilk.id));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof TodoNotFound, true);
         }
       }).pipe(provide),
@@ -90,7 +94,9 @@ describe("TodosRepositoryFake", () => {
         const exit = yield* Effect.exit(repo.updateOne(buyMilk));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof TodoNotFound, true);
         }
       }).pipe(provide),
@@ -114,7 +120,9 @@ describe("TodosRepositoryFake", () => {
         const exit = yield* Effect.exit(repo.deleteOne(orgId, bobId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof TodoNotFound, true);
         }
       }).pipe(provide),

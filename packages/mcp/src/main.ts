@@ -68,9 +68,7 @@ const callTool = <A>(body: (client: CliClient) => Effect.Effect<A, unknown, neve
     const value = yield* body(client);
     return { ok: true as const, value };
   }).pipe(
-    Effect.catch((error) =>
-      Effect.succeed({ ok: false as const, message: friendlyError(error) }),
-    ),
+    Effect.catch((error) => Effect.succeed({ ok: false as const, message: friendlyError(error) })),
   );
 
 const runtime = ManagedRuntime.make(Layer.mergeAll(NodeServices.layer, FetchHttpClient.layer));
@@ -142,7 +140,10 @@ server.registerTool(
   ({ orgId, title }) =>
     dispatch(
       callTool((client) =>
-        client.cliTodos.create({ params: { orgId: OrganizationId.make(orgId) }, payload: { title } }),
+        client.cliTodos.create({
+          params: { orgId: OrganizationId.make(orgId) },
+          payload: { title },
+        }),
       ),
       jsonResult,
     ),

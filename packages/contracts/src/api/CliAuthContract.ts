@@ -36,11 +36,7 @@ export class DeviceTokenResponse extends Schema.Class<DeviceTokenResponse>("Devi
 // CLI switches on (keep polling on pending; stop on the rest).
 export class DeviceAuthorizationPending extends Schema.TaggedErrorClass<DeviceAuthorizationPending>(
   "DeviceAuthorizationPending",
-)(
-  "DeviceAuthorizationPending",
-  { message: Schema.String },
-  { httpApiStatus: 400 },
-) {}
+)("DeviceAuthorizationPending", { message: Schema.String }, { httpApiStatus: 400 }) {}
 
 export class DeviceTokenExpired extends Schema.TaggedErrorClass<DeviceTokenExpired>(
   "DeviceTokenExpired",

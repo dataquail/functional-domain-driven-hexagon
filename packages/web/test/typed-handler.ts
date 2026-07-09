@@ -88,9 +88,7 @@ type ResolverEffect<E extends HttpApiEndpoint.Any> = Effect.Effect<
   HttpApiEndpoint.Error<E>["Type"]
 >;
 
-type Resolver<E extends HttpApiEndpoint.Any> = (
-  input: ResolverInput<E>,
-) => ResolverEffect<E>;
+type Resolver<E extends HttpApiEndpoint.Any> = (input: ResolverInput<E>) => ResolverEffect<E>;
 
 /**
  * Build an MSW handler for one endpoint. The URL is `TEST_API_BASE` +
@@ -177,7 +175,7 @@ export const typedHandler = <E extends HttpApiEndpoint.Any>(
     const variantSchema =
       typeof error.constructor === "function" && "ast" in (error.constructor as object)
         ? (error.constructor as unknown as Schema.Top)
-        : ([...ep.error][0]);
+        : [...ep.error][0];
     const status = getStatus(variantSchema.ast, 500);
     const encoded = await encodeUnknown(variantSchema, error);
     return HttpResponse.json(encoded as JsonValue, { status });

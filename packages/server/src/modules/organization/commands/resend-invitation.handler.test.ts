@@ -101,7 +101,9 @@ describe("resendInvitation", () => {
       const exit = yield* Effect.exit(resendInvitation(cmd));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof InvitationAlreadyRevoked, true);
       }
     }).pipe(Effect.provide(TestLayer)),
@@ -120,7 +122,9 @@ describe("resendInvitation", () => {
       const exit = yield* Effect.exit(resendInvitation(cmd));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof InvitationAlreadyAccepted, true);
       }
     }).pipe(Effect.provide(TestLayer)),

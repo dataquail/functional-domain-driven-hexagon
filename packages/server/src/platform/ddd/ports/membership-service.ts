@@ -24,4 +24,6 @@ export type MembershipServiceShape = {
   ) => Effect.Effect<boolean, PersistenceUnavailable>;
 };
 
-export class MembershipService extends Context.Service<MembershipService, MembershipServiceShape>()("MembershipService") {}
+export class MembershipService extends Context.Service<MembershipService, MembershipServiceShape>()(
+  "MembershipService",
+) {}

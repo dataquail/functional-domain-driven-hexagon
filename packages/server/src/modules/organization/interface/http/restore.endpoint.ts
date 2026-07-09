@@ -14,7 +14,9 @@ export const restoreEndpoint = (
   Effect.gen(function* () {
     yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.params.id);
     const commandBus = yield* CommandBus;
-    yield* commandBus.execute(RestoreOrganizationCommand.make({ organizationId: request.params.id }));
+    yield* commandBus.execute(
+      RestoreOrganizationCommand.make({ organizationId: request.params.id }),
+    );
   }).pipe(
     Effect.catchTag("NotFound", () =>
       Effect.fail(

@@ -32,4 +32,6 @@ export type UserProvisioningShape = {
   ) => Effect.Effect<UserId, PersistenceUnavailable | UserProvisioningConflict>;
 };
 
-export class UserProvisioning extends Context.Service<UserProvisioning, UserProvisioningShape>()("UserProvisioning") {}
+export class UserProvisioning extends Context.Service<UserProvisioning, UserProvisioningShape>()(
+  "UserProvisioning",
+) {}

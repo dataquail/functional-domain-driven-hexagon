@@ -98,7 +98,9 @@ describe("acceptInvitation", () => {
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof InvitationTokenNotFound, true);
       }
     }).pipe(Effect.provide(TestLayer)),
@@ -116,7 +118,9 @@ describe("acceptInvitation", () => {
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof InvitationAlreadyAccepted, true);
       }
     }).pipe(Effect.provide(TestLayer)),
@@ -134,7 +138,9 @@ describe("acceptInvitation", () => {
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof InvitationRevoked, true);
       }
     }).pipe(Effect.provide(TestLayer)),
@@ -161,7 +167,9 @@ describe("acceptInvitation", () => {
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof InvitationExpired, true);
       }
     }).pipe(Effect.provide(TestLayer)),
@@ -179,7 +187,9 @@ describe("acceptInvitation", () => {
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof SuperAdminCannotOwnOrganization, true);
       }
     }).pipe(

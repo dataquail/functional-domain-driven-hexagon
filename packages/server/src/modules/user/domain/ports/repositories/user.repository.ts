@@ -30,4 +30,6 @@ export type UserRepositoryShape = {
   ) => Effect.Effect<Option.Option<UserRoot>, PersistenceUnavailable>;
 };
 
-export class UserRepository extends Context.Service<UserRepository, UserRepositoryShape>()("UserRepository") {}
+export class UserRepository extends Context.Service<UserRepository, UserRepositoryShape>()(
+  "UserRepository",
+) {}

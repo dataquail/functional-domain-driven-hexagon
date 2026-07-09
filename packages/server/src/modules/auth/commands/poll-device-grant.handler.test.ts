@@ -34,7 +34,9 @@ const TestLayer = Layer.mergeAll(
 const poll = (deviceCode: string) =>
   pollDeviceGrant(PollDeviceGrantCommand.make({ deviceCode, tokenExpiresInDays: 90 }));
 const errorOf = (exit: Exit.Exit<unknown, unknown>) =>
-  Exit.isFailure(exit) && Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+  Exit.isFailure(exit) && Cause.hasFails(exit.cause)
+    ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+    : null;
 
 describe("pollDeviceGrant", () => {
   it.effect("fails DeviceGrantPending before approval", () =>

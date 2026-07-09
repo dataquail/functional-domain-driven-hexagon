@@ -2,11 +2,13 @@ import * as Schema from "effect/Schema";
 
 import { UserId } from "@/platform/ids/user-id.js";
 
-export class UserAlreadyExists extends Schema.TaggedErrorClass<UserAlreadyExists>("UserAlreadyExists")(
+export class UserAlreadyExists extends Schema.TaggedErrorClass<UserAlreadyExists>(
   "UserAlreadyExists",
-  { email: Schema.String },
-) {}
+)("UserAlreadyExists", { email: Schema.String }) {}
 
-export class UserNotFound extends Schema.TaggedErrorClass<UserNotFound>("UserNotFound")("UserNotFound", {
-  userId: UserId,
-}) {}
+export class UserNotFound extends Schema.TaggedErrorClass<UserNotFound>("UserNotFound")(
+  "UserNotFound",
+  {
+    userId: UserId,
+  },
+) {}

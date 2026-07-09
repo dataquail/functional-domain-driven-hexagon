@@ -95,7 +95,10 @@ suite("SubscriptionRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.insertOne(mk(subB, acme, "sub_b")));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof SubscriptionAlreadyExistsForOrganization);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              SubscriptionAlreadyExistsForOrganization,
+          );
         }
       }).pipe(Effect.provide(TestLayer)),
     );

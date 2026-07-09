@@ -13,9 +13,12 @@ import {
 // HTML or standing up the platform `Mailer`. Mirrors the
 // `RecordingEventBus`/`RecordedEvents` pair: provide `InvitationMailerFake`
 // in the test layer, then yield `SentInvitations` to read what was captured.
-export class SentInvitations extends Context.Service<SentInvitations, {
+export class SentInvitations extends Context.Service<
+  SentInvitations,
+  {
     readonly all: Effect.Effect<ReadonlyArray<SendInvitationInput>>;
-  }>()("SentInvitations") {}
+  }
+>()("SentInvitations") {}
 
 export const InvitationMailerFake: Layer.Layer<InvitationMailer | SentInvitations> =
   Layer.effectContext(

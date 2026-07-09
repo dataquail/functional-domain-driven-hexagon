@@ -16,10 +16,9 @@ export class InvitationTokenNotFound extends Schema.TaggedErrorClass<InvitationT
 )("InvitationTokenNotFound", {}) {}
 
 // Aggregate invariant: accept fails if `expiresAt < now`.
-export class InvitationExpired extends Schema.TaggedErrorClass<InvitationExpired>("InvitationExpired")(
+export class InvitationExpired extends Schema.TaggedErrorClass<InvitationExpired>(
   "InvitationExpired",
-  { invitationId: InvitationId },
-) {}
+)("InvitationExpired", { invitationId: InvitationId }) {}
 
 // Aggregate invariant: accept + revoke both fail if `acceptedAt` is set.
 export class InvitationAlreadyAccepted extends Schema.TaggedErrorClass<InvitationAlreadyAccepted>(
@@ -36,7 +35,6 @@ export class InvitationAlreadyRevoked extends Schema.TaggedErrorClass<Invitation
 // Re-exposed by `accept` since the invitation can't be consumed if the
 // invitee already had their accept rejected for this state — same tag
 // so callers can pattern-match consistently.
-export class InvitationRevoked extends Schema.TaggedErrorClass<InvitationRevoked>("InvitationRevoked")(
+export class InvitationRevoked extends Schema.TaggedErrorClass<InvitationRevoked>(
   "InvitationRevoked",
-  { invitationId: InvitationId },
-) {}
+)("InvitationRevoked", { invitationId: InvitationId }) {}

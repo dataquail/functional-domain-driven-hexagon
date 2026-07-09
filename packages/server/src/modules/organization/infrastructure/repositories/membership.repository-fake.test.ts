@@ -49,7 +49,9 @@ describe("MembershipRepositoryFake", () => {
       const exit = yield* Effect.exit(repo.findOneByUserIdAndOrgId(userId, organizationId));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof MembershipNotFound, true);
       }
     }).pipe(provide),
@@ -72,7 +74,9 @@ describe("MembershipRepositoryFake", () => {
       const exit = yield* Effect.exit(repo.deleteOne(userId, organizationId));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof MembershipNotFound, true);
       }
     }).pipe(provide),

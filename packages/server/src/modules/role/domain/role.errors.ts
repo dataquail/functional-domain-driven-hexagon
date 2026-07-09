@@ -23,7 +23,6 @@ export class DoesNotHaveRole extends Schema.TaggedErrorClass<DoesNotHaveRole>("D
 // target. Lives at the command boundary rather than on the aggregate
 // because the aggregate doesn't carry actor context. The HTTP endpoint
 // translates this to a 403 Forbidden.
-export class CannotPromoteSelf extends Schema.TaggedErrorClass<CannotPromoteSelf>("CannotPromoteSelf")(
+export class CannotPromoteSelf extends Schema.TaggedErrorClass<CannotPromoteSelf>(
   "CannotPromoteSelf",
-  { userId: UserId },
-) {}
+)("CannotPromoteSelf", { userId: UserId }) {}

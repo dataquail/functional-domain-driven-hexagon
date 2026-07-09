@@ -76,7 +76,9 @@ describe("grantOrganizationRole", () => {
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof CannotPromoteSelfInOrganization, true);
       }
     }).pipe(Effect.provide(TestLayer)),
@@ -94,7 +96,9 @@ describe("grantOrganizationRole", () => {
       const exit = yield* Effect.exit(grantOrganizationRole(cmd));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof AlreadyHasOrganizationRole, true);
       }
     }).pipe(Effect.provide(TestLayer)),

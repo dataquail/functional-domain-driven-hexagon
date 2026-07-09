@@ -63,7 +63,10 @@ describe("startSubscription", () => {
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof SubscriptionAlreadyExistsForOrganization);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              SubscriptionAlreadyExistsForOrganization,
+          );
         }
       }).pipe(Effect.provide(TestLayer)),
   );

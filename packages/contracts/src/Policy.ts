@@ -12,10 +12,13 @@ import { type UserId } from "./EntityIds.js";
 // by policies, not on this tag. Endpoints consume it via `yield*
 // CurrentUser`; per-route authz decisions go through
 // `Authz.hasPermissions(...)` in the server package.
-export class CurrentUser extends Context.Service<CurrentUser, {
+export class CurrentUser extends Context.Service<
+  CurrentUser,
+  {
     readonly sessionId: string;
     readonly userId: UserId;
-  }>()("CurrentUser") {}
+  }
+>()("CurrentUser") {}
 
 // The middleware fails with `Unauthorized` for normal auth failures
 // (missing/invalid cookie, expired session) and `ServiceUnavailable`

@@ -54,7 +54,9 @@ describe("UserRepositoryFake", () => {
         const exit = yield* Effect.exit(repo.insertOne(clashing));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof UserAlreadyExists, true);
           deepStrictEqual((error as UserAlreadyExists).email, alice.email);
         }
@@ -69,7 +71,9 @@ describe("UserRepositoryFake", () => {
         const exit = yield* Effect.exit(repo.findOneById(aliceId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof UserNotFound, true);
         }
       }).pipe(provide),
@@ -120,7 +124,9 @@ describe("UserRepositoryFake", () => {
         const exit = yield* Effect.exit(repo.updateOne(alice));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof UserNotFound, true);
         }
       }).pipe(provide),
@@ -144,7 +150,9 @@ describe("UserRepositoryFake", () => {
         const exit = yield* Effect.exit(repo.deleteOne(aliceId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof UserNotFound, true);
         }
       }).pipe(provide),

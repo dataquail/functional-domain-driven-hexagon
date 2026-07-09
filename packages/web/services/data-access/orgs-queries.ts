@@ -56,9 +56,7 @@ export const createOrganization = (payload: OrganizationContract.CreateOrganizat
     client.organization.create({
       payload: new OrganizationContract.CreateOrganizationPayload(payload),
     }),
-  ).pipe(
-    Effect.tap(() => myOrgsHelpers.invalidateAllQueries()),
-  );
+  ).pipe(Effect.tap(() => myOrgsHelpers.invalidateAllQueries()));
 
 // ─── softDelete / restore (admin) ────────────────────────────────────
 

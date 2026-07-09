@@ -158,7 +158,10 @@ memberSuite("GET /orgs/:orgId/members (integration, plain-member caller)", () =>
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              CustomHttpApiError.Forbidden,
+          );
         }
       }),
     );

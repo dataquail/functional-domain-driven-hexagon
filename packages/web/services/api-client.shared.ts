@@ -22,5 +22,7 @@ type ClientShape = HttpApiClient.ForApi<typeof DomainApi>;
 // `Context.Tag`'s class self-reference is the canonical Effect pattern; the
 // recursion is purely type-level (the class IS the tag identity).
 /* eslint-disable no-use-before-define */
-export class ApiClient extends Context.Service<ApiClient, { readonly client: ClientShape }>()("@org/web/ApiClient") {}
+export class ApiClient extends Context.Service<ApiClient, { readonly client: ClientShape }>()(
+  "@org/web/ApiClient",
+) {}
 /* eslint-enable no-use-before-define */

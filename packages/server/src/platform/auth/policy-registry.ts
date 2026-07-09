@@ -88,12 +88,15 @@ type AnyRegisteredCheck = (
   resource?: unknown,
 ) => Effect.Effect<boolean, PolicyErrors, PolicyDeps>;
 
-export class PolicyRegistry extends Context.Service<PolicyRegistry, {
+export class PolicyRegistry extends Context.Service<
+  PolicyRegistry,
+  {
     readonly get: <R extends PolicyResource, A extends ActionFor<R>>(
       resource: R,
       action: A,
     ) => AnyRegisteredCheck | undefined;
-  }>()("PolicyRegistry") {}
+  }
+>()("PolicyRegistry") {}
 
 // Compose an array of checks into a single AND-composed check.
 // Variadic across flat (1-arg) and resource-scoped (2-arg) shapes —

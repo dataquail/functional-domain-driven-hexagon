@@ -12,9 +12,7 @@ import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistenc
 export type EndpointRequest<
   G extends HttpApiGroup.Any,
   Name extends string,
-> = HttpApiEndpoint.Request<
-  HttpApiEndpoint.WithName<HttpApiGroup.Endpoints<G>, Name>
->;
+> = HttpApiEndpoint.Request<HttpApiEndpoint.WithName<HttpApiGroup.Endpoints<G>, Name>>;
 
 // Standard endpoint translation for the transient-store signal. Every
 // endpoint that calls a use case ends up with `PersistenceUnavailable`

@@ -48,7 +48,9 @@ describe("SessionRepositoryFake", () => {
       const exit = yield* Effect.exit(repo.findOneById(idMissing));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof SessionNotFound, true);
       }
     }).pipe(provide),
@@ -104,7 +106,9 @@ describe("SessionRepositoryFake", () => {
       const exit = yield* Effect.exit(repo.updateOne(makeSession(idMissing)));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof SessionNotFound, true);
       }
     }).pipe(provide),
@@ -121,7 +125,9 @@ describe("SessionRepositoryFake", () => {
       const exit = yield* Effect.exit(repo.updateOne(touched));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof SessionNotFound, true);
       }
     }).pipe(provide),

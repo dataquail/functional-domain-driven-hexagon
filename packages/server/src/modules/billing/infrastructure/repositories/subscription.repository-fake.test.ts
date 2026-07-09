@@ -50,7 +50,10 @@ describe("SubscriptionRepositoryFake.insert", () => {
       const exit = yield* Effect.exit(repo.insertOne(mk(subB, acme, "sub_y")));
       ok(Exit.isFailure(exit));
       if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-        ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof SubscriptionAlreadyExistsForOrganization);
+        ok(
+          Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+            SubscriptionAlreadyExistsForOrganization,
+        );
       }
     }).pipe(provide),
   );

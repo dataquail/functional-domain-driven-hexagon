@@ -27,4 +27,6 @@ export type InvitationMailerShape = {
   readonly send: (input: SendInvitationInput) => Effect.Effect<void>;
 };
 
-export class InvitationMailer extends Context.Service<InvitationMailer, InvitationMailerShape>()("@org/server/organization/InvitationMailer") {}
+export class InvitationMailer extends Context.Service<InvitationMailer, InvitationMailerShape>()(
+  "@org/server/organization/InvitationMailer",
+) {}

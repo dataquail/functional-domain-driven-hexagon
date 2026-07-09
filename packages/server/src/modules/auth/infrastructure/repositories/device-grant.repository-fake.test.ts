@@ -50,7 +50,9 @@ describe("DeviceGrantRepositoryFake", () => {
       const exit = yield* Effect.exit(repo.findOneByUserCode("ZZZZ-9999"));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof DeviceGrantNotFound, true);
       }
     }).pipe(provide),

@@ -32,11 +32,7 @@ export class OrganizationNotDeletedError extends Schema.TaggedErrorClass<Organiz
 
 export class InvitationNotFoundError extends Schema.TaggedErrorClass<InvitationNotFoundError>(
   "InvitationNotFoundError",
-)(
-  "InvitationNotFoundError",
-  { message: Schema.String },
-  { httpApiStatus: 404 },
-) {}
+)("InvitationNotFoundError", { message: Schema.String }, { httpApiStatus: 404 }) {}
 
 // 410 Gone covers the three terminal/expired states (accepted, revoked,
 // expired). Clients see one error variant; the `reason` discriminates
@@ -54,11 +50,7 @@ export class InvitationGoneError extends Schema.TaggedErrorClass<InvitationGoneE
 
 export class MembershipNotFoundError extends Schema.TaggedErrorClass<MembershipNotFoundError>(
   "MembershipNotFoundError",
-)(
-  "MembershipNotFoundError",
-  { message: Schema.String },
-  { httpApiStatus: 404 },
-) {}
+)("MembershipNotFoundError", { message: Schema.String }, { httpApiStatus: 404 }) {}
 
 // 409 Conflict: model invariant — super-admins are a separate user
 // type from regular users; they don't own or join organizations.
@@ -82,11 +74,7 @@ export class OrganizationRoleConflictError extends Schema.TaggedErrorClass<Organ
 
 export class SuperAdminCannotOwnOrganizationError extends Schema.TaggedErrorClass<SuperAdminCannotOwnOrganizationError>(
   "SuperAdminCannotOwnOrganizationError",
-)(
-  "SuperAdminCannotOwnOrganizationError",
-  { message: Schema.String },
-  { httpApiStatus: 409 },
-) {}
+)("SuperAdminCannotOwnOrganizationError", { message: Schema.String }, { httpApiStatus: 409 }) {}
 
 // ==========================================
 // Shapes
@@ -135,7 +123,10 @@ export class FindAllOrganizationsParams extends Schema.Class<FindAllOrganization
   "FindAllOrganizationsParams",
 )({
   page: Schema.NumberFromString.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(1)),
-  pageSize: Schema.NumberFromString.check(Schema.isInt(), Schema.isBetween({ minimum: 1, maximum: 100 })),
+  pageSize: Schema.NumberFromString.check(
+    Schema.isInt(),
+    Schema.isBetween({ minimum: 1, maximum: 100 }),
+  ),
   includeDeleted: Schema.optional(Schema.Literals(["true", "false"])),
 }) {}
 

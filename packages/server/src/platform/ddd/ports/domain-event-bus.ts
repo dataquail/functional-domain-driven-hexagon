@@ -31,7 +31,9 @@ export interface DomainEventBusShape {
   ) => Effect.Effect<void>;
 }
 
-export class DomainEventBus extends Context.Service<DomainEventBus, DomainEventBusShape>()("DomainEventBus") {}
+export class DomainEventBus extends Context.Service<DomainEventBus, DomainEventBusShape>()(
+  "DomainEventBus",
+) {}
 
 /**
  * Map from event tag to a span-attributes extractor. Built per-module

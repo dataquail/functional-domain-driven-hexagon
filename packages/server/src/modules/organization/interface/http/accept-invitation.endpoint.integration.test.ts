@@ -106,7 +106,10 @@ suite("POST /invitations/:token/accept (integration, member caller)", () => {
         const exit = yield* Effect.exit(client.invitations.accept({ params: { token: "nope" } }));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          deepStrictEqual(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag, "InvitationNotFoundError");
+          deepStrictEqual(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag,
+            "InvitationNotFoundError",
+          );
         }
       }),
     );
@@ -174,7 +177,10 @@ suite("POST /invitations/:token/accept (integration, super-admin caller)", () =>
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          deepStrictEqual(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag, "SuperAdminCannotOwnOrganizationError");
+          deepStrictEqual(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag,
+            "SuperAdminCannotOwnOrganizationError",
+          );
         }
       }),
     );

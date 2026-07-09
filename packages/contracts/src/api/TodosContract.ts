@@ -6,14 +6,16 @@ import * as CustomHttpApiError from "../CustomHttpApiError.js";
 import { OrganizationId, TodoId } from "../EntityIds.js";
 import { UserAuthMiddleware } from "../Policy.js";
 
-export class TodoNotFoundError extends Schema.TaggedErrorClass<TodoNotFoundError>("TodoNotFoundError")(
+export class TodoNotFoundError extends Schema.TaggedErrorClass<TodoNotFoundError>(
+  "TodoNotFoundError",
+)(
   "TodoNotFoundError",
   {
     message: Schema.String,
   },
   {
-      httpApiStatus: 404,
-    },
+    httpApiStatus: 404,
+  },
 ) {}
 
 export class Todo extends Schema.Class<Todo>("Todo")({

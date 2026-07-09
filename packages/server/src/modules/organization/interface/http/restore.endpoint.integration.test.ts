@@ -76,7 +76,10 @@ suite("POST /orgs/:id/restore (integration)", () => {
         const exit = yield* Effect.exit(client.organization.restore({ params: { id: orgId } }));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof OrganizationContract.OrganizationNotDeletedError);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              OrganizationContract.OrganizationNotDeletedError,
+          );
         }
       }),
     );
@@ -93,7 +96,10 @@ suite("POST /orgs/:id/restore (integration)", () => {
         );
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof OrganizationContract.OrganizationNotFoundError);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              OrganizationContract.OrganizationNotFoundError,
+          );
         }
       }),
     );
@@ -128,7 +134,10 @@ memberSuite("POST /orgs/:id/restore (integration, non-super-admin caller)", () =
         const exit = yield* Effect.exit(client.organization.restore({ params: { id: orgId } }));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof CustomHttpApiError.Forbidden);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              CustomHttpApiError.Forbidden,
+          );
         }
       }),
     );

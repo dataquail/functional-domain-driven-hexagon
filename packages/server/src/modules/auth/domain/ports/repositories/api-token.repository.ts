@@ -37,4 +37,7 @@ export type ApiTokenRepositoryShape = {
   ) => Effect.Effect<void, ApiTokenNotFound | PersistenceUnavailable>;
 };
 
-export class ApiTokenRepository extends Context.Service<ApiTokenRepository, ApiTokenRepositoryShape>()("ApiTokenRepository") {}
+export class ApiTokenRepository extends Context.Service<
+  ApiTokenRepository,
+  ApiTokenRepositoryShape
+>()("ApiTokenRepository") {}

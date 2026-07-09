@@ -69,7 +69,10 @@ suite("POST /orgs/:orgId/leave (integration)", () => {
         const exit = yield* Effect.exit(client.organization.leave({ params: { orgId: ORG_ID } }));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          deepStrictEqual(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag, "MembershipNotFoundError");
+          deepStrictEqual(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag,
+            "MembershipNotFoundError",
+          );
         }
       }),
     );

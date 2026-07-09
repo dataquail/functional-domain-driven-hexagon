@@ -74,7 +74,9 @@ suite("ApiTokenRepositoryLive (integration)", () => {
       const exit = yield* Effect.exit(repo.findOneByHash("missing"));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+        const error = Cause.hasFails(exit.cause)
+          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof ApiTokenNotFound, true);
       }
     }).pipe(Effect.provide(TestLayer)),

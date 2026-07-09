@@ -86,7 +86,9 @@ suite("DeviceGrantRepositoryLive (integration)", () => {
       const lookup = yield* Effect.exit(repo.findOneByCodeHash("dc-hash"));
       deepStrictEqual(Exit.isFailure(lookup), true);
       if (Exit.isFailure(lookup)) {
-        const error = Cause.hasFails(lookup.cause) ? Cause.findErrorOption(lookup.cause).pipe(Option.getOrThrow) : null;
+        const error = Cause.hasFails(lookup.cause)
+          ? Cause.findErrorOption(lookup.cause).pipe(Option.getOrThrow)
+          : null;
         deepStrictEqual(error instanceof DeviceGrantNotFound, true);
       }
       const second = yield* Effect.exit(repo.deleteOne(id));

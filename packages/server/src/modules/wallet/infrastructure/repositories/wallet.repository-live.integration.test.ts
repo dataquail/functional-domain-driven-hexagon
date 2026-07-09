@@ -85,7 +85,9 @@ suite("WalletRepositoryLive (integration)", () => {
           const exit = yield* Effect.exit(repo.insertOne(clashing));
           deepStrictEqual(Exit.isFailure(exit), true);
           if (Exit.isFailure(exit)) {
-            const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+            const error = Cause.hasFails(exit.cause)
+              ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+              : null;
             deepStrictEqual(error instanceof WalletAlreadyExistsForOrganization, true);
             deepStrictEqual(
               (error as WalletAlreadyExistsForOrganization).organizationId,

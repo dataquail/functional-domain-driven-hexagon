@@ -41,7 +41,10 @@ suite("WebhookEventRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.insertOne("evt_test_dup"));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof WebhookEventAlreadyRecorded);
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              WebhookEventAlreadyRecorded,
+          );
         }
       }).pipe(Effect.provide(TestLayer)),
   );
