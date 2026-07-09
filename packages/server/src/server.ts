@@ -220,6 +220,11 @@ const HttpLive = HttpRouter.serve(ApiLive, {
   // Applied to the whole server chain: log every request, then answer CORS
   // preflight (empty allow-list — see CORS note above).
   middleware: (httpApp) => corsMiddleware(HttpMiddleware.logger(httpApp)),
+  // `HttpRouter.serve` composes its OWN `HttpMiddleware.logger` unless told not
+  // to. Our `middleware` above already logs, so without this every request was
+  // logged twice ("Sent HTTP response" ×2, visible in traces). Own the logger
+  // here; let serve skip its default.
+  disableLogger: true,
 }).pipe(
   // The endpoints' per-request services, now unwrapped by `serve` into plain
   // requirements. The provide ORDER encodes the dependency graph (peers don't
