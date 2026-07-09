@@ -12,10 +12,8 @@ import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/
 // CLI adapter (ADR-0024): completing is an update-gated action. The `todo`
 // resolver scopes by (orgId, id), so a missing or cross-tenant todo is
 // NotFound → the CLI's CliTodoNotFoundError.
-export const completeEndpoint = (
-  request: EndpointRequest<typeof CliTodosContract.Group, "complete">,
-) =>
-  Effect.gen(function* () {
+export const completeEndpoint = Effect.fn("CliTodosLive.complete")(
+  function* (request: EndpointRequest<typeof CliTodosContract.Group, "complete">) {
     yield* Authz.hasPermissions(TodoResource, Actions.Update, {
       organizationId: request.params.orgId,
       todoId: request.params.id,
@@ -42,14 +40,13 @@ export const completeEndpoint = (
       title: todo.title,
       completed: todo.completed,
     });
-  }).pipe(
-    Effect.catchTag("TodoNotFound", (err) =>
-      Effect.fail(
-        new CliTodosContract.CliTodoNotFoundError({
-          message: `Todo with id ${err.todoId} not found`,
-        }),
-      ),
+  },
+  Effect.catchTag("TodoNotFound", (err) =>
+    Effect.fail(
+      new CliTodosContract.CliTodoNotFoundError({
+        message: `Todo with id ${err.todoId} not found`,
+      }),
     ),
-    recoverPersistenceUnavailable,
-    Effect.withSpan("CliTodosLive.complete"),
-  );
+  ),
+  recoverPersistenceUnavailable,
+);

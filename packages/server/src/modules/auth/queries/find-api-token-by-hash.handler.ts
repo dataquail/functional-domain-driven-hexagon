@@ -15,11 +15,11 @@ export const findApiTokenByHash = Effect.fn("findApiTokenByHash")(function* (
   const repo = yield* ApiTokenRepository;
   const token = yield* repo.findOneByHash(query.tokenHash);
   if (token.revokedAt !== null) {
-    return yield* Effect.fail(new ApiTokenRevoked());
+    return yield* new ApiTokenRevoked();
   }
   const now = yield* DateTime.now;
   if (ApiTokenRootOps.isExpired(token, now)) {
-    return yield* Effect.fail(new ApiTokenExpired());
+    return yield* new ApiTokenExpired();
   }
   return token;
 });

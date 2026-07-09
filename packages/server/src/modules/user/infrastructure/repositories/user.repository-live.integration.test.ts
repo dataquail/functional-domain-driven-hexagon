@@ -69,7 +69,9 @@ suite("UserRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.insertOne(clashing));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof UserAlreadyExists, true);
           deepStrictEqual((error as UserAlreadyExists).email, alice.email);
         }
@@ -84,7 +86,9 @@ suite("UserRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.findOneById(aliceId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof UserNotFound, true);
         }
       }).pipe(Effect.provide(TestLayer)),
@@ -138,7 +142,9 @@ suite("UserRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.updateOne(alice));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof UserNotFound, true);
         }
       }).pipe(Effect.provide(TestLayer)),
@@ -162,7 +168,9 @@ suite("UserRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.deleteOne(aliceId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof UserNotFound, true);
         }
       }).pipe(Effect.provide(TestLayer)),
@@ -190,13 +198,15 @@ suite("UserRepositoryLive (integration)", () => {
           db.transaction((tx) =>
             Effect.gen(function* () {
               yield* repo.insertOne(alice).pipe(Database.TransactionContext.provide(tx));
-              return yield* Effect.fail(new UserNotFound({ userId: bobId }));
+              return yield* new UserNotFound({ userId: bobId });
             }),
           ),
         );
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof UserNotFound, true);
         }
         const after = yield* repo.findOneByEmail(alice.email);

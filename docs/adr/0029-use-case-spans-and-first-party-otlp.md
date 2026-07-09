@@ -47,7 +47,13 @@ off the `@effect/opentelemetry` companion package onto Effect v4's first-party e
 
 The boundaries from ADR-0012 that produce a span are **retained unchanged**:
 
-- HTTP endpoints span each operation.
+- HTTP (and CLI) endpoints span each operation. In v4 the endpoint adapter
+  declares that boundary span the same way handlers do — `Effect.fn("<GroupLive.op>")`
+  wrapping the generator body — rather than a trailing `Effect.withSpan(...)`. This
+  is expression, not granularity: it is the _same_ per-operation boundary span
+  ADR-0012 mandated, now written in the idiom v4 makes canonical (and that
+  `@effect/language-service`'s `effectFnOpportunity` diagnostic steers toward). It
+  does not add a span below the endpoint boundary.
 - The command bus spans every dispatch: `command:<CommandTag>`.
 - The query bus spans every dispatch: `query:<QueryTag>`.
 - The domain event bus spans every event: `domainEvent:<EventTag>`.

@@ -29,9 +29,9 @@ export const startSubscription = Effect.fn("startSubscription")(function* (
   // double-charge if a caller retries POST after a network blip.
   const existing = yield* repo.findOneByOrganizationId(cmd.organizationId);
   if (Option.isSome(existing)) {
-    return yield* Effect.fail(
-      new SubscriptionAlreadyExistsForOrganization({ organizationId: cmd.organizationId }),
-    );
+    return yield* new SubscriptionAlreadyExistsForOrganization({
+      organizationId: cmd.organizationId,
+    });
   }
 
   const customer = yield* gateway.createCustomer({ organizationId: cmd.organizationId });

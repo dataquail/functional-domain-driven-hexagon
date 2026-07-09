@@ -32,10 +32,10 @@ export const pollDeviceGrant = Effect.fn("pollDeviceGrant")(function* (
     yield* grants
       .deleteOne(grant.id)
       .pipe(Effect.catchTag("DeviceGrantNotFound", () => Effect.void));
-    return yield* Effect.fail(new DeviceGrantExpired());
+    return yield* new DeviceGrantExpired();
   }
   if (grant.status === "pending" || grant.userId === null) {
-    return yield* Effect.fail(new DeviceGrantPending());
+    return yield* new DeviceGrantPending();
   }
 
   const minted = yield* mintApiTokenCore({

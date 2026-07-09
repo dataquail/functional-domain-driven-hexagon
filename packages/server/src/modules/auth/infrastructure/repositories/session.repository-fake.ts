@@ -35,7 +35,7 @@ export const SessionRepositoryFake = Layer.effect(
         const m = yield* Ref.get(store);
         const existing = HashMap.get(m, id);
         if (Option.isNone(existing) || existing.value.revokedAt !== null) {
-          return yield* Effect.fail(new SessionNotFound({ sessionId: id }));
+          return yield* new SessionNotFound({ sessionId: id });
         }
         const now = yield* DateTime.now;
         yield* Ref.update(store, (m2) =>
@@ -64,7 +64,7 @@ export const SessionRepositoryFake = Layer.effect(
         const m = yield* Ref.get(store);
         const existing = HashMap.get(m, session.id);
         if (Option.isNone(existing) || existing.value.revokedAt !== null) {
-          return yield* Effect.fail(new SessionNotFound({ sessionId: session.id }));
+          return yield* new SessionNotFound({ sessionId: session.id });
         }
         yield* Ref.update(store, (m2) =>
           HashMap.set(

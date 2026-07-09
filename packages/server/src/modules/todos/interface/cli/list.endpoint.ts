@@ -16,16 +16,17 @@ const toCli = (view: ListTodosTodoView): CliTodosContract.CliTodo =>
 
 // CLI adapter (ADR-0024): same membership gate + ListTodosQuery as the GUI's
 // get endpoint, mapped to the CLI's own `CliTodo` shape.
-export const listEndpoint = (request: EndpointRequest<typeof CliTodosContract.Group, "list">) =>
-  Effect.gen(function* () {
-    yield* Authz.hasPermissions(TodoCollectionResource, Actions.Read, request.params.orgId).pipe(
-      Effect.catchTag("NotFound", () =>
-        Effect.die("Unreachable: todoCollection resolver cannot surface NotFound"),
-      ),
-    );
-    const queryBus = yield* QueryBus;
-    const result = yield* queryBus.execute(
-      ListTodosQuery.make({ organizationId: request.params.orgId }),
-    );
-    return result.todos.map(toCli);
-  }).pipe(recoverPersistenceUnavailable, Effect.withSpan("CliTodosLive.list"));
+export const listEndpoint = Effect.fn("CliTodosLive.list")(function* (
+  request: EndpointRequest<typeof CliTodosContract.Group, "list">,
+) {
+  yield* Authz.hasPermissions(TodoCollectionResource, Actions.Read, request.params.orgId).pipe(
+    Effect.catchTag("NotFound", () =>
+      Effect.die("Unreachable: todoCollection resolver cannot surface NotFound"),
+    ),
+  );
+  const queryBus = yield* QueryBus;
+  const result = yield* queryBus.execute(
+    ListTodosQuery.make({ organizationId: request.params.orgId }),
+  );
+  return result.todos.map(toCli);
+}, recoverPersistenceUnavailable);

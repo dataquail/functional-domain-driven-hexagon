@@ -1,5 +1,6 @@
 import { type Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 
 import {
   type AcceptInvitationCommand,
@@ -227,9 +228,13 @@ export const organizationCommandHandlers = commandHandlers({
   CreateOrganizationCommand: {
     handle: (cmd): CreateOrganizationBusOutput =>
       createOrganization(cmd).pipe(
-        Effect.provide(OrganizationRepositoryLive),
-        Effect.provide(MembershipRepositoryLive),
-        Effect.provide(OrganizationRolesRepositoryLive),
+        Effect.provide(
+          Layer.mergeAll(
+            OrganizationRepositoryLive,
+            MembershipRepositoryLive,
+            OrganizationRolesRepositoryLive,
+          ),
+        ),
       ),
     spanAttributes: createOrganizationCommandSpanAttributes,
   },
@@ -261,8 +266,7 @@ export const organizationCommandHandlers = commandHandlers({
   AcceptInvitationCommand: {
     handle: (cmd): AcceptInvitationBusOutput =>
       acceptInvitation(cmd).pipe(
-        Effect.provide(InvitationRepositoryLive),
-        Effect.provide(MembershipRepositoryLive),
+        Effect.provide(Layer.mergeAll(InvitationRepositoryLive, MembershipRepositoryLive)),
       ),
     spanAttributes: acceptInvitationCommandSpanAttributes,
   },

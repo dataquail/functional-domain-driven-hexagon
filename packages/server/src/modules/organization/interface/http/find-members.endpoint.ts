@@ -16,35 +16,34 @@ import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/
 // `isAdmin` flag. The cross-module orchestration (membership +
 // `UsersLookup` + roles) lives inside the query handler; this endpoint
 // stays a thin dispatch — outbound ports are private to use cases.
-export const findMembersEndpoint = (
+export const findMembersEndpoint = Effect.fn("OrganizationLive.findMembers")(function* (
   request: EndpointRequest<typeof OrganizationContract.Group, "findMembers">,
-) =>
-  Effect.gen(function* () {
-    yield* Authz.hasPermissions(OrganizationResource, Actions.Read, request.params.orgId).pipe(
-      Effect.catchTag("NotFound", () =>
-        Effect.fail(
-          new OrganizationContract.OrganizationNotFoundError({
-            organizationId: request.params.orgId,
-            message: `Organization ${request.params.orgId} not found`,
-          }),
-        ),
+) {
+  yield* Authz.hasPermissions(OrganizationResource, Actions.Read, request.params.orgId).pipe(
+    Effect.catchTag("NotFound", () =>
+      Effect.fail(
+        new OrganizationContract.OrganizationNotFoundError({
+          organizationId: request.params.orgId,
+          message: `Organization ${request.params.orgId} not found`,
+        }),
       ),
-    );
+    ),
+  );
 
-    const queryBus = yield* QueryBus;
-    const members = yield* queryBus.execute(
-      FindOrganizationMembershipsQuery.make({ organizationId: request.params.orgId }),
-    );
+  const queryBus = yield* QueryBus;
+  const members = yield* queryBus.execute(
+    FindOrganizationMembershipsQuery.make({ organizationId: request.params.orgId }),
+  );
 
-    return new OrganizationContract.OrganizationMembersResponse({
-      members: members.map(
-        (m) =>
-          new OrganizationContract.OrganizationMember({
-            userId: m.userId,
-            email: m.email,
-            joinedAt: m.joinedAt,
-            isAdmin: m.isAdmin,
-          }),
-      ),
-    });
-  }).pipe(recoverPersistenceUnavailable, Effect.withSpan("OrganizationLive.findMembers"));
+  return new OrganizationContract.OrganizationMembersResponse({
+    members: members.map(
+      (m) =>
+        new OrganizationContract.OrganizationMember({
+          userId: m.userId,
+          email: m.email,
+          joinedAt: m.joinedAt,
+          isAdmin: m.isAdmin,
+        }),
+    ),
+  });
+}, recoverPersistenceUnavailable);

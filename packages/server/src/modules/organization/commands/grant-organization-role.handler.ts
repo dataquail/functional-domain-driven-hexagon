@@ -14,12 +14,10 @@ export const grantOrganizationRole = Effect.fn("grantOrganizationRole")(function
   // Mirrors `CannotPromoteSelf` in the role module — prevents
   // self-elevation regardless of the policy layer's decision.
   if (cmd.actorUserId === cmd.userId) {
-    return yield* Effect.fail(
-      new CannotPromoteSelfInOrganization({
-        userId: cmd.userId,
-        organizationId: cmd.organizationId,
-      }),
-    );
+    return yield* new CannotPromoteSelfInOrganization({
+      userId: cmd.userId,
+      organizationId: cmd.organizationId,
+    });
   }
 
   const repo = yield* OrganizationRolesRepository;

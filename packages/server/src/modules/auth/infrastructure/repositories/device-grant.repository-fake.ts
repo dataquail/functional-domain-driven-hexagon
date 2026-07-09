@@ -34,7 +34,7 @@ export const DeviceGrantRepositoryFake = Layer.effect(
       Effect.gen(function* () {
         const m = yield* Ref.get(store);
         if (Option.isNone(HashMap.get(m, grant.id))) {
-          return yield* Effect.fail(new DeviceGrantNotFound());
+          return yield* new DeviceGrantNotFound();
         }
         yield* Ref.update(store, HashMap.set(grant.id, grant));
       });
@@ -43,7 +43,7 @@ export const DeviceGrantRepositoryFake = Layer.effect(
       Effect.gen(function* () {
         const m = yield* Ref.get(store);
         if (Option.isNone(HashMap.get(m, id))) {
-          return yield* Effect.fail(new DeviceGrantNotFound());
+          return yield* new DeviceGrantNotFound();
         }
         yield* Ref.update(store, HashMap.remove(id));
       });

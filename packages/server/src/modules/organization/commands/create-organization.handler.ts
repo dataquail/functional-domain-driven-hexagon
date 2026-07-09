@@ -41,7 +41,7 @@ export const createOrganization = Effect.fn("createOrganization")(function* (
   const roles = yield* RoleService;
   const perms = yield* roles.findPlatformPermissions(cmd.actorUserId);
   if (perms.roles.includes("super_admin")) {
-    return yield* Effect.fail(new SuperAdminCannotOwnOrganization({ userId: cmd.actorUserId }));
+    return yield* new SuperAdminCannotOwnOrganization({ userId: cmd.actorUserId });
   }
 
   const orgRepo = yield* OrganizationRepository;

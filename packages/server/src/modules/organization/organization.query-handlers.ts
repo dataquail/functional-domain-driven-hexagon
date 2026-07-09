@@ -1,5 +1,6 @@
 import { type Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 
 import { UsersLookupLive } from "@/modules/organization/infrastructure/acl/users-lookup.acl-live.js";
 import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/repositories/invitation.repository-live.js";
@@ -112,9 +113,13 @@ export const organizationQueryHandlers = queryHandlers({
   FindOrganizationMembershipsQuery: {
     handle: (q): FindOrganizationMembershipsBusOutput =>
       findOrganizationMemberships(q).pipe(
-        Effect.provide(MembershipRepositoryLive),
-        Effect.provide(UsersLookupLive),
-        Effect.provide(OrganizationRolesRepositoryLive),
+        Effect.provide(
+          Layer.mergeAll(
+            MembershipRepositoryLive,
+            UsersLookupLive,
+            OrganizationRolesRepositoryLive,
+          ),
+        ),
       ),
     spanAttributes: findOrganizationMembershipsQuerySpanAttributes,
   },

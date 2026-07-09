@@ -64,8 +64,9 @@ describe("InvitationMailerLive", () => {
       ok(mail.html.includes(expectedUrl), "html should contain the accept URL");
       ok(mail.text.includes(expectedUrl), "text should contain the accept URL");
     }).pipe(
-      Effect.provide(InvitationMailerLive.pipe(Layer.provideMerge(MailerFake))),
-      Effect.provide(EnvVarsTest),
+      Effect.provide(
+        InvitationMailerLive.pipe(Layer.provideMerge(MailerFake), Layer.provide(EnvVarsTest)),
+      ),
     ),
   );
 
@@ -92,9 +93,9 @@ describe("InvitationMailerLive", () => {
               }),
             ),
           ),
+          Layer.provide(EnvVarsTest),
         ),
       ),
-      Effect.provide(EnvVarsTest),
     ),
   );
 });

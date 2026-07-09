@@ -51,7 +51,7 @@ const sign = (payload: string): string =>
 
 // Return type inferred: EnvVarsTest adds ConfigError to the error channel.
 const provide = <A, E>(effect: Effect.Effect<A, E, BillingGateway>) =>
-  effect.pipe(Effect.provide(BillingGatewayLive), Effect.provide(EnvVarsTest));
+  effect.pipe(Effect.provide(BillingGatewayLive.pipe(Layer.provideMerge(EnvVarsTest))));
 
 describe("BillingGatewayLive.verifyAndParseWebhook", () => {
   it.effect("rejects a payload whose signature doesn't verify as InvalidWebhookSignature", () =>

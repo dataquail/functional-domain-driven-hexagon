@@ -9,10 +9,8 @@ import * as Authz from "@/platform/auth/authz.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
-export const cancelSubscriptionEndpoint = (
-  request: EndpointRequest<typeof BillingContract.PrivateGroup, "cancelSubscription">,
-) =>
-  Effect.gen(function* () {
+export const cancelSubscriptionEndpoint = Effect.fn("BillingLive.cancelSubscription")(
+  function* (request: EndpointRequest<typeof BillingContract.PrivateGroup, "cancelSubscription">) {
     yield* Authz.hasPermissions(BillingResource, Actions.Update, request.params.orgId).pipe(
       Effect.catchTag("NotFound", () =>
         Effect.die("Unreachable: billing resolver cannot surface NotFound"),
@@ -28,18 +26,17 @@ export const cancelSubscriptionEndpoint = (
       status: subscription.status,
       currentPeriodEnd: subscription.currentPeriodEnd,
     });
-  }).pipe(
-    Effect.catchTag("SubscriptionNotFound", (err) =>
-      Effect.fail(
-        new BillingContract.SubscriptionNotFoundError({
-          organizationId: err.organizationId,
-          message: `No subscription found for organization ${err.organizationId}`,
-        }),
-      ),
+  },
+  Effect.catchTag("SubscriptionNotFound", (err) =>
+    Effect.fail(
+      new BillingContract.SubscriptionNotFoundError({
+        organizationId: err.organizationId,
+        message: `No subscription found for organization ${err.organizationId}`,
+      }),
     ),
-    Effect.catchTag("BillingGatewayUnavailable", (err) =>
-      Effect.fail(new CustomHttpApiError.BadGateway({ message: err.message })),
-    ),
-    recoverPersistenceUnavailable,
-    Effect.withSpan("BillingLive.cancelSubscription"),
-  );
+  ),
+  Effect.catchTag("BillingGatewayUnavailable", (err) =>
+    Effect.fail(new CustomHttpApiError.BadGateway({ message: err.message })),
+  ),
+  recoverPersistenceUnavailable,
+);

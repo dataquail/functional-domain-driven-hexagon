@@ -23,14 +23,13 @@ const toContract = (view: FindMyOrganizationsView): OrganizationContract.MyOrgan
 // `CurrentUser.userId` server-side, so the caller can only see their
 // own memberships. Used by the frontend to resolve "which org am I in"
 // until the route reshape (Phase 8) puts orgId in the URL.
-export const findMineEndpoint = (
+export const findMineEndpoint = Effect.fn("OrganizationLive.findMine")(function* (
   _request: EndpointRequest<typeof OrganizationContract.Group, "findMine">,
-) =>
-  Effect.gen(function* () {
-    const currentUser = yield* CurrentUser;
-    const queryBus = yield* QueryBus;
-    const result = yield* queryBus.execute(
-      FindMyOrganizationsQuery.make({ userId: currentUser.userId }),
-    );
-    return result.organizations.map(toContract);
-  }).pipe(recoverPersistenceUnavailable, Effect.withSpan("OrganizationLive.findMine"));
+) {
+  const currentUser = yield* CurrentUser;
+  const queryBus = yield* QueryBus;
+  const result = yield* queryBus.execute(
+    FindMyOrganizationsQuery.make({ userId: currentUser.userId }),
+  );
+  return result.organizations.map(toContract);
+}, recoverPersistenceUnavailable);

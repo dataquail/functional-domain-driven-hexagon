@@ -25,7 +25,7 @@ export const cancelSubscription = Effect.fn("cancelSubscription")(function* (
 
   const found = yield* repo.findOneByOrganizationId(cmd.organizationId);
   if (Option.isNone(found)) {
-    return yield* Effect.fail(new SubscriptionNotFound({ organizationId: cmd.organizationId }));
+    return yield* new SubscriptionNotFound({ organizationId: cmd.organizationId });
   }
   const existing = found.value;
 

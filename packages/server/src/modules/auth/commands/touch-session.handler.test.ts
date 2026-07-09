@@ -63,9 +63,7 @@ describe("touchSession", () => {
   );
 
   it.effect("does not fail when the session does not exist (benign race)", () =>
-    Effect.gen(function* () {
-      yield* touchSession(cmd);
-    }).pipe(Effect.provide(SessionRepositoryFake)),
+    touchSession(cmd).pipe(Effect.provide(SessionRepositoryFake)),
   );
 
   it.live("does not advance a revoked session", () =>

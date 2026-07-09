@@ -1,6 +1,7 @@
 import type * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { type Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 
 import {
   type ApproveDeviceGrantCommand,
@@ -161,8 +162,7 @@ export const authCommandHandlers = commandHandlers({
   SignInCommand: {
     handle: (cmd): SignInBusOutput =>
       signIn(cmd).pipe(
-        Effect.provide(AuthIdentityRepositoryLive),
-        Effect.provide(SessionRepositoryLive),
+        Effect.provide(Layer.mergeAll(AuthIdentityRepositoryLive, SessionRepositoryLive)),
       ),
     spanAttributes: signInCommandSpanAttributes,
   },
@@ -204,8 +204,7 @@ export const authCommandHandlers = commandHandlers({
   PollDeviceGrantCommand: {
     handle: (cmd): PollDeviceGrantBusOutput =>
       pollDeviceGrant(cmd).pipe(
-        Effect.provide(DeviceGrantRepositoryLive),
-        Effect.provide(ApiTokenRepositoryLive),
+        Effect.provide(Layer.mergeAll(DeviceGrantRepositoryLive, ApiTokenRepositoryLive)),
       ),
     spanAttributes: pollDeviceGrantCommandSpanAttributes,
   },

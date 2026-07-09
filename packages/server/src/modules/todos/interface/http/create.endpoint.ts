@@ -8,32 +8,33 @@ import { todoMemberCheck } from "@/modules/todos/policies/todos.policies.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
-export const createEndpoint = (request: EndpointRequest<typeof TodosContract.Group, "create">) =>
-  Effect.gen(function* () {
-    const currentUser = yield* CurrentUser;
-    // Create is a flat action — the Authz DSL forbids an id on Create,
-    // and a flat check can't see the orgId — so run the same composed
-    // membership gate directly against the path orgId (defined once in
-    // `todos-policies.ts` as `todoMemberCheck`).
-    const allowed = yield* todoMemberCheck(currentUser, {
+export const createEndpoint = Effect.fn("TodosLive.create")(function* (
+  request: EndpointRequest<typeof TodosContract.Group, "create">,
+) {
+  const currentUser = yield* CurrentUser;
+  // Create is a flat action — the Authz DSL forbids an id on Create,
+  // and a flat check can't see the orgId — so run the same composed
+  // membership gate directly against the path orgId (defined once in
+  // `todos-policies.ts` as `todoMemberCheck`).
+  const allowed = yield* todoMemberCheck(currentUser, {
+    organizationId: request.params.orgId,
+  });
+  if (!allowed) {
+    return yield* new CustomHttpApiError.Forbidden({
+      message: "Not permitted: todoCollection.create",
+    });
+  }
+  const commandBus = yield* CommandBus;
+  const todo = yield* commandBus.execute(
+    CreateTodoCommand.make({
+      title: request.payload.title,
       organizationId: request.params.orgId,
-    });
-    if (!allowed) {
-      return yield* Effect.fail(
-        new CustomHttpApiError.Forbidden({ message: "Not permitted: todoCollection.create" }),
-      );
-    }
-    const commandBus = yield* CommandBus;
-    const todo = yield* commandBus.execute(
-      CreateTodoCommand.make({
-        title: request.payload.title,
-        organizationId: request.params.orgId,
-        userId: currentUser.userId,
-      }),
-    );
-    return new TodosContract.Todo({
-      id: todo.id,
-      title: todo.title,
-      completed: todo.completed,
-    });
-  }).pipe(recoverPersistenceUnavailable, Effect.withSpan("TodosLive.create"));
+      userId: currentUser.userId,
+    }),
+  );
+  return new TodosContract.Todo({
+    id: todo.id,
+    title: todo.title,
+    completed: todo.completed,
+  });
+}, recoverPersistenceUnavailable);

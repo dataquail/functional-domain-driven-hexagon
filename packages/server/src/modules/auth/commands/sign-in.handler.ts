@@ -38,11 +38,9 @@ export const signIn = Effect.fn("signIn")(function* (cmd: SignInCommand) {
     Effect.catchTag("AuthIdentityNotFound", () =>
       Effect.gen(function* () {
         if (cmd.email === null) {
-          return yield* Effect.fail(
-            new CustomHttpApiError.Unauthorized({
-              message: "Cannot provision a user: the identity has no email.",
-            }),
-          );
+          return yield* new CustomHttpApiError.Unauthorized({
+            message: "Cannot provision a user: the identity has no email.",
+          });
         }
         const newUserId = yield* provisioning.provision(cmd.email).pipe(
           Effect.catchTag("UserProvisioningConflict", (e) =>

@@ -22,31 +22,29 @@ import { recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 // NO `Authz.hasPermissions` — Stripe doesn't carry our session
 // cookie. Authentication is by signature, verified inside the
 // command handler via `BillingGateway`.
-export const stripeWebhookEndpoint = () =>
-  Effect.gen(function* () {
-    const httpReq = yield* HttpServerRequest.HttpServerRequest;
-    const commandBus = yield* CommandBus;
+export const stripeWebhookEndpoint = Effect.fn("BillingLive.stripeWebhook")(function* () {
+  const httpReq = yield* HttpServerRequest.HttpServerRequest;
+  const commandBus = yield* CommandBus;
 
-    const signature = httpReq.headers["stripe-signature"];
-    if (signature === undefined || signature === "") {
-      return yield* Effect.fail(
-        new CustomHttpApiError.Unauthorized({ message: "Missing stripe-signature header" }),
-      );
-    }
-    const payload = yield* httpReq.text.pipe(
-      Effect.catch((cause) =>
-        Effect.fail(
-          new CustomHttpApiError.BadRequest({ message: `Failed to read body: ${String(cause)}` }),
-        ),
+  const signature = httpReq.headers["stripe-signature"];
+  if (signature === undefined || signature === "") {
+    return yield* new CustomHttpApiError.Unauthorized({
+      message: "Missing stripe-signature header",
+    });
+  }
+  const payload = yield* httpReq.text.pipe(
+    Effect.mapError(
+      (cause) =>
+        new CustomHttpApiError.BadRequest({ message: `Failed to read body: ${String(cause)}` }),
+    ),
+  );
+
+  yield* commandBus
+    .execute(IngestStripeWebhookCommand.make({ payload, signature }))
+    .pipe(
+      Effect.catchTag("InvalidWebhookSignature", (err) =>
+        Effect.fail(new CustomHttpApiError.Unauthorized({ message: err.message })),
       ),
     );
-
-    yield* commandBus
-      .execute(IngestStripeWebhookCommand.make({ payload, signature }))
-      .pipe(
-        Effect.catchTag("InvalidWebhookSignature", (err) =>
-          Effect.fail(new CustomHttpApiError.Unauthorized({ message: err.message })),
-        ),
-      );
-    return undefined;
-  }).pipe(recoverPersistenceUnavailable, Effect.withSpan("BillingLive.stripeWebhook"));
+  return undefined;
+}, recoverPersistenceUnavailable);

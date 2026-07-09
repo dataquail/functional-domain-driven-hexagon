@@ -84,10 +84,9 @@ export const UserAuthMiddlewareLive = Layer.effect(
 
       const cookies = cookie.parse(httpReq.headers.cookie ?? "");
       const raw = cookies[env.SESSION_COOKIE_NAME];
-      if (raw === undefined || raw === "")
-        return yield* Effect.fail(new CustomHttpApiError.Unauthorized());
+      if (raw === undefined || raw === "") return yield* new CustomHttpApiError.Unauthorized();
       const verified = codec.verify(raw);
-      if (verified === null) return yield* Effect.fail(new CustomHttpApiError.Unauthorized());
+      if (verified === null) return yield* new CustomHttpApiError.Unauthorized();
       const sessionId = SessionId.make(verified);
       const session = yield* queryBus
         .execute(FindSessionQuery.make({ sessionId }))

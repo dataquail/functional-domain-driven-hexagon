@@ -14,7 +14,7 @@ export const revokeApiToken = Effect.fn("revokeApiToken")(function* (cmd: Revoke
   const repo = yield* ApiTokenRepository;
   const token = yield* repo.findOneById(cmd.apiTokenId);
   if (token.userId !== cmd.userId) {
-    return yield* Effect.fail(new ApiTokenNotFound());
+    return yield* new ApiTokenNotFound();
   }
   yield* repo.deleteOne(cmd.apiTokenId);
 }, withUnitOfWork);

@@ -35,7 +35,20 @@
     "module": "NodeNext",
     "incremental": true,
     "removeComments": false,
-    "plugins": [{ "name": "@effect/language-service" }],
+    "plugins": [
+      {
+        "name": "@effect/language-service",
+        "diagnosticSeverity": {
+          // Every JSON.parse/stringify in this repo sits at a deliberate wire
+          // or test boundary — the Stripe webhook's raw JSON payload, the
+          // billing-gateway fake mirroring it, integration tests driving the
+          // HTTP layer, and the CLI credentials-file cache. Schema adds no
+          // safety there (the contract schemas already validate at the API
+          // edge), so preferring it would be gold-plating. Rule off project-wide.
+          "preferSchemaOverJson": "off"
+        }
+      }
+    ],
     "paths": {
       "@org/contracts": ["./packages/contracts/src/index.js"],
       "@org/contracts/*": ["./packages/contracts/src/*.js"],

@@ -15,11 +15,9 @@ export const authedClient = Effect.gen(function* () {
   const creds = yield* readCredentials;
   const token = resolveToken(creds);
   if (token === null) {
-    return yield* Effect.fail(
-      new CliError({
-        message: "Not authenticated. Run `org auth login`, or set APP_API_TOKEN.",
-      }),
-    );
+    return yield* new CliError({
+      message: "Not authenticated. Run `org auth login`, or set APP_API_TOKEN.",
+    });
   }
   return yield* makeCliClient({ baseUrl: resolveBaseUrl(), token });
 });
@@ -31,11 +29,9 @@ export const resolveOrg = (explicit: Option.Option<string>) =>
     if (Option.isSome(explicit)) return explicit.value;
     const creds = yield* readCredentials;
     if (creds.defaultOrgId !== undefined) return creds.defaultOrgId;
-    return yield* Effect.fail(
-      new CliError({
-        message: "No organization selected. Pass --org <id> or run `org config set-org <id>`.",
-      }),
-    );
+    return yield* new CliError({
+      message: "No organization selected. Pass --org <id> or run `org config set-org <id>`.",
+    });
   });
 
 // Best-effort: open the verification URL in the user's browser. Failure is

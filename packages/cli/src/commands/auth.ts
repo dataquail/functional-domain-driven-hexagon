@@ -75,7 +75,7 @@ const login = Command.make("login", { withToken: withTokenOption }, ({ withToken
 
     yield* saveToken(token.access_token);
     yield* Console.log("✓ Authenticated! You're signed in.");
-  }).pipe(Effect.catch((error) => Effect.fail(toCliError(error)))),
+  }).pipe(Effect.mapError(toCliError)),
 );
 
 const status = Command.make("status", {}, () =>

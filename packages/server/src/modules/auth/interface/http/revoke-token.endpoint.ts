@@ -10,19 +10,16 @@ import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/
 // Revokes one of the caller's own tokens. The command scopes the revoke to
 // the owner, so a token that isn't the caller's (or doesn't exist) surfaces
 // as `ApiTokenNotFound` → 404 without revealing whether it existed.
-export const revokeTokenEndpoint = (
-  request: EndpointRequest<typeof AuthContract.TokensGroup, "revoke">,
-) =>
-  Effect.gen(function* () {
+export const revokeTokenEndpoint = Effect.fn("AuthLive.tokens.revoke")(
+  function* (request: EndpointRequest<typeof AuthContract.TokensGroup, "revoke">) {
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
     yield* commandBus.execute(
       RevokeApiTokenCommand.make({ apiTokenId: request.params.id, userId: currentUser.userId }),
     );
-  }).pipe(
-    Effect.catchTag("ApiTokenNotFound", () =>
-      Effect.fail(new CustomHttpApiError.NotFound({ message: "API token not found" })),
-    ),
-    recoverPersistenceUnavailable,
-    Effect.withSpan("AuthLive.tokens.revoke"),
-  );
+  },
+  Effect.catchTag("ApiTokenNotFound", () =>
+    Effect.fail(new CustomHttpApiError.NotFound({ message: "API token not found" })),
+  ),
+  recoverPersistenceUnavailable,
+);

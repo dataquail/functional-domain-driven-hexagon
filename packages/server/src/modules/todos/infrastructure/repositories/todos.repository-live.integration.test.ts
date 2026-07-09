@@ -80,7 +80,9 @@ suite("TodosRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.findOneById(orgA, bobId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof TodoNotFound, true);
         }
       }).pipe(Effect.provide(TestLayer)),
@@ -94,7 +96,9 @@ suite("TodosRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.findOneById(orgB, buyMilk.id));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof TodoNotFound, true);
         }
       }).pipe(Effect.provide(TestLayer)),
@@ -130,7 +134,9 @@ suite("TodosRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.updateOne(buyMilk));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof TodoNotFound, true);
         }
       }).pipe(Effect.provide(TestLayer)),
@@ -157,7 +163,9 @@ suite("TodosRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.deleteOne(orgB, buyMilk.id));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof TodoNotFound, true);
         }
         const found = yield* repo.findOneById(orgA, buyMilk.id);
@@ -172,7 +180,9 @@ suite("TodosRepositoryLive (integration)", () => {
         const exit = yield* Effect.exit(repo.deleteOne(orgA, bobId));
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause) ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) : null;
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
           deepStrictEqual(error instanceof TodoNotFound, true);
         }
       }).pipe(Effect.provide(TestLayer)),
@@ -189,7 +199,7 @@ suite("TodosRepositoryLive (integration)", () => {
           db.transaction((tx) =>
             Effect.gen(function* () {
               yield* repo.insertOne(buyMilk).pipe(Database.TransactionContext.provide(tx));
-              return yield* Effect.fail(new TodoNotFound({ todoId: bobId }));
+              return yield* new TodoNotFound({ todoId: bobId });
             }),
           ),
         );

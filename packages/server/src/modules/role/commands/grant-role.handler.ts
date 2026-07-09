@@ -12,7 +12,7 @@ export const grantRole = Effect.fn("grantRole")(function* (cmd: GrantRoleCommand
   // Prevents self-elevation regardless of the policy layer's
   // decision about `user.update`.
   if (cmd.actorUserId === cmd.userId) {
-    return yield* Effect.fail(new CannotPromoteSelf({ userId: cmd.userId }));
+    return yield* new CannotPromoteSelf({ userId: cmd.userId });
   }
 
   const repo = yield* RolesRepository;

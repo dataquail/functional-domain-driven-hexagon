@@ -19,14 +19,13 @@ const toCli = (view: FindMyOrganizationsView): CliOrganizationContract.CliOrgani
 // CLI adapter (ADR-0024): same `FindMyOrganizationsQuery` as the GUI's
 // findMine (filters by CurrentUser server-side), mapped to the leaner
 // `CliOrganization` shape.
-export const findMineEndpoint = (
+export const findMineEndpoint = Effect.fn("CliOrganizationLive.listMine")(function* (
   _request: EndpointRequest<typeof CliOrganizationContract.Group, "listMine">,
-) =>
-  Effect.gen(function* () {
-    const currentUser = yield* CurrentUser;
-    const queryBus = yield* QueryBus;
-    const result = yield* queryBus.execute(
-      FindMyOrganizationsQuery.make({ userId: currentUser.userId }),
-    );
-    return result.organizations.map(toCli);
-  }).pipe(recoverPersistenceUnavailable, Effect.withSpan("CliOrganizationLive.listMine"));
+) {
+  const currentUser = yield* CurrentUser;
+  const queryBus = yield* QueryBus;
+  const result = yield* queryBus.execute(
+    FindMyOrganizationsQuery.make({ userId: currentUser.userId }),
+  );
+  return result.organizations.map(toCli);
+}, recoverPersistenceUnavailable);

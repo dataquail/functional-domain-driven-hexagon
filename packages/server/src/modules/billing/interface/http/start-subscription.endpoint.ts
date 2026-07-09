@@ -12,10 +12,8 @@ import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/
 // `Actions.Update` covers subscribe + cancel (CRUD vocabulary; the
 // verb-level difference is the HTTP method). Gated by
 // `IsBillingOrgAdmin` (composed with `SuperAdminOnly`).
-export const startSubscriptionEndpoint = (
-  request: EndpointRequest<typeof BillingContract.PrivateGroup, "startSubscription">,
-) =>
-  Effect.gen(function* () {
+export const startSubscriptionEndpoint = Effect.fn("BillingLive.startSubscription")(
+  function* (request: EndpointRequest<typeof BillingContract.PrivateGroup, "startSubscription">) {
     // The billing resolver is a deliberate echo of the path orgId —
     // never NotFound — so the contract surface stays narrow.
     yield* Authz.hasPermissions(BillingResource, Actions.Update, request.params.orgId).pipe(
@@ -33,18 +31,17 @@ export const startSubscriptionEndpoint = (
       status: subscription.status,
       currentPeriodEnd: subscription.currentPeriodEnd,
     });
-  }).pipe(
-    Effect.catchTag("SubscriptionAlreadyExistsForOrganization", (err) =>
-      Effect.fail(
-        new BillingContract.SubscriptionAlreadyExistsError({
-          organizationId: err.organizationId,
-          message: `An active subscription already exists for organization ${err.organizationId}`,
-        }),
-      ),
+  },
+  Effect.catchTag("SubscriptionAlreadyExistsForOrganization", (err) =>
+    Effect.fail(
+      new BillingContract.SubscriptionAlreadyExistsError({
+        organizationId: err.organizationId,
+        message: `An active subscription already exists for organization ${err.organizationId}`,
+      }),
     ),
-    Effect.catchTag("BillingGatewayUnavailable", (err) =>
-      Effect.fail(new CustomHttpApiError.BadGateway({ message: err.message })),
-    ),
-    recoverPersistenceUnavailable,
-    Effect.withSpan("BillingLive.startSubscription"),
-  );
+  ),
+  Effect.catchTag("BillingGatewayUnavailable", (err) =>
+    Effect.fail(new CustomHttpApiError.BadGateway({ message: err.message })),
+  ),
+  recoverPersistenceUnavailable,
+);

@@ -10,10 +10,8 @@ import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/
 // org; the caller becomes its first Membership and (Phase 4) receives
 // the default admin grant bundle via `MembershipCreated` /
 // `OrganizationCreated` subscribers.
-export const createEndpoint = (
-  request: EndpointRequest<typeof OrganizationContract.Group, "create">,
-) =>
-  Effect.gen(function* () {
+export const createEndpoint = Effect.fn("OrganizationLive.create")(
+  function* (request: EndpointRequest<typeof OrganizationContract.Group, "create">) {
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
     const id = yield* commandBus.execute(
@@ -23,14 +21,13 @@ export const createEndpoint = (
       }),
     );
     return new OrganizationContract.CreateOrganizationResponse({ id });
-  }).pipe(
-    Effect.catchTag("SuperAdminCannotOwnOrganization", () =>
-      Effect.fail(
-        new OrganizationContract.SuperAdminCannotOwnOrganizationError({
-          message: "Super-admins don't own organizations.",
-        }),
-      ),
+  },
+  Effect.catchTag("SuperAdminCannotOwnOrganization", () =>
+    Effect.fail(
+      new OrganizationContract.SuperAdminCannotOwnOrganizationError({
+        message: "Super-admins don't own organizations.",
+      }),
     ),
-    recoverPersistenceUnavailable,
-    Effect.withSpan("OrganizationLive.create"),
-  );
+  ),
+  recoverPersistenceUnavailable,
+);

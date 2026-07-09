@@ -12,14 +12,14 @@ export const findSession = Effect.fn("findSession")(function* (query: FindSessio
   const sessions = yield* SessionRepository;
   const session = yield* sessions.findOneById(query.sessionId);
   if (session.revokedAt !== null) {
-    return yield* Effect.fail(new SessionRevoked({ sessionId: query.sessionId }));
+    return yield* new SessionRevoked({ sessionId: query.sessionId });
   }
   const now = yield* DateTime.now;
   if (DateTime.isLessThanOrEqualTo(session.expiresAt, now)) {
-    return yield* Effect.fail(new SessionExpired({ sessionId: query.sessionId }));
+    return yield* new SessionExpired({ sessionId: query.sessionId });
   }
   if (DateTime.isLessThanOrEqualTo(session.absoluteExpiresAt, now)) {
-    return yield* Effect.fail(new SessionExpired({ sessionId: query.sessionId }));
+    return yield* new SessionExpired({ sessionId: query.sessionId });
   }
   return session;
 });

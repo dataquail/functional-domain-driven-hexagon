@@ -89,75 +89,72 @@ export const UnitOfWorkLive: Layer.Layer<UnitOfWork, never, Database.Database> =
 
     return UnitOfWork.of({
       run: <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-        Effect.serviceOption(Database.TransactionContext)
-          .pipe(
-            Effect.flatMap((existing) =>
-              // Resolve the post-commit buffer (fresh at the outermost, the
-              // ambient one when nested) and provide it to `effect` inside each
-              // branch — providing `PostCommitBuffer` onto the `db.transaction`/
-              // `db.savepoint` *result* (rather than onto the input `effect`)
-              // trips a `tsc -b` declaration-emit assertion. The branches differ
-              // only in how `Exclude` nests, so the callback's annotated return
-              // type unifies them by R-widening.
-              resolveBuffer.pipe(
-                Effect.flatMap(
-                  (
-                    buffer,
-                  ): Effect.Effect<
-                    A,
-                    Database.DatabaseError | Database.DatabaseUnavailable | E,
-                    Exclude<R, Database.TransactionContext>
-                  > =>
-                    Option.isSome(existing)
-                      ? // Nested: savepoint on the ambient transaction; snapshot
-                        // the buffer on entry and truncate back on rollback so
-                        // integration events emitted inside it never flush.
-                        Ref.get(buffer).pipe(
-                          Effect.flatMap((before) =>
-                            db
-                              .savepoint((sp) =>
-                                effect.pipe(
-                                  Effect.provide(Context.make(PostCommitBuffer, buffer)),
-                                  Database.TransactionContext.provide(sp),
-                                ),
-                              )
-                              .pipe(
-                                Database.TransactionContext.provide(existing.value),
-                                Effect.tapCause(() =>
-                                  Ref.update(buffer, (b) => b.slice(0, before.length)),
-                                ),
+        Effect.serviceOption(Database.TransactionContext).pipe(
+          Effect.flatMap((existing) =>
+            // Resolve the post-commit buffer (fresh at the outermost, the
+            // ambient one when nested) and provide it to `effect` inside each
+            // branch — providing `PostCommitBuffer` onto the `db.transaction`/
+            // `db.savepoint` *result* (rather than onto the input `effect`)
+            // trips a `tsc -b` declaration-emit assertion. The branches differ
+            // only in how `Exclude` nests, so the callback's annotated return
+            // type unifies them by R-widening.
+            resolveBuffer.pipe(
+              Effect.flatMap(
+                (
+                  buffer,
+                ): Effect.Effect<
+                  A,
+                  Database.DatabaseError | Database.DatabaseUnavailable | E,
+                  Exclude<R, Database.TransactionContext>
+                > =>
+                  Option.isSome(existing)
+                    ? // Nested: savepoint on the ambient transaction; snapshot
+                      // the buffer on entry and truncate back on rollback so
+                      // integration events emitted inside it never flush.
+                      Ref.get(buffer).pipe(
+                        Effect.flatMap((before) =>
+                          db
+                            .savepoint((sp) =>
+                              effect.pipe(
+                                Effect.provide(Context.make(PostCommitBuffer, buffer)),
+                                Database.TransactionContext.provide(sp),
                               ),
+                            )
+                            .pipe(
+                              Database.TransactionContext.provide(existing.value),
+                              Effect.tapCause(() =>
+                                Ref.update(buffer, (b) => b.slice(0, before.length)),
+                              ),
+                            ),
+                        ),
+                      )
+                    : // Outermost: run the transaction, then flush the buffer
+                      // once it commits (`Effect.tap` runs on success only — a
+                      // rollback skips it and the buffer dies with the effect).
+                      db
+                        .transaction((tx) =>
+                          effect.pipe(
+                            Effect.provide(Context.make(PostCommitBuffer, buffer)),
+                            Database.TransactionContext.provide(tx),
                           ),
                         )
-                      : // Outermost: run the transaction, then flush the buffer
-                        // once it commits (`Effect.tap` runs on success only — a
-                        // rollback skips it and the buffer dies with the effect).
-                        db
-                          .transaction((tx) =>
-                            effect.pipe(
-                              Effect.provide(Context.make(PostCommitBuffer, buffer)),
-                              Database.TransactionContext.provide(tx),
-                            ),
-                          )
-                          .pipe(Effect.tap(() => flushPostCommit(buffer))),
-                ),
-              ),
-            ),
-          )
-          .pipe(
-            // `catchTag` widens `e` to `{ _tag: "DatabaseUnavailable" }` because
-            // the generic `E` from the caller could include any shape with
-            // that tag. We runtime-guarantee `e` is the real
-            // `Database.DatabaseUnavailable` (it came from `db.transaction`);
-            // the local cast carries that knowledge across the inference gap.
-            Effect.catchTag("DatabaseUnavailable", (e) =>
-              Effect.fail(
-                new PersistenceUnavailable({
-                  message: (e as Database.DatabaseUnavailable).message,
-                }),
+                        .pipe(Effect.tap(() => flushPostCommit(buffer))),
               ),
             ),
           ),
+          // `catchTag` widens `e` to `{ _tag: "DatabaseUnavailable" }` because
+          // the generic `E` from the caller could include any shape with
+          // that tag. We runtime-guarantee `e` is the real
+          // `Database.DatabaseUnavailable` (it came from `db.transaction`);
+          // the local cast carries that knowledge across the inference gap.
+          Effect.catchTag("DatabaseUnavailable", (e) =>
+            Effect.fail(
+              new PersistenceUnavailable({
+                message: (e as Database.DatabaseUnavailable).message,
+              }),
+            ),
+          ),
+        ),
     });
   }),
 );

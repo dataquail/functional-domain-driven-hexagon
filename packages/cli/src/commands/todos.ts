@@ -28,7 +28,7 @@ const list = Command.make("list", { org: orgOption }, ({ org }) =>
     for (const todo of todos) {
       yield* Console.log(`${todo.completed ? "[x]" : "[ ]"} ${todo.id}  ${todo.title}`);
     }
-  }).pipe(Effect.catch((error) => Effect.fail(toCliError(error)))),
+  }).pipe(Effect.mapError(toCliError)),
 );
 
 const create = Command.make("create", { org: orgOption, title: titleArg }, ({ org, title }) =>
@@ -37,7 +37,7 @@ const create = Command.make("create", { org: orgOption, title: titleArg }, ({ or
     const orgId = OrganizationId.make(yield* resolveOrg(org));
     const todo = yield* client.cliTodos.create({ params: { orgId }, payload: { title } });
     yield* Console.log(`Created ${todo.id}: ${todo.title}`);
-  }).pipe(Effect.catch((error) => Effect.fail(toCliError(error)))),
+  }).pipe(Effect.mapError(toCliError)),
 );
 
 const complete = Command.make("complete", { org: orgOption, id: todoIdArg }, ({ id, org }) =>
@@ -46,7 +46,7 @@ const complete = Command.make("complete", { org: orgOption, id: todoIdArg }, ({ 
     const orgId = OrganizationId.make(yield* resolveOrg(org));
     const todo = yield* client.cliTodos.complete({ params: { orgId, id: TodoId.make(id) } });
     yield* Console.log(`Completed ${todo.id}: ${todo.title}`);
-  }).pipe(Effect.catch((error) => Effect.fail(toCliError(error)))),
+  }).pipe(Effect.mapError(toCliError)),
 );
 
 const remove = Command.make("remove", { org: orgOption, id: todoIdArg }, ({ id, org }) =>
@@ -55,7 +55,7 @@ const remove = Command.make("remove", { org: orgOption, id: todoIdArg }, ({ id, 
     const orgId = OrganizationId.make(yield* resolveOrg(org));
     yield* client.cliTodos.remove({ params: { orgId, id: TodoId.make(id) } });
     yield* Console.log(`Removed ${id}.`);
-  }).pipe(Effect.catch((error) => Effect.fail(toCliError(error)))),
+  }).pipe(Effect.mapError(toCliError)),
 );
 
 export const todosCommand = Command.make("todos", {}, () =>

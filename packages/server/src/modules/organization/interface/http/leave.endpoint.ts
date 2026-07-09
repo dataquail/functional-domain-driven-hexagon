@@ -9,10 +9,8 @@ import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/
 // No `Authz.hasPermissions` check — leaving is a self-action and the
 // membership-existence check (returns 404) is the gate. A caller who
 // isn't a member gets MembershipNotFound, not a 403.
-export const leaveEndpoint = (
-  request: EndpointRequest<typeof OrganizationContract.Group, "leave">,
-) =>
-  Effect.gen(function* () {
+export const leaveEndpoint = Effect.fn("OrganizationLive.leave")(
+  function* (request: EndpointRequest<typeof OrganizationContract.Group, "leave">) {
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
     yield* commandBus.execute(
@@ -21,14 +19,13 @@ export const leaveEndpoint = (
         organizationId: request.params.orgId,
       }),
     );
-  }).pipe(
-    Effect.catchTag("MembershipNotFound", () =>
-      Effect.fail(
-        new OrganizationContract.MembershipNotFoundError({
-          message: "You aren't a member of this organization",
-        }),
-      ),
+  },
+  Effect.catchTag("MembershipNotFound", () =>
+    Effect.fail(
+      new OrganizationContract.MembershipNotFoundError({
+        message: "You aren't a member of this organization",
+      }),
     ),
-    recoverPersistenceUnavailable,
-    Effect.withSpan("OrganizationLive.leave"),
-  );
+  ),
+  recoverPersistenceUnavailable,
+);

@@ -18,7 +18,7 @@ export const acceptInvitation = Effect.fn("acceptInvitation")(
     const roles = yield* RoleService;
     const perms = yield* roles.findPlatformPermissions(cmd.userId);
     if (perms.roles.includes("super_admin")) {
-      return yield* Effect.fail(new SuperAdminCannotOwnOrganization({ userId: cmd.userId }));
+      return yield* new SuperAdminCannotOwnOrganization({ userId: cmd.userId });
     }
 
     const invRepo = yield* InvitationRepository;
