@@ -79,9 +79,13 @@ const MSG = {
   moduleRoot:
     "The module root admits only aggregation files: index.ts (barrel), <feature>.module.ts (composed Layer), <feature>.command-handlers.ts / .query-handlers.ts (bus-registration maps), <feature>.event-span-attributes.ts, <feature>.shared-deps.ts. Feature code belongs in a stereotype subfolder (domain/, commands/, queries/, event-handlers/, infrastructure/, interface/, policies/).",
   domain:
-    "domain/ admits only named DDD stereotypes: *.root.ts, *.aggregate.ts, *.entity.ts, *.value-object.ts, *.id.ts, *.errors.ts, *.events.ts, *.domain-service.ts. A free-standing helper is a smell — model it as a method on the aggregate root, a *.value-object.ts, or (if it's stateless logic no aggregate owns) a *.domain-service.ts. A genuinely new *kind* of building block must be added to the taxonomy in eslint.project-structure.mjs — don't force-fit an existing stereotype.",
-  rootTest:
-    "Every aggregate root (*.root.ts) carries a test-parity obligation: add the sibling *.root.test.ts (roots own invariants, so they must be tested).",
+    "domain/ admits only named DDD stereotypes: *.root.ts (dumb data) + *.root-ops.ts (operations), *.aggregate.ts, *.entity.ts, *.value-object.ts + their *-ops.ts operation bags, *.id.ts, *.errors.ts, *.events.ts, *.specification.ts, *.domain-service.ts. A free-standing helper is a smell — model it as an aggregate op (*.root-ops.ts / *.entity-ops.ts / *.value-object-ops.ts), a named predicate (*.specification.ts), or (if it's stateless logic no aggregate owns) a *.domain-service.ts. A genuinely new *kind* of building block must be added to the taxonomy in eslint.project-structure.mjs — don't force-fit an existing stereotype.",
+  rootOpsTest:
+    "An aggregate root's operations bag (*.root-ops.ts) owns the invariants, so it carries the test-parity obligation: add the sibling *.root-ops.test.ts. (The *.root.ts data class is a dumb Schema and needs no test.)",
+  specificationTest:
+    "A specification (*.specification.ts) is a named domain predicate over an aggregate; add the sibling *.specification.test.ts.",
+  constituentOpsTest:
+    "A constituent operations bag (*.entity-ops.ts / *.aggregate-ops.ts / *.value-object-ops.ts) is domain-private invariant logic; add the sibling *.<stereotype>.test.ts.",
   domainServiceTest:
     "A domain service is real domain logic (ADR-0023), so it needs a sibling *.domain-service.test.ts.",
   repositoryPort:
@@ -143,13 +147,40 @@ export const serverModules = createFolderStructure({
           name: "domain",
           message: MSG.domain, // stray file in domain/
           children: [
-            { name: "*.root.ts", enforceExistence: "{node-name}.test.ts", message: MSG.rootTest },
+            // Aggregate root: dumb-data class (no test obligation) + its
+            // operations bag (carries the parity). See ADR-0003.
+            { name: "*.root.ts", message: MSG.domain },
+            {
+              name: "*.root-ops.ts",
+              enforceExistence: "{node-name}.test.ts",
+              message: MSG.rootOpsTest,
+            },
             { name: "*.aggregate.ts", message: MSG.domain },
+            {
+              name: "*.aggregate-ops.ts",
+              enforceExistence: "{node-name}.test.ts",
+              message: MSG.constituentOpsTest,
+            },
             { name: "*.entity.ts", message: MSG.domain },
+            {
+              name: "*.entity-ops.ts",
+              enforceExistence: "{node-name}.test.ts",
+              message: MSG.constituentOpsTest,
+            },
             { name: "*.value-object.ts", message: MSG.domain },
+            {
+              name: "*.value-object-ops.ts",
+              enforceExistence: "{node-name}.test.ts",
+              message: MSG.constituentOpsTest,
+            },
             { name: "*.id.ts", message: MSG.domain },
             { name: "*.errors.ts", message: MSG.domain },
             { name: "*.events.ts", message: MSG.domain },
+            {
+              name: "*.specification.ts",
+              enforceExistence: "{node-name}.test.ts",
+              message: MSG.specificationTest,
+            },
             {
               name: "*.domain-service.ts",
               enforceExistence: "{node-name}.test.ts",
@@ -159,7 +190,20 @@ export const serverModules = createFolderStructure({
             {
               name: "value-objects",
               message: MSG.domain,
-              children: [{ name: "*.value-object.ts" }, TEST_TS],
+              children: [
+                { name: "*.value-object.ts" },
+                {
+                  name: "*.value-object-ops.ts",
+                  enforceExistence: "{node-name}.test.ts",
+                  message: MSG.constituentOpsTest,
+                },
+                {
+                  name: "*.specification.ts",
+                  enforceExistence: "{node-name}.test.ts",
+                  message: MSG.specificationTest,
+                },
+                TEST_TS,
+              ],
             },
             {
               name: "ports", // container: tier subfolders only (no direct files)
@@ -229,25 +273,6 @@ export const serverModules = createFolderStructure({
               message: MSG.queryHandlerTest,
             },
             TEST_TS,
-          ],
-        },
-
-        // ── event-handlers/ ──
-        {
-          name: "event-handlers",
-          message: MSG.eventHandlers,
-          children: [
-            {
-              name: "*.handler.ts",
-              enforceExistence: "{node-name}.test.ts",
-              message: MSG.eventHandlerTest,
-            },
-            TEST_TS,
-            {
-              name: "triggers",
-              message: MSG.eventHandlers,
-              children: [{ name: "*.triggers.ts", message: MSG.eventHandlers }],
-            },
           ],
         },
 

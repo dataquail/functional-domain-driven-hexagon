@@ -14,10 +14,8 @@ import {
   InvitationNotFound,
   InvitationTokenNotFound,
 } from "@/modules/organization/domain/invitation.errors.js";
-import {
-  type InvitationRoot,
-  InvitationRootOps,
-} from "@/modules/organization/domain/invitation.root.js";
+import { type InvitationRoot } from "@/modules/organization/domain/invitation.root.js";
+import { InvitationRootOps } from "@/modules/organization/domain/invitation.root-ops.js";
 import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation.repository.js";
 import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/repositories/invitation.repository-live.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";

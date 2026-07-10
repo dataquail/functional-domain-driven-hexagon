@@ -7,7 +7,7 @@ import { TouchSessionCommand } from "@/modules/auth/commands/touch-session.comma
 import { touchSession } from "@/modules/auth/commands/touch-session.handler.js";
 import { SessionRepository } from "@/modules/auth/domain/ports/repositories/session.repository.js";
 import { SessionId } from "@/modules/auth/domain/session.id.js";
-import { SessionRootOps } from "@/modules/auth/domain/session.root.js";
+import { SessionRootOps } from "@/modules/auth/domain/session.root-ops.js";
 import { SessionRepositoryFake } from "@/modules/auth/infrastructure/repositories/session.repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
 

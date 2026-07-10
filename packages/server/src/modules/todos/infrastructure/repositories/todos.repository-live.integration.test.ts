@@ -12,7 +12,7 @@ import { beforeEach } from "vitest";
 import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todos.repository.js";
 import { TodoNotFound } from "@/modules/todos/domain/todo.errors.js";
 import { TodoId } from "@/modules/todos/domain/todo.id.js";
-import { TodoRootOps } from "@/modules/todos/domain/todo.root.js";
+import { TodoRootOps } from "@/modules/todos/domain/todo.root-ops.js";
 import { TodosRepositoryLive } from "@/modules/todos/infrastructure/repositories/todos.repository-live.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";

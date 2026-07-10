@@ -22,19 +22,22 @@ Aggregate state is a `Schema.Class`. Identity, timestamps, and invariants live i
 
 Each DDD stereotype in `domain/` is named by an explicit filename suffix and a matching identifier-keyword suffix, so a file's role is legible without opening it:
 
-- **Aggregate root** — `*.root.ts`; the root data type is `XRoot`. For a single-state aggregate that is one `Schema.Class`; for a state machine it is a union `type XRoot = AVariantRoot | BVariantRoot | …` over one class per variant (see "Variant aggregates").
-- **Constituent aggregate** — `*.aggregate.ts`: a collection of entities/value objects that is only a _part_ of a root, not itself a consistency-boundary root.
-- **Entity** — `*.entity.ts` / `XEntity`.
-- **Value object** — `*.value-object.ts` / `XValueObject`: a `Schema.Class` (multi-field) or `Schema.brand`-ed primitive; an attribute-bag with no identity of its own.
+- **Aggregate root** — two files. `*.root.ts` holds the root _data type_ `XRoot`, a dumb `Schema.Class` with no behavior (for a single-state aggregate one class; for a state machine a union `type XRoot = AVariantRoot | BVariantRoot | …` over one class per variant — see "Variant aggregates"). `*.root-ops.ts` holds the _operations_, the `XRootOps` free-function bag. The split into two files is deliberate and explained under "Operations"; the test-parity obligation sits on `*.root-ops.ts`, the dumb `*.root.ts` data carries none.
+- **Constituent aggregate** — `*.aggregate.ts`: a collection of entities/value objects that is only a _part_ of a root, not itself a consistency-boundary root. Behavior, when it has any, lives in a sibling `*.aggregate-ops.ts` bag.
+- **Entity** — `*.entity.ts` / `XEntity`; behavior in a sibling `*.entity-ops.ts` bag.
+- **Value object** — `*.value-object.ts` / `XValueObject`: a `Schema.Class` (multi-field) or `Schema.brand`-ed primitive; an attribute-bag with no identity of its own. Behavior in a sibling `*.value-object-ops.ts` bag.
 - **Branded identifier** — `*.id.ts` / `XId` (e.g. `UserId`). Technically a value object, but kept as its own category: it already carries its keyword and denotes _an entity's identity_ rather than being an attribute-bag.
+- **Specification** — `*.specification.ts` / `XSpecifications`: a free-function bag of pure predicates and derivations over an aggregate (`isExpired`, `isOpen`, `hasRole`, `statusAt`). It carries no state transition and emits no events (see "Specifications and the operation-stereotype privacy gradient").
 
 ### Operations
 
-Operations are pure functions taking current state plus inputs (timestamps, ids) and returning either the next state directly or a record discriminated by domain meaning (`{ state, events }`). They are **not** methods or statics on the data class — the aggregate root stays a dumb value. Each root file collects its operations into a single frozen bag exported as `XRootOps`, beside the `XRoot` data type:
+Operations are pure functions taking current state plus inputs (timestamps, ids) and returning either the next state directly or a record discriminated by domain meaning (`{ state, events }`). They are **not** methods or statics on the data class — the aggregate root stays a dumb value. The operations live in a sibling `*.root-ops.ts` file, collected into a single frozen bag exported as `XRootOps`:
 
 ```ts
+// user.root.ts — the dumb data type
 export class UserRoot extends Schema.Class<UserRoot>("UserRoot")({ ... }) {}
 
+// user.root-ops.ts — the operations
 export type Outcome = {
   readonly user: UserRoot;
   readonly events: ReadonlyArray<UserEvent>;
@@ -47,7 +50,23 @@ const updateAddress = (user: UserRoot, input: UpdateAddressInput): Outcome => { 
 export const UserRootOps = { create, markDeleted, updateAddress } as const;
 ```
 
-Consumers `import { UserRoot, UserRootOps }` and call `UserRootOps.create(...)`. There is deliberately no `import * as User`: every reference is a named import, so an aggregate can't drift to different aliases across files, and the `Root` / `RootOps` split is uniform. Keeping operations as free functions (rather than methods/statics on the data) keeps invariant guards and state transitions expressible as plain, individually-typed functions. The op's success payload — the new state plus emitted events — is named `Outcome` (not `Result`) so it does not shadow the imported `effect/Result` module.
+Consumers `import { UserRoot } from "./user.root.js"` and `import { UserRootOps } from "./user.root-ops.js"`, then call `UserRootOps.create(...)`. There is deliberately no `import * as User`: every reference is a named import, so an aggregate can't drift to different aliases across files, and the `Root` / `RootOps` split is uniform. Keeping operations as free functions (rather than methods/statics on the data) keeps invariant guards and state transitions expressible as plain, individually-typed functions. The op's success payload — the new state plus emitted events — is named `Outcome` (not `Result`) so it does not shadow the imported `effect/Result` module.
+
+The data and ops are **two files, not one**, because architecture enforcement is by file path, not by imported symbol (ADR-0008). Only command handlers may invoke a mutating op — but read-side code (queries, event adapters, mappers) legitimately imports the `XRoot` data type. Splitting them lets the `root-ops-only-from-command-handlers` rule gate the ops file to the write side while the data file stays freely importable.
+
+### Specifications and the operation-stereotype privacy gradient
+
+A **specification** (`*.specification.ts`) is an `XSpecifications` free-function bag of pure predicates and derivations over an aggregate — `isExpired(token, now)`, `isOpen(workOrder)`, `hasRole(...)`, `statusAt(...)`. It reads state and returns a value; it never transitions state and emits no events. Because reading a predicate mutates nothing, a specification is importable from `domain/`, `commands/`, `queries/`, and the inbound event adapters in `interface/events/` — this is what lets read-side code consult a domain rule without importing the write-gated `*.root-ops.ts`.
+
+Constituent aggregates, entities, and value objects that carry behavior get their own operation bags — `*.aggregate-ops.ts`, `*.entity-ops.ts`, `*.value-object-ops.ts` — each mirroring the `XRootOps` free-function-bag shape.
+
+The operation stereotypes sit on a privacy gradient, enforced by dependency-cruiser (ADR-0008), that realizes the DDD law that an aggregate's internals mutate only through its root:
+
+- `*.root-ops.ts` is the aggregate's single mutation surface and the one operation stereotype that escapes the domain: importable only from its own module's `domain/`, its own `commands/*.handler.ts`, test files, and repository fakes (a test seam).
+- `*.entity-ops.ts` / `*.aggregate-ops.ts` / `*.value-object-ops.ts` are **domain-private**: composed hierarchically (root-ops → entity-ops → … → value-object-ops) and importable only within their own module's `domain/`, with `no-circular` backstopping a backwards containment edge. There is no value-object exception — invariant-bearing VO logic (e.g. "a street address may not be blank") stays domain-mediated exactly like entity/root logic; VO immutability buys aliasing safety, not licence to invoke the op from any layer.
+- `*.specification.ts` is readable from `domain/`, `commands/`, `queries/`, and `interface/events/`.
+
+Every operation bag and every specification carries a test-parity obligation (its sibling `*.test.ts`); the dumb `*.root.ts` data class does not. Wire-format formatters that are an aggregate's _own_ concern — assembling a credential's `prefix_publicId_secret` wire form, formatting a human-typable user code — stay in that aggregate's `*.root-ops.ts` bag: they are neither predicates (so not specifications) nor cross-aggregate logic (so not domain services, ADR-0023).
 
 ### Lifecycle: guarded total operations (default) vs. variant types
 
@@ -122,3 +141,5 @@ export const createUser = Effect.fn("createUser")(function* (cmd: CreateUserComm
 
 - ADR-0001 (functional core, imperative shell)
 - ADR-0007 (unit of work + event dispatch — what the use case does with `events`)
+- ADR-0008 (architecture enforcement — the path rules that gate `*.root-ops.ts` and the constituent op bags)
+- ADR-0023 (domain services — the free-function-bag stereotype specifications and ops mirror, and the specification-vs-domain-service boundary)

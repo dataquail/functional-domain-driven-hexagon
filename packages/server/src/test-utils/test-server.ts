@@ -62,7 +62,11 @@ import {
   UserResolverEntry,
   UserResolverEntryLive,
 } from "@/modules/user/index.js";
-import { walletEventSpanAttributes, WalletModuleLive } from "@/modules/wallet/index.js";
+import {
+  walletCommandHandlers,
+  walletEventSpanAttributes,
+  WalletModuleLive,
+} from "@/modules/wallet/index.js";
 import { makePolicyRegistry } from "@/platform/auth/policy-registry.js";
 import { makeResourceResolverRegistry } from "@/platform/auth/resource-resolver-registry.js";
 import { makeCommandBus } from "@/platform/command-bus-live.js";
@@ -87,6 +91,7 @@ const CommandBusLive = Layer.succeed(
     ...roleCommandHandlers,
     ...organizationCommandHandlers,
     ...billingCommandHandlers,
+    ...walletCommandHandlers,
   }),
 );
 const QueryBusLive = Layer.succeed(

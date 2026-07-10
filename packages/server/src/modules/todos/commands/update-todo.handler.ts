@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 
 import { type UpdateTodoCommand } from "@/modules/todos/commands/update-todo.command.js";
 import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todos.repository.js";
-import { TodoRootOps } from "@/modules/todos/domain/todo.root.js";
+import { TodoRootOps } from "@/modules/todos/domain/todo.root-ops.js";
 
 export const updateTodo = Effect.fn("updateTodo")(function* (cmd: UpdateTodoCommand) {
   const repo = yield* TodosRepository;

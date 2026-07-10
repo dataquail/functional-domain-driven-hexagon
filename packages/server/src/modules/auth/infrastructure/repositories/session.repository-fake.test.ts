@@ -9,7 +9,7 @@ import * as Option from "effect/Option";
 import { SessionRepository } from "@/modules/auth/domain/ports/repositories/session.repository.js";
 import { SessionNotFound } from "@/modules/auth/domain/session.errors.js";
 import { SessionId } from "@/modules/auth/domain/session.id.js";
-import { SessionRootOps } from "@/modules/auth/domain/session.root.js";
+import { SessionRootOps } from "@/modules/auth/domain/session.root-ops.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 import { SessionRepositoryFake } from "./session.repository-fake.js";

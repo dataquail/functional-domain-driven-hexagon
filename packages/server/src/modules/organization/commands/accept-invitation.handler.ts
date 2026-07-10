@@ -2,7 +2,7 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
 import { type AcceptInvitationCommand } from "@/modules/organization/commands/accept-invitation.command.js";
-import { InvitationRootOps } from "@/modules/organization/domain/invitation.root.js";
+import { InvitationRootOps } from "@/modules/organization/domain/invitation.root-ops.js";
 import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization.errors.js";
 import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation.repository.js";
 import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership.repository.js";

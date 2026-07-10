@@ -8,7 +8,7 @@ import {
   DeviceGrantExpired,
   DeviceGrantPending,
 } from "@/modules/auth/domain/device-grant.errors.js";
-import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant.root.js";
+import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant.specification.js";
 import { DeviceGrantRepository } from "@/modules/auth/domain/ports/repositories/device-grant.repository.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
@@ -28,7 +28,7 @@ export const pollDeviceGrant = Effect.fn("pollDeviceGrant")(function* (
   const grant = yield* grants.findOneByCodeHash(CredentialHash.of(cmd.deviceCode));
   const now = yield* DateTime.now;
 
-  if (DeviceGrantRootOps.isExpired(grant, now)) {
+  if (DeviceGrantSpecifications.isExpired(grant, now)) {
     yield* grants
       .deleteOne(grant.id)
       .pipe(Effect.catchTag("DeviceGrantNotFound", () => Effect.void));

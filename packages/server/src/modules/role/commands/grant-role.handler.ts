@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 import { type GrantRoleCommand } from "@/modules/role/commands/grant-role.command.js";
 import { RolesRepository } from "@/modules/role/domain/ports/repositories/roles.repository.js";
 import { CannotPromoteSelf } from "@/modules/role/domain/role.errors.js";
-import { RolesRootOps } from "@/modules/role/domain/roles.root.js";
+import { RolesRootOps } from "@/modules/role/domain/roles.root-ops.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 

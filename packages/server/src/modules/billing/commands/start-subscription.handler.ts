@@ -6,7 +6,7 @@ import { BillingGateway } from "@/modules/billing/domain/ports/clients/billing-g
 import { SubscriptionRepository } from "@/modules/billing/domain/ports/repositories/subscription.repository.js";
 import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription.errors.js";
 import { SubscriptionId } from "@/modules/billing/domain/subscription.id.js";
-import { SubscriptionRootOps } from "@/modules/billing/domain/subscription.root.js";
+import { SubscriptionRootOps } from "@/modules/billing/domain/subscription.root-ops.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 

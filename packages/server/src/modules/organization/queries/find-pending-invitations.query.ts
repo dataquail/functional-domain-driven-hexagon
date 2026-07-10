@@ -1,7 +1,7 @@
 import type * as DateTime from "effect/DateTime";
 import * as Schema from "effect/Schema";
 
-import { type InvitationStatus } from "@/modules/organization/domain/invitation.root.js";
+import { type InvitationStatus } from "@/modules/organization/domain/invitation.specification.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 import { type InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";

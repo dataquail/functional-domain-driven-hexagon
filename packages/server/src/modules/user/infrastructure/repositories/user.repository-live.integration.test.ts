@@ -11,7 +11,7 @@ import { beforeEach } from "vitest";
 
 import { UserRepository } from "@/modules/user/domain/ports/repositories/user.repository.js";
 import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user.errors.js";
-import { UserRootOps } from "@/modules/user/domain/user.root.js";
+import { UserRootOps } from "@/modules/user/domain/user.root-ops.js";
 import { AddressValueObject } from "@/modules/user/domain/value-objects/address.value-object.js";
 import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live.js";
 import { UserId } from "@/platform/ids/user-id.js";

@@ -8,7 +8,7 @@ import * as Option from "effect/Option";
 
 import { ApiTokenNotFound } from "@/modules/auth/domain/api-token.errors.js";
 import { ApiTokenId } from "@/modules/auth/domain/api-token.id.js";
-import { ApiTokenRootOps } from "@/modules/auth/domain/api-token.root.js";
+import { ApiTokenRootOps } from "@/modules/auth/domain/api-token.root-ops.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/ports/repositories/api-token.repository.js";
 import { UserId } from "@/platform/ids/user-id.js";
 

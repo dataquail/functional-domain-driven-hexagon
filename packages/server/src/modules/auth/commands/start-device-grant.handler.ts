@@ -6,7 +6,7 @@ import * as Effect from "effect/Effect";
 import { type StartDeviceGrantCommand } from "@/modules/auth/commands/start-device-grant.command.js";
 import { CredentialHash } from "@/modules/auth/domain/credential-hash.domain-service.js";
 import { DeviceGrantId } from "@/modules/auth/domain/device-grant.id.js";
-import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant.root.js";
+import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant.root-ops.js";
 import { DeviceGrantRepository } from "@/modules/auth/domain/ports/repositories/device-grant.repository.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 

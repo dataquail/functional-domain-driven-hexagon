@@ -46,7 +46,7 @@ export const createUser = (cmd: CreateUserCommand) =>
   }).pipe(withUnitOfWork);
 ```
 
-The transaction is declared once, visibly, at the boundary. `withUnitOfWork` also demotes the constraint-violation `DatabaseError` to a defect in one place (replacing a per-handler `catchTag`) and surfaces only `PersistenceUnavailable`. It is named `withUnitOfWork`, deliberately **not** `transactional`: "transactional" leaks the SQL-transaction implementation the abstraction exists to hide. The unit of work stays an **application-layer** concern — it lives only in `commands/`, `event-handlers/`, and `platform/`, never in `domain/` aggregates.
+The transaction is declared once, visibly, at the boundary. `withUnitOfWork` also demotes the constraint-violation `DatabaseError` to a defect in one place (replacing a per-handler `catchTag`) and surfaces only `PersistenceUnavailable`. It is named `withUnitOfWork`, deliberately **not** `transactional`: "transactional" leaks the SQL-transaction implementation the abstraction exists to hide. The unit of work stays an **application-layer** concern — it lives only in `commands/` and `platform/`, never in `domain/` aggregates.
 
 `UnitOfWork.run` remains the escape hatch: integration tests drive it directly, and a handler with work that must stay _outside_ the transaction (external IO like a Stripe call, or a post-commit email) wraps only the transactional sub-block in `withUnitOfWork` and leaves the rest outside.
 
@@ -80,7 +80,7 @@ Because handlers run in the publisher's fiber, they inherit `TransactionContext`
 
 The integration bus carries the **same** `DomainEvent` base type as the in-fiber bus — the bus a producer publishes to is the switch between consistency models, not a distinct event type family. Its `dispatch` does **not** run handlers; it appends the events to a `PostCommitBuffer` that the unit of work provides. The **outermost** `run` drains that buffer **after** its transaction commits — each handler in its own fresh transaction, its failure logged and isolated. This is the default for new cross-aggregate reactions.
 
-Subscriptions choose their bus in `interface/events/*-event-adapter.ts`: immediate reactions use `DomainEventBus.subscribe`, eventual ones use `IntegrationEventBus.subscribe`. The choice is per handler; default new cross-aggregate reactions to the integration (eventual) bus.
+Subscriptions choose their bus in `interface/events/*.event-adapter.ts`: immediate reactions use `DomainEventBus.subscribe`, eventual ones use `IntegrationEventBus.subscribe`. The choice is per adapter; default new cross-aggregate reactions to the integration (eventual) bus.
 
 ### Dispatch presumes a unit of work
 
@@ -124,42 +124,45 @@ The integration bus delivers the full conceptual model — separate transaction 
 
 ## Anti-corruption layer for cross-module event consumption
 
-When a module subscribes to another module's domain event, that event's schema becomes load-bearing for the subscriber. A new field on `OrganizationCreated` is harmless to organization's internal callers; it can break the wallet handler if that handler reads field names off the event directly.
+When a module reacts to another module's domain event, that event's schema becomes load-bearing for the reactor. A new field on `OrganizationCreated` is harmless to organization's internal callers; it can break a naive wallet reaction that reads field names off the event directly.
 
-To keep the publisher's event schema from leaking into the consumer's handlers, cross-module subscriptions go through an **adapter** file. The adapter is an inbound port — structurally identical to an HTTP endpoint, just on the event-bus transport — so it lives in `interface/events/`, the only place allowed to import the publisher's barrel. Handlers stay in `event-handlers/` and consume a consumer-internal trigger type instead.
+A cross-aggregate reaction is therefore not a use case of its own — it is an **inbound adapter**, structurally identical to an HTTP or CLI endpoint, just on the event-bus transport. It lives at `interface/events/<publisher>.event-adapter.ts`, the only place in a consumer module allowed to import the publisher's barrel. The adapter subscribes to the event, translates it, and **dispatches one of its own module's commands** through the command bus. It is **bus-only**: it touches no repository, no domain ops, no `domain/ports/`. The dispatched command's handler owns the aggregate mutation — the reaction reuses the existing command rather than duplicating its logic in a separate handler. This realizes the Command → Event → Command chain of ADR-0002 and ADR-0006: the reacting module runs its own command.
 
 ```
 modules/<consumer>/
-├── interface/
-│   └── events/
-│       └── <publisher>-event-adapter.ts     # subscribes to publisher events (inbound port)
-└── event-handlers/
-    ├── triggers/
-    │   └── <publisher>-events.ts            # consumer-internal trigger types
-    └── <name>-when-<...>.ts                 # handler — imports the trigger type
+└── interface/
+    └── events/
+        └── <publisher>.event-adapter.ts   # subscribes to the event, dispatches a command
 ```
 
-The adapter subscribes (to whichever bus fits the consistency model), translates the event into the consumer's trigger shape, and forwards to the handler:
+The command schema _is_ the internal contract; there is no separate trigger type. The adapter translates the foreign event directly into a command message:
 
 ```ts
-const toTrigger = (event: OrganizationCreated): OrganizationCreatedTrigger => ({
-  organizationId: event.organizationId,
-});
-
 export const OrganizationEventAdapterLive = Layer.effectDiscard(
   Effect.gen(function* () {
-    const bus = yield* DomainEventBus; // immediate: wallet must exist in the same tx
-    const repo = yield* WalletRepository;
-    yield* bus.subscribe(OrganizationCreated, (event) =>
-      handleOrganizationCreated(toTrigger(event)).pipe(
-        Effect.provideService(WalletRepository, repo),
-      ),
+    const domainEventBus = yield* DomainEventBus; // immediate: wallet must exist in the same tx
+    const commandBus = yield* CommandBus;
+    const unitOfWork = yield* UnitOfWork;
+    yield* domainEventBus.subscribe(OrganizationCreated, (event) =>
+      commandBus
+        .execute(CreateWalletCommand.make({ organizationId: event.organizationId }))
+        .pipe(
+          Effect.provideService(DomainEventBus, domainEventBus),
+          Effect.provideService(UnitOfWork, unitOfWork),
+          Effect.orDie,
+        ),
     );
   }),
 );
 ```
 
-The handler depends only on the trigger type — never on `OrganizationCreated`. If organization adds a field, only the adapter changes. The pattern is enforced by the `event-handlers-isolation` dep-cruiser rule, which forbids `event-handlers/` from importing other modules' barrels; the adapter in `interface/events/` is the permitted inbound-adapter layer. This is Vernon's anti-corruption layer at module scope — one file per (consumer, publisher) pair plus one trigger-types file.
+`subscribe` requires a handler with no requirements and no error channel, so the adapter provides the dispatched command's application services (the event buses, the unit of work) from the captured singletons and relies on the ambient publisher fiber for the transaction context and the residual pool connection. If organization adds a field, only this translation changes.
+
+**Atomicity via nested savepoint.** An immediate-consistency reaction — a subscriber that must commit atomically with its publisher, e.g. a wallet must exist iff its organization does — subscribes on the in-fiber `DomainEventBus`. Because the adapter runs in the publisher's fiber, the command it dispatches runs its own `withUnitOfWork` as a **nested savepoint** on the publisher's transaction (see "Nested savepoints"): both commit or both roll back. An eventually-consistent reaction subscribes on the `IntegrationEventBus` instead, and its command runs post-commit in its own transaction.
+
+**External IO is a tiered judgment call, not a new stereotype.** If a reaction touches the domain, it dispatches a command (above). A pure side effect that always follows its trigger — a telemetry emit, a notification tied to one command — is colocated in the originating command, not modeled as a reaction. A genuine third-party effect (send an email, ETL to an external system) is performed by a command handler through its client port. `interface/events/` itself stays strictly bus-only.
+
+The pattern is enforced by the `interface-events-isolation` dep-cruiser rule, a positive allowlist that lets an event adapter import only its own module's domain events/ids, its own command schemas, the DDD kernel ports, `platform/ids/`, and — for cross-module events — another module's barrel. This is Vernon's anti-corruption layer at module scope: one adapter per (consumer, publisher) pair.
 
 ## Alternatives considered
 

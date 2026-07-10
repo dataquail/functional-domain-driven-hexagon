@@ -9,7 +9,7 @@ import * as Option from "effect/Option";
 import { WalletRepository } from "@/modules/wallet/domain/ports/repositories/wallet.repository.js";
 import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet.errors.js";
 import { WalletId } from "@/modules/wallet/domain/wallet.id.js";
-import { WalletRootOps } from "@/modules/wallet/domain/wallet.root.js";
+import { WalletRootOps } from "@/modules/wallet/domain/wallet.root-ops.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 import { WalletRepositoryFake } from "./wallet.repository-fake.js";

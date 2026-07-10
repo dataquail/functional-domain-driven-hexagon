@@ -16,7 +16,7 @@ import {
   InvitationAlreadyRevoked,
 } from "@/modules/organization/domain/invitation.errors.js";
 import { type InvitationReissued } from "@/modules/organization/domain/invitation.events.js";
-import { InvitationRootOps } from "@/modules/organization/domain/invitation.root.js";
+import { InvitationRootOps } from "@/modules/organization/domain/invitation.root-ops.js";
 import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation.repository.js";
 import {
   InvitationMailerFake,

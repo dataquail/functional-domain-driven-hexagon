@@ -2,7 +2,7 @@ import * as Effect from "effect/Effect";
 
 import { type GrantOrganizationRoleCommand } from "@/modules/organization/commands/grant-organization-role.command.js";
 import { CannotPromoteSelfInOrganization } from "@/modules/organization/domain/organization-role.errors.js";
-import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles.root.js";
+import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles.root-ops.js";
 import { OrganizationRolesRepository } from "@/modules/organization/domain/ports/repositories/organization-roles.repository.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";

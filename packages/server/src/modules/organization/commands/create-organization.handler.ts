@@ -5,10 +5,10 @@ import * as Effect from "effect/Effect";
 import * as Result from "effect/Result";
 
 import { type CreateOrganizationCommand } from "@/modules/organization/commands/create-organization.command.js";
-import { MembershipRootOps } from "@/modules/organization/domain/membership.root.js";
+import { MembershipRootOps } from "@/modules/organization/domain/membership.root-ops.js";
 import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization.errors.js";
-import { OrganizationRootOps } from "@/modules/organization/domain/organization.root.js";
-import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles.root.js";
+import { OrganizationRootOps } from "@/modules/organization/domain/organization.root-ops.js";
+import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles.root-ops.js";
 import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership.repository.js";
 import { OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization.repository.js";
 import { OrganizationRolesRepository } from "@/modules/organization/domain/ports/repositories/organization-roles.repository.js";

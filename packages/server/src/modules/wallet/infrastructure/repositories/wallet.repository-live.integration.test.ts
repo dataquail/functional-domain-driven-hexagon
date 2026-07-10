@@ -12,7 +12,7 @@ import { beforeEach } from "vitest";
 import { WalletRepository } from "@/modules/wallet/domain/ports/repositories/wallet.repository.js";
 import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet.errors.js";
 import { WalletId } from "@/modules/wallet/domain/wallet.id.js";
-import { WalletRootOps } from "@/modules/wallet/domain/wallet.root.js";
+import { WalletRootOps } from "@/modules/wallet/domain/wallet.root-ops.js";
 import { WalletRepositoryLive } from "@/modules/wallet/infrastructure/repositories/wallet.repository-live.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";

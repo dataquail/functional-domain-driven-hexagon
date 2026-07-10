@@ -9,7 +9,7 @@ import {
   type MintApiTokenResult,
 } from "@/modules/auth/commands/mint-api-token.command.js";
 import { ApiTokenId } from "@/modules/auth/domain/api-token.id.js";
-import { ApiTokenRootOps } from "@/modules/auth/domain/api-token.root.js";
+import { ApiTokenRootOps } from "@/modules/auth/domain/api-token.root-ops.js";
 import { CredentialHash } from "@/modules/auth/domain/credential-hash.domain-service.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/ports/repositories/api-token.repository.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";

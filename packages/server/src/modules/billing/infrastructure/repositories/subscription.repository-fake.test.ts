@@ -9,7 +9,7 @@ import * as Option from "effect/Option";
 import { SubscriptionRepository } from "@/modules/billing/domain/ports/repositories/subscription.repository.js";
 import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription.errors.js";
 import { SubscriptionId } from "@/modules/billing/domain/subscription.id.js";
-import { SubscriptionRootOps } from "@/modules/billing/domain/subscription.root.js";
+import { SubscriptionRootOps } from "@/modules/billing/domain/subscription.root-ops.js";
 import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 

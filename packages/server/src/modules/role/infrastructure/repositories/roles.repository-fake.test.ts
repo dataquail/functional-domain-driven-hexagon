@@ -4,7 +4,7 @@ import * as Effect from "effect/Effect";
 import * as Result from "effect/Result";
 
 import { RolesRepository } from "@/modules/role/domain/ports/repositories/roles.repository.js";
-import { RolesRootOps } from "@/modules/role/domain/roles.root.js";
+import { RolesRootOps } from "@/modules/role/domain/roles.root-ops.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 import { RolesRepositoryFake } from "./roles.repository-fake.js";

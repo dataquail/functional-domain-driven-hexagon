@@ -68,13 +68,13 @@ Persistence-format conversion lives in `infrastructure/repositories/<feature>.ma
 The two highest-frequency forms of logic creep fail `check:all` deterministically:
 
 1. **eslint `dumb-repository-ports`** (`scripts/eslint-rules/dumb-repository-ports.mjs`), scoped to `domain/ports/repositories/*.repository.ts`, inspects the `*RepositoryShape` type literal and requires every method name to match the vocabulary above. A name that reads as a domain verb, or omits the `One`/`Many` size, fails — the message tells the contributor to move the behaviour onto the aggregate or add the cardinality. The port is the right enforcement point because the `Live` and `Fake` must structurally satisfy it.
-2. **dependency-cruiser `dumb-repository-live-no-app-collaborators`** forbids `infrastructure/repositories/*.repository-live.ts` from importing the module's own `commands/` / `queries/` / `event-handlers/` use cases, or the application-tier ports (`command-bus`, `query-bus`, `domain-event-bus`, `integration-event-bus`, `unit-of-work`, `with-unit-of-work`). A repository that reaches for these is smuggling orchestration into persistence.
+2. **dependency-cruiser `dumb-repository-live-no-app-collaborators`** forbids `infrastructure/repositories/*.repository-live.ts` from importing the module's own `commands/` / `queries/` use cases, or the application-tier ports (`command-bus`, `query-bus`, `domain-event-bus`, `integration-event-bus`, `unit-of-work`, `with-unit-of-work`). A repository that reaches for these is smuggling orchestration into persistence.
 
 Both are allowlists (by name and by import path): a determinedly misleading name or pure computation inside an `updateOne` body can still pass. They are guardrails against the common case, not a substitute for review.
 
 ### Test exemption
 
-Static analysis allows test files in `commands/`, `queries/`, and `event-handlers/` to import from `infrastructure/` (so unit tests can pull in the fake). Production code in those folders may not (see ADR-0008).
+Static analysis allows test files in `commands/` and `queries/` to import from `infrastructure/` (so unit tests can pull in the fake). Production code in those folders may not (see ADR-0008).
 
 ## Consequences
 

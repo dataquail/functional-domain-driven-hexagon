@@ -11,7 +11,7 @@ import { beforeEach } from "vitest";
 
 import { DeviceGrantNotFound } from "@/modules/auth/domain/device-grant.errors.js";
 import { DeviceGrantId } from "@/modules/auth/domain/device-grant.id.js";
-import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant.root.js";
+import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant.root-ops.js";
 import { DeviceGrantRepository } from "@/modules/auth/domain/ports/repositories/device-grant.repository.js";
 import { DeviceGrantRepositoryLive } from "@/modules/auth/infrastructure/repositories/device-grant.repository-live.js";
 import { UserId } from "@/platform/ids/user-id.js";

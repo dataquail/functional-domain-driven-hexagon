@@ -7,7 +7,7 @@ import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 
 import { MembershipNotFound } from "@/modules/organization/domain/membership.errors.js";
-import { MembershipRootOps } from "@/modules/organization/domain/membership.root.js";
+import { MembershipRootOps } from "@/modules/organization/domain/membership.root-ops.js";
 import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership.repository.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";

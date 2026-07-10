@@ -13,7 +13,7 @@ import { RemoveMemberCommand } from "@/modules/organization/commands/remove-memb
 import { removeMember } from "@/modules/organization/commands/remove-member.handler.js";
 import { MembershipNotFound } from "@/modules/organization/domain/membership.errors.js";
 import { type MembershipRevoked } from "@/modules/organization/domain/membership.events.js";
-import { MembershipRootOps } from "@/modules/organization/domain/membership.root.js";
+import { MembershipRootOps } from "@/modules/organization/domain/membership.root-ops.js";
 import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership.repository.js";
 import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.js";
 import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization.repository-fake.js";

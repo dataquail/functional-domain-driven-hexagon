@@ -10,7 +10,7 @@ import * as Option from "effect/Option";
 import { beforeEach } from "vitest";
 
 import { MembershipNotFound } from "@/modules/organization/domain/membership.errors.js";
-import { MembershipRootOps } from "@/modules/organization/domain/membership.root.js";
+import { MembershipRootOps } from "@/modules/organization/domain/membership.root-ops.js";
 import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership.repository.js";
 import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/repositories/membership.repository-live.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";

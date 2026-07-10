@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 
 import { type CompleteTodoCommand } from "@/modules/todos/commands/complete-todo.command.js";
 import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todos.repository.js";
-import { TodoRootOps } from "@/modules/todos/domain/todo.root.js";
+import { TodoRootOps } from "@/modules/todos/domain/todo.root-ops.js";
 
 export const completeTodo = Effect.fn("completeTodo")(function* (cmd: CompleteTodoCommand) {
   const repo = yield* TodosRepository;

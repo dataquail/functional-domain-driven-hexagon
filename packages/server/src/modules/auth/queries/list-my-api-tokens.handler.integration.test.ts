@@ -7,7 +7,7 @@ import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
 
 import { ApiTokenId } from "@/modules/auth/domain/api-token.id.js";
-import { ApiTokenRootOps } from "@/modules/auth/domain/api-token.root.js";
+import { ApiTokenRootOps } from "@/modules/auth/domain/api-token.root-ops.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/ports/repositories/api-token.repository.js";
 import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositories/api-token.repository-live.js";
 import { listMyApiTokens } from "@/modules/auth/queries/list-my-api-tokens.handler.js";

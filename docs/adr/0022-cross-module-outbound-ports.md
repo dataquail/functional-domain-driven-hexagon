@@ -30,7 +30,7 @@ A module that calls another module does so through a **consumer-owned outbound p
 - A **port** in `domain/ports/acl/<capability>.acl.ts` — a `Context.Service` whose method signatures and error types are expressed entirely in the consumer's own vocabulary. The port names a capability ("grant super admin to this user"), not a publisher ("the role module").
 - An **adapter** in `infrastructure/acl/<capability>.acl-live.ts` — the `Live`. This is the _only_ file in the consuming module permitted to import the publisher's barrel, construct the publisher's command/query message, and dispatch it on the `CommandBus`/`QueryBus`. It maps the publisher's results and errors back into the port's own types.
 
-Commands, queries, event-handlers, domain, and interface code all depend on the port. None of them import the publisher's barrel. This is the outbound mirror of ADR-0007's inbound event ACL — every module-boundary crossing passes through exactly one named adapter file, one per direction (`interface/events/*.event-adapter.ts` inbound, `infrastructure/acl/*.acl-live.ts` outbound), and those two folders are the only places permitted to import a foreign barrel.
+Commands, queries, domain, and interface code all depend on the port. None of them import the publisher's barrel. This is the outbound mirror of ADR-0007's inbound event ACL — every module-boundary crossing passes through exactly one named adapter file, one per direction (`interface/events/*.event-adapter.ts` inbound, `infrastructure/acl/*.acl-live.ts` outbound), and those two folders are the only places permitted to import a foreign barrel.
 
 ### Port and adapter taxonomy: three buckets by counterpart
 

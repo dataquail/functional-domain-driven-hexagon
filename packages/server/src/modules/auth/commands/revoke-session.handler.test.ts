@@ -8,7 +8,7 @@ import { RevokeSessionCommand } from "@/modules/auth/commands/revoke-session.com
 import { revokeSession } from "@/modules/auth/commands/revoke-session.handler.js";
 import { SessionRepository } from "@/modules/auth/domain/ports/repositories/session.repository.js";
 import { SessionId } from "@/modules/auth/domain/session.id.js";
-import { SessionRootOps } from "@/modules/auth/domain/session.root.js";
+import { SessionRootOps } from "@/modules/auth/domain/session.root-ops.js";
 import { SessionRepositoryFake } from "@/modules/auth/infrastructure/repositories/session.repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
 

@@ -6,10 +6,8 @@ import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attr
 
 // Emitted by `IngestStripeWebhookCommand` after a fresh webhook
 // delivery has been verified and the idempotency claim is held.
-// Carries the parsed Stripe event so downstream handlers can fan out
-// by `type` without re-reading the wire payload. Same-module event
-// (no cross-module ACL): subscribers live in `billing/event-handlers/`
-// and consume `StripeWebhookIngested` directly.
+// Carries the parsed Stripe event so a subscriber can fan out by `type`
+// without re-reading the wire payload.
 export const StripeWebhookIngested = DomainEvent("StripeWebhookIngested", {
   stripeEvent: StripeWebhookEvent,
 });

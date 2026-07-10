@@ -5,7 +5,7 @@ import * as Layer from "effect/Layer";
 
 import { MintApiTokenCommand } from "@/modules/auth/commands/mint-api-token.command.js";
 import { mintApiToken } from "@/modules/auth/commands/mint-api-token.handler.js";
-import { API_TOKEN_PREFIX } from "@/modules/auth/domain/api-token.root.js";
+import { API_TOKEN_PREFIX } from "@/modules/auth/domain/api-token.root-ops.js";
 import { CredentialHash } from "@/modules/auth/domain/credential-hash.domain-service.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/ports/repositories/api-token.repository.js";
 import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake.js";

@@ -16,10 +16,8 @@ import {
   InvitationRevoked,
   InvitationTokenNotFound,
 } from "@/modules/organization/domain/invitation.errors.js";
-import {
-  type InvitationRoot,
-  InvitationRootOps,
-} from "@/modules/organization/domain/invitation.root.js";
+import { type InvitationRoot } from "@/modules/organization/domain/invitation.root.js";
+import { InvitationRootOps } from "@/modules/organization/domain/invitation.root-ops.js";
 import { type MembershipCreated } from "@/modules/organization/domain/membership.events.js";
 import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization.errors.js";
 import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation.repository.js";

@@ -1,7 +1,7 @@
 import * as Effect from "effect/Effect";
 
 import { type RemoveMemberCommand } from "@/modules/organization/commands/remove-member.command.js";
-import { MembershipRootOps } from "@/modules/organization/domain/membership.root.js";
+import { MembershipRootOps } from "@/modules/organization/domain/membership.root-ops.js";
 import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership.repository.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";

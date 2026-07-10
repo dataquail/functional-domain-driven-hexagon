@@ -7,7 +7,7 @@ import * as Result from "effect/Result";
 import { beforeEach } from "vitest";
 
 import { RolesRepository } from "@/modules/role/domain/ports/repositories/roles.repository.js";
-import { RolesRootOps } from "@/modules/role/domain/roles.root.js";
+import { RolesRootOps } from "@/modules/role/domain/roles.root-ops.js";
 import { RolesRepositoryLive } from "@/modules/role/infrastructure/repositories/roles.repository-live.js";
 import { findUserRoles } from "@/modules/role/queries/find-user-roles.handler.js";
 import { FindUserRolesQuery } from "@/modules/role/queries/find-user-roles.query.js";

@@ -5,7 +5,7 @@ import * as Effect from "effect/Effect";
 import * as Result from "effect/Result";
 
 import { type InviteUserCommand } from "@/modules/organization/commands/invite-user.command.js";
-import { InvitationRootOps } from "@/modules/organization/domain/invitation.root.js";
+import { InvitationRootOps } from "@/modules/organization/domain/invitation.root-ops.js";
 import { InvitationMailer } from "@/modules/organization/domain/ports/clients/invitation-mailer.client.js";
 import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation.repository.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";

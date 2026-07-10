@@ -11,7 +11,7 @@ import { beforeEach } from "vitest";
 
 import { ApiTokenNotFound } from "@/modules/auth/domain/api-token.errors.js";
 import { ApiTokenId } from "@/modules/auth/domain/api-token.id.js";
-import { ApiTokenRootOps } from "@/modules/auth/domain/api-token.root.js";
+import { ApiTokenRootOps } from "@/modules/auth/domain/api-token.root-ops.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/ports/repositories/api-token.repository.js";
 import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositories/api-token.repository-live.js";
 import { UserId } from "@/platform/ids/user-id.js";

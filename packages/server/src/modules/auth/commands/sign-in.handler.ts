@@ -6,7 +6,7 @@ import { type SignInCommand } from "@/modules/auth/commands/sign-in.command.js";
 import { AuthIdentityRepository } from "@/modules/auth/domain/ports/repositories/auth-identity.repository.js";
 import { SessionRepository } from "@/modules/auth/domain/ports/repositories/session.repository.js";
 import { SessionId } from "@/modules/auth/domain/session.id.js";
-import { SessionRootOps } from "@/modules/auth/domain/session.root.js";
+import { SessionRootOps } from "@/modules/auth/domain/session.root-ops.js";
 import { UserProvisioning } from "@/platform/ddd/ports/user-provisioning.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 

@@ -1,4 +1,4 @@
-# ADR-0002: Module layout (domain / commands / queries / event-handlers / infrastructure / interface)
+# ADR-0002: Module layout (domain / commands / queries / infrastructure / interface)
 
 - Status: Accepted
 - Date: 2026-04-25
@@ -23,14 +23,13 @@ Each feature module lives at `modules/<feature>/` with sibling subfolders, named
 
 ```
 modules/<feature>/
-  domain/          — pure data, ops, ports, errors, events. Stereotypes are dot-delimited suffixes (ADR-0024): aggregate roots `*.root.ts` (`XRoot` data + `XRootOps` free-function bag), constituent aggregates `*.aggregate.ts`, entities `*.entity.ts` (`XEntity`), value objects `*.value-object.ts` (`XValueObject`), branded IDs `*.id.ts` (`XId`), errors `*.errors.ts`, events `*.events.ts`, domain services `*.domain-service.ts` (stateless logic no aggregate owns — ADR-0023). See ADR-0003.
+  domain/          — pure data, ops, ports, errors, events. Stereotypes are dot-delimited suffixes (ADR-0024): aggregate roots as two files — `*.root.ts` (the dumb `XRoot` data) and `*.root-ops.ts` (the `XRootOps` free-function bag) — constituent aggregates `*.aggregate.ts`, entities `*.entity.ts` (`XEntity`), value objects `*.value-object.ts` (`XValueObject`), their behavior in sibling `*-ops.ts` bags, branded IDs `*.id.ts` (`XId`), specifications `*.specification.ts` (pure predicates over an aggregate), errors `*.errors.ts`, events `*.events.ts`, domain services `*.domain-service.ts` (stateless logic no aggregate owns — ADR-0023). See ADR-0003.
     ports/         — outbound ports, tiered by counterpart (see ADR-0022)
       repositories/ — the module's own datastore (`*.repository.ts`)
       clients/      — true third-party systems (`*.client.ts`)
       acl/          — other bounded contexts (`*.acl.ts`)
   commands/        — `*.command.ts` schema + `*.handler.ts` handler + bus-registration map
   queries/         — `*.query.ts` schema + `*.handler.ts` handler (may bypass the domain) + bus-registration map
-  event-handlers/  — write-side use cases (`*.handler.ts`) reacting to internal triggers (event-handlers/triggers/`*.triggers.ts`); same dependency shape as commands
   infrastructure/  — driven adapters, tiered by counterpart to match domain/ports/ (see ADR-0022)
     repositories/  — `*.repository-live.ts` + `*.repository-fake.ts` + `*.mapper.ts`
     clients/       — third-party adapters (*.client-live.ts + *.client-fake.ts, self-contained *.client.ts, *.email.tsx templates)
@@ -38,7 +37,7 @@ modules/<feature>/
   interface/       — inbound adapters, one subfolder per protocol
     http/          — one *.endpoint.ts per HTTP endpoint plus an index.ts barrel that registers the endpoint groups (see ADR-0013); may also hold *.util.ts protocol helpers (ADR-0023)
     cli/           — one *.endpoint.ts per CLI endpoint (ADR-0013) plus an index.ts barrel; may hold *.util.ts
-    events/        — one *.event-adapter.ts per upstream module whose domain events this module consumes (see ADR-0007)
+    events/        — one *.event-adapter.ts per domain event this module reacts to; a bus-only inbound port that dispatches one of the module's own commands (see ADR-0007)
   policies/        — *.policies.ts registry, *.resource-resolver(s).ts, is-*.policy.ts checks
     public/        — *.service-live.ts: this module's Lives of platform ACL service ports, published to the policy registry
   # module root — a closed set of aggregation/composition files only (ADR-0024); feature code lives in the subfolders above
@@ -49,9 +48,9 @@ modules/<feature>/
   index.ts                            — barrel: re-exports only what other modules legitimately need
 ```
 
-Not every module has all six folders — `event-handlers/` and `queries/` are present only when the module needs them. Likewise `interface/http/` is present only for modules that expose HTTP endpoints; `interface/events/` only for modules that subscribe to another module's events.
+Not every module has all folders — `queries/` is present only when the module needs it. Likewise `interface/http/` is present only for modules that expose HTTP endpoints; `interface/events/` only for modules that react to domain events (their own or another module's).
 
-`commands/`, `queries/`, and `event-handlers/` together correspond to what hexagonal architecture calls the "application layer." There is deliberately no `application/` umbrella over them. The split reflects two real distinctions: write-side vs. read-side (queries can touch `@org/database` and bypass the domain because there is no aggregate to protect when nothing mutates), and use-case-driven vs. event-driven (event handlers run as reactions, not as direct dispatch). Each folder gets its own dependency-cruiser isolation rule (see ADR-0008), so the architectural distinction shows up at the file-system level rather than via convention.
+`commands/` and `queries/` together correspond to what hexagonal architecture calls the "application layer." There is deliberately no `application/` umbrella over them. The split reflects one real distinction: write-side vs. read-side (queries can touch `@org/database` and bypass the domain because there is no aggregate to protect when nothing mutates). Each folder gets its own dependency-cruiser isolation rule (see ADR-0008), so the architectural distinction shows up at the file-system level rather than via convention. A cross-aggregate reaction to a domain event is not a third application folder: it is an inbound adapter at `interface/events/` that dispatches one of the module's own commands (see ADR-0007), reusing the command's handler rather than duplicating it.
 
 Cross-cutting platform services that don't belong to any feature live in a sibling `platform/` folder: the domain event bus, command/query buses, unit of work, request context, HTTP middlewares.
 
@@ -62,14 +61,14 @@ Enforced by static analysis (see ADR-0008):
 - Code outside a module imports it only via the module's `index.ts` barrel.
 - Modules do not reach into each other's internal folders directly.
 - The barrel itself is restricted: it may not re-export anything from `infrastructure/` or `interface/`, so the published cross-module surface is limited to domain types (events, IDs, errors), command/query message types, handler-registration maps and span-attribute aggregators, and the module's `Live` layer.
-- Cross-module flow happens via three channels: the published HTTP contract, published domain events, or dispatch through the typed command/query bus (ADR-0006). The bus carries one constraint: a command handler in one module must not dispatch a command in another module — the chain goes through an event (Command → Event → Command). Cross-module _queries_ via the bus are unrestricted; they are reads, with no transactional or coupling consequences.
+- Cross-module flow happens via three channels: the published HTTP contract, published domain events, or dispatch through the typed command/query bus (ADR-0006). The bus carries one constraint: a command handler in one module must not dispatch a command in another module — the chain goes through an event (Command → Event → Command), where the reacting module's `interface/events/` adapter subscribes to the event and dispatches its own command. Cross-module _queries_ via the bus are unrestricted; they are reads, with no transactional or coupling consequences.
 - Domain events that other modules subscribe to, and command/query schemas that other modules dispatch, are part of the source module's public surface and are re-exported from its `index.ts`.
 
 ### Typed-ID shared kernel and its governance
 
 `platform/ids/` holds branded entity IDs that more than one module references — `UserId` is the load-bearing example: wallet stores it as `userId` on the `Wallet` aggregate; todos commands carry it through `currentUser.userId`; auth's identity row targets it. Without a shared declaration, each module would redeclare the same `Schema.brand("UserId")` and silently invite drift if one definition ever evolved (e.g. added length or format validation), and TypeScript would treat the two brands as distinct types, forcing coercion at every cross-FK boundary.
 
-The kernel is allowlisted by all four layer-isolation dep-cruiser rules (`domain-isolation`, `commands-isolation`, `event-handlers-isolation`, `queries-isolation`), so any layer can import an ID without weakening the layer's other constraints.
+The kernel is allowlisted by the layer-isolation dep-cruiser rules (`domain-isolation`, `commands-isolation`, `queries-isolation`, and the `interface-events-isolation` adapter rule), so any layer can import an ID without weakening the layer's other constraints.
 
 Shared kernels grow into dumping grounds without explicit rules (Newman's "minimal stable shared kernel", Vernon's anti-corruption warning). The governance is therefore narrow and mechanical:
 
@@ -85,7 +84,7 @@ Moving IDs into `@org/contracts` is rejected: contracts are the HTTP wire shape 
 
 - Predictable navigation. Every module uses the same folder vocabulary. Finding "the persistence implementation for X" is always `modules/<feature>/infrastructure/`; finding "where the read-side projection for Y lives" is always `modules/<feature>/queries/`.
 - Per-use-case slicing (the strength of vertical slicing) is given up. The role-based split aligns with the dependency rules, which is what we're optimizing for.
-- A subscriber in another module reaches through the barrel — for example, the wallet module's event handler imports `UserCreated` from `modules/user/index.ts`, not from an internal file. This is intentional: domain events are part of the user module's public contract, the same way the HTTP API is. The same applies to any command or query schema another module is expected to dispatch.
+- A subscriber in another module reaches through the barrel — for example, the wallet module's `interface/events/` adapter imports `OrganizationCreated` from `modules/organization/index.ts`, not from an internal file. This is intentional: domain events are part of the organization module's public contract, the same way the HTTP API is. The same applies to any command or query schema another module is expected to dispatch.
 - Adding a new module is mechanical: create the folders the module needs and add a `<feature>.module.ts` Layer. The barrel-only dependency rules apply automatically to any folder under `src/modules/` (ADR-0008).
 - The typed-ID kernel stays a one-line-per-file folder for the foreseeable future, by design. New cross-module IDs are cheap (one file, one PR, reviewer confirms two distinct consumers).
 - If a long-running orchestration appears (saga, process manager) that doesn't fit "single command" or "single event reaction," it gets its own sibling folder and its own isolation rule — the layout is open to that growth without re-introducing an `application/` umbrella.
@@ -94,7 +93,7 @@ Moving IDs into `@org/contracts` is rejected: contracts are the HTTP wire shape 
 
 - **Vertical slicing** (folder per use case). Stronger cohesion within a use case; weaker cohesion of the architectural layer as a whole; harder to express dependency rules cleanly. Rejected for this codebase.
 - **Three layers (domain / application / infrastructure) without `interface/`.** Folds HTTP bindings into either application or infrastructure. Rejected because the boundary between "use case" and "transport adapter" is the most-changed boundary in practice; giving it its own folder pays off.
-- **Single `application/` umbrella over commands, queries, and event-handlers.** Rejected because (a) read-side queries don't share dependency constraints with write-side commands — queries can touch `@org/database`, commands can't — so an umbrella implies a kinship that doesn't exist, and (b) once queries are carved out, the umbrella contains only commands and event-handlers, which are siblings in every meaningful sense.
+- **Single `application/` umbrella over commands and queries.** Rejected because read-side queries don't share dependency constraints with write-side commands — queries can touch `@org/database`, commands can't — so an umbrella implies a kinship that doesn't exist, and once queries are carved out the umbrella wraps only `commands/`, adding nesting that distinguishes nothing.
 - **Flat module layout with file-name conventions** (e.g. `user.entity.ts`, `user.service.ts`). Workable for small modules; doesn't scale and conflates layer rules with naming conventions.
 - **Eliminate `platform/ids/`; each module redefines its own brand.** Rejected: two `UserId` brands are distinct types to TypeScript, forcing coercion at every cross-FK boundary.
 

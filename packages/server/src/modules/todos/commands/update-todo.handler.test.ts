@@ -9,7 +9,7 @@ import * as Option from "effect/Option";
 import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todos.repository.js";
 import { TodoNotFound } from "@/modules/todos/domain/todo.errors.js";
 import { TodoId } from "@/modules/todos/domain/todo.id.js";
-import { TodoRootOps } from "@/modules/todos/domain/todo.root.js";
+import { TodoRootOps } from "@/modules/todos/domain/todo.root-ops.js";
 import { TodosRepositoryFake } from "@/modules/todos/infrastructure/repositories/todos.repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";

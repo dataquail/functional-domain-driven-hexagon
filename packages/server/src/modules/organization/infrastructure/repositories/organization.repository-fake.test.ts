@@ -8,7 +8,7 @@ import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 
 import { OrganizationNotFound } from "@/modules/organization/domain/organization.errors.js";
-import { OrganizationRootOps } from "@/modules/organization/domain/organization.root.js";
+import { OrganizationRootOps } from "@/modules/organization/domain/organization.root-ops.js";
 import { OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization.repository.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 

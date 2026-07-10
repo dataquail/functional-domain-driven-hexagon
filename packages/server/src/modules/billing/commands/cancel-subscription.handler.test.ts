@@ -13,7 +13,7 @@ import { SubscriptionRepository } from "@/modules/billing/domain/ports/repositor
 import { SubscriptionNotFound } from "@/modules/billing/domain/subscription.errors.js";
 import { type SubscriptionCanceled } from "@/modules/billing/domain/subscription.events.js";
 import { SubscriptionId } from "@/modules/billing/domain/subscription.id.js";
-import { SubscriptionRootOps } from "@/modules/billing/domain/subscription.root.js";
+import { SubscriptionRootOps } from "@/modules/billing/domain/subscription.root-ops.js";
 import { BillingGatewayFake } from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake.js";
 import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";

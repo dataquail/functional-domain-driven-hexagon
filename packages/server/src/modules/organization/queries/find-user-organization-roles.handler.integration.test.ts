@@ -7,8 +7,8 @@ import * as Layer from "effect/Layer";
 import * as Result from "effect/Result";
 import { beforeEach } from "vitest";
 
-import { OrganizationRootOps } from "@/modules/organization/domain/organization.root.js";
-import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles.root.js";
+import { OrganizationRootOps } from "@/modules/organization/domain/organization.root-ops.js";
+import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles.root-ops.js";
 import { OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization.repository.js";
 import { OrganizationRolesRepository } from "@/modules/organization/domain/ports/repositories/organization-roles.repository.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";

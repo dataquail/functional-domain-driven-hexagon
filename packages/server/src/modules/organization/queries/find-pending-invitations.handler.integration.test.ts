@@ -7,8 +7,8 @@ import * as Result from "effect/Result";
 import * as TestClock from "effect/testing/TestClock";
 import { beforeEach } from "vitest";
 
-import { InvitationRootOps } from "@/modules/organization/domain/invitation.root.js";
-import { OrganizationRootOps } from "@/modules/organization/domain/organization.root.js";
+import { InvitationRootOps } from "@/modules/organization/domain/invitation.root-ops.js";
+import { OrganizationRootOps } from "@/modules/organization/domain/organization.root-ops.js";
 import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation.repository.js";
 import { OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization.repository.js";
 import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/repositories/invitation.repository-live.js";

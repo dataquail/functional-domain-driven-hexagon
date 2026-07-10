@@ -1,47 +1,48 @@
-// Anti-corruption layer between `organization`'s published events and
-// the wallet module's internal trigger types. Inbound port — lives in
-// `interface/events/` alongside HTTP endpoints (`interface/http/`)
-// since both are inbound transports translating external schemas into
-// internal messages. Only this file is permitted to import from
-// `@/modules/organization/index.js`; the use case downstream consumes
-// the trigger type and stays decoupled from the publisher's event shape
-// (ADR-0007).
-//
-// If `organization` adds fields to `OrganizationCreated`, only this
-// file changes — the handler and trigger types stay stable.
+// Inbound event adapter (ADR-0007): the only file in the wallet module
+// permitted to import `@/modules/organization/index.js`. It translates
+// `OrganizationCreated` into a `CreateWalletCommand` and dispatches it
+// through the bus — a bus-only inbound port, structurally identical to an
+// HTTP endpoint. It never touches the wallet domain, its ops, or its
+// repository: the CreateWallet command handler owns the mutation (the
+// ADR-0022 mutation boundary). If organization adds a field to the event,
+// only this translation changes.
 
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { OrganizationCreated } from "@/modules/organization/index.js";
-import { WalletRepository } from "@/modules/wallet/domain/ports/repositories/wallet.repository.js";
-import { handleOrganizationCreated } from "@/modules/wallet/event-handlers/create-wallet-when-organization-is-created.handler.js";
-import { type OrganizationCreatedTrigger } from "@/modules/wallet/event-handlers/triggers/organization.triggers.js";
+import { CreateWalletCommand } from "@/modules/wallet/commands/create-wallet.command.js";
+import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-
-const toTrigger = (event: OrganizationCreated): OrganizationCreatedTrigger => ({
-  organizationId: event.organizationId,
-});
+import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 
 export const OrganizationEventAdapterLive = Layer.effectDiscard(
   Effect.gen(function* () {
-    const bus = yield* DomainEventBus;
-    const repo = yield* WalletRepository;
-    yield* bus.subscribe(OrganizationCreated, (event) =>
-      handleOrganizationCreated(toTrigger(event)).pipe(
-        Effect.provideService(WalletRepository, repo),
-        // The bus contract (`subscribe` returns `Effect<void>`) requires
-        // handlers with no typed error channel: per ADR-0007, subscriber
-        // failures roll back the publisher's transaction via the defect
-        // path. The handler now propagates `PersistenceUnavailable` (since
-        // the wallet repo can fail transiently); `Effect.orDie` demotes
-        // that to a defect so the rollback still happens, at the cost of
-        // collapsing 503 into 500 for the *cross-module* failure case.
-        // A direct `OrganizationRepository` transient failure still
-        // surfaces as 503 because that flows through the command's typed
-        // channel.
-        Effect.orDie,
-      ),
+    const domainEventBus = yield* DomainEventBus;
+    const commandBus = yield* CommandBus;
+    const unitOfWork = yield* UnitOfWork;
+    yield* domainEventBus.subscribe(
+      OrganizationCreated,
+      (event) =>
+        // `subscribe` requires a handler with no requirements and no error
+        // channel. The dispatched command's application deps (DomainEventBus,
+        // UnitOfWork) are provided from the captured singletons; its residual
+        // `Database.Database` (the pool, pulled in by the repository Live) is
+        // elided here — it, and the ambient `TransactionContext`, are
+        // guaranteed present because the immediate bus runs this handler in
+        // the publisher's fully-provisioned fiber, so the command's
+        // `withUnitOfWork` opens a nested savepoint on the org-creation
+        // transaction (wallet + org commit atomically). `orDie` demotes a
+        // transient failure to a defect so it rolls the publisher back —
+        // collapsing 503 → 500 for this cross-module path, the
+        // immediate-consistency contract.
+        commandBus
+          .execute(CreateWalletCommand.make({ organizationId: event.organizationId }))
+          .pipe(
+            Effect.provideService(DomainEventBus, domainEventBus),
+            Effect.provideService(UnitOfWork, unitOfWork),
+            Effect.orDie,
+          ) as Effect.Effect<void>,
     );
   }),
 );
