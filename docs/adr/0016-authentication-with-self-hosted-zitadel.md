@@ -38,7 +38,7 @@ Logout flow: the browser navigates to `GET /auth/logout` (idempotent, public —
 `Session` is an aggregate, not a leaf record. Sliding TTL with an absolute cap (`SESSION_TTL_SECONDS` / `SESSION_ABSOLUTE_TTL_SECONDS`). The aggregate, repository (live + fake), the `SignIn` and `TouchSession` commands, the `findSession` query, and the four endpoints (`login`, `callback`, `me`, `logout`) live under `modules/auth/` per the module conventions (ADR-0002, ADR-0013). A few things sit at platform level:
 
 - `platform/auth/cookie-codec.ts` — generic HMAC sign/verify, used by both the auth module and the auth middleware.
-- `platform/middlewares/auth-middleware-live.ts` — the implementation behind the auth middleware. It reads the cookie, dispatches `FindSessionQuery`, dispatches `TouchSessionCommand` (sliding refresh), performs a one-line `users.role` lookup to populate the super-admin flag, and hydrates `CurrentUser`. Authorization checks themselves live in the per-route policy layer (ADR-0021).
+- `platform/middlewares/auth-middleware-live.ts` — the implementation behind the auth middleware. It reads the cookie, dispatches `FindSessionQuery`, dispatches `TouchSessionCommand` (sliding refresh, fire-and-forget — see below), performs a one-line `users.role` lookup to populate the super-admin flag, and hydrates `CurrentUser`. Authorization checks themselves live in the per-route policy layer (ADR-0021).
 
 ### Sliding-TTL refresh via `TouchSessionCommand`
 
@@ -47,6 +47,8 @@ Every authenticated request, after `findSession` succeeds, the middleware dispat
 - Skips the write when the prior `lastUsedAt` is younger than `SESSION_TOUCH_THRESHOLD_SECONDS` (default 60). Without this throttle, a busy client would hammer Postgres with one UPDATE per request for no real-world benefit.
 - Computes the new `expiresAt` via the `Session.touch` aggregate function, which clamps to `absoluteExpiresAt` so the hard cap holds.
 - Persists via `SessionRepository.updateOne`, whose SQL `WHERE revoked_at IS NULL` guards against touching a session revoked between the query and the command. `SessionNotFound` failures (revoked or deleted mid-flight) are swallowed — the user already has a valid `CurrentUser` for this request, and the next request fails cleanly.
+
+The dispatch is **fire-and-forget**: the middleware forks the command onto a detached fiber (`forkDetach`) rather than awaiting it, so the touch's read-and-maybe-write never sits on the auth critical path. Authentication is already established by `findSession`; the touch is a best-effort refresh, and blocking every authenticated request on an extra round-trip would add latency for no correctness gain. Because the fiber is detached it is also not awaited at shutdown — an in-flight touch can be dropped on restart, which is harmless for a stamp the next request re-applies. The bearer path (CLI / MCP) dispatches its analogous `TouchApiTokenCommand` the same way, for the same reason.
 
 This keeps lifecycle reads (`findSession`) and writes (`TouchSessionCommand`) on opposite sides of CQRS without putting business logic in the middleware.
 

@@ -67,8 +67,10 @@ export const UserAuthMiddlewareLive = Layer.effect(
         const apiToken = yield* queryBus
           .execute(FindApiTokenByHashQuery.make({ tokenHash: CredentialHash.of(bearer) }))
           .pipe(Effect.provideService(Database.Database, db), Effect.mapError(toAuthError));
-        // Fire-and-forget last-used stamp; throttled + error-swallowing in the
-        // handler, same rationale as the session touch below.
+        // Last-used stamp, forked off the request fiber (`forkDetach`) so its
+        // lookup + throttle never sit on the auth critical path. Detached from
+        // the request scope so it outlives the response; throttled +
+        // error-swallowing in the handler. Same rationale as the session touch.
         yield* commandBus
           .execute(
             TouchApiTokenCommand.make({
@@ -76,7 +78,7 @@ export const UserAuthMiddlewareLive = Layer.effect(
               thresholdSeconds: env.API_TOKEN_TOUCH_THRESHOLD_SECONDS,
             }),
           )
-          .pipe(Effect.provideService(Database.Database, db));
+          .pipe(Effect.provideService(Database.Database, db), Effect.forkDetach);
         // No browser session for a bearer caller; the token id stands in as
         // the opaque principal id on `CurrentUser` (Policy.ts unchanged).
         return { sessionId: apiToken.id, userId: apiToken.userId };
@@ -91,7 +93,8 @@ export const UserAuthMiddlewareLive = Layer.effect(
       const session = yield* queryBus
         .execute(FindSessionQuery.make({ sessionId }))
         .pipe(Effect.provideService(Database.Database, db), Effect.mapError(toAuthError));
-      // Sliding-TTL refresh, fire-and-forget on the request fiber. The
+      // Sliding-TTL refresh, forked off the request fiber (`forkDetach`) so it
+      // stays off the auth critical path and outlives the response. The
       // command's own throttle decides whether to write; failures are
       // benign races (revoked / removed mid-flight) and are swallowed by
       // the handler so they never bubble up as a 401.
@@ -103,7 +106,7 @@ export const UserAuthMiddlewareLive = Layer.effect(
             thresholdSeconds: env.SESSION_TOUCH_THRESHOLD_SECONDS,
           }),
         )
-        .pipe(Effect.provideService(Database.Database, db));
+        .pipe(Effect.provideService(Database.Database, db), Effect.forkDetach);
       return {
         sessionId: session.id,
         userId: session.userId,
