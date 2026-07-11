@@ -1,10 +1,13 @@
 import type * as DateTime from "effect/DateTime";
 import * as Schema from "effect/Schema";
 
-import { type InvitationStatus } from "@/modules/organization/domain/invitation/invitation.specification.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 import { type InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
+
+// Display status of an open invitation, derived on the read path from
+// `expiresAt` vs now: still live (`pending`) or lapsed (`expired`).
+export type PendingInvitationStatus = "pending" | "expired";
 
 // Pending-invitations roster for the member-management surface: every
 // *open* invitation (not yet accepted, not revoked) for the org, each
@@ -23,7 +26,7 @@ export const findPendingInvitationsQuerySpanAttributes: SpanAttributesExtractor<
 export type PendingInvitationView = {
   readonly invitationId: InvitationId;
   readonly inviteeEmail: string;
-  readonly status: InvitationStatus;
+  readonly status: PendingInvitationStatus;
   readonly expiresAt: DateTime.Utc;
   readonly createdAt: DateTime.Utc;
 };

@@ -10,16 +10,16 @@ import * as Option from "effect/Option";
 import * as TestClock from "effect/testing/TestClock";
 import { beforeEach } from "vitest";
 
-import {
-  ApiTokenExpired,
-  ApiTokenRevoked,
-} from "@/modules/auth/domain/api-token/api-token.errors.js";
 import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.js";
 import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositories/api-token.repository-live.js";
 import { findApiTokenByHash } from "@/modules/auth/queries/find-api-token-by-hash.handler.js";
-import { FindApiTokenByHashQuery } from "@/modules/auth/queries/find-api-token-by-hash.query.js";
+import {
+  ApiTokenExpired,
+  ApiTokenRevoked,
+  FindApiTokenByHashQuery,
+} from "@/modules/auth/queries/find-api-token-by-hash.query.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 

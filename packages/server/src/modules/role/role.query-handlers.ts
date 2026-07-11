@@ -1,7 +1,6 @@
 import { type Database } from "@org/database/index";
-import * as Effect from "effect/Effect";
+import type * as Effect from "effect/Effect";
 
-import { RolesRepositoryLive } from "@/modules/role/infrastructure/repositories/roles.repository-live.js";
 import { findUserRoles } from "@/modules/role/queries/find-user-roles.handler.js";
 import {
   type FindUserRolesQuery,
@@ -28,7 +27,7 @@ declare module "@/platform/ddd/ports/query-bus.js" {
 
 export const roleQueryHandlers = queryHandlers({
   FindUserRolesQuery: {
-    handle: (q): FindUserRolesOutput => findUserRoles(q).pipe(Effect.provide(RolesRepositoryLive)),
+    handle: findUserRoles,
     spanAttributes: findUserRolesQuerySpanAttributes,
   },
 });

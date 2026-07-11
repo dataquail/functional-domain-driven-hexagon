@@ -1,22 +1,12 @@
 import { type Database } from "@org/database/index";
-import * as Effect from "effect/Effect";
+import type * as Effect from "effect/Effect";
 
+import { findApiTokenByHash } from "@/modules/auth/queries/find-api-token-by-hash.handler.js";
 import {
   type ApiTokenExpired,
   type ApiTokenNotFound,
+  type ApiTokenPrincipalView,
   type ApiTokenRevoked,
-} from "@/modules/auth/domain/api-token/api-token.errors.js";
-import { type ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root.js";
-import {
-  type SessionExpired,
-  type SessionNotFound,
-  type SessionRevoked,
-} from "@/modules/auth/domain/session/session.errors.js";
-import { type SessionRoot } from "@/modules/auth/domain/session/session.root.js";
-import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositories/api-token.repository-live.js";
-import { SessionRepositoryLive } from "@/modules/auth/infrastructure/repositories/session.repository-live.js";
-import { findApiTokenByHash } from "@/modules/auth/queries/find-api-token-by-hash.handler.js";
-import {
   type FindApiTokenByHashQuery,
   findApiTokenByHashQuerySpanAttributes,
 } from "@/modules/auth/queries/find-api-token-by-hash.query.js";
@@ -24,9 +14,14 @@ import { findSession } from "@/modules/auth/queries/find-session.handler.js";
 import {
   type FindSessionQuery,
   findSessionQuerySpanAttributes,
+  type SessionExpired,
+  type SessionNotFound,
+  type SessionRevoked,
+  type SessionView,
 } from "@/modules/auth/queries/find-session.query.js";
 import { listMyApiTokens } from "@/modules/auth/queries/list-my-api-tokens.handler.js";
 import {
+  type ApiTokenView,
   type ListMyApiTokensQuery,
   listMyApiTokensQuerySpanAttributes,
 } from "@/modules/auth/queries/list-my-api-tokens.query.js";
@@ -34,19 +29,19 @@ import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistenc
 import { queryHandlers } from "@/platform/ddd/ports/query-bus.js";
 
 type FindSessionOutput = Effect.Effect<
-  SessionRoot,
+  SessionView,
   SessionNotFound | SessionExpired | SessionRevoked | PersistenceUnavailable,
   Database.Database
 >;
 
 type FindApiTokenByHashOutput = Effect.Effect<
-  ApiTokenRoot,
+  ApiTokenPrincipalView,
   ApiTokenNotFound | ApiTokenExpired | ApiTokenRevoked | PersistenceUnavailable,
   Database.Database
 >;
 
 type ListMyApiTokensOutput = Effect.Effect<
-  ReadonlyArray<ApiTokenRoot>,
+  ReadonlyArray<ApiTokenView>,
   PersistenceUnavailable,
   Database.Database
 >;
@@ -70,17 +65,15 @@ declare module "@/platform/ddd/ports/query-bus.js" {
 
 export const authQueryHandlers = queryHandlers({
   FindSessionQuery: {
-    handle: (q): FindSessionOutput => findSession(q).pipe(Effect.provide(SessionRepositoryLive)),
+    handle: findSession,
     spanAttributes: findSessionQuerySpanAttributes,
   },
   FindApiTokenByHashQuery: {
-    handle: (q): FindApiTokenByHashOutput =>
-      findApiTokenByHash(q).pipe(Effect.provide(ApiTokenRepositoryLive)),
+    handle: findApiTokenByHash,
     spanAttributes: findApiTokenByHashQuerySpanAttributes,
   },
   ListMyApiTokensQuery: {
-    handle: (q): ListMyApiTokensOutput =>
-      listMyApiTokens(q).pipe(Effect.provide(ApiTokenRepositoryLive)),
+    handle: listMyApiTokens,
     spanAttributes: listMyApiTokensQuerySpanAttributes,
   },
 });

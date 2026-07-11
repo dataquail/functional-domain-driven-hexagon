@@ -30,7 +30,9 @@ Two collaborating platform services — `UnitOfWork` and a pair of domain-event 
 
 ### UnitOfWork and the `withUnitOfWork` boundary
 
-`UnitOfWork.run` is the low-level primitive: it opens a transaction, provides a `TransactionContext` to the inner effect (so repository calls join it via the database's per-call `makeQuery` check), and rolls back if anything inside fails. Its error channel surfaces `DatabaseError` (constraint violations) and the domain-language `PersistenceUnavailable` (transient store outage), never the raw `@org/database` signal.
+`UnitOfWork.run` is the low-level primitive: it opens a transaction, provides a `TransactionContext` to the inner effect (so repository calls and query-handler reads join it via the database's per-call `makeQuery` check), and rolls back if anything inside fails. Its error channel surfaces `DatabaseError` (constraint violations) and the domain-language `PersistenceUnavailable` (transient store outage), never the raw `@org/database` signal.
+
+This is why use-case DB access — repositories and read-side query handlers alike — goes through the transaction-aware `makeQuery`, never the bare pool `execute`. A read dispatched inside a unit of work (a CQRS query is not confined to request-time reads: a policy/ACL query is resolved during a command's authorization, inside its transaction) must join the ambient transaction, or it runs on a foreign pool connection and fails. A lint rule enforces `makeQuery` over bare `execute` across commands and queries; bare `execute` is reserved for test seeding and background jobs, which run outside any unit of work.
 
 Use cases don't call `run` directly; they apply the **`withUnitOfWork`** combinator at the end of the handler's pipe, the way Cosmic-Python writes `with uow:` at the top of a handler:
 

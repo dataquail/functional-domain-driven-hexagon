@@ -40,8 +40,9 @@ export const findMyOrganizations = Effect.fn("findMyOrganizations")(function* (
 ) {
   const db = yield* Database.Database;
   const rows = yield* db
-    .execute((client) =>
-      client.any(sql.type(MyOrganizationRowStd)`
+    .makeQuery((execute) =>
+      execute((client) =>
+        client.any(sql.type(MyOrganizationRowStd)`
           SELECT
             o.*,
             EXISTS (
@@ -57,7 +58,8 @@ export const findMyOrganizations = Effect.fn("findMyOrganizations")(function* (
             AND o.deleted_at IS NULL
           ORDER BY o.created_at DESC
         `),
-    )
+      ),
+    )()
     .pipe(
       Effect.catchTag("DatabaseError", Effect.die),
       Effect.catchTag("DatabaseUnavailable", (e) =>

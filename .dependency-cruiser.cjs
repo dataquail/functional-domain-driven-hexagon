@@ -178,7 +178,7 @@ module.exports = {
       name: "queries-isolation",
       severity: "error",
       comment:
-        "Module queries are read-side: may import own module's domain (for IDs/value objects) and sibling queries, the DDD shared kernel ports under platform/ddd/, platform/ids/, and @org/database for direct SQL projection. May NOT import platform/*-live.ts, own commands, event-handlers, infrastructure, interface, @org/contracts (wire types belong in interface), or (ADR-0022) other modules' barrels — cross-module reads go through a `domain/ports/acl/` port whose adapter lives in `infrastructure/acl/`. Test files excluded.",
+        "Module queries are read-side projections and must NOT reach the write-side consistency boundary: they build their own read models by reading SQL directly via @org/database, never by loading aggregates through repositories. A query may import: sibling queries, the DDD shared kernel ports under platform/ddd/, platform/ids/, @org/database, and — from its OWN domain — only two things that are not the write model: branded IDs (domain/<sub>/*.id.ts, identity vocabulary) and cross-context ACL ports (domain/ports/acl/, read facades over OTHER modules; ADR-0020 bans cross-schema SQL so there is no SQL alternative). Everything else in domain is off-limits: roots, *.root-ops.ts, repositories, specifications, value-objects, entities, domain-services, errors, events, and the repository/client ports. May NOT import platform/*-live.ts, own commands, event-handlers, infrastructure, interface, @org/contracts (wire types belong in interface), or (ADR-0022) other modules' barrels. Test files excluded (they may seed via the live repository). See ADR-0002.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/queries/",
         pathNot: "\\.test\\.ts$",
@@ -186,7 +186,9 @@ module.exports = {
       to: {
         path: "^packages/",
         pathNot: [
-          "^packages/server/src/modules/$1/(domain|queries)/",
+          "^packages/server/src/modules/$1/queries/",
+          "^packages/server/src/modules/$1/domain/[^/]+/[^/]+\\.id\\.ts$",
+          "^packages/server/src/modules/$1/domain/ports/acl/",
           "^packages/server/src/platform/ddd/",
           "^packages/server/src/platform/ids/",
           "^packages/database/",

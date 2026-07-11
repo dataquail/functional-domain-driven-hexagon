@@ -1,7 +1,6 @@
 import { type Database } from "@org/database/index";
-import * as Effect from "effect/Effect";
+import type * as Effect from "effect/Effect";
 
-import { SubscriptionRepositoryLive } from "@/modules/billing/infrastructure/repositories/subscription.repository-live.js";
 import { findSubscriptionByOrganization } from "@/modules/billing/queries/find-subscription-by-organization.handler.js";
 import {
   type FindSubscriptionByOrganizationQuery,
@@ -28,8 +27,7 @@ declare module "@/platform/ddd/ports/query-bus.js" {
 
 export const billingQueryHandlers = queryHandlers({
   FindSubscriptionByOrganizationQuery: {
-    handle: (q): FindSubscriptionByOrganizationOutput =>
-      findSubscriptionByOrganization(q).pipe(Effect.provide(SubscriptionRepositoryLive)),
+    handle: findSubscriptionByOrganization,
     spanAttributes: findSubscriptionByOrganizationQuerySpanAttributes,
   },
 });

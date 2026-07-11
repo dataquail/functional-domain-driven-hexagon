@@ -30,30 +30,32 @@ export const findAllOrganizations = Effect.fn("findAllOrganizations")(function* 
   const offset = (query.page - 1) * query.pageSize;
 
   const result = yield* db
-    .execute((client) =>
-      Promise.all([
-        query.includeDeleted
-          ? client.any(sql.type(RowSchemas.OrganizationRowStd)`
+    .makeQuery((execute) =>
+      execute((client) =>
+        Promise.all([
+          query.includeDeleted
+            ? client.any(sql.type(RowSchemas.OrganizationRowStd)`
                 SELECT * FROM "organization".organizations
                 ORDER BY created_at DESC
                 LIMIT ${query.pageSize} OFFSET ${offset}
               `)
-          : client.any(sql.type(RowSchemas.OrganizationRowStd)`
+            : client.any(sql.type(RowSchemas.OrganizationRowStd)`
                 SELECT * FROM "organization".organizations
                 WHERE deleted_at IS NULL
                 ORDER BY created_at DESC
                 LIMIT ${query.pageSize} OFFSET ${offset}
               `),
-        query.includeDeleted
-          ? client.one(sql.type(CountRowStd)`
+          query.includeDeleted
+            ? client.one(sql.type(CountRowStd)`
                 SELECT COUNT(*)::int AS value FROM "organization".organizations
               `)
-          : client.one(sql.type(CountRowStd)`
+            : client.one(sql.type(CountRowStd)`
                 SELECT COUNT(*)::int AS value FROM "organization".organizations
                 WHERE deleted_at IS NULL
               `),
-      ]),
-    )
+        ]),
+      ),
+    )()
     .pipe(
       Effect.catchTag("DatabaseError", Effect.die),
       Effect.catchTag("DatabaseUnavailable", (e) =>

@@ -17,13 +17,15 @@ const toView = (row: RowSchemas.TodoRow): ListTodosTodoView => ({
 export const listTodos = Effect.fn("listTodos")(function* (query: ListTodosQuery) {
   const db = yield* Database.Database;
   const rows = yield* db
-    .execute((client) =>
-      client.any(sql.type(RowSchemas.TodoRowStd)`
+    .makeQuery((execute) =>
+      execute((client) =>
+        client.any(sql.type(RowSchemas.TodoRowStd)`
           SELECT * FROM todos.todos
           WHERE organization_id = ${query.organizationId}
           ORDER BY created_at DESC
         `),
-    )
+      ),
+    )()
     .pipe(
       Effect.catchTag("DatabaseError", Effect.die),
       Effect.catchTag("DatabaseUnavailable", (e) =>

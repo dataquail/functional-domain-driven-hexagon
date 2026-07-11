@@ -1,15 +1,31 @@
+import { Database, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
+import * as Schema from "effect/Schema";
 
-import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
 import { type FindMembershipQuery } from "@/modules/organization/queries/find-membership.query.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
-// Goes through the repository so the org module stays the single source
-// of truth for membership. Absence (`MembershipNotFound`) is the normal
-// "not a member" answer, mapped to `false` — not an error.
+const CountRowStd = Schema.toStandardSchemaV1(Schema.Struct({ value: Schema.Number }));
+
+// `makeQuery` (not bare `execute`) so the read joins the ambient
+// transaction when one exists — this query is dispatched by
+// `MembershipService` during a command's authorization, inside its unit
+// of work.
 export const findMembership = Effect.fn("findMembership")(function* (query: FindMembershipQuery) {
-  const repo = yield* MembershipRepository;
-  return yield* repo.findOneByUserIdAndOrgId(query.userId, query.organizationId).pipe(
-    Effect.map(() => ({ isMember: true })),
-    Effect.catchTag("MembershipNotFound", () => Effect.succeed({ isMember: false })),
+  const db = yield* Database.Database;
+  const readCount = db.makeQuery((execute) =>
+    execute((client) =>
+      client.one(sql.type(CountRowStd)`
+          SELECT COUNT(*)::int AS value FROM "organization".memberships
+          WHERE user_id = ${query.userId} AND organization_id = ${query.organizationId}
+        `),
+    ),
   );
+  const row = yield* readCount().pipe(
+    Effect.catchTag("DatabaseError", Effect.die),
+    Effect.catchTag("DatabaseUnavailable", (e) =>
+      Effect.fail(new PersistenceUnavailable({ message: e.message })),
+    ),
+  );
+  return { isMember: row.value > 0 };
 });
