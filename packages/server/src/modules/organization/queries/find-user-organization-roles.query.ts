@@ -1,6 +1,6 @@
 import * as Schema from "effect/Schema";
 
-import { type OrganizationRoleValueObject } from "@/modules/organization/domain/organization-role.value-object.js";
+import { type OrganizationRoleValueObject } from "@/modules/organization/domain/organization-roles/organization-role.value-object.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";

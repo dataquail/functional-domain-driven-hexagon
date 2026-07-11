@@ -11,10 +11,10 @@ import { CreateOrganizationCommand } from "@/modules/organization/commands/creat
 import { createOrganization } from "@/modules/organization/commands/create-organization.handler.js";
 import { RemoveMemberCommand } from "@/modules/organization/commands/remove-member.command.js";
 import { removeMember } from "@/modules/organization/commands/remove-member.handler.js";
-import { MembershipNotFound } from "@/modules/organization/domain/membership.errors.js";
-import { type MembershipRevoked } from "@/modules/organization/domain/membership.events.js";
-import { MembershipRootOps } from "@/modules/organization/domain/membership.root.js";
-import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership.repository.js";
+import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.js";
+import { type MembershipRevoked } from "@/modules/organization/domain/membership/membership.events.js";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
+import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops.js";
 import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.js";
 import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization.repository-fake.js";
 import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.js";

@@ -13,12 +13,10 @@ import { beforeEach } from "vitest";
 import {
   InvitationNotFound,
   InvitationTokenNotFound,
-} from "@/modules/organization/domain/invitation.errors.js";
-import {
-  type InvitationRoot,
-  InvitationRootOps,
-} from "@/modules/organization/domain/invitation.root.js";
-import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation.repository.js";
+} from "@/modules/organization/domain/invitation/invitation.errors.js";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
+import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.js";
+import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
 import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/repositories/invitation.repository-live.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";

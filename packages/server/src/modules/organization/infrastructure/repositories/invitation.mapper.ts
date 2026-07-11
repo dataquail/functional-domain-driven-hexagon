@@ -1,7 +1,7 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 
-import { InvitationRoot } from "@/modules/organization/domain/invitation.root.js";
+import { InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 

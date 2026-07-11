@@ -96,6 +96,52 @@ module.exports = {
       },
     },
     {
+      name: "root-ops-only-from-command-handlers",
+      severity: "error",
+      comment:
+        "ADR-0003: *.root-ops.ts is the aggregate's mutation surface — the one op stereotype that escapes the domain. It may be imported only by the module's own command handlers (commands/*.handler.ts), its own domain/ (invariant guards and sub-op composition), tests, and repository fakes (a test seam). A query, event adapter, interface endpoint, or infrastructure Live reaching for root-ops is bypassing the command boundary — dispatch a command instead, or (for a read predicate) use a *.specification.ts. Cross-module import is already blocked by the barrel rules.",
+      from: {
+        path: "^packages/server/src/modules/[^/]+/",
+        pathNot: [
+          "^packages/server/src/modules/[^/]+/domain/",
+          "^packages/server/src/modules/[^/]+/commands/[^/]+\\.handler\\.ts$",
+          "\\.test\\.ts$",
+          "\\.repository-fake\\.ts$",
+        ],
+      },
+      to: { path: "^packages/server/src/modules/[^/]+/domain/.+\\.root-ops\\.ts$" },
+    },
+    {
+      name: "subdomain-isolation",
+      severity: "error",
+      comment:
+        "Within a module's domain, each subdomain folder (domain/<subdomain>/) is a boundary: it may import only its own subdomain (plus effect, platform/ddd/contracts, and platform/ids per domain-isolation). It may NOT import another subdomain, domain/domain-services/, or domain/ports/. Cross-subdomain composition is the job of a domain service in domain/domain-services/ — the one domain location allowed to reach into more than one subdomain (excluded from this rule's `from`). Test files excluded.",
+      from: {
+        path: "^packages/server/src/modules/([^/]+)/domain/([^/]+)/",
+        pathNot: [
+          "^packages/server/src/modules/[^/]+/domain/(domain-services|ports)/",
+          "\\.test\\.ts$",
+        ],
+      },
+      to: {
+        path: "^packages/server/src/modules/[^/]+/domain/[^/]+/",
+        pathNot: "^packages/server/src/modules/$1/domain/$2/",
+      },
+    },
+    {
+      name: "constituent-ops-domain-private",
+      severity: "error",
+      comment:
+        "ADR-0003: *.entity-ops.ts / *.aggregate-ops.ts / *.value-object-ops.ts encode invariants on an aggregate's internals. They are domain-private — only the module's own domain/ may compose them (hierarchically: root-ops → entity-ops → … → value-object-ops), and nothing outside domain/ may touch them. Mutate the aggregate only through its root: a command, query, adapter, or infrastructure file reaching for a constituent op is bypassing the root. `no-circular` backstops a backwards containment edge.",
+      from: {
+        path: "^packages/server/src/modules/[^/]+/",
+        pathNot: ["^packages/server/src/modules/[^/]+/domain/", "\\.test\\.ts$"],
+      },
+      to: {
+        path: "^packages/server/src/modules/[^/]+/domain/.+\\.(entity-ops|aggregate-ops|value-object-ops)\\.ts$",
+      },
+    },
+    {
       name: "commands-isolation",
       severity: "error",
       comment:
@@ -121,38 +167,6 @@ module.exports = {
         "Commands are runtime-pure: only 'effect' allowed externally. No drivers, no clients, no framework code.",
       from: {
         path: "^packages/server/src/modules/[^/]+/commands/",
-        pathNot: "\\.test\\.ts$",
-      },
-      to: {
-        dependencyTypes: ["npm", "npm-dev", "npm-peer", "npm-optional"],
-        pathNot: "/node_modules/effect/",
-      },
-    },
-    {
-      name: "event-handlers-isolation",
-      severity: "error",
-      comment:
-        "Module event-handlers are write-side use cases reacting to internal triggers (event-handlers/triggers/*). Cross-module events arrive translated to triggers via `interface/events/<publisher>.event-adapter.ts` (ADR-0007 ACL). Same constraints as commands: own module's domain and sibling event-handlers, the DDD shared kernel ports under platform/ddd/, platform/ids/. No platform/*-live.ts, no infrastructure, no interface, no commands, no queries, no @org/contracts, no @org/database, no other-module barrels. Test files excluded.",
-      from: {
-        path: "^packages/server/src/modules/([^/]+)/event-handlers/",
-        pathNot: "\\.test\\.ts$",
-      },
-      to: {
-        path: "^packages/",
-        pathNot: [
-          "^packages/server/src/modules/$1/(domain|event-handlers)/",
-          "^packages/server/src/platform/ddd/",
-          "^packages/server/src/platform/ids/",
-        ],
-      },
-    },
-    {
-      name: "event-handlers-no-external-beyond-effect",
-      severity: "error",
-      comment:
-        "Event handlers are runtime-pure: only 'effect' allowed externally. No drivers, no clients, no framework code.",
-      from: {
-        path: "^packages/server/src/modules/[^/]+/event-handlers/",
         pathNot: "\\.test\\.ts$",
       },
       to: {
@@ -194,6 +208,26 @@ module.exports = {
       },
     },
     {
+      name: "interface-events-isolation",
+      severity: "error",
+      comment:
+        "ADR-0007: an event adapter (interface/events/*.event-adapter.ts) is a bus-only inbound port — structurally identical to an HTTP endpoint. It subscribes to a domain event and dispatches a command; it must NOT reach the consistency boundary directly. It may import: its own module's domain events/ids (to subscribe), its own commands' *.command.ts schemas (to dispatch), the DDD kernel ports under platform/ddd/ (CommandBus/QueryBus/the event buses/UnitOfWork), platform/ids/, and (via foreign-barrel-only-from-outbound-adapter) another module's index.ts barrel for cross-module events. No domain/ports/, no domain ops (*.root-ops.ts etc.), no repositories/infrastructure, no command *.handler.ts, no @org/database — the dispatched command owns all of that. Test files excluded.",
+      from: {
+        path: "^packages/server/src/modules/([^/]+)/interface/events/",
+        pathNot: "\\.test\\.ts$",
+      },
+      to: {
+        path: "^packages/",
+        pathNot: [
+          "^packages/server/src/modules/$1/domain/[^/]+/[^/]+\\.(events|id)\\.ts$",
+          "^packages/server/src/modules/$1/commands/[^/]+\\.command\\.ts$",
+          "^packages/server/src/modules/[^/]+/index\\.ts$",
+          "^packages/server/src/platform/ddd/",
+          "^packages/server/src/platform/ids/",
+        ],
+      },
+    },
+    {
       name: "barrel-content-discipline",
       severity: "error",
       comment:
@@ -214,12 +248,11 @@ module.exports = {
       name: "outbound-ports-private-to-use-cases",
       severity: "error",
       comment:
-        "Outbound ports under `domain/ports/` are private to use cases — see `pathNot` for the allowlist. The common violation is a controller reaching for a port instead of dispatching through the bus.",
+        "Outbound ports are private to use cases: the repository port in each subdomain folder (domain/<sub>/*.repository.ts) and the clients/acl ports under domain/ports/. See `pathNot` for the allowlist. The common violation is a controller reaching for a port instead of dispatching through the bus.",
       from: {
         path: "^packages/server/src/modules/[^/]+/",
         pathNot: [
-          "^packages/server/src/modules/[^/]+/(commands|queries|event-handlers|infrastructure)/",
-          "^packages/server/src/modules/[^/]+/interface/events/",
+          "^packages/server/src/modules/[^/]+/(commands|queries|infrastructure)/",
           "^packages/server/src/modules/[^/]+/policies/.*resource-resolvers?\\.ts$",
           "^packages/server/src/modules/[^/]+/domain/",
           "^packages/server/src/modules/[^/]+/policies/public/.*\\.service-live\\.ts$",
@@ -227,7 +260,12 @@ module.exports = {
           "\\.test\\.ts$",
         ],
       },
-      to: { path: "^packages/server/src/modules/[^/]+/domain/ports/" },
+      to: {
+        path: [
+          "^packages/server/src/modules/[^/]+/domain/ports/",
+          "^packages/server/src/modules/[^/]+/domain/[^/]+/[^/]+\\.repository\\.ts$",
+        ],
+      },
     },
     {
       name: "lives-only-from-composition-roots",
@@ -249,13 +287,13 @@ module.exports = {
       name: "dumb-repository-live-no-app-collaborators",
       severity: "error",
       comment:
-        "ADR-0005: repository Lives are dumb persistence. They map an aggregate to/from rows and nothing more — they must not import the command/query/event-handler use cases, nor the application-tier buses and unit-of-work (CommandBus, QueryBus, DomainEventBus, IntegrationEventBus, UnitOfWork). Publishing events, dispatching commands, and owning the transaction boundary are the use case's job, not the repository's. A repository that reaches for these is smuggling business logic into persistence — move it to the aggregate or the use case. (The eslint `dumb-repository-ports` rule guards the port's method names; this guards what the Live collaborates with.)",
+        "ADR-0005: repository Lives are dumb persistence. They map an aggregate to/from rows and nothing more — they must not import the command/query use cases, nor the application-tier buses and unit-of-work (CommandBus, QueryBus, DomainEventBus, IntegrationEventBus, UnitOfWork). Publishing events, dispatching commands, and owning the transaction boundary are the use case's job, not the repository's. A repository that reaches for these is smuggling business logic into persistence — move it to the aggregate or the use case. (The eslint `dumb-repository-ports` rule guards the port's method names; this guards what the Live collaborates with.)",
       from: {
         path: "^packages/server/src/modules/[^/]+/infrastructure/repositories/[^/]+\\.repository-live\\.ts$",
       },
       to: {
         path: [
-          "^packages/server/src/modules/[^/]+/(commands|queries|event-handlers)/",
+          "^packages/server/src/modules/[^/]+/(commands|queries)/",
           "^packages/server/src/platform/ddd/ports/(command-bus|query-bus|domain-event-bus|integration-event-bus|unit-of-work|with-unit-of-work)\\.ts$",
         ],
       },
@@ -264,7 +302,7 @@ module.exports = {
       name: "interface-util-files-are-leaves",
       severity: "error",
       comment:
-        "ADR-0023: an interface `*.util.ts` is a pure, leaf protocol/wire helper extracted from an endpoint for testability. It must not import ports (`domain/ports/`), use cases (`commands`/`queries`/`event-handlers`), infrastructure adapters, the application buses/unit-of-work (`platform/ddd/ports/`), or a module barrel. Orchestration and domain access belong in the endpoint or a use case, not a util — this keeps the util mechanical and denies it as a backdoor around the architecture. Test files excluded.",
+        "ADR-0023: an interface `*.util.ts` is a pure, leaf protocol/wire helper extracted from an endpoint for testability. It must not import ports (`domain/ports/`), use cases (`commands`/`queries`), infrastructure adapters, the application buses/unit-of-work (`platform/ddd/ports/`), or a module barrel. Orchestration and domain access belong in the endpoint or a use case, not a util — this keeps the util mechanical and denies it as a backdoor around the architecture. Test files excluded.",
       from: {
         path: "^packages/server/src/modules/[^/]+/interface/[^/]+/[^/]+\\.util\\.ts$",
         pathNot: "\\.test\\.ts$",
@@ -272,7 +310,7 @@ module.exports = {
       to: {
         path: [
           "^packages/server/src/modules/[^/]+/domain/ports/",
-          "^packages/server/src/modules/[^/]+/(commands|queries|event-handlers|infrastructure)/",
+          "^packages/server/src/modules/[^/]+/(commands|queries|infrastructure)/",
           "^packages/server/src/platform/ddd/ports/",
           "^packages/server/src/modules/[^/]+/index\\.ts$",
         ],

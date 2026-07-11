@@ -1,9 +1,9 @@
 import * as Effect from "effect/Effect";
 
-import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles.root.js";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
+import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification.js";
 import { UsersLookup } from "@/modules/organization/domain/ports/acl/users-lookup.acl.js";
-import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership.repository.js";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/ports/repositories/organization-roles.repository.js";
 import { type FindOrganizationMembershipsQuery } from "@/modules/organization/queries/find-organization-memberships.query.js";
 
 export const findOrganizationMemberships = Effect.fn("findOrganizationMemberships")(function* (
@@ -32,7 +32,7 @@ export const findOrganizationMemberships = Effect.fn("findOrganizationMembership
           userId: m.userId,
           email: user.email,
           joinedAt: m.createdAt,
-          isAdmin: OrganizationRolesRootOps.hasRole(roles, "admin"),
+          isAdmin: OrganizationRolesSpecifications.hasRole(roles, "admin"),
         },
       ];
     }),

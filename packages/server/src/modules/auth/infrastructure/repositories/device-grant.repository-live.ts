@@ -2,10 +2,10 @@ import { Database, orFail, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { DeviceGrantNotFound } from "@/modules/auth/domain/device-grant.errors.js";
-import { type DeviceGrantId } from "@/modules/auth/domain/device-grant.id.js";
-import { type DeviceGrantRoot } from "@/modules/auth/domain/device-grant.root.js";
-import { DeviceGrantRepository } from "@/modules/auth/domain/ports/repositories/device-grant.repository.js";
+import { DeviceGrantNotFound } from "@/modules/auth/domain/device-grant/device-grant.errors.js";
+import { type DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.js";
+import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
+import { type DeviceGrantRoot } from "@/modules/auth/domain/device-grant/device-grant.root.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
 import * as DeviceGrantMapper from "./device-grant.mapper.js";

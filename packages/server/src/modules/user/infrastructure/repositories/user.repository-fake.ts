@@ -4,9 +4,9 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { UserRepository } from "@/modules/user/domain/ports/repositories/user.repository.js";
-import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user.errors.js";
-import { type UserRoot } from "@/modules/user/domain/user.root.js";
+import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user/user.errors.js";
+import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
+import { type UserRoot } from "@/modules/user/domain/user/user.root.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 
 const findUserByEmail = (

@@ -5,7 +5,7 @@ import { SuperAdminOnly } from "@/platform/auth/policies/super-admin.js";
 import type * as PolicyRegistry from "@/platform/auth/policy-registry.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 
-import { type UserRoot } from "../domain/user.root.js";
+import { type UserRoot } from "../domain/user/user.root.js";
 
 // Per-module declaration-merge contribution.
 //

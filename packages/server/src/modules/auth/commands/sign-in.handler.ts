@@ -3,10 +3,10 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
 import { type SignInCommand } from "@/modules/auth/commands/sign-in.command.js";
-import { AuthIdentityRepository } from "@/modules/auth/domain/ports/repositories/auth-identity.repository.js";
-import { SessionRepository } from "@/modules/auth/domain/ports/repositories/session.repository.js";
-import { SessionId } from "@/modules/auth/domain/session.id.js";
-import { SessionRootOps } from "@/modules/auth/domain/session.root.js";
+import { AuthIdentityRepository } from "@/modules/auth/domain/auth-identity/auth-identity.repository.js";
+import { SessionId } from "@/modules/auth/domain/session/session.id.js";
+import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
+import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.js";
 import { UserProvisioning } from "@/platform/ddd/ports/user-provisioning.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 

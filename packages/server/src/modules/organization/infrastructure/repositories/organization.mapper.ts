@@ -1,7 +1,7 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 
-import { OrganizationRoot } from "@/modules/organization/domain/organization.root.js";
+import { OrganizationRoot } from "@/modules/organization/domain/organization/organization.root.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 type Row = RowSchemas.OrganizationRow;

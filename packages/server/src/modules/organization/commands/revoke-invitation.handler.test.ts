@@ -14,13 +14,11 @@ import {
   InvitationAlreadyAccepted,
   InvitationAlreadyRevoked,
   InvitationNotFound,
-} from "@/modules/organization/domain/invitation.errors.js";
-import { type InvitationRevoked } from "@/modules/organization/domain/invitation.events.js";
-import {
-  type InvitationRoot,
-  InvitationRootOps,
-} from "@/modules/organization/domain/invitation.root.js";
-import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation.repository.js";
+} from "@/modules/organization/domain/invitation/invitation.errors.js";
+import { type InvitationRevoked } from "@/modules/organization/domain/invitation/invitation.events.js";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
+import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.js";
+import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
 import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";

@@ -3,13 +3,13 @@ import * as Effect from "effect/Effect";
 
 import { mintApiTokenCore } from "@/modules/auth/commands/mint-api-token.handler.js";
 import { type PollDeviceGrantCommand } from "@/modules/auth/commands/poll-device-grant.command.js";
-import { CredentialHash } from "@/modules/auth/domain/credential-hash.domain-service.js";
 import {
   DeviceGrantExpired,
   DeviceGrantPending,
-} from "@/modules/auth/domain/device-grant.errors.js";
-import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant.root.js";
-import { DeviceGrantRepository } from "@/modules/auth/domain/ports/repositories/device-grant.repository.js";
+} from "@/modules/auth/domain/device-grant/device-grant.errors.js";
+import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
+import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification.js";
+import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
 // Single-use exchange. Hashes the presented device code, then:
@@ -28,7 +28,7 @@ export const pollDeviceGrant = Effect.fn("pollDeviceGrant")(function* (
   const grant = yield* grants.findOneByCodeHash(CredentialHash.of(cmd.deviceCode));
   const now = yield* DateTime.now;
 
-  if (DeviceGrantRootOps.isExpired(grant, now)) {
+  if (DeviceGrantSpecifications.isExpired(grant, now)) {
     yield* grants
       .deleteOne(grant.id)
       .pipe(Effect.catchTag("DeviceGrantNotFound", () => Effect.void));

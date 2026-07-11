@@ -6,8 +6,8 @@ import * as Layer from "effect/Layer";
 import * as Result from "effect/Result";
 import { beforeEach } from "vitest";
 
-import { RolesRepository } from "@/modules/role/domain/ports/repositories/roles.repository.js";
-import { RolesRootOps } from "@/modules/role/domain/roles.root.js";
+import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
+import { RolesRootOps } from "@/modules/role/domain/roles/roles.root-ops.js";
 import { RolesRepositoryLive } from "@/modules/role/infrastructure/repositories/roles.repository-live.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";

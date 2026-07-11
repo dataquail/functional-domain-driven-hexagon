@@ -1,12 +1,12 @@
 import * as Context from "effect/Context";
 import type * as DateTime from "effect/DateTime";
 import type * as Effect from "effect/Effect";
-import * as Schema from "effect/Schema";
 
 import {
   type BillingGatewayUnavailable,
   type InvalidWebhookSignature,
-} from "@/modules/billing/domain/subscription.errors.js";
+} from "@/modules/billing/domain/subscription/subscription.errors.js";
+import { type StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 // Outbound port to the external billing provider (Stripe in prod, an
@@ -53,39 +53,6 @@ export type VerifyWebhookInput = {
   readonly payload: string;
   readonly signature: string;
 };
-
-// Discriminated union over the handful of Stripe event types we react
-// to. `type` carries the literal string from Stripe; the consumer
-// switches on it. `unknown` is the safety bucket for event types we
-// haven't modeled yet — we still want to record-and-200 the delivery
-// so Stripe doesn't keep retrying.
-export const StripeWebhookEvent = Schema.Union([
-  Schema.Struct({
-    eventId: Schema.String,
-    type: Schema.Literals([
-      "customer.subscription.created",
-      "customer.subscription.updated",
-      "customer.subscription.deleted",
-    ]),
-    subscription: Schema.Struct({
-      stripeSubscriptionId: Schema.String,
-      status: Schema.String,
-      currentPeriodEnd: Schema.NullOr(Schema.DateTimeUtc),
-    }),
-  }),
-  Schema.Struct({
-    eventId: Schema.String,
-    type: Schema.Literals(["invoice.paid", "invoice.payment_failed"]),
-    invoice: Schema.Struct({
-      stripeSubscriptionId: Schema.NullOr(Schema.String),
-    }),
-  }),
-  Schema.Struct({
-    eventId: Schema.String,
-    type: Schema.Literal("unknown"),
-  }),
-]);
-export type StripeWebhookEvent = typeof StripeWebhookEvent.Type;
 
 export type BillingGatewayShape = {
   readonly createCustomer: (

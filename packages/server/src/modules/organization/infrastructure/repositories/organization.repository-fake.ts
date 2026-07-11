@@ -3,9 +3,9 @@ import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
 
-import { OrganizationNotFound } from "@/modules/organization/domain/organization.errors.js";
-import { type OrganizationRoot } from "@/modules/organization/domain/organization.root.js";
-import { OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization.repository.js";
+import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.js";
+import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
+import { type OrganizationRoot } from "@/modules/organization/domain/organization/organization.root.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 export const OrganizationRepositoryFake = Layer.effect(

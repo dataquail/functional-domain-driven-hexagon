@@ -6,10 +6,10 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 
-import { ApiTokenNotFound } from "@/modules/auth/domain/api-token.errors.js";
-import { ApiTokenId } from "@/modules/auth/domain/api-token.id.js";
-import { ApiTokenRootOps } from "@/modules/auth/domain/api-token.root.js";
-import { ApiTokenRepository } from "@/modules/auth/domain/ports/repositories/api-token.repository.js";
+import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.js";
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
+import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 import { ApiTokenRepositoryFake } from "./api-token.repository-fake.js";

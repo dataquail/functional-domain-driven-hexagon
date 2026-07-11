@@ -3,8 +3,8 @@ import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
 
 import { type TouchApiTokenCommand } from "@/modules/auth/commands/touch-api-token.command.js";
-import { ApiTokenRootOps } from "@/modules/auth/domain/api-token.root.js";
-import { ApiTokenRepository } from "@/modules/auth/domain/ports/repositories/api-token.repository.js";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
+import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.js";
 
 // Last-used stamp, throttled + race-tolerant.
 //

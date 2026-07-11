@@ -3,9 +3,9 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { WalletRepository } from "@/modules/wallet/domain/ports/repositories/wallet.repository.js";
-import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet.errors.js";
-import { type WalletRoot } from "@/modules/wallet/domain/wallet.root.js";
+import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors.js";
+import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
+import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 

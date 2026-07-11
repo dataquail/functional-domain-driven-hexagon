@@ -2,10 +2,10 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
 import { type AcceptInvitationCommand } from "@/modules/organization/commands/accept-invitation.command.js";
-import { InvitationRootOps } from "@/modules/organization/domain/invitation.root.js";
-import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization.errors.js";
-import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation.repository.js";
-import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership.repository.js";
+import { InvitationAcceptance } from "@/modules/organization/domain/domain-services/invitation-acceptance.domain-service.js";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
+import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { RoleService } from "@/platform/ddd/ports/role-service.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
@@ -28,7 +28,7 @@ export const acceptInvitation = Effect.fn("acceptInvitation")(
 
     const invitation = yield* invRepo.findOneByToken(cmd.token);
     const result = yield* Effect.fromResult(
-      InvitationRootOps.accept(invitation, { userId: cmd.userId, now }),
+      InvitationAcceptance.accept(invitation, { userId: cmd.userId, now }),
     );
     yield* Effect.annotateCurrentSpan("invitation.id", invitation.id);
     yield* Effect.annotateCurrentSpan("organization.id", invitation.organizationId);

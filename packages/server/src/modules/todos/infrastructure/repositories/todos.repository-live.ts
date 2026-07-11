@@ -2,10 +2,10 @@ import { Database, orFail, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todos.repository.js";
-import { TodoNotFound } from "@/modules/todos/domain/todo.errors.js";
-import { type TodoId } from "@/modules/todos/domain/todo.id.js";
-import { type TodoRoot } from "@/modules/todos/domain/todo.root.js";
+import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.js";
+import { type TodoId } from "@/modules/todos/domain/todo/todo.id.js";
+import { type TodoRoot } from "@/modules/todos/domain/todo/todo.root.js";
+import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 

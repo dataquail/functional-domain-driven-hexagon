@@ -10,9 +10,9 @@ import { MintApiTokenCommand } from "@/modules/auth/commands/mint-api-token.comm
 import { mintApiToken } from "@/modules/auth/commands/mint-api-token.handler.js";
 import { RevokeApiTokenCommand } from "@/modules/auth/commands/revoke-api-token.command.js";
 import { revokeApiToken } from "@/modules/auth/commands/revoke-api-token.handler.js";
-import { ApiTokenNotFound } from "@/modules/auth/domain/api-token.errors.js";
-import { ApiTokenId } from "@/modules/auth/domain/api-token.id.js";
-import { ApiTokenRepository } from "@/modules/auth/domain/ports/repositories/api-token.repository.js";
+import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.js";
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";

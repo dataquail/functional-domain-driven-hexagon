@@ -21,8 +21,8 @@ import {
   updateTodoCommandSpanAttributes,
 } from "@/modules/todos/commands/update-todo.command.js";
 import { updateTodo } from "@/modules/todos/commands/update-todo.handler.js";
-import { type TodoNotFound } from "@/modules/todos/domain/todo.errors.js";
-import { type TodoRoot } from "@/modules/todos/domain/todo.root.js";
+import { type TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.js";
+import { type TodoRoot } from "@/modules/todos/domain/todo/todo.root.js";
 import { TodosRepositoryLive } from "@/modules/todos/infrastructure/repositories/todos.repository-live.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { commandHandlers } from "@/platform/ddd/ports/command-bus.js";

@@ -3,9 +3,9 @@ import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
 
-import { MembershipNotFound } from "@/modules/organization/domain/membership.errors.js";
-import { type MembershipRoot } from "@/modules/organization/domain/membership.root.js";
-import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership.repository.js";
+import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.js";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
+import { type MembershipRoot } from "@/modules/organization/domain/membership/membership.root.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 

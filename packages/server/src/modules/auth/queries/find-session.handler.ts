@@ -1,8 +1,8 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { SessionRepository } from "@/modules/auth/domain/ports/repositories/session.repository.js";
-import { SessionExpired, SessionRevoked } from "@/modules/auth/domain/session.errors.js";
+import { SessionExpired, SessionRevoked } from "@/modules/auth/domain/session/session.errors.js";
+import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
 import { type FindSessionQuery } from "@/modules/auth/queries/find-session.query.js";
 
 // Looks up a session and validates its lifecycle (revoked / expired). Used

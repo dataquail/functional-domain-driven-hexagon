@@ -7,12 +7,10 @@ import * as Ref from "effect/Ref";
 import {
   InvitationNotFound,
   InvitationTokenNotFound,
-} from "@/modules/organization/domain/invitation.errors.js";
-import {
-  type InvitationRoot,
-  InvitationRootOps,
-} from "@/modules/organization/domain/invitation.root.js";
-import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation.repository.js";
+} from "@/modules/organization/domain/invitation/invitation.errors.js";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
+import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.js";
+import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
 import { type InvitationId } from "@/platform/ids/invitation-id.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
@@ -72,7 +70,7 @@ export const InvitationRepositoryFake = Layer.effect(
             (inv) =>
               inv.organizationId === organizationId &&
               inv.inviteeEmail === inviteeEmail &&
-              InvitationRootOps.isOpen(inv),
+              InvitationSpecifications.isOpen(inv),
           )
           .sort(byCreatedAtDesc);
         return open[0] ?? null;

@@ -1,7 +1,7 @@
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { SubscriptionRepository } from "@/modules/billing/domain/ports/repositories/subscription.repository.js";
+import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
 
 import { type FindSubscriptionByOrganizationQuery } from "./find-subscription-by-organization.query.js";
 

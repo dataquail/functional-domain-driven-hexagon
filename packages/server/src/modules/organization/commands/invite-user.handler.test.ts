@@ -5,8 +5,8 @@ import * as Layer from "effect/Layer";
 
 import { InviteUserCommand } from "@/modules/organization/commands/invite-user.command.js";
 import { inviteUser } from "@/modules/organization/commands/invite-user.handler.js";
-import { type InvitationIssued } from "@/modules/organization/domain/invitation.events.js";
-import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation.repository.js";
+import { type InvitationIssued } from "@/modules/organization/domain/invitation/invitation.events.js";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
 import {
   InvitationMailerFake,
   SentInvitations,

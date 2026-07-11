@@ -1,8 +1,8 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 
-import { SessionId } from "@/modules/auth/domain/session.id.js";
-import { SessionRoot } from "@/modules/auth/domain/session.root.js";
+import { SessionId } from "@/modules/auth/domain/session/session.id.js";
+import { SessionRoot } from "@/modules/auth/domain/session/session.root.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 export const toDomain = (row: RowSchemas.SessionRow): SessionRoot =>

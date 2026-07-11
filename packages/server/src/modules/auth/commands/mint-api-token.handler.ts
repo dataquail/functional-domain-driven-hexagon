@@ -8,10 +8,10 @@ import {
   type MintApiTokenInput,
   type MintApiTokenResult,
 } from "@/modules/auth/commands/mint-api-token.command.js";
-import { ApiTokenId } from "@/modules/auth/domain/api-token.id.js";
-import { ApiTokenRootOps } from "@/modules/auth/domain/api-token.root.js";
-import { CredentialHash } from "@/modules/auth/domain/credential-hash.domain-service.js";
-import { ApiTokenRepository } from "@/modules/auth/domain/ports/repositories/api-token.repository.js";
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
+import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.js";
+import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 

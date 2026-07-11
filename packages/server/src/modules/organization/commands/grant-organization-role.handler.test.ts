@@ -11,9 +11,9 @@ import { grantOrganizationRole } from "@/modules/organization/commands/grant-org
 import {
   AlreadyHasOrganizationRole,
   CannotPromoteSelfInOrganization,
-} from "@/modules/organization/domain/organization-role.errors.js";
-import { type OrganizationRoleGranted } from "@/modules/organization/domain/organization-role.events.js";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/ports/repositories/organization-roles.repository.js";
+} from "@/modules/organization/domain/organization-roles/organization-role.errors.js";
+import { type OrganizationRoleGranted } from "@/modules/organization/domain/organization-roles/organization-role.events.js";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
 import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";

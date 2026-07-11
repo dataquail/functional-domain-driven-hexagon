@@ -1,6 +1,6 @@
 import * as Effect from "effect/Effect";
 
-import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership.repository.js";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
 import { type FindMembershipQuery } from "@/modules/organization/queries/find-membership.query.js";
 
 // Goes through the repository so the org module stays the single source

@@ -426,7 +426,7 @@ export default [
     // type may only declare CRUD-shaped methods — domain verbs belong on the
     // aggregate. Constraining the port transitively keeps Live/Fake dumb,
     // since both must structurally satisfy it.
-    files: ["packages/server/src/modules/**/domain/ports/repositories/*.repository.ts"],
+    files: ["packages/server/src/modules/*/domain/*/*.repository.ts"],
     rules: {
       "dumb-repository-ports/dumb-repository-ports": "error",
     },

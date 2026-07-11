@@ -1,20 +1,19 @@
 import * as Layer from "effect/Layer";
 
-import { SyncSubscriptionFromStripeWebhookLive } from "@/modules/billing/event-handlers/sync-subscription-from-stripe-webhook.handler.js";
 import { BillingGatewayFake } from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake.js";
 import { BillingGatewayLive } from "@/modules/billing/infrastructure/clients/billing-gateway.client-live.js";
-import { SubscriptionRepositoryLive } from "@/modules/billing/infrastructure/repositories/subscription.repository-live.js";
-import { WebhookEventRepositoryLive } from "@/modules/billing/infrastructure/repositories/webhook-event.repository-live.js";
+import { StripeWebhookEventAdapterLive } from "@/modules/billing/interface/events/stripe-webhook.event-adapter.js";
 import { BillingLive, BillingWebhooksLive } from "@/modules/billing/interface/http/index.js";
 
-// Three things live behind this Layer:
+// Two things live behind this Layer:
 //   1. The HTTP groups (auth-gated + webhook).
-//   2. The same-module event subscriber that syncs the local
-//      `Subscription` projection off `StripeWebhookIngested` (acts as
-//      a use case directly, per the dep-cruise event-handlers-isolation
-//      rule). Runs in the publisher's fiber and inherits the
-//      transaction (ADR-0007).
-//   3. The infra Lives those layers need.
+//   2. The stripe-webhook event adapter (interface/events): a bus-only
+//      inbound port that subscribes to `StripeWebhookIngested` and
+//      dispatches a `SyncSubscriptionCommand`. It runs in the ingest
+//      command's fiber and its dispatched command opens a nested savepoint
+//      (ADR-0007). The command handler (billing.command-handlers.ts) owns
+//      the SubscriptionRepository; the adapter touches no infrastructure,
+//      so its bus deps are satisfied at the composition root.
 //
 // The module owns its DI graph. `BillingGateway` is consumed by the billing
 // command handlers, whose requirement reaches the endpoints (via the typed
@@ -42,8 +41,8 @@ import { BillingLive, BillingWebhooksLive } from "@/modules/billing/interface/ht
 export const BillingModuleLive = Layer.mergeAll(
   BillingLive,
   BillingWebhooksLive,
-  SyncSubscriptionFromStripeWebhookLive,
-).pipe(Layer.provide(SubscriptionRepositoryLive), Layer.provide(WebhookEventRepositoryLive));
+  StripeWebhookEventAdapterLive,
+);
 
 export const BillingHttpDepsLive = BillingGatewayLive;
 

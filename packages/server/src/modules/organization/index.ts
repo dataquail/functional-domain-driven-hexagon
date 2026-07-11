@@ -14,18 +14,18 @@ export {
   InvitationIssued,
   InvitationReissued,
   InvitationRevoked,
-} from "./domain/invitation.events.js";
-export { MembershipCreated, MembershipRevoked } from "./domain/membership.events.js";
+} from "./domain/invitation/invitation.events.js";
+export { MembershipCreated, MembershipRevoked } from "./domain/membership/membership.events.js";
 export {
   OrganizationCreated,
   OrganizationRestored,
   OrganizationSoftDeleted,
-} from "./domain/organization.events.js";
-export { CannotPromoteSelfInOrganization } from "./domain/organization-role.errors.js";
+} from "./domain/organization/organization.events.js";
+export { CannotPromoteSelfInOrganization } from "./domain/organization-roles/organization-role.errors.js";
 export {
   OrganizationRoleGranted,
   OrganizationRoleRevoked,
-} from "./domain/organization-role.events.js";
+} from "./domain/organization-roles/organization-role.events.js";
 // MembershipServiceLive wraps the module's internal MembershipRepository
 // into the platform-layer `MembershipService` ACL. OrganizationRoleServiceLive
 // (Phase 4) plays the same role for the per-(user, org) role assignments.

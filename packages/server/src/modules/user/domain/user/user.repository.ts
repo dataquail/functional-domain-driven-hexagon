@@ -1,0 +1,38 @@
+import * as Context from "effect/Context";
+import type * as Effect from "effect/Effect";
+import type * as Option from "effect/Option";
+
+import {
+  type UserAlreadyExists,
+  type UserNotFound,
+} from "@/modules/user/domain/user/user.errors.js";
+import { type UserRoot } from "@/modules/user/domain/user/user.root.js";
+import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
+import { type UserId } from "@/platform/ids/user-id.js";
+
+// Every method's error channel includes `PersistenceUnavailable` so the
+// transient-store signal can flow from the live repo through to the
+// endpoint, which maps it to a 503. The shared-kernel port name keeps
+// the domain free of any specific storage technology — the live
+// implementation translates `@org/database`'s `DatabaseUnavailable` into
+// this abstract port-level error at the boundary. Fakes never produce
+// this at runtime but match the channel for type compatibility.
+export type UserRepositoryShape = {
+  readonly insertOne: (
+    user: UserRoot,
+  ) => Effect.Effect<void, UserAlreadyExists | PersistenceUnavailable>;
+  readonly updateOne: (
+    user: UserRoot,
+  ) => Effect.Effect<void, UserNotFound | PersistenceUnavailable>;
+  readonly deleteOne: (id: UserId) => Effect.Effect<void, UserNotFound | PersistenceUnavailable>;
+  readonly findOneById: (
+    id: UserId,
+  ) => Effect.Effect<UserRoot, UserNotFound | PersistenceUnavailable>;
+  readonly findOneByEmail: (
+    email: string,
+  ) => Effect.Effect<Option.Option<UserRoot>, PersistenceUnavailable>;
+};
+
+export class UserRepository extends Context.Service<UserRepository, UserRepositoryShape>()(
+  "UserRepository",
+) {}

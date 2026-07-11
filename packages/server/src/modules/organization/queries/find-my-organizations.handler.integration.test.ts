@@ -6,10 +6,10 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
 
-import { MembershipRootOps } from "@/modules/organization/domain/membership.root.js";
-import { OrganizationRootOps } from "@/modules/organization/domain/organization.root.js";
-import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership.repository.js";
-import { OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization.repository.js";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
+import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops.js";
+import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
+import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.js";
 import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/repositories/membership.repository-live.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
 import { findMyOrganizations } from "@/modules/organization/queries/find-my-organizations.handler.js";

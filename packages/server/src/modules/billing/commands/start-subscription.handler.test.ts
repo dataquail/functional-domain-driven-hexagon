@@ -8,9 +8,9 @@ import * as Option from "effect/Option";
 
 import { StartSubscriptionCommand } from "@/modules/billing/commands/start-subscription.command.js";
 import { startSubscription } from "@/modules/billing/commands/start-subscription.handler.js";
-import { SubscriptionRepository } from "@/modules/billing/domain/ports/repositories/subscription.repository.js";
-import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription.errors.js";
-import { type SubscriptionStarted } from "@/modules/billing/domain/subscription.events.js";
+import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.js";
+import { type SubscriptionStarted } from "@/modules/billing/domain/subscription/subscription.events.js";
+import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
 import { BillingGatewayFake } from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake.js";
 import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";

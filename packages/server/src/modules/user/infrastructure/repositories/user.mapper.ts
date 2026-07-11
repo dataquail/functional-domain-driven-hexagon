@@ -1,8 +1,8 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 
-import { UserRoot } from "@/modules/user/domain/user.root.js";
-import { AddressValueObject } from "@/modules/user/domain/value-objects/address.value-object.js";
+import { UserRoot } from "@/modules/user/domain/user/user.root.js";
+import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 type Row = RowSchemas.UserRow;

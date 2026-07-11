@@ -7,10 +7,10 @@ import * as Result from "effect/Result";
 import * as TestClock from "effect/testing/TestClock";
 import { beforeEach } from "vitest";
 
-import { InvitationRootOps } from "@/modules/organization/domain/invitation.root.js";
-import { OrganizationRootOps } from "@/modules/organization/domain/organization.root.js";
-import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation.repository.js";
-import { OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization.repository.js";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
+import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
+import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
+import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.js";
 import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/repositories/invitation.repository-live.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
 import { findPendingInvitations } from "@/modules/organization/queries/find-pending-invitations.handler.js";

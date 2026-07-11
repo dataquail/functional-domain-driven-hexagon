@@ -2,9 +2,9 @@ import { Database, orFail, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { OrganizationNotFound } from "@/modules/organization/domain/organization.errors.js";
-import { type OrganizationRoot } from "@/modules/organization/domain/organization.root.js";
-import { OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization.repository.js";
+import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.js";
+import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
+import { type OrganizationRoot } from "@/modules/organization/domain/organization/organization.root.js";
 import * as OrganizationMapper from "@/modules/organization/infrastructure/repositories/organization.mapper.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";

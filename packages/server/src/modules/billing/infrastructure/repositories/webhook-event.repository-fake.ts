@@ -5,11 +5,11 @@ import * as Layer from "effect/Layer";
 import type * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
+import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors.js";
 import {
   type WebhookEventRecord,
   WebhookEventRepository,
-} from "@/modules/billing/domain/ports/repositories/webhook-event.repository.js";
-import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event.errors.js";
+} from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
 
 export const WebhookEventRepositoryFake = Layer.effect(
   WebhookEventRepository,

@@ -6,9 +6,9 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { UserRepository } from "@/modules/user/domain/ports/repositories/user.repository.js";
-import { UserAlreadyExists } from "@/modules/user/domain/user.errors.js";
-import { type UserCreated } from "@/modules/user/domain/user.events.js";
+import { UserAlreadyExists } from "@/modules/user/domain/user/user.errors.js";
+import { type UserCreated } from "@/modules/user/domain/user/user.events.js";
+import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
 import { UserRepositoryFake } from "@/modules/user/infrastructure/repositories/user.repository-fake.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";

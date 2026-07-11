@@ -6,10 +6,10 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 
-import { DeviceGrantNotFound } from "@/modules/auth/domain/device-grant.errors.js";
-import { DeviceGrantId } from "@/modules/auth/domain/device-grant.id.js";
-import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant.root.js";
-import { DeviceGrantRepository } from "@/modules/auth/domain/ports/repositories/device-grant.repository.js";
+import { DeviceGrantNotFound } from "@/modules/auth/domain/device-grant/device-grant.errors.js";
+import { DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.js";
+import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
+import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant/device-grant.root-ops.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 import { DeviceGrantRepositoryFake } from "./device-grant.repository-fake.js";

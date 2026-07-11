@@ -12,14 +12,14 @@ import {
   type CreateCustomerInput,
   type CreateCustomerResult,
   type CreateSubscriptionInput,
-  type StripeWebhookEvent,
   type SubscriptionState,
   type VerifyWebhookInput,
 } from "@/modules/billing/domain/ports/clients/billing-gateway.client.js";
 import {
   BillingGatewayUnavailable,
   InvalidWebhookSignature,
-} from "@/modules/billing/domain/subscription.errors.js";
+} from "@/modules/billing/domain/subscription/subscription.errors.js";
+import { type StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.js";
 
 // Wraps the Stripe SDK. The only file in the repo that imports `stripe`.
 // All other billing code consumes the `BillingGateway` Tag and never

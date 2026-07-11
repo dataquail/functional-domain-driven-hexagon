@@ -11,7 +11,10 @@ import {
   deleteUserCommandSpanAttributes,
 } from "@/modules/user/commands/delete-user.command.js";
 import { deleteUser } from "@/modules/user/commands/delete-user.handler.js";
-import { type UserAlreadyExists, type UserNotFound } from "@/modules/user/domain/user.errors.js";
+import {
+  type UserAlreadyExists,
+  type UserNotFound,
+} from "@/modules/user/domain/user/user.errors.js";
 import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { commandHandlers } from "@/platform/ddd/ports/command-bus.js";

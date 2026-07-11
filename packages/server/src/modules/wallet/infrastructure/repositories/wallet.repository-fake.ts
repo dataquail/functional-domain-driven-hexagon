@@ -4,10 +4,10 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { WalletRepository } from "@/modules/wallet/domain/ports/repositories/wallet.repository.js";
-import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet.errors.js";
-import { type WalletId } from "@/modules/wallet/domain/wallet.id.js";
-import { type WalletRoot } from "@/modules/wallet/domain/wallet.root.js";
+import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors.js";
+import { type WalletId } from "@/modules/wallet/domain/wallet/wallet.id.js";
+import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
+import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 const findByOrganizationIdIn = (

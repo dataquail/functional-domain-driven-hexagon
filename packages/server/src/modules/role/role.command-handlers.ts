@@ -15,7 +15,7 @@ import {
   type AlreadyHasRole,
   type CannotPromoteSelf,
   type DoesNotHaveRole,
-} from "@/modules/role/domain/role.errors.js";
+} from "@/modules/role/domain/roles/role.errors.js";
 import { RolesRepositoryLive } from "@/modules/role/infrastructure/repositories/roles.repository-live.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { commandHandlers } from "@/platform/ddd/ports/command-bus.js";

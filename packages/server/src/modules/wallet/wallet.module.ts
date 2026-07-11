@@ -1,14 +1,10 @@
-import * as Layer from "effect/Layer";
-
-import { WalletRepositoryLive } from "./infrastructure/repositories/wallet.repository-live.js";
 import { OrganizationEventAdapterLive } from "./interface/events/organization.event-adapter.js";
 
-// Cross-module event subscriptions go through the per-publisher
-// adapter in `interface/events/<publisher>-event-adapter.ts` — an
-// inbound port at the same architectural layer as HTTP endpoints, and
-// the only place allowed to import `@/modules/<publisher>/index.js`.
-// Handlers downstream of the adapter consume wallet-internal trigger
-// types from `event-handlers/triggers/` (see ADR-0007 ACL pattern).
-export const WalletModuleLive = OrganizationEventAdapterLive.pipe(
-  Layer.provide(WalletRepositoryLive),
-);
+// The wallet module's only inbound surface is the organization event
+// adapter (`interface/events/`): it subscribes to `OrganizationCreated`
+// and dispatches a `CreateWalletCommand` through the bus (ADR-0007). The
+// adapter is bus-only, so its requirements (CommandBus, DomainEventBus,
+// UnitOfWork) are satisfied at the composition root — the wallet
+// repository is wired behind the CreateWallet command handler
+// (`wallet.command-handlers.ts`), not here.
+export const WalletModuleLive = OrganizationEventAdapterLive;

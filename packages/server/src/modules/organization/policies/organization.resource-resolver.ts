@@ -5,7 +5,7 @@ import * as Layer from "effect/Layer";
 
 import { type Resolver } from "@/platform/auth/resource-resolver-registry.js";
 
-import { OrganizationRepository } from "../domain/ports/repositories/organization.repository.js";
+import { OrganizationRepository } from "../domain/organization/organization.repository.js";
 import { OrganizationRepositoryLive } from "../infrastructure/repositories/organization.repository-live.js";
 
 // Resolver loads soft-deleted rows too. The restore endpoint

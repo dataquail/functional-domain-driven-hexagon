@@ -6,9 +6,9 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 
-import { MembershipNotFound } from "@/modules/organization/domain/membership.errors.js";
-import { MembershipRootOps } from "@/modules/organization/domain/membership.root.js";
-import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership.repository.js";
+import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.js";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
+import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 

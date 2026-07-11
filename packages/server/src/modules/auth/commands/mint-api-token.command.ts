@@ -1,6 +1,6 @@
 import * as Schema from "effect/Schema";
 
-import { type ApiTokenRoot } from "@/modules/auth/domain/api-token.root.js";
+import { type ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 

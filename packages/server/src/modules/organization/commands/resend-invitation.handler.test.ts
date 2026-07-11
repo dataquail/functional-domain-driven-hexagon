@@ -14,10 +14,10 @@ import { resendInvitation } from "@/modules/organization/commands/resend-invitat
 import {
   InvitationAlreadyAccepted,
   InvitationAlreadyRevoked,
-} from "@/modules/organization/domain/invitation.errors.js";
-import { type InvitationReissued } from "@/modules/organization/domain/invitation.events.js";
-import { InvitationRootOps } from "@/modules/organization/domain/invitation.root.js";
-import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation.repository.js";
+} from "@/modules/organization/domain/invitation/invitation.errors.js";
+import { type InvitationReissued } from "@/modules/organization/domain/invitation/invitation.events.js";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
+import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
 import {
   InvitationMailerFake,
   SentInvitations,

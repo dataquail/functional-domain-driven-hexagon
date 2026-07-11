@@ -16,14 +16,19 @@ import {
   startSubscriptionCommandSpanAttributes,
 } from "@/modules/billing/commands/start-subscription.command.js";
 import { startSubscription } from "@/modules/billing/commands/start-subscription.handler.js";
+import {
+  type SyncSubscriptionCommand,
+  syncSubscriptionCommandSpanAttributes,
+} from "@/modules/billing/commands/sync-subscription.command.js";
+import { syncSubscription } from "@/modules/billing/commands/sync-subscription.handler.js";
 import { type BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client.js";
 import {
   type BillingGatewayUnavailable,
   type InvalidWebhookSignature,
   type SubscriptionAlreadyExistsForOrganization,
   type SubscriptionNotFound,
-} from "@/modules/billing/domain/subscription.errors.js";
-import { type SubscriptionRoot } from "@/modules/billing/domain/subscription.root.js";
+} from "@/modules/billing/domain/subscription/subscription.errors.js";
+import { type SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.js";
 import { SubscriptionRepositoryLive } from "@/modules/billing/infrastructure/repositories/subscription.repository-live.js";
 import { WebhookEventRepositoryLive } from "@/modules/billing/infrastructure/repositories/webhook-event.repository-live.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
@@ -57,6 +62,12 @@ type IngestStripeWebhookOutput = Effect.Effect<
   BillingGateway | DomainEventBus | UnitOfWork | Database.Database
 >;
 
+type SyncSubscriptionOutput = Effect.Effect<
+  void,
+  PersistenceUnavailable,
+  DomainEventBus | UnitOfWork | Database.Database
+>;
+
 declare module "@/platform/ddd/ports/command-bus.js" {
   interface CommandRegistry {
     StartSubscriptionCommand: {
@@ -70,6 +81,10 @@ declare module "@/platform/ddd/ports/command-bus.js" {
     IngestStripeWebhookCommand: {
       readonly command: IngestStripeWebhookCommand;
       readonly output: IngestStripeWebhookOutput;
+    };
+    SyncSubscriptionCommand: {
+      readonly command: SyncSubscriptionCommand;
+      readonly output: SyncSubscriptionOutput;
     };
   }
 }
@@ -89,5 +104,10 @@ export const billingCommandHandlers = commandHandlers({
     handle: (cmd): IngestStripeWebhookOutput =>
       ingestStripeWebhook(cmd).pipe(Effect.provide(WebhookEventRepositoryLive)),
     spanAttributes: ingestStripeWebhookCommandSpanAttributes,
+  },
+  SyncSubscriptionCommand: {
+    handle: (cmd): SyncSubscriptionOutput =>
+      syncSubscription(cmd).pipe(Effect.provide(SubscriptionRepositoryLive)),
+    spanAttributes: syncSubscriptionCommandSpanAttributes,
   },
 });

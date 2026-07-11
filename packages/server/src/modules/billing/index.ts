@@ -11,12 +11,12 @@ export { billingQueryHandlers } from "./billing.query-handlers.js";
 export { CancelSubscriptionCommand } from "./commands/cancel-subscription.command.js";
 export { IngestStripeWebhookCommand } from "./commands/ingest-stripe-webhook.command.js";
 export { StartSubscriptionCommand } from "./commands/start-subscription.command.js";
-export { StripeWebhookIngested } from "./domain/stripe-webhook.events.js";
 export {
   SubscriptionCanceled,
   SubscriptionStarted,
   SubscriptionStatusChanged,
-} from "./domain/subscription.events.js";
+} from "./domain/subscription/subscription.events.js";
+export { StripeWebhookIngested } from "./domain/webhook-event/stripe-webhook.events.js";
 export { billingPolicies, BillingResource } from "./policies/billing.policies.js";
 export {
   BillingResolverEntry,

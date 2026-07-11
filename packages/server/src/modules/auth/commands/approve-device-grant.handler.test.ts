@@ -13,8 +13,8 @@ import { startDeviceGrant } from "@/modules/auth/commands/start-device-grant.han
 import {
   DeviceGrantExpired,
   DeviceGrantNotFound,
-} from "@/modules/auth/domain/device-grant.errors.js";
-import { DeviceGrantRepository } from "@/modules/auth/domain/ports/repositories/device-grant.repository.js";
+} from "@/modules/auth/domain/device-grant/device-grant.errors.js";
+import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
 import { DeviceGrantRepositoryFake } from "@/modules/auth/infrastructure/repositories/device-grant.repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
