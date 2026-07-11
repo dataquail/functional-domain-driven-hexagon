@@ -1,8 +1,8 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { InvitationSpecifications } from "@/modules/organization/domain/invitation.specification.js";
-import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation.repository.js";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
+import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
 import { type FindPendingInvitationsQuery } from "@/modules/organization/queries/find-pending-invitations.query.js";
 
 export const findPendingInvitations = Effect.fn("findPendingInvitations")(function* (

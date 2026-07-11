@@ -8,10 +8,10 @@ import * as Option from "effect/Option";
 
 import { IngestStripeWebhookCommand } from "@/modules/billing/commands/ingest-stripe-webhook.command.js";
 import { ingestStripeWebhook } from "@/modules/billing/commands/ingest-stripe-webhook.handler.js";
-import { type StripeWebhookEvent } from "@/modules/billing/domain/ports/clients/billing-gateway.client.js";
-import { WebhookEventRepository } from "@/modules/billing/domain/ports/repositories/webhook-event.repository.js";
-import { type StripeWebhookIngested } from "@/modules/billing/domain/stripe-webhook.events.js";
-import { InvalidWebhookSignature } from "@/modules/billing/domain/subscription.errors.js";
+import { InvalidWebhookSignature } from "@/modules/billing/domain/subscription/subscription.errors.js";
+import { type StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events.js";
+import { type StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.js";
+import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
 import {
   BillingGatewayFake,
   FAKE_WEBHOOK_SIGNATURE,

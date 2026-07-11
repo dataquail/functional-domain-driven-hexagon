@@ -3,8 +3,8 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { WebhookEventRepository } from "@/modules/billing/domain/ports/repositories/webhook-event.repository.js";
-import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event.errors.js";
+import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors.js";
+import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
 import * as WebhookEventMapper from "./webhook-event.mapper.js";

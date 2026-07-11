@@ -64,19 +64,19 @@ import {
   type InvitationNotFound,
   type InvitationRevoked,
   type InvitationTokenNotFound,
-} from "@/modules/organization/domain/invitation.errors.js";
-import { type MembershipNotFound } from "@/modules/organization/domain/membership.errors.js";
+} from "@/modules/organization/domain/invitation/invitation.errors.js";
+import { type MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.js";
 import {
   type OrganizationAlreadyDeleted,
   type OrganizationNotDeleted,
   type OrganizationNotFound,
   type SuperAdminCannotOwnOrganization,
-} from "@/modules/organization/domain/organization.errors.js";
+} from "@/modules/organization/domain/organization/organization.errors.js";
 import {
   type AlreadyHasOrganizationRole,
   type CannotPromoteSelfInOrganization,
   type DoesNotHaveOrganizationRole,
-} from "@/modules/organization/domain/organization-role.errors.js";
+} from "@/modules/organization/domain/organization-roles/organization-role.errors.js";
 import { type InvitationMailer } from "@/modules/organization/domain/ports/clients/invitation-mailer.client.js";
 import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/repositories/invitation.repository-live.js";
 import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/repositories/membership.repository-live.js";

@@ -2,11 +2,11 @@ import { Database, orFail, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { AuthIdentityNotFound } from "@/modules/auth/domain/auth-identity/auth-identity.errors.js";
 import {
   type AuthIdentity,
   AuthIdentityRepository,
-} from "@/modules/auth/domain/ports/repositories/auth-identity.repository.js";
-import { AuthIdentityNotFound } from "@/modules/auth/domain/session.errors.js";
+} from "@/modules/auth/domain/auth-identity/auth-identity.repository.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
 import * as AuthIdentityMapper from "./auth-identity.mapper.js";

@@ -4,10 +4,10 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { SubscriptionRepository } from "@/modules/billing/domain/ports/repositories/subscription.repository.js";
-import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription.errors.js";
-import { type SubscriptionId } from "@/modules/billing/domain/subscription.id.js";
-import { type SubscriptionRoot } from "@/modules/billing/domain/subscription.root.js";
+import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.js";
+import { type SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
+import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
+import { type SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 const findByOrgIn = (

@@ -9,11 +9,11 @@ import * as Option from "effect/Option";
 
 import { CancelSubscriptionCommand } from "@/modules/billing/commands/cancel-subscription.command.js";
 import { cancelSubscription } from "@/modules/billing/commands/cancel-subscription.handler.js";
-import { SubscriptionRepository } from "@/modules/billing/domain/ports/repositories/subscription.repository.js";
-import { SubscriptionNotFound } from "@/modules/billing/domain/subscription.errors.js";
-import { type SubscriptionCanceled } from "@/modules/billing/domain/subscription.events.js";
-import { SubscriptionId } from "@/modules/billing/domain/subscription.id.js";
-import { SubscriptionRootOps } from "@/modules/billing/domain/subscription.root-ops.js";
+import { SubscriptionNotFound } from "@/modules/billing/domain/subscription/subscription.errors.js";
+import { type SubscriptionCanceled } from "@/modules/billing/domain/subscription/subscription.events.js";
+import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
+import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
+import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
 import { BillingGatewayFake } from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake.js";
 import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";

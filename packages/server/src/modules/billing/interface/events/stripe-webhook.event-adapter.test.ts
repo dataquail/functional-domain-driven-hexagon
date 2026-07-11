@@ -13,8 +13,8 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { type SyncSubscriptionCommand } from "@/modules/billing/commands/sync-subscription.command.js";
-import { type StripeWebhookEvent } from "@/modules/billing/domain/ports/clients/billing-gateway.client.js";
-import { StripeWebhookIngested } from "@/modules/billing/domain/stripe-webhook.events.js";
+import { StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events.js";
+import { type StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.js";
 import { StripeWebhookEventAdapterLive } from "@/modules/billing/interface/events/stripe-webhook.event-adapter.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { makeDomainEventBusLive } from "@/platform/domain-event-bus-live.js";

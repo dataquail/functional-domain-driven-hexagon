@@ -1,7 +1,7 @@
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
-import { TodoId } from "@/modules/todos/domain/todo.id.js";
+import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import {
   type ListTodosQuery,
   type ListTodosTodoView,

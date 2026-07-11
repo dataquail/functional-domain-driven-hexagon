@@ -1,9 +1,12 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { ApiTokenExpired, ApiTokenRevoked } from "@/modules/auth/domain/api-token.errors.js";
-import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token.specification.js";
-import { ApiTokenRepository } from "@/modules/auth/domain/ports/repositories/api-token.repository.js";
+import {
+  ApiTokenExpired,
+  ApiTokenRevoked,
+} from "@/modules/auth/domain/api-token/api-token.errors.js";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
+import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
 import { type FindApiTokenByHashQuery } from "@/modules/auth/queries/find-api-token-by-hash.query.js";
 
 // Looks up a token by hash and validates its lifecycle (revoked / expired).

@@ -5,8 +5,8 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 
-import { WebhookEventRepository } from "@/modules/billing/domain/ports/repositories/webhook-event.repository.js";
-import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event.errors.js";
+import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors.js";
+import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
 import { WebhookEventRepositoryFake } from "@/modules/billing/infrastructure/repositories/webhook-event.repository-fake.js";
 
 const provide = Effect.provide(WebhookEventRepositoryFake);

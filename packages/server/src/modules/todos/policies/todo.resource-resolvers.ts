@@ -3,8 +3,8 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todos.repository.js";
-import { type TodoId } from "@/modules/todos/domain/todo.id.js";
+import { type TodoId } from "@/modules/todos/domain/todo/todo.id.js";
+import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js";
 import { TodosRepositoryLive } from "@/modules/todos/infrastructure/repositories/todos.repository-live.js";
 import { type Resolver } from "@/platform/auth/resource-resolver-registry.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";

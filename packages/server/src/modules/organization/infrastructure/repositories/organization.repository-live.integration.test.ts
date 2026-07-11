@@ -9,9 +9,9 @@ import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import { beforeEach } from "vitest";
 
-import { OrganizationNotFound } from "@/modules/organization/domain/organization.errors.js";
-import { OrganizationRootOps } from "@/modules/organization/domain/organization.root-ops.js";
-import { OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization.repository.js";
+import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.js";
+import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
+import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";

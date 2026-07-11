@@ -1,8 +1,8 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 
-import { DeviceGrantId } from "@/modules/auth/domain/device-grant.id.js";
-import { DeviceGrantRoot } from "@/modules/auth/domain/device-grant.root.js";
+import { DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.js";
+import { DeviceGrantRoot } from "@/modules/auth/domain/device-grant/device-grant.root.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 export const toDomain = (row: RowSchemas.DeviceGrantRow): DeviceGrantRoot =>

@@ -6,10 +6,10 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 
-import { UserRepository } from "@/modules/user/domain/ports/repositories/user.repository.js";
-import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user.errors.js";
-import { UserRootOps } from "@/modules/user/domain/user.root-ops.js";
-import { AddressValueObject } from "@/modules/user/domain/value-objects/address.value-object.js";
+import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user/user.errors.js";
+import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
+import { UserRootOps } from "@/modules/user/domain/user/user.root-ops.js";
+import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 import { UserRepositoryFake } from "./user.repository-fake.js";

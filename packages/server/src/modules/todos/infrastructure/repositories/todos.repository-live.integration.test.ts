@@ -9,10 +9,10 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import { beforeEach } from "vitest";
 
-import { TodosRepository } from "@/modules/todos/domain/ports/repositories/todos.repository.js";
-import { TodoNotFound } from "@/modules/todos/domain/todo.errors.js";
-import { TodoId } from "@/modules/todos/domain/todo.id.js";
-import { TodoRootOps } from "@/modules/todos/domain/todo.root-ops.js";
+import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.js";
+import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
+import { TodoRootOps } from "@/modules/todos/domain/todo/todo.root-ops.js";
+import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js";
 import { TodosRepositoryLive } from "@/modules/todos/infrastructure/repositories/todos.repository-live.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";

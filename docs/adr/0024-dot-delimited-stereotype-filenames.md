@@ -20,21 +20,21 @@ A dot makes the seam explicit and machine-parseable, and matches the `*.root-ops
 
 ### The full vocabulary
 
-| Folder                         | Stereotype filenames                                                                                                                                                                               |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `domain/`                      | `.root` · `.root-ops` · `.aggregate` · `.aggregate-ops` · `.entity` · `.entity-ops` · `.value-object` · `.value-object-ops` · `.id` · `.errors` · `.events` · `.specification` · `.domain-service` |
-| `domain/ports/repositories/`   | `.repository`                                                                                                                                                                                      |
-| `domain/ports/clients/`        | `.client`                                                                                                                                                                                          |
-| `domain/ports/acl/`            | `.acl`                                                                                                                                                                                             |
-| `commands/` · `queries/`       | `.command` / `.query` (schema) + `.handler`                                                                                                                                                        |
-| `infrastructure/repositories/` | `.repository-live` · `.repository-fake` · `.mapper`                                                                                                                                                |
-| `infrastructure/clients/`      | `.client-live` · `.client-fake` · `.client` (self-contained) · `.email` (tsx)                                                                                                                      |
-| `infrastructure/acl/`          | `.acl-live` · `.acl-fake`                                                                                                                                                                          |
-| `interface/http,cli/`          | `.endpoint` · `index.ts` (group-registration barrel) · `.util`                                                                                                                                     |
-| `interface/events/`            | `.event-adapter`                                                                                                                                                                                   |
-| `policies/`                    | `.policies` · `.resource-resolver(s)` · `.policy` (the `is-*` checks)                                                                                                                              |
-| `policies/public/`             | `.service-live` (this module's Lives of platform ACL service ports)                                                                                                                                |
-| module root                    | `index.ts` · `.module` · `.command-handlers` · `.query-handlers` · `.event-span-attributes` · `.shared-deps`                                                                                       |
+| Folder                         | Stereotype filenames                                                                                                                                                                           |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `domain/<subdomain>/`          | `.root` · `.root-ops` · `.aggregate` · `.aggregate-ops` · `.entity` · `.entity-ops` · `.value-object` · `.value-object-ops` · `.id` · `.errors` · `.events` · `.specification` · `.repository` |
+| `domain/domain-services/`      | `.domain-service`                                                                                                                                                                              |
+| `domain/ports/clients/`        | `.client`                                                                                                                                                                                      |
+| `domain/ports/acl/`            | `.acl`                                                                                                                                                                                         |
+| `commands/` · `queries/`       | `.command` / `.query` (schema) + `.handler`                                                                                                                                                    |
+| `infrastructure/repositories/` | `.repository-live` · `.repository-fake` · `.mapper`                                                                                                                                            |
+| `infrastructure/clients/`      | `.client-live` · `.client-fake` · `.client` (self-contained) · `.email` (tsx)                                                                                                                  |
+| `infrastructure/acl/`          | `.acl-live` · `.acl-fake`                                                                                                                                                                      |
+| `interface/http,cli/`          | `.endpoint` · `index.ts` (group-registration barrel) · `.util`                                                                                                                                 |
+| `interface/events/`            | `.event-adapter`                                                                                                                                                                               |
+| `policies/`                    | `.policies` · `.resource-resolver(s)` · `.policy` (the `is-*` checks)                                                                                                                          |
+| `policies/public/`             | `.service-live` (this module's Lives of platform ACL service ports)                                                                                                                            |
+| module root                    | `index.ts` · `.module` · `.command-handlers` · `.query-handlers` · `.event-span-attributes` · `.shared-deps`                                                                                   |
 
 Tests append their qualifier to the subject stereotype: `*.handler.test.ts`, `*.repository-live.integration.test.ts`, `*.event-adapter.test.ts`.
 
@@ -52,7 +52,7 @@ The `project-structure/folder-structure` layout and parity allowlists (ADR-0008)
 
 - Every file's role is legible from its name without a lookup table, and uniformly so — the dot always precedes the stereotype.
 - Handlers are first-class stereotypes rather than the unmarked residue of a folder.
-- Same-basename files that map to _different_ stereotypes are disambiguated by folder, not basename (`organization.events` in the organization module's `domain/` vs `organization.event-adapter` in a consumer's `interface/events/`).
+- Same-basename files that map to _different_ stereotypes are disambiguated by folder, not basename (`organization.events` in the organization module's `domain/organization/` subdomain vs `organization.event-adapter` in a consumer's `interface/events/`).
 
 ## Alternatives considered
 

@@ -2,7 +2,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { SyncSubscriptionCommand } from "@/modules/billing/commands/sync-subscription.command.js";
-import { StripeWebhookIngested } from "@/modules/billing/domain/stripe-webhook.events.js";
+import { StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";

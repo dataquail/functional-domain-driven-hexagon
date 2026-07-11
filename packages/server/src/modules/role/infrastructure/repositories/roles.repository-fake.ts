@@ -3,9 +3,9 @@ import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
 
-import { RolesRepository } from "@/modules/role/domain/ports/repositories/roles.repository.js";
-import { type RolesRoot } from "@/modules/role/domain/roles.root.js";
-import { RolesRootOps } from "@/modules/role/domain/roles.root-ops.js";
+import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
+import { type RolesRoot } from "@/modules/role/domain/roles/roles.root.js";
+import { RolesRootOps } from "@/modules/role/domain/roles/roles.root-ops.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 
 // In-memory `RolesRepository` for use-case unit tests. Composes with

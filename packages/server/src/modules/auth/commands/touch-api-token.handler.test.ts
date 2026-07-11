@@ -5,9 +5,9 @@ import * as Effect from "effect/Effect";
 
 import { TouchApiTokenCommand } from "@/modules/auth/commands/touch-api-token.command.js";
 import { touchApiToken } from "@/modules/auth/commands/touch-api-token.handler.js";
-import { ApiTokenId } from "@/modules/auth/domain/api-token.id.js";
-import { ApiTokenRootOps } from "@/modules/auth/domain/api-token.root-ops.js";
-import { ApiTokenRepository } from "@/modules/auth/domain/ports/repositories/api-token.repository.js";
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
+import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.js";
 import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
 

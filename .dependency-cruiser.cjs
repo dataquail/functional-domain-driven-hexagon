@@ -109,7 +109,24 @@ module.exports = {
           "\\.repository-fake\\.ts$",
         ],
       },
-      to: { path: "^packages/server/src/modules/[^/]+/domain/[^/]+\\.root-ops\\.ts$" },
+      to: { path: "^packages/server/src/modules/[^/]+/domain/.+\\.root-ops\\.ts$" },
+    },
+    {
+      name: "subdomain-isolation",
+      severity: "error",
+      comment:
+        "Within a module's domain, each subdomain folder (domain/<subdomain>/) is a boundary: it may import only its own subdomain (plus effect, platform/ddd/contracts, and platform/ids per domain-isolation). It may NOT import another subdomain, domain/domain-services/, or domain/ports/. Cross-subdomain composition is the job of a domain service in domain/domain-services/ — the one domain location allowed to reach into more than one subdomain (excluded from this rule's `from`). Test files excluded.",
+      from: {
+        path: "^packages/server/src/modules/([^/]+)/domain/([^/]+)/",
+        pathNot: [
+          "^packages/server/src/modules/[^/]+/domain/(domain-services|ports)/",
+          "\\.test\\.ts$",
+        ],
+      },
+      to: {
+        path: "^packages/server/src/modules/[^/]+/domain/[^/]+/",
+        pathNot: "^packages/server/src/modules/$1/domain/$2/",
+      },
     },
     {
       name: "constituent-ops-domain-private",
@@ -121,7 +138,7 @@ module.exports = {
         pathNot: ["^packages/server/src/modules/[^/]+/domain/", "\\.test\\.ts$"],
       },
       to: {
-        path: "^packages/server/src/modules/[^/]+/domain/[^/]+\\.(entity-ops|aggregate-ops|value-object-ops)\\.ts$",
+        path: "^packages/server/src/modules/[^/]+/domain/.+\\.(entity-ops|aggregate-ops|value-object-ops)\\.ts$",
       },
     },
     {
@@ -202,7 +219,7 @@ module.exports = {
       to: {
         path: "^packages/",
         pathNot: [
-          "^packages/server/src/modules/$1/domain/[^/]+\\.(events|id)\\.ts$",
+          "^packages/server/src/modules/$1/domain/[^/]+/[^/]+\\.(events|id)\\.ts$",
           "^packages/server/src/modules/$1/commands/[^/]+\\.command\\.ts$",
           "^packages/server/src/modules/[^/]+/index\\.ts$",
           "^packages/server/src/platform/ddd/",
@@ -231,7 +248,7 @@ module.exports = {
       name: "outbound-ports-private-to-use-cases",
       severity: "error",
       comment:
-        "Outbound ports under `domain/ports/` are private to use cases — see `pathNot` for the allowlist. The common violation is a controller reaching for a port instead of dispatching through the bus.",
+        "Outbound ports are private to use cases: the repository port in each subdomain folder (domain/<sub>/*.repository.ts) and the clients/acl ports under domain/ports/. See `pathNot` for the allowlist. The common violation is a controller reaching for a port instead of dispatching through the bus.",
       from: {
         path: "^packages/server/src/modules/[^/]+/",
         pathNot: [
@@ -243,7 +260,12 @@ module.exports = {
           "\\.test\\.ts$",
         ],
       },
-      to: { path: "^packages/server/src/modules/[^/]+/domain/ports/" },
+      to: {
+        path: [
+          "^packages/server/src/modules/[^/]+/domain/ports/",
+          "^packages/server/src/modules/[^/]+/domain/[^/]+/[^/]+\\.repository\\.ts$",
+        ],
+      },
     },
     {
       name: "lives-only-from-composition-roots",

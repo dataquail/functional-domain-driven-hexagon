@@ -1,8 +1,8 @@
 import * as Effect from "effect/Effect";
 
 import { type RevokeOrganizationRoleCommand } from "@/modules/organization/commands/revoke-organization-role.command.js";
-import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles.root-ops.js";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/ports/repositories/organization-roles.repository.js";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
+import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 

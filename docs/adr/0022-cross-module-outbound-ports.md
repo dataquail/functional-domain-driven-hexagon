@@ -34,13 +34,13 @@ Commands, queries, domain, and interface code all depend on the port. None of th
 
 ### Port and adapter taxonomy: three buckets by counterpart
 
-Both `domain/ports/` and `infrastructure/` are tiered into three sibling folders, matched pairwise — because the counterpart is what determines the anti-corruption obligation and whether the dependency becomes a network call under a service split:
+The counterpart is what determines the anti-corruption obligation and whether the dependency becomes a network call under a service split, so ports and adapters are tiered by it. The repository port lives in its aggregate's subdomain folder (`domain/<subdomain>/*.repository.ts`, ADR-0005); the two outbound ports that are _not_ repositories are tiered under `domain/ports/`. `infrastructure/` mirrors all three, matched pairwise:
 
-| Counterpart                | Port                         | Adapter                        | May import a foreign module barrel |
-| -------------------------- | ---------------------------- | ------------------------------ | ---------------------------------- |
-| The module's own datastore | `domain/ports/repositories/` | `infrastructure/repositories/` | no                                 |
-| A true third-party system  | `domain/ports/clients/`      | `infrastructure/clients/`      | no                                 |
-| Another bounded context    | `domain/ports/acl/`          | `infrastructure/acl/`          | **yes** — the only place           |
+| Counterpart                | Port                                 | Adapter                        | May import a foreign module barrel |
+| -------------------------- | ------------------------------------ | ------------------------------ | ---------------------------------- |
+| The module's own datastore | `domain/<subdomain>/*.repository.ts` | `infrastructure/repositories/` | no                                 |
+| A true third-party system  | `domain/ports/clients/`              | `infrastructure/clients/`      | no                                 |
+| Another bounded context    | `domain/ports/acl/`                  | `infrastructure/acl/`          | **yes** — the only place           |
 
 `infrastructure/repositories/` holds the `*.repository-live.ts` / `*.repository-fake.ts` / `*.mapper.ts` trio (ADR-0005). `infrastructure/clients/` holds port-backed vendor adapters (`*.client-live.ts` + `*.client-fake.ts`), self-contained service clients that are their own `Effect.Service` with no port (`*.client.ts`), and template components (`*.email.tsx`). `infrastructure/acl/` holds the anti-corruption adapters to sibling modules (`*.acl-live.ts` + `*.acl-fake.ts`).
 

@@ -1,7 +1,7 @@
 import * as Effect from "effect/Effect";
 
 import { type RevokeSessionCommand } from "@/modules/auth/commands/revoke-session.command.js";
-import { SessionRepository } from "@/modules/auth/domain/ports/repositories/session.repository.js";
+import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
 
 // Logout must succeed even when the session row is missing, already
 // revoked, or the DB is temporarily unavailable — the user's cookie

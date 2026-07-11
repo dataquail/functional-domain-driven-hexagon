@@ -8,8 +8,8 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import { beforeEach } from "vitest";
 
-import { AuthIdentityRepository } from "@/modules/auth/domain/ports/repositories/auth-identity.repository.js";
-import { AuthIdentityNotFound } from "@/modules/auth/domain/session.errors.js";
+import { AuthIdentityNotFound } from "@/modules/auth/domain/auth-identity/auth-identity.errors.js";
+import { AuthIdentityRepository } from "@/modules/auth/domain/auth-identity/auth-identity.repository.js";
 import { AuthIdentityRepositoryLive } from "@/modules/auth/infrastructure/repositories/auth-identity.repository-live.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";

@@ -10,9 +10,9 @@ import { GrantOrganizationRoleCommand } from "@/modules/organization/commands/gr
 import { grantOrganizationRole } from "@/modules/organization/commands/grant-organization-role.handler.js";
 import { RevokeOrganizationRoleCommand } from "@/modules/organization/commands/revoke-organization-role.command.js";
 import { revokeOrganizationRole } from "@/modules/organization/commands/revoke-organization-role.handler.js";
-import { DoesNotHaveOrganizationRole } from "@/modules/organization/domain/organization-role.errors.js";
-import { type OrganizationRoleRevoked } from "@/modules/organization/domain/organization-role.events.js";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/ports/repositories/organization-roles.repository.js";
+import { DoesNotHaveOrganizationRole } from "@/modules/organization/domain/organization-roles/organization-role.errors.js";
+import { type OrganizationRoleRevoked } from "@/modules/organization/domain/organization-roles/organization-role.events.js";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
 import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";

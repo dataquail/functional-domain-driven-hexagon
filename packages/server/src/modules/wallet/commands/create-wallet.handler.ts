@@ -4,9 +4,9 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
 import { type CreateWalletCommand } from "@/modules/wallet/commands/create-wallet.command.js";
-import { WalletRepository } from "@/modules/wallet/domain/ports/repositories/wallet.repository.js";
-import { WalletId } from "@/modules/wallet/domain/wallet.id.js";
-import { WalletRootOps } from "@/modules/wallet/domain/wallet.root-ops.js";
+import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id.js";
+import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
+import { WalletRootOps } from "@/modules/wallet/domain/wallet/wallet.root-ops.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 

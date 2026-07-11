@@ -1,15 +1,15 @@
 import { type RowSchemas } from "@org/database/index";
 
-import { type OrganizationRoleValueObject } from "@/modules/organization/domain/organization-role.value-object.js";
+import { type OrganizationRoleValueObject } from "@/modules/organization/domain/organization-roles/organization-role.value-object.js";
 import {
   IssuedRoleValueObject,
   OrganizationRolesRoot,
-} from "@/modules/organization/domain/organization-roles.root.js";
+} from "@/modules/organization/domain/organization-roles/organization-roles.root.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // Closed set of recognized role names. Mirrors the `OrganizationRoleValueObject`
-// Schema literal in `domain/organization-role.ts` — adding a new role
+// Schema literal in `domain/organization-roles/organization-role.value-object.ts` — adding a new role
 // requires updating both.
 const KNOWN_ROLES = new Set<string>(["admin"]);
 

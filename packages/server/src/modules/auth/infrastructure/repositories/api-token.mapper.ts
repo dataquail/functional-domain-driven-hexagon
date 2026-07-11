@@ -1,8 +1,8 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 
-import { ApiTokenId } from "@/modules/auth/domain/api-token.id.js";
-import { ApiTokenRoot } from "@/modules/auth/domain/api-token.root.js";
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
+import { ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 export const toDomain = (row: RowSchemas.ApiTokenRow): ApiTokenRoot =>

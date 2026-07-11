@@ -7,10 +7,10 @@ import * as Layer from "effect/Layer";
 import * as Result from "effect/Result";
 import { beforeEach } from "vitest";
 
-import { OrganizationRootOps } from "@/modules/organization/domain/organization.root-ops.js";
-import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles.root-ops.js";
-import { OrganizationRepository } from "@/modules/organization/domain/ports/repositories/organization.repository.js";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/ports/repositories/organization-roles.repository.js";
+import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
+import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.js";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
+import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
 import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-live.js";
 import { findUserOrganizationRoles } from "@/modules/organization/queries/find-user-organization-roles.handler.js";

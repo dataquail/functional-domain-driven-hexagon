@@ -13,7 +13,7 @@ import { Api } from "@/api.js";
 import { OrganizationCreated } from "@/modules/organization/index.js";
 import { type CreateWalletCommand } from "@/modules/wallet/commands/create-wallet.command.js";
 import { createWallet } from "@/modules/wallet/commands/create-wallet.handler.js";
-import { WalletRepository } from "@/modules/wallet/domain/ports/repositories/wallet.repository.js";
+import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
 import { OrganizationEventAdapterLive } from "@/modules/wallet/interface/events/organization.event-adapter.js";
 import { makeCommandBus } from "@/platform/command-bus-live.js";
 import { CommandBus, type CommandHandlers } from "@/platform/ddd/ports/command-bus.js";

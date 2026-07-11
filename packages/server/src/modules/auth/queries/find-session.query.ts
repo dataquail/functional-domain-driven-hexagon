@@ -1,6 +1,6 @@
 import * as Schema from "effect/Schema";
 
-import { SessionId } from "@/modules/auth/domain/session.id.js";
+import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 
 export const FindSessionQuery = Schema.TaggedStruct("FindSessionQuery", {

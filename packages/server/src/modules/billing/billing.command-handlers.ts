@@ -27,8 +27,8 @@ import {
   type InvalidWebhookSignature,
   type SubscriptionAlreadyExistsForOrganization,
   type SubscriptionNotFound,
-} from "@/modules/billing/domain/subscription.errors.js";
-import { type SubscriptionRoot } from "@/modules/billing/domain/subscription.root.js";
+} from "@/modules/billing/domain/subscription/subscription.errors.js";
+import { type SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.js";
 import { SubscriptionRepositoryLive } from "@/modules/billing/infrastructure/repositories/subscription.repository-live.js";
 import { WebhookEventRepositoryLive } from "@/modules/billing/infrastructure/repositories/webhook-event.repository-live.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";

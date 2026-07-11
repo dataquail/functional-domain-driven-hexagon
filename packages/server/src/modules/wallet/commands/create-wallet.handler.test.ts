@@ -7,7 +7,7 @@ import * as Option from "effect/Option";
 
 import { CreateWalletCommand } from "@/modules/wallet/commands/create-wallet.command.js";
 import { createWallet } from "@/modules/wallet/commands/create-wallet.handler.js";
-import { WalletRepository } from "@/modules/wallet/domain/ports/repositories/wallet.repository.js";
+import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
 import { WalletRepositoryFake } from "@/modules/wallet/infrastructure/repositories/wallet.repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";

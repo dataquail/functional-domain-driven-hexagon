@@ -3,8 +3,8 @@ import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 import * as Result from "effect/Result";
 
-import { RolesRepository } from "@/modules/role/domain/ports/repositories/roles.repository.js";
-import { RolesRootOps } from "@/modules/role/domain/roles.root-ops.js";
+import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
+import { RolesRootOps } from "@/modules/role/domain/roles/roles.root-ops.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 import { RolesRepositoryFake } from "./roles.repository-fake.js";

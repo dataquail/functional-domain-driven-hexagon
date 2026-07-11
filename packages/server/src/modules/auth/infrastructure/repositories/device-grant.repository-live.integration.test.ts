@@ -9,10 +9,10 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import { beforeEach } from "vitest";
 
-import { DeviceGrantNotFound } from "@/modules/auth/domain/device-grant.errors.js";
-import { DeviceGrantId } from "@/modules/auth/domain/device-grant.id.js";
-import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant.root-ops.js";
-import { DeviceGrantRepository } from "@/modules/auth/domain/ports/repositories/device-grant.repository.js";
+import { DeviceGrantNotFound } from "@/modules/auth/domain/device-grant/device-grant.errors.js";
+import { DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.js";
+import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
+import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant/device-grant.root-ops.js";
 import { DeviceGrantRepositoryLive } from "@/modules/auth/infrastructure/repositories/device-grant.repository-live.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";

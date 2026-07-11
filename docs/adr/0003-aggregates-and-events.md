@@ -20,7 +20,7 @@ The forces:
 
 Aggregate state is a `Schema.Class`. Identity, timestamps, and invariants live in the schema fields and any `Schema.filter` refinements layered on top. Constructors are obtained via the class's static `make({ ... })`.
 
-Each DDD stereotype in `domain/` is named by an explicit filename suffix and a matching identifier-keyword suffix, so a file's role is legible without opening it:
+`domain/` is a container: one **subdomain folder per aggregate** (a consistency boundary), plus a `domain-services/` folder and a `ports/` folder. An aggregate's stereotypes are grouped in its own subdomain folder, alongside that aggregate's repository port (`*.repository.ts`, ADR-0005). Each DDD stereotype is named by an explicit filename suffix and a matching identifier-keyword suffix, so a file's role is legible without opening it:
 
 - **Aggregate root** — two files. `*.root.ts` holds the root _data type_ `XRoot`, a dumb `Schema.Class` with no behavior (for a single-state aggregate one class; for a state machine a union `type XRoot = AVariantRoot | BVariantRoot | …` over one class per variant — see "Variant aggregates"). `*.root-ops.ts` holds the _operations_, the `XRootOps` free-function bag. The split into two files is deliberate and explained under "Operations"; the test-parity obligation sits on `*.root-ops.ts`, the dumb `*.root.ts` data carries none.
 - **Constituent aggregate** — `*.aggregate.ts`: a collection of entities/value objects that is only a _part_ of a root, not itself a consistency-boundary root. Behavior, when it has any, lives in a sibling `*.aggregate-ops.ts` bag.
@@ -28,6 +28,8 @@ Each DDD stereotype in `domain/` is named by an explicit filename suffix and a m
 - **Value object** — `*.value-object.ts` / `XValueObject`: a `Schema.Class` (multi-field) or `Schema.brand`-ed primitive; an attribute-bag with no identity of its own. Behavior in a sibling `*.value-object-ops.ts` bag.
 - **Branded identifier** — `*.id.ts` / `XId` (e.g. `UserId`). Technically a value object, but kept as its own category: it already carries its keyword and denotes _an entity's identity_ rather than being an attribute-bag.
 - **Specification** — `*.specification.ts` / `XSpecifications`: a free-function bag of pure predicates and derivations over an aggregate (`isExpired`, `isOpen`, `hasRole`, `statusAt`). It carries no state transition and emits no events (see "Specifications and the operation-stereotype privacy gradient").
+
+Subdomain folders are **isolated from one another**: a file in `domain/<subA>/` may import only its own subdomain (plus `effect`, the `platform/ddd/contracts/` tier, and `platform/ids/`), never another subdomain or `domain/ports/`. Cross-subdomain domain logic — logic that legitimately spans two aggregates inside the bounded context — is a **domain service** in `domain/domain-services/` (ADR-0023), the one domain location permitted to compose more than one subdomain. Command handlers, queries, interface, and infrastructure sit outside `domain/` and may consume several subdomains freely; the isolation is a domain-internal boundary (enforced by `subdomain-isolation`, ADR-0008).
 
 ### Operations
 

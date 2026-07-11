@@ -1,6 +1,6 @@
 import * as Schema from "effect/Schema";
 
-import { type TodoId } from "@/modules/todos/domain/todo.id.js";
+import { type TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 

@@ -13,11 +13,11 @@ import {
   type CreateCustomerInput,
   type CreateCustomerResult,
   type CreateSubscriptionInput,
-  StripeWebhookEvent,
   type SubscriptionState,
   type VerifyWebhookInput,
 } from "@/modules/billing/domain/ports/clients/billing-gateway.client.js";
-import { InvalidWebhookSignature } from "@/modules/billing/domain/subscription.errors.js";
+import { InvalidWebhookSignature } from "@/modules/billing/domain/subscription/subscription.errors.js";
+import { StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 const decodeWebhookEvent = Schema.decodeUnknownEffect(StripeWebhookEvent);

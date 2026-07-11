@@ -1,6 +1,6 @@
 import * as Schema from "effect/Schema";
 
-import { type SessionId } from "@/modules/auth/domain/session.id.js";
+import { type SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 

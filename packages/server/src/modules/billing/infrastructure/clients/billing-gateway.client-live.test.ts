@@ -8,7 +8,7 @@ import Stripe from "stripe";
 
 import { EnvVars } from "@/common/env-vars.js";
 import { BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client.js";
-import { InvalidWebhookSignature } from "@/modules/billing/domain/subscription.errors.js";
+import { InvalidWebhookSignature } from "@/modules/billing/domain/subscription/subscription.errors.js";
 import { BillingGatewayLive } from "@/modules/billing/infrastructure/clients/billing-gateway.client-live.js";
 
 // Unit coverage for the Stripe adapter's webhook path — the half of the

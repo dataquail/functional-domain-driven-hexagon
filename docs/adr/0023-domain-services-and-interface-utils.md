@@ -17,7 +17,9 @@ The risk in filling either gap is convention drift — a generic "utils allowed"
 
 ### Domain services — `*.domain-service.ts`
 
-A **domain service** is a sanctioned domain stereotype: stateless domain logic that no single aggregate owns. It lives in `domain/`, is a pure free-function module (matching the `XRootOps` free-function-bag style — the ops that live in an aggregate's `*.root-ops.ts` — _not_ an injected `Context.Tag`; there is nothing to configure or fake for a pure function), and carries a test obligation.
+A **domain service** is a sanctioned domain stereotype: stateless domain logic that no single aggregate owns. It lives in `domain/domain-services/`, is a pure free-function module (matching the `XRootOps` free-function-bag style — the ops that live in an aggregate's `*.root-ops.ts` — _not_ an injected `Context.Tag`; there is nothing to configure or fake for a pure function), and carries a test obligation.
+
+Because `domain/` is organized into subdomain folders that are isolated from one another (ADR-0003), a domain service is also the one domain location permitted to **compose more than one subdomain** — the orchestration seam among aggregates inside the bounded context. `invitation-acceptance` (organization module) composes the invitation and membership subdomains: accepting an invitation makes the invitee a member. Neither aggregate owns that rule, and subdomain isolation forbids the invitation subdomain from importing the membership subdomain (or vice versa), so the composition lives in `domain/domain-services/invitation-acceptance.domain-service.ts`.
 
 `hashToken` becomes `CredentialHash.of` in `credential-hash.domain-service.ts`. The API-token wire format (`assembleToken`, `displayPrefix`) folds onto `ApiTokenRootOps` (in `api-token.root-ops.ts`) and the user-code format (`toUserCode`) onto `DeviceGrantRootOps`, because those _are_ their aggregates' own concerns — only the cross-cutting hash graduates to a service.
 
@@ -45,9 +47,9 @@ Two guards keep `*.util.ts` from drifting even within the interface layer:
 
 ## Enforcement
 
-- Folder-structure rule layout (ADR-0008): `*.domain-service.ts` is in the `domain/` allowlist; `*.util.ts` is in the `interface/http` and `interface/cli` allowlists only.
+- Folder-structure rule layout (ADR-0008): `*.domain-service.ts` is in the `domain/domain-services/` allowlist; `*.util.ts` is in the `interface/http` and `interface/cli` allowlists only.
 - Folder-structure rule parity: `*.domain-service.ts` → `*.domain-service.test.ts`; `*.util.ts` → `*.util.test.ts`.
-- Dependency-cruiser: `interface-util-files-are-leaves` enforces the leaf constraint. Domain services need no new rule — `domain-isolation` + `domain-no-external-beyond-effect` already govern them (`node:crypto` is a core module, exempt).
+- Dependency-cruiser: `interface-util-files-are-leaves` enforces the leaf constraint. Domain services need no new rule — `domain-isolation` + `domain-no-external-beyond-effect` already govern them (`node:crypto` is a core module, exempt); and `subdomain-isolation` (ADR-0008) excludes `domain/domain-services/` from its `from`, which is what lets a domain service import more than one subdomain.
 
 ## Consequences
 

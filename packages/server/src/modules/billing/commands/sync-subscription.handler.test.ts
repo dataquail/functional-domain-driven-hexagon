@@ -7,9 +7,9 @@ import * as Option from "effect/Option";
 
 import { SyncSubscriptionCommand } from "@/modules/billing/commands/sync-subscription.command.js";
 import { syncSubscription } from "@/modules/billing/commands/sync-subscription.handler.js";
-import { SubscriptionRepository } from "@/modules/billing/domain/ports/repositories/subscription.repository.js";
-import { SubscriptionId } from "@/modules/billing/domain/subscription.id.js";
-import { SubscriptionRootOps } from "@/modules/billing/domain/subscription.root-ops.js";
+import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
+import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
+import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
 import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";

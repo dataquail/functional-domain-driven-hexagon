@@ -1,6 +1,6 @@
 import { type RowSchemas } from "@org/database/index";
 
-import { type WebhookEventRecord } from "@/modules/billing/domain/ports/repositories/webhook-event.repository.js";
+import { type WebhookEventRecord } from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
 
 type Row = RowSchemas.WebhookEventRow;
 

@@ -1,8 +1,8 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 
-import { SubscriptionId } from "@/modules/billing/domain/subscription.id.js";
-import { SubscriptionRoot } from "@/modules/billing/domain/subscription.root.js";
+import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
+import { SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 type Row = RowSchemas.SubscriptionRow;

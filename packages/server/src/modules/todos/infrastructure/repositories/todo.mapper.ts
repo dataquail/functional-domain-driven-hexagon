@@ -1,8 +1,8 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 
-import { TodoId } from "@/modules/todos/domain/todo.id.js";
-import { TodoRoot } from "@/modules/todos/domain/todo.root.js";
+import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
+import { TodoRoot } from "@/modules/todos/domain/todo/todo.root.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 type Row = RowSchemas.TodoRow;

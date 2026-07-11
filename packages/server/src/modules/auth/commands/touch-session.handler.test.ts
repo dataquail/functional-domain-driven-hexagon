@@ -5,9 +5,9 @@ import * as Effect from "effect/Effect";
 
 import { TouchSessionCommand } from "@/modules/auth/commands/touch-session.command.js";
 import { touchSession } from "@/modules/auth/commands/touch-session.handler.js";
-import { SessionRepository } from "@/modules/auth/domain/ports/repositories/session.repository.js";
-import { SessionId } from "@/modules/auth/domain/session.id.js";
-import { SessionRootOps } from "@/modules/auth/domain/session.root-ops.js";
+import { SessionId } from "@/modules/auth/domain/session/session.id.js";
+import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
+import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.js";
 import { SessionRepositoryFake } from "@/modules/auth/infrastructure/repositories/session.repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
 

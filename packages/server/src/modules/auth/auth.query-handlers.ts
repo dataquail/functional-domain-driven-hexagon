@@ -5,14 +5,14 @@ import {
   type ApiTokenExpired,
   type ApiTokenNotFound,
   type ApiTokenRevoked,
-} from "@/modules/auth/domain/api-token.errors.js";
-import { type ApiTokenRoot } from "@/modules/auth/domain/api-token.root.js";
+} from "@/modules/auth/domain/api-token/api-token.errors.js";
+import { type ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root.js";
 import {
   type SessionExpired,
   type SessionNotFound,
   type SessionRevoked,
-} from "@/modules/auth/domain/session.errors.js";
-import { type SessionRoot } from "@/modules/auth/domain/session.root.js";
+} from "@/modules/auth/domain/session/session.errors.js";
+import { type SessionRoot } from "@/modules/auth/domain/session/session.root.js";
 import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositories/api-token.repository-live.js";
 import { SessionRepositoryLive } from "@/modules/auth/infrastructure/repositories/session.repository-live.js";
 import { findApiTokenByHash } from "@/modules/auth/queries/find-api-token-by-hash.handler.js";

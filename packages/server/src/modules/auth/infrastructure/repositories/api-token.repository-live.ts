@@ -2,10 +2,10 @@ import { Database, orFail, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { ApiTokenNotFound } from "@/modules/auth/domain/api-token.errors.js";
-import { type ApiTokenId } from "@/modules/auth/domain/api-token.id.js";
-import { type ApiTokenRoot } from "@/modules/auth/domain/api-token.root.js";
-import { ApiTokenRepository } from "@/modules/auth/domain/ports/repositories/api-token.repository.js";
+import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.js";
+import { type ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
+import { type ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 

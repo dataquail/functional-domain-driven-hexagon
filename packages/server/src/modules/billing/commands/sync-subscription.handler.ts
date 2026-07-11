@@ -3,8 +3,8 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
 import { type SyncSubscriptionCommand } from "@/modules/billing/commands/sync-subscription.command.js";
-import { SubscriptionRepository } from "@/modules/billing/domain/ports/repositories/subscription.repository.js";
-import { SubscriptionRootOps } from "@/modules/billing/domain/subscription.root-ops.js";
+import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
+import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 

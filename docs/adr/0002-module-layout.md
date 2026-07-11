@@ -23,14 +23,15 @@ Each feature module lives at `modules/<feature>/` with sibling subfolders, named
 
 ```
 modules/<feature>/
-  domain/          — pure data, ops, ports, errors, events. Stereotypes are dot-delimited suffixes (ADR-0024): aggregate roots as two files — `*.root.ts` (the dumb `XRoot` data) and `*.root-ops.ts` (the `XRootOps` free-function bag) — constituent aggregates `*.aggregate.ts`, entities `*.entity.ts` (`XEntity`), value objects `*.value-object.ts` (`XValueObject`), their behavior in sibling `*-ops.ts` bags, branded IDs `*.id.ts` (`XId`), specifications `*.specification.ts` (pure predicates over an aggregate), errors `*.errors.ts`, events `*.events.ts`, domain services `*.domain-service.ts` (stateless logic no aggregate owns — ADR-0023). See ADR-0003.
-    ports/         — outbound ports, tiered by counterpart (see ADR-0022)
-      repositories/ — the module's own datastore (`*.repository.ts`)
+  domain/          — a container: no files live here directly. It holds one subdomain folder per aggregate, a domain-services/ folder, and a ports/ folder.
+    <subdomain>/   — one aggregate's stereotypes, dot-delimited suffixes (ADR-0024): aggregate roots as two files — `*.root.ts` (the dumb `XRoot` data) and `*.root-ops.ts` (the `XRootOps` free-function bag) — constituent aggregates `*.aggregate.ts`, entities `*.entity.ts` (`XEntity`), value objects `*.value-object.ts` (`XValueObject`) (plus a `value-objects/` subfolder), their behavior in sibling `*-ops.ts` bags, branded IDs `*.id.ts` (`XId`), specifications `*.specification.ts` (pure predicates over an aggregate), errors `*.errors.ts`, events `*.events.ts`, plus that aggregate's own repository port `*.repository.ts` (ADR-0005). Subdomains are isolated from one another; a subdomain may be repository-only (a lookup/idempotency table with no aggregate root). See ADR-0003.
+    domain-services/ — `*.domain-service.ts`: stateless logic no single aggregate owns; the one domain place allowed to compose more than one subdomain (ADR-0023)
+    ports/         — the outbound ports that are not repositories, tiered by counterpart (see ADR-0022)
       clients/      — true third-party systems (`*.client.ts`)
       acl/          — other bounded contexts (`*.acl.ts`)
   commands/        — `*.command.ts` schema + `*.handler.ts` handler + bus-registration map
   queries/         — `*.query.ts` schema + `*.handler.ts` handler (may bypass the domain) + bus-registration map
-  infrastructure/  — driven adapters, tiered by counterpart to match domain/ports/ (see ADR-0022)
+  infrastructure/  — driven adapters, tiered by counterpart (see ADR-0022)
     repositories/  — `*.repository-live.ts` + `*.repository-fake.ts` + `*.mapper.ts`
     clients/       — third-party adapters (*.client-live.ts + *.client-fake.ts, self-contained *.client.ts, *.email.tsx templates)
     acl/           — anti-corruption adapters to other modules (*.acl-live.ts + *.acl-fake.ts); only place that may import a foreign barrel
@@ -100,6 +101,6 @@ Moving IDs into `@org/contracts` is rejected: contracts are the HTTP wire shape 
 ## Related
 
 - ADR-0008 (architecture enforcement) makes this layout a runtime check, not just a convention.
-- ADR-0005 (repository pattern) details how the port lives in `domain/ports/repositories/` and the implementations in `infrastructure/repositories/`.
+- ADR-0005 (repository pattern) details how the port lives in its aggregate's subdomain folder (`domain/<subdomain>/*.repository.ts`) and the implementations in `infrastructure/repositories/`.
 - ADR-0010 (HTTP-only contracts) details what `interface/` actually contains.
 - ADR-0024 (dot-delimited filenames) — the stereotype filename convention these folders use.

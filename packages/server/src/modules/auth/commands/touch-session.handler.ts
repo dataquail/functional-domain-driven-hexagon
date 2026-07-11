@@ -3,8 +3,8 @@ import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
 
 import { type TouchSessionCommand } from "@/modules/auth/commands/touch-session.command.js";
-import { SessionRepository } from "@/modules/auth/domain/ports/repositories/session.repository.js";
-import { SessionRootOps } from "@/modules/auth/domain/session.root-ops.js";
+import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
+import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.js";
 
 // Sliding-TTL refresh.
 //

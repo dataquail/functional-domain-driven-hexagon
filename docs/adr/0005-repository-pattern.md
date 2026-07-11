@@ -16,11 +16,11 @@ The fourth demand is easy to state and easy to erode. The recurring failure mode
 
 ## Decision
 
-For each feature module: a port in `domain/ports/repositories/`, a `Live` and `Fake` in `infrastructure/repositories/`, and a mapper. The port speaks a fixed, **cardinality-explicit vocabulary**, and two lint rules keep it dumb.
+For each aggregate: a port in its subdomain folder (`domain/<subdomain>/`), a `Live` and `Fake` in `infrastructure/repositories/`, and a mapper. The port speaks a fixed, **cardinality-explicit vocabulary**, and two lint rules keep it dumb.
 
 ### Port
 
-The port lives in `domain/ports/repositories/<feature>.repository.ts` as a `Context.Service`. Its method signatures are typed in terms of domain aggregates, not rows. The transient-store failure is the domain-language `PersistenceUnavailable` (from `platform/ddd/contracts/`); absence is modeled as `Option` or an empty aggregate rather than a thrown `NotFound` where that reads better.
+The port lives in its aggregate's subdomain folder, `domain/<subdomain>/<feature>.repository.ts`, as a `Context.Service`. Its method signatures are typed in terms of domain aggregates, not rows. The transient-store failure is the domain-language `PersistenceUnavailable` (from `platform/ddd/contracts/`); absence is modeled as `Option` or an empty aggregate rather than a thrown `NotFound` where that reads better.
 
 ```ts
 export type UserRepositoryShape = {
@@ -67,7 +67,7 @@ Persistence-format conversion lives in `infrastructure/repositories/<feature>.ma
 
 The two highest-frequency forms of logic creep fail `check:all` deterministically:
 
-1. **eslint `dumb-repository-ports`** (`scripts/eslint-rules/dumb-repository-ports.mjs`), scoped to `domain/ports/repositories/*.repository.ts`, inspects the `*RepositoryShape` type literal and requires every method name to match the vocabulary above. A name that reads as a domain verb, or omits the `One`/`Many` size, fails — the message tells the contributor to move the behaviour onto the aggregate or add the cardinality. The port is the right enforcement point because the `Live` and `Fake` must structurally satisfy it.
+1. **eslint `dumb-repository-ports`** (`scripts/eslint-rules/dumb-repository-ports.mjs`), scoped to the subdomain repository ports (`domain/<subdomain>/*.repository.ts`), inspects the `*RepositoryShape` type literal and requires every method name to match the vocabulary above. A name that reads as a domain verb, or omits the `One`/`Many` size, fails — the message tells the contributor to move the behaviour onto the aggregate or add the cardinality. The port is the right enforcement point because the `Live` and `Fake` must structurally satisfy it.
 2. **dependency-cruiser `dumb-repository-live-no-app-collaborators`** forbids `infrastructure/repositories/*.repository-live.ts` from importing the module's own `commands/` / `queries/` use cases, or the application-tier ports (`command-bus`, `query-bus`, `domain-event-bus`, `integration-event-bus`, `unit-of-work`, `with-unit-of-work`). A repository that reaches for these is smuggling orchestration into persistence.
 
 Both are allowlists (by name and by import path): a determinedly misleading name or pure computation inside an `updateOne` body can still pass. They are guardrails against the common case, not a substitute for review.

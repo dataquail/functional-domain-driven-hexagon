@@ -8,9 +8,9 @@ import * as Option from "effect/Option";
 
 import { GrantRoleCommand } from "@/modules/role/commands/grant-role.command.js";
 import { grantRole } from "@/modules/role/commands/grant-role.handler.js";
-import { RolesRepository } from "@/modules/role/domain/ports/repositories/roles.repository.js";
-import { AlreadyHasRole, CannotPromoteSelf } from "@/modules/role/domain/role.errors.js";
-import { type RoleGranted } from "@/modules/role/domain/role.events.js";
+import { AlreadyHasRole, CannotPromoteSelf } from "@/modules/role/domain/roles/role.errors.js";
+import { type RoleGranted } from "@/modules/role/domain/roles/role.events.js";
+import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
 import { RolesRepositoryFake } from "@/modules/role/infrastructure/repositories/roles.repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";

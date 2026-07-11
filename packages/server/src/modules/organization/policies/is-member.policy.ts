@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 import { makeIsOrgMember } from "@/platform/auth/policies/is-org-member.js";
 import type * as PolicyRegistry from "@/platform/auth/policy-registry.js";
 
-import { type OrganizationRoot } from "../domain/organization.root.js";
+import { type OrganizationRoot } from "../domain/organization/organization.root.js";
 
 // "Is this caller a member of the org?" — the `organization` resource
 // resolves to the OrganizationRoot aggregate, so the org id is `.id`. All

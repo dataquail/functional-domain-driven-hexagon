@@ -3,10 +3,10 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
 import { BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client.js";
-import { SubscriptionRepository } from "@/modules/billing/domain/ports/repositories/subscription.repository.js";
-import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription.errors.js";
-import { SubscriptionId } from "@/modules/billing/domain/subscription.id.js";
-import { SubscriptionRootOps } from "@/modules/billing/domain/subscription.root-ops.js";
+import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.js";
+import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
+import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
+import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 

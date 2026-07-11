@@ -5,10 +5,10 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { SessionRepository } from "@/modules/auth/domain/ports/repositories/session.repository.js";
-import { SessionNotFound } from "@/modules/auth/domain/session.errors.js";
-import { type SessionId } from "@/modules/auth/domain/session.id.js";
-import { SessionRoot } from "@/modules/auth/domain/session.root.js";
+import { SessionNotFound } from "@/modules/auth/domain/session/session.errors.js";
+import { type SessionId } from "@/modules/auth/domain/session/session.id.js";
+import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
+import { SessionRoot } from "@/modules/auth/domain/session/session.root.js";
 
 export const SessionRepositoryFake = Layer.effect(
   SessionRepository,

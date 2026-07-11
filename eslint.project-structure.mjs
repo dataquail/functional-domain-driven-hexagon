@@ -79,7 +79,11 @@ const MSG = {
   moduleRoot:
     "The module root admits only aggregation files: index.ts (barrel), <feature>.module.ts (composed Layer), <feature>.command-handlers.ts / .query-handlers.ts (bus-registration maps), <feature>.event-span-attributes.ts, <feature>.shared-deps.ts. Feature code belongs in a stereotype subfolder (domain/, commands/, queries/, event-handlers/, infrastructure/, interface/, policies/).",
   domain:
-    "domain/ admits only named DDD stereotypes: *.root.ts (dumb data) + *.root-ops.ts (operations), *.aggregate.ts, *.entity.ts, *.value-object.ts + their *-ops.ts operation bags, *.id.ts, *.errors.ts, *.events.ts, *.specification.ts, *.domain-service.ts. A free-standing helper is a smell — model it as an aggregate op (*.root-ops.ts / *.entity-ops.ts / *.value-object-ops.ts), a named predicate (*.specification.ts), or (if it's stateless logic no aggregate owns) a *.domain-service.ts. A genuinely new *kind* of building block must be added to the taxonomy in eslint.project-structure.mjs — don't force-fit an existing stereotype.",
+    "domain/ is a container: it admits only subdomain folders (one per aggregate/consistency boundary), domain-services/ (cross-subdomain domain services), and ports/ (clients/ + acl/). No files live directly in domain/ — put the stereotype inside its subdomain folder.",
+  subdomain:
+    "A subdomain folder under domain/ admits its DDD stereotypes: *.root.ts (dumb data) + *.root-ops.ts, *.aggregate.ts / *.entity.ts / *.value-object.ts + their *-ops.ts bags, *.id.ts, *.errors.ts, *.events.ts, *.specification.ts, the subdomain's *.repository.ts port, and a value-objects/ subfolder. A free-standing helper is a smell — model it as an op or a *.specification.ts. Domain services do NOT live here (they span subdomains → domain/domain-services/); clients/acl ports live in domain/ports/.",
+  domainServices:
+    "domain/domain-services/ holds only *.domain-service.ts (+ its *.domain-service.test.ts): stateless domain logic that spans subdomains (ADR-0023), the one domain location allowed to compose more than one subdomain. Logic an aggregate owns belongs on that aggregate's *.root-ops.ts in its subdomain folder.",
   rootOpsTest:
     "An aggregate root's operations bag (*.root-ops.ts) owns the invariants, so it carries the test-parity obligation: add the sibling *.root-ops.test.ts. (The *.root.ts data class is a dumb Schema and needs no test.)",
   specificationTest:
@@ -126,6 +130,73 @@ const portCounterparts = (bucket, testSuffix) => [
   `../../../infrastructure/${bucket}/{node-name}-live${testSuffix}`,
 ];
 
+// A repository port now lives inside its subdomain folder (domain/<sub>/),
+// so its infrastructure trio resolves 2 levels up (not 3, as for the
+// clients/acl ports still under domain/ports/<tier>/).
+const subdomainRepoCounterparts = [
+  "../../infrastructure/repositories/{node-name}-live.ts",
+  "../../infrastructure/repositories/{node-name}-fake.ts",
+  "../../infrastructure/repositories/{node-name}-live.integration.test.ts",
+];
+
+// The file kinds a subdomain folder (domain/<subdomain>/) admits: the DDD
+// stereotypes for one aggregate, its repository port, and a nested
+// value-objects/ folder. Domain services and clients/acl ports are NOT here.
+const subdomainChildren = [
+  { name: "*.root.ts", message: MSG.subdomain },
+  { name: "*.root-ops.ts", enforceExistence: "{node-name}.test.ts", message: MSG.rootOpsTest },
+  { name: "*.aggregate.ts", message: MSG.subdomain },
+  {
+    name: "*.aggregate-ops.ts",
+    enforceExistence: "{node-name}.test.ts",
+    message: MSG.constituentOpsTest,
+  },
+  { name: "*.entity.ts", message: MSG.subdomain },
+  {
+    name: "*.entity-ops.ts",
+    enforceExistence: "{node-name}.test.ts",
+    message: MSG.constituentOpsTest,
+  },
+  { name: "*.value-object.ts", message: MSG.subdomain },
+  {
+    name: "*.value-object-ops.ts",
+    enforceExistence: "{node-name}.test.ts",
+    message: MSG.constituentOpsTest,
+  },
+  { name: "*.id.ts", message: MSG.subdomain },
+  { name: "*.errors.ts", message: MSG.subdomain },
+  { name: "*.events.ts", message: MSG.subdomain },
+  {
+    name: "*.specification.ts",
+    enforceExistence: "{node-name}.test.ts",
+    message: MSG.specificationTest,
+  },
+  {
+    name: "*.repository.ts",
+    enforceExistence: subdomainRepoCounterparts,
+    message: MSG.repositoryPort,
+  },
+  TEST_TS,
+  {
+    name: "value-objects",
+    message: MSG.subdomain,
+    children: [
+      { name: "*.value-object.ts" },
+      {
+        name: "*.value-object-ops.ts",
+        enforceExistence: "{node-name}.test.ts",
+        message: MSG.constituentOpsTest,
+      },
+      {
+        name: "*.specification.ts",
+        enforceExistence: "{node-name}.test.ts",
+        message: MSG.specificationTest,
+      },
+      TEST_TS,
+    ],
+  },
+];
+
 export const serverModules = createFolderStructure({
   structureRoot: "packages/server/src/modules",
   structure: [
@@ -147,79 +218,26 @@ export const serverModules = createFolderStructure({
           name: "domain",
           message: MSG.domain, // stray file in domain/
           children: [
-            // Aggregate root: dumb-data class (no test obligation) + its
-            // operations bag (carries the parity). See ADR-0003.
-            { name: "*.root.ts", message: MSG.domain },
+            // domain services: stateless logic spanning subdomains (ADR-0023),
+            // the one domain location allowed to compose >1 subdomain.
             {
-              name: "*.root-ops.ts",
-              enforceExistence: "{node-name}.test.ts",
-              message: MSG.rootOpsTest,
-            },
-            { name: "*.aggregate.ts", message: MSG.domain },
-            {
-              name: "*.aggregate-ops.ts",
-              enforceExistence: "{node-name}.test.ts",
-              message: MSG.constituentOpsTest,
-            },
-            { name: "*.entity.ts", message: MSG.domain },
-            {
-              name: "*.entity-ops.ts",
-              enforceExistence: "{node-name}.test.ts",
-              message: MSG.constituentOpsTest,
-            },
-            { name: "*.value-object.ts", message: MSG.domain },
-            {
-              name: "*.value-object-ops.ts",
-              enforceExistence: "{node-name}.test.ts",
-              message: MSG.constituentOpsTest,
-            },
-            { name: "*.id.ts", message: MSG.domain },
-            { name: "*.errors.ts", message: MSG.domain },
-            { name: "*.events.ts", message: MSG.domain },
-            {
-              name: "*.specification.ts",
-              enforceExistence: "{node-name}.test.ts",
-              message: MSG.specificationTest,
-            },
-            {
-              name: "*.domain-service.ts",
-              enforceExistence: "{node-name}.test.ts",
-              message: MSG.domainServiceTest,
-            },
-            TEST_TS,
-            {
-              name: "value-objects",
-              message: MSG.domain,
+              name: "domain-services",
+              message: MSG.domainServices,
               children: [
-                { name: "*.value-object.ts" },
                 {
-                  name: "*.value-object-ops.ts",
+                  name: "*.domain-service.ts",
                   enforceExistence: "{node-name}.test.ts",
-                  message: MSG.constituentOpsTest,
-                },
-                {
-                  name: "*.specification.ts",
-                  enforceExistence: "{node-name}.test.ts",
-                  message: MSG.specificationTest,
+                  message: MSG.domainServiceTest,
                 },
                 TEST_TS,
               ],
             },
+            // ports container: clients + acl only. Repository ports live in
+            // their subdomain folder (see the `*` subdomain rule below).
             {
-              name: "ports", // container: tier subfolders only (no direct files)
+              name: "ports",
               message: MSG.portsContainer,
               children: [
-                {
-                  name: "repositories",
-                  message: MSG.repositoryPort,
-                  children: [
-                    {
-                      name: "*.repository.ts",
-                      enforceExistence: portCounterparts("repositories", ".integration.test.ts"),
-                      message: MSG.repositoryPort,
-                    },
-                  ],
-                },
                 {
                   name: "clients",
                   message: MSG.clientPort,
@@ -244,6 +262,9 @@ export const serverModules = createFolderStructure({
                 },
               ],
             },
+            // each subdomain folder (one per aggregate). Catch-all `*` — the
+            // named domain-services/ and ports/ rules above take precedence.
+            { name: "*", message: MSG.subdomain, children: subdomainChildren },
           ],
         },
 

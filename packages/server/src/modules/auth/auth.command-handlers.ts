@@ -51,12 +51,12 @@ import {
   touchSessionCommandSpanAttributes,
 } from "@/modules/auth/commands/touch-session.command.js";
 import { touchSession } from "@/modules/auth/commands/touch-session.handler.js";
-import { type ApiTokenNotFound } from "@/modules/auth/domain/api-token.errors.js";
+import { type ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.js";
 import {
   type DeviceGrantExpired,
   type DeviceGrantNotFound,
   type DeviceGrantPending,
-} from "@/modules/auth/domain/device-grant.errors.js";
+} from "@/modules/auth/domain/device-grant/device-grant.errors.js";
 import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositories/api-token.repository-live.js";
 import { AuthIdentityRepositoryLive } from "@/modules/auth/infrastructure/repositories/auth-identity.repository-live.js";
 import { DeviceGrantRepositoryLive } from "@/modules/auth/infrastructure/repositories/device-grant.repository-live.js";

@@ -12,8 +12,8 @@ import { signIn } from "@/modules/auth/commands/sign-in.handler.js";
 import {
   type AuthIdentity,
   AuthIdentityRepository,
-} from "@/modules/auth/domain/ports/repositories/auth-identity.repository.js";
-import { SessionRepository } from "@/modules/auth/domain/ports/repositories/session.repository.js";
+} from "@/modules/auth/domain/auth-identity/auth-identity.repository.js";
+import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
 import { makeAuthIdentityRepositoryFake } from "@/modules/auth/infrastructure/repositories/auth-identity.repository-fake.js";
 import { SessionRepositoryFake } from "@/modules/auth/infrastructure/repositories/session.repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";

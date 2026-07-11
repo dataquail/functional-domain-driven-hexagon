@@ -10,14 +10,14 @@ import * as Option from "effect/Option";
 import * as TestClock from "effect/testing/TestClock";
 import { beforeEach } from "vitest";
 
-import { SessionRepository } from "@/modules/auth/domain/ports/repositories/session.repository.js";
 import {
   SessionExpired,
   SessionNotFound,
   SessionRevoked,
-} from "@/modules/auth/domain/session.errors.js";
-import { SessionId } from "@/modules/auth/domain/session.id.js";
-import { SessionRoot } from "@/modules/auth/domain/session.root.js";
+} from "@/modules/auth/domain/session/session.errors.js";
+import { SessionId } from "@/modules/auth/domain/session/session.id.js";
+import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
+import { SessionRoot } from "@/modules/auth/domain/session/session.root.js";
 import { SessionRepositoryLive } from "@/modules/auth/infrastructure/repositories/session.repository-live.js";
 import { findSession } from "@/modules/auth/queries/find-session.handler.js";
 import { FindSessionQuery } from "@/modules/auth/queries/find-session.query.js";

@@ -1,8 +1,8 @@
 import * as Effect from "effect/Effect";
 
 import { type RevokeApiTokenCommand } from "@/modules/auth/commands/revoke-api-token.command.js";
-import { ApiTokenNotFound } from "@/modules/auth/domain/api-token.errors.js";
-import { ApiTokenRepository } from "@/modules/auth/domain/ports/repositories/api-token.repository.js";
+import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.js";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
 // Ownership-scoped revoke: load the token, refuse (as NotFound) if it isn't

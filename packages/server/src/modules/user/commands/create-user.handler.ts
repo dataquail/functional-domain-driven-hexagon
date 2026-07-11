@@ -2,9 +2,9 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
 import { type CreateUserCommand } from "@/modules/user/commands/create-user.command.js";
-import { UserRepository } from "@/modules/user/domain/ports/repositories/user.repository.js";
-import { UserRootOps } from "@/modules/user/domain/user.root-ops.js";
-import { AddressValueObject } from "@/modules/user/domain/value-objects/address.value-object.js";
+import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
+import { UserRootOps } from "@/modules/user/domain/user/user.root-ops.js";
+import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 import { UserId } from "@/platform/ids/user-id.js";

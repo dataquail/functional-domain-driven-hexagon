@@ -6,10 +6,10 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 
-import { SessionRepository } from "@/modules/auth/domain/ports/repositories/session.repository.js";
-import { SessionNotFound } from "@/modules/auth/domain/session.errors.js";
-import { SessionId } from "@/modules/auth/domain/session.id.js";
-import { SessionRootOps } from "@/modules/auth/domain/session.root-ops.js";
+import { SessionNotFound } from "@/modules/auth/domain/session/session.errors.js";
+import { SessionId } from "@/modules/auth/domain/session/session.id.js";
+import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
+import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 import { SessionRepositoryFake } from "./session.repository-fake.js";

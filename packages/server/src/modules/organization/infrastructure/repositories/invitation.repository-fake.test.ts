@@ -10,10 +10,10 @@ import * as Result from "effect/Result";
 import {
   InvitationNotFound,
   InvitationTokenNotFound,
-} from "@/modules/organization/domain/invitation.errors.js";
-import { type InvitationRoot } from "@/modules/organization/domain/invitation.root.js";
-import { InvitationRootOps } from "@/modules/organization/domain/invitation.root-ops.js";
-import { InvitationRepository } from "@/modules/organization/domain/ports/repositories/invitation.repository.js";
+} from "@/modules/organization/domain/invitation/invitation.errors.js";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
+import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.js";
+import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";

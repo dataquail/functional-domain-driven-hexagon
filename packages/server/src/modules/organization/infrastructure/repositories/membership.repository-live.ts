@@ -2,9 +2,9 @@ import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { MembershipNotFound } from "@/modules/organization/domain/membership.errors.js";
-import { type MembershipRoot } from "@/modules/organization/domain/membership.root.js";
-import { MembershipRepository } from "@/modules/organization/domain/ports/repositories/membership.repository.js";
+import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.js";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
+import { type MembershipRoot } from "@/modules/organization/domain/membership/membership.root.js";
 import * as MembershipMapper from "@/modules/organization/infrastructure/repositories/membership.mapper.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { type UserId } from "@/platform/ids/user-id.js";

@@ -1,6 +1,6 @@
 export { CreateUserCommand } from "./commands/create-user.command.js";
 export { DeleteUserCommand } from "./commands/delete-user.command.js";
-export { UserCreated } from "./domain/user.events.js";
+export { UserCreated } from "./domain/user/user.events.js";
 export { UserProvisioningLive } from "./policies/public/user-provisioning.service-live.js";
 export { userPolicies, UserResource } from "./policies/user.policies.js";
 export { UserResolverEntry, UserResolverEntryLive } from "./policies/user.resource-resolver.js";

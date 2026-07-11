@@ -3,7 +3,7 @@ import { SuperAdminOnly } from "@/platform/auth/policies/super-admin.js";
 import type * as PolicyRegistry from "@/platform/auth/policy-registry.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
-import { type OrganizationRoot } from "../domain/organization.root.js";
+import { type OrganizationRoot } from "../domain/organization/organization.root.js";
 import { IsMemberRead } from "./is-member.policy.js";
 import { IsOrgAdmin } from "./is-org-admin.policy.js";
 

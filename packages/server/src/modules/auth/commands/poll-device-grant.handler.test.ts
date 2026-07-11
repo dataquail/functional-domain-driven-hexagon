@@ -12,14 +12,14 @@ import { PollDeviceGrantCommand } from "@/modules/auth/commands/poll-device-gran
 import { pollDeviceGrant } from "@/modules/auth/commands/poll-device-grant.handler.js";
 import { StartDeviceGrantCommand } from "@/modules/auth/commands/start-device-grant.command.js";
 import { startDeviceGrant } from "@/modules/auth/commands/start-device-grant.handler.js";
-import { CredentialHash } from "@/modules/auth/domain/credential-hash.domain-service.js";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import {
   DeviceGrantExpired,
   DeviceGrantNotFound,
   DeviceGrantPending,
-} from "@/modules/auth/domain/device-grant.errors.js";
-import { ApiTokenRepository } from "@/modules/auth/domain/ports/repositories/api-token.repository.js";
-import { DeviceGrantRepository } from "@/modules/auth/domain/ports/repositories/device-grant.repository.js";
+} from "@/modules/auth/domain/device-grant/device-grant.errors.js";
+import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
+import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service.js";
 import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake.js";
 import { DeviceGrantRepositoryFake } from "@/modules/auth/infrastructure/repositories/device-grant.repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";

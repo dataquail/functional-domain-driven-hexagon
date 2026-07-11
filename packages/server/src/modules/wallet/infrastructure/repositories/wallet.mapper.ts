@@ -1,8 +1,8 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 
-import { WalletId } from "@/modules/wallet/domain/wallet.id.js";
-import { WalletRoot } from "@/modules/wallet/domain/wallet.root.js";
+import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id.js";
+import { WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 type Row = RowSchemas.WalletRow;

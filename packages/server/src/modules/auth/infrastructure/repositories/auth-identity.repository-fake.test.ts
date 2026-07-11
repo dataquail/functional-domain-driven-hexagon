@@ -5,8 +5,8 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 
-import { AuthIdentityRepository } from "@/modules/auth/domain/ports/repositories/auth-identity.repository.js";
-import { AuthIdentityNotFound } from "@/modules/auth/domain/session.errors.js";
+import { AuthIdentityNotFound } from "@/modules/auth/domain/auth-identity/auth-identity.errors.js";
+import { AuthIdentityRepository } from "@/modules/auth/domain/auth-identity/auth-identity.repository.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 import { makeAuthIdentityRepositoryFake } from "./auth-identity.repository-fake.js";

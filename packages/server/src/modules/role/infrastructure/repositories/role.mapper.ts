@@ -1,7 +1,7 @@
 import { type RowSchemas } from "@org/database/index";
 
-import { type RoleValueObject } from "@/modules/role/domain/role.value-object.js";
-import { RolesRoot } from "@/modules/role/domain/roles.root.js";
+import { type RoleValueObject } from "@/modules/role/domain/roles/role.value-object.js";
+import { RolesRoot } from "@/modules/role/domain/roles/roles.root.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 
 // Closed set of recognized role names. Mirrors the `RoleValueObject` Schema literal

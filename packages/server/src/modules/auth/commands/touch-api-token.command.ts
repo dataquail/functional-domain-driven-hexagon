@@ -1,6 +1,6 @@
 import * as Schema from "effect/Schema";
 
-import { ApiTokenId } from "@/modules/auth/domain/api-token.id.js";
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 
 // Records last-used time for a token, dispatched by the auth middleware
