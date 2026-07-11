@@ -27,18 +27,20 @@ export const findUsers = Effect.fn("findUsers")(function* (query: FindUsersQuery
   const offset = (query.page - 1) * query.pageSize;
 
   const result = yield* db
-    .execute((client) =>
-      Promise.all([
-        client.any(sql.type(RowSchemas.UserRowStd)`
+    .makeQuery((execute) =>
+      execute((client) =>
+        Promise.all([
+          client.any(sql.type(RowSchemas.UserRowStd)`
             SELECT * FROM "user".users
             ORDER BY created_at DESC
             LIMIT ${query.pageSize} OFFSET ${offset}
           `),
-        client.one(sql.type(CountRowStd)`
+          client.one(sql.type(CountRowStd)`
             SELECT COUNT(*)::int AS value FROM "user".users
           `),
-      ]),
-    )
+        ]),
+      ),
+    )()
     .pipe(
       Effect.catchTag("DatabaseError", Effect.die),
       Effect.catchTag("DatabaseUnavailable", (e) =>

@@ -30,7 +30,7 @@ modules/<feature>/
       clients/      — true third-party systems (`*.client.ts`)
       acl/          — other bounded contexts (`*.acl.ts`)
   commands/        — `*.command.ts` schema + `*.handler.ts` handler + bus-registration map
-  queries/         — `*.query.ts` schema + `*.handler.ts` handler (may bypass the domain) + bus-registration map
+  queries/         — `*.query.ts` schema + `*.handler.ts` handler (reads SQL directly; must not touch the domain core) + bus-registration map
   infrastructure/  — driven adapters, tiered by counterpart (see ADR-0022)
     repositories/  — `*.repository-live.ts` + `*.repository-fake.ts` + `*.mapper.ts`
     clients/       — third-party adapters (*.client-live.ts + *.client-fake.ts, self-contained *.client.ts, *.email.tsx templates)
@@ -51,7 +51,7 @@ modules/<feature>/
 
 Not every module has all folders — `queries/` is present only when the module needs it. Likewise `interface/http/` is present only for modules that expose HTTP endpoints; `interface/events/` only for modules that react to domain events (their own or another module's).
 
-`commands/` and `queries/` together correspond to what hexagonal architecture calls the "application layer." There is deliberately no `application/` umbrella over them. The split reflects one real distinction: write-side vs. read-side (queries can touch `@org/database` and bypass the domain because there is no aggregate to protect when nothing mutates). Each folder gets its own dependency-cruiser isolation rule (see ADR-0008), so the architectural distinction shows up at the file-system level rather than via convention. A cross-aggregate reaction to a domain event is not a third application folder: it is an inbound adapter at `interface/events/` that dispatches one of the module's own commands (see ADR-0007), reusing the command's handler rather than duplicating it.
+`commands/` and `queries/` together correspond to what hexagonal architecture calls the "application layer." There is deliberately no `application/` umbrella over them. The split reflects one real distinction: write-side vs. read-side. A query must _not_ reach the write-side consistency boundary — it builds its own read model by reading SQL directly through `@org/database`, never by loading an aggregate through a repository. This closes the loop on data-consistency leaks: a read that hydrates a write aggregate couples the read path to the write model and can smuggle the aggregate (and its invariants) into a projection. From its own `domain/` a query may still import two things that are not the write model — branded IDs (identity vocabulary) and cross-context ACL ports (`domain/ports/acl/`, because ADR-0020 bans the cross-schema SQL that would otherwise fetch another context's data) — but nothing else. Read-side errors and derived statuses are query-owned (declared in the `.query.ts`), not borrowed from the domain. Each folder gets its own dependency-cruiser isolation rule (see ADR-0008), so the architectural distinction shows up at the file-system level rather than via convention. A cross-aggregate reaction to a domain event is not a third application folder: it is an inbound adapter at `interface/events/` that dispatches one of the module's own commands (see ADR-0007), reusing the command's handler rather than duplicating it.
 
 Cross-cutting platform services that don't belong to any feature live in a sibling `platform/` folder: the domain event bus, command/query buses, unit of work, request context, HTTP middlewares.
 

@@ -6,14 +6,11 @@ import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 
 // Detailed membership view returned to the member-management surface
-// (org-admin + super-admin). The handler orchestrates three reads —
-// `MembershipRepository` for the membership rows, the `UsersLookup`
-// outbound port for each user's email (ADR-0020 disallows cross-schema
-// SQL), and `OrganizationRolesRepository` for each member's `isAdmin`
-// flag. The endpoint just dispatches through the QueryBus and maps the
-// result to the contract; the cross-module concerns stay inside the
-// use case (matching the "outbound ports are private to use cases"
-// rule).
+// (org-admin + super-admin). The handler reads its own schema directly
+// (membership rows + admin role rows) and enriches each row with the
+// user's email through the `UsersLookup` ACL — ADR-0020 disallows the
+// cross-schema JOIN that would otherwise fetch it. The endpoint just
+// dispatches through the QueryBus and maps the result to the contract.
 export const FindOrganizationMembershipsQuery = Schema.TaggedStruct(
   "FindOrganizationMembershipsQuery",
   { organizationId: OrganizationId },

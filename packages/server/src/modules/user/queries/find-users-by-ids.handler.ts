@@ -21,13 +21,15 @@ export const findUsersByIds = Effect.fn("findUsersByIds")(function* (query: Find
   if (query.ids.length === 0) return [];
   const db = yield* Database.Database;
   const rows = yield* db
-    .execute((client) =>
-      client.any(sql.type(RowSchemas.UserRowStd)`
+    .makeQuery((execute) =>
+      execute((client) =>
+        client.any(sql.type(RowSchemas.UserRowStd)`
           SELECT * FROM "user".users
           WHERE id = ANY(${sql.array(query.ids, "uuid")})
           ORDER BY created_at ASC
         `),
-    )
+      ),
+    )()
     .pipe(
       Effect.catchTag("DatabaseError", Effect.die),
       Effect.catchTag("DatabaseUnavailable", (e) =>

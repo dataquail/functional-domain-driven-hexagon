@@ -30,6 +30,7 @@ import enforceReactNamespace from "./scripts/eslint-rules/enforce-react-namespac
 import noDeepRelativeImports from "./scripts/eslint-rules/no-deep-relative-imports.mjs";
 import noEffectNamespaceImports from "./scripts/eslint-rules/no-effect-namespace-imports.mjs";
 import noRelativeImportOutsidePackage from "./scripts/eslint-rules/no-relative-import-outside-package.mjs";
+import useCaseDbViaMakeQuery from "./scripts/eslint-rules/use-case-db-via-make-query.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -101,6 +102,12 @@ export default [
       "dumb-repository-ports": {
         rules: {
           "dumb-repository-ports": dumbRepositoryPorts,
+        },
+      },
+
+      "use-case-db-via-make-query": {
+        rules: {
+          "use-case-db-via-make-query": useCaseDbViaMakeQuery,
         },
       },
     },
@@ -429,6 +436,19 @@ export default [
     files: ["packages/server/src/modules/*/domain/*/*.repository.ts"],
     rules: {
       "dumb-repository-ports/dumb-repository-ports": "error",
+    },
+  },
+  {
+    // ADR-0007: use-case reads go through `db.makeQuery` (transaction-aware),
+    // never bare `db.execute` (pool-only), so a read dispatched inside a unit
+    // of work — e.g. a policy/ACL query during command authorization — joins
+    // the ambient transaction instead of crashing on a foreign connection.
+    // Test files are excluded: seeding runs outside any UoW and uses
+    // `db.execute` directly.
+    files: ["packages/server/src/modules/*/{commands,queries}/**/*.{ts,tsx}"],
+    ignores: ["**/*.test.ts", "**/*.test.tsx"],
+    rules: {
+      "use-case-db-via-make-query/use-case-db-via-make-query": "error",
     },
   },
   {

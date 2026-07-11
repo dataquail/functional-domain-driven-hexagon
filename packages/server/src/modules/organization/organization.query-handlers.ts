@@ -1,11 +1,7 @@
 import { type Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
-import * as Layer from "effect/Layer";
 
 import { UsersLookupLive } from "@/modules/organization/infrastructure/acl/users-lookup.acl-live.js";
-import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/repositories/invitation.repository-live.js";
-import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/repositories/membership.repository-live.js";
-import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-live.js";
 import { findAllOrganizations } from "@/modules/organization/queries/find-all-organizations.handler.js";
 import {
   type FindAllOrganizationsQuery,
@@ -114,11 +110,10 @@ declare module "@/platform/ddd/ports/query-bus.js" {
   }
 }
 
-// `FindAllOrganizationsQuery` reads SQL directly (no repository in R)
-// so the handler doesn't need wrapping. `FindUserOrganizationRolesQuery`
-// and `FindMembershipQuery` go through their repositories and are
-// wrapped with the corresponding `*RepositoryLive` to discharge that
-// dep before the bus dispatch.
+// Every handler here reads SQL directly, so none needs a repository
+// wrap. `FindOrganizationMembershipsQuery` is the exception: it still
+// discharges `UsersLookup` (the cross-module email ACL) before the bus
+// dispatch, leaving `Database | QueryBus` in R.
 export const organizationQueryHandlers = queryHandlers({
   FindAllOrganizationsQuery: {
     handle: findAllOrganizations,
@@ -129,31 +124,20 @@ export const organizationQueryHandlers = queryHandlers({
     spanAttributes: findMyOrganizationsQuerySpanAttributes,
   },
   FindUserOrganizationRolesQuery: {
-    handle: (q): FindUserOrganizationRolesOutput =>
-      findUserOrganizationRoles(q).pipe(Effect.provide(OrganizationRolesRepositoryLive)),
+    handle: findUserOrganizationRoles,
     spanAttributes: findUserOrganizationRolesQuerySpanAttributes,
   },
   FindMembershipQuery: {
-    handle: (q): FindMembershipOutput =>
-      findMembership(q).pipe(Effect.provide(MembershipRepositoryLive)),
+    handle: findMembership,
     spanAttributes: findMembershipQuerySpanAttributes,
   },
   FindOrganizationMembershipsQuery: {
     handle: (q): FindOrganizationMembershipsOutput =>
-      findOrganizationMemberships(q).pipe(
-        Effect.provide(
-          Layer.mergeAll(
-            MembershipRepositoryLive,
-            UsersLookupLive,
-            OrganizationRolesRepositoryLive,
-          ),
-        ),
-      ),
+      findOrganizationMemberships(q).pipe(Effect.provide(UsersLookupLive)),
     spanAttributes: findOrganizationMembershipsQuerySpanAttributes,
   },
   FindPendingInvitationsQuery: {
-    handle: (q): FindPendingInvitationsOutput =>
-      findPendingInvitations(q).pipe(Effect.provide(InvitationRepositoryLive)),
+    handle: findPendingInvitations,
     spanAttributes: findPendingInvitationsQuerySpanAttributes,
   },
 });
