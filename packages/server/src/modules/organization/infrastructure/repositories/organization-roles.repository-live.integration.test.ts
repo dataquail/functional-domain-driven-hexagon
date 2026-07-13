@@ -8,7 +8,9 @@ import { beforeEach } from "vitest";
 
 import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
 import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.js";
+import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification.js";
 import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-live.js";
+import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
@@ -16,6 +18,11 @@ import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const issuedBy = UserId.make("99999999-9999-9999-9999-999999999999");
+
+const forPair = Spec.and(
+  OrganizationRolesSpecifications.forUser(userId),
+  OrganizationRolesSpecifications.forOrganization(orgId),
+);
 
 // organization.organization_roles FKs to "user".users(id) (twice — for
 // user_id + issued_by) and organization.organizations(id). Each test
@@ -62,15 +69,13 @@ suite("OrganizationRolesRepositoryLive (integration)", () => {
     );
   });
 
-  describe("findOneByUserIdAndOrgId", () => {
-    it.effect("returns an empty aggregate when no rows exist", () =>
+  describe("findOne", () => {
+    it.effect("returns null when no rows exist (the empty case is the caller's)", () =>
       Effect.gen(function* () {
         yield* seedFixtures;
         const repo = yield* OrganizationRolesRepository;
-        const roles = yield* repo.findOneByUserIdAndOrgId(userId, orgId);
-        deepStrictEqual(roles.userId, userId);
-        deepStrictEqual(roles.organizationId, orgId);
-        deepStrictEqual([...roles.roles], []);
+        const roles = yield* repo.findOne(forPair);
+        deepStrictEqual(roles, null);
       }).pipe(Effect.provide(TestLayer)),
     );
   });
@@ -87,7 +92,8 @@ suite("OrganizationRolesRepositoryLive (integration)", () => {
         );
         if (Result.isFailure(granted)) throw new Error("expected Right");
         yield* repo.upsertOne(granted.success.organizationRoles);
-        const fetched = yield* repo.findOneByUserIdAndOrgId(userId, orgId);
+        const fetched = yield* repo.findOne(forPair);
+        if (fetched === null) throw new Error("expected aggregate");
         deepStrictEqual(
           fetched.roles.map((r) => ({ role: r.role, issuedBy: r.issuedBy })),
           [{ role: "admin", issuedBy }],
@@ -112,8 +118,10 @@ suite("OrganizationRolesRepositoryLive (integration)", () => {
         );
         if (Result.isFailure(revoked)) throw new Error("expected Right");
         yield* repo.upsertOne(revoked.success.organizationRoles);
-        const fetched = yield* repo.findOneByUserIdAndOrgId(userId, orgId);
-        deepStrictEqual([...fetched.roles], []);
+        // Revoking the last role deletes every row, so there is nothing to
+        // reconstitute — findOne reports null (no rows = no roles).
+        const fetched = yield* repo.findOne(forPair);
+        deepStrictEqual(fetched, null);
       }).pipe(Effect.provide(TestLayer)),
     );
   });

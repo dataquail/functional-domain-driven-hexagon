@@ -9,6 +9,7 @@ import { revokeSession } from "@/modules/auth/commands/revoke-session.handler.js
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
 import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.js";
+import { SessionSpecifications } from "@/modules/auth/domain/session/session.specification.js";
 import { SessionRepositoryFake } from "@/modules/auth/infrastructure/repositories/session.repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
@@ -38,9 +39,7 @@ describe("revokeSession", () => {
       yield* seedSession();
       yield* revokeSession(RevokeSessionCommand.make({ sessionId }));
       const repo = yield* SessionRepository;
-      const found = yield* repo
-        .findOneById(sessionId)
-        .pipe(Effect.catchTag("SessionNotFound", () => Effect.succeed(null)));
+      const found = yield* repo.findOne(SessionSpecifications.withId(sessionId));
       ok(found !== null);
       ok(Option.isSome(Option.fromNullishOr(found.revokedAt)));
     }).pipe(provide),

@@ -8,6 +8,7 @@ import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/doma
 import { type SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
 import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
 import { type SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 const findByOrgIn = (
@@ -16,16 +17,6 @@ const findByOrgIn = (
 ): Option.Option<SubscriptionRoot> => {
   for (const sub of HashMap.values(store)) {
     if (sub.organizationId === organizationId) return Option.some(sub);
-  }
-  return Option.none();
-};
-
-const findByStripeIdIn = (
-  store: HashMap.HashMap<SubscriptionId, SubscriptionRoot>,
-  stripeSubscriptionId: string,
-): Option.Option<SubscriptionRoot> => {
-  for (const sub of HashMap.values(store)) {
-    if (sub.stripeSubscriptionId === stripeSubscriptionId) return Option.some(sub);
   }
   return Option.none();
 };
@@ -51,21 +42,17 @@ export const SubscriptionRepositoryFake = Layer.effect(
     const updateOne = (sub: SubscriptionRoot): Effect.Effect<void> =>
       Ref.update(store, HashMap.set(sub.id, sub));
 
-    const findOneByOrganizationId = (
-      organizationId: OrganizationId,
-    ): Effect.Effect<Option.Option<SubscriptionRoot>> =>
-      Effect.map(Ref.get(store), (m) => findByOrgIn(m, organizationId));
-
-    const findOneByStripeSubscriptionId = (
-      stripeSubscriptionId: string,
-    ): Effect.Effect<Option.Option<SubscriptionRoot>> =>
-      Effect.map(Ref.get(store), (m) => findByStripeIdIn(m, stripeSubscriptionId));
+    // The spec IS the in-memory predicate — the same object the live repo
+    // compiles to SQL — so fake and live agree by construction.
+    const findOne = (
+      spec: Specification<SubscriptionRoot>,
+    ): Effect.Effect<SubscriptionRoot | null> =>
+      Effect.map(Ref.get(store), (m) => Array.from(HashMap.values(m)).find(spec) ?? null);
 
     return SubscriptionRepository.of({
       insertOne,
       updateOne,
-      findOneByOrganizationId,
-      findOneByStripeSubscriptionId,
+      findOne,
     });
   }),
 );

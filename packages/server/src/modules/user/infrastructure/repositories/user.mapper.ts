@@ -4,8 +4,17 @@ import * as DateTime from "effect/DateTime";
 import { UserRoot } from "@/modules/user/domain/user/user.root.js";
 import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.js";
 import { UserId } from "@/platform/ids/user-id.js";
+import { type ColumnMap } from "@/platform/persistence/criteria-to-sql.js";
 
 type Row = RowSchemas.UserRow;
+
+// Resolves the specification field names the live repository filters on to
+// physical columns of "user".users. Only filterable scalar fields need an
+// entry; `satisfies` keeps the keys honest against the root.
+export const columns = {
+  id: "id",
+  email: "email",
+} as const satisfies Partial<Record<keyof UserRoot, string>> & ColumnMap;
 
 export const toDomain = (row: Row): UserRoot =>
   new UserRoot({

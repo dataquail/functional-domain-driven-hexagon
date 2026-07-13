@@ -2,7 +2,9 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
+import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification.js";
 import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-live.js";
+import { Spec } from "@/platform/ddd/contracts/specification.js";
 import {
   type OrganizationRoleName,
   OrganizationRoleService,
@@ -23,16 +25,25 @@ export const OrganizationRoleServiceLive = Layer.effect(
     const repo = yield* OrganizationRolesRepository;
     return OrganizationRoleService.of({
       findOrganizationPermissions: (userId, organizationId) =>
-        repo.findOneByUserIdAndOrgId(userId, organizationId).pipe(
-          Effect.map((aggregate) => ({
-            userId: aggregate.userId,
-            organizationId: aggregate.organizationId,
-            roles: aggregate.roles
-              .map((r) => r.role)
-              .filter((r): r is OrganizationRoleName => narrow(r)),
-          })),
-          Effect.withSpan("OrganizationRoleService.findOrganizationPermissions"),
-        ),
+        repo
+          .findOne(
+            Spec.and(
+              OrganizationRolesSpecifications.forUser(userId),
+              OrganizationRolesSpecifications.forOrganization(organizationId),
+            ),
+          )
+          .pipe(
+            // No rows → no roles (the empty-aggregate state); this service only
+            // needs the role names, so it reads them off the aggregate or [].
+            Effect.map((aggregate) => ({
+              userId,
+              organizationId,
+              roles: (aggregate?.roles ?? [])
+                .map((r) => r.role)
+                .filter((r): r is OrganizationRoleName => narrow(r)),
+            })),
+            Effect.withSpan("OrganizationRoleService.findOrganizationPermissions"),
+          ),
     });
   }),
 ).pipe(Layer.provide(OrganizationRolesRepositoryLive));

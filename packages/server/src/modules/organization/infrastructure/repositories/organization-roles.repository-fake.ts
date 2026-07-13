@@ -5,7 +5,7 @@ import * as Ref from "effect/Ref";
 
 import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
 import { type OrganizationRolesRoot } from "@/modules/organization/domain/organization-roles/organization-roles.root.js";
-import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 
@@ -23,26 +23,29 @@ export const OrganizationRolesRepositoryFake = Layer.effect(
   Effect.gen(function* () {
     const store = yield* Ref.make(HashMap.empty<string, OrganizationRolesRoot>());
 
+    // Mirror the live repo's row model: it persists as DELETE-then-INSERT, so
+    // an aggregate with no roles leaves zero rows — indistinguishable from an
+    // absent one. Storing an empty aggregate here would make findOne return it
+    // where the live repo returns null, so an empty upsert deletes the entry.
     const upsertOne = (organizationRoles: OrganizationRolesRoot): Effect.Effect<void> =>
       Ref.update(
         store,
-        HashMap.set(
-          key(organizationRoles.userId, organizationRoles.organizationId),
-          organizationRoles,
-        ),
+        organizationRoles.roles.length === 0
+          ? HashMap.remove(key(organizationRoles.userId, organizationRoles.organizationId))
+          : HashMap.set(
+              key(organizationRoles.userId, organizationRoles.organizationId),
+              organizationRoles,
+            ),
       );
 
-    const findOneByUserIdAndOrgId = (
-      userId: UserId,
-      organizationId: OrganizationId,
-    ): Effect.Effect<OrganizationRolesRoot> =>
-      Effect.map(Ref.get(store), (m) => {
-        const found = HashMap.get(m, key(userId, organizationId));
-        return found._tag === "Some"
-          ? found.value
-          : OrganizationRolesRootOps.empty(userId, organizationId);
-      });
+    // The spec is the in-memory predicate over the whole aggregate — the same
+    // object the live repo compiles to SQL. Absence is `null`; the caller maps
+    // it to an empty aggregate.
+    const findOne = (
+      spec: Specification<OrganizationRolesRoot>,
+    ): Effect.Effect<OrganizationRolesRoot | null> =>
+      Effect.map(Ref.get(store), (m) => Array.from(HashMap.values(m)).find(spec) ?? null);
 
-    return OrganizationRolesRepository.of({ upsertOne, findOneByUserIdAndOrgId });
+    return OrganizationRolesRepository.of({ upsertOne, findOne });
   }),
 );

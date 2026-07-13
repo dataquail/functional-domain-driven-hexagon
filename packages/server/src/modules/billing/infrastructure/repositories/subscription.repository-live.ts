@@ -1,12 +1,12 @@
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 
 import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.js";
 import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
 import { type SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
+import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
 import * as SubscriptionMapper from "./subscription.mapper.js";
@@ -78,41 +78,29 @@ export const SubscriptionRepositoryLive = Layer.effect(
       );
     });
 
-    const findOneByOrganizationId = db.makeQuery((execute, organizationId: OrganizationId) =>
+    // The spec contributes only the WHERE; the repository owns FROM and the
+    // projection. `LIMIT 1` is safe because every spec used with findOne
+    // selects at most one row (the unique organization_id, the unique
+    // stripe_subscription_id).
+    const findOne = db.makeQuery((execute, spec: Specification<SubscriptionRoot>) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.SubscriptionRowStd)`
-          SELECT * FROM billing.subscriptions WHERE organization_id = ${organizationId}
+          SELECT * FROM billing.subscriptions
+          WHERE ${criteriaToWhere(spec.criteria, SubscriptionMapper.columns)}
+          LIMIT 1
         `),
       ).pipe(
-        Effect.map((row) =>
-          row === null ? Option.none() : Option.some(SubscriptionMapper.toDomain(row)),
-        ),
+        Effect.map((row) => (row === null ? null : SubscriptionMapper.toDomain(row))),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("SubscriptionRepository.findOneByOrganizationId"),
-      ),
-    );
-
-    const findOneByStripeSubscriptionId = db.makeQuery((execute, stripeSubscriptionId: string) =>
-      execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.SubscriptionRowStd)`
-          SELECT * FROM billing.subscriptions WHERE stripe_subscription_id = ${stripeSubscriptionId}
-        `),
-      ).pipe(
-        Effect.map((row) =>
-          row === null ? Option.none() : Option.some(SubscriptionMapper.toDomain(row)),
-        ),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
-        Effect.withSpan("SubscriptionRepository.findOneByStripeSubscriptionId"),
+        Effect.withSpan("SubscriptionRepository.findOne"),
       ),
     );
 
     return SubscriptionRepository.of({
       insertOne,
       updateOne,
-      findOneByOrganizationId,
-      findOneByStripeSubscriptionId,
+      findOne,
     });
   }),
 );

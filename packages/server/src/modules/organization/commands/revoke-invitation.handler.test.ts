@@ -19,6 +19,7 @@ import { type InvitationRevoked } from "@/modules/organization/domain/invitation
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
 import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.js";
 import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
+import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
 import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
@@ -54,7 +55,8 @@ describe("revokeInvitation", () => {
 
       yield* revokeInvitation(RevokeInvitationCommand.make({ invitationId, actorUserId }));
 
-      const updated = yield* repo.findOneById(invitationId);
+      const updated = yield* repo.findOne(InvitationSpecifications.withId(invitationId));
+      if (updated === null) throw new Error("expected invitation");
       deepStrictEqual(updated.revokedAt !== null, true);
 
       const events = yield* rec.byTag<InvitationRevoked>("InvitationRevoked");

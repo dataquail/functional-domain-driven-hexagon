@@ -6,7 +6,8 @@ import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.erro
 import { type ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import { type ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root.js";
-import { type UserId } from "@/platform/ids/user-id.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
+import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
 import * as ApiTokenMapper from "./api-token.mapper.js";
@@ -42,46 +43,38 @@ export const ApiTokenRepositoryLive = Layer.effect(
       );
     });
 
-    const findOneById = db.makeQuery((execute, id: ApiTokenId) =>
+    // The spec contributes only the WHERE; the repository owns FROM and the
+    // projection. `LIMIT 1` is safe because every spec used with findOne
+    // selects at most one row (the id primary key, the unique token_hash).
+    const findOne = db.makeQuery((execute, spec: Specification<ApiTokenRoot>) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.ApiTokenRowStd)`
-          SELECT * FROM auth.api_tokens WHERE id = ${id}
+          SELECT * FROM auth.api_tokens
+          WHERE ${criteriaToWhere(spec.criteria, ApiTokenMapper.columns)}
+          LIMIT 1
         `),
       ).pipe(
-        orFail(() => new ApiTokenNotFound()),
-        Effect.map(ApiTokenMapper.toDomain),
+        Effect.map((row) => (row === null ? null : ApiTokenMapper.toDomain(row))),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("ApiTokenRepository.findOneById"),
+        Effect.withSpan("ApiTokenRepository.findOne"),
       ),
     );
 
-    const findOneByHash = db.makeQuery((execute, tokenHash: string) =>
-      execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.ApiTokenRowStd)`
-          SELECT * FROM auth.api_tokens WHERE token_hash = ${tokenHash}
-        `),
-      ).pipe(
-        orFail(() => new ApiTokenNotFound()),
-        Effect.map(ApiTokenMapper.toDomain),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
-        Effect.withSpan("ApiTokenRepository.findOneByHash"),
-      ),
-    );
-
-    const findManyByUser = db.makeQuery((execute, userId: UserId) =>
+    // The repository owns the newest-first ordering; the spec (e.g. forUser)
+    // contributes the WHERE, including the `revoked_at IS NULL` active filter.
+    const findMany = db.makeQuery((execute, spec: Specification<ApiTokenRoot>) =>
       execute((client) =>
         client.any(sql.type(RowSchemas.ApiTokenRowStd)`
           SELECT * FROM auth.api_tokens
-          WHERE user_id = ${userId} AND revoked_at IS NULL
+          WHERE ${criteriaToWhere(spec.criteria, ApiTokenMapper.columns)}
           ORDER BY created_at DESC
         `),
       ).pipe(
         Effect.map((rows) => rows.map(ApiTokenMapper.toDomain)),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("ApiTokenRepository.findManyByUser"),
+        Effect.withSpan("ApiTokenRepository.findMany"),
       ),
     );
 
@@ -121,9 +114,8 @@ export const ApiTokenRepositoryLive = Layer.effect(
 
     return ApiTokenRepository.of({
       insertOne,
-      findOneById,
-      findOneByHash,
-      findManyByUser,
+      findOne,
+      findMany,
       deleteOne: deleteById,
       updateOne,
     });

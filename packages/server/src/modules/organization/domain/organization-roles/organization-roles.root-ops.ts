@@ -32,7 +32,7 @@ const grantRole = (
   role: OrganizationRoleValueObject,
   issuedBy: UserId,
 ): Result.Result<Outcome, AlreadyHasOrganizationRole> => {
-  if (OrganizationRolesSpecifications.hasRole(aggregate, role)) {
+  if (OrganizationRolesSpecifications.hasRole(role)(aggregate)) {
     return Result.fail(
       new AlreadyHasOrganizationRole({
         userId: aggregate.userId,
@@ -64,7 +64,7 @@ const revokeRole = (
   aggregate: OrganizationRolesRoot,
   role: OrganizationRoleValueObject,
 ): Result.Result<Outcome, DoesNotHaveOrganizationRole> => {
-  if (!OrganizationRolesSpecifications.hasRole(aggregate, role)) {
+  if (!OrganizationRolesSpecifications.hasRole(role)(aggregate)) {
     return Result.fail(
       new DoesNotHaveOrganizationRole({
         userId: aggregate.userId,

@@ -6,8 +6,10 @@ import { MembershipNotFound } from "@/modules/organization/domain/membership/mem
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
 import { type MembershipRoot } from "@/modules/organization/domain/membership/membership.root.js";
 import * as MembershipMapper from "@/modules/organization/infrastructure/repositories/membership.mapper.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { type UserId } from "@/platform/ids/user-id.js";
+import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
 export const MembershipRepositoryLive = Layer.effect(
@@ -65,53 +67,28 @@ export const MembershipRepositoryLive = Layer.effect(
         ),
     );
 
-    const findOneByUserIdAndOrgId = db.makeQuery(
-      (execute, args: { userId: UserId; organizationId: OrganizationId }) =>
-        execute((client) =>
-          client.maybeOne(sql.type(RowSchemas.MembershipRowStd)`
-            SELECT * FROM "organization".memberships
-            WHERE user_id = ${args.userId}
-              AND organization_id = ${args.organizationId}
-          `),
-        ).pipe(
-          Effect.flatMap((row) =>
-            row === null
-              ? Effect.fail(
-                  new MembershipNotFound({
-                    userId: args.userId,
-                    organizationId: args.organizationId,
-                  }),
-                )
-              : Effect.succeed(MembershipMapper.toDomain(row)),
-          ),
-          Effect.catchTag("DatabaseError", Effect.die),
-          translatePersistenceUnavailable,
-          Effect.withSpan("MembershipRepository.findOneByUserIdAndOrgId"),
-        ),
-    );
-
-    const findManyByOrganizationId = db.makeQuery(
-      (execute, args: { organizationId: OrganizationId }) =>
-        execute((client) =>
-          client.any(sql.type(RowSchemas.MembershipRowStd)`
-            SELECT * FROM "organization".memberships
-            WHERE organization_id = ${args.organizationId}
-            ORDER BY created_at ASC
-          `),
-        ).pipe(
-          Effect.map((rows) => rows.map(MembershipMapper.toDomain)),
-          Effect.catchTag("DatabaseError", Effect.die),
-          translatePersistenceUnavailable,
-          Effect.withSpan("MembershipRepository.findManyByOrganizationId"),
-        ),
+    // The spec contributes only the WHERE (the composite identity); the
+    // repository owns FROM and projection. `LIMIT 1` is safe because the
+    // composite key selects at most one row.
+    const findOne = db.makeQuery((execute, spec: Specification<MembershipRoot>) =>
+      execute((client) =>
+        client.maybeOne(sql.type(RowSchemas.MembershipRowStd)`
+          SELECT * FROM "organization".memberships
+          WHERE ${criteriaToWhere(spec.criteria, MembershipMapper.columns)}
+          LIMIT 1
+        `),
+      ).pipe(
+        Effect.map((row) => (row === null ? null : MembershipMapper.toDomain(row))),
+        Effect.catchTag("DatabaseError", Effect.die),
+        translatePersistenceUnavailable,
+        Effect.withSpan("MembershipRepository.findOne"),
+      ),
     );
 
     return MembershipRepository.of({
       insertOne,
       deleteOne: (userId, organizationId) => deleteRow({ userId, organizationId }),
-      findOneByUserIdAndOrgId: (userId, organizationId) =>
-        findOneByUserIdAndOrgId({ userId, organizationId }),
-      findManyByOrganizationId: (organizationId) => findManyByOrganizationId({ organizationId }),
+      findOne,
     });
   }),
 );

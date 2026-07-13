@@ -5,25 +5,22 @@ import { type ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token
 import { type ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 import { type ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { type UserId } from "@/platform/ids/user-id.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
 
-// Dumb collection port (per `feedback_dumb_repositories`): save / findByX
-// only. Domain verbs (mint, revoke, touch) live in the use cases and the
-// aggregate; the soft-delete storage mechanism behind `delete` is an
-// implementation detail.
+// Dumb collection port (per `feedback_dumb_repositories`): insert/update the
+// aggregate, delete by id, and read it back by a Specification. Domain verbs
+// (mint, revoke, touch) live in the use cases and the aggregate; the
+// soft-delete storage mechanism behind `delete` is an implementation detail.
+// Every lookup — by id, by hash, the owner's active tokens — is expressed as a
+// spec at the call site (ApiTokenSpecifications). Absence is a plain `null` /
+// empty array; mapping it to ApiTokenNotFound is the caller's job.
 export type ApiTokenRepositoryShape = {
   readonly insertOne: (token: ApiTokenRoot) => Effect.Effect<void, PersistenceUnavailable>;
-  readonly findOneById: (
-    id: ApiTokenId,
-  ) => Effect.Effect<ApiTokenRoot, ApiTokenNotFound | PersistenceUnavailable>;
-  // Per-request lookup of the presented bearer (already hashed by the
-  // caller — the raw secret never reaches the repository).
-  readonly findOneByHash: (
-    tokenHash: string,
-  ) => Effect.Effect<ApiTokenRoot, ApiTokenNotFound | PersistenceUnavailable>;
-  // Active (non-revoked) tokens for the owner's management listing.
-  readonly findManyByUser: (
-    userId: UserId,
+  readonly findOne: (
+    spec: Specification<ApiTokenRoot>,
+  ) => Effect.Effect<ApiTokenRoot | null, PersistenceUnavailable>;
+  readonly findMany: (
+    spec: Specification<ApiTokenRoot>,
   ) => Effect.Effect<ReadonlyArray<ApiTokenRoot>, PersistenceUnavailable>;
   // Soft-delete via `revoked_at` (SQL `WHERE revoked_at IS NULL`). A
   // re-revoke matches zero rows and surfaces as `ApiTokenNotFound`, same as

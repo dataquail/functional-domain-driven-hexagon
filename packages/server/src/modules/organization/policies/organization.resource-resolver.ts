@@ -6,6 +6,7 @@ import * as Layer from "effect/Layer";
 import { type Resolver } from "@/platform/auth/resource-resolver-registry.js";
 
 import { OrganizationRepository } from "../domain/organization/organization.repository.js";
+import { OrganizationSpecifications } from "../domain/organization/organization.specification.js";
 import { OrganizationRepositoryLive } from "../infrastructure/repositories/organization.repository-live.js";
 
 // Resolver loads soft-deleted rows too. The restore endpoint
@@ -29,9 +30,11 @@ export const OrganizationResolverEntryLive = Layer.effect(
   Effect.gen(function* () {
     const repo = yield* OrganizationRepository;
     return (id) =>
-      repo.findOneByIdIncludingDeleted(id).pipe(
-        Effect.catchTag("OrganizationNotFound", () =>
-          Effect.fail(new CustomHttpApiError.NotFound()),
+      repo.findOne(OrganizationSpecifications.withId(id)).pipe(
+        Effect.flatMap((organization) =>
+          organization === null
+            ? Effect.fail(new CustomHttpApiError.NotFound())
+            : Effect.succeed(organization),
         ),
         Effect.catchTag("PersistenceUnavailable", Effect.die),
       );

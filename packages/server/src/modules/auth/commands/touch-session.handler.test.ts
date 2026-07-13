@@ -8,6 +8,7 @@ import { touchSession } from "@/modules/auth/commands/touch-session.handler.js";
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
 import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.js";
+import { SessionSpecifications } from "@/modules/auth/domain/session/session.specification.js";
 import { SessionRepositoryFake } from "@/modules/auth/infrastructure/repositories/session.repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
@@ -44,7 +45,8 @@ describe("touchSession", () => {
       const seed = yield* seedSession(farPast);
       yield* touchSession(cmd);
       const repo = yield* SessionRepository;
-      const after = yield* repo.findOneById(sessionId);
+      const after = yield* repo.findOne(SessionSpecifications.withId(sessionId));
+      if (after === null) throw new Error("expected a session");
       deepStrictEqual(DateTime.isGreaterThan(after.lastUsedAt, seed.lastUsedAt), true);
       deepStrictEqual(DateTime.isGreaterThan(after.expiresAt, seed.expiresAt), true);
     }).pipe(Effect.provide(SessionRepositoryFake)),
@@ -56,7 +58,8 @@ describe("touchSession", () => {
       const seed = yield* seedSession(justNow);
       yield* touchSession(cmd);
       const repo = yield* SessionRepository;
-      const after = yield* repo.findOneById(sessionId);
+      const after = yield* repo.findOne(SessionSpecifications.withId(sessionId));
+      if (after === null) throw new Error("expected a session");
       deepStrictEqual(after.lastUsedAt, seed.lastUsedAt);
       deepStrictEqual(after.expiresAt, seed.expiresAt);
     }).pipe(Effect.provide(SessionRepositoryFake)),
@@ -73,7 +76,8 @@ describe("touchSession", () => {
       const repo = yield* SessionRepository;
       yield* repo.deleteOne(sessionId);
       yield* touchSession(cmd);
-      const after = yield* repo.findOneById(sessionId);
+      const after = yield* repo.findOne(SessionSpecifications.withId(sessionId));
+      if (after === null) throw new Error("expected a session");
       deepStrictEqual(after.expiresAt, seed.expiresAt);
       deepStrictEqual(after.lastUsedAt, seed.lastUsedAt);
     }).pipe(Effect.provide(SessionRepositoryFake)),

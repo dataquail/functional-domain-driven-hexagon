@@ -14,7 +14,7 @@ export type Outcome = {
 };
 
 // Factory for the "no roles yet" case — used by the command handler
-// when `findOneByUserId` returns nothing and we still want to apply a
+// when `findOne` returns nothing and we still want to apply a
 // grant rather than fail.
 const empty = (userId: UserId): RolesRoot => RolesRoot.make({ userId, roles: [] });
 
@@ -25,7 +25,7 @@ const grant = (
   aggregate: RolesRoot,
   role: RoleValueObject,
 ): Result.Result<Outcome, AlreadyHasRole> => {
-  if (RolesSpecifications.hasRole(aggregate, role)) {
+  if (RolesSpecifications.hasRole(role)(aggregate)) {
     return Result.fail(new AlreadyHasRole({ userId: aggregate.userId, role }));
   }
   return Result.succeed({
@@ -43,7 +43,7 @@ const revoke = (
   aggregate: RolesRoot,
   role: RoleValueObject,
 ): Result.Result<Outcome, DoesNotHaveRole> => {
-  if (!RolesSpecifications.hasRole(aggregate, role)) {
+  if (!RolesSpecifications.hasRole(role)(aggregate)) {
     return Result.fail(new DoesNotHaveRole({ userId: aggregate.userId, role }));
   }
   return Result.succeed({

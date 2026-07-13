@@ -4,15 +4,11 @@ import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
 
-import {
-  InvitationNotFound,
-  InvitationTokenNotFound,
-} from "@/modules/organization/domain/invitation/invitation.errors.js";
+import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors.js";
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
 import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.js";
-import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { type InvitationId } from "@/platform/ids/invitation-id.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 export const InvitationRepositoryFake = Layer.effect(
   InvitationRepository,
@@ -29,60 +25,24 @@ export const InvitationRepositoryFake = Layer.effect(
           : Effect.fail(new InvitationNotFound({ invitationId: invitation.id })),
       );
 
-    const findOneById = (id: InvitationId): Effect.Effect<InvitationRoot, InvitationNotFound> =>
-      Effect.flatMap(Ref.get(store), (m) => {
-        const found = HashMap.get(m, id);
-        return found._tag === "Some"
-          ? Effect.succeed(found.value)
-          : Effect.fail(new InvitationNotFound({ invitationId: id }));
-      });
-
-    const findOneByToken = (
-      token: string,
-    ): Effect.Effect<InvitationRoot, InvitationTokenNotFound> =>
-      Effect.flatMap(Ref.get(store), (m) => {
-        for (const inv of HashMap.values(m)) {
-          if (inv.token === token) return Effect.succeed(inv);
-        }
-        return Effect.fail(new InvitationTokenNotFound());
-      });
-
-    // Newest-first, matching the live repo's `ORDER BY created_at DESC`.
+    // Newest-first, matching the live repo's `ORDER BY created_at DESC`. The
+    // spec IS the in-memory predicate — same object the live repo compiles to
+    // SQL — so fake and live agree by construction.
     const byCreatedAtDesc = (a: InvitationRoot, b: InvitationRoot): number =>
       DateTime.toEpochMillis(b.createdAt) - DateTime.toEpochMillis(a.createdAt);
 
-    const findManyByOrganizationId = (
-      organizationId: OrganizationId,
-    ): Effect.Effect<ReadonlyArray<InvitationRoot>> =>
+    const matching = (spec: Specification<InvitationRoot>) =>
       Effect.map(Ref.get(store), (m) =>
-        Array.from(HashMap.values(m))
-          .filter((inv) => inv.organizationId === organizationId)
-          .sort(byCreatedAtDesc),
+        Array.from(HashMap.values(m)).filter(spec).sort(byCreatedAtDesc),
       );
 
-    const findOneOpenByOrganizationIdAndEmail = (
-      organizationId: OrganizationId,
-      inviteeEmail: string,
-    ): Effect.Effect<InvitationRoot | null> =>
-      Effect.map(Ref.get(store), (m) => {
-        const open = Array.from(HashMap.values(m))
-          .filter(
-            (inv) =>
-              inv.organizationId === organizationId &&
-              inv.inviteeEmail === inviteeEmail &&
-              InvitationSpecifications.isOpen(inv),
-          )
-          .sort(byCreatedAtDesc);
-        return open[0] ?? null;
-      });
+    const findOne = (spec: Specification<InvitationRoot>): Effect.Effect<InvitationRoot | null> =>
+      Effect.map(matching(spec), (rows) => rows[0] ?? null);
 
-    return InvitationRepository.of({
-      insertOne,
-      updateOne,
-      findOneById,
-      findOneByToken,
-      findManyByOrganizationId,
-      findOneOpenByOrganizationIdAndEmail,
-    });
+    const findMany = (
+      spec: Specification<InvitationRoot>,
+    ): Effect.Effect<ReadonlyArray<InvitationRoot>> => matching(spec);
+
+    return InvitationRepository.of({ insertOne, updateOne, findOne, findMany });
   }),
 );

@@ -1,18 +1,16 @@
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
-import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 import { beforeEach } from "vitest";
 
-import { DeviceGrantNotFound } from "@/modules/auth/domain/device-grant/device-grant.errors.js";
 import { DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.js";
 import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
 import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant/device-grant.root-ops.js";
+import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification.js";
 import { DeviceGrantRepositoryLive } from "@/modules/auth/infrastructure/repositories/device-grant.repository-live.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
@@ -50,13 +48,15 @@ suite("DeviceGrantRepositoryLive (integration)", () => {
     );
   });
 
-  it.effect("insert + findOneByCodeHash + findOneByUserCode round-trip", () =>
+  it.effect("insert + findOne by code hash and by user code round-trip", () =>
     Effect.gen(function* () {
       const repo = yield* DeviceGrantRepository;
       const now = yield* DateTime.now;
       yield* repo.insertOne(start(now));
-      deepStrictEqual((yield* repo.findOneByCodeHash("dc-hash")).id, id);
-      const byUser = yield* repo.findOneByUserCode("ABCD-2345");
+      const byHash = yield* repo.findOne(DeviceGrantSpecifications.withCodeHash("dc-hash"));
+      const byUser = yield* repo.findOne(DeviceGrantSpecifications.withUserCode("ABCD-2345"));
+      if (byHash === null || byUser === null) throw new Error("expected a grant");
+      deepStrictEqual(byHash.id, id);
       deepStrictEqual(byUser.status, "pending");
       deepStrictEqual(byUser.userId, null);
     }).pipe(Effect.provide(TestLayer)),
@@ -70,7 +70,8 @@ suite("DeviceGrantRepositoryLive (integration)", () => {
       const grant = start(now);
       yield* repo.insertOne(grant);
       yield* repo.updateOne(DeviceGrantRootOps.approve({ grant, userId, now }));
-      const after = yield* repo.findOneByCodeHash("dc-hash");
+      const after = yield* repo.findOne(DeviceGrantSpecifications.withCodeHash("dc-hash"));
+      if (after === null) throw new Error("expected a grant");
       deepStrictEqual(after.status, "approved");
       deepStrictEqual(after.userId, userId);
       deepStrictEqual(after.approvedAt !== null, true);
@@ -83,14 +84,8 @@ suite("DeviceGrantRepositoryLive (integration)", () => {
       const now = yield* DateTime.now;
       yield* repo.insertOne(start(now));
       yield* repo.deleteOne(id);
-      const lookup = yield* Effect.exit(repo.findOneByCodeHash("dc-hash"));
-      deepStrictEqual(Exit.isFailure(lookup), true);
-      if (Exit.isFailure(lookup)) {
-        const error = Cause.hasFails(lookup.cause)
-          ? Cause.findErrorOption(lookup.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(error instanceof DeviceGrantNotFound, true);
-      }
+      const lookup = yield* repo.findOne(DeviceGrantSpecifications.withCodeHash("dc-hash"));
+      deepStrictEqual(lookup, null);
       const second = yield* Effect.exit(repo.deleteOne(id));
       deepStrictEqual(Exit.isFailure(second), true);
     }).pipe(Effect.provide(TestLayer)),

@@ -13,7 +13,9 @@ import {
   type AuthIdentity,
   AuthIdentityRepository,
 } from "@/modules/auth/domain/auth-identity/auth-identity.repository.js";
+import { AuthIdentitySpecifications } from "@/modules/auth/domain/auth-identity/auth-identity.specification.js";
 import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
+import { SessionSpecifications } from "@/modules/auth/domain/session/session.specification.js";
 import { makeAuthIdentityRepositoryFake } from "@/modules/auth/infrastructure/repositories/auth-identity.repository-fake.js";
 import { SessionRepositoryFake } from "@/modules/auth/infrastructure/repositories/session.repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
@@ -48,7 +50,8 @@ describe("signIn", () => {
       const result = yield* signIn(command);
       deepStrictEqual(result.userId, userId);
       const sessions = yield* SessionRepository;
-      const stored = yield* sessions.findOneById(result.sessionId);
+      const stored = yield* sessions.findOne(SessionSpecifications.withId(result.sessionId));
+      if (stored === null) throw new Error("expected a session");
       deepStrictEqual(stored.userId, userId);
       deepStrictEqual(stored.subject, subject);
       deepStrictEqual(stored.revokedAt, null);
@@ -64,11 +67,13 @@ describe("signIn", () => {
       deepStrictEqual(result.userId, provisionedUserId);
       // …and the identity is now linked, so a subsequent lookup finds it.
       const identities = yield* AuthIdentityRepository;
-      const linked = yield* identities.findOneBySubject("new-subject");
+      const linked = yield* identities.findOne(AuthIdentitySpecifications.bySubject("new-subject"));
+      if (linked === null) throw new Error("expected an identity");
       deepStrictEqual(linked.userId, provisionedUserId);
       deepStrictEqual(linked.provider, "zitadel");
       const sessions = yield* SessionRepository;
-      const stored = yield* sessions.findOneById(result.sessionId);
+      const stored = yield* sessions.findOne(SessionSpecifications.withId(result.sessionId));
+      if (stored === null) throw new Error("expected a session");
       deepStrictEqual(stored.userId, provisionedUserId);
     }).pipe(Effect.provide(TestLayer)),
   );

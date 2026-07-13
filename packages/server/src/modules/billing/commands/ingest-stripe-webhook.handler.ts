@@ -20,10 +20,9 @@ import { type IngestStripeWebhookCommand } from "./ingest-stripe-webhook.command
 // downstream subscribers (subscription status sync) never fire twice
 // for the same delivery.
 //
-// The repository's `findOneByStripeEventId` exists for audit/dashboard
-// read paths; the write path here intentionally skips it because
-// "find then insert" introduces a race window. Postgres' unique
-// constraint is the arbiter.
+// The repository's read side exists for audit/dashboard read paths;
+// the write path here intentionally skips it because "find then insert"
+// introduces a race window. Postgres' unique constraint is the arbiter.
 export const ingestStripeWebhook = Effect.fn("ingestStripeWebhook")(function* (
   cmd: IngestStripeWebhookCommand,
 ) {

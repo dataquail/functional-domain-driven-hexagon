@@ -7,6 +7,7 @@ import * as Option from "effect/Option";
 
 import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors.js";
 import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
+import { WebhookEventSpecifications } from "@/modules/billing/domain/webhook-event/webhook-event.specification.js";
 import { WebhookEventRepositoryFake } from "@/modules/billing/infrastructure/repositories/webhook-event.repository-fake.js";
 
 const provide = Effect.provide(WebhookEventRepositoryFake);
@@ -16,9 +17,9 @@ describe("WebhookEventRepositoryFake.insert", () => {
     Effect.gen(function* () {
       const repo = yield* WebhookEventRepository;
       yield* repo.insertOne("evt_abc");
-      const found = yield* repo.findOneByStripeEventId("evt_abc");
-      ok(Option.isSome(found));
-      if (Option.isSome(found)) deepStrictEqual(found.value.stripeEventId, "evt_abc");
+      const found = yield* repo.findOne(WebhookEventSpecifications.withStripeEventId("evt_abc"));
+      ok(found !== null);
+      deepStrictEqual(found.stripeEventId, "evt_abc");
     }).pipe(provide),
   );
 
@@ -42,19 +43,21 @@ describe("WebhookEventRepositoryFake.insert", () => {
       const repo = yield* WebhookEventRepository;
       yield* repo.insertOne("evt_a");
       yield* repo.insertOne("evt_b");
-      const a = yield* repo.findOneByStripeEventId("evt_a");
-      const b = yield* repo.findOneByStripeEventId("evt_b");
-      ok(Option.isSome(a) && Option.isSome(b));
+      const a = yield* repo.findOne(WebhookEventSpecifications.withStripeEventId("evt_a"));
+      const b = yield* repo.findOne(WebhookEventSpecifications.withStripeEventId("evt_b"));
+      ok(a !== null && b !== null);
     }).pipe(provide),
   );
 });
 
-describe("WebhookEventRepositoryFake.findOneByStripeEventId", () => {
-  it.effect("returns None when no event has been recorded for the id", () =>
+describe("WebhookEventRepositoryFake.findOne", () => {
+  it.effect("returns null when no event has been recorded for the id", () =>
     Effect.gen(function* () {
       const repo = yield* WebhookEventRepository;
-      const found = yield* repo.findOneByStripeEventId("evt_unknown");
-      ok(Option.isNone(found));
+      const found = yield* repo.findOne(
+        WebhookEventSpecifications.withStripeEventId("evt_unknown"),
+      );
+      deepStrictEqual(found, null);
     }).pipe(provide),
   );
 });

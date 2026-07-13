@@ -8,6 +8,7 @@ import { DeviceGrantNotFound } from "@/modules/auth/domain/device-grant/device-g
 import { type DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.js";
 import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
 import { type DeviceGrantRoot } from "@/modules/auth/domain/device-grant/device-grant.root.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
 
 export const DeviceGrantRepositoryFake = Layer.effect(
   DeviceGrantRepository,
@@ -17,18 +18,10 @@ export const DeviceGrantRepositoryFake = Layer.effect(
     const insertOne = (grant: DeviceGrantRoot): Effect.Effect<void> =>
       Ref.update(store, HashMap.set(grant.id, grant));
 
-    const findBy = (
-      pred: (g: DeviceGrantRoot) => boolean,
-    ): Effect.Effect<DeviceGrantRoot, DeviceGrantNotFound> =>
-      Effect.flatMap(Ref.get(store), (m) => {
-        const match = Array.from(HashMap.values(m)).find(pred);
-        return match === undefined ? Effect.fail(new DeviceGrantNotFound()) : Effect.succeed(match);
-      });
-
-    const findOneByCodeHash = (deviceCodeHash: string) =>
-      findBy((g) => g.deviceCodeHash === deviceCodeHash);
-
-    const findOneByUserCode = (userCode: string) => findBy((g) => g.userCode === userCode);
+    // The spec IS the in-memory predicate — the same object the live repo
+    // compiles to SQL — so fake and live agree by construction.
+    const findOne = (spec: Specification<DeviceGrantRoot>): Effect.Effect<DeviceGrantRoot | null> =>
+      Effect.map(Ref.get(store), (m) => Array.from(HashMap.values(m)).find(spec) ?? null);
 
     const updateOne = (grant: DeviceGrantRoot): Effect.Effect<void, DeviceGrantNotFound> =>
       Effect.gen(function* () {
@@ -50,8 +43,7 @@ export const DeviceGrantRepositoryFake = Layer.effect(
 
     return DeviceGrantRepository.of({
       insertOne,
-      findOneByCodeHash,
-      findOneByUserCode,
+      findOne,
       updateOne,
       deleteOne: deleteGrant,
     });

@@ -11,6 +11,7 @@ import { startSubscription } from "@/modules/billing/commands/start-subscription
 import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.js";
 import { type SubscriptionStarted } from "@/modules/billing/domain/subscription/subscription.events.js";
 import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
+import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.js";
 import { BillingGatewayFake } from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake.js";
 import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
@@ -42,8 +43,8 @@ describe("startSubscription", () => {
         ok(sub.stripeSubscriptionId.startsWith("sub_test_"));
         deepStrictEqual(sub.status, "active");
 
-        const stored = yield* repo.findOneByOrganizationId(acme);
-        ok(Option.isSome(stored));
+        const stored = yield* repo.findOne(SubscriptionSpecifications.forOrganization(acme));
+        ok(stored !== null);
 
         const events = yield* rec.byTag<SubscriptionStarted>("SubscriptionStarted");
         deepStrictEqual(events.length, 1);

@@ -13,12 +13,14 @@ import { pollDeviceGrant } from "@/modules/auth/commands/poll-device-grant.handl
 import { StartDeviceGrantCommand } from "@/modules/auth/commands/start-device-grant.command.js";
 import { startDeviceGrant } from "@/modules/auth/commands/start-device-grant.handler.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
+import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
 import {
   DeviceGrantExpired,
   DeviceGrantNotFound,
   DeviceGrantPending,
 } from "@/modules/auth/domain/device-grant/device-grant.errors.js";
 import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
+import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification.js";
 import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service.js";
 import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake.js";
 import { DeviceGrantRepositoryFake } from "@/modules/auth/infrastructure/repositories/device-grant.repository-fake.js";
@@ -63,13 +65,17 @@ describe("pollDeviceGrant", () => {
       deepStrictEqual(apiToken.userId, userId);
       // Minted token is resolvable by its hash…
       const apiTokens = yield* ApiTokenRepository;
-      deepStrictEqual((yield* apiTokens.findOneByHash(CredentialHash.of(token))).id, apiToken.id);
+      const foundToken = yield* apiTokens.findOne(
+        ApiTokenSpecifications.withHash(CredentialHash.of(token)),
+      );
+      if (foundToken === null) throw new Error("expected an api token");
+      deepStrictEqual(foundToken.id, apiToken.id);
       // …and the grant is consumed: a second poll finds nothing.
       const grants = yield* DeviceGrantRepository;
-      deepStrictEqual(
-        Exit.isFailure(yield* Effect.exit(grants.findOneByCodeHash(CredentialHash.of(deviceCode)))),
-        true,
+      const consumed = yield* grants.findOne(
+        DeviceGrantSpecifications.withCodeHash(CredentialHash.of(deviceCode)),
       );
+      deepStrictEqual(consumed, null);
       deepStrictEqual(
         errorOf(yield* Effect.exit(poll(deviceCode))) instanceof DeviceGrantNotFound,
         true,

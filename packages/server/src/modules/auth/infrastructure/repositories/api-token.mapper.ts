@@ -4,6 +4,17 @@ import * as DateTime from "effect/DateTime";
 import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 import { ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root.js";
 import { UserId } from "@/platform/ids/user-id.js";
+import { type ColumnMap } from "@/platform/persistence/criteria-to-sql.js";
+
+// Resolves the specification field names the live repository filters on to
+// physical columns of auth.api_tokens. Only filterable scalar fields need an
+// entry; `satisfies` keeps the keys honest against the root.
+export const columns = {
+  id: "id",
+  tokenHash: "token_hash",
+  userId: "user_id",
+  revokedAt: "revoked_at",
+} as const satisfies Partial<Record<keyof ApiTokenRoot, string>> & ColumnMap;
 
 export const toDomain = (row: RowSchemas.ApiTokenRow): ApiTokenRoot =>
   ApiTokenRoot.make({

@@ -6,6 +6,7 @@ import * as Layer from "effect/Layer";
 import { type Resolver } from "@/platform/auth/resource-resolver-registry.js";
 
 import { UserRepository } from "../domain/user/user.repository.js";
+import { UserSpecifications } from "../domain/user/user.specification.js";
 import { UserRepositoryLive } from "../infrastructure/repositories/user.repository-live.js";
 
 // PersistenceUnavailable is treated as an unrecoverable failure here
@@ -20,8 +21,10 @@ export const UserResolverEntryLive = Layer.effect(
   Effect.gen(function* () {
     const repo = yield* UserRepository;
     return (id) =>
-      repo.findOneById(id).pipe(
-        Effect.catchTag("UserNotFound", () => Effect.fail(new CustomHttpApiError.NotFound())),
+      repo.findOne(UserSpecifications.withId(id)).pipe(
+        Effect.flatMap((user) =>
+          user === null ? Effect.fail(new CustomHttpApiError.NotFound()) : Effect.succeed(user),
+        ),
         Effect.catchTag("PersistenceUnavailable", Effect.die),
       );
   }),

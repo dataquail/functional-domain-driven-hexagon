@@ -18,6 +18,7 @@ import {
 } from "@/modules/organization/domain/organization/organization.errors.js";
 import { type OrganizationRestored } from "@/modules/organization/domain/organization/organization.events.js";
 import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
+import { OrganizationSpecifications } from "@/modules/organization/domain/organization/organization.specification.js";
 import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.js";
 import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization.repository-fake.js";
 import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.js";
@@ -48,7 +49,8 @@ describe("restoreOrganization", () => {
       );
       yield* softDeleteOrganization(SoftDeleteOrganizationCommand.make({ organizationId: id }));
       yield* restoreOrganization(RestoreOrganizationCommand.make({ organizationId: id }));
-      const stored = yield* repo.findOneById(id);
+      const stored = yield* repo.findOne(OrganizationSpecifications.withId(id));
+      if (stored === null) throw new Error("expected organization");
       deepStrictEqual(stored.deletedAt, null);
       const events = yield* rec.byTag<OrganizationRestored>("OrganizationRestored");
       deepStrictEqual(events.length, 1);

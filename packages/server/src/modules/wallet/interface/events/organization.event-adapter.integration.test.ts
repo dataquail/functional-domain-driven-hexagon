@@ -5,7 +5,6 @@ import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { beforeEach } from "vitest";
 
@@ -95,7 +94,7 @@ const FailingWalletRepository = Layer.succeed(
   WalletRepository,
   WalletRepository.of({
     insertOne: () => Effect.die("simulated wallet command failure"),
-    findOneByOrganizationId: () => Effect.succeed(Option.none()),
+    findOne: () => Effect.succeed(null),
   }),
 );
 

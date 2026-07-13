@@ -10,7 +10,9 @@ import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.js";
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { TodoRootOps } from "@/modules/todos/domain/todo/todo.root-ops.js";
 import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js";
+import { TodoSpecifications } from "@/modules/todos/domain/todo/todos.specification.js";
 import { TodosRepositoryFake } from "@/modules/todos/infrastructure/repositories/todos.repository-fake.js";
+import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
@@ -39,7 +41,10 @@ describe("completeTodo", () => {
       );
       deepStrictEqual(completed.completed, true);
       deepStrictEqual(completed.title, "Buy milk");
-      const stored = yield* (yield* TodosRepository).findOneById(orgId, todoId);
+      const stored = yield* (yield* TodosRepository).findOne(
+        Spec.and(TodoSpecifications.withId(todoId), TodoSpecifications.forOrganization(orgId)),
+      );
+      if (stored === null) throw new Error("expected stored todo");
       deepStrictEqual(stored.completed, true);
     }).pipe(Effect.provide(TodosRepositoryFake)),
   );

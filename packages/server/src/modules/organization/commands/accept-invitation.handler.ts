@@ -3,7 +3,9 @@ import * as Effect from "effect/Effect";
 
 import { type AcceptInvitationCommand } from "@/modules/organization/commands/accept-invitation.command.js";
 import { InvitationAcceptance } from "@/modules/organization/domain/domain-services/invitation-acceptance.domain-service.js";
+import { InvitationTokenNotFound } from "@/modules/organization/domain/invitation/invitation.errors.js";
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
+import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
 import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
@@ -26,7 +28,10 @@ export const acceptInvitation = Effect.fn("acceptInvitation")(
     const bus = yield* DomainEventBus;
     const now = yield* DateTime.now;
 
-    const invitation = yield* invRepo.findOneByToken(cmd.token);
+    const invitation = yield* invRepo.findOne(InvitationSpecifications.withToken(cmd.token));
+    if (invitation === null) {
+      return yield* new InvitationTokenNotFound();
+    }
     const result = yield* Effect.fromResult(
       InvitationAcceptance.accept(invitation, { userId: cmd.userId, now }),
     );
@@ -36,9 +41,9 @@ export const acceptInvitation = Effect.fn("acceptInvitation")(
     yield* invRepo.updateOne(result.invitation);
     yield* memberRepo.insertOne(result.membership);
     yield* bus.dispatch(result.events);
-    // Concurrent revoke between findOneByToken and update would surface as
-    // InvitationNotFound from `update` — treat as a defect (the token
-    // was valid moments ago; the operator should look at the trace).
+    // Concurrent revoke between the findOne(withToken) read and update would
+    // surface as InvitationNotFound from `update` — treat as a defect (the
+    // token was valid moments ago; the operator should look at the trace).
     // For normal use, the aggregate's accept() catches expired/revoked.
 
     return invitation.organizationId;

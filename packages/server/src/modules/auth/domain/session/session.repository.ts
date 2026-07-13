@@ -8,12 +8,18 @@ import {
 import { type SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { type SessionRoot } from "@/modules/auth/domain/session/session.root.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
 
+// Dumb persistence: insert/update the aggregate, soft-delete by id, and read
+// it back by a Specification. The identity lookup is expressed as a spec at the
+// call site (SessionSpecifications.withId) and compiled to a WHERE fragment by
+// the live repository. Absence is a plain `null`; mapping it to a domain 404
+// (SessionNotFound) is the caller's job.
 export type SessionRepositoryShape = {
   readonly insertOne: (session: SessionRoot) => Effect.Effect<void, PersistenceUnavailable>;
-  readonly findOneById: (
-    id: SessionId,
-  ) => Effect.Effect<SessionRoot, SessionNotFound | PersistenceUnavailable>;
+  readonly findOne: (
+    spec: Specification<SessionRoot>,
+  ) => Effect.Effect<SessionRoot | null, PersistenceUnavailable>;
   // Soft-deletes the session by stamping `revoked_at`. Named after the
   // collection operation, not the business meaning ("revoke" is a
   // use-case concern — see `RevokeSessionCommand`). Repository ports

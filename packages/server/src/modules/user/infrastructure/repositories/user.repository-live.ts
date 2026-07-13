@@ -1,12 +1,13 @@
 import { Database, orFail, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 
 import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user/user.errors.js";
 import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
 import { type UserRoot } from "@/modules/user/domain/user/user.root.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { type UserId } from "@/platform/ids/user-id.js";
+import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
 import * as UserMapper from "./user.mapper.js";
@@ -79,33 +80,24 @@ export const UserRepositoryLive = Layer.effect(
       ),
     );
 
-    const findOneById = db.makeQuery((execute, id: UserId) =>
+    // The spec contributes only the WHERE; the repository owns FROM and the
+    // projection. `LIMIT 1` is safe because every spec used with findOne
+    // selects at most one row (the id primary key, the unique email).
+    const findOne = db.makeQuery((execute, spec: Specification<UserRoot>) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.UserRowStd)`
-          SELECT * FROM "user".users WHERE id = ${id}
+          SELECT * FROM "user".users
+          WHERE ${criteriaToWhere(spec.criteria, UserMapper.columns)}
+          LIMIT 1
         `),
       ).pipe(
-        orFail(() => new UserNotFound({ userId: id })),
-        Effect.map(UserMapper.toDomain),
+        Effect.map((row) => (row === null ? null : UserMapper.toDomain(row))),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("UserRepository.findOneById"),
+        Effect.withSpan("UserRepository.findOne"),
       ),
     );
 
-    const findOneByEmail = db.makeQuery((execute, email: string) =>
-      execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.UserRowStd)`
-          SELECT * FROM "user".users WHERE email = ${email}
-        `),
-      ).pipe(
-        Effect.map((row) => (row === null ? Option.none() : Option.some(UserMapper.toDomain(row)))),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
-        Effect.withSpan("UserRepository.findOneByEmail"),
-      ),
-    );
-
-    return UserRepository.of({ insertOne, updateOne, deleteOne, findOneById, findOneByEmail });
+    return UserRepository.of({ insertOne, updateOne, deleteOne, findOne });
   }),
 );

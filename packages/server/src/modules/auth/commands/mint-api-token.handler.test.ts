@@ -7,6 +7,7 @@ import { MintApiTokenCommand } from "@/modules/auth/commands/mint-api-token.comm
 import { mintApiToken } from "@/modules/auth/commands/mint-api-token.handler.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import { API_TOKEN_PREFIX } from "@/modules/auth/domain/api-token/api-token.root-ops.js";
+import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
 import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service.js";
 import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
@@ -34,7 +35,8 @@ describe("mintApiToken", () => {
 
       // Round-trips: the minted token resolves by its hash.
       const repo = yield* ApiTokenRepository;
-      const found = yield* repo.findOneByHash(CredentialHash.of(token));
+      const found = yield* repo.findOne(ApiTokenSpecifications.withHash(CredentialHash.of(token)));
+      if (found === null) throw new Error("expected an api token");
       deepStrictEqual(found.id, apiToken.id);
     }).pipe(Effect.provide(TestLayer)),
   );

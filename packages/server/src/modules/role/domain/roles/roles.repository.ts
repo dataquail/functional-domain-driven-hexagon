@@ -3,17 +3,20 @@ import type * as Effect from "effect/Effect";
 
 import { type RolesRoot } from "@/modules/role/domain/roles/roles.root.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { type UserId } from "@/platform/ids/user-id.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
 
-// Dumb persistence port. The aggregate carries the invariants; the
-// repository only knows how to save and fetch the resulting state.
-//
-// `findOneByUserId` returns an empty `RolesRoot` aggregate if no roles are
-// stored — the absence of any rows is a valid "no roles granted yet"
-// state, not a NotFound condition.
+// Dumb persistence, collapsed to upsert + spec-based read. The aggregate is
+// multi-row (one `platform.roles` row per granted role) keyed on `userId`.
+// `findOne` compiles the spec to a WHERE, fetches the matching rows, and
+// reconstitutes ONE aggregate — or `null` when no rows match. "No rows" is a
+// valid "no roles granted yet" state, so the caller maps `null` to
+// `RolesRootOps.empty(...)`: the empty aggregate is a domain concern the repo
+// can't synthesize from zero rows.
 export type RolesRepositoryShape = {
   readonly upsertOne: (roles: RolesRoot) => Effect.Effect<void, PersistenceUnavailable>;
-  readonly findOneByUserId: (userId: UserId) => Effect.Effect<RolesRoot, PersistenceUnavailable>;
+  readonly findOne: (
+    spec: Specification<RolesRoot>,
+  ) => Effect.Effect<RolesRoot | null, PersistenceUnavailable>;
 };
 
 export class RolesRepository extends Context.Service<RolesRepository, RolesRepositoryShape>()(

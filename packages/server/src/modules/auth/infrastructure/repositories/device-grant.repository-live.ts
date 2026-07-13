@@ -6,6 +6,8 @@ import { DeviceGrantNotFound } from "@/modules/auth/domain/device-grant/device-g
 import { type DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.js";
 import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
 import { type DeviceGrantRoot } from "@/modules/auth/domain/device-grant/device-grant.root.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
+import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
 import * as DeviceGrantMapper from "./device-grant.mapper.js";
@@ -40,31 +42,21 @@ export const DeviceGrantRepositoryLive = Layer.effect(
       );
     });
 
-    const findOneByCodeHash = db.makeQuery((execute, deviceCodeHash: string) =>
+    // The spec contributes only the WHERE; the repository owns FROM and the
+    // projection. `LIMIT 1` is safe because every spec used with findOne
+    // selects at most one row (the unique device_code_hash / user_code).
+    const findOne = db.makeQuery((execute, spec: Specification<DeviceGrantRoot>) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.DeviceGrantRowStd)`
-          SELECT * FROM auth.device_grants WHERE device_code_hash = ${deviceCodeHash}
+          SELECT * FROM auth.device_grants
+          WHERE ${criteriaToWhere(spec.criteria, DeviceGrantMapper.columns)}
+          LIMIT 1
         `),
       ).pipe(
-        orFail(() => new DeviceGrantNotFound()),
-        Effect.map(DeviceGrantMapper.toDomain),
+        Effect.map((row) => (row === null ? null : DeviceGrantMapper.toDomain(row))),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("DeviceGrantRepository.findOneByCodeHash"),
-      ),
-    );
-
-    const findOneByUserCode = db.makeQuery((execute, userCode: string) =>
-      execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.DeviceGrantRowStd)`
-          SELECT * FROM auth.device_grants WHERE user_code = ${userCode}
-        `),
-      ).pipe(
-        orFail(() => new DeviceGrantNotFound()),
-        Effect.map(DeviceGrantMapper.toDomain),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
-        Effect.withSpan("DeviceGrantRepository.findOneByUserCode"),
+        Effect.withSpan("DeviceGrantRepository.findOne"),
       ),
     );
 
@@ -104,8 +96,7 @@ export const DeviceGrantRepositoryLive = Layer.effect(
 
     return DeviceGrantRepository.of({
       insertOne,
-      findOneByCodeHash,
-      findOneByUserCode,
+      findOne,
       updateOne,
       deleteOne: deleteById,
     });

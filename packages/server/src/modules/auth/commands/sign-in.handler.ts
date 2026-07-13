@@ -4,6 +4,7 @@ import * as Effect from "effect/Effect";
 
 import { type SignInCommand } from "@/modules/auth/commands/sign-in.command.js";
 import { AuthIdentityRepository } from "@/modules/auth/domain/auth-identity/auth-identity.repository.js";
+import { AuthIdentitySpecifications } from "@/modules/auth/domain/auth-identity/auth-identity.specification.js";
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
 import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.js";
@@ -29,37 +30,36 @@ export const signIn = Effect.fn("signIn")(function* (cmd: SignInCommand) {
   const sessions = yield* SessionRepository;
   const provisioning = yield* UserProvisioning;
 
-  const userId = yield* identities.findOneBySubject(cmd.subject).pipe(
-    Effect.map((identity) => identity.userId),
-    // First sign-in for this subject: JIT provision an ordinary user.
-    // Requires an email (the `users` row needs one); a verified
-    // identity with no email can't be provisioned. The provisioning
-    // command runs in this same transaction.
-    Effect.catchTag("AuthIdentityNotFound", () =>
-      Effect.gen(function* () {
-        if (cmd.email === null) {
-          return yield* new CustomHttpApiError.Unauthorized({
-            message: "Cannot provision a user: the identity has no email.",
-          });
-        }
-        const newUserId = yield* provisioning.provision(cmd.email).pipe(
-          Effect.catchTag("UserProvisioningConflict", (e) =>
-            Effect.fail(
-              new CustomHttpApiError.Unauthorized({
-                message: `Cannot provision a user: email ${e.email} is already registered.`,
-              }),
+  const identity = yield* identities.findOne(AuthIdentitySpecifications.bySubject(cmd.subject));
+  const userId =
+    identity !== null
+      ? identity.userId
+      : // First sign-in for this subject: JIT provision an ordinary user.
+        // Requires an email (the `users` row needs one); a verified
+        // identity with no email can't be provisioned. The provisioning
+        // command runs in this same transaction.
+        yield* Effect.gen(function* () {
+          if (cmd.email === null) {
+            return yield* new CustomHttpApiError.Unauthorized({
+              message: "Cannot provision a user: the identity has no email.",
+            });
+          }
+          const newUserId = yield* provisioning.provision(cmd.email).pipe(
+            Effect.catchTag("UserProvisioningConflict", (e) =>
+              Effect.fail(
+                new CustomHttpApiError.Unauthorized({
+                  message: `Cannot provision a user: email ${e.email} is already registered.`,
+                }),
+              ),
             ),
-          ),
-        );
-        yield* identities.insertOne({
-          subject: cmd.subject,
-          userId: newUserId,
-          provider: "zitadel",
+          );
+          yield* identities.insertOne({
+            subject: cmd.subject,
+            userId: newUserId,
+            provider: "zitadel",
+          });
+          return newUserId;
         });
-        return newUserId;
-      }),
-    ),
-  );
 
   const id = SessionId.make(yield* Effect.sync(() => crypto.randomUUID()));
   const now = yield* DateTime.now;

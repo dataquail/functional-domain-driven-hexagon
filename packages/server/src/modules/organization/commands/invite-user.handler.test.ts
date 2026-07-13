@@ -7,6 +7,7 @@ import { InviteUserCommand } from "@/modules/organization/commands/invite-user.c
 import { inviteUser } from "@/modules/organization/commands/invite-user.handler.js";
 import { type InvitationIssued } from "@/modules/organization/domain/invitation/invitation.events.js";
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
+import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
 import {
   InvitationMailerFake,
   SentInvitations,
@@ -41,7 +42,8 @@ describe("inviteUser", () => {
           actorUserId,
         }),
       );
-      const stored = yield* repo.findOneById(id);
+      const stored = yield* repo.findOne(InvitationSpecifications.withId(id));
+      if (stored === null) throw new Error("expected invitation");
       deepStrictEqual(stored.organizationId, organizationId);
       deepStrictEqual(stored.inviteeEmail, "alice@example.com");
       ok(stored.token.length > 0);
@@ -79,13 +81,15 @@ describe("inviteUser", () => {
         });
 
       const firstId = yield* inviteUser(make());
-      const firstToken = (yield* repo.findOneById(firstId)).token;
+      const first = yield* repo.findOne(InvitationSpecifications.withId(firstId));
+      if (first === null) throw new Error("expected invitation");
+      const firstToken = first.token;
 
       const secondId = yield* inviteUser(make());
 
       // Same invitation row (dedup), with a rotated token.
       deepStrictEqual(secondId, firstId);
-      const all = yield* repo.findManyByOrganizationId(organizationId);
+      const all = yield* repo.findMany(InvitationSpecifications.forOrganization(organizationId));
       deepStrictEqual(all.length, 1);
       ok(all[0]?.token !== firstToken, "token should be rotated on reissue");
 

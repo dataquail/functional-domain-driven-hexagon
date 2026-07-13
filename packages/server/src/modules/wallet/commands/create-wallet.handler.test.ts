@@ -3,11 +3,11 @@ import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 
 import { CreateWalletCommand } from "@/modules/wallet/commands/create-wallet.command.js";
 import { createWallet } from "@/modules/wallet/commands/create-wallet.handler.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
+import { WalletSpecifications } from "@/modules/wallet/domain/wallet/wallet.specification.js";
 import { WalletRepositoryFake } from "@/modules/wallet/infrastructure/repositories/wallet.repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
@@ -25,11 +25,11 @@ describe("createWallet", () => {
 
       yield* createWallet(CreateWalletCommand.make({ organizationId }));
 
-      const stored = yield* repo.findOneByOrganizationId(organizationId);
-      deepStrictEqual(Option.isSome(stored), true);
-      if (Option.isSome(stored)) {
-        deepStrictEqual(stored.value.balance, 0);
-        deepStrictEqual(stored.value.organizationId, organizationId);
+      const stored = yield* repo.findOne(WalletSpecifications.forOrganization(organizationId));
+      deepStrictEqual(stored !== null, true);
+      if (stored !== null) {
+        deepStrictEqual(stored.balance, 0);
+        deepStrictEqual(stored.organizationId, organizationId);
       }
 
       const tags = (yield* rec.all).map((e) => e._tag);

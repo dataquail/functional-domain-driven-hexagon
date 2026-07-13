@@ -10,7 +10,9 @@ import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.js";
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { TodoRootOps } from "@/modules/todos/domain/todo/todo.root-ops.js";
 import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js";
+import { TodoSpecifications } from "@/modules/todos/domain/todo/todos.specification.js";
 import { TodosRepositoryFake } from "@/modules/todos/infrastructure/repositories/todos.repository-fake.js";
+import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
@@ -33,8 +35,10 @@ describe("deleteTodo", () => {
       yield* deleteTodo(
         DeleteTodoCommand.make({ todoId: aliceId, organizationId: orgId, userId: aliceUserId }),
       );
-      const exit = yield* Effect.exit(repo.findOneById(orgId, aliceId));
-      deepStrictEqual(Exit.isFailure(exit), true);
+      const found = yield* repo.findOne(
+        Spec.and(TodoSpecifications.withId(aliceId), TodoSpecifications.forOrganization(orgId)),
+      );
+      deepStrictEqual(found, null);
     }).pipe(Effect.provide(TodosRepositoryFake)),
   );
 
@@ -78,7 +82,10 @@ describe("deleteTodo", () => {
         deepStrictEqual(error instanceof TodoNotFound, true);
       }
       // The original (correct-org) row is untouched.
-      const stillThere = yield* repo.findOneById(orgId, aliceId);
+      const stillThere = yield* repo.findOne(
+        Spec.and(TodoSpecifications.withId(aliceId), TodoSpecifications.forOrganization(orgId)),
+      );
+      if (stillThere === null) throw new Error("expected stored todo");
       deepStrictEqual(stillThere.id, aliceId);
     }).pipe(Effect.provide(TodosRepositoryFake)),
   );

@@ -6,8 +6,8 @@ import * as Option from "effect/Option";
 import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
 import { type OrganizationRolesRoot } from "@/modules/organization/domain/organization-roles/organization-roles.root.js";
 import * as OrganizationRolesMapper from "@/modules/organization/infrastructure/repositories/organization-roles.mapper.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
-import { type UserId } from "@/platform/ids/user-id.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
+import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
 export const OrganizationRolesRepositoryLive = Layer.effect(
@@ -64,29 +64,25 @@ export const OrganizationRolesRepositoryLive = Layer.effect(
         Effect.withSpan("OrganizationRolesRepository.upsertOne"),
       );
 
-    const findOneByUserIdAndOrgId = db.makeQuery(
-      (execute, args: { userId: UserId; organizationId: OrganizationId }) =>
-        execute((client) =>
-          client.any(sql.type(RowSchemas.OrganizationRoleRowStd)`
-            SELECT organization_id, user_id, role, issued_by, created_at
-            FROM "organization".organization_roles
-            WHERE user_id = ${args.userId}
-              AND organization_id = ${args.organizationId}
-          `),
-        ).pipe(
-          Effect.map((rows) =>
-            OrganizationRolesMapper.toDomain(args.userId, args.organizationId, rows),
-          ),
-          Effect.catchTag("DatabaseError", Effect.die),
-          translatePersistenceUnavailable,
-          Effect.withSpan("OrganizationRolesRepository.findOneByUserIdAndOrgId"),
-        ),
+    // The spec pins the composite key, so every matched row belongs to one
+    // aggregate; the mapper groups them (or returns null for zero rows). The
+    // compiler contributes only the WHERE — this repo owns the projection and,
+    // for a multi-row aggregate, the reconstitution.
+    const findOne = db.makeQuery((execute, spec: Specification<OrganizationRolesRoot>) =>
+      execute((client) =>
+        client.any(sql.type(RowSchemas.OrganizationRoleRowStd)`
+          SELECT organization_id, user_id, role, issued_by, created_at
+          FROM "organization".organization_roles
+          WHERE ${criteriaToWhere(spec.criteria, OrganizationRolesMapper.columns)}
+        `),
+      ).pipe(
+        Effect.map((rows) => OrganizationRolesMapper.toDomain(rows)),
+        Effect.catchTag("DatabaseError", Effect.die),
+        translatePersistenceUnavailable,
+        Effect.withSpan("OrganizationRolesRepository.findOne"),
+      ),
     );
 
-    return OrganizationRolesRepository.of({
-      upsertOne,
-      findOneByUserIdAndOrgId: (userId, organizationId) =>
-        findOneByUserIdAndOrgId({ userId, organizationId }),
-    });
+    return OrganizationRolesRepository.of({ upsertOne, findOne });
   }),
 );

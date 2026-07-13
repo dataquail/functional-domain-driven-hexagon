@@ -14,6 +14,7 @@ import { SubscriptionId } from "@/modules/billing/domain/subscription/subscripti
 import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
 import { type SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.js";
 import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
+import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.js";
 import { SubscriptionRepositoryLive } from "@/modules/billing/infrastructure/repositories/subscription.repository-live.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
@@ -70,18 +71,16 @@ suite("SubscriptionRepositoryLive (integration)", () => {
   });
 
   describe("insert", () => {
-    it.effect("persists and decodes back via findOneByOrganizationId", () =>
+    it.effect("persists and decodes back via findOne(forOrganization)", () =>
       Effect.gen(function* () {
         yield* seedOrgRow(acme, "Acme");
         const repo = yield* SubscriptionRepository;
         yield* repo.insertOne(mk(subA, acme, "sub_acme"));
-        const found = yield* repo.findOneByOrganizationId(acme);
-        ok(Option.isSome(found));
-        if (Option.isSome(found)) {
-          deepStrictEqual(found.value.id, subA);
-          deepStrictEqual(found.value.stripeSubscriptionId, "sub_acme");
-          deepStrictEqual(found.value.status, "active");
-        }
+        const found = yield* repo.findOne(SubscriptionSpecifications.forOrganization(acme));
+        ok(found !== null);
+        deepStrictEqual(found.id, subA);
+        deepStrictEqual(found.stripeSubscriptionId, "sub_acme");
+        deepStrictEqual(found.status, "active");
       }).pipe(Effect.provide(TestLayer)),
     );
 
@@ -111,14 +110,14 @@ suite("SubscriptionRepositoryLive (integration)", () => {
         yield* repo.insertOne(sub);
         const { subscription: canceled } = SubscriptionRootOps.cancel(sub, now);
         yield* repo.updateOne(canceled);
-        const found = yield* repo.findOneByOrganizationId(acme);
-        ok(Option.isSome(found));
-        if (Option.isSome(found)) deepStrictEqual(found.value.status, "canceled");
+        const found = yield* repo.findOne(SubscriptionSpecifications.forOrganization(acme));
+        ok(found !== null);
+        deepStrictEqual(found.status, "canceled");
       }).pipe(Effect.provide(TestLayer)),
     );
   });
 
-  describe("findOneByStripeSubscriptionId", () => {
+  describe("findOne by Stripe subscription id", () => {
     it.effect("returns the subscription that has the matching Stripe id (cross-tenant safe)", () =>
       Effect.gen(function* () {
         yield* seedOrgRow(acme, "Acme");
@@ -126,20 +125,22 @@ suite("SubscriptionRepositoryLive (integration)", () => {
         const repo = yield* SubscriptionRepository;
         yield* repo.insertOne(mk(subA, acme, "sub_acme_id"));
         yield* repo.insertOne(mk(subB, beta, "sub_beta_id"));
-        const found = yield* repo.findOneByStripeSubscriptionId("sub_beta_id");
-        ok(Option.isSome(found));
-        if (Option.isSome(found)) {
-          deepStrictEqual(found.value.id, subB);
-          deepStrictEqual(found.value.organizationId, beta);
-        }
+        const found = yield* repo.findOne(
+          SubscriptionSpecifications.withStripeSubscriptionId("sub_beta_id"),
+        );
+        ok(found !== null);
+        deepStrictEqual(found.id, subB);
+        deepStrictEqual(found.organizationId, beta);
       }).pipe(Effect.provide(TestLayer)),
     );
 
-    it.effect("returns None when no subscription matches", () =>
+    it.effect("returns null when no subscription matches", () =>
       Effect.gen(function* () {
         const repo = yield* SubscriptionRepository;
-        const found = yield* repo.findOneByStripeSubscriptionId("sub_unknown");
-        ok(Option.isNone(found));
+        const found = yield* repo.findOne(
+          SubscriptionSpecifications.withStripeSubscriptionId("sub_unknown"),
+        );
+        deepStrictEqual(found, null);
       }).pipe(Effect.provide(TestLayer)),
     );
   });

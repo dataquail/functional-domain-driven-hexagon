@@ -10,6 +10,7 @@ import { SessionNotFound } from "@/modules/auth/domain/session/session.errors.js
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
 import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.js";
+import { SessionSpecifications } from "@/modules/auth/domain/session/session.specification.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 import { SessionRepositoryFake } from "./session.repository-fake.js";
@@ -32,27 +33,22 @@ const makeSession = (id: SessionId) =>
 const provide = Effect.provide(SessionRepositoryFake);
 
 describe("SessionRepositoryFake", () => {
-  it.effect("insert + findOneById round-trip", () =>
+  it.effect("insert + findOne(withId) round-trip", () =>
     Effect.gen(function* () {
       const repo = yield* SessionRepository;
       yield* repo.insertOne(makeSession(idA));
-      const found = yield* repo.findOneById(idA);
+      const found = yield* repo.findOne(SessionSpecifications.withId(idA));
+      if (found === null) throw new Error("expected a session");
       deepStrictEqual(found.id, idA);
       deepStrictEqual(found.revokedAt, null);
     }).pipe(provide),
   );
 
-  it.effect("findOneById fails SessionNotFound for an unknown id", () =>
+  it.effect("findOne returns null for an unknown id (absence is not an error)", () =>
     Effect.gen(function* () {
       const repo = yield* SessionRepository;
-      const exit = yield* Effect.exit(repo.findOneById(idMissing));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(error instanceof SessionNotFound, true);
-      }
+      const found = yield* repo.findOne(SessionSpecifications.withId(idMissing));
+      deepStrictEqual(found, null);
     }).pipe(provide),
   );
 
@@ -61,7 +57,8 @@ describe("SessionRepositoryFake", () => {
       const repo = yield* SessionRepository;
       yield* repo.insertOne(makeSession(idA));
       yield* repo.deleteOne(idA);
-      const found = yield* repo.findOneById(idA);
+      const found = yield* repo.findOne(SessionSpecifications.withId(idA));
+      if (found === null) throw new Error("expected a session");
       deepStrictEqual(found.revokedAt !== null, true);
     }).pipe(provide),
   );
@@ -92,7 +89,8 @@ describe("SessionRepositoryFake", () => {
       const later = DateTime.add(now, { seconds: 1800 });
       const touched = SessionRootOps.touch({ session: seed, now: later, ttlSeconds: 3600 });
       yield* repo.updateOne(touched);
-      const found = yield* repo.findOneById(idA);
+      const found = yield* repo.findOne(SessionSpecifications.withId(idA));
+      if (found === null) throw new Error("expected a session");
       deepStrictEqual(found.expiresAt, touched.expiresAt);
       deepStrictEqual(found.lastUsedAt, touched.lastUsedAt);
       deepStrictEqual(found.createdAt, seed.createdAt);

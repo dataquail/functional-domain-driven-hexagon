@@ -3,8 +3,17 @@ import * as DateTime from "effect/DateTime";
 
 import { OrganizationRoot } from "@/modules/organization/domain/organization/organization.root.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
+import { type ColumnMap } from "@/platform/persistence/criteria-to-sql.js";
 
 type Row = RowSchemas.OrganizationRow;
+
+// Resolves the specification field names the live repository filters on to
+// physical columns of "organization".organizations. Only filterable scalar
+// fields need an entry; `satisfies` keeps the keys honest against the root.
+export const columns = {
+  id: "id",
+  deletedAt: "deleted_at",
+} as const satisfies Partial<Record<keyof OrganizationRoot, string>> & ColumnMap;
 
 export const toDomain = (row: Row): OrganizationRoot =>
   new OrganizationRoot({

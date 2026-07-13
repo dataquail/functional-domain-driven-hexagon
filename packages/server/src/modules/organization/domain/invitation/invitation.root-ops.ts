@@ -86,7 +86,7 @@ const accept = (
   if (InvitationSpecifications.isRevoked(invitation)) {
     return Result.fail(new InvitationRevokedError({ invitationId: invitation.id }));
   }
-  if (InvitationSpecifications.isExpiredAt(invitation, input.now)) {
+  if (InvitationSpecifications.isExpiredAt(input.now)(invitation)) {
     return Result.fail(new InvitationExpired({ invitationId: invitation.id }));
   }
   const updated = InvitationRoot.make({

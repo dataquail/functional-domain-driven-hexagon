@@ -15,6 +15,7 @@ import {
   DeviceGrantNotFound,
 } from "@/modules/auth/domain/device-grant/device-grant.errors.js";
 import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
+import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification.js";
 import { DeviceGrantRepositoryFake } from "@/modules/auth/infrastructure/repositories/device-grant.repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
@@ -34,7 +35,8 @@ describe("approveDeviceGrant", () => {
       );
       yield* approveDeviceGrant(ApproveDeviceGrantCommand.make({ userCode, userId }));
       const repo = yield* DeviceGrantRepository;
-      const grant = yield* repo.findOneByUserCode(userCode);
+      const grant = yield* repo.findOne(DeviceGrantSpecifications.withUserCode(userCode));
+      if (grant === null) throw new Error("expected a grant");
       deepStrictEqual(grant.status, "approved");
       deepStrictEqual(grant.userId, userId);
     }).pipe(Effect.provide(TestLayer)),

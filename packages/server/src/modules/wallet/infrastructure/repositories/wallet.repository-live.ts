@@ -1,12 +1,12 @@
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 
 import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
 import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
+import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
 import * as WalletMapper from "./wallet.mapper.js";
@@ -45,21 +45,24 @@ export const WalletRepositoryLive = Layer.effect(
       );
     });
 
-    const findOneByOrganizationId = db.makeQuery((execute, organizationId: OrganizationId) =>
+    // The spec contributes only the WHERE; the repository owns FROM, projection,
+    // and the `LIMIT 1` (every spec used with findOne selects at most one row —
+    // the unique organization_id index guarantees at most one wallet per org).
+    const findOne = db.makeQuery((execute, spec: Specification<WalletRoot>) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.WalletRowStd)`
-          SELECT * FROM wallet.wallets WHERE organization_id = ${organizationId}
+          SELECT * FROM wallet.wallets
+          WHERE ${criteriaToWhere(spec.criteria, WalletMapper.columns)}
+          LIMIT 1
         `),
       ).pipe(
-        Effect.map((row) =>
-          row === null ? Option.none() : Option.some(WalletMapper.toDomain(row)),
-        ),
+        Effect.map((row) => (row === null ? null : WalletMapper.toDomain(row))),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("WalletRepository.findOneByOrganizationId"),
+        Effect.withSpan("WalletRepository.findOne"),
       ),
     );
 
-    return WalletRepository.of({ insertOne, findOneByOrganizationId });
+    return WalletRepository.of({ insertOne, findOne });
   }),
 );

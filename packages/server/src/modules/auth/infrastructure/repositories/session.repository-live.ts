@@ -6,6 +6,8 @@ import { SessionNotFound } from "@/modules/auth/domain/session/session.errors.js
 import { type SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
 import { type SessionRoot } from "@/modules/auth/domain/session/session.root.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
+import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
 import * as SessionMapper from "./session.mapper.js";
@@ -40,17 +42,21 @@ export const SessionRepositoryLive = Layer.effect(
       );
     });
 
-    const findOneById = db.makeQuery((execute, id: SessionId) =>
+    // The spec contributes only the WHERE; the repository owns FROM and the
+    // projection. `LIMIT 1` is safe because every spec used with findOne
+    // selects at most one row (the id primary key).
+    const findOne = db.makeQuery((execute, spec: Specification<SessionRoot>) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.SessionRowStd)`
-          SELECT * FROM auth.sessions WHERE id = ${id}
+          SELECT * FROM auth.sessions
+          WHERE ${criteriaToWhere(spec.criteria, SessionMapper.columns)}
+          LIMIT 1
         `),
       ).pipe(
-        orFail(() => new SessionNotFound({ sessionId: id })),
-        Effect.map(SessionMapper.toDomain),
+        Effect.map((row) => (row === null ? null : SessionMapper.toDomain(row))),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("SessionRepository.findOneById"),
+        Effect.withSpan("SessionRepository.findOne"),
       ),
     );
 
@@ -89,6 +95,6 @@ export const SessionRepositoryLive = Layer.effect(
       );
     });
 
-    return SessionRepository.of({ insertOne, findOneById, deleteOne: deleteById, updateOne });
+    return SessionRepository.of({ insertOne, findOne, deleteOne: deleteById, updateOne });
   }),
 );

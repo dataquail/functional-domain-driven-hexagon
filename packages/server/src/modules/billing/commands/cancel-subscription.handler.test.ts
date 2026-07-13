@@ -14,6 +14,7 @@ import { type SubscriptionCanceled } from "@/modules/billing/domain/subscription
 import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
 import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
 import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
+import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.js";
 import { BillingGatewayFake } from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake.js";
 import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
@@ -58,9 +59,9 @@ describe("cancelSubscription", () => {
       );
       deepStrictEqual(result.status, "canceled");
 
-      const found = yield* repo.findOneByOrganizationId(acme);
-      ok(Option.isSome(found));
-      if (Option.isSome(found)) deepStrictEqual(found.value.status, "canceled");
+      const found = yield* repo.findOne(SubscriptionSpecifications.forOrganization(acme));
+      ok(found !== null);
+      deepStrictEqual(found.status, "canceled");
 
       const events = yield* rec.byTag<SubscriptionCanceled>("SubscriptionCanceled");
       deepStrictEqual(events.length, 1);

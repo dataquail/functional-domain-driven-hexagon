@@ -10,6 +10,7 @@ import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/doma
 import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
 import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
 import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
+import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.js";
 import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
@@ -33,13 +34,13 @@ const mk = (id: SubscriptionId, organizationId: OrganizationId, stripeSub = "sub
   }).subscription;
 
 describe("SubscriptionRepositoryFake.insert", () => {
-  it.effect("stores a subscription and makes it findable by organizationId", () =>
+  it.effect("stores a subscription and makes it findable by organization", () =>
     Effect.gen(function* () {
       const repo = yield* SubscriptionRepository;
       yield* repo.insertOne(mk(subA, acme));
-      const found = yield* repo.findOneByOrganizationId(acme);
-      ok(Option.isSome(found));
-      if (Option.isSome(found)) deepStrictEqual(found.value.id, subA);
+      const found = yield* repo.findOne(SubscriptionSpecifications.forOrganization(acme));
+      ok(found !== null);
+      deepStrictEqual(found.id, subA);
     }).pipe(provide),
   );
 
@@ -63,9 +64,9 @@ describe("SubscriptionRepositoryFake.insert", () => {
       const repo = yield* SubscriptionRepository;
       yield* repo.insertOne(mk(subA, acme, "sub_a"));
       yield* repo.insertOne(mk(subB, beta, "sub_b"));
-      const a = yield* repo.findOneByOrganizationId(acme);
-      const b = yield* repo.findOneByOrganizationId(beta);
-      ok(Option.isSome(a) && Option.isSome(b));
+      const a = yield* repo.findOne(SubscriptionSpecifications.forOrganization(acme));
+      const b = yield* repo.findOne(SubscriptionSpecifications.forOrganization(beta));
+      ok(a !== null && b !== null);
     }).pipe(provide),
   );
 });
@@ -78,39 +79,43 @@ describe("SubscriptionRepositoryFake.update", () => {
       yield* repo.insertOne(sub);
       const { subscription: canceled } = SubscriptionRootOps.cancel(sub, now);
       yield* repo.updateOne(canceled);
-      const found = yield* repo.findOneByOrganizationId(acme);
-      ok(Option.isSome(found));
-      if (Option.isSome(found)) deepStrictEqual(found.value.status, "canceled");
+      const found = yield* repo.findOne(SubscriptionSpecifications.forOrganization(acme));
+      ok(found !== null);
+      deepStrictEqual(found.status, "canceled");
     }).pipe(provide),
   );
 });
 
-describe("SubscriptionRepositoryFake.findOneByStripeSubscriptionId", () => {
+describe("SubscriptionRepositoryFake.findOne by Stripe subscription id", () => {
   it.effect("returns the subscription that has the matching Stripe id", () =>
     Effect.gen(function* () {
       const repo = yield* SubscriptionRepository;
       yield* repo.insertOne(mk(subA, acme, "sub_unique"));
-      const found = yield* repo.findOneByStripeSubscriptionId("sub_unique");
-      ok(Option.isSome(found));
-      if (Option.isSome(found)) deepStrictEqual(found.value.id, subA);
+      const found = yield* repo.findOne(
+        SubscriptionSpecifications.withStripeSubscriptionId("sub_unique"),
+      );
+      ok(found !== null);
+      deepStrictEqual(found.id, subA);
     }).pipe(provide),
   );
 
-  it.effect("returns None when no subscription has the given Stripe id", () =>
+  it.effect("returns null when no subscription has the given Stripe id", () =>
     Effect.gen(function* () {
       const repo = yield* SubscriptionRepository;
-      const found = yield* repo.findOneByStripeSubscriptionId("sub_does_not_exist");
-      ok(Option.isNone(found));
+      const found = yield* repo.findOne(
+        SubscriptionSpecifications.withStripeSubscriptionId("sub_does_not_exist"),
+      );
+      deepStrictEqual(found, null);
     }).pipe(provide),
   );
 });
 
-describe("SubscriptionRepositoryFake.findOneByOrganizationId", () => {
-  it.effect("returns None for an org with no subscription", () =>
+describe("SubscriptionRepositoryFake.findOne by organization", () => {
+  it.effect("returns null for an org with no subscription", () =>
     Effect.gen(function* () {
       const repo = yield* SubscriptionRepository;
-      const found = yield* repo.findOneByOrganizationId(acme);
-      ok(Option.isNone(found));
+      const found = yield* repo.findOne(SubscriptionSpecifications.forOrganization(acme));
+      deepStrictEqual(found, null);
     }).pipe(provide),
   );
 });

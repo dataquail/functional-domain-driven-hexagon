@@ -6,7 +6,8 @@ import * as Option from "effect/Option";
 import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
 import { type RolesRoot } from "@/modules/role/domain/roles/roles.root.js";
 import * as RoleMapper from "@/modules/role/infrastructure/repositories/role.mapper.js";
-import { type UserId } from "@/platform/ids/user-id.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
+import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
 export const RolesRepositoryLive = Layer.effect(
@@ -58,19 +59,25 @@ export const RolesRepositoryLive = Layer.effect(
         Effect.withSpan("RolesRepository.upsertOne"),
       );
 
-    const findOneByUserId = db.makeQuery((execute, userId: UserId) =>
+    // The spec pins the user id, so every matched row belongs to one aggregate;
+    // the mapper groups them (or returns null for zero rows). The compiler
+    // contributes only the WHERE — this repo owns the projection and, for a
+    // multi-row aggregate, the reconstitution.
+    const findOne = db.makeQuery((execute, spec: Specification<RolesRoot>) =>
       execute((client) =>
         client.any(sql.type(RowSchemas.PlatformRoleRowStd)`
-          SELECT user_id, role, granted_at FROM platform.roles WHERE user_id = ${userId}
+          SELECT user_id, role, granted_at
+          FROM platform.roles
+          WHERE ${criteriaToWhere(spec.criteria, RoleMapper.columns)}
         `),
       ).pipe(
-        Effect.map((rows) => RoleMapper.toDomain(userId, rows)),
+        Effect.map((rows) => RoleMapper.toDomain(rows)),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("RolesRepository.findOneByUserId"),
+        Effect.withSpan("RolesRepository.findOne"),
       ),
     );
 
-    return RolesRepository.of({ upsertOne, findOneByUserId });
+    return RolesRepository.of({ upsertOne, findOne });
   }),
 );

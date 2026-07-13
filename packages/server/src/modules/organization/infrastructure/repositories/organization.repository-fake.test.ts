@@ -10,9 +10,14 @@ import * as Result from "effect/Result";
 import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.js";
 import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
 import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.js";
+import { OrganizationSpecifications } from "@/modules/organization/domain/organization/organization.specification.js";
+import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 import { OrganizationRepositoryFake } from "./organization.repository-fake.js";
+
+const activeById = (id: OrganizationId) =>
+  Spec.and(OrganizationSpecifications.withId(id), OrganizationSpecifications.notDeleted);
 
 const id = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const now = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
@@ -20,18 +25,19 @@ const later = DateTime.makeUnsafe(new Date("2026-02-01T00:00:00Z"));
 const provide = Effect.provide(OrganizationRepositoryFake);
 
 describe("OrganizationRepositoryFake", () => {
-  it.effect("findOneById round-trips an inserted org", () =>
+  it.effect("findOne by active-id spec round-trips an inserted org", () =>
     Effect.gen(function* () {
       const repo = yield* OrganizationRepository;
       const { organization } = OrganizationRootOps.create({ id, name: "Acme", now });
       yield* repo.insertOne(organization);
-      const found = yield* repo.findOneById(id);
+      const found = yield* repo.findOne(activeById(id));
+      if (found === null) throw new Error("expected organization");
       deepStrictEqual(found.id, id);
       deepStrictEqual(found.name, "Acme");
     }).pipe(provide),
   );
 
-  it.effect("findOneById hides soft-deleted rows", () =>
+  it.effect("the active-id spec hides soft-deleted rows", () =>
     Effect.gen(function* () {
       const repo = yield* OrganizationRepository;
       const { organization } = OrganizationRootOps.create({ id, name: "Acme", now });
@@ -39,18 +45,12 @@ describe("OrganizationRepositoryFake", () => {
       const deletedEither = OrganizationRootOps.softDelete(organization, { now: later });
       if (Result.isFailure(deletedEither)) throw new Error("expected Right");
       yield* repo.updateOne(deletedEither.success.organization);
-      const exit = yield* Effect.exit(repo.findOneById(id));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(error instanceof OrganizationNotFound, true);
-      }
+      const found = yield* repo.findOne(activeById(id));
+      deepStrictEqual(found, null);
     }).pipe(provide),
   );
 
-  it.effect("findOneByIdIncludingDeleted returns soft-deleted rows", () =>
+  it.effect("the withId spec returns soft-deleted rows", () =>
     Effect.gen(function* () {
       const repo = yield* OrganizationRepository;
       const { organization } = OrganizationRootOps.create({ id, name: "Acme", now });
@@ -58,7 +58,8 @@ describe("OrganizationRepositoryFake", () => {
       const deletedEither = OrganizationRootOps.softDelete(organization, { now: later });
       if (Result.isFailure(deletedEither)) throw new Error("expected Right");
       yield* repo.updateOne(deletedEither.success.organization);
-      const found = yield* repo.findOneByIdIncludingDeleted(id);
+      const found = yield* repo.findOne(OrganizationSpecifications.withId(id));
+      if (found === null) throw new Error("expected organization");
       deepStrictEqual(found.deletedAt !== null, true);
     }).pipe(provide),
   );

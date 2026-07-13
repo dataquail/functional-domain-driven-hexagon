@@ -5,13 +5,17 @@ import { type TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.js";
 import { type TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { type TodoRoot } from "@/modules/todos/domain/todo/todo.root.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
-// Every read/mutate is org-scoped (Phase 5). `findOneById` and `remove`
-// take the `organizationId` explicitly so a caller can't reach a todo
-// outside the org in the request path — a row in another org reads as
-// `TodoNotFound`, not a leak. `insert`/`update` carry the org on the
-// `TodoRoot` itself; `update`'s SQL filters on it too.
+// Dumb persistence, collapsed to the minimal vocabulary: insert/update/delete
+// the aggregate, and read it back by a Specification. Every read is org-scoped
+// (Phase 5): a caller pins the org in the spec — `Spec.and(withId(id),
+// forOrganization(orgId))` (see TodoSpecifications) — so a row in another org
+// reads as absent (`null`), not a leak. `deleteOne` still takes the org
+// explicitly; `insert`/`update` carry it on the `TodoRoot` and `update`'s SQL
+// filters on it too. Absence is a plain `null`; mapping it to a domain 404
+// (TodoNotFound) is the caller's job.
 export type TodosRepositoryShape = {
   readonly insertOne: (todo: TodoRoot) => Effect.Effect<void, PersistenceUnavailable>;
   readonly updateOne: (
@@ -21,10 +25,9 @@ export type TodosRepositoryShape = {
     organizationId: OrganizationId,
     id: TodoId,
   ) => Effect.Effect<void, TodoNotFound | PersistenceUnavailable>;
-  readonly findOneById: (
-    organizationId: OrganizationId,
-    id: TodoId,
-  ) => Effect.Effect<TodoRoot, TodoNotFound | PersistenceUnavailable>;
+  readonly findOne: (
+    spec: Specification<TodoRoot>,
+  ) => Effect.Effect<TodoRoot | null, PersistenceUnavailable>;
 };
 
 export class TodosRepository extends Context.Service<TodosRepository, TodosRepositoryShape>()(

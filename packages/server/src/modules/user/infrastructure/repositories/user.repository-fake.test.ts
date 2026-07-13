@@ -9,6 +9,7 @@ import * as Option from "effect/Option";
 import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user/user.errors.js";
 import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
 import { UserRootOps } from "@/modules/user/domain/user/user.root-ops.js";
+import { UserSpecifications } from "@/modules/user/domain/user/user.specification.js";
 import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
@@ -35,7 +36,8 @@ describe("UserRepositoryFake", () => {
       Effect.gen(function* () {
         const repo = yield* UserRepository;
         yield* repo.insertOne(alice);
-        const found = yield* repo.findOneById(alice.id);
+        const found = yield* repo.findOne(UserSpecifications.withId(alice.id));
+        if (found === null) throw new Error("expected stored user");
         deepStrictEqual(found.id, alice.id);
         deepStrictEqual(found.email, alice.email);
       }).pipe(provide),
@@ -64,40 +66,30 @@ describe("UserRepositoryFake", () => {
     );
   });
 
-  describe("findOneById", () => {
-    it.effect("fails UserNotFound for an unknown id", () =>
+  describe("findOne", () => {
+    it.effect("returns null for an unknown id (absence is not an error)", () =>
       Effect.gen(function* () {
         const repo = yield* UserRepository;
-        const exit = yield* Effect.exit(repo.findOneById(aliceId));
-        deepStrictEqual(Exit.isFailure(exit), true);
-        if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause)
-            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-            : null;
-          deepStrictEqual(error instanceof UserNotFound, true);
-        }
+        const found = yield* repo.findOne(UserSpecifications.withId(aliceId));
+        deepStrictEqual(found, null);
       }).pipe(provide),
     );
-  });
 
-  describe("findOneByEmail", () => {
-    it.effect("returns Some(user) when the email matches", () =>
+    it.effect("returns the user when the email matches", () =>
       Effect.gen(function* () {
         const repo = yield* UserRepository;
         yield* repo.insertOne(alice);
-        const result = yield* repo.findOneByEmail("alice@example.com");
-        deepStrictEqual(Option.isSome(result), true);
-        if (Option.isSome(result)) {
-          deepStrictEqual(result.value.id, alice.id);
-        }
+        const found = yield* repo.findOne(UserSpecifications.withEmail("alice@example.com"));
+        if (found === null) throw new Error("expected stored user");
+        deepStrictEqual(found.id, alice.id);
       }).pipe(provide),
     );
 
-    it.effect("returns None when no user has the email", () =>
+    it.effect("returns null when no user has the email", () =>
       Effect.gen(function* () {
         const repo = yield* UserRepository;
-        const result = yield* repo.findOneByEmail("nobody@example.com");
-        deepStrictEqual(Option.isNone(result), true);
+        const found = yield* repo.findOne(UserSpecifications.withEmail("nobody@example.com"));
+        deepStrictEqual(found, null);
       }).pipe(provide),
     );
   });
@@ -112,7 +104,8 @@ describe("UserRepositoryFake", () => {
           now: later,
         });
         yield* repo.updateOne(updated);
-        const found = yield* repo.findOneById(alice.id);
+        const found = yield* repo.findOne(UserSpecifications.withId(alice.id));
+        if (found === null) throw new Error("expected stored user");
         deepStrictEqual(found.address?.country, "Canada");
         deepStrictEqual(found.updatedAt, later);
       }).pipe(provide),
@@ -139,8 +132,8 @@ describe("UserRepositoryFake", () => {
         const repo = yield* UserRepository;
         yield* repo.insertOne(alice);
         yield* repo.deleteOne(alice.id);
-        const exit = yield* Effect.exit(repo.findOneById(alice.id));
-        deepStrictEqual(Exit.isFailure(exit), true);
+        const found = yield* repo.findOne(UserSpecifications.withId(alice.id));
+        deepStrictEqual(found, null);
       }).pipe(provide),
     );
 
@@ -164,15 +157,15 @@ describe("UserRepositoryFake", () => {
       Effect.gen(function* () {
         const repo1 = yield* UserRepository;
         yield* repo1.insertOne(alice);
-        const exists = yield* repo1.findOneByEmail(alice.email);
-        deepStrictEqual(Option.isSome(exists), true);
+        const exists = yield* repo1.findOne(UserSpecifications.withEmail(alice.email));
+        deepStrictEqual(exists !== null, true);
       }).pipe(provide, (first) =>
         Effect.andThen(
           first,
           Effect.gen(function* () {
             const repo2 = yield* UserRepository;
-            const empty = yield* repo2.findOneByEmail(alice.email);
-            deepStrictEqual(Option.isNone(empty), true);
+            const empty = yield* repo2.findOne(UserSpecifications.withEmail(alice.email));
+            deepStrictEqual(empty, null);
           }).pipe(provide),
         ),
       ),

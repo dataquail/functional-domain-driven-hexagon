@@ -6,7 +6,8 @@ import { OrganizationNotFound } from "@/modules/organization/domain/organization
 import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
 import { type OrganizationRoot } from "@/modules/organization/domain/organization/organization.root.js";
 import * as OrganizationMapper from "@/modules/organization/infrastructure/repositories/organization.mapper.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
+import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
 export const OrganizationRepositoryLive = Layer.effect(
@@ -55,48 +56,29 @@ export const OrganizationRepositoryLive = Layer.effect(
       );
     });
 
-    // findOneById hides soft-deleted rows so consumers (commands, the
-    // resource resolver registered for active-only flows) don't have to
-    // remember to filter on `deleted_at IS NULL` themselves.
-    const findOneById = db.makeQuery((execute, id: OrganizationId) =>
+    // The spec contributes only the WHERE (identity, and — for active-only
+    // reads — `deleted_at IS NULL`); the repository owns FROM and projection.
+    // `LIMIT 1` is safe because every spec used with findOne selects at most
+    // one row (identity keys).
+    const findOne = db.makeQuery((execute, spec: Specification<OrganizationRoot>) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.OrganizationRowStd)`
           SELECT * FROM "organization".organizations
-          WHERE id = ${id} AND deleted_at IS NULL
+          WHERE ${criteriaToWhere(spec.criteria, OrganizationMapper.columns)}
+          LIMIT 1
         `),
       ).pipe(
-        orFail(() => new OrganizationNotFound({ organizationId: id })),
-        Effect.map(OrganizationMapper.toDomain),
+        Effect.map((row) => (row === null ? null : OrganizationMapper.toDomain(row))),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("OrganizationRepository.findOneById"),
-      ),
-    );
-
-    // Explicit opt-in for the restore path and the super-admin
-    // "include deleted" listing. Keeping the variant separate at the
-    // port level documents that callers had to actively ask for
-    // tombstones — same shape as the `with-deleted` boolean would
-    // collapse to, but more discoverable.
-    const findOneByIdIncludingDeleted = db.makeQuery((execute, id: OrganizationId) =>
-      execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.OrganizationRowStd)`
-          SELECT * FROM "organization".organizations WHERE id = ${id}
-        `),
-      ).pipe(
-        orFail(() => new OrganizationNotFound({ organizationId: id })),
-        Effect.map(OrganizationMapper.toDomain),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
-        Effect.withSpan("OrganizationRepository.findOneByIdIncludingDeleted"),
+        Effect.withSpan("OrganizationRepository.findOne"),
       ),
     );
 
     return OrganizationRepository.of({
       insertOne,
       updateOne,
-      findOneById,
-      findOneByIdIncludingDeleted,
+      findOne,
     });
   }),
 );

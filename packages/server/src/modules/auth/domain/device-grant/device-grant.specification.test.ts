@@ -18,6 +18,38 @@ const start = () =>
     ttlSeconds: 600,
   });
 
+describe("DeviceGrantSpecifications.withCodeHash", () => {
+  it("matches the grant with the given device-code hash and no other", () => {
+    const grant = start();
+    deepStrictEqual(DeviceGrantSpecifications.withCodeHash("hash")(grant), true);
+    deepStrictEqual(DeviceGrantSpecifications.withCodeHash("other")(grant), false);
+  });
+
+  it("carries an Eq criteria over the device_code_hash column", () => {
+    deepStrictEqual(DeviceGrantSpecifications.withCodeHash("hash").criteria, {
+      _tag: "Eq",
+      field: "deviceCodeHash",
+      value: "hash",
+    });
+  });
+});
+
+describe("DeviceGrantSpecifications.withUserCode", () => {
+  it("matches the grant with the given user code and no other", () => {
+    const grant = start();
+    deepStrictEqual(DeviceGrantSpecifications.withUserCode("ABCD-2345")(grant), true);
+    deepStrictEqual(DeviceGrantSpecifications.withUserCode("ZZZZ-9999")(grant), false);
+  });
+
+  it("carries an Eq criteria over the user_code column", () => {
+    deepStrictEqual(DeviceGrantSpecifications.withUserCode("ABCD-2345").criteria, {
+      _tag: "Eq",
+      field: "userCode",
+      value: "ABCD-2345",
+    });
+  });
+});
+
 describe("DeviceGrantSpecifications.isExpired", () => {
   it("is false before expiry and true at/after it", () => {
     const grant = start();

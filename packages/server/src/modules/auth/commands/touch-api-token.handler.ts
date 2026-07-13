@@ -5,6 +5,7 @@ import * as Effect from "effect/Effect";
 import { type TouchApiTokenCommand } from "@/modules/auth/commands/touch-api-token.command.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.js";
+import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
 
 // Last-used stamp, throttled + race-tolerant.
 //
@@ -18,10 +19,9 @@ import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-
 // Bus-boundary span (ADR-0012) wraps this at dispatch time.
 export const touchApiToken = Effect.fn("touchApiToken")(function* (cmd: TouchApiTokenCommand) {
   const repo = yield* ApiTokenRepository;
-  const token = yield* repo.findOneById(cmd.apiTokenId).pipe(
-    Effect.catchTag("ApiTokenNotFound", () => Effect.succeed(null)),
-    Effect.catchTag("PersistenceUnavailable", () => Effect.succeed(null)),
-  );
+  const token = yield* repo
+    .findOne(ApiTokenSpecifications.withId(cmd.apiTokenId))
+    .pipe(Effect.catchTag("PersistenceUnavailable", () => Effect.succeed(null)));
   if (token?.revokedAt !== null) return;
 
   const now = yield* DateTime.now;

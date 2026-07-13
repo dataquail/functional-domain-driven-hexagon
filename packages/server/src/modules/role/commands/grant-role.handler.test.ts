@@ -11,6 +11,7 @@ import { grantRole } from "@/modules/role/commands/grant-role.handler.js";
 import { AlreadyHasRole, CannotPromoteSelf } from "@/modules/role/domain/roles/role.errors.js";
 import { type RoleGranted } from "@/modules/role/domain/roles/role.events.js";
 import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
+import { RolesSpecifications } from "@/modules/role/domain/roles/roles.specification.js";
 import { RolesRepositoryFake } from "@/modules/role/infrastructure/repositories/roles.repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
@@ -31,7 +32,8 @@ describe("grantRole", () => {
         GrantRoleCommand.make({ userId: targetId, role: "super_admin", actorUserId: actorId }),
       );
 
-      const roles = yield* repo.findOneByUserId(targetId);
+      const roles = yield* repo.findOne(RolesSpecifications.forUser(targetId));
+      if (roles === null) throw new Error("expected aggregate");
       deepStrictEqual([...roles.roles], ["super_admin"]);
 
       const events = yield* rec.byTag<RoleGranted>("RoleGranted");
