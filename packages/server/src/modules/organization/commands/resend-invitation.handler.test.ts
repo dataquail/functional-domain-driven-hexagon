@@ -18,6 +18,7 @@ import {
 import { type InvitationReissued } from "@/modules/organization/domain/invitation/invitation.events.js";
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
 import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
+import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
 import {
   InvitationMailerFake,
   SentInvitations,
@@ -72,7 +73,8 @@ describe("resendInvitation", () => {
 
       yield* resendInvitation(cmd);
 
-      const stored = yield* repo.findOneById(invitationId);
+      const stored = yield* repo.findOne(InvitationSpecifications.withId(invitationId));
+      if (stored === null) throw new Error("expected invitation");
       ok(stored.token !== "tok-original", "token should be rotated");
       ok(DateTime.isGreaterThan(stored.expiresAt, originalExpiry), "expiry should be pushed out");
       deepStrictEqual(stored.acceptedAt, null);

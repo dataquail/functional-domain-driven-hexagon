@@ -10,7 +10,7 @@ import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.erro
 import { type ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import { ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root.js";
-import { type UserId } from "@/platform/ids/user-id.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
 
 export const ApiTokenRepositoryFake = Layer.effect(
   ApiTokenRepository,
@@ -20,25 +20,18 @@ export const ApiTokenRepositoryFake = Layer.effect(
     const insertOne = (token: ApiTokenRoot): Effect.Effect<void> =>
       Ref.update(store, HashMap.set(token.id, token));
 
-    const findOneById = (id: ApiTokenId): Effect.Effect<ApiTokenRoot, ApiTokenNotFound> =>
-      Effect.flatMap(Ref.get(store), (m) =>
-        Option.match(HashMap.get(m, id), {
-          onNone: () => Effect.fail(new ApiTokenNotFound()),
-          onSome: Effect.succeed,
-        }),
-      );
+    // The spec IS the in-memory predicate — the same object the live repo
+    // compiles to SQL — so fake and live agree by construction.
+    const findOne = (spec: Specification<ApiTokenRoot>): Effect.Effect<ApiTokenRoot | null> =>
+      Effect.map(Ref.get(store), (m) => Array.from(HashMap.values(m)).find(spec) ?? null);
 
-    const findOneByHash = (tokenHash: string): Effect.Effect<ApiTokenRoot, ApiTokenNotFound> =>
-      Effect.flatMap(Ref.get(store), (m) => {
-        const match = Array.from(HashMap.values(m)).find((t) => t.tokenHash === tokenHash);
-        return match === undefined ? Effect.fail(new ApiTokenNotFound()) : Effect.succeed(match);
-      });
-
-    // Active (non-revoked) tokens, newest first — mirrors the live SQL.
-    const findManyByUser = (userId: UserId): Effect.Effect<ReadonlyArray<ApiTokenRoot>> =>
+    // Newest first, mirroring the live repo's `ORDER BY created_at DESC`.
+    const findMany = (
+      spec: Specification<ApiTokenRoot>,
+    ): Effect.Effect<ReadonlyArray<ApiTokenRoot>> =>
       Effect.map(Ref.get(store), (m) =>
         Array.from(HashMap.values(m))
-          .filter((t) => t.userId === userId && t.revokedAt === null)
+          .filter(spec)
           .sort(Order.flip(Order.mapInput(DateTime.Order, (t: ApiTokenRoot) => t.createdAt))),
       );
 
@@ -78,9 +71,8 @@ export const ApiTokenRepositoryFake = Layer.effect(
 
     return ApiTokenRepository.of({
       insertOne,
-      findOneById,
-      findOneByHash,
-      findManyByUser,
+      findOne,
+      findMany,
       deleteOne: deleteToken,
       updateOne,
     });

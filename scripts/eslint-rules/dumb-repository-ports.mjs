@@ -1,14 +1,19 @@
 /* eslint-disable */
 /**
- * @fileoverview Repository ports are dumb persistence with a cardinality-explicit
- * vocabulary (ADR-0005). The `*RepositoryShape` type may only declare methods of
- * the form <verb><One|Many>, where verb is insert/update/delete/upsert, plus
- * findOne / findMany (each optionally suffixed with a `By<Key>` lookup). Every
- * operation names its size — one row or many — so callers read intent off the
- * method name. Domain verbs (grant, revoke, promote, activate, cancel, …) are
- * aggregate behaviour, not persistence. Because the Live and Fake implementations
- * must structurally satisfy the port, constraining the port's method names
- * transitively keeps the implementations dumb too.
+ * @fileoverview Repository ports are dumb persistence with a minimal vocabulary
+ * (ADR-0005). The `*RepositoryShape` type may only declare: the write verbs
+ * `<insert|update|delete|upsert><One|Many>`, and the two reads `findOne` /
+ * `findMany`. Reads take a `Specification` and nothing else — there are no
+ * keyed or variant finders (`findOneById`, `findManyByOrganizationId`,
+ * `findOneOpenBy…`, `findAll…`). Every lookup and every variant — by id, by a
+ * natural key, "open", "active", "not deleted" — is a domain Specification the
+ * caller composes and passes to `findOne`/`findMany`, so the rule lives in one
+ * place, the fake filters and the live query with the same object, and the port
+ * cannot drift into read-method bloat. Domain verbs (grant, revoke, promote,
+ * activate, cancel, …) are aggregate behaviour, not persistence. Because the
+ * Live and Fake implementations must structurally satisfy the port,
+ * constraining the port's method names transitively keeps the implementations
+ * dumb too.
  *
  * Scoped (via eslint.config.mjs) to:
  *   packages/server/src/modules/<m>/domain/ports/repositories/*.repository.ts
@@ -18,22 +23,16 @@
 // Rule Definition
 //------------------------------------------------------------------------------
 
-// A method name is allowed when it is one of:
-//   <verb><One|Many>                    — insertOne, updateMany, deleteOne, upsertOne, …
-//   find<One|Many>[<Qualifier>]By<Key>  — findOneById, findManyByOrganizationId,
-//                                          findOneOpenByOrganizationIdAndEmail, …
-//   find<One|Many>                      — findOne, findMany (bare)
-//   findAll[<Qualifier>]                — findAll, findAllActive (whole collection,
-//                                          no key argument; qualifier is a built-in filter)
-// On a keyed find the optional qualifier (e.g. "Open") is only permitted in front
-// of the `By<Key>` clause, so it always rides along with a lookup — a bare
-// find-and-mutate name like `findOneAndDelete` (no `By`) is still rejected. A
-// keyless filtered collection is `findAll<Qualifier>`, not `findMany<Qualifier>`.
-const ALLOWED_METHOD =
-  /^(?:(?:insert|update|delete|upsert)(?:One|Many)|findAll(?:[A-Z][A-Za-z0-9]*)?|find(?:One|Many)(?:(?:[A-Z][A-Za-z0-9]*)?By[A-Z][A-Za-z0-9]*)?)$/;
+// A method name is allowed when it is exactly one of:
+//   <verb><One|Many>  — insertOne, updateMany, deleteOne, upsertOne, …
+//   findOne / findMany — the ONLY reads; each takes a Specification.
+// A keyed or variant finder (findOneById, findManyByOrganizationId,
+// findOneOpenBy…, findAll…) is rejected: express the lookup/variant as a
+// Specification passed to findOne/findMany, not as a bespoke persistence method.
+const ALLOWED_METHOD = /^(?:(?:insert|update|delete|upsert)(?:One|Many)|find(?:One|Many))$/;
 
 function describeAllowed() {
-  return "insertOne/insertMany, updateOne/updateMany, deleteOne/deleteMany, upsertOne/upsertMany, findOne/findMany (optionally find{One,Many}[<Qualifier>]By<Key>, e.g. findOneById / findManyByOrganizationId / findOneOpenByOrganizationIdAndEmail), findAll / findAll<Qualifier> (e.g. findAllActive)";
+  return "insertOne/insertMany, updateOne/updateMany, deleteOne/deleteMany, upsertOne/upsertMany, and findOne/findMany (each taking a Specification). Express a lookup or variant (by id, by email, open/active/not-deleted) as a Specification passed to findOne/findMany — not as a keyed/qualified find method.";
 }
 
 function keyName(member) {
@@ -73,9 +72,10 @@ export default {
         context.report({
           node: member.key,
           message:
-            `Repository port method "${name}" is not in the cardinality-explicit vocabulary — repositories are dumb persistence (ADR-0005). ` +
-            `Either it reads like a domain verb (put that behaviour on the aggregate and have the use case persist the result), ` +
-            `or it omits the One/Many size (rename to e.g. ${name.startsWith("find") ? "findOne…/findMany…" : "…One/…Many"}). ` +
+            `Repository port method "${name}" is not in the dumb-persistence vocabulary (ADR-0005). ` +
+            (name.startsWith("find")
+              ? `A read is only findOne/findMany taking a Specification — turn this lookup/variant into a Specification the caller composes (e.g. repo.findOne(XSpecifications.withId(id))). `
+              : `It reads like a domain verb — put that behaviour on the aggregate and have the use case persist the result. `) +
             `Allowed: ${describeAllowed()}.`,
         });
       }

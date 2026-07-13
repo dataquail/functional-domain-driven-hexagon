@@ -9,6 +9,7 @@ import { beforeEach } from "vitest";
 
 import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors.js";
 import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
+import { WebhookEventSpecifications } from "@/modules/billing/domain/webhook-event/webhook-event.specification.js";
 import { WebhookEventRepositoryLive } from "@/modules/billing/infrastructure/repositories/webhook-event.repository-live.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
@@ -22,13 +23,13 @@ suite("WebhookEventRepositoryLive (integration)", () => {
     );
   });
 
-  it.effect("inserts an event id and decodes it back via findOneByStripeEventId", () =>
+  it.effect("inserts an event id and decodes it back via findOne", () =>
     Effect.gen(function* () {
       const repo = yield* WebhookEventRepository;
       yield* repo.insertOne("evt_test_1");
-      const found = yield* repo.findOneByStripeEventId("evt_test_1");
-      ok(Option.isSome(found));
-      if (Option.isSome(found)) deepStrictEqual(found.value.stripeEventId, "evt_test_1");
+      const found = yield* repo.findOne(WebhookEventSpecifications.withStripeEventId("evt_test_1"));
+      ok(found !== null);
+      deepStrictEqual(found.stripeEventId, "evt_test_1");
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -49,11 +50,13 @@ suite("WebhookEventRepositoryLive (integration)", () => {
       }).pipe(Effect.provide(TestLayer)),
   );
 
-  it.effect("returns None for an unrecorded event id", () =>
+  it.effect("returns null for an unrecorded event id", () =>
     Effect.gen(function* () {
       const repo = yield* WebhookEventRepository;
-      const found = yield* repo.findOneByStripeEventId("evt_does_not_exist");
-      ok(Option.isNone(found));
+      const found = yield* repo.findOne(
+        WebhookEventSpecifications.withStripeEventId("evt_does_not_exist"),
+      );
+      deepStrictEqual(found, null);
     }).pipe(Effect.provide(TestLayer)),
   );
 });

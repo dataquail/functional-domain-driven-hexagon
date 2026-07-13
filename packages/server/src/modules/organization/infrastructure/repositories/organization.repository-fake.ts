@@ -6,6 +6,7 @@ import * as Ref from "effect/Ref";
 import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.js";
 import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
 import { type OrganizationRoot } from "@/modules/organization/domain/organization/organization.root.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 export const OrganizationRepositoryFake = Layer.effect(
@@ -23,32 +24,17 @@ export const OrganizationRepositoryFake = Layer.effect(
           : Effect.fail(new OrganizationNotFound({ organizationId: organization.id })),
       );
 
-    const findOneById = (
-      id: OrganizationId,
-    ): Effect.Effect<OrganizationRoot, OrganizationNotFound> =>
-      Effect.flatMap(Ref.get(store), (m) => {
-        const found = HashMap.get(m, id);
-        if (found._tag === "None" || found.value.deletedAt !== null) {
-          return Effect.fail(new OrganizationNotFound({ organizationId: id }));
-        }
-        return Effect.succeed(found.value);
-      });
-
-    const findOneByIdIncludingDeleted = (
-      id: OrganizationId,
-    ): Effect.Effect<OrganizationRoot, OrganizationNotFound> =>
-      Effect.flatMap(Ref.get(store), (m) => {
-        const found = HashMap.get(m, id);
-        return found._tag === "Some"
-          ? Effect.succeed(found.value)
-          : Effect.fail(new OrganizationNotFound({ organizationId: id }));
-      });
+    // The spec IS the in-memory predicate — the same object the live repo
+    // compiles to SQL — so fake and live agree by construction.
+    const findOne = (
+      spec: Specification<OrganizationRoot>,
+    ): Effect.Effect<OrganizationRoot | null> =>
+      Effect.map(Ref.get(store), (m) => Array.from(HashMap.values(m)).find(spec) ?? null);
 
     return OrganizationRepository.of({
       insertOne,
       updateOne,
-      findOneById,
-      findOneByIdIncludingDeleted,
+      findOne,
     });
   }),
 );

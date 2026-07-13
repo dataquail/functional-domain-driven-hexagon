@@ -2,15 +2,12 @@ import { Database, orFail, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import {
-  InvitationNotFound,
-  InvitationTokenNotFound,
-} from "@/modules/organization/domain/invitation/invitation.errors.js";
+import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors.js";
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
 import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.js";
 import * as InvitationMapper from "@/modules/organization/infrastructure/repositories/invitation.mapper.js";
-import { type InvitationId } from "@/platform/ids/invitation-id.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
+import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
 export const InvitationRepositoryLive = Layer.effect(
@@ -71,77 +68,41 @@ export const InvitationRepositoryLive = Layer.effect(
       );
     });
 
-    const findOneById = db.makeQuery((execute, id: InvitationId) =>
+    // The spec contributes only the WHERE; the repository owns FROM, the
+    // newest-first ordering, and the projection. `LIMIT 1` is safe because
+    // every spec used with findOne selects at most one row (identity keys, or
+    // the at-most-one open invite per org+email).
+    const findOne = db.makeQuery((execute, spec: Specification<InvitationRoot>) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.InvitationRowStd)`
-          SELECT * FROM "organization".invitations WHERE id = ${id}
+          SELECT * FROM "organization".invitations
+          WHERE ${criteriaToWhere(spec.criteria, InvitationMapper.columns)}
+          ORDER BY created_at DESC
+          LIMIT 1
         `),
       ).pipe(
-        orFail(() => new InvitationNotFound({ invitationId: id })),
-        Effect.map(InvitationMapper.toDomain),
+        Effect.map((row) => (row === null ? null : InvitationMapper.toDomain(row))),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("InvitationRepository.findOneById"),
+        Effect.withSpan("InvitationRepository.findOne"),
       ),
     );
 
-    const findOneByToken = db.makeQuery((execute, token: string) =>
-      execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.InvitationRowStd)`
-          SELECT * FROM "organization".invitations WHERE token = ${token}
-        `),
-      ).pipe(
-        orFail(() => new InvitationTokenNotFound()),
-        Effect.map(InvitationMapper.toDomain),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
-        Effect.withSpan("InvitationRepository.findOneByToken"),
-      ),
-    );
-
-    const findManyByOrganizationId = db.makeQuery((execute, organizationId: OrganizationId) =>
+    const findMany = db.makeQuery((execute, spec: Specification<InvitationRoot>) =>
       execute((client) =>
         client.any(sql.type(RowSchemas.InvitationRowStd)`
           SELECT * FROM "organization".invitations
-          WHERE organization_id = ${organizationId}
+          WHERE ${criteriaToWhere(spec.criteria, InvitationMapper.columns)}
           ORDER BY created_at DESC
         `),
       ).pipe(
         Effect.map((rows) => rows.map(InvitationMapper.toDomain)),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("InvitationRepository.findManyByOrganizationId"),
+        Effect.withSpan("InvitationRepository.findMany"),
       ),
     );
 
-    const findOneOpenByOrganizationIdAndEmail = db.makeQuery(
-      (execute, args: { organizationId: OrganizationId; inviteeEmail: string }) =>
-        execute((client) =>
-          client.maybeOne(sql.type(RowSchemas.InvitationRowStd)`
-            SELECT * FROM "organization".invitations
-            WHERE organization_id = ${args.organizationId}
-              AND invitee_email = ${args.inviteeEmail}
-              AND accepted_at IS NULL
-              AND revoked_at IS NULL
-            ORDER BY created_at DESC
-            LIMIT 1
-          `),
-        ).pipe(
-          Effect.map((row) => (row === null ? null : InvitationMapper.toDomain(row))),
-          Effect.catchTag("DatabaseError", Effect.die),
-          translatePersistenceUnavailable,
-          Effect.withSpan("InvitationRepository.findOneOpenByOrganizationIdAndEmail"),
-        ),
-    );
-
-    return InvitationRepository.of({
-      insertOne,
-      updateOne,
-      findOneById,
-      findOneByToken,
-      findManyByOrganizationId,
-      findOneOpenByOrganizationIdAndEmail: (organizationId, inviteeEmail) =>
-        findOneOpenByOrganizationIdAndEmail({ organizationId, inviteeEmail }),
-    });
+    return InvitationRepository.of({ insertOne, updateOne, findOne, findMany });
   }),
 );

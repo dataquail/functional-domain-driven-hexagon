@@ -10,14 +10,18 @@ import { CreateOrganizationCommand } from "@/modules/organization/commands/creat
 import { createOrganization } from "@/modules/organization/commands/create-organization.handler.js";
 import { type MembershipCreated } from "@/modules/organization/domain/membership/membership.events.js";
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
+import { MembershipSpecifications } from "@/modules/organization/domain/membership/membership.specification.js";
 import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors.js";
 import { type OrganizationCreated } from "@/modules/organization/domain/organization/organization.events.js";
 import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
+import { OrganizationSpecifications } from "@/modules/organization/domain/organization/organization.specification.js";
 import { type OrganizationRoleGranted } from "@/modules/organization/domain/organization-roles/organization-role.events.js";
 import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
+import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification.js";
 import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.js";
 import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization.repository-fake.js";
 import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.js";
+import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
@@ -45,7 +49,8 @@ describe("createOrganization", () => {
       const id = yield* createOrganization(
         CreateOrganizationCommand.make({ name: "Acme", actorUserId }),
       );
-      const stored = yield* repo.findOneById(id);
+      const stored = yield* repo.findOne(OrganizationSpecifications.withId(id));
+      if (stored === null) throw new Error("expected organization");
       deepStrictEqual(stored.name, "Acme");
       const events = yield* rec.byTag<OrganizationCreated>("OrganizationCreated");
       deepStrictEqual(events.length, 1);
@@ -63,7 +68,13 @@ describe("createOrganization", () => {
       const id = yield* createOrganization(
         CreateOrganizationCommand.make({ name: "Acme", actorUserId }),
       );
-      const membership = yield* memberships.findOneByUserIdAndOrgId(actorUserId, id);
+      const membership = yield* memberships.findOne(
+        Spec.and(
+          MembershipSpecifications.forUser(actorUserId),
+          MembershipSpecifications.forOrganization(id),
+        ),
+      );
+      if (membership === null) throw new Error("expected membership");
       deepStrictEqual(membership.userId, actorUserId);
       deepStrictEqual(membership.organizationId, id);
       const events = yield* rec.byTag<MembershipCreated>("MembershipCreated");
@@ -84,7 +95,13 @@ describe("createOrganization", () => {
         const id = yield* createOrganization(
           CreateOrganizationCommand.make({ name: "Acme", actorUserId }),
         );
-        const roles = yield* orgRolesRepo.findOneByUserIdAndOrgId(actorUserId, id);
+        const roles = yield* orgRolesRepo.findOne(
+          Spec.and(
+            OrganizationRolesSpecifications.forUser(actorUserId),
+            OrganizationRolesSpecifications.forOrganization(id),
+          ),
+        );
+        if (roles === null) throw new Error("expected aggregate");
         deepStrictEqual(
           roles.roles.map((r) => ({ role: r.role, issuedBy: r.issuedBy })),
           [{ role: "admin", issuedBy: actorUserId }],

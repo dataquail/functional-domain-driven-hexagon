@@ -10,6 +10,7 @@ import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wall
 import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
 import { WalletRootOps } from "@/modules/wallet/domain/wallet/wallet.root-ops.js";
+import { WalletSpecifications } from "@/modules/wallet/domain/wallet/wallet.specification.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 import { WalletRepositoryFake } from "./wallet.repository-fake.js";
@@ -29,13 +30,11 @@ describe("WalletRepositoryFake", () => {
         const repo = yield* WalletRepository;
         const { wallet } = WalletRootOps.create({ id: walletA, organizationId: acmeId, now });
         yield* repo.insertOne(wallet);
-        const found = yield* repo.findOneByOrganizationId(acmeId);
-        ok(Option.isSome(found));
-        if (Option.isSome(found)) {
-          deepStrictEqual(found.value.id, walletA);
-          deepStrictEqual(found.value.organizationId, acmeId);
-          deepStrictEqual(found.value.balance, 0);
-        }
+        const found = yield* repo.findOne(WalletSpecifications.forOrganization(acmeId));
+        if (found === null) throw new Error("expected stored wallet");
+        deepStrictEqual(found.id, walletA);
+        deepStrictEqual(found.organizationId, acmeId);
+        deepStrictEqual(found.balance, 0);
       }).pipe(provide),
     );
 
@@ -82,22 +81,22 @@ describe("WalletRepositoryFake", () => {
         });
         yield* repo.insertOne(acmeWallet);
         yield* repo.insertOne(betaWallet);
-        const acmeFound = yield* repo.findOneByOrganizationId(acmeId);
-        const betaFound = yield* repo.findOneByOrganizationId(betaId);
-        ok(Option.isSome(acmeFound));
-        ok(Option.isSome(betaFound));
-        if (Option.isSome(acmeFound)) deepStrictEqual(acmeFound.value.id, walletA);
-        if (Option.isSome(betaFound)) deepStrictEqual(betaFound.value.id, walletB);
+        const acmeFound = yield* repo.findOne(WalletSpecifications.forOrganization(acmeId));
+        const betaFound = yield* repo.findOne(WalletSpecifications.forOrganization(betaId));
+        if (acmeFound === null) throw new Error("expected acme wallet");
+        if (betaFound === null) throw new Error("expected beta wallet");
+        deepStrictEqual(acmeFound.id, walletA);
+        deepStrictEqual(betaFound.id, walletB);
       }).pipe(provide),
     );
   });
 
-  describe("findOneByOrganizationId", () => {
-    it.effect("returns None when no wallet exists for the org", () =>
+  describe("findOne", () => {
+    it.effect("returns null when no wallet exists for the org", () =>
       Effect.gen(function* () {
         const repo = yield* WalletRepository;
-        const result = yield* repo.findOneByOrganizationId(acmeId);
-        ok(Option.isNone(result));
+        const result = yield* repo.findOne(WalletSpecifications.forOrganization(acmeId));
+        ok(result === null);
       }).pipe(provide),
     );
   });
@@ -108,15 +107,15 @@ describe("WalletRepositoryFake", () => {
         const repo1 = yield* WalletRepository;
         const { wallet } = WalletRootOps.create({ id: walletA, organizationId: acmeId, now });
         yield* repo1.insertOne(wallet);
-        const exists = yield* repo1.findOneByOrganizationId(acmeId);
-        ok(Option.isSome(exists));
+        const exists = yield* repo1.findOne(WalletSpecifications.forOrganization(acmeId));
+        ok(exists !== null);
       }).pipe(provide, (first) =>
         Effect.andThen(
           first,
           Effect.gen(function* () {
             const repo2 = yield* WalletRepository;
-            const empty = yield* repo2.findOneByOrganizationId(acmeId);
-            ok(Option.isNone(empty));
+            const empty = yield* repo2.findOne(WalletSpecifications.forOrganization(acmeId));
+            ok(empty === null);
           }).pipe(provide),
         ),
       ),

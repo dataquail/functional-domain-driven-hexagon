@@ -5,8 +5,10 @@ import * as Layer from "effect/Layer";
 
 import { type TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js";
+import { TodoSpecifications } from "@/modules/todos/domain/todo/todos.specification.js";
 import { TodosRepositoryLive } from "@/modules/todos/infrastructure/repositories/todos.repository-live.js";
 import { type Resolver } from "@/platform/auth/resource-resolver-registry.js";
+import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 // Todos expose two policy resources, split by what is actually being
@@ -55,8 +57,8 @@ export class TodoResolverEntry extends Context.Service<TodoResolverEntry, Resolv
   "TodoResolverEntry",
 ) {}
 
-// Loads the todo scoped to its org. `TodoNotFound` (missing OR
-// cross-tenant) → `NotFound`, which the endpoint maps to
+// Loads the todo scoped to its org. Absence (missing OR cross-tenant, since
+// the spec pins the org) → `NotFound`, which the endpoint maps to
 // `TodoNotFoundError`. `PersistenceUnavailable` dies inside the resolver
 // — the endpoint's `recoverPersistenceUnavailable` converts it to 503,
 // same shape as the organization resolver.
@@ -65,10 +67,20 @@ export const TodoResolverEntryLive = Layer.effect(
   Effect.gen(function* () {
     const repo = yield* TodosRepository;
     return ({ organizationId, todoId }) =>
-      repo.findOneById(organizationId, todoId).pipe(
-        Effect.map((todo) => ({ organizationId: todo.organizationId })),
-        Effect.catchTag("TodoNotFound", () => Effect.fail(new CustomHttpApiError.NotFound())),
-        Effect.catchTag("PersistenceUnavailable", Effect.die),
-      );
+      repo
+        .findOne(
+          Spec.and(
+            TodoSpecifications.withId(todoId),
+            TodoSpecifications.forOrganization(organizationId),
+          ),
+        )
+        .pipe(
+          Effect.flatMap((todo) =>
+            todo === null
+              ? Effect.fail(new CustomHttpApiError.NotFound())
+              : Effect.succeed({ organizationId: todo.organizationId }),
+          ),
+          Effect.catchTag("PersistenceUnavailable", Effect.die),
+        );
   }),
 ).pipe(Layer.provide(TodosRepositoryLive));

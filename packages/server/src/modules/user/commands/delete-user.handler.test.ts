@@ -9,6 +9,7 @@ import * as Option from "effect/Option";
 import { UserNotFound } from "@/modules/user/domain/user/user.errors.js";
 import { type UserDeleted } from "@/modules/user/domain/user/user.events.js";
 import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
+import { UserSpecifications } from "@/modules/user/domain/user/user.specification.js";
 import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.js";
 import { UserRepositoryFake } from "@/modules/user/infrastructure/repositories/user.repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
@@ -44,8 +45,8 @@ describe("deleteUser", () => {
 
       yield* deleteUser(DeleteUserCommand.make({ userId: id }));
 
-      const exit = yield* Effect.exit(repo.findOneById(id));
-      deepStrictEqual(Exit.isFailure(exit), true);
+      const found = yield* repo.findOne(UserSpecifications.withId(id));
+      deepStrictEqual(found, null);
 
       const events = yield* rec.byTag<UserDeleted>("UserDeleted");
       deepStrictEqual(events.length, 1);

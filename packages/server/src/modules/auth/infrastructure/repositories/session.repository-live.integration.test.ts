@@ -1,18 +1,16 @@
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
-import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 import { beforeEach } from "vitest";
 
-import { SessionNotFound } from "@/modules/auth/domain/session/session.errors.js";
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
 import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.js";
+import { SessionSpecifications } from "@/modules/auth/domain/session/session.specification.js";
 import { SessionRepositoryLive } from "@/modules/auth/infrastructure/repositories/session.repository-live.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
@@ -50,14 +48,15 @@ suite("SessionRepositoryLive (integration)", () => {
     await Effect.runPromise(truncate("user.users").pipe(Effect.provide(TestDatabaseLive)));
   });
 
-  it.effect("insert + findOneById round-trips a Session through the DB", () =>
+  it.effect("insert + findOne(withId) round-trips a Session through the DB", () =>
     Effect.gen(function* () {
       yield* insertUserRow;
       const repo = yield* SessionRepository;
       const now = yield* DateTime.now;
       const session = makeSession(now);
       yield* repo.insertOne(session);
-      const found = yield* repo.findOneById(sessionId);
+      const found = yield* repo.findOne(SessionSpecifications.withId(sessionId));
+      if (found === null) throw new Error("expected a session");
       deepStrictEqual(found.id, sessionId);
       deepStrictEqual(found.userId, userId);
       deepStrictEqual(found.subject, subject);
@@ -65,17 +64,11 @@ suite("SessionRepositoryLive (integration)", () => {
     }).pipe(Effect.provide(TestLayer)),
   );
 
-  it.effect("findOneById fails SessionNotFound for an unknown id", () =>
+  it.effect("findOne returns null for an unknown id (absence is not an error)", () =>
     Effect.gen(function* () {
       const repo = yield* SessionRepository;
-      const exit = yield* Effect.exit(repo.findOneById(sessionId));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(error instanceof SessionNotFound, true);
-      }
+      const found = yield* repo.findOne(SessionSpecifications.withId(sessionId));
+      deepStrictEqual(found, null);
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -86,7 +79,8 @@ suite("SessionRepositoryLive (integration)", () => {
       const now = yield* DateTime.now;
       yield* repo.insertOne(makeSession(now));
       yield* repo.deleteOne(sessionId);
-      const found = yield* repo.findOneById(sessionId);
+      const found = yield* repo.findOne(SessionSpecifications.withId(sessionId));
+      if (found === null) throw new Error("expected a session");
       deepStrictEqual(found.revokedAt !== null, true);
 
       const second = yield* Effect.exit(repo.deleteOne(sessionId));
@@ -104,7 +98,8 @@ suite("SessionRepositoryLive (integration)", () => {
       const later = DateTime.add(now, { seconds: 1800 });
       const touched = SessionRootOps.touch({ session: seed, now: later, ttlSeconds: 3600 });
       yield* repo.updateOne(touched);
-      const found = yield* repo.findOneById(sessionId);
+      const found = yield* repo.findOne(SessionSpecifications.withId(sessionId));
+      if (found === null) throw new Error("expected a session");
       deepStrictEqual(found.expiresAt, touched.expiresAt);
       deepStrictEqual(found.lastUsedAt, touched.lastUsedAt);
       deepStrictEqual(found.absoluteExpiresAt, seed.absoluteExpiresAt);

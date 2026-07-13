@@ -3,6 +3,7 @@ import * as Effect from "effect/Effect";
 import { type RevokeApiTokenCommand } from "@/modules/auth/commands/revoke-api-token.command.js";
 import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
+import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
 // Ownership-scoped revoke: load the token, refuse (as NotFound) if it isn't
@@ -12,8 +13,8 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 // Bus-boundary span (ADR-0012) wraps this at dispatch time.
 export const revokeApiToken = Effect.fn("revokeApiToken")(function* (cmd: RevokeApiTokenCommand) {
   const repo = yield* ApiTokenRepository;
-  const token = yield* repo.findOneById(cmd.apiTokenId);
-  if (token.userId !== cmd.userId) {
+  const token = yield* repo.findOne(ApiTokenSpecifications.withId(cmd.apiTokenId));
+  if (token?.userId !== cmd.userId) {
     return yield* new ApiTokenNotFound();
   }
   yield* repo.deleteOne(cmd.apiTokenId);

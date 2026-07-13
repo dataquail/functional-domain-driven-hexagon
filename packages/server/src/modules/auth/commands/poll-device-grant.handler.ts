@@ -5,6 +5,7 @@ import { mintApiTokenCore } from "@/modules/auth/commands/mint-api-token.handler
 import { type PollDeviceGrantCommand } from "@/modules/auth/commands/poll-device-grant.command.js";
 import {
   DeviceGrantExpired,
+  DeviceGrantNotFound,
   DeviceGrantPending,
 } from "@/modules/auth/domain/device-grant/device-grant.errors.js";
 import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
@@ -25,7 +26,12 @@ export const pollDeviceGrant = Effect.fn("pollDeviceGrant")(function* (
   cmd: PollDeviceGrantCommand,
 ) {
   const grants = yield* DeviceGrantRepository;
-  const grant = yield* grants.findOneByCodeHash(CredentialHash.of(cmd.deviceCode));
+  const grant = yield* grants.findOne(
+    DeviceGrantSpecifications.withCodeHash(CredentialHash.of(cmd.deviceCode)),
+  );
+  if (grant === null) {
+    return yield* new DeviceGrantNotFound();
+  }
   const now = yield* DateTime.now;
 
   if (DeviceGrantSpecifications.isExpired(grant, now)) {

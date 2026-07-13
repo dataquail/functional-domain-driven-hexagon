@@ -12,9 +12,14 @@ import { beforeEach } from "vitest";
 import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.js";
 import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
 import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.js";
+import { OrganizationSpecifications } from "@/modules/organization/domain/organization/organization.specification.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
+import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+
+const activeById = (id: OrganizationId) =>
+  Spec.and(OrganizationSpecifications.withId(id), OrganizationSpecifications.notDeleted);
 
 const id = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const now = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
@@ -31,36 +36,31 @@ suite("OrganizationRepositoryLive (integration)", () => {
     );
   });
 
-  describe("insert + findOneById", () => {
+  describe("insert + findOne", () => {
     it.effect("round-trips an inserted org", () =>
       Effect.gen(function* () {
         const repo = yield* OrganizationRepository;
         const { organization } = OrganizationRootOps.create({ id, name: "Acme", now });
         yield* repo.insertOne(organization);
-        const found = yield* repo.findOneById(id);
+        const found = yield* repo.findOne(activeById(id));
+        if (found === null) throw new Error("expected organization");
         deepStrictEqual(found.id, id);
         deepStrictEqual(found.name, "Acme");
         deepStrictEqual(found.deletedAt, null);
       }).pipe(Effect.provide(TestLayer)),
     );
 
-    it.effect("findOneById fails OrganizationNotFound for an unknown id", () =>
+    it.effect("findOne returns null for an unknown id", () =>
       Effect.gen(function* () {
         const repo = yield* OrganizationRepository;
-        const exit = yield* Effect.exit(repo.findOneById(id));
-        deepStrictEqual(Exit.isFailure(exit), true);
-        if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause)
-            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-            : null;
-          deepStrictEqual(error instanceof OrganizationNotFound, true);
-        }
+        const found = yield* repo.findOne(activeById(id));
+        deepStrictEqual(found, null);
       }).pipe(Effect.provide(TestLayer)),
     );
   });
 
   describe("update (soft-delete tombstone)", () => {
-    it.effect("findOneById hides a soft-deleted row; findOneByIdIncludingDeleted returns it", () =>
+    it.effect("the active-id spec hides a soft-deleted row; withId returns it", () =>
       Effect.gen(function* () {
         const repo = yield* OrganizationRepository;
         const { organization } = OrganizationRootOps.create({ id, name: "Acme", now });
@@ -69,10 +69,11 @@ suite("OrganizationRepositoryLive (integration)", () => {
         if (Result.isFailure(deletedEither)) throw new Error("expected Right");
         yield* repo.updateOne(deletedEither.success.organization);
 
-        const hiddenExit = yield* Effect.exit(repo.findOneById(id));
-        deepStrictEqual(Exit.isFailure(hiddenExit), true);
+        const hidden = yield* repo.findOne(activeById(id));
+        deepStrictEqual(hidden, null);
 
-        const visible = yield* repo.findOneByIdIncludingDeleted(id);
+        const visible = yield* repo.findOne(OrganizationSpecifications.withId(id));
+        if (visible === null) throw new Error("expected organization");
         deepStrictEqual(visible.deletedAt !== null, true);
       }).pipe(Effect.provide(TestLayer)),
     );

@@ -2,7 +2,10 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
 import { type ApproveDeviceGrantCommand } from "@/modules/auth/commands/approve-device-grant.command.js";
-import { DeviceGrantExpired } from "@/modules/auth/domain/device-grant/device-grant.errors.js";
+import {
+  DeviceGrantExpired,
+  DeviceGrantNotFound,
+} from "@/modules/auth/domain/device-grant/device-grant.errors.js";
 import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
 import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant/device-grant.root-ops.js";
 import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification.js";
@@ -17,7 +20,10 @@ export const approveDeviceGrant = Effect.fn("approveDeviceGrant")(function* (
   cmd: ApproveDeviceGrantCommand,
 ) {
   const repo = yield* DeviceGrantRepository;
-  const grant = yield* repo.findOneByUserCode(cmd.userCode);
+  const grant = yield* repo.findOne(DeviceGrantSpecifications.withUserCode(cmd.userCode));
+  if (grant === null) {
+    return yield* new DeviceGrantNotFound();
+  }
   const now = yield* DateTime.now;
   if (DeviceGrantSpecifications.isExpired(grant, now)) {
     return yield* new DeviceGrantExpired();

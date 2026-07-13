@@ -12,7 +12,9 @@ import { beforeEach } from "vitest";
 import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.js";
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
 import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops.js";
+import { MembershipSpecifications } from "@/modules/organization/domain/membership/membership.specification.js";
 import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/repositories/membership.repository-live.js";
+import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
@@ -21,6 +23,9 @@ const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const otherUserId = UserId.make("22222222-2222-2222-2222-222222222222");
 const organizationId = OrganizationId.make("33333333-3333-3333-3333-333333333333");
 const now = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
+
+const byPair = (u: UserId, o: OrganizationId) =>
+  Spec.and(MembershipSpecifications.forUser(u), MembershipSpecifications.forOrganization(o));
 
 // organization.memberships FKs to "user".users(id) and
 // organization.organizations(id) — seed both via raw SQL since neither
@@ -59,14 +64,15 @@ suite("MembershipRepositoryLive (integration)", () => {
     );
   });
 
-  describe("insert + findOneByUserIdAndOrgId", () => {
+  describe("insert + findOne", () => {
     it.effect("round-trips an inserted membership", () =>
       Effect.gen(function* () {
         yield* seedFks;
         const repo = yield* MembershipRepository;
         const { membership } = MembershipRootOps.create({ userId, organizationId, now });
         yield* repo.insertOne(membership);
-        const found = yield* repo.findOneByUserIdAndOrgId(userId, organizationId);
+        const found = yield* repo.findOne(byPair(userId, organizationId));
+        if (found === null) throw new Error("expected membership");
         deepStrictEqual(found.userId, userId);
         deepStrictEqual(found.organizationId, organizationId);
       }).pipe(Effect.provide(TestLayer)),
@@ -79,37 +85,32 @@ suite("MembershipRepositoryLive (integration)", () => {
         const { membership } = MembershipRootOps.create({ userId, organizationId, now });
         yield* repo.insertOne(membership);
         yield* repo.insertOne(membership);
-        const found = yield* repo.findOneByUserIdAndOrgId(userId, organizationId);
+        const found = yield* repo.findOne(byPair(userId, organizationId));
+        if (found === null) throw new Error("expected membership");
         deepStrictEqual(found.userId, userId);
       }).pipe(Effect.provide(TestLayer)),
     );
 
-    it.effect("findOneByUserIdAndOrgId fails MembershipNotFound for an unknown pair", () =>
+    it.effect("findOne returns null for an unknown pair", () =>
       Effect.gen(function* () {
         yield* seedFks;
         const repo = yield* MembershipRepository;
-        const exit = yield* Effect.exit(repo.findOneByUserIdAndOrgId(otherUserId, organizationId));
-        deepStrictEqual(Exit.isFailure(exit), true);
-        if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause)
-            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-            : null;
-          deepStrictEqual(error instanceof MembershipNotFound, true);
-        }
+        const found = yield* repo.findOne(byPair(otherUserId, organizationId));
+        deepStrictEqual(found, null);
       }).pipe(Effect.provide(TestLayer)),
     );
   });
 
   describe("delete", () => {
-    it.effect("removes the row; subsequent find fails MembershipNotFound", () =>
+    it.effect("removes the row; subsequent find returns null", () =>
       Effect.gen(function* () {
         yield* seedFks;
         const repo = yield* MembershipRepository;
         const { membership } = MembershipRootOps.create({ userId, organizationId, now });
         yield* repo.insertOne(membership);
         yield* repo.deleteOne(userId, organizationId);
-        const exit = yield* Effect.exit(repo.findOneByUserIdAndOrgId(userId, organizationId));
-        deepStrictEqual(Exit.isFailure(exit), true);
+        const found = yield* repo.findOne(byPair(userId, organizationId));
+        deepStrictEqual(found, null);
       }).pipe(Effect.provide(TestLayer)),
     );
 

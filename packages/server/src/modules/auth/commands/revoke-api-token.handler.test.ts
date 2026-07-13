@@ -13,6 +13,7 @@ import { revokeApiToken } from "@/modules/auth/commands/revoke-api-token.handler
 import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.js";
 import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
+import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
 import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
@@ -30,7 +31,9 @@ describe("revokeApiToken", () => {
       const { apiToken } = yield* mint(userId);
       yield* revokeApiToken(RevokeApiTokenCommand.make({ apiTokenId: apiToken.id, userId }));
       const repo = yield* ApiTokenRepository;
-      deepStrictEqual((yield* repo.findOneById(apiToken.id)).revokedAt !== null, true);
+      const found = yield* repo.findOne(ApiTokenSpecifications.withId(apiToken.id));
+      if (found === null) throw new Error("expected an api token");
+      deepStrictEqual(found.revokedAt !== null, true);
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -48,7 +51,9 @@ describe("revokeApiToken", () => {
         deepStrictEqual(error instanceof ApiTokenNotFound, true);
       }
       const repo = yield* ApiTokenRepository;
-      deepStrictEqual((yield* repo.findOneById(apiToken.id)).revokedAt, null);
+      const found = yield* repo.findOne(ApiTokenSpecifications.withId(apiToken.id));
+      if (found === null) throw new Error("expected an api token");
+      deepStrictEqual(found.revokedAt, null);
     }).pipe(Effect.provide(TestLayer)),
   );
 

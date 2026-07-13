@@ -9,6 +9,8 @@ import * as Option from "effect/Option";
 import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.js";
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
 import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops.js";
+import { MembershipSpecifications } from "@/modules/organization/domain/membership/membership.specification.js";
+import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
@@ -20,13 +22,17 @@ const organizationId = OrganizationId.make("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb
 const now = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
 const provide = Effect.provide(MembershipRepositoryFake);
 
+const byPair = (u: UserId, o: OrganizationId) =>
+  Spec.and(MembershipSpecifications.forUser(u), MembershipSpecifications.forOrganization(o));
+
 describe("MembershipRepositoryFake", () => {
-  it.effect("findOneByUserIdAndOrgId round-trips an inserted membership", () =>
+  it.effect("findOne by pair spec round-trips an inserted membership", () =>
     Effect.gen(function* () {
       const repo = yield* MembershipRepository;
       const { membership } = MembershipRootOps.create({ userId, organizationId, now });
       yield* repo.insertOne(membership);
-      const found = yield* repo.findOneByUserIdAndOrgId(userId, organizationId);
+      const found = yield* repo.findOne(byPair(userId, organizationId));
+      if (found === null) throw new Error("expected membership");
       deepStrictEqual(found.userId, userId);
       deepStrictEqual(found.organizationId, organizationId);
     }).pipe(provide),
@@ -38,33 +44,28 @@ describe("MembershipRepositoryFake", () => {
       const { membership } = MembershipRootOps.create({ userId, organizationId, now });
       yield* repo.insertOne(membership);
       yield* repo.insertOne(membership);
-      const found = yield* repo.findOneByUserIdAndOrgId(userId, organizationId);
+      const found = yield* repo.findOne(byPair(userId, organizationId));
+      if (found === null) throw new Error("expected membership");
       deepStrictEqual(found.userId, userId);
     }).pipe(provide),
   );
 
-  it.effect("findOneByUserIdAndOrgId fails MembershipNotFound when absent", () =>
+  it.effect("findOne returns null when absent", () =>
     Effect.gen(function* () {
       const repo = yield* MembershipRepository;
-      const exit = yield* Effect.exit(repo.findOneByUserIdAndOrgId(userId, organizationId));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(error instanceof MembershipNotFound, true);
-      }
+      const found = yield* repo.findOne(byPair(userId, organizationId));
+      deepStrictEqual(found, null);
     }).pipe(provide),
   );
 
-  it.effect("delete removes the row; subsequent find fails MembershipNotFound", () =>
+  it.effect("delete removes the row; subsequent find returns null", () =>
     Effect.gen(function* () {
       const repo = yield* MembershipRepository;
       const { membership } = MembershipRootOps.create({ userId, organizationId, now });
       yield* repo.insertOne(membership);
       yield* repo.deleteOne(userId, organizationId);
-      const exit = yield* Effect.exit(repo.findOneByUserIdAndOrgId(userId, organizationId));
-      deepStrictEqual(Exit.isFailure(exit), true);
+      const found = yield* repo.findOne(byPair(userId, organizationId));
+      deepStrictEqual(found, null);
     }).pipe(provide),
   );
 
@@ -87,8 +88,8 @@ describe("MembershipRepositoryFake", () => {
       const repo = yield* MembershipRepository;
       const { membership } = MembershipRootOps.create({ userId, organizationId, now });
       yield* repo.insertOne(membership);
-      const exit = yield* Effect.exit(repo.findOneByUserIdAndOrgId(otherUserId, organizationId));
-      deepStrictEqual(Exit.isFailure(exit), true);
+      const found = yield* repo.findOne(byPair(otherUserId, organizationId));
+      deepStrictEqual(found, null);
     }).pipe(provide),
   );
 });

@@ -5,18 +5,19 @@ import { type DeviceGrantNotFound } from "@/modules/auth/domain/device-grant/dev
 import { type DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.js";
 import { type DeviceGrantRoot } from "@/modules/auth/domain/device-grant/device-grant.root.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
 
-// Dumb collection port (per `feedback_dumb_repositories`). Lookups by the two
-// codes the flow keys on: device_code_hash (CLI poll) and user_code (browser
-// approve).
+// Dumb collection port (per `feedback_dumb_repositories`): insert/update the
+// aggregate, delete by id, and read it back by a Specification. The lookups the
+// flow keys on — device_code_hash (CLI poll) and user_code (browser approve) —
+// are expressed as specs at the call site (DeviceGrantSpecifications) and
+// compiled to a WHERE fragment by the live repository. Absence is a plain
+// `null`, mapped to DeviceGrantNotFound by the caller.
 export type DeviceGrantRepositoryShape = {
   readonly insertOne: (grant: DeviceGrantRoot) => Effect.Effect<void, PersistenceUnavailable>;
-  readonly findOneByCodeHash: (
-    deviceCodeHash: string,
-  ) => Effect.Effect<DeviceGrantRoot, DeviceGrantNotFound | PersistenceUnavailable>;
-  readonly findOneByUserCode: (
-    userCode: string,
-  ) => Effect.Effect<DeviceGrantRoot, DeviceGrantNotFound | PersistenceUnavailable>;
+  readonly findOne: (
+    spec: Specification<DeviceGrantRoot>,
+  ) => Effect.Effect<DeviceGrantRoot | null, PersistenceUnavailable>;
   readonly updateOne: (
     grant: DeviceGrantRoot,
   ) => Effect.Effect<void, DeviceGrantNotFound | PersistenceUnavailable>;

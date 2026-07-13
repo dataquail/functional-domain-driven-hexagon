@@ -6,6 +6,7 @@ import * as Layer from "effect/Layer";
 import { StartDeviceGrantCommand } from "@/modules/auth/commands/start-device-grant.command.js";
 import { startDeviceGrant } from "@/modules/auth/commands/start-device-grant.handler.js";
 import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
+import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification.js";
 import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service.js";
 import { DeviceGrantRepositoryFake } from "@/modules/auth/infrastructure/repositories/device-grant.repository-fake.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
@@ -22,7 +23,10 @@ describe("startDeviceGrant", () => {
       ok(/^[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(userCode));
 
       const repo = yield* DeviceGrantRepository;
-      const stored = yield* repo.findOneByCodeHash(CredentialHash.of(deviceCode));
+      const stored = yield* repo.findOne(
+        DeviceGrantSpecifications.withCodeHash(CredentialHash.of(deviceCode)),
+      );
+      if (stored === null) throw new Error("expected a grant");
       deepStrictEqual(stored.status, "pending");
       deepStrictEqual(stored.userId, null);
       deepStrictEqual(stored.userCode, userCode);

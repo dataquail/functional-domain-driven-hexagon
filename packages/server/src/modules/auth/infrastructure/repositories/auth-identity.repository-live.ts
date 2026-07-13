@@ -1,12 +1,13 @@
-import { Database, orFail, RowSchemas, sql } from "@org/database/index";
+import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { AuthIdentityNotFound } from "@/modules/auth/domain/auth-identity/auth-identity.errors.js";
 import {
   type AuthIdentity,
   AuthIdentityRepository,
 } from "@/modules/auth/domain/auth-identity/auth-identity.repository.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
+import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
 import * as AuthIdentityMapper from "./auth-identity.mapper.js";
@@ -16,17 +17,21 @@ export const AuthIdentityRepositoryLive = Layer.effect(
   Effect.gen(function* () {
     const db = yield* Database.Database;
 
-    const findOneBySubject = db.makeQuery((execute, subject: string) =>
+    // The spec contributes only the WHERE; the repository owns FROM and the
+    // projection. `LIMIT 1` is safe because every spec used with findOne
+    // selects at most one row (the unique subject).
+    const findOne = db.makeQuery((execute, spec: Specification<AuthIdentity>) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.AuthIdentityRowStd)`
-          SELECT * FROM auth.auth_identities WHERE subject = ${subject}
+          SELECT * FROM auth.auth_identities
+          WHERE ${criteriaToWhere(spec.criteria, AuthIdentityMapper.columns)}
+          LIMIT 1
         `),
       ).pipe(
-        orFail(() => new AuthIdentityNotFound({ subject })),
-        Effect.map(AuthIdentityMapper.toDomain),
+        Effect.map((row) => (row === null ? null : AuthIdentityMapper.toDomain(row))),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("AuthIdentityRepository.findOneBySubject"),
+        Effect.withSpan("AuthIdentityRepository.findOne"),
       ),
     );
 
@@ -44,6 +49,6 @@ export const AuthIdentityRepositoryLive = Layer.effect(
       ),
     );
 
-    return AuthIdentityRepository.of({ findOneBySubject, insertOne });
+    return AuthIdentityRepository.of({ findOne, insertOne });
   }),
 );

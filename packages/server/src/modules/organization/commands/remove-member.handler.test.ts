@@ -15,9 +15,11 @@ import { MembershipNotFound } from "@/modules/organization/domain/membership/mem
 import { type MembershipRevoked } from "@/modules/organization/domain/membership/membership.events.js";
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
 import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops.js";
+import { MembershipSpecifications } from "@/modules/organization/domain/membership/membership.specification.js";
 import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.js";
 import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization.repository-fake.js";
 import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.js";
+import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
@@ -62,8 +64,13 @@ describe("removeMember", () => {
         }),
       );
 
-      const exit = yield* Effect.exit(memberships.findOneByUserIdAndOrgId(otherUserId, orgId));
-      deepStrictEqual(Exit.isFailure(exit), true);
+      const found = yield* memberships.findOne(
+        Spec.and(
+          MembershipSpecifications.forUser(otherUserId),
+          MembershipSpecifications.forOrganization(orgId),
+        ),
+      );
+      deepStrictEqual(found, null);
 
       const events = yield* rec.byTag<MembershipRevoked>("MembershipRevoked");
       deepStrictEqual(events.length, 1);

@@ -9,6 +9,7 @@ import * as Option from "effect/Option";
 import { UserAlreadyExists } from "@/modules/user/domain/user/user.errors.js";
 import { type UserCreated } from "@/modules/user/domain/user/user.events.js";
 import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
+import { UserSpecifications } from "@/modules/user/domain/user/user.specification.js";
 import { UserRepositoryFake } from "@/modules/user/infrastructure/repositories/user.repository-fake.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
@@ -30,7 +31,8 @@ describe("createUser", () => {
     Effect.gen(function* () {
       const repo = yield* UserRepository;
       const id = yield* createUser(CreateUserCommand.make(baseCmd));
-      const stored = yield* repo.findOneById(id);
+      const stored = yield* repo.findOne(UserSpecifications.withId(id));
+      if (stored === null) throw new Error("expected stored user");
       deepStrictEqual(stored.email, "alice@example.com");
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -52,7 +54,8 @@ describe("createUser", () => {
     Effect.gen(function* () {
       const repo = yield* UserRepository;
       const id = yield* createUser(CreateUserCommand.make({ email: "jit@example.com" }));
-      const stored = yield* repo.findOneById(id);
+      const stored = yield* repo.findOne(UserSpecifications.withId(id));
+      if (stored === null) throw new Error("expected stored user");
       deepStrictEqual(stored.email, "jit@example.com");
       deepStrictEqual(stored.address, null);
     }).pipe(Effect.provide(TestLayer)),

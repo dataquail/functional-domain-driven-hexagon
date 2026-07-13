@@ -1,11 +1,11 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Option from "effect/Option";
 
 import { BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client.js";
 import { SubscriptionNotFound } from "@/modules/billing/domain/subscription/subscription.errors.js";
 import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
 import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
+import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
@@ -23,11 +23,12 @@ export const cancelSubscription = Effect.fn("cancelSubscription")(function* (
   const gateway = yield* BillingGateway;
   const bus = yield* DomainEventBus;
 
-  const found = yield* repo.findOneByOrganizationId(cmd.organizationId);
-  if (Option.isNone(found)) {
+  const existing = yield* repo.findOne(
+    SubscriptionSpecifications.forOrganization(cmd.organizationId),
+  );
+  if (existing === null) {
     return yield* new SubscriptionNotFound({ organizationId: cmd.organizationId });
   }
-  const existing = found.value;
 
   yield* gateway.cancelSubscription({
     stripeSubscriptionId: existing.stripeSubscriptionId,

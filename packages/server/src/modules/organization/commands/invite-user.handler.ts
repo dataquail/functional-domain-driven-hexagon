@@ -7,7 +7,9 @@ import * as Result from "effect/Result";
 import { type InviteUserCommand } from "@/modules/organization/commands/invite-user.command.js";
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
 import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
+import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
 import { InvitationMailer } from "@/modules/organization/domain/ports/clients/invitation-mailer.client.js";
+import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";
@@ -27,13 +29,18 @@ export const inviteUser = Effect.fn("inviteUser")(function* (cmd: InviteUserComm
     // Invite-again-becomes-resend: if an open invite already exists for
     // this (org, email), reissue it (fresh token + expiry) instead of
     // creating a duplicate row, so the pending list stays one-per-email.
-    const existing = yield* repo.findOneOpenByOrganizationIdAndEmail(
-      cmd.organizationId,
-      cmd.inviteeEmail,
+    // Key eqs + the `isOpen` variant compose into one spec; the repository
+    // compiles the whole predicate to SQL and returns at most one row.
+    const openInvite = yield* repo.findOne(
+      Spec.and(
+        InvitationSpecifications.forOrganization(cmd.organizationId),
+        InvitationSpecifications.withInviteeEmail(cmd.inviteeEmail),
+        InvitationSpecifications.isOpen,
+      ),
     );
-    if (existing !== null) {
-      const result = InvitationRootOps.reissue(existing, { token, expiresAt, now });
-      // `existing` is open by construction, so reissue can't reject it;
+    if (openInvite !== null) {
+      const result = InvitationRootOps.reissue(openInvite, { token, expiresAt, now });
+      // `openInvite` is open by construction, so reissue can't reject it;
       // a Left here would mean a concurrent accept/revoke — treat as a
       // defect (same posture as the accept handler's concurrent-revoke).
       if (Result.isFailure(result)) return yield* Effect.die(result.failure);
@@ -44,7 +51,7 @@ export const inviteUser = Effect.fn("inviteUser")(function* (cmd: InviteUserComm
         .updateOne(result.success.invitation)
         .pipe(Effect.catchTag("InvitationNotFound", Effect.die));
       yield* bus.dispatch(result.success.events);
-      return existing.id;
+      return openInvite.id;
     }
     const id = InvitationId.make(crypto.randomUUID());
     const { events, invitation } = InvitationRootOps.issue({

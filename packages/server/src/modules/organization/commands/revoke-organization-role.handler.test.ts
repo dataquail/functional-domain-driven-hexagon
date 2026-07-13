@@ -13,7 +13,9 @@ import { revokeOrganizationRole } from "@/modules/organization/commands/revoke-o
 import { DoesNotHaveOrganizationRole } from "@/modules/organization/domain/organization-roles/organization-role.errors.js";
 import { type OrganizationRoleRevoked } from "@/modules/organization/domain/organization-roles/organization-role.events.js";
 import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
+import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification.js";
 import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.js";
+import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
@@ -52,8 +54,15 @@ describe("revokeOrganizationRole", () => {
         }),
       );
 
-      const roles = yield* repo.findOneByUserIdAndOrgId(targetId, orgId);
-      deepStrictEqual([...roles.roles], []);
+      // Revoking the only role leaves no rows, so the aggregate no longer
+      // resolves — findOne reports null (no rows = no roles).
+      const roles = yield* repo.findOne(
+        Spec.and(
+          OrganizationRolesSpecifications.forUser(targetId),
+          OrganizationRolesSpecifications.forOrganization(orgId),
+        ),
+      );
+      deepStrictEqual(roles, null);
 
       const events = yield* rec.byTag<OrganizationRoleRevoked>("OrganizationRoleRevoked");
       deepStrictEqual(events.length, 1);

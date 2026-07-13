@@ -19,11 +19,14 @@ import {
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
 import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.js";
 import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
+import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
 import { type MembershipCreated } from "@/modules/organization/domain/membership/membership.events.js";
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
+import { MembershipSpecifications } from "@/modules/organization/domain/membership/membership.specification.js";
 import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors.js";
 import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake.js";
 import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.js";
+import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
@@ -71,10 +74,17 @@ describe("acceptInvitation", () => {
       );
       deepStrictEqual(orgId, organizationId);
 
-      const updated = yield* inv.findOneById(invitationId);
+      const updated = yield* inv.findOne(InvitationSpecifications.withId(invitationId));
+      if (updated === null) throw new Error("expected invitation");
       deepStrictEqual(updated.acceptedAt !== null, true);
 
-      const membership = yield* members.findOneByUserIdAndOrgId(userId, organizationId);
+      const membership = yield* members.findOne(
+        Spec.and(
+          MembershipSpecifications.forUser(userId),
+          MembershipSpecifications.forOrganization(organizationId),
+        ),
+      );
+      if (membership === null) throw new Error("expected membership");
       deepStrictEqual(membership.userId, userId);
 
       const tags = (yield* rec.all).map((e) => e._tag);

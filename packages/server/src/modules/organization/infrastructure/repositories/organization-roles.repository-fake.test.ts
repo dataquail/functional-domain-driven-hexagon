@@ -5,6 +5,8 @@ import * as Result from "effect/Result";
 
 import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
 import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.js";
+import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification.js";
+import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
@@ -14,18 +16,21 @@ const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const issuedBy = UserId.make("99999999-9999-9999-9999-999999999999");
 
+const forPair = Spec.and(
+  OrganizationRolesSpecifications.forUser(userId),
+  OrganizationRolesSpecifications.forOrganization(orgId),
+);
+
 describe("OrganizationRolesRepositoryFake", () => {
-  it.effect("returns an empty aggregate for a previously-unseen (user, org) pair", () =>
+  it.effect("findOne returns null for a previously-unseen (user, org) pair", () =>
     Effect.gen(function* () {
       const repo = yield* OrganizationRolesRepository;
-      const roles = yield* repo.findOneByUserIdAndOrgId(userId, orgId);
-      deepStrictEqual(roles.userId, userId);
-      deepStrictEqual(roles.organizationId, orgId);
-      deepStrictEqual([...roles.roles], []);
+      const roles = yield* repo.findOne(forPair);
+      deepStrictEqual(roles, null);
     }).pipe(Effect.provide(OrganizationRolesRepositoryFake)),
   );
 
-  it.effect("round-trips a saved aggregate via findOneByUserIdAndOrgId", () =>
+  it.effect("round-trips a saved aggregate via findOne", () =>
     Effect.gen(function* () {
       const repo = yield* OrganizationRolesRepository;
       const granted = OrganizationRolesRootOps.grantRole(
@@ -35,7 +40,8 @@ describe("OrganizationRolesRepositoryFake", () => {
       );
       if (Result.isFailure(granted)) throw new Error("expected Right");
       yield* repo.upsertOne(granted.success.organizationRoles);
-      const fetched = yield* repo.findOneByUserIdAndOrgId(userId, orgId);
+      const fetched = yield* repo.findOne(forPair);
+      if (fetched === null) throw new Error("expected aggregate");
       deepStrictEqual(
         fetched.roles.map((r) => ({ role: r.role, issuedBy: r.issuedBy })),
         [{ role: "admin", issuedBy }],

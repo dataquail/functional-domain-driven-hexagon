@@ -1,18 +1,16 @@
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
-import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 import { beforeEach } from "vitest";
 
-import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.js";
 import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.js";
+import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
 import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositories/api-token.repository-live.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
@@ -53,36 +51,32 @@ suite("ApiTokenRepositoryLive (integration)", () => {
     );
   });
 
-  it.effect("insert + findOneById + findOneByHash round-trip a token through the DB", () =>
+  it.effect("insert + findOne by id and by hash round-trip a token through the DB", () =>
     Effect.gen(function* () {
       yield* insertUserRow;
       const repo = yield* ApiTokenRepository;
       const now = yield* DateTime.now;
       yield* repo.insertOne(make(idA, "hash-A", now));
-      const byId = yield* repo.findOneById(idA);
+      const byId = yield* repo.findOne(ApiTokenSpecifications.withId(idA));
+      const byHash = yield* repo.findOne(ApiTokenSpecifications.withHash("hash-A"));
+      if (byId === null || byHash === null) throw new Error("expected a token");
       deepStrictEqual(byId.id, idA);
       deepStrictEqual(byId.userId, userId);
       deepStrictEqual(byId.tokenHash, "hash-A");
       deepStrictEqual(byId.revokedAt, null);
-      deepStrictEqual((yield* repo.findOneByHash("hash-A")).id, idA);
+      deepStrictEqual(byHash.id, idA);
     }).pipe(Effect.provide(TestLayer)),
   );
 
-  it.effect("findOneByHash fails ApiTokenNotFound for an unknown hash", () =>
+  it.effect("findOne returns null for an unknown hash (absence is not an error)", () =>
     Effect.gen(function* () {
       const repo = yield* ApiTokenRepository;
-      const exit = yield* Effect.exit(repo.findOneByHash("missing"));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(error instanceof ApiTokenNotFound, true);
-      }
+      const found = yield* repo.findOne(ApiTokenSpecifications.withHash("missing"));
+      deepStrictEqual(found, null);
     }).pipe(Effect.provide(TestLayer)),
   );
 
-  it.effect("findManyByUser returns active tokens newest-first and hides revoked", () =>
+  it.effect("findMany(forUser) returns active tokens newest-first and hides revoked", () =>
     Effect.gen(function* () {
       yield* insertUserRow;
       const repo = yield* ApiTokenRepository;
@@ -90,7 +84,7 @@ suite("ApiTokenRepositoryLive (integration)", () => {
       yield* repo.insertOne(make(idA, "a", now, now));
       yield* repo.insertOne(make(idB, "b", now, DateTime.add(now, { hours: 1 })));
       yield* repo.deleteOne(idA);
-      const mine = yield* repo.findManyByUser(userId);
+      const mine = yield* repo.findMany(ApiTokenSpecifications.forUser(userId));
       deepStrictEqual(
         mine.map((t) => t.id),
         [idB],
@@ -105,7 +99,9 @@ suite("ApiTokenRepositoryLive (integration)", () => {
       const now = yield* DateTime.now;
       yield* repo.insertOne(make(idA, "a", now));
       yield* repo.deleteOne(idA);
-      deepStrictEqual((yield* repo.findOneById(idA)).revokedAt !== null, true);
+      const found = yield* repo.findOne(ApiTokenSpecifications.withId(idA));
+      if (found === null) throw new Error("expected a token");
+      deepStrictEqual(found.revokedAt !== null, true);
       const second = yield* Effect.exit(repo.deleteOne(idA));
       deepStrictEqual(Exit.isFailure(second), true);
     }).pipe(Effect.provide(TestLayer)),
@@ -120,7 +116,8 @@ suite("ApiTokenRepositoryLive (integration)", () => {
       yield* repo.insertOne(seed);
       const later = DateTime.add(now, { hours: 2 });
       yield* repo.updateOne(ApiTokenRootOps.touch({ token: seed, now: later }));
-      const found = yield* repo.findOneById(idA);
+      const found = yield* repo.findOne(ApiTokenSpecifications.withId(idA));
+      if (found === null) throw new Error("expected a token");
       deepStrictEqual(found.lastUsedAt, later);
       deepStrictEqual(found.expiresAt, seed.expiresAt);
     }).pipe(Effect.provide(TestLayer)),

@@ -8,6 +8,7 @@ import { touchApiToken } from "@/modules/auth/commands/touch-api-token.handler.j
 import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.js";
+import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
 import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
@@ -42,7 +43,8 @@ describe("touchApiToken", () => {
       const before = yield* seed(farPast);
       yield* touchApiToken(cmd);
       const repo = yield* ApiTokenRepository;
-      const after = yield* repo.findOneById(apiTokenId);
+      const after = yield* repo.findOne(ApiTokenSpecifications.withId(apiTokenId));
+      if (after === null) throw new Error("expected an api token");
       deepStrictEqual(DateTime.isGreaterThan(after.lastUsedAt, before.lastUsedAt), true);
       // Fixed expiry: touch must NOT extend it.
       deepStrictEqual(after.expiresAt, before.expiresAt);
@@ -55,7 +57,8 @@ describe("touchApiToken", () => {
       const before = yield* seed(justNow);
       yield* touchApiToken(TouchApiTokenCommand.make({ apiTokenId, thresholdSeconds: 3600 }));
       const repo = yield* ApiTokenRepository;
-      const after = yield* repo.findOneById(apiTokenId);
+      const after = yield* repo.findOne(ApiTokenSpecifications.withId(apiTokenId));
+      if (after === null) throw new Error("expected an api token");
       deepStrictEqual(after.lastUsedAt, before.lastUsedAt);
     }).pipe(provide),
   );

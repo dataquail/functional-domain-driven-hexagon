@@ -1,12 +1,12 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Option from "effect/Option";
 
 import { BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client.js";
 import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.js";
 import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
 import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
 import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
+import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
@@ -27,8 +27,10 @@ export const startSubscription = Effect.fn("startSubscription")(function* (
 
   // Idempotency check at the use-case layer: avoid a Stripe-side
   // double-charge if a caller retries POST after a network blip.
-  const existing = yield* repo.findOneByOrganizationId(cmd.organizationId);
-  if (Option.isSome(existing)) {
+  const existing = yield* repo.findOne(
+    SubscriptionSpecifications.forOrganization(cmd.organizationId),
+  );
+  if (existing !== null) {
     return yield* new SubscriptionAlreadyExistsForOrganization({
       organizationId: cmd.organizationId,
     });

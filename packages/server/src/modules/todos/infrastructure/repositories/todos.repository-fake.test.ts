@@ -10,6 +10,8 @@ import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.js";
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { TodoRootOps } from "@/modules/todos/domain/todo/todo.root-ops.js";
 import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js";
+import { TodoSpecifications } from "@/modules/todos/domain/todo/todos.specification.js";
+import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 import { TodosRepositoryFake } from "./todos.repository-fake.js";
@@ -23,6 +25,9 @@ const later = DateTime.makeUnsafe(new Date("2025-02-01T00:00:00Z"));
 
 const buyMilk = TodoRootOps.create({ id: aliceId, organizationId: orgId, title: "Buy milk", now });
 
+const byOrgAndId = (organizationId: OrganizationId, id: TodoId) =>
+  Spec.and(TodoSpecifications.withId(id), TodoSpecifications.forOrganization(organizationId));
+
 const provide = Effect.provide(TodosRepositoryFake);
 
 describe("TodosRepositoryFake", () => {
@@ -31,7 +36,8 @@ describe("TodosRepositoryFake", () => {
       Effect.gen(function* () {
         const repo = yield* TodosRepository;
         yield* repo.insertOne(buyMilk);
-        const found = yield* repo.findOneById(orgId, buyMilk.id);
+        const found = yield* repo.findOne(byOrgAndId(orgId, buyMilk.id));
+        if (found === null) throw new Error("expected stored todo");
         deepStrictEqual(found.id, buyMilk.id);
         deepStrictEqual(found.organizationId, orgId);
         deepStrictEqual(found.title, buyMilk.title);
@@ -40,33 +46,21 @@ describe("TodosRepositoryFake", () => {
     );
   });
 
-  describe("findOneById", () => {
-    it.effect("fails TodoNotFound for an unknown id", () =>
+  describe("findOne", () => {
+    it.effect("returns null for an unknown id", () =>
       Effect.gen(function* () {
         const repo = yield* TodosRepository;
-        const exit = yield* Effect.exit(repo.findOneById(orgId, bobId));
-        deepStrictEqual(Exit.isFailure(exit), true);
-        if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause)
-            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-            : null;
-          deepStrictEqual(error instanceof TodoNotFound, true);
-        }
+        const found = yield* repo.findOne(byOrgAndId(orgId, bobId));
+        deepStrictEqual(found, null);
       }).pipe(provide),
     );
 
-    it.effect("fails TodoNotFound when the id exists but in another org (isolation)", () =>
+    it.effect("returns null when the id exists but in another org (isolation)", () =>
       Effect.gen(function* () {
         const repo = yield* TodosRepository;
         yield* repo.insertOne(buyMilk);
-        const exit = yield* Effect.exit(repo.findOneById(otherOrgId, buyMilk.id));
-        deepStrictEqual(Exit.isFailure(exit), true);
-        if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause)
-            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-            : null;
-          deepStrictEqual(error instanceof TodoNotFound, true);
-        }
+        const found = yield* repo.findOne(byOrgAndId(otherOrgId, buyMilk.id));
+        deepStrictEqual(found, null);
       }).pipe(provide),
     );
   });
@@ -82,7 +76,8 @@ describe("TodosRepositoryFake", () => {
           now: later,
         });
         yield* repo.updateOne(completed);
-        const found = yield* repo.findOneById(orgId, buyMilk.id);
+        const found = yield* repo.findOne(byOrgAndId(orgId, buyMilk.id));
+        if (found === null) throw new Error("expected stored todo");
         deepStrictEqual(found.completed, true);
         deepStrictEqual(found.updatedAt, later);
       }).pipe(provide),
@@ -109,8 +104,8 @@ describe("TodosRepositoryFake", () => {
         const repo = yield* TodosRepository;
         yield* repo.insertOne(buyMilk);
         yield* repo.deleteOne(orgId, buyMilk.id);
-        const exit = yield* Effect.exit(repo.findOneById(orgId, buyMilk.id));
-        deepStrictEqual(Exit.isFailure(exit), true);
+        const found = yield* repo.findOne(byOrgAndId(orgId, buyMilk.id));
+        deepStrictEqual(found, null);
       }).pipe(provide),
     );
 
@@ -135,7 +130,8 @@ describe("TodosRepositoryFake", () => {
         const exit = yield* Effect.exit(repo.deleteOne(otherOrgId, buyMilk.id));
         deepStrictEqual(Exit.isFailure(exit), true);
         // Row still present under its real org.
-        const found = yield* repo.findOneById(orgId, buyMilk.id);
+        const found = yield* repo.findOne(byOrgAndId(orgId, buyMilk.id));
+        if (found === null) throw new Error("expected stored todo");
         deepStrictEqual(found.id, buyMilk.id);
       }).pipe(provide),
     );

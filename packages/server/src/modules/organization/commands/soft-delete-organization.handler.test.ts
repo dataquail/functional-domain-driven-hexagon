@@ -13,6 +13,7 @@ import { softDeleteOrganization } from "@/modules/organization/commands/soft-del
 import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.js";
 import { type OrganizationSoftDeleted } from "@/modules/organization/domain/organization/organization.events.js";
 import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
+import { OrganizationSpecifications } from "@/modules/organization/domain/organization/organization.specification.js";
 import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.js";
 import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization.repository-fake.js";
 import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.js";
@@ -42,7 +43,8 @@ describe("softDeleteOrganization", () => {
         CreateOrganizationCommand.make({ name: "Acme", actorUserId }),
       );
       yield* softDeleteOrganization(SoftDeleteOrganizationCommand.make({ organizationId: id }));
-      const stored = yield* repo.findOneByIdIncludingDeleted(id);
+      const stored = yield* repo.findOne(OrganizationSpecifications.withId(id));
+      if (stored === null) throw new Error("expected organization");
       deepStrictEqual(stored.deletedAt !== null, true);
       const events = yield* rec.byTag<OrganizationSoftDeleted>("OrganizationSoftDeleted");
       deepStrictEqual(events.length, 1);

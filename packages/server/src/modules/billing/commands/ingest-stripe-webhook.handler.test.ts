@@ -12,6 +12,7 @@ import { InvalidWebhookSignature } from "@/modules/billing/domain/subscription/s
 import { type StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events.js";
 import { type StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.js";
 import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
+import { WebhookEventSpecifications } from "@/modules/billing/domain/webhook-event/webhook-event.specification.js";
 import {
   BillingGatewayFake,
   FAKE_WEBHOOK_SIGNATURE,
@@ -53,8 +54,8 @@ describe("ingestStripeWebhook", () => {
 
         yield* ingestStripeWebhook(cmd("evt_new"));
 
-        const seen = yield* repo.findOneByStripeEventId("evt_new");
-        ok(Option.isSome(seen));
+        const seen = yield* repo.findOne(WebhookEventSpecifications.withStripeEventId("evt_new"));
+        ok(seen !== null);
 
         const events = yield* rec.byTag<StripeWebhookIngested>("StripeWebhookIngested");
         deepStrictEqual(events.length, 1);
@@ -78,8 +79,8 @@ describe("ingestStripeWebhook", () => {
         );
       }
 
-      const seen = yield* repo.findOneByStripeEventId("evt_bad_sig");
-      ok(Option.isNone(seen));
+      const seen = yield* repo.findOne(WebhookEventSpecifications.withStripeEventId("evt_bad_sig"));
+      deepStrictEqual(seen, null);
       const events = yield* rec.byTag<StripeWebhookIngested>("StripeWebhookIngested");
       deepStrictEqual(events.length, 0);
     }).pipe(Effect.provide(TestLayer)),

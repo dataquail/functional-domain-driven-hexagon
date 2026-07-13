@@ -13,6 +13,7 @@ import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wall
 import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
 import { WalletRootOps } from "@/modules/wallet/domain/wallet/wallet.root-ops.js";
+import { WalletSpecifications } from "@/modules/wallet/domain/wallet/wallet.specification.js";
 import { WalletRepositoryLive } from "@/modules/wallet/infrastructure/repositories/wallet.repository-live.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
@@ -59,17 +60,17 @@ suite("WalletRepositoryLive (integration)", () => {
   });
 
   describe("insert", () => {
-    it.effect("persists the wallet and decodes it back via findOneByOrganizationId", () =>
+    it.effect("persists the wallet and decodes it back via findOne", () =>
       Effect.gen(function* () {
         yield* seedOrgRow(organizationId);
         const repo = yield* WalletRepository;
         yield* repo.insertOne(acmeWallet);
-        const found = yield* repo.findOneByOrganizationId(organizationId);
-        deepStrictEqual(Option.isSome(found), true);
-        if (Option.isSome(found)) {
-          deepStrictEqual(found.value.id, acmeWallet.id);
-          deepStrictEqual(found.value.organizationId, organizationId);
-          deepStrictEqual(found.value.balance, 0);
+        const found = yield* repo.findOne(WalletSpecifications.forOrganization(organizationId));
+        deepStrictEqual(found !== null, true);
+        if (found !== null) {
+          deepStrictEqual(found.id, acmeWallet.id);
+          deepStrictEqual(found.organizationId, organizationId);
+          deepStrictEqual(found.balance, 0);
         }
       }).pipe(Effect.provide(TestLayer)),
     );
@@ -98,12 +99,12 @@ suite("WalletRepositoryLive (integration)", () => {
     );
   });
 
-  describe("findOneByOrganizationId", () => {
-    it.effect("returns None when no wallet exists for the org", () =>
+  describe("findOne", () => {
+    it.effect("returns null when no wallet exists for the org", () =>
       Effect.gen(function* () {
         const repo = yield* WalletRepository;
-        const result = yield* repo.findOneByOrganizationId(otherOrgId);
-        deepStrictEqual(Option.isNone(result), true);
+        const result = yield* repo.findOne(WalletSpecifications.forOrganization(otherOrgId));
+        deepStrictEqual(result === null, true);
       }).pipe(Effect.provide(TestLayer)),
     );
   });

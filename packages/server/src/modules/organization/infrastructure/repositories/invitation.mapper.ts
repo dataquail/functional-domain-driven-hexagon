@@ -4,8 +4,21 @@ import * as DateTime from "effect/DateTime";
 import { InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
+import { type ColumnMap } from "@/platform/persistence/criteria-to-sql.js";
 
 type Row = RowSchemas.InvitationRow;
+
+// Resolves the specification field names the live repository filters on to
+// physical columns of "organization".invitations. Only filterable scalar
+// fields need an entry; `satisfies` keeps the keys honest against the root.
+export const columns = {
+  id: "id",
+  token: "token",
+  organizationId: "organization_id",
+  inviteeEmail: "invitee_email",
+  acceptedAt: "accepted_at",
+  revokedAt: "revoked_at",
+} as const satisfies Partial<Record<keyof InvitationRoot, string>> & ColumnMap;
 
 export const toDomain = (row: Row): InvitationRoot =>
   new InvitationRoot({

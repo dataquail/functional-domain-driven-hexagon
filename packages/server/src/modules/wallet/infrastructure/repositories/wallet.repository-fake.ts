@@ -8,6 +8,7 @@ import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wall
 import { type WalletId } from "@/modules/wallet/domain/wallet/wallet.id.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
 import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 const findByOrganizationIdIn = (
@@ -36,11 +37,9 @@ export const WalletRepositoryFake = Layer.effect(
           : Ref.update(store, HashMap.set(wallet.id, wallet)),
       );
 
-    const findOneByOrganizationId = (
-      organizationId: OrganizationId,
-    ): Effect.Effect<Option.Option<WalletRoot>> =>
-      Effect.map(Ref.get(store), (m) => findByOrganizationIdIn(m, organizationId));
+    const findOne = (spec: Specification<WalletRoot>): Effect.Effect<WalletRoot | null> =>
+      Effect.map(Ref.get(store), (m) => Array.from(HashMap.values(m)).find(spec) ?? null);
 
-    return WalletRepository.of({ insertOne, findOneByOrganizationId });
+    return WalletRepository.of({ insertOne, findOne });
   }),
 );

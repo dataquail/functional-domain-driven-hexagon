@@ -6,6 +6,7 @@ import * as Ref from "effect/Ref";
 import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.js";
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
 import { type MembershipRoot } from "@/modules/organization/domain/membership/membership.root.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 
@@ -38,29 +39,15 @@ export const MembershipRepositoryFake = Layer.effect(
         return Ref.update(store, HashMap.remove(k));
       });
 
-    const findOneByUserIdAndOrgId = (
-      userId: UserId,
-      organizationId: OrganizationId,
-    ): Effect.Effect<MembershipRoot, MembershipNotFound> =>
-      Effect.flatMap(Ref.get(store), (m) => {
-        const found = HashMap.get(m, key(userId, organizationId));
-        return found._tag === "Some"
-          ? Effect.succeed(found.value)
-          : Effect.fail(new MembershipNotFound({ userId, organizationId }));
-      });
-
-    const findManyByOrganizationId = (
-      organizationId: OrganizationId,
-    ): Effect.Effect<ReadonlyArray<MembershipRoot>> =>
-      Effect.map(Ref.get(store), (m) =>
-        Array.from(HashMap.values(m)).filter((mem) => mem.organizationId === organizationId),
-      );
+    // The spec IS the in-memory predicate — the same object the live repo
+    // compiles to SQL — so fake and live agree by construction.
+    const findOne = (spec: Specification<MembershipRoot>): Effect.Effect<MembershipRoot | null> =>
+      Effect.map(Ref.get(store), (m) => Array.from(HashMap.values(m)).find(spec) ?? null);
 
     return MembershipRepository.of({
       insertOne,
       deleteOne: deleteRow,
-      findOneByUserIdAndOrgId,
-      findManyByOrganizationId,
+      findOne,
     });
   }),
 );

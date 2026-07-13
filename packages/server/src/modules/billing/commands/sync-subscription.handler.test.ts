@@ -3,13 +3,13 @@ import { deepStrictEqual, ok } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 
 import { SyncSubscriptionCommand } from "@/modules/billing/commands/sync-subscription.command.js";
 import { syncSubscription } from "@/modules/billing/commands/sync-subscription.handler.js";
 import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
 import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
 import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
+import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.js";
 import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
@@ -52,9 +52,9 @@ describe("syncSubscription", () => {
       );
 
       const repo = yield* SubscriptionRepository;
-      const found = yield* repo.findOneByOrganizationId(acme);
-      ok(Option.isSome(found));
-      if (Option.isSome(found)) deepStrictEqual(found.value.status, "active");
+      const found = yield* repo.findOne(SubscriptionSpecifications.forOrganization(acme));
+      ok(found !== null);
+      deepStrictEqual(found.status, "active");
 
       const tags = (yield* rec.all).map((e) => e._tag);
       deepStrictEqual(tags, ["SubscriptionStatusChanged"]);
@@ -73,8 +73,8 @@ describe("syncSubscription", () => {
         }),
       );
       const repo = yield* SubscriptionRepository;
-      const found = yield* repo.findOneByOrganizationId(acme);
-      deepStrictEqual(Option.isNone(found), true);
+      const found = yield* repo.findOne(SubscriptionSpecifications.forOrganization(acme));
+      deepStrictEqual(found, null);
       deepStrictEqual((yield* rec.all).length, 0);
     }).pipe(Effect.provide(TestLayer)),
   );

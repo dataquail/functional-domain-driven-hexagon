@@ -9,6 +9,7 @@ import { SessionNotFound } from "@/modules/auth/domain/session/session.errors.js
 import { type SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
 import { SessionRoot } from "@/modules/auth/domain/session/session.root.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
 
 export const SessionRepositoryFake = Layer.effect(
   SessionRepository,
@@ -18,13 +19,10 @@ export const SessionRepositoryFake = Layer.effect(
     const insertOne = (session: SessionRoot): Effect.Effect<void> =>
       Ref.update(store, HashMap.set(session.id, session));
 
-    const findOneById = (id: SessionId): Effect.Effect<SessionRoot, SessionNotFound> =>
-      Effect.flatMap(Ref.get(store), (m) =>
-        Option.match(HashMap.get(m, id), {
-          onNone: () => Effect.fail(new SessionNotFound({ sessionId: id })),
-          onSome: Effect.succeed,
-        }),
-      );
+    // The spec IS the in-memory predicate — the same object the live repo
+    // compiles to SQL — so fake and live agree by construction.
+    const findOne = (spec: Specification<SessionRoot>): Effect.Effect<SessionRoot | null> =>
+      Effect.map(Ref.get(store), (m) => Array.from(HashMap.values(m)).find(spec) ?? null);
 
     // Mirrors the live impl: a re-delete on an already-soft-deleted
     // session is reported as SessionNotFound (the SQL UPDATE matches
@@ -84,6 +82,6 @@ export const SessionRepositoryFake = Layer.effect(
         );
       });
 
-    return SessionRepository.of({ insertOne, findOneById, deleteOne: deleteSession, updateOne });
+    return SessionRepository.of({ insertOne, findOne, deleteOne: deleteSession, updateOne });
   }),
 );

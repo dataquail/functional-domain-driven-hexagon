@@ -1,10 +1,14 @@
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 
 import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors.js";
-import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
+import {
+  type WebhookEventRecord,
+  WebhookEventRepository,
+} from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
+import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
 import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
 
 import * as WebhookEventMapper from "./webhook-event.mapper.js";
@@ -37,21 +41,24 @@ export const WebhookEventRepositoryLive = Layer.effect(
       ),
     );
 
-    const findOneByStripeEventId = db.makeQuery((execute, stripeEventId: string) =>
+    // The spec contributes only the WHERE; the repository owns FROM and the
+    // projection. `LIMIT 1` is safe because every spec used with findOne
+    // selects at most one row (the unique stripe_event_id).
+    const findOne = db.makeQuery((execute, spec: Specification<WebhookEventRecord>) =>
       execute((client) =>
         client.maybeOne(sql.type(RowSchemas.WebhookEventRowStd)`
-          SELECT * FROM billing.webhook_events WHERE stripe_event_id = ${stripeEventId}
+          SELECT * FROM billing.webhook_events
+          WHERE ${criteriaToWhere(spec.criteria, WebhookEventMapper.columns)}
+          LIMIT 1
         `),
       ).pipe(
-        Effect.map((row) =>
-          row === null ? Option.none() : Option.some(WebhookEventMapper.toDomain(row)),
-        ),
+        Effect.map((row) => (row === null ? null : WebhookEventMapper.toDomain(row))),
         Effect.catchTag("DatabaseError", Effect.die),
         translatePersistenceUnavailable,
-        Effect.withSpan("WebhookEventRepository.findOneByStripeEventId"),
+        Effect.withSpan("WebhookEventRepository.findOne"),
       ),
     );
 
-    return WebhookEventRepository.of({ insertOne, findOneByStripeEventId });
+    return WebhookEventRepository.of({ insertOne, findOne });
   }),
 );

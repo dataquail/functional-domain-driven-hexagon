@@ -4,8 +4,17 @@ import * as DateTime from "effect/DateTime";
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { TodoRoot } from "@/modules/todos/domain/todo/todo.root.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
+import { type ColumnMap } from "@/platform/persistence/criteria-to-sql.js";
 
 type Row = RowSchemas.TodoRow;
+
+// Resolves the specification field names the live repository filters on to
+// physical columns of todos.todos. Only filterable scalar fields need an
+// entry; `satisfies` keeps the keys honest against the root.
+export const columns = {
+  id: "id",
+  organizationId: "organization_id",
+} as const satisfies Partial<Record<keyof TodoRoot, string>> & ColumnMap;
 
 export const toDomain = (row: Row): TodoRoot =>
   new TodoRoot({

@@ -4,8 +4,17 @@ import * as DateTime from "effect/DateTime";
 import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
 import { SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
+import { type ColumnMap } from "@/platform/persistence/criteria-to-sql.js";
 
 type Row = RowSchemas.SubscriptionRow;
+
+// Resolves the specification field names the live repository filters on to
+// physical columns of billing.subscriptions. Only filterable scalar fields
+// need an entry; `satisfies` keeps the keys honest against the root.
+export const columns = {
+  organizationId: "organization_id",
+  stripeSubscriptionId: "stripe_subscription_id",
+} as const satisfies Partial<Record<keyof SubscriptionRoot, string>> & ColumnMap;
 
 export const toDomain = (row: Row): SubscriptionRoot =>
   new SubscriptionRoot({

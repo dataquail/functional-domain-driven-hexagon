@@ -4,6 +4,7 @@ import type * as Effect from "effect/Effect";
 import { type MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.js";
 import { type MembershipRoot } from "@/modules/organization/domain/membership/membership.root.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 
@@ -15,19 +16,19 @@ import { type UserId } from "@/platform/ids/user-id.js";
 // `delete` returns `MembershipNotFound` when there's nothing to remove
 // — `RemoveMember`/`LeaveOrganization` rely on that to surface a 404 to
 // callers asking to remove a non-existent member.
+//
+// The composite (userId, organizationId) lookup is a spec at the call
+// site (see MembershipSpecifications). Absence is a plain `null`; mapping
+// it to `MembershipNotFound` is the caller's job.
 export type MembershipRepositoryShape = {
   readonly insertOne: (membership: MembershipRoot) => Effect.Effect<void, PersistenceUnavailable>;
   readonly deleteOne: (
     userId: UserId,
     organizationId: OrganizationId,
   ) => Effect.Effect<void, MembershipNotFound | PersistenceUnavailable>;
-  readonly findOneByUserIdAndOrgId: (
-    userId: UserId,
-    organizationId: OrganizationId,
-  ) => Effect.Effect<MembershipRoot, MembershipNotFound | PersistenceUnavailable>;
-  readonly findManyByOrganizationId: (
-    organizationId: OrganizationId,
-  ) => Effect.Effect<ReadonlyArray<MembershipRoot>, PersistenceUnavailable>;
+  readonly findOne: (
+    spec: Specification<MembershipRoot>,
+  ) => Effect.Effect<MembershipRoot | null, PersistenceUnavailable>;
 };
 
 export class MembershipRepository extends Context.Service<

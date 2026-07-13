@@ -7,6 +7,7 @@ import * as Ref from "effect/Ref";
 import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user/user.errors.js";
 import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
 import { type UserRoot } from "@/modules/user/domain/user/user.root.js";
+import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 
 const findUserByEmail = (
@@ -45,17 +46,11 @@ export const UserRepositoryFake = Layer.effect(
           : Effect.fail(new UserNotFound({ userId: id })),
       );
 
-    const findOneById = (id: UserId): Effect.Effect<UserRoot, UserNotFound> =>
-      Effect.flatMap(Ref.get(store), (m) =>
-        Option.match(HashMap.get(m, id), {
-          onNone: () => Effect.fail(new UserNotFound({ userId: id })),
-          onSome: Effect.succeed,
-        }),
-      );
+    // The spec IS the in-memory predicate — the same object the live repo
+    // compiles to SQL — so fake and live agree by construction.
+    const findOne = (spec: Specification<UserRoot>): Effect.Effect<UserRoot | null> =>
+      Effect.map(Ref.get(store), (m) => Array.from(HashMap.values(m)).find(spec) ?? null);
 
-    const findOneByEmail = (email: string): Effect.Effect<Option.Option<UserRoot>> =>
-      Effect.map(Ref.get(store), (m) => findUserByEmail(m, email));
-
-    return UserRepository.of({ insertOne, updateOne, deleteOne, findOneById, findOneByEmail });
+    return UserRepository.of({ insertOne, updateOne, deleteOne, findOne });
   }),
 );
