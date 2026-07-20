@@ -8,7 +8,7 @@ import { Card } from "@org/components/primitives/card";
 import { Skeleton } from "@org/components/primitives/skeleton";
 import React from "react";
 
-import { OrgsList } from "@/features/admin/orgs-list/orgs-list";
+import { OrgsList } from "@/features/admin/orgs-list/orgs-list.view";
 import { ServerHydrationBoundary } from "@/lib/tanstack-query/server-hydration-boundary";
 import { prefetchAdminOrgs } from "@/services/data-access/orgs-queries.server";
 

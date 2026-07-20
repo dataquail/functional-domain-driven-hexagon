@@ -32,7 +32,7 @@ Components import the hook shape. ViewModels import the Effect or Observable sha
 
 ### View layer — three tiers
 
-**Tier 1 — naked component**. JSX plus 1–3 hook calls from `services/data-access/` and any pure derivation. No abstraction file. Most leaf components live here.
+**Tier 1 — naked component (`*.view.tsx`)**. JSX plus 1–3 hook calls from `services/data-access/` and any pure derivation. No orchestration abstraction, but it still carries a stereotype suffix so every feature source file declares its tier at a filename glance. Most leaf components live here.
 
 **Tier 2 — Presenter (`*.presenter.ts` or `*.presenter.tsx`)**. A React-coupled custom hook (and, when JSX is needed, an accompanying provider or wrapper component) that orchestrates intrinsically-React libraries (TanStack Form, react-hook-form, etc.) with data-access calls. The `.tsx` form is appropriate when the Presenter must export JSX itself — for example, a context provider that scopes multi-step form state across screens, or a wrapper that interfaces with a JSX-input library like react-pdf. The Presenter is _allowed_ to depend on the React framework and on React-coupled libraries; that's the point of the tier. It corresponds to the Presenter in MVP. Tested with `renderHook` (or `render`, when JSX is involved) from `@testing-library/react`.
 
@@ -46,7 +46,7 @@ The decision of which tier a piece of logic belongs in is mechanical and based o
 
 - React-library state (form fields, drag handlers, animation refs) plus possibly data-access → **Presenter**. The library's hook is the source of truth and cannot be expressed as an Effect.
 - Effect-shaped orchestration (queries, mutations, streams, derivations) with no React-library state → **ViewModel**.
-- Just data plus JSX → **naked component**.
+- Just data plus JSX → **naked component (`*.view.tsx`)**.
 
 The architecture does not name the whole — it names the parts. Hexagonal at the application boundary, MVVM where the orchestration is framework-agnostic, MVP where it isn't.
 
@@ -62,13 +62,14 @@ Per ADR-0008, layering is enforced by `pnpm lint:deps` (the dependency-cruiser w
 - `client-view-model-no-react` — `features/**/*.view-model.ts` may not import `react`, `react-dom`, `@tanstack/react-*`, `react-hook-form`, or any package matching `react-*` / `*-react`. ViewModels are framework-agnostic.
 - `client-presenter-allowed` — `features/**/*.presenter.{ts,tsx}` is the kitchen-sink tier; it may import React, React-coupled libraries, Effect runtime primitives, sibling ViewModels, and data-access hooks/Effects.
 
-**Test parity (`project-structure/folder-structure`, `webFeatures`):**
+**Layout + test parity (`project-structure/folder-structure`, `webFeatures`):**
 
+- Layout is deny-by-default: a source file under `features/**` must carry one of the three view-tier stereotypes — `*.view.tsx`, `*.presenter.{ts,tsx}`, or `*.view-model.ts`. A bare `*.tsx` with no stereotype (the old convention) fails; the violation names the missing `.view` suffix. Tests are siblings, not stereotypes, so any `*.test.{ts,tsx}` (including a feature-level `*.integration.test.tsx`) is admitted; nothing else is.
 - `features/**/*.view-model.ts` requires sibling `*.view-model.test.ts`.
 - `features/**/*.presenter.{ts,tsx}` requires sibling `*.presenter.test.tsx`. Presenter tests standardize on the `.tsx` extension (a shared test harness supplies the JSX wrapper for hook-only presenters), so the parity rule has one canonical requirement rather than an inexpressible "either sibling".
-- Components are not subject to parity. Components that consume a Presenter or ViewModel are dumb projection; the test value is captured at the abstraction.
+- Views (`*.view.tsx`) carry the stereotype suffix but no parity obligation. A view that consumes a Presenter or ViewModel is dumb projection; the test value is captured at the abstraction.
 
-The two filename suffixes (`*.view-model.ts`, `*.presenter.ts`) double as detector and documentation. A reader can tell at a filename glance which tier a file belongs to and what testing approach applies. They are bypassable (a contributor could put orchestration in a non-suffixed file), but bypass is the kind of thing review catches; the rules' job is to catch _forgetfulness_, not malice.
+The three filename suffixes (`*.view.tsx`, `*.presenter.{ts,tsx}`, `*.view-model.ts`) double as detector and documentation. A reader can tell at a filename glance which tier a file belongs to and what testing approach applies. Because layout is deny-by-default, a contributor cannot smuggle orchestration into a non-suffixed file — the file fails lint until it declares a tier. What review still catches is _mis-tiering_ (orchestration parked in a `*.view.tsx` that should be a Presenter); the rules catch the coarser _forgetfulness_ of no stereotype at all.
 
 ## Consequences
 

@@ -7,8 +7,8 @@ import { Skeleton } from "@org/components/primitives/skeleton";
 import { OrganizationId } from "@org/contracts/EntityIds";
 import React from "react";
 
-import { AddTodo } from "@/features/index/add-todo/add-todo";
-import { TodoList } from "@/features/index/todo-list";
+import { AddTodo } from "@/features/index/add-todo/add-todo.view";
+import { TodoList } from "@/features/index/todo-list.view";
 import { ServerHydrationBoundary } from "@/lib/tanstack-query/server-hydration-boundary";
 import { prefetchTodos } from "@/services/data-access/todos-queries.server";
 

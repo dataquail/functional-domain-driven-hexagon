@@ -11,8 +11,8 @@ import { Skeleton } from "@org/components/primitives/skeleton";
 import { OrganizationId } from "@org/contracts/EntityIds";
 import React from "react";
 
-import { OrgInvitationsList } from "@/features/admin/org-invitations-list/org-invitations-list";
-import { OrgMembersList } from "@/features/admin/org-members-list/org-members-list";
+import { OrgInvitationsList } from "@/features/admin/org-invitations-list/org-invitations-list.view";
+import { OrgMembersList } from "@/features/admin/org-members-list/org-members-list.view";
 import { ServerHydrationBoundary } from "@/lib/tanstack-query/server-hydration-boundary";
 import { fetchMyOrgRole } from "@/services/data-access/my-orgs.server";
 import {

@@ -14,8 +14,8 @@ import { Skeleton } from "@org/components/primitives/skeleton";
 import { redirect } from "next/navigation";
 import React from "react";
 
-import { CreateOrg } from "@/features/orgs/create-org/create-org";
-import { OrgPicker } from "@/features/orgs/org-picker/org-picker";
+import { CreateOrg } from "@/features/orgs/create-org/create-org.view";
+import { OrgPicker } from "@/features/orgs/org-picker/org-picker.view";
 import { fetchCurrentUser } from "@/services/data-access/me.server";
 
 const Fallback: React.FC = () => (

@@ -7,7 +7,7 @@ import { OrganizationId } from "@org/contracts/EntityIds";
 import Link from "next/link";
 import React from "react";
 
-import { InviteForm } from "@/features/invite/invite-form/invite-form";
+import { InviteForm } from "@/features/invite/invite-form/invite-form.view";
 
 export default async function AdminOrgInvitePage({
   params,
