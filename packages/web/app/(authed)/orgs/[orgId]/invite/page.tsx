@@ -9,7 +9,7 @@ import { OrganizationId } from "@org/contracts/EntityIds";
 import { notFound } from "next/navigation";
 import React from "react";
 
-import { InviteForm } from "@/features/invite/invite-form/invite-form";
+import { InviteForm } from "@/features/invite/invite-form/invite-form.view";
 import { fetchMyOrgRole } from "@/services/data-access/my-orgs.server";
 
 export default async function InvitePage({

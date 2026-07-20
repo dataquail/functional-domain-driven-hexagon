@@ -15,7 +15,7 @@
 import { redirect } from "next/navigation";
 import * as React from "react";
 
-import { Nav } from "@/features/__root/nav";
+import { Nav } from "@/features/__root/nav.view";
 import { ServerHydrationBoundary } from "@/lib/tanstack-query/server-hydration-boundary";
 import { fetchCurrentUser } from "@/services/data-access/me.server";
 import { prefetchMyOrgs } from "@/services/data-access/orgs-queries.server";

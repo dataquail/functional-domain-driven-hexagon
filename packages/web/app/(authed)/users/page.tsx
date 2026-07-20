@@ -2,8 +2,8 @@ import { Card } from "@org/components/primitives/card";
 import { Skeleton } from "@org/components/primitives/skeleton";
 import React from "react";
 
-import { CreateUser } from "@/features/users/create-user/create-user";
-import { UserList } from "@/features/users/user-list";
+import { CreateUser } from "@/features/users/create-user/create-user.view";
+import { UserList } from "@/features/users/user-list.view";
 import { ServerHydrationBoundary } from "@/lib/tanstack-query/server-hydration-boundary";
 import { prefetchUsers } from "@/services/data-access/users-queries.server";
 

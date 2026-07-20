@@ -9,7 +9,7 @@
 import Link from "next/link";
 import * as React from "react";
 
-import { OrgSwitcher } from "@/features/__root/org-switcher/org-switcher";
+import { OrgSwitcher } from "@/features/__root/org-switcher/org-switcher.view";
 import { fetchCurrentUser } from "@/services/data-access/me.server";
 
 export const Nav = async () => {

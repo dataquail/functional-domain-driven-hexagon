@@ -19,8 +19,8 @@ import { rtlUsersDriver } from "@org/test-drivers/adapters/rtl/users-page-driver
 import * as React from "react";
 import { describe, it } from "vitest";
 
-import { CreateUser } from "@/features/users/create-user/create-user";
-import { UserList } from "@/features/users/user-list";
+import { CreateUser } from "@/features/users/create-user/create-user.view";
+import { UserList } from "@/features/users/user-list.view";
 import { makeUser } from "@/test/fixtures";
 import { handlers } from "@/test/handlers";
 import { renderWithHarness } from "@/test/integration-harness";

@@ -5,7 +5,7 @@
 
 import { Card } from "@org/components/primitives/card";
 
-import { ApproveDevice } from "@/features/device/approve-device/approve-device";
+import { ApproveDevice } from "@/features/device/approve-device/approve-device.view";
 
 export default async function DeviceApprovalPage({
   searchParams,

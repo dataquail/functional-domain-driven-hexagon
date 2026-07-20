@@ -11,8 +11,8 @@ import { userEvent } from "@testing-library/user-event";
 import * as React from "react";
 import { describe, expect, it } from "vitest";
 
-import { CreateUser } from "@/features/users/create-user/create-user";
-import { UserList } from "@/features/users/user-list";
+import { CreateUser } from "@/features/users/create-user/create-user.view";
+import { UserList } from "@/features/users/user-list.view";
 import { makePaginatedUsers, makeUser } from "@/test/fixtures";
 import { handlers } from "@/test/handlers";
 import { renderWithHarness } from "@/test/integration-harness";

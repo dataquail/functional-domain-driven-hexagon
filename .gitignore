@@ -10,7 +10,7 @@ scratchpad/*
 !scratchpad/tsconfig.json
 .direnv/
 .idea/
-.claude/
+.claude/settings.local.json
 .env
 .env.local
 .env.development.local

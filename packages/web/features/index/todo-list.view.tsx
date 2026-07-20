@@ -3,7 +3,7 @@
 import type { OrganizationId } from "@org/contracts/EntityIds";
 import * as Array from "effect/Array";
 
-import { TodoItem } from "./todo-item/todo-item";
+import { TodoItem } from "./todo-item/todo-item.view";
 import { useTodoListPresenter } from "./todo-list.presenter";
 
 export const TodoList: React.FC<{ orgId: OrganizationId }> = ({ orgId }) => {

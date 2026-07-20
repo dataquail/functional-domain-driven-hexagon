@@ -10,7 +10,7 @@ import { OrganizationId } from "@org/contracts/EntityIds";
 import { notFound } from "next/navigation";
 import * as React from "react";
 
-import { OrgNav } from "@/features/__root/org-nav";
+import { OrgNav } from "@/features/__root/org-nav.view";
 import { fetchMyOrgs } from "@/services/data-access/my-orgs.server";
 
 export default async function OrgScopedLayout({

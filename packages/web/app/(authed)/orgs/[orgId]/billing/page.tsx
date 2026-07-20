@@ -12,7 +12,7 @@ import { OrganizationId } from "@org/contracts/EntityIds";
 import { notFound } from "next/navigation";
 import React from "react";
 
-import { BillingPanel } from "@/features/billing/billing-panel/billing-panel";
+import { BillingPanel } from "@/features/billing/billing-panel/billing-panel.view";
 import { ServerHydrationBoundary } from "@/lib/tanstack-query/server-hydration-boundary";
 import { prefetchCurrentSubscription } from "@/services/data-access/billing-queries.server";
 import { fetchMyOrgRole } from "@/services/data-access/my-orgs.server";

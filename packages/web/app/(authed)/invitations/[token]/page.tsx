@@ -6,7 +6,7 @@
 import { Card } from "@org/components/primitives/card";
 import React from "react";
 
-import { AcceptInvitation } from "@/features/invite/accept-invitation/accept-invitation";
+import { AcceptInvitation } from "@/features/invite/accept-invitation/accept-invitation.view";
 
 export default async function AcceptInvitationPage({
   params,

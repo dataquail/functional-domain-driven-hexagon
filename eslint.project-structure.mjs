@@ -416,21 +416,28 @@ export const serverModules = createFolderStructure({
 });
 
 // ---------------------------------------------------------------------------
-// Web features (packages/web/features) — view-tiering PARITY only (ADR-0014).
-// Layout is intentionally permissive (the scripts never enforced web layout):
-// every ViewModel and Presenter needs its sibling test; any other file is
-// allowed. Self-recursive `dir` so parity fires at any nesting depth.
+// Web features (packages/web/features) — view-tiering layout + parity (ADR-0014).
+// Deny-by-default: a feature source file must carry one of the three view-tier
+// stereotypes — *.view.tsx (naked component), *.presenter.{ts,tsx}, or
+// *.view-model.ts. Tests are siblings, not stereotypes, so any *.test.{ts,tsx}
+// (incl. *.integration.test.*) is admitted; every ViewModel/Presenter still owes
+// its sibling test. Self-recursive `dir` so both fire at any nesting depth.
 // ---------------------------------------------------------------------------
 
 const VIEW_MODEL_MSG =
   "Every *.view-model.ts needs a sibling *.view-model.test.ts (ADR-0014 view tiering — the ViewModel is pure Effect and must be unit-tested).";
 const PRESENTER_MSG =
   "Every *.presenter.{ts,tsx} needs a sibling *.presenter.test.tsx (ADR-0014 — the presenter binds a React-coupled library and is tested through a JSX wrapper).";
+const VIEW_STEREOTYPE_MSG =
+  "Files in packages/web/features/** must carry a view-tier stereotype (ADR-0014): a naked component is *.view.tsx, orchestration is *.presenter.{ts,tsx} or *.view-model.ts, and tests are *.test.{ts,tsx}. A bare component file has no stereotype — rename it *.view.tsx.";
 
 // One folder's contents; the same shape applies at the structureRoot and every
-// nested folder. Parity rules first, then recurse into subfolders, then a
-// permissive catch-all for any other file (no layout enforcement).
+// nested folder. Tests pass through first, then the three source stereotypes
+// (with parity on presenter/view-model — views are dumb projection and carry
+// none), then recurse into subfolders. No catch-all: deny-by-default.
 const webFeatureFolderChildren = [
+  { name: "*.test.ts", message: VIEW_STEREOTYPE_MSG }, // incl. *.integration.test.ts + *.view-model.test.ts
+  { name: "*.test.tsx", message: VIEW_STEREOTYPE_MSG }, // incl. *.presenter.test.tsx + *.integration.test.tsx
   {
     name: "*.view-model.ts",
     enforceExistence: "{node-name}.test.ts",
@@ -446,8 +453,8 @@ const webFeatureFolderChildren = [
     enforceExistence: "{node-name}.test.tsx",
     message: PRESENTER_MSG,
   },
-  { name: "*", ruleId: "dir" }, // recurse into any subfolder
-  { name: "*" }, // permissive: allow any other file
+  { name: "*.view.tsx", message: VIEW_STEREOTYPE_MSG },
+  { name: "*", ruleId: "dir", message: VIEW_STEREOTYPE_MSG }, // recurse into any subfolder
 ];
 
 export const webFeatures = createFolderStructure({
