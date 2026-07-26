@@ -32,9 +32,21 @@ export type ResourceTypeFor<R extends ResourceName> = ResourceResolverMap[R] ext
   ? T
   : never;
 
+// A resource declares whether resolving it can fail. Most resources load a
+// row and so can report `NotFound` (the default when the field is omitted).
+// A resource whose identity IS its id — an "echo" resolver that has nothing
+// to load — declares `notFound: never`, which both forbids its Live from
+// failing and removes `NotFound` from every call site's error channel, so
+// there is no unreachable branch to defend against.
+export type NotFoundFor<R extends ResourceName> = ResourceResolverMap[R] extends {
+  notFound: infer N;
+}
+  ? N
+  : CustomHttpApiError.NotFound;
+
 export type Resolver<R extends ResourceName> = (
   id: IdFor<R>,
-) => Effect.Effect<ResourceTypeFor<R>, CustomHttpApiError.NotFound, never>;
+) => Effect.Effect<ResourceTypeFor<R>, NotFoundFor<R>, never>;
 
 type ResolversObject = { [R in ResourceName]: Resolver<R> };
 
@@ -44,7 +56,7 @@ export class ResourceResolverRegistry extends Context.Service<
     readonly resolve: <R extends ResourceName>(
       resource: R,
       id: IdFor<R>,
-    ) => Effect.Effect<ResourceTypeFor<R>, CustomHttpApiError.NotFound, never>;
+    ) => Effect.Effect<ResourceTypeFor<R>, NotFoundFor<R>, never>;
   }
 >()("ResourceResolverRegistry") {}
 

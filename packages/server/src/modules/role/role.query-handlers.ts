@@ -6,7 +6,7 @@ import {
   type FindUserRolesQuery,
   findUserRolesQuerySpanAttributes,
   type FindUserRolesResult,
-} from "@/modules/role/queries/find-user-roles.query.js";
+} from "@/modules/role/queries/find-user-roles.policy-query.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { queryHandlers } from "@/platform/ddd/ports/query-bus.js";
 

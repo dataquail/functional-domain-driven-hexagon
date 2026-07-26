@@ -71,11 +71,56 @@ yield * Authz.hasPermissions(UserResource, Actions.Update, request.path.id);
 - **Resource** is a name like `"user"` keyed into `ResourceResolverMap`.
 - **Action** is one of `Actions.{Create, Read, Update, Delete}` —
   the platform-wide CRUD vocabulary.
-- **id** is required for resource-scoped actions
-  (READ/UPDATE/DELETE), forbidden for CREATE. The variadic-tuple type
-  on the third arg gives `Expected 3 arguments, but got 2` if you
-  forget the id, which is clearer than the `not assignable to never`
+- **id** is decided by the resource, not the action. The variadic-tuple
+  type on the third arg gives `Expected 3 arguments, but got 2` if you
+  forget it, which is clearer than the `not assignable to never`
   that function overloads would produce.
+
+### Scopedness is a property of the resource, not the action
+
+An earlier iteration keyed scopedness to the action: CREATE was "flat"
+(id forbidden, checks see only the caller) and READ/UPDATE/DELETE took
+an **optional** id. Both halves were wrong, and each produced a
+workaround that had to be removed:
+
+- **Optional id made the check's parameter type a lie.** A check
+  declared `resource: R` but received `undefined` whenever a call site
+  omitted the id, so a resource-scoped check had to defend against a
+  missing resource with a runtime cast, and an unscoped call site had
+  to collapse an unreachable `NotFound` to a defect.
+- **Flat CREATE could not express "create within a container."** The
+  overwhelmingly common create is scoped to a parent — a todo in an
+  organization. With no id available, the endpoint had to call the
+  composed check directly, beside the registry: no span, no
+  registration, and an authorization decision inlined in an endpoint.
+
+The rule is now: a resource registered in `ResourceResolverMap` is
+**scoped** — every action on it requires an id, and its checks always
+receive the resolved resource. A resource absent from that map is
+**unscoped** — no action on it takes an id, and its checks only ever
+see the caller. A "create in this container" is a scoped action on the
+container resource. `FlatAction` no longer exists, and a check can no
+longer be handed `undefined`.
+
+Two things follow from making this a resource property. A caller-only
+check is declared at the narrower one-parameter arity, so one instance
+composes into both tiers — TypeScript accepts a fewer-parameter
+function wherever a more-parameter one is expected, never the reverse.
+And an unscoped resource's error channel omits `NotFound` entirely,
+because nothing is resolved.
+
+### Resolver fallibility is declared, not assumed
+
+Taking an id and being able to fail are separate axes. A resource whose
+identity _is_ its id — an "echo" resolver with nothing to load — takes
+an id but can never report absence, so `NotFound` sat unreachably in
+every one of its call sites' error channels, and each defended against
+it with a dead branch.
+
+A resource therefore declares whether resolving it can fail. An echo
+declares `notFound: never`, which both forbids its adapter from failing
+and removes `NotFound` from every caller's channel. The dead branches
+are not merely deleted — they become unrepresentable.
 
 ### Actions are CRUD; business operations live in commands
 
@@ -118,21 +163,38 @@ update: any(SuperAdminOnly, IsSelf); // OR
 
 ### Checks are Effects returning boolean, not void + Forbidden
 
-`Check<Caller, Resource, E, R>` is
-`(caller, resource) => Effect<boolean, E, R>`. The boolean shape lets
-checks compose via `any` / `all` before the final lift to `Forbidden`
-at the `Authz.hasPermissions` boundary. Each check can read from the
-Effect environment (DB, repositories, the bus) freely.
+A check is `(caller, resource) => Effect<boolean, …>`. The boolean shape
+lets checks compose via `any` / `all` before the final lift to
+`Forbidden` at the `Authz.hasPermissions` boundary.
 
-`SuperAdminOnly` is the baseline policy:
+### Registered checks are fully closed — an empty requirement channel
 
-```ts
-const SuperAdminOnly: Check<CurrentUser["Type"], unknown> = (caller) =>
-  Effect.succeed(caller.isSuperAdmin);
-```
+An earlier iteration let a check read whatever it needed from the Effect
+environment, and the registry named the closed set of services it could
+reach. That coupled every check to every service: each check's
+requirement channel declared the whole set whether it used it or not, so
+every policy unit test in every module had to stub services the check
+never touched, and the cost grew with modules × capabilities.
 
-It ignores the resource argument, so it composes with any
-resource-typed check via `any` / `all`.
+A check now takes its data source as an **argument** and the module's
+contribution closes over it at registration, so every registered check
+has an empty requirement channel. Consequences:
+
+- The registry holds no ambient service requirements, and a policy unit
+  test provides nothing at all.
+- Because the closing happens inside a Layer, a module's contribution is
+  effectful: it is published behind a Tag whose Layer yields that
+  module's own ports, mirroring how resource resolvers are already
+  published. The composition root yields each Tag and hands the values
+  to the registry.
+- A dependency that used to be an implicit environment requirement is now
+  an explicit Layer edge the composition root can see.
+
+Where a check's data belongs to another bounded context, the argument is
+the module's own outbound ACL port (ADR-0022); where it is the module's
+own data, the argument is a function the contribution builds by
+dispatching the module's own query. There is no platform-level
+authorization service — see ADR-0022 for why that tier was withdrawn.
 
 ### Resolver loads the resource per request, not at session start
 
@@ -144,26 +206,38 @@ endpoint to translate. No caching. This is the property that makes
 without re-authentication: the per-request lookup sees the new state
 the moment it exists.
 
-When the registered check doesn't need the resource (`SuperAdminOnly`
-on any action), the endpoint can omit the id and skip the DB load.
-The type system enforces this — `id` is optional only for
-READ/UPDATE/DELETE, forbidden for CREATE.
+A check whose decision does not involve the resource belongs on an
+unscoped resource, which takes no id and performs no load — see
+"Scopedness is a property of the resource" above.
+
+The resolver reads a **read model**, never an aggregate. Handing an
+aggregate root to a check is content coupling: the authorization rule
+becomes breakable by an aggregate refactor with no authorization
+content, and a check gains reach it should not have. Where the load
+exists only to distinguish "no such resource" from "not permitted", the
+projection is as small as the id itself.
+
+Note what per-request resolution now rests on: reads join the caller's
+ambient transaction, so this is only immediate while the read path stays
+synchronous and same-database. A query backing an authorization decision
+must never be served from a replica or a projection — see ADR-0022.
 
 ### Wiring respects the composition-root rule
 
-Each module's policies file exposes its contributions as plain data
-(a `PolicyContribution` object) and its resource resolver as a
-factory function taking the relevant repository. The composition
-root builds the registries from those contributions and provides
-them as Layers alongside the existing bus layers. The
-`lives-only-from-composition-roots` dep-cruise rule continues to
-hold.
+Each module publishes its policy contribution and its resource
+resolvers behind Tags. The composition root yields those Tags, builds
+the two registries, and provides them alongside the bus layers. Both
+registries dispatch queries, so both sit in the step that receives the
+buses.
 
-Module-private repositories that need to be referenced by the
-composition root (the user-resource-resolver factory needs the
-`UserRepository`) ship as a narrowly-scoped `<module>SharedDepsLive`
-Layer — the same shape that auth's shared deps Layer already uses.
-Module barrels remain barrel-content-discipline compliant.
+A module's outbound ACL adapter cannot be closed inside the module — it
+needs the buses, which only the composition root has — and it lives in
+`infrastructure/`, which `barrel-content-discipline` forbids a barrel
+from re-exporting. It therefore ships as a named module-root bundle, the
+same shape already used for a module's endpoint-consumed services. The
+composition root provides the opaque bundle; the port Tag stays private
+to the module. `lives-only-from-composition-roots` continues to hold,
+and module barrels stay barrel-content-discipline compliant.
 
 ## Consequences
 
@@ -176,9 +250,10 @@ Module barrels remain barrel-content-discipline compliant.
   immediately, no session refresh.
 - Future capability-ACL work plugs in as one more registered check
   (`MemberHasGrant("...")`). The wiring already exists.
-- Super-admin bypass is just a registered `SuperAdminOnly` baseline
-  composed via `Check.any` — no special-cased middleware short-
-  circuit.
+- Super-admin bypass is just another registered check composed via
+  `Check.any` — no special-cased middleware short-circuit. Each module
+  owns its own, asking the role module through its own ACL port, so no
+  module carries a platform-level authorization dependency (ADR-0022).
 
 ### Negative / trade-offs
 

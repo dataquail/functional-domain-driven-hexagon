@@ -16,11 +16,11 @@ import {
 import { AuthIdentitySpecifications } from "@/modules/auth/domain/auth-identity/auth-identity.specification.js";
 import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
 import { SessionSpecifications } from "@/modules/auth/domain/session/session.specification.js";
+import { makeUserProvisioningFake } from "@/modules/auth/infrastructure/acl/user-provisioning.acl-fake.js";
 import { makeAuthIdentityRepositoryFake } from "@/modules/auth/infrastructure/repositories/auth-identity.repository-fake.js";
 import { SessionRepositoryFake } from "@/modules/auth/infrastructure/repositories/session.repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
-import { makeUserProvisioningFake } from "@/test-utils/user-provisioning-fake.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const provisionedUserId = UserId.make("22222222-2222-2222-2222-222222222222");

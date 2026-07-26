@@ -14,13 +14,7 @@ import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/
 // `IsBillingOrgAdmin` (composed with `SuperAdminOnly`).
 export const startSubscriptionEndpoint = Effect.fn("BillingLive.startSubscription")(
   function* (request: EndpointRequest<typeof BillingContract.PrivateGroup, "startSubscription">) {
-    // The billing resolver is a deliberate echo of the path orgId —
-    // never NotFound — so the contract surface stays narrow.
-    yield* Authz.hasPermissions(BillingResource, Actions.Update, request.params.orgId).pipe(
-      Effect.catchTag("NotFound", () =>
-        Effect.die("Unreachable: billing resolver cannot surface NotFound"),
-      ),
-    );
+    yield* Authz.hasPermissions(BillingResource, Actions.Update, request.params.orgId);
     const commandBus = yield* CommandBus;
     const subscription = yield* commandBus.execute(
       StartSubscriptionCommand.make({ organizationId: request.params.orgId }),

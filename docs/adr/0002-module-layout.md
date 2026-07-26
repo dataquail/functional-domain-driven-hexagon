@@ -31,6 +31,7 @@ modules/<feature>/
       acl/          — other bounded contexts (`*.acl.ts`)
   commands/        — `*.command.ts` schema + `*.handler.ts` handler + bus-registration map
   queries/         — `*.query.ts` schema + `*.handler.ts` handler (reads SQL directly; must not touch the domain core) + bus-registration map
+                     `*.policy-query.ts` marks a query published for other modules' authorization checks (ADR-0022)
   infrastructure/  — driven adapters, tiered by counterpart (see ADR-0022)
     repositories/  — `*.repository-live.ts` + `*.repository-fake.ts` + `*.mapper.ts`
     clients/       — third-party adapters (*.client-live.ts + *.client-fake.ts, self-contained *.client.ts, *.email.tsx templates)
@@ -40,7 +41,6 @@ modules/<feature>/
     cli/           — one *.endpoint.ts per CLI endpoint (ADR-0013) plus an index.ts barrel; may hold *.util.ts
     events/        — one *.event-adapter.ts per domain event this module reacts to; a bus-only inbound port that dispatches one of the module's own commands (see ADR-0007)
   policies/        — *.policies.ts registry, *.resource-resolver(s).ts, is-*.policy.ts checks
-    public/        — *.service-live.ts: this module's Lives of platform ACL service ports, published to the policy registry
   # module root — a closed set of aggregation/composition files only (ADR-0024); feature code lives in the subfolders above
   <feature>.module.ts                 — the composed Layer for the module
   <feature>.command-handlers.ts / .query-handlers.ts  — bus-registration maps

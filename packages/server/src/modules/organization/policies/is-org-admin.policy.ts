@@ -1,14 +1,15 @@
-import { makeIsOrgAdmin } from "@/platform/auth/policies/is-org-admin.js";
-import type * as PolicyRegistry from "@/platform/auth/policy-registry.js";
+import { type OrganizationAuthzView } from "@/modules/organization/queries/find-organization-by-id.query.js";
+import { type ResourceCheck } from "@/platform/auth/policy-registry.js";
 
-// "Is this caller an admin of this organization?" — the `organization`
-// resource resolves to the Organization aggregate, so the org id is
-// `.id`. The lookup against `OrganizationRoleService` lives in the
-// shared `makeIsOrgAdmin` factory (platform); this module supplies
-// only the resource→orgId extractor. Same pattern as `IsMember`.
+import { type UserOrganizationLookup } from "./is-member.policy.js";
+
+// "Is this caller an admin of this organization?" — gates managing the roster
+// (invite, revoke, remove, promote, demote). Plain membership is not enough.
 //
-// Composed via `Authz.any(SuperAdminOnly, IsOrgAdmin)` so super-admins
-// bypass the per-org role lookup.
-export const IsOrgAdmin: PolicyRegistry.CheckFor<"organization", "update"> = makeIsOrgAdmin(
-  (organization) => organization.id,
-);
+// Same shape as `makeIsMember`: org roles are this module's own data, so the
+// lookup is a plain function the contribution layer supplies from this module's
+// own policy-query.
+export const makeIsOrgAdmin =
+  (isAdmin: UserOrganizationLookup): ResourceCheck<OrganizationAuthzView> =>
+  (caller, organization) =>
+    isAdmin(caller.userId, organization.organizationId);

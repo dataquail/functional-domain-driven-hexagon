@@ -8,8 +8,8 @@ import { InvitationRepository } from "@/modules/organization/domain/invitation/i
 import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
 import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors.js";
+import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { RoleService } from "@/platform/ddd/ports/role-service.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
 export const acceptInvitation = Effect.fn("acceptInvitation")(
@@ -17,9 +17,8 @@ export const acceptInvitation = Effect.fn("acceptInvitation")(
     // Model invariant: super-admins don't own or join organizations.
     // See `createOrganization` for the rationale on placing this at
     // the use-case level rather than HTTP authz.
-    const roles = yield* RoleService;
-    const perms = yield* roles.findPlatformPermissions(cmd.userId);
-    if (perms.roles.includes("super_admin")) {
+    const roles = yield* PlatformRoles;
+    if (yield* roles.isSuperAdmin(cmd.userId)) {
       return yield* new SuperAdminCannotOwnOrganization({ userId: cmd.userId });
     }
 

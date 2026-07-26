@@ -1,7 +1,7 @@
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
-import { OrganizationResource } from "@/modules/organization/policies/organization.policies.js";
+import { OrganizationCollectionResource } from "@/modules/organization/policies/organization.policies.js";
 import {
   FindAllOrganizationsQuery,
   type FindAllOrganizationsResult,
@@ -36,16 +36,7 @@ const toPaginatedContract = (
 export const findAllEndpoint = Effect.fn("OrganizationAdminLive.findAll")(function* (
   request: EndpointRequest<typeof OrganizationContract.AdminGroup, "findAll">,
 ) {
-  // Flat `Read` action — no id, no resource resolver. The registered
-  // policy is `SuperAdminOnly`; members get a 403 before the query
-  // fires. `Authz.hasPermissions` declares `NotFound` in its error
-  // channel for resource-scoped calls; with no id passed it can't
-  // surface, so we collapse it to a defect at the boundary.
-  yield* Authz.hasPermissions(OrganizationResource, Actions.Read).pipe(
-    Effect.catchTag("NotFound", () =>
-      Effect.die("Unreachable: flat Authz.hasPermissions cannot surface NotFound"),
-    ),
-  );
+  yield* Authz.hasPermissions(OrganizationCollectionResource, Actions.Read);
   const queryBus = yield* QueryBus;
   const result = yield* queryBus.execute(
     FindAllOrganizationsQuery.make({

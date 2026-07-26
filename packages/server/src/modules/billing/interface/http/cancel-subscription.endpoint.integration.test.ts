@@ -1,5 +1,7 @@
 import { describe, it } from "@effect/vitest";
 import { BillingContract, OrganizationContract } from "@org/contracts/api/Contracts";
+import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
+import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
@@ -65,6 +67,49 @@ suite("DELETE /orgs/:orgId/billing/subscriptions/current (integration)", () => {
             Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
               BillingContract.SubscriptionNotFoundError,
           );
+        }
+      }),
+    );
+  });
+});
+
+// Non-admin caller: `TestServerLiveAsMember` reports `MEMBER_CALLER_ID`, who has
+// no `super_admin` platform role and no `admin` org-role on a foreign org.
+// Cancelling is `update`-gated like subscribing, so the composed check denies.
+const memberSuite = describe.sequential;
+
+memberSuite("DELETE /orgs/:orgId/billing/subscriptions/current (non-admin caller)", () => {
+  const { run } = useServerTestRuntime(BILLING_TABLES, {
+    server: TestServerLiveAsMember,
+    seedSuperAdminCaller: true,
+  });
+
+  it("returns 403 Forbidden for a caller who isn't an org admin", async () => {
+    await run(
+      Effect.gen(function* () {
+        // Seeded directly: creating the org through the endpoint would
+        // auto-grant the caller admin, defeating the test.
+        const orgId = "11111111-1111-1111-1111-111111111111" as never;
+        const db = yield* Database.Database;
+        yield* db
+          .execute((c) =>
+            c.query(sql.unsafe`
+              INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
+              VALUES (${orgId}, 'Acme', now(), now(), null)
+            `),
+          )
+          .pipe(Effect.orDie);
+
+        const client = yield* HttpApiClient.make(Api);
+        const exit = yield* Effect.exit(client.billing.cancelSubscription({ params: { orgId } }));
+        ok(Exit.isFailure(exit));
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              CustomHttpApiError.Forbidden,
+          );
+        } else {
+          throw new Error("expected typed Fail, got " + JSON.stringify(exit));
         }
       }),
     );

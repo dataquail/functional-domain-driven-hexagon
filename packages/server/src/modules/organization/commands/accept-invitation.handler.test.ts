@@ -24,6 +24,7 @@ import { type MembershipCreated } from "@/modules/organization/domain/membership
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
 import { MembershipSpecifications } from "@/modules/organization/domain/membership/membership.specification.js";
 import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors.js";
+import { makePlatformRolesFake } from "@/modules/organization/infrastructure/acl/platform-roles.acl-fake.js";
 import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake.js";
 import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.js";
 import { Spec } from "@/platform/ddd/contracts/specification.js";
@@ -32,7 +33,6 @@ import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
-import { makeRoleServiceFake } from "@/test-utils/role-service-fake.js";
 
 const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");
 const organizationId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
@@ -57,8 +57,8 @@ const TestLayer = Layer.mergeAll(
   RecordingEventBus,
   IdentityUnitOfWork,
   // Default: caller is a regular user. The super-admin-rejection test
-  // composes its own RoleService fake.
-  makeRoleServiceFake(new Map()),
+  // composes its own PlatformRoles fake.
+  makePlatformRolesFake(),
 );
 
 describe("acceptInvitation", () => {
@@ -207,7 +207,7 @@ describe("acceptInvitation", () => {
           MembershipRepositoryFake,
           RecordingEventBus,
           IdentityUnitOfWork,
-          makeRoleServiceFake(new Map([[superAdminUserId, ["super_admin"]]])),
+          makePlatformRolesFake(new Set([superAdminUserId])),
         ),
       ),
     ),

@@ -26,21 +26,20 @@ A dot makes the seam explicit and machine-parseable, and matches the `*.root-ops
 | `domain/domain-services/`      | `.domain-service`                                                                                                                                                                              |
 | `domain/ports/clients/`        | `.client`                                                                                                                                                                                      |
 | `domain/ports/acl/`            | `.acl`                                                                                                                                                                                         |
-| `commands/` · `queries/`       | `.command` / `.query` (schema) + `.handler`                                                                                                                                                    |
+| `commands/` · `queries/`       | `.command` / `.query` (schema) + `.handler`; `.policy-query` for a query published as a cross-module authorization contract (ADR-0022)                                                         |
 | `infrastructure/repositories/` | `.repository-live` · `.repository-fake` · `.mapper`                                                                                                                                            |
 | `infrastructure/clients/`      | `.client-live` · `.client-fake` · `.client` (self-contained) · `.email` (tsx)                                                                                                                  |
 | `infrastructure/acl/`          | `.acl-live` · `.acl-fake`                                                                                                                                                                      |
 | `interface/http,cli/`          | `.endpoint` · `index.ts` (group-registration barrel) · `.util`                                                                                                                                 |
 | `interface/events/`            | `.event-adapter`                                                                                                                                                                               |
 | `policies/`                    | `.policies` · `.resource-resolver(s)` · `.policy` (the `is-*` checks)                                                                                                                          |
-| `policies/public/`             | `.service-live` (this module's Lives of platform ACL service ports)                                                                                                                            |
 | module root                    | `index.ts` · `.module` · `.command-handlers` · `.query-handlers` · `.event-span-attributes` · `.shared-deps`                                                                                   |
 
 Tests append their qualifier to the subject stereotype: `*.handler.test.ts`, `*.repository-live.integration.test.ts`, `*.event-adapter.test.ts`.
 
 ### Scope
 
-This applies to the module **stereotype folders** and the **module root** (whose aggregation/composition files — `<feature>.module.ts`, `<feature>.command-handlers.ts`, `<feature>.query-handlers.ts`, `<feature>.event-span-attributes.ts`, `<feature>.shared-deps.ts` — are dotted too, and are the _only_ files the module root admits; `index.ts` stays as the barrel). The module root's platform-ACL service Lives, previously loose files, moved to `policies/public/*.service-live.ts`.
+This applies to the module **stereotype folders** and the **module root** (whose aggregation/composition files — `<feature>.module.ts`, `<feature>.command-handlers.ts`, `<feature>.query-handlers.ts`, `<feature>.event-span-attributes.ts`, `<feature>.shared-deps.ts` — are dotted too, and are the _only_ files the module root admits; `index.ts` stays as the barrel). (ADR-0022 later withdrew the platform ACL tier, so `policies/public/` no longer exists; a module's outbound adapters live in `infrastructure/acl/` and are published to the composition root as a module-root bundle.)
 
 The `platform/`, `common/`, and `test-utils/` trees remain deliberately **excluded**: they hold kernel/wiring/support code with descriptive kebab names, not DDD stereotypes. Forcing a `.stereotype` onto `env-vars.ts` or `unit-of-work.ts` would invent a role that isn't there.
 

@@ -14,6 +14,7 @@ import { OrganizationNotFound } from "@/modules/organization/domain/organization
 import { type OrganizationSoftDeleted } from "@/modules/organization/domain/organization/organization.events.js";
 import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
 import { OrganizationSpecifications } from "@/modules/organization/domain/organization/organization.specification.js";
+import { makePlatformRolesFake } from "@/modules/organization/infrastructure/acl/platform-roles.acl-fake.js";
 import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.js";
 import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization.repository-fake.js";
 import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.js";
@@ -21,7 +22,6 @@ import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
-import { makeRoleServiceFake } from "@/test-utils/role-service-fake.js";
 
 const actorUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
@@ -31,7 +31,7 @@ const TestLayer = Layer.mergeAll(
   OrganizationRolesRepositoryFake,
   RecordingEventBus,
   IdentityUnitOfWork,
-  makeRoleServiceFake(new Map()),
+  makePlatformRolesFake(),
 );
 
 describe("softDeleteOrganization", () => {

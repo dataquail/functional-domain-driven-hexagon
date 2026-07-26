@@ -10,7 +10,7 @@ import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js
 import { RolesRootOps } from "@/modules/role/domain/roles/roles.root-ops.js";
 import { RolesRepositoryLive } from "@/modules/role/infrastructure/repositories/roles.repository-live.js";
 import { findUserRoles } from "@/modules/role/queries/find-user-roles.handler.js";
-import { FindUserRolesQuery } from "@/modules/role/queries/find-user-roles.query.js";
+import { FindUserRolesQuery } from "@/modules/role/queries/find-user-roles.policy-query.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 

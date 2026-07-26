@@ -103,6 +103,8 @@ const MSG = {
   commandHandlerTest:
     "Every command handler (*.handler.ts) needs a sibling *.handler.test.ts (use-case unit test with the repository fakes).",
   queries: " queries/ holds a <verb-noun>.query.ts schema and its <verb-noun>.handler.ts handler.",
+  policyQuery:
+    "A *.policy-query.ts is a query this module publishes so OTHER modules' authorization checks can ask it a question (ADR-0022). It is a cross-module contract: changing its shape breaks consumers you cannot see from here, so it carries a stability obligation an internal *.query.ts does not. A query only this module dispatches is a plain *.query.ts.",
   queryHandlerTest:
     "Every query handler (*.handler.ts) needs a sibling *.handler.integration.test.ts — queries read real SQL projections, so the parity is on the integration test (seed via the live repository).",
   eventHandlers:
@@ -117,7 +119,7 @@ const MSG = {
   oidcExempt:
     "The OIDC flow endpoints (login/callback exchange with Zitadel, logout end-session) keep unit-token coverage: their happy path needs a live IdP and is covered by Playwright + the SessionRepositoryLive integration test. See CLAUDE.md 'Endpoint test naming'.",
   policies:
-    "policies/ admits *.policies.ts registries, *.resource-resolver(s).ts, and is-*.policy.ts checks; policies/public/ holds *.service-live.ts (published ACL service Lives).",
+    "policies/ admits *.policies.ts registries, *.resource-resolver(s).ts, and is-*.policy.ts checks. There is no policies/public/: a module does NOT publish an ACL service for other modules' policies to consume. Cross-module authorization data flows the ADR-0022 way — the module that needs the answer owns a port in domain/ports/acl/ whose adapter dispatches the owning module's published *.policy-query.ts.",
 };
 
 // enforceExistence paths for a domain/ports/<tier>/ port, resolved 3 levels up
@@ -288,6 +290,7 @@ export const serverModules = createFolderStructure({
           message: MSG.queries,
           children: [
             { name: "*.query.ts", message: MSG.queries },
+            { name: "*.policy-query.ts", message: MSG.policyQuery },
             {
               name: "*.handler.ts",
               enforceExistence: "{node-name}.integration.test.ts",
@@ -403,11 +406,6 @@ export const serverModules = createFolderStructure({
             { name: "*.resource-resolvers.ts", message: MSG.policies },
             { name: "*.policy.ts", message: MSG.policies },
             TEST_TS,
-            {
-              name: "public",
-              message: MSG.policies,
-              children: [{ name: "*.service-live.ts", message: MSG.policies }, TEST_TS],
-            },
           ],
         },
       ],

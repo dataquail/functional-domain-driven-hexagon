@@ -12,8 +12,8 @@ import { OrganizationRepository } from "@/modules/organization/domain/organizati
 import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.js";
 import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
 import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.js";
+import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { RoleService } from "@/platform/ddd/ports/role-service.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
@@ -38,9 +38,8 @@ export const createOrganization = Effect.fn("createOrganization")(function* (
   // don't own or join organizations. The check sits at the use-case
   // level (not at HTTP authz) because the rule is a fact about the
   // role model, not a per-resource permission decision.
-  const roles = yield* RoleService;
-  const perms = yield* roles.findPlatformPermissions(cmd.actorUserId);
-  if (perms.roles.includes("super_admin")) {
+  const roles = yield* PlatformRoles;
+  if (yield* roles.isSuperAdmin(cmd.actorUserId)) {
     return yield* new SuperAdminCannotOwnOrganization({ userId: cmd.actorUserId });
   }
 

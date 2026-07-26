@@ -1,25 +1,21 @@
 import { CliTodosContract } from "@org/contracts/api/Contracts";
-import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
 import { CreateTodoCommand } from "@/modules/todos/commands/create-todo.command.js";
-import { todoMemberCheck } from "@/modules/todos/policies/todos.policies.js";
+import { TodoCollectionResource } from "@/modules/todos/policies/todos.policies.js";
+import { Actions } from "@/platform/auth/actions.js";
+import * as Authz from "@/platform/auth/authz.js";
 import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
-// CLI adapter (ADR-0005): same flat membership gate + CreateTodoCommand as
-// the GUI's create endpoint.
+// CLI adapter (ADR-0005): same membership gate + CreateTodoCommand as the
+// GUI's create endpoint.
 export const createEndpoint = Effect.fn("CliTodosLive.create")(function* (
   request: EndpointRequest<typeof CliTodosContract.Group, "create">,
 ) {
   const currentUser = yield* CurrentUser;
-  const allowed = yield* todoMemberCheck(currentUser, { organizationId: request.params.orgId });
-  if (!allowed) {
-    return yield* new CustomHttpApiError.Forbidden({
-      message: "Not permitted: todoCollection.create",
-    });
-  }
+  yield* Authz.hasPermissions(TodoCollectionResource, Actions.Create, request.params.orgId);
   const commandBus = yield* CommandBus;
   const todo = yield* commandBus.execute(
     CreateTodoCommand.make({

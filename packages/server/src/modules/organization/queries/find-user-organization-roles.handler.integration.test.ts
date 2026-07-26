@@ -14,7 +14,7 @@ import { OrganizationRolesRootOps } from "@/modules/organization/domain/organiza
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
 import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-live.js";
 import { findUserOrganizationRoles } from "@/modules/organization/queries/find-user-organization-roles.handler.js";
-import { FindUserOrganizationRolesQuery } from "@/modules/organization/queries/find-user-organization-roles.query.js";
+import { FindUserOrganizationRolesQuery } from "@/modules/organization/queries/find-user-organization-roles.policy-query.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";

@@ -1,5 +1,7 @@
 import * as Layer from "effect/Layer";
 
+import { PlatformRolesLive } from "./infrastructure/acl/platform-roles.acl-live.js";
+import { UserProvisioningLive } from "./infrastructure/acl/user-provisioning.acl-live.js";
 import { OidcClient } from "./infrastructure/clients/oidc.client.js";
 import { AuthIdentityRepositoryLive } from "./infrastructure/repositories/auth-identity.repository-live.js";
 import { SessionRepositoryLive } from "./infrastructure/repositories/session.repository-live.js";
@@ -25,6 +27,19 @@ import { AuthLive } from "./interface/http/index.js";
 // reached through the bus, so their requirement is closed at build with
 // `Layer.provide`.
 export const AuthHttpDepsLive = OidcClient.layer;
+
+// The JIT-provisioning adapter needs the buses and unit of work, which only
+// the composition root has, so it cannot be closed here. It ships as a named
+// module bundle instead of a barrel re-export because the adapter itself lives
+// in `infrastructure/` and the barrel may not reach in there — same shape as
+// `AuthHttpDepsLive`. Consumers see the bundle; the `UserProvisioning` Tag
+// stays private to this module's use-case ring.
+export const AuthProvisioningDepsLive = UserProvisioningLive;
+
+// The role-lookup adapter behind `/auth/me`. Same reason as above: it dispatches
+// through the QueryBus, so it cannot be closed inside the module, and it lives
+// in `infrastructure/` so the barrel cannot re-export it directly.
+export const AuthAclDepsLive = PlatformRolesLive;
 
 export const AuthModuleLive = AuthLive.pipe(
   Layer.provide(AuthIdentityRepositoryLive),

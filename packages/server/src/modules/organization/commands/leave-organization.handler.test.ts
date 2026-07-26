@@ -14,6 +14,7 @@ import { MembershipNotFound } from "@/modules/organization/domain/membership/mem
 import { type MembershipRevoked } from "@/modules/organization/domain/membership/membership.events.js";
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
 import { MembershipSpecifications } from "@/modules/organization/domain/membership/membership.specification.js";
+import { makePlatformRolesFake } from "@/modules/organization/infrastructure/acl/platform-roles.acl-fake.js";
 import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.js";
 import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization.repository-fake.js";
 import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.js";
@@ -22,7 +23,6 @@ import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
-import { makeRoleServiceFake } from "@/test-utils/role-service-fake.js";
 
 const userId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
@@ -32,9 +32,9 @@ const TestLayer = Layer.mergeAll(
   OrganizationRolesRepositoryFake,
   RecordingEventBus,
   IdentityUnitOfWork,
-  // Seed `createOrganization` calls need `RoleService`; defaulting to
+  // Seed `createOrganization` calls need `PlatformRoles`; defaulting to
   // "caller has no platform roles" matches the regular-user path.
-  makeRoleServiceFake(new Map()),
+  makePlatformRolesFake(),
 );
 
 describe("leaveOrganization", () => {

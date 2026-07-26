@@ -18,6 +18,7 @@ import { OrganizationSpecifications } from "@/modules/organization/domain/organi
 import { type OrganizationRoleGranted } from "@/modules/organization/domain/organization-roles/organization-role.events.js";
 import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
 import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification.js";
+import { makePlatformRolesFake } from "@/modules/organization/infrastructure/acl/platform-roles.acl-fake.js";
 import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.js";
 import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization.repository-fake.js";
 import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.js";
@@ -25,7 +26,6 @@ import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
-import { makeRoleServiceFake } from "@/test-utils/role-service-fake.js";
 
 const actorUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const superAdminUserId = UserId.make("ssssssss-ssss-ssss-ssss-ssssssssssss");
@@ -37,8 +37,8 @@ const TestLayer = Layer.mergeAll(
   RecordingEventBus,
   IdentityUnitOfWork,
   // Default: caller is a regular user (no platform roles). The
-  // super-admin-rejection test composes its own RoleService fake.
-  makeRoleServiceFake(new Map()),
+  // super-admin-rejection test composes its own PlatformRoles fake.
+  makePlatformRolesFake(),
 );
 
 describe("createOrganization", () => {
@@ -139,7 +139,7 @@ describe("createOrganization", () => {
           OrganizationRolesRepositoryFake,
           RecordingEventBus,
           IdentityUnitOfWork,
-          makeRoleServiceFake(new Map([[superAdminUserId, ["super_admin"]]])),
+          makePlatformRolesFake(new Set([superAdminUserId])),
         ),
       ),
     ),

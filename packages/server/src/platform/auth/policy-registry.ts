@@ -4,22 +4,10 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { type MembershipService } from "@/platform/ddd/ports/membership-service.js";
-import { type OrganizationRoleService } from "@/platform/ddd/ports/organization-role-service.js";
-import { type RoleService } from "@/platform/ddd/ports/role-service.js";
 
-import { type Action, type FlatAction } from "./actions.js";
+import { type Action } from "./actions.js";
 import { type ResourceName, type ResourceTypeFor } from "./resource-resolver-registry.js";
 
-// Closed set of cross-cutting services a registered check may depend
-// on. Today: `RoleService` (the platform-layer ACL over the role
-// module), `MembershipService` (the platform-layer ACL over the org
-// module's memberships), `OrganizationRoleService` (the platform-layer
-// ACL over the org module's per-(user, org) role assignments — Phase
-// 4). All three are platform/ddd/ shaped services, never the source
-// module's domain types — keeps consuming policies decoupled and keeps
-// the dep graph acyclic.
-export type PolicyDeps = RoleService | MembershipService | OrganizationRoleService;
 export type PolicyErrors = PersistenceUnavailable;
 
 // Registry of policy checks, keyed by (resource, action). Actions are
@@ -40,26 +28,26 @@ export interface PolicyMap {}
 export type PolicyResource = keyof PolicyMap;
 export type ActionFor<R extends PolicyResource> = keyof PolicyMap[R] & Action;
 
-// Resource-scoped checks receive the resolved resource; flat checks
-// (CREATE) only see the current user. Both may reach the closed
-// `PolicyDeps` set (RoleService etc.) and fail with `PolicyErrors`
-// (PersistenceUnavailable).
-export type ResourceCheck<R> = (
+// Checks on a scoped resource receive the resolved resource; checks on an
+// unscoped resource only see the current user. Both are fully closed: a module
+// needing cross-module data closes over its own ACL port at registration rather
+// than reaching a shared service through the environment. That is what keeps
+// `R = never`, and what lets a policy unit test provide nothing at all.
+export type ResourceCheck<Resource> = (
   caller: CurrentUser["Service"],
-  resource: R,
-) => Effect.Effect<boolean, PolicyErrors, PolicyDeps>;
+  resource: Resource,
+) => Effect.Effect<boolean, PolicyErrors, never>;
 
-export type FlatCheck = (
+export type UnscopedCheck = (
   caller: CurrentUser["Service"],
-) => Effect.Effect<boolean, PolicyErrors, PolicyDeps>;
+) => Effect.Effect<boolean, PolicyErrors, never>;
 
-// Per-(resource, action) callback type. CREATE is flat (no resource
-// load); READ/UPDATE/DELETE pass the resolved resource to the check.
-export type CheckFor<R extends PolicyResource, A extends ActionFor<R>> = A extends FlatAction
-  ? FlatCheck
-  : R extends ResourceName
-    ? ResourceCheck<ResourceTypeFor<R>>
-    : never;
+// Per-resource callback type. Registration in `ResourceResolverMap` is the
+// switch: a resource with a resolver always hands its resolved value to the
+// check, one without never does. The action does not enter into it.
+export type CheckFor<R extends PolicyResource> = R extends ResourceName
+  ? ResourceCheck<ResourceTypeFor<R>>
+  : UnscopedCheck;
 
 // At the registration site, a policy entry may be a single check or an
 // array of checks. Arrays are AND-composed: every check must return
@@ -68,15 +56,13 @@ export type CheckFor<R extends PolicyResource, A extends ActionFor<R>> = A exten
 // `./check.js`. Stacking checks like
 //   update: [SuperAdminOnly, NotRecentlyPromoted]
 // keeps the call site readable as checks grow.
-export type CheckOrArray<R extends PolicyResource, A extends ActionFor<R>> =
-  | CheckFor<R, A>
-  | ReadonlyArray<CheckFor<R, A>>;
+export type CheckOrArray<R extends PolicyResource> = CheckFor<R> | ReadonlyArray<CheckFor<R>>;
 
 // Module contributions are typed as a partial nested object — modules
 // only fill in entries for resources/actions they own.
 export type PolicyContribution = {
   readonly [R in PolicyResource]?: {
-    readonly [A in ActionFor<R>]?: CheckOrArray<R, A>;
+    readonly [A in ActionFor<R>]?: CheckOrArray<R>;
   };
 };
 
@@ -86,7 +72,7 @@ export type PolicyContribution = {
 type AnyRegisteredCheck = (
   caller: CurrentUser["Service"],
   resource?: unknown,
-) => Effect.Effect<boolean, PolicyErrors, PolicyDeps>;
+) => Effect.Effect<boolean, PolicyErrors, never>;
 
 export class PolicyRegistry extends Context.Service<
   PolicyRegistry,

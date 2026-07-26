@@ -20,7 +20,7 @@ export const makeUserAuthMiddlewareFake = (currentUser: CurrentUser["Service"]) 
   );
 
 // The default fake's userId is paired with a `platform.roles` seed in
-// `useServerTestRuntime` so the `RoleService` ACL surfaces this caller
+// `useServerTestRuntime` so the role lookup surfaces this caller
 // as super_admin for the authz layer.
 export const SUPER_ADMIN_CALLER_ID = UserId.make("00000000-0000-0000-0000-000000000001");
 export const MEMBER_CALLER_ID = UserId.make("00000000-0000-0000-0000-000000000002");

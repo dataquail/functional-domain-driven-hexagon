@@ -1,14 +1,13 @@
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
+import { Database } from "@org/database/index";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { type TodoId } from "@/modules/todos/domain/todo/todo.id.js";
-import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js";
-import { TodoSpecifications } from "@/modules/todos/domain/todo/todos.specification.js";
-import { TodosRepositoryLive } from "@/modules/todos/infrastructure/repositories/todos.repository-live.js";
+import { FindTodoOrganizationQuery } from "@/modules/todos/queries/find-todo-organization.query.js";
 import { type Resolver } from "@/platform/auth/resource-resolver-registry.js";
-import { Spec } from "@/platform/ddd/contracts/specification.js";
+import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 // Todos expose two policy resources, split by what is actually being
@@ -36,7 +35,11 @@ export type TodoResourceId = {
 
 declare module "@/platform/auth/resource-resolver-registry.js" {
   interface ResourceResolverMap {
-    todoCollection: { resourceType: TodoOrgContext; idType: OrganizationId };
+    todoCollection: {
+      resourceType: TodoOrgContext;
+      idType: OrganizationId;
+      notFound: never;
+    };
     todo: { resourceType: TodoOrgContext; idType: TodoResourceId };
   }
 }
@@ -65,22 +68,15 @@ export class TodoResolverEntry extends Context.Service<TodoResolverEntry, Resolv
 export const TodoResolverEntryLive = Layer.effect(
   TodoResolverEntry,
   Effect.gen(function* () {
-    const repo = yield* TodosRepository;
+    const queryBus = yield* QueryBus;
+    const db = yield* Database.Database;
     return ({ organizationId, todoId }) =>
-      repo
-        .findOne(
-          Spec.and(
-            TodoSpecifications.withId(todoId),
-            TodoSpecifications.forOrganization(organizationId),
-          ),
-        )
-        .pipe(
-          Effect.flatMap((todo) =>
-            todo === null
-              ? Effect.fail(new CustomHttpApiError.NotFound())
-              : Effect.succeed({ organizationId: todo.organizationId }),
-          ),
-          Effect.catchTag("PersistenceUnavailable", Effect.die),
-        );
+      queryBus.execute(FindTodoOrganizationQuery.make({ organizationId, todoId })).pipe(
+        Effect.provideService(Database.Database, db),
+        Effect.flatMap((view) =>
+          view === null ? Effect.fail(new CustomHttpApiError.NotFound()) : Effect.succeed(view),
+        ),
+        Effect.catchTag("PersistenceUnavailable", Effect.die),
+      );
   }),
-).pipe(Layer.provide(TodosRepositoryLive));
+);

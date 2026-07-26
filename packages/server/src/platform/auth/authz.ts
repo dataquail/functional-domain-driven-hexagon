@@ -4,56 +4,43 @@ import * as Effect from "effect/Effect";
 
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
-import { type FlatAction } from "./actions.js";
-import {
-  type ActionFor,
-  type PolicyDeps,
-  PolicyRegistry,
-  type PolicyResource,
-} from "./policy-registry.js";
+import { type ActionFor, PolicyRegistry, type PolicyResource } from "./policy-registry.js";
 import {
   type IdFor,
+  type NotFoundFor,
   type ResourceName,
   ResourceResolverRegistry,
 } from "./resource-resolver-registry.js";
 
-// Endpoint-facing API. Mirrors jaclp's `hasPermission(resource, action,
-// id?)`.
+// Endpoint-facing API. Mirrors jaclp's `hasPermission(resource, action, id)`.
 //
-// id semantics by action type:
-//   - CREATE (FlatAction):  id forbidden (no record exists yet).
-//   - READ / UPDATE / DELETE: id optional. Pass it when the registered
-//     check needs to inspect the resource (OwnerOf, MemberHasGrant,
-//     IsSelf, etc.) — the framework loads it via the registered
-//     resolver and hands it to the check. Omit it when the check only
-//     inspects the caller (SuperAdminOnly is the canonical example) —
-//     no DB round trip, no 404 surface for ids the caller might not be
-//     allowed to see.
+// The resource decides whether an id is taken, on every action:
+//   - Scoped resource (registered in `ResourceResolverMap`): id is
+//     REQUIRED. The framework loads the resource via the registered
+//     resolver and hands it to the check, so a check can never receive
+//     `undefined`. Resource-not-found propagates as `NotFound`, which the
+//     endpoint translates to a domain-specific `*NotFoundError`.
+//   - Unscoped resource (absent from that map): id is FORBIDDEN, no
+//     resolver runs, and `NotFound` is absent from the error channel — so
+//     an unscoped call site has no unreachable branch to defend against.
 //
-// Resource-not-found at the resolver propagates as `NotFound` — the
-// endpoint translates it to a domain-specific `*NotFoundError`. A
-// policy returning `false` becomes `Forbidden`.
+// A policy returning `false` becomes `Forbidden` in either case.
 //
 // Variadic-tuple shape on the third arg gives clearer TS errors than
-// overloads would: missing-id mistakes turn into "Argument of type X
-// is not assignable to parameter of type Y," not "not assignable to
-// type 'never'."
+// overloads would: missing-id mistakes turn into "Expected 3 arguments,
+// but got 2," not "not assignable to type 'never'."
 
-type IdArgsFor<R extends PolicyResource, A extends ActionFor<R>> = A extends FlatAction
-  ? []
-  : R extends ResourceName
-    ? [id?: IdFor<R>]
-    : never;
+type IdArgsFor<R extends PolicyResource> = R extends ResourceName ? [id: IdFor<R>] : [];
+
+type ErrorsFor<R extends PolicyResource> = R extends ResourceName
+  ? CustomHttpApiError.Forbidden | PersistenceUnavailable | NotFoundFor<R>
+  : CustomHttpApiError.Forbidden | PersistenceUnavailable;
 
 export const hasPermissions = <R extends PolicyResource, A extends ActionFor<R>>(
   resource: R,
   action: A,
-  ...args: IdArgsFor<R, A>
-): Effect.Effect<
-  void,
-  CustomHttpApiError.Forbidden | CustomHttpApiError.NotFound | PersistenceUnavailable,
-  CurrentUser | PolicyRegistry | ResourceResolverRegistry | PolicyDeps
-> =>
+  ...args: IdArgsFor<R>
+): Effect.Effect<void, ErrorsFor<R>, CurrentUser | PolicyRegistry | ResourceResolverRegistry> =>
   Effect.gen(function* () {
     const caller = yield* CurrentUser;
     const registry = yield* PolicyRegistry;
@@ -91,4 +78,12 @@ export const hasPermissions = <R extends PolicyResource, A extends ActionFor<R>>
         message: `Not permitted: ${String(resource)}.${String(action)}`,
       });
     }
-  }).pipe(Effect.withSpan(`authz.hasPermissions.${String(resource)}.${String(action)}`));
+  }).pipe(
+    Effect.withSpan(`authz.hasPermissions.${String(resource)}.${String(action)}`),
+    // The body's error union is the widest case (`NotFound` included). The
+    // runtime `id !== undefined` branch above IS the scoped/unscoped split
+    // that `ErrorsFor` keys on, so `NotFound` is only reachable when
+    // `R extends ResourceName` — which TS can't verify through the erased
+    // name-keyed resolver lookup.
+    (effect) => effect as Effect.Effect<void, ErrorsFor<R>, never>,
+  );

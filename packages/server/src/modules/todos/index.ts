@@ -8,7 +8,12 @@ export {
   TodoResolverEntry,
   TodoResolverEntryLive,
 } from "./policies/todo.resource-resolvers.js";
-export { TodoCollectionResource, TodoResource, todosPolicies } from "./policies/todos.policies.js";
+export {
+  TodoCollectionResource,
+  TodoPoliciesLive,
+  TodoPolicyContribution,
+  TodoResource,
+} from "./policies/todos.policies.js";
 export { ListTodosQuery } from "./queries/list-todos.query.js";
 export { todoCommandHandlers } from "./todo.command-handlers.js";
 export { todoQueryHandlers } from "./todo.query-handlers.js";

@@ -8,9 +8,11 @@ import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 import { Api } from "@/api.js";
 import { EnvVars } from "@/common/env-vars.js";
 import {
+  AuthAclDepsLive,
   authCommandHandlers,
   AuthHttpDepsLive,
   AuthModuleLive,
+  AuthProvisioningDepsLive,
   authQueryHandlers,
   AuthSharedDepsLive,
 } from "@/modules/auth/index.js";
@@ -19,48 +21,45 @@ import {
   billingEventSpanAttributes,
   BillingHttpDepsFake,
   BillingModuleLive,
-  billingPolicies,
+  BillingPoliciesLive,
+  BillingPolicyContribution,
   billingQueryHandlers,
   BillingResolverEntry,
   BillingResolverEntryLive,
 } from "@/modules/billing/index.js";
 import {
-  MembershipServiceLive,
+  OrganizationAclDepsLive,
   organizationCommandHandlers,
   organizationEventSpanAttributes,
   OrganizationHttpDepsLive,
   OrganizationModuleLive,
-  organizationPolicies,
+  OrganizationPoliciesLive,
+  OrganizationPolicyContribution,
   organizationQueryHandlers,
   OrganizationResolverEntry,
   OrganizationResolverEntryLive,
-  OrganizationRoleServiceLive,
 } from "@/modules/organization/index.js";
 import {
   roleCommandHandlers,
   roleEventSpanAttributes,
   roleQueryHandlers,
-  RoleServiceLive,
 } from "@/modules/role/index.js";
 import {
   TodoCollectionResolverEntry,
   TodoCollectionResolverEntryLive,
   todoCommandHandlers,
+  TodoPoliciesLive,
+  TodoPolicyContribution,
   todoQueryHandlers,
   TodoResolverEntry,
   TodoResolverEntryLive,
   TodosModuleLive,
-  todosPolicies,
 } from "@/modules/todos/index.js";
 import {
   userCommandHandlers,
   userEventSpanAttributes,
   UserModuleLive,
-  userPolicies,
-  UserProvisioningLive,
   userQueryHandlers,
-  UserResolverEntry,
-  UserResolverEntryLive,
 } from "@/modules/user/index.js";
 import {
   walletCommandHandlers,
@@ -116,22 +115,25 @@ const DomainEventBusLive = makeDomainEventBusLive({
 });
 const IntegrationEventBusLive = makeIntegrationEventBusLive();
 
-const PolicyRegistryLive = makePolicyRegistry([
-  userPolicies,
-  organizationPolicies,
-  todosPolicies,
-  billingPolicies,
-]);
+// Every module publishes its policy contribution behind a Tag whose Layer closes
+// over that module's own ACL ports, so every registered check is R = never and
+// the registry holds no ambient service requirements.
+const PolicyRegistryLive = Layer.unwrap(
+  Effect.gen(function* () {
+    const todoPolicies = yield* TodoPolicyContribution;
+    const billingPolicies = yield* BillingPolicyContribution;
+    const organizationPolicies = yield* OrganizationPolicyContribution;
+    return makePolicyRegistry([todoPolicies, billingPolicies, organizationPolicies]);
+  }),
+).pipe(Layer.provide([TodoPoliciesLive, BillingPoliciesLive, OrganizationPoliciesLive]));
 
 const ResourceResolverRegistryLive = Layer.unwrap(
   Effect.gen(function* () {
-    const userResolver = yield* UserResolverEntry;
     const organizationResolver = yield* OrganizationResolverEntry;
     const todoCollectionResolver = yield* TodoCollectionResolverEntry;
     const todoResolver = yield* TodoResolverEntry;
     const billingResolver = yield* BillingResolverEntry;
     return makeResourceResolverRegistry({
-      user: userResolver,
       organization: organizationResolver,
       todoCollection: todoCollectionResolver,
       todo: todoResolver,
@@ -140,7 +142,6 @@ const ResourceResolverRegistryLive = Layer.unwrap(
   }),
 ).pipe(
   Layer.provide([
-    UserResolverEntryLive,
     OrganizationResolverEntryLive,
     TodoCollectionResolverEntryLive,
     TodoResolverEntryLive,
@@ -188,13 +189,14 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
   // `yield* CommandBus`/`QueryBus`, `yield* HttpApiClient.make(Api)`, and drive
   // the DB directly.
   return HttpRouter.serve(ApiLive).pipe(
-    // UserProvisioningLive depends on DomainEventBus + UnitOfWork + CommandBus,
-    // so those steps must provide TO it.
-    Layer.provide([UserProvisioningLive]),
+    // Auth's JIT provisioning adapter depends on DomainEventBus + UnitOfWork +
+    // CommandBus, so those steps must provide TO it.
+    Layer.provide([AuthProvisioningDepsLive]),
     Layer.provide([
-      RoleServiceLive,
-      MembershipServiceLive,
-      OrganizationRoleServiceLive,
+      OrganizationAclDepsLive,
+      AuthAclDepsLive,
+      PolicyRegistryLive,
+      ResourceResolverRegistryLive,
       DomainEventBusLive,
       UnitOfWorkLive,
       // Endpoint-consumed, module-owned services that `serve` unwrapped from
@@ -206,7 +208,6 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
       BillingHttpDepsFake,
     ]),
     Layer.provideMerge(Layer.mergeAll(CommandBusLive, QueryBusLive, IntegrationEventBusLive)),
-    Layer.provide([PolicyRegistryLive, ResourceResolverRegistryLive]),
     Layer.provide(AuthSharedDepsLive),
     Layer.provideMerge(TestDatabaseLive),
     Layer.provide(EnvVars.layer),

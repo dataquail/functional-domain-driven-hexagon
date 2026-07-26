@@ -18,9 +18,11 @@ import * as OtlpTracer from "effect/unstable/observability/OtlpTracer";
 import { Api } from "./api.js";
 import { EnvVars } from "./common/env-vars.js";
 import {
+  AuthAclDepsLive,
   authCommandHandlers,
   AuthHttpDepsLive,
   AuthModuleLive,
+  AuthProvisioningDepsLive,
   authQueryHandlers,
   AuthSharedDepsLive,
 } from "./modules/auth/index.js";
@@ -29,48 +31,45 @@ import {
   billingEventSpanAttributes,
   BillingHttpDepsLive,
   BillingModuleLive,
-  billingPolicies,
+  BillingPoliciesLive,
+  BillingPolicyContribution,
   billingQueryHandlers,
   BillingResolverEntry,
   BillingResolverEntryLive,
 } from "./modules/billing/index.js";
 import {
-  MembershipServiceLive,
+  OrganizationAclDepsLive,
   organizationCommandHandlers,
   organizationEventSpanAttributes,
   OrganizationHttpDepsLive,
   OrganizationModuleLive,
-  organizationPolicies,
+  OrganizationPoliciesLive,
+  OrganizationPolicyContribution,
   organizationQueryHandlers,
   OrganizationResolverEntry,
   OrganizationResolverEntryLive,
-  OrganizationRoleServiceLive,
 } from "./modules/organization/index.js";
 import {
   roleCommandHandlers,
   roleEventSpanAttributes,
   roleQueryHandlers,
-  RoleServiceLive,
 } from "./modules/role/index.js";
 import {
   TodoCollectionResolverEntry,
   TodoCollectionResolverEntryLive,
   todoCommandHandlers,
+  TodoPoliciesLive,
+  TodoPolicyContribution,
   todoQueryHandlers,
   TodoResolverEntry,
   TodoResolverEntryLive,
   TodosModuleLive,
-  todosPolicies,
 } from "./modules/todos/index.js";
 import {
   userCommandHandlers,
   userEventSpanAttributes,
   UserModuleLive,
-  userPolicies,
-  UserProvisioningLive,
   userQueryHandlers,
-  UserResolverEntry,
-  UserResolverEntryLive,
 } from "./modules/user/index.js";
 import {
   walletCommandHandlers,
@@ -127,12 +126,17 @@ const DomainEventBusLive = makeDomainEventBusLive({
 });
 const IntegrationEventBusLive = makeIntegrationEventBusLive();
 
-const PolicyRegistryLive = makePolicyRegistry([
-  userPolicies,
-  organizationPolicies,
-  todosPolicies,
-  billingPolicies,
-]);
+// Every module publishes its policy contribution behind a Tag whose Layer closes
+// over that module's own ACL ports, so every registered check is R = never and
+// the registry holds no ambient service requirements.
+const PolicyRegistryLive = Layer.unwrap(
+  Effect.gen(function* () {
+    const todoPolicies = yield* TodoPolicyContribution;
+    const billingPolicies = yield* BillingPolicyContribution;
+    const organizationPolicies = yield* OrganizationPolicyContribution;
+    return makePolicyRegistry([todoPolicies, billingPolicies, organizationPolicies]);
+  }),
+).pipe(Layer.provide([TodoPoliciesLive, BillingPoliciesLive, OrganizationPoliciesLive]));
 
 // Resource resolvers are owned by each module: the module exports a
 // `*ResolverEntryLive` layer that internally satisfies its repository
@@ -142,13 +146,11 @@ const PolicyRegistryLive = makePolicyRegistry([
 // and provide the layer below.
 const ResourceResolverRegistryLive = Layer.unwrap(
   Effect.gen(function* () {
-    const userResolver = yield* UserResolverEntry;
     const organizationResolver = yield* OrganizationResolverEntry;
     const todoCollectionResolver = yield* TodoCollectionResolverEntry;
     const todoResolver = yield* TodoResolverEntry;
     const billingResolver = yield* BillingResolverEntry;
     return makeResourceResolverRegistry({
-      user: userResolver,
       organization: organizationResolver,
       todoCollection: todoCollectionResolver,
       todo: todoResolver,
@@ -157,7 +159,6 @@ const ResourceResolverRegistryLive = Layer.unwrap(
   }),
 ).pipe(
   Layer.provide([
-    UserResolverEntryLive,
     OrganizationResolverEntryLive,
     TodoCollectionResolverEntryLive,
     TodoResolverEntryLive,
@@ -235,20 +236,21 @@ const HttpLive = HttpRouter.serve(ApiLive, {
   // requirements. The provide ORDER encodes the dependency graph (peers don't
   // satisfy each other) — it mirrors the pre-v4 ApiLive wiring.
   //
-  // UserProvisioning (JIT user creation for `auth` first sign-in) depends on
-  // DomainEventBus + UnitOfWork (peers below) + CommandBus (fires
-  // CreateUserCommand two steps down), so it gets its own earlier step.
-  Layer.provide([UserProvisioningLive]),
-  // RoleService is a peer of the auth middleware: both consume the buses
-  // provided just below and feed upstream consumers (endpoints +
-  // `SuperAdminOnly`). The Stripe-vs-fake `BillingGateway` swap ships as the
+  // The auth module's JIT user provisioning (first OIDC sign-in) depends on
+  // DomainEventBus + UnitOfWork (peers below) + CommandBus (fires the user
+  // module's CreateUserCommand two steps down), so it gets its own earlier step.
+  Layer.provide([AuthProvisioningDepsLive]),
+  // The per-module ACL adapters and the policy registry are peers of the auth
+  // middleware: all consume the buses provided just below and feed upstream
+  // consumers (endpoints + policy checks). The Stripe-vs-fake `BillingGateway` swap ships as the
   // module's `BillingHttpDeps{Live,Fake}` bundles: prod provides the live
   // one here; `test-server.ts` provides the fake. The `BillingGateway` Tag
   // stays private to the module — only the opaque bundle appears here.
   Layer.provide([
-    RoleServiceLive,
-    MembershipServiceLive,
-    OrganizationRoleServiceLive,
+    OrganizationAclDepsLive,
+    AuthAclDepsLive,
+    PolicyRegistryLive,
+    ResourceResolverRegistryLive,
     DomainEventBusLive,
     UnitOfWorkLive,
     // Endpoint-consumed, module-owned services that `serve` unwrapped from
@@ -263,8 +265,9 @@ const HttpLive = HttpRouter.serve(ApiLive, {
   // FindSessionQuery). IntegrationEventBus provides TO UnitOfWork (post-commit
   // flush), so it sits here, not as a peer of UnitOfWork above.
   Layer.provide([CommandBusLive, QueryBusLive, IntegrationEventBusLive]),
-  // Authz registries — endpoints consume these via Authz.requires/requiresOn.
-  Layer.provide([PolicyRegistryLive, ResourceResolverRegistryLive]),
+  // Resource resolvers read through repositories, so they close on Database
+  // alone; the policy registry sits above with the buses it now dispatches
+  // through.
   Layer.provide(AuthSharedDepsLive),
   Layer.merge(Layer.effectDiscard(Database.Database.use((db) => db.setupConnectionListeners))),
   Layer.provide(DatabaseLive),
