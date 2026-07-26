@@ -9,9 +9,6 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
 import { UserId } from "@/platform/ids/user-id.js";
-import { makeMembershipServiceFake } from "@/test-utils/membership-service-fake.js";
-import { makeOrganizationRoleServiceFake } from "@/test-utils/organization-role-service-fake.js";
-import { makeRoleServiceFake } from "@/test-utils/role-service-fake.js";
 
 import { Actions } from "./actions.js";
 import * as Authz from "./authz.js";
@@ -20,6 +17,11 @@ import { makeResourceResolverRegistry } from "./resource-resolver-registry.js";
 
 // Synthetic registry entries scoped to this test file via declaration
 // merging. Real module entries live in `modules/<m>/policies/*-policies.ts`.
+//
+// `test` is a SCOPED resource: it appears in ResourceResolverMap, so every
+// action on it requires an id and receives the resolved resource.
+// `testPlatform` is an UNSCOPED resource: absent from ResourceResolverMap, so
+// no action on it takes an id and its checks only ever see the caller.
 type ThingId = string & { readonly _brand: "ThingId" };
 type Thing = { readonly id: ThingId; readonly ownerId: string };
 
@@ -32,9 +34,12 @@ declare module "./resource-resolver-registry.js" {
 declare module "./policy-registry.js" {
   interface PolicyMap {
     test: {
-      read: CheckFor<"test", "read">;
-      update: CheckFor<"test", "update">;
-      create: CheckFor<"test", "create">;
+      read: CheckFor<"test">;
+      update: CheckFor<"test">;
+      create: CheckFor<"test">;
+    };
+    testPlatform: {
+      read: CheckFor<"testPlatform">;
     };
   }
 }
@@ -47,9 +52,10 @@ const callerMember: CurrentUser["Service"] = {
 const knownThing: Thing = { id: "thing-1" as ThingId, ownerId: "u1" };
 
 const provideRegistries = (opts: {
-  readonly read: CheckFor<"test", "read">;
-  readonly update: CheckFor<"test", "update">;
-  readonly create: CheckFor<"test", "create">;
+  readonly read: CheckFor<"test">;
+  readonly update: CheckFor<"test">;
+  readonly create: CheckFor<"test">;
+  readonly platformRead?: CheckFor<"testPlatform">;
   readonly thingById?: (id: ThingId) => Effect.Effect<Thing, CustomHttpApiError.NotFound>;
 }) =>
   Layer.mergeAll(
@@ -59,6 +65,9 @@ const provideRegistries = (opts: {
           read: opts.read,
           update: opts.update,
           create: opts.create,
+        },
+        testPlatform: {
+          read: opts.platformRead ?? (() => Effect.succeed(false)),
         },
       },
     ]),
@@ -70,12 +79,6 @@ const provideRegistries = (opts: {
             ? Effect.succeed(knownThing)
             : Effect.fail(new CustomHttpApiError.NotFound())),
     }),
-    // `Authz.hasPermissions` reaches `RoleService` + `MembershipService`
-    // (the platform-layer ACLs); none of the synthetic checks below
-    // consume them, but the R channel still needs satisfying.
-    makeRoleServiceFake(new Map()),
-    makeMembershipServiceFake(),
-    makeOrganizationRoleServiceFake(),
   );
 
 const provideCurrentUser = (caller: CurrentUser["Service"]) =>
@@ -99,9 +102,6 @@ describe("makePolicyRegistry — array-of-checks AND composition", () => {
             makeResourceResolverRegistry({
               test: () => Effect.succeed(knownThing),
             }),
-            makeRoleServiceFake(new Map()),
-            makeMembershipServiceFake(),
-            makeOrganizationRoleServiceFake(),
           ),
           provideCurrentUser(callerMember),
         ),
@@ -139,9 +139,6 @@ describe("makePolicyRegistry — array-of-checks AND composition", () => {
             makeResourceResolverRegistry({
               test: () => Effect.succeed(knownThing),
             }),
-            makeRoleServiceFake(new Map()),
-            makeMembershipServiceFake(),
-            makeOrganizationRoleServiceFake(),
           ),
           provideCurrentUser(callerMember),
         ),
@@ -150,15 +147,16 @@ describe("makePolicyRegistry — array-of-checks AND composition", () => {
   );
 });
 
-describe("Authz.hasPermissions (flat — CREATE, no resource)", () => {
+describe("Authz.hasPermissions (unscoped resource — takes no id)", () => {
   it.effect("succeeds when the registered policy returns true", () =>
-    Authz.hasPermissions("test", Actions.Create).pipe(
+    Authz.hasPermissions("testPlatform", Actions.Read).pipe(
       Effect.provide(
         Layer.mergeAll(
           provideRegistries({
             read: () => Effect.succeed(false),
             update: () => Effect.succeed(false),
-            create: () => Effect.succeed(true),
+            create: () => Effect.succeed(false),
+            platformRead: () => Effect.succeed(true),
           }),
           provideCurrentUser(callerMember),
         ),
@@ -168,7 +166,7 @@ describe("Authz.hasPermissions (flat — CREATE, no resource)", () => {
 
   it.effect("fails Forbidden when the registered policy returns false", () =>
     Effect.gen(function* () {
-      const exit = yield* Effect.exit(Authz.hasPermissions("test", Actions.Create));
+      const exit = yield* Effect.exit(Authz.hasPermissions("testPlatform", Actions.Read));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.hasFails(exit.cause)
@@ -182,7 +180,25 @@ describe("Authz.hasPermissions (flat — CREATE, no resource)", () => {
           provideRegistries({
             read: () => Effect.succeed(true),
             update: () => Effect.succeed(true),
+            create: () => Effect.succeed(true),
+            platformRead: () => Effect.succeed(false),
+          }),
+          provideCurrentUser(callerMember),
+        ),
+      ),
+    ),
+  );
+
+  it.effect("never consults the resolver registry", () =>
+    Authz.hasPermissions("testPlatform", Actions.Read).pipe(
+      Effect.provide(
+        Layer.mergeAll(
+          provideRegistries({
+            read: () => Effect.succeed(false),
+            update: () => Effect.succeed(false),
             create: () => Effect.succeed(false),
+            platformRead: () => Effect.succeed(true),
+            thingById: () => Effect.die("resolver must not run for an unscoped resource"),
           }),
           provideCurrentUser(callerMember),
         ),
@@ -191,7 +207,7 @@ describe("Authz.hasPermissions (flat — CREATE, no resource)", () => {
   );
 });
 
-describe("Authz.hasPermissions (resource-scoped — READ/UPDATE/DELETE)", () => {
+describe("Authz.hasPermissions (scoped resource — every action carries an id)", () => {
   it.effect("resolves the resource and threads it to the registered policy", () =>
     Authz.hasPermissions("test", Actions.Read, knownThing.id).pipe(
       Effect.provide(
@@ -200,6 +216,21 @@ describe("Authz.hasPermissions (resource-scoped — READ/UPDATE/DELETE)", () => 
             read: (_caller, resource) => Effect.succeed(resource.id === knownThing.id),
             update: () => Effect.succeed(false),
             create: () => Effect.succeed(false),
+          }),
+          provideCurrentUser(callerMember),
+        ),
+      ),
+    ),
+  );
+
+  it.effect("resolves the resource for CREATE too, so a create can be scoped to its parent", () =>
+    Authz.hasPermissions("test", Actions.Create, knownThing.id).pipe(
+      Effect.provide(
+        Layer.mergeAll(
+          provideRegistries({
+            read: () => Effect.succeed(false),
+            update: () => Effect.succeed(false),
+            create: (_caller, resource) => Effect.succeed(resource.id === knownThing.id),
           }),
           provideCurrentUser(callerMember),
         ),

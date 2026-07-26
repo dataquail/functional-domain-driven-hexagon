@@ -57,6 +57,7 @@ import {
   type DeviceGrantNotFound,
   type DeviceGrantPending,
 } from "@/modules/auth/domain/device-grant/device-grant.errors.js";
+import { type UserProvisioning } from "@/modules/auth/domain/ports/acl/user-provisioning.acl.js";
 import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositories/api-token.repository-live.js";
 import { AuthIdentityRepositoryLive } from "@/modules/auth/infrastructure/repositories/auth-identity.repository-live.js";
 import { DeviceGrantRepositoryLive } from "@/modules/auth/infrastructure/repositories/device-grant.repository-live.js";
@@ -64,7 +65,6 @@ import { SessionRepositoryLive } from "@/modules/auth/infrastructure/repositorie
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { commandHandlers } from "@/platform/ddd/ports/command-bus.js";
 import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
-import { type UserProvisioning } from "@/platform/ddd/ports/user-provisioning.js";
 
 // `UnitOfWork` + `UserProvisioning` are not provided by the handler wrap
 // (only the two repositories are); they're satisfied from the composition-

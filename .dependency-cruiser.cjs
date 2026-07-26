@@ -210,6 +210,31 @@ module.exports = {
       },
     },
     {
+      name: "policies-isolation",
+      severity: "error",
+      comment:
+        "A module's `policies/` ring answers 'may this caller do this?' and must never reach the write-side consistency boundary to do it. It may import: sibling policy files, its OWN `queries/` (the read models its checks and resolvers ask), its own `domain/ports/acl/` + the `infrastructure/acl/` adapters its contribution layer provides, its own branded IDs (`domain/<sub>/*.id.ts`), `platform/auth/`, `platform/ddd/` (the QueryBus it dispatches through, and PersistenceUnavailable), `platform/ids/`, `@org/database` (to capture Database for a bus dispatch), and `@org/contracts` (CurrentUser + the Forbidden/NotFound wire errors authz lifts to). Everything else in `domain/` is off-limits: roots, *.root-ops.ts, repositories, specifications, value-objects, entities, and domain-services. Also barred: own commands and event-handlers, `interface/`, `platform/*-live.ts`, and (ADR-0022) another module's barrel — a cross-module answer comes from an `acl/` port, not a direct reach. An authorization check reading aggregate state is the violation this rule exists to stop: model the question as a read model instead. Test files excluded. See ADR-0021, ADR-0022.",
+      from: {
+        path: "^packages/server/src/modules/([^/]+)/policies/",
+        pathNot: "\\.test\\.ts$",
+      },
+      to: {
+        path: "^packages/",
+        pathNot: [
+          "^packages/server/src/modules/$1/policies/",
+          "^packages/server/src/modules/$1/queries/",
+          "^packages/server/src/modules/$1/domain/ports/acl/",
+          "^packages/server/src/modules/$1/infrastructure/acl/",
+          "^packages/server/src/modules/$1/domain/[^/]+/[^/]+\\.id\\.ts$",
+          "^packages/server/src/platform/auth/",
+          "^packages/server/src/platform/ddd/",
+          "^packages/server/src/platform/ids/",
+          "^packages/database/",
+          "^packages/contracts/",
+        ],
+      },
+    },
+    {
       name: "interface-events-isolation",
       severity: "error",
       comment:
@@ -255,9 +280,7 @@ module.exports = {
         path: "^packages/server/src/modules/[^/]+/",
         pathNot: [
           "^packages/server/src/modules/[^/]+/(commands|queries|infrastructure)/",
-          "^packages/server/src/modules/[^/]+/policies/.*resource-resolvers?\\.ts$",
           "^packages/server/src/modules/[^/]+/domain/",
-          "^packages/server/src/modules/[^/]+/policies/public/.*\\.service-live\\.ts$",
           "^packages/server/src/modules/[^/]+/[^/]+\\.(command|query)-handlers\\.ts$",
           "\\.test\\.ts$",
         ],
@@ -267,7 +290,26 @@ module.exports = {
           "^packages/server/src/modules/[^/]+/domain/ports/",
           "^packages/server/src/modules/[^/]+/domain/[^/]+/[^/]+\\.repository\\.ts$",
         ],
+        // ACL ports have a wider legitimate audience (policies too), so they
+        // get their own rule below.
+        pathNot: "^packages/server/src/modules/[^/]+/domain/ports/acl/",
       },
+    },
+    {
+      name: "acl-ports-private-to-use-cases-and-policies",
+      severity: "error",
+      comment:
+        "ADR-0022 cross-context ACL ports (`domain/ports/acl/`) may be consumed by the module's use cases (commands/queries), its `policies/` authorization checks, its own `infrastructure/acl/` adapters, and its domain — nothing else. Unlike the repository and client ports (see `outbound-ports-private-to-use-cases`), `policies/` IS a legitimate consumer: an authorization check asks another bounded context a question through this module's own narrow port, which is how a policy avoids depending on a platform-level ACL service. An `interface/` endpoint reaching for an ACL port is still bypassing the bus — dispatch a command or query instead. Test files excluded.",
+      from: {
+        path: "^packages/server/src/modules/[^/]+/",
+        pathNot: [
+          "^packages/server/src/modules/[^/]+/(commands|queries|infrastructure|policies)/",
+          "^packages/server/src/modules/[^/]+/domain/",
+          "^packages/server/src/modules/[^/]+/[^/]+\\.(command|query)-handlers\\.ts$",
+          "\\.test\\.ts$",
+        ],
+      },
+      to: { path: "^packages/server/src/modules/[^/]+/domain/ports/acl/" },
     },
     {
       name: "lives-only-from-composition-roots",

@@ -77,6 +77,7 @@ import {
   type CannotPromoteSelfInOrganization,
   type DoesNotHaveOrganizationRole,
 } from "@/modules/organization/domain/organization-roles/organization-role.errors.js";
+import { type PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.js";
 import { type InvitationMailer } from "@/modules/organization/domain/ports/clients/invitation-mailer.client.js";
 import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/repositories/invitation.repository-live.js";
 import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/repositories/membership.repository-live.js";
@@ -85,18 +86,17 @@ import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastr
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { commandHandlers } from "@/platform/ddd/ports/command-bus.js";
 import { type DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { type RoleService } from "@/platform/ddd/ports/role-service.js";
 import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 import { type InvitationId } from "@/platform/ids/invitation-id.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
-// `RoleService` stays in the bus output's R because the model-invariant
+// `PlatformRoles` stays in the bus output's R because the model-invariant
 // check (super-admins can't own orgs) needs the platform-role ACL. The
-// composition root wires `RoleServiceLive` alongside the module Live.
+// composition root wires `OrganizationAclDepsLive` alongside the module Live.
 type CreateOrganizationOutput = Effect.Effect<
   OrganizationId,
   PersistenceUnavailable | SuperAdminCannotOwnOrganization,
-  DomainEventBus | UnitOfWork | Database.Database | RoleService
+  DomainEventBus | UnitOfWork | Database.Database | PlatformRoles
 >;
 
 type RestoreOrganizationOutput = Effect.Effect<
@@ -140,7 +140,7 @@ type AcceptInvitationOutput = Effect.Effect<
   | InvitationExpired
   | SuperAdminCannotOwnOrganization
   | PersistenceUnavailable,
-  DomainEventBus | UnitOfWork | Database.Database | RoleService
+  DomainEventBus | UnitOfWork | Database.Database | PlatformRoles
 >;
 
 type RevokeInvitationOutput = Effect.Effect<

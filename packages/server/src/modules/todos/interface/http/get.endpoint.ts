@@ -25,16 +25,7 @@ const toResponse = (result: ListTodosResult): ReadonlyArray<TodosContract.Todo> 
 export const getEndpoint = Effect.fn("TodosLive.get")(function* (
   request: EndpointRequest<typeof TodosContract.Group, "get">,
 ) {
-  // The `todoCollection` resolver is a deliberate echo of the orgId
-  // and never fails NotFound (the collection's identity *is* the org;
-  // we don't leak org existence to non-members). `hasPermissions`
-  // declares NotFound for resource-scoped calls, so collapse the
-  // unreachable case to a defect.
-  yield* Authz.hasPermissions(TodoCollectionResource, Actions.Read, request.params.orgId).pipe(
-    Effect.catchTag("NotFound", () =>
-      Effect.die("Unreachable: todoCollection resolver cannot surface NotFound"),
-    ),
-  );
+  yield* Authz.hasPermissions(TodoCollectionResource, Actions.Read, request.params.orgId);
   const queryBus = yield* QueryBus;
   const result = yield* queryBus.execute(
     ListTodosQuery.make({ organizationId: request.params.orgId }),

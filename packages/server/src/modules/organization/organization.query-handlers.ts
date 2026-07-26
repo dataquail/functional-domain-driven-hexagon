@@ -13,13 +13,19 @@ import {
   type FindMembershipQuery,
   findMembershipQuerySpanAttributes,
   type FindMembershipResult,
-} from "@/modules/organization/queries/find-membership.query.js";
+} from "@/modules/organization/queries/find-membership.policy-query.js";
 import { findMyOrganizations } from "@/modules/organization/queries/find-my-organizations.handler.js";
 import {
   type FindMyOrganizationsQuery,
   findMyOrganizationsQuerySpanAttributes,
   type FindMyOrganizationsResult,
 } from "@/modules/organization/queries/find-my-organizations.query.js";
+import { findOrganizationById } from "@/modules/organization/queries/find-organization-by-id.handler.js";
+import {
+  type FindOrganizationByIdQuery,
+  findOrganizationByIdQuerySpanAttributes,
+  type OrganizationAuthzView,
+} from "@/modules/organization/queries/find-organization-by-id.query.js";
 import { findOrganizationMemberships } from "@/modules/organization/queries/find-organization-memberships.handler.js";
 import {
   type FindOrganizationMembershipsQuery,
@@ -37,7 +43,7 @@ import {
   type FindUserOrganizationRolesQuery,
   findUserOrganizationRolesQuerySpanAttributes,
   type FindUserOrganizationRolesResult,
-} from "@/modules/organization/queries/find-user-organization-roles.query.js";
+} from "@/modules/organization/queries/find-user-organization-roles.policy-query.js";
 import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { type QueryBus, queryHandlers } from "@/platform/ddd/ports/query-bus.js";
 
@@ -81,6 +87,12 @@ type FindPendingInvitationsOutput = Effect.Effect<
   Database.Database
 >;
 
+type FindOrganizationByIdOutput = Effect.Effect<
+  OrganizationAuthzView | null,
+  PersistenceUnavailable,
+  Database.Database
+>;
+
 declare module "@/platform/ddd/ports/query-bus.js" {
   interface QueryRegistry {
     FindAllOrganizationsQuery: {
@@ -94,6 +106,10 @@ declare module "@/platform/ddd/ports/query-bus.js" {
     FindUserOrganizationRolesQuery: {
       readonly query: FindUserOrganizationRolesQuery;
       readonly output: FindUserOrganizationRolesOutput;
+    };
+    FindOrganizationByIdQuery: {
+      readonly query: FindOrganizationByIdQuery;
+      readonly output: FindOrganizationByIdOutput;
     };
     FindMembershipQuery: {
       readonly query: FindMembershipQuery;
@@ -115,6 +131,10 @@ declare module "@/platform/ddd/ports/query-bus.js" {
 // discharges `UsersLookup` (the cross-module email ACL) before the bus
 // dispatch, leaving `Database | QueryBus` in R.
 export const organizationQueryHandlers = queryHandlers({
+  FindOrganizationByIdQuery: {
+    handle: findOrganizationById,
+    spanAttributes: findOrganizationByIdQuerySpanAttributes,
+  },
   FindAllOrganizationsQuery: {
     handle: findAllOrganizations,
     spanAttributes: findAllOrganizationsQuerySpanAttributes,

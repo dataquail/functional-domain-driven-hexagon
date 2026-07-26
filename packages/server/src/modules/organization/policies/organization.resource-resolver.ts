@@ -1,25 +1,23 @@
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
+import { Database } from "@org/database/index";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { FindOrganizationByIdQuery } from "@/modules/organization/queries/find-organization-by-id.query.js";
 import { type Resolver } from "@/platform/auth/resource-resolver-registry.js";
+import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 
-import { OrganizationRepository } from "../domain/organization/organization.repository.js";
-import { OrganizationSpecifications } from "../domain/organization/organization.specification.js";
-import { OrganizationRepositoryLive } from "../infrastructure/repositories/organization.repository-live.js";
-
-// Resolver loads soft-deleted rows too. The restore endpoint
-// (`Authz.hasPermissions(OrganizationResource, Actions.Update, id)`)
-// needs the tombstoned aggregate to compute "can the caller update
-// this," and the soft-delete endpoint sees an active row at the time
-// of resolution. Keeping a single `organization` resolver in
-// `ResourceResolverMap` is simpler than splitting into active vs.
-// with-deleted flavors.
+// Resolves the `organization` authz resource off the read side: the checks only
+// need the org id, and the load exists to distinguish "no such organization"
+// (NotFound → the endpoint's own *NotFoundError) from "not permitted".
 //
-// PersistenceUnavailable dies inside the resolver — the boundary that
-// converts it to a 503 is the endpoint's `recoverPersistenceUnavailable`,
-// same shape as the user resolver.
+// Soft-deleted rows resolve too. The restore endpoint has to reach a tombstoned
+// organization to decide whether the caller may act on it, and the soft-delete
+// endpoint sees an active row at resolution time.
+//
+// PersistenceUnavailable dies here — the endpoint's `recoverPersistenceUnavailable`
+// is the boundary that turns it into a 503.
 export class OrganizationResolverEntry extends Context.Service<
   OrganizationResolverEntry,
   Resolver<"organization">
@@ -28,15 +26,15 @@ export class OrganizationResolverEntry extends Context.Service<
 export const OrganizationResolverEntryLive = Layer.effect(
   OrganizationResolverEntry,
   Effect.gen(function* () {
-    const repo = yield* OrganizationRepository;
-    return (id) =>
-      repo.findOne(OrganizationSpecifications.withId(id)).pipe(
-        Effect.flatMap((organization) =>
-          organization === null
-            ? Effect.fail(new CustomHttpApiError.NotFound())
-            : Effect.succeed(organization),
+    const queryBus = yield* QueryBus;
+    const db = yield* Database.Database;
+    return (organizationId) =>
+      queryBus.execute(FindOrganizationByIdQuery.make({ organizationId })).pipe(
+        Effect.provideService(Database.Database, db),
+        Effect.flatMap((view) =>
+          view === null ? Effect.fail(new CustomHttpApiError.NotFound()) : Effect.succeed(view),
         ),
         Effect.catchTag("PersistenceUnavailable", Effect.die),
       );
   }),
-).pipe(Layer.provide(OrganizationRepositoryLive));
+);

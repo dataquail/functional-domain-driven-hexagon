@@ -15,6 +15,15 @@ export type Check<Caller, Resource, E = never, R = never> = (
   resource: Resource,
 ) => Effect.Effect<boolean, E, R>;
 
+// A check that inspects only the caller. Declaring the narrower arity (rather
+// than a `Check<Caller, unknown>` that ignores its second parameter) is what
+// lets one such check serve both an unscoped resource, whose checks are handed
+// no resource at all, and a scoped one — TS accepts a fewer-parameter function
+// wherever a more-parameter one is expected, never the reverse.
+export type CallerCheck<Caller, E = never, R = never> = (
+  caller: Caller,
+) => Effect.Effect<boolean, E, R>;
+
 // OR semantics. Short-circuits on the first true. With zero checks,
 // returns false — denying by default is the safer floor.
 export const any =

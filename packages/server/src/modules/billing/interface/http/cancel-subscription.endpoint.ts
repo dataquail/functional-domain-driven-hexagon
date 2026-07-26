@@ -11,11 +11,7 @@ import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/
 
 export const cancelSubscriptionEndpoint = Effect.fn("BillingLive.cancelSubscription")(
   function* (request: EndpointRequest<typeof BillingContract.PrivateGroup, "cancelSubscription">) {
-    yield* Authz.hasPermissions(BillingResource, Actions.Update, request.params.orgId).pipe(
-      Effect.catchTag("NotFound", () =>
-        Effect.die("Unreachable: billing resolver cannot surface NotFound"),
-      ),
-    );
+    yield* Authz.hasPermissions(BillingResource, Actions.Update, request.params.orgId);
     const commandBus = yield* CommandBus;
     const subscription = yield* commandBus.execute(
       CancelSubscriptionCommand.make({ organizationId: request.params.orgId }),

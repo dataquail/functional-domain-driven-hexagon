@@ -10,12 +10,16 @@ import { type OrganizationId } from "@/platform/ids/organization-id.js";
 // and a non-member must not learn whether a subscription exists for
 // the org. Same shape as the `todoCollection` resolver: a deliberate
 // echo. The membership / org-admin checks each look up against their
-// own platform ACL and decide.
+// own ACL port and decide.
 export type BillingResourceContext = { readonly organizationId: OrganizationId };
 
 declare module "@/platform/auth/resource-resolver-registry.js" {
   interface ResourceResolverMap {
-    billing: { resourceType: BillingResourceContext; idType: OrganizationId };
+    billing: {
+      resourceType: BillingResourceContext;
+      idType: OrganizationId;
+      notFound: never;
+    };
   }
 }
 

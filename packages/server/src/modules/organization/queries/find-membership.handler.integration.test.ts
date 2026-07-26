@@ -13,7 +13,7 @@ import { OrganizationRootOps } from "@/modules/organization/domain/organization/
 import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/repositories/membership.repository-live.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
 import { findMembership } from "@/modules/organization/queries/find-membership.handler.js";
-import { FindMembershipQuery } from "@/modules/organization/queries/find-membership.query.js";
+import { FindMembershipQuery } from "@/modules/organization/queries/find-membership.policy-query.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";

@@ -1,5 +1,7 @@
 import { describe, it } from "@effect/vitest";
 import { OrganizationContract, TodosContract } from "@org/contracts/api/Contracts";
+import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
+import { Database, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
@@ -98,6 +100,56 @@ suite("DELETE /orgs/:orgId/todos/:id (integration)", () => {
         // The todo is still present under its real org.
         const todos = yield* client.todos.get({ params: { orgId: orgA } });
         deepStrictEqual(todos.length, 1);
+      }),
+    );
+  });
+});
+
+const nonMemberSuite = describe.sequential;
+
+nonMemberSuite("DELETE /orgs/:orgId/todos/:id (integration, non-member caller)", () => {
+  const { run } = useServerTestRuntime(TODO_TABLES, {
+    server: TestServerLiveAsMember,
+    seedSuperAdminCaller: true,
+  });
+
+  it("returns 403 Forbidden for a caller who isn't a member of the todo's org", async () => {
+    await run(
+      Effect.gen(function* () {
+        // Seeded directly: the caller cannot reach the create endpoints for an
+        // org they are not a member of, and the resolver must find a real todo
+        // so the denial comes from the policy rather than from NotFound.
+        const orgId = "11111111-1111-1111-1111-111111111111" as never;
+        const todoId = "33333333-3333-3333-3333-333333333333" as never;
+        const db = yield* Database.Database;
+        yield* db
+          .execute((c) =>
+            c.query(sql.unsafe`
+              INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
+              VALUES (${orgId}, 'Acme', now(), now(), null)
+            `),
+          )
+          .pipe(Effect.orDie);
+        yield* db
+          .execute((c) =>
+            c.query(sql.unsafe`
+              INSERT INTO todos.todos (id, organization_id, title, completed, created_at, updated_at)
+              VALUES (${todoId}, ${orgId}, 'Someone else''s todo', false, now(), now())
+            `),
+          )
+          .pipe(Effect.orDie);
+
+        const client = yield* HttpApiClient.make(Api);
+        const exit = yield* Effect.exit(client.todos.delete({ params: { orgId, id: todoId } }));
+        ok(Exit.isFailure(exit));
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
+              CustomHttpApiError.Forbidden,
+          );
+        } else {
+          throw new Error("expected a typed Fail, got " + JSON.stringify(exit));
+        }
       }),
     );
   });

@@ -8,7 +8,13 @@ import {
   type QueryRegistry,
 } from "@/platform/ddd/ports/query-bus.js";
 
-export const makeQueryBus = (handlers: QueryHandlers): QueryBusShape => ({
+// Accepts a subset of the registry so an integration test can stage just the
+// handlers its sub-graph needs (ADR-0009). An unregistered tag already dies with
+// a clear message at dispatch, so a partial map is a runtime-safe narrowing, not
+// a hole — the composition roots still pass every handler.
+export const makeQueryBus = <K extends keyof QueryRegistry>(
+  handlers: QueryHandlers<K>,
+): QueryBusShape => ({
   execute: ((query: { readonly _tag: string }) => {
     const entry = (handlers as Record<string, QueryHandlerEntry<keyof QueryRegistry>>)[query._tag];
     if (entry === undefined) {

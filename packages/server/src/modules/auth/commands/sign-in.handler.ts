@@ -5,10 +5,10 @@ import * as Effect from "effect/Effect";
 import { type SignInCommand } from "@/modules/auth/commands/sign-in.command.js";
 import { AuthIdentityRepository } from "@/modules/auth/domain/auth-identity/auth-identity.repository.js";
 import { AuthIdentitySpecifications } from "@/modules/auth/domain/auth-identity/auth-identity.specification.js";
+import { UserProvisioning } from "@/modules/auth/domain/ports/acl/user-provisioning.acl.js";
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
 import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.js";
-import { UserProvisioning } from "@/platform/ddd/ports/user-provisioning.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
 // Slice-scope SignIn:

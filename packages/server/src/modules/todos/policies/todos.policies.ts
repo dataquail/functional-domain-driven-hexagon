@@ -1,25 +1,33 @@
+import * as Context from "effect/Context";
+import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
+
+import { OrganizationAccess } from "@/modules/todos/domain/ports/acl/organization-access.acl.js";
+import { PlatformRoles } from "@/modules/todos/domain/ports/acl/platform-roles.acl.js";
+import { OrganizationAccessLive } from "@/modules/todos/infrastructure/acl/organization-access.acl-live.js";
+import { PlatformRolesLive } from "@/modules/todos/infrastructure/acl/platform-roles.acl-live.js";
 import * as Check from "@/platform/auth/check.js";
-import { SuperAdminOnly } from "@/platform/auth/policies/super-admin.js";
 import type * as PolicyRegistry from "@/platform/auth/policy-registry.js";
 
-import { IsTodoOrgMember } from "./is-todo-org-member.policy.js";
+import { makeIsTodoOrgMember } from "./is-todo-org-member.policy.js";
+import { makeIsTodoSuperAdmin } from "./is-todo-super-admin.policy.js";
 
-// Two todo policy resources (see todo-resource-resolvers.ts):
-//   - `todoCollection.read`        — list the todos in an org
-//   - `todo.update` / `todo.delete` — act on a single todo
-// All gate on org membership (super-admin bypasses). `create` is a flat
-// action — the DSL forbids an id on Create, and a flat check can't see
-// the orgId — so its endpoint runs `todoMemberCheck` directly against
-// the path orgId, the same composed gate registered here.
+// Two todo policy resources (see todo.resource-resolvers.ts), both scoped:
+//   - `todoCollection` (by OrganizationId) — `create` a todo in an org and
+//     `read` the org's list. Create carries the org id like every other
+//     action, so the gate runs through the registry rather than beside it.
+//   - `todo` (by the (orgId, todoId) pair) — `update` / `delete` one todo.
+// All gate on org membership; super-admin bypasses.
 
 declare module "@/platform/auth/policy-registry.js" {
   interface PolicyMap {
     todoCollection: {
-      read: PolicyRegistry.CheckFor<"todoCollection", "read">;
+      create: PolicyRegistry.CheckFor<"todoCollection">;
+      read: PolicyRegistry.CheckFor<"todoCollection">;
     };
     todo: {
-      update: PolicyRegistry.CheckFor<"todo", "update">;
-      delete: PolicyRegistry.CheckFor<"todo", "delete">;
+      update: PolicyRegistry.CheckFor<"todo">;
+      delete: PolicyRegistry.CheckFor<"todo">;
     };
   }
 }
@@ -27,16 +35,37 @@ declare module "@/platform/auth/policy-registry.js" {
 export const TodoCollectionResource = "todoCollection" as const;
 export const TodoResource = "todo" as const;
 
-// One composed gate reused across every todo operation, including the
-// create endpoint's direct call — so the membership rule is defined once.
-export const todoMemberCheck = Check.any(SuperAdminOnly, IsTodoOrgMember);
+// The contribution is effectful because its checks close over this module's own
+// ACL ports, which makes every registered check `R = never`. The composition
+// root yields this Tag and hands the value to `makePolicyRegistry` — the same
+// shape the resource resolvers already use.
+export class TodoPolicyContribution extends Context.Service<
+  TodoPolicyContribution,
+  PolicyRegistry.PolicyContribution
+>()("TodoPolicyContribution") {}
 
-export const todosPolicies: PolicyRegistry.PolicyContribution = {
-  todoCollection: {
-    read: todoMemberCheck,
-  },
-  todo: {
-    update: todoMemberCheck,
-    delete: todoMemberCheck,
-  },
-};
+export const TodoPoliciesLive = Layer.effect(
+  TodoPolicyContribution,
+  Effect.gen(function* () {
+    const roles = yield* PlatformRoles;
+    const organizations = yield* OrganizationAccess;
+
+    // One composed gate reused across every todo operation, so the membership
+    // rule is defined once.
+    const todoMemberCheck = Check.any(
+      makeIsTodoSuperAdmin(roles),
+      makeIsTodoOrgMember(organizations),
+    );
+
+    return {
+      todoCollection: {
+        create: todoMemberCheck,
+        read: todoMemberCheck,
+      },
+      todo: {
+        update: todoMemberCheck,
+        delete: todoMemberCheck,
+      },
+    };
+  }),
+).pipe(Layer.provide([PlatformRolesLive, OrganizationAccessLive]));

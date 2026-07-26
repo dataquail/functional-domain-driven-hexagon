@@ -1,5 +1,10 @@
 export { authCommandHandlers } from "./auth.command-handlers.js";
-export { AuthHttpDepsLive, AuthModuleLive } from "./auth.module.js";
+export {
+  AuthAclDepsLive,
+  AuthHttpDepsLive,
+  AuthModuleLive,
+  AuthProvisioningDepsLive,
+} from "./auth.module.js";
 export { authQueryHandlers } from "./auth.query-handlers.js";
 // AuthSharedDepsLive narrowly exposes only CookieCodec for the
 // platform middleware. The auth-module's handlers wrap their own

@@ -16,11 +16,7 @@ export const getCurrentSubscriptionEndpoint = Effect.fn("BillingLive.getCurrentS
   function* (
     request: EndpointRequest<typeof BillingContract.PrivateGroup, "getCurrentSubscription">,
   ) {
-    yield* Authz.hasPermissions(BillingResource, Actions.Read, request.params.orgId).pipe(
-      Effect.catchTag("NotFound", () =>
-        Effect.die("Unreachable: billing resolver cannot surface NotFound"),
-      ),
-    );
+    yield* Authz.hasPermissions(BillingResource, Actions.Read, request.params.orgId);
     const queryBus = yield* QueryBus;
     const result = yield* queryBus.execute(
       FindSubscriptionByOrganizationQuery.make({ organizationId: request.params.orgId }),
