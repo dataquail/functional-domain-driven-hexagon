@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 import {
-  type FindMyOrganizationsQuery,
+  type FindMyOrganizationsPayload,
   type FindMyOrganizationsView,
 } from "@/modules/organization/queries/find-my-organizations.query.js";
 import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
@@ -36,7 +36,7 @@ const toView = (row: typeof MyOrganizationRow.Type): FindMyOrganizationsView => 
 // out — a soft-deleted org should not appear in the caller's chooser.
 // `is_admin` is the caller's own `admin` OrganizationRole in each org.
 export const findMyOrganizations = Effect.fn("findMyOrganizations")(function* (
-  query: FindMyOrganizationsQuery,
+  query: FindMyOrganizationsPayload,
 ) {
   const db = yield* Database.Database;
   const rows = yield* db

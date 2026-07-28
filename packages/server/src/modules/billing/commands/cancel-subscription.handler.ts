@@ -9,7 +9,7 @@ import { SubscriptionSpecifications } from "@/modules/billing/domain/subscriptio
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-import { type CancelSubscriptionCommand } from "./cancel-subscription.command.js";
+import { type CancelSubscriptionPayload } from "./cancel-subscription.command.js";
 
 // Cancels upstream first, then flips local status. If Stripe cancel
 // succeeds but the local update fails, the subscription is canceled
@@ -17,7 +17,7 @@ import { type CancelSubscriptionCommand } from "./cancel-subscription.command.js
 // here) would catch the mismatch via the webhook that Stripe sends
 // on cancel anyway, which would call MarkSubscriptionStatusCommand.
 export const cancelSubscription = Effect.fn("cancelSubscription")(function* (
-  cmd: CancelSubscriptionCommand,
+  cmd: CancelSubscriptionPayload,
 ) {
   const repo = yield* SubscriptionRepository;
   const gateway = yield* BillingGateway;

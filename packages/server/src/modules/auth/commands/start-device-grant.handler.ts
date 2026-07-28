@@ -3,7 +3,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { type StartDeviceGrantCommand } from "@/modules/auth/commands/start-device-grant.command.js";
+import { type StartDeviceGrantPayload } from "@/modules/auth/commands/start-device-grant.command.js";
 import { DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.js";
 import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
 import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant/device-grant.root-ops.js";
@@ -18,7 +18,7 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 //
 // Bus-boundary span (ADR-0012) wraps this at dispatch time.
 export const startDeviceGrant = Effect.fn("startDeviceGrant")(function* (
-  cmd: StartDeviceGrantCommand,
+  cmd: StartDeviceGrantPayload,
 ) {
   const repo = yield* DeviceGrantRepository;
   const { deviceCode, userCode } = yield* Effect.sync(() => ({

@@ -1,13 +1,13 @@
+import { Command } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import { UserNotFound } from "@/modules/user/domain/user/user.errors.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-export const DeleteUserCommand = Schema.TaggedStruct("DeleteUserCommand", {
-  userId: UserId,
+export const DeleteUser = Command.make("DeleteUserCommand", {
+  payload: { userId: UserId },
+  success: Schema.Void,
+  failure: Schema.Union([UserNotFound, PersistenceUnavailable]),
 });
-export type DeleteUserCommand = typeof DeleteUserCommand.Type;
-
-export const deleteUserCommandSpanAttributes: SpanAttributesExtractor<DeleteUserCommand> = (
-  cmd,
-) => ({ "user.id": cmd.userId });
+export type DeleteUserPayload = Command.Payload<typeof DeleteUser>;

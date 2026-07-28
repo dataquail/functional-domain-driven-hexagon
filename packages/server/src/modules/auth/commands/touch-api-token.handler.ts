@@ -2,7 +2,7 @@ import * as DateTime from "effect/DateTime";
 import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
 
-import { type TouchApiTokenCommand } from "@/modules/auth/commands/touch-api-token.command.js";
+import { type TouchApiTokenPayload } from "@/modules/auth/commands/touch-api-token.command.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.js";
 import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
@@ -17,7 +17,7 @@ import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-toke
 // already authorized — both are swallowed.
 //
 // Bus-boundary span (ADR-0012) wraps this at dispatch time.
-export const touchApiToken = Effect.fn("touchApiToken")(function* (cmd: TouchApiTokenCommand) {
+export const touchApiToken = Effect.fn("touchApiToken")(function* (cmd: TouchApiTokenPayload) {
   const repo = yield* ApiTokenRepository;
   const token = yield* repo
     .findOne(ApiTokenSpecifications.withId(cmd.apiTokenId))

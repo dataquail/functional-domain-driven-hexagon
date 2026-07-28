@@ -1,48 +1,35 @@
-import { type Database } from "@org/database/index";
-import type * as Effect from "effect/Effect";
+import { Query } from "@org/cqrs";
+import * as Context from "effect/Context";
+import * as Layer from "effect/Layer";
 
 import { findTodoOrganization } from "@/modules/todos/queries/find-todo-organization.handler.js";
-import {
-  type FindTodoOrganizationQuery,
-  findTodoOrganizationQuerySpanAttributes,
-  type TodoOrganizationView,
-} from "@/modules/todos/queries/find-todo-organization.query.js";
+import { FindTodoOrganization } from "@/modules/todos/queries/find-todo-organization.query.js";
 import { listTodos } from "@/modules/todos/queries/list-todos.handler.js";
-import {
-  type ListTodosQuery,
-  listTodosQuerySpanAttributes,
-  type ListTodosResult,
-} from "@/modules/todos/queries/list-todos.query.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { queryHandlers } from "@/platform/ddd/ports/query-bus.js";
+import { ListTodos } from "@/modules/todos/queries/list-todos.query.js";
 
-type ListTodosOutput = Effect.Effect<ListTodosResult, PersistenceUnavailable, Database.Database>;
+const todoQueryGroup = Query.group(ListTodos, FindTodoOrganization);
 
-type FindTodoOrganizationOutput = Effect.Effect<
-  TodoOrganizationView | null,
-  PersistenceUnavailable,
-  Database.Database
->;
-
-declare module "@/platform/ddd/ports/query-bus.js" {
-  interface QueryRegistry {
-    ListTodosQuery: {
-      readonly query: ListTodosQuery;
-      readonly output: ListTodosOutput;
-    };
-    FindTodoOrganizationQuery: {
-      readonly query: FindTodoOrganizationQuery;
-      readonly output: FindTodoOrganizationOutput;
-    };
-  }
-}
-
-// `ListTodosQuery` reads SQL directly so the handler doesn't need wrapping.
-// Lives at module root for symmetry with `todo-command-handlers.ts`.
-export const todoQueryHandlers = queryHandlers({
-  ListTodosQuery: { handle: listTodos, spanAttributes: listTodosQuerySpanAttributes },
-  FindTodoOrganizationQuery: {
-    handle: findTodoOrganization,
-    spanAttributes: findTodoOrganizationQuerySpanAttributes,
-  },
+const TodoQueryHandlersLive = Query.handlersOf(todoQueryGroup, {
+  ListTodosQuery: (payload) => listTodos(payload),
+  FindTodoOrganizationQuery: (payload) => findTodoOrganization(payload),
 });
+
+const todoQuerySpanAttributes: Query.SpanAttributes<typeof todoQueryGroup> = {
+  ListTodosQuery: (payload) => ({ "organization.id": payload.organizationId }),
+  FindTodoOrganizationQuery: (payload) => ({
+    "query.organizationId": payload.organizationId,
+    "query.todoId": payload.todoId,
+  }),
+};
+
+// This module's slice of the read-side dispatch surface. See `WalletCommands` for why a
+// module publishes its own surface rather than letting consumers name the bus.
+export class TodoQueries extends Context.Service<
+  TodoQueries,
+  Query.Dispatcher<typeof todoQueryGroup>
+>()("@org/server/todos/TodoQueries") {}
+
+export const TodoQueriesLive = Layer.effect(
+  TodoQueries,
+  Query.dispatcher(todoQueryGroup, { spanAttributes: todoQuerySpanAttributes }),
+).pipe(Layer.provide(TodoQueryHandlersLive));

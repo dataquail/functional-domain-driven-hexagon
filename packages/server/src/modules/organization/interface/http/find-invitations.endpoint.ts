@@ -1,11 +1,11 @@
 import { OrganizationContract } from "@org/contracts/api/Contracts";
+import { QueryBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { OrganizationResource } from "@/modules/organization/policies/organization.policies.js";
-import { FindPendingInvitationsQuery } from "@/modules/organization/queries/find-pending-invitations.query.js";
+import { FindPendingInvitations } from "@/modules/organization/queries/find-pending-invitations.query.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
-import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // Org admins + super-admins (the `update` policy's OR chain). Lists the
@@ -27,9 +27,9 @@ export const findInvitationsEndpoint = Effect.fn("OrganizationLive.findInvitatio
   );
 
   const queryBus = yield* QueryBus;
-  const invitations = yield* queryBus.execute(
-    FindPendingInvitationsQuery.make({ organizationId: request.params.orgId }),
-  );
+  const invitations = yield* queryBus.execute(FindPendingInvitations, {
+    organizationId: request.params.orgId,
+  });
 
   return new OrganizationContract.PendingInvitationsResponse({
     invitations: invitations.map(

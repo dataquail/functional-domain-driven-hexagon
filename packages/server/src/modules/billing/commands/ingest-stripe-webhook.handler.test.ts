@@ -6,7 +6,6 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { IngestStripeWebhookCommand } from "@/modules/billing/commands/ingest-stripe-webhook.command.js";
 import { ingestStripeWebhook } from "@/modules/billing/commands/ingest-stripe-webhook.handler.js";
 import { InvalidWebhookSignature } from "@/modules/billing/domain/subscription/subscription.errors.js";
 import { type StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events.js";
@@ -38,11 +37,10 @@ const subscriptionUpdated = (eventId: string): StripeWebhookEvent => ({
   },
 });
 
-const cmd = (eventId: string, signature = FAKE_WEBHOOK_SIGNATURE) =>
-  IngestStripeWebhookCommand.make({
-    payload: JSON.stringify(subscriptionUpdated(eventId)),
-    signature,
-  });
+const cmd = (eventId: string, signature = FAKE_WEBHOOK_SIGNATURE) => ({
+  payload: JSON.stringify(subscriptionUpdated(eventId)),
+  signature,
+});
 
 describe("ingestStripeWebhook", () => {
   it.effect(

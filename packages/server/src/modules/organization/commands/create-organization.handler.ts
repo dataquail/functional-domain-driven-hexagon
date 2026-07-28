@@ -4,7 +4,7 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Result from "effect/Result";
 
-import { type CreateOrganizationCommand } from "@/modules/organization/commands/create-organization.command.js";
+import { type CreateOrganizationPayload } from "@/modules/organization/commands/create-organization.command.js";
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
 import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops.js";
 import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors.js";
@@ -32,7 +32,7 @@ import { OrganizationId } from "@/platform/ids/organization-id.js";
 // because that invariant guards interactive self-elevation through the
 // bus, not the system-level seed.
 export const createOrganization = Effect.fn("createOrganization")(function* (
-  cmd: CreateOrganizationCommand,
+  cmd: CreateOrganizationPayload,
 ) {
   // Model invariant: super-admins are a separate user type — they
   // don't own or join organizations. The check sits at the use-case

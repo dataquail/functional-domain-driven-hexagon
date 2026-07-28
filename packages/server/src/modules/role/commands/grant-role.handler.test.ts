@@ -6,7 +6,6 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { GrantRoleCommand } from "@/modules/role/commands/grant-role.command.js";
 import { grantRole } from "@/modules/role/commands/grant-role.handler.js";
 import { AlreadyHasRole, CannotPromoteSelf } from "@/modules/role/domain/roles/role.errors.js";
 import { type RoleGranted } from "@/modules/role/domain/roles/role.events.js";
@@ -28,9 +27,7 @@ describe("grantRole", () => {
       const repo = yield* RolesRepository;
       const rec = yield* RecordedEvents;
 
-      yield* grantRole(
-        GrantRoleCommand.make({ userId: targetId, role: "super_admin", actorUserId: actorId }),
-      );
+      yield* grantRole({ userId: targetId, role: "super_admin", actorUserId: actorId });
 
       const roles = yield* repo.findOne(RolesSpecifications.forUser(targetId));
       if (roles === null) throw new Error("expected aggregate");
@@ -48,9 +45,7 @@ describe("grantRole", () => {
   it.effect("fails CannotPromoteSelf when actor equals target", () =>
     Effect.gen(function* () {
       const exit = yield* Effect.exit(
-        grantRole(
-          GrantRoleCommand.make({ userId: targetId, role: "super_admin", actorUserId: targetId }),
-        ),
+        grantRole({ userId: targetId, role: "super_admin", actorUserId: targetId }),
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
@@ -64,13 +59,9 @@ describe("grantRole", () => {
 
   it.effect("fails AlreadyHasRole when the role is already granted", () =>
     Effect.gen(function* () {
-      yield* grantRole(
-        GrantRoleCommand.make({ userId: targetId, role: "super_admin", actorUserId: actorId }),
-      );
+      yield* grantRole({ userId: targetId, role: "super_admin", actorUserId: actorId });
       const exit = yield* Effect.exit(
-        grantRole(
-          GrantRoleCommand.make({ userId: targetId, role: "super_admin", actorUserId: actorId }),
-        ),
+        grantRole({ userId: targetId, role: "super_admin", actorUserId: actorId }),
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {

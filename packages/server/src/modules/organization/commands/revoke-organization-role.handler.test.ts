@@ -6,9 +6,7 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { GrantOrganizationRoleCommand } from "@/modules/organization/commands/grant-organization-role.command.js";
 import { grantOrganizationRole } from "@/modules/organization/commands/grant-organization-role.handler.js";
-import { RevokeOrganizationRoleCommand } from "@/modules/organization/commands/revoke-organization-role.command.js";
 import { revokeOrganizationRole } from "@/modules/organization/commands/revoke-organization-role.handler.js";
 import { DoesNotHaveOrganizationRole } from "@/modules/organization/domain/organization-roles/organization-role.errors.js";
 import { type OrganizationRoleRevoked } from "@/modules/organization/domain/organization-roles/organization-role.events.js";
@@ -37,22 +35,18 @@ describe("revokeOrganizationRole", () => {
       const repo = yield* OrganizationRolesRepository;
       const rec = yield* RecordedEvents;
 
-      yield* grantOrganizationRole(
-        GrantOrganizationRoleCommand.make({
-          userId: targetId,
-          organizationId: orgId,
-          role: "admin",
-          actorUserId: actorId,
-        }),
-      );
+      yield* grantOrganizationRole({
+        userId: targetId,
+        organizationId: orgId,
+        role: "admin",
+        actorUserId: actorId,
+      });
 
-      yield* revokeOrganizationRole(
-        RevokeOrganizationRoleCommand.make({
-          userId: targetId,
-          organizationId: orgId,
-          role: "admin",
-        }),
-      );
+      yield* revokeOrganizationRole({
+        userId: targetId,
+        organizationId: orgId,
+        role: "admin",
+      });
 
       // Revoking the only role leaves no rows, so the aggregate no longer
       // resolves — findOne reports null (no rows = no roles).
@@ -77,13 +71,11 @@ describe("revokeOrganizationRole", () => {
   it.effect("fails DoesNotHaveOrganizationRole when the role isn't held", () =>
     Effect.gen(function* () {
       const exit = yield* Effect.exit(
-        revokeOrganizationRole(
-          RevokeOrganizationRoleCommand.make({
-            userId: targetId,
-            organizationId: orgId,
-            role: "admin",
-          }),
-        ),
+        revokeOrganizationRole({
+          userId: targetId,
+          organizationId: orgId,
+          role: "admin",
+        }),
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {

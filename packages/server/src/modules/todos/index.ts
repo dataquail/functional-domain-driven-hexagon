@@ -1,7 +1,7 @@
-export { CompleteTodoCommand } from "./commands/complete-todo.command.js";
-export { CreateTodoCommand } from "./commands/create-todo.command.js";
-export { DeleteTodoCommand } from "./commands/delete-todo.command.js";
-export { UpdateTodoCommand } from "./commands/update-todo.command.js";
+export { CompleteTodo } from "./commands/complete-todo.command.js";
+export { CreateTodo } from "./commands/create-todo.command.js";
+export { DeleteTodo } from "./commands/delete-todo.command.js";
+export { UpdateTodo } from "./commands/update-todo.command.js";
 export {
   TodoCollectionResolverEntry,
   TodoCollectionResolverEntryLive,
@@ -14,7 +14,7 @@ export {
   TodoPolicyContribution,
   TodoResource,
 } from "./policies/todos.policies.js";
-export { ListTodosQuery } from "./queries/list-todos.query.js";
-export { todoCommandHandlers } from "./todo.command-handlers.js";
-export { todoQueryHandlers } from "./todo.query-handlers.js";
+export { ListTodos } from "./queries/list-todos.query.js";
+export { TodoCommands, TodoCommandsLive } from "./todo.command-handlers.js";
+export { TodoQueries, TodoQueriesLive } from "./todo.query-handlers.js";
 export { TodosModuleLive } from "./todos.module.js";

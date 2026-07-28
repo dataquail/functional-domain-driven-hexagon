@@ -1,6 +1,6 @@
 import * as Effect from "effect/Effect";
 
-import { type GrantRoleCommand } from "@/modules/role/commands/grant-role.command.js";
+import { type GrantRolePayload } from "@/modules/role/commands/grant-role.command.js";
 import { CannotPromoteSelf } from "@/modules/role/domain/roles/role.errors.js";
 import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
 import { RolesRootOps } from "@/modules/role/domain/roles/roles.root-ops.js";
@@ -8,7 +8,7 @@ import { RolesSpecifications } from "@/modules/role/domain/roles/roles.specifica
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-export const grantRole = Effect.fn("grantRole")(function* (cmd: GrantRoleCommand) {
+export const grantRole = Effect.fn("grantRole")(function* (cmd: GrantRolePayload) {
   // Command-level invariant: a user can't grant themselves a role.
   // Prevents self-elevation regardless of the policy layer's
   // decision about `user.update`.

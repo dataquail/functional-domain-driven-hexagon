@@ -11,7 +11,6 @@ import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.re
 import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.js";
 import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositories/api-token.repository-live.js";
 import { listMyApiTokens } from "@/modules/auth/queries/list-my-api-tokens.handler.js";
-import { ListMyApiTokensQuery } from "@/modules/auth/queries/list-my-api-tokens.query.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
@@ -62,7 +61,7 @@ suite("listMyApiTokens (integration)", () => {
       yield* repo.insertOne(mk(idA, userId));
       yield* repo.insertOne(mk(idOther, otherUserId));
 
-      const mine = yield* listMyApiTokens(ListMyApiTokensQuery.make({ userId }));
+      const mine = yield* listMyApiTokens({ userId });
       deepStrictEqual(
         mine.map((t) => t.id),
         [idA],
@@ -89,7 +88,7 @@ suite("listMyApiTokens (integration)", () => {
       // filter it out (WHERE revoked_at IS NULL).
       yield* repo.deleteOne(idA);
 
-      const mine = yield* listMyApiTokens(ListMyApiTokensQuery.make({ userId }));
+      const mine = yield* listMyApiTokens({ userId });
       deepStrictEqual([...mine], []);
     }).pipe(Effect.provide(TestLayer)),
   );

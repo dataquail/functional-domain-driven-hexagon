@@ -4,7 +4,7 @@ import * as Effect from "effect/Effect";
 import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 import {
   type ApiTokenView,
-  type ListMyApiTokensQuery,
+  type ListMyApiTokensPayload,
 } from "@/modules/auth/queries/list-my-api-tokens.query.js";
 import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
@@ -18,7 +18,7 @@ const toView = (row: RowSchemas.ApiTokenRow): ApiTokenView => ({
 });
 
 export const listMyApiTokens = Effect.fn("listMyApiTokens")(function* (
-  query: ListMyApiTokensQuery,
+  query: ListMyApiTokensPayload,
 ) {
   const db = yield* Database.Database;
   const rows = yield* db

@@ -1,9 +1,9 @@
 import { CliAuthContract } from "@org/contracts/api/Contracts";
+import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { EnvVars } from "@/common/env-vars.js";
-import { PollDeviceGrantCommand } from "@/modules/auth/commands/poll-device-grant.command.js";
-import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
+import { PollDeviceGrant } from "@/modules/auth/commands/poll-device-grant.command.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // CLI adapter (ADR-0005): the poll/exchange endpoint. Maps the device-grant
@@ -13,12 +13,10 @@ export const deviceTokenEndpoint = Effect.fn("CliAuthLive.deviceToken")(
   function* (request: EndpointRequest<typeof CliAuthContract.DeviceGroup, "deviceToken">) {
     const env = yield* EnvVars;
     const commandBus = yield* CommandBus;
-    const { apiToken, token } = yield* commandBus.execute(
-      PollDeviceGrantCommand.make({
-        deviceCode: request.payload.device_code,
-        tokenExpiresInDays: env.API_TOKEN_DEFAULT_TTL_DAYS,
-      }),
-    );
+    const { apiToken, token } = yield* commandBus.execute(PollDeviceGrant, {
+      deviceCode: request.payload.device_code,
+      tokenExpiresInDays: env.API_TOKEN_DEFAULT_TTL_DAYS,
+    });
     return new CliAuthContract.DeviceTokenResponse({
       access_token: token,
       token_type: "Bearer",

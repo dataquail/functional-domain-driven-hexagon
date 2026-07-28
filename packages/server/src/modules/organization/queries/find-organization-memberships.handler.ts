@@ -3,14 +3,14 @@ import * as Effect from "effect/Effect";
 
 import { UsersLookup } from "@/modules/organization/domain/ports/acl/users-lookup.acl.js";
 import {
-  type FindOrganizationMembershipsQuery,
+  type FindOrganizationMembershipsPayload,
   type OrganizationMemberView,
 } from "@/modules/organization/queries/find-organization-memberships.query.js";
 import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 export const findOrganizationMemberships = Effect.fn("findOrganizationMemberships")(function* (
-  query: FindOrganizationMembershipsQuery,
+  query: FindOrganizationMembershipsPayload,
 ) {
   const db = yield* Database.Database;
   const usersLookup = yield* UsersLookup;

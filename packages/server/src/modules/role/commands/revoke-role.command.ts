@@ -1,18 +1,14 @@
+import { Command } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
+import { DoesNotHaveRole } from "@/modules/role/domain/roles/role.errors.js";
 import { RoleValueObject } from "@/modules/role/domain/roles/role.value-object.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-export const RevokeRoleCommand = Schema.TaggedStruct("RevokeRoleCommand", {
-  userId: UserId,
-  role: RoleValueObject,
+export const RevokeRole = Command.make("RevokeRoleCommand", {
+  payload: { userId: UserId, role: RoleValueObject },
+  success: Schema.Void,
+  failure: Schema.Union([DoesNotHaveRole, PersistenceUnavailable]),
 });
-export type RevokeRoleCommand = typeof RevokeRoleCommand.Type;
-
-export const revokeRoleCommandSpanAttributes: SpanAttributesExtractor<RevokeRoleCommand> = (
-  cmd,
-) => ({
-  "user.id": cmd.userId,
-  "role.name": cmd.role,
-});
+export type RevokeRolePayload = Command.Payload<typeof RevokeRole>;

@@ -1,16 +1,27 @@
+import { Command } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import {
+  InvitationAlreadyAccepted,
+  InvitationExpired,
+  InvitationRevoked,
+  InvitationTokenNotFound,
+} from "@/modules/organization/domain/invitation/invitation.errors.js";
+import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
+import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-export const AcceptInvitationCommand = Schema.TaggedStruct("AcceptInvitationCommand", {
-  token: Schema.String,
-  userId: UserId,
+export const AcceptInvitation = Command.make("AcceptInvitationCommand", {
+  payload: { token: Schema.String, userId: UserId },
+  success: OrganizationId,
+  failure: Schema.Union([
+    InvitationTokenNotFound,
+    InvitationAlreadyAccepted,
+    InvitationRevoked,
+    InvitationExpired,
+    SuperAdminCannotOwnOrganization,
+    PersistenceUnavailable,
+  ]),
 });
-export type AcceptInvitationCommand = typeof AcceptInvitationCommand.Type;
-
-// Token deliberately omitted from the span — it's a bearer credential.
-// The invitation id is annotated inside the handler once resolved.
-export const acceptInvitationCommandSpanAttributes: SpanAttributesExtractor<
-  AcceptInvitationCommand
-> = (cmd) => ({ "user.id": cmd.userId });
+export type AcceptInvitationPayload = Command.Payload<typeof AcceptInvitation>;

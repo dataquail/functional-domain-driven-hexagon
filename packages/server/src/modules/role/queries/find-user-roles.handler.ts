@@ -1,13 +1,13 @@
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
-import { type FindUserRolesQuery } from "@/modules/role/queries/find-user-roles.policy-query.js";
+import { type FindUserRolesPayload } from "@/modules/role/queries/find-user-roles.policy-query.js";
 import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
 // `makeQuery` (not bare `execute`) so the read joins the ambient
 // transaction when one exists — this query is dispatched by consumers' ACL adapters
 // during a command's authorization, inside its unit of work.
-export const findUserRoles = Effect.fn("findUserRoles")(function* (query: FindUserRolesQuery) {
+export const findUserRoles = Effect.fn("findUserRoles")(function* (query: FindUserRolesPayload) {
   const db = yield* Database.Database;
   const readRoles = db.makeQuery((execute) =>
     execute((client) =>

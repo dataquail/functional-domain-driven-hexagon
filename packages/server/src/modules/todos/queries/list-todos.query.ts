@@ -1,24 +1,25 @@
+import { Query } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
-import { type TodoId } from "@/modules/todos/domain/todo/todo.id.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
-export const ListTodosQuery = Schema.TaggedStruct("ListTodosQuery", {
-  organizationId: OrganizationId,
+export const ListTodosTodoView = Schema.Struct({
+  id: TodoId,
+  title: Schema.String,
+  completed: Schema.Boolean,
 });
-export type ListTodosQuery = typeof ListTodosQuery.Type;
+export type ListTodosTodoView = typeof ListTodosTodoView.Type;
 
-export const listTodosQuerySpanAttributes: SpanAttributesExtractor<ListTodosQuery> = (query) => ({
-  "organization.id": query.organizationId,
+export const ListTodosResultView = Schema.Struct({
+  todos: Schema.Array(ListTodosTodoView),
 });
+export type ListTodosResult = typeof ListTodosResultView.Type;
 
-export type ListTodosTodoView = {
-  readonly id: TodoId;
-  readonly title: string;
-  readonly completed: boolean;
-};
-
-export type ListTodosResult = {
-  readonly todos: ReadonlyArray<ListTodosTodoView>;
-};
+export const ListTodos = Query.make("ListTodosQuery", {
+  payload: { organizationId: OrganizationId },
+  success: ListTodosResultView,
+  failure: PersistenceUnavailable,
+});
+export type ListTodosPayload = Query.Payload<typeof ListTodos>;

@@ -1,4 +1,8 @@
-export { billingCommandHandlers } from "./billing.command-handlers.js";
+export {
+  BillingCommands,
+  BillingCommandsFake,
+  BillingCommandsLive,
+} from "./billing.command-handlers.js";
 export { billingEventSpanAttributes } from "./billing.event-span-attributes.js";
 // One module Live registers the HTTP groups + infra; the prod-vs-test
 // `BillingGateway` swap ships as two opaque bundled layers the composition
@@ -6,11 +10,11 @@ export { billingEventSpanAttributes } from "./billing.event-span-attributes.js";
 // `HttpApiBuilder`'s routes in v4 — see billing.module.ts). The
 // `BillingGateway` Tag stays private to the module's use-case ring —
 // composition roots pick a bundle and don't see the Tag at all.
-export { BillingHttpDepsFake, BillingHttpDepsLive, BillingModuleLive } from "./billing.module.js";
-export { billingQueryHandlers } from "./billing.query-handlers.js";
-export { CancelSubscriptionCommand } from "./commands/cancel-subscription.command.js";
-export { IngestStripeWebhookCommand } from "./commands/ingest-stripe-webhook.command.js";
-export { StartSubscriptionCommand } from "./commands/start-subscription.command.js";
+export { BillingModuleLive } from "./billing.module.js";
+export { BillingQueries, BillingQueriesLive } from "./billing.query-handlers.js";
+export { CancelSubscription } from "./commands/cancel-subscription.command.js";
+export { IngestStripeWebhook } from "./commands/ingest-stripe-webhook.command.js";
+export { StartSubscription } from "./commands/start-subscription.command.js";
 export {
   SubscriptionCanceled,
   SubscriptionStarted,
@@ -26,4 +30,4 @@ export {
   BillingResolverEntry,
   BillingResolverEntryLive,
 } from "./policies/billing.resource-resolver.js";
-export { FindSubscriptionByOrganizationQuery } from "./queries/find-subscription-by-organization.query.js";
+export { FindSubscriptionByOrganization } from "./queries/find-subscription-by-organization.query.js";

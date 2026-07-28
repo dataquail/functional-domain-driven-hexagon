@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 import {
-  type FindUsersQuery,
+  type FindUsersPayload,
   type FindUsersUserView,
 } from "@/modules/user/queries/find-users.query.js";
 import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
@@ -22,7 +22,7 @@ const toUserView = (row: RowSchemas.UserRow): FindUsersUserView => ({
   updatedAt: row.updated_at,
 });
 
-export const findUsers = Effect.fn("findUsers")(function* (query: FindUsersQuery) {
+export const findUsers = Effect.fn("findUsers")(function* (query: FindUsersPayload) {
   const db = yield* Database.Database;
   const offset = (query.page - 1) * query.pageSize;
 

@@ -1,7 +1,7 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { type AcceptInvitationCommand } from "@/modules/organization/commands/accept-invitation.command.js";
+import { type AcceptInvitationPayload } from "@/modules/organization/commands/accept-invitation.command.js";
 import { InvitationAcceptance } from "@/modules/organization/domain/domain-services/invitation-acceptance.domain-service.js";
 import { InvitationTokenNotFound } from "@/modules/organization/domain/invitation/invitation.errors.js";
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
@@ -13,7 +13,7 @@ import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
 export const acceptInvitation = Effect.fn("acceptInvitation")(
-  function* (cmd: AcceptInvitationCommand) {
+  function* (cmd: AcceptInvitationPayload) {
     // Model invariant: super-admins don't own or join organizations.
     // See `createOrganization` for the rationale on placing this at
     // the use-case level rather than HTTP authz.

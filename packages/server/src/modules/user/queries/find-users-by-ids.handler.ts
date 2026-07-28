@@ -2,7 +2,7 @@ import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
 import { type FindUsersUserView } from "@/modules/user/queries/find-users.query.js";
-import { type FindUsersByIdsQuery } from "@/modules/user/queries/find-users-by-ids.query.js";
+import { type FindUsersByIdsPayload } from "@/modules/user/queries/find-users-by-ids.query.js";
 import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
@@ -17,7 +17,7 @@ const toUserView = (row: RowSchemas.UserRow): FindUsersUserView => ({
   updatedAt: row.updated_at,
 });
 
-export const findUsersByIds = Effect.fn("findUsersByIds")(function* (query: FindUsersByIdsQuery) {
+export const findUsersByIds = Effect.fn("findUsersByIds")(function* (query: FindUsersByIdsPayload) {
   if (query.ids.length === 0) return [];
   const db = yield* Database.Database;
   const rows = yield* db

@@ -1,9 +1,9 @@
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
+import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
-import { CreateOrganizationCommand } from "@/modules/organization/commands/create-organization.command.js";
-import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
+import { CreateOrganization } from "@/modules/organization/commands/create-organization.command.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // Authenticated, no `Authz.hasPermissions` gate. Anyone can create an
@@ -14,12 +14,10 @@ export const createEndpoint = Effect.fn("OrganizationLive.create")(
   function* (request: EndpointRequest<typeof OrganizationContract.Group, "create">) {
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
-    const id = yield* commandBus.execute(
-      CreateOrganizationCommand.make({
-        name: request.payload.name,
-        actorUserId: currentUser.userId,
-      }),
-    );
+    const id = yield* commandBus.execute(CreateOrganization, {
+      name: request.payload.name,
+      actorUserId: currentUser.userId,
+    });
     return new OrganizationContract.CreateOrganizationResponse({ id });
   },
   Effect.catchTag("SuperAdminCannotOwnOrganization", () =>

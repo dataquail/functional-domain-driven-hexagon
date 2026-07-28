@@ -1,26 +1,27 @@
-import type * as DateTime from "effect/DateTime";
-import type * as Option from "effect/Option";
+import { Query } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
-import { type SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
-export const FindSubscriptionByOrganizationQuery = Schema.TaggedStruct(
-  "FindSubscriptionByOrganizationQuery",
-  { organizationId: OrganizationId },
-);
-export type FindSubscriptionByOrganizationQuery = typeof FindSubscriptionByOrganizationQuery.Type;
+export const SubscriptionView = Schema.Struct({
+  id: SubscriptionId,
+  organizationId: OrganizationId,
+  status: Schema.String,
+  currentPeriodEnd: Schema.NullOr(Schema.DateTimeUtc),
+});
+export type SubscriptionView = typeof SubscriptionView.Type;
 
-export type SubscriptionView = {
-  readonly id: SubscriptionId;
-  readonly organizationId: OrganizationId;
-  readonly status: string;
-  readonly currentPeriodEnd: DateTime.Utc | null;
-};
+// `null` for "no subscription", not `Option`: every other absent-read model here is
+// nullable, and a null is representable on a wire where an `Option` needs a codec.
+export type FindSubscriptionByOrganizationResult = SubscriptionView | null;
 
-export type FindSubscriptionByOrganizationResult = Option.Option<SubscriptionView>;
-
-export const findSubscriptionByOrganizationQuerySpanAttributes: SpanAttributesExtractor<
-  FindSubscriptionByOrganizationQuery
-> = (q) => ({ "organization.id": q.organizationId });
+export const FindSubscriptionByOrganization = Query.make("FindSubscriptionByOrganizationQuery", {
+  payload: { organizationId: OrganizationId },
+  success: Schema.NullOr(SubscriptionView),
+  failure: PersistenceUnavailable,
+});
+export type FindSubscriptionByOrganizationPayload = Query.Payload<
+  typeof FindSubscriptionByOrganization
+>;

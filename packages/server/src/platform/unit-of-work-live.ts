@@ -81,7 +81,7 @@ export const UnitOfWorkLive: Layer.Layer<UnitOfWork, never, Database.Database> =
                 Effect.catchCause((cause) =>
                   Effect.logError(`Integration event handler failed for ${event._tag}`, cause),
                 ),
-                Effect.withSpan(`integrationEvent:${event._tag}`),
+                Effect.withSpan(`integrationEvent.${event._tag}`),
               );
           }
         }

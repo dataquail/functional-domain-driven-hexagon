@@ -4,7 +4,7 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Result from "effect/Result";
 
-import { type InviteUserCommand } from "@/modules/organization/commands/invite-user.command.js";
+import { type InviteUserPayload } from "@/modules/organization/commands/invite-user.command.js";
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
 import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
 import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
@@ -14,7 +14,7 @@ import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 
-export const inviteUser = Effect.fn("inviteUser")(function* (cmd: InviteUserCommand) {
+export const inviteUser = Effect.fn("inviteUser")(function* (cmd: InviteUserPayload) {
   const repo = yield* InvitationRepository;
   const bus = yield* DomainEventBus;
   const invitationMailer = yield* InvitationMailer;

@@ -1,25 +1,22 @@
-import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.js";
-import { FindUserRolesQuery } from "@/modules/role/index.js";
-import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
+import { RoleQueries } from "@/modules/role/index.js";
 
 const SUPER_ADMIN = "super_admin";
 
-// ADR-0022 outbound adapter. Dispatches the role module's published
-// policy-query and narrows its role-name list to the port's single boolean.
+// ADR-0022 outbound adapter. Dispatches the role module's published policy-query and
+// narrows its role-name list to the port's single boolean. It resolves that module's
+// own dispatch surface rather than the app-wide bus, so a module whose handlers need
+// this port does not end up depending on the bus that routes those handlers.
 export const PlatformRolesLive = Layer.effect(
   PlatformRoles,
   Effect.gen(function* () {
-    const queryBus = yield* QueryBus;
-    const db = yield* Database.Database;
-
+    const roleQueries = yield* RoleQueries;
     return PlatformRoles.of({
       isSuperAdmin: (userId) =>
-        queryBus.execute(FindUserRolesQuery.make({ userId })).pipe(
-          Effect.provideService(Database.Database, db),
+        roleQueries.FindUserRolesQuery({ userId }).pipe(
           Effect.map((result) => result.roles.includes(SUPER_ADMIN)),
           Effect.withSpan("PlatformRoles.isSuperAdmin"),
         ),

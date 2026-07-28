@@ -1,6 +1,6 @@
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { CurrentUser, UserAuthMiddleware } from "@org/contracts/Policy";
-import { Database } from "@org/database/index";
+import { CommandBus, QueryBus } from "@org/cqrs";
 import * as cookie from "cookie";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -9,15 +9,13 @@ import * as HttpServerRequest from "effect/unstable/http/HttpServerRequest";
 import { EnvVars } from "@/common/env-vars.js";
 import {
   CredentialHash,
-  FindApiTokenByHashQuery,
-  FindSessionQuery,
+  FindApiTokenByHash,
+  FindSession,
   SessionId,
-  TouchApiTokenCommand,
-  TouchSessionCommand,
+  TouchApiToken,
+  TouchSession,
 } from "@/modules/auth/index.js";
 import { CookieCodec } from "@/platform/auth/cookie-codec.js";
-import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
-import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 
 // `Authorization: Bearer <token>` — case-insensitive scheme. Returns the
 // raw token, or null when the header is absent or not a bearer credential.
@@ -47,10 +45,6 @@ export const UserAuthMiddlewareLive = Layer.effect(
     const codec = yield* CookieCodec;
     const queryBus = yield* QueryBus;
     const commandBus = yield* CommandBus;
-    // Captured here so the per-request Effect can satisfy the bus
-    // dispatch's Database requirement inline — auth-module handlers
-    // wrap their own SessionRepository (Stage B), leaving Database in R.
-    const db = yield* Database.Database;
 
     // v4 HttpApiMiddleware is a wrapper: authenticate the request, then
     // `provide` the resolved `CurrentUser` into the downstream endpoint
@@ -65,20 +59,18 @@ export const UserAuthMiddlewareLive = Layer.effect(
       const bearer = readBearer(httpReq.headers.authorization);
       if (bearer !== null) {
         const apiToken = yield* queryBus
-          .execute(FindApiTokenByHashQuery.make({ tokenHash: CredentialHash.of(bearer) }))
-          .pipe(Effect.provideService(Database.Database, db), Effect.mapError(toAuthError));
+          .execute(FindApiTokenByHash, { tokenHash: CredentialHash.of(bearer) })
+          .pipe(Effect.mapError(toAuthError));
         // Last-used stamp, forked off the request fiber (`forkDetach`) so its
         // lookup + throttle never sit on the auth critical path. Detached from
         // the request scope so it outlives the response; throttled +
         // error-swallowing in the handler. Same rationale as the session touch.
         yield* commandBus
-          .execute(
-            TouchApiTokenCommand.make({
-              apiTokenId: apiToken.id,
-              thresholdSeconds: env.API_TOKEN_TOUCH_THRESHOLD_SECONDS,
-            }),
-          )
-          .pipe(Effect.provideService(Database.Database, db), Effect.forkDetach);
+          .execute(TouchApiToken, {
+            apiTokenId: apiToken.id,
+            thresholdSeconds: env.API_TOKEN_TOUCH_THRESHOLD_SECONDS,
+          })
+          .pipe(Effect.forkDetach);
         // No browser session for a bearer caller; the token id stands in as
         // the opaque principal id on `CurrentUser` (Policy.ts unchanged).
         return { sessionId: apiToken.id, userId: apiToken.userId };
@@ -91,22 +83,20 @@ export const UserAuthMiddlewareLive = Layer.effect(
       if (verified === null) return yield* new CustomHttpApiError.Unauthorized();
       const sessionId = SessionId.make(verified);
       const session = yield* queryBus
-        .execute(FindSessionQuery.make({ sessionId }))
-        .pipe(Effect.provideService(Database.Database, db), Effect.mapError(toAuthError));
+        .execute(FindSession, { sessionId })
+        .pipe(Effect.mapError(toAuthError));
       // Sliding-TTL refresh, forked off the request fiber (`forkDetach`) so it
       // stays off the auth critical path and outlives the response. The
       // command's own throttle decides whether to write; failures are
       // benign races (revoked / removed mid-flight) and are swallowed by
       // the handler so they never bubble up as a 401.
       yield* commandBus
-        .execute(
-          TouchSessionCommand.make({
-            sessionId,
-            ttlSeconds: env.SESSION_TTL_SECONDS,
-            thresholdSeconds: env.SESSION_TOUCH_THRESHOLD_SECONDS,
-          }),
-        )
-        .pipe(Effect.provideService(Database.Database, db), Effect.forkDetach);
+        .execute(TouchSession, {
+          sessionId,
+          ttlSeconds: env.SESSION_TTL_SECONDS,
+          thresholdSeconds: env.SESSION_TOUCH_THRESHOLD_SECONDS,
+        })
+        .pipe(Effect.forkDetach);
       return {
         sessionId: session.id,
         userId: session.userId,

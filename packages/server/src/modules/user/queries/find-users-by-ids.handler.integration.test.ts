@@ -10,7 +10,6 @@ import { UserRootOps } from "@/modules/user/domain/user/user.root-ops.js";
 import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.js";
 import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live.js";
 import { findUsersByIds } from "@/modules/user/queries/find-users-by-ids.handler.js";
-import { FindUsersByIdsQuery } from "@/modules/user/queries/find-users-by-ids.query.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
@@ -53,7 +52,7 @@ suite("findUsersByIds (integration)", () => {
       yield* repo.insertOne(bob);
       yield* repo.insertOne(carol);
 
-      const result = yield* findUsersByIds(FindUsersByIdsQuery.make({ ids: [aliceId, carolId] }));
+      const result = yield* findUsersByIds({ ids: [aliceId, carolId] });
       deepStrictEqual(result.length, 2);
       deepStrictEqual(
         new Set(result.map((u) => u.email)),
@@ -64,7 +63,7 @@ suite("findUsersByIds (integration)", () => {
 
   it.effect("returns empty for an empty id list (no SQL dispatched)", () =>
     Effect.gen(function* () {
-      const result = yield* findUsersByIds(FindUsersByIdsQuery.make({ ids: [] }));
+      const result = yield* findUsersByIds({ ids: [] });
       deepStrictEqual(result, []);
     }).pipe(Effect.provide(TestLayer)),
   );

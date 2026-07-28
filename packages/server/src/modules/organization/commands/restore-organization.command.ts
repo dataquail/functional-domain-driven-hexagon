@@ -1,13 +1,16 @@
+import { Command } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import {
+  OrganizationNotDeleted,
+  OrganizationNotFound,
+} from "@/modules/organization/domain/organization/organization.errors.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
-export const RestoreOrganizationCommand = Schema.TaggedStruct("RestoreOrganizationCommand", {
-  organizationId: OrganizationId,
+export const RestoreOrganization = Command.make("RestoreOrganizationCommand", {
+  payload: { organizationId: OrganizationId },
+  success: Schema.Void,
+  failure: Schema.Union([OrganizationNotFound, OrganizationNotDeleted, PersistenceUnavailable]),
 });
-export type RestoreOrganizationCommand = typeof RestoreOrganizationCommand.Type;
-
-export const restoreOrganizationCommandSpanAttributes: SpanAttributesExtractor<
-  RestoreOrganizationCommand
-> = (cmd) => ({ "organization.id": cmd.organizationId });
+export type RestoreOrganizationPayload = Command.Payload<typeof RestoreOrganization>;

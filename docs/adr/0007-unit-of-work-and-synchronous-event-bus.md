@@ -37,7 +37,7 @@ This is why use-case DB access — repositories and read-side query handlers ali
 Use cases don't call `run` directly; they apply the **`withUnitOfWork`** combinator at the end of the handler's pipe, the way Cosmic-Python writes `with uow:` at the top of a handler:
 
 ```ts
-export const createUser = (cmd: CreateUserCommand) =>
+export const createUser = (cmd: CreateUserPayload) =>
   Effect.gen(function* () {
     const repo = yield* UserRepository;
     const bus = yield* DomainEventBus;
@@ -137,34 +137,27 @@ modules/<consumer>/
         └── <publisher>.event-adapter.ts   # subscribes to the event, dispatches a command
 ```
 
-The command schema _is_ the internal contract; there is no separate trigger type. The adapter translates the foreign event directly into a command message:
+The command definition _is_ the internal contract; there is no separate trigger type. The adapter translates the foreign event directly into a dispatch:
 
 ```ts
 export const OrganizationEventAdapterLive = Layer.effectDiscard(
   Effect.gen(function* () {
     const domainEventBus = yield* DomainEventBus; // immediate: wallet must exist in the same tx
     const commandBus = yield* CommandBus;
-    const unitOfWork = yield* UnitOfWork;
     yield* domainEventBus.subscribe(OrganizationCreated, (event) =>
-      commandBus
-        .execute(CreateWalletCommand.make({ organizationId: event.organizationId }))
-        .pipe(
-          Effect.provideService(DomainEventBus, domainEventBus),
-          Effect.provideService(UnitOfWork, unitOfWork),
-          Effect.orDie,
-        ),
+      commandBus.execute(CreateWallet, { organizationId: event.organizationId }).pipe(Effect.orDie),
     );
   }),
 );
 ```
 
-`subscribe` requires a handler with no requirements and no error channel, so the adapter provides the dispatched command's application services (the event buses, the unit of work) from the captured singletons and relies on the ambient publisher fiber for the transaction context and the residual pool connection. If organization adds a field, only this translation changes.
+`subscribe` requires a handler with no requirements and no error channel. Dispatch already satisfies the first: the bus clears the requirement channel, so the handler's services are discharged where the owning module's dispatch surface is composed rather than re-supplied here (ADR-0006) — an adapter that had to hand-provide them was the problem that shaped that decision. The error channel is closed by `orDie` above. The transaction context comes from the ambient publisher fiber. If organization adds a field, only this translation changes.
 
 **Atomicity via nested savepoint.** An immediate-consistency reaction — a subscriber that must commit atomically with its publisher, e.g. a wallet must exist iff its organization does — subscribes on the in-fiber `DomainEventBus`. Because the adapter runs in the publisher's fiber, the command it dispatches runs its own `withUnitOfWork` as a **nested savepoint** on the publisher's transaction (see "Nested savepoints"): both commit or both roll back. An eventually-consistent reaction subscribes on the `IntegrationEventBus` instead, and its command runs post-commit in its own transaction.
 
 **External IO is a tiered judgment call, not a new stereotype.** If a reaction touches the domain, it dispatches a command (above). A pure side effect that always follows its trigger — a telemetry emit, a notification tied to one command — is colocated in the originating command, not modeled as a reaction. A genuine third-party effect (send an email, ETL to an external system) is performed by a command handler through its client port. `interface/events/` itself stays strictly bus-only.
 
-The pattern is enforced by the `interface-events-isolation` dep-cruiser rule, a positive allowlist that lets an event adapter import only its own module's domain events/ids, its own command schemas, the DDD kernel ports, `platform/ids/`, and — for cross-module events — another module's barrel. This is Vernon's anti-corruption layer at module scope: one adapter per (consumer, publisher) pair.
+The pattern is enforced by the `interface-events-isolation` dep-cruiser rule, a positive allowlist that lets an event adapter import only its own module's domain events/ids, its own command definitions, the DDD kernel ports, `platform/ids/`, and — for cross-module events — another module's barrel. This is Vernon's anti-corruption layer at module scope: one adapter per (consumer, publisher) pair.
 
 ## Alternatives considered
 

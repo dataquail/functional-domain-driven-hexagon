@@ -6,7 +6,6 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { StartSubscriptionCommand } from "@/modules/billing/commands/start-subscription.command.js";
 import { startSubscription } from "@/modules/billing/commands/start-subscription.handler.js";
 import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.js";
 import { type SubscriptionStarted } from "@/modules/billing/domain/subscription/subscription.events.js";
@@ -35,9 +34,7 @@ describe("startSubscription", () => {
         const repo = yield* SubscriptionRepository;
         const rec = yield* RecordedEvents;
 
-        const sub = yield* startSubscription(
-          StartSubscriptionCommand.make({ organizationId: acme }),
-        );
+        const sub = yield* startSubscription({ organizationId: acme });
         deepStrictEqual(sub.organizationId, acme);
         ok(sub.stripeCustomerId.startsWith("cus_test_"));
         ok(sub.stripeSubscriptionId.startsWith("sub_test_"));
@@ -58,10 +55,8 @@ describe("startSubscription", () => {
     "fails SubscriptionAlreadyExistsForOrganization on a second start for the same org",
     () =>
       Effect.gen(function* () {
-        yield* startSubscription(StartSubscriptionCommand.make({ organizationId: acme }));
-        const exit = yield* Effect.exit(
-          startSubscription(StartSubscriptionCommand.make({ organizationId: acme })),
-        );
+        yield* startSubscription({ organizationId: acme });
+        const exit = yield* Effect.exit(startSubscription({ organizationId: acme }));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(

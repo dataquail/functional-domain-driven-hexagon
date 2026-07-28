@@ -1,6 +1,6 @@
 import * as Effect from "effect/Effect";
 
-import { type RevokeApiTokenCommand } from "@/modules/auth/commands/revoke-api-token.command.js";
+import { type RevokeApiTokenPayload } from "@/modules/auth/commands/revoke-api-token.command.js";
 import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
@@ -11,7 +11,7 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 // avoids leaking the existence of other users' tokens.
 //
 // Bus-boundary span (ADR-0012) wraps this at dispatch time.
-export const revokeApiToken = Effect.fn("revokeApiToken")(function* (cmd: RevokeApiTokenCommand) {
+export const revokeApiToken = Effect.fn("revokeApiToken")(function* (cmd: RevokeApiTokenPayload) {
   const repo = yield* ApiTokenRepository;
   const token = yield* repo.findOne(ApiTokenSpecifications.withId(cmd.apiTokenId));
   if (token?.userId !== cmd.userId) {

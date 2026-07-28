@@ -19,7 +19,6 @@ import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
 import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-live.js";
 import { findOrganizationMemberships } from "@/modules/organization/queries/find-organization-memberships.handler.js";
-import { FindOrganizationMembershipsQuery } from "@/modules/organization/queries/find-organization-memberships.query.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
@@ -113,9 +112,7 @@ suite("findOrganizationMemberships (integration)", () => {
       yield* seedMember(userB, orgA);
       yield* seedMember(userC, orgB);
 
-      const result = yield* findOrganizationMemberships(
-        FindOrganizationMembershipsQuery.make({ organizationId: orgA }),
-      );
+      const result = yield* findOrganizationMemberships({ organizationId: orgA });
       deepStrictEqual(result.length, 2);
       deepStrictEqual(
         new Set(result.map((r) => r.email)),
@@ -132,9 +129,7 @@ suite("findOrganizationMemberships (integration)", () => {
       yield* seedMember(userB, orgA);
       yield* seedAdmin(userA, orgA);
 
-      const result = yield* findOrganizationMemberships(
-        FindOrganizationMembershipsQuery.make({ organizationId: orgA }),
-      );
+      const result = yield* findOrganizationMemberships({ organizationId: orgA });
       const byUser = new Map(result.map((r) => [r.userId, r.isAdmin]));
       deepStrictEqual(byUser.get(userA), true);
       deepStrictEqual(byUser.get(userB), false);
@@ -145,9 +140,7 @@ suite("findOrganizationMemberships (integration)", () => {
     Effect.gen(function* () {
       yield* seedUsers;
       yield* seedOrgs;
-      const result = yield* findOrganizationMemberships(
-        FindOrganizationMembershipsQuery.make({ organizationId: orgA }),
-      );
+      const result = yield* findOrganizationMemberships({ organizationId: orgA });
       deepStrictEqual(result, []);
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -160,9 +153,7 @@ suite("findOrganizationMemberships (integration)", () => {
       // `orphanedUser` has a membership row but is absent from the lookup map.
       yield* seedMember(orphanedUser, orgA);
 
-      const result = yield* findOrganizationMemberships(
-        FindOrganizationMembershipsQuery.make({ organizationId: orgA }),
-      );
+      const result = yield* findOrganizationMemberships({ organizationId: orgA });
       deepStrictEqual(result.length, 1);
       deepStrictEqual(
         result.map((r) => r.userId),

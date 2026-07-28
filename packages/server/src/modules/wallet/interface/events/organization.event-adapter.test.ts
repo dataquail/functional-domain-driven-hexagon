@@ -12,7 +12,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { type OrganizationCreated } from "@/modules/organization/index.js";
-import { type CreateWalletCommand } from "@/modules/wallet/commands/create-wallet.command.js";
+import { CreateWallet } from "@/modules/wallet/commands/create-wallet.command.js";
 import { OrganizationEventAdapterLive } from "@/modules/wallet/interface/events/organization.event-adapter.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { makeDomainEventBusLive } from "@/platform/domain-event-bus-live.js";
@@ -28,7 +28,7 @@ const TestLayer = OrganizationEventAdapterLive.pipe(
 );
 
 describe("OrganizationEventAdapterLive", () => {
-  it.effect("translates OrganizationCreated into a CreateWalletCommand dispatch", () =>
+  it.effect("translates OrganizationCreated into a CreateWalletPayload dispatch", () =>
     Effect.gen(function* () {
       const bus = yield* DomainEventBus;
       const rec = yield* RecordedCommands;
@@ -43,11 +43,8 @@ describe("OrganizationEventAdapterLive", () => {
       } as unknown as OrganizationCreated;
       yield* bus.dispatch([event]);
 
-      const commands = yield* rec.byTag<CreateWalletCommand>("CreateWalletCommand");
-      deepStrictEqual(commands.length, 1);
-      const command = commands[0];
-      if (command === undefined) throw new Error("expected a CreateWalletCommand");
-      deepStrictEqual(command.organizationId, organizationId);
+      const payloads = yield* rec.payloadsFor(CreateWallet);
+      deepStrictEqual(payloads, [{ organizationId }]);
       // In production this dispatch runs inside `uow.run`; supply a no-op
       // transaction context so the bus's unit-of-work guard passes.
     }).pipe(Database.TransactionContext.provide(fakeTransaction), Effect.provide(TestLayer)),

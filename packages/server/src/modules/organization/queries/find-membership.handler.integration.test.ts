@@ -13,7 +13,6 @@ import { OrganizationRootOps } from "@/modules/organization/domain/organization/
 import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/repositories/membership.repository-live.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
 import { findMembership } from "@/modules/organization/queries/find-membership.handler.js";
-import { FindMembershipQuery } from "@/modules/organization/queries/find-membership.policy-query.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
@@ -58,9 +57,7 @@ suite("findMembership (integration)", () => {
     Effect.gen(function* () {
       yield* seedUser;
       yield* seedOrg;
-      const result = yield* findMembership(
-        FindMembershipQuery.make({ userId, organizationId: orgId }),
-      );
+      const result = yield* findMembership({ userId, organizationId: orgId });
       deepStrictEqual(result.isMember, false);
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -72,9 +69,7 @@ suite("findMembership (integration)", () => {
       const repo = yield* MembershipRepository;
       const { membership } = MembershipRootOps.create({ userId, organizationId: orgId, now });
       yield* repo.insertOne(membership);
-      const result = yield* findMembership(
-        FindMembershipQuery.make({ userId, organizationId: orgId }),
-      );
+      const result = yield* findMembership({ userId, organizationId: orgId });
       deepStrictEqual(result.isMember, true);
     }).pipe(Effect.provide(TestLayer)),
   );

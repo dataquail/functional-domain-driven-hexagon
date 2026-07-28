@@ -143,7 +143,14 @@ which the endpoint translates to a 403 with a distinct message.
 
 ### Two declaration-mergeable registries
 
-Mirroring the existing typed CommandBus / QueryBus pattern:
+The command/query buses originally used this pattern and have since
+dropped it: a dispatched message carries its own signature, so the
+registry there was a second declaration of facts the message already
+held (ADR-0006). Authorization is not analogous. A resource name is
+not a value anyone dispatches — it is a string literal in an endpoint
+naming a resource whose id and resolver types live in another module —
+so there is no message to read the signature off. The registries stay
+here for that reason, not for symmetry:
 
 - **`ResourceResolverMap`** maps a resource name → `{ idType,
 resourceType }`. Each module declares its entries via TypeScript
@@ -297,8 +304,9 @@ and module barrels stay barrel-content-discipline compliant.
 
 - ADR-0002: hexagonal module layout — the boundary modules contribute
   policies and resolvers across.
-- ADR-0006: typed CommandBus / QueryBus — the declaration-merge
-  pattern this ADR mirrors.
+- ADR-0006: typed CommandBus / QueryBus — where a check's own data
+  comes from, and why the buses no longer use the declaration-merged
+  registry these authz registries still do.
 - ADR-0007: synchronous event bus + interface/events ACL — a peer
   cross-module seam.
 - ADR-0008: dep-cruiser enforcement of the boundary rules this ADR

@@ -18,7 +18,6 @@ import { findApiTokenByHash } from "@/modules/auth/queries/find-api-token-by-has
 import {
   ApiTokenExpired,
   ApiTokenRevoked,
-  FindApiTokenByHashQuery,
 } from "@/modules/auth/queries/find-api-token-by-hash.query.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
@@ -94,9 +93,7 @@ suite("findApiTokenByHash (integration)", () => {
       yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
       yield* seedUser;
       yield* insert({ expiresAt: future });
-      const token = yield* findApiTokenByHash(
-        FindApiTokenByHashQuery.make({ tokenHash: "hash-A" }),
-      );
+      const token = yield* findApiTokenByHash({ tokenHash: "hash-A" });
       deepStrictEqual(token.id, apiTokenId);
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -104,9 +101,7 @@ suite("findApiTokenByHash (integration)", () => {
   it.effect("fails ApiTokenNotFound for an unknown hash", () =>
     Effect.gen(function* () {
       yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
-      const exit = yield* Effect.exit(
-        findApiTokenByHash(FindApiTokenByHashQuery.make({ tokenHash: "missing" })),
-      );
+      const exit = yield* Effect.exit(findApiTokenByHash({ tokenHash: "missing" }));
       deepStrictEqual(Exit.isFailure(exit), true);
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -116,9 +111,7 @@ suite("findApiTokenByHash (integration)", () => {
       yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
       yield* seedUser;
       yield* insert({ expiresAt: future, revokedAt: clockNow });
-      const exit = yield* Effect.exit(
-        findApiTokenByHash(FindApiTokenByHashQuery.make({ tokenHash: "hash-A" })),
-      );
+      const exit = yield* Effect.exit(findApiTokenByHash({ tokenHash: "hash-A" }));
       deepStrictEqual(errorOf(exit) instanceof ApiTokenRevoked, true);
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -128,9 +121,7 @@ suite("findApiTokenByHash (integration)", () => {
       yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
       yield* seedUser;
       yield* insert({ expiresAt: past });
-      const exit = yield* Effect.exit(
-        findApiTokenByHash(FindApiTokenByHashQuery.make({ tokenHash: "hash-A" })),
-      );
+      const exit = yield* Effect.exit(findApiTokenByHash({ tokenHash: "hash-A" }));
       deepStrictEqual(errorOf(exit) instanceof ApiTokenExpired, true);
     }).pipe(Effect.provide(TestLayer)),
   );

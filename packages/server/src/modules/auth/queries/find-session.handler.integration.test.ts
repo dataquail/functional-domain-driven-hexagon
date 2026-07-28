@@ -16,7 +16,6 @@ import { SessionRoot } from "@/modules/auth/domain/session/session.root.js";
 import { SessionRepositoryLive } from "@/modules/auth/infrastructure/repositories/session.repository-live.js";
 import { findSession } from "@/modules/auth/queries/find-session.handler.js";
 import {
-  FindSessionQuery,
   SessionExpired,
   SessionNotFound,
   SessionRevoked,
@@ -88,7 +87,7 @@ suite("findSession (integration)", () => {
           absoluteExpiresAt: farFutureLater,
         }),
       );
-      const result = yield* findSession(FindSessionQuery.make({ sessionId }));
+      const result = yield* findSession({ sessionId });
       deepStrictEqual(result.id, sessionId);
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -96,7 +95,7 @@ suite("findSession (integration)", () => {
   it.effect("fails SessionNotFound for an unknown id", () =>
     Effect.gen(function* () {
       yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
-      const exit = yield* Effect.exit(findSession(FindSessionQuery.make({ sessionId })));
+      const exit = yield* Effect.exit(findSession({ sessionId }));
       deepStrictEqual(errorOf(exit) instanceof SessionNotFound, true);
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -113,7 +112,7 @@ suite("findSession (integration)", () => {
           absoluteExpiresAt: farFutureLater,
         }),
       );
-      const exit = yield* Effect.exit(findSession(FindSessionQuery.make({ sessionId })));
+      const exit = yield* Effect.exit(findSession({ sessionId }));
       deepStrictEqual(errorOf(exit) instanceof SessionRevoked, true);
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -129,7 +128,7 @@ suite("findSession (integration)", () => {
           absoluteExpiresAt: farFutureLater,
         }),
       );
-      const exit = yield* Effect.exit(findSession(FindSessionQuery.make({ sessionId })));
+      const exit = yield* Effect.exit(findSession({ sessionId }));
       deepStrictEqual(errorOf(exit) instanceof SessionExpired, true);
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -145,7 +144,7 @@ suite("findSession (integration)", () => {
           absoluteExpiresAt: farPast,
         }),
       );
-      const exit = yield* Effect.exit(findSession(FindSessionQuery.make({ sessionId })));
+      const exit = yield* Effect.exit(findSession({ sessionId }));
       deepStrictEqual(errorOf(exit) instanceof SessionExpired, true);
     }).pipe(Effect.provide(TestLayer)),
   );

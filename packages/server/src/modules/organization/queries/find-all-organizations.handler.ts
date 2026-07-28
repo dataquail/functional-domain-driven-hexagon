@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 import {
-  type FindAllOrganizationsQuery,
+  type FindAllOrganizationsPayload,
   type FindAllOrganizationsView,
 } from "@/modules/organization/queries/find-all-organizations.query.js";
 import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
@@ -24,7 +24,7 @@ const toView = (row: RowSchemas.OrganizationRow): FindAllOrganizationsView => ({
 // branches are parallel; the query is small enough that duplication
 // reads better than abstracting.
 export const findAllOrganizations = Effect.fn("findAllOrganizations")(function* (
-  query: FindAllOrganizationsQuery,
+  query: FindAllOrganizationsPayload,
 ) {
   const db = yield* Database.Database;
   const offset = (query.page - 1) * query.pageSize;

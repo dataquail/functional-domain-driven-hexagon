@@ -6,7 +6,6 @@ import { beforeEach } from "vitest";
 
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { findTodoOrganization } from "@/modules/todos/queries/find-todo-organization.handler.js";
-import { FindTodoOrganizationQuery } from "@/modules/todos/queries/find-todo-organization.query.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
@@ -50,9 +49,7 @@ suite("findTodoOrganization (integration)", () => {
     await Effect.runPromise(
       Effect.gen(function* () {
         yield* seed;
-        const view = yield* findTodoOrganization(
-          FindTodoOrganizationQuery.make({ organizationId: orgId, todoId }),
-        );
+        const view = yield* findTodoOrganization({ organizationId: orgId, todoId });
         deepStrictEqual(view, { organizationId: orgId });
       }).pipe(Effect.provide(TestDatabaseLive)),
     );
@@ -64,9 +61,7 @@ suite("findTodoOrganization (integration)", () => {
     await Effect.runPromise(
       Effect.gen(function* () {
         yield* seed;
-        const view = yield* findTodoOrganization(
-          FindTodoOrganizationQuery.make({ organizationId: otherOrgId, todoId }),
-        );
+        const view = yield* findTodoOrganization({ organizationId: otherOrgId, todoId });
         deepStrictEqual(view, null);
       }).pipe(Effect.provide(TestDatabaseLive)),
     );
@@ -76,9 +71,7 @@ suite("findTodoOrganization (integration)", () => {
     await Effect.runPromise(
       Effect.gen(function* () {
         yield* seed;
-        const view = yield* findTodoOrganization(
-          FindTodoOrganizationQuery.make({ organizationId: orgId, todoId: unknownTodoId }),
-        );
+        const view = yield* findTodoOrganization({ organizationId: orgId, todoId: unknownTodoId });
         deepStrictEqual(view, null);
       }).pipe(Effect.provide(TestDatabaseLive)),
     );

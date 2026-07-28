@@ -112,7 +112,7 @@ export const UserCreated = DomainEvent("UserCreated", {
 Use cases bind these together explicitly, declaring the transaction once at the boundary (ADR-0007):
 
 ```ts
-export const createUser = Effect.fn("createUser")(function* (cmd: CreateUserCommand) {
+export const createUser = Effect.fn("createUser")(function* (cmd: CreateUserPayload) {
   const repo = yield* UserRepository;
   const bus = yield* DomainEventBus;
   const { user, events } = UserRootOps.create({ id, email, address, now });

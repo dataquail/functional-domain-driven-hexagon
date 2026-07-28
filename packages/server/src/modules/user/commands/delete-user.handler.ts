@@ -1,6 +1,6 @@
 import * as Effect from "effect/Effect";
 
-import { type DeleteUserCommand } from "@/modules/user/commands/delete-user.command.js";
+import { type DeleteUserPayload } from "@/modules/user/commands/delete-user.command.js";
 import { UserNotFound } from "@/modules/user/domain/user/user.errors.js";
 import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
 import { UserRootOps } from "@/modules/user/domain/user/user.root-ops.js";
@@ -8,7 +8,7 @@ import { UserSpecifications } from "@/modules/user/domain/user/user.specificatio
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-export const deleteUser = Effect.fn("deleteUser")(function* (cmd: DeleteUserCommand) {
+export const deleteUser = Effect.fn("deleteUser")(function* (cmd: DeleteUserPayload) {
   const repo = yield* UserRepository;
   const bus = yield* DomainEventBus;
   const user = yield* repo.findOne(UserSpecifications.withId(cmd.userId));

@@ -9,7 +9,7 @@ ADR-0006 gives modules a typed command/query bus, and ADR-0007 a synchronous dom
 
 The _outbound_ direction needs equivalent discipline. When a module needs another module to do something — fire a command, answer a query — nothing should let any file in the consuming module import the publisher's barrel directly, construct the message, and dispatch it on the bus. That allow-by-default admits two kinds of leakage:
 
-- **Message shape.** A consumer that constructs `GrantRoleCommand.make({ role: "super_admin", actorUserId, userId })` is coupled to that field set. If the publisher restructures the command, every call site changes.
+- **Message shape.** A consumer that dispatches `GrantRole` with `{ role: "super_admin", actorUserId, userId }` is coupled to that field set. If the publisher restructures the command's payload, every call site changes.
 - **Error vocabulary.** Because the bus is typed (ADR-0006), the foreign command's error union rides along with the message type. A consumer that dispatches it inherits the publisher's domain error tags (`CannotPromoteSelf`, `AlreadyHasRole`, …) and catches them — by tag — in its own interface layer. The publisher's domain vocabulary has crossed into the consumer.
 
 The canonical example: the `user` module exposes a `POST /users/:id/super-admin` endpoint because the URL is user-shaped, but the write belongs to the `role` module. The orchestration is correct; the coupling must be contained.
@@ -28,7 +28,9 @@ Co-locating them loses information: a reader can't tell which adapters would bec
 A module that calls another module does so through a **consumer-owned outbound port**. Two collaborating files per (consumer, capability):
 
 - A **port** in `domain/ports/acl/<capability>.acl.ts` — a `Context.Service` whose method signatures and error types are expressed entirely in the consumer's own vocabulary. The port names a capability ("grant super admin to this user"), not a publisher ("the role module").
-- An **adapter** in `infrastructure/acl/<capability>.acl-live.ts` — the `Live`. This is the _only_ file in the consuming module permitted to import the publisher's barrel, construct the publisher's command/query message, and dispatch it on the `CommandBus`/`QueryBus`. It maps the publisher's results and errors back into the port's own types.
+- An **adapter** in `infrastructure/acl/<capability>.acl-live.ts` — the `Live`. This is the _only_ file in the consuming module permitted to import the publisher's barrel and dispatch the publisher's command or query. It maps the publisher's results and errors back into the port's own types.
+
+The adapter resolves **the publisher module's own dispatch surface**, not the app-wide bus (ADR-0006). This is not a stylistic preference: naming the bus here is a dependency cycle, because the bus aggregates every module's surface — including the consumer's, whose handlers require this port. Naming only the module the adapter actually talks to leaves the real cross-module graph, which is acyclic, and the composition root states that order once.
 
 Commands, queries, domain, and interface code all depend on the port. None of them import the publisher's barrel. This is the outbound mirror of ADR-0007's inbound event ACL — every module-boundary crossing passes through exactly one named adapter file, one per direction (`interface/events/*.event-adapter.ts` inbound, `infrastructure/acl/*.acl-live.ts` outbound), and those two folders are the only places permitted to import a foreign barrel.
 
@@ -74,7 +76,7 @@ Under the withdrawal, a check closes over its module's own port at registration 
 
 The port answers a question; something has to supply the answer. The owning module publishes a **`queries/*.policy-query.ts`** — an ordinary read-side query, marked by its stereotype as a cross-module authorization contract. The distinction is a stability obligation, not a mechanism: a plain `*.query.ts` is dispatched only by its own module and may be reshaped freely, whereas a `*.policy-query.ts` has consumers that are invisible from the file, so changing its shape breaks them.
 
-This is a Customer-Supplier relationship with the query message as the contract. A consumer's `acl/` adapter dispatches it on the `QueryBus` and narrows the result into the port's vocabulary — for example, a role-name list becomes the single boolean `isSuperAdmin`, so the supplier's role vocabulary never reaches the consumer's checks.
+This is a Customer-Supplier relationship with the query definition as the contract. A consumer's `acl/` adapter dispatches it against the supplier module's query surface and narrows the result into the port's vocabulary — for example, a role-name list becomes the single boolean `isSuperAdmin`, so the supplier's role vocabulary never reaches the consumer's checks.
 
 ### Authorization now reads the read side
 

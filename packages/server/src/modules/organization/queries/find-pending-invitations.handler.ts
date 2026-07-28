@@ -3,7 +3,7 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
 import {
-  type FindPendingInvitationsQuery,
+  type FindPendingInvitationsPayload,
   type PendingInvitationView,
 } from "@/modules/organization/queries/find-pending-invitations.query.js";
 import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
@@ -22,7 +22,7 @@ const toView = (row: RowSchemas.InvitationRow, now: DateTime.Utc): PendingInvita
 });
 
 export const findPendingInvitations = Effect.fn("findPendingInvitations")(function* (
-  query: FindPendingInvitationsQuery,
+  query: FindPendingInvitationsPayload,
 ) {
   const db = yield* Database.Database;
   const now = yield* DateTime.now;

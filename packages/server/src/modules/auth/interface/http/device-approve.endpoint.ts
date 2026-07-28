@@ -1,10 +1,10 @@
 import { type AuthContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { CurrentUser } from "@org/contracts/Policy";
+import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
-import { ApproveDeviceGrantCommand } from "@/modules/auth/commands/approve-device-grant.command.js";
-import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
+import { ApproveDeviceGrant } from "@/modules/auth/commands/approve-device-grant.command.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // GUI adapter: the signed-in user approves a CLI device grant by submitting
@@ -14,12 +14,10 @@ export const deviceApproveEndpoint = Effect.fn("AuthLive.device.approve")(
   function* (request: EndpointRequest<typeof AuthContract.DeviceApprovalGroup, "approve">) {
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
-    yield* commandBus.execute(
-      ApproveDeviceGrantCommand.make({
-        userCode: request.payload.userCode,
-        userId: currentUser.userId,
-      }),
-    );
+    yield* commandBus.execute(ApproveDeviceGrant, {
+      userCode: request.payload.userCode,
+      userId: currentUser.userId,
+    });
   },
   Effect.catchTag("DeviceGrantNotFound", () =>
     Effect.fail(

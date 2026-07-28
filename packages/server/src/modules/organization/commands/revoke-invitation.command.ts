@@ -1,15 +1,23 @@
+import { Command } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import {
+  InvitationAlreadyAccepted,
+  InvitationAlreadyRevoked,
+  InvitationNotFound,
+} from "@/modules/organization/domain/invitation/invitation.errors.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-export const RevokeInvitationCommand = Schema.TaggedStruct("RevokeInvitationCommand", {
-  invitationId: InvitationId,
-  actorUserId: UserId,
+export const RevokeInvitation = Command.make("RevokeInvitationCommand", {
+  payload: { invitationId: InvitationId, actorUserId: UserId },
+  success: Schema.Void,
+  failure: Schema.Union([
+    InvitationNotFound,
+    InvitationAlreadyAccepted,
+    InvitationAlreadyRevoked,
+    PersistenceUnavailable,
+  ]),
 });
-export type RevokeInvitationCommand = typeof RevokeInvitationCommand.Type;
-
-export const revokeInvitationCommandSpanAttributes: SpanAttributesExtractor<
-  RevokeInvitationCommand
-> = (cmd) => ({ "invitation.id": cmd.invitationId, "actor.user.id": cmd.actorUserId });
+export type RevokeInvitationPayload = Command.Payload<typeof RevokeInvitation>;

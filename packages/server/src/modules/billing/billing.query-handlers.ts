@@ -1,33 +1,28 @@
-import { type Database } from "@org/database/index";
-import type * as Effect from "effect/Effect";
+import { Query } from "@org/cqrs";
+import * as Context from "effect/Context";
+import * as Layer from "effect/Layer";
 
 import { findSubscriptionByOrganization } from "@/modules/billing/queries/find-subscription-by-organization.handler.js";
-import {
-  type FindSubscriptionByOrganizationQuery,
-  findSubscriptionByOrganizationQuerySpanAttributes,
-  type FindSubscriptionByOrganizationResult,
-} from "@/modules/billing/queries/find-subscription-by-organization.query.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { queryHandlers } from "@/platform/ddd/ports/query-bus.js";
+import { FindSubscriptionByOrganization } from "@/modules/billing/queries/find-subscription-by-organization.query.js";
 
-type FindSubscriptionByOrganizationOutput = Effect.Effect<
-  FindSubscriptionByOrganizationResult,
-  PersistenceUnavailable,
-  Database.Database
->;
+const billingQueryGroup = Query.group(FindSubscriptionByOrganization);
 
-declare module "@/platform/ddd/ports/query-bus.js" {
-  interface QueryRegistry {
-    FindSubscriptionByOrganizationQuery: {
-      readonly query: FindSubscriptionByOrganizationQuery;
-      readonly output: FindSubscriptionByOrganizationOutput;
-    };
-  }
-}
-
-export const billingQueryHandlers = queryHandlers({
-  FindSubscriptionByOrganizationQuery: {
-    handle: findSubscriptionByOrganization,
-    spanAttributes: findSubscriptionByOrganizationQuerySpanAttributes,
-  },
+const BillingQueryHandlersLive = Query.handlersOf(billingQueryGroup, {
+  FindSubscriptionByOrganizationQuery: (payload) => findSubscriptionByOrganization(payload),
 });
+
+const billingQuerySpanAttributes: Query.SpanAttributes<typeof billingQueryGroup> = {
+  FindSubscriptionByOrganizationQuery: (payload) => ({
+    "organization.id": payload.organizationId,
+  }),
+};
+
+export class BillingQueries extends Context.Service<
+  BillingQueries,
+  Query.Dispatcher<typeof billingQueryGroup>
+>()("@org/server/billing/BillingQueries") {}
+
+export const BillingQueriesLive = Layer.effect(
+  BillingQueries,
+  Query.dispatcher(billingQueryGroup, { spanAttributes: billingQuerySpanAttributes }),
+).pipe(Layer.provide(BillingQueryHandlersLive));

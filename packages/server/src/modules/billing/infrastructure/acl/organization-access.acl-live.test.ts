@@ -1,12 +1,11 @@
 import { describe, it } from "@effect/vitest";
-import { Database } from "@org/database/index";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { OrganizationAccess } from "@/modules/billing/domain/ports/acl/organization-access.acl.js";
 import { OrganizationAccessLive } from "@/modules/billing/infrastructure/acl/organization-access.acl-live.js";
-import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
+import { OrganizationQueries } from "@/modules/organization/index.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
@@ -17,34 +16,36 @@ import { UserId } from "@/platform/ids/user-id.js";
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 
-const stubQueryBus = (opts: {
+// The organization module's dispatch surface is a plain object of typed methods, so
+// standing in for it needs no cast. The tags this adapter must never reach are wired to
+// die rather than omitted, which is what makes "asks exactly these two questions" a
+// property the test enforces.
+const unreached = (tag: string) => () => Effect.die(`unexpected query ${tag}`);
+
+const stubOrganizationQueries = (opts: {
   readonly isMember?: boolean;
   readonly roles?: ReadonlyArray<string>;
 }) =>
   Layer.succeed(
-    QueryBus,
-    QueryBus.of({
-      execute: ((query: { _tag: string; userId: UserId; organizationId: OrganizationId }) => {
-        switch (query._tag) {
-          case "FindMembershipQuery":
-            return Effect.succeed({ isMember: opts.isMember ?? false });
-          case "FindUserOrganizationRolesQuery":
-            return Effect.succeed({
-              userId: query.userId,
-              organizationId: query.organizationId,
-              roles: opts.roles ?? [],
-            });
-          default:
-            return Effect.die(`unexpected query ${query._tag}`);
-        }
-      }) as never,
+    OrganizationQueries,
+    OrganizationQueries.of({
+      FindMembershipQuery: () => Effect.succeed({ isMember: opts.isMember ?? false }),
+      FindUserOrganizationRolesQuery: (payload) =>
+        Effect.succeed({
+          userId: payload.userId,
+          organizationId: payload.organizationId,
+          roles: opts.roles ?? [],
+        }),
+      FindOrganizationMembershipsQuery: unreached("FindOrganizationMembershipsQuery"),
+      FindAllOrganizationsQuery: unreached("FindAllOrganizationsQuery"),
+      FindMyOrganizationsQuery: unreached("FindMyOrganizationsQuery"),
+      FindOrganizationByIdQuery: unreached("FindOrganizationByIdQuery"),
+      FindPendingInvitationsQuery: unreached("FindPendingInvitationsQuery"),
     }),
   );
 
-const stubDatabase = Layer.succeed(Database.Database, {} as Database.Database["Service"]);
-
 const testLayer = (opts: { readonly isMember?: boolean; readonly roles?: ReadonlyArray<string> }) =>
-  OrganizationAccessLive.pipe(Layer.provide(stubQueryBus(opts)), Layer.provide(stubDatabase));
+  OrganizationAccessLive.pipe(Layer.provide(stubOrganizationQueries(opts)));
 
 describe("OrganizationAccessLive (billing)", () => {
   it.effect("isMember reflects the organization module's membership answer", () =>

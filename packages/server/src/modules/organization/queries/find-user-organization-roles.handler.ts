@@ -1,11 +1,11 @@
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
-import { type FindUserOrganizationRolesQuery } from "@/modules/organization/queries/find-user-organization-roles.policy-query.js";
+import { type FindUserOrganizationRolesPayload } from "@/modules/organization/queries/find-user-organization-roles.policy-query.js";
 import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
 export const findUserOrganizationRoles = Effect.fn("findUserOrganizationRoles")(function* (
-  query: FindUserOrganizationRolesQuery,
+  query: FindUserOrganizationRolesPayload,
 ) {
   const db = yield* Database.Database;
   const rows = yield* db

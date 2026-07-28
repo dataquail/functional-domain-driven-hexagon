@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 import {
-  type FindOrganizationByIdQuery,
+  type FindOrganizationByIdPayload,
   type OrganizationAuthzView,
 } from "@/modules/organization/queries/find-organization-by-id.query.js";
 import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
@@ -15,7 +15,7 @@ const IdRowStd = Schema.toStandardSchemaV1(Schema.Struct({ id: Schema.String }))
 // one exists — the authz resolver runs this during a command's authorization,
 // inside that command's unit of work.
 export const findOrganizationById = Effect.fn("findOrganizationById")(function* (
-  query: FindOrganizationByIdQuery,
+  query: FindOrganizationByIdPayload,
 ) {
   const db = yield* Database.Database;
   const readOrganization = db.makeQuery((execute) =>

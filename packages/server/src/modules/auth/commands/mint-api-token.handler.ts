@@ -4,8 +4,8 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
 import {
-  type MintApiTokenCommand,
   type MintApiTokenInput,
+  type MintApiTokenPayload,
   type MintApiTokenResult,
 } from "@/modules/auth/commands/mint-api-token.command.js";
 import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
@@ -55,6 +55,6 @@ export const mintApiTokenCore = (
 // boundary span; `mintApiTokenCore` stays span-less (a shared sub-step below
 // use-case granularity) so its `annotateCurrentSpan` lands on whichever use
 // case invoked it (this one, or `pollDeviceGrant`).
-export const mintApiToken = Effect.fn("mintApiToken")(function* (cmd: MintApiTokenCommand) {
+export const mintApiToken = Effect.fn("mintApiToken")(function* (cmd: MintApiTokenPayload) {
   return yield* mintApiTokenCore(cmd);
 }, withUnitOfWork);

@@ -13,7 +13,6 @@ import { OrganizationRootOps } from "@/modules/organization/domain/organization/
 import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/repositories/membership.repository-live.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
 import { findMyOrganizations } from "@/modules/organization/queries/find-my-organizations.handler.js";
-import { FindMyOrganizationsQuery } from "@/modules/organization/queries/find-my-organizations.query.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
@@ -74,7 +73,7 @@ suite("findMyOrganizations (integration)", () => {
         MembershipRootOps.create({ userId: bobId, organizationId: betaId, now }).membership,
       );
 
-      const result = yield* findMyOrganizations(FindMyOrganizationsQuery.make({ userId: aliceId }));
+      const result = yield* findMyOrganizations({ userId: aliceId });
       deepStrictEqual(
         result.organizations.map((o) => o.name),
         ["Acme"],
@@ -111,7 +110,7 @@ suite("findMyOrganizations (integration)", () => {
         )
         .pipe(Effect.orDie);
 
-      const result = yield* findMyOrganizations(FindMyOrganizationsQuery.make({ userId: aliceId }));
+      const result = yield* findMyOrganizations({ userId: aliceId });
       const isAdminByName = new Map(result.organizations.map((o) => [o.name, o.isAdmin]));
       deepStrictEqual(isAdminByName.get("Acme"), true);
       deepStrictEqual(isAdminByName.get("Beta"), false);
@@ -121,7 +120,7 @@ suite("findMyOrganizations (integration)", () => {
   it.effect("returns an empty list when the caller has no memberships", () =>
     Effect.gen(function* () {
       yield* seedUsers;
-      const result = yield* findMyOrganizations(FindMyOrganizationsQuery.make({ userId: aliceId }));
+      const result = yield* findMyOrganizations({ userId: aliceId });
       deepStrictEqual([...result.organizations], []);
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -140,7 +139,7 @@ suite("findMyOrganizations (integration)", () => {
       if (deleted._tag !== "Success") throw new Error("expected Right");
       yield* orgs.updateOne(deleted.success.organization);
 
-      const result = yield* findMyOrganizations(FindMyOrganizationsQuery.make({ userId: aliceId }));
+      const result = yield* findMyOrganizations({ userId: aliceId });
       deepStrictEqual([...result.organizations], []);
     }).pipe(Effect.provide(TestLayer)),
   );

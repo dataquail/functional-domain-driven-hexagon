@@ -1,9 +1,9 @@
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
+import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
-import { AcceptInvitationCommand } from "@/modules/organization/commands/accept-invitation.command.js";
-import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
+import { AcceptInvitation } from "@/modules/organization/commands/accept-invitation.command.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // Sits in the standalone InvitationGroup (`/api/invitations/:token/accept`)
@@ -15,12 +15,10 @@ export const acceptInvitationEndpoint = Effect.fn("OrganizationLive.acceptInvita
   function* (request: EndpointRequest<typeof OrganizationContract.InvitationGroup, "accept">) {
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
-    const organizationId = yield* commandBus.execute(
-      AcceptInvitationCommand.make({
-        token: request.params.token,
-        userId: currentUser.userId,
-      }),
-    );
+    const organizationId = yield* commandBus.execute(AcceptInvitation, {
+      token: request.params.token,
+      userId: currentUser.userId,
+    });
     return new OrganizationContract.AcceptInvitationResponse({ organizationId });
   },
   Effect.catchTag("InvitationTokenNotFound", () =>

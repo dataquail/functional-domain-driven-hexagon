@@ -6,7 +6,7 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { GrantOrganizationRoleCommand } from "@/modules/organization/commands/grant-organization-role.command.js";
+import { type GrantOrganizationRolePayload } from "@/modules/organization/commands/grant-organization-role.command.js";
 import { grantOrganizationRole } from "@/modules/organization/commands/grant-organization-role.handler.js";
 import {
   AlreadyHasOrganizationRole,
@@ -38,14 +38,12 @@ describe("grantOrganizationRole", () => {
       const repo = yield* OrganizationRolesRepository;
       const rec = yield* RecordedEvents;
 
-      yield* grantOrganizationRole(
-        GrantOrganizationRoleCommand.make({
-          userId: targetId,
-          organizationId: orgId,
-          role: "admin",
-          actorUserId: actorId,
-        }),
-      );
+      yield* grantOrganizationRole({
+        userId: targetId,
+        organizationId: orgId,
+        role: "admin",
+        actorUserId: actorId,
+      });
 
       const roles = yield* repo.findOne(
         Spec.and(
@@ -73,14 +71,12 @@ describe("grantOrganizationRole", () => {
   it.effect("fails CannotPromoteSelfInOrganization when actor equals target", () =>
     Effect.gen(function* () {
       const exit = yield* Effect.exit(
-        grantOrganizationRole(
-          GrantOrganizationRoleCommand.make({
-            userId: targetId,
-            organizationId: orgId,
-            role: "admin",
-            actorUserId: targetId,
-          }),
-        ),
+        grantOrganizationRole({
+          userId: targetId,
+          organizationId: orgId,
+          role: "admin",
+          actorUserId: targetId,
+        }),
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
@@ -94,12 +90,12 @@ describe("grantOrganizationRole", () => {
 
   it.effect("fails AlreadyHasOrganizationRole when the role is already granted", () =>
     Effect.gen(function* () {
-      const cmd = GrantOrganizationRoleCommand.make({
+      const cmd: GrantOrganizationRolePayload = {
         userId: targetId,
         organizationId: orgId,
         role: "admin",
         actorUserId: actorId,
-      });
+      };
       yield* grantOrganizationRole(cmd);
       const exit = yield* Effect.exit(grantOrganizationRole(cmd));
       deepStrictEqual(Exit.isFailure(exit), true);

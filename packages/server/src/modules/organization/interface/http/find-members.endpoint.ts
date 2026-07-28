@@ -1,11 +1,11 @@
 import { OrganizationContract } from "@org/contracts/api/Contracts";
+import { QueryBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { OrganizationResource } from "@/modules/organization/policies/organization.policies.js";
-import { FindOrganizationMembershipsQuery } from "@/modules/organization/queries/find-organization-memberships.query.js";
+import { FindOrganizationMemberships } from "@/modules/organization/queries/find-organization-memberships.query.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
-import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // Any member of the org (plus super-admins) may read the roster — the
@@ -31,9 +31,9 @@ export const findMembersEndpoint = Effect.fn("OrganizationLive.findMembers")(fun
   );
 
   const queryBus = yield* QueryBus;
-  const members = yield* queryBus.execute(
-    FindOrganizationMembershipsQuery.make({ organizationId: request.params.orgId }),
-  );
+  const members = yield* queryBus.execute(FindOrganizationMemberships, {
+    organizationId: request.params.orgId,
+  });
 
   return new OrganizationContract.OrganizationMembersResponse({
     members: members.map(

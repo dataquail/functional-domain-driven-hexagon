@@ -4,7 +4,6 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { SyncSubscriptionCommand } from "@/modules/billing/commands/sync-subscription.command.js";
 import { syncSubscription } from "@/modules/billing/commands/sync-subscription.handler.js";
 import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
 import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
@@ -43,13 +42,11 @@ describe("syncSubscription", () => {
       yield* seedSubscription();
       const rec = yield* RecordedEvents;
 
-      yield* syncSubscription(
-        SyncSubscriptionCommand.make({
-          stripeSubscriptionId: stripeSubId,
-          status: "active",
-          currentPeriodEnd: null,
-        }),
-      );
+      yield* syncSubscription({
+        stripeSubscriptionId: stripeSubId,
+        status: "active",
+        currentPeriodEnd: null,
+      });
 
       const repo = yield* SubscriptionRepository;
       const found = yield* repo.findOne(SubscriptionSpecifications.forOrganization(acme));
@@ -65,13 +62,11 @@ describe("syncSubscription", () => {
     Effect.gen(function* () {
       // No seed — nothing matches the stripe id.
       const rec = yield* RecordedEvents;
-      yield* syncSubscription(
-        SyncSubscriptionCommand.make({
-          stripeSubscriptionId: "sub_never_seen",
-          status: "active",
-          currentPeriodEnd: null,
-        }),
-      );
+      yield* syncSubscription({
+        stripeSubscriptionId: "sub_never_seen",
+        status: "active",
+        currentPeriodEnd: null,
+      });
       const repo = yield* SubscriptionRepository;
       const found = yield* repo.findOne(SubscriptionSpecifications.forOrganization(acme));
       deepStrictEqual(found, null);

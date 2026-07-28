@@ -1,86 +1,60 @@
-import { type Database } from "@org/database/index";
+import { Command } from "@org/cqrs";
+import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 
-import {
-  type CompleteTodoCommand,
-  completeTodoCommandSpanAttributes,
-} from "@/modules/todos/commands/complete-todo.command.js";
+import { CompleteTodo } from "@/modules/todos/commands/complete-todo.command.js";
 import { completeTodo } from "@/modules/todos/commands/complete-todo.handler.js";
-import {
-  type CreateTodoCommand,
-  createTodoCommandSpanAttributes,
-} from "@/modules/todos/commands/create-todo.command.js";
+import { CreateTodo } from "@/modules/todos/commands/create-todo.command.js";
 import { createTodo } from "@/modules/todos/commands/create-todo.handler.js";
-import {
-  type DeleteTodoCommand,
-  deleteTodoCommandSpanAttributes,
-} from "@/modules/todos/commands/delete-todo.command.js";
+import { DeleteTodo } from "@/modules/todos/commands/delete-todo.command.js";
 import { deleteTodo } from "@/modules/todos/commands/delete-todo.handler.js";
-import {
-  type UpdateTodoCommand,
-  updateTodoCommandSpanAttributes,
-} from "@/modules/todos/commands/update-todo.command.js";
+import { UpdateTodo } from "@/modules/todos/commands/update-todo.command.js";
 import { updateTodo } from "@/modules/todos/commands/update-todo.handler.js";
-import { type TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.js";
-import { type TodoRoot } from "@/modules/todos/domain/todo/todo.root.js";
 import { TodosRepositoryLive } from "@/modules/todos/infrastructure/repositories/todos.repository-live.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { commandHandlers } from "@/platform/ddd/ports/command-bus.js";
 
-type CreateTodoOutput = Effect.Effect<TodoRoot, PersistenceUnavailable, Database.Database>;
-type DeleteTodoOutput = Effect.Effect<
-  void,
-  TodoNotFound | PersistenceUnavailable,
-  Database.Database
->;
-type UpdateTodoOutput = Effect.Effect<
-  TodoRoot,
-  TodoNotFound | PersistenceUnavailable,
-  Database.Database
->;
-type CompleteTodoOutput = Effect.Effect<
-  TodoRoot,
-  TodoNotFound | PersistenceUnavailable,
-  Database.Database
->;
+const todoCommandGroup = Command.group(CreateTodo, UpdateTodo, CompleteTodo, DeleteTodo);
 
-declare module "@/platform/ddd/ports/command-bus.js" {
-  interface CommandRegistry {
-    CreateTodoCommand: {
-      readonly command: CreateTodoCommand;
-      readonly output: CreateTodoOutput;
-    };
-    UpdateTodoCommand: {
-      readonly command: UpdateTodoCommand;
-      readonly output: UpdateTodoOutput;
-    };
-    CompleteTodoCommand: {
-      readonly command: CompleteTodoCommand;
-      readonly output: CompleteTodoOutput;
-    };
-    DeleteTodoCommand: {
-      readonly command: DeleteTodoCommand;
-      readonly output: DeleteTodoOutput;
-    };
-  }
-}
-
-export const todoCommandHandlers = commandHandlers({
-  CreateTodoCommand: {
-    handle: (cmd): CreateTodoOutput => createTodo(cmd).pipe(Effect.provide(TodosRepositoryLive)),
-    spanAttributes: createTodoCommandSpanAttributes,
-  },
-  UpdateTodoCommand: {
-    handle: (cmd): UpdateTodoOutput => updateTodo(cmd).pipe(Effect.provide(TodosRepositoryLive)),
-    spanAttributes: updateTodoCommandSpanAttributes,
-  },
-  CompleteTodoCommand: {
-    handle: (cmd): CompleteTodoOutput =>
-      completeTodo(cmd).pipe(Effect.provide(TodosRepositoryLive)),
-    spanAttributes: completeTodoCommandSpanAttributes,
-  },
-  DeleteTodoCommand: {
-    handle: (cmd): DeleteTodoOutput => deleteTodo(cmd).pipe(Effect.provide(TodosRepositoryLive)),
-    spanAttributes: deleteTodoCommandSpanAttributes,
-  },
+const TodoCommandHandlersLive = Command.handlersOf(todoCommandGroup, {
+  CreateTodoCommand: (payload) => createTodo(payload).pipe(Effect.provide(TodosRepositoryLive)),
+  UpdateTodoCommand: (payload) => updateTodo(payload).pipe(Effect.provide(TodosRepositoryLive)),
+  CompleteTodoCommand: (payload) => completeTodo(payload).pipe(Effect.provide(TodosRepositoryLive)),
+  DeleteTodoCommand: (payload) => deleteTodo(payload).pipe(Effect.provide(TodosRepositoryLive)),
 });
+
+// A todo's title is user-supplied content, so it never reaches a span; the generated id
+// is annotated from inside the create handler instead.
+const todoCommandSpanAttributes: Command.SpanAttributes<typeof todoCommandGroup> = {
+  CreateTodoCommand: (payload) => ({
+    "user.id": payload.userId,
+    "organization.id": payload.organizationId,
+  }),
+  UpdateTodoCommand: (payload) => ({
+    "todo.id": payload.todoId,
+    "organization.id": payload.organizationId,
+    "todo.completed": payload.completed,
+    "user.id": payload.userId,
+  }),
+  CompleteTodoCommand: (payload) => ({
+    "todo.id": payload.todoId,
+    "organization.id": payload.organizationId,
+    "user.id": payload.userId,
+  }),
+  DeleteTodoCommand: (payload) => ({
+    "todo.id": payload.todoId,
+    "organization.id": payload.organizationId,
+    "user.id": payload.userId,
+  }),
+};
+
+// This module's slice of the write-side dispatch surface. See `WalletCommands` for why a
+// module publishes its own surface rather than letting consumers name the bus.
+export class TodoCommands extends Context.Service<
+  TodoCommands,
+  Command.Dispatcher<typeof todoCommandGroup>
+>()("@org/server/todos/TodoCommands") {}
+
+export const TodoCommandsLive = Layer.effect(
+  TodoCommands,
+  Command.dispatcher(todoCommandGroup, { spanAttributes: todoCommandSpanAttributes }),
+).pipe(Layer.provide(TodoCommandHandlersLive));

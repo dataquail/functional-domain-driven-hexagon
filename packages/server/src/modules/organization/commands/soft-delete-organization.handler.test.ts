@@ -6,9 +6,7 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { CreateOrganizationCommand } from "@/modules/organization/commands/create-organization.command.js";
 import { createOrganization } from "@/modules/organization/commands/create-organization.handler.js";
-import { SoftDeleteOrganizationCommand } from "@/modules/organization/commands/soft-delete-organization.command.js";
 import { softDeleteOrganization } from "@/modules/organization/commands/soft-delete-organization.handler.js";
 import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.js";
 import { type OrganizationSoftDeleted } from "@/modules/organization/domain/organization/organization.events.js";
@@ -39,10 +37,8 @@ describe("softDeleteOrganization", () => {
     Effect.gen(function* () {
       const repo = yield* OrganizationRepository;
       const rec = yield* RecordedEvents;
-      const id = yield* createOrganization(
-        CreateOrganizationCommand.make({ name: "Acme", actorUserId }),
-      );
-      yield* softDeleteOrganization(SoftDeleteOrganizationCommand.make({ organizationId: id }));
+      const id = yield* createOrganization({ name: "Acme", actorUserId });
+      yield* softDeleteOrganization({ organizationId: id });
       const stored = yield* repo.findOne(OrganizationSpecifications.withId(id));
       if (stored === null) throw new Error("expected organization");
       deepStrictEqual(stored.deletedAt !== null, true);
@@ -54,9 +50,7 @@ describe("softDeleteOrganization", () => {
   it.effect("fails OrganizationNotFound when the org doesn't exist", () =>
     Effect.gen(function* () {
       const unknown = OrganizationId.make("00000000-0000-0000-0000-000000000000");
-      const exit = yield* Effect.exit(
-        softDeleteOrganization(SoftDeleteOrganizationCommand.make({ organizationId: unknown })),
-      );
+      const exit = yield* Effect.exit(softDeleteOrganization({ organizationId: unknown }));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.hasFails(exit.cause)
@@ -69,13 +63,9 @@ describe("softDeleteOrganization", () => {
 
   it.effect("fails OrganizationNotFound when the org is already soft-deleted", () =>
     Effect.gen(function* () {
-      const id = yield* createOrganization(
-        CreateOrganizationCommand.make({ name: "Acme", actorUserId }),
-      );
-      yield* softDeleteOrganization(SoftDeleteOrganizationCommand.make({ organizationId: id }));
-      const exit = yield* Effect.exit(
-        softDeleteOrganization(SoftDeleteOrganizationCommand.make({ organizationId: id })),
-      );
+      const id = yield* createOrganization({ name: "Acme", actorUserId });
+      yield* softDeleteOrganization({ organizationId: id });
+      const exit = yield* Effect.exit(softDeleteOrganization({ organizationId: id }));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.hasFails(exit.cause)

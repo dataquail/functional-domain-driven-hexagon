@@ -1,16 +1,18 @@
+import { Command } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import {
+  DeviceGrantExpired,
+  DeviceGrantNotFound,
+} from "@/modules/auth/domain/device-grant/device-grant.errors.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // Browser-side approval: the signed-in user submits the `userCode` they were
 // shown by the CLI; we bind the grant to them.
-export const ApproveDeviceGrantCommand = Schema.TaggedStruct("ApproveDeviceGrantCommand", {
-  userCode: Schema.String,
-  userId: UserId,
+export const ApproveDeviceGrant = Command.make("ApproveDeviceGrantCommand", {
+  payload: { userCode: Schema.String, userId: UserId },
+  success: Schema.Void,
+  failure: Schema.Union([DeviceGrantNotFound, DeviceGrantExpired, PersistenceUnavailable]),
 });
-export type ApproveDeviceGrantCommand = typeof ApproveDeviceGrantCommand.Type;
-
-export const approveDeviceGrantCommandSpanAttributes: SpanAttributesExtractor<
-  ApproveDeviceGrantCommand
-> = (c) => ({ "user.id": c.userId });
+export type ApproveDeviceGrantPayload = Command.Payload<typeof ApproveDeviceGrant>;

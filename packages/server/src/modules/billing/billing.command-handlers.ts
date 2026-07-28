@@ -1,113 +1,68 @@
-import { type Database } from "@org/database/index";
+import { Command } from "@org/cqrs";
+import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 
-import {
-  type CancelSubscriptionCommand,
-  cancelSubscriptionCommandSpanAttributes,
-} from "@/modules/billing/commands/cancel-subscription.command.js";
+import { type EnvVars } from "@/common/env-vars.js";
+import { CancelSubscription } from "@/modules/billing/commands/cancel-subscription.command.js";
 import { cancelSubscription } from "@/modules/billing/commands/cancel-subscription.handler.js";
-import {
-  type IngestStripeWebhookCommand,
-  ingestStripeWebhookCommandSpanAttributes,
-} from "@/modules/billing/commands/ingest-stripe-webhook.command.js";
+import { IngestStripeWebhook } from "@/modules/billing/commands/ingest-stripe-webhook.command.js";
 import { ingestStripeWebhook } from "@/modules/billing/commands/ingest-stripe-webhook.handler.js";
-import {
-  type StartSubscriptionCommand,
-  startSubscriptionCommandSpanAttributes,
-} from "@/modules/billing/commands/start-subscription.command.js";
+import { StartSubscription } from "@/modules/billing/commands/start-subscription.command.js";
 import { startSubscription } from "@/modules/billing/commands/start-subscription.handler.js";
-import {
-  type SyncSubscriptionCommand,
-  syncSubscriptionCommandSpanAttributes,
-} from "@/modules/billing/commands/sync-subscription.command.js";
+import { SyncSubscription } from "@/modules/billing/commands/sync-subscription.command.js";
 import { syncSubscription } from "@/modules/billing/commands/sync-subscription.handler.js";
 import { type BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client.js";
-import {
-  type BillingGatewayUnavailable,
-  type InvalidWebhookSignature,
-  type SubscriptionAlreadyExistsForOrganization,
-  type SubscriptionNotFound,
-} from "@/modules/billing/domain/subscription/subscription.errors.js";
-import { type SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.js";
+import { BillingGatewayFake } from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake.js";
+import { BillingGatewayLive } from "@/modules/billing/infrastructure/clients/billing-gateway.client-live.js";
 import { SubscriptionRepositoryLive } from "@/modules/billing/infrastructure/repositories/subscription.repository-live.js";
 import { WebhookEventRepositoryLive } from "@/modules/billing/infrastructure/repositories/webhook-event.repository-live.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { commandHandlers } from "@/platform/ddd/ports/command-bus.js";
-import { type DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 
-// Bus-visible output types: the raw handlers in `commands/` carry
-// `SubscriptionRepository` in R; the wraps below discharge that via
-// `SubscriptionRepositoryLive`. `BillingGateway` stays in R because
-// the composition root chooses Live (Stripe) vs Fake at runtime —
-// repos are owned-and-static; the gateway is the integration seam.
-// `EnvVars` stays in R because `EnvVars.layer` is provided at the
-// server boot level.
+// Repositories are owned-and-static, so each entry below discharges its own. The gateway
+// is the integration seam and stays in the handler map's requirements: this module ships
+// two named Lives so the Stripe-vs-fake swap is a choice between them rather than a port
+// Tag threaded through the composition root. `EnvVars` stays required because
+// `EnvVars.layer` is provided at server boot.
+const billingCommandGroup = Command.group(
+  StartSubscription,
+  CancelSubscription,
+  IngestStripeWebhook,
+  SyncSubscription,
+);
 
-type StartSubscriptionOutput = Effect.Effect<
-  SubscriptionRoot,
-  SubscriptionAlreadyExistsForOrganization | BillingGatewayUnavailable | PersistenceUnavailable,
-  BillingGateway | DomainEventBus | UnitOfWork | Database.Database
->;
-
-type CancelSubscriptionOutput = Effect.Effect<
-  SubscriptionRoot,
-  SubscriptionNotFound | BillingGatewayUnavailable | PersistenceUnavailable,
-  BillingGateway | DomainEventBus | UnitOfWork | Database.Database
->;
-
-type IngestStripeWebhookOutput = Effect.Effect<
-  void,
-  InvalidWebhookSignature | PersistenceUnavailable,
-  BillingGateway | DomainEventBus | UnitOfWork | Database.Database
->;
-
-type SyncSubscriptionOutput = Effect.Effect<
-  void,
-  PersistenceUnavailable,
-  DomainEventBus | UnitOfWork | Database.Database
->;
-
-declare module "@/platform/ddd/ports/command-bus.js" {
-  interface CommandRegistry {
-    StartSubscriptionCommand: {
-      readonly command: StartSubscriptionCommand;
-      readonly output: StartSubscriptionOutput;
-    };
-    CancelSubscriptionCommand: {
-      readonly command: CancelSubscriptionCommand;
-      readonly output: CancelSubscriptionOutput;
-    };
-    IngestStripeWebhookCommand: {
-      readonly command: IngestStripeWebhookCommand;
-      readonly output: IngestStripeWebhookOutput;
-    };
-    SyncSubscriptionCommand: {
-      readonly command: SyncSubscriptionCommand;
-      readonly output: SyncSubscriptionOutput;
-    };
-  }
-}
-
-export const billingCommandHandlers = commandHandlers({
-  StartSubscriptionCommand: {
-    handle: (cmd): StartSubscriptionOutput =>
-      startSubscription(cmd).pipe(Effect.provide(SubscriptionRepositoryLive)),
-    spanAttributes: startSubscriptionCommandSpanAttributes,
-  },
-  CancelSubscriptionCommand: {
-    handle: (cmd): CancelSubscriptionOutput =>
-      cancelSubscription(cmd).pipe(Effect.provide(SubscriptionRepositoryLive)),
-    spanAttributes: cancelSubscriptionCommandSpanAttributes,
-  },
-  IngestStripeWebhookCommand: {
-    handle: (cmd): IngestStripeWebhookOutput =>
-      ingestStripeWebhook(cmd).pipe(Effect.provide(WebhookEventRepositoryLive)),
-    spanAttributes: ingestStripeWebhookCommandSpanAttributes,
-  },
-  SyncSubscriptionCommand: {
-    handle: (cmd): SyncSubscriptionOutput =>
-      syncSubscription(cmd).pipe(Effect.provide(SubscriptionRepositoryLive)),
-    spanAttributes: syncSubscriptionCommandSpanAttributes,
-  },
+const BillingCommandHandlersLive = Command.handlersOf(billingCommandGroup, {
+  StartSubscriptionCommand: (payload) =>
+    startSubscription(payload).pipe(Effect.provide(SubscriptionRepositoryLive)),
+  CancelSubscriptionCommand: (payload) =>
+    cancelSubscription(payload).pipe(Effect.provide(SubscriptionRepositoryLive)),
+  IngestStripeWebhookCommand: (payload) =>
+    ingestStripeWebhook(payload).pipe(Effect.provide(WebhookEventRepositoryLive)),
+  SyncSubscriptionCommand: (payload) =>
+    syncSubscription(payload).pipe(Effect.provide(SubscriptionRepositoryLive)),
 });
+
+// Neither webhook field reaches a span: the raw body is unbounded and the signature is a
+// credential.
+const billingCommandSpanAttributes: Command.SpanAttributes<typeof billingCommandGroup> = {
+  StartSubscriptionCommand: (payload) => ({ "organization.id": payload.organizationId }),
+  CancelSubscriptionCommand: (payload) => ({ "organization.id": payload.organizationId }),
+  SyncSubscriptionCommand: (payload) => ({
+    "billing.stripe.subscription.id": payload.stripeSubscriptionId,
+    "billing.subscription.status": payload.status,
+  }),
+};
+
+export class BillingCommands extends Context.Service<
+  BillingCommands,
+  Command.Dispatcher<typeof billingCommandGroup>
+>()("@org/server/billing/BillingCommands") {}
+
+const makeBillingCommandsLive = (gateway: Layer.Layer<BillingGateway, never, EnvVars>) =>
+  Layer.effect(
+    BillingCommands,
+    Command.dispatcher(billingCommandGroup, { spanAttributes: billingCommandSpanAttributes }),
+  ).pipe(Layer.provide(BillingCommandHandlersLive.pipe(Layer.provide(gateway))));
+
+export const BillingCommandsLive = makeBillingCommandsLive(BillingGatewayLive);
+
+export const BillingCommandsFake = makeBillingCommandsLive(BillingGatewayFake);

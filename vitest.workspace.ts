@@ -17,6 +17,7 @@ export default defineWorkspace([
   // isn't auto-discovered and its `*.spec.ts` files aren't loaded as Vitest
   // tests. Acceptance specs run via `pnpm test:acceptance`.
   "packages/contracts",
+  "packages/cqrs",
   "packages/database",
   "packages/jobs",
   "packages/server",

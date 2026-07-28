@@ -6,9 +6,7 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { GrantRoleCommand } from "@/modules/role/commands/grant-role.command.js";
 import { grantRole } from "@/modules/role/commands/grant-role.handler.js";
-import { RevokeRoleCommand } from "@/modules/role/commands/revoke-role.command.js";
 import { revokeRole } from "@/modules/role/commands/revoke-role.handler.js";
 import { DoesNotHaveRole } from "@/modules/role/domain/roles/role.errors.js";
 import { type RoleRevoked } from "@/modules/role/domain/roles/role.events.js";
@@ -30,10 +28,8 @@ describe("revokeRole", () => {
       const repo = yield* RolesRepository;
       const rec = yield* RecordedEvents;
 
-      yield* grantRole(
-        GrantRoleCommand.make({ userId: targetId, role: "super_admin", actorUserId: actorId }),
-      );
-      yield* revokeRole(RevokeRoleCommand.make({ userId: targetId, role: "super_admin" }));
+      yield* grantRole({ userId: targetId, role: "super_admin", actorUserId: actorId });
+      yield* revokeRole({ userId: targetId, role: "super_admin" });
 
       // Revoking the only role leaves no rows, so the aggregate no longer
       // resolves — findOne reports null (no rows = no roles).
@@ -51,9 +47,7 @@ describe("revokeRole", () => {
 
   it.effect("fails DoesNotHaveRole when the role isn't held", () =>
     Effect.gen(function* () {
-      const exit = yield* Effect.exit(
-        revokeRole(RevokeRoleCommand.make({ userId: targetId, role: "super_admin" })),
-      );
+      const exit = yield* Effect.exit(revokeRole({ userId: targetId, role: "super_admin" }));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.hasFails(exit.cause)

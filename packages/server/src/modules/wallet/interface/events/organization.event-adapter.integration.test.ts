@@ -1,5 +1,6 @@
 import { describe, it } from "@effect/vitest";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
+import { Command, CommandBus, makeCommandBus, mergeDispatchTables } from "@org/cqrs";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
@@ -10,12 +11,10 @@ import { beforeEach } from "vitest";
 
 import { Api } from "@/api.js";
 import { OrganizationCreated } from "@/modules/organization/index.js";
-import { type CreateWalletCommand } from "@/modules/wallet/commands/create-wallet.command.js";
 import { createWallet } from "@/modules/wallet/commands/create-wallet.handler.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
+import { walletCommandGroup, WalletCommands, WalletCommandsLive } from "@/modules/wallet/index.js";
 import { OrganizationEventAdapterLive } from "@/modules/wallet/interface/events/organization.event-adapter.js";
-import { makeCommandBus } from "@/platform/command-bus-live.js";
-import { CommandBus, type CommandHandlers } from "@/platform/ddd/ports/command-bus.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 import { makeDomainEventBusLive } from "@/platform/domain-event-bus-live.js";
@@ -90,6 +89,21 @@ suite("organization → wallet adapter (integration)", () => {
 const probeOrgId = OrganizationId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const probeName = "Rollback Probe Org";
 
+// The publisher's own write. `makeQuery`, not `execute`: inside a unit of work
+// only `makeQuery` joins the ambient transaction, and a bare `execute` takes a
+// foreign pool connection and dies — which would satisfy "the unit of work
+// failed" without the dispatch ever having run.
+const insertProbeOrg = Effect.flatMap(Database.Database, (db) =>
+  db.makeQuery((execute) =>
+    execute((client) =>
+      client.query(sql.unsafe`
+        INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
+        VALUES (${probeOrgId}, ${probeName}, NOW(), NOW(), null)
+      `),
+    ),
+  )(),
+);
+
 const FailingWalletRepository = Layer.succeed(
   WalletRepository,
   WalletRepository.of({
@@ -98,30 +112,56 @@ const FailingWalletRepository = Layer.succeed(
   }),
 );
 
-// A command bus with only CreateWallet registered, backed by the failing
-// repository. Cast to the full `CommandHandlers` shape — the bus looks up
-// by tag at runtime and only CreateWalletCommand is dispatched here.
-const FailingCommandBusLive = Layer.succeed(
+// A command bus routing only CreateWallet, backed by the failing repository. The table
+// holds nothing else, so a dispatch of any other tag dies with "no handler registered"
+// rather than quietly exercising a different path.
+const FailingCommandBusLive = Layer.effect(
   CommandBus,
-  makeCommandBus({
-    CreateWalletCommand: {
-      handle: (cmd: CreateWalletCommand) =>
-        createWallet(cmd).pipe(Effect.provide(FailingWalletRepository)),
-    },
-  } as unknown as CommandHandlers),
+  Effect.gen(function* () {
+    const failingWallet = yield* Command.dispatcher(walletCommandGroup);
+    return makeCommandBus(mergeDispatchTables(failingWallet));
+  }),
+).pipe(
+  Layer.provide(
+    Command.handlersOf(walletCommandGroup, {
+      CreateWalletCommand: (payload) =>
+        createWallet(payload).pipe(Effect.provide(FailingWalletRepository)),
+    }),
+  ),
 );
 
-// The adapter now `yield*`s UnitOfWork/DomainEventBus/CommandBus at build
-// time, so they must be provided *into* it (provideMerge), not merged as
-// siblings. provideMerge re-exports each so the test can still yield
-// UnitOfWork/DomainEventBus/Database itself.
-const RollbackTestLayer = OrganizationEventAdapterLive.pipe(
-  Layer.provideMerge(UnitOfWorkLive),
-  Layer.provideMerge(makeDomainEventBusLive()),
-  Layer.provideMerge(FailingCommandBusLive),
-  Layer.provideMerge(makeIntegrationEventBusLive()),
-  Layer.provideMerge(TestDatabaseLive),
-);
+// The mirror of the rollback case, and the one that actually pins transaction
+// joining: here the dispatched command SUCCEEDS and the publisher fails
+// afterwards. If the rpc-dispatched write had run on its own connection rather
+// than joining the publisher's transaction, the wallet row would survive the
+// publisher's rollback.
+const WorkingCommandBusLive = Layer.effect(
+  CommandBus,
+  Effect.gen(function* () {
+    const wallet = yield* WalletCommands;
+    return makeCommandBus(mergeDispatchTables(wallet));
+  }),
+).pipe(Layer.provide(WalletCommandsLive));
+
+// The adapter `yield*`s DomainEventBus/CommandBus at build time, so they must be
+// provided *into* it (provideMerge), not merged as siblings. provideMerge
+// re-exports each so the test can still yield UnitOfWork/DomainEventBus/Database
+// itself. The command bus sits directly under the adapter and above the unit of
+// work, because the rpc handler layer it wraps demands DomainEventBus +
+// UnitOfWork of its own — only what is lower in this chain provides to it.
+const DomainEventBusTestLive = makeDomainEventBusLive();
+
+const withBusUnder = (
+  commandBus: Layer.Layer<CommandBus, never, DomainEventBus | UnitOfWork | Database.Database>,
+) =>
+  OrganizationEventAdapterLive.pipe(
+    Layer.provideMerge(commandBus),
+    Layer.provideMerge(Layer.mergeAll(DomainEventBusTestLive, UnitOfWorkLive)),
+    Layer.provideMerge(makeIntegrationEventBusLive()),
+    Layer.provideMerge(TestDatabaseLive),
+  );
+
+const RollbackTestLayer = withBusUnder(FailingCommandBusLive);
 
 suite("organization → wallet adapter (rollback integration)", () => {
   beforeEach(async () => {
@@ -141,12 +181,7 @@ suite("organization → wallet adapter (rollback integration)", () => {
       const exit = yield* Effect.exit(
         uow.run(
           Effect.gen(function* () {
-            yield* db.execute((c) =>
-              c.query(sql.unsafe`
-                INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
-                VALUES (${probeOrgId}, ${probeName}, NOW(), NOW(), null)
-              `),
-            );
+            yield* insertProbeOrg;
             yield* bus.dispatch([
               OrganizationCreated.make({ organizationId: probeOrgId, name: probeName }),
             ]);
@@ -162,5 +197,74 @@ suite("organization → wallet adapter (rollback integration)", () => {
       );
       deepStrictEqual(rows.length, 0);
     }).pipe(Effect.provide(RollbackTestLayer)),
+  );
+});
+
+const JoinTestLayer = withBusUnder(WorkingCommandBusLive);
+
+suite("organization → wallet adapter (transaction-join integration)", () => {
+  beforeEach(async () => {
+    await Effect.runPromise(
+      truncate("wallet.wallets", "organization.organizations").pipe(
+        Effect.provide(TestDatabaseLive),
+      ),
+    );
+  });
+
+  // Control for the test below: without the publisher's failure the very same
+  // flow leaves a wallet row behind. Without this, "no wallet row" would also be
+  // satisfied by a dispatch that silently did nothing — `createWallet` is
+  // idempotent and swallows a duplicate, so a no-op is a real possibility.
+  it.effect("inserts the wallet when the publisher commits", () =>
+    Effect.gen(function* () {
+      const uow = yield* UnitOfWork;
+      const bus = yield* DomainEventBus;
+      const db = yield* Database.Database;
+
+      yield* uow.run(
+        Effect.gen(function* () {
+          yield* insertProbeOrg;
+          yield* bus.dispatch([
+            OrganizationCreated.make({ organizationId: probeOrgId, name: probeName }),
+          ]);
+        }),
+      );
+
+      const wallets = yield* db.execute((c) =>
+        c.any(sql.type(RowSchemas.WalletRowStd)`
+          SELECT * FROM wallet.wallets WHERE organization_id = ${probeOrgId}
+        `),
+      );
+      deepStrictEqual(wallets.length, 1);
+    }).pipe(Effect.provide(JoinTestLayer)),
+  );
+
+  it.effect("discards the dispatched command's write when the publisher rolls back", () =>
+    Effect.gen(function* () {
+      const uow = yield* UnitOfWork;
+      const bus = yield* DomainEventBus;
+      const db = yield* Database.Database;
+
+      const exit = yield* Effect.exit(
+        uow.run(
+          Effect.gen(function* () {
+            yield* insertProbeOrg;
+            // Succeeds, inserting a wallet row inside the publisher's transaction.
+            yield* bus.dispatch([
+              OrganizationCreated.make({ organizationId: probeOrgId, name: probeName }),
+            ]);
+            return yield* Effect.fail("publisher failed after the wallet was created");
+          }),
+        ),
+      );
+      deepStrictEqual(Exit.isFailure(exit), true);
+
+      const wallets = yield* db.execute((c) =>
+        c.any(sql.type(RowSchemas.WalletRowStd)`
+          SELECT * FROM wallet.wallets WHERE organization_id = ${probeOrgId}
+        `),
+      );
+      deepStrictEqual(wallets.length, 0);
+    }).pipe(Effect.provide(JoinTestLayer)),
   );
 });

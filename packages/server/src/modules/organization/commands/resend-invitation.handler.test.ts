@@ -9,7 +9,6 @@ import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as TestClock from "effect/testing/TestClock";
 
-import { ResendInvitationCommand } from "@/modules/organization/commands/resend-invitation.command.js";
 import { resendInvitation } from "@/modules/organization/commands/resend-invitation.handler.js";
 import {
   InvitationAlreadyAccepted,
@@ -56,11 +55,11 @@ const TestLayer = Layer.mergeAll(
   InvitationMailerFake,
 );
 
-const cmd = ResendInvitationCommand.make({
+const cmd = {
   invitationId,
   ttlSeconds: 60 * 60 * 24 * 7,
   actorUserId,
-});
+};
 
 describe("resendInvitation", () => {
   it.effect("rotates the token, resets expiry, emits InvitationReissued, re-sends the email", () =>

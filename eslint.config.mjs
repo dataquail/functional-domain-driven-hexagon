@@ -452,6 +452,33 @@ export default [
     },
   },
   {
+    // ADR-0006: constructing a bus takes the WHOLE routing table, so anything that
+    // built one could answer a message with a different module's handler than the
+    // composed application would. Only a composition root may. This is an eslint rule
+    // rather than a dependency-cruiser one because these live in `@org/cqrs` and are
+    // re-exported from its barrel: dep-cruiser matches resolved paths, and every
+    // importer resolves to the same barrel, so a path rule cannot tell the bus
+    // factories apart from the Tags that everything legitimately imports. Matching the
+    // named import can.
+    files: ["packages/server/src/**/*.ts", "packages/jobs/src/**/*.ts"],
+    ignores: ["packages/server/src/server.ts", "packages/server/src/test-utils/**", "**/*.test.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@org/cqrs",
+              importNames: ["makeCommandBus", "makeQueryBus", "mergeDispatchTables"],
+              message:
+                "Building a CommandBus/QueryBus routes every module's messages, so it belongs at a composition root (server.ts or test-utils/). Depend on the `CommandBus`/`QueryBus` Tag instead, or — inside a module — publish that module's own surface with `Command.dispatcher`.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     // ADR-0020: each module owns its DB schema. App SQL must address its own
     // schema only ("user".users, todos.todos, etc). Cross-schema reads belong
     // in the synchronous event-bus seam, not in repository SQL.

@@ -12,7 +12,7 @@ import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { type SyncSubscriptionCommand } from "@/modules/billing/commands/sync-subscription.command.js";
+import { SyncSubscription } from "@/modules/billing/commands/sync-subscription.command.js";
 import { StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events.js";
 import { type StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.js";
 import { StripeWebhookEventAdapterLive } from "@/modules/billing/interface/events/stripe-webhook.event-adapter.js";
@@ -44,7 +44,7 @@ const dispatchAndReadCommands = (stripeEvent: StripeWebhookEvent) =>
     const bus = yield* DomainEventBus;
     const rec = yield* RecordedCommands;
     yield* bus.dispatch([StripeWebhookIngested.make({ stripeEvent })]);
-    return yield* rec.byTag<SyncSubscriptionCommand>("SyncSubscriptionCommand");
+    return yield* rec.payloadsFor(SyncSubscription);
   }).pipe(Database.TransactionContext.provide(fakeTransaction), Effect.provide(TestLayer));
 
 describe("StripeWebhookEventAdapterLive", () => {
@@ -52,31 +52,29 @@ describe("StripeWebhookEventAdapterLive", () => {
     "on customer.subscription.updated → dispatches SyncSubscription with the reported status",
     () =>
       Effect.gen(function* () {
-        const commands = yield* dispatchAndReadCommands(subEvent("updated", "active"));
-        deepStrictEqual(commands.length, 1);
-        const command = commands[0];
-        if (command === undefined) throw new Error("expected a SyncSubscriptionCommand");
-        deepStrictEqual(command.stripeSubscriptionId, stripeSubId);
-        deepStrictEqual(command.status, "active");
+        const payloads = yield* dispatchAndReadCommands(subEvent("updated", "active"));
+        deepStrictEqual(payloads, [
+          { stripeSubscriptionId: stripeSubId, status: "active", currentPeriodEnd: null },
+        ]);
       }),
   );
 
   it.effect("on customer.subscription.deleted → maps status to 'canceled'", () =>
     Effect.gen(function* () {
-      const commands = yield* dispatchAndReadCommands(subEvent("deleted"));
-      deepStrictEqual(commands.length, 1);
-      deepStrictEqual(commands[0]?.status, "canceled");
+      const payloads = yield* dispatchAndReadCommands(subEvent("deleted"));
+      deepStrictEqual(payloads.length, 1);
+      deepStrictEqual(payloads[0]?.status, "canceled");
     }),
   );
 
   it.effect("on invoice.paid → dispatches nothing", () =>
     Effect.gen(function* () {
-      const commands = yield* dispatchAndReadCommands({
+      const payloads = yield* dispatchAndReadCommands({
         eventId: "evt_test_invoice_paid",
         type: "invoice.paid",
         invoice: { stripeSubscriptionId: null },
       });
-      deepStrictEqual(commands.length, 0);
+      deepStrictEqual(payloads.length, 0);
     }),
   );
 

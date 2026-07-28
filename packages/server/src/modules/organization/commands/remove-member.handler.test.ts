@@ -7,9 +7,7 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { CreateOrganizationCommand } from "@/modules/organization/commands/create-organization.command.js";
 import { createOrganization } from "@/modules/organization/commands/create-organization.handler.js";
-import { RemoveMemberCommand } from "@/modules/organization/commands/remove-member.command.js";
 import { removeMember } from "@/modules/organization/commands/remove-member.handler.js";
 import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.js";
 import { type MembershipRevoked } from "@/modules/organization/domain/membership/membership.events.js";
@@ -43,9 +41,7 @@ describe("removeMember", () => {
     Effect.gen(function* () {
       const memberships = yield* MembershipRepository;
       const rec = yield* RecordedEvents;
-      const orgId = yield* createOrganization(
-        CreateOrganizationCommand.make({ name: "Acme", actorUserId }),
-      );
+      const orgId = yield* createOrganization({ name: "Acme", actorUserId });
       // Seed a second member directly via the repo — Phase 3 wires
       // AcceptInvitation as the production add-member path, but this
       // test isolates the removal use case from the invitation flow.
@@ -56,13 +52,11 @@ describe("removeMember", () => {
       });
       yield* memberships.insertOne(secondMember);
 
-      yield* removeMember(
-        RemoveMemberCommand.make({
-          targetUserId: otherUserId,
-          organizationId: orgId,
-          actorUserId,
-        }),
-      );
+      yield* removeMember({
+        targetUserId: otherUserId,
+        organizationId: orgId,
+        actorUserId,
+      });
 
       const found = yield* memberships.findOne(
         Spec.and(
@@ -85,13 +79,11 @@ describe("removeMember", () => {
     Effect.gen(function* () {
       const orgId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
       const exit = yield* Effect.exit(
-        removeMember(
-          RemoveMemberCommand.make({
-            targetUserId: otherUserId,
-            organizationId: orgId,
-            actorUserId,
-          }),
-        ),
+        removeMember({
+          targetUserId: otherUserId,
+          organizationId: orgId,
+          actorUserId,
+        }),
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {

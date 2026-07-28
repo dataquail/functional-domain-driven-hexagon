@@ -1,9 +1,9 @@
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
+import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 import * as HttpServerRequest from "effect/unstable/http/HttpServerRequest";
 
-import { IngestStripeWebhookCommand } from "@/modules/billing/commands/ingest-stripe-webhook.command.js";
-import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
+import { IngestStripeWebhook } from "@/modules/billing/commands/ingest-stripe-webhook.command.js";
 import { recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // Pure translation: read raw body (Stripe's `constructEvent` needs
@@ -40,7 +40,7 @@ export const stripeWebhookEndpoint = Effect.fn("BillingLive.stripeWebhook")(func
   );
 
   yield* commandBus
-    .execute(IngestStripeWebhookCommand.make({ payload, signature }))
+    .execute(IngestStripeWebhook, { payload, signature })
     .pipe(
       Effect.catchTag("InvalidWebhookSignature", (err) =>
         Effect.fail(new CustomHttpApiError.Unauthorized({ message: err.message })),

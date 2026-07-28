@@ -1,6 +1,6 @@
 import * as Effect from "effect/Effect";
 
-import { type LeaveOrganizationCommand } from "@/modules/organization/commands/leave-organization.command.js";
+import { type LeaveOrganizationPayload } from "@/modules/organization/commands/leave-organization.command.js";
 import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.js";
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
 import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops.js";
@@ -10,7 +10,7 @@ import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
 export const leaveOrganization = Effect.fn("leaveOrganization")(function* (
-  cmd: LeaveOrganizationCommand,
+  cmd: LeaveOrganizationPayload,
 ) {
   const repo = yield* MembershipRepository;
   const bus = yield* DomainEventBus;

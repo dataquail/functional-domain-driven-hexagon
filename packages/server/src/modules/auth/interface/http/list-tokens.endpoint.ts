@@ -1,9 +1,9 @@
 import { AuthContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
+import { QueryBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
-import { ListMyApiTokensQuery } from "@/modules/auth/queries/list-my-api-tokens.query.js";
-import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
+import { ListMyApiTokens } from "@/modules/auth/queries/list-my-api-tokens.query.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // Lists the caller's active (non-revoked) tokens. Secret-free: only the
@@ -13,7 +13,7 @@ export const listTokensEndpoint = Effect.fn("AuthLive.tokens.list")(function* (
 ) {
   const currentUser = yield* CurrentUser;
   const queryBus = yield* QueryBus;
-  const tokens = yield* queryBus.execute(ListMyApiTokensQuery.make({ userId: currentUser.userId }));
+  const tokens = yield* queryBus.execute(ListMyApiTokens, { userId: currentUser.userId });
   return tokens.map(
     (t) =>
       new AuthContract.ApiTokenSummary({

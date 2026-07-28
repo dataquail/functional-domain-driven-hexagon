@@ -3,7 +3,6 @@ import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { TouchSessionCommand } from "@/modules/auth/commands/touch-session.command.js";
 import { touchSession } from "@/modules/auth/commands/touch-session.handler.js";
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
@@ -32,11 +31,11 @@ const seedSession = (lastUsedAt: DateTime.Utc) =>
     return base;
   });
 
-const cmd = TouchSessionCommand.make({
+const cmd = {
   sessionId,
   ttlSeconds: 3600,
   thresholdSeconds: 60,
-});
+};
 
 describe("touchSession", () => {
   it.live("advances expiresAt and lastUsedAt when threshold has elapsed", () =>

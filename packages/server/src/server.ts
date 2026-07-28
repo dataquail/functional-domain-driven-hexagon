@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
+import { CommandBus, makeCommandBus, makeQueryBus, mergeDispatchTables, QueryBus } from "@org/cqrs";
 import { Database } from "@org/database/index";
 import * as dotenv from "dotenv";
 import * as Duration from "effect/Duration";
@@ -18,102 +19,138 @@ import * as OtlpTracer from "effect/unstable/observability/OtlpTracer";
 import { Api } from "./api.js";
 import { EnvVars } from "./common/env-vars.js";
 import {
-  AuthAclDepsLive,
-  authCommandHandlers,
+  AuthCommands,
+  AuthCommandsLive,
   AuthHttpDepsLive,
   AuthModuleLive,
-  AuthProvisioningDepsLive,
-  authQueryHandlers,
+  AuthQueries,
+  AuthQueriesLive,
   AuthSharedDepsLive,
 } from "./modules/auth/index.js";
 import {
-  billingCommandHandlers,
+  BillingCommands,
+  BillingCommandsLive,
   billingEventSpanAttributes,
-  BillingHttpDepsLive,
   BillingModuleLive,
   BillingPoliciesLive,
   BillingPolicyContribution,
-  billingQueryHandlers,
+  BillingQueries,
+  BillingQueriesLive,
   BillingResolverEntry,
   BillingResolverEntryLive,
 } from "./modules/billing/index.js";
 import {
-  OrganizationAclDepsLive,
-  organizationCommandHandlers,
+  OrganizationCommands,
+  OrganizationCommandsLive,
   organizationEventSpanAttributes,
-  OrganizationHttpDepsLive,
   OrganizationModuleLive,
   OrganizationPoliciesLive,
   OrganizationPolicyContribution,
-  organizationQueryHandlers,
+  OrganizationQueries,
+  OrganizationQueriesLive,
   OrganizationResolverEntry,
   OrganizationResolverEntryLive,
 } from "./modules/organization/index.js";
 import {
-  roleCommandHandlers,
+  RoleCommands,
+  RoleCommandsLive,
   roleEventSpanAttributes,
-  roleQueryHandlers,
+  RoleQueriesLive,
 } from "./modules/role/index.js";
 import {
   TodoCollectionResolverEntry,
   TodoCollectionResolverEntryLive,
-  todoCommandHandlers,
+  TodoCommands,
+  TodoCommandsLive,
   TodoPoliciesLive,
   TodoPolicyContribution,
-  todoQueryHandlers,
+  TodoQueries,
+  TodoQueriesLive,
   TodoResolverEntry,
   TodoResolverEntryLive,
   TodosModuleLive,
 } from "./modules/todos/index.js";
 import {
-  userCommandHandlers,
+  UserCommands,
+  UserCommandsLive,
   userEventSpanAttributes,
   UserModuleLive,
-  userQueryHandlers,
+  UserQueries,
+  UserQueriesLive,
 } from "./modules/user/index.js";
 import {
-  walletCommandHandlers,
+  WalletCommands,
+  WalletCommandsLive,
   walletEventSpanAttributes,
   WalletModuleLive,
 } from "./modules/wallet/index.js";
 import { makePolicyRegistry } from "./platform/auth/policy-registry.js";
 import { makeResourceResolverRegistry } from "./platform/auth/resource-resolver-registry.js";
-import { makeCommandBus } from "./platform/command-bus-live.js";
 import { DatabaseLive } from "./platform/database-live.js";
-import { CommandBus } from "./platform/ddd/ports/command-bus.js";
-import { QueryBus } from "./platform/ddd/ports/query-bus.js";
 import { makeDomainEventBusLive } from "./platform/domain-event-bus-live.js";
 import { makeIntegrationEventBusLive } from "./platform/integration-event-bus-live.js";
 import { UserAuthMiddlewareLive } from "./platform/middlewares/auth-middleware-live.js";
-import { makeQueryBus } from "./platform/query-bus-live.js";
 import { UnitOfWorkLive } from "./platform/unit-of-work-live.js";
 
 dotenv.config({
   path: "../../.env",
 });
 
-const CommandBusLive = Layer.succeed(
+// `CommandBus`/`QueryBus` route by tag across the per-module dispatch surfaces
+// (`ModuleDispatchersLive` below). A dispatch site names the bus and the message
+// definition; which module answers a tag is settled here, once.
+const CommandBusLive = Layer.effect(
   CommandBus,
-  makeCommandBus({
-    ...userCommandHandlers,
-    ...todoCommandHandlers,
-    ...authCommandHandlers,
-    ...roleCommandHandlers,
-    ...organizationCommandHandlers,
-    ...billingCommandHandlers,
-    ...walletCommandHandlers,
+  Effect.gen(function* () {
+    const wallet = yield* WalletCommands;
+    const user = yield* UserCommands;
+    const organization = yield* OrganizationCommands;
+    const auth = yield* AuthCommands;
+    const todos = yield* TodoCommands;
+    const role = yield* RoleCommands;
+    const billing = yield* BillingCommands;
+    return makeCommandBus(
+      mergeDispatchTables(wallet, user, organization, auth, todos, role, billing),
+    );
   }),
 );
-const QueryBusLive = Layer.succeed(
+const QueryBusLive = Layer.effect(
   QueryBus,
-  makeQueryBus({
-    ...userQueryHandlers,
-    ...todoQueryHandlers,
-    ...authQueryHandlers,
-    ...roleQueryHandlers,
-    ...organizationQueryHandlers,
-    ...billingQueryHandlers,
+  Effect.gen(function* () {
+    const organization = yield* OrganizationQueries;
+    const auth = yield* AuthQueries;
+    const user = yield* UserQueries;
+    const todos = yield* TodoQueries;
+    const billing = yield* BillingQueries;
+    return makeQueryBus(mergeDispatchTables(organization, auth, user, todos, billing));
   }),
+);
+
+// The module dependency order, stated once. A module whose handlers reach another
+// module through an outbound ACL port sits above the module it reaches, so the graph
+// the layers resolve is the real cross-module graph rather than the aggregate one a
+// single all-modules bus would impose. A genuine cycle between two modules would
+// surface here as an unresolvable layer, which is the point.
+const ModuleDispatchersLive = Layer.mergeAll(
+  // Reach downward through an outbound ACL port: auth provisions a user and asks role
+  // whether the caller is a super admin; organization asks role the same question and
+  // asks user for members' emails.
+  AuthCommandsLive,
+  AuthQueriesLive,
+  OrganizationCommandsLive,
+  OrganizationQueriesLive,
+  // Reach no other module; peers of the above only because nothing reaches them either.
+  BillingCommandsLive,
+  BillingQueriesLive,
+  TodoCommandsLive,
+  TodoQueriesLive,
+  WalletCommandsLive,
+).pipe(
+  // The modules the first group reaches into. They reach nothing themselves, which is
+  // what makes the ordering possible at all.
+  Layer.provideMerge(
+    Layer.mergeAll(RoleCommandsLive, RoleQueriesLive, UserCommandsLive, UserQueriesLive),
+  ),
 );
 const DomainEventBusLive = makeDomainEventBusLive({
   spanAttributes: {
@@ -235,36 +272,35 @@ const HttpLive = HttpRouter.serve(ApiLive, {
   // The endpoints' per-request services, now unwrapped by `serve` into plain
   // requirements. The provide ORDER encodes the dependency graph (peers don't
   // satisfy each other) — it mirrors the pre-v4 ApiLive wiring.
-  //
-  // The auth module's JIT user provisioning (first OIDC sign-in) depends on
-  // DomainEventBus + UnitOfWork (peers below) + CommandBus (fires the user
-  // module's CreateUserCommand two steps down), so it gets its own earlier step.
-  Layer.provide([AuthProvisioningDepsLive]),
-  // The per-module ACL adapters and the policy registry are peers of the auth
-  // middleware: all consume the buses provided just below and feed upstream
-  // consumers (endpoints + policy checks). The Stripe-vs-fake `BillingGateway` swap ships as the
-  // module's `BillingHttpDeps{Live,Fake}` bundles: prod provides the live
-  // one here; `test-server.ts` provides the fake. The `BillingGateway` Tag
-  // stays private to the module — only the opaque bundle appears here.
+  // The policy registry and the endpoint-consumed module services are peers of the auth
+  // middleware: all consume the buses provided just below and feed upstream consumers
+  // (endpoints + policy checks). No module's ACL adapter appears here any more — each is
+  // provided inside the module that owns it. The Stripe-vs-fake `BillingGateway` swap
+  // ships as the module's `BillingHttpDeps{Live,Fake}` bundles: prod provides the live
+  // one here; `test-server.ts` provides the fake, so the `BillingGateway` Tag stays
+  // private to the module and only the opaque bundle appears here.
   Layer.provide([
-    OrganizationAclDepsLive,
-    AuthAclDepsLive,
     PolicyRegistryLive,
     ResourceResolverRegistryLive,
-    DomainEventBusLive,
-    UnitOfWorkLive,
     // Endpoint-consumed, module-owned services that `serve` unwrapped from
     // request-scoped into plain requirements (see the module Lives). Prod
     // uses the live billing gateway; test-server.ts swaps the fake. Their
     // deps (EnvVars, etc.) close below.
-    OrganizationHttpDepsLive,
     AuthHttpDepsLive,
-    BillingHttpDepsLive,
   ]),
   // CommandBus + QueryBus provide TO the middleware (which dispatches
   // FindSessionQuery). IntegrationEventBus provides TO UnitOfWork (post-commit
-  // flush), so it sits here, not as a peer of UnitOfWork above.
+  // flush), so it sits here, not as a peer of UnitOfWork below.
   Layer.provide([CommandBusLive, QueryBusLive, IntegrationEventBusLive]),
+  // Merged, not provided: the buses route through these, and so do the outbound ACL
+  // adapters above, which name the module they reach rather than the bus.
+  Layer.provideMerge(ModuleDispatchersLive),
+  // `provideMerge`, and below the dispatchers, because the demand runs both ways: the
+  // layers above consume these, and so does every module dispatcher (`handlersOf`
+  // hoists its handlers' requirements onto the layer). Merging one layer value in one
+  // place is what keeps it a single instance — two `provide` sites would risk a
+  // second event bus whose subscribers nobody notifies.
+  Layer.provideMerge(Layer.mergeAll(DomainEventBusLive, UnitOfWorkLive)),
   // Resource resolvers read through repositories, so they close on Database
   // alone; the policy registry sits above with the buses it now dispatches
   // through.

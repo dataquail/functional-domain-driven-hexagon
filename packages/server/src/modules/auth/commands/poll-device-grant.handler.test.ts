@@ -6,11 +6,8 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { ApproveDeviceGrantCommand } from "@/modules/auth/commands/approve-device-grant.command.js";
 import { approveDeviceGrant } from "@/modules/auth/commands/approve-device-grant.handler.js";
-import { PollDeviceGrantCommand } from "@/modules/auth/commands/poll-device-grant.command.js";
 import { pollDeviceGrant } from "@/modules/auth/commands/poll-device-grant.handler.js";
-import { StartDeviceGrantCommand } from "@/modules/auth/commands/start-device-grant.command.js";
 import { startDeviceGrant } from "@/modules/auth/commands/start-device-grant.handler.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
@@ -33,8 +30,7 @@ const TestLayer = Layer.mergeAll(
   ApiTokenRepositoryFake,
   IdentityUnitOfWork,
 );
-const poll = (deviceCode: string) =>
-  pollDeviceGrant(PollDeviceGrantCommand.make({ deviceCode, tokenExpiresInDays: 90 }));
+const poll = (deviceCode: string) => pollDeviceGrant({ deviceCode, tokenExpiresInDays: 90 });
 const errorOf = (exit: Exit.Exit<unknown, unknown>) =>
   Exit.isFailure(exit) && Cause.hasFails(exit.cause)
     ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
@@ -43,9 +39,7 @@ const errorOf = (exit: Exit.Exit<unknown, unknown>) =>
 describe("pollDeviceGrant", () => {
   it.effect("fails DeviceGrantPending before approval", () =>
     Effect.gen(function* () {
-      const { deviceCode } = yield* startDeviceGrant(
-        StartDeviceGrantCommand.make({ ttlSeconds: 600 }),
-      );
+      const { deviceCode } = yield* startDeviceGrant({ ttlSeconds: 600 });
       deepStrictEqual(
         errorOf(yield* Effect.exit(poll(deviceCode))) instanceof DeviceGrantPending,
         true,
@@ -55,10 +49,8 @@ describe("pollDeviceGrant", () => {
 
   it.effect("mints a token on approval and consumes the grant (single-use)", () =>
     Effect.gen(function* () {
-      const { deviceCode, userCode } = yield* startDeviceGrant(
-        StartDeviceGrantCommand.make({ ttlSeconds: 600 }),
-      );
-      yield* approveDeviceGrant(ApproveDeviceGrantCommand.make({ userCode, userId }));
+      const { deviceCode, userCode } = yield* startDeviceGrant({ ttlSeconds: 600 });
+      yield* approveDeviceGrant({ userCode, userId });
 
       const { apiToken, token } = yield* poll(deviceCode);
       ok(token.startsWith("pat_"));
@@ -85,9 +77,7 @@ describe("pollDeviceGrant", () => {
 
   it.effect("fails DeviceGrantExpired for a lapsed grant", () =>
     Effect.gen(function* () {
-      const { deviceCode } = yield* startDeviceGrant(
-        StartDeviceGrantCommand.make({ ttlSeconds: -10 }),
-      );
+      const { deviceCode } = yield* startDeviceGrant({ ttlSeconds: -10 });
       deepStrictEqual(
         errorOf(yield* Effect.exit(poll(deviceCode))) instanceof DeviceGrantExpired,
         true,

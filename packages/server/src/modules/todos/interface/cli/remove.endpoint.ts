@@ -1,12 +1,12 @@
 import { CliTodosContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
+import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
-import { DeleteTodoCommand } from "@/modules/todos/commands/delete-todo.command.js";
+import { DeleteTodo } from "@/modules/todos/commands/delete-todo.command.js";
 import { TodoResource } from "@/modules/todos/policies/todos.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
-import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // CLI adapter (ADR-0005): same delete-gated resource + DeleteTodoCommand as
@@ -27,13 +27,11 @@ export const removeEndpoint = Effect.fn("CliTodosLive.remove")(
     );
     const commandBus = yield* CommandBus;
     const currentUser = yield* CurrentUser;
-    yield* commandBus.execute(
-      DeleteTodoCommand.make({
-        todoId: request.params.id,
-        organizationId: request.params.orgId,
-        userId: currentUser.userId,
-      }),
-    );
+    yield* commandBus.execute(DeleteTodo, {
+      todoId: request.params.id,
+      organizationId: request.params.orgId,
+      userId: currentUser.userId,
+    });
   },
   Effect.catchTag("TodoNotFound", (err) =>
     Effect.fail(

@@ -1,13 +1,13 @@
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { CurrentUser } from "@org/contracts/Policy";
+import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
-import { GrantOrganizationRoleCommand } from "@/modules/organization/commands/grant-organization-role.command.js";
+import { GrantOrganizationRole } from "@/modules/organization/commands/grant-organization-role.command.js";
 import { OrganizationResource } from "@/modules/organization/policies/organization.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
-import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // Promote a member to the `admin` OrganizationRole. Gated by the
@@ -22,14 +22,12 @@ export const promoteMemberEndpoint = (
     yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.params.orgId);
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
-    yield* commandBus.execute(
-      GrantOrganizationRoleCommand.make({
-        userId: request.params.userId,
-        organizationId: request.params.orgId,
-        role: "admin",
-        actorUserId: currentUser.userId,
-      }),
-    );
+    yield* commandBus.execute(GrantOrganizationRole, {
+      userId: request.params.userId,
+      organizationId: request.params.orgId,
+      role: "admin",
+      actorUserId: currentUser.userId,
+    });
   }).pipe(
     Effect.catchTag("NotFound", () =>
       Effect.fail(

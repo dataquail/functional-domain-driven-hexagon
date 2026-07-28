@@ -16,7 +16,6 @@ import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-import { DeleteTodoCommand } from "./delete-todo.command.js";
 import { deleteTodo } from "./delete-todo.handler.js";
 
 const aliceId = TodoId.make("11111111-1111-1111-1111-111111111111");
@@ -32,9 +31,7 @@ describe("deleteTodo", () => {
       yield* repo.insertOne(
         TodoRootOps.create({ id: aliceId, organizationId: orgId, title: "Buy milk", now }),
       );
-      yield* deleteTodo(
-        DeleteTodoCommand.make({ todoId: aliceId, organizationId: orgId, userId: aliceUserId }),
-      );
+      yield* deleteTodo({ todoId: aliceId, organizationId: orgId, userId: aliceUserId });
       const found = yield* repo.findOne(
         Spec.and(TodoSpecifications.withId(aliceId), TodoSpecifications.forOrganization(orgId)),
       );
@@ -45,9 +42,7 @@ describe("deleteTodo", () => {
   it.effect("fails TodoNotFound when the todo doesn't exist", () =>
     Effect.gen(function* () {
       const exit = yield* Effect.exit(
-        deleteTodo(
-          DeleteTodoCommand.make({ todoId: aliceId, organizationId: orgId, userId: aliceUserId }),
-        ),
+        deleteTodo({ todoId: aliceId, organizationId: orgId, userId: aliceUserId }),
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
@@ -66,13 +61,11 @@ describe("deleteTodo", () => {
         TodoRootOps.create({ id: aliceId, organizationId: orgId, title: "Buy milk", now }),
       );
       const exit = yield* Effect.exit(
-        deleteTodo(
-          DeleteTodoCommand.make({
-            todoId: aliceId,
-            organizationId: otherOrgId,
-            userId: aliceUserId,
-          }),
-        ),
+        deleteTodo({
+          todoId: aliceId,
+          organizationId: otherOrgId,
+          userId: aliceUserId,
+        }),
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {

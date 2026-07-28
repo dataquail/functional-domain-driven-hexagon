@@ -1,12 +1,12 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { type CreateTodoCommand } from "@/modules/todos/commands/create-todo.command.js";
+import { type CreateTodoPayload } from "@/modules/todos/commands/create-todo.command.js";
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { TodoRootOps } from "@/modules/todos/domain/todo/todo.root-ops.js";
 import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js";
 
-export const createTodo = Effect.fn("createTodo")(function* (cmd: CreateTodoCommand) {
+export const createTodo = Effect.fn("createTodo")(function* (cmd: CreateTodoPayload) {
   const repo = yield* TodosRepository;
   const id = TodoId.make(yield* Effect.sync(() => crypto.randomUUID()));
   yield* Effect.annotateCurrentSpan("todo.id", id);

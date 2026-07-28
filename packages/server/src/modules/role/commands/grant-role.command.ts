@@ -1,23 +1,22 @@
+import { Command } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
+import { AlreadyHasRole, CannotPromoteSelf } from "@/modules/role/domain/roles/role.errors.js";
 import { RoleValueObject } from "@/modules/role/domain/roles/role.value-object.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-export const GrantRoleCommand = Schema.TaggedStruct("GrantRoleCommand", {
-  // The user receiving the role.
-  userId: UserId,
-  role: RoleValueObject,
-  // The user dispatching the command. Carried explicitly (rather than
-  // pulled from `CurrentUser`) so the bus boundary stays uniform — the
-  // HTTP endpoint is the one place that translates request-context
-  // into command input.
-  actorUserId: UserId,
+// `actorUserId` is carried explicitly rather than pulled from `CurrentUser` so the bus
+// boundary stays uniform — the HTTP endpoint is the one place that translates
+// request-context into command input.
+export const GrantRole = Command.make("GrantRoleCommand", {
+  payload: {
+    // The user receiving the role.
+    userId: UserId,
+    role: RoleValueObject,
+    actorUserId: UserId,
+  },
+  success: Schema.Void,
+  failure: Schema.Union([AlreadyHasRole, CannotPromoteSelf, PersistenceUnavailable]),
 });
-export type GrantRoleCommand = typeof GrantRoleCommand.Type;
-
-export const grantRoleCommandSpanAttributes: SpanAttributesExtractor<GrantRoleCommand> = (cmd) => ({
-  "user.id": cmd.userId,
-  "role.name": cmd.role,
-  "actor.user.id": cmd.actorUserId,
-});
+export type GrantRolePayload = Command.Payload<typeof GrantRole>;

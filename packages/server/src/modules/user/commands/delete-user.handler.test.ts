@@ -16,9 +16,7 @@ import { UserId } from "@/platform/ids/user-id.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
-import { CreateUserCommand } from "./create-user.command.js";
 import { createUser } from "./create-user.handler.js";
-import { DeleteUserCommand } from "./delete-user.command.js";
 import { deleteUser } from "./delete-user.handler.js";
 
 const TestLayer = Layer.mergeAll(UserRepositoryFake, RecordingEventBus, IdentityUnitOfWork);
@@ -34,16 +32,14 @@ describe("deleteUser", () => {
     Effect.gen(function* () {
       const repo = yield* UserRepository;
       const rec = yield* RecordedEvents;
-      const id = yield* createUser(
-        CreateUserCommand.make({
-          email: "alice@example.com",
-          country: address.country,
-          street: address.street,
-          postalCode: address.postalCode,
-        }),
-      );
+      const id = yield* createUser({
+        email: "alice@example.com",
+        country: address.country,
+        street: address.street,
+        postalCode: address.postalCode,
+      });
 
-      yield* deleteUser(DeleteUserCommand.make({ userId: id }));
+      yield* deleteUser({ userId: id });
 
       const found = yield* repo.findOne(UserSpecifications.withId(id));
       deepStrictEqual(found, null);
@@ -57,7 +53,7 @@ describe("deleteUser", () => {
   it.effect("fails UserNotFound when the user doesn't exist", () =>
     Effect.gen(function* () {
       const unknownId = UserId.make("00000000-0000-0000-0000-000000000000");
-      const exit = yield* Effect.exit(deleteUser(DeleteUserCommand.make({ userId: unknownId })));
+      const exit = yield* Effect.exit(deleteUser({ userId: unknownId }));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.hasFails(exit.cause)
@@ -72,7 +68,7 @@ describe("deleteUser", () => {
     Effect.gen(function* () {
       const rec = yield* RecordedEvents;
       const unknownId = UserId.make("00000000-0000-0000-0000-000000000000");
-      yield* Effect.exit(deleteUser(DeleteUserCommand.make({ userId: unknownId })));
+      yield* Effect.exit(deleteUser({ userId: unknownId }));
       const events = yield* rec.byTag<UserDeleted>("UserDeleted");
       deepStrictEqual(events.length, 0);
     }).pipe(Effect.provide(TestLayer)),

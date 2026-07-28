@@ -2,7 +2,7 @@ import * as DateTime from "effect/DateTime";
 import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
 
-import { type TouchSessionCommand } from "@/modules/auth/commands/touch-session.command.js";
+import { type TouchSessionPayload } from "@/modules/auth/commands/touch-session.command.js";
 import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
 import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.js";
 import { SessionSpecifications } from "@/modules/auth/domain/session/session.specification.js";
@@ -22,7 +22,7 @@ import { SessionSpecifications } from "@/modules/auth/domain/session/session.spe
 // just doesn't extend this round — they get refreshed on the next request.
 //
 // Bus-boundary span (ADR-0012) wraps this at dispatch time.
-export const touchSession = Effect.fn("touchSession")(function* (cmd: TouchSessionCommand) {
+export const touchSession = Effect.fn("touchSession")(function* (cmd: TouchSessionPayload) {
   const repo = yield* SessionRepository;
   const session = yield* repo
     .findOne(SessionSpecifications.withId(cmd.sessionId))

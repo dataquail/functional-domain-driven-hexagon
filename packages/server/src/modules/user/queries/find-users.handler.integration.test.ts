@@ -10,7 +10,6 @@ import { UserRootOps } from "@/modules/user/domain/user/user.root-ops.js";
 import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.js";
 import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live.js";
 import { findUsers } from "@/modules/user/queries/find-users.handler.js";
-import { FindUsersQuery } from "@/modules/user/queries/find-users.query.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
@@ -50,7 +49,7 @@ suite("findUsers (integration)", () => {
       yield* seed(bobId, "bob@example.com", bobTime);
       yield* seed(carolId, "carol@example.com", carolTime);
 
-      const result = yield* findUsers(FindUsersQuery.make({ page: 1, pageSize: 2 }));
+      const result = yield* findUsers({ page: 1, pageSize: 2 });
       deepStrictEqual(result.page, 1);
       deepStrictEqual(result.pageSize, 2);
       deepStrictEqual(result.total, 3);
@@ -68,7 +67,7 @@ suite("findUsers (integration)", () => {
       yield* seed(bobId, "bob@example.com", bobTime);
       yield* seed(carolId, "carol@example.com", carolTime);
 
-      const result = yield* findUsers(FindUsersQuery.make({ page: 2, pageSize: 2 }));
+      const result = yield* findUsers({ page: 2, pageSize: 2 });
       deepStrictEqual(result.total, 3);
       deepStrictEqual(result.users.length, 1);
       deepStrictEqual(result.users[0]?.email, "alice@example.com");
@@ -77,7 +76,7 @@ suite("findUsers (integration)", () => {
 
   it.effect("returns total 0 and empty users when the table is empty", () =>
     Effect.gen(function* () {
-      const result = yield* findUsers(FindUsersQuery.make({ page: 1, pageSize: 10 }));
+      const result = yield* findUsers({ page: 1, pageSize: 10 });
       deepStrictEqual(result.total, 0);
       deepStrictEqual(result.users, []);
     }).pipe(Effect.provide(TestLayer)),

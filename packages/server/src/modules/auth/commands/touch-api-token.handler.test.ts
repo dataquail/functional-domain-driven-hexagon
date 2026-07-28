@@ -3,7 +3,6 @@ import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { TouchApiTokenCommand } from "@/modules/auth/commands/touch-api-token.command.js";
 import { touchApiToken } from "@/modules/auth/commands/touch-api-token.handler.js";
 import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
@@ -31,7 +30,7 @@ const seed = (lastUsedAt: DateTime.Utc) =>
     return token;
   });
 
-const cmd = TouchApiTokenCommand.make({ apiTokenId, thresholdSeconds: 60 });
+const cmd = { apiTokenId, thresholdSeconds: 60 };
 const provide = Effect.provide(ApiTokenRepositoryFake);
 
 describe("touchApiToken", () => {
@@ -55,7 +54,7 @@ describe("touchApiToken", () => {
     Effect.gen(function* () {
       const justNow = yield* DateTime.now;
       const before = yield* seed(justNow);
-      yield* touchApiToken(TouchApiTokenCommand.make({ apiTokenId, thresholdSeconds: 3600 }));
+      yield* touchApiToken({ apiTokenId, thresholdSeconds: 3600 });
       const repo = yield* ApiTokenRepository;
       const after = yield* repo.findOne(ApiTokenSpecifications.withId(apiTokenId));
       if (after === null) throw new Error("expected an api token");

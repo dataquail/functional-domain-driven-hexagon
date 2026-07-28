@@ -4,7 +4,6 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 
-import { CreateWalletCommand } from "@/modules/wallet/commands/create-wallet.command.js";
 import { createWallet } from "@/modules/wallet/commands/create-wallet.handler.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
 import { WalletSpecifications } from "@/modules/wallet/domain/wallet/wallet.specification.js";
@@ -23,7 +22,7 @@ describe("createWallet", () => {
       const repo = yield* WalletRepository;
       const rec = yield* RecordedEvents;
 
-      yield* createWallet(CreateWalletCommand.make({ organizationId }));
+      yield* createWallet({ organizationId });
 
       const stored = yield* repo.findOne(WalletSpecifications.forOrganization(organizationId));
       deepStrictEqual(stored !== null, true);
@@ -40,8 +39,8 @@ describe("createWallet", () => {
   it.effect("is idempotent: a duplicate command is a no-op and dispatches no second event", () =>
     Effect.gen(function* () {
       const rec = yield* RecordedEvents;
-      yield* createWallet(CreateWalletCommand.make({ organizationId }));
-      const exit = yield* Effect.exit(createWallet(CreateWalletCommand.make({ organizationId })));
+      yield* createWallet({ organizationId });
+      const exit = yield* Effect.exit(createWallet({ organizationId }));
       deepStrictEqual(Exit.isSuccess(exit), true);
       // Only the first insert emits WalletCreated; the duplicate swallows
       // WalletAlreadyExistsForOrganization and dispatches nothing.

@@ -1,13 +1,12 @@
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
-import * as Option from "effect/Option";
 
 import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
 import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 import {
-  type FindSubscriptionByOrganizationQuery,
+  type FindSubscriptionByOrganizationPayload,
   type SubscriptionView,
 } from "./find-subscription-by-organization.query.js";
 
@@ -22,7 +21,7 @@ const toView = (row: RowSchemas.SubscriptionRow): SubscriptionView => ({
 });
 
 export const findSubscriptionByOrganization = Effect.fn("findSubscriptionByOrganization")(
-  function* (query: FindSubscriptionByOrganizationQuery) {
+  function* (query: FindSubscriptionByOrganizationPayload) {
     const db = yield* Database.Database;
     const row = yield* db
       .makeQuery((execute) =>
@@ -38,6 +37,6 @@ export const findSubscriptionByOrganization = Effect.fn("findSubscriptionByOrgan
           Effect.fail(new PersistenceUnavailable({ message: e.message })),
         ),
       );
-    return row === null ? Option.none() : Option.some(toView(row));
+    return row === null ? null : toView(row);
   },
 );

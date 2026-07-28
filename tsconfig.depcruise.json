@@ -1,12 +1,27 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
+    // Resolution-only config for dependency-cruiser. These mirror tsconfig.base.json's
+    // paths but WITHOUT the trailing `.js` those carry: tsc rewrites a mapped `.js`
+    // target to the `.ts` on disk, dependency-cruiser's resolver does not. A `.js`
+    // target therefore fails to resolve, the import is reported as `unknown`, and every
+    // path-based rule about that package goes silently vacuous. Keep these extensionless.
+    // Node resolution cannot serve as a fallback either: the workspace links `@org/*` to
+    // `packages/*/dist`, which only exists after a publish build.
     "paths": {
       "@/*": ["./packages/server/src/*"],
-      "@org/contracts": ["./packages/contracts/src/index.js"],
-      "@org/contracts/*": ["./packages/contracts/src/*.js"],
-      "@org/database": ["./packages/database/src/index.js"],
-      "@org/database/*": ["./packages/database/src/*.js"]
+      "@org/contracts/*": ["./packages/contracts/src/*"],
+      "@org/cqrs": ["./packages/cqrs/src/index.ts"],
+      "@org/cqrs/*": ["./packages/cqrs/src/*"],
+      "@org/database": ["./packages/database/src/index.ts"],
+      "@org/database/*": ["./packages/database/src/*"],
+      "@org/api-client": ["./packages/api-client/src/index.ts"],
+      "@org/api-client/*": ["./packages/api-client/src/*"],
+      "@org/jobs": ["./packages/jobs/src/main.ts"],
+      "@org/jobs/*": ["./packages/jobs/src/*"],
+      "@org/server/*": ["./packages/server/src/*"],
+      "@org/test-drivers": ["./packages/test-drivers/src/index.ts"],
+      "@org/test-drivers/*": ["./packages/test-drivers/src/*"]
     },
     "moduleResolution": "NodeNext",
     "module": "NodeNext",

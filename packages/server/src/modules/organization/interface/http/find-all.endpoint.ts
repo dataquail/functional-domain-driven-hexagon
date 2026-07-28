@@ -1,15 +1,15 @@
 import { OrganizationContract } from "@org/contracts/api/Contracts";
+import { QueryBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { OrganizationCollectionResource } from "@/modules/organization/policies/organization.policies.js";
 import {
-  FindAllOrganizationsQuery,
+  FindAllOrganizations,
   type FindAllOrganizationsResult,
   type FindAllOrganizationsView,
 } from "@/modules/organization/queries/find-all-organizations.query.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
-import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 const toOrganizationContract = (
@@ -38,12 +38,10 @@ export const findAllEndpoint = Effect.fn("OrganizationAdminLive.findAll")(functi
 ) {
   yield* Authz.hasPermissions(OrganizationCollectionResource, Actions.Read);
   const queryBus = yield* QueryBus;
-  const result = yield* queryBus.execute(
-    FindAllOrganizationsQuery.make({
-      page: request.query.page,
-      pageSize: request.query.pageSize,
-      includeDeleted: request.query.includeDeleted === "true",
-    }),
-  );
+  const result = yield* queryBus.execute(FindAllOrganizations, {
+    page: request.query.page,
+    pageSize: request.query.pageSize,
+    includeDeleted: request.query.includeDeleted === "true",
+  });
   return toPaginatedContract(result);
 }, recoverPersistenceUnavailable);

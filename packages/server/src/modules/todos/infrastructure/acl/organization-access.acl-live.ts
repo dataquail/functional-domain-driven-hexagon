@@ -1,26 +1,22 @@
-import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { FindMembershipQuery } from "@/modules/organization/index.js";
+import { OrganizationQueries } from "@/modules/organization/index.js";
 import { OrganizationAccess } from "@/modules/todos/domain/ports/acl/organization-access.acl.js";
-import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 
 // ADR-0022 outbound adapter. Dispatches the organization module's published
 // policy-query so the membership determination stays an explicit question to the
 // owning module rather than a reach into its tables (ADR-0020 bans cross-schema
-// SQL anyway). `Database` is captured at construction and re-provided to the
-// dispatched effect so the port's method surface stays `R = never`.
+// SQL anyway). It resolves that module's own dispatch surface rather than the app-wide
+// bus, so a module whose handlers need this port does not end up depending on the bus that
+// routes those handlers.
 export const OrganizationAccessLive = Layer.effect(
   OrganizationAccess,
   Effect.gen(function* () {
-    const queryBus = yield* QueryBus;
-    const db = yield* Database.Database;
-
+    const organizationQueries = yield* OrganizationQueries;
     return OrganizationAccess.of({
       isMember: (userId, organizationId) =>
-        queryBus.execute(FindMembershipQuery.make({ userId, organizationId })).pipe(
-          Effect.provideService(Database.Database, db),
+        organizationQueries.FindMembershipQuery({ userId, organizationId }).pipe(
           Effect.map((result) => result.isMember),
           Effect.withSpan("OrganizationAccess.isMember"),
         ),

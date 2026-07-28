@@ -1,12 +1,12 @@
 import { BillingContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
+import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
-import { StartSubscriptionCommand } from "@/modules/billing/commands/start-subscription.command.js";
+import { StartSubscription } from "@/modules/billing/commands/start-subscription.command.js";
 import { BillingResource } from "@/modules/billing/policies/billing.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
-import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // `Actions.Update` covers subscribe + cancel (CRUD vocabulary; the
@@ -16,9 +16,9 @@ export const startSubscriptionEndpoint = Effect.fn("BillingLive.startSubscriptio
   function* (request: EndpointRequest<typeof BillingContract.PrivateGroup, "startSubscription">) {
     yield* Authz.hasPermissions(BillingResource, Actions.Update, request.params.orgId);
     const commandBus = yield* CommandBus;
-    const subscription = yield* commandBus.execute(
-      StartSubscriptionCommand.make({ organizationId: request.params.orgId }),
-    );
+    const subscription = yield* commandBus.execute(StartSubscription, {
+      organizationId: request.params.orgId,
+    });
     return new BillingContract.SubscriptionResponse({
       id: subscription.id,
       organizationId: subscription.organizationId,

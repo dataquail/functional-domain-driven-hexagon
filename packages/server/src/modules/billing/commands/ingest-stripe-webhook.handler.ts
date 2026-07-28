@@ -6,7 +6,7 @@ import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/w
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-import { type IngestStripeWebhookCommand } from "./ingest-stripe-webhook.command.js";
+import { type IngestStripeWebhookPayload } from "./ingest-stripe-webhook.command.js";
 
 // Signature verification + parsing + idempotency claim + domain event
 // dispatch in one transactional unit. Verifies OUTSIDE the unit of
@@ -24,7 +24,7 @@ import { type IngestStripeWebhookCommand } from "./ingest-stripe-webhook.command
 // the write path here intentionally skips it because "find then insert"
 // introduces a race window. Postgres' unique constraint is the arbiter.
 export const ingestStripeWebhook = Effect.fn("ingestStripeWebhook")(function* (
-  cmd: IngestStripeWebhookCommand,
+  cmd: IngestStripeWebhookPayload,
 ) {
   const gateway = yield* BillingGateway;
   const repo = yield* WebhookEventRepository;

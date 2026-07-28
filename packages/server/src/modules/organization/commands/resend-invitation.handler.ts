@@ -3,7 +3,7 @@ import * as crypto from "node:crypto";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { type ResendInvitationCommand } from "@/modules/organization/commands/resend-invitation.command.js";
+import { type ResendInvitationPayload } from "@/modules/organization/commands/resend-invitation.command.js";
 import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors.js";
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
 import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
@@ -18,7 +18,7 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 // invitations (the aggregate enforces it), which the endpoint maps to
 // 410 Gone — same shape as revoke.
 export const resendInvitation = Effect.fn("resendInvitation")(function* (
-  cmd: ResendInvitationCommand,
+  cmd: ResendInvitationPayload,
 ) {
   const repo = yield* InvitationRepository;
   const bus = yield* DomainEventBus;

@@ -1,15 +1,17 @@
+import { Command } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import {
+  BillingGatewayUnavailable,
+  SubscriptionNotFound,
+} from "@/modules/billing/domain/subscription/subscription.errors.js";
+import { SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
-export const CancelSubscriptionCommand = Schema.TaggedStruct("CancelSubscriptionCommand", {
-  organizationId: OrganizationId,
+export const CancelSubscription = Command.make("CancelSubscriptionCommand", {
+  payload: { organizationId: OrganizationId },
+  success: SubscriptionRoot,
+  failure: Schema.Union([SubscriptionNotFound, BillingGatewayUnavailable, PersistenceUnavailable]),
 });
-export type CancelSubscriptionCommand = typeof CancelSubscriptionCommand.Type;
-
-export const cancelSubscriptionCommandSpanAttributes: SpanAttributesExtractor<
-  CancelSubscriptionCommand
-> = (cmd) => ({
-  "organization.id": cmd.organizationId,
-});
+export type CancelSubscriptionPayload = Command.Payload<typeof CancelSubscription>;
