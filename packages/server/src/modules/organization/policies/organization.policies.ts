@@ -1,4 +1,4 @@
-import { Database } from "@org/database/index";
+import { QueryBus } from "@org/cqrs";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -10,7 +10,6 @@ import { type OrganizationAuthzView } from "@/modules/organization/queries/find-
 import { FindUserOrganizationRolesQuery } from "@/modules/organization/queries/find-user-organization-roles.policy-query.js";
 import * as Check from "@/platform/auth/check.js";
 import type * as PolicyRegistry from "@/platform/auth/policy-registry.js";
-import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 import { makeIsMember, type UserOrganizationLookup } from "./is-member.policy.js";
@@ -70,21 +69,16 @@ export const OrganizationPoliciesLive = Layer.effect(
   Effect.gen(function* () {
     const roles = yield* PlatformRoles;
     const queryBus = yield* QueryBus;
-    // The query handlers pull `Database` through the dispatch, so it is captured
-    // once here and re-provided, keeping each check's requirements empty.
-    const db = yield* Database.Database;
 
     const isMember: UserOrganizationLookup = (userId, organizationId) =>
-      queryBus.execute(FindMembershipQuery.make({ userId, organizationId })).pipe(
-        Effect.provideService(Database.Database, db),
-        Effect.map((result) => result.isMember),
-      );
+      queryBus
+        .execute(FindMembershipQuery, { userId, organizationId })
+        .pipe(Effect.map((result) => result.isMember));
 
     const isOrgAdmin: UserOrganizationLookup = (userId, organizationId) =>
-      queryBus.execute(FindUserOrganizationRolesQuery.make({ userId, organizationId })).pipe(
-        Effect.provideService(Database.Database, db),
-        Effect.map((result) => result.roles.includes(ORG_ADMIN_ROLE)),
-      );
+      queryBus
+        .execute(FindUserOrganizationRolesQuery, { userId, organizationId })
+        .pipe(Effect.map((result) => result.roles.includes(ORG_ADMIN_ROLE)));
 
     const superAdmin = makeIsOrgSuperAdmin(roles);
 

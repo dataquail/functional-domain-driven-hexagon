@@ -1,36 +1,36 @@
-import type * as DateTime from "effect/DateTime";
+import { Query } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
-import { type UserId } from "@/platform/ids/user-id.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
+import { UserId } from "@/platform/ids/user-id.js";
 
-export const FindUsersQuery = Schema.TaggedStruct("FindUsersQuery", {
+export const FindUsersUserView = Schema.Struct({
+  id: UserId,
+  email: Schema.String,
+  // Nullable: JIT-provisioned users have no address until they fill it in.
+  address: Schema.NullOr(
+    Schema.Struct({
+      country: Schema.String,
+      street: Schema.String,
+      postalCode: Schema.String,
+    }),
+  ),
+  createdAt: Schema.DateTimeUtc,
+  updatedAt: Schema.DateTimeUtc,
+});
+export type FindUsersUserView = typeof FindUsersUserView.Type;
+
+export const FindUsersResultView = Schema.Struct({
+  users: Schema.Array(FindUsersUserView),
   page: Schema.Number,
   pageSize: Schema.Number,
+  total: Schema.Number,
 });
-export type FindUsersQuery = typeof FindUsersQuery.Type;
+export type FindUsersResult = typeof FindUsersResultView.Type;
 
-export const findUsersQuerySpanAttributes: SpanAttributesExtractor<FindUsersQuery> = (query) => ({
-  "query.page": query.page,
-  "query.pageSize": query.pageSize,
+export const FindUsersQuery = Query.make("FindUsersQuery", {
+  payload: { page: Schema.Number, pageSize: Schema.Number },
+  success: FindUsersResultView,
+  failure: PersistenceUnavailable,
 });
-
-export type FindUsersUserView = {
-  readonly id: UserId;
-  readonly email: string;
-  // Nullable: JIT-provisioned users have no address until they fill it in.
-  readonly address: {
-    readonly country: string;
-    readonly street: string;
-    readonly postalCode: string;
-  } | null;
-  readonly createdAt: DateTime.Utc;
-  readonly updatedAt: DateTime.Utc;
-};
-
-export type FindUsersResult = {
-  readonly users: ReadonlyArray<FindUsersUserView>;
-  readonly page: number;
-  readonly pageSize: number;
-  readonly total: number;
-};
+export type FindUsersPayload = Query.Payload<typeof FindUsersQuery>;

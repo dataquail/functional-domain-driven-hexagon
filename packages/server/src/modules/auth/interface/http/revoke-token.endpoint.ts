@@ -1,10 +1,10 @@
 import { type AuthContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { CurrentUser } from "@org/contracts/Policy";
+import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { RevokeApiTokenCommand } from "@/modules/auth/commands/revoke-api-token.command.js";
-import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // Revokes one of the caller's own tokens. The command scopes the revoke to
@@ -14,9 +14,10 @@ export const revokeTokenEndpoint = Effect.fn("AuthLive.tokens.revoke")(
   function* (request: EndpointRequest<typeof AuthContract.TokensGroup, "revoke">) {
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
-    yield* commandBus.execute(
-      RevokeApiTokenCommand.make({ apiTokenId: request.params.id, userId: currentUser.userId }),
-    );
+    yield* commandBus.execute(RevokeApiTokenCommand, {
+      apiTokenId: request.params.id,
+      userId: currentUser.userId,
+    });
   },
   Effect.catchTag("ApiTokenNotFound", () =>
     Effect.fail(new CustomHttpApiError.NotFound({ message: "API token not found" })),

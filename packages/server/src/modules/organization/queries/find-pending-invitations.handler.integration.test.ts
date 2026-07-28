@@ -13,8 +13,7 @@ import { OrganizationRepository } from "@/modules/organization/domain/organizati
 import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.js";
 import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/repositories/invitation.repository-live.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
-import { findPendingInvitations } from "@/modules/organization/queries/find-pending-invitations.handler.js";
-import { FindPendingInvitationsQuery } from "@/modules/organization/queries/find-pending-invitations.query.js";
+import { findPendingInvitationsHandler } from "@/modules/organization/queries/find-pending-invitations.handler.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
@@ -56,7 +55,7 @@ const seedOrgs = Effect.gen(function* () {
 
 const suite = describe.sequential;
 
-suite("findPendingInvitations (integration)", () => {
+suite("findPendingInvitationsHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("organization.invitations", "organization.organizations").pipe(
@@ -96,9 +95,7 @@ suite("findPendingInvitations (integration)", () => {
       if (Result.isFailure(accepted)) throw new Error("expected Right");
       yield* repo.updateOne(accepted.success.invitation);
 
-      const result = yield* findPendingInvitations(
-        FindPendingInvitationsQuery.make({ organizationId: orgId }),
-      );
+      const result = yield* findPendingInvitationsHandler({ organizationId: orgId });
 
       const byEmail = new Map(result.map((r) => [r.inviteeEmail, r]));
       deepStrictEqual(result.length, 2);
@@ -115,9 +112,7 @@ suite("findPendingInvitations (integration)", () => {
     Effect.gen(function* () {
       yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
       yield* seedOrgs;
-      const result = yield* findPendingInvitations(
-        FindPendingInvitationsQuery.make({ organizationId: orgId }),
-      );
+      const result = yield* findPendingInvitationsHandler({ organizationId: orgId });
       deepStrictEqual(result.length, 0);
     }).pipe(Effect.provide(TestLayer)),
   );

@@ -1,12 +1,11 @@
 import { BillingContract } from "@org/contracts/api/Contracts";
+import { QueryBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
-import * as Option from "effect/Option";
 
 import { BillingResource } from "@/modules/billing/policies/billing.policies.js";
 import { FindSubscriptionByOrganizationQuery } from "@/modules/billing/queries/find-subscription-by-organization.query.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
-import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // `Actions.Read` is the member-or-super-admin gate. Subscription
@@ -18,16 +17,16 @@ export const getCurrentSubscriptionEndpoint = Effect.fn("BillingLive.getCurrentS
   ) {
     yield* Authz.hasPermissions(BillingResource, Actions.Read, request.params.orgId);
     const queryBus = yield* QueryBus;
-    const result = yield* queryBus.execute(
-      FindSubscriptionByOrganizationQuery.make({ organizationId: request.params.orgId }),
-    );
-    if (Option.isNone(result)) {
+    const result = yield* queryBus.execute(FindSubscriptionByOrganizationQuery, {
+      organizationId: request.params.orgId,
+    });
+    if (result === null) {
       return yield* new BillingContract.SubscriptionNotFoundError({
         organizationId: request.params.orgId,
         message: `No subscription found for organization ${request.params.orgId}`,
       });
     }
-    const sub = result.value;
+    const sub = result;
     return new BillingContract.SubscriptionResponse({
       id: sub.id,
       organizationId: sub.organizationId,

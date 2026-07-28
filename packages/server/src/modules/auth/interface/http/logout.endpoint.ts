@@ -1,3 +1,4 @@
+import { CommandBus } from "@org/cqrs";
 import * as cookie from "cookie";
 import * as Effect from "effect/Effect";
 import * as HttpServerRequest from "effect/unstable/http/HttpServerRequest";
@@ -8,7 +9,6 @@ import { RevokeSessionCommand } from "@/modules/auth/commands/revoke-session.com
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client.js";
 import { CookieCodec } from "@/platform/auth/cookie-codec.js";
-import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 
 // Sign out — single round-trip:
 //   1. Reads our session cookie inline (no middleware; logout must work even
@@ -30,7 +30,7 @@ export const logoutEndpoint = Effect.fn("AuthLive.logout")(function* () {
   if (raw !== undefined && raw !== "") {
     const verified = codec.verify(raw);
     if (verified !== null) {
-      yield* commandBus.execute(RevokeSessionCommand.make({ sessionId: SessionId.make(verified) }));
+      yield* commandBus.execute(RevokeSessionCommand, { sessionId: SessionId.make(verified) });
     }
   }
 

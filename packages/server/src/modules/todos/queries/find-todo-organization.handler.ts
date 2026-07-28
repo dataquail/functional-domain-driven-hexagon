@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 import {
-  type FindTodoOrganizationQuery,
+  type FindTodoOrganizationPayload,
   type TodoOrganizationView,
 } from "@/modules/todos/queries/find-todo-organization.query.js";
 import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
@@ -14,8 +14,8 @@ const OrgIdRowStd = Schema.toStandardSchemaV1(Schema.Struct({ organization_id: S
 // `makeQuery` (not bare `execute`) so the read joins the ambient transaction when
 // one exists — the authz resolver runs this during a command's authorization,
 // inside that command's unit of work.
-export const findTodoOrganization = Effect.fn("findTodoOrganization")(function* (
-  query: FindTodoOrganizationQuery,
+export const findTodoOrganizationHandler = Effect.fn("findTodoOrganizationHandler")(function* (
+  query: FindTodoOrganizationPayload,
 ) {
   const db = yield* Database.Database;
   const readTodo = db.makeQuery((execute) =>

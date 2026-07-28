@@ -1,33 +1,33 @@
-import { type Database } from "@org/database/index";
-import type * as Effect from "effect/Effect";
+import { Query } from "@org/cqrs";
+import * as Context from "effect/Context";
+import * as Layer from "effect/Layer";
 
-import { findUserRoles } from "@/modules/role/queries/find-user-roles.handler.js";
-import {
-  type FindUserRolesQuery,
-  findUserRolesQuerySpanAttributes,
-  type FindUserRolesResult,
-} from "@/modules/role/queries/find-user-roles.policy-query.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { queryHandlers } from "@/platform/ddd/ports/query-bus.js";
+import { findUserRolesHandler } from "@/modules/role/queries/find-user-roles.handler.js";
+import { FindUserRolesQuery } from "@/modules/role/queries/find-user-roles.policy-query.js";
 
-type FindUserRolesOutput = Effect.Effect<
-  FindUserRolesResult,
-  PersistenceUnavailable,
-  Database.Database
->;
+// This is a policy-query, so its only consumers are other modules' ACL adapters, and
+// ADR-0022 has them reach it through their own port. They resolve this surface directly;
+// nothing dispatches the tag on the app-wide bus.
+const roleQueryGroup = Query.group(FindUserRolesQuery);
 
-declare module "@/platform/ddd/ports/query-bus.js" {
-  interface QueryRegistry {
-    FindUserRolesQuery: {
-      readonly query: FindUserRolesQuery;
-      readonly output: FindUserRolesOutput;
-    };
-  }
-}
-
-export const roleQueryHandlers = queryHandlers({
-  FindUserRolesQuery: {
-    handle: findUserRoles,
-    spanAttributes: findUserRolesQuerySpanAttributes,
-  },
+const RoleQueryHandlersLive = Query.handlersOf(roleQueryGroup, {
+  FindUserRolesQuery: (payload) => findUserRolesHandler(payload),
 });
+
+const roleQuerySpanAttributes: Query.SpanAttributes<typeof roleQueryGroup> = {
+  FindUserRolesQuery: (payload) => ({ "query.userId": payload.userId }),
+};
+
+// This module's slice of the read-side dispatch surface, and the one four other
+// modules resolve: each owns a `PlatformRoles` port whose adapter asks this question.
+// Those adapters name this surface rather than the bus, which is what keeps the
+// modules whose handlers depend on them out of a cycle with the bus that routes them.
+export class RoleQueries extends Context.Service<
+  RoleQueries,
+  Query.Dispatcher<typeof roleQueryGroup>
+>()("@org/server/role/RoleQueries") {}
+
+export const RoleQueriesLive = Layer.effect(
+  RoleQueries,
+  Query.dispatcher(roleQueryGroup, { spanAttributes: roleQuerySpanAttributes }),
+).pipe(Layer.provide(RoleQueryHandlersLive));

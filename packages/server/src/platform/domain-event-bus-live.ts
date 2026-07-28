@@ -68,7 +68,7 @@ export const makeDomainEventBusLive = (
                 yield* handler(event);
               }
             }).pipe(
-              Effect.withSpan(`domainEvent:${event._tag}`, {
+              Effect.withSpan(`domainEvent.${event._tag}`, {
                 attributes: {
                   "event.tag": event._tag,
                   "event.handler.count": list.length,

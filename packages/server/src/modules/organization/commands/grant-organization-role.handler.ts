@@ -1,6 +1,6 @@
 import * as Effect from "effect/Effect";
 
-import { type GrantOrganizationRoleCommand } from "@/modules/organization/commands/grant-organization-role.command.js";
+import { type GrantOrganizationRolePayload } from "@/modules/organization/commands/grant-organization-role.command.js";
 import { CannotPromoteSelfInOrganization } from "@/modules/organization/domain/organization-roles/organization-role.errors.js";
 import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
 import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.js";
@@ -9,8 +9,8 @@ import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-export const grantOrganizationRole = Effect.fn("grantOrganizationRole")(function* (
-  cmd: GrantOrganizationRoleCommand,
+export const grantOrganizationRoleHandler = Effect.fn("grantOrganizationRoleHandler")(function* (
+  cmd: GrantOrganizationRolePayload,
 ) {
   // Command-level invariant: a user can't grant themselves an org role.
   // Mirrors `CannotPromoteSelf` in the role module — prevents

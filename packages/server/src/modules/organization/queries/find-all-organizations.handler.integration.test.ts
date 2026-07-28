@@ -9,8 +9,7 @@ import { beforeEach } from "vitest";
 import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
 import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
-import { findAllOrganizations } from "@/modules/organization/queries/find-all-organizations.handler.js";
-import { FindAllOrganizationsQuery } from "@/modules/organization/queries/find-all-organizations.query.js";
+import { findAllOrganizationsHandler } from "@/modules/organization/queries/find-all-organizations.handler.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
@@ -23,7 +22,7 @@ const TestLayer = OrganizationRepositoryLive.pipe(Layer.provideMerge(TestDatabas
 
 const suite = describe.sequential;
 
-suite("findAllOrganizations (integration)", () => {
+suite("findAllOrganizationsHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("organization.organizations").pipe(Effect.provide(TestDatabaseLive)),
@@ -42,9 +41,11 @@ suite("findAllOrganizations (integration)", () => {
       if (Result.isFailure(deletedEither)) throw new Error("expected Right");
       yield* repo.updateOne(deletedEither.success.organization);
 
-      const result = yield* findAllOrganizations(
-        FindAllOrganizationsQuery.make({ page: 1, pageSize: 10, includeDeleted: false }),
-      );
+      const result = yield* findAllOrganizationsHandler({
+        page: 1,
+        pageSize: 10,
+        includeDeleted: false,
+      });
       deepStrictEqual(result.total, 1);
       deepStrictEqual(result.organizations[0]?.name, "Acme");
     }).pipe(Effect.provide(TestLayer)),
@@ -62,18 +63,22 @@ suite("findAllOrganizations (integration)", () => {
       if (Result.isFailure(deletedEither)) throw new Error("expected Right");
       yield* repo.updateOne(deletedEither.success.organization);
 
-      const result = yield* findAllOrganizations(
-        FindAllOrganizationsQuery.make({ page: 1, pageSize: 10, includeDeleted: true }),
-      );
+      const result = yield* findAllOrganizationsHandler({
+        page: 1,
+        pageSize: 10,
+        includeDeleted: true,
+      });
       deepStrictEqual(result.total, 2);
     }).pipe(Effect.provide(TestLayer)),
   );
 
   it.effect("returns empty + total=0 on an empty table", () =>
     Effect.gen(function* () {
-      const result = yield* findAllOrganizations(
-        FindAllOrganizationsQuery.make({ page: 1, pageSize: 10, includeDeleted: false }),
-      );
+      const result = yield* findAllOrganizationsHandler({
+        page: 1,
+        pageSize: 10,
+        includeDeleted: false,
+      });
       deepStrictEqual(result.total, 0);
       deepStrictEqual([...result.organizations], []);
     }).pipe(Effect.provide(TestLayer)),

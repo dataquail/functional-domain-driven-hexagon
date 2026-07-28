@@ -24,16 +24,18 @@ Spans live at architectural boundaries **and** at each use-case handler; nowhere
 The boundary spans:
 
 - **HTTP (and CLI) endpoints** span each operation. The endpoint adapter declares its boundary span by being written as `Effect.fn("<GroupLive.op>")` (e.g. `UserHttp.create`) — the v4 idiom, and what `@effect/language-service`'s `effectFnOpportunity` diagnostic steers toward — rather than a trailing `Effect.withSpan`.
-- **The command bus** spans every dispatch: `command:<CommandTag>` with attribute `command.tag`.
-- **The query bus** spans every dispatch: `query:<QueryTag>` with attribute `query.tag`.
-- **The domain event bus** spans every event: `domainEvent:<EventTag>` with attributes `event.tag` and `event.handler.count`.
+- **The command bus** spans every dispatch: `command.<CommandTag>` with attribute `command.tag`.
+- **The query bus** spans every dispatch: `query.<QueryTag>` with attribute `query.tag`.
+- **The domain event bus** spans every event: `domainEvent.<EventTag>` with attributes `event.tag` and `event.handler.count`; the integration bus uses `integrationEvent.<EventTag>`.
 - **Repository methods** span each method: `<Repository>.<method>`.
+
+The delimiter is a dot, not a colon. An earlier version of this decision used `command:<Tag>`, which was this repo's own invention; `effect/unstable/rpc` joins a span prefix to a tag with a dot and offers no way to configure it, so once the buses dispatch through it, a colon would mean two naming schemes for one kind of span. The dot is also the separator already used for endpoint, repository, and use-case spans, so a single rule now covers every span the system emits.
 
 Every use-case handler — command, query, and event handlers — is declared with `Effect.fn("<handlerName>")`, which names a span for the handler body itself, nested _inside_ the bus/endpoint boundary span and _above_ the repository-method spans:
 
 ```
-command:CompleteTodoCommand      (bus boundary)
-└─ completeTodo                  (use case)
+command.CompleteTodoCommand      (bus boundary)
+└─ completeTodoHandler           (use case)
    └─ TodosRepository.updateOne  (repository)
       └─ <SQL>
 ```
@@ -42,16 +44,18 @@ The use-case span carries the function identity and source location — informat
 
 **Granularity rule.** Instrument at use-case granularity and no finer. A handler's span plus the retained repository/bus/endpoint spans is the whole story; do not open spans for private sub-steps. Where a use case delegates to a shared internal helper (e.g. the API-token mint core reused by the mint use case and the device-grant poll), the helper stays span-less so its `Effect.annotateCurrentSpan` calls land on whichever use case invoked it. A shared helper acquiring its own span would be instrumentation below use-case granularity — a speculative-generality smell.
 
-### Span attributes — sibling extractor functions composed at registration
+### Span attributes — extractor functions composed at registration
 
-Commands, queries, and domain events are plain `Schema.TaggedStruct` data — not class instances — so the wire format and the in-memory format are the same shape. This matters because events have realistic serialization pressure (outbox tables, message queues), where any "did I remember to decode this?" foot-gun translates to dropped observability the moment a worker reads a row as raw JSON.
+An extractor is a function from a message to an attribute map, returning only fields its author has audited as non-PHI/non-PII. Omitting a tag emits only the tag attribute, so the default is to leak nothing. Extractors are never methods on a class: messages and events are plain data, so the wire format and the in-memory format are the same shape, and a `toSpanAttributes()` method would disappear the moment something read a JSON row without decoding through Schema. Events in particular have realistic serialization pressure (outbox tables, message queues), where that foot-gun translates directly to dropped observability.
 
-Span-attribute extraction is a sibling concern. Each command/query/event file exports both the schema and a `<name>SpanAttributes(value) => attrs` function next to it; the function returns only fields its author has audited as non-PHI/non-PII. The two are composed at registration:
+Where the extractors live follows how the thing is registered:
 
-- For commands and queries, each registry entry has the shape `{ handle, spanAttributes? }`. The bus reads both: `handle` produces the work, `spanAttributes` produces the attribute map merged into the bus-level span. Omitting it emits only the tag attribute.
-- For domain events, subscribers register independently of definitions, so the registry is a separate `eventSpanAttributes({ ... })` map per module, merged at server-wiring time and passed to the domain-event bus Live. The bus dispatches by `_tag` and looks up the matching extractor.
+- **Commands and queries** — one map per module, keyed by tag, declared beside that module's handler registration and passed to its bus constructor. The map is typed against the module's message group, so a key that is not one of the module's tags, or an extractor reading a field the payload does not have, is a compile error.
+- **Domain events** — a sibling `<name>SpanAttributes` function next to each event definition, aggregated into one `eventSpanAttributes({ ... })` map per module, merged at server-wiring time and passed to the event bus Lives. Events keep the sibling-file shape because subscribers register independently of definitions, so there is no single registration site to co-locate the map with.
 
-Values _generated_ mid-handler (e.g. a freshly created user id) are attached with `Effect.annotateCurrentSpan`, which now annotates the handler's own use-case span. This shape was chosen over a method on a class: a `toSpanAttributes()` method on a `Schema.TaggedClass` disappears the moment something reads a JSON row without decoding through Schema. Plain structs plus sibling extractors eliminate that whole category of error.
+Commands and queries previously used the sibling-file shape too, one extractor per message file. It was dropped: the extractor and the handler registration are the same concern — both keyed by tag, both per module — and splitting them cost a file-level indirection per message to hold a one-line function. Co-locating them also makes the audit reviewable, because which tags contribute nothing is visible in one place per module rather than inferable only by opening every message file.
+
+Values _generated_ mid-handler (e.g. a freshly created user id) are attached with `Effect.annotateCurrentSpan`, which annotates the handler's own use-case span.
 
 ### Export — first-party OTLP tracer
 

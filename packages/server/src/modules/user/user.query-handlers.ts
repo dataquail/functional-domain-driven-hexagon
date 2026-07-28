@@ -1,49 +1,41 @@
-import { type Database } from "@org/database/index";
-import type * as Effect from "effect/Effect";
+import { Query } from "@org/cqrs";
+import * as Context from "effect/Context";
+import * as Layer from "effect/Layer";
 
-import { findUsers } from "@/modules/user/queries/find-users.handler.js";
-import {
-  type FindUsersQuery,
-  findUsersQuerySpanAttributes,
-  type FindUsersResult,
-  type FindUsersUserView,
-} from "@/modules/user/queries/find-users.query.js";
-import { findUsersByIds } from "@/modules/user/queries/find-users-by-ids.handler.js";
-import {
-  type FindUsersByIdsQuery,
-  findUsersByIdsQuerySpanAttributes,
-} from "@/modules/user/queries/find-users-by-ids.query.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { queryHandlers } from "@/platform/ddd/ports/query-bus.js";
+import { findUsersHandler } from "@/modules/user/queries/find-users.handler.js";
+import { FindUsersQuery } from "@/modules/user/queries/find-users.query.js";
+import { findUsersByIdsHandler } from "@/modules/user/queries/find-users-by-ids.handler.js";
+import { FindUsersByIdsQuery } from "@/modules/user/queries/find-users-by-ids.query.js";
 
-type FindUsersOutput = Effect.Effect<FindUsersResult, PersistenceUnavailable, Database.Database>;
+// `FindUsersQuery` is dispatched by an HTTP endpoint through the app-wide bus.
+// `FindUsersByIdsQuery`'s only consumer is the organization module's `UsersLookup`
+// adapter, which resolves this surface directly through its own port (ADR-0022) rather
+// than going through the bus.
+const userQueryGroup = Query.group(FindUsersQuery, FindUsersByIdsQuery);
 
-type FindUsersByIdsOutput = Effect.Effect<
-  ReadonlyArray<FindUsersUserView>,
-  PersistenceUnavailable,
-  Database.Database
->;
-
-declare module "@/platform/ddd/ports/query-bus.js" {
-  interface QueryRegistry {
-    FindUsersQuery: {
-      readonly query: FindUsersQuery;
-      readonly output: FindUsersOutput;
-    };
-    FindUsersByIdsQuery: {
-      readonly query: FindUsersByIdsQuery;
-      readonly output: FindUsersByIdsOutput;
-    };
-  }
-}
-
-// `FindUsersQuery` reads SQL directly (no UserRepository in R) so the
-// handler doesn't need wrapping. Lives at module root for symmetry with
-// `user-command-handlers.ts`.
-export const userQueryHandlers = queryHandlers({
-  FindUsersQuery: { handle: findUsers, spanAttributes: findUsersQuerySpanAttributes },
-  FindUsersByIdsQuery: {
-    handle: findUsersByIds,
-    spanAttributes: findUsersByIdsQuerySpanAttributes,
-  },
+const UserQueryHandlersLive = Query.handlersOf(userQueryGroup, {
+  FindUsersQuery: (payload) => findUsersHandler(payload),
+  FindUsersByIdsQuery: (payload) => findUsersByIdsHandler(payload),
 });
+
+// A batch's size is useful for spotting a runaway fan-out; the ids themselves are not
+// span-safe.
+const userQuerySpanAttributes: Query.SpanAttributes<typeof userQueryGroup> = {
+  FindUsersQuery: (payload) => ({
+    "query.page": payload.page,
+    "query.pageSize": payload.pageSize,
+  }),
+  FindUsersByIdsQuery: (payload) => ({ "query.id.count": payload.ids.length }),
+};
+
+// This module's slice of the read-side dispatch surface. See `UserCommands` for why a
+// module publishes its own surface rather than letting consumers name the bus.
+export class UserQueries extends Context.Service<
+  UserQueries,
+  Query.Dispatcher<typeof userQueryGroup>
+>()("@org/server/user/UserQueries") {}
+
+export const UserQueriesLive = Layer.effect(
+  UserQueries,
+  Query.dispatcher(userQueryGroup, { spanAttributes: userQuerySpanAttributes }),
+).pipe(Layer.provide(UserQueryHandlersLive));

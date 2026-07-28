@@ -6,10 +6,8 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { CreateOrganizationCommand } from "@/modules/organization/commands/create-organization.command.js";
-import { createOrganization } from "@/modules/organization/commands/create-organization.handler.js";
-import { LeaveOrganizationCommand } from "@/modules/organization/commands/leave-organization.command.js";
-import { leaveOrganization } from "@/modules/organization/commands/leave-organization.handler.js";
+import { createOrganizationHandler } from "@/modules/organization/commands/create-organization.handler.js";
+import { leaveOrganizationHandler } from "@/modules/organization/commands/leave-organization.handler.js";
 import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.js";
 import { type MembershipRevoked } from "@/modules/organization/domain/membership/membership.events.js";
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
@@ -32,21 +30,19 @@ const TestLayer = Layer.mergeAll(
   OrganizationRolesRepositoryFake,
   RecordingEventBus,
   IdentityUnitOfWork,
-  // Seed `createOrganization` calls need `PlatformRoles`; defaulting to
+  // Seed `createOrganizationHandler` calls need `PlatformRoles`; defaulting to
   // "caller has no platform roles" matches the regular-user path.
   makePlatformRolesFake(),
 );
 
-describe("leaveOrganization", () => {
+describe("leaveOrganizationHandler", () => {
   it.effect("deletes the caller's membership and publishes MembershipRevoked", () =>
     Effect.gen(function* () {
       const memberships = yield* MembershipRepository;
       const rec = yield* RecordedEvents;
-      const orgId = yield* createOrganization(
-        CreateOrganizationCommand.make({ name: "Acme", actorUserId: userId }),
-      );
+      const orgId = yield* createOrganizationHandler({ name: "Acme", actorUserId: userId });
 
-      yield* leaveOrganization(LeaveOrganizationCommand.make({ userId, organizationId: orgId }));
+      yield* leaveOrganizationHandler({ userId, organizationId: orgId });
 
       const found = yield* memberships.findOne(
         Spec.and(
@@ -68,9 +64,7 @@ describe("leaveOrganization", () => {
   it.effect("fails MembershipNotFound when the caller isn't a member", () =>
     Effect.gen(function* () {
       const orgId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
-      const exit = yield* Effect.exit(
-        leaveOrganization(LeaveOrganizationCommand.make({ userId, organizationId: orgId })),
-      );
+      const exit = yield* Effect.exit(leaveOrganizationHandler({ userId, organizationId: orgId }));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.hasFails(exit.cause)

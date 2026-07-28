@@ -42,7 +42,7 @@ export const createEndpoint = Effect.fn("UserHttp.create")(function* (
   request: EndpointRequest<typeof UserContract.Group, "create">,
 ) {
   const commandBus = yield* CommandBus;
-  const id = yield* commandBus.execute(CreateUserCommand.make({ ...request.payload }));
+  const id = yield* commandBus.execute(CreateUserCommand, { ...request.payload });
   return new UserContract.CreateUserResponse({ id });
 }).pipe(
   Effect.catchTag(

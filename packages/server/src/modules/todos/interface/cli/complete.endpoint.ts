@@ -1,12 +1,12 @@
 import { CliTodosContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
+import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { CompleteTodoCommand } from "@/modules/todos/commands/complete-todo.command.js";
 import { TodoResource } from "@/modules/todos/policies/todos.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
-import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // CLI adapter (ADR-0005): completing is an update-gated action. The `todo`
@@ -28,13 +28,11 @@ export const completeEndpoint = Effect.fn("CliTodosLive.complete")(
     );
     const commandBus = yield* CommandBus;
     const currentUser = yield* CurrentUser;
-    const todo = yield* commandBus.execute(
-      CompleteTodoCommand.make({
-        todoId: request.params.id,
-        organizationId: request.params.orgId,
-        userId: currentUser.userId,
-      }),
-    );
+    const todo = yield* commandBus.execute(CompleteTodoCommand, {
+      todoId: request.params.id,
+      organizationId: request.params.orgId,
+      userId: currentUser.userId,
+    });
     return new CliTodosContract.CliTodo({
       id: todo.id,
       title: todo.title,

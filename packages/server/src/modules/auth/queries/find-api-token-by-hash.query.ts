@@ -1,24 +1,17 @@
+import { Query } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
-import { type ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
-import { type UserId } from "@/platform/ids/user-id.js";
-
-// Per-request bearer lookup, dispatched by the auth middleware. The caller
-// hashes the presented token before dispatch, so the raw secret never
-// travels through the bus or a span. Validates lifecycle (revoked /
-// expired) the same way `FindSessionQuery` does for cookies.
-export const FindApiTokenByHashQuery = Schema.TaggedStruct("FindApiTokenByHashQuery", {
-  tokenHash: Schema.String,
-});
-export type FindApiTokenByHashQuery = typeof FindApiTokenByHashQuery.Type;
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
+import { UserId } from "@/platform/ids/user-id.js";
 
 // The read model the auth middleware needs: the token's id (opaque
 // principal id for a bearer caller) and the owning user.
-export type ApiTokenPrincipalView = {
-  readonly id: ApiTokenId;
-  readonly userId: UserId;
-};
+export const ApiTokenPrincipalView = Schema.Struct({
+  id: ApiTokenId,
+  userId: UserId,
+});
+export type ApiTokenPrincipalView = typeof ApiTokenPrincipalView.Type;
 
 // Read-side lifecycle outcomes — query-owned so the read path stays off
 // the domain. Fieldless (a hash miss has no id to report); the auth
@@ -38,7 +31,18 @@ export class ApiTokenRevoked extends Schema.TaggedErrorClass<ApiTokenRevoked>("A
   {},
 ) {}
 
-// Deliberately empty: `tokenHash` is secret-derived and must not land in a span.
-export const findApiTokenByHashQuerySpanAttributes: SpanAttributesExtractor<
-  FindApiTokenByHashQuery
-> = () => ({});
+// Per-request bearer lookup, dispatched by the auth middleware. The caller
+// hashes the presented token before dispatch, so the raw secret never
+// travels through the bus or a span. Validates lifecycle (revoked /
+// expired) the same way `FindSessionQuery` does for cookies.
+export const FindApiTokenByHashQuery = Query.make("FindApiTokenByHashQuery", {
+  payload: { tokenHash: Schema.String },
+  success: ApiTokenPrincipalView,
+  failure: Schema.Union([
+    ApiTokenNotFound,
+    ApiTokenExpired,
+    ApiTokenRevoked,
+    PersistenceUnavailable,
+  ]),
+});
+export type FindApiTokenByHashPayload = Query.Payload<typeof FindApiTokenByHashQuery>;

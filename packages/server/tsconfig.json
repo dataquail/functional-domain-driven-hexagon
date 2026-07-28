@@ -8,6 +8,8 @@
       "@/*": ["./src/*"],
       "@org/contracts": ["../contracts/src/index.js"],
       "@org/contracts/*": ["../contracts/src/*.js"],
+      "@org/cqrs": ["../cqrs/src/index.js"],
+      "@org/cqrs/*": ["../cqrs/src/*.js"],
       "@org/database": ["../database/src/index.js"],
       "@org/database/*": ["../database/src/*.js"]
     }

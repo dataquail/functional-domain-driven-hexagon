@@ -1,21 +1,18 @@
+import { Command } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
 
-// Sliding-TTL refresh, dispatched by the auth middleware after a successful
-// `FindSessionQuery`. The handler does its own throttle + revocation guard,
-// so the command is safe to fire on every request — when nothing needs to
-// change, it's a no-op.
-export const TouchSessionCommand = Schema.TaggedStruct("TouchSessionCommand", {
-  sessionId: SessionId,
-  ttlSeconds: Schema.Number,
-  thresholdSeconds: Schema.Number,
+// Sliding-TTL refresh, dispatched by the auth middleware after a successful session lookup.
+// The handler does its own throttle + revocation guard, so the command is safe to fire on every
+// request — when nothing needs to change, it's a no-op. No failure channel: the handler swallows
+// its own errors so a sliding-TTL refresh can never fail a request.
+export const TouchSessionCommand = Command.make("TouchSessionCommand", {
+  payload: {
+    sessionId: SessionId,
+    ttlSeconds: Schema.Number,
+    thresholdSeconds: Schema.Number,
+  },
+  success: Schema.Void,
 });
-export type TouchSessionCommand = typeof TouchSessionCommand.Type;
-
-export const touchSessionCommandSpanAttributes: SpanAttributesExtractor<TouchSessionCommand> = (
-  c,
-) => ({
-  "auth.session.id": c.sessionId,
-});
+export type TouchSessionPayload = Command.Payload<typeof TouchSessionCommand>;

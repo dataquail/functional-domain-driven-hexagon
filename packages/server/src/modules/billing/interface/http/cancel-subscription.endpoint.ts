@@ -1,21 +1,21 @@
 import { BillingContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
+import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { CancelSubscriptionCommand } from "@/modules/billing/commands/cancel-subscription.command.js";
 import { BillingResource } from "@/modules/billing/policies/billing.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
-import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 export const cancelSubscriptionEndpoint = Effect.fn("BillingLive.cancelSubscription")(
   function* (request: EndpointRequest<typeof BillingContract.PrivateGroup, "cancelSubscription">) {
     yield* Authz.hasPermissions(BillingResource, Actions.Update, request.params.orgId);
     const commandBus = yield* CommandBus;
-    const subscription = yield* commandBus.execute(
-      CancelSubscriptionCommand.make({ organizationId: request.params.orgId }),
-    );
+    const subscription = yield* commandBus.execute(CancelSubscriptionCommand, {
+      organizationId: request.params.orgId,
+    });
     return new BillingContract.SubscriptionResponse({
       id: subscription.id,
       organizationId: subscription.organizationId,

@@ -21,6 +21,7 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 | `@org/web`          | Next.js App Router renderer + `/api/*` proxy; the server stays the BFF (ADR-0018). |
 | `@org/components`   | Bespoke component library (primitives + patterns) + Storybook (ADR-0015).          |
 | `@org/contracts`    | Shared HTTP API contracts, schemas, errors — consumed by server and clients.       |
+| `@org/cqrs`         | Standalone typed CQRS bus (`Command`/`Query` + per-module dispatchers) — ADR-0006. |
 | `@org/database`     | DB access kernel (slonik, `RowSchemas`, `db.makeQuery`) + migrations.              |
 | `@org/jobs`         | Background/cron jobs.                                                              |
 | `@org/cli`          | Command-line client (device-flow auth, organizations, todos).                      |

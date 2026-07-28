@@ -1,21 +1,18 @@
+import { Query } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
-import { type UserId } from "@/platform/ids/user-id.js";
-
-export const FindSessionQuery = Schema.TaggedStruct("FindSessionQuery", {
-  sessionId: SessionId,
-});
-export type FindSessionQuery = typeof FindSessionQuery.Type;
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
+import { UserId } from "@/platform/ids/user-id.js";
 
 // The read model the auth middleware needs: the opaque principal ids,
 // nothing else. Lifecycle (revoked/expired) is enforced by the handler
 // and surfaced as the errors below, not carried on the view.
-export type SessionView = {
-  readonly id: SessionId;
-  readonly userId: UserId;
-};
+export const SessionView = Schema.Struct({
+  id: SessionId,
+  userId: UserId,
+});
+export type SessionView = typeof SessionView.Type;
 
 // Read-side lifecycle outcomes. The write-side `Session` aggregate owns
 // its own equivalents (revoke path); these are query-owned so the read
@@ -36,7 +33,9 @@ export class SessionRevoked extends Schema.TaggedErrorClass<SessionRevoked>("Ses
   { sessionId: SessionId },
 ) {}
 
-// SessionId is a UUID — opaque enough for spans, not tied to PII directly.
-export const findSessionQuerySpanAttributes: SpanAttributesExtractor<FindSessionQuery> = (q) => ({
-  "auth.session.id": q.sessionId,
+export const FindSessionQuery = Query.make("FindSessionQuery", {
+  payload: { sessionId: SessionId },
+  success: SessionView,
+  failure: Schema.Union([SessionNotFound, SessionExpired, SessionRevoked, PersistenceUnavailable]),
 });
+export type FindSessionPayload = Query.Payload<typeof FindSessionQuery>;

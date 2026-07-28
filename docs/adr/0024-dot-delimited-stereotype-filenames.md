@@ -37,6 +37,10 @@ A dot makes the seam explicit and machine-parseable, and matches the `*.root-ops
 
 Tests append their qualifier to the subject stereotype: `*.handler.test.ts`, `*.repository-live.integration.test.ts`, `*.event-adapter.test.ts`.
 
+### The identifier carries the stereotype too
+
+A filename suffix only helps a reader who is looking at the file. The exported identifier is what appears at a call site, so it carries the same keyword: `XRoot`, `XRootOps`, `XEntity`, `XValueObject`, `XId`. Commands, queries, and handlers follow the rule rather than opting out of it — a `.command.ts` exports `XCommand`, a `.query.ts` (or `.policy-query.ts`) exports `XQuery`, and a `.handler.ts` exports `xHandler`. For a message the identifier is also exactly its dispatch tag, so the declaration and the string it registers under cannot drift apart by inspection. The one deliberate omission is the payload type, which stays `XPayload`: `Payload` already implies a message, and `XCommandPayload` only lengthens the signature every handler writes.
+
 ### Scope
 
 This applies to the module **stereotype folders** and the **module root** (whose aggregation/composition files — `<feature>.module.ts`, `<feature>.command-handlers.ts`, `<feature>.query-handlers.ts`, `<feature>.event-span-attributes.ts`, `<feature>.shared-deps.ts` — are dotted too, and are the _only_ files the module root admits; `index.ts` stays as the barrel). (ADR-0022 later withdrew the platform ACL tier, so `policies/public/` no longer exists; a module's outbound adapters live in `infrastructure/acl/` and are published to the composition root as a module-root bundle.)

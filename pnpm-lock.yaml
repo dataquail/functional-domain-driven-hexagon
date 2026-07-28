@@ -303,6 +303,13 @@ importers:
         version: 4.0.0-beta.94
     publishDirectory: dist
 
+  packages/cqrs:
+    dependencies:
+      effect:
+        specifier: 4.0.0-beta.94
+        version: 4.0.0-beta.94
+    publishDirectory: dist
+
   packages/database:
     dependencies:
       '@effect/platform-node':
@@ -402,6 +409,9 @@ importers:
       '@org/contracts':
         specifier: workspace:^
         version: link:../contracts/dist
+      '@org/cqrs':
+        specifier: workspace:^
+        version: link:../cqrs/dist
       '@org/database':
         specifier: workspace:^
         version: link:../database/dist

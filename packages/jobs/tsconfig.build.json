@@ -1,0 +1,20 @@
+{
+  // Must list the BUILD config of every workspace package `src/` imports, not the
+  // solution config: a solution config emits nothing, so TypeScript cannot redirect
+  // an import to its declarations and instead pulls the sibling's sources into this
+  // program, which then fails `rootDir`. This overrides tsconfig.src.json's
+  // references rather than extending them, so the list must be complete.
+  "references": [{ "path": "../database/tsconfig.build.json" }],
+  "extends": "./tsconfig.src.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "tsBuildInfoFile": ".tsbuildinfo/build.tsbuildinfo",
+    "outDir": "build/esm",
+    "declarationDir": "build/dts",
+    "stripInternal": true,
+    "composite": true,
+    "declaration": true,
+    "sourceMap": true
+  },
+  "include": ["src"]
+}

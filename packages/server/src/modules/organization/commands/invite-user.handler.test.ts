@@ -3,8 +3,7 @@ import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { InviteUserCommand } from "@/modules/organization/commands/invite-user.command.js";
-import { inviteUser } from "@/modules/organization/commands/invite-user.handler.js";
+import { inviteUserHandler } from "@/modules/organization/commands/invite-user.handler.js";
 import { type InvitationIssued } from "@/modules/organization/domain/invitation/invitation.events.js";
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
 import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
@@ -28,20 +27,18 @@ const TestLayer = Layer.mergeAll(
   InvitationMailerFake,
 );
 
-describe("inviteUser", () => {
+describe("inviteUserHandler", () => {
   it.effect("inserts an invitation, publishes InvitationIssued, sends one mail", () =>
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
       const rec = yield* RecordedEvents;
       const sent = yield* SentInvitations;
-      const id = yield* inviteUser(
-        InviteUserCommand.make({
-          organizationId,
-          inviteeEmail: "alice@example.com",
-          ttlSeconds: 60 * 60 * 24 * 7,
-          actorUserId,
-        }),
-      );
+      const id = yield* inviteUserHandler({
+        organizationId,
+        inviteeEmail: "alice@example.com",
+        ttlSeconds: 60 * 60 * 24 * 7,
+        actorUserId,
+      });
       const stored = yield* repo.findOne(InvitationSpecifications.withId(id));
       if (stored === null) throw new Error("expected invitation");
       deepStrictEqual(stored.organizationId, organizationId);
@@ -72,20 +69,19 @@ describe("inviteUser", () => {
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
       const sent = yield* SentInvitations;
-      const make = () =>
-        InviteUserCommand.make({
-          organizationId,
-          inviteeEmail: "alice@example.com",
-          ttlSeconds: 60 * 60 * 24 * 7,
-          actorUserId,
-        });
+      const make = () => ({
+        organizationId,
+        inviteeEmail: "alice@example.com",
+        ttlSeconds: 60 * 60 * 24 * 7,
+        actorUserId,
+      });
 
-      const firstId = yield* inviteUser(make());
+      const firstId = yield* inviteUserHandler(make());
       const first = yield* repo.findOne(InvitationSpecifications.withId(firstId));
       if (first === null) throw new Error("expected invitation");
       const firstToken = first.token;
 
-      const secondId = yield* inviteUser(make());
+      const secondId = yield* inviteUserHandler(make());
 
       // Same invitation row (dedup), with a rotated token.
       deepStrictEqual(secondId, firstId);

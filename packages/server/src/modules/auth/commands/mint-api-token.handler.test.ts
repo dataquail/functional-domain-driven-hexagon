@@ -3,8 +3,7 @@ import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { MintApiTokenCommand } from "@/modules/auth/commands/mint-api-token.command.js";
-import { mintApiToken } from "@/modules/auth/commands/mint-api-token.handler.js";
+import { mintApiTokenHandler } from "@/modules/auth/commands/mint-api-token.handler.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import { API_TOKEN_PREFIX } from "@/modules/auth/domain/api-token/api-token.root-ops.js";
 import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
@@ -16,12 +15,14 @@ import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const TestLayer = Layer.mergeAll(ApiTokenRepositoryFake, IdentityUnitOfWork);
 
-describe("mintApiToken", () => {
+describe("mintApiTokenHandler", () => {
   it.effect("returns a plaintext token once and persists only its hash", () =>
     Effect.gen(function* () {
-      const { apiToken, token } = yield* mintApiToken(
-        MintApiTokenCommand.make({ userId, label: "ci", expiresInDays: 90 }),
-      );
+      const { apiToken, token } = yield* mintApiTokenHandler({
+        userId,
+        label: "ci",
+        expiresInDays: 90,
+      });
       // Plaintext is the prefixed opaque token; the stored hash matches it.
       ok(token.startsWith(`${API_TOKEN_PREFIX}_`));
       deepStrictEqual(apiToken.tokenHash, CredentialHash.of(token));
@@ -43,12 +44,8 @@ describe("mintApiToken", () => {
 
   it.effect("mints distinct tokens on each call", () =>
     Effect.gen(function* () {
-      const a = yield* mintApiToken(
-        MintApiTokenCommand.make({ userId, label: "a", expiresInDays: 1 }),
-      );
-      const b = yield* mintApiToken(
-        MintApiTokenCommand.make({ userId, label: "b", expiresInDays: 1 }),
-      );
+      const a = yield* mintApiTokenHandler({ userId, label: "a", expiresInDays: 1 });
+      const b = yield* mintApiTokenHandler({ userId, label: "b", expiresInDays: 1 });
       ok(a.token !== b.token);
       ok(a.apiToken.id !== b.apiToken.id);
     }).pipe(Effect.provide(TestLayer)),

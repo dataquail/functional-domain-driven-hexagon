@@ -6,8 +6,7 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { CreateOrganizationCommand } from "@/modules/organization/commands/create-organization.command.js";
-import { createOrganization } from "@/modules/organization/commands/create-organization.handler.js";
+import { createOrganizationHandler } from "@/modules/organization/commands/create-organization.handler.js";
 import { type MembershipCreated } from "@/modules/organization/domain/membership/membership.events.js";
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
 import { MembershipSpecifications } from "@/modules/organization/domain/membership/membership.specification.js";
@@ -41,14 +40,12 @@ const TestLayer = Layer.mergeAll(
   makePlatformRolesFake(),
 );
 
-describe("createOrganization", () => {
+describe("createOrganizationHandler", () => {
   it.effect("inserts an org, returns the id, publishes OrganizationCreated", () =>
     Effect.gen(function* () {
       const repo = yield* OrganizationRepository;
       const rec = yield* RecordedEvents;
-      const id = yield* createOrganization(
-        CreateOrganizationCommand.make({ name: "Acme", actorUserId }),
-      );
+      const id = yield* createOrganizationHandler({ name: "Acme", actorUserId });
       const stored = yield* repo.findOne(OrganizationSpecifications.withId(id));
       if (stored === null) throw new Error("expected organization");
       deepStrictEqual(stored.name, "Acme");
@@ -65,9 +62,7 @@ describe("createOrganization", () => {
     Effect.gen(function* () {
       const memberships = yield* MembershipRepository;
       const rec = yield* RecordedEvents;
-      const id = yield* createOrganization(
-        CreateOrganizationCommand.make({ name: "Acme", actorUserId }),
-      );
+      const id = yield* createOrganizationHandler({ name: "Acme", actorUserId });
       const membership = yield* memberships.findOne(
         Spec.and(
           MembershipSpecifications.forUser(actorUserId),
@@ -92,9 +87,7 @@ describe("createOrganization", () => {
       Effect.gen(function* () {
         const orgRolesRepo = yield* OrganizationRolesRepository;
         const rec = yield* RecordedEvents;
-        const id = yield* createOrganization(
-          CreateOrganizationCommand.make({ name: "Acme", actorUserId }),
-        );
+        const id = yield* createOrganizationHandler({ name: "Acme", actorUserId });
         const roles = yield* orgRolesRepo.findOne(
           Spec.and(
             OrganizationRolesSpecifications.forUser(actorUserId),
@@ -120,9 +113,7 @@ describe("createOrganization", () => {
   it.effect("rejects with SuperAdminCannotOwnOrganization when caller is a super-admin", () =>
     Effect.gen(function* () {
       const exit = yield* Effect.exit(
-        createOrganization(
-          CreateOrganizationCommand.make({ name: "Acme", actorUserId: superAdminUserId }),
-        ),
+        createOrganizationHandler({ name: "Acme", actorUserId: superAdminUserId }),
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {

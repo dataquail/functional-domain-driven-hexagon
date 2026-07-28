@@ -1,5 +1,4 @@
 import { describe, it } from "@effect/vitest";
-import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { deepStrictEqual } from "assert";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
@@ -7,8 +6,11 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { SignInCommand } from "@/modules/auth/commands/sign-in.command.js";
-import { signIn } from "@/modules/auth/commands/sign-in.handler.js";
+import { signInHandler } from "@/modules/auth/commands/sign-in.handler.js";
+import {
+  IdentityEmailAlreadyRegistered,
+  IdentityMissingEmail,
+} from "@/modules/auth/domain/auth-identity/auth-identity.errors.js";
 import {
   type AuthIdentity,
   AuthIdentityRepository,
@@ -37,17 +39,17 @@ const TestLayer = Layer.mergeAll(
   IdentityUnitOfWork,
 );
 
-const command = SignInCommand.make({
+const command = {
   subject,
   email: "admin@example.com",
   ttlSeconds: 3600,
   absoluteTtlSeconds: 43200,
-});
+};
 
-describe("signIn", () => {
+describe("signInHandler", () => {
   it.effect("creates a session and returns the new sessionId for a known subject", () =>
     Effect.gen(function* () {
-      const result = yield* signIn(command);
+      const result = yield* signInHandler(command);
       deepStrictEqual(result.userId, userId);
       const sessions = yield* SessionRepository;
       const stored = yield* sessions.findOne(SessionSpecifications.withId(result.sessionId));
@@ -60,9 +62,11 @@ describe("signIn", () => {
 
   it.effect("JIT-provisions a user and links the identity for an unknown subject", () =>
     Effect.gen(function* () {
-      const result = yield* signIn(
-        SignInCommand.make({ ...command, subject: "new-subject", email: "new@example.com" }),
-      );
+      const result = yield* signInHandler({
+        ...command,
+        subject: "new-subject",
+        email: "new@example.com",
+      });
       // The session is created for the freshly-provisioned user…
       deepStrictEqual(result.userId, provisionedUserId);
       // …and the identity is now linked, so a subsequent lookup finds it.
@@ -78,44 +82,46 @@ describe("signIn", () => {
     }).pipe(Effect.provide(TestLayer)),
   );
 
-  it.effect("fails Unauthorized when an unknown subject has no email to provision with", () =>
-    Effect.gen(function* () {
-      const exit = yield* Effect.exit(
-        signIn(SignInCommand.make({ ...command, subject: "no-email-subject", email: null })),
-      );
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(error instanceof CustomHttpApiError.Unauthorized, true);
-      }
-    }).pipe(Effect.provide(TestLayer)),
+  it.effect(
+    "fails IdentityMissingEmail when an unknown subject has no email to provision with",
+    () =>
+      Effect.gen(function* () {
+        const exit = yield* Effect.exit(
+          signInHandler({ ...command, subject: "no-email-subject", email: null }),
+        );
+        deepStrictEqual(Exit.isFailure(exit), true);
+        if (Exit.isFailure(exit)) {
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
+          deepStrictEqual(error instanceof IdentityMissingEmail, true);
+        }
+      }).pipe(Effect.provide(TestLayer)),
   );
 
-  it.effect("fails Unauthorized when provisioning conflicts on an already-registered email", () =>
-    Effect.gen(function* () {
-      const exit = yield* Effect.exit(
-        signIn(
-          SignInCommand.make({ ...command, subject: "dup-subject", email: "taken@example.com" }),
-        ).pipe(
-          Effect.provide(
-            Layer.mergeAll(
-              SessionRepositoryFake,
-              makeAuthIdentityRepositoryFake(seededIdentities),
-              makeUserProvisioningFake({ conflicts: new Set(["taken@example.com"]) }),
-              IdentityUnitOfWork,
+  it.effect(
+    "fails IdentityEmailAlreadyRegistered when provisioning conflicts on a registered email",
+    () =>
+      Effect.gen(function* () {
+        const exit = yield* Effect.exit(
+          signInHandler({ ...command, subject: "dup-subject", email: "taken@example.com" }).pipe(
+            Effect.provide(
+              Layer.mergeAll(
+                SessionRepositoryFake,
+                makeAuthIdentityRepositoryFake(seededIdentities),
+                makeUserProvisioningFake({ conflicts: new Set(["taken@example.com"]) }),
+                IdentityUnitOfWork,
+              ),
             ),
           ),
-        ),
-      );
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(error instanceof CustomHttpApiError.Unauthorized, true);
-      }
-    }),
+        );
+        deepStrictEqual(Exit.isFailure(exit), true);
+        if (Exit.isFailure(exit)) {
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
+          deepStrictEqual(error instanceof IdentityEmailAlreadyRegistered, true);
+        }
+      }),
   );
 });

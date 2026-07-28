@@ -1,7 +1,7 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { type SyncSubscriptionCommand } from "@/modules/billing/commands/sync-subscription.command.js";
+import { type SyncSubscriptionPayload } from "@/modules/billing/commands/sync-subscription.command.js";
 import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
 import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
 import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.js";
@@ -14,8 +14,8 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 // eventual `created` delivery brings us back in sync. Dispatched by the
 // stripe-webhook event adapter inside the ingest command's transaction, so
 // `withUnitOfWork` opens a nested savepoint (ADR-0007).
-export const syncSubscription = Effect.fn("syncSubscription")(function* (
-  cmd: SyncSubscriptionCommand,
+export const syncSubscriptionHandler = Effect.fn("syncSubscriptionHandler")(function* (
+  cmd: SyncSubscriptionPayload,
 ) {
   const repo = yield* SubscriptionRepository;
   const bus = yield* DomainEventBus;

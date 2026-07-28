@@ -3,7 +3,7 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
 import {
-  type FindSessionQuery,
+  type FindSessionPayload,
   SessionExpired,
   SessionNotFound,
   SessionRevoked,
@@ -15,7 +15,9 @@ import { UserId } from "@/platform/ids/user-id.js";
 // Looks up a session by id and validates its lifecycle (revoked /
 // expired). Used by the auth middleware via `QueryBus.execute(...)` —
 // the bus-boundary span (ADR-0012) wraps this at dispatch time.
-export const findSession = Effect.fn("findSession")(function* (query: FindSessionQuery) {
+export const findSessionHandler = Effect.fn("findSessionHandler")(function* (
+  query: FindSessionPayload,
+) {
   const db = yield* Database.Database;
   const row = yield* db
     .makeQuery((execute) =>

@@ -1,9 +1,9 @@
 import { AuthContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
+import { QueryBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { FindCurrentUserQuery } from "@/modules/auth/queries/find-current-user.query.js";
-import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 export const meEndpoint = Effect.fn("AuthLive.me")(function* (
@@ -11,7 +11,7 @@ export const meEndpoint = Effect.fn("AuthLive.me")(function* (
 ) {
   const user = yield* CurrentUser;
   const queryBus = yield* QueryBus;
-  const view = yield* queryBus.execute(FindCurrentUserQuery.make({ userId: user.userId }));
+  const view = yield* queryBus.execute(FindCurrentUserQuery, { userId: user.userId });
   return new AuthContract.CurrentUserResponse({
     userId: view.userId,
     isSuperAdmin: view.isSuperAdmin,

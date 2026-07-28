@@ -6,25 +6,21 @@ import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
 
 import { PlatformRolesLive } from "@/modules/auth/infrastructure/acl/platform-roles.acl-live.js";
-import { findCurrentUser } from "@/modules/auth/queries/find-current-user.handler.js";
-import { FindCurrentUserQuery } from "@/modules/auth/queries/find-current-user.query.js";
-import { roleQueryHandlers } from "@/modules/role/index.js";
-import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
+import { findCurrentUserHandler } from "@/modules/auth/queries/find-current-user.handler.js";
+import { RoleQueriesLive } from "@/modules/role/index.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { makeQueryBus } from "@/platform/query-bus-live.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const superAdminId = UserId.make("11111111-1111-1111-1111-111111111111");
 const memberId = UserId.make("22222222-2222-2222-2222-222222222222");
 
-// Stages the real cross-module chain rather than a stub: the auth query reads
-// its `PlatformRoles` port, whose adapter dispatches the role module's query
-// through a real bus into real SQL. This is the seam a stubbed unit test cannot
-// cover — a rename or shape change on the role module's published policy-query
+// Stages the real cross-module chain rather than a stub: the auth query reads its
+// `PlatformRoles` port, whose adapter dispatches the role module's query through that
+// module's real dispatch surface into real SQL. This is the seam a stubbed unit test
+// cannot cover — a rename or shape change on the role module's published policy-query
 // fails here.
-const QueryBusLive = Layer.succeed(QueryBus, makeQueryBus(roleQueryHandlers));
 const TestLayer = PlatformRolesLive.pipe(
-  Layer.provide(QueryBusLive),
+  Layer.provide(RoleQueriesLive),
   Layer.provideMerge(TestDatabaseLive),
 );
 
@@ -56,7 +52,7 @@ const grantSuperAdmin = Effect.gen(function* () {
 
 const suite = describe.sequential;
 
-suite("findCurrentUser (integration)", () => {
+suite("findCurrentUserHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("platform.roles", "user.users").pipe(Effect.provide(TestDatabaseLive)),
@@ -68,7 +64,7 @@ suite("findCurrentUser (integration)", () => {
       Effect.gen(function* () {
         yield* seedUsers;
         yield* grantSuperAdmin;
-        const view = yield* findCurrentUser(FindCurrentUserQuery.make({ userId: superAdminId }));
+        const view = yield* findCurrentUserHandler({ userId: superAdminId });
         deepStrictEqual(view, { userId: superAdminId, isSuperAdmin: true });
       }).pipe(Effect.provide(TestLayer)),
     );
@@ -79,7 +75,7 @@ suite("findCurrentUser (integration)", () => {
       Effect.gen(function* () {
         yield* seedUsers;
         yield* grantSuperAdmin;
-        const view = yield* findCurrentUser(FindCurrentUserQuery.make({ userId: memberId }));
+        const view = yield* findCurrentUserHandler({ userId: memberId });
         deepStrictEqual(view, { userId: memberId, isSuperAdmin: false });
       }).pipe(Effect.provide(TestLayer)),
     );

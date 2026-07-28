@@ -1,7 +1,7 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { type SoftDeleteOrganizationCommand } from "@/modules/organization/commands/soft-delete-organization.command.js";
+import { type SoftDeleteOrganizationPayload } from "@/modules/organization/commands/soft-delete-organization.command.js";
 import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.js";
 import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
 import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.js";
@@ -10,8 +10,8 @@ import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-export const softDeleteOrganization = Effect.fn("softDeleteOrganization")(function* (
-  cmd: SoftDeleteOrganizationCommand,
+export const softDeleteOrganizationHandler = Effect.fn("softDeleteOrganizationHandler")(function* (
+  cmd: SoftDeleteOrganizationPayload,
 ) {
   const repo = yield* OrganizationRepository;
   const bus = yield* DomainEventBus;

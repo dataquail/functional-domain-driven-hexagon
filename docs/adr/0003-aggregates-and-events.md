@@ -72,7 +72,7 @@ Every operation bag and every specification carries a test-parity obligation (it
 
 ### Lifecycle: guarded total operations (default) vs. variant types
 
-The default — and what every aggregate here does — is a **single `Schema.Class` whose lifecycle is carried in flag/nullable columns, with total operations that guard their own invariants and return `Result<Outcome, DomainError>`** (effect v4's `effect/Result`). `InvitationRootOps.accept` takes an invitation in _any_ state and returns `InvitationAlreadyAccepted | InvitationRevoked | InvitationExpired` on failure, or the accepted invitation on success. The invariant checks — and the specific errors they produce — live in the domain, once; every caller (the AcceptInvitation command today, anything else tomorrow) gets identical enforcement for free.
+The default — and what every aggregate here does — is a **single `Schema.Class` whose lifecycle is carried in flag/nullable columns, with total operations that guard their own invariants and return `Result<Outcome, DomainError>`** (effect v4's `effect/Result`). `InvitationRootOps.accept` takes an invitation in _any_ state and returns `InvitationAlreadyAccepted | InvitationRevoked | InvitationExpired` on failure, or the accepted invitation on success. The invariant checks — and the specific errors they produce — live in the domain, once; every caller (the `AcceptInvitationCommand` handler today, anything else tomorrow) gets identical enforcement for free.
 
 A handler consumes such a `Result` inside its `Effect.gen` by lifting it explicitly with `yield* Effect.fromResult(...)` — v4's `Effect.gen` does not adapt a yielded `Result` (its iterator is distinct from Effect's).
 
@@ -112,7 +112,7 @@ export const UserCreated = DomainEvent("UserCreated", {
 Use cases bind these together explicitly, declaring the transaction once at the boundary (ADR-0007):
 
 ```ts
-export const createUser = Effect.fn("createUser")(function* (cmd: CreateUserCommand) {
+export const createUserHandler = Effect.fn("createUserHandler")(function* (cmd: CreateUserPayload) {
   const repo = yield* UserRepository;
   const bus = yield* DomainEventBus;
   const { user, events } = UserRootOps.create({ id, email, address, now });

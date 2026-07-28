@@ -1,7 +1,7 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { type RestoreOrganizationCommand } from "@/modules/organization/commands/restore-organization.command.js";
+import { type RestoreOrganizationPayload } from "@/modules/organization/commands/restore-organization.command.js";
 import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.js";
 import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
 import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.js";
@@ -9,8 +9,8 @@ import { OrganizationSpecifications } from "@/modules/organization/domain/organi
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-export const restoreOrganization = Effect.fn("restoreOrganization")(function* (
-  cmd: RestoreOrganizationCommand,
+export const restoreOrganizationHandler = Effect.fn("restoreOrganizationHandler")(function* (
+  cmd: RestoreOrganizationPayload,
 ) {
   const repo = yield* OrganizationRepository;
   const bus = yield* DomainEventBus;

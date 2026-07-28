@@ -6,10 +6,8 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { GrantOrganizationRoleCommand } from "@/modules/organization/commands/grant-organization-role.command.js";
-import { grantOrganizationRole } from "@/modules/organization/commands/grant-organization-role.handler.js";
-import { RevokeOrganizationRoleCommand } from "@/modules/organization/commands/revoke-organization-role.command.js";
-import { revokeOrganizationRole } from "@/modules/organization/commands/revoke-organization-role.handler.js";
+import { grantOrganizationRoleHandler } from "@/modules/organization/commands/grant-organization-role.handler.js";
+import { revokeOrganizationRoleHandler } from "@/modules/organization/commands/revoke-organization-role.handler.js";
 import { DoesNotHaveOrganizationRole } from "@/modules/organization/domain/organization-roles/organization-role.errors.js";
 import { type OrganizationRoleRevoked } from "@/modules/organization/domain/organization-roles/organization-role.events.js";
 import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
@@ -31,28 +29,24 @@ const targetId = UserId.make("11111111-1111-1111-1111-111111111111");
 const actorId = UserId.make("99999999-9999-9999-9999-999999999999");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 
-describe("revokeOrganizationRole", () => {
+describe("revokeOrganizationRoleHandler", () => {
   it.effect("removes the role and publishes OrganizationRoleRevoked", () =>
     Effect.gen(function* () {
       const repo = yield* OrganizationRolesRepository;
       const rec = yield* RecordedEvents;
 
-      yield* grantOrganizationRole(
-        GrantOrganizationRoleCommand.make({
-          userId: targetId,
-          organizationId: orgId,
-          role: "admin",
-          actorUserId: actorId,
-        }),
-      );
+      yield* grantOrganizationRoleHandler({
+        userId: targetId,
+        organizationId: orgId,
+        role: "admin",
+        actorUserId: actorId,
+      });
 
-      yield* revokeOrganizationRole(
-        RevokeOrganizationRoleCommand.make({
-          userId: targetId,
-          organizationId: orgId,
-          role: "admin",
-        }),
-      );
+      yield* revokeOrganizationRoleHandler({
+        userId: targetId,
+        organizationId: orgId,
+        role: "admin",
+      });
 
       // Revoking the only role leaves no rows, so the aggregate no longer
       // resolves — findOne reports null (no rows = no roles).
@@ -77,13 +71,11 @@ describe("revokeOrganizationRole", () => {
   it.effect("fails DoesNotHaveOrganizationRole when the role isn't held", () =>
     Effect.gen(function* () {
       const exit = yield* Effect.exit(
-        revokeOrganizationRole(
-          RevokeOrganizationRoleCommand.make({
-            userId: targetId,
-            organizationId: orgId,
-            role: "admin",
-          }),
-        ),
+        revokeOrganizationRoleHandler({
+          userId: targetId,
+          organizationId: orgId,
+          role: "admin",
+        }),
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {

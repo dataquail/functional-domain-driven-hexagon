@@ -2,7 +2,7 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
 import { mintApiTokenCore } from "@/modules/auth/commands/mint-api-token.handler.js";
-import { type PollDeviceGrantCommand } from "@/modules/auth/commands/poll-device-grant.command.js";
+import { type PollDeviceGrantPayload } from "@/modules/auth/commands/poll-device-grant.command.js";
 import {
   DeviceGrantExpired,
   DeviceGrantNotFound,
@@ -22,8 +22,8 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 // transaction rather than nesting a savepoint.
 //
 // Bus-boundary span (ADR-0012) wraps this at dispatch time.
-export const pollDeviceGrant = Effect.fn("pollDeviceGrant")(function* (
-  cmd: PollDeviceGrantCommand,
+export const pollDeviceGrantHandler = Effect.fn("pollDeviceGrantHandler")(function* (
+  cmd: PollDeviceGrantPayload,
 ) {
   const grants = yield* DeviceGrantRepository;
   const grant = yield* grants.findOne(

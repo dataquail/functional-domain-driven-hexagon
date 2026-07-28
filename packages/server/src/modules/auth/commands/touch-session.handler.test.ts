@@ -3,8 +3,7 @@ import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { TouchSessionCommand } from "@/modules/auth/commands/touch-session.command.js";
-import { touchSession } from "@/modules/auth/commands/touch-session.handler.js";
+import { touchSessionHandler } from "@/modules/auth/commands/touch-session.handler.js";
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
 import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.js";
@@ -32,18 +31,18 @@ const seedSession = (lastUsedAt: DateTime.Utc) =>
     return base;
   });
 
-const cmd = TouchSessionCommand.make({
+const cmd = {
   sessionId,
   ttlSeconds: 3600,
   thresholdSeconds: 60,
-});
+};
 
-describe("touchSession", () => {
+describe("touchSessionHandler", () => {
   it.live("advances expiresAt and lastUsedAt when threshold has elapsed", () =>
     Effect.gen(function* () {
       const farPast = DateTime.makeUnsafe(new Date("2000-01-01T00:00:00Z"));
       const seed = yield* seedSession(farPast);
-      yield* touchSession(cmd);
+      yield* touchSessionHandler(cmd);
       const repo = yield* SessionRepository;
       const after = yield* repo.findOne(SessionSpecifications.withId(sessionId));
       if (after === null) throw new Error("expected a session");
@@ -56,7 +55,7 @@ describe("touchSession", () => {
     Effect.gen(function* () {
       const justNow = yield* DateTime.now;
       const seed = yield* seedSession(justNow);
-      yield* touchSession(cmd);
+      yield* touchSessionHandler(cmd);
       const repo = yield* SessionRepository;
       const after = yield* repo.findOne(SessionSpecifications.withId(sessionId));
       if (after === null) throw new Error("expected a session");
@@ -66,7 +65,7 @@ describe("touchSession", () => {
   );
 
   it.effect("does not fail when the session does not exist (benign race)", () =>
-    touchSession(cmd).pipe(Effect.provide(SessionRepositoryFake)),
+    touchSessionHandler(cmd).pipe(Effect.provide(SessionRepositoryFake)),
   );
 
   it.live("does not advance a revoked session", () =>
@@ -75,7 +74,7 @@ describe("touchSession", () => {
       const seed = yield* seedSession(farPast);
       const repo = yield* SessionRepository;
       yield* repo.deleteOne(sessionId);
-      yield* touchSession(cmd);
+      yield* touchSessionHandler(cmd);
       const after = yield* repo.findOne(SessionSpecifications.withId(sessionId));
       if (after === null) throw new Error("expected a session");
       deepStrictEqual(after.expiresAt, seed.expiresAt);

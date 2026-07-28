@@ -4,8 +4,7 @@ import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 import { beforeEach } from "vitest";
 
-import { findOrganizationById } from "@/modules/organization/queries/find-organization-by-id.handler.js";
-import { FindOrganizationByIdQuery } from "@/modules/organization/queries/find-organization-by-id.query.js";
+import { findOrganizationByIdHandler } from "@/modules/organization/queries/find-organization-by-id.handler.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
@@ -29,7 +28,7 @@ const seedOrganizations = Effect.gen(function* () {
 
 const suite = describe.sequential;
 
-suite("findOrganizationById (integration)", () => {
+suite("findOrganizationByIdHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("organization.organizations").pipe(Effect.provide(TestDatabaseLive)),
@@ -40,9 +39,7 @@ suite("findOrganizationById (integration)", () => {
     await Effect.runPromise(
       Effect.gen(function* () {
         yield* seedOrganizations;
-        const view = yield* findOrganizationById(
-          FindOrganizationByIdQuery.make({ organizationId: activeOrgId }),
-        );
+        const view = yield* findOrganizationByIdHandler({ organizationId: activeOrgId });
         deepStrictEqual(view, { organizationId: activeOrgId });
       }).pipe(Effect.provide(TestDatabaseLive)),
     );
@@ -54,9 +51,7 @@ suite("findOrganizationById (integration)", () => {
     await Effect.runPromise(
       Effect.gen(function* () {
         yield* seedOrganizations;
-        const view = yield* findOrganizationById(
-          FindOrganizationByIdQuery.make({ organizationId: deletedOrgId }),
-        );
+        const view = yield* findOrganizationByIdHandler({ organizationId: deletedOrgId });
         deepStrictEqual(view, { organizationId: deletedOrgId });
       }).pipe(Effect.provide(TestDatabaseLive)),
     );
@@ -66,9 +61,7 @@ suite("findOrganizationById (integration)", () => {
     await Effect.runPromise(
       Effect.gen(function* () {
         yield* seedOrganizations;
-        const view = yield* findOrganizationById(
-          FindOrganizationByIdQuery.make({ organizationId: unknownOrgId }),
-        );
+        const view = yield* findOrganizationByIdHandler({ organizationId: unknownOrgId });
         deepStrictEqual(view, null);
       }).pipe(Effect.provide(TestDatabaseLive)),
     );

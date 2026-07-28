@@ -1,8 +1,11 @@
-import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { type SignInCommand } from "@/modules/auth/commands/sign-in.command.js";
+import { type SignInPayload } from "@/modules/auth/commands/sign-in.command.js";
+import {
+  IdentityEmailAlreadyRegistered,
+  IdentityMissingEmail,
+} from "@/modules/auth/domain/auth-identity/auth-identity.errors.js";
 import { AuthIdentityRepository } from "@/modules/auth/domain/auth-identity/auth-identity.repository.js";
 import { AuthIdentitySpecifications } from "@/modules/auth/domain/auth-identity/auth-identity.specification.js";
 import { UserProvisioning } from "@/modules/auth/domain/ports/acl/user-provisioning.acl.js";
@@ -11,7 +14,7 @@ import { SessionRepository } from "@/modules/auth/domain/session/session.reposit
 import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-// Slice-scope SignIn:
+// Slice-scope SignInCommand:
 //   - looks up auth_identities by Zitadel subject
 //   - admins are pre-seeded by infra/zitadel/seed.mjs, so the row exists
 //   - an unknown subject is just-in-time provisioned as an ordinary
@@ -25,7 +28,7 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 //
 // Bus-boundary span (ADR-0012) wraps this at dispatch time, so no inline
 // `withSpan` here.
-export const signIn = Effect.fn("signIn")(function* (cmd: SignInCommand) {
+export const signInHandler = Effect.fn("signInHandler")(function* (cmd: SignInPayload) {
   const identities = yield* AuthIdentityRepository;
   const sessions = yield* SessionRepository;
   const provisioning = yield* UserProvisioning;
@@ -40,19 +43,15 @@ export const signIn = Effect.fn("signIn")(function* (cmd: SignInCommand) {
         // command runs in this same transaction.
         yield* Effect.gen(function* () {
           if (cmd.email === null) {
-            return yield* new CustomHttpApiError.Unauthorized({
-              message: "Cannot provision a user: the identity has no email.",
-            });
+            return yield* new IdentityMissingEmail({ subject: cmd.subject });
           }
-          const newUserId = yield* provisioning.provision(cmd.email).pipe(
-            Effect.catchTag("UserProvisioningConflict", (e) =>
-              Effect.fail(
-                new CustomHttpApiError.Unauthorized({
-                  message: `Cannot provision a user: email ${e.email} is already registered.`,
-                }),
+          const newUserId = yield* provisioning
+            .provision(cmd.email)
+            .pipe(
+              Effect.catchTag("UserProvisioningConflict", (e) =>
+                Effect.fail(new IdentityEmailAlreadyRegistered({ email: e.email })),
               ),
-            ),
-          );
+            );
           yield* identities.insertOne({
             subject: cmd.subject,
             userId: newUserId,

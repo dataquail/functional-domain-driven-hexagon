@@ -1,7 +1,5 @@
 import * as Layer from "effect/Layer";
 
-import { BillingGatewayFake } from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake.js";
-import { BillingGatewayLive } from "@/modules/billing/infrastructure/clients/billing-gateway.client-live.js";
 import { StripeWebhookEventAdapterLive } from "@/modules/billing/interface/events/stripe-webhook.event-adapter.js";
 import { BillingLive, BillingWebhooksLive } from "@/modules/billing/interface/http/index.js";
 
@@ -43,7 +41,3 @@ export const BillingModuleLive = Layer.mergeAll(
   BillingWebhooksLive,
   StripeWebhookEventAdapterLive,
 );
-
-export const BillingHttpDepsLive = BillingGatewayLive;
-
-export const BillingHttpDepsFake = BillingGatewayFake;

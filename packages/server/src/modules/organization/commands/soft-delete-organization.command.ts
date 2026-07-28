@@ -1,13 +1,16 @@
+import { Command } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import {
+  OrganizationAlreadyDeleted,
+  OrganizationNotFound,
+} from "@/modules/organization/domain/organization/organization.errors.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
-export const SoftDeleteOrganizationCommand = Schema.TaggedStruct("SoftDeleteOrganizationCommand", {
-  organizationId: OrganizationId,
+export const SoftDeleteOrganizationCommand = Command.make("SoftDeleteOrganizationCommand", {
+  payload: { organizationId: OrganizationId },
+  success: Schema.Void,
+  failure: Schema.Union([OrganizationNotFound, OrganizationAlreadyDeleted, PersistenceUnavailable]),
 });
-export type SoftDeleteOrganizationCommand = typeof SoftDeleteOrganizationCommand.Type;
-
-export const softDeleteOrganizationCommandSpanAttributes: SpanAttributesExtractor<
-  SoftDeleteOrganizationCommand
-> = (cmd) => ({ "organization.id": cmd.organizationId });
+export type SoftDeleteOrganizationPayload = Command.Payload<typeof SoftDeleteOrganizationCommand>;

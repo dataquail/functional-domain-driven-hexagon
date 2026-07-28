@@ -145,7 +145,7 @@ module.exports = {
       name: "commands-isolation",
       severity: "error",
       comment:
-        "Module commands (write-side use cases) may only import: own module's domain and sibling commands, the DDD shared kernel ports under platform/ddd/ (CommandBus, QueryBus, DomainEventBus, UnitOfWork, DomainEvent, SpanAttributesExtractor), platform/ids/, and platform/notifications/ port files (e.g. Mailer Tag — same shape as platform/ddd/, just a different infrastructure surface). No platform/*-live.ts (Lives are wired at the composition root), no infrastructure, no interface, no queries, no event-handlers, no @org/contracts, no @org/database, and (ADR-0022) no other modules' barrels — cross-module calls go through a `domain/ports/acl/` port whose adapter lives in `infrastructure/acl/`. Test files excluded.",
+        "Module commands (write-side use cases) may only import: own module's domain and sibling commands, `@org/cqrs` (the message vocabulary a command is declared in — ADR-0006), the DDD shared kernel ports under platform/ddd/ (CommandBus, QueryBus, DomainEventBus, UnitOfWork, DomainEvent, SpanAttributesExtractor), platform/ids/, and platform/notifications/ port files (e.g. Mailer Tag — same shape as platform/ddd/, just a different infrastructure surface). No platform/*-live.ts (Lives are wired at the composition root), no infrastructure, no interface, no queries, no event-handlers, no @org/contracts (a command's failure channel names domain errors; the endpoint maps them to wire errors — ADR-0004), no @org/database, and (ADR-0022) no other modules' barrels — cross-module calls go through a `domain/ports/acl/` port whose adapter lives in `infrastructure/acl/`. Test files excluded.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/commands/",
         pathNot: "\\.test\\.ts$",
@@ -154,6 +154,7 @@ module.exports = {
         path: "^packages/",
         pathNot: [
           "^packages/server/src/modules/$1/(domain|commands)/",
+          "^packages/cqrs/src/",
           "^packages/server/src/platform/ddd/",
           "^packages/server/src/platform/ids/",
           "^packages/server/src/platform/notifications/(?!.*-live\\.ts$)",
@@ -178,7 +179,7 @@ module.exports = {
       name: "queries-isolation",
       severity: "error",
       comment:
-        "Module queries are read-side projections and must NOT reach the write-side consistency boundary: they build their own read models by reading SQL directly via @org/database, never by loading aggregates through repositories. A query may import: sibling queries, the DDD shared kernel ports under platform/ddd/, platform/ids/, @org/database, and — from its OWN domain — only two things that are not the write model: branded IDs (domain/<sub>/*.id.ts, identity vocabulary) and cross-context ACL ports (domain/ports/acl/, read facades over OTHER modules; ADR-0020 bans cross-schema SQL so there is no SQL alternative). Everything else in domain is off-limits: roots, *.root-ops.ts, repositories, specifications, value-objects, entities, domain-services, errors, events, and the repository/client ports. May NOT import platform/*-live.ts, own commands, event-handlers, infrastructure, interface, @org/contracts (wire types belong in interface), or (ADR-0022) other modules' barrels. Test files excluded (they may seed via the live repository). See ADR-0002.",
+        "Module queries are read-side projections and must NOT reach the write-side consistency boundary: they build their own read models by reading SQL directly via @org/database, never by loading aggregates through repositories. A query may import: sibling queries, `@org/cqrs` (the message vocabulary a query is declared in — ADR-0006), the DDD shared kernel ports under platform/ddd/, platform/ids/, @org/database, and — from its OWN domain — only two things that are not the write model: branded IDs (domain/<sub>/*.id.ts, identity vocabulary) and cross-context ACL ports (domain/ports/acl/, read facades over OTHER modules; ADR-0020 bans cross-schema SQL so there is no SQL alternative). Everything else in domain is off-limits: roots, *.root-ops.ts, repositories, specifications, value-objects, entities, domain-services, errors, events, and the repository/client ports. May NOT import platform/*-live.ts, own commands, event-handlers, infrastructure, interface, @org/contracts (wire types belong in interface), or (ADR-0022) other modules' barrels. Test files excluded (they may seed via the live repository). See ADR-0002.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/queries/",
         pathNot: "\\.test\\.ts$",
@@ -189,6 +190,7 @@ module.exports = {
           "^packages/server/src/modules/$1/queries/",
           "^packages/server/src/modules/$1/domain/[^/]+/[^/]+\\.id\\.ts$",
           "^packages/server/src/modules/$1/domain/ports/acl/",
+          "^packages/cqrs/src/",
           "^packages/server/src/platform/ddd/",
           "^packages/server/src/platform/ids/",
           "^packages/database/",
@@ -213,7 +215,7 @@ module.exports = {
       name: "policies-isolation",
       severity: "error",
       comment:
-        "A module's `policies/` ring answers 'may this caller do this?' and must never reach the write-side consistency boundary to do it. It may import: sibling policy files, its OWN `queries/` (the read models its checks and resolvers ask), its own `domain/ports/acl/` + the `infrastructure/acl/` adapters its contribution layer provides, its own branded IDs (`domain/<sub>/*.id.ts`), `platform/auth/`, `platform/ddd/` (the QueryBus it dispatches through, and PersistenceUnavailable), `platform/ids/`, `@org/database` (to capture Database for a bus dispatch), and `@org/contracts` (CurrentUser + the Forbidden/NotFound wire errors authz lifts to). Everything else in `domain/` is off-limits: roots, *.root-ops.ts, repositories, specifications, value-objects, entities, and domain-services. Also barred: own commands and event-handlers, `interface/`, `platform/*-live.ts`, and (ADR-0022) another module's barrel — a cross-module answer comes from an `acl/` port, not a direct reach. An authorization check reading aggregate state is the violation this rule exists to stop: model the question as a read model instead. Test files excluded. See ADR-0021, ADR-0022.",
+        "A module's `policies/` ring answers 'may this caller do this?' and must never reach the write-side consistency boundary to do it. It may import: sibling policy files, its OWN `queries/` (the read models its checks and resolvers ask), its own `domain/ports/acl/` + the `infrastructure/acl/` adapters its contribution layer provides, its own branded IDs (`domain/<sub>/*.id.ts`), `platform/auth/`, `@org/cqrs` (the QueryBus it dispatches through), `platform/ddd/` (PersistenceUnavailable), `platform/ids/`, `@org/database` (to capture Database for a bus dispatch), and `@org/contracts` (CurrentUser + the Forbidden/NotFound wire errors authz lifts to). Everything else in `domain/` is off-limits: roots, *.root-ops.ts, repositories, specifications, value-objects, entities, and domain-services. Also barred: own commands and event-handlers, `interface/`, `platform/*-live.ts`, and (ADR-0022) another module's barrel — a cross-module answer comes from an `acl/` port, not a direct reach. An authorization check reading aggregate state is the violation this rule exists to stop: model the question as a read model instead. Test files excluded. See ADR-0021, ADR-0022.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/policies/",
         pathNot: "\\.test\\.ts$",
@@ -226,6 +228,7 @@ module.exports = {
           "^packages/server/src/modules/$1/domain/ports/acl/",
           "^packages/server/src/modules/$1/infrastructure/acl/",
           "^packages/server/src/modules/$1/domain/[^/]+/[^/]+\\.id\\.ts$",
+          "^packages/cqrs/src/",
           "^packages/server/src/platform/auth/",
           "^packages/server/src/platform/ddd/",
           "^packages/server/src/platform/ids/",
@@ -238,7 +241,7 @@ module.exports = {
       name: "interface-events-isolation",
       severity: "error",
       comment:
-        "ADR-0007: an event adapter (interface/events/*.event-adapter.ts) is a bus-only inbound port — structurally identical to an HTTP endpoint. It subscribes to a domain event and dispatches a command; it must NOT reach the consistency boundary directly. It may import: its own module's domain events/ids (to subscribe), its own commands' *.command.ts schemas (to dispatch), the DDD kernel ports under platform/ddd/ (CommandBus/QueryBus/the event buses/UnitOfWork), platform/ids/, and (via foreign-barrel-only-from-outbound-adapter) another module's index.ts barrel for cross-module events. No domain/ports/, no domain ops (*.root-ops.ts etc.), no repositories/infrastructure, no command *.handler.ts, no @org/database — the dispatched command owns all of that. Test files excluded.",
+        "ADR-0007: an event adapter (interface/events/*.event-adapter.ts) is a bus-only inbound port — structurally identical to an HTTP endpoint. It subscribes to a domain event and dispatches a command; it must NOT reach the consistency boundary directly. It may import: its own module's domain events/ids (to subscribe), its own commands' *.command.ts definitions (to dispatch), `@org/cqrs` (CommandBus/QueryBus), the DDD kernel ports under platform/ddd/ (the event buses/UnitOfWork), platform/ids/, and (via foreign-barrel-only-from-outbound-adapter) another module's index.ts barrel for cross-module events. No domain/ports/, no domain ops (*.root-ops.ts etc.), no repositories/infrastructure, no command *.handler.ts, no @org/database — the dispatched command owns all of that. Test files excluded.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/interface/events/",
         pathNot: "\\.test\\.ts$",
@@ -249,6 +252,7 @@ module.exports = {
           "^packages/server/src/modules/$1/domain/[^/]+/[^/]+\\.(events|id)\\.ts$",
           "^packages/server/src/modules/$1/commands/[^/]+\\.command\\.ts$",
           "^packages/server/src/modules/[^/]+/index\\.ts$",
+          "^packages/cqrs/src/",
           "^packages/server/src/platform/ddd/",
           "^packages/server/src/platform/ids/",
         ],
@@ -312,10 +316,26 @@ module.exports = {
       to: { path: "^packages/server/src/modules/[^/]+/domain/ports/acl/" },
     },
     {
+      name: "cqrs-internals-stay-inside-the-cqrs-package",
+      severity: "error",
+      comment:
+        "`@org/cqrs/internal/*` is the shared machinery behind the `Command` and `Query` facades — it is parameterized by side and enforces nothing about which side a caller is on. Reaching it directly bypasses the CQRS separation the facades exist to express. Consume `Command` / `CommandBus` / `Query` / `QueryBus`.",
+      from: { path: "^packages/(?!cqrs/)" },
+      to: { path: "^packages/cqrs/src/internal/" },
+    },
+    {
+      name: "rpc-stays-inside-the-cqrs-package",
+      severity: "error",
+      comment:
+        "`@org/cqrs` exists so that the transport carrying commands and queries is an implementation detail. A feature module declares a message with `Command.make` and implements it with `Command.handlersOf`; it must never name the underlying rpc primitives, or the package is a pass-through and the transport can no longer change without touching every module. If you need something rpc offers that the package does not expose, widen the package's own surface.",
+      from: { path: "^packages/(?!cqrs/)" },
+      to: { path: "/node_modules/effect/(dist|src)/unstable/rpc/" },
+    },
+    {
       name: "lives-only-from-composition-roots",
       severity: "error",
       comment:
-        "Live implementations of DDD shared kernel ports (platform/*-live.ts) are wired only by the composition root (server.ts), the test runtime (test-utils/), and integration tests that intentionally stage a sub-graph. Production-path code — commands, queries, event-handlers, domain, interface, middlewares — depends on the ports under platform/ddd/, never on these Lives. Lives may import each other.",
+        "Live implementations of DDD shared kernel ports (platform/*-live.ts) are wired only by the composition root (server.ts), the test runtime (test-utils/), and integration tests that intentionally stage a sub-graph. Production-path code — commands, queries, event-handlers, domain, interface, middlewares — depends on the ports under platform/ddd/, never on these Lives. Lives may import each other. The command/query bus factories are the same kind of thing but live in `@org/cqrs`, where a path rule cannot reach them through the package barrel; the eslint `no-restricted-imports` entry for `makeCommandBus`/`makeQueryBus`/`mergeDispatchTables` is what keeps those at a composition root.",
       from: {
         path: "^packages/server/src/",
         pathNot: [

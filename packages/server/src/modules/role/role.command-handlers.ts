@@ -1,63 +1,40 @@
-import { type Database } from "@org/database/index";
+import { Command } from "@org/cqrs";
+import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 
-import {
-  type GrantRoleCommand,
-  grantRoleCommandSpanAttributes,
-} from "@/modules/role/commands/grant-role.command.js";
-import { grantRole } from "@/modules/role/commands/grant-role.handler.js";
-import {
-  type RevokeRoleCommand,
-  revokeRoleCommandSpanAttributes,
-} from "@/modules/role/commands/revoke-role.command.js";
-import { revokeRole } from "@/modules/role/commands/revoke-role.handler.js";
-import {
-  type AlreadyHasRole,
-  type CannotPromoteSelf,
-  type DoesNotHaveRole,
-} from "@/modules/role/domain/roles/role.errors.js";
+import { GrantRoleCommand } from "@/modules/role/commands/grant-role.command.js";
+import { grantRoleHandler } from "@/modules/role/commands/grant-role.handler.js";
+import { RevokeRoleCommand } from "@/modules/role/commands/revoke-role.command.js";
+import { revokeRoleHandler } from "@/modules/role/commands/revoke-role.handler.js";
 import { RolesRepositoryLive } from "@/modules/role/infrastructure/repositories/roles.repository-live.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { commandHandlers } from "@/platform/ddd/ports/command-bus.js";
-import { type DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 
-// Bus-visible output types: the raw handlers in `commands/` carry
-// `RolesRepository` in R; the wraps below discharge that via
-// `RolesRepositoryLive`, leaving the platform-shared deps
-// (`Database`, `DomainEventBus`, `UnitOfWork`) in R for runtime swap.
-type GrantRoleOutput = Effect.Effect<
-  void,
-  AlreadyHasRole | CannotPromoteSelf | PersistenceUnavailable,
-  DomainEventBus | UnitOfWork | Database.Database
->;
+const roleCommandGroup = Command.group(GrantRoleCommand, RevokeRoleCommand);
 
-type RevokeRoleOutput = Effect.Effect<
-  void,
-  DoesNotHaveRole | PersistenceUnavailable,
-  DomainEventBus | UnitOfWork | Database.Database
->;
-
-declare module "@/platform/ddd/ports/command-bus.js" {
-  interface CommandRegistry {
-    GrantRoleCommand: {
-      readonly command: GrantRoleCommand;
-      readonly output: GrantRoleOutput;
-    };
-    RevokeRoleCommand: {
-      readonly command: RevokeRoleCommand;
-      readonly output: RevokeRoleOutput;
-    };
-  }
-}
-
-export const roleCommandHandlers = commandHandlers({
-  GrantRoleCommand: {
-    handle: (cmd): GrantRoleOutput => grantRole(cmd).pipe(Effect.provide(RolesRepositoryLive)),
-    spanAttributes: grantRoleCommandSpanAttributes,
-  },
-  RevokeRoleCommand: {
-    handle: (cmd): RevokeRoleOutput => revokeRole(cmd).pipe(Effect.provide(RolesRepositoryLive)),
-    spanAttributes: revokeRoleCommandSpanAttributes,
-  },
+const RoleCommandHandlersLive = Command.handlersOf(roleCommandGroup, {
+  GrantRoleCommand: (payload) =>
+    grantRoleHandler(payload).pipe(Effect.provide(RolesRepositoryLive)),
+  RevokeRoleCommand: (payload) =>
+    revokeRoleHandler(payload).pipe(Effect.provide(RolesRepositoryLive)),
 });
+
+const roleCommandSpanAttributes: Command.SpanAttributes<typeof roleCommandGroup> = {
+  GrantRoleCommand: (payload) => ({
+    "user.id": payload.userId,
+    "role.name": payload.role,
+    "actor.user.id": payload.actorUserId,
+  }),
+  RevokeRoleCommand: (payload) => ({ "user.id": payload.userId, "role.name": payload.role }),
+};
+
+// This module's slice of the write-side dispatch surface. See `WalletCommands` for why a
+// module publishes its own surface rather than letting consumers name the bus.
+export class RoleCommands extends Context.Service<
+  RoleCommands,
+  Command.Dispatcher<typeof roleCommandGroup>
+>()("@org/server/role/RoleCommands") {}
+
+export const RoleCommandsLive = Layer.effect(
+  RoleCommands,
+  Command.dispatcher(roleCommandGroup, { spanAttributes: roleCommandSpanAttributes }),
+).pipe(Layer.provide(RoleCommandHandlersLive));

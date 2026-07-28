@@ -10,8 +10,7 @@ import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { TodoRootOps } from "@/modules/todos/domain/todo/todo.root-ops.js";
 import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js";
 import { TodosRepositoryLive } from "@/modules/todos/infrastructure/repositories/todos.repository-live.js";
-import { listTodos } from "@/modules/todos/queries/list-todos.handler.js";
-import { ListTodosQuery } from "@/modules/todos/queries/list-todos.query.js";
+import { listTodosHandler } from "@/modules/todos/queries/list-todos.handler.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
@@ -52,7 +51,7 @@ const seed = (id: TodoId, organizationId: OrganizationId, title: string, now: Da
 
 const suite = describe.sequential;
 
-suite("listTodos (integration)", () => {
+suite("listTodosHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("todos.todos", "organization.organizations").pipe(Effect.provide(TestDatabaseLive)),
@@ -66,7 +65,7 @@ suite("listTodos (integration)", () => {
       yield* seed(bobId, orgA, "bob", bobTime);
       yield* seed(carolId, orgB, "carol-in-org-b", carolTime);
 
-      const result = yield* listTodos(ListTodosQuery.make({ organizationId: orgA }));
+      const result = yield* listTodosHandler({ organizationId: orgA });
       deepStrictEqual(
         result.todos.map((t) => t.title),
         ["bob", "alice"],
@@ -78,7 +77,7 @@ suite("listTodos (integration)", () => {
     Effect.gen(function* () {
       yield* seedOrgs;
       yield* seed(aliceId, orgA, "alice", aliceTime);
-      const result = yield* listTodos(ListTodosQuery.make({ organizationId: orgB }));
+      const result = yield* listTodosHandler({ organizationId: orgB });
       deepStrictEqual(result.todos, []);
     }).pipe(Effect.provide(TestLayer)),
   );

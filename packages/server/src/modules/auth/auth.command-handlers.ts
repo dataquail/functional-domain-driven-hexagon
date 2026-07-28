@@ -1,211 +1,98 @@
-import type * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
-import { type Database } from "@org/database/index";
+import { Command } from "@org/cqrs";
+import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import {
-  type ApproveDeviceGrantCommand,
-  approveDeviceGrantCommandSpanAttributes,
-} from "@/modules/auth/commands/approve-device-grant.command.js";
-import { approveDeviceGrant } from "@/modules/auth/commands/approve-device-grant.handler.js";
-import {
-  type MintApiTokenCommand,
-  mintApiTokenCommandSpanAttributes,
-  type MintApiTokenResult,
-} from "@/modules/auth/commands/mint-api-token.command.js";
-import { mintApiToken } from "@/modules/auth/commands/mint-api-token.handler.js";
-import {
-  type PollDeviceGrantCommand,
-  pollDeviceGrantCommandSpanAttributes,
-} from "@/modules/auth/commands/poll-device-grant.command.js";
-import { pollDeviceGrant } from "@/modules/auth/commands/poll-device-grant.handler.js";
-import {
-  type RevokeApiTokenCommand,
-  revokeApiTokenCommandSpanAttributes,
-} from "@/modules/auth/commands/revoke-api-token.command.js";
-import { revokeApiToken } from "@/modules/auth/commands/revoke-api-token.handler.js";
-import {
-  type RevokeSessionCommand,
-  revokeSessionCommandSpanAttributes,
-} from "@/modules/auth/commands/revoke-session.command.js";
-import { revokeSession } from "@/modules/auth/commands/revoke-session.handler.js";
-import {
-  type SignInCommand,
-  signInCommandSpanAttributes,
-  type SignInResult,
-} from "@/modules/auth/commands/sign-in.command.js";
-import { signIn } from "@/modules/auth/commands/sign-in.handler.js";
-import {
-  type StartDeviceGrantCommand,
-  startDeviceGrantCommandSpanAttributes,
-  type StartDeviceGrantResult,
-} from "@/modules/auth/commands/start-device-grant.command.js";
-import { startDeviceGrant } from "@/modules/auth/commands/start-device-grant.handler.js";
-import {
-  type TouchApiTokenCommand,
-  touchApiTokenCommandSpanAttributes,
-} from "@/modules/auth/commands/touch-api-token.command.js";
-import { touchApiToken } from "@/modules/auth/commands/touch-api-token.handler.js";
-import {
-  type TouchSessionCommand,
-  touchSessionCommandSpanAttributes,
-} from "@/modules/auth/commands/touch-session.command.js";
-import { touchSession } from "@/modules/auth/commands/touch-session.handler.js";
-import { type ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.js";
-import {
-  type DeviceGrantExpired,
-  type DeviceGrantNotFound,
-  type DeviceGrantPending,
-} from "@/modules/auth/domain/device-grant/device-grant.errors.js";
-import { type UserProvisioning } from "@/modules/auth/domain/ports/acl/user-provisioning.acl.js";
+import { ApproveDeviceGrantCommand } from "@/modules/auth/commands/approve-device-grant.command.js";
+import { approveDeviceGrantHandler } from "@/modules/auth/commands/approve-device-grant.handler.js";
+import { MintApiTokenCommand } from "@/modules/auth/commands/mint-api-token.command.js";
+import { mintApiTokenHandler } from "@/modules/auth/commands/mint-api-token.handler.js";
+import { PollDeviceGrantCommand } from "@/modules/auth/commands/poll-device-grant.command.js";
+import { pollDeviceGrantHandler } from "@/modules/auth/commands/poll-device-grant.handler.js";
+import { RevokeApiTokenCommand } from "@/modules/auth/commands/revoke-api-token.command.js";
+import { revokeApiTokenHandler } from "@/modules/auth/commands/revoke-api-token.handler.js";
+import { RevokeSessionCommand } from "@/modules/auth/commands/revoke-session.command.js";
+import { revokeSessionHandler } from "@/modules/auth/commands/revoke-session.handler.js";
+import { SignInCommand } from "@/modules/auth/commands/sign-in.command.js";
+import { signInHandler } from "@/modules/auth/commands/sign-in.handler.js";
+import { StartDeviceGrantCommand } from "@/modules/auth/commands/start-device-grant.command.js";
+import { startDeviceGrantHandler } from "@/modules/auth/commands/start-device-grant.handler.js";
+import { TouchApiTokenCommand } from "@/modules/auth/commands/touch-api-token.command.js";
+import { touchApiTokenHandler } from "@/modules/auth/commands/touch-api-token.handler.js";
+import { TouchSessionCommand } from "@/modules/auth/commands/touch-session.command.js";
+import { touchSessionHandler } from "@/modules/auth/commands/touch-session.handler.js";
+import { UserProvisioningLive } from "@/modules/auth/infrastructure/acl/user-provisioning.acl-live.js";
 import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositories/api-token.repository-live.js";
 import { AuthIdentityRepositoryLive } from "@/modules/auth/infrastructure/repositories/auth-identity.repository-live.js";
 import { DeviceGrantRepositoryLive } from "@/modules/auth/infrastructure/repositories/device-grant.repository-live.js";
 import { SessionRepositoryLive } from "@/modules/auth/infrastructure/repositories/session.repository-live.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { commandHandlers } from "@/platform/ddd/ports/command-bus.js";
-import { type UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
 
-// `UnitOfWork` + `UserProvisioning` are not provided by the handler wrap
-// (only the two repositories are); they're satisfied from the composition-
-// root context, so they remain in the bus output's residual R alongside
-// `Database`.
-type SignInOutput = Effect.Effect<
-  SignInResult,
-  CustomHttpApiError.Unauthorized | PersistenceUnavailable,
-  Database.Database | UnitOfWork | UserProvisioning
->;
+// `UserProvisioningLive` is provided here rather than at the composition root: only a
+// dispatch surface can absorb its own outbound adapter, because `handlersOf` infers the
+// user-module requirement it carries where a hand-written output type would force this
+// module to name it. Provisioning joins sign-in's transaction (ADR-0007 +
+// `UnitOfWorkLive` re-entrancy), which is why it is a dispatched command rather than an
+// event reaction.
+const authCommandGroup = Command.group(
+  SignInCommand,
+  TouchSessionCommand,
+  RevokeSessionCommand,
+  MintApiTokenCommand,
+  RevokeApiTokenCommand,
+  TouchApiTokenCommand,
+  StartDeviceGrantCommand,
+  ApproveDeviceGrantCommand,
+  PollDeviceGrantCommand,
+);
 
-type TouchSessionOutput = Effect.Effect<void, never, Database.Database>;
+const AuthCommandHandlersLive = Command.handlersOf(authCommandGroup, {
+  SignInCommand: (payload) =>
+    signInHandler(payload).pipe(
+      Effect.provide(Layer.mergeAll(AuthIdentityRepositoryLive, SessionRepositoryLive)),
+    ),
+  TouchSessionCommand: (payload) =>
+    touchSessionHandler(payload).pipe(Effect.provide(SessionRepositoryLive)),
+  RevokeSessionCommand: (payload) =>
+    revokeSessionHandler(payload).pipe(Effect.provide(SessionRepositoryLive)),
+  MintApiTokenCommand: (payload) =>
+    mintApiTokenHandler(payload).pipe(Effect.provide(ApiTokenRepositoryLive)),
+  RevokeApiTokenCommand: (payload) =>
+    revokeApiTokenHandler(payload).pipe(Effect.provide(ApiTokenRepositoryLive)),
+  TouchApiTokenCommand: (payload) =>
+    touchApiTokenHandler(payload).pipe(Effect.provide(ApiTokenRepositoryLive)),
+  StartDeviceGrantCommand: (payload) =>
+    startDeviceGrantHandler(payload).pipe(Effect.provide(DeviceGrantRepositoryLive)),
+  ApproveDeviceGrantCommand: (payload) =>
+    approveDeviceGrantHandler(payload).pipe(Effect.provide(DeviceGrantRepositoryLive)),
+  PollDeviceGrantCommand: (payload) =>
+    pollDeviceGrantHandler(payload).pipe(
+      Effect.provide(Layer.mergeAll(DeviceGrantRepositoryLive, ApiTokenRepositoryLive)),
+    ),
+}).pipe(Layer.provide(UserProvisioningLive));
 
-type RevokeSessionOutput = Effect.Effect<void, never, Database.Database>;
+// Three payload fields are deliberately absent: Zitadel's `subject` is opaque but still
+// user-correlatable, and `userCode`/`deviceCode` are bearer credentials. Each handler
+// annotates the resolved ids itself, which is post-redaction and safe.
+const authCommandSpanAttributes: Command.SpanAttributes<typeof authCommandGroup> = {
+  TouchSessionCommand: (payload) => ({ "auth.session.id": payload.sessionId }),
+  RevokeSessionCommand: (payload) => ({ "auth.session.id": payload.sessionId }),
+  MintApiTokenCommand: (payload) => ({ "user.id": payload.userId }),
+  RevokeApiTokenCommand: (payload) => ({
+    "auth.api_token.id": payload.apiTokenId,
+    "user.id": payload.userId,
+  }),
+  TouchApiTokenCommand: (payload) => ({ "auth.api_token.id": payload.apiTokenId }),
+  ApproveDeviceGrantCommand: (payload) => ({ "user.id": payload.userId }),
+};
 
-// Mint/revoke run in a unit of work; the repository wrap discharges
-// `ApiTokenRepository`, leaving `Database` (its dependency) + `UnitOfWork`.
-type MintApiTokenOutput = Effect.Effect<
-  MintApiTokenResult,
-  PersistenceUnavailable,
-  Database.Database | UnitOfWork
->;
+// This module's slice of the write-side dispatch surface. See `WalletCommands` for why a
+// module publishes its own surface rather than letting consumers name the bus.
+export class AuthCommands extends Context.Service<
+  AuthCommands,
+  Command.Dispatcher<typeof authCommandGroup>
+>()("@org/server/auth/AuthCommands") {}
 
-type RevokeApiTokenOutput = Effect.Effect<
-  void,
-  ApiTokenNotFound | PersistenceUnavailable,
-  Database.Database | UnitOfWork
->;
-
-// Fire-and-forget last-used stamp; swallows its own errors (no uow).
-type TouchApiTokenOutput = Effect.Effect<void, never, Database.Database>;
-
-// Device flow (ADR-0005). Start/approve run in a uow over the grant repo;
-// poll additionally mints (ApiToken repo), all in one transaction.
-type StartDeviceGrantOutput = Effect.Effect<
-  StartDeviceGrantResult,
-  PersistenceUnavailable,
-  Database.Database | UnitOfWork
->;
-
-type ApproveDeviceGrantOutput = Effect.Effect<
-  void,
-  DeviceGrantNotFound | DeviceGrantExpired | PersistenceUnavailable,
-  Database.Database | UnitOfWork
->;
-
-type PollDeviceGrantOutput = Effect.Effect<
-  MintApiTokenResult,
-  DeviceGrantNotFound | DeviceGrantExpired | DeviceGrantPending | PersistenceUnavailable,
-  Database.Database | UnitOfWork
->;
-
-declare module "@/platform/ddd/ports/command-bus.js" {
-  interface CommandRegistry {
-    SignInCommand: {
-      readonly command: SignInCommand;
-      readonly output: SignInOutput;
-    };
-    TouchSessionCommand: {
-      readonly command: TouchSessionCommand;
-      readonly output: TouchSessionOutput;
-    };
-    RevokeSessionCommand: {
-      readonly command: RevokeSessionCommand;
-      readonly output: RevokeSessionOutput;
-    };
-    MintApiTokenCommand: {
-      readonly command: MintApiTokenCommand;
-      readonly output: MintApiTokenOutput;
-    };
-    RevokeApiTokenCommand: {
-      readonly command: RevokeApiTokenCommand;
-      readonly output: RevokeApiTokenOutput;
-    };
-    TouchApiTokenCommand: {
-      readonly command: TouchApiTokenCommand;
-      readonly output: TouchApiTokenOutput;
-    };
-    StartDeviceGrantCommand: {
-      readonly command: StartDeviceGrantCommand;
-      readonly output: StartDeviceGrantOutput;
-    };
-    ApproveDeviceGrantCommand: {
-      readonly command: ApproveDeviceGrantCommand;
-      readonly output: ApproveDeviceGrantOutput;
-    };
-    PollDeviceGrantCommand: {
-      readonly command: PollDeviceGrantCommand;
-      readonly output: PollDeviceGrantOutput;
-    };
-  }
-}
-
-export const authCommandHandlers = commandHandlers({
-  SignInCommand: {
-    handle: (cmd): SignInOutput =>
-      signIn(cmd).pipe(
-        Effect.provide(Layer.mergeAll(AuthIdentityRepositoryLive, SessionRepositoryLive)),
-      ),
-    spanAttributes: signInCommandSpanAttributes,
-  },
-  TouchSessionCommand: {
-    handle: (cmd): TouchSessionOutput =>
-      touchSession(cmd).pipe(Effect.provide(SessionRepositoryLive)),
-    spanAttributes: touchSessionCommandSpanAttributes,
-  },
-  RevokeSessionCommand: {
-    handle: (cmd): RevokeSessionOutput =>
-      revokeSession(cmd).pipe(Effect.provide(SessionRepositoryLive)),
-    spanAttributes: revokeSessionCommandSpanAttributes,
-  },
-  MintApiTokenCommand: {
-    handle: (cmd): MintApiTokenOutput =>
-      mintApiToken(cmd).pipe(Effect.provide(ApiTokenRepositoryLive)),
-    spanAttributes: mintApiTokenCommandSpanAttributes,
-  },
-  RevokeApiTokenCommand: {
-    handle: (cmd): RevokeApiTokenOutput =>
-      revokeApiToken(cmd).pipe(Effect.provide(ApiTokenRepositoryLive)),
-    spanAttributes: revokeApiTokenCommandSpanAttributes,
-  },
-  TouchApiTokenCommand: {
-    handle: (cmd): TouchApiTokenOutput =>
-      touchApiToken(cmd).pipe(Effect.provide(ApiTokenRepositoryLive)),
-    spanAttributes: touchApiTokenCommandSpanAttributes,
-  },
-  StartDeviceGrantCommand: {
-    handle: (cmd): StartDeviceGrantOutput =>
-      startDeviceGrant(cmd).pipe(Effect.provide(DeviceGrantRepositoryLive)),
-    spanAttributes: startDeviceGrantCommandSpanAttributes,
-  },
-  ApproveDeviceGrantCommand: {
-    handle: (cmd): ApproveDeviceGrantOutput =>
-      approveDeviceGrant(cmd).pipe(Effect.provide(DeviceGrantRepositoryLive)),
-    spanAttributes: approveDeviceGrantCommandSpanAttributes,
-  },
-  PollDeviceGrantCommand: {
-    handle: (cmd): PollDeviceGrantOutput =>
-      pollDeviceGrant(cmd).pipe(
-        Effect.provide(Layer.mergeAll(DeviceGrantRepositoryLive, ApiTokenRepositoryLive)),
-      ),
-    spanAttributes: pollDeviceGrantCommandSpanAttributes,
-  },
-});
+export const AuthCommandsLive = Layer.effect(
+  AuthCommands,
+  Command.dispatcher(authCommandGroup, { spanAttributes: authCommandSpanAttributes }),
+).pipe(Layer.provide(AuthCommandHandlersLive));

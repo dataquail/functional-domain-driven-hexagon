@@ -3,7 +3,7 @@ import * as crypto from "node:crypto";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { type ResendInvitationCommand } from "@/modules/organization/commands/resend-invitation.command.js";
+import { type ResendInvitationPayload } from "@/modules/organization/commands/resend-invitation.command.js";
 import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors.js";
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
 import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
@@ -17,8 +17,8 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 // previous link stops working. Reissue refuses accepted/revoked
 // invitations (the aggregate enforces it), which the endpoint maps to
 // 410 Gone — same shape as revoke.
-export const resendInvitation = Effect.fn("resendInvitation")(function* (
-  cmd: ResendInvitationCommand,
+export const resendInvitationHandler = Effect.fn("resendInvitationHandler")(function* (
+  cmd: ResendInvitationPayload,
 ) {
   const repo = yield* InvitationRepository;
   const bus = yield* DomainEventBus;
@@ -43,7 +43,7 @@ export const resendInvitation = Effect.fn("resendInvitation")(function* (
   }).pipe(withUnitOfWork);
 
   yield* Effect.annotateCurrentSpan("invitation.id", cmd.invitationId);
-  // Fire after the UoW commits (same rationale as inviteUser): the email
+  // Fire after the UoW commits (same rationale as inviteUserHandler): the email
   // carries the new accept link; best-effort delivery in the adapter.
   yield* invitationMailer.send({ to: reissued.inviteeEmail, token, expiresAt });
 });

@@ -28,6 +28,7 @@
     "@aws-sdk/client-sesv2": "^3.1081.0",
     "@effect/platform-node": "4.0.0-beta.94",
     "@org/contracts": "workspace:^",
+    "@org/cqrs": "workspace:^",
     "@org/database": "workspace:^",
     "@react-email/components": "^1.0.12",
     "@react-email/render": "^2.0.10",

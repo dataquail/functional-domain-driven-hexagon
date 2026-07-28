@@ -1,39 +1,33 @@
-import type * as DateTime from "effect/DateTime";
+import { Query } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
+import { OrganizationId } from "@/platform/ids/organization-id.js";
+
+export const FindAllOrganizationsView = Schema.Struct({
+  id: OrganizationId,
+  name: Schema.String,
+  createdAt: Schema.DateTimeUtc,
+  updatedAt: Schema.DateTimeUtc,
+  deletedAt: Schema.NullOr(Schema.DateTimeUtc),
+});
+export type FindAllOrganizationsView = typeof FindAllOrganizationsView.Type;
+
+export const FindAllOrganizationsResultView = Schema.Struct({
+  organizations: Schema.Array(FindAllOrganizationsView),
+  page: Schema.Number,
+  pageSize: Schema.Number,
+  total: Schema.Number,
+});
+export type FindAllOrganizationsResult = typeof FindAllOrganizationsResultView.Type;
 
 // Admin-side listing of every org. `includeDeleted` is the explicit
 // opt-in for the soft-delete recycling-bin view; by default the
 // query filters tombstones out so the regular admin browse doesn't
 // surface them.
-export const FindAllOrganizationsQuery = Schema.TaggedStruct("FindAllOrganizationsQuery", {
-  page: Schema.Number,
-  pageSize: Schema.Number,
-  includeDeleted: Schema.Boolean,
+export const FindAllOrganizationsQuery = Query.make("FindAllOrganizationsQuery", {
+  payload: { page: Schema.Number, pageSize: Schema.Number, includeDeleted: Schema.Boolean },
+  success: FindAllOrganizationsResultView,
+  failure: PersistenceUnavailable,
 });
-export type FindAllOrganizationsQuery = typeof FindAllOrganizationsQuery.Type;
-
-export const findAllOrganizationsQuerySpanAttributes: SpanAttributesExtractor<
-  FindAllOrganizationsQuery
-> = (query) => ({
-  "query.page": query.page,
-  "query.pageSize": query.pageSize,
-  "query.includeDeleted": query.includeDeleted,
-});
-
-export type FindAllOrganizationsView = {
-  readonly id: OrganizationId;
-  readonly name: string;
-  readonly createdAt: DateTime.Utc;
-  readonly updatedAt: DateTime.Utc;
-  readonly deletedAt: DateTime.Utc | null;
-};
-
-export type FindAllOrganizationsResult = {
-  readonly organizations: ReadonlyArray<FindAllOrganizationsView>;
-  readonly page: number;
-  readonly pageSize: number;
-  readonly total: number;
-};
+export type FindAllOrganizationsPayload = Query.Payload<typeof FindAllOrganizationsQuery>;

@@ -29,8 +29,8 @@ modules/<feature>/
     ports/         — the outbound ports that are not repositories, tiered by counterpart (see ADR-0022)
       clients/      — true third-party systems (`*.client.ts`)
       acl/          — other bounded contexts (`*.acl.ts`)
-  commands/        — `*.command.ts` schema + `*.handler.ts` handler + bus-registration map
-  queries/         — `*.query.ts` schema + `*.handler.ts` handler (reads SQL directly; must not touch the domain core) + bus-registration map
+  commands/        — `*.command.ts` definition + `*.handler.ts` handler (registered from the module root)
+  queries/         — `*.query.ts` definition + `*.handler.ts` handler (reads SQL directly; must not touch the domain core)
                      `*.policy-query.ts` marks a query published for other modules' authorization checks (ADR-0022)
   infrastructure/  — driven adapters, tiered by counterpart (see ADR-0022)
     repositories/  — `*.repository-live.ts` + `*.repository-fake.ts` + `*.mapper.ts`
@@ -43,7 +43,7 @@ modules/<feature>/
   policies/        — *.policies.ts registry, *.resource-resolver(s).ts, is-*.policy.ts checks
   # module root — a closed set of aggregation/composition files only (ADR-0024); feature code lives in the subfolders above
   <feature>.module.ts                 — the composed Layer for the module
-  <feature>.command-handlers.ts / .query-handlers.ts  — bus-registration maps
+  <feature>.command-handlers.ts / .query-handlers.ts  — handler registration + this module's published dispatch surface (ADR-0006)
   <feature>.event-span-attributes.ts  — per-event span-attribute extractors aggregated for this module
   <feature>.shared-deps.ts            — narrow shared-dependency Layer (when a module needs one)
   index.ts                            — barrel: re-exports only what other modules legitimately need
@@ -61,9 +61,9 @@ Enforced by static analysis (see ADR-0008):
 
 - Code outside a module imports it only via the module's `index.ts` barrel.
 - Modules do not reach into each other's internal folders directly.
-- The barrel itself is restricted: it may not re-export anything from `infrastructure/` or `interface/`, so the published cross-module surface is limited to domain types (events, IDs, errors), command/query message types, handler-registration maps and span-attribute aggregators, and the module's `Live` layer.
-- Cross-module flow happens via three channels: the published HTTP contract, published domain events, or dispatch through the typed command/query bus (ADR-0006). The bus carries one constraint: a command handler in one module must not dispatch a command in another module — the chain goes through an event (Command → Event → Command), where the reacting module's `interface/events/` adapter subscribes to the event and dispatches its own command. Cross-module _queries_ via the bus are unrestricted; they are reads, with no transactional or coupling consequences.
-- Domain events that other modules subscribe to, and command/query schemas that other modules dispatch, are part of the source module's public surface and are re-exported from its `index.ts`.
+- The barrel itself is restricted: it may not re-export anything from `infrastructure/` or `interface/`, so the published cross-module surface is limited to domain types (events, IDs, errors), command/query definitions, this module's dispatch-surface Tags and their Lives, its span-attribute aggregator, and the module's `Live` layer.
+- Cross-module flow happens via three channels: the published HTTP contract, published domain events, or a dispatch made through the consumer's own outbound port (ADR-0022) against the publisher's dispatch surface (ADR-0006). Writes default to going through an event — Command → Event → Command, where the reacting module's `interface/events/` adapter subscribes and dispatches its own command — because that keeps the two modules' write paths independent. A write whose result the caller needs synchronously inside its own transaction is the exception and still goes through an outbound port.
+- Domain events that other modules subscribe to, and command/query definitions that other modules dispatch, are part of the source module's public surface and are re-exported from its `index.ts`.
 
 ### Typed-ID shared kernel and its governance
 
@@ -85,7 +85,7 @@ Moving IDs into `@org/contracts` is rejected: contracts are the HTTP wire shape 
 
 - Predictable navigation. Every module uses the same folder vocabulary. Finding "the persistence implementation for X" is always `modules/<feature>/infrastructure/`; finding "where the read-side projection for Y lives" is always `modules/<feature>/queries/`.
 - Per-use-case slicing (the strength of vertical slicing) is given up. The role-based split aligns with the dependency rules, which is what we're optimizing for.
-- A subscriber in another module reaches through the barrel — for example, the wallet module's `interface/events/` adapter imports `OrganizationCreated` from `modules/organization/index.ts`, not from an internal file. This is intentional: domain events are part of the organization module's public contract, the same way the HTTP API is. The same applies to any command or query schema another module is expected to dispatch.
+- A subscriber in another module reaches through the barrel — for example, the wallet module's `interface/events/` adapter imports `OrganizationCreated` from `modules/organization/index.ts`, not from an internal file. This is intentional: domain events are part of the organization module's public contract, the same way the HTTP API is. The same applies to any command or query definition another module is expected to dispatch.
 - Adding a new module is mechanical: create the folders the module needs and add a `<feature>.module.ts` Layer. The barrel-only dependency rules apply automatically to any folder under `src/modules/` (ADR-0008).
 - The typed-ID kernel stays a one-line-per-file folder for the foreseeable future, by design. New cross-module IDs are cheap (one file, one PR, reviewer confirms two distinct consumers).
 - If a long-running orchestration appears (saga, process manager) that doesn't fit "single command" or "single event reaction," it gets its own sibling folder and its own isolation rule — the layout is open to that growth without re-introducing an `application/` umbrella.

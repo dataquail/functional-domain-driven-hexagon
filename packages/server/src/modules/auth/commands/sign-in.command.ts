@@ -1,27 +1,36 @@
+import { Command } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
-import { type SessionId } from "@/modules/auth/domain/session/session.id.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
-import { type UserId } from "@/platform/ids/user-id.js";
+import {
+  IdentityEmailAlreadyRegistered,
+  IdentityMissingEmail,
+} from "@/modules/auth/domain/auth-identity/auth-identity.errors.js";
+import { SessionId } from "@/modules/auth/domain/session/session.id.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
+import { UserId } from "@/platform/ids/user-id.js";
+
+export const SignInResultView = Schema.Struct({
+  sessionId: SessionId,
+  userId: UserId,
+});
+export type SignInResult = typeof SignInResultView.Type;
 
 // Inputs come from the OIDC callback: a verified Zitadel `subject`, the
 // signed-in `email`, and the caller's chosen TTLs. `email` is required to
 // JIT-provision an unknown subject on first sign-in (admins are pre-seeded
 // by `infra/zitadel/seed.mjs`); a `null` email fails provisioning.
-export const SignInCommand = Schema.TaggedStruct("SignInCommand", {
-  subject: Schema.String,
-  email: Schema.NullOr(Schema.String),
-  ttlSeconds: Schema.Number,
-  absoluteTtlSeconds: Schema.Number,
+export const SignInCommand = Command.make("SignInCommand", {
+  payload: {
+    subject: Schema.String,
+    email: Schema.NullOr(Schema.String),
+    ttlSeconds: Schema.Number,
+    absoluteTtlSeconds: Schema.Number,
+  },
+  success: SignInResultView,
+  failure: Schema.Union([
+    IdentityMissingEmail,
+    IdentityEmailAlreadyRegistered,
+    PersistenceUnavailable,
+  ]),
 });
-export type SignInCommand = typeof SignInCommand.Type;
-
-// `subject` is intentionally not in the span — Zitadel's sub is opaque but
-// still user-correlatable. The handler annotates `user.id` once it's
-// resolved, which is post-redaction and safe.
-export const signInCommandSpanAttributes: SpanAttributesExtractor<SignInCommand> = () => ({});
-
-export type SignInResult = {
-  readonly sessionId: SessionId;
-  readonly userId: UserId;
-};
+export type SignInPayload = Command.Payload<typeof SignInCommand>;

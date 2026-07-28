@@ -1,16 +1,27 @@
+import { Command } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import {
+  InvitationAlreadyAccepted,
+  InvitationAlreadyRevoked,
+  InvitationNotFound,
+} from "@/modules/organization/domain/invitation/invitation.errors.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-export const ResendInvitationCommand = Schema.TaggedStruct("ResendInvitationCommand", {
-  invitationId: InvitationId,
-  ttlSeconds: Schema.Number,
-  actorUserId: UserId,
+export const ResendInvitationCommand = Command.make("ResendInvitationCommand", {
+  payload: {
+    invitationId: InvitationId,
+    ttlSeconds: Schema.Number,
+    actorUserId: UserId,
+  },
+  success: Schema.Void,
+  failure: Schema.Union([
+    InvitationNotFound,
+    InvitationAlreadyAccepted,
+    InvitationAlreadyRevoked,
+    PersistenceUnavailable,
+  ]),
 });
-export type ResendInvitationCommand = typeof ResendInvitationCommand.Type;
-
-export const resendInvitationCommandSpanAttributes: SpanAttributesExtractor<
-  ResendInvitationCommand
-> = (cmd) => ({ "invitation.id": cmd.invitationId, "actor.user.id": cmd.actorUserId });
+export type ResendInvitationPayload = Command.Payload<typeof ResendInvitationCommand>;

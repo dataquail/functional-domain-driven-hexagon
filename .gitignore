@@ -28,3 +28,16 @@ packages/acceptance/playwright/.auth/
 
 # eslint-plugin-project-structure cache
 projectStructure.cache.json
+
+# Compiled output emitted beside its own source. A build misconfigured to write into
+# `src/` shadows the `.ts` it came from: TypeScript resolves the stale `.js` first and
+# every type from that module silently degrades to `any`. Ignoring keeps the artifacts
+# out of a commit — it does not stop the shadowing, so delete them if a build starts
+# resolving a workspace package as `any`. A hand-written ambient `.d.ts` under `src/`
+# would need an explicit negation here.
+packages/*/src/**/*.js
+packages/*/src/**/*.jsx
+packages/*/src/**/*.mjs
+packages/*/src/**/*.cjs
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.map

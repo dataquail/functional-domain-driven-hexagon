@@ -1,12 +1,11 @@
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
-import { Database } from "@org/database/index";
+import { QueryBus } from "@org/cqrs";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { FindOrganizationByIdQuery } from "@/modules/organization/queries/find-organization-by-id.query.js";
 import { type Resolver } from "@/platform/auth/resource-resolver-registry.js";
-import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 
 // Resolves the `organization` authz resource off the read side: the checks only
 // need the org id, and the load exists to distinguish "no such organization"
@@ -27,10 +26,8 @@ export const OrganizationResolverEntryLive = Layer.effect(
   OrganizationResolverEntry,
   Effect.gen(function* () {
     const queryBus = yield* QueryBus;
-    const db = yield* Database.Database;
     return (organizationId) =>
-      queryBus.execute(FindOrganizationByIdQuery.make({ organizationId })).pipe(
-        Effect.provideService(Database.Database, db),
+      queryBus.execute(FindOrganizationByIdQuery, { organizationId }).pipe(
         Effect.flatMap((view) =>
           view === null ? Effect.fail(new CustomHttpApiError.NotFound()) : Effect.succeed(view),
         ),

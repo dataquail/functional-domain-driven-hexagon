@@ -10,7 +10,7 @@ import { SubscriptionSpecifications } from "@/modules/billing/domain/subscriptio
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-import { type StartSubscriptionCommand } from "./start-subscription.command.js";
+import { type StartSubscriptionPayload } from "./start-subscription.command.js";
 
 // External IO (`gateway.createCustomer` / `createSubscription`) runs
 // OUTSIDE the unit of work. If the DB insert fails after the gateway
@@ -18,8 +18,8 @@ import { type StartSubscriptionCommand } from "./start-subscription.command.js";
 // the reconciliation problem is real but out of scope for the MVP.
 // The local repo insert is wrapped in the UoW so the bus dispatch
 // still rolls back with it if a downstream subscriber defects.
-export const startSubscription = Effect.fn("startSubscription")(function* (
-  cmd: StartSubscriptionCommand,
+export const startSubscriptionHandler = Effect.fn("startSubscriptionHandler")(function* (
+  cmd: StartSubscriptionPayload,
 ) {
   const repo = yield* SubscriptionRepository;
   const gateway = yield* BillingGateway;

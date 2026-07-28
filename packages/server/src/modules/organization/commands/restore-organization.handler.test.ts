@@ -6,12 +6,9 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { CreateOrganizationCommand } from "@/modules/organization/commands/create-organization.command.js";
-import { createOrganization } from "@/modules/organization/commands/create-organization.handler.js";
-import { RestoreOrganizationCommand } from "@/modules/organization/commands/restore-organization.command.js";
-import { restoreOrganization } from "@/modules/organization/commands/restore-organization.handler.js";
-import { SoftDeleteOrganizationCommand } from "@/modules/organization/commands/soft-delete-organization.command.js";
-import { softDeleteOrganization } from "@/modules/organization/commands/soft-delete-organization.handler.js";
+import { createOrganizationHandler } from "@/modules/organization/commands/create-organization.handler.js";
+import { restoreOrganizationHandler } from "@/modules/organization/commands/restore-organization.handler.js";
+import { softDeleteOrganizationHandler } from "@/modules/organization/commands/soft-delete-organization.handler.js";
 import {
   OrganizationNotDeleted,
   OrganizationNotFound,
@@ -39,16 +36,14 @@ const TestLayer = Layer.mergeAll(
   makePlatformRolesFake(),
 );
 
-describe("restoreOrganization", () => {
+describe("restoreOrganizationHandler", () => {
   it.effect("clears the tombstone and publishes OrganizationRestored", () =>
     Effect.gen(function* () {
       const repo = yield* OrganizationRepository;
       const rec = yield* RecordedEvents;
-      const id = yield* createOrganization(
-        CreateOrganizationCommand.make({ name: "Acme", actorUserId }),
-      );
-      yield* softDeleteOrganization(SoftDeleteOrganizationCommand.make({ organizationId: id }));
-      yield* restoreOrganization(RestoreOrganizationCommand.make({ organizationId: id }));
+      const id = yield* createOrganizationHandler({ name: "Acme", actorUserId });
+      yield* softDeleteOrganizationHandler({ organizationId: id });
+      yield* restoreOrganizationHandler({ organizationId: id });
       const stored = yield* repo.findOne(OrganizationSpecifications.withId(id));
       if (stored === null) throw new Error("expected organization");
       deepStrictEqual(stored.deletedAt, null);
@@ -60,9 +55,7 @@ describe("restoreOrganization", () => {
   it.effect("fails OrganizationNotFound when the org doesn't exist", () =>
     Effect.gen(function* () {
       const unknown = OrganizationId.make("00000000-0000-0000-0000-000000000000");
-      const exit = yield* Effect.exit(
-        restoreOrganization(RestoreOrganizationCommand.make({ organizationId: unknown })),
-      );
+      const exit = yield* Effect.exit(restoreOrganizationHandler({ organizationId: unknown }));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.hasFails(exit.cause)
@@ -75,12 +68,8 @@ describe("restoreOrganization", () => {
 
   it.effect("fails OrganizationNotDeleted when the org is still active", () =>
     Effect.gen(function* () {
-      const id = yield* createOrganization(
-        CreateOrganizationCommand.make({ name: "Acme", actorUserId }),
-      );
-      const exit = yield* Effect.exit(
-        restoreOrganization(RestoreOrganizationCommand.make({ organizationId: id })),
-      );
+      const id = yield* createOrganizationHandler({ name: "Acme", actorUserId });
+      const exit = yield* Effect.exit(restoreOrganizationHandler({ organizationId: id }));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.hasFails(exit.cause)

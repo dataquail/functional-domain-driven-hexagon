@@ -1,12 +1,12 @@
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
+import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { InviteUserCommand } from "@/modules/organization/commands/invite-user.command.js";
 import { OrganizationResource } from "@/modules/organization/policies/organization.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
-import { CommandBus } from "@/platform/ddd/ports/command-bus.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // Default invitation lifetime — 7 days. Lives at the endpoint
@@ -23,14 +23,12 @@ export const inviteEndpoint = (
     yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.params.orgId);
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
-    const invitationId = yield* commandBus.execute(
-      InviteUserCommand.make({
-        organizationId: request.params.orgId,
-        inviteeEmail: request.payload.email,
-        ttlSeconds: DEFAULT_INVITATION_TTL_SECONDS,
-        actorUserId: currentUser.userId,
-      }),
-    );
+    const invitationId = yield* commandBus.execute(InviteUserCommand, {
+      organizationId: request.params.orgId,
+      inviteeEmail: request.payload.email,
+      ttlSeconds: DEFAULT_INVITATION_TTL_SECONDS,
+      actorUserId: currentUser.userId,
+    });
     return new OrganizationContract.InviteUserResponse({ invitationId });
   }).pipe(
     Effect.catchTag("NotFound", () =>

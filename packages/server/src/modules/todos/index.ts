@@ -15,6 +15,6 @@ export {
   TodoResource,
 } from "./policies/todos.policies.js";
 export { ListTodosQuery } from "./queries/list-todos.query.js";
-export { todoCommandHandlers } from "./todo.command-handlers.js";
-export { todoQueryHandlers } from "./todo.query-handlers.js";
+export { TodoCommands, TodoCommandsLive } from "./todo.command-handlers.js";
+export { TodoQueries, TodoQueriesLive } from "./todo.query-handlers.js";
 export { TodosModuleLive } from "./todos.module.js";

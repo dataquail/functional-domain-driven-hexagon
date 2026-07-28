@@ -1,100 +1,49 @@
-import { type Database } from "@org/database/index";
-import type * as Effect from "effect/Effect";
+import { Query } from "@org/cqrs";
+import * as Context from "effect/Context";
+import * as Layer from "effect/Layer";
 
-import { type PlatformRoles } from "@/modules/auth/domain/ports/acl/platform-roles.acl.js";
-import { findApiTokenByHash } from "@/modules/auth/queries/find-api-token-by-hash.handler.js";
-import {
-  type ApiTokenExpired,
-  type ApiTokenNotFound,
-  type ApiTokenPrincipalView,
-  type ApiTokenRevoked,
-  type FindApiTokenByHashQuery,
-  findApiTokenByHashQuerySpanAttributes,
-} from "@/modules/auth/queries/find-api-token-by-hash.query.js";
-import { findCurrentUser } from "@/modules/auth/queries/find-current-user.handler.js";
-import {
-  type CurrentUserView,
-  type FindCurrentUserQuery,
-  findCurrentUserQuerySpanAttributes,
-} from "@/modules/auth/queries/find-current-user.query.js";
-import { findSession } from "@/modules/auth/queries/find-session.handler.js";
-import {
-  type FindSessionQuery,
-  findSessionQuerySpanAttributes,
-  type SessionExpired,
-  type SessionNotFound,
-  type SessionRevoked,
-  type SessionView,
-} from "@/modules/auth/queries/find-session.query.js";
-import { listMyApiTokens } from "@/modules/auth/queries/list-my-api-tokens.handler.js";
-import {
-  type ApiTokenView,
-  type ListMyApiTokensQuery,
-  listMyApiTokensQuerySpanAttributes,
-} from "@/modules/auth/queries/list-my-api-tokens.query.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { queryHandlers } from "@/platform/ddd/ports/query-bus.js";
+import { PlatformRolesLive } from "@/modules/auth/infrastructure/acl/platform-roles.acl-live.js";
+import { findApiTokenByHashHandler } from "@/modules/auth/queries/find-api-token-by-hash.handler.js";
+import { FindApiTokenByHashQuery } from "@/modules/auth/queries/find-api-token-by-hash.query.js";
+import { findCurrentUserHandler } from "@/modules/auth/queries/find-current-user.handler.js";
+import { FindCurrentUserQuery } from "@/modules/auth/queries/find-current-user.query.js";
+import { findSessionHandler } from "@/modules/auth/queries/find-session.handler.js";
+import { FindSessionQuery } from "@/modules/auth/queries/find-session.query.js";
+import { listMyApiTokensHandler } from "@/modules/auth/queries/list-my-api-tokens.handler.js";
+import { ListMyApiTokensQuery } from "@/modules/auth/queries/list-my-api-tokens.query.js";
 
-type FindSessionOutput = Effect.Effect<
-  SessionView,
-  SessionNotFound | SessionExpired | SessionRevoked | PersistenceUnavailable,
-  Database.Database
->;
+// This module's slice of the read-side dispatch surface. `handlersOf` is what lets the
+// `PlatformRoles` adapter be provided here: the role-module requirement it drags in is
+// inferred onto this layer rather than written into a type, so auth never names a role
+// type.
+const authQueryGroup = Query.group(
+  FindCurrentUserQuery,
+  FindSessionQuery,
+  FindApiTokenByHashQuery,
+  ListMyApiTokensQuery,
+);
 
-type FindApiTokenByHashOutput = Effect.Effect<
-  ApiTokenPrincipalView,
-  ApiTokenNotFound | ApiTokenExpired | ApiTokenRevoked | PersistenceUnavailable,
-  Database.Database
->;
+const AuthQueryHandlersLive = Query.handlersOf(authQueryGroup, {
+  FindCurrentUserQuery: (payload) => findCurrentUserHandler(payload),
+  FindSessionQuery: (payload) => findSessionHandler(payload),
+  FindApiTokenByHashQuery: (payload) => findApiTokenByHashHandler(payload),
+  ListMyApiTokensQuery: (payload) => listMyApiTokensHandler(payload),
+}).pipe(Layer.provide(PlatformRolesLive));
 
-type ListMyApiTokensOutput = Effect.Effect<
-  ReadonlyArray<ApiTokenView>,
-  PersistenceUnavailable,
-  Database.Database
->;
+// `tokenHash` is secret-derived and never reaches a span; a session id is an opaque
+// UUID and does.
+const authQuerySpanAttributes: Query.SpanAttributes<typeof authQueryGroup> = {
+  FindCurrentUserQuery: (payload) => ({ "user.id": payload.userId }),
+  FindSessionQuery: (payload) => ({ "auth.session.id": payload.sessionId }),
+  ListMyApiTokensQuery: (payload) => ({ "user.id": payload.userId }),
+};
 
-// `PlatformRoles` stays in the output R rather than being wrapped here: the
-// adapter dispatches through the QueryBus, so closing it inside the query-bus
-// layer would make that layer depend on itself. The composition root provides it
-// where the endpoint call sites can see it.
-type FindCurrentUserOutput = Effect.Effect<CurrentUserView, PersistenceUnavailable, PlatformRoles>;
+export class AuthQueries extends Context.Service<
+  AuthQueries,
+  Query.Dispatcher<typeof authQueryGroup>
+>()("@org/server/auth/AuthQueries") {}
 
-declare module "@/platform/ddd/ports/query-bus.js" {
-  interface QueryRegistry {
-    FindSessionQuery: {
-      readonly query: FindSessionQuery;
-      readonly output: FindSessionOutput;
-    };
-    FindApiTokenByHashQuery: {
-      readonly query: FindApiTokenByHashQuery;
-      readonly output: FindApiTokenByHashOutput;
-    };
-    ListMyApiTokensQuery: {
-      readonly query: ListMyApiTokensQuery;
-      readonly output: ListMyApiTokensOutput;
-    };
-    FindCurrentUserQuery: {
-      readonly query: FindCurrentUserQuery;
-      readonly output: FindCurrentUserOutput;
-    };
-  }
-}
-
-export const authQueryHandlers = queryHandlers({
-  FindSessionQuery: {
-    handle: findSession,
-    spanAttributes: findSessionQuerySpanAttributes,
-  },
-  FindApiTokenByHashQuery: {
-    handle: findApiTokenByHash,
-    spanAttributes: findApiTokenByHashQuerySpanAttributes,
-  },
-  ListMyApiTokensQuery: {
-    handle: listMyApiTokens,
-    spanAttributes: listMyApiTokensQuerySpanAttributes,
-  },
-  FindCurrentUserQuery: {
-    handle: findCurrentUser,
-    spanAttributes: findCurrentUserQuerySpanAttributes,
-  },
-});
+export const AuthQueriesLive = Layer.effect(
+  AuthQueries,
+  Query.dispatcher(authQueryGroup, { spanAttributes: authQuerySpanAttributes }),
+).pipe(Layer.provide(AuthQueryHandlersLive));

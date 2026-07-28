@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import {
-  type ListTodosQuery,
+  type ListTodosPayload,
   type ListTodosTodoView,
 } from "@/modules/todos/queries/list-todos.query.js";
 import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
@@ -14,7 +14,7 @@ const toView = (row: RowSchemas.TodoRow): ListTodosTodoView => ({
   completed: row.completed,
 });
 
-export const listTodos = Effect.fn("listTodos")(function* (query: ListTodosQuery) {
+export const listTodosHandler = Effect.fn("listTodosHandler")(function* (query: ListTodosPayload) {
   const db = yield* Database.Database;
   const rows = yield* db
     .makeQuery((execute) =>

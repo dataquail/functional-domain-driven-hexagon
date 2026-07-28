@@ -8,8 +8,7 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 
-import { AcceptInvitationCommand } from "@/modules/organization/commands/accept-invitation.command.js";
-import { acceptInvitation } from "@/modules/organization/commands/accept-invitation.handler.js";
+import { acceptInvitationHandler } from "@/modules/organization/commands/accept-invitation.handler.js";
 import {
   InvitationAlreadyAccepted,
   InvitationExpired,
@@ -61,7 +60,7 @@ const TestLayer = Layer.mergeAll(
   makePlatformRolesFake(),
 );
 
-describe("acceptInvitation", () => {
+describe("acceptInvitationHandler", () => {
   it.effect("creates the membership, marks invitation accepted, dispatches both events", () =>
     Effect.gen(function* () {
       const inv = yield* InvitationRepository;
@@ -69,9 +68,7 @@ describe("acceptInvitation", () => {
       const rec = yield* RecordedEvents;
       yield* inv.insertOne(seed());
 
-      const orgId = yield* acceptInvitation(
-        AcceptInvitationCommand.make({ token: "tok-abc", userId }),
-      );
+      const orgId = yield* acceptInvitationHandler({ token: "tok-abc", userId });
       deepStrictEqual(orgId, organizationId);
 
       const updated = yield* inv.findOne(InvitationSpecifications.withId(invitationId));
@@ -101,9 +98,7 @@ describe("acceptInvitation", () => {
 
   it.effect("fails InvitationTokenNotFound when no invitation matches the token", () =>
     Effect.gen(function* () {
-      const exit = yield* Effect.exit(
-        acceptInvitation(AcceptInvitationCommand.make({ token: "missing", userId })),
-      );
+      const exit = yield* Effect.exit(acceptInvitationHandler({ token: "missing", userId }));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.hasFails(exit.cause)
@@ -121,9 +116,7 @@ describe("acceptInvitation", () => {
       if (Result.isFailure(accepted)) throw new Error("expected Right");
       yield* inv.insertOne(accepted.success.invitation);
 
-      const exit = yield* Effect.exit(
-        acceptInvitation(AcceptInvitationCommand.make({ token: "tok-abc", userId })),
-      );
+      const exit = yield* Effect.exit(acceptInvitationHandler({ token: "tok-abc", userId }));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.hasFails(exit.cause)
@@ -141,9 +134,7 @@ describe("acceptInvitation", () => {
       if (Result.isFailure(revoked)) throw new Error("expected Right");
       yield* inv.insertOne(revoked.success.invitation);
 
-      const exit = yield* Effect.exit(
-        acceptInvitation(AcceptInvitationCommand.make({ token: "tok-abc", userId })),
-      );
+      const exit = yield* Effect.exit(acceptInvitationHandler({ token: "tok-abc", userId }));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.hasFails(exit.cause)
@@ -170,9 +161,7 @@ describe("acceptInvitation", () => {
       }).invitation;
       yield* inv.insertOne(expired);
 
-      const exit = yield* Effect.exit(
-        acceptInvitation(AcceptInvitationCommand.make({ token: "tok-abc", userId })),
-      );
+      const exit = yield* Effect.exit(acceptInvitationHandler({ token: "tok-abc", userId }));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.hasFails(exit.cause)
@@ -189,9 +178,7 @@ describe("acceptInvitation", () => {
       yield* inv.insertOne(seed());
 
       const exit = yield* Effect.exit(
-        acceptInvitation(
-          AcceptInvitationCommand.make({ token: "tok-abc", userId: superAdminUserId }),
-        ),
+        acceptInvitationHandler({ token: "tok-abc", userId: superAdminUserId }),
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {

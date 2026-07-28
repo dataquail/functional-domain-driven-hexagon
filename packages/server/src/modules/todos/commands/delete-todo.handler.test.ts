@@ -16,8 +16,7 @@ import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-import { DeleteTodoCommand } from "./delete-todo.command.js";
-import { deleteTodo } from "./delete-todo.handler.js";
+import { deleteTodoHandler } from "./delete-todo.handler.js";
 
 const aliceId = TodoId.make("11111111-1111-1111-1111-111111111111");
 const aliceUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
@@ -25,16 +24,14 @@ const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const otherOrgId = OrganizationId.make("33333333-3333-3333-3333-333333333333");
 const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
 
-describe("deleteTodo", () => {
+describe("deleteTodoHandler", () => {
   it.effect("removes the todo from the repository", () =>
     Effect.gen(function* () {
       const repo = yield* TodosRepository;
       yield* repo.insertOne(
         TodoRootOps.create({ id: aliceId, organizationId: orgId, title: "Buy milk", now }),
       );
-      yield* deleteTodo(
-        DeleteTodoCommand.make({ todoId: aliceId, organizationId: orgId, userId: aliceUserId }),
-      );
+      yield* deleteTodoHandler({ todoId: aliceId, organizationId: orgId, userId: aliceUserId });
       const found = yield* repo.findOne(
         Spec.and(TodoSpecifications.withId(aliceId), TodoSpecifications.forOrganization(orgId)),
       );
@@ -45,9 +42,7 @@ describe("deleteTodo", () => {
   it.effect("fails TodoNotFound when the todo doesn't exist", () =>
     Effect.gen(function* () {
       const exit = yield* Effect.exit(
-        deleteTodo(
-          DeleteTodoCommand.make({ todoId: aliceId, organizationId: orgId, userId: aliceUserId }),
-        ),
+        deleteTodoHandler({ todoId: aliceId, organizationId: orgId, userId: aliceUserId }),
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
@@ -66,13 +61,11 @@ describe("deleteTodo", () => {
         TodoRootOps.create({ id: aliceId, organizationId: orgId, title: "Buy milk", now }),
       );
       const exit = yield* Effect.exit(
-        deleteTodo(
-          DeleteTodoCommand.make({
-            todoId: aliceId,
-            organizationId: otherOrgId,
-            userId: aliceUserId,
-          }),
-        ),
+        deleteTodoHandler({
+          todoId: aliceId,
+          organizationId: otherOrgId,
+          userId: aliceUserId,
+        }),
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {

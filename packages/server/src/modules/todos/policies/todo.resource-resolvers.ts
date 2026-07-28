@@ -1,5 +1,5 @@
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
-import { Database } from "@org/database/index";
+import { QueryBus } from "@org/cqrs";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -7,7 +7,6 @@ import * as Layer from "effect/Layer";
 import { type TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { FindTodoOrganizationQuery } from "@/modules/todos/queries/find-todo-organization.query.js";
 import { type Resolver } from "@/platform/auth/resource-resolver-registry.js";
-import { QueryBus } from "@/platform/ddd/ports/query-bus.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 // Todos expose two policy resources, split by what is actually being
@@ -69,10 +68,8 @@ export const TodoResolverEntryLive = Layer.effect(
   TodoResolverEntry,
   Effect.gen(function* () {
     const queryBus = yield* QueryBus;
-    const db = yield* Database.Database;
     return ({ organizationId, todoId }) =>
-      queryBus.execute(FindTodoOrganizationQuery.make({ organizationId, todoId })).pipe(
-        Effect.provideService(Database.Database, db),
+      queryBus.execute(FindTodoOrganizationQuery, { organizationId, todoId }).pipe(
         Effect.flatMap((view) =>
           view === null ? Effect.fail(new CustomHttpApiError.NotFound()) : Effect.succeed(view),
         ),
