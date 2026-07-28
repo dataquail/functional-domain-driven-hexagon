@@ -1,9 +1,18 @@
 {
   "extends": "./tsconfig.base.json",
   "include": [],
+  // Every buildable package, so `tsc -b` orders the whole graph in one pass. The
+  // `pnpm build` script then runs each package's own build as a no-op. Listing only
+  // some of them left the rest to the script's `--parallel` step, where two packages
+  // needing the same dependency race to write its .tsbuildinfo.
   "references": [
     { "path": "packages/contracts/tsconfig.build.json" },
+    { "path": "packages/cqrs/tsconfig.build.json" },
     { "path": "packages/database/tsconfig.build.json" },
-    { "path": "packages/server/tsconfig.build.json" }
+    { "path": "packages/api-client/tsconfig.build.json" },
+    { "path": "packages/server/tsconfig.build.json" },
+    { "path": "packages/jobs/tsconfig.build.json" },
+    { "path": "packages/cli/tsconfig.build.json" },
+    { "path": "packages/mcp/tsconfig.build.json" }
   ]
 }
