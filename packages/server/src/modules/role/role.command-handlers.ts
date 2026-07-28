@@ -3,17 +3,19 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { GrantRole } from "@/modules/role/commands/grant-role.command.js";
-import { grantRole } from "@/modules/role/commands/grant-role.handler.js";
-import { RevokeRole } from "@/modules/role/commands/revoke-role.command.js";
-import { revokeRole } from "@/modules/role/commands/revoke-role.handler.js";
+import { GrantRoleCommand } from "@/modules/role/commands/grant-role.command.js";
+import { grantRoleHandler } from "@/modules/role/commands/grant-role.handler.js";
+import { RevokeRoleCommand } from "@/modules/role/commands/revoke-role.command.js";
+import { revokeRoleHandler } from "@/modules/role/commands/revoke-role.handler.js";
 import { RolesRepositoryLive } from "@/modules/role/infrastructure/repositories/roles.repository-live.js";
 
-const roleCommandGroup = Command.group(GrantRole, RevokeRole);
+const roleCommandGroup = Command.group(GrantRoleCommand, RevokeRoleCommand);
 
 const RoleCommandHandlersLive = Command.handlersOf(roleCommandGroup, {
-  GrantRoleCommand: (payload) => grantRole(payload).pipe(Effect.provide(RolesRepositoryLive)),
-  RevokeRoleCommand: (payload) => revokeRole(payload).pipe(Effect.provide(RolesRepositoryLive)),
+  GrantRoleCommand: (payload) =>
+    grantRoleHandler(payload).pipe(Effect.provide(RolesRepositoryLive)),
+  RevokeRoleCommand: (payload) =>
+    revokeRoleHandler(payload).pipe(Effect.provide(RolesRepositoryLive)),
 });
 
 const roleCommandSpanAttributes: Command.SpanAttributes<typeof roleCommandGroup> = {

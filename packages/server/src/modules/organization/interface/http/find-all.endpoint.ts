@@ -4,7 +4,7 @@ import * as Effect from "effect/Effect";
 
 import { OrganizationCollectionResource } from "@/modules/organization/policies/organization.policies.js";
 import {
-  FindAllOrganizations,
+  FindAllOrganizationsQuery,
   type FindAllOrganizationsResult,
   type FindAllOrganizationsView,
 } from "@/modules/organization/queries/find-all-organizations.query.js";
@@ -38,7 +38,7 @@ export const findAllEndpoint = Effect.fn("OrganizationAdminLive.findAll")(functi
 ) {
   yield* Authz.hasPermissions(OrganizationCollectionResource, Actions.Read);
   const queryBus = yield* QueryBus;
-  const result = yield* queryBus.execute(FindAllOrganizations, {
+  const result = yield* queryBus.execute(FindAllOrganizationsQuery, {
     page: request.query.page,
     pageSize: request.query.pageSize,
     includeDeleted: request.query.includeDeleted === "true",

@@ -3,8 +3,8 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { CreateWallet } from "@/modules/wallet/commands/create-wallet.command.js";
-import { createWallet } from "@/modules/wallet/commands/create-wallet.handler.js";
+import { CreateWalletCommand } from "@/modules/wallet/commands/create-wallet.command.js";
+import { createWalletHandler } from "@/modules/wallet/commands/create-wallet.handler.js";
 import { WalletRepositoryLive } from "@/modules/wallet/infrastructure/repositories/wallet.repository-live.js";
 
 // The group is the module's slice of the write-side surface; `handlersOf` moves the
@@ -14,11 +14,11 @@ import { WalletRepositoryLive } from "@/modules/wallet/infrastructure/repositori
 // Published so an integration test can stage this module's write side against
 // alternative handlers (ADR-0009); the composition root reaches `WalletCommandsLive`
 // instead and never reassembles the group itself.
-export const walletCommandGroup = Command.group(CreateWallet);
+export const walletCommandGroup = Command.group(CreateWalletCommand);
 
 const WalletCommandHandlersLive = Command.handlersOf(walletCommandGroup, {
   CreateWalletCommand: (payload) =>
-    createWallet(payload).pipe(Effect.provide(WalletRepositoryLive)),
+    createWalletHandler(payload).pipe(Effect.provide(WalletRepositoryLive)),
 });
 
 const walletCommandSpanAttributes: Command.SpanAttributes<typeof walletCommandGroup> = {

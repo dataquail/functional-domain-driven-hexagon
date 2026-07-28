@@ -8,7 +8,7 @@ import { UserSpecifications } from "@/modules/user/domain/user/user.specificatio
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-export const deleteUser = Effect.fn("deleteUser")(function* (cmd: DeleteUserPayload) {
+export const deleteUserHandler = Effect.fn("deleteUserHandler")(function* (cmd: DeleteUserPayload) {
   const repo = yield* UserRepository;
   const bus = yield* DomainEventBus;
   const user = yield* repo.findOne(UserSpecifications.withId(cmd.userId));

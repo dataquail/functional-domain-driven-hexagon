@@ -8,7 +8,7 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 
-import { revokeInvitation } from "@/modules/organization/commands/revoke-invitation.handler.js";
+import { revokeInvitationHandler } from "@/modules/organization/commands/revoke-invitation.handler.js";
 import {
   InvitationAlreadyAccepted,
   InvitationAlreadyRevoked,
@@ -45,14 +45,14 @@ const seed = (): InvitationRoot =>
 
 const TestLayer = Layer.mergeAll(InvitationRepositoryFake, RecordingEventBus, IdentityUnitOfWork);
 
-describe("revokeInvitation", () => {
+describe("revokeInvitationHandler", () => {
   it.effect("marks invitation revoked and publishes InvitationRevoked", () =>
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
       const rec = yield* RecordedEvents;
       yield* repo.insertOne(seed());
 
-      yield* revokeInvitation({ invitationId, actorUserId });
+      yield* revokeInvitationHandler({ invitationId, actorUserId });
 
       const updated = yield* repo.findOne(InvitationSpecifications.withId(invitationId));
       if (updated === null) throw new Error("expected invitation");
@@ -68,7 +68,7 @@ describe("revokeInvitation", () => {
 
   it.effect("fails InvitationNotFound when the id is unknown", () =>
     Effect.gen(function* () {
-      const exit = yield* Effect.exit(revokeInvitation({ invitationId, actorUserId }));
+      const exit = yield* Effect.exit(revokeInvitationHandler({ invitationId, actorUserId }));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.hasFails(exit.cause)
@@ -86,7 +86,7 @@ describe("revokeInvitation", () => {
       if (Result.isFailure(accepted)) throw new Error("expected Right");
       yield* repo.insertOne(accepted.success.invitation);
 
-      const exit = yield* Effect.exit(revokeInvitation({ invitationId, actorUserId }));
+      const exit = yield* Effect.exit(revokeInvitationHandler({ invitationId, actorUserId }));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.hasFails(exit.cause)
@@ -104,7 +104,7 @@ describe("revokeInvitation", () => {
       if (Result.isFailure(revoked)) throw new Error("expected Right");
       yield* repo.insertOne(revoked.success.invitation);
 
-      const exit = yield* Effect.exit(revokeInvitation({ invitationId, actorUserId }));
+      const exit = yield* Effect.exit(revokeInvitationHandler({ invitationId, actorUserId }));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.hasFails(exit.cause)

@@ -7,7 +7,7 @@ import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 // The handler does its own throttle + revocation guard, so the command is safe to fire on every
 // request — when nothing needs to change, it's a no-op. No failure channel: the handler swallows
 // its own errors so a sliding-TTL refresh can never fail a request.
-export const TouchSession = Command.make("TouchSessionCommand", {
+export const TouchSessionCommand = Command.make("TouchSessionCommand", {
   payload: {
     sessionId: SessionId,
     ttlSeconds: Schema.Number,
@@ -15,4 +15,4 @@ export const TouchSession = Command.make("TouchSessionCommand", {
   },
   success: Schema.Void,
 });
-export type TouchSessionPayload = Command.Payload<typeof TouchSession>;
+export type TouchSessionPayload = Command.Payload<typeof TouchSessionCommand>;

@@ -7,7 +7,7 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { cancelSubscription } from "@/modules/billing/commands/cancel-subscription.handler.js";
+import { cancelSubscriptionHandler } from "@/modules/billing/commands/cancel-subscription.handler.js";
 import { SubscriptionNotFound } from "@/modules/billing/domain/subscription/subscription.errors.js";
 import { type SubscriptionCanceled } from "@/modules/billing/domain/subscription/subscription.events.js";
 import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
@@ -46,14 +46,14 @@ const seed = (status = "active") =>
     yield* repo.insertOne(subscription);
   });
 
-describe("cancelSubscription", () => {
+describe("cancelSubscriptionHandler", () => {
   it.effect("flips status to 'canceled', persists, publishes SubscriptionCanceled", () =>
     Effect.gen(function* () {
       yield* seed();
       const repo = yield* SubscriptionRepository;
       const rec = yield* RecordedEvents;
 
-      const result = yield* cancelSubscription({ organizationId: acme });
+      const result = yield* cancelSubscriptionHandler({ organizationId: acme });
       deepStrictEqual(result.status, "canceled");
 
       const found = yield* repo.findOne(SubscriptionSpecifications.forOrganization(acme));
@@ -67,7 +67,7 @@ describe("cancelSubscription", () => {
 
   it.effect("fails SubscriptionNotFound when no subscription exists for the org", () =>
     Effect.gen(function* () {
-      const exit = yield* Effect.exit(cancelSubscription({ organizationId: acme }));
+      const exit = yield* Effect.exit(cancelSubscriptionHandler({ organizationId: acme }));
       ok(Exit.isFailure(exit));
       if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
         ok(

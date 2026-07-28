@@ -3,7 +3,7 @@ import { CurrentUser } from "@org/contracts/Policy";
 import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
-import { DeleteTodo } from "@/modules/todos/commands/delete-todo.command.js";
+import { DeleteTodoCommand } from "@/modules/todos/commands/delete-todo.command.js";
 import { TodoResource } from "@/modules/todos/policies/todos.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
@@ -29,7 +29,7 @@ export const deleteEndpoint = Effect.fn("TodosLive.delete")(
     );
     const commandBus = yield* CommandBus;
     const currentUser = yield* CurrentUser;
-    yield* commandBus.execute(DeleteTodo, {
+    yield* commandBus.execute(DeleteTodoCommand, {
       todoId: request.params.id,
       organizationId: request.params.orgId,
       userId: currentUser.userId,

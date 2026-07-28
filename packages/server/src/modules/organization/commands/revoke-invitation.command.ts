@@ -10,7 +10,7 @@ import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-una
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-export const RevokeInvitation = Command.make("RevokeInvitationCommand", {
+export const RevokeInvitationCommand = Command.make("RevokeInvitationCommand", {
   payload: { invitationId: InvitationId, actorUserId: UserId },
   success: Schema.Void,
   failure: Schema.Union([
@@ -20,4 +20,4 @@ export const RevokeInvitation = Command.make("RevokeInvitationCommand", {
     PersistenceUnavailable,
   ]),
 });
-export type RevokeInvitationPayload = Command.Payload<typeof RevokeInvitation>;
+export type RevokeInvitationPayload = Command.Payload<typeof RevokeInvitationCommand>;

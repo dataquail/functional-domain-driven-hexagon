@@ -2,16 +2,16 @@ import { Query } from "@org/cqrs";
 import * as Context from "effect/Context";
 import * as Layer from "effect/Layer";
 
-import { findUserRoles } from "@/modules/role/queries/find-user-roles.handler.js";
-import { FindUserRoles } from "@/modules/role/queries/find-user-roles.policy-query.js";
+import { findUserRolesHandler } from "@/modules/role/queries/find-user-roles.handler.js";
+import { FindUserRolesQuery } from "@/modules/role/queries/find-user-roles.policy-query.js";
 
 // This is a policy-query, so its only consumers are other modules' ACL adapters, and
 // ADR-0022 has them reach it through their own port. They resolve this surface directly;
 // nothing dispatches the tag on the app-wide bus.
-const roleQueryGroup = Query.group(FindUserRoles);
+const roleQueryGroup = Query.group(FindUserRolesQuery);
 
 const RoleQueryHandlersLive = Query.handlersOf(roleQueryGroup, {
-  FindUserRolesQuery: (payload) => findUserRoles(payload),
+  FindUserRolesQuery: (payload) => findUserRolesHandler(payload),
 });
 
 const roleQuerySpanAttributes: Query.SpanAttributes<typeof roleQueryGroup> = {

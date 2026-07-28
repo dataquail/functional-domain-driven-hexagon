@@ -4,7 +4,7 @@ import { QueryBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import {
-  FindMyOrganizations,
+  FindMyOrganizationsQuery,
   type FindMyOrganizationsView,
 } from "@/modules/organization/queries/find-my-organizations.query.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
@@ -24,6 +24,6 @@ export const findMineEndpoint = Effect.fn("CliOrganizationLive.listMine")(functi
 ) {
   const currentUser = yield* CurrentUser;
   const queryBus = yield* QueryBus;
-  const result = yield* queryBus.execute(FindMyOrganizations, { userId: currentUser.userId });
+  const result = yield* queryBus.execute(FindMyOrganizationsQuery, { userId: currentUser.userId });
   return result.organizations.map(toCli);
 }, recoverPersistenceUnavailable);

@@ -23,7 +23,7 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 //
 // Exposed sans-uow so a caller already inside a transaction (the device-flow
 // poll) can mint + consume its grant atomically without nesting a second
-// unit of work. `mintApiToken` adds the boundary for direct bus dispatch.
+// unit of work. `mintApiTokenHandler` adds the boundary for direct bus dispatch.
 export const mintApiTokenCore = (
   input: MintApiTokenInput,
 ): Effect.Effect<MintApiTokenResult, PersistenceUnavailable, ApiTokenRepository> =>
@@ -51,10 +51,12 @@ export const mintApiTokenCore = (
   });
 
 // The registered use case: `mintApiTokenCore` + the transaction boundary.
-// `Effect.fn` names the use-case span (`mintApiToken`) inside the command-bus
+// `Effect.fn` names the use-case span (`mintApiTokenHandler`) inside the command-bus
 // boundary span; `mintApiTokenCore` stays span-less (a shared sub-step below
 // use-case granularity) so its `annotateCurrentSpan` lands on whichever use
-// case invoked it (this one, or `pollDeviceGrant`).
-export const mintApiToken = Effect.fn("mintApiToken")(function* (cmd: MintApiTokenPayload) {
+// case invoked it (this one, or `pollDeviceGrantHandler`).
+export const mintApiTokenHandler = Effect.fn("mintApiTokenHandler")(function* (
+  cmd: MintApiTokenPayload,
+) {
   return yield* mintApiTokenCore(cmd);
 }, withUnitOfWork);

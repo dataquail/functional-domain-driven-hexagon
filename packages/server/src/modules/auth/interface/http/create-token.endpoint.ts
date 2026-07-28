@@ -4,7 +4,7 @@ import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { EnvVars } from "@/common/env-vars.js";
-import { MintApiToken } from "@/modules/auth/commands/mint-api-token.command.js";
+import { MintApiTokenCommand } from "@/modules/auth/commands/mint-api-token.command.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // Mints a personal access token for the authenticated caller and returns the
@@ -16,7 +16,7 @@ export const createTokenEndpoint = Effect.fn("AuthLive.tokens.create")(function*
   const currentUser = yield* CurrentUser;
   const env = yield* EnvVars;
   const commandBus = yield* CommandBus;
-  const { apiToken, token } = yield* commandBus.execute(MintApiToken, {
+  const { apiToken, token } = yield* commandBus.execute(MintApiTokenCommand, {
     userId: currentUser.userId,
     label: request.payload.label,
     expiresInDays: request.payload.expiresInDays ?? env.API_TOKEN_DEFAULT_TTL_DAYS,

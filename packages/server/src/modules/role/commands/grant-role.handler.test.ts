@@ -6,7 +6,7 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { grantRole } from "@/modules/role/commands/grant-role.handler.js";
+import { grantRoleHandler } from "@/modules/role/commands/grant-role.handler.js";
 import { AlreadyHasRole, CannotPromoteSelf } from "@/modules/role/domain/roles/role.errors.js";
 import { type RoleGranted } from "@/modules/role/domain/roles/role.events.js";
 import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
@@ -21,13 +21,13 @@ const TestLayer = Layer.mergeAll(RolesRepositoryFake, RecordingEventBus, Identit
 const targetId = UserId.make("11111111-1111-1111-1111-111111111111");
 const actorId = UserId.make("99999999-9999-9999-9999-999999999999");
 
-describe("grantRole", () => {
+describe("grantRoleHandler", () => {
   it.effect("persists the role and publishes RoleGranted", () =>
     Effect.gen(function* () {
       const repo = yield* RolesRepository;
       const rec = yield* RecordedEvents;
 
-      yield* grantRole({ userId: targetId, role: "super_admin", actorUserId: actorId });
+      yield* grantRoleHandler({ userId: targetId, role: "super_admin", actorUserId: actorId });
 
       const roles = yield* repo.findOne(RolesSpecifications.forUser(targetId));
       if (roles === null) throw new Error("expected aggregate");
@@ -45,7 +45,7 @@ describe("grantRole", () => {
   it.effect("fails CannotPromoteSelf when actor equals target", () =>
     Effect.gen(function* () {
       const exit = yield* Effect.exit(
-        grantRole({ userId: targetId, role: "super_admin", actorUserId: targetId }),
+        grantRoleHandler({ userId: targetId, role: "super_admin", actorUserId: targetId }),
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
@@ -59,9 +59,9 @@ describe("grantRole", () => {
 
   it.effect("fails AlreadyHasRole when the role is already granted", () =>
     Effect.gen(function* () {
-      yield* grantRole({ userId: targetId, role: "super_admin", actorUserId: actorId });
+      yield* grantRoleHandler({ userId: targetId, role: "super_admin", actorUserId: actorId });
       const exit = yield* Effect.exit(
-        grantRole({ userId: targetId, role: "super_admin", actorUserId: actorId }),
+        grantRoleHandler({ userId: targetId, role: "super_admin", actorUserId: actorId }),
       );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {

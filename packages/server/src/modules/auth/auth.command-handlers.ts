@@ -3,24 +3,24 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { ApproveDeviceGrant } from "@/modules/auth/commands/approve-device-grant.command.js";
-import { approveDeviceGrant } from "@/modules/auth/commands/approve-device-grant.handler.js";
-import { MintApiToken } from "@/modules/auth/commands/mint-api-token.command.js";
-import { mintApiToken } from "@/modules/auth/commands/mint-api-token.handler.js";
-import { PollDeviceGrant } from "@/modules/auth/commands/poll-device-grant.command.js";
-import { pollDeviceGrant } from "@/modules/auth/commands/poll-device-grant.handler.js";
-import { RevokeApiToken } from "@/modules/auth/commands/revoke-api-token.command.js";
-import { revokeApiToken } from "@/modules/auth/commands/revoke-api-token.handler.js";
-import { RevokeSession } from "@/modules/auth/commands/revoke-session.command.js";
-import { revokeSession } from "@/modules/auth/commands/revoke-session.handler.js";
-import { SignIn } from "@/modules/auth/commands/sign-in.command.js";
-import { signIn } from "@/modules/auth/commands/sign-in.handler.js";
-import { StartDeviceGrant } from "@/modules/auth/commands/start-device-grant.command.js";
-import { startDeviceGrant } from "@/modules/auth/commands/start-device-grant.handler.js";
-import { TouchApiToken } from "@/modules/auth/commands/touch-api-token.command.js";
-import { touchApiToken } from "@/modules/auth/commands/touch-api-token.handler.js";
-import { TouchSession } from "@/modules/auth/commands/touch-session.command.js";
-import { touchSession } from "@/modules/auth/commands/touch-session.handler.js";
+import { ApproveDeviceGrantCommand } from "@/modules/auth/commands/approve-device-grant.command.js";
+import { approveDeviceGrantHandler } from "@/modules/auth/commands/approve-device-grant.handler.js";
+import { MintApiTokenCommand } from "@/modules/auth/commands/mint-api-token.command.js";
+import { mintApiTokenHandler } from "@/modules/auth/commands/mint-api-token.handler.js";
+import { PollDeviceGrantCommand } from "@/modules/auth/commands/poll-device-grant.command.js";
+import { pollDeviceGrantHandler } from "@/modules/auth/commands/poll-device-grant.handler.js";
+import { RevokeApiTokenCommand } from "@/modules/auth/commands/revoke-api-token.command.js";
+import { revokeApiTokenHandler } from "@/modules/auth/commands/revoke-api-token.handler.js";
+import { RevokeSessionCommand } from "@/modules/auth/commands/revoke-session.command.js";
+import { revokeSessionHandler } from "@/modules/auth/commands/revoke-session.handler.js";
+import { SignInCommand } from "@/modules/auth/commands/sign-in.command.js";
+import { signInHandler } from "@/modules/auth/commands/sign-in.handler.js";
+import { StartDeviceGrantCommand } from "@/modules/auth/commands/start-device-grant.command.js";
+import { startDeviceGrantHandler } from "@/modules/auth/commands/start-device-grant.handler.js";
+import { TouchApiTokenCommand } from "@/modules/auth/commands/touch-api-token.command.js";
+import { touchApiTokenHandler } from "@/modules/auth/commands/touch-api-token.handler.js";
+import { TouchSessionCommand } from "@/modules/auth/commands/touch-session.command.js";
+import { touchSessionHandler } from "@/modules/auth/commands/touch-session.handler.js";
 import { UserProvisioningLive } from "@/modules/auth/infrastructure/acl/user-provisioning.acl-live.js";
 import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositories/api-token.repository-live.js";
 import { AuthIdentityRepositoryLive } from "@/modules/auth/infrastructure/repositories/auth-identity.repository-live.js";
@@ -34,38 +34,38 @@ import { SessionRepositoryLive } from "@/modules/auth/infrastructure/repositorie
 // `UnitOfWorkLive` re-entrancy), which is why it is a dispatched command rather than an
 // event reaction.
 const authCommandGroup = Command.group(
-  SignIn,
-  TouchSession,
-  RevokeSession,
-  MintApiToken,
-  RevokeApiToken,
-  TouchApiToken,
-  StartDeviceGrant,
-  ApproveDeviceGrant,
-  PollDeviceGrant,
+  SignInCommand,
+  TouchSessionCommand,
+  RevokeSessionCommand,
+  MintApiTokenCommand,
+  RevokeApiTokenCommand,
+  TouchApiTokenCommand,
+  StartDeviceGrantCommand,
+  ApproveDeviceGrantCommand,
+  PollDeviceGrantCommand,
 );
 
 const AuthCommandHandlersLive = Command.handlersOf(authCommandGroup, {
   SignInCommand: (payload) =>
-    signIn(payload).pipe(
+    signInHandler(payload).pipe(
       Effect.provide(Layer.mergeAll(AuthIdentityRepositoryLive, SessionRepositoryLive)),
     ),
   TouchSessionCommand: (payload) =>
-    touchSession(payload).pipe(Effect.provide(SessionRepositoryLive)),
+    touchSessionHandler(payload).pipe(Effect.provide(SessionRepositoryLive)),
   RevokeSessionCommand: (payload) =>
-    revokeSession(payload).pipe(Effect.provide(SessionRepositoryLive)),
+    revokeSessionHandler(payload).pipe(Effect.provide(SessionRepositoryLive)),
   MintApiTokenCommand: (payload) =>
-    mintApiToken(payload).pipe(Effect.provide(ApiTokenRepositoryLive)),
+    mintApiTokenHandler(payload).pipe(Effect.provide(ApiTokenRepositoryLive)),
   RevokeApiTokenCommand: (payload) =>
-    revokeApiToken(payload).pipe(Effect.provide(ApiTokenRepositoryLive)),
+    revokeApiTokenHandler(payload).pipe(Effect.provide(ApiTokenRepositoryLive)),
   TouchApiTokenCommand: (payload) =>
-    touchApiToken(payload).pipe(Effect.provide(ApiTokenRepositoryLive)),
+    touchApiTokenHandler(payload).pipe(Effect.provide(ApiTokenRepositoryLive)),
   StartDeviceGrantCommand: (payload) =>
-    startDeviceGrant(payload).pipe(Effect.provide(DeviceGrantRepositoryLive)),
+    startDeviceGrantHandler(payload).pipe(Effect.provide(DeviceGrantRepositoryLive)),
   ApproveDeviceGrantCommand: (payload) =>
-    approveDeviceGrant(payload).pipe(Effect.provide(DeviceGrantRepositoryLive)),
+    approveDeviceGrantHandler(payload).pipe(Effect.provide(DeviceGrantRepositoryLive)),
   PollDeviceGrantCommand: (payload) =>
-    pollDeviceGrant(payload).pipe(
+    pollDeviceGrantHandler(payload).pipe(
       Effect.provide(Layer.mergeAll(DeviceGrantRepositoryLive, ApiTokenRepositoryLive)),
     ),
 }).pipe(Layer.provide(UserProvisioningLive));

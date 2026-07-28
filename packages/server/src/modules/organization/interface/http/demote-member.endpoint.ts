@@ -2,7 +2,7 @@ import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
-import { RevokeOrganizationRole } from "@/modules/organization/commands/revoke-organization-role.command.js";
+import { RevokeOrganizationRoleCommand } from "@/modules/organization/commands/revoke-organization-role.command.js";
 import { OrganizationResource } from "@/modules/organization/policies/organization.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
@@ -20,7 +20,7 @@ export const demoteMemberEndpoint = (
   Effect.gen(function* () {
     yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.params.orgId);
     const commandBus = yield* CommandBus;
-    yield* commandBus.execute(RevokeOrganizationRole, {
+    yield* commandBus.execute(RevokeOrganizationRoleCommand, {
       userId: request.params.userId,
       organizationId: request.params.orgId,
       role: "admin",

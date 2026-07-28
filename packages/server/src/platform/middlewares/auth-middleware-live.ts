@@ -9,11 +9,11 @@ import * as HttpServerRequest from "effect/unstable/http/HttpServerRequest";
 import { EnvVars } from "@/common/env-vars.js";
 import {
   CredentialHash,
-  FindApiTokenByHash,
-  FindSession,
+  FindApiTokenByHashQuery,
+  FindSessionQuery,
   SessionId,
-  TouchApiToken,
-  TouchSession,
+  TouchApiTokenCommand,
+  TouchSessionCommand,
 } from "@/modules/auth/index.js";
 import { CookieCodec } from "@/platform/auth/cookie-codec.js";
 
@@ -59,14 +59,14 @@ export const UserAuthMiddlewareLive = Layer.effect(
       const bearer = readBearer(httpReq.headers.authorization);
       if (bearer !== null) {
         const apiToken = yield* queryBus
-          .execute(FindApiTokenByHash, { tokenHash: CredentialHash.of(bearer) })
+          .execute(FindApiTokenByHashQuery, { tokenHash: CredentialHash.of(bearer) })
           .pipe(Effect.mapError(toAuthError));
         // Last-used stamp, forked off the request fiber (`forkDetach`) so its
         // lookup + throttle never sit on the auth critical path. Detached from
         // the request scope so it outlives the response; throttled +
         // error-swallowing in the handler. Same rationale as the session touch.
         yield* commandBus
-          .execute(TouchApiToken, {
+          .execute(TouchApiTokenCommand, {
             apiTokenId: apiToken.id,
             thresholdSeconds: env.API_TOKEN_TOUCH_THRESHOLD_SECONDS,
           })
@@ -83,7 +83,7 @@ export const UserAuthMiddlewareLive = Layer.effect(
       if (verified === null) return yield* new CustomHttpApiError.Unauthorized();
       const sessionId = SessionId.make(verified);
       const session = yield* queryBus
-        .execute(FindSession, { sessionId })
+        .execute(FindSessionQuery, { sessionId })
         .pipe(Effect.mapError(toAuthError));
       // Sliding-TTL refresh, forked off the request fiber (`forkDetach`) so it
       // stays off the auth critical path and outlives the response. The
@@ -91,7 +91,7 @@ export const UserAuthMiddlewareLive = Layer.effect(
       // benign races (revoked / removed mid-flight) and are swallowed by
       // the handler so they never bubble up as a 401.
       yield* commandBus
-        .execute(TouchSession, {
+        .execute(TouchSessionCommand, {
           sessionId,
           ttlSeconds: env.SESSION_TTL_SECONDS,
           thresholdSeconds: env.SESSION_TOUCH_THRESHOLD_SECONDS,

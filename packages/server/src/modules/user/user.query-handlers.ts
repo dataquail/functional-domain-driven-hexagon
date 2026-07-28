@@ -2,20 +2,20 @@ import { Query } from "@org/cqrs";
 import * as Context from "effect/Context";
 import * as Layer from "effect/Layer";
 
-import { findUsers } from "@/modules/user/queries/find-users.handler.js";
-import { FindUsers } from "@/modules/user/queries/find-users.query.js";
-import { findUsersByIds } from "@/modules/user/queries/find-users-by-ids.handler.js";
-import { FindUsersByIds } from "@/modules/user/queries/find-users-by-ids.query.js";
+import { findUsersHandler } from "@/modules/user/queries/find-users.handler.js";
+import { FindUsersQuery } from "@/modules/user/queries/find-users.query.js";
+import { findUsersByIdsHandler } from "@/modules/user/queries/find-users-by-ids.handler.js";
+import { FindUsersByIdsQuery } from "@/modules/user/queries/find-users-by-ids.query.js";
 
 // `FindUsersQuery` is dispatched by an HTTP endpoint through the app-wide bus.
 // `FindUsersByIdsQuery`'s only consumer is the organization module's `UsersLookup`
 // adapter, which resolves this surface directly through its own port (ADR-0022) rather
 // than going through the bus.
-const userQueryGroup = Query.group(FindUsers, FindUsersByIds);
+const userQueryGroup = Query.group(FindUsersQuery, FindUsersByIdsQuery);
 
 const UserQueryHandlersLive = Query.handlersOf(userQueryGroup, {
-  FindUsersQuery: (payload) => findUsers(payload),
-  FindUsersByIdsQuery: (payload) => findUsersByIds(payload),
+  FindUsersQuery: (payload) => findUsersHandler(payload),
+  FindUsersByIdsQuery: (payload) => findUsersByIdsHandler(payload),
 });
 
 // A batch's size is useful for spotting a runaway fan-out; the ids themselves are not

@@ -17,9 +17,9 @@ export type FindUserOrganizationRolesResult = typeof UserOrganizationRolesView.T
 // NotFound. Role names are projected as bare strings; the read path
 // trusts the DB (the write side is the sole validator) and the
 // consuming policy service narrows to the roles it recognizes.
-export const FindUserOrganizationRoles = Query.make("FindUserOrganizationRolesQuery", {
+export const FindUserOrganizationRolesQuery = Query.make("FindUserOrganizationRolesQuery", {
   payload: { userId: UserId, organizationId: OrganizationId },
   success: UserOrganizationRolesView,
   failure: PersistenceUnavailable,
 });
-export type FindUserOrganizationRolesPayload = Query.Payload<typeof FindUserOrganizationRoles>;
+export type FindUserOrganizationRolesPayload = Query.Payload<typeof FindUserOrganizationRolesQuery>;

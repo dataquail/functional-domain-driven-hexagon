@@ -2,7 +2,7 @@ import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { SyncSubscription } from "@/modules/billing/commands/sync-subscription.command.js";
+import { SyncSubscriptionCommand } from "@/modules/billing/commands/sync-subscription.command.js";
 import { StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 
@@ -32,7 +32,7 @@ export const StripeWebhookEventAdapterLive = Layer.effectDiscard(
           // command's `withUnitOfWork` opens a nested savepoint on its
           // transaction.
           return commandBus
-            .execute(SyncSubscription, {
+            .execute(SyncSubscriptionCommand, {
               stripeSubscriptionId: stripeEvent.subscription.stripeSubscriptionId,
               status,
               currentPeriodEnd: stripeEvent.subscription.currentPeriodEnd,

@@ -14,7 +14,7 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 // eventual `created` delivery brings us back in sync. Dispatched by the
 // stripe-webhook event adapter inside the ingest command's transaction, so
 // `withUnitOfWork` opens a nested savepoint (ADR-0007).
-export const syncSubscription = Effect.fn("syncSubscription")(function* (
+export const syncSubscriptionHandler = Effect.fn("syncSubscriptionHandler")(function* (
   cmd: SyncSubscriptionPayload,
 ) {
   const repo = yield* SubscriptionRepository;

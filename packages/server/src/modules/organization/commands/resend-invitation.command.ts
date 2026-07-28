@@ -10,7 +10,7 @@ import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-una
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-export const ResendInvitation = Command.make("ResendInvitationCommand", {
+export const ResendInvitationCommand = Command.make("ResendInvitationCommand", {
   payload: {
     invitationId: InvitationId,
     ttlSeconds: Schema.Number,
@@ -24,4 +24,4 @@ export const ResendInvitation = Command.make("ResendInvitationCommand", {
     PersistenceUnavailable,
   ]),
 });
-export type ResendInvitationPayload = Command.Payload<typeof ResendInvitation>;
+export type ResendInvitationPayload = Command.Payload<typeof ResendInvitationCommand>;

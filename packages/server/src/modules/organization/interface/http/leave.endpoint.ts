@@ -3,7 +3,7 @@ import { CurrentUser } from "@org/contracts/Policy";
 import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
-import { LeaveOrganization } from "@/modules/organization/commands/leave-organization.command.js";
+import { LeaveOrganizationCommand } from "@/modules/organization/commands/leave-organization.command.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // No `Authz.hasPermissions` check — leaving is a self-action and the
@@ -13,7 +13,7 @@ export const leaveEndpoint = Effect.fn("OrganizationLive.leave")(
   function* (request: EndpointRequest<typeof OrganizationContract.Group, "leave">) {
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
-    yield* commandBus.execute(LeaveOrganization, {
+    yield* commandBus.execute(LeaveOrganizationCommand, {
       userId: currentUser.userId,
       organizationId: request.params.orgId,
     });

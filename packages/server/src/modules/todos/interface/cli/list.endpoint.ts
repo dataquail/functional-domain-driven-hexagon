@@ -3,7 +3,10 @@ import { QueryBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { TodoCollectionResource } from "@/modules/todos/policies/todos.policies.js";
-import { ListTodos, type ListTodosTodoView } from "@/modules/todos/queries/list-todos.query.js";
+import {
+  ListTodosQuery,
+  type ListTodosTodoView,
+} from "@/modules/todos/queries/list-todos.query.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
@@ -18,6 +21,6 @@ export const listEndpoint = Effect.fn("CliTodosLive.list")(function* (
 ) {
   yield* Authz.hasPermissions(TodoCollectionResource, Actions.Read, request.params.orgId);
   const queryBus = yield* QueryBus;
-  const result = yield* queryBus.execute(ListTodos, { organizationId: request.params.orgId });
+  const result = yield* queryBus.execute(ListTodosQuery, { organizationId: request.params.orgId });
   return result.todos.map(toCli);
 }, recoverPersistenceUnavailable);

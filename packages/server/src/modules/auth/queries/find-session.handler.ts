@@ -15,7 +15,9 @@ import { UserId } from "@/platform/ids/user-id.js";
 // Looks up a session by id and validates its lifecycle (revoked /
 // expired). Used by the auth middleware via `QueryBus.execute(...)` —
 // the bus-boundary span (ADR-0012) wraps this at dispatch time.
-export const findSession = Effect.fn("findSession")(function* (query: FindSessionPayload) {
+export const findSessionHandler = Effect.fn("findSessionHandler")(function* (
+  query: FindSessionPayload,
+) {
   const db = yield* Database.Database;
   const row = yield* db
     .makeQuery((execute) =>

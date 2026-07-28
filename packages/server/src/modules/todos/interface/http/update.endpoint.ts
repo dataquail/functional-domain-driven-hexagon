@@ -3,7 +3,7 @@ import { CurrentUser } from "@org/contracts/Policy";
 import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
-import { UpdateTodo } from "@/modules/todos/commands/update-todo.command.js";
+import { UpdateTodoCommand } from "@/modules/todos/commands/update-todo.command.js";
 import { TodoResource } from "@/modules/todos/policies/todos.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
@@ -29,7 +29,7 @@ export const updateEndpoint = Effect.fn("TodosLive.update")(
     );
     const commandBus = yield* CommandBus;
     const currentUser = yield* CurrentUser;
-    const todo = yield* commandBus.execute(UpdateTodo, {
+    const todo = yield* commandBus.execute(UpdateTodoCommand, {
       todoId: request.params.id,
       organizationId: request.params.orgId,
       title: request.payload.title,

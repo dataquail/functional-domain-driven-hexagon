@@ -11,7 +11,9 @@ const CountRowStd = Schema.toStandardSchemaV1(Schema.Struct({ value: Schema.Numb
 // transaction when one exists — this query is dispatched by
 // a policy check during a command's authorization, inside its unit
 // of work.
-export const findMembership = Effect.fn("findMembership")(function* (query: FindMembershipPayload) {
+export const findMembershipHandler = Effect.fn("findMembershipHandler")(function* (
+  query: FindMembershipPayload,
+) {
   const db = yield* Database.Database;
   const readCount = db.makeQuery((execute) =>
     execute((client) =>

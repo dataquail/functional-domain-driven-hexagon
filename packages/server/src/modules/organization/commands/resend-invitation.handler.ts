@@ -17,7 +17,7 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 // previous link stops working. Reissue refuses accepted/revoked
 // invitations (the aggregate enforces it), which the endpoint maps to
 // 410 Gone — same shape as revoke.
-export const resendInvitation = Effect.fn("resendInvitation")(function* (
+export const resendInvitationHandler = Effect.fn("resendInvitationHandler")(function* (
   cmd: ResendInvitationPayload,
 ) {
   const repo = yield* InvitationRepository;
@@ -43,7 +43,7 @@ export const resendInvitation = Effect.fn("resendInvitation")(function* (
   }).pipe(withUnitOfWork);
 
   yield* Effect.annotateCurrentSpan("invitation.id", cmd.invitationId);
-  // Fire after the UoW commits (same rationale as inviteUser): the email
+  // Fire after the UoW commits (same rationale as inviteUserHandler): the email
   // carries the new accept link; best-effort delivery in the adapter.
   yield* invitationMailer.send({ to: reissued.inviteeEmail, token, expiresAt });
 });

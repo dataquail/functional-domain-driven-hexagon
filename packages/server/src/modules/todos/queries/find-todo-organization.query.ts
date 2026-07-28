@@ -15,9 +15,9 @@ export type TodoOrganizationView = typeof TodoOrganizationView.Type;
 // tenant isolation folded into the resolve step rather than left to the check.
 //
 // Returns null rather than failing; the resolver turns absence into `NotFound`.
-export const FindTodoOrganization = Query.make("FindTodoOrganizationQuery", {
+export const FindTodoOrganizationQuery = Query.make("FindTodoOrganizationQuery", {
   payload: { organizationId: OrganizationId, todoId: TodoId },
   success: Schema.NullOr(TodoOrganizationView),
   failure: PersistenceUnavailable,
 });
-export type FindTodoOrganizationPayload = Query.Payload<typeof FindTodoOrganization>;
+export type FindTodoOrganizationPayload = Query.Payload<typeof FindTodoOrganizationQuery>;

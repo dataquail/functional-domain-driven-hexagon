@@ -3,7 +3,7 @@ import { QueryBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { OrganizationResource } from "@/modules/organization/policies/organization.policies.js";
-import { FindOrganizationMemberships } from "@/modules/organization/queries/find-organization-memberships.query.js";
+import { FindOrganizationMembershipsQuery } from "@/modules/organization/queries/find-organization-memberships.query.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
@@ -31,7 +31,7 @@ export const findMembersEndpoint = Effect.fn("OrganizationLive.findMembers")(fun
   );
 
   const queryBus = yield* QueryBus;
-  const members = yield* queryBus.execute(FindOrganizationMemberships, {
+  const members = yield* queryBus.execute(FindOrganizationMembershipsQuery, {
     organizationId: request.params.orgId,
   });
 

@@ -3,7 +3,7 @@ import { CurrentUser } from "@org/contracts/Policy";
 import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
-import { ResendInvitation } from "@/modules/organization/commands/resend-invitation.command.js";
+import { ResendInvitationCommand } from "@/modules/organization/commands/resend-invitation.command.js";
 import { OrganizationResource } from "@/modules/organization/policies/organization.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
@@ -20,7 +20,7 @@ export const resendInvitationEndpoint = (
     yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.params.orgId);
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
-    yield* commandBus.execute(ResendInvitation, {
+    yield* commandBus.execute(ResendInvitationCommand, {
       invitationId: request.params.invitationId,
       ttlSeconds: DEFAULT_INVITATION_TTL_SECONDS,
       actorUserId: currentUser.userId,

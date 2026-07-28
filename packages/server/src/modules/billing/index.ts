@@ -12,9 +12,9 @@ export { billingEventSpanAttributes } from "./billing.event-span-attributes.js";
 // composition roots pick a bundle and don't see the Tag at all.
 export { BillingModuleLive } from "./billing.module.js";
 export { BillingQueries, BillingQueriesLive } from "./billing.query-handlers.js";
-export { CancelSubscription } from "./commands/cancel-subscription.command.js";
-export { IngestStripeWebhook } from "./commands/ingest-stripe-webhook.command.js";
-export { StartSubscription } from "./commands/start-subscription.command.js";
+export { CancelSubscriptionCommand } from "./commands/cancel-subscription.command.js";
+export { IngestStripeWebhookCommand } from "./commands/ingest-stripe-webhook.command.js";
+export { StartSubscriptionCommand } from "./commands/start-subscription.command.js";
 export {
   SubscriptionCanceled,
   SubscriptionStarted,
@@ -30,4 +30,4 @@ export {
   BillingResolverEntry,
   BillingResolverEntryLive,
 } from "./policies/billing.resource-resolver.js";
-export { FindSubscriptionByOrganization } from "./queries/find-subscription-by-organization.query.js";
+export { FindSubscriptionByOrganizationQuery } from "./queries/find-subscription-by-organization.query.js";

@@ -9,7 +9,9 @@ import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-export const removeMember = Effect.fn("removeMember")(function* (cmd: RemoveMemberPayload) {
+export const removeMemberHandler = Effect.fn("removeMemberHandler")(function* (
+  cmd: RemoveMemberPayload,
+) {
   const repo = yield* MembershipRepository;
   const bus = yield* DomainEventBus;
   const membership = yield* repo.findOne(

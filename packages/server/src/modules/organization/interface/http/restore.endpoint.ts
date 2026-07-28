@@ -2,7 +2,7 @@ import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
-import { RestoreOrganization } from "@/modules/organization/commands/restore-organization.command.js";
+import { RestoreOrganizationCommand } from "@/modules/organization/commands/restore-organization.command.js";
 import { OrganizationResource } from "@/modules/organization/policies/organization.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
@@ -14,7 +14,7 @@ export const restoreEndpoint = (
   Effect.gen(function* () {
     yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.params.id);
     const commandBus = yield* CommandBus;
-    yield* commandBus.execute(RestoreOrganization, { organizationId: request.params.id });
+    yield* commandBus.execute(RestoreOrganizationCommand, { organizationId: request.params.id });
   }).pipe(
     Effect.catchTag("NotFound", () =>
       Effect.fail(

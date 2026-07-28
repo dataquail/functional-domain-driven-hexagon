@@ -11,7 +11,7 @@ import { UserId } from "@/platform/ids/user-id.js";
 // handler itself doesn't enforce a "no self-removal" invariant —
 // callers wanting to leave should dispatch `LeaveOrganizationCommand`,
 // which is the authenticated-self path with its own policy.
-export const RemoveMember = Command.make("RemoveMemberCommand", {
+export const RemoveMemberCommand = Command.make("RemoveMemberCommand", {
   payload: {
     targetUserId: UserId,
     organizationId: OrganizationId,
@@ -20,4 +20,4 @@ export const RemoveMember = Command.make("RemoveMemberCommand", {
   success: Schema.Void,
   failure: Schema.Union([MembershipNotFound, PersistenceUnavailable]),
 });
-export type RemoveMemberPayload = Command.Payload<typeof RemoveMember>;
+export type RemoveMemberPayload = Command.Payload<typeof RemoveMemberCommand>;

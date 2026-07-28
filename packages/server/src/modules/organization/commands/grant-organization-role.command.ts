@@ -13,7 +13,7 @@ import { UserId } from "@/platform/ids/user-id.js";
 // `actorUserId` is carried explicitly rather than pulled from `CurrentUser` so the bus
 // boundary stays uniform — the HTTP endpoint is the one place that translates
 // request-context into command input. It is persisted as `issued_by` for audit.
-export const GrantOrganizationRole = Command.make("GrantOrganizationRoleCommand", {
+export const GrantOrganizationRoleCommand = Command.make("GrantOrganizationRoleCommand", {
   payload: {
     // The user receiving the role.
     userId: UserId,
@@ -28,4 +28,4 @@ export const GrantOrganizationRole = Command.make("GrantOrganizationRoleCommand"
     PersistenceUnavailable,
   ]),
 });
-export type GrantOrganizationRolePayload = Command.Payload<typeof GrantOrganizationRole>;
+export type GrantOrganizationRolePayload = Command.Payload<typeof GrantOrganizationRoleCommand>;

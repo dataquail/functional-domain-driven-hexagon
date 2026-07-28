@@ -22,7 +22,7 @@ const toUserView = (row: RowSchemas.UserRow): FindUsersUserView => ({
   updatedAt: row.updated_at,
 });
 
-export const findUsers = Effect.fn("findUsers")(function* (query: FindUsersPayload) {
+export const findUsersHandler = Effect.fn("findUsersHandler")(function* (query: FindUsersPayload) {
   const db = yield* Database.Database;
   const offset = (query.page - 1) * query.pageSize;
 

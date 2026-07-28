@@ -17,9 +17,9 @@ export const UserRolesView = Schema.Struct({
 });
 export type FindUserRolesResult = typeof UserRolesView.Type;
 
-export const FindUserRoles = Query.make("FindUserRolesQuery", {
+export const FindUserRolesQuery = Query.make("FindUserRolesQuery", {
   payload: { userId: UserId },
   success: UserRolesView,
   failure: PersistenceUnavailable,
 });
-export type FindUserRolesPayload = Query.Payload<typeof FindUserRoles>;
+export type FindUserRolesPayload = Query.Payload<typeof FindUserRolesQuery>;

@@ -28,9 +28,9 @@ export const FindUsersResultView = Schema.Struct({
 });
 export type FindUsersResult = typeof FindUsersResultView.Type;
 
-export const FindUsers = Query.make("FindUsersQuery", {
+export const FindUsersQuery = Query.make("FindUsersQuery", {
   payload: { page: Schema.Number, pageSize: Schema.Number },
   success: FindUsersResultView,
   failure: PersistenceUnavailable,
 });
-export type FindUsersPayload = Query.Payload<typeof FindUsers>;
+export type FindUsersPayload = Query.Payload<typeof FindUsersQuery>;

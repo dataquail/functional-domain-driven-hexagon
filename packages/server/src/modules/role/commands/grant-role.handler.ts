@@ -8,7 +8,7 @@ import { RolesSpecifications } from "@/modules/role/domain/roles/roles.specifica
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-export const grantRole = Effect.fn("grantRole")(function* (cmd: GrantRolePayload) {
+export const grantRoleHandler = Effect.fn("grantRoleHandler")(function* (cmd: GrantRolePayload) {
   // Command-level invariant: a user can't grant themselves a role.
   // Prevents self-elevation regardless of the policy layer's
   // decision about `user.update`.

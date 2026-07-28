@@ -6,8 +6,8 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { grantRole } from "@/modules/role/commands/grant-role.handler.js";
-import { revokeRole } from "@/modules/role/commands/revoke-role.handler.js";
+import { grantRoleHandler } from "@/modules/role/commands/grant-role.handler.js";
+import { revokeRoleHandler } from "@/modules/role/commands/revoke-role.handler.js";
 import { DoesNotHaveRole } from "@/modules/role/domain/roles/role.errors.js";
 import { type RoleRevoked } from "@/modules/role/domain/roles/role.events.js";
 import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
@@ -22,14 +22,14 @@ const TestLayer = Layer.mergeAll(RolesRepositoryFake, RecordingEventBus, Identit
 const targetId = UserId.make("11111111-1111-1111-1111-111111111111");
 const actorId = UserId.make("99999999-9999-9999-9999-999999999999");
 
-describe("revokeRole", () => {
+describe("revokeRoleHandler", () => {
   it.effect("removes the role and publishes RoleRevoked", () =>
     Effect.gen(function* () {
       const repo = yield* RolesRepository;
       const rec = yield* RecordedEvents;
 
-      yield* grantRole({ userId: targetId, role: "super_admin", actorUserId: actorId });
-      yield* revokeRole({ userId: targetId, role: "super_admin" });
+      yield* grantRoleHandler({ userId: targetId, role: "super_admin", actorUserId: actorId });
+      yield* revokeRoleHandler({ userId: targetId, role: "super_admin" });
 
       // Revoking the only role leaves no rows, so the aggregate no longer
       // resolves — findOne reports null (no rows = no roles).
@@ -47,7 +47,7 @@ describe("revokeRole", () => {
 
   it.effect("fails DoesNotHaveRole when the role isn't held", () =>
     Effect.gen(function* () {
-      const exit = yield* Effect.exit(revokeRole({ userId: targetId, role: "super_admin" }));
+      const exit = yield* Effect.exit(revokeRoleHandler({ userId: targetId, role: "super_admin" }));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.hasFails(exit.cause)

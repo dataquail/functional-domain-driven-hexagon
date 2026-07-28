@@ -6,7 +6,7 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { startSubscription } from "@/modules/billing/commands/start-subscription.handler.js";
+import { startSubscriptionHandler } from "@/modules/billing/commands/start-subscription.handler.js";
 import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.js";
 import { type SubscriptionStarted } from "@/modules/billing/domain/subscription/subscription.events.js";
 import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
@@ -26,7 +26,7 @@ const TestLayer = Layer.mergeAll(
   IdentityUnitOfWork,
 );
 
-describe("startSubscription", () => {
+describe("startSubscriptionHandler", () => {
   it.effect(
     "creates Stripe customer + sub, persists subscription, publishes SubscriptionStarted",
     () =>
@@ -34,7 +34,7 @@ describe("startSubscription", () => {
         const repo = yield* SubscriptionRepository;
         const rec = yield* RecordedEvents;
 
-        const sub = yield* startSubscription({ organizationId: acme });
+        const sub = yield* startSubscriptionHandler({ organizationId: acme });
         deepStrictEqual(sub.organizationId, acme);
         ok(sub.stripeCustomerId.startsWith("cus_test_"));
         ok(sub.stripeSubscriptionId.startsWith("sub_test_"));
@@ -55,8 +55,8 @@ describe("startSubscription", () => {
     "fails SubscriptionAlreadyExistsForOrganization on a second start for the same org",
     () =>
       Effect.gen(function* () {
-        yield* startSubscription({ organizationId: acme });
-        const exit = yield* Effect.exit(startSubscription({ organizationId: acme }));
+        yield* startSubscriptionHandler({ organizationId: acme });
+        const exit = yield* Effect.exit(startSubscriptionHandler({ organizationId: acme }));
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(

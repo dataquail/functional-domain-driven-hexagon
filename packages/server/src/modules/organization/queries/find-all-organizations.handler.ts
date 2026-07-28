@@ -23,7 +23,7 @@ const toView = (row: RowSchemas.OrganizationRow): FindAllOrganizationsView => ({
 // doesn't compose well with conditional WHERE clauses so the two
 // branches are parallel; the query is small enough that duplication
 // reads better than abstracting.
-export const findAllOrganizations = Effect.fn("findAllOrganizations")(function* (
+export const findAllOrganizationsHandler = Effect.fn("findAllOrganizationsHandler")(function* (
   query: FindAllOrganizationsPayload,
 ) {
   const db = yield* Database.Database;

@@ -11,7 +11,9 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 // avoids leaking the existence of other users' tokens.
 //
 // Bus-boundary span (ADR-0012) wraps this at dispatch time.
-export const revokeApiToken = Effect.fn("revokeApiToken")(function* (cmd: RevokeApiTokenPayload) {
+export const revokeApiTokenHandler = Effect.fn("revokeApiTokenHandler")(function* (
+  cmd: RevokeApiTokenPayload,
+) {
   const repo = yield* ApiTokenRepository;
   const token = yield* repo.findOne(ApiTokenSpecifications.withId(cmd.apiTokenId));
   if (token?.userId !== cmd.userId) {

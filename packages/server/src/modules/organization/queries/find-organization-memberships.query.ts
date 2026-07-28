@@ -19,9 +19,11 @@ export type OrganizationMemberView = typeof OrganizationMemberView.Type;
 // user's email through the `UsersLookup` ACL — ADR-0020 disallows the
 // cross-schema JOIN that would otherwise fetch it. The endpoint just
 // dispatches through the QueryBus and maps the result to the contract.
-export const FindOrganizationMemberships = Query.make("FindOrganizationMembershipsQuery", {
+export const FindOrganizationMembershipsQuery = Query.make("FindOrganizationMembershipsQuery", {
   payload: { organizationId: OrganizationId },
   success: Schema.Array(OrganizationMemberView),
   failure: PersistenceUnavailable,
 });
-export type FindOrganizationMembershipsPayload = Query.Payload<typeof FindOrganizationMemberships>;
+export type FindOrganizationMembershipsPayload = Query.Payload<
+  typeof FindOrganizationMembershipsQuery
+>;

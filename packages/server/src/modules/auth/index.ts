@@ -5,13 +5,13 @@ export { AuthQueries, AuthQueriesLive } from "./auth.query-handlers.js";
 // platform middleware. The auth-module's handlers wrap their own
 // SessionRepository internally (Stage B).
 export { AuthSharedDepsLive } from "./auth.shared-deps.js";
-export { MintApiToken } from "./commands/mint-api-token.command.js";
-export { RevokeApiToken } from "./commands/revoke-api-token.command.js";
-export { RevokeSession } from "./commands/revoke-session.command.js";
-export { SignIn } from "./commands/sign-in.command.js";
+export { MintApiTokenCommand } from "./commands/mint-api-token.command.js";
+export { RevokeApiTokenCommand } from "./commands/revoke-api-token.command.js";
+export { RevokeSessionCommand } from "./commands/revoke-session.command.js";
+export { SignInCommand } from "./commands/sign-in.command.js";
 // Dispatched by the auth middleware on the bearer path (ADR-0005).
-export { TouchApiToken } from "./commands/touch-api-token.command.js";
-export { TouchSession } from "./commands/touch-session.command.js";
+export { TouchApiTokenCommand } from "./commands/touch-api-token.command.js";
+export { TouchSessionCommand } from "./commands/touch-session.command.js";
 export {
   ApiTokenExpired,
   ApiTokenNotFound,
@@ -30,6 +30,6 @@ export {
 } from "./domain/session/session.errors.js";
 export { SessionId } from "./domain/session/session.id.js";
 export { SessionRoot } from "./domain/session/session.root.js";
-export { FindApiTokenByHash } from "./queries/find-api-token-by-hash.query.js";
-export { FindSession } from "./queries/find-session.query.js";
-export { ListMyApiTokens } from "./queries/list-my-api-tokens.query.js";
+export { FindApiTokenByHashQuery } from "./queries/find-api-token-by-hash.query.js";
+export { FindSessionQuery } from "./queries/find-session.query.js";
+export { ListMyApiTokensQuery } from "./queries/list-my-api-tokens.query.js";

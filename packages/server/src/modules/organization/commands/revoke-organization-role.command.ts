@@ -7,7 +7,7 @@ import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-una
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-export const RevokeOrganizationRole = Command.make("RevokeOrganizationRoleCommand", {
+export const RevokeOrganizationRoleCommand = Command.make("RevokeOrganizationRoleCommand", {
   payload: {
     userId: UserId,
     organizationId: OrganizationId,
@@ -16,4 +16,4 @@ export const RevokeOrganizationRole = Command.make("RevokeOrganizationRoleComman
   success: Schema.Void,
   failure: Schema.Union([DoesNotHaveOrganizationRole, PersistenceUnavailable]),
 });
-export type RevokeOrganizationRolePayload = Command.Payload<typeof RevokeOrganizationRole>;
+export type RevokeOrganizationRolePayload = Command.Payload<typeof RevokeOrganizationRoleCommand>;

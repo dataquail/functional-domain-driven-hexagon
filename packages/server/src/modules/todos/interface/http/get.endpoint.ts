@@ -4,7 +4,7 @@ import * as Effect from "effect/Effect";
 
 import { TodoCollectionResource } from "@/modules/todos/policies/todos.policies.js";
 import {
-  ListTodos,
+  ListTodosQuery,
   type ListTodosResult,
   type ListTodosTodoView,
 } from "@/modules/todos/queries/list-todos.query.js";
@@ -27,6 +27,6 @@ export const getEndpoint = Effect.fn("TodosLive.get")(function* (
 ) {
   yield* Authz.hasPermissions(TodoCollectionResource, Actions.Read, request.params.orgId);
   const queryBus = yield* QueryBus;
-  const result = yield* queryBus.execute(ListTodos, { organizationId: request.params.orgId });
+  const result = yield* queryBus.execute(ListTodosQuery, { organizationId: request.params.orgId });
   return toResponse(result);
 }, recoverPersistenceUnavailable);

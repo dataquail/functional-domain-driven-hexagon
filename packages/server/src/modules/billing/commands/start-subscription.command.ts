@@ -9,7 +9,7 @@ import { SubscriptionRoot } from "@/modules/billing/domain/subscription/subscrip
 import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
-export const StartSubscription = Command.make("StartSubscriptionCommand", {
+export const StartSubscriptionCommand = Command.make("StartSubscriptionCommand", {
   payload: { organizationId: OrganizationId },
   success: SubscriptionRoot,
   failure: Schema.Union([
@@ -18,4 +18,4 @@ export const StartSubscription = Command.make("StartSubscriptionCommand", {
     PersistenceUnavailable,
   ]),
 });
-export type StartSubscriptionPayload = Command.Payload<typeof StartSubscription>;
+export type StartSubscriptionPayload = Command.Payload<typeof StartSubscriptionCommand>;

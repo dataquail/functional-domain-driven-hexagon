@@ -9,7 +9,7 @@ import { UserId } from "@/platform/ids/user-id.js";
 // `actorUserId` is the creator — recorded as the org's first Membership. Carried
 // explicitly rather than pulled from `CurrentUser` so the bus boundary stays uniform;
 // the HTTP endpoint is the one place that translates request-context into command input.
-export const CreateOrganization = Command.make("CreateOrganizationCommand", {
+export const CreateOrganizationCommand = Command.make("CreateOrganizationCommand", {
   payload: {
     name: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(255)),
     actorUserId: UserId,
@@ -17,4 +17,4 @@ export const CreateOrganization = Command.make("CreateOrganizationCommand", {
   success: OrganizationId,
   failure: Schema.Union([SuperAdminCannotOwnOrganization, PersistenceUnavailable]),
 });
-export type CreateOrganizationPayload = Command.Payload<typeof CreateOrganization>;
+export type CreateOrganizationPayload = Command.Payload<typeof CreateOrganizationCommand>;

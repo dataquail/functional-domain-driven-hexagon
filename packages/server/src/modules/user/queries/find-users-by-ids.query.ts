@@ -9,9 +9,9 @@ import { UserId } from "@/platform/ids/user-id.js";
 // endpoint to enrich the org-module's membership rows with email
 // without a cross-schema JOIN. Returns only the users present in the
 // `ids` argument — missing ids are silently omitted.
-export const FindUsersByIds = Query.make("FindUsersByIdsQuery", {
+export const FindUsersByIdsQuery = Query.make("FindUsersByIdsQuery", {
   payload: { ids: Schema.Array(UserId) },
   success: Schema.Array(FindUsersUserView),
   failure: PersistenceUnavailable,
 });
-export type FindUsersByIdsPayload = Query.Payload<typeof FindUsersByIds>;
+export type FindUsersByIdsPayload = Query.Payload<typeof FindUsersByIdsQuery>;

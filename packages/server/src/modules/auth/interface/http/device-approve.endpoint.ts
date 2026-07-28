@@ -4,7 +4,7 @@ import { CurrentUser } from "@org/contracts/Policy";
 import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
-import { ApproveDeviceGrant } from "@/modules/auth/commands/approve-device-grant.command.js";
+import { ApproveDeviceGrantCommand } from "@/modules/auth/commands/approve-device-grant.command.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // GUI adapter: the signed-in user approves a CLI device grant by submitting
@@ -14,7 +14,7 @@ export const deviceApproveEndpoint = Effect.fn("AuthLive.device.approve")(
   function* (request: EndpointRequest<typeof AuthContract.DeviceApprovalGroup, "approve">) {
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
-    yield* commandBus.execute(ApproveDeviceGrant, {
+    yield* commandBus.execute(ApproveDeviceGrantCommand, {
       userCode: request.payload.userCode,
       userId: currentUser.userId,
     });

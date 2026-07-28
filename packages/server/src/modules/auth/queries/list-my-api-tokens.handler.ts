@@ -17,7 +17,7 @@ const toView = (row: RowSchemas.ApiTokenRow): ApiTokenView => ({
   lastUsedAt: row.last_used_at,
 });
 
-export const listMyApiTokens = Effect.fn("listMyApiTokens")(function* (
+export const listMyApiTokensHandler = Effect.fn("listMyApiTokensHandler")(function* (
   query: ListMyApiTokensPayload,
 ) {
   const db = yield* Database.Database;

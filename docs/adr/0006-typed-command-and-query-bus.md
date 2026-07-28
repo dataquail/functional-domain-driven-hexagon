@@ -22,13 +22,15 @@ We want the bus's benefits without paying that cost. Effect already carries succ
 Each command and query is declared once, as a definition carrying its payload, success, and failure **schemas** plus its side (command or query):
 
 ```ts
-export const CreateUser = Command.make("CreateUserCommand", {
+export const CreateUserCommand = Command.make("CreateUserCommand", {
   payload: { email: Schema.String },
   success: UserId,
   failure: Schema.Union([UserAlreadyExists, PersistenceUnavailable]),
 });
-export type CreateUserPayload = Command.Payload<typeof CreateUser>;
+export type CreateUserPayload = Command.Payload<typeof CreateUserCommand>;
 ```
+
+The definition's identifier **is** its tag: a definition declared `"CreateUserCommand"` is exported under that name, and a handler is named for the definition it implements plus a `Handler` suffix (`createUserHandler`). Nothing forces the identifier and the tag to agree — the tag is a string — so the convention is what keeps a reader from having to open a file to learn whether a symbol is a command, a query, or the function that answers one. The payload type keeps the shorter `CreateUserPayload`, since `Payload` already marks it as belonging to a message.
 
 `success` defaults to void and `failure` to the empty union, so a fire-and-forget command declares only a payload. The definition is the single source of truth: it types the dispatch site, it types the handler, and it publishes the payload type the handler names. Declaring the channels as schemas rather than bare types is what would let a message travel over a wire if a module were ever extracted; in-process nothing is ever encoded.
 
@@ -39,7 +41,7 @@ Because the definition carries its side, a query cannot be dispatched on the com
 `execute` takes the definition plus that message's payload:
 
 ```ts
-bus.execute(CreateUser, { email }); // Effect<UserId, UserAlreadyExists | PersistenceUnavailable, never>
+bus.execute(CreateUserCommand, { email }); // Effect<UserId, UserAlreadyExists | PersistenceUnavailable, never>
 ```
 
 The signature is read off the thing being dispatched. Nothing else needs to know it, so there is no side table keyed by tag that a message's own declaration could drift from, no `declare module` block per message, and no conditional-type lookup standing between a call site and its inferred type.
@@ -57,11 +59,11 @@ Clearing `R` does not mean trusting the composition root. Handler requirements r
 Each module publishes **its own slice** of the dispatch surface — one method per tag it owns — as a Tag exported from its barrel, built from that module's message group:
 
 ```ts
-const walletCommandGroup = Command.group(CreateWallet);
+const walletCommandGroup = Command.group(CreateWalletCommand);
 
 const WalletCommandHandlersLive = Command.handlersOf(walletCommandGroup, {
   CreateWalletCommand: (payload) =>
-    createWallet(payload).pipe(Effect.provide(WalletRepositoryLive)),
+    createWalletHandler(payload).pipe(Effect.provide(WalletRepositoryLive)),
 });
 
 export class WalletCommands extends Context.Service<

@@ -4,7 +4,7 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { revokeSession } from "@/modules/auth/commands/revoke-session.handler.js";
+import { revokeSessionHandler } from "@/modules/auth/commands/revoke-session.handler.js";
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
 import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.js";
@@ -32,11 +32,11 @@ const seedSession = () =>
 
 const provide = Effect.provide(SessionRepositoryFake);
 
-describe("revokeSession", () => {
+describe("revokeSessionHandler", () => {
   it.effect("revokes an active session", () =>
     Effect.gen(function* () {
       yield* seedSession();
-      yield* revokeSession({ sessionId });
+      yield* revokeSessionHandler({ sessionId });
       const repo = yield* SessionRepository;
       const found = yield* repo.findOne(SessionSpecifications.withId(sessionId));
       ok(found !== null);
@@ -46,7 +46,7 @@ describe("revokeSession", () => {
 
   it.effect("is idempotent on a missing session (no error)", () =>
     Effect.gen(function* () {
-      yield* revokeSession({ sessionId });
+      yield* revokeSessionHandler({ sessionId });
       // No assertion — the assertion is that the command's typed error
       // channel is `never`, so any failure would surface as a defect
       // and crash the test. Reaching here means the SessionNotFound
@@ -58,8 +58,8 @@ describe("revokeSession", () => {
   it.effect("is idempotent on an already-revoked session", () =>
     Effect.gen(function* () {
       yield* seedSession();
-      yield* revokeSession({ sessionId });
-      yield* revokeSession({ sessionId });
+      yield* revokeSessionHandler({ sessionId });
+      yield* revokeSessionHandler({ sessionId });
       deepStrictEqual(true, true);
     }).pipe(provide),
   );

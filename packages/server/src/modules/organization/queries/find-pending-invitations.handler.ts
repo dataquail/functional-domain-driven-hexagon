@@ -21,7 +21,7 @@ const toView = (row: RowSchemas.InvitationRow, now: DateTime.Utc): PendingInvita
   createdAt: row.created_at,
 });
 
-export const findPendingInvitations = Effect.fn("findPendingInvitations")(function* (
+export const findPendingInvitationsHandler = Effect.fn("findPendingInvitationsHandler")(function* (
   query: FindPendingInvitationsPayload,
 ) {
   const db = yield* Database.Database;

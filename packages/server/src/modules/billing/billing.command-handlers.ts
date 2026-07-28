@@ -4,14 +4,14 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { type EnvVars } from "@/common/env-vars.js";
-import { CancelSubscription } from "@/modules/billing/commands/cancel-subscription.command.js";
-import { cancelSubscription } from "@/modules/billing/commands/cancel-subscription.handler.js";
-import { IngestStripeWebhook } from "@/modules/billing/commands/ingest-stripe-webhook.command.js";
-import { ingestStripeWebhook } from "@/modules/billing/commands/ingest-stripe-webhook.handler.js";
-import { StartSubscription } from "@/modules/billing/commands/start-subscription.command.js";
-import { startSubscription } from "@/modules/billing/commands/start-subscription.handler.js";
-import { SyncSubscription } from "@/modules/billing/commands/sync-subscription.command.js";
-import { syncSubscription } from "@/modules/billing/commands/sync-subscription.handler.js";
+import { CancelSubscriptionCommand } from "@/modules/billing/commands/cancel-subscription.command.js";
+import { cancelSubscriptionHandler } from "@/modules/billing/commands/cancel-subscription.handler.js";
+import { IngestStripeWebhookCommand } from "@/modules/billing/commands/ingest-stripe-webhook.command.js";
+import { ingestStripeWebhookHandler } from "@/modules/billing/commands/ingest-stripe-webhook.handler.js";
+import { StartSubscriptionCommand } from "@/modules/billing/commands/start-subscription.command.js";
+import { startSubscriptionHandler } from "@/modules/billing/commands/start-subscription.handler.js";
+import { SyncSubscriptionCommand } from "@/modules/billing/commands/sync-subscription.command.js";
+import { syncSubscriptionHandler } from "@/modules/billing/commands/sync-subscription.handler.js";
 import { type BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client.js";
 import { BillingGatewayFake } from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake.js";
 import { BillingGatewayLive } from "@/modules/billing/infrastructure/clients/billing-gateway.client-live.js";
@@ -24,21 +24,21 @@ import { WebhookEventRepositoryLive } from "@/modules/billing/infrastructure/rep
 // Tag threaded through the composition root. `EnvVars` stays required because
 // `EnvVars.layer` is provided at server boot.
 const billingCommandGroup = Command.group(
-  StartSubscription,
-  CancelSubscription,
-  IngestStripeWebhook,
-  SyncSubscription,
+  StartSubscriptionCommand,
+  CancelSubscriptionCommand,
+  IngestStripeWebhookCommand,
+  SyncSubscriptionCommand,
 );
 
 const BillingCommandHandlersLive = Command.handlersOf(billingCommandGroup, {
   StartSubscriptionCommand: (payload) =>
-    startSubscription(payload).pipe(Effect.provide(SubscriptionRepositoryLive)),
+    startSubscriptionHandler(payload).pipe(Effect.provide(SubscriptionRepositoryLive)),
   CancelSubscriptionCommand: (payload) =>
-    cancelSubscription(payload).pipe(Effect.provide(SubscriptionRepositoryLive)),
+    cancelSubscriptionHandler(payload).pipe(Effect.provide(SubscriptionRepositoryLive)),
   IngestStripeWebhookCommand: (payload) =>
-    ingestStripeWebhook(payload).pipe(Effect.provide(WebhookEventRepositoryLive)),
+    ingestStripeWebhookHandler(payload).pipe(Effect.provide(WebhookEventRepositoryLive)),
   SyncSubscriptionCommand: (payload) =>
-    syncSubscription(payload).pipe(Effect.provide(SubscriptionRepositoryLive)),
+    syncSubscriptionHandler(payload).pipe(Effect.provide(SubscriptionRepositoryLive)),
 });
 
 // Neither webhook field reaches a span: the raw body is unbounded and the signature is a

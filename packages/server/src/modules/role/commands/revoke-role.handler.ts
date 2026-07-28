@@ -7,7 +7,7 @@ import { RolesSpecifications } from "@/modules/role/domain/roles/roles.specifica
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-export const revokeRole = Effect.fn("revokeRole")(function* (cmd: RevokeRolePayload) {
+export const revokeRoleHandler = Effect.fn("revokeRoleHandler")(function* (cmd: RevokeRolePayload) {
   const repo = yield* RolesRepository;
   const bus = yield* DomainEventBus;
 

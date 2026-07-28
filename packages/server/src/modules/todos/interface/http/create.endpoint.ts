@@ -3,7 +3,7 @@ import { CurrentUser } from "@org/contracts/Policy";
 import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
-import { CreateTodo } from "@/modules/todos/commands/create-todo.command.js";
+import { CreateTodoCommand } from "@/modules/todos/commands/create-todo.command.js";
 import { TodoCollectionResource } from "@/modules/todos/policies/todos.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
@@ -15,7 +15,7 @@ export const createEndpoint = Effect.fn("TodosLive.create")(function* (
   const currentUser = yield* CurrentUser;
   yield* Authz.hasPermissions(TodoCollectionResource, Actions.Create, request.params.orgId);
   const commandBus = yield* CommandBus;
-  const todo = yield* commandBus.execute(CreateTodo, {
+  const todo = yield* commandBus.execute(CreateTodoCommand, {
     title: request.payload.title,
     organizationId: request.params.orgId,
     userId: currentUser.userId,

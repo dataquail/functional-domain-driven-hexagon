@@ -5,7 +5,7 @@ import * as Effect from "effect/Effect";
 import { beforeEach } from "vitest";
 
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
-import { findTodoOrganization } from "@/modules/todos/queries/find-todo-organization.handler.js";
+import { findTodoOrganizationHandler } from "@/modules/todos/queries/find-todo-organization.handler.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
@@ -38,7 +38,7 @@ const seed = Effect.gen(function* () {
 
 const suite = describe.sequential;
 
-suite("findTodoOrganization (integration)", () => {
+suite("findTodoOrganizationHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("todos.todos", "organization.organizations").pipe(Effect.provide(TestDatabaseLive)),
@@ -49,7 +49,7 @@ suite("findTodoOrganization (integration)", () => {
     await Effect.runPromise(
       Effect.gen(function* () {
         yield* seed;
-        const view = yield* findTodoOrganization({ organizationId: orgId, todoId });
+        const view = yield* findTodoOrganizationHandler({ organizationId: orgId, todoId });
         deepStrictEqual(view, { organizationId: orgId });
       }).pipe(Effect.provide(TestDatabaseLive)),
     );
@@ -61,7 +61,7 @@ suite("findTodoOrganization (integration)", () => {
     await Effect.runPromise(
       Effect.gen(function* () {
         yield* seed;
-        const view = yield* findTodoOrganization({ organizationId: otherOrgId, todoId });
+        const view = yield* findTodoOrganizationHandler({ organizationId: otherOrgId, todoId });
         deepStrictEqual(view, null);
       }).pipe(Effect.provide(TestDatabaseLive)),
     );
@@ -71,7 +71,10 @@ suite("findTodoOrganization (integration)", () => {
     await Effect.runPromise(
       Effect.gen(function* () {
         yield* seed;
-        const view = yield* findTodoOrganization({ organizationId: orgId, todoId: unknownTodoId });
+        const view = yield* findTodoOrganizationHandler({
+          organizationId: orgId,
+          todoId: unknownTodoId,
+        });
         deepStrictEqual(view, null);
       }).pipe(Effect.provide(TestDatabaseLive)),
     );

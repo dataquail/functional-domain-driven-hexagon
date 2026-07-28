@@ -9,16 +9,16 @@ import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-import { createTodo } from "./create-todo.handler.js";
+import { createTodoHandler } from "./create-todo.handler.js";
 
 const aliceUserId = UserId.make("11111111-1111-1111-1111-111111111111");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 
-describe("createTodo", () => {
+describe("createTodoHandler", () => {
   it.effect("inserts a todo scoped to the org with completed=false and returns it", () =>
     Effect.gen(function* () {
       const repo = yield* TodosRepository;
-      const todo = yield* createTodo({
+      const todo = yield* createTodoHandler({
         title: "Buy milk",
         organizationId: orgId,
         userId: aliceUserId,
@@ -36,8 +36,16 @@ describe("createTodo", () => {
 
   it.effect("each call gets a unique id", () =>
     Effect.gen(function* () {
-      const a = yield* createTodo({ title: "A", organizationId: orgId, userId: aliceUserId });
-      const b = yield* createTodo({ title: "B", organizationId: orgId, userId: aliceUserId });
+      const a = yield* createTodoHandler({
+        title: "A",
+        organizationId: orgId,
+        userId: aliceUserId,
+      });
+      const b = yield* createTodoHandler({
+        title: "B",
+        organizationId: orgId,
+        userId: aliceUserId,
+      });
       deepStrictEqual(a.id === b.id, false);
     }).pipe(Effect.provide(TodosRepositoryFake)),
   );

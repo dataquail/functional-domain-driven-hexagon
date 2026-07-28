@@ -33,9 +33,9 @@ export class SessionRevoked extends Schema.TaggedErrorClass<SessionRevoked>("Ses
   { sessionId: SessionId },
 ) {}
 
-export const FindSession = Query.make("FindSessionQuery", {
+export const FindSessionQuery = Query.make("FindSessionQuery", {
   payload: { sessionId: SessionId },
   success: SessionView,
   failure: Schema.Union([SessionNotFound, SessionExpired, SessionRevoked, PersistenceUnavailable]),
 });
-export type FindSessionPayload = Query.Payload<typeof FindSession>;
+export type FindSessionPayload = Query.Payload<typeof FindSessionQuery>;

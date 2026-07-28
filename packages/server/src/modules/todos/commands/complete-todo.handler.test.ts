@@ -16,7 +16,7 @@ import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-import { completeTodo } from "./complete-todo.handler.js";
+import { completeTodoHandler } from "./complete-todo.handler.js";
 
 const todoId = TodoId.make("11111111-1111-1111-1111-111111111111");
 const userId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
@@ -31,11 +31,11 @@ const seed = Effect.gen(function* () {
   );
 });
 
-describe("completeTodo", () => {
+describe("completeTodoHandler", () => {
   it.effect("marks the todo done, preserving its title", () =>
     Effect.gen(function* () {
       yield* seed;
-      const completed = yield* completeTodo({ todoId, organizationId: orgId, userId });
+      const completed = yield* completeTodoHandler({ todoId, organizationId: orgId, userId });
       deepStrictEqual(completed.completed, true);
       deepStrictEqual(completed.title, "Buy milk");
       const stored = yield* (yield* TodosRepository).findOne(
@@ -48,7 +48,9 @@ describe("completeTodo", () => {
 
   it.effect("fails TodoNotFound for an unknown todo", () =>
     Effect.gen(function* () {
-      const exit = yield* Effect.exit(completeTodo({ todoId, organizationId: orgId, userId }));
+      const exit = yield* Effect.exit(
+        completeTodoHandler({ todoId, organizationId: orgId, userId }),
+      );
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.hasFails(exit.cause)
@@ -62,7 +64,9 @@ describe("completeTodo", () => {
   it.effect("fails TodoNotFound across a tenant boundary", () =>
     Effect.gen(function* () {
       yield* seed;
-      const exit = yield* Effect.exit(completeTodo({ todoId, organizationId: otherOrgId, userId }));
+      const exit = yield* Effect.exit(
+        completeTodoHandler({ todoId, organizationId: otherOrgId, userId }),
+      );
       deepStrictEqual(Exit.isFailure(exit), true);
     }).pipe(Effect.provide(TodosRepositoryFake)),
   );

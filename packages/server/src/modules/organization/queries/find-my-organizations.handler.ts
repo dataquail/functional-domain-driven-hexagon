@@ -35,7 +35,7 @@ const toView = (row: typeof MyOrganizationRow.Type): FindMyOrganizationsView => 
 // `no-cross-schema-slonik-access` rule). Tombstoned orgs are filtered
 // out — a soft-deleted org should not appear in the caller's chooser.
 // `is_admin` is the caller's own `admin` OrganizationRole in each org.
-export const findMyOrganizations = Effect.fn("findMyOrganizations")(function* (
+export const findMyOrganizationsHandler = Effect.fn("findMyOrganizationsHandler")(function* (
   query: FindMyOrganizationsPayload,
 ) {
   const db = yield* Database.Database;

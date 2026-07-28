@@ -16,7 +16,9 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 // fires only on a fresh insert. Dispatched from the organization event
 // adapter inside the publisher's transaction, so `withUnitOfWork` opens a
 // nested savepoint and the wallet commits atomically with the org (ADR-0007).
-export const createWallet = Effect.fn("createWallet")(function* (cmd: CreateWalletPayload) {
+export const createWalletHandler = Effect.fn("createWalletHandler")(function* (
+  cmd: CreateWalletPayload,
+) {
   const repo = yield* WalletRepository;
   const bus = yield* DomainEventBus;
   const id = WalletId.make(crypto.randomUUID());

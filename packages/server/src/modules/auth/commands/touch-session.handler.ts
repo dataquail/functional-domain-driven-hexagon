@@ -22,7 +22,9 @@ import { SessionSpecifications } from "@/modules/auth/domain/session/session.spe
 // just doesn't extend this round — they get refreshed on the next request.
 //
 // Bus-boundary span (ADR-0012) wraps this at dispatch time.
-export const touchSession = Effect.fn("touchSession")(function* (cmd: TouchSessionPayload) {
+export const touchSessionHandler = Effect.fn("touchSessionHandler")(function* (
+  cmd: TouchSessionPayload,
+) {
   const repo = yield* SessionRepository;
   const session = yield* repo
     .findOne(SessionSpecifications.withId(cmd.sessionId))

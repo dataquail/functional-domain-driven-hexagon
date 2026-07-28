@@ -10,7 +10,7 @@ import { OrganizationId } from "@/platform/ids/organization-id.js";
 // State derived from columns. `acceptedAt`/`revokedAt` are terminal —
 // once either is set, the invitation can't transition further. The
 // composite-PK-like uniqueness of "one open invitation per
-// (org, email)" isn't enforced here; the InviteUser command handler
+// (org, email)" isn't enforced here; the InviteUserCommand handler
 // performs the duplicate-check via a repo lookup before issuing.
 export class InvitationRoot extends Schema.Class<InvitationRoot>("InvitationRoot")({
   id: InvitationId,

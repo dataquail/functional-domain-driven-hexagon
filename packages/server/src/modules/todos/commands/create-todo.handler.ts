@@ -6,7 +6,7 @@ import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { TodoRootOps } from "@/modules/todos/domain/todo/todo.root-ops.js";
 import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js";
 
-export const createTodo = Effect.fn("createTodo")(function* (cmd: CreateTodoPayload) {
+export const createTodoHandler = Effect.fn("createTodoHandler")(function* (cmd: CreateTodoPayload) {
   const repo = yield* TodosRepository;
   const id = TodoId.make(yield* Effect.sync(() => crypto.randomUUID()));
   yield* Effect.annotateCurrentSpan("todo.id", id);

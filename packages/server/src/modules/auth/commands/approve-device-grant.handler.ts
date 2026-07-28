@@ -16,7 +16,7 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 // re-stamps it (a double-submit from the browser is harmless).
 //
 // Bus-boundary span (ADR-0012) wraps this at dispatch time.
-export const approveDeviceGrant = Effect.fn("approveDeviceGrant")(function* (
+export const approveDeviceGrantHandler = Effect.fn("approveDeviceGrantHandler")(function* (
   cmd: ApproveDeviceGrantPayload,
 ) {
   const repo = yield* DeviceGrantRepository;

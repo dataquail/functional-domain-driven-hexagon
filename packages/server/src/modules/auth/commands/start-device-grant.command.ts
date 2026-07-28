@@ -22,9 +22,9 @@ export const StartDeviceGrantResultView = Schema.Struct({
 // Begins a device authorization grant. `ttlSeconds` is resolved by the
 // endpoint from config so the handler computes `expiresAt` against the
 // server clock.
-export const StartDeviceGrant = Command.make("StartDeviceGrantCommand", {
+export const StartDeviceGrantCommand = Command.make("StartDeviceGrantCommand", {
   payload: { ttlSeconds: Schema.Number },
   success: StartDeviceGrantResultView,
   failure: PersistenceUnavailable,
 });
-export type StartDeviceGrantPayload = Command.Payload<typeof StartDeviceGrant>;
+export type StartDeviceGrantPayload = Command.Payload<typeof StartDeviceGrantCommand>;

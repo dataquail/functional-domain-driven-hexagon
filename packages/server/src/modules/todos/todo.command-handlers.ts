@@ -3,23 +3,32 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { CompleteTodo } from "@/modules/todos/commands/complete-todo.command.js";
-import { completeTodo } from "@/modules/todos/commands/complete-todo.handler.js";
-import { CreateTodo } from "@/modules/todos/commands/create-todo.command.js";
-import { createTodo } from "@/modules/todos/commands/create-todo.handler.js";
-import { DeleteTodo } from "@/modules/todos/commands/delete-todo.command.js";
-import { deleteTodo } from "@/modules/todos/commands/delete-todo.handler.js";
-import { UpdateTodo } from "@/modules/todos/commands/update-todo.command.js";
-import { updateTodo } from "@/modules/todos/commands/update-todo.handler.js";
+import { CompleteTodoCommand } from "@/modules/todos/commands/complete-todo.command.js";
+import { completeTodoHandler } from "@/modules/todos/commands/complete-todo.handler.js";
+import { CreateTodoCommand } from "@/modules/todos/commands/create-todo.command.js";
+import { createTodoHandler } from "@/modules/todos/commands/create-todo.handler.js";
+import { DeleteTodoCommand } from "@/modules/todos/commands/delete-todo.command.js";
+import { deleteTodoHandler } from "@/modules/todos/commands/delete-todo.handler.js";
+import { UpdateTodoCommand } from "@/modules/todos/commands/update-todo.command.js";
+import { updateTodoHandler } from "@/modules/todos/commands/update-todo.handler.js";
 import { TodosRepositoryLive } from "@/modules/todos/infrastructure/repositories/todos.repository-live.js";
 
-const todoCommandGroup = Command.group(CreateTodo, UpdateTodo, CompleteTodo, DeleteTodo);
+const todoCommandGroup = Command.group(
+  CreateTodoCommand,
+  UpdateTodoCommand,
+  CompleteTodoCommand,
+  DeleteTodoCommand,
+);
 
 const TodoCommandHandlersLive = Command.handlersOf(todoCommandGroup, {
-  CreateTodoCommand: (payload) => createTodo(payload).pipe(Effect.provide(TodosRepositoryLive)),
-  UpdateTodoCommand: (payload) => updateTodo(payload).pipe(Effect.provide(TodosRepositoryLive)),
-  CompleteTodoCommand: (payload) => completeTodo(payload).pipe(Effect.provide(TodosRepositoryLive)),
-  DeleteTodoCommand: (payload) => deleteTodo(payload).pipe(Effect.provide(TodosRepositoryLive)),
+  CreateTodoCommand: (payload) =>
+    createTodoHandler(payload).pipe(Effect.provide(TodosRepositoryLive)),
+  UpdateTodoCommand: (payload) =>
+    updateTodoHandler(payload).pipe(Effect.provide(TodosRepositoryLive)),
+  CompleteTodoCommand: (payload) =>
+    completeTodoHandler(payload).pipe(Effect.provide(TodosRepositoryLive)),
+  DeleteTodoCommand: (payload) =>
+    deleteTodoHandler(payload).pipe(Effect.provide(TodosRepositoryLive)),
 });
 
 // A todo's title is user-supplied content, so it never reaches a span; the generated id

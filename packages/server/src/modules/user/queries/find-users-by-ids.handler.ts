@@ -17,7 +17,9 @@ const toUserView = (row: RowSchemas.UserRow): FindUsersUserView => ({
   updatedAt: row.updated_at,
 });
 
-export const findUsersByIds = Effect.fn("findUsersByIds")(function* (query: FindUsersByIdsPayload) {
+export const findUsersByIdsHandler = Effect.fn("findUsersByIdsHandler")(function* (
+  query: FindUsersByIdsPayload,
+) {
   if (query.ids.length === 0) return [];
   const db = yield* Database.Database;
   const rows = yield* db

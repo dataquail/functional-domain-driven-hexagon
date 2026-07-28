@@ -7,7 +7,7 @@ import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-una
 // Dispatched by the stripe-webhook event adapter (interface/events) for
 // subscription lifecycle events — Stripe vocabulary is translated to these
 // domain fields in the adapter, so this command carries no Stripe types.
-export const SyncSubscription = Command.make("SyncSubscriptionCommand", {
+export const SyncSubscriptionCommand = Command.make("SyncSubscriptionCommand", {
   payload: {
     stripeSubscriptionId: Schema.String,
     status: Schema.String,
@@ -16,4 +16,4 @@ export const SyncSubscription = Command.make("SyncSubscriptionCommand", {
   success: Schema.Void,
   failure: PersistenceUnavailable,
 });
-export type SyncSubscriptionPayload = Command.Payload<typeof SyncSubscription>;
+export type SyncSubscriptionPayload = Command.Payload<typeof SyncSubscriptionCommand>;

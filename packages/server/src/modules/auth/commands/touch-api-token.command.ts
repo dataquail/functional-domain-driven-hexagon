@@ -7,8 +7,8 @@ import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 // bearer lookup. Throttled + race-tolerant in the handler, so it's safe to fire on every
 // request. Unlike sessions there is no sliding TTL — this only stamps `lastUsedAt`, and there
 // is no failure channel because that stamp must never fail a request.
-export const TouchApiToken = Command.make("TouchApiTokenCommand", {
+export const TouchApiTokenCommand = Command.make("TouchApiTokenCommand", {
   payload: { apiTokenId: ApiTokenId, thresholdSeconds: Schema.Number },
   success: Schema.Void,
 });
-export type TouchApiTokenPayload = Command.Payload<typeof TouchApiToken>;
+export type TouchApiTokenPayload = Command.Payload<typeof TouchApiTokenCommand>;

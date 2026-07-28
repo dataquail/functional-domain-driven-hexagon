@@ -28,9 +28,9 @@ export type FindMyOrganizationsResult = typeof FindMyOrganizationsResultView.Typ
 //
 // Tombstoned orgs are filtered out — a soft-deleted org should not
 // appear in the caller's chooser.
-export const FindMyOrganizations = Query.make("FindMyOrganizationsQuery", {
+export const FindMyOrganizationsQuery = Query.make("FindMyOrganizationsQuery", {
   payload: { userId: UserId },
   success: FindMyOrganizationsResultView,
   failure: PersistenceUnavailable,
 });
-export type FindMyOrganizationsPayload = Query.Payload<typeof FindMyOrganizations>;
+export type FindMyOrganizationsPayload = Query.Payload<typeof FindMyOrganizationsQuery>;

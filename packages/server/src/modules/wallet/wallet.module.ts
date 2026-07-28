@@ -5,6 +5,6 @@ import { OrganizationEventAdapterLive } from "./interface/events/organization.ev
 // and dispatches a `CreateWalletCommand` through the bus (ADR-0007). The
 // adapter is bus-only, so its requirements (CommandBus, DomainEventBus,
 // UnitOfWork) are satisfied at the composition root — the wallet
-// repository is wired behind the CreateWallet command handler
+// repository is wired behind the CreateWalletCommand handler
 // (`wallet.command-handlers.ts`), not here.
 export const WalletModuleLive = OrganizationEventAdapterLive;

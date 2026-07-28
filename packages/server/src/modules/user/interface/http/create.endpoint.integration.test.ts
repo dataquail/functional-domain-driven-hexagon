@@ -9,7 +9,7 @@ import * as Option from "effect/Option";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/api.js";
-import { FindUsers } from "@/modules/user/index.js";
+import { FindUsersQuery } from "@/modules/user/index.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 
 const basePayload = new UserContract.CreateUserPayload({
@@ -36,7 +36,7 @@ suite("POST /users (integration)", () => {
         // `Layer.provideMerge` in TestServerLive because it's a public
         // cross-module dispatch surface, not a module-internal port.
         const queryBus = yield* QueryBus;
-        const result = yield* queryBus.execute(FindUsers, { page: 1, pageSize: 10 });
+        const result = yield* queryBus.execute(FindUsersQuery, { page: 1, pageSize: 10 });
         const stored = result.users.find((u) => u.email === basePayload.email);
         ok(stored !== undefined);
         deepStrictEqual(stored.id, res.id);

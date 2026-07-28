@@ -9,7 +9,7 @@ import { beforeEach } from "vitest";
 import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
 import { RolesRootOps } from "@/modules/role/domain/roles/roles.root-ops.js";
 import { RolesRepositoryLive } from "@/modules/role/infrastructure/repositories/roles.repository-live.js";
-import { findUserRoles } from "@/modules/role/queries/find-user-roles.handler.js";
+import { findUserRolesHandler } from "@/modules/role/queries/find-user-roles.handler.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
@@ -31,7 +31,7 @@ const seedUser = Effect.gen(function* () {
 
 const suite = describe.sequential;
 
-suite("findUserRoles (integration)", () => {
+suite("findUserRolesHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("platform.roles", "user.users").pipe(Effect.provide(TestDatabaseLive)),
@@ -41,7 +41,7 @@ suite("findUserRoles (integration)", () => {
   it.effect("returns an empty role array for a user with none granted", () =>
     Effect.gen(function* () {
       yield* seedUser;
-      const result = yield* findUserRoles({ userId });
+      const result = yield* findUserRolesHandler({ userId });
       deepStrictEqual(result.userId, userId);
       deepStrictEqual([...result.roles], []);
     }).pipe(Effect.provide(TestLayer)),
@@ -54,7 +54,7 @@ suite("findUserRoles (integration)", () => {
       const granted = RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin");
       if (Result.isFailure(granted)) throw new Error("expected Right");
       yield* repo.upsertOne(granted.success.roles);
-      const result = yield* findUserRoles({ userId });
+      const result = yield* findUserRolesHandler({ userId });
       deepStrictEqual([...result.roles], ["super_admin"]);
     }).pipe(Effect.provide(TestLayer)),
   );

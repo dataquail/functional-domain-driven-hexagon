@@ -1,7 +1,7 @@
 // Unit test for the organization → wallet inbound adapter. Verifies that
 // dispatching OrganizationCreated through the bus makes the adapter dispatch
 // a CreateWalletCommand carrying the organizationId. The wallet-creation
-// itself is covered by the CreateWallet handler unit test and the adapter
+// itself is covered by the CreateWalletCommand handler unit test and the adapter
 // integration test; this asserts only the adapter glue (subscribe +
 // translate + dispatch).
 
@@ -12,7 +12,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { type OrganizationCreated } from "@/modules/organization/index.js";
-import { CreateWallet } from "@/modules/wallet/commands/create-wallet.command.js";
+import { CreateWalletCommand } from "@/modules/wallet/commands/create-wallet.command.js";
 import { OrganizationEventAdapterLive } from "@/modules/wallet/interface/events/organization.event-adapter.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { makeDomainEventBusLive } from "@/platform/domain-event-bus-live.js";
@@ -43,7 +43,7 @@ describe("OrganizationEventAdapterLive", () => {
       } as unknown as OrganizationCreated;
       yield* bus.dispatch([event]);
 
-      const payloads = yield* rec.payloadsFor(CreateWallet);
+      const payloads = yield* rec.payloadsFor(CreateWalletCommand);
       deepStrictEqual(payloads, [{ organizationId }]);
       // In production this dispatch runs inside `uow.run`; supply a no-op
       // transaction context so the bus's unit-of-work guard passes.

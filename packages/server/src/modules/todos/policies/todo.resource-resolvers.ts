@@ -5,7 +5,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { type TodoId } from "@/modules/todos/domain/todo/todo.id.js";
-import { FindTodoOrganization } from "@/modules/todos/queries/find-todo-organization.query.js";
+import { FindTodoOrganizationQuery } from "@/modules/todos/queries/find-todo-organization.query.js";
 import { type Resolver } from "@/platform/auth/resource-resolver-registry.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
@@ -69,7 +69,7 @@ export const TodoResolverEntryLive = Layer.effect(
   Effect.gen(function* () {
     const queryBus = yield* QueryBus;
     return ({ organizationId, todoId }) =>
-      queryBus.execute(FindTodoOrganization, { organizationId, todoId }).pipe(
+      queryBus.execute(FindTodoOrganizationQuery, { organizationId, todoId }).pipe(
         Effect.flatMap((view) =>
           view === null ? Effect.fail(new CustomHttpApiError.NotFound()) : Effect.succeed(view),
         ),

@@ -3,7 +3,7 @@ import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { EnvVars } from "@/common/env-vars.js";
-import { StartDeviceGrant } from "@/modules/auth/commands/start-device-grant.command.js";
+import { StartDeviceGrantCommand } from "@/modules/auth/commands/start-device-grant.command.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // CLI adapter (ADR-0005): starts a device grant and returns the codes plus
@@ -14,7 +14,7 @@ export const deviceStartEndpoint = Effect.fn("CliAuthLive.deviceStart")(function
 ) {
   const env = yield* EnvVars;
   const commandBus = yield* CommandBus;
-  const { deviceCode, userCode } = yield* commandBus.execute(StartDeviceGrant, {
+  const { deviceCode, userCode } = yield* commandBus.execute(StartDeviceGrantCommand, {
     ttlSeconds: env.DEVICE_CODE_TTL_SECONDS,
   });
   const verificationUri = `${env.APP_URL}/device`;

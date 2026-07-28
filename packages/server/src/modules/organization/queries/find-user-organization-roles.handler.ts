@@ -4,30 +4,30 @@ import * as Effect from "effect/Effect";
 import { type FindUserOrganizationRolesPayload } from "@/modules/organization/queries/find-user-organization-roles.policy-query.js";
 import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
-export const findUserOrganizationRoles = Effect.fn("findUserOrganizationRoles")(function* (
-  query: FindUserOrganizationRolesPayload,
-) {
-  const db = yield* Database.Database;
-  const rows = yield* db
-    .makeQuery((execute) =>
-      execute((client) =>
-        client.any(sql.type(RowSchemas.OrganizationRoleRowStd)`
+export const findUserOrganizationRolesHandler = Effect.fn("findUserOrganizationRolesHandler")(
+  function* (query: FindUserOrganizationRolesPayload) {
+    const db = yield* Database.Database;
+    const rows = yield* db
+      .makeQuery((execute) =>
+        execute((client) =>
+          client.any(sql.type(RowSchemas.OrganizationRoleRowStd)`
           SELECT organization_id, user_id, role, issued_by, created_at
           FROM "organization".organization_roles
           WHERE user_id = ${query.userId} AND organization_id = ${query.organizationId}
           ORDER BY created_at ASC
         `),
-      ),
-    )()
-    .pipe(
-      Effect.catchTag("DatabaseError", Effect.die),
-      Effect.catchTag("DatabaseUnavailable", (e) =>
-        Effect.fail(new PersistenceUnavailable({ message: e.message })),
-      ),
-    );
-  return {
-    userId: query.userId,
-    organizationId: query.organizationId,
-    roles: rows.map((row) => row.role),
-  };
-});
+        ),
+      )()
+      .pipe(
+        Effect.catchTag("DatabaseError", Effect.die),
+        Effect.catchTag("DatabaseUnavailable", (e) =>
+          Effect.fail(new PersistenceUnavailable({ message: e.message })),
+        ),
+      );
+    return {
+      userId: query.userId,
+      organizationId: query.organizationId,
+      roles: rows.map((row) => row.role),
+    };
+  },
+);

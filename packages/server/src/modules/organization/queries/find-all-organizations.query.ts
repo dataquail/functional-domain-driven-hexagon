@@ -25,9 +25,9 @@ export type FindAllOrganizationsResult = typeof FindAllOrganizationsResultView.T
 // opt-in for the soft-delete recycling-bin view; by default the
 // query filters tombstones out so the regular admin browse doesn't
 // surface them.
-export const FindAllOrganizations = Query.make("FindAllOrganizationsQuery", {
+export const FindAllOrganizationsQuery = Query.make("FindAllOrganizationsQuery", {
   payload: { page: Schema.Number, pageSize: Schema.Number, includeDeleted: Schema.Boolean },
   success: FindAllOrganizationsResultView,
   failure: PersistenceUnavailable,
 });
-export type FindAllOrganizationsPayload = Query.Payload<typeof FindAllOrganizations>;
+export type FindAllOrganizationsPayload = Query.Payload<typeof FindAllOrganizationsQuery>;

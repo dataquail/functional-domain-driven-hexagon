@@ -4,7 +4,7 @@ import { CurrentUser } from "@org/contracts/Policy";
 import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
-import { GrantOrganizationRole } from "@/modules/organization/commands/grant-organization-role.command.js";
+import { GrantOrganizationRoleCommand } from "@/modules/organization/commands/grant-organization-role.command.js";
 import { OrganizationResource } from "@/modules/organization/policies/organization.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
@@ -22,7 +22,7 @@ export const promoteMemberEndpoint = (
     yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.params.orgId);
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
-    yield* commandBus.execute(GrantOrganizationRole, {
+    yield* commandBus.execute(GrantOrganizationRoleCommand, {
       userId: request.params.userId,
       organizationId: request.params.orgId,
       role: "admin",

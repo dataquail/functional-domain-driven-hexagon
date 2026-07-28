@@ -4,7 +4,7 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { FindOrganizationById } from "@/modules/organization/queries/find-organization-by-id.query.js";
+import { FindOrganizationByIdQuery } from "@/modules/organization/queries/find-organization-by-id.query.js";
 import { type Resolver } from "@/platform/auth/resource-resolver-registry.js";
 
 // Resolves the `organization` authz resource off the read side: the checks only
@@ -27,7 +27,7 @@ export const OrganizationResolverEntryLive = Layer.effect(
   Effect.gen(function* () {
     const queryBus = yield* QueryBus;
     return (organizationId) =>
-      queryBus.execute(FindOrganizationById, { organizationId }).pipe(
+      queryBus.execute(FindOrganizationByIdQuery, { organizationId }).pipe(
         Effect.flatMap((view) =>
           view === null ? Effect.fail(new CustomHttpApiError.NotFound()) : Effect.succeed(view),
         ),

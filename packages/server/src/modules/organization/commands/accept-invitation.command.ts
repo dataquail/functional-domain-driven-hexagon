@@ -12,7 +12,7 @@ import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-una
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-export const AcceptInvitation = Command.make("AcceptInvitationCommand", {
+export const AcceptInvitationCommand = Command.make("AcceptInvitationCommand", {
   payload: { token: Schema.String, userId: UserId },
   success: OrganizationId,
   failure: Schema.Union([
@@ -24,4 +24,4 @@ export const AcceptInvitation = Command.make("AcceptInvitationCommand", {
     PersistenceUnavailable,
   ]),
 });
-export type AcceptInvitationPayload = Command.Payload<typeof AcceptInvitation>;
+export type AcceptInvitationPayload = Command.Payload<typeof AcceptInvitationCommand>;

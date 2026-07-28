@@ -14,7 +14,7 @@ import { type UserId } from "@/platform/ids/user-id.js";
 // failing if the row already exists.
 //
 // `delete` returns `MembershipNotFound` when there's nothing to remove
-// — `RemoveMember`/`LeaveOrganization` rely on that to surface a 404 to
+// — `RemoveMemberCommand`/`LeaveOrganizationCommand` rely on that to surface a 404 to
 // callers asking to remove a non-existent member.
 //
 // The composite (userId, organizationId) lookup is a spec at the call

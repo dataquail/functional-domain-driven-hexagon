@@ -9,9 +9,9 @@ import { UserId } from "@/platform/ids/user-id.js";
 // Revokes one of the caller's own tokens. Carries `userId` so the handler
 // can scope the revoke to the owner — a token belonging to someone else is
 // reported as `ApiTokenNotFound`, never revealed.
-export const RevokeApiToken = Command.make("RevokeApiTokenCommand", {
+export const RevokeApiTokenCommand = Command.make("RevokeApiTokenCommand", {
   payload: { apiTokenId: ApiTokenId, userId: UserId },
   success: Schema.Void,
   failure: Schema.Union([ApiTokenNotFound, PersistenceUnavailable]),
 });
-export type RevokeApiTokenPayload = Command.Payload<typeof RevokeApiToken>;
+export type RevokeApiTokenPayload = Command.Payload<typeof RevokeApiTokenCommand>;

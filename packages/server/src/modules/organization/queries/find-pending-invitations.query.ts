@@ -24,9 +24,9 @@ export type PendingInvitationView = typeof PendingInvitationView.Type;
 // tagged pending vs expired so the UI can flag lapsed ones for resend.
 // Accepted invitees show up in the members list instead; revoked ones
 // are gone. The handler reads the repo and derives status against now.
-export const FindPendingInvitations = Query.make("FindPendingInvitationsQuery", {
+export const FindPendingInvitationsQuery = Query.make("FindPendingInvitationsQuery", {
   payload: { organizationId: OrganizationId },
   success: Schema.Array(PendingInvitationView),
   failure: PersistenceUnavailable,
 });
-export type FindPendingInvitationsPayload = Query.Payload<typeof FindPendingInvitations>;
+export type FindPendingInvitationsPayload = Query.Payload<typeof FindPendingInvitationsQuery>;

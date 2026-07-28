@@ -9,7 +9,7 @@ import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-export const leaveOrganization = Effect.fn("leaveOrganization")(function* (
+export const leaveOrganizationHandler = Effect.fn("leaveOrganizationHandler")(function* (
   cmd: LeaveOrganizationPayload,
 ) {
   const repo = yield* MembershipRepository;

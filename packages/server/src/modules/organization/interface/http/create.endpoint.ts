@@ -3,7 +3,7 @@ import { CurrentUser } from "@org/contracts/Policy";
 import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
-import { CreateOrganization } from "@/modules/organization/commands/create-organization.command.js";
+import { CreateOrganizationCommand } from "@/modules/organization/commands/create-organization.command.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // Authenticated, no `Authz.hasPermissions` gate. Anyone can create an
@@ -14,7 +14,7 @@ export const createEndpoint = Effect.fn("OrganizationLive.create")(
   function* (request: EndpointRequest<typeof OrganizationContract.Group, "create">) {
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
-    const id = yield* commandBus.execute(CreateOrganization, {
+    const id = yield* commandBus.execute(CreateOrganizationCommand, {
       name: request.payload.name,
       actorUserId: currentUser.userId,
     });

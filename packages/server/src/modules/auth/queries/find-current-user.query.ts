@@ -14,9 +14,9 @@ export type CurrentUserView = typeof CurrentUserView.Type;
 // client routes on. `isSuperAdmin` is the role module's data, reached through
 // this module's `PlatformRoles` port — going through the bus is what keeps the
 // endpoint free of cross-module vocabulary.
-export const FindCurrentUser = Query.make("FindCurrentUserQuery", {
+export const FindCurrentUserQuery = Query.make("FindCurrentUserQuery", {
   payload: { userId: UserId },
   success: CurrentUserView,
   failure: PersistenceUnavailable,
 });
-export type FindCurrentUserPayload = Query.Payload<typeof FindCurrentUser>;
+export type FindCurrentUserPayload = Query.Payload<typeof FindCurrentUserQuery>;

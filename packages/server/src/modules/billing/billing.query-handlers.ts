@@ -2,13 +2,13 @@ import { Query } from "@org/cqrs";
 import * as Context from "effect/Context";
 import * as Layer from "effect/Layer";
 
-import { findSubscriptionByOrganization } from "@/modules/billing/queries/find-subscription-by-organization.handler.js";
-import { FindSubscriptionByOrganization } from "@/modules/billing/queries/find-subscription-by-organization.query.js";
+import { findSubscriptionByOrganizationHandler } from "@/modules/billing/queries/find-subscription-by-organization.handler.js";
+import { FindSubscriptionByOrganizationQuery } from "@/modules/billing/queries/find-subscription-by-organization.query.js";
 
-const billingQueryGroup = Query.group(FindSubscriptionByOrganization);
+const billingQueryGroup = Query.group(FindSubscriptionByOrganizationQuery);
 
 const BillingQueryHandlersLive = Query.handlersOf(billingQueryGroup, {
-  FindSubscriptionByOrganizationQuery: (payload) => findSubscriptionByOrganization(payload),
+  FindSubscriptionByOrganizationQuery: (payload) => findSubscriptionByOrganizationHandler(payload),
 });
 
 const billingQuerySpanAttributes: Query.SpanAttributes<typeof billingQueryGroup> = {

@@ -14,7 +14,7 @@ import { UserRepositoryFake } from "@/modules/user/infrastructure/repositories/u
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
-import { createUser } from "./create-user.handler.js";
+import { createUserHandler } from "./create-user.handler.js";
 
 const TestLayer = Layer.mergeAll(UserRepositoryFake, RecordingEventBus, IdentityUnitOfWork);
 
@@ -25,11 +25,11 @@ const baseCmd = {
   postalCode: "12345",
 };
 
-describe("createUser", () => {
+describe("createUserHandler", () => {
   it.effect("inserts a user and returns the generated id", () =>
     Effect.gen(function* () {
       const repo = yield* UserRepository;
-      const id = yield* createUser(baseCmd);
+      const id = yield* createUserHandler(baseCmd);
       const stored = yield* repo.findOne(UserSpecifications.withId(id));
       if (stored === null) throw new Error("expected stored user");
       deepStrictEqual(stored.email, "alice@example.com");
@@ -39,7 +39,7 @@ describe("createUser", () => {
   it.effect("publishes exactly one UserCreated event carrying the email and address", () =>
     Effect.gen(function* () {
       const rec = yield* RecordedEvents;
-      yield* createUser(baseCmd);
+      yield* createUserHandler(baseCmd);
       const events = yield* rec.byTag<UserCreated>("UserCreated");
       deepStrictEqual(events.length, 1);
       const event = events[0];
@@ -52,7 +52,7 @@ describe("createUser", () => {
   it.effect("provisions an address-less user when no address fields are given (JIT path)", () =>
     Effect.gen(function* () {
       const repo = yield* UserRepository;
-      const id = yield* createUser({ email: "jit@example.com" });
+      const id = yield* createUserHandler({ email: "jit@example.com" });
       const stored = yield* repo.findOne(UserSpecifications.withId(id));
       if (stored === null) throw new Error("expected stored user");
       deepStrictEqual(stored.email, "jit@example.com");
@@ -62,8 +62,8 @@ describe("createUser", () => {
 
   it.effect("fails UserAlreadyExists when the email is taken", () =>
     Effect.gen(function* () {
-      yield* createUser(baseCmd);
-      const exit = yield* Effect.exit(createUser(baseCmd));
+      yield* createUserHandler(baseCmd);
+      const exit = yield* Effect.exit(createUserHandler(baseCmd));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.hasFails(exit.cause)
@@ -77,8 +77,8 @@ describe("createUser", () => {
   it.effect("does not publish an event when insert fails", () =>
     Effect.gen(function* () {
       const rec = yield* RecordedEvents;
-      yield* createUser(baseCmd);
-      yield* Effect.exit(createUser(baseCmd));
+      yield* createUserHandler(baseCmd);
+      yield* Effect.exit(createUserHandler(baseCmd));
       const events = yield* rec.byTag<UserCreated>("UserCreated");
       deepStrictEqual(events.length, 1);
     }).pipe(Effect.provide(TestLayer)),

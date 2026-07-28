@@ -12,7 +12,7 @@ import { OrganizationRepository } from "@/modules/organization/domain/organizati
 import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.js";
 import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/repositories/membership.repository-live.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
-import { findMembership } from "@/modules/organization/queries/find-membership.handler.js";
+import { findMembershipHandler } from "@/modules/organization/queries/find-membership.handler.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
@@ -44,7 +44,7 @@ const seedOrg = Effect.gen(function* () {
 
 const suite = describe.sequential;
 
-suite("findMembership (integration)", () => {
+suite("findMembershipHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("organization.memberships", "organization.organizations", "user.users").pipe(
@@ -57,7 +57,7 @@ suite("findMembership (integration)", () => {
     Effect.gen(function* () {
       yield* seedUser;
       yield* seedOrg;
-      const result = yield* findMembership({ userId, organizationId: orgId });
+      const result = yield* findMembershipHandler({ userId, organizationId: orgId });
       deepStrictEqual(result.isMember, false);
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -69,7 +69,7 @@ suite("findMembership (integration)", () => {
       const repo = yield* MembershipRepository;
       const { membership } = MembershipRootOps.create({ userId, organizationId: orgId, now });
       yield* repo.insertOne(membership);
-      const result = yield* findMembership({ userId, organizationId: orgId });
+      const result = yield* findMembershipHandler({ userId, organizationId: orgId });
       deepStrictEqual(result.isMember, true);
     }).pipe(Effect.provide(TestLayer)),
   );

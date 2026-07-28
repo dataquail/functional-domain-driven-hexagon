@@ -119,7 +119,7 @@ export type RevokeResult = {
 };
 
 // Aggregate-protected invariant: revoke fails if the invitation is
-// already accepted (need RemoveMember instead) or already revoked
+// already accepted (need RemoveMemberCommand instead) or already revoked
 // (idempotent-by-accident would mask UI double-clicks; same pattern
 // as `OrganizationRootOps.softDelete` failing AlreadyDeleted).
 const revoke = (
@@ -167,7 +167,7 @@ export type ReissueResult = {
 // Aggregate-protected invariant: re-issue rotates the token and resets
 // the expiry on an *open* invitation (the resend action, and the
 // invite-again-for-an-existing-email path). Fails on a terminal
-// invitation — accepted (the invitee already joined; use RemoveMember)
+// invitation — accepted (the invitee already joined; use RemoveMemberCommand)
 // or revoked (gone; issue a fresh invite instead). The old token is
 // discarded, so any previously-sent accept link stops working.
 const reissue = (

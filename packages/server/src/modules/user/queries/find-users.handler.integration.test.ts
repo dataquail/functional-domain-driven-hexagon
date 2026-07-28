@@ -9,7 +9,7 @@ import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
 import { UserRootOps } from "@/modules/user/domain/user/user.root-ops.js";
 import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.js";
 import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live.js";
-import { findUsers } from "@/modules/user/queries/find-users.handler.js";
+import { findUsersHandler } from "@/modules/user/queries/find-users.handler.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
@@ -38,7 +38,7 @@ const seed = (id: UserId, email: string, now: DateTime.Utc) =>
 
 const suite = describe.sequential;
 
-suite("findUsers (integration)", () => {
+suite("findUsersHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(truncate("user.users").pipe(Effect.provide(TestDatabaseLive)));
   });
@@ -49,7 +49,7 @@ suite("findUsers (integration)", () => {
       yield* seed(bobId, "bob@example.com", bobTime);
       yield* seed(carolId, "carol@example.com", carolTime);
 
-      const result = yield* findUsers({ page: 1, pageSize: 2 });
+      const result = yield* findUsersHandler({ page: 1, pageSize: 2 });
       deepStrictEqual(result.page, 1);
       deepStrictEqual(result.pageSize, 2);
       deepStrictEqual(result.total, 3);
@@ -67,7 +67,7 @@ suite("findUsers (integration)", () => {
       yield* seed(bobId, "bob@example.com", bobTime);
       yield* seed(carolId, "carol@example.com", carolTime);
 
-      const result = yield* findUsers({ page: 2, pageSize: 2 });
+      const result = yield* findUsersHandler({ page: 2, pageSize: 2 });
       deepStrictEqual(result.total, 3);
       deepStrictEqual(result.users.length, 1);
       deepStrictEqual(result.users[0]?.email, "alice@example.com");
@@ -76,7 +76,7 @@ suite("findUsers (integration)", () => {
 
   it.effect("returns total 0 and empty users when the table is empty", () =>
     Effect.gen(function* () {
-      const result = yield* findUsers({ page: 1, pageSize: 10 });
+      const result = yield* findUsersHandler({ page: 1, pageSize: 10 });
       deepStrictEqual(result.total, 0);
       deepStrictEqual(result.users, []);
     }).pipe(Effect.provide(TestLayer)),

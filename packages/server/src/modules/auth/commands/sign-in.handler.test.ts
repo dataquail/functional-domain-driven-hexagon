@@ -6,7 +6,7 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { signIn } from "@/modules/auth/commands/sign-in.handler.js";
+import { signInHandler } from "@/modules/auth/commands/sign-in.handler.js";
 import {
   IdentityEmailAlreadyRegistered,
   IdentityMissingEmail,
@@ -46,10 +46,10 @@ const command = {
   absoluteTtlSeconds: 43200,
 };
 
-describe("signIn", () => {
+describe("signInHandler", () => {
   it.effect("creates a session and returns the new sessionId for a known subject", () =>
     Effect.gen(function* () {
-      const result = yield* signIn(command);
+      const result = yield* signInHandler(command);
       deepStrictEqual(result.userId, userId);
       const sessions = yield* SessionRepository;
       const stored = yield* sessions.findOne(SessionSpecifications.withId(result.sessionId));
@@ -62,7 +62,7 @@ describe("signIn", () => {
 
   it.effect("JIT-provisions a user and links the identity for an unknown subject", () =>
     Effect.gen(function* () {
-      const result = yield* signIn({
+      const result = yield* signInHandler({
         ...command,
         subject: "new-subject",
         email: "new@example.com",
@@ -87,7 +87,7 @@ describe("signIn", () => {
     () =>
       Effect.gen(function* () {
         const exit = yield* Effect.exit(
-          signIn({ ...command, subject: "no-email-subject", email: null }),
+          signInHandler({ ...command, subject: "no-email-subject", email: null }),
         );
         deepStrictEqual(Exit.isFailure(exit), true);
         if (Exit.isFailure(exit)) {
@@ -104,7 +104,7 @@ describe("signIn", () => {
     () =>
       Effect.gen(function* () {
         const exit = yield* Effect.exit(
-          signIn({ ...command, subject: "dup-subject", email: "taken@example.com" }).pipe(
+          signInHandler({ ...command, subject: "dup-subject", email: "taken@example.com" }).pipe(
             Effect.provide(
               Layer.mergeAll(
                 SessionRepositoryFake,

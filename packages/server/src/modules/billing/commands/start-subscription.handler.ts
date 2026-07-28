@@ -18,7 +18,7 @@ import { type StartSubscriptionPayload } from "./start-subscription.command.js";
 // the reconciliation problem is real but out of scope for the MVP.
 // The local repo insert is wrapped in the UoW so the bus dispatch
 // still rolls back with it if a downstream subscriber defects.
-export const startSubscription = Effect.fn("startSubscription")(function* (
+export const startSubscriptionHandler = Effect.fn("startSubscriptionHandler")(function* (
   cmd: StartSubscriptionPayload,
 ) {
   const repo = yield* SubscriptionRepository;

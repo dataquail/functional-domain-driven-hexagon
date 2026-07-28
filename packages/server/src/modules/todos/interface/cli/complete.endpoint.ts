@@ -3,7 +3,7 @@ import { CurrentUser } from "@org/contracts/Policy";
 import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
-import { CompleteTodo } from "@/modules/todos/commands/complete-todo.command.js";
+import { CompleteTodoCommand } from "@/modules/todos/commands/complete-todo.command.js";
 import { TodoResource } from "@/modules/todos/policies/todos.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
@@ -28,7 +28,7 @@ export const completeEndpoint = Effect.fn("CliTodosLive.complete")(
     );
     const commandBus = yield* CommandBus;
     const currentUser = yield* CurrentUser;
-    const todo = yield* commandBus.execute(CompleteTodo, {
+    const todo = yield* commandBus.execute(CompleteTodoCommand, {
       todoId: request.params.id,
       organizationId: request.params.orgId,
       userId: currentUser.userId,

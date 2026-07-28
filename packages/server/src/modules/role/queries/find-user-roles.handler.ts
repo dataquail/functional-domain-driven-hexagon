@@ -7,7 +7,9 @@ import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-una
 // `makeQuery` (not bare `execute`) so the read joins the ambient
 // transaction when one exists — this query is dispatched by consumers' ACL adapters
 // during a command's authorization, inside its unit of work.
-export const findUserRoles = Effect.fn("findUserRoles")(function* (query: FindUserRolesPayload) {
+export const findUserRolesHandler = Effect.fn("findUserRolesHandler")(function* (
+  query: FindUserRolesPayload,
+) {
   const db = yield* Database.Database;
   const readRoles = db.makeQuery((execute) =>
     execute((client) =>

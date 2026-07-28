@@ -3,7 +3,7 @@ import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { touchApiToken } from "@/modules/auth/commands/touch-api-token.handler.js";
+import { touchApiTokenHandler } from "@/modules/auth/commands/touch-api-token.handler.js";
 import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.js";
@@ -33,14 +33,14 @@ const seed = (lastUsedAt: DateTime.Utc) =>
 const cmd = { apiTokenId, thresholdSeconds: 60 };
 const provide = Effect.provide(ApiTokenRepositoryFake);
 
-describe("touchApiToken", () => {
+describe("touchApiTokenHandler", () => {
   // `it.live` uses the real Clock so `DateTime.now` in the handler is "now",
   // making the throttle window meaningful (the TestClock sits at epoch 0).
   it.live("stamps lastUsedAt once the throttle window has elapsed", () =>
     Effect.gen(function* () {
       const farPast = DateTime.makeUnsafe(new Date("2000-01-01T00:00:00Z"));
       const before = yield* seed(farPast);
-      yield* touchApiToken(cmd);
+      yield* touchApiTokenHandler(cmd);
       const repo = yield* ApiTokenRepository;
       const after = yield* repo.findOne(ApiTokenSpecifications.withId(apiTokenId));
       if (after === null) throw new Error("expected an api token");
@@ -54,7 +54,7 @@ describe("touchApiToken", () => {
     Effect.gen(function* () {
       const justNow = yield* DateTime.now;
       const before = yield* seed(justNow);
-      yield* touchApiToken({ apiTokenId, thresholdSeconds: 3600 });
+      yield* touchApiTokenHandler({ apiTokenId, thresholdSeconds: 3600 });
       const repo = yield* ApiTokenRepository;
       const after = yield* repo.findOne(ApiTokenSpecifications.withId(apiTokenId));
       if (after === null) throw new Error("expected an api token");
@@ -64,7 +64,7 @@ describe("touchApiToken", () => {
 
   it.effect("is a no-op on a missing token (error channel is never)", () =>
     Effect.gen(function* () {
-      yield* touchApiToken(cmd);
+      yield* touchApiTokenHandler(cmd);
       deepStrictEqual(true, true);
     }).pipe(provide),
   );

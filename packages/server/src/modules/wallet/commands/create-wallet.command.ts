@@ -11,9 +11,9 @@ import { OrganizationId } from "@/platform/ids/organization-id.js";
 // Declaring the success and failure channels as schemas is what would let this
 // command travel over a wire if the module were ever extracted; in-process the bus
 // passes values by reference and never encodes them.
-export const CreateWallet = Command.make("CreateWalletCommand", {
+export const CreateWalletCommand = Command.make("CreateWalletCommand", {
   payload: { organizationId: OrganizationId },
   success: Schema.Void,
   failure: PersistenceUnavailable,
 });
-export type CreateWalletPayload = Command.Payload<typeof CreateWallet>;
+export type CreateWalletPayload = Command.Payload<typeof CreateWalletCommand>;

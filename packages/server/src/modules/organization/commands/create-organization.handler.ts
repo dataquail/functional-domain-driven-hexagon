@@ -31,7 +31,7 @@ import { OrganizationId } from "@/platform/ids/organization-id.js";
 // invariant on the explicit `GrantOrganizationRoleCommand` path
 // because that invariant guards interactive self-elevation through the
 // bus, not the system-level seed.
-export const createOrganization = Effect.fn("createOrganization")(function* (
+export const createOrganizationHandler = Effect.fn("createOrganizationHandler")(function* (
   cmd: CreateOrganizationPayload,
 ) {
   // Model invariant: super-admins are a separate user type — they

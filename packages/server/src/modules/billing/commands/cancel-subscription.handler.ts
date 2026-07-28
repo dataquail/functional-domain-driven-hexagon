@@ -16,7 +16,7 @@ import { type CancelSubscriptionPayload } from "./cancel-subscription.command.js
 // from Stripe's POV — the periodic reconciliation job (out of scope
 // here) would catch the mismatch via the webhook that Stripe sends
 // on cancel anyway, which would call MarkSubscriptionStatusCommand.
-export const cancelSubscription = Effect.fn("cancelSubscription")(function* (
+export const cancelSubscriptionHandler = Effect.fn("cancelSubscriptionHandler")(function* (
   cmd: CancelSubscriptionPayload,
 ) {
   const repo = yield* SubscriptionRepository;

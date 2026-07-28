@@ -2,7 +2,7 @@ import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
-import { SoftDeleteOrganization } from "@/modules/organization/commands/soft-delete-organization.command.js";
+import { SoftDeleteOrganizationCommand } from "@/modules/organization/commands/soft-delete-organization.command.js";
 import { OrganizationResource } from "@/modules/organization/policies/organization.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
@@ -14,7 +14,7 @@ export const softDeleteEndpoint = (
   Effect.gen(function* () {
     yield* Authz.hasPermissions(OrganizationResource, Actions.Delete, request.params.id);
     const commandBus = yield* CommandBus;
-    yield* commandBus.execute(SoftDeleteOrganization, { organizationId: request.params.id });
+    yield* commandBus.execute(SoftDeleteOrganizationCommand, { organizationId: request.params.id });
   }).pipe(
     Effect.catchTag("NotFound", () =>
       Effect.fail(

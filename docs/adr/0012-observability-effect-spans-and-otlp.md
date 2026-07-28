@@ -35,7 +35,7 @@ Every use-case handler — command, query, and event handlers — is declared wi
 
 ```
 command.CompleteTodoCommand      (bus boundary)
-└─ completeTodo                  (use case)
+└─ completeTodoHandler           (use case)
    └─ TodosRepository.updateOne  (repository)
       └─ <SQL>
 ```

@@ -11,7 +11,7 @@ import { UserId } from "@/platform/ids/user-id.js";
 //
 // `UserAlreadyExists` is part of the declared failure channel because another module
 // provisions through this command and translates that outcome into its own vocabulary.
-export const CreateUser = Command.make("CreateUserCommand", {
+export const CreateUserCommand = Command.make("CreateUserCommand", {
   payload: {
     email: Schema.String,
     country: Schema.optional(Schema.String),
@@ -21,4 +21,4 @@ export const CreateUser = Command.make("CreateUserCommand", {
   success: UserId,
   failure: Schema.Union([UserAlreadyExists, PersistenceUnavailable]),
 });
-export type CreateUserPayload = Command.Payload<typeof CreateUser>;
+export type CreateUserPayload = Command.Payload<typeof CreateUserCommand>;

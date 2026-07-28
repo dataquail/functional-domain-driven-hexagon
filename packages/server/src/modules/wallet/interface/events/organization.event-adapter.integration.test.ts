@@ -11,7 +11,7 @@ import { beforeEach } from "vitest";
 
 import { Api } from "@/api.js";
 import { OrganizationCreated } from "@/modules/organization/index.js";
-import { createWallet } from "@/modules/wallet/commands/create-wallet.handler.js";
+import { createWalletHandler } from "@/modules/wallet/commands/create-wallet.handler.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
 import { walletCommandGroup, WalletCommands, WalletCommandsLive } from "@/modules/wallet/index.js";
 import { OrganizationEventAdapterLive } from "@/modules/wallet/interface/events/organization.event-adapter.js";
@@ -125,7 +125,7 @@ const FailingCommandBusLive = Layer.effect(
   Layer.provide(
     Command.handlersOf(walletCommandGroup, {
       CreateWalletCommand: (payload) =>
-        createWallet(payload).pipe(Effect.provide(FailingWalletRepository)),
+        createWalletHandler(payload).pipe(Effect.provide(FailingWalletRepository)),
     }),
   ),
 );

@@ -12,7 +12,7 @@ import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-una
 // CLI poll: exchange a device code for an app token once the grant is approved.
 // `tokenExpiresInDays` is resolved by the endpoint from config. It mints on the user's behalf,
 // so it returns the same result view the mint command does.
-export const PollDeviceGrant = Command.make("PollDeviceGrantCommand", {
+export const PollDeviceGrantCommand = Command.make("PollDeviceGrantCommand", {
   payload: { deviceCode: Schema.String, tokenExpiresInDays: Schema.Number },
   success: MintApiTokenResultView,
   failure: Schema.Union([
@@ -22,4 +22,4 @@ export const PollDeviceGrant = Command.make("PollDeviceGrantCommand", {
     PersistenceUnavailable,
   ]),
 });
-export type PollDeviceGrantPayload = Command.Payload<typeof PollDeviceGrant>;
+export type PollDeviceGrantPayload = Command.Payload<typeof PollDeviceGrantCommand>;

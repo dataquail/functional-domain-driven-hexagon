@@ -7,7 +7,7 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
 import { type GrantOrganizationRolePayload } from "@/modules/organization/commands/grant-organization-role.command.js";
-import { grantOrganizationRole } from "@/modules/organization/commands/grant-organization-role.handler.js";
+import { grantOrganizationRoleHandler } from "@/modules/organization/commands/grant-organization-role.handler.js";
 import {
   AlreadyHasOrganizationRole,
   CannotPromoteSelfInOrganization,
@@ -32,13 +32,13 @@ const targetId = UserId.make("11111111-1111-1111-1111-111111111111");
 const actorId = UserId.make("99999999-9999-9999-9999-999999999999");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 
-describe("grantOrganizationRole", () => {
+describe("grantOrganizationRoleHandler", () => {
   it.effect("persists the role and publishes OrganizationRoleGranted with issuedBy", () =>
     Effect.gen(function* () {
       const repo = yield* OrganizationRolesRepository;
       const rec = yield* RecordedEvents;
 
-      yield* grantOrganizationRole({
+      yield* grantOrganizationRoleHandler({
         userId: targetId,
         organizationId: orgId,
         role: "admin",
@@ -71,7 +71,7 @@ describe("grantOrganizationRole", () => {
   it.effect("fails CannotPromoteSelfInOrganization when actor equals target", () =>
     Effect.gen(function* () {
       const exit = yield* Effect.exit(
-        grantOrganizationRole({
+        grantOrganizationRoleHandler({
           userId: targetId,
           organizationId: orgId,
           role: "admin",
@@ -96,8 +96,8 @@ describe("grantOrganizationRole", () => {
         role: "admin",
         actorUserId: actorId,
       };
-      yield* grantOrganizationRole(cmd);
-      const exit = yield* Effect.exit(grantOrganizationRole(cmd));
+      yield* grantOrganizationRoleHandler(cmd);
+      const exit = yield* Effect.exit(grantOrganizationRoleHandler(cmd));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.hasFails(exit.cause)

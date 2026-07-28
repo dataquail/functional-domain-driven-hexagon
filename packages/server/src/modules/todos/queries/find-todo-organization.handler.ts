@@ -14,7 +14,7 @@ const OrgIdRowStd = Schema.toStandardSchemaV1(Schema.Struct({ organization_id: S
 // `makeQuery` (not bare `execute`) so the read joins the ambient transaction when
 // one exists — the authz resolver runs this during a command's authorization,
 // inside that command's unit of work.
-export const findTodoOrganization = Effect.fn("findTodoOrganization")(function* (
+export const findTodoOrganizationHandler = Effect.fn("findTodoOrganizationHandler")(function* (
   query: FindTodoOrganizationPayload,
 ) {
   const db = yield* Database.Database;

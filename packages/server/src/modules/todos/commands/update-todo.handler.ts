@@ -8,7 +8,7 @@ import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js
 import { TodoSpecifications } from "@/modules/todos/domain/todo/todos.specification.js";
 import { Spec } from "@/platform/ddd/contracts/specification.js";
 
-export const updateTodo = Effect.fn("updateTodo")(function* (cmd: UpdateTodoPayload) {
+export const updateTodoHandler = Effect.fn("updateTodoHandler")(function* (cmd: UpdateTodoPayload) {
   const repo = yield* TodosRepository;
   const existing = yield* repo.findOne(
     Spec.and(

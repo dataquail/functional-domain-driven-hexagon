@@ -10,7 +10,7 @@ import { UserId } from "@/platform/ids/user-id.js";
 
 // First-class "mark done" verb (ADR-0005) — distinct from `UpdateTodoCommand`
 // so the CLI can complete a todo without resupplying its title.
-export const CompleteTodo = Command.make("CompleteTodoCommand", {
+export const CompleteTodoCommand = Command.make("CompleteTodoCommand", {
   payload: {
     todoId: TodoId,
     organizationId: OrganizationId,
@@ -19,4 +19,4 @@ export const CompleteTodo = Command.make("CompleteTodoCommand", {
   success: TodoRoot,
   failure: Schema.Union([TodoNotFound, PersistenceUnavailable]),
 });
-export type CompleteTodoPayload = Command.Payload<typeof CompleteTodo>;
+export type CompleteTodoPayload = Command.Payload<typeof CompleteTodoCommand>;

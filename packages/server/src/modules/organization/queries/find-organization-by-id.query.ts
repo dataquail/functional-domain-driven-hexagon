@@ -15,9 +15,9 @@ export type OrganizationAuthzView = typeof OrganizationAuthzView.Type;
 //
 // Returns null rather than failing — absence is a fact about the read model, and
 // the resolver is the layer that turns it into `NotFound`.
-export const FindOrganizationById = Query.make("FindOrganizationByIdQuery", {
+export const FindOrganizationByIdQuery = Query.make("FindOrganizationByIdQuery", {
   payload: { organizationId: OrganizationId },
   success: Schema.NullOr(OrganizationAuthzView),
   failure: PersistenceUnavailable,
 });
-export type FindOrganizationByIdPayload = Query.Payload<typeof FindOrganizationById>;
+export type FindOrganizationByIdPayload = Query.Payload<typeof FindOrganizationByIdQuery>;

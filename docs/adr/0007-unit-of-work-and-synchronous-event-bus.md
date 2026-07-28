@@ -37,7 +37,7 @@ This is why use-case DB access — repositories and read-side query handlers ali
 Use cases don't call `run` directly; they apply the **`withUnitOfWork`** combinator at the end of the handler's pipe, the way Cosmic-Python writes `with uow:` at the top of a handler:
 
 ```ts
-export const createUser = (cmd: CreateUserPayload) =>
+export const createUserHandler = (cmd: CreateUserPayload) =>
   Effect.gen(function* () {
     const repo = yield* UserRepository;
     const bus = yield* DomainEventBus;
@@ -145,7 +145,9 @@ export const OrganizationEventAdapterLive = Layer.effectDiscard(
     const domainEventBus = yield* DomainEventBus; // immediate: wallet must exist in the same tx
     const commandBus = yield* CommandBus;
     yield* domainEventBus.subscribe(OrganizationCreated, (event) =>
-      commandBus.execute(CreateWallet, { organizationId: event.organizationId }).pipe(Effect.orDie),
+      commandBus
+        .execute(CreateWalletCommand, { organizationId: event.organizationId })
+        .pipe(Effect.orDie),
     );
   }),
 );

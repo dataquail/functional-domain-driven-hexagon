@@ -10,9 +10,9 @@ import { UserId } from "@/platform/ids/user-id.js";
 
 // Browser-side approval: the signed-in user submits the `userCode` they were
 // shown by the CLI; we bind the grant to them.
-export const ApproveDeviceGrant = Command.make("ApproveDeviceGrantCommand", {
+export const ApproveDeviceGrantCommand = Command.make("ApproveDeviceGrantCommand", {
   payload: { userCode: Schema.String, userId: UserId },
   success: Schema.Void,
   failure: Schema.Union([DeviceGrantNotFound, DeviceGrantExpired, PersistenceUnavailable]),
 });
-export type ApproveDeviceGrantPayload = Command.Payload<typeof ApproveDeviceGrant>;
+export type ApproveDeviceGrantPayload = Command.Payload<typeof ApproveDeviceGrantCommand>;

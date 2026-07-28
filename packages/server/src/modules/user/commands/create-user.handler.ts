@@ -9,7 +9,7 @@ import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-export const createUser = Effect.fn("createUser")(function* (cmd: CreateUserPayload) {
+export const createUserHandler = Effect.fn("createUserHandler")(function* (cmd: CreateUserPayload) {
   const repo = yield* UserRepository;
   const bus = yield* DomainEventBus;
   const id = UserId.make(yield* Effect.sync(() => crypto.randomUUID()));

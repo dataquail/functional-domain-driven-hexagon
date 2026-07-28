@@ -18,9 +18,9 @@ import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-una
 // these unmodified). `signature` is the `stripe-signature` header.
 // Neither reaches a span: the raw body is unbounded and the signature
 // is a credential.
-export const IngestStripeWebhook = Command.make("IngestStripeWebhookCommand", {
+export const IngestStripeWebhookCommand = Command.make("IngestStripeWebhookCommand", {
   payload: { payload: Schema.String, signature: Schema.String },
   success: Schema.Void,
   failure: Schema.Union([InvalidWebhookSignature, PersistenceUnavailable]),
 });
-export type IngestStripeWebhookPayload = Command.Payload<typeof IngestStripeWebhook>;
+export type IngestStripeWebhookPayload = Command.Payload<typeof IngestStripeWebhookCommand>;

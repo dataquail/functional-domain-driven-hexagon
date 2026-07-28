@@ -5,9 +5,9 @@ import * as Layer from "effect/Layer";
 
 import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.js";
 import { PlatformRolesLive } from "@/modules/organization/infrastructure/acl/platform-roles.acl-live.js";
-import { FindMembership } from "@/modules/organization/queries/find-membership.policy-query.js";
+import { FindMembershipQuery } from "@/modules/organization/queries/find-membership.policy-query.js";
 import { type OrganizationAuthzView } from "@/modules/organization/queries/find-organization-by-id.query.js";
-import { FindUserOrganizationRoles } from "@/modules/organization/queries/find-user-organization-roles.policy-query.js";
+import { FindUserOrganizationRolesQuery } from "@/modules/organization/queries/find-user-organization-roles.policy-query.js";
 import * as Check from "@/platform/auth/check.js";
 import type * as PolicyRegistry from "@/platform/auth/policy-registry.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
@@ -72,12 +72,12 @@ export const OrganizationPoliciesLive = Layer.effect(
 
     const isMember: UserOrganizationLookup = (userId, organizationId) =>
       queryBus
-        .execute(FindMembership, { userId, organizationId })
+        .execute(FindMembershipQuery, { userId, organizationId })
         .pipe(Effect.map((result) => result.isMember));
 
     const isOrgAdmin: UserOrganizationLookup = (userId, organizationId) =>
       queryBus
-        .execute(FindUserOrganizationRoles, { userId, organizationId })
+        .execute(FindUserOrganizationRolesQuery, { userId, organizationId })
         .pipe(Effect.map((result) => result.roles.includes(ORG_ADMIN_ROLE)));
 
     const superAdmin = makeIsOrgSuperAdmin(roles);

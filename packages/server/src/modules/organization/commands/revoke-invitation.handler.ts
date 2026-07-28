@@ -9,7 +9,7 @@ import { InvitationSpecifications } from "@/modules/organization/domain/invitati
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-export const revokeInvitation = Effect.fn("revokeInvitation")(function* (
+export const revokeInvitationHandler = Effect.fn("revokeInvitationHandler")(function* (
   cmd: RevokeInvitationPayload,
 ) {
   const repo = yield* InvitationRepository;

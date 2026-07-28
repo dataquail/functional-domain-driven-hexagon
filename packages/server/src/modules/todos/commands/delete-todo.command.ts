@@ -7,7 +7,7 @@ import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-una
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-export const DeleteTodo = Command.make("DeleteTodoCommand", {
+export const DeleteTodoCommand = Command.make("DeleteTodoCommand", {
   payload: {
     todoId: TodoId,
     organizationId: OrganizationId,
@@ -16,4 +16,4 @@ export const DeleteTodo = Command.make("DeleteTodoCommand", {
   success: Schema.Void,
   failure: Schema.Union([TodoNotFound, PersistenceUnavailable]),
 });
-export type DeleteTodoPayload = Command.Payload<typeof DeleteTodo>;
+export type DeleteTodoPayload = Command.Payload<typeof DeleteTodoCommand>;

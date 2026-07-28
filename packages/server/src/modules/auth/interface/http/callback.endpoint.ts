@@ -6,7 +6,7 @@ import * as HttpServerRequest from "effect/unstable/http/HttpServerRequest";
 import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
 
 import { EnvVars } from "@/common/env-vars.js";
-import { SignIn } from "@/modules/auth/commands/sign-in.command.js";
+import { SignInCommand } from "@/modules/auth/commands/sign-in.command.js";
 import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client.js";
 import { CookieCodec } from "@/platform/auth/cookie-codec.js";
 import { recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
@@ -40,7 +40,7 @@ export const callbackEndpoint = Effect.fn("AuthLive.callback")(
     const exchange = yield* oidc.exchangeCode(url, expectedState, codeVerifier);
 
     const bus = yield* CommandBus;
-    const { sessionId } = yield* bus.execute(SignIn, {
+    const { sessionId } = yield* bus.execute(SignInCommand, {
       subject: exchange.subject,
       email: exchange.email,
       ttlSeconds: env.SESSION_TTL_SECONDS,

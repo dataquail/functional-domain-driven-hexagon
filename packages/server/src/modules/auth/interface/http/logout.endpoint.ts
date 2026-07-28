@@ -5,7 +5,7 @@ import * as HttpServerRequest from "effect/unstable/http/HttpServerRequest";
 import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
 
 import { EnvVars } from "@/common/env-vars.js";
-import { RevokeSession } from "@/modules/auth/commands/revoke-session.command.js";
+import { RevokeSessionCommand } from "@/modules/auth/commands/revoke-session.command.js";
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client.js";
 import { CookieCodec } from "@/platform/auth/cookie-codec.js";
@@ -30,7 +30,7 @@ export const logoutEndpoint = Effect.fn("AuthLive.logout")(function* () {
   if (raw !== undefined && raw !== "") {
     const verified = codec.verify(raw);
     if (verified !== null) {
-      yield* commandBus.execute(RevokeSession, { sessionId: SessionId.make(verified) });
+      yield* commandBus.execute(RevokeSessionCommand, { sessionId: SessionId.make(verified) });
     }
   }
 

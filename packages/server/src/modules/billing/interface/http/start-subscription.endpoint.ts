@@ -3,7 +3,7 @@ import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
-import { StartSubscription } from "@/modules/billing/commands/start-subscription.command.js";
+import { StartSubscriptionCommand } from "@/modules/billing/commands/start-subscription.command.js";
 import { BillingResource } from "@/modules/billing/policies/billing.policies.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
@@ -16,7 +16,7 @@ export const startSubscriptionEndpoint = Effect.fn("BillingLive.startSubscriptio
   function* (request: EndpointRequest<typeof BillingContract.PrivateGroup, "startSubscription">) {
     yield* Authz.hasPermissions(BillingResource, Actions.Update, request.params.orgId);
     const commandBus = yield* CommandBus;
-    const subscription = yield* commandBus.execute(StartSubscription, {
+    const subscription = yield* commandBus.execute(StartSubscriptionCommand, {
       organizationId: request.params.orgId,
     });
     return new BillingContract.SubscriptionResponse({

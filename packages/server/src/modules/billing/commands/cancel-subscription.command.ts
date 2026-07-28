@@ -9,9 +9,9 @@ import { SubscriptionRoot } from "@/modules/billing/domain/subscription/subscrip
 import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
-export const CancelSubscription = Command.make("CancelSubscriptionCommand", {
+export const CancelSubscriptionCommand = Command.make("CancelSubscriptionCommand", {
   payload: { organizationId: OrganizationId },
   success: SubscriptionRoot,
   failure: Schema.Union([SubscriptionNotFound, BillingGatewayUnavailable, PersistenceUnavailable]),
 });
-export type CancelSubscriptionPayload = Command.Payload<typeof CancelSubscription>;
+export type CancelSubscriptionPayload = Command.Payload<typeof CancelSubscriptionCommand>;

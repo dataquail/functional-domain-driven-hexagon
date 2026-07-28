@@ -3,17 +3,19 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { CreateUser } from "@/modules/user/commands/create-user.command.js";
-import { createUser } from "@/modules/user/commands/create-user.handler.js";
-import { DeleteUser } from "@/modules/user/commands/delete-user.command.js";
-import { deleteUser } from "@/modules/user/commands/delete-user.handler.js";
+import { CreateUserCommand } from "@/modules/user/commands/create-user.command.js";
+import { createUserHandler } from "@/modules/user/commands/create-user.handler.js";
+import { DeleteUserCommand } from "@/modules/user/commands/delete-user.command.js";
+import { deleteUserHandler } from "@/modules/user/commands/delete-user.handler.js";
 import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live.js";
 
-const userCommandGroup = Command.group(CreateUser, DeleteUser);
+const userCommandGroup = Command.group(CreateUserCommand, DeleteUserCommand);
 
 const UserCommandHandlersLive = Command.handlersOf(userCommandGroup, {
-  CreateUserCommand: (payload) => createUser(payload).pipe(Effect.provide(UserRepositoryLive)),
-  DeleteUserCommand: (payload) => deleteUser(payload).pipe(Effect.provide(UserRepositoryLive)),
+  CreateUserCommand: (payload) =>
+    createUserHandler(payload).pipe(Effect.provide(UserRepositoryLive)),
+  DeleteUserCommand: (payload) =>
+    deleteUserHandler(payload).pipe(Effect.provide(UserRepositoryLive)),
 });
 
 // Every field of `CreateUserCommand` is PII (email, postal address), so it

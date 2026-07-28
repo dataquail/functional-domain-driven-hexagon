@@ -23,7 +23,7 @@ import { type IngestStripeWebhookPayload } from "./ingest-stripe-webhook.command
 // The repository's read side exists for audit/dashboard read paths;
 // the write path here intentionally skips it because "find then insert"
 // introduces a race window. Postgres' unique constraint is the arbiter.
-export const ingestStripeWebhook = Effect.fn("ingestStripeWebhook")(function* (
+export const ingestStripeWebhookHandler = Effect.fn("ingestStripeWebhookHandler")(function* (
   cmd: IngestStripeWebhookPayload,
 ) {
   const gateway = yield* BillingGateway;

@@ -15,9 +15,9 @@ export type FindMembershipResult = typeof MembershipView.Type;
 // modules' authorization checks can ask it through their own ACL port (ADR-0022).
 // Consumers dispatch it through the bus rather than reaching this module's
 // tables, so the org module stays the single source of truth.
-export const FindMembership = Query.make("FindMembershipQuery", {
+export const FindMembershipQuery = Query.make("FindMembershipQuery", {
   payload: { userId: UserId, organizationId: OrganizationId },
   success: MembershipView,
   failure: PersistenceUnavailable,
 });
-export type FindMembershipPayload = Query.Payload<typeof FindMembership>;
+export type FindMembershipPayload = Query.Payload<typeof FindMembershipQuery>;

@@ -17,11 +17,14 @@ export type SubscriptionView = typeof SubscriptionView.Type;
 // nullable, and a null is representable on a wire where an `Option` needs a codec.
 export type FindSubscriptionByOrganizationResult = SubscriptionView | null;
 
-export const FindSubscriptionByOrganization = Query.make("FindSubscriptionByOrganizationQuery", {
-  payload: { organizationId: OrganizationId },
-  success: Schema.NullOr(SubscriptionView),
-  failure: PersistenceUnavailable,
-});
+export const FindSubscriptionByOrganizationQuery = Query.make(
+  "FindSubscriptionByOrganizationQuery",
+  {
+    payload: { organizationId: OrganizationId },
+    success: Schema.NullOr(SubscriptionView),
+    failure: PersistenceUnavailable,
+  },
+);
 export type FindSubscriptionByOrganizationPayload = Query.Payload<
-  typeof FindSubscriptionByOrganization
+  typeof FindSubscriptionByOrganizationQuery
 >;

@@ -2,16 +2,16 @@ import { Query } from "@org/cqrs";
 import * as Context from "effect/Context";
 import * as Layer from "effect/Layer";
 
-import { findTodoOrganization } from "@/modules/todos/queries/find-todo-organization.handler.js";
-import { FindTodoOrganization } from "@/modules/todos/queries/find-todo-organization.query.js";
-import { listTodos } from "@/modules/todos/queries/list-todos.handler.js";
-import { ListTodos } from "@/modules/todos/queries/list-todos.query.js";
+import { findTodoOrganizationHandler } from "@/modules/todos/queries/find-todo-organization.handler.js";
+import { FindTodoOrganizationQuery } from "@/modules/todos/queries/find-todo-organization.query.js";
+import { listTodosHandler } from "@/modules/todos/queries/list-todos.handler.js";
+import { ListTodosQuery } from "@/modules/todos/queries/list-todos.query.js";
 
-const todoQueryGroup = Query.group(ListTodos, FindTodoOrganization);
+const todoQueryGroup = Query.group(ListTodosQuery, FindTodoOrganizationQuery);
 
 const TodoQueryHandlersLive = Query.handlersOf(todoQueryGroup, {
-  ListTodosQuery: (payload) => listTodos(payload),
-  FindTodoOrganizationQuery: (payload) => findTodoOrganization(payload),
+  ListTodosQuery: (payload) => listTodosHandler(payload),
+  FindTodoOrganizationQuery: (payload) => findTodoOrganizationHandler(payload),
 });
 
 const todoQuerySpanAttributes: Query.SpanAttributes<typeof todoQueryGroup> = {

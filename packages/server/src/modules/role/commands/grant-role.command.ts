@@ -9,7 +9,7 @@ import { UserId } from "@/platform/ids/user-id.js";
 // `actorUserId` is carried explicitly rather than pulled from `CurrentUser` so the bus
 // boundary stays uniform — the HTTP endpoint is the one place that translates
 // request-context into command input.
-export const GrantRole = Command.make("GrantRoleCommand", {
+export const GrantRoleCommand = Command.make("GrantRoleCommand", {
   payload: {
     // The user receiving the role.
     userId: UserId,
@@ -19,4 +19,4 @@ export const GrantRole = Command.make("GrantRoleCommand", {
   success: Schema.Void,
   failure: Schema.Union([AlreadyHasRole, CannotPromoteSelf, PersistenceUnavailable]),
 });
-export type GrantRolePayload = Command.Payload<typeof GrantRole>;
+export type GrantRolePayload = Command.Payload<typeof GrantRoleCommand>;

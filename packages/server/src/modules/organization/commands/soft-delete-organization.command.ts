@@ -8,9 +8,9 @@ import {
 import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
-export const SoftDeleteOrganization = Command.make("SoftDeleteOrganizationCommand", {
+export const SoftDeleteOrganizationCommand = Command.make("SoftDeleteOrganizationCommand", {
   payload: { organizationId: OrganizationId },
   success: Schema.Void,
   failure: Schema.Union([OrganizationNotFound, OrganizationAlreadyDeleted, PersistenceUnavailable]),
 });
-export type SoftDeleteOrganizationPayload = Command.Payload<typeof SoftDeleteOrganization>;
+export type SoftDeleteOrganizationPayload = Command.Payload<typeof SoftDeleteOrganizationCommand>;

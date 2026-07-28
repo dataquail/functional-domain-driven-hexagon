@@ -9,7 +9,7 @@ import { OrganizationSpecifications } from "@/modules/organization/domain/organi
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-export const restoreOrganization = Effect.fn("restoreOrganization")(function* (
+export const restoreOrganizationHandler = Effect.fn("restoreOrganizationHandler")(function* (
   cmd: RestoreOrganizationPayload,
 ) {
   const repo = yield* OrganizationRepository;

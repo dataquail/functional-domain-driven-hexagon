@@ -12,8 +12,8 @@ import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 // session is a success, because logout must succeed regardless of session state. Transient DB
 // failure is swallowed for the same reason (we'd rather let the caller's cookie be cleared and
 // the OIDC end-session URL be hit than 503 a logout); the session's TTL eventually expires.
-export const RevokeSession = Command.make("RevokeSessionCommand", {
+export const RevokeSessionCommand = Command.make("RevokeSessionCommand", {
   payload: { sessionId: SessionId },
   success: Schema.Void,
 });
-export type RevokeSessionPayload = Command.Payload<typeof RevokeSession>;
+export type RevokeSessionPayload = Command.Payload<typeof RevokeSessionCommand>;

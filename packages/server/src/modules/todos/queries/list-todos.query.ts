@@ -17,9 +17,9 @@ export const ListTodosResultView = Schema.Struct({
 });
 export type ListTodosResult = typeof ListTodosResultView.Type;
 
-export const ListTodos = Query.make("ListTodosQuery", {
+export const ListTodosQuery = Query.make("ListTodosQuery", {
   payload: { organizationId: OrganizationId },
   success: ListTodosResultView,
   failure: PersistenceUnavailable,
 });
-export type ListTodosPayload = Query.Payload<typeof ListTodos>;
+export type ListTodosPayload = Query.Payload<typeof ListTodosQuery>;

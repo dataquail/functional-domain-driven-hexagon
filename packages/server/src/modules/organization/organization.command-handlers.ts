@@ -3,28 +3,28 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { AcceptInvitation } from "@/modules/organization/commands/accept-invitation.command.js";
-import { acceptInvitation } from "@/modules/organization/commands/accept-invitation.handler.js";
-import { CreateOrganization } from "@/modules/organization/commands/create-organization.command.js";
-import { createOrganization } from "@/modules/organization/commands/create-organization.handler.js";
-import { GrantOrganizationRole } from "@/modules/organization/commands/grant-organization-role.command.js";
-import { grantOrganizationRole } from "@/modules/organization/commands/grant-organization-role.handler.js";
-import { InviteUser } from "@/modules/organization/commands/invite-user.command.js";
-import { inviteUser } from "@/modules/organization/commands/invite-user.handler.js";
-import { LeaveOrganization } from "@/modules/organization/commands/leave-organization.command.js";
-import { leaveOrganization } from "@/modules/organization/commands/leave-organization.handler.js";
-import { RemoveMember } from "@/modules/organization/commands/remove-member.command.js";
-import { removeMember } from "@/modules/organization/commands/remove-member.handler.js";
-import { ResendInvitation } from "@/modules/organization/commands/resend-invitation.command.js";
-import { resendInvitation } from "@/modules/organization/commands/resend-invitation.handler.js";
-import { RestoreOrganization } from "@/modules/organization/commands/restore-organization.command.js";
-import { restoreOrganization } from "@/modules/organization/commands/restore-organization.handler.js";
-import { RevokeInvitation } from "@/modules/organization/commands/revoke-invitation.command.js";
-import { revokeInvitation } from "@/modules/organization/commands/revoke-invitation.handler.js";
-import { RevokeOrganizationRole } from "@/modules/organization/commands/revoke-organization-role.command.js";
-import { revokeOrganizationRole } from "@/modules/organization/commands/revoke-organization-role.handler.js";
-import { SoftDeleteOrganization } from "@/modules/organization/commands/soft-delete-organization.command.js";
-import { softDeleteOrganization } from "@/modules/organization/commands/soft-delete-organization.handler.js";
+import { AcceptInvitationCommand } from "@/modules/organization/commands/accept-invitation.command.js";
+import { acceptInvitationHandler } from "@/modules/organization/commands/accept-invitation.handler.js";
+import { CreateOrganizationCommand } from "@/modules/organization/commands/create-organization.command.js";
+import { createOrganizationHandler } from "@/modules/organization/commands/create-organization.handler.js";
+import { GrantOrganizationRoleCommand } from "@/modules/organization/commands/grant-organization-role.command.js";
+import { grantOrganizationRoleHandler } from "@/modules/organization/commands/grant-organization-role.handler.js";
+import { InviteUserCommand } from "@/modules/organization/commands/invite-user.command.js";
+import { inviteUserHandler } from "@/modules/organization/commands/invite-user.handler.js";
+import { LeaveOrganizationCommand } from "@/modules/organization/commands/leave-organization.command.js";
+import { leaveOrganizationHandler } from "@/modules/organization/commands/leave-organization.handler.js";
+import { RemoveMemberCommand } from "@/modules/organization/commands/remove-member.command.js";
+import { removeMemberHandler } from "@/modules/organization/commands/remove-member.handler.js";
+import { ResendInvitationCommand } from "@/modules/organization/commands/resend-invitation.command.js";
+import { resendInvitationHandler } from "@/modules/organization/commands/resend-invitation.handler.js";
+import { RestoreOrganizationCommand } from "@/modules/organization/commands/restore-organization.command.js";
+import { restoreOrganizationHandler } from "@/modules/organization/commands/restore-organization.handler.js";
+import { RevokeInvitationCommand } from "@/modules/organization/commands/revoke-invitation.command.js";
+import { revokeInvitationHandler } from "@/modules/organization/commands/revoke-invitation.handler.js";
+import { RevokeOrganizationRoleCommand } from "@/modules/organization/commands/revoke-organization-role.command.js";
+import { revokeOrganizationRoleHandler } from "@/modules/organization/commands/revoke-organization-role.handler.js";
+import { SoftDeleteOrganizationCommand } from "@/modules/organization/commands/soft-delete-organization.command.js";
+import { softDeleteOrganizationHandler } from "@/modules/organization/commands/soft-delete-organization.handler.js";
 import { PlatformRolesLive } from "@/modules/organization/infrastructure/acl/platform-roles.acl-live.js";
 import { InvitationMailerLive } from "@/modules/organization/infrastructure/clients/invitation-mailer.client-live.js";
 import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/repositories/invitation.repository-live.js";
@@ -40,22 +40,22 @@ import { MailerLive } from "@/platform/notifications/mailer-live.js";
 // mailer follows for symmetry — it was only ever hoisted because the invite handler's
 // requirement used to reach the endpoints through the bus.
 const organizationCommandGroup = Command.group(
-  CreateOrganization,
-  AcceptInvitation,
-  InviteUser,
-  ResendInvitation,
-  RevokeInvitation,
-  GrantOrganizationRole,
-  RevokeOrganizationRole,
-  LeaveOrganization,
-  RemoveMember,
-  RestoreOrganization,
-  SoftDeleteOrganization,
+  CreateOrganizationCommand,
+  AcceptInvitationCommand,
+  InviteUserCommand,
+  ResendInvitationCommand,
+  RevokeInvitationCommand,
+  GrantOrganizationRoleCommand,
+  RevokeOrganizationRoleCommand,
+  LeaveOrganizationCommand,
+  RemoveMemberCommand,
+  RestoreOrganizationCommand,
+  SoftDeleteOrganizationCommand,
 );
 
 const OrganizationCommandHandlersLive = Command.handlersOf(organizationCommandGroup, {
   CreateOrganizationCommand: (payload) =>
-    createOrganization(payload).pipe(
+    createOrganizationHandler(payload).pipe(
       Effect.provide(
         Layer.mergeAll(
           OrganizationRepositoryLive,
@@ -65,27 +65,27 @@ const OrganizationCommandHandlersLive = Command.handlersOf(organizationCommandGr
       ),
     ),
   AcceptInvitationCommand: (payload) =>
-    acceptInvitation(payload).pipe(
+    acceptInvitationHandler(payload).pipe(
       Effect.provide(Layer.mergeAll(InvitationRepositoryLive, MembershipRepositoryLive)),
     ),
   InviteUserCommand: (payload) =>
-    inviteUser(payload).pipe(Effect.provide(InvitationRepositoryLive)),
+    inviteUserHandler(payload).pipe(Effect.provide(InvitationRepositoryLive)),
   ResendInvitationCommand: (payload) =>
-    resendInvitation(payload).pipe(Effect.provide(InvitationRepositoryLive)),
+    resendInvitationHandler(payload).pipe(Effect.provide(InvitationRepositoryLive)),
   RevokeInvitationCommand: (payload) =>
-    revokeInvitation(payload).pipe(Effect.provide(InvitationRepositoryLive)),
+    revokeInvitationHandler(payload).pipe(Effect.provide(InvitationRepositoryLive)),
   GrantOrganizationRoleCommand: (payload) =>
-    grantOrganizationRole(payload).pipe(Effect.provide(OrganizationRolesRepositoryLive)),
+    grantOrganizationRoleHandler(payload).pipe(Effect.provide(OrganizationRolesRepositoryLive)),
   RevokeOrganizationRoleCommand: (payload) =>
-    revokeOrganizationRole(payload).pipe(Effect.provide(OrganizationRolesRepositoryLive)),
+    revokeOrganizationRoleHandler(payload).pipe(Effect.provide(OrganizationRolesRepositoryLive)),
   LeaveOrganizationCommand: (payload) =>
-    leaveOrganization(payload).pipe(Effect.provide(MembershipRepositoryLive)),
+    leaveOrganizationHandler(payload).pipe(Effect.provide(MembershipRepositoryLive)),
   RemoveMemberCommand: (payload) =>
-    removeMember(payload).pipe(Effect.provide(MembershipRepositoryLive)),
+    removeMemberHandler(payload).pipe(Effect.provide(MembershipRepositoryLive)),
   RestoreOrganizationCommand: (payload) =>
-    restoreOrganization(payload).pipe(Effect.provide(OrganizationRepositoryLive)),
+    restoreOrganizationHandler(payload).pipe(Effect.provide(OrganizationRepositoryLive)),
   SoftDeleteOrganizationCommand: (payload) =>
-    softDeleteOrganization(payload).pipe(Effect.provide(OrganizationRepositoryLive)),
+    softDeleteOrganizationHandler(payload).pipe(Effect.provide(OrganizationRepositoryLive)),
 }).pipe(
   Layer.provide(
     Layer.mergeAll(PlatformRolesLive, InvitationMailerLive.pipe(Layer.provide(MailerLive))),

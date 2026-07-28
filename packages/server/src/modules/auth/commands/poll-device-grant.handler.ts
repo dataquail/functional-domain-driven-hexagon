@@ -22,7 +22,7 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 // transaction rather than nesting a savepoint.
 //
 // Bus-boundary span (ADR-0012) wraps this at dispatch time.
-export const pollDeviceGrant = Effect.fn("pollDeviceGrant")(function* (
+export const pollDeviceGrantHandler = Effect.fn("pollDeviceGrantHandler")(function* (
   cmd: PollDeviceGrantPayload,
 ) {
   const grants = yield* DeviceGrantRepository;

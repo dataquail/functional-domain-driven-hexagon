@@ -12,10 +12,10 @@ import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-export const acceptInvitation = Effect.fn("acceptInvitation")(
+export const acceptInvitationHandler = Effect.fn("acceptInvitationHandler")(
   function* (cmd: AcceptInvitationPayload) {
     // Model invariant: super-admins don't own or join organizations.
-    // See `createOrganization` for the rationale on placing this at
+    // See `createOrganizationHandler` for the rationale on placing this at
     // the use-case level rather than HTTP authz.
     const roles = yield* PlatformRoles;
     if (yield* roles.isSuperAdmin(cmd.userId)) {

@@ -14,7 +14,7 @@ const toView = (row: RowSchemas.TodoRow): ListTodosTodoView => ({
   completed: row.completed,
 });
 
-export const listTodos = Effect.fn("listTodos")(function* (query: ListTodosPayload) {
+export const listTodosHandler = Effect.fn("listTodosHandler")(function* (query: ListTodosPayload) {
   const db = yield* Database.Database;
   const rows = yield* db
     .makeQuery((execute) =>

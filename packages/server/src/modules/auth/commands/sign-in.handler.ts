@@ -14,7 +14,7 @@ import { SessionRepository } from "@/modules/auth/domain/session/session.reposit
 import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-// Slice-scope SignIn:
+// Slice-scope SignInCommand:
 //   - looks up auth_identities by Zitadel subject
 //   - admins are pre-seeded by infra/zitadel/seed.mjs, so the row exists
 //   - an unknown subject is just-in-time provisioned as an ordinary
@@ -28,7 +28,7 @@ import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 //
 // Bus-boundary span (ADR-0012) wraps this at dispatch time, so no inline
 // `withSpan` here.
-export const signIn = Effect.fn("signIn")(function* (cmd: SignInPayload) {
+export const signInHandler = Effect.fn("signInHandler")(function* (cmd: SignInPayload) {
   const identities = yield* AuthIdentityRepository;
   const sessions = yield* SessionRepository;
   const provisioning = yield* UserProvisioning;

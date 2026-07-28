@@ -17,7 +17,7 @@ import { UserId } from "@/platform/ids/user-id.js";
 // expired). Used by the auth middleware via `QueryBus.execute(...)`; the
 // bus-boundary span (ADR-0012) wraps this at dispatch time. A null
 // `expires_at` means non-expiring — such a token never lapses on time.
-export const findApiTokenByHash = Effect.fn("findApiTokenByHash")(function* (
+export const findApiTokenByHashHandler = Effect.fn("findApiTokenByHashHandler")(function* (
   query: FindApiTokenByHashPayload,
 ) {
   const db = yield* Database.Database;

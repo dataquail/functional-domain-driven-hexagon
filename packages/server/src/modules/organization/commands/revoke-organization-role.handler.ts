@@ -8,7 +8,7 @@ import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-export const revokeOrganizationRole = Effect.fn("revokeOrganizationRole")(function* (
+export const revokeOrganizationRoleHandler = Effect.fn("revokeOrganizationRoleHandler")(function* (
   cmd: RevokeOrganizationRolePayload,
 ) {
   const repo = yield* OrganizationRolesRepository;

@@ -46,7 +46,7 @@ export class UserAlreadyExistsError extends Schema.TaggedErrorClass<UserAlreadyE
 The interface layer (the HTTP endpoint) catches each domain error and re-throws as the contract's HTTP error variant via `Effect.catchTag`. This is the only place those two error sets meet:
 
 ```ts
-createUser(...).pipe(
+createUserHandler(...).pipe(
   Effect.catchTag("UserAlreadyExists", (e) =>
     new UserContract.UserAlreadyExistsError({
       email: e.email,

@@ -9,7 +9,7 @@ import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as TestClock from "effect/testing/TestClock";
 
-import { resendInvitation } from "@/modules/organization/commands/resend-invitation.handler.js";
+import { resendInvitationHandler } from "@/modules/organization/commands/resend-invitation.handler.js";
 import {
   InvitationAlreadyAccepted,
   InvitationAlreadyRevoked,
@@ -61,7 +61,7 @@ const cmd = {
   actorUserId,
 };
 
-describe("resendInvitation", () => {
+describe("resendInvitationHandler", () => {
   it.effect("rotates the token, resets expiry, emits InvitationReissued, re-sends the email", () =>
     Effect.gen(function* () {
       yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
@@ -70,7 +70,7 @@ describe("resendInvitation", () => {
       const sent = yield* SentInvitations;
       yield* repo.insertOne(seedInvitation());
 
-      yield* resendInvitation(cmd);
+      yield* resendInvitationHandler(cmd);
 
       const stored = yield* repo.findOne(InvitationSpecifications.withId(invitationId));
       if (stored === null) throw new Error("expected invitation");
@@ -99,7 +99,7 @@ describe("resendInvitation", () => {
       if (Result.isFailure(revoked)) throw new Error("expected Right");
       yield* repo.insertOne(revoked.success.invitation);
 
-      const exit = yield* Effect.exit(resendInvitation(cmd));
+      const exit = yield* Effect.exit(resendInvitationHandler(cmd));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.hasFails(exit.cause)
@@ -120,7 +120,7 @@ describe("resendInvitation", () => {
       if (Result.isFailure(accepted)) throw new Error("expected Right");
       yield* repo.insertOne(accepted.success.invitation);
 
-      const exit = yield* Effect.exit(resendInvitation(cmd));
+      const exit = yield* Effect.exit(resendInvitationHandler(cmd));
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.hasFails(exit.cause)

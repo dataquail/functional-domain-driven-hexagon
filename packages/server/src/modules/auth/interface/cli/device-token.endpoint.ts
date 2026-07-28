@@ -3,7 +3,7 @@ import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { EnvVars } from "@/common/env-vars.js";
-import { PollDeviceGrant } from "@/modules/auth/commands/poll-device-grant.command.js";
+import { PollDeviceGrantCommand } from "@/modules/auth/commands/poll-device-grant.command.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // CLI adapter (ADR-0005): the poll/exchange endpoint. Maps the device-grant
@@ -13,7 +13,7 @@ export const deviceTokenEndpoint = Effect.fn("CliAuthLive.deviceToken")(
   function* (request: EndpointRequest<typeof CliAuthContract.DeviceGroup, "deviceToken">) {
     const env = yield* EnvVars;
     const commandBus = yield* CommandBus;
-    const { apiToken, token } = yield* commandBus.execute(PollDeviceGrant, {
+    const { apiToken, token } = yield* commandBus.execute(PollDeviceGrantCommand, {
       deviceCode: request.payload.device_code,
       tokenExpiresInDays: env.API_TOKEN_DEFAULT_TTL_DAYS,
     });

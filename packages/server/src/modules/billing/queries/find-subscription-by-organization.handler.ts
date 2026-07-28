@@ -20,23 +20,23 @@ const toView = (row: RowSchemas.SubscriptionRow): SubscriptionView => ({
   currentPeriodEnd: row.current_period_end,
 });
 
-export const findSubscriptionByOrganization = Effect.fn("findSubscriptionByOrganization")(
-  function* (query: FindSubscriptionByOrganizationPayload) {
-    const db = yield* Database.Database;
-    const row = yield* db
-      .makeQuery((execute) =>
-        execute((client) =>
-          client.maybeOne(sql.type(RowSchemas.SubscriptionRowStd)`
+export const findSubscriptionByOrganizationHandler = Effect.fn(
+  "findSubscriptionByOrganizationHandler",
+)(function* (query: FindSubscriptionByOrganizationPayload) {
+  const db = yield* Database.Database;
+  const row = yield* db
+    .makeQuery((execute) =>
+      execute((client) =>
+        client.maybeOne(sql.type(RowSchemas.SubscriptionRowStd)`
             SELECT * FROM billing.subscriptions WHERE organization_id = ${query.organizationId}
           `),
-        ),
-      )()
-      .pipe(
-        Effect.catchTag("DatabaseError", Effect.die),
-        Effect.catchTag("DatabaseUnavailable", (e) =>
-          Effect.fail(new PersistenceUnavailable({ message: e.message })),
-        ),
-      );
-    return row === null ? null : toView(row);
-  },
-);
+      ),
+    )()
+    .pipe(
+      Effect.catchTag("DatabaseError", Effect.die),
+      Effect.catchTag("DatabaseUnavailable", (e) =>
+        Effect.fail(new PersistenceUnavailable({ message: e.message })),
+      ),
+    );
+  return row === null ? null : toView(row);
+});

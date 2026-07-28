@@ -19,7 +19,7 @@ export type SignInResult = typeof SignInResultView.Type;
 // signed-in `email`, and the caller's chosen TTLs. `email` is required to
 // JIT-provision an unknown subject on first sign-in (admins are pre-seeded
 // by `infra/zitadel/seed.mjs`); a `null` email fails provisioning.
-export const SignIn = Command.make("SignInCommand", {
+export const SignInCommand = Command.make("SignInCommand", {
   payload: {
     subject: Schema.String,
     email: Schema.NullOr(Schema.String),
@@ -33,4 +33,4 @@ export const SignIn = Command.make("SignInCommand", {
     PersistenceUnavailable,
   ]),
 });
-export type SignInPayload = Command.Payload<typeof SignIn>;
+export type SignInPayload = Command.Payload<typeof SignInCommand>;

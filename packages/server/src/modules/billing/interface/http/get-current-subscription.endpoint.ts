@@ -3,7 +3,7 @@ import { QueryBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { BillingResource } from "@/modules/billing/policies/billing.policies.js";
-import { FindSubscriptionByOrganization } from "@/modules/billing/queries/find-subscription-by-organization.query.js";
+import { FindSubscriptionByOrganizationQuery } from "@/modules/billing/queries/find-subscription-by-organization.query.js";
 import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
@@ -17,7 +17,7 @@ export const getCurrentSubscriptionEndpoint = Effect.fn("BillingLive.getCurrentS
   ) {
     yield* Authz.hasPermissions(BillingResource, Actions.Read, request.params.orgId);
     const queryBus = yield* QueryBus;
-    const result = yield* queryBus.execute(FindSubscriptionByOrganization, {
+    const result = yield* queryBus.execute(FindSubscriptionByOrganizationQuery, {
       organizationId: request.params.orgId,
     });
     if (result === null) {

@@ -30,9 +30,9 @@ export const MintApiTokenResultView = Schema.Struct({
 // Mints a new API token for the caller. `expiresInDays` is resolved by the
 // endpoint (payload value or the configured default) so the handler can
 // compute `expiresAt` against the server clock — no client/server skew.
-export const MintApiToken = Command.make("MintApiTokenCommand", {
+export const MintApiTokenCommand = Command.make("MintApiTokenCommand", {
   payload: { userId: UserId, label: Schema.String, expiresInDays: Schema.Number },
   success: MintApiTokenResultView,
   failure: PersistenceUnavailable,
 });
-export type MintApiTokenPayload = Command.Payload<typeof MintApiToken>;
+export type MintApiTokenPayload = Command.Payload<typeof MintApiTokenCommand>;

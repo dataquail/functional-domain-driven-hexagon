@@ -18,9 +18,9 @@ export const ApiTokenView = Schema.Struct({
 export type ApiTokenView = typeof ApiTokenView.Type;
 
 // Lists the caller's active (non-revoked) tokens for the management UI.
-export const ListMyApiTokens = Query.make("ListMyApiTokensQuery", {
+export const ListMyApiTokensQuery = Query.make("ListMyApiTokensQuery", {
   payload: { userId: UserId },
   success: Schema.Array(ApiTokenView),
   failure: PersistenceUnavailable,
 });
-export type ListMyApiTokensPayload = Query.Payload<typeof ListMyApiTokens>;
+export type ListMyApiTokensPayload = Query.Payload<typeof ListMyApiTokensQuery>;

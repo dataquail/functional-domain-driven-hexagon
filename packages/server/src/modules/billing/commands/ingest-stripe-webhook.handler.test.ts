@@ -6,7 +6,7 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { ingestStripeWebhook } from "@/modules/billing/commands/ingest-stripe-webhook.handler.js";
+import { ingestStripeWebhookHandler } from "@/modules/billing/commands/ingest-stripe-webhook.handler.js";
 import { InvalidWebhookSignature } from "@/modules/billing/domain/subscription/subscription.errors.js";
 import { type StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events.js";
 import { type StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.js";
@@ -42,7 +42,7 @@ const cmd = (eventId: string, signature = FAKE_WEBHOOK_SIGNATURE) => ({
   signature,
 });
 
-describe("ingestStripeWebhook", () => {
+describe("ingestStripeWebhookHandler", () => {
   it.effect(
     "on first delivery: verifies signature, claims the id, emits StripeWebhookIngested",
     () =>
@@ -50,7 +50,7 @@ describe("ingestStripeWebhook", () => {
         const repo = yield* WebhookEventRepository;
         const rec = yield* RecordedEvents;
 
-        yield* ingestStripeWebhook(cmd("evt_new"));
+        yield* ingestStripeWebhookHandler(cmd("evt_new"));
 
         const seen = yield* repo.findOne(WebhookEventSpecifications.withStripeEventId("evt_new"));
         ok(seen !== null);
@@ -68,7 +68,9 @@ describe("ingestStripeWebhook", () => {
       const repo = yield* WebhookEventRepository;
       const rec = yield* RecordedEvents;
 
-      const exit = yield* Effect.exit(ingestStripeWebhook(cmd("evt_bad_sig", "wrong-signature")));
+      const exit = yield* Effect.exit(
+        ingestStripeWebhookHandler(cmd("evt_bad_sig", "wrong-signature")),
+      );
       ok(Exit.isFailure(exit));
       if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
         ok(
@@ -87,8 +89,8 @@ describe("ingestStripeWebhook", () => {
   it.effect("on redelivery: short-circuits without emitting a second event", () =>
     Effect.gen(function* () {
       const rec = yield* RecordedEvents;
-      yield* ingestStripeWebhook(cmd("evt_dup"));
-      yield* ingestStripeWebhook(cmd("evt_dup"));
+      yield* ingestStripeWebhookHandler(cmd("evt_dup"));
+      yield* ingestStripeWebhookHandler(cmd("evt_dup"));
       const events = yield* rec.byTag<StripeWebhookIngested>("StripeWebhookIngested");
       deepStrictEqual(events.length, 1);
     }).pipe(Effect.provide(TestLayer)),

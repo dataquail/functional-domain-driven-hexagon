@@ -10,7 +10,7 @@ import { SubscriptionId } from "@/modules/billing/domain/subscription/subscripti
 import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
 import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
 import { SubscriptionRepositoryLive } from "@/modules/billing/infrastructure/repositories/subscription.repository-live.js";
-import { findSubscriptionByOrganization } from "@/modules/billing/queries/find-subscription-by-organization.handler.js";
+import { findSubscriptionByOrganizationHandler } from "@/modules/billing/queries/find-subscription-by-organization.handler.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
@@ -41,7 +41,7 @@ const seedOrg = (id: OrganizationId, name: string) =>
 
 const suite = describe.sequential;
 
-suite("findSubscriptionByOrganization (integration)", () => {
+suite("findSubscriptionByOrganizationHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("billing.subscriptions", "organization.organizations").pipe(
@@ -67,7 +67,7 @@ suite("findSubscriptionByOrganization (integration)", () => {
         });
         yield* repo.insertOne(subscription);
 
-        const result = yield* findSubscriptionByOrganization({ organizationId: acme });
+        const result = yield* findSubscriptionByOrganizationHandler({ organizationId: acme });
         ok(result !== null);
         deepStrictEqual(result.id, subId);
         deepStrictEqual(result.organizationId, acme);
@@ -78,7 +78,7 @@ suite("findSubscriptionByOrganization (integration)", () => {
   it.effect("returns null when no subscription exists for the org", () =>
     Effect.gen(function* () {
       yield* seedOrg(beta, "Beta");
-      const result = yield* findSubscriptionByOrganization({ organizationId: beta });
+      const result = yield* findSubscriptionByOrganizationHandler({ organizationId: beta });
       deepStrictEqual(result, null);
     }).pipe(Effect.provide(TestLayer)),
   );

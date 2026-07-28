@@ -6,9 +6,9 @@ import { RoleValueObject } from "@/modules/role/domain/roles/role.value-object.j
 import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-export const RevokeRole = Command.make("RevokeRoleCommand", {
+export const RevokeRoleCommand = Command.make("RevokeRoleCommand", {
   payload: { userId: UserId, role: RoleValueObject },
   success: Schema.Void,
   failure: Schema.Union([DoesNotHaveRole, PersistenceUnavailable]),
 });
-export type RevokeRolePayload = Command.Payload<typeof RevokeRole>;
+export type RevokeRolePayload = Command.Payload<typeof RevokeRoleCommand>;

@@ -4,7 +4,7 @@ import { CurrentUser } from "@org/contracts/Policy";
 import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
-import { RevokeApiToken } from "@/modules/auth/commands/revoke-api-token.command.js";
+import { RevokeApiTokenCommand } from "@/modules/auth/commands/revoke-api-token.command.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // Revokes one of the caller's own tokens. The command scopes the revoke to
@@ -14,7 +14,7 @@ export const revokeTokenEndpoint = Effect.fn("AuthLive.tokens.revoke")(
   function* (request: EndpointRequest<typeof AuthContract.TokensGroup, "revoke">) {
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
-    yield* commandBus.execute(RevokeApiToken, {
+    yield* commandBus.execute(RevokeApiTokenCommand, {
       apiTokenId: request.params.id,
       userId: currentUser.userId,
     });

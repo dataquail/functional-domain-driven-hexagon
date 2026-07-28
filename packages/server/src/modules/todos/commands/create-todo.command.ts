@@ -6,7 +6,7 @@ import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-una
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-export const CreateTodo = Command.make("CreateTodoCommand", {
+export const CreateTodoCommand = Command.make("CreateTodoCommand", {
   payload: {
     title: Schema.String,
     organizationId: OrganizationId,
@@ -15,4 +15,4 @@ export const CreateTodo = Command.make("CreateTodoCommand", {
   success: TodoRoot,
   failure: PersistenceUnavailable,
 });
-export type CreateTodoPayload = Command.Payload<typeof CreateTodo>;
+export type CreateTodoPayload = Command.Payload<typeof CreateTodoCommand>;

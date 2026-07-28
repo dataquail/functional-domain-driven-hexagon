@@ -2,7 +2,7 @@
 // translation from `StripeWebhookIngested` to a `SyncSubscriptionCommand`
 // dispatch: subscription lifecycle events dispatch (with `deleted` mapped to
 // "canceled"); invoice/unknown events dispatch nothing. The subscription
-// mutation itself is covered by the SyncSubscription handler unit test, and
+// mutation itself is covered by the SyncSubscriptionCommand handler unit test, and
 // the full HTTP → ingest → event → adapter → sync chain by
 // stripe-webhook.endpoint.integration.test.ts.
 
@@ -12,7 +12,7 @@ import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { SyncSubscription } from "@/modules/billing/commands/sync-subscription.command.js";
+import { SyncSubscriptionCommand } from "@/modules/billing/commands/sync-subscription.command.js";
 import { StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events.js";
 import { type StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.js";
 import { StripeWebhookEventAdapterLive } from "@/modules/billing/interface/events/stripe-webhook.event-adapter.js";
@@ -44,12 +44,12 @@ const dispatchAndReadCommands = (stripeEvent: StripeWebhookEvent) =>
     const bus = yield* DomainEventBus;
     const rec = yield* RecordedCommands;
     yield* bus.dispatch([StripeWebhookIngested.make({ stripeEvent })]);
-    return yield* rec.payloadsFor(SyncSubscription);
+    return yield* rec.payloadsFor(SyncSubscriptionCommand);
   }).pipe(Database.TransactionContext.provide(fakeTransaction), Effect.provide(TestLayer));
 
 describe("StripeWebhookEventAdapterLive", () => {
   it.effect(
-    "on customer.subscription.updated → dispatches SyncSubscription with the reported status",
+    "on customer.subscription.updated → dispatches SyncSubscriptionCommand with the reported status",
     () =>
       Effect.gen(function* () {
         const payloads = yield* dispatchAndReadCommands(subEvent("updated", "active"));

@@ -9,7 +9,7 @@ import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
 import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
-export const grantOrganizationRole = Effect.fn("grantOrganizationRole")(function* (
+export const grantOrganizationRoleHandler = Effect.fn("grantOrganizationRoleHandler")(function* (
   cmd: GrantOrganizationRolePayload,
 ) {
   // Command-level invariant: a user can't grant themselves an org role.

@@ -4,7 +4,7 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { syncSubscription } from "@/modules/billing/commands/sync-subscription.handler.js";
+import { syncSubscriptionHandler } from "@/modules/billing/commands/sync-subscription.handler.js";
 import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
 import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
 import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
@@ -36,13 +36,13 @@ const seedSubscription = () =>
     yield* repo.insertOne(subscription);
   });
 
-describe("syncSubscription", () => {
+describe("syncSubscriptionHandler", () => {
   it.effect("applies the reported status and dispatches SubscriptionStatusChanged", () =>
     Effect.gen(function* () {
       yield* seedSubscription();
       const rec = yield* RecordedEvents;
 
-      yield* syncSubscription({
+      yield* syncSubscriptionHandler({
         stripeSubscriptionId: stripeSubId,
         status: "active",
         currentPeriodEnd: null,
@@ -62,7 +62,7 @@ describe("syncSubscription", () => {
     Effect.gen(function* () {
       // No seed — nothing matches the stripe id.
       const rec = yield* RecordedEvents;
-      yield* syncSubscription({
+      yield* syncSubscriptionHandler({
         stripeSubscriptionId: "sub_never_seen",
         status: "active",
         currentPeriodEnd: null,

@@ -10,7 +10,7 @@ import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.js";
 import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositories/api-token.repository-live.js";
-import { listMyApiTokens } from "@/modules/auth/queries/list-my-api-tokens.handler.js";
+import { listMyApiTokensHandler } from "@/modules/auth/queries/list-my-api-tokens.handler.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
@@ -37,7 +37,7 @@ const seedUsers = Effect.gen(function* () {
 
 const suite = describe.sequential;
 
-suite("listMyApiTokens (integration)", () => {
+suite("listMyApiTokensHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("auth.api_tokens", "user.users").pipe(Effect.provide(TestDatabaseLive)),
@@ -61,7 +61,7 @@ suite("listMyApiTokens (integration)", () => {
       yield* repo.insertOne(mk(idA, userId));
       yield* repo.insertOne(mk(idOther, otherUserId));
 
-      const mine = yield* listMyApiTokens({ userId });
+      const mine = yield* listMyApiTokensHandler({ userId });
       deepStrictEqual(
         mine.map((t) => t.id),
         [idA],
@@ -88,7 +88,7 @@ suite("listMyApiTokens (integration)", () => {
       // filter it out (WHERE revoked_at IS NULL).
       yield* repo.deleteOne(idA);
 
-      const mine = yield* listMyApiTokens({ userId });
+      const mine = yield* listMyApiTokensHandler({ userId });
       deepStrictEqual([...mine], []);
     }).pipe(Effect.provide(TestLayer)),
   );

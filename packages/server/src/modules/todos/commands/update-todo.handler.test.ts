@@ -16,7 +16,7 @@ import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-import { updateTodo } from "./update-todo.handler.js";
+import { updateTodoHandler } from "./update-todo.handler.js";
 
 const aliceId = TodoId.make("11111111-1111-1111-1111-111111111111");
 const aliceUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
@@ -30,11 +30,11 @@ const seed = Effect.gen(function* () {
   yield* repo.insertOne(todo);
 });
 
-describe("updateTodo", () => {
+describe("updateTodoHandler", () => {
   it.effect("overwrites title and completed and returns the updated todo", () =>
     Effect.gen(function* () {
       yield* seed;
-      const updated = yield* updateTodo({
+      const updated = yield* updateTodoHandler({
         todoId: aliceId,
         organizationId: orgId,
         title: "Buy oat milk",
@@ -57,7 +57,7 @@ describe("updateTodo", () => {
   it.effect("fails TodoNotFound when the todo doesn't exist", () =>
     Effect.gen(function* () {
       const exit = yield* Effect.exit(
-        updateTodo({
+        updateTodoHandler({
           todoId: aliceId,
           organizationId: orgId,
           title: "x",
@@ -79,7 +79,7 @@ describe("updateTodo", () => {
     Effect.gen(function* () {
       yield* seed;
       const exit = yield* Effect.exit(
-        updateTodo({
+        updateTodoHandler({
           todoId: aliceId,
           organizationId: otherOrgId,
           title: "x",

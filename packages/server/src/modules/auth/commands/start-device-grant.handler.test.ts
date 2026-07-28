@@ -3,7 +3,7 @@ import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { startDeviceGrant } from "@/modules/auth/commands/start-device-grant.handler.js";
+import { startDeviceGrantHandler } from "@/modules/auth/commands/start-device-grant.handler.js";
 import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
 import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification.js";
 import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service.js";
@@ -12,10 +12,10 @@ import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 
 const TestLayer = Layer.mergeAll(DeviceGrantRepositoryFake, IdentityUnitOfWork);
 
-describe("startDeviceGrant", () => {
+describe("startDeviceGrantHandler", () => {
   it.effect("returns codes and persists a pending grant keyed by the device-code hash", () =>
     Effect.gen(function* () {
-      const { deviceCode, userCode } = yield* startDeviceGrant({ ttlSeconds: 600 });
+      const { deviceCode, userCode } = yield* startDeviceGrantHandler({ ttlSeconds: 600 });
       ok(deviceCode.length > 0);
       ok(/^[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(userCode));
 
