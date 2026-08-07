@@ -9,10 +9,8 @@ import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
-export const removeMemberEndpoint = (
-  request: EndpointRequest<typeof OrganizationContract.Group, "removeMember">,
-) =>
-  Effect.gen(function* () {
+export const removeMemberEndpoint = Effect.fn("OrganizationLive.removeMember")(
+  function* (request: EndpointRequest<typeof OrganizationContract.Group, "removeMember">) {
     yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.params.orgId);
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
@@ -21,20 +19,18 @@ export const removeMemberEndpoint = (
       organizationId: request.params.orgId,
       actorUserId: currentUser.userId,
     });
-  }).pipe(
-    Effect.catchTag("NotFound", () =>
-      Effect.fail(
-        new OrganizationContract.OrganizationNotFoundError({
-          organizationId: request.params.orgId,
-          message: `Organization ${request.params.orgId} not found`,
-        }),
-      ),
+  },
+  (effect, request) =>
+    effect.pipe(
+      Effect.catchTags({
+        NotFound: () =>
+          new OrganizationContract.OrganizationNotFoundError({
+            organizationId: request.params.orgId,
+            message: `Organization ${request.params.orgId} not found`,
+          }),
+        MembershipNotFound: () =>
+          new OrganizationContract.MembershipNotFoundError({ message: "Member not found in org" }),
+      }),
+      recoverPersistenceUnavailable,
     ),
-    Effect.catchTag("MembershipNotFound", () =>
-      Effect.fail(
-        new OrganizationContract.MembershipNotFoundError({ message: "Member not found in org" }),
-      ),
-    ),
-    recoverPersistenceUnavailable,
-    Effect.withSpan("OrganizationLive.removeMember"),
-  );
+);

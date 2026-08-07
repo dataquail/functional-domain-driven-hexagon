@@ -15,10 +15,8 @@ import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/
 // super-admins both reach it. The `CannotPromoteSelfInOrganization`
 // invariant (an actor can't grant themselves) lives on the command and
 // maps to 403; `AlreadyHasOrganizationRole` maps to a 409 conflict.
-export const promoteMemberEndpoint = (
-  request: EndpointRequest<typeof OrganizationContract.Group, "promoteMember">,
-) =>
-  Effect.gen(function* () {
+export const promoteMemberEndpoint = Effect.fn("OrganizationLive.promoteMember")(
+  function* (request: EndpointRequest<typeof OrganizationContract.Group, "promoteMember">) {
     yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.params.orgId);
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
@@ -28,30 +26,23 @@ export const promoteMemberEndpoint = (
       role: "admin",
       actorUserId: currentUser.userId,
     });
-  }).pipe(
-    Effect.catchTag("NotFound", () =>
-      Effect.fail(
-        new OrganizationContract.OrganizationNotFoundError({
-          organizationId: request.params.orgId,
-          message: `Organization ${request.params.orgId} not found`,
-        }),
-      ),
+  },
+  (effect, request) =>
+    effect.pipe(
+      Effect.catchTags({
+        NotFound: () =>
+          new OrganizationContract.OrganizationNotFoundError({
+            organizationId: request.params.orgId,
+            message: `Organization ${request.params.orgId} not found`,
+          }),
+        AlreadyHasOrganizationRole: () =>
+          new OrganizationContract.OrganizationRoleConflictError({
+            reason: "already_admin",
+            message: "Member is already an admin of this organization",
+          }),
+        CannotPromoteSelfInOrganization: () =>
+          new CustomHttpApiError.Forbidden({ message: "You cannot change your own role" }),
+      }),
+      recoverPersistenceUnavailable,
     ),
-    Effect.catchTag("AlreadyHasOrganizationRole", () =>
-      Effect.fail(
-        new OrganizationContract.OrganizationRoleConflictError({
-          reason: "already_admin",
-          message: "Member is already an admin of this organization",
-        }),
-      ),
-    ),
-    Effect.catchTag("CannotPromoteSelfInOrganization", () =>
-      Effect.fail(
-        new CustomHttpApiError.Forbidden({
-          message: "You cannot change your own role",
-        }),
-      ),
-    ),
-    recoverPersistenceUnavailable,
-    Effect.withSpan("OrganizationLive.promoteMember"),
-  );
+);

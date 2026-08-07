@@ -16,10 +16,8 @@ import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/
 // handler.
 const DEFAULT_INVITATION_TTL_SECONDS = 60 * 60 * 24 * 7;
 
-export const inviteEndpoint = (
-  request: EndpointRequest<typeof OrganizationContract.Group, "inviteUser">,
-) =>
-  Effect.gen(function* () {
+export const inviteEndpoint = Effect.fn("OrganizationLive.inviteUser")(
+  function* (request: EndpointRequest<typeof OrganizationContract.Group, "inviteUser">) {
     yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.params.orgId);
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
@@ -30,15 +28,17 @@ export const inviteEndpoint = (
       actorUserId: currentUser.userId,
     });
     return new OrganizationContract.InviteUserResponse({ invitationId });
-  }).pipe(
-    Effect.catchTag("NotFound", () =>
-      Effect.fail(
-        new OrganizationContract.OrganizationNotFoundError({
-          organizationId: request.params.orgId,
-          message: `Organization ${request.params.orgId} not found`,
-        }),
+  },
+  (effect, request) =>
+    effect.pipe(
+      Effect.catchTag(
+        "NotFound",
+        () =>
+          new OrganizationContract.OrganizationNotFoundError({
+            organizationId: request.params.orgId,
+            message: `Organization ${request.params.orgId} not found`,
+          }),
       ),
+      recoverPersistenceUnavailable,
     ),
-    recoverPersistenceUnavailable,
-    Effect.withSpan("OrganizationLive.inviteUser"),
-  );
+);

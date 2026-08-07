@@ -14,10 +14,8 @@ import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/
 // — a super-admin restores access if an org becomes admin-less), so
 // there's no last-admin guard. `DoesNotHaveOrganizationRole` maps to a
 // 409 conflict.
-export const demoteMemberEndpoint = (
-  request: EndpointRequest<typeof OrganizationContract.Group, "demoteMember">,
-) =>
-  Effect.gen(function* () {
+export const demoteMemberEndpoint = Effect.fn("OrganizationLive.demoteMember")(
+  function* (request: EndpointRequest<typeof OrganizationContract.Group, "demoteMember">) {
     yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.params.orgId);
     const commandBus = yield* CommandBus;
     yield* commandBus.execute(RevokeOrganizationRoleCommand, {
@@ -25,23 +23,21 @@ export const demoteMemberEndpoint = (
       organizationId: request.params.orgId,
       role: "admin",
     });
-  }).pipe(
-    Effect.catchTag("NotFound", () =>
-      Effect.fail(
-        new OrganizationContract.OrganizationNotFoundError({
-          organizationId: request.params.orgId,
-          message: `Organization ${request.params.orgId} not found`,
-        }),
-      ),
+  },
+  (effect, request) =>
+    effect.pipe(
+      Effect.catchTags({
+        NotFound: () =>
+          new OrganizationContract.OrganizationNotFoundError({
+            organizationId: request.params.orgId,
+            message: `Organization ${request.params.orgId} not found`,
+          }),
+        DoesNotHaveOrganizationRole: () =>
+          new OrganizationContract.OrganizationRoleConflictError({
+            reason: "not_admin",
+            message: "Member is not an admin of this organization",
+          }),
+      }),
+      recoverPersistenceUnavailable,
     ),
-    Effect.catchTag("DoesNotHaveOrganizationRole", () =>
-      Effect.fail(
-        new OrganizationContract.OrganizationRoleConflictError({
-          reason: "not_admin",
-          message: "Member is not an admin of this organization",
-        }),
-      ),
-    ),
-    recoverPersistenceUnavailable,
-    Effect.withSpan("OrganizationLive.demoteMember"),
-  );
+);

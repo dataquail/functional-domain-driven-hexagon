@@ -13,10 +13,8 @@ import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/
 // is a UX decision, kept at the endpoint, not the command).
 const DEFAULT_INVITATION_TTL_SECONDS = 60 * 60 * 24 * 7;
 
-export const resendInvitationEndpoint = (
-  request: EndpointRequest<typeof OrganizationContract.Group, "resendInvitation">,
-) =>
-  Effect.gen(function* () {
+export const resendInvitationEndpoint = Effect.fn("OrganizationLive.resendInvitation")(
+  function* (request: EndpointRequest<typeof OrganizationContract.Group, "resendInvitation">) {
     yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.params.orgId);
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
@@ -25,36 +23,28 @@ export const resendInvitationEndpoint = (
       ttlSeconds: DEFAULT_INVITATION_TTL_SECONDS,
       actorUserId: currentUser.userId,
     });
-  }).pipe(
-    Effect.catchTag("NotFound", () =>
-      Effect.fail(
-        new OrganizationContract.OrganizationNotFoundError({
-          organizationId: request.params.orgId,
-          message: `Organization ${request.params.orgId} not found`,
-        }),
-      ),
+  },
+  (effect, request) =>
+    effect.pipe(
+      Effect.catchTags({
+        NotFound: () =>
+          new OrganizationContract.OrganizationNotFoundError({
+            organizationId: request.params.orgId,
+            message: `Organization ${request.params.orgId} not found`,
+          }),
+        InvitationNotFound: () =>
+          new OrganizationContract.InvitationNotFoundError({ message: "Invitation not found" }),
+        InvitationAlreadyAccepted: () =>
+          new OrganizationContract.InvitationGoneError({
+            reason: "accepted",
+            message: "Invitation already accepted; nothing to resend.",
+          }),
+        InvitationAlreadyRevoked: () =>
+          new OrganizationContract.InvitationGoneError({
+            reason: "revoked",
+            message: "Invitation was revoked; issue a new invite instead.",
+          }),
+      }),
+      recoverPersistenceUnavailable,
     ),
-    Effect.catchTag("InvitationNotFound", () =>
-      Effect.fail(
-        new OrganizationContract.InvitationNotFoundError({ message: "Invitation not found" }),
-      ),
-    ),
-    Effect.catchTag("InvitationAlreadyAccepted", () =>
-      Effect.fail(
-        new OrganizationContract.InvitationGoneError({
-          reason: "accepted",
-          message: "Invitation already accepted; nothing to resend.",
-        }),
-      ),
-    ),
-    Effect.catchTag("InvitationAlreadyRevoked", () =>
-      Effect.fail(
-        new OrganizationContract.InvitationGoneError({
-          reason: "revoked",
-          message: "Invitation was revoked; issue a new invite instead.",
-        }),
-      ),
-    ),
-    recoverPersistenceUnavailable,
-    Effect.withSpan("OrganizationLive.resendInvitation"),
-  );
+);

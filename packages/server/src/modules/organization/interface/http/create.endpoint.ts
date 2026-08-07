@@ -20,12 +20,12 @@ export const createEndpoint = Effect.fn("OrganizationLive.create")(
     });
     return new OrganizationContract.CreateOrganizationResponse({ id });
   },
-  Effect.catchTag("SuperAdminCannotOwnOrganization", () =>
-    Effect.fail(
+  Effect.catchTag(
+    "SuperAdminCannotOwnOrganization",
+    () =>
       new OrganizationContract.SuperAdminCannotOwnOrganizationError({
         message: "Super-admins don't own organizations.",
       }),
-    ),
   ),
   recoverPersistenceUnavailable,
 );
