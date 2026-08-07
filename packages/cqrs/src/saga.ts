@@ -1,7 +1,6 @@
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import type * as Schema from "effect/Schema";
 import type * as Stream from "effect/Stream";
 
 import type * as Event from "./event.js";
@@ -61,7 +60,7 @@ export const make = <const Events extends ReadonlyArray<Event.Any>, R>(definitio
   readonly name: string;
   readonly events: Events;
   readonly run: (
-    events: Stream.Stream<Schema.Schema.Type<Events[number]>>,
+    events: Stream.Stream<Event.Type<Events[number]>>,
   ) => Effect.Effect<void, never, R>;
 }): Saga<R> => ({
   name: definition.name,

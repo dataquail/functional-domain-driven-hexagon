@@ -47,6 +47,6 @@ export const checkEventsSerializable = (
   Serializable.check(
     events.map((event) => ({
       tag: event.tag,
-      schemas: { payload: event, success: Schema.Void, failure: Schema.Never },
+      schemas: { payload: event.schema, success: Schema.Void, failure: Schema.Never },
     })) as never,
   );

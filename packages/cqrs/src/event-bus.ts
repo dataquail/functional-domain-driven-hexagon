@@ -56,9 +56,9 @@ export interface EventBusShape {
    * This is the contract for a reaction that is part of the same logical
    * operation — a wallet must not exist without its organization.
    */
-  readonly subscribe: <S extends Event.Any>(
-    event: S,
-    handler: (event: Schema.Schema.Type<S>) => Effect.Effect<void>,
+  readonly subscribe: <E extends Event.Any>(
+    event: E,
+    handler: (event: Event.Type<E>) => Effect.Effect<void>,
   ) => Effect.Effect<void>;
   /**
    * Runs after the outermost unit of work commits, each handler in a fresh unit
@@ -68,9 +68,9 @@ export interface EventBusShape {
    * has already committed, so a reaction must not undo it. Handlers are therefore
    * expected to be idempotent and independently retryable.
    */
-  readonly subscribeAfterCommit: <S extends Event.Any>(
-    event: S,
-    handler: (event: Schema.Schema.Type<S>) => Effect.Effect<void>,
+  readonly subscribeAfterCommit: <E extends Event.Any>(
+    event: E,
+    handler: (event: Event.Type<E>) => Effect.Effect<void>,
   ) => Effect.Effect<void>;
   /**
    * Subscribes to the events of the given tags and hands back their stream. Only
