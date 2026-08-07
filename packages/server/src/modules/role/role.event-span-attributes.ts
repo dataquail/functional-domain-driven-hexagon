@@ -1,10 +1,11 @@
+import { Event } from "@org/cqrs";
+
 import {
   roleGrantedSpanAttributes,
   roleRevokedSpanAttributes,
 } from "@/modules/role/domain/roles/role.events.js";
-import { eventSpanAttributes } from "@/platform/ddd/ports/domain-event-bus.js";
 
-export const roleEventSpanAttributes = eventSpanAttributes({
+export const roleEventSpanAttributes = Event.spanAttributes({
   RoleGranted: roleGrantedSpanAttributes,
   RoleRevoked: roleRevokedSpanAttributes,
 });

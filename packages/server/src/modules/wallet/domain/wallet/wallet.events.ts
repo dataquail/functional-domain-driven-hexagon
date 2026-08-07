@@ -1,12 +1,12 @@
 import * as Schema from "effect/Schema";
 
-import { DomainEvent } from "@/platform/ddd/contracts/domain-event.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import * as Event from "@/platform/ddd/contracts/domain-event.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/domain-event.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 import { WalletId } from "./wallet.id.js";
 
-export const WalletCreated = DomainEvent("WalletCreated", {
+export const WalletCreated = Event.make("WalletCreated", {
   walletId: WalletId,
   organizationId: OrganizationId,
 });
@@ -17,7 +17,7 @@ export const walletCreatedSpanAttributes: SpanAttributesExtractor<WalletCreated>
   "organization.id": event.organizationId,
 });
 
-export const WalletCredited = DomainEvent("WalletCredited", {
+export const WalletCredited = Event.make("WalletCredited", {
   walletId: WalletId,
   amount: Schema.Number,
   newBalance: Schema.Number,
@@ -30,7 +30,7 @@ export const walletCreditedSpanAttributes: SpanAttributesExtractor<WalletCredite
   "wallet.new_balance": event.newBalance,
 });
 
-export const WalletDebited = DomainEvent("WalletDebited", {
+export const WalletDebited = Event.make("WalletDebited", {
   walletId: WalletId,
   amount: Schema.Number,
   newBalance: Schema.Number,

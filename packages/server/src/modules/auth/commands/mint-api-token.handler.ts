@@ -1,5 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
 
+import { type PersistenceUnavailable, withUnitOfWork } from "@org/cqrs";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
@@ -12,8 +13,6 @@ import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.js";
 import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
 // Core mint, WITHOUT the unit-of-work boundary. Generates an opaque
 // `pat_<publicId>_<secret>`, persists only its sha256 hash, and returns the

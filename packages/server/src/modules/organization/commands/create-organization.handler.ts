@@ -1,5 +1,6 @@
 import * as crypto from "node:crypto";
 
+import { withUnitOfWork } from "@org/cqrs";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Result from "effect/Result";
@@ -13,8 +14,7 @@ import { OrganizationRootOps } from "@/modules/organization/domain/organization/
 import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
 import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.js";
 import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.js";
-import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
+import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 // Creating an org also creates the creator's Membership AND grants the

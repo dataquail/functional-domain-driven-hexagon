@@ -2,13 +2,15 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
+import * as Stream from "effect/Stream";
 
-import { type DomainEvent, DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
+import { type DomainEvent } from "@/platform/ddd/contracts/domain-event.js";
+import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 
-// Test double for `DomainEventBus`: records every dispatched event and
-// ignores `subscribe` calls. Use-case unit tests assert against the
-// recorded log without needing the real subscribers wired up. Integration
-// tests that need real subscribers use the real bus from `makeDomainEventBusLive` instead.
+// Test double for `DomainEventBus`: records every dispatched event and ignores
+// every registration, whichever surface it came in on. A use-case unit test
+// asserts what its subject *published*; what anyone does in response is that
+// subscriber's own test. A test that needs real subscribers wires the real bus.
 export class RecordedEvents extends Context.Service<
   RecordedEvents,
   {
@@ -27,6 +29,10 @@ export const RecordingEventBus: Layer.Layer<DomainEventBus | RecordedEvents> = L
         DomainEventBus.of({
           dispatch: (events) => Ref.update(published, (prev) => [...prev, ...events]),
           subscribe: () => Effect.void,
+          subscribeAfterCommit: () => Effect.void,
+          afterCommitHandlersFor: () => Effect.succeed([]),
+          broadcast: () => Effect.void,
+          stream: () => Effect.succeed(Stream.empty),
         }),
       ),
       Context.add(RecordedEvents, {

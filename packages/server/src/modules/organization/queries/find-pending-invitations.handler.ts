@@ -1,3 +1,4 @@
+import { PersistenceUnavailable } from "@org/cqrs";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -6,7 +7,6 @@ import {
   type FindPendingInvitationsPayload,
   type PendingInvitationView,
 } from "@/modules/organization/queries/find-pending-invitations.query.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 
 // Only *open* invitations (not accepted, not revoked) belong on the

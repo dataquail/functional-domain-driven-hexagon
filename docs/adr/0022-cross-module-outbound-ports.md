@@ -5,7 +5,7 @@
 
 ## Context and Problem Statement
 
-ADR-0006 gives modules a typed command/query bus, and ADR-0007 a synchronous domain-event bus. Together they are the only sanctioned channels for one module to affect another. ADR-0007 also establishes an anti-corruption layer for the _inbound_ direction: when a module consumes another module's domain events, the event schema is translated at a single adapter in `interface/events/` into a consumer-internal trigger, so the publisher's evolving schema never leaks into the consumer's handlers.
+ADR-0006 gives modules a typed command/query bus, and ADR-0007 a domain-event bus whose subscriptions choose whether they run inside the publisher's transaction or after it commits. Together they are the only sanctioned channels for one module to affect another. ADR-0007 also establishes an anti-corruption layer for the _inbound_ direction: when a module consumes another module's domain events, the event schema is translated at a single adapter in `interface/events/` into a consumer-internal trigger, so the publisher's evolving schema never leaks into the consumer's handlers.
 
 The _outbound_ direction needs equivalent discipline. When a module needs another module to do something — fire a command, answer a query — nothing should let any file in the consuming module import the publisher's barrel directly, construct the message, and dispatch it on the bus. That allow-by-default admits two kinds of leakage:
 

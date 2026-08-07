@@ -1,3 +1,4 @@
+import { withUnitOfWork } from "@org/cqrs";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
@@ -6,8 +7,7 @@ import { SubscriptionNotFound } from "@/modules/billing/domain/subscription/subs
 import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
 import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
 import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.js";
-import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
+import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 
 import { type CancelSubscriptionPayload } from "./cancel-subscription.command.js";
 

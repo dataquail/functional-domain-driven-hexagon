@@ -1,3 +1,4 @@
+import { withUnitOfWork } from "@org/cqrs";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
@@ -9,7 +10,6 @@ import {
 import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
 import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant/device-grant.root-ops.js";
 import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification.js";
-import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
 // Looks up the grant by its user code, refuses a lapsed one, and binds it to
 // the approving user. Idempotent: re-approving an already-approved grant just

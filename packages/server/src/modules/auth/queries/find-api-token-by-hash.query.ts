@@ -1,8 +1,7 @@
-import { Query } from "@org/cqrs";
+import { PersistenceUnavailable, Query } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
 import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // The read model the auth middleware needs: the token's id (opaque

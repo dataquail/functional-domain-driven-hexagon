@@ -23,6 +23,8 @@ import { RevokeInvitationCommand } from "@/modules/organization/commands/revoke-
 import { revokeInvitationHandler } from "@/modules/organization/commands/revoke-invitation.handler.js";
 import { RevokeOrganizationRoleCommand } from "@/modules/organization/commands/revoke-organization-role.command.js";
 import { revokeOrganizationRoleHandler } from "@/modules/organization/commands/revoke-organization-role.handler.js";
+import { SendInvitationEmailCommand } from "@/modules/organization/commands/send-invitation-email.command.js";
+import { sendInvitationEmailHandler } from "@/modules/organization/commands/send-invitation-email.handler.js";
 import { SoftDeleteOrganizationCommand } from "@/modules/organization/commands/soft-delete-organization.command.js";
 import { softDeleteOrganizationHandler } from "@/modules/organization/commands/soft-delete-organization.handler.js";
 import { PlatformRolesLive } from "@/modules/organization/infrastructure/acl/platform-roles.acl-live.js";
@@ -38,8 +40,9 @@ import { MailerLive } from "@/platform/notifications/mailer-live.js";
 // dispatch surface can absorb it, because `handlersOf` infers the role-module requirement
 // it carries where a hand-written output type would force this module to name it. The
 // mailer follows for symmetry — it was only ever hoisted because the invite handler's
-// requirement used to reach the endpoints through the bus.
-const organizationCommandGroup = Command.group(
+// requirement used to reach the endpoints through the bus. It is now the send-email
+// handler that names it, reached after commit rather than from the invite path.
+export const organizationCommandGroup = Command.group(
   CreateOrganizationCommand,
   AcceptInvitationCommand,
   InviteUserCommand,
@@ -51,6 +54,7 @@ const organizationCommandGroup = Command.group(
   RemoveMemberCommand,
   RestoreOrganizationCommand,
   SoftDeleteOrganizationCommand,
+  SendInvitationEmailCommand,
 );
 
 const OrganizationCommandHandlersLive = Command.handlersOf(organizationCommandGroup, {
@@ -86,6 +90,8 @@ const OrganizationCommandHandlersLive = Command.handlersOf(organizationCommandGr
     restoreOrganizationHandler(payload).pipe(Effect.provide(OrganizationRepositoryLive)),
   SoftDeleteOrganizationCommand: (payload) =>
     softDeleteOrganizationHandler(payload).pipe(Effect.provide(OrganizationRepositoryLive)),
+  SendInvitationEmailCommand: (payload) =>
+    sendInvitationEmailHandler(payload).pipe(Effect.provide(InvitationRepositoryLive)),
 }).pipe(
   Layer.provide(
     Layer.mergeAll(PlatformRolesLive, InvitationMailerLive.pipe(Layer.provide(MailerLive))),

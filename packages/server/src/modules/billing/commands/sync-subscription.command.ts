@@ -1,7 +1,5 @@
-import { Command } from "@org/cqrs";
+import { Command, PersistenceUnavailable } from "@org/cqrs";
 import * as Schema from "effect/Schema";
-
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
 // Syncs the local Subscription projection to a Stripe-reported status.
 // Dispatched by the stripe-webhook event adapter (interface/events) for

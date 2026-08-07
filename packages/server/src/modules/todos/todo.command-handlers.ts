@@ -13,7 +13,7 @@ import { UpdateTodoCommand } from "@/modules/todos/commands/update-todo.command.
 import { updateTodoHandler } from "@/modules/todos/commands/update-todo.handler.js";
 import { TodosRepositoryLive } from "@/modules/todos/infrastructure/repositories/todos.repository-live.js";
 
-const todoCommandGroup = Command.group(
+export const todoCommandGroup = Command.group(
   CreateTodoCommand,
   UpdateTodoCommand,
   CompleteTodoCommand,

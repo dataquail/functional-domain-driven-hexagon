@@ -16,7 +16,7 @@ import { ListMyApiTokensQuery } from "@/modules/auth/queries/list-my-api-tokens.
 // `PlatformRoles` adapter be provided here: the role-module requirement it drags in is
 // inferred onto this layer rather than written into a type, so auth never names a role
 // type.
-const authQueryGroup = Query.group(
+export const authQueryGroup = Query.group(
   FindCurrentUserQuery,
   FindSessionQuery,
   FindApiTokenByHashQuery,

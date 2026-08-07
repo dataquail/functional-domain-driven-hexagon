@@ -4,7 +4,7 @@ import * as Layer from "effect/Layer";
 
 import { SyncSubscriptionCommand } from "@/modules/billing/commands/sync-subscription.command.js";
 import { StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events.js";
-import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
+import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 
 // Inbound event adapter (ADR-0007): subscribes to the same-module
 // `StripeWebhookIngested` domain event, translates Stripe's subscription

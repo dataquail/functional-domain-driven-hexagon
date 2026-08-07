@@ -3,8 +3,9 @@ import type * as Layer from "effect/Layer";
 import type * as Schema from "effect/Schema";
 import type * as Scope from "effect/Scope";
 
-import * as Bus from "./internal/bus.js";
 import * as Message from "./internal/message.js";
+import * as Serializable from "./internal/serializable.js";
+import * as Middleware from "./middleware.js";
 
 /**
  * A write-side message: a tag, the payload that names it, and the success and
@@ -126,6 +127,38 @@ export const handlersOf = <G extends AnyGroup, H extends Handlers<G>>(
  */
 export const dispatcher = <G extends AnyGroup>(
   commandGroup: G,
-  options: { readonly spanAttributes?: SpanAttributes<G> } = {},
+  options: {
+    readonly spanAttributes?: SpanAttributes<G>;
+    readonly middleware?: ReadonlyArray<Middleware.Middleware>;
+  } = {},
 ): Effect.Effect<Dispatcher<G>, never, Scope.Scope | Registered<G>> =>
-  Bus.make(commandGroup, "command", (options.spanAttributes ?? {}) as never);
+  Message.dispatcher(commandGroup, [
+    // Outermost, so a caller's middleware runs inside the dispatch span and its
+    // work is attributed there rather than to whatever ran before it.
+    Middleware.span({ spanPrefix: "command", attributes: options.spanAttributes as never }),
+    ...(options.middleware ?? []),
+  ]);
+
+/**
+ * Whether a value is a command definition. Lets a host reflect over its own
+ * module barrels and check that every message it publishes is reachable — the
+ * one completeness question a bus cannot answer, because a definition that was
+ * never put in a group never reaches it.
+ */
+export const is = (u: unknown): u is Any => Message.isMessage("command", u);
+
+/** Whether a value is a command group — the group counterpart of `is`. */
+export const isGroup = (u: unknown): u is AnyGroup => Message.isGroup("command", u);
+
+/**
+ * Reports any channel of any command in the group that cannot survive a round-trip
+ * through JSON. Empty means every declared contract is portable.
+ *
+ * In-process dispatch never encodes anything, so this is the only thing standing
+ * between "these are schemas, so a module could be extracted" and a payload that
+ * quietly cannot travel. Call it from a test.
+ */
+export const checkSerializable = (
+  commandGroup: AnyGroup,
+): Effect.Effect<ReadonlyArray<Serializable.Incompatibility>> =>
+  Serializable.check(commandGroup.messages);

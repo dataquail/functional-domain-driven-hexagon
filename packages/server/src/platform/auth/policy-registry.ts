@@ -1,9 +1,8 @@
 import { type CurrentUser } from "@org/contracts/Policy";
+import { type PersistenceUnavailable } from "@org/cqrs";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
 import { type Action } from "./actions.js";
 import { type ResourceName, type ResourceTypeFor } from "./resource-resolver-registry.js";

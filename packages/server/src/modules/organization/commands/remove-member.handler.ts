@@ -1,3 +1,4 @@
+import { withUnitOfWork } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { type RemoveMemberPayload } from "@/modules/organization/commands/remove-member.command.js";
@@ -6,8 +7,7 @@ import { MembershipRepository } from "@/modules/organization/domain/membership/m
 import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops.js";
 import { MembershipSpecifications } from "@/modules/organization/domain/membership/membership.specification.js";
 import { Spec } from "@/platform/ddd/contracts/specification.js";
-import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
+import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 
 export const removeMemberHandler = Effect.fn("removeMemberHandler")(function* (
   cmd: RemoveMemberPayload,

@@ -1,12 +1,12 @@
 import * as Schema from "effect/Schema";
 
-import { DomainEvent } from "@/platform/ddd/contracts/domain-event.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import * as Event from "@/platform/ddd/contracts/domain-event.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/domain-event.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 import { AddressValueObject } from "./value-objects/address.value-object.js";
 
-export const UserCreated = DomainEvent("UserCreated", {
+export const UserCreated = Event.make("UserCreated", {
   userId: UserId,
   email: Schema.String,
   // Nullable: a JIT-provisioned user is created without an address.
@@ -18,7 +18,7 @@ export const userCreatedSpanAttributes: SpanAttributesExtractor<UserCreated> = (
   "user.id": event.userId,
 });
 
-export const UserDeleted = DomainEvent("UserDeleted", {
+export const UserDeleted = Event.make("UserDeleted", {
   userId: UserId,
 });
 export type UserDeleted = typeof UserDeleted.Type;
@@ -27,7 +27,7 @@ export const userDeletedSpanAttributes: SpanAttributesExtractor<UserDeleted> = (
   "user.id": event.userId,
 });
 
-export const UserAddressUpdated = DomainEvent("UserAddressUpdated", {
+export const UserAddressUpdated = Event.make("UserAddressUpdated", {
   userId: UserId,
   country: Schema.String,
   street: Schema.String,

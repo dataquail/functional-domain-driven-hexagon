@@ -1,4 +1,5 @@
 import { describe, it } from "@effect/vitest";
+import { type PersistenceUnavailable } from "@org/cqrs";
 import { deepStrictEqual } from "assert";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
@@ -12,7 +13,6 @@ import {
 } from "@/modules/auth/domain/ports/acl/user-provisioning.acl.js";
 import { UserProvisioningLive } from "@/modules/auth/infrastructure/acl/user-provisioning.acl-live.js";
 import { UserAlreadyExists, UserCommands } from "@/modules/user/index.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // `UserProvisioningLive` is a thin translation over the user module's own dispatch

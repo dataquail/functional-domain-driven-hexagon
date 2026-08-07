@@ -61,19 +61,20 @@ export class TodoResolverEntry extends Context.Service<TodoResolverEntry, Resolv
 
 // Loads the todo scoped to its org. Absence (missing OR cross-tenant, since
 // the spec pins the org) → `NotFound`, which the endpoint maps to
-// `TodoNotFoundError`. `PersistenceUnavailable` dies inside the resolver
-// — the endpoint's `recoverPersistenceUnavailable` converts it to 503,
-// same shape as the organization resolver.
+// `TodoNotFoundError`. A transient store outage propagates untouched, so the
+// endpoint's `recoverPersistenceUnavailable` turns it into the same 503 it would
+// have produced had the outage struck the use case instead.
 export const TodoResolverEntryLive = Layer.effect(
   TodoResolverEntry,
   Effect.gen(function* () {
     const queryBus = yield* QueryBus;
     return ({ organizationId, todoId }) =>
-      queryBus.execute(FindTodoOrganizationQuery, { organizationId, todoId }).pipe(
-        Effect.flatMap((view) =>
-          view === null ? Effect.fail(new CustomHttpApiError.NotFound()) : Effect.succeed(view),
-        ),
-        Effect.catchTag("PersistenceUnavailable", Effect.die),
-      );
+      queryBus
+        .execute(FindTodoOrganizationQuery, { organizationId, todoId })
+        .pipe(
+          Effect.flatMap((view) =>
+            view === null ? Effect.fail(new CustomHttpApiError.NotFound()) : Effect.succeed(view),
+          ),
+        );
   }),
 );

@@ -1,4 +1,5 @@
 import { describe, it } from "@effect/vitest";
+import { Event, EventBus, makeEventBus, makeUnitOfWork, UnitOfWork } from "@org/cqrs";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
@@ -7,19 +8,17 @@ import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 import { beforeEach } from "vitest";
 
-import { DomainEvent as makeDomainEvent } from "@/platform/ddd/contracts/domain-event.js";
-import { IntegrationEventBus } from "@/platform/ddd/ports/integration-event-bus.js";
-import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
-import { makeIntegrationEventBusLive } from "@/platform/integration-event-bus-live.js";
-import { UnitOfWorkLive } from "@/platform/unit-of-work-live.js";
+import { TransactionDriverLive } from "@/platform/transaction-driver-live.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
-// `UnitOfWorkLive` now depends on `IntegrationEventBus` (for the post-commit
-// flush). Bundling them in one layer guarantees the test body's
-// `yield* IntegrationEventBus` and the unit of work's flush share the SAME bus
-// instance — so a handler subscribed in the test is the one the flush runs.
-const UoWTestLive = UnitOfWorkLive.pipe(Layer.provideMerge(makeIntegrationEventBusLive()));
 
-// Proves the re-entrancy contract of `UnitOfWorkLive.run`: a nested `run`
+// The unit of work reads `EventBus` from ambient context to flush it.
+// Bundling them in one layer guarantees the test body's `yield* EventBus`
+// and the flush share the SAME bus instance — so a handler subscribed in the test
+// is the one the flush runs.
+const UnitOfWorkLive = makeUnitOfWork().pipe(Layer.provide(TransactionDriverLive));
+const UoWTestLive = UnitOfWorkLive.pipe(Layer.provideMerge(makeEventBus()));
+
+// Proves the re-entrancy contract of `UnitOfWork.run`: a nested `run`
 // (e.g. a command fired from inside another command's unit of work — exactly
 // what auth JIT sign-in does when it provisions a user) JOINS the outer
 // transaction rather than opening a second one on a foreign connection. Two
@@ -38,14 +37,14 @@ const countSeeded = sql.type(RowSchemas.UserRowStd)`
 // A post-commit integration handler writes this marker row in its own
 // transaction, so its presence/absence is the observable signal for the flush.
 const markerId = "bbbbbbbb-0000-0000-0000-000000000001";
-const PostCommitTestEvent = makeDomainEvent("PostCommitTestEvent", { marker: Schema.String });
+const PostCommitTestEvent = Event.make("PostCommitTestEvent", { marker: Schema.String });
 const countFlush = sql.type(RowSchemas.UserRowStd)`
   SELECT * FROM "user".users WHERE id IN (${outerId}, ${markerId})
 `;
 
 const suite = describe.sequential;
 
-suite("UnitOfWorkLive re-entrancy (integration)", () => {
+suite("UnitOfWork re-entrancy (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(truncate("user.users").pipe(Effect.provide(TestDatabaseLive)));
   });
@@ -154,10 +153,10 @@ suite("UnitOfWorkLive re-entrancy (integration)", () => {
 });
 
 // Proves the post-commit (integration) bus contract: events dispatched to
-// `IntegrationEventBus` inside a unit of work are buffered, then drained AFTER
+// `EventBus` inside a unit of work are buffered, then drained AFTER
 // the transaction commits — each handler in its own transaction, its failure
 // isolated, and discarded entirely if the producer rolls back.
-suite("UnitOfWorkLive post-commit flush (integration)", () => {
+suite("UnitOfWork post-commit flush (integration)", () => {
   const insert = (db: Database.Database["Service"], id: string, email: string) =>
     db.makeQuery((execute) =>
       execute((c) =>
@@ -176,8 +175,8 @@ suite("UnitOfWorkLive post-commit flush (integration)", () => {
     Effect.gen(function* () {
       const uow = yield* UnitOfWork;
       const db = yield* Database.Database;
-      const bus = yield* IntegrationEventBus;
-      yield* bus.subscribe(PostCommitTestEvent, () =>
+      const bus = yield* EventBus;
+      yield* bus.subscribeAfterCommit(PostCommitTestEvent, () =>
         insert(db, markerId, "marker@example.com").pipe(Effect.orDie),
       );
 
@@ -198,8 +197,10 @@ suite("UnitOfWorkLive post-commit flush (integration)", () => {
     Effect.gen(function* () {
       const uow = yield* UnitOfWork;
       const db = yield* Database.Database;
-      const bus = yield* IntegrationEventBus;
-      yield* bus.subscribe(PostCommitTestEvent, () => Effect.die("integration handler boom"));
+      const bus = yield* EventBus;
+      yield* bus.subscribeAfterCommit(PostCommitTestEvent, () =>
+        Effect.die("integration handler boom"),
+      );
 
       const exit = yield* Effect.exit(
         uow.run(
@@ -223,8 +224,8 @@ suite("UnitOfWorkLive post-commit flush (integration)", () => {
     Effect.gen(function* () {
       const uow = yield* UnitOfWork;
       const db = yield* Database.Database;
-      const bus = yield* IntegrationEventBus;
-      yield* bus.subscribe(PostCommitTestEvent, () =>
+      const bus = yield* EventBus;
+      yield* bus.subscribeAfterCommit(PostCommitTestEvent, () =>
         insert(db, markerId, "marker@example.com").pipe(Effect.orDie),
       );
 
@@ -249,8 +250,8 @@ suite("UnitOfWorkLive post-commit flush (integration)", () => {
     Effect.gen(function* () {
       const uow = yield* UnitOfWork;
       const db = yield* Database.Database;
-      const bus = yield* IntegrationEventBus;
-      yield* bus.subscribe(PostCommitTestEvent, () =>
+      const bus = yield* EventBus;
+      yield* bus.subscribeAfterCommit(PostCommitTestEvent, () =>
         insert(db, markerId, "marker@example.com").pipe(Effect.orDie),
       );
 

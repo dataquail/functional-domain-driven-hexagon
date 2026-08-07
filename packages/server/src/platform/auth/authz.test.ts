@@ -1,6 +1,7 @@
 import { describe, it } from "@effect/vitest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { type CurrentUser, CurrentUser as CurrentUserTag } from "@org/contracts/Policy";
+import { PersistenceUnavailable } from "@org/cqrs";
 import { deepStrictEqual } from "assert";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
@@ -56,7 +57,9 @@ const provideRegistries = (opts: {
   readonly update: CheckFor<"test">;
   readonly create: CheckFor<"test">;
   readonly platformRead?: CheckFor<"testPlatform">;
-  readonly thingById?: (id: ThingId) => Effect.Effect<Thing, CustomHttpApiError.NotFound>;
+  readonly thingById?: (
+    id: ThingId,
+  ) => Effect.Effect<Thing, CustomHttpApiError.NotFound | PersistenceUnavailable>;
 }) =>
   Layer.mergeAll(
     makePolicyRegistry([
@@ -255,6 +258,59 @@ describe("Authz.hasPermissions (scoped resource — every action carries an id)"
         Layer.mergeAll(
           provideRegistries({
             read: () => Effect.succeed(true),
+            update: () => Effect.succeed(true),
+            create: () => Effect.succeed(true),
+          }),
+          provideCurrentUser(callerMember),
+        ),
+      ),
+    ),
+  );
+
+  // Authorization touches the store twice — resolving the resource, then running
+  // the check — and a transient outage in either is the same outage. Both must
+  // arrive as the same failure, or the status a caller sees would depend on which
+  // of the two steps happened to reach the store first.
+  it.effect("propagates PersistenceUnavailable from the resource resolver", () =>
+    Effect.gen(function* () {
+      const exit = yield* Effect.exit(Authz.hasPermissions("test", Actions.Read, knownThing.id));
+
+      deepStrictEqual(Exit.isFailure(exit), true);
+      if (Exit.isFailure(exit)) {
+        deepStrictEqual(Cause.hasDies(exit.cause), false);
+        const error = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
+        deepStrictEqual(error instanceof PersistenceUnavailable, true);
+      }
+    }).pipe(
+      Effect.provide(
+        Layer.mergeAll(
+          provideRegistries({
+            read: () => Effect.succeed(true),
+            update: () => Effect.succeed(true),
+            create: () => Effect.succeed(true),
+            thingById: () => new PersistenceUnavailable({ message: "connection lost" }),
+          }),
+          provideCurrentUser(callerMember),
+        ),
+      ),
+    ),
+  );
+
+  it.effect("propagates PersistenceUnavailable from the policy check", () =>
+    Effect.gen(function* () {
+      const exit = yield* Effect.exit(Authz.hasPermissions("test", Actions.Read, knownThing.id));
+
+      deepStrictEqual(Exit.isFailure(exit), true);
+      if (Exit.isFailure(exit)) {
+        deepStrictEqual(Cause.hasDies(exit.cause), false);
+        const error = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
+        deepStrictEqual(error instanceof PersistenceUnavailable, true);
+      }
+    }).pipe(
+      Effect.provide(
+        Layer.mergeAll(
+          provideRegistries({
+            read: () => new PersistenceUnavailable({ message: "connection lost" }),
             update: () => Effect.succeed(true),
             create: () => Effect.succeed(true),
           }),

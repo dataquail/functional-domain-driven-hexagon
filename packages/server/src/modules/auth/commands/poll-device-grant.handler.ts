@@ -1,3 +1,4 @@
+import { withUnitOfWork } from "@org/cqrs";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
@@ -11,7 +12,6 @@ import {
 import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
 import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification.js";
 import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service.js";
-import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
 // Single-use exchange. Hashes the presented device code, then:
 //   - lapsed grant  → consume it + fail `DeviceGrantExpired`

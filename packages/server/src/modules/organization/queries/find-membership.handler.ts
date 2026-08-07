@@ -1,9 +1,9 @@
+import { PersistenceUnavailable } from "@org/cqrs";
 import { Database, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 import { type FindMembershipPayload } from "@/modules/organization/queries/find-membership.policy-query.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
 const CountRowStd = Schema.toStandardSchemaV1(Schema.Struct({ value: Schema.Number }));
 

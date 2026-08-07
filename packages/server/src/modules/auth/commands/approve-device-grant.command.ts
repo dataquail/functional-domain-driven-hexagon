@@ -1,11 +1,10 @@
-import { Command } from "@org/cqrs";
+import { Command, PersistenceUnavailable } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
 import {
   DeviceGrantExpired,
   DeviceGrantNotFound,
 } from "@/modules/auth/domain/device-grant/device-grant.errors.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // Browser-side approval: the signed-in user submits the `userCode` they were

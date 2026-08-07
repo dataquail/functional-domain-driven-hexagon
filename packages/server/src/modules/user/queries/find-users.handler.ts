@@ -1,3 +1,4 @@
+import { PersistenceUnavailable } from "@org/cqrs";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
@@ -6,7 +7,6 @@ import {
   type FindUsersPayload,
   type FindUsersUserView,
 } from "@/modules/user/queries/find-users.query.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 const CountRowStd = Schema.toStandardSchemaV1(Schema.Struct({ value: Schema.Number }));

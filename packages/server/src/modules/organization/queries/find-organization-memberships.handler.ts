@@ -1,3 +1,4 @@
+import { PersistenceUnavailable } from "@org/cqrs";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
@@ -6,7 +7,6 @@ import {
   type FindOrganizationMembershipsPayload,
   type OrganizationMemberView,
 } from "@/modules/organization/queries/find-organization-memberships.query.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 export const findOrganizationMembershipsHandler = Effect.fn("findOrganizationMembershipsHandler")(

@@ -1,3 +1,4 @@
+import { PersistenceUnavailable } from "@org/cqrs";
 import { Database, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
@@ -6,7 +7,6 @@ import {
   type FindTodoOrganizationPayload,
   type TodoOrganizationView,
 } from "@/modules/todos/queries/find-todo-organization.query.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 const OrgIdRowStd = Schema.toStandardSchemaV1(Schema.Struct({ organization_id: Schema.String }));

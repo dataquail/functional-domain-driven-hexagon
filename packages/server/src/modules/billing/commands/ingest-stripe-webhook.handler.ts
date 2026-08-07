@@ -1,10 +1,10 @@
+import { withUnitOfWork } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client.js";
 import { StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events.js";
 import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
-import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
+import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 
 import { type IngestStripeWebhookPayload } from "./ingest-stripe-webhook.command.js";
 

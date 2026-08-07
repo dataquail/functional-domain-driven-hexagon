@@ -13,7 +13,7 @@ import * as Layer from "effect/Layer";
 
 import { OrganizationCreated } from "@/modules/organization/index.js";
 import { CreateWalletCommand } from "@/modules/wallet/commands/create-wallet.command.js";
-import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
+import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 
 export const OrganizationEventAdapterLive = Layer.effectDiscard(
   Effect.gen(function* () {

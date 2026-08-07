@@ -1,7 +1,6 @@
-import { Command } from "@org/cqrs";
+import { Command, PersistenceUnavailable } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 // Creates the wallet for a freshly-created organization. Dispatched by the

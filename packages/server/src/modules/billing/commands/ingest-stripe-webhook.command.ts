@@ -1,8 +1,7 @@
-import { Command } from "@org/cqrs";
+import { Command, PersistenceUnavailable } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
 import { InvalidWebhookSignature } from "@/modules/billing/domain/subscription/subscription.errors.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
 // Single entry point for a Stripe webhook delivery. The endpoint is
 // pure translation (read raw payload + signature header → dispatch);

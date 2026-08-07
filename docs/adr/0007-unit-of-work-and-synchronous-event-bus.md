@@ -26,7 +26,15 @@ Two further concerns shape the design:
 
 ## Decision
 
-Two collaborating platform services — `UnitOfWork` and a pair of domain-event buses (`DomainEventBus`, `IntegrationEventBus`) — plus a use-case-facing `withUnitOfWork` combinator. All are exposed as ports under `platform/ddd/`; production Lives live in sibling `platform/*-live.ts` files and are wired only at the composition root.
+Two collaborating services — `UnitOfWork` and a single `DomainEventBus` — plus a use-case-facing `withUnitOfWork` combinator. **The bus offers both consistency models, and a subscription chooses between them.**
+
+These live in the CQRS package (ADR-0006), not in the application. The boundary's _semantics_ — re-entrancy, post-commit buffering, flush ordering, failure isolation — are the same wherever it runs; only the SQL is ours. What the application supplies is a `TransactionDriver`: open a scope, open a nested scope, say whether one is already open. The slonik binding for it is the one file that knows a unit of work is implemented as a database transaction, and it is wired at the composition root.
+
+Two consequences of that split are worth recording because both were load-bearing and neither is obvious.
+
+The port's requirement channel is **unchanged** by `run`. An earlier shape excluded the database's transaction-context service from it, on the assumption that callers composed effects requiring one. They do not: repository reads resolve the ambient scope optionally, so it never appears in a caller's requirements, and the exclusion was an artifact of the internals leaking outward. The adapter's own internals still narrow it, which is assignable to a port promising `R` untouched because a requirement channel is covariant.
+
+The port's error channel names `TransactionFailed`, not the database's own error. By the time an effect reaches the boundary a repository has already translated its constraint violations into domain errors; what is left is the boundary itself failing, which no use case can act on. `withUnitOfWork` demotes it to a defect in one place, so a use case still sees only `PersistenceUnavailable` — the same type it saw before, for a better-named reason.
 
 ### UnitOfWork and the `withUnitOfWork` boundary
 
@@ -58,53 +66,84 @@ A test-only identity implementation (`IdentityUnitOfWork` in `test-utils/`) make
 
 `run` is re-entrant. A bare (top-level) call opens a real `db.transaction`. A nested call (a `TransactionContext` already in scope) opens a real **savepoint** on the ambient transaction. A nested failure that the caller **catches** rolls back only to the savepoint, leaving the outer unit of work free to commit; an **uncaught** nested failure propagates and rolls the whole thing back. This gives callers a per-call-site choice — is a sub-operation's failure fatal to the whole unit of work, or recoverable? — that a flatten-into-parent strategy could not express.
 
-### DomainEventBus — immediate, in-fiber
+### One bus; the subscription picks the consistency model
 
-The in-fiber bus is a synchronous registry. `subscribe(eventSchema, handler)` registers a handler under the schema's tag at Layer construction time. `dispatch(events)` runs each event's handlers, in registration order, in the publisher's fiber:
+A producer knows what happened. It does not know who is listening, and under ADR-0022 it is frequently forbidden to: the organization module must not know the wallet module exists. An earlier design gave each consistency model its own bus, which put the choice on `dispatch` — so a producer decided, on behalf of consumers it could not name, whether their failure could undo its own write. Organization picked immediate consistency for wallet without knowing wallet was there.
+
+So `dispatch` says only that the events happened, and each subscriber declares what it needs:
+
+| surface                | when                                            | transaction              | a handler's failure      |
+| ---------------------- | ----------------------------------------------- | ------------------------ | ------------------------ |
+| `subscribe`            | in the publisher's fiber, in registration order | inherits the publisher's | rolls the publisher back |
+| `subscribeAfterCommit` | once the outermost unit of work commits         | a fresh one per handler  | logged and isolated      |
+| `stream`               | same as after-commit, but never awaited         | none — its own fiber     | reported; see sagas      |
+
+One event can therefore serve consumers that need different things — a wallet that must be atomic with its organization, and a welcome email that must not be — which two buses could only express by dispatching the same event twice.
+
+`subscribe(eventSchema, handler)` registers under the schema's tag at Layer construction time. `dispatch(events)` runs the immediate handlers in the publisher's fiber, then buffers the events for the flush:
 
 ```ts
 const dispatch: DomainEventBusShape["dispatch"] = (events) =>
   Effect.gen(function* () {
-    // Dispatch presumes a unit of work: the in-fiber bus only makes sense
-    // inside the publisher's transaction. Absent → defect (see below).
-    const map = yield* Ref.get(handlers);
+    // Dispatch presumes a unit of work. Absent → defect (see below).
+    const map = yield* Ref.get(immediate);
     for (const event of events) {
       for (const handler of map.get(event._tag) ?? []) {
         yield* handler(event);
       }
     }
+    yield* Ref.update(scope.postCommitEvents, (buffered) => [...buffered, ...events]);
   });
 ```
 
-Because handlers run in the publisher's fiber, they inherit `TransactionContext`: a subscriber's write joins the publisher's transaction, and a subscriber's failure propagates out of `dispatch`, up through the unit of work, and rolls the transaction back. This is the right bus when two aggregates are one logical unit.
+Because immediate handlers run in the publisher's fiber, they inherit `TransactionContext`: a subscriber's write joins the publisher's transaction, and its failure propagates out of `dispatch`, up through the unit of work, and rolls the transaction back. That is the right surface when two aggregates are one logical unit.
 
-### IntegrationEventBus — eventual, post-commit
+Everything is buffered, unconditionally, and only once the immediate handlers have succeeded — their failure aborts the publisher, so there would be nothing left to notify after a commit that is no longer going to happen. The **outermost** `run` drains the buffer **after** its transaction commits, each after-commit handler through its own `run`, so each gets a fresh transaction and its own scope with its failure isolated. Giving a handler its own scope rather than a bare transaction is what lets a reaction publish events of its own; it also means a cycle among reactions would loop, which is inherent to any at-least-once relay and is the author's to avoid.
 
-The integration bus carries the **same** `DomainEvent` base type as the in-fiber bus — the bus a producer publishes to is the switch between consistency models, not a distinct event type family. Its `dispatch` does **not** run handlers; it appends the events to a `PostCommitBuffer` that the unit of work provides. The **outermost** `run` drains that buffer **after** its transaction commits — each handler in its own fresh transaction, its failure logged and isolated. This is the default for new cross-aggregate reactions.
+Subscriptions are declared in `interface/events/*.event-adapter.ts`. Default new cross-aggregate reactions to `subscribeAfterCommit`; reserve `subscribe` for the case where the reaction genuinely must be able to abort its trigger.
 
-Subscriptions choose their bus in `interface/events/*.event-adapter.ts`: immediate reactions use `DomainEventBus.subscribe`, eventual ones use `IntegrationEventBus.subscribe`. The choice is per adapter; default new cross-aggregate reactions to the integration (eventual) bus.
+**Positional dispatch was rejected.** Dispatching after the `withUnitOfWork` block, rather than inside it, would also run a reaction post-commit and needs no second surface. It was not taken: the subscriber then runs in the command handler's fiber, so its failure surfaces as the failure of a command whose write already committed — the inversion after-commit delivery exists to prevent. It also leaves sagas without a source, and makes the consistency model a property of where a line sits in a function body, invisible in the type and silently changed by moving it.
 
 ### Dispatch presumes a unit of work
 
-Dispatching to _either_ bus outside a unit of work is a defect, and fails fast:
+Dispatching outside a unit of work is a defect, and fails fast.
 
-- `DomainEventBus.dispatch` asserts an ambient `TransactionContext`; absent → die.
-- `IntegrationEventBus.dispatch` asserts an ambient `PostCommitBuffer`; absent → die (without a buffer the event would be silently dropped — nothing drains it).
+`dispatch` asserts an ambient `UnitOfWorkScope`; absent → die. Its presence _is_ the answer to "am I inside a unit of work". The bus previously asked the database whether a transaction was open — a unit-of-work question answered by the wrong service, and the reason the bus knew about SQL at all.
+
+Absent a scope the alternatives are worse than a defect: immediate subscribers would run with no transaction to inherit, and after-commit ones would buffer onto nothing.
 
 Both almost always mean a forgotten `withUnitOfWork`. Failing loudly at dispatch is the safety net.
 
 ### Failure-semantics asymmetry
 
-The two buses fail in opposite directions, by design:
+The two subscription surfaces fail in opposite directions, by design:
 
-- A **DomainEventBus** (immediate) handler failure propagates out of `dispatch`, out of the unit of work, and **rolls the publisher back**. Partial success is the bug class this bus exists to prevent. A subscriber that legitimately wants to swallow a known error does so explicitly via `Effect.catchTag` in its own subscription closure.
-- An **IntegrationEventBus** (eventual) handler failure is **logged and swallowed**. The producer already committed; the reaction's failure must not undo the trigger. Handlers are expected to be idempotent and independently retryable.
+- A **`subscribe`** handler's failure propagates out of `dispatch`, out of the unit of work, and **rolls the publisher back**. Partial success is the bug class that surface exists to prevent. A subscriber that legitimately wants to swallow a known error does so explicitly via `Effect.catchTag` in its own subscription closure.
+- A **`subscribeAfterCommit`** handler's failure is **isolated**. The producer already committed; the reaction's failure must not undo the trigger. Handlers are expected to be idempotent and independently retryable.
+
+That isolation leaves the failure nowhere to surface — the dispatching fiber finished long ago — so it is logged _and_ reported to an `UnhandledFailures` surface carrying the source, the event, and the cause. A log line is something nothing can alert on and no test can assert against; this is the programmatic record. It is resolved from ambient context and optional, so a host that wires none keeps the behavior it had.
 
 ### Outermost-flush and savepoint-discard
 
-- Only the **outermost** `run` provides the `PostCommitBuffer` and drains it. Nested runs inherit the ambient buffer.
-- The flush happens **after** the outer transaction commits. If the transaction **rolls back**, the flush is skipped and the buffer is discarded — integration events from a rolled-back unit of work never fire.
-- A **rolled-back savepoint** truncates the buffer back to its length on savepoint entry, so integration events emitted inside a nested savepoint that then rolled back are discarded, while events from the surviving outer scope still flush.
+- Only the **outermost** `run` opens a fresh `UnitOfWorkScope` and drains it. Nested runs inherit the enclosing one.
+- The flush happens **after** the outer transaction commits. If the transaction **rolls back**, the flush is skipped and the buffer is discarded — after-commit reactions to a rolled-back unit of work never fire.
+- A **rolled-back savepoint** truncates the buffer back to its length on savepoint entry, so after-commit reactions to events emitted inside a nested savepoint that then rolled back are discarded, while events from the surviving outer scope still flush.
+
+### Process managers over after-commit events
+
+An event adapter translates one event into one command. Some reactions need more: they wait for a _combination_ of events, time one out, and compensate when a later step fails. That is a process manager, and it gets its own stereotype — a `sagas/` folder beside the others, with its own isolation rule (ADR-0002 and ADR-0008 reserved it).
+
+A saga declares the events it watches and receives them as a stream. Two properties matter more than the API.
+
+**It cannot inherit a publisher's transaction.** The runner forks each saga from its own layer's scope, so the fiber's context is the one the layer was built with and a publisher's scope is not in its ancestry. Nothing has to be scrubbed, so nothing can be forgotten. Each command a saga dispatches opens its own unit of work. This is not a limitation being worked around — holding one transaction open across a process that waits for a payment is precisely what sagas exist to avoid, which is why they trade atomicity for compensation.
+
+**A slow saga cannot hold up a flush.** Stream consumers are published to and not awaited, where `subscribeAfterCommit` handlers are awaited and isolated. Those are two registration surfaces rather than one with a flag, because the delivery contracts genuinely differ. Subscription happens when the runner's layer is built, not lazily on first pull, so a saga cannot miss what the first unit of work to commit after boot published.
+
+A saga's `run` may not fail. A process manager that ends in an unhandled error has no one to report to, so the compensating action is part of its job; an empty error channel forces that decision rather than deferring it. Interruption is not reported as a failure — every saga fiber is interrupted at shutdown, and announcing each one as broken on every clean stop is the noise that trains people to ignore the channel.
+
+**Delivery is in-memory and lossy across a restart.** A saga's state lives in the fiber running it, and its events arrive over a subscription with no replay, so a process death loses whatever was in flight. That is the same durability boundary after-commit delivery already has, and the deferred outbox below closes both at once. Until then, keep a saga's decisions idempotent.
+
+Reach for an adapter first. A saga earns its state only when no single event decides the outcome.
 
 ## Consequences
 
@@ -112,17 +151,20 @@ The two buses fail in opposite directions, by design:
 - Eventual consistency is expressible. Cross-aggregate reactions that must not be able to fail their trigger have a home, and "one aggregate per transaction" becomes the achievable default.
 - The transaction boundary reads at the use-case level: a reviewer sees `.pipe(withUnitOfWork)` and knows the whole handler body is one unit of work.
 - Nested units of work gain a recoverable-failure option via savepoints; flows that want all-or-nothing simply let the nested failure propagate.
-- A forgotten `withUnitOfWork` is caught at dispatch (a defect) rather than producing an out-of-transaction subscriber run or a silently dropped integration event.
+- A forgotten `withUnitOfWork` is caught at dispatch (a defect) rather than producing an out-of-transaction subscriber run or a silently dropped after-commit reaction.
 - Slow immediate subscribers slow their publishers — accepted, since they are part of the same logical operation.
 - Use-case unit tests don't need a database: the identity unit of work makes `run` a pass-through and fake repositories ignore `TransactionContext`.
-- The in-memory integration flush is **lossy on a crash between commit and flush** — if the process dies after the transaction commits but before the buffer drains, those integration events are lost. Accepted for now; the durable replacement is the deferred outbox below. (A similar at-most-once window exists for the immediate bus on process death between commit and HTTP response; mitigated by idempotent subscribers and deterministic upstream ids.)
+- The in-memory flush is **lossy on a crash between commit and flush** — if the process dies after the transaction commits but before the buffer drains, those after-commit reactions are lost. Accepted for now; the durable replacement is the deferred outbox below. (A similar at-most-once window exists for immediate subscribers on process death between commit and HTTP response; mitigated by idempotent subscribers and deterministic upstream ids.)
 
-## Deferred: transactional outbox
+## Deferred: transactional outbox and durable process managers
 
-The integration bus delivers the full conceptual model — separate transaction per handler, eventual default, failure isolation — with no new table or relay, at the cost of being lossy on a commit-then-crash. The durable upgrade is a **transactional outbox**: persist integration events to a `platform.outbox` row in the _same_ transaction as the trigger, and a relay loop (poll + advisory lock) reads the outbox and runs handlers idempotently, at least once. Two constraints on that follow-up:
+After-commit delivery gives the full conceptual model — separate transaction per handler, eventual default, failure isolation — with no new table or relay, at the cost of being lossy on a commit-then-crash. Process managers sit on the same boundary. The durable upgrade closes both.
 
-- The relay must run in the **server runtime**, not the jobs deployable — integration handlers are in-process functions registered on the bus, and `@org/jobs` deliberately cannot import `@org/server`.
-- Handlers must be idempotent, because at-least-once delivery will re-run them.
+**The outbox.** Persist after-commit events to a `platform.outbox` row in the _same_ transaction as the trigger — the insert replaces the in-memory buffer append — and have a relay loop (poll plus advisory lock) read it and run handlers at least once. Two constraints carry over: the relay must run in the **server runtime**, not the jobs deployable, because after-commit handlers are in-process functions registered on the bus; and handlers must be idempotent, because at-least-once means they will re-run.
+
+**Durable process managers.** The crux is that an in-memory timeout dies with the process while a `timeout_at` column survives. A saga instance table keyed by saga name and correlation id, holding its state and its next deadline, lets the runner rehydrate open instances at boot and re-arm their timers. Saga bodies do not change: the stream surface stays the API, only its _source_ moves from an in-memory subscription to the outbox, plus rehydration. That is what makes deferring this cheap rather than a rewrite.
+
+**Idempotency deserves a mechanism, not an expectation.** "Handlers are expected to be idempotent" is what this ADR says today, and nothing enforces or assists it. At-least-once delivery makes it mandatory. Prior art worth copying — a small Effect CQRS sample by Patrick Roza does exactly this — is a command receipt keyed by a caller-supplied command id: a replayed command returns the original result, and a previously-rejected one returns the original rejection, so retry becomes a no-op by construction. The cost is that every command must carry a stable id supplied by its caller, which is an API change reaching every definition and dispatch site; it is worth paying on the write paths that need it rather than blanket.
 
 ## Anti-corruption layer for cross-module event consumption
 
@@ -142,8 +184,10 @@ The command definition _is_ the internal contract; there is no separate trigger 
 ```ts
 export const OrganizationEventAdapterLive = Layer.effectDiscard(
   Effect.gen(function* () {
-    const domainEventBus = yield* DomainEventBus; // immediate: wallet must exist in the same tx
+    const domainEventBus = yield* DomainEventBus;
     const commandBus = yield* CommandBus;
+    // `subscribe`, not `subscribeAfterCommit`: a wallet must exist iff its
+    // organization does, and this is the consumer that knows that.
     yield* domainEventBus.subscribe(OrganizationCreated, (event) =>
       commandBus
         .execute(CreateWalletCommand, { organizationId: event.organizationId })
@@ -155,7 +199,7 @@ export const OrganizationEventAdapterLive = Layer.effectDiscard(
 
 `subscribe` requires a handler with no requirements and no error channel. Dispatch already satisfies the first: the bus clears the requirement channel, so the handler's services are discharged where the owning module's dispatch surface is composed rather than re-supplied here (ADR-0006) — an adapter that had to hand-provide them was the problem that shaped that decision. The error channel is closed by `orDie` above. The transaction context comes from the ambient publisher fiber. If organization adds a field, only this translation changes.
 
-**Atomicity via nested savepoint.** An immediate-consistency reaction — a subscriber that must commit atomically with its publisher, e.g. a wallet must exist iff its organization does — subscribes on the in-fiber `DomainEventBus`. Because the adapter runs in the publisher's fiber, the command it dispatches runs its own `withUnitOfWork` as a **nested savepoint** on the publisher's transaction (see "Nested savepoints"): both commit or both roll back. An eventually-consistent reaction subscribes on the `IntegrationEventBus` instead, and its command runs post-commit in its own transaction.
+**Atomicity via nested savepoint.** A reaction that must commit atomically with its publisher — a wallet must exist iff its organization does — uses `subscribe`. Because the adapter then runs in the publisher's fiber, the command it dispatches runs its own `withUnitOfWork` as a **nested savepoint** on the publisher's transaction (see "Nested savepoints"): both commit or both roll back. A reaction that must not be able to undo its trigger uses `subscribeAfterCommit`, and its command runs post-commit in its own transaction — which is how an invitation email is sent, so that a mail-server outage cannot fail the invite and a rolled-back transaction cannot produce a live accept link.
 
 **External IO is a tiered judgment call, not a new stereotype.** If a reaction touches the domain, it dispatches a command (above). A pure side effect that always follows its trigger — a telemetry emit, a notification tied to one command — is colocated in the originating command, not modeled as a reaction. A genuine third-party effect (send an email, ETL to an external system) is performed by a command handler through its client port. `interface/events/` itself stays strictly bus-only.
 
@@ -163,13 +207,14 @@ The pattern is enforced by the `interface-events-isolation` dep-cruiser rule, a 
 
 ## Alternatives considered
 
-- **One dual-mode bus** (synchronous and asynchronous delivery, opt-in per subscriber). Rejected. Two delivery semantics in one component is confusing; a subscriber shouldn't have to know whether it runs in- or out-of-transaction. Two buses with one shared event base keeps the switch explicit and at the publishing call site.
-- **A distinct `IntegrationEvent` type family.** Rejected for now — the bus a producer publishes to already encodes the consistency model; a parallel type hierarchy would double the event definitions without buying clarity.
-- **Pub/sub-backed immediate bus with forked subscribers.** Rejected — the delivery model precludes the subscriber inheriting `TransactionContext` from the publisher, which is exactly the property the immediate bus needs.
+- **Two buses, the publisher choosing between them.** How this was first built, and reversed. It put the consistency decision on the party that must not know its consumers, so one event could not serve two reactions with different needs; and because both the publisher and every subscriber named a bus, the two had to agree with nothing checking that they did. A subscriber on the wrong bus was a silent no-op.
+- **A distinct `IntegrationEvent` type family.** Rejected — a parallel type hierarchy would double the event definitions without buying clarity. Note this leaves the term free for what the literature means by it: a versioned cross-boundary contract, which this package may want later and which is not a delivery mode.
+- **Positional dispatch as the post-commit mechanism.** Rejected; see "One bus" above.
+- **Pub/sub-backed immediate delivery with forked subscribers.** Rejected — the delivery model precludes the subscriber inheriting `TransactionContext` from the publisher, which is exactly the property `subscribe` needs.
 - **Skip the unit-of-work abstraction; open transactions directly in use cases.** Rejected — it forces use cases to depend on the database service, which the unit-test fakes don't provide.
 - **Flatten nested runs into the parent transaction.** Rejected — flatten cannot express a recoverable sub-operation, and the database already supports savepoints.
-- **Fail-soft immediate subscribers** (a failed subscriber logs and the publisher commits anyway). Rejected — that is the partial-failure-with-logged-silence behavior the immediate bus exists to prevent. Reactions that _should_ tolerate failure belong on the integration bus.
-- **Transactional outbox from day one.** Rejected as premature — the in-memory flush delivers the programming model today; the outbox is the right answer when durability across a commit-then-crash matters, and is cheaper to add once the two-bus shape is in place.
+- **Fail-soft immediate subscribers** (a failed `subscribe` handler logs and the publisher commits anyway). Rejected — that is the partial-failure-with-logged-silence behavior that surface exists to prevent. A reaction that _should_ tolerate failure uses `subscribeAfterCommit`.
+- **Transactional outbox from day one.** Rejected as premature — the in-memory flush delivers the programming model today; the outbox is the right answer when durability across a commit-then-crash matters, and is cheaper to add once the delivery surfaces are settled.
 
 ## Related
 

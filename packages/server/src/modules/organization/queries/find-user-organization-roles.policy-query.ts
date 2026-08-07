@@ -1,7 +1,6 @@
-import { Query } from "@org/cqrs";
+import { PersistenceUnavailable, Query } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 

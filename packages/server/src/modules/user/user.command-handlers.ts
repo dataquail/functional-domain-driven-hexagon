@@ -9,7 +9,7 @@ import { DeleteUserCommand } from "@/modules/user/commands/delete-user.command.j
 import { deleteUserHandler } from "@/modules/user/commands/delete-user.handler.js";
 import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live.js";
 
-const userCommandGroup = Command.group(CreateUserCommand, DeleteUserCommand);
+export const userCommandGroup = Command.group(CreateUserCommand, DeleteUserCommand);
 
 const UserCommandHandlersLive = Command.handlersOf(userCommandGroup, {
   CreateUserCommand: (payload) =>

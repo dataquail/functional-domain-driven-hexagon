@@ -5,7 +5,7 @@ import * as Layer from "effect/Layer";
 import { findSubscriptionByOrganizationHandler } from "@/modules/billing/queries/find-subscription-by-organization.handler.js";
 import { FindSubscriptionByOrganizationQuery } from "@/modules/billing/queries/find-subscription-by-organization.query.js";
 
-const billingQueryGroup = Query.group(FindSubscriptionByOrganizationQuery);
+export const billingQueryGroup = Query.group(FindSubscriptionByOrganizationQuery);
 
 const BillingQueryHandlersLive = Query.handlersOf(billingQueryGroup, {
   FindSubscriptionByOrganizationQuery: (payload) => findSubscriptionByOrganizationHandler(payload),

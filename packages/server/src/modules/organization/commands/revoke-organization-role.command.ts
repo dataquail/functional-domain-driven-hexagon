@@ -1,9 +1,8 @@
-import { Command } from "@org/cqrs";
+import { Command, PersistenceUnavailable } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
 import { DoesNotHaveOrganizationRole } from "@/modules/organization/domain/organization-roles/organization-role.errors.js";
 import { OrganizationRoleValueObject } from "@/modules/organization/domain/organization-roles/organization-role.value-object.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 

@@ -38,6 +38,9 @@ export const RecordingCommandBus: Layer.Layer<CommandBus | RecordedCommands> = L
               ...prev,
               { tag: command.tag, payload },
             ])) as CommandBusShape["execute"],
+          // A recorder answers whatever it is asked, so there is no fixed routing
+          // table to report. Tests that need real routing use the production bus.
+          tags: new Set<string>(),
         }),
       ),
       Context.add(RecordedCommands, {

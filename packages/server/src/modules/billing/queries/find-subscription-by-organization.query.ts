@@ -1,8 +1,7 @@
-import { Query } from "@org/cqrs";
+import { PersistenceUnavailable, Query } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
 import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 export const SubscriptionView = Schema.Struct({

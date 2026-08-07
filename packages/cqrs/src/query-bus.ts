@@ -2,6 +2,7 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 
 import type { DispatchTable } from "./dispatch-table.js";
+import { assertEveryTagRoutable } from "./internal/completeness.js";
 import type * as Query from "./query.js";
 
 /**
@@ -19,17 +20,28 @@ export type QueryBusShape = {
     query: M,
     payload: Query.Payload<M>,
   ) => Effect.Effect<Query.Success<M>, Query.Failure<M>, never>;
+  /** Every tag this bus routes — see `CommandBusShape.tags`. */
+  readonly tags: ReadonlySet<string>;
 };
 
 export class QueryBus extends Context.Service<QueryBus, QueryBusShape>()("@org/cqrs/QueryBus") {}
 
 /** See `makeCommandBus` — same routing, same reason it belongs at a composition root. */
-export const makeQueryBus = (dispatch: DispatchTable): QueryBusShape => ({
-  execute: ((query: { readonly tag: string }, payload: never) => {
-    const dispatcher = dispatch[query.tag];
-    if (dispatcher === undefined) {
-      return Effect.die(new Error(`[QueryBus] no handler registered for '${query.tag}'`));
-    }
-    return dispatcher(payload);
-  }) as QueryBusShape["execute"],
-});
+export const makeQueryBus = (
+  dispatch: DispatchTable,
+  options: { readonly declaredIn?: ReadonlyArray<Query.AnyGroup> } = {},
+): QueryBusShape => {
+  const tags = new Set(Object.keys(dispatch));
+  assertEveryTagRoutable("QueryBus", tags, options.declaredIn);
+
+  return {
+    execute: ((query: { readonly tag: string }, payload: never) => {
+      const dispatcher = dispatch[query.tag];
+      if (dispatcher === undefined) {
+        return Effect.die(new Error(`[QueryBus] no handler registered for '${query.tag}'`));
+      }
+      return dispatcher(payload);
+    }) as QueryBusShape["execute"],
+    tags,
+  };
+};

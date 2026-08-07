@@ -4,13 +4,12 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { inviteUserHandler } from "@/modules/organization/commands/invite-user.handler.js";
-import { type InvitationIssued } from "@/modules/organization/domain/invitation/invitation.events.js";
+import {
+  type InvitationIssued,
+  type InvitationReissued,
+} from "@/modules/organization/domain/invitation/invitation.events.js";
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
 import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
-import {
-  InvitationMailerFake,
-  SentInvitations,
-} from "@/modules/organization/infrastructure/clients/invitation-mailer.client-fake.js";
 import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
@@ -20,19 +19,13 @@ import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-
 const actorUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const organizationId = OrganizationId.make("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
 
-const TestLayer = Layer.mergeAll(
-  InvitationRepositoryFake,
-  RecordingEventBus,
-  IdentityUnitOfWork,
-  InvitationMailerFake,
-);
+const TestLayer = Layer.mergeAll(InvitationRepositoryFake, RecordingEventBus, IdentityUnitOfWork);
 
 describe("inviteUserHandler", () => {
-  it.effect("inserts an invitation, publishes InvitationIssued, sends one mail", () =>
+  it.effect("inserts an invitation and publishes InvitationIssued", () =>
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
       const rec = yield* RecordedEvents;
-      const sent = yield* SentInvitations;
       const id = yield* inviteUserHandler({
         organizationId,
         inviteeEmail: "alice@example.com",
@@ -52,23 +45,13 @@ describe("inviteUserHandler", () => {
       deepStrictEqual(event.invitationId, id);
       deepStrictEqual(event.organizationId, organizationId);
       deepStrictEqual(event.inviteeEmail, "alice@example.com");
-
-      const invites = yield* sent.all;
-      deepStrictEqual(invites.length, 1);
-      const invite = invites[0];
-      if (invite === undefined) throw new Error("expected one sent invitation");
-      deepStrictEqual(invite.to, "alice@example.com");
-      // The use case hands the adapter the raw token; the adapter builds
-      // the accept link. Asserting the token matches the persisted row
-      // proves the invitee gets a link that resolves to this invitation.
-      deepStrictEqual(invite.token, stored.token);
     }).pipe(Effect.provide(TestLayer)),
   );
 
   it.effect("inviting an email with an open invite reissues it instead of duplicating", () =>
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
-      const sent = yield* SentInvitations;
+      const rec = yield* RecordedEvents;
       const make = () => ({
         organizationId,
         inviteeEmail: "alice@example.com",
@@ -89,10 +72,10 @@ describe("inviteUserHandler", () => {
       deepStrictEqual(all.length, 1);
       ok(all[0]?.token !== firstToken, "token should be rotated on reissue");
 
-      // Two emails were sent (one per invite call), the latest with the new token.
-      const invites = yield* sent.all;
-      deepStrictEqual(invites.length, 2);
-      deepStrictEqual(invites[1]?.token, all[0]?.token);
+      // The second call re-issues rather than issues, so the mail-out reacts to a
+      // different event — which is what tells the invitee their old link is dead.
+      deepStrictEqual((yield* rec.byTag<InvitationIssued>("InvitationIssued")).length, 1);
+      deepStrictEqual((yield* rec.byTag<InvitationReissued>("InvitationReissued")).length, 1);
     }).pipe(Effect.provide(TestLayer)),
   );
 });

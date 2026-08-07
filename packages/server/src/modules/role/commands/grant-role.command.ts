@@ -1,9 +1,8 @@
-import { Command } from "@org/cqrs";
+import { Command, PersistenceUnavailable } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
 import { AlreadyHasRole, CannotPromoteSelf } from "@/modules/role/domain/roles/role.errors.js";
 import { RoleValueObject } from "@/modules/role/domain/roles/role.value-object.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // `actorUserId` is carried explicitly rather than pulled from `CurrentUser` so the bus

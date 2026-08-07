@@ -1,8 +1,6 @@
-import { Command } from "@org/cqrs";
+import { Command, PersistenceUnavailable } from "@org/cqrs";
 import type * as DateTime from "effect/DateTime";
 import * as Schema from "effect/Schema";
-
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
 // The plaintext `deviceCode` is returned to the CLI once (it holds it and
 // polls with it); only its hash is persisted. `userCode` is what the human

@@ -1,10 +1,10 @@
 import * as Schema from "effect/Schema";
 
-import { DomainEvent } from "@/platform/ddd/contracts/domain-event.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import * as Event from "@/platform/ddd/contracts/domain-event.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/domain-event.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
-export const OrganizationCreated = DomainEvent("OrganizationCreated", {
+export const OrganizationCreated = Event.make("OrganizationCreated", {
   organizationId: OrganizationId,
   name: Schema.String,
 });
@@ -14,7 +14,7 @@ export const organizationCreatedSpanAttributes: SpanAttributesExtractor<Organiza
   event,
 ) => ({ "organization.id": event.organizationId });
 
-export const OrganizationSoftDeleted = DomainEvent("OrganizationSoftDeleted", {
+export const OrganizationSoftDeleted = Event.make("OrganizationSoftDeleted", {
   organizationId: OrganizationId,
 });
 export type OrganizationSoftDeleted = typeof OrganizationSoftDeleted.Type;
@@ -23,7 +23,7 @@ export const organizationSoftDeletedSpanAttributes: SpanAttributesExtractor<
   OrganizationSoftDeleted
 > = (event) => ({ "organization.id": event.organizationId });
 
-export const OrganizationRestored = DomainEvent("OrganizationRestored", {
+export const OrganizationRestored = Event.make("OrganizationRestored", {
   organizationId: OrganizationId,
 });
 export type OrganizationRestored = typeof OrganizationRestored.Type;

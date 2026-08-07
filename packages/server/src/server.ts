@@ -2,7 +2,6 @@ import { createServer } from "node:http";
 
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
-import { CommandBus, makeCommandBus, makeQueryBus, mergeDispatchTables, QueryBus } from "@org/cqrs";
 import { Database } from "@org/database/index";
 import * as dotenv from "dotenv";
 import * as Duration from "effect/Duration";
@@ -19,112 +18,59 @@ import * as OtlpTracer from "effect/unstable/observability/OtlpTracer";
 import { Api } from "./api.js";
 import { EnvVars } from "./common/env-vars.js";
 import {
-  AuthCommands,
+  CommandBusLive,
+  DomainEventBusLive,
+  QueryBusLive,
+  UnhandledFailuresLive,
+  UnitOfWorkLive,
+} from "./cqrs-runtime.js";
+import {
   AuthCommandsLive,
   AuthHttpDepsLive,
   AuthModuleLive,
-  AuthQueries,
   AuthQueriesLive,
   AuthSharedDepsLive,
 } from "./modules/auth/index.js";
 import {
-  BillingCommands,
   BillingCommandsLive,
-  billingEventSpanAttributes,
   BillingModuleLive,
   BillingPoliciesLive,
   BillingPolicyContribution,
-  BillingQueries,
   BillingQueriesLive,
   BillingResolverEntry,
   BillingResolverEntryLive,
 } from "./modules/billing/index.js";
 import {
-  OrganizationCommands,
   OrganizationCommandsLive,
-  organizationEventSpanAttributes,
   OrganizationModuleLive,
   OrganizationPoliciesLive,
   OrganizationPolicyContribution,
-  OrganizationQueries,
   OrganizationQueriesLive,
   OrganizationResolverEntry,
   OrganizationResolverEntryLive,
 } from "./modules/organization/index.js";
-import {
-  RoleCommands,
-  RoleCommandsLive,
-  roleEventSpanAttributes,
-  RoleQueriesLive,
-} from "./modules/role/index.js";
+import { RoleCommandsLive, RoleQueriesLive } from "./modules/role/index.js";
 import {
   TodoCollectionResolverEntry,
   TodoCollectionResolverEntryLive,
-  TodoCommands,
   TodoCommandsLive,
   TodoPoliciesLive,
   TodoPolicyContribution,
-  TodoQueries,
   TodoQueriesLive,
   TodoResolverEntry,
   TodoResolverEntryLive,
   TodosModuleLive,
 } from "./modules/todos/index.js";
-import {
-  UserCommands,
-  UserCommandsLive,
-  userEventSpanAttributes,
-  UserModuleLive,
-  UserQueries,
-  UserQueriesLive,
-} from "./modules/user/index.js";
-import {
-  WalletCommands,
-  WalletCommandsLive,
-  walletEventSpanAttributes,
-  WalletModuleLive,
-} from "./modules/wallet/index.js";
+import { UserCommandsLive, UserModuleLive, UserQueriesLive } from "./modules/user/index.js";
+import { WalletCommandsLive, WalletModuleLive } from "./modules/wallet/index.js";
 import { makePolicyRegistry } from "./platform/auth/policy-registry.js";
 import { makeResourceResolverRegistry } from "./platform/auth/resource-resolver-registry.js";
 import { DatabaseLive } from "./platform/database-live.js";
-import { makeDomainEventBusLive } from "./platform/domain-event-bus-live.js";
-import { makeIntegrationEventBusLive } from "./platform/integration-event-bus-live.js";
 import { UserAuthMiddlewareLive } from "./platform/middlewares/auth-middleware-live.js";
-import { UnitOfWorkLive } from "./platform/unit-of-work-live.js";
 
 dotenv.config({
   path: "../../.env",
 });
-
-// `CommandBus`/`QueryBus` route by tag across the per-module dispatch surfaces
-// (`ModuleDispatchersLive` below). A dispatch site names the bus and the message
-// definition; which module answers a tag is settled here, once.
-const CommandBusLive = Layer.effect(
-  CommandBus,
-  Effect.gen(function* () {
-    const wallet = yield* WalletCommands;
-    const user = yield* UserCommands;
-    const organization = yield* OrganizationCommands;
-    const auth = yield* AuthCommands;
-    const todos = yield* TodoCommands;
-    const role = yield* RoleCommands;
-    const billing = yield* BillingCommands;
-    return makeCommandBus(
-      mergeDispatchTables(wallet, user, organization, auth, todos, role, billing),
-    );
-  }),
-);
-const QueryBusLive = Layer.effect(
-  QueryBus,
-  Effect.gen(function* () {
-    const organization = yield* OrganizationQueries;
-    const auth = yield* AuthQueries;
-    const user = yield* UserQueries;
-    const todos = yield* TodoQueries;
-    const billing = yield* BillingQueries;
-    return makeQueryBus(mergeDispatchTables(organization, auth, user, todos, billing));
-  }),
-);
 
 // The module dependency order, stated once. A module whose handlers reach another
 // module through an outbound ACL port sits above the module it reaches, so the graph
@@ -152,16 +98,6 @@ const ModuleDispatchersLive = Layer.mergeAll(
     Layer.mergeAll(RoleCommandsLive, RoleQueriesLive, UserCommandsLive, UserQueriesLive),
   ),
 );
-const DomainEventBusLive = makeDomainEventBusLive({
-  spanAttributes: {
-    ...userEventSpanAttributes,
-    ...walletEventSpanAttributes,
-    ...roleEventSpanAttributes,
-    ...organizationEventSpanAttributes,
-    ...billingEventSpanAttributes,
-  },
-});
-const IntegrationEventBusLive = makeIntegrationEventBusLive();
 
 // Every module publishes its policy contribution behind a Tag whose Layer closes
 // over that module's own ACL ports, so every registered check is R = never and
@@ -289,9 +225,10 @@ const HttpLive = HttpRouter.serve(ApiLive, {
     AuthHttpDepsLive,
   ]),
   // CommandBus + QueryBus provide TO the middleware (which dispatches
-  // FindSessionQuery). IntegrationEventBus provides TO UnitOfWork (post-commit
-  // flush), so it sits here, not as a peer of UnitOfWork below.
-  Layer.provide([CommandBusLive, QueryBusLive, IntegrationEventBusLive]),
+  // FindSessionQuery). The event bus is not here: the unit of work resolves it from
+  // the running fiber's context when it flushes, so a peer of `UnitOfWork` below
+  // reaches it — and one instance is what keeps a subscriber notified.
+  Layer.provide([CommandBusLive, QueryBusLive, UnhandledFailuresLive]),
   // Merged, not provided: the buses route through these, and so do the outbound ACL
   // adapters above, which name the module they reach rather than the bus.
   Layer.provideMerge(ModuleDispatchersLive),

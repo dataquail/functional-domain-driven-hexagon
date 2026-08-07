@@ -23,7 +23,7 @@ import { WebhookEventRepositoryLive } from "@/modules/billing/infrastructure/rep
 // two named Lives so the Stripe-vs-fake swap is a choice between them rather than a port
 // Tag threaded through the composition root. `EnvVars` stays required because
 // `EnvVars.layer` is provided at server boot.
-const billingCommandGroup = Command.group(
+export const billingCommandGroup = Command.group(
   StartSubscriptionCommand,
   CancelSubscriptionCommand,
   IngestStripeWebhookCommand,

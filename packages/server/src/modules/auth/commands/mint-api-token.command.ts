@@ -1,8 +1,7 @@
-import { Command } from "@org/cqrs";
+import { Command, PersistenceUnavailable } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
 import { ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // The resolved inputs the mint core needs. The command is one source of

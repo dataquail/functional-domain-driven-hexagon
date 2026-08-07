@@ -1,4 +1,5 @@
 export {
+  billingCommandGroup,
   BillingCommands,
   BillingCommandsFake,
   BillingCommandsLive,
@@ -11,7 +12,7 @@ export { billingEventSpanAttributes } from "./billing.event-span-attributes.js";
 // `BillingGateway` Tag stays private to the module's use-case ring —
 // composition roots pick a bundle and don't see the Tag at all.
 export { BillingModuleLive } from "./billing.module.js";
-export { BillingQueries, BillingQueriesLive } from "./billing.query-handlers.js";
+export { BillingQueries, BillingQueriesLive, billingQueryGroup } from "./billing.query-handlers.js";
 export { CancelSubscriptionCommand } from "./commands/cancel-subscription.command.js";
 export { IngestStripeWebhookCommand } from "./commands/ingest-stripe-webhook.command.js";
 export { StartSubscriptionCommand } from "./commands/start-subscription.command.js";

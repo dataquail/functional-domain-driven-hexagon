@@ -1,8 +1,7 @@
-import { Query } from "@org/cqrs";
+import { PersistenceUnavailable, Query } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 export const ListTodosTodoView = Schema.Struct({

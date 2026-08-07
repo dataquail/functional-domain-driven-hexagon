@@ -9,7 +9,7 @@ import { RevokeRoleCommand } from "@/modules/role/commands/revoke-role.command.j
 import { revokeRoleHandler } from "@/modules/role/commands/revoke-role.handler.js";
 import { RolesRepositoryLive } from "@/modules/role/infrastructure/repositories/roles.repository-live.js";
 
-const roleCommandGroup = Command.group(GrantRoleCommand, RevokeRoleCommand);
+export const roleCommandGroup = Command.group(GrantRoleCommand, RevokeRoleCommand);
 
 const RoleCommandHandlersLive = Command.handlersOf(roleCommandGroup, {
   GrantRoleCommand: (payload) =>
