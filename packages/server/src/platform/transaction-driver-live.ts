@@ -25,17 +25,17 @@ export const TransactionDriverLive: Layer.Layer<TransactionDriver, never, Databa
         effect: Effect.Effect<A, E | Database.DatabaseError | Database.DatabaseUnavailable, R>,
       ): Effect.Effect<A, E | TransactionFailed | PersistenceUnavailable, R> =>
         effect.pipe(
-          Effect.catchTag("DatabaseError", (error) =>
-            Effect.fail(
+          Effect.catchTag(
+            "DatabaseError",
+            (error) =>
               new TransactionFailed({ message: (error as Database.DatabaseError).message }),
-            ),
           ),
-          Effect.catchTag("DatabaseUnavailable", (error) =>
-            Effect.fail(
+          Effect.catchTag(
+            "DatabaseUnavailable",
+            (error) =>
               new PersistenceUnavailable({
                 message: (error as Database.DatabaseUnavailable).message,
               }),
-            ),
           ),
         );
 

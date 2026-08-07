@@ -48,8 +48,9 @@ export const signInHandler = Effect.fn("signInHandler")(function* (cmd: SignInPa
           const newUserId = yield* provisioning
             .provision(cmd.email)
             .pipe(
-              Effect.catchTag("UserProvisioningConflict", (e) =>
-                Effect.fail(new IdentityEmailAlreadyRegistered({ email: e.email })),
+              Effect.catchTag(
+                "UserProvisioningConflict",
+                (e) => new IdentityEmailAlreadyRegistered({ email: e.email }),
               ),
             );
           yield* identities.insertOne({
