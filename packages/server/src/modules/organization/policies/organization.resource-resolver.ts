@@ -15,8 +15,9 @@ import { type Resolver } from "@/platform/auth/resource-resolver-registry.js";
 // organization to decide whether the caller may act on it, and the soft-delete
 // endpoint sees an active row at resolution time.
 //
-// PersistenceUnavailable dies here — the endpoint's `recoverPersistenceUnavailable`
-// is the boundary that turns it into a 503.
+// A transient store outage propagates untouched, so the endpoint's
+// `recoverPersistenceUnavailable` turns it into the same 503 it would have
+// produced had the outage struck the use case instead.
 export class OrganizationResolverEntry extends Context.Service<
   OrganizationResolverEntry,
   Resolver<"organization">
@@ -27,11 +28,12 @@ export const OrganizationResolverEntryLive = Layer.effect(
   Effect.gen(function* () {
     const queryBus = yield* QueryBus;
     return (organizationId) =>
-      queryBus.execute(FindOrganizationByIdQuery, { organizationId }).pipe(
-        Effect.flatMap((view) =>
-          view === null ? Effect.fail(new CustomHttpApiError.NotFound()) : Effect.succeed(view),
-        ),
-        Effect.catchTag("PersistenceUnavailable", Effect.die),
-      );
+      queryBus
+        .execute(FindOrganizationByIdQuery, { organizationId })
+        .pipe(
+          Effect.flatMap((view) =>
+            view === null ? Effect.fail(new CustomHttpApiError.NotFound()) : Effect.succeed(view),
+          ),
+        );
   }),
 );

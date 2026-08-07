@@ -1,11 +1,11 @@
-import { DomainEvent } from "@/platform/ddd/contracts/domain-event.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import * as Event from "@/platform/ddd/contracts/domain-event.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/domain-event.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 import { OrganizationRoleValueObject } from "./organization-role.value-object.js";
 
-export const OrganizationRoleGranted = DomainEvent("OrganizationRoleGranted", {
+export const OrganizationRoleGranted = Event.make("OrganizationRoleGranted", {
   userId: UserId,
   organizationId: OrganizationId,
   role: OrganizationRoleValueObject,
@@ -22,7 +22,7 @@ export const organizationRoleGrantedSpanAttributes: SpanAttributesExtractor<
   "issued.by.user.id": event.issuedBy,
 });
 
-export const OrganizationRoleRevoked = DomainEvent("OrganizationRoleRevoked", {
+export const OrganizationRoleRevoked = Event.make("OrganizationRoleRevoked", {
   userId: UserId,
   organizationId: OrganizationId,
   role: OrganizationRoleValueObject,

@@ -1,10 +1,10 @@
+import { withUnitOfWork } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { type RevokeApiTokenPayload } from "@/modules/auth/commands/revoke-api-token.command.js";
 import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
-import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
 // Ownership-scoped revoke: load the token, refuse (as NotFound) if it isn't
 // the caller's, then soft-delete. Returning NotFound for a foreign token

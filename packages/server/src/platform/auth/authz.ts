@@ -1,8 +1,7 @@
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { CurrentUser } from "@org/contracts/Policy";
+import { type PersistenceUnavailable } from "@org/cqrs";
 import * as Effect from "effect/Effect";
-
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
 import { type ActionFor, PolicyRegistry, type PolicyResource } from "./policy-registry.js";
 import {

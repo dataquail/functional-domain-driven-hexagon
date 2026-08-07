@@ -1,12 +1,12 @@
 import * as Schema from "effect/Schema";
 
-import { DomainEvent } from "@/platform/ddd/contracts/domain-event.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import * as Event from "@/platform/ddd/contracts/domain-event.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/domain-event.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
-export const InvitationIssued = DomainEvent("InvitationIssued", {
+export const InvitationIssued = Event.make("InvitationIssued", {
   invitationId: InvitationId,
   organizationId: OrganizationId,
   inviteeEmail: Schema.String,
@@ -20,7 +20,7 @@ export const invitationIssuedSpanAttributes: SpanAttributesExtractor<InvitationI
   "organization.id": event.organizationId,
 });
 
-export const InvitationAccepted = DomainEvent("InvitationAccepted", {
+export const InvitationAccepted = Event.make("InvitationAccepted", {
   invitationId: InvitationId,
   organizationId: OrganizationId,
   userId: UserId,
@@ -35,7 +35,7 @@ export const invitationAcceptedSpanAttributes: SpanAttributesExtractor<Invitatio
   "user.id": event.userId,
 });
 
-export const InvitationRevoked = DomainEvent("InvitationRevoked", {
+export const InvitationRevoked = Event.make("InvitationRevoked", {
   invitationId: InvitationId,
   organizationId: OrganizationId,
 });
@@ -51,7 +51,7 @@ export const invitationRevokedSpanAttributes: SpanAttributesExtractor<Invitation
 // Emitted when an open invitation is re-issued (resend, or invite-again
 // for an email that already has an open invite): a fresh token + expiry
 // replace the old ones, so the previous accept link stops working.
-export const InvitationReissued = DomainEvent("InvitationReissued", {
+export const InvitationReissued = Event.make("InvitationReissued", {
   invitationId: InvitationId,
   organizationId: OrganizationId,
   inviteeEmail: Schema.String,

@@ -1,3 +1,4 @@
+import { withUnitOfWork } from "@org/cqrs";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
@@ -7,8 +8,7 @@ import { OrganizationRepository } from "@/modules/organization/domain/organizati
 import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.js";
 import { OrganizationSpecifications } from "@/modules/organization/domain/organization/organization.specification.js";
 import { Spec } from "@/platform/ddd/contracts/specification.js";
-import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
+import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 
 export const softDeleteOrganizationHandler = Effect.fn("softDeleteOrganizationHandler")(function* (
   cmd: SoftDeleteOrganizationPayload,

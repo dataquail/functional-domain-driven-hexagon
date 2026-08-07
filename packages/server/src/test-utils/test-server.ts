@@ -1,6 +1,5 @@
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import { type UserAuthMiddleware } from "@org/contracts/Policy";
-import { CommandBus, makeCommandBus, makeQueryBus, mergeDispatchTables, QueryBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as HttpRouter from "effect/unstable/http/HttpRouter";
@@ -9,110 +8,58 @@ import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 import { Api } from "@/api.js";
 import { EnvVars } from "@/common/env-vars.js";
 import {
-  AuthCommands,
+  CommandBusLive,
+  DomainEventBusLive,
+  QueryBusLive,
+  UnhandledFailuresLive,
+  UnitOfWorkLive,
+} from "@/cqrs-runtime.js";
+import {
   AuthCommandsLive,
   AuthHttpDepsLive,
   AuthModuleLive,
-  AuthQueries,
   AuthQueriesLive,
   AuthSharedDepsLive,
 } from "@/modules/auth/index.js";
 import {
-  BillingCommands,
   BillingCommandsFake,
-  billingEventSpanAttributes,
   BillingModuleLive,
   BillingPoliciesLive,
   BillingPolicyContribution,
-  BillingQueries,
   BillingQueriesLive,
   BillingResolverEntry,
   BillingResolverEntryLive,
 } from "@/modules/billing/index.js";
 import {
-  OrganizationCommands,
   OrganizationCommandsLive,
-  organizationEventSpanAttributes,
   OrganizationModuleLive,
   OrganizationPoliciesLive,
   OrganizationPolicyContribution,
-  OrganizationQueries,
   OrganizationQueriesLive,
   OrganizationResolverEntry,
   OrganizationResolverEntryLive,
 } from "@/modules/organization/index.js";
-import {
-  RoleCommands,
-  RoleCommandsLive,
-  roleEventSpanAttributes,
-  RoleQueriesLive,
-} from "@/modules/role/index.js";
+import { RoleCommandsLive, RoleQueriesLive } from "@/modules/role/index.js";
 import {
   TodoCollectionResolverEntry,
   TodoCollectionResolverEntryLive,
-  TodoCommands,
   TodoCommandsLive,
   TodoPoliciesLive,
   TodoPolicyContribution,
-  TodoQueries,
   TodoQueriesLive,
   TodoResolverEntry,
   TodoResolverEntryLive,
   TodosModuleLive,
 } from "@/modules/todos/index.js";
-import {
-  UserCommands,
-  UserCommandsLive,
-  userEventSpanAttributes,
-  UserModuleLive,
-  UserQueries,
-  UserQueriesLive,
-} from "@/modules/user/index.js";
-import {
-  WalletCommands,
-  WalletCommandsLive,
-  walletEventSpanAttributes,
-  WalletModuleLive,
-} from "@/modules/wallet/index.js";
+import { UserCommandsLive, UserModuleLive, UserQueriesLive } from "@/modules/user/index.js";
+import { WalletCommandsLive, WalletModuleLive } from "@/modules/wallet/index.js";
 import { makePolicyRegistry } from "@/platform/auth/policy-registry.js";
 import { makeResourceResolverRegistry } from "@/platform/auth/resource-resolver-registry.js";
-import { makeDomainEventBusLive } from "@/platform/domain-event-bus-live.js";
-import { makeIntegrationEventBusLive } from "@/platform/integration-event-bus-live.js";
-import { UnitOfWorkLive } from "@/platform/unit-of-work-live.js";
 import {
   UserAuthMiddlewareFake,
   UserAuthMiddlewareFakeAsMember,
 } from "@/test-utils/fake-auth-middleware.js";
 import { TestDatabaseLive } from "@/test-utils/test-database.js";
-
-// Mirrors `server.ts`: the buses route by tag across the per-module dispatch surfaces.
-// Billing is the one deliberate divergence — it takes the fake gateway.
-const CommandBusLive = Layer.effect(
-  CommandBus,
-  Effect.gen(function* () {
-    const wallet = yield* WalletCommands;
-    const user = yield* UserCommands;
-    const organization = yield* OrganizationCommands;
-    const auth = yield* AuthCommands;
-    const todos = yield* TodoCommands;
-    const role = yield* RoleCommands;
-    const billing = yield* BillingCommands;
-    return makeCommandBus(
-      mergeDispatchTables(wallet, user, organization, auth, todos, role, billing),
-    );
-  }),
-);
-const QueryBusLive = Layer.effect(
-  QueryBus,
-  Effect.gen(function* () {
-    const organization = yield* OrganizationQueries;
-    const auth = yield* AuthQueries;
-    const user = yield* UserQueries;
-    const todos = yield* TodoQueries;
-    const billing = yield* BillingQueries;
-    return makeQueryBus(mergeDispatchTables(organization, auth, user, todos, billing));
-  }),
-);
 
 // The module dependency order — see `server.ts` for why it is stated here.
 const ModuleDispatchersLive = Layer.mergeAll(
@@ -136,16 +83,6 @@ const ModuleDispatchersLive = Layer.mergeAll(
     Layer.mergeAll(RoleCommandsLive, RoleQueriesLive, UserCommandsLive, UserQueriesLive),
   ),
 );
-const DomainEventBusLive = makeDomainEventBusLive({
-  spanAttributes: {
-    ...userEventSpanAttributes,
-    ...walletEventSpanAttributes,
-    ...roleEventSpanAttributes,
-    ...organizationEventSpanAttributes,
-    ...billingEventSpanAttributes,
-  },
-});
-const IntegrationEventBusLive = makeIntegrationEventBusLive();
 
 // Every module publishes its policy contribution behind a Tag whose Layer closes
 // over that module's own ACL ports, so every registered check is R = never and
@@ -230,7 +167,7 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
       // server.ts. Their deps (EnvVars, etc.) close below.
       AuthHttpDepsLive,
     ]),
-    Layer.provideMerge(Layer.mergeAll(CommandBusLive, QueryBusLive, IntegrationEventBusLive)),
+    Layer.provideMerge(Layer.mergeAll(CommandBusLive, QueryBusLive, UnhandledFailuresLive)),
     Layer.provideMerge(ModuleDispatchersLive),
     // Below the dispatchers and merged, not provided: every dispatcher needs these
     // too (`handlersOf` hoists its handlers' requirements), and one layer value in

@@ -18,10 +18,6 @@ import { type InvitationReissued } from "@/modules/organization/domain/invitatio
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
 import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
 import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
-import {
-  InvitationMailerFake,
-  SentInvitations,
-} from "@/modules/organization/infrastructure/clients/invitation-mailer.client-fake.js";
 import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
@@ -48,12 +44,7 @@ const seedInvitation = () =>
     now: issuedAt,
   }).invitation;
 
-const TestLayer = Layer.mergeAll(
-  InvitationRepositoryFake,
-  RecordingEventBus,
-  IdentityUnitOfWork,
-  InvitationMailerFake,
-);
+const TestLayer = Layer.mergeAll(InvitationRepositoryFake, RecordingEventBus, IdentityUnitOfWork);
 
 const cmd = {
   invitationId,
@@ -62,12 +53,11 @@ const cmd = {
 };
 
 describe("resendInvitationHandler", () => {
-  it.effect("rotates the token, resets expiry, emits InvitationReissued, re-sends the email", () =>
+  it.effect("rotates the token, resets expiry and emits InvitationReissued", () =>
     Effect.gen(function* () {
       yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
       const repo = yield* InvitationRepository;
       const rec = yield* RecordedEvents;
-      const sent = yield* SentInvitations;
       yield* repo.insertOne(seedInvitation());
 
       yield* resendInvitationHandler(cmd);
@@ -81,14 +71,6 @@ describe("resendInvitationHandler", () => {
 
       const events = yield* rec.byTag<InvitationReissued>("InvitationReissued");
       deepStrictEqual(events.length, 1);
-
-      const invites = yield* sent.all;
-      deepStrictEqual(invites.length, 1);
-      const invite = invites[0];
-      if (invite === undefined) throw new Error("expected one sent invitation");
-      deepStrictEqual(invite.to, "alice@example.com");
-      // The re-sent email carries the freshly rotated token.
-      deepStrictEqual(invite.token, stored.token);
     }).pipe(Effect.provide(TestLayer)),
   );
 

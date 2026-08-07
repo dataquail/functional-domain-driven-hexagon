@@ -3,6 +3,7 @@ import * as Effect from "effect/Effect";
 
 import type * as Command from "./command.js";
 import type { DispatchTable } from "./dispatch-table.js";
+import { assertEveryTagRoutable } from "./internal/completeness.js";
 
 /**
  * The application-wide write-side bus: one service whose `execute` takes a command
@@ -25,6 +26,11 @@ export type CommandBusShape = {
     command: M,
     payload: Command.Payload<M>,
   ) => Effect.Effect<Command.Success<M>, Command.Failure<M>, never>;
+  /**
+   * Every tag this bus routes. Exposed for diagnostics and so a host can assert
+   * its own wiring is complete; dispatching never consults it.
+   */
+  readonly tags: ReadonlySet<string>;
 };
 
 export class CommandBus extends Context.Service<CommandBus, CommandBusShape>()(
@@ -48,12 +54,21 @@ export class CommandBus extends Context.Service<CommandBus, CommandBusShape>()(
  * anything else that built one could answer a message with a different module's handler
  * than the composed application would.
  */
-export const makeCommandBus = (dispatch: DispatchTable): CommandBusShape => ({
-  execute: ((command: { readonly tag: string }, payload: never) => {
-    const dispatcher = dispatch[command.tag];
-    if (dispatcher === undefined) {
-      return Effect.die(new Error(`[CommandBus] no handler registered for '${command.tag}'`));
-    }
-    return dispatcher(payload);
-  }) as CommandBusShape["execute"],
-});
+export const makeCommandBus = (
+  dispatch: DispatchTable,
+  options: { readonly declaredIn?: ReadonlyArray<Command.AnyGroup> } = {},
+): CommandBusShape => {
+  const tags = new Set(Object.keys(dispatch));
+  assertEveryTagRoutable("CommandBus", tags, options.declaredIn);
+
+  return {
+    execute: ((command: { readonly tag: string }, payload: never) => {
+      const dispatcher = dispatch[command.tag];
+      if (dispatcher === undefined) {
+        return Effect.die(new Error(`[CommandBus] no handler registered for '${command.tag}'`));
+      }
+      return dispatcher(payload);
+    }) as CommandBusShape["execute"],
+    tags,
+  };
+};

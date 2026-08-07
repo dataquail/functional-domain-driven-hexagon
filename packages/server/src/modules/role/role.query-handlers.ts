@@ -8,7 +8,7 @@ import { FindUserRolesQuery } from "@/modules/role/queries/find-user-roles.polic
 // This is a policy-query, so its only consumers are other modules' ACL adapters, and
 // ADR-0022 has them reach it through their own port. They resolve this surface directly;
 // nothing dispatches the tag on the app-wide bus.
-const roleQueryGroup = Query.group(FindUserRolesQuery);
+export const roleQueryGroup = Query.group(FindUserRolesQuery);
 
 const RoleQueryHandlersLive = Query.handlersOf(roleQueryGroup, {
   FindUserRolesQuery: (payload) => findUserRolesHandler(payload),

@@ -1,3 +1,5 @@
+import { Event } from "@org/cqrs";
+
 import {
   invitationAcceptedSpanAttributes,
   invitationIssuedSpanAttributes,
@@ -17,9 +19,8 @@ import {
   organizationRoleGrantedSpanAttributes,
   organizationRoleRevokedSpanAttributes,
 } from "@/modules/organization/domain/organization-roles/organization-role.events.js";
-import { eventSpanAttributes } from "@/platform/ddd/ports/domain-event-bus.js";
 
-export const organizationEventSpanAttributes = eventSpanAttributes({
+export const organizationEventSpanAttributes = Event.spanAttributes({
   OrganizationCreated: organizationCreatedSpanAttributes,
   OrganizationSoftDeleted: organizationSoftDeletedSpanAttributes,
   OrganizationRestored: organizationRestoredSpanAttributes,

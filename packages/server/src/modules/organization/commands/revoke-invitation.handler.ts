@@ -1,3 +1,4 @@
+import { withUnitOfWork } from "@org/cqrs";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
@@ -6,8 +7,7 @@ import { InvitationNotFound } from "@/modules/organization/domain/invitation/inv
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
 import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
 import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
-import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
+import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 
 export const revokeInvitationHandler = Effect.fn("revokeInvitationHandler")(function* (
   cmd: RevokeInvitationPayload,

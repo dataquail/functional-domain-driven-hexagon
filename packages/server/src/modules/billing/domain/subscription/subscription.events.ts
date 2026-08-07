@@ -1,12 +1,12 @@
 import * as Schema from "effect/Schema";
 
-import { DomainEvent } from "@/platform/ddd/contracts/domain-event.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import * as Event from "@/platform/ddd/contracts/domain-event.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/domain-event.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 import { SubscriptionId } from "./subscription.id.js";
 
-export const SubscriptionStarted = DomainEvent("SubscriptionStarted", {
+export const SubscriptionStarted = Event.make("SubscriptionStarted", {
   subscriptionId: SubscriptionId,
   organizationId: OrganizationId,
   stripeSubscriptionId: Schema.String,
@@ -23,7 +23,7 @@ export const subscriptionStartedSpanAttributes: SpanAttributesExtractor<Subscrip
   "subscription.status": event.status,
 });
 
-export const SubscriptionStatusChanged = DomainEvent("SubscriptionStatusChanged", {
+export const SubscriptionStatusChanged = Event.make("SubscriptionStatusChanged", {
   subscriptionId: SubscriptionId,
   organizationId: OrganizationId,
   status: Schema.String,
@@ -40,7 +40,7 @@ export const subscriptionStatusChangedSpanAttributes: SpanAttributesExtractor<
   "subscription.previous_status": event.previousStatus,
 });
 
-export const SubscriptionCanceled = DomainEvent("SubscriptionCanceled", {
+export const SubscriptionCanceled = Event.make("SubscriptionCanceled", {
   subscriptionId: SubscriptionId,
   organizationId: OrganizationId,
 });

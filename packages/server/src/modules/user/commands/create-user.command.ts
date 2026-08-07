@@ -1,8 +1,7 @@
-import { Command } from "@org/cqrs";
+import { Command, PersistenceUnavailable } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
 import { UserAlreadyExists } from "@/modules/user/domain/user/user.errors.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // Address fields are optional so the same command serves both the address-collecting

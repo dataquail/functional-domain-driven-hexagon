@@ -1,3 +1,4 @@
+import { PersistenceUnavailable } from "@org/cqrs";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
@@ -6,7 +7,6 @@ import {
   type ListTodosPayload,
   type ListTodosTodoView,
 } from "@/modules/todos/queries/list-todos.query.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
 const toView = (row: RowSchemas.TodoRow): ListTodosTodoView => ({
   id: TodoId.make(row.id),

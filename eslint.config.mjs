@@ -5,6 +5,7 @@ import storybook from "eslint-plugin-storybook";
 import { projectStructurePlugin } from "eslint-plugin-project-structure";
 import {
   componentsPatterns,
+  cqrsPackage,
   componentsPrimitives,
   serverModules,
   webFeatures,
@@ -461,7 +462,12 @@ export default [
     // factories apart from the Tags that everything legitimately imports. Matching the
     // named import can.
     files: ["packages/server/src/**/*.ts", "packages/jobs/src/**/*.ts"],
-    ignores: ["packages/server/src/server.ts", "packages/server/src/test-utils/**", "**/*.test.ts"],
+    ignores: [
+      "packages/server/src/server.ts",
+      "packages/server/src/cqrs-runtime.ts",
+      "packages/server/src/test-utils/**",
+      "**/*.test.ts",
+    ],
     rules: {
       "no-restricted-imports": [
         "error",
@@ -469,9 +475,16 @@ export default [
           paths: [
             {
               name: "@org/cqrs",
-              importNames: ["makeCommandBus", "makeQueryBus", "mergeDispatchTables"],
+              importNames: [
+                "makeCommandBus",
+                "makeQueryBus",
+                "mergeDispatchTables",
+                "makeEventBus",
+                "makeUnitOfWork",
+                "makeUnhandledFailures",
+              ],
               message:
-                "Building a CommandBus/QueryBus routes every module's messages, so it belongs at a composition root (server.ts or test-utils/). Depend on the `CommandBus`/`QueryBus` Tag instead, or — inside a module — publish that module's own surface with `Command.dispatcher`.",
+                "Building a CommandBus/QueryBus routes every module's messages, so it belongs at a composition root (server.ts or test-utils/). Depend on the `CommandBus`/`QueryBus` Tag instead, or — inside a module — publish that module's own surface with `Command.dispatcher`. The event bus, the unit of work and the unhandled-failure sink are fenced for a related reason: a second instance of any of them is subscribers nobody notifies, a transaction nobody joins, or reports nobody reads.",
             },
           ],
         },
@@ -549,8 +562,6 @@ export default [
     // docs/scratch/typesafe-registry-declaration-merging-spike.md — it replaces
     // ~27 inline eslint-disable directives. The rule stays on everywhere else.
     files: [
-      "packages/server/src/platform/ddd/ports/command-bus.ts",
-      "packages/server/src/platform/ddd/ports/query-bus.ts",
       "packages/server/src/platform/auth/policy-registry.ts",
       "packages/server/src/platform/auth/resource-resolver-registry.ts",
       "packages/server/src/modules/**/*.command-handlers.ts",
@@ -571,8 +582,6 @@ export default [
     // `interface`s (the merge target). Turn off the empty-interface rules for
     // just those files so the empty declaration needs no inline disable.
     files: [
-      "packages/server/src/platform/ddd/ports/command-bus.ts",
-      "packages/server/src/platform/ddd/ports/query-bus.ts",
       "packages/server/src/platform/auth/policy-registry.ts",
       "packages/server/src/platform/auth/resource-resolver-registry.ts",
     ],
@@ -624,6 +633,15 @@ export default [
     plugins: { "project-structure": projectStructurePlugin },
     rules: {
       "project-structure/folder-structure": ["error", webTanstackBridge],
+    },
+  },
+  {
+    // `internal/` is the only subfolder @org/cqrs admits — the dependency rules
+    // that fence the transport and the message machinery match exactly that path.
+    files: ["packages/cqrs/src/**/*.ts"],
+    plugins: { "project-structure": projectStructurePlugin },
+    rules: {
+      "project-structure/folder-structure": ["error", cqrsPackage],
     },
   },
 ];

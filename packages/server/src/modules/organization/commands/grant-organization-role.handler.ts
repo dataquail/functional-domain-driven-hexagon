@@ -1,3 +1,4 @@
+import { withUnitOfWork } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { type GrantOrganizationRolePayload } from "@/modules/organization/commands/grant-organization-role.command.js";
@@ -6,8 +7,7 @@ import { OrganizationRolesRepository } from "@/modules/organization/domain/organ
 import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.js";
 import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification.js";
 import { Spec } from "@/platform/ddd/contracts/specification.js";
-import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
+import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 
 export const grantOrganizationRoleHandler = Effect.fn("grantOrganizationRoleHandler")(function* (
   cmd: GrantOrganizationRolePayload,

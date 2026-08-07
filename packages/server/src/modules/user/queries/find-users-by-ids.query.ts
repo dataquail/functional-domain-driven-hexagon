@@ -1,8 +1,7 @@
-import { Query } from "@org/cqrs";
+import { PersistenceUnavailable, Query } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
 import { FindUsersUserView } from "@/modules/user/queries/find-users.query.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // Batched lookup by id list. Used by the SA's "members of an org"

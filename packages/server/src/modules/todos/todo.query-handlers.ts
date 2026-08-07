@@ -7,7 +7,7 @@ import { FindTodoOrganizationQuery } from "@/modules/todos/queries/find-todo-org
 import { listTodosHandler } from "@/modules/todos/queries/list-todos.handler.js";
 import { ListTodosQuery } from "@/modules/todos/queries/list-todos.query.js";
 
-const todoQueryGroup = Query.group(ListTodosQuery, FindTodoOrganizationQuery);
+export const todoQueryGroup = Query.group(ListTodosQuery, FindTodoOrganizationQuery);
 
 const TodoQueryHandlersLive = Query.handlersOf(todoQueryGroup, {
   ListTodosQuery: (payload) => listTodosHandler(payload),

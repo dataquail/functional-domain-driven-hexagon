@@ -68,21 +68,13 @@ module.exports = {
       name: "domain-isolation",
       severity: "error",
       comment:
-        "Module domain may only import from its own folder, effect (external), the DDD kernel's *contracts* tier (`platform/ddd/contracts/` — the `DomainEvent` factory, the `SpanAttributesExtractor` type used by event extractor signatures, and the `PersistenceUnavailable` port-level error every repository channel includes), and `platform/ids/` for branded entity IDs referenced cross-module (ADR-0002). The contracts tier is the *types/contracts* the domain may reference; the kernel's *ports* tier (`platform/ddd/ports/` — the buses, UnitOfWork, ACL services) holds services the application ring invokes and is OFF-LIMITS to the domain. No contracts package, no cross-module domain, no infrastructure/commands/queries/event-handlers/interface. See ADR-0008.",
+        "Module domain may only import from its own folder, effect (external), the DDD kernel's *contracts* tier (`platform/ddd/contracts/`), and `platform/ids/` for branded entity IDs referenced cross-module (ADR-0002). The domain does not name `@org/cqrs` at all: the library's domain-safe modules are re-exported under this application's vocabulary from `platform/ddd/contracts/`, and the buses and `UnitOfWork` are deliberately NOT — admitting them here would let a `domain/ports/` port name a bus in its requirement channel, the exclusion ADR-0006's per-module dispatch surfaces depend on. Tiering by folder rather than by package path is what keeps this rule independent of another package's internal file layout, which that package generates its published surface from. No contracts package, no cross-module domain, no infrastructure/commands/queries/event-handlers/interface. See ADR-0008.",
       from: { path: "^packages/server/src/modules/[^/]+/domain/" },
       to: {
         path: "^packages/",
         pathNot:
           "/domain/|^packages/server/src/platform/ddd/contracts/|^packages/server/src/platform/ids/",
       },
-    },
-    {
-      name: "ddd-contracts-no-ports",
-      severity: "error",
-      comment:
-        "The DDD kernel's contracts tier (`platform/ddd/contracts/`) is domain-importable, so it must stay free of the ports tier (`platform/ddd/ports/` — buses, UnitOfWork, ACL services). If a contract imported a port, domain code importing that contract would transitively pull in an application-tier service, silently defeating `domain-isolation`. Dependencies run ports → contracts only. See ADR-0008.",
-      from: { path: "^packages/server/src/platform/ddd/contracts/" },
-      to: { path: "^packages/server/src/platform/ddd/ports/" },
     },
     {
       name: "domain-no-external-beyond-effect",
@@ -259,6 +251,27 @@ module.exports = {
       },
     },
     {
+      name: "sagas-isolation",
+      severity: "error",
+      comment:
+        "ADR-0002/ADR-0007: a saga (sagas/*.saga.ts) is a long-running process manager over EVENTUAL events. Like an event adapter it is bus-only — it correlates events and dispatches its own module's commands, and must NOT reach the consistency boundary itself. It may import: its own module's domain events/ids (to declare what it watches), its own commands' *.command.ts definitions (to dispatch), `@org/cqrs` (Saga, CommandBus/QueryBus, the event buses), platform/ids/, and another module's index.ts barrel for cross-module events. No domain/ports/, no domain ops (*.root-ops.ts etc.), no repositories/infrastructure, no command *.handler.ts, no @org/database — the dispatched command owns all of that. A saga runs on its own fiber with no publisher's transaction to inherit, so reaching for a repository here would write outside every unit of work. Test files excluded.",
+      from: {
+        path: "^packages/server/src/modules/([^/]+)/sagas/",
+        pathNot: "\\.test\\.ts$",
+      },
+      to: {
+        path: "^packages/",
+        pathNot: [
+          "^packages/server/src/modules/$1/domain/[^/]+/[^/]+\\.(events|id)\\.ts$",
+          "^packages/server/src/modules/$1/commands/[^/]+\\.command\\.ts$",
+          "^packages/server/src/modules/$1/sagas/",
+          "^packages/server/src/modules/[^/]+/index\\.ts$",
+          "^packages/cqrs/src/",
+          "^packages/server/src/platform/ids/",
+        ],
+      },
+    },
+    {
       name: "barrel-content-discipline",
       severity: "error",
       comment:
@@ -332,14 +345,26 @@ module.exports = {
       to: { path: "/node_modules/effect/(dist|src)/unstable/rpc/" },
     },
     {
+      name: "rpc-stays-in-the-transport-file",
+      severity: "error",
+      comment:
+        "Inside `@org/cqrs`, the rpc primitives belong to `internal/transport-rpc.ts` and nowhere else. `effect/unstable/rpc` is explicitly unstable and pinned to an exact beta, and this package is published — confining it to one file is what keeps the blast radius of a bump to one file, and what makes swapping the transport a rewrite of that file rather than a hunt through the package. Everything else works against the carrier type aliases and the functions that file exports. If you need something rpc offers that it does not expose, widen that file's surface.",
+      from: {
+        path: "^packages/cqrs/src/",
+        pathNot: "^packages/cqrs/src/internal/transport-rpc\\.ts$",
+      },
+      to: { path: "/node_modules/effect/(dist|src)/unstable/rpc/" },
+    },
+    {
       name: "lives-only-from-composition-roots",
       severity: "error",
       comment:
-        "Live implementations of DDD shared kernel ports (platform/*-live.ts) are wired only by the composition root (server.ts), the test runtime (test-utils/), and integration tests that intentionally stage a sub-graph. Production-path code — commands, queries, event-handlers, domain, interface, middlewares — depends on the ports under platform/ddd/, never on these Lives. Lives may import each other. The command/query bus factories are the same kind of thing but live in `@org/cqrs`, where a path rule cannot reach them through the package barrel; the eslint `no-restricted-imports` entry for `makeCommandBus`/`makeQueryBus`/`mergeDispatchTables` is what keeps those at a composition root.",
+        "Live implementations of DDD shared kernel ports (platform/*-live.ts) are wired only by the composition roots (server.ts and cqrs-runtime.ts, the slice of it production and the test runtime share verbatim), the test runtime (test-utils/), and integration tests that intentionally stage a sub-graph. Production-path code — commands, queries, event-handlers, domain, interface, middlewares — depends on the ports under platform/ddd/ and `@org/cqrs`, never on these Lives. Lives may import each other. The command/query bus factories are the same kind of thing but live in `@org/cqrs`, where a path rule cannot reach them through the package barrel; the eslint `no-restricted-imports` entry for `makeCommandBus`/`makeQueryBus`/`mergeDispatchTables` is what keeps those at a composition root.",
       from: {
         path: "^packages/server/src/",
         pathNot: [
           "^packages/server/src/server\\.ts$",
+          "^packages/server/src/cqrs-runtime\\.ts$",
           "^packages/server/src/test-utils/",
           ".*\\.test\\.ts$",
           "^packages/server/src/platform/[^/]+-live\\.ts$",
@@ -351,14 +376,15 @@ module.exports = {
       name: "dumb-repository-live-no-app-collaborators",
       severity: "error",
       comment:
-        "ADR-0005: repository Lives are dumb persistence. They map an aggregate to/from rows and nothing more — they must not import the command/query use cases, nor the application-tier buses and unit-of-work (CommandBus, QueryBus, DomainEventBus, IntegrationEventBus, UnitOfWork). Publishing events, dispatching commands, and owning the transaction boundary are the use case's job, not the repository's. A repository that reaches for these is smuggling business logic into persistence — move it to the aggregate or the use case. (The eslint `dumb-repository-ports` rule guards the port's method names; this guards what the Live collaborates with.)",
+        "ADR-0005: repository Lives are dumb persistence. They map an aggregate to/from rows and nothing more — they must not import the command/query use cases, nor the application-tier buses and unit-of-work (CommandBus, QueryBus, DomainEventBus, UnitOfWork). Publishing events, dispatching commands, and owning the transaction boundary are the use case's job, not the repository's. A repository that reaches for these is smuggling business logic into persistence — move it to the aggregate or the use case. (The eslint `dumb-repository-ports` rule guards the port's method names; this guards what the Live collaborates with.)",
       from: {
         path: "^packages/server/src/modules/[^/]+/infrastructure/repositories/[^/]+\\.repository-live\\.ts$",
       },
       to: {
         path: [
           "^packages/server/src/modules/[^/]+/(commands|queries)/",
-          "^packages/server/src/platform/ddd/ports/(command-bus|query-bus|domain-event-bus|integration-event-bus|unit-of-work|with-unit-of-work)\\.ts$",
+          "^packages/cqrs/src/(command-bus|query-bus|event-bus|unit-of-work)\\.ts$",
+          "^packages/server/src/platform/ddd/event-bus\\.ts$",
         ],
       },
     },
@@ -366,7 +392,7 @@ module.exports = {
       name: "interface-util-files-are-leaves",
       severity: "error",
       comment:
-        "ADR-0023: an interface `*.util.ts` is a pure, leaf protocol/wire helper extracted from an endpoint for testability. It must not import ports (`domain/ports/`), use cases (`commands`/`queries`), infrastructure adapters, the application buses/unit-of-work (`platform/ddd/ports/`), or a module barrel. Orchestration and domain access belong in the endpoint or a use case, not a util — this keeps the util mechanical and denies it as a backdoor around the architecture. Test files excluded.",
+        "ADR-0023: an interface `*.util.ts` is a pure, leaf protocol/wire helper extracted from an endpoint for testability. It must not import ports (`domain/ports/`), use cases (`commands`/`queries`), infrastructure adapters, the application buses/unit-of-work, or a module barrel. Orchestration and domain access belong in the endpoint or a use case, not a util — this keeps the util mechanical and denies it as a backdoor around the architecture. Test files excluded.",
       from: {
         path: "^packages/server/src/modules/[^/]+/interface/[^/]+/[^/]+\\.util\\.ts$",
         pathNot: "\\.test\\.ts$",
@@ -375,7 +401,8 @@ module.exports = {
         path: [
           "^packages/server/src/modules/[^/]+/domain/ports/",
           "^packages/server/src/modules/[^/]+/(commands|queries|infrastructure)/",
-          "^packages/server/src/platform/ddd/ports/",
+          "^packages/cqrs/src/(command-bus|query-bus|event-bus|unit-of-work)\\.ts$",
+          "^packages/server/src/platform/ddd/event-bus\\.ts$",
           "^packages/server/src/modules/[^/]+/index\\.ts$",
         ],
       },

@@ -1,4 +1,4 @@
-import { Command } from "@org/cqrs";
+import { Command, PersistenceUnavailable } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
 import {
@@ -6,7 +6,6 @@ import {
   IdentityMissingEmail,
 } from "@/modules/auth/domain/auth-identity/auth-identity.errors.js";
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 export const SignInResultView = Schema.Struct({

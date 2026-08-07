@@ -1,7 +1,6 @@
+import { PersistenceUnavailable } from "@org/cqrs";
 import { type Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
-
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
 // Pipeline step for live repositories: translates the `@org/database`
 // transient signal into the domain-language port-level signal. Apply at

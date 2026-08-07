@@ -1,4 +1,4 @@
-import { Command } from "@org/cqrs";
+import { Command, PersistenceUnavailable } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
 import { MintApiTokenResultView } from "@/modules/auth/commands/mint-api-token.command.js";
@@ -7,7 +7,6 @@ import {
   DeviceGrantNotFound,
   DeviceGrantPending,
 } from "@/modules/auth/domain/device-grant/device-grant.errors.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
 // CLI poll: exchange a device code for an app token once the grant is approved.
 // `tokenExpiresInDays` is resolved by the endpoint from config. It mints on the user's behalf,

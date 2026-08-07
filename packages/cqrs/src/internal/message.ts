@@ -1,8 +1,10 @@
 import type * as Effect from "effect/Effect";
 import type * as Layer from "effect/Layer";
-import type * as Schema from "effect/Schema";
-import * as Rpc from "effect/unstable/rpc/Rpc";
-import * as RpcGroup from "effect/unstable/rpc/RpcGroup";
+import * as Schema from "effect/Schema";
+import type * as Scope from "effect/Scope";
+
+import type { Middleware } from "../middleware.js";
+import * as Transport from "./transport-rpc.js";
 
 // Machinery shared by the write side and the read side. Dispatching a command and
 // dispatching a query differ in exactly two ways — the side they belong to and the
@@ -19,6 +21,20 @@ const TypeId: TypeId = "~@org/cqrs/Message";
 export type GroupTypeId = "~@org/cqrs/MessageGroup";
 const GroupTypeId: GroupTypeId = "~@org/cqrs/MessageGroup";
 
+/**
+ * The three channels a message declares, kept as plain schemas.
+ *
+ * Held here rather than read back off the transport: asking what a message's
+ * contract is must not depend on which transport happens to be carrying it, and
+ * a checker that reached into the transport to find out would couple the one
+ * thing this package exists to keep swappable.
+ */
+export interface Schemas {
+  readonly payload: Schema.Top;
+  readonly success: Schema.Top;
+  readonly failure: Schema.Top;
+}
+
 export interface Message<
   Side extends string,
   Tag extends string,
@@ -29,8 +45,9 @@ export interface Message<
   readonly [TypeId]: TypeId;
   readonly side: Side;
   readonly tag: Tag;
+  readonly schemas: Schemas;
   /** @internal */
-  readonly rpc: Rpc.Rpc<Tag, Payload, Success, Failure>;
+  readonly carrier: Transport.Carrier<Tag, Payload, Success, Failure>;
 }
 
 /**
@@ -43,9 +60,18 @@ export interface Any<Side extends string> {
   readonly [TypeId]: TypeId;
   readonly side: Side;
   readonly tag: string;
+  readonly schemas: Schemas;
   /** @internal */
-  readonly rpc: Rpc.Any;
+  readonly carrier: Transport.AnyCarrier;
 }
+
+/** A schema carries an `ast`; a field record is the bag of fields a struct is built from. */
+const asSchema = (payload: Schema.Top | Schema.Struct.Fields | undefined): Schema.Top =>
+  payload === undefined
+    ? Schema.Void
+    : "ast" in payload
+      ? (payload as Schema.Top)
+      : Schema.Struct(payload);
 
 export const make = <
   Side extends string,
@@ -71,31 +97,46 @@ export const make = <
   [TypeId]: TypeId,
   side,
   tag,
-  rpc: Rpc.make(tag, {
-    ...(options?.payload !== undefined ? { payload: options.payload } : {}),
-    ...(options?.success !== undefined ? { success: options.success } : {}),
-    ...(options?.failure !== undefined ? { error: options.failure } : {}),
-  }),
+  // Defaults mirror `Rpc.make`'s: a message that declares nothing reports nothing
+  // and cannot fail in a way a caller handles. A payload given as a field record
+  // is normalised to the struct it stands for, so what is recorded here is always
+  // a schema — the same thing the transport is handed.
+  schemas: {
+    payload: asSchema(options?.payload),
+    success: options?.success ?? Schema.Void,
+    failure: options?.failure ?? Schema.Never,
+  },
+  carrier: Transport.makeCarrier(tag, options) as never,
 });
 
 export interface Group<Side extends string, Messages extends Any<string>> {
   readonly [GroupTypeId]: GroupTypeId;
   readonly side: Side;
+  /**
+   * The tags this group carries, in declaration order. Recorded here rather than
+   * read back off the transport, so asking what a module owns never depends on
+   * which transport is carrying it.
+   */
+  readonly tags: ReadonlyArray<string>;
+  /** The messages themselves, so their declared contracts stay reachable. */
+  readonly messages: ReadonlyArray<Any<Side>>;
   /** @internal */
-  readonly group: RpcGroup.RpcGroup<RpcOf<Messages>>;
+  readonly group: Transport.GroupCarrier<CarrierOf<Messages>>;
 }
 
 /** Erased `Group`, for constraints — same reasoning as `Any`. */
 export interface AnyGroup<Side extends string> {
   readonly [GroupTypeId]: GroupTypeId;
   readonly side: Side;
+  readonly tags: ReadonlyArray<string>;
+  readonly messages: ReadonlyArray<Any<Side>>;
   /** @internal */
-  readonly group: RpcGroup.Any;
+  readonly group: Transport.AnyGroupCarrier;
 }
 
-export type RpcOf<M> =
+export type CarrierOf<M> =
   M extends Message<infer _Side, infer Tag, infer Payload, infer Success, infer Failure>
-    ? Rpc.Rpc<Tag, Payload, Success, Failure>
+    ? Transport.Carrier<Tag, Payload, Success, Failure>
     : never;
 
 export const group = <Side extends string, const Messages extends ReadonlyArray<Any<Side>>>(
@@ -105,14 +146,36 @@ export const group = <Side extends string, const Messages extends ReadonlyArray<
   ({
     [GroupTypeId]: GroupTypeId,
     side,
-    group: RpcGroup.make(...messages.map((message) => message.rpc)),
+    tags: messages.map((message) => message.tag),
+    messages,
+    group: Transport.makeGroupCarrier(messages.map((message) => message.carrier)),
   }) as never;
 
+/**
+ * Whether a value is a message of the given side. A host needs this to reflect
+ * over its own modules and ask whether everything it exports is reachable — a
+ * definition nobody put in a group is invisible to any bus.
+ */
+// Read through `unknown` rather than the branded interface: accessing the brand on
+// an already-typed value narrows it to its own literal, and the comparison the
+// check is made of would then be flagged as always true.
+const brandOf = (u: unknown, key: string): unknown =>
+  typeof u === "object" && u !== null ? (u as Record<string, unknown>)[key] : undefined;
+
+export const isMessage = <Side extends string>(side: Side, u: unknown): u is Any<Side> =>
+  brandOf(u, TypeId) === TypeId && (u as Any<string>).side === side;
+
+/** The group counterpart of `isMessage`, for the same reflection use. */
+export const isGroup = <Side extends string>(side: Side, u: unknown): u is AnyGroup<Side> =>
+  brandOf(u, GroupTypeId) === GroupTypeId && (u as AnyGroup<string>).side === side;
+
 export type Handlers<G extends AnyGroup<string>> =
-  G extends Group<string, infer Messages> ? RpcGroup.HandlersFrom<RpcOf<Messages>> : never;
+  G extends Group<string, infer Messages> ? Transport.HandlersFrom<CarrierOf<Messages>> : never;
 
 export type HandlerServices<G extends AnyGroup<string>, H> =
-  G extends Group<string, infer Messages> ? RpcGroup.HandlersServices<RpcOf<Messages>, H> : never;
+  G extends Group<string, infer Messages>
+    ? Transport.HandlerServicesFrom<CarrierOf<Messages>, H>
+    : never;
 
 declare const RegisteredBrand: unique symbol;
 
@@ -133,7 +196,7 @@ export const handlersOf = <G extends AnyGroup<string>, H extends Handlers<G>>(
   messageGroup: G,
   handlers: H,
 ): Layer.Layer<Registered<G>, never, HandlerServices<G, H>> =>
-  rpcGroupOf(messageGroup).toLayer(handlers as never) as never;
+  Transport.registerHandlers(messageGroup.group, handlers) as never;
 
 /**
  * Per-message span-attribute extractors, keyed by tag, passed to the bus rather than
@@ -182,7 +245,18 @@ export type FailureOf<M> =
     ? Failure["Type"]
     : never;
 
-// A bus works against the erased group; the tag-accurate types are recovered on the
-// way out via `Dispatcher<G>`, so this widening is not observable to a caller.
-export const rpcGroupOf = (messageGroup: AnyGroup<string>): RpcGroup.RpcGroup<Rpc.Any> =>
-  messageGroup.group as unknown as RpcGroup.RpcGroup<Rpc.Any>;
+/**
+ * Builds a group's dispatch surface. The transport works against the erased group;
+ * the tag-accurate types are recovered on the way out via `Dispatcher<G>`, so the
+ * widening is not observable to a caller.
+ */
+export const dispatcher = <G extends AnyGroup<string>>(
+  messageGroup: G,
+  middleware: ReadonlyArray<Middleware>,
+): Effect.Effect<Dispatcher<G>, never, Scope.Scope | Registered<G>> =>
+  Transport.makeDispatcher(
+    messageGroup.group,
+    messageGroup.tags,
+    messageGroup.side as "command" | "query",
+    middleware,
+  ) as never;

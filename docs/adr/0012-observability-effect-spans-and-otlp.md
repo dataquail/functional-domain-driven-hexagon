@@ -26,7 +26,7 @@ The boundary spans:
 - **HTTP (and CLI) endpoints** span each operation. The endpoint adapter declares its boundary span by being written as `Effect.fn("<GroupLive.op>")` (e.g. `UserHttp.create`) — the v4 idiom, and what `@effect/language-service`'s `effectFnOpportunity` diagnostic steers toward — rather than a trailing `Effect.withSpan`.
 - **The command bus** spans every dispatch: `command.<CommandTag>` with attribute `command.tag`.
 - **The query bus** spans every dispatch: `query.<QueryTag>` with attribute `query.tag`.
-- **The domain event bus** spans every event: `domainEvent.<EventTag>` with attributes `event.tag` and `event.handler.count`; the integration bus uses `integrationEvent.<EventTag>`.
+- **The domain event bus** spans every event: `event.<EventTag>` with attributes `event.tag` and `event.handler.count` for the immediate subscribers, and `event.afterCommit.<EventTag>` around each post-commit handler.
 - **Repository methods** span each method: `<Repository>.<method>`.
 
 The delimiter is a dot, not a colon. An earlier version of this decision used `command:<Tag>`, which was this repo's own invention; `effect/unstable/rpc` joins a span prefix to a tag with a dot and offers no way to configure it, so once the buses dispatch through it, a colon would mean two naming schemes for one kind of span. The dot is also the separator already used for endpoint, repository, and use-case spans, so a single rule now covers every span the system emits.

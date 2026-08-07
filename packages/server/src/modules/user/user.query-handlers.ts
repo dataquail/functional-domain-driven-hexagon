@@ -11,7 +11,7 @@ import { FindUsersByIdsQuery } from "@/modules/user/queries/find-users-by-ids.qu
 // `FindUsersByIdsQuery`'s only consumer is the organization module's `UsersLookup`
 // adapter, which resolves this surface directly through its own port (ADR-0022) rather
 // than going through the bus.
-const userQueryGroup = Query.group(FindUsersQuery, FindUsersByIdsQuery);
+export const userQueryGroup = Query.group(FindUsersQuery, FindUsersByIdsQuery);
 
 const UserQueryHandlersLive = Query.handlersOf(userQueryGroup, {
   FindUsersQuery: (payload) => findUsersHandler(payload),

@@ -1,3 +1,4 @@
+import { withUnitOfWork } from "@org/cqrs";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
@@ -12,7 +13,6 @@ import { UserProvisioning } from "@/modules/auth/domain/ports/acl/user-provision
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
 import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.js";
-import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
 // Slice-scope SignInCommand:
 //   - looks up auth_identities by Zitadel subject

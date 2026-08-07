@@ -1,3 +1,4 @@
+import { withUnitOfWork } from "@org/cqrs";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
@@ -9,8 +10,7 @@ import { InvitationSpecifications } from "@/modules/organization/domain/invitati
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
 import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors.js";
 import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.js";
-import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
+import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 
 export const acceptInvitationHandler = Effect.fn("acceptInvitationHandler")(
   function* (cmd: AcceptInvitationPayload) {

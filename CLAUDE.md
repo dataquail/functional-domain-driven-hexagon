@@ -15,20 +15,20 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 
 ## Monorepo map
 
-| Package             | What it is                                                                         |
-| ------------------- | ---------------------------------------------------------------------------------- |
-| `@org/server`       | The Effect BFF backend (`src/modules/`, `src/platform/`, HTTP). Bulk of the rules. |
-| `@org/web`          | Next.js App Router renderer + `/api/*` proxy; the server stays the BFF (ADR-0018). |
-| `@org/components`   | Bespoke component library (primitives + patterns) + Storybook (ADR-0015).          |
-| `@org/contracts`    | Shared HTTP API contracts, schemas, errors — consumed by server and clients.       |
-| `@org/cqrs`         | Standalone typed CQRS bus (`Command`/`Query` + per-module dispatchers) — ADR-0006. |
-| `@org/database`     | DB access kernel (slonik, `RowSchemas`, `db.makeQuery`) + migrations.              |
-| `@org/jobs`         | Background/cron jobs.                                                              |
-| `@org/cli`          | Command-line client (device-flow auth, organizations, todos).                      |
-| `@org/mcp`          | MCP (stdio) server exposing the CLI surface as tools.                              |
-| `@org/api-client`   | Shared typed client + credential store for the CLI and MCP.                        |
-| `@org/acceptance`   | Playwright acceptance tests (specs / drivers / pages / infrastructure).            |
-| `@org/test-drivers` | Tier-agnostic page-driver contracts + per-tier adapters (Playwright / RTL).        |
+| Package             | What it is                                                                                                                                                                                                  |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@org/server`       | The Effect BFF backend (`src/modules/`, `src/platform/`, HTTP). Bulk of the rules.                                                                                                                          |
+| `@org/web`          | Next.js App Router renderer + `/api/*` proxy; the server stays the BFF (ADR-0018).                                                                                                                          |
+| `@org/components`   | Bespoke component library (primitives + patterns) + Storybook (ADR-0015).                                                                                                                                   |
+| `@org/contracts`    | Shared HTTP API contracts, schemas, errors — consumed by server and clients.                                                                                                                                |
+| `@org/cqrs`         | Standalone typed CQRS library: `Command`/`Query`/`Event`, per-module dispatchers, one event bus whose subscriptions pick their consistency model, the `UnitOfWork` port, sagas, middleware — ADR-0006/0007. |
+| `@org/database`     | DB access kernel (slonik, `RowSchemas`, `db.makeQuery`) + migrations.                                                                                                                                       |
+| `@org/jobs`         | Background/cron jobs.                                                                                                                                                                                       |
+| `@org/cli`          | Command-line client (device-flow auth, organizations, todos).                                                                                                                                               |
+| `@org/mcp`          | MCP (stdio) server exposing the CLI surface as tools.                                                                                                                                                       |
+| `@org/api-client`   | Shared typed client + credential store for the CLI and MCP.                                                                                                                                                 |
+| `@org/acceptance`   | Playwright acceptance tests (specs / drivers / pages / infrastructure).                                                                                                                                     |
+| `@org/test-drivers` | Tier-agnostic page-driver contracts + per-tier adapters (Playwright / RTL).                                                                                                                                 |
 
 ## Commands
 

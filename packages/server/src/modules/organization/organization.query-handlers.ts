@@ -23,7 +23,7 @@ import { FindUserOrganizationRolesQuery } from "@/modules/organization/queries/f
 // surface can absorb its own outbound adapter, because `handlersOf` infers the user-module
 // requirement it carries where a hand-written output type would force this module to name
 // it.
-const organizationQueryGroup = Query.group(
+export const organizationQueryGroup = Query.group(
   FindMembershipQuery,
   FindOrganizationMembershipsQuery,
   FindAllOrganizationsQuery,

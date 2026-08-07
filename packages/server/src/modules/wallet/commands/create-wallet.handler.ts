@@ -1,5 +1,6 @@
 import * as crypto from "node:crypto";
 
+import { withUnitOfWork } from "@org/cqrs";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
@@ -7,8 +8,7 @@ import { type CreateWalletPayload } from "@/modules/wallet/commands/create-walle
 import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
 import { WalletRootOps } from "@/modules/wallet/domain/wallet/wallet.root-ops.js";
-import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
+import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 
 // Creates the org's wallet with a zero balance. Idempotent: a duplicate
 // trigger for an org that already has a wallet is a no-op — the insert's

@@ -1,5 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
 
+import { withUnitOfWork } from "@org/cqrs";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
@@ -8,7 +9,6 @@ import { DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.i
 import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
 import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant/device-grant.root-ops.js";
 import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service.js";
-import { withUnitOfWork } from "@/platform/ddd/ports/with-unit-of-work.js";
 
 // Mints a high-entropy device code (returned once, only its hash stored) and
 // a short human-typable user code, persists a pending grant, and returns the

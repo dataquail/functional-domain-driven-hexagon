@@ -1,8 +1,8 @@
+import { PersistenceUnavailable } from "@org/cqrs";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
 import { type FindUserOrganizationRolesPayload } from "@/modules/organization/queries/find-user-organization-roles.policy-query.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
 export const findUserOrganizationRolesHandler = Effect.fn("findUserOrganizationRolesHandler")(
   function* (query: FindUserOrganizationRolesPayload) {

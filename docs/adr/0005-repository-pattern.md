@@ -80,7 +80,7 @@ Persistence-format conversion lives in `infrastructure/repositories/<feature>.ma
 ### Two lint rules keep the port dumb
 
 1. **eslint `dumb-repository-ports`**, scoped to the subdomain repository ports (`domain/<subdomain>/*.repository.ts`), inspects the `*RepositoryShape` type literal and requires every method name to be one of the write verbs or bare `findOne` / `findMany`. A name that reads as a domain verb, omits the `One`/`Many` size, or is a keyed/variant finder (`findOneById`, `findOneOpenBy…`) fails — the message tells the contributor to move behaviour onto the aggregate or express the lookup as a specification. The port is the right enforcement point because the `Live` and `Fake` must structurally satisfy it.
-2. **dependency-cruiser `dumb-repository-live-no-app-collaborators`** forbids `infrastructure/repositories/*.repository-live.ts` from importing the module's own `commands/` / `queries/` use cases, or the application-tier ports (`command-bus`, `query-bus`, `domain-event-bus`, `integration-event-bus`, `unit-of-work`, `with-unit-of-work`). A repository that reaches for these is smuggling orchestration into persistence.
+2. **dependency-cruiser `dumb-repository-live-no-app-collaborators`** forbids `infrastructure/repositories/*.repository-live.ts` from importing the module's own `commands/` / `queries/` use cases, or the application-tier ports (`command-bus`, `query-bus`, `event-bus`, `unit-of-work`). A repository that reaches for these is smuggling orchestration into persistence.
 
 Both are allowlists: a determinedly misleading name or pure computation inside an `updateOne` body can still pass. They are guardrails against the common case, not a substitute for review.
 

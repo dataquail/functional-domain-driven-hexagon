@@ -1,9 +1,8 @@
-import { Command } from "@org/cqrs";
+import { Command, PersistenceUnavailable } from "@org/cqrs";
 import * as Schema from "effect/Schema";
 
 import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.js";
 import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // Revokes one of the caller's own tokens. Carries `userId` so the handler

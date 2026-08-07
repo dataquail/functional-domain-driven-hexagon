@@ -7,7 +7,7 @@
 // stripe-webhook.endpoint.integration.test.ts.
 
 import { describe, it } from "@effect/vitest";
-import { Database } from "@org/database/index";
+import { makeEventBus, UnitOfWork } from "@org/cqrs";
 import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -16,9 +16,7 @@ import { SyncSubscriptionCommand } from "@/modules/billing/commands/sync-subscri
 import { StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events.js";
 import { type StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.js";
 import { StripeWebhookEventAdapterLive } from "@/modules/billing/interface/events/stripe-webhook.event-adapter.js";
-import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { makeDomainEventBusLive } from "@/platform/domain-event-bus-live.js";
-import { fakeTransaction } from "@/test-utils/fake-transaction-context.js";
+import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedCommands, RecordingCommandBus } from "@/test-utils/recording-command-bus.js";
 
@@ -34,7 +32,7 @@ const subEvent = (
 });
 
 const TestLayer = StripeWebhookEventAdapterLive.pipe(
-  Layer.provideMerge(makeDomainEventBusLive()),
+  Layer.provideMerge(makeEventBus()),
   Layer.provideMerge(RecordingCommandBus),
   Layer.provideMerge(IdentityUnitOfWork),
 );
@@ -42,10 +40,12 @@ const TestLayer = StripeWebhookEventAdapterLive.pipe(
 const dispatchAndReadCommands = (stripeEvent: StripeWebhookEvent) =>
   Effect.gen(function* () {
     const bus = yield* DomainEventBus;
+    const uow = yield* UnitOfWork;
     const rec = yield* RecordedCommands;
-    yield* bus.dispatch([StripeWebhookIngested.make({ stripeEvent })]);
+    // Dispatched inside a unit of work, as the ingesting command would.
+    yield* uow.run(bus.dispatch([StripeWebhookIngested.make({ stripeEvent })]));
     return yield* rec.payloadsFor(SyncSubscriptionCommand);
-  }).pipe(Database.TransactionContext.provide(fakeTransaction), Effect.provide(TestLayer));
+  }).pipe(Effect.provide(TestLayer));
 
 describe("StripeWebhookEventAdapterLive", () => {
   it.effect(

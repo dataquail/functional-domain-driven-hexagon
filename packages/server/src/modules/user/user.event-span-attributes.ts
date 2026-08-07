@@ -1,11 +1,12 @@
+import { Event } from "@org/cqrs";
+
 import {
   userAddressUpdatedSpanAttributes,
   userCreatedSpanAttributes,
   userDeletedSpanAttributes,
 } from "@/modules/user/domain/user/user.events.js";
-import { eventSpanAttributes } from "@/platform/ddd/ports/domain-event-bus.js";
 
-export const userEventSpanAttributes = eventSpanAttributes({
+export const userEventSpanAttributes = Event.spanAttributes({
   UserCreated: userCreatedSpanAttributes,
   UserDeleted: userDeletedSpanAttributes,
   UserAddressUpdated: userAddressUpdatedSpanAttributes,

@@ -1,3 +1,4 @@
+import { PersistenceUnavailable } from "@org/cqrs";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
@@ -6,7 +7,6 @@ import {
   type ApiTokenView,
   type ListMyApiTokensPayload,
 } from "@/modules/auth/queries/list-my-api-tokens.query.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 
 const toView = (row: RowSchemas.ApiTokenRow): ApiTokenView => ({
   id: ApiTokenId.make(row.id),

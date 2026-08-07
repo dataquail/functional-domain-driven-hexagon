@@ -1,6 +1,14 @@
 import { describe, it } from "@effect/vitest";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
-import { Command, CommandBus, makeCommandBus, mergeDispatchTables } from "@org/cqrs";
+import {
+  Command,
+  CommandBus,
+  makeCommandBus,
+  makeEventBus,
+  makeUnitOfWork,
+  mergeDispatchTables,
+  UnitOfWork,
+} from "@org/cqrs";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
@@ -15,12 +23,9 @@ import { createWalletHandler } from "@/modules/wallet/commands/create-wallet.han
 import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
 import { walletCommandGroup, WalletCommands, WalletCommandsLive } from "@/modules/wallet/index.js";
 import { OrganizationEventAdapterLive } from "@/modules/wallet/interface/events/organization.event-adapter.js";
-import { DomainEventBus } from "@/platform/ddd/ports/domain-event-bus.js";
-import { UnitOfWork } from "@/platform/ddd/ports/unit-of-work.js";
-import { makeDomainEventBusLive } from "@/platform/domain-event-bus-live.js";
+import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { makeIntegrationEventBusLive } from "@/platform/integration-event-bus-live.js";
-import { UnitOfWorkLive } from "@/platform/unit-of-work-live.js";
+import { TransactionDriverLive } from "@/platform/transaction-driver-live.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
@@ -149,7 +154,8 @@ const WorkingCommandBusLive = Layer.effect(
 // itself. The command bus sits directly under the adapter and above the unit of
 // work, because the rpc handler layer it wraps demands DomainEventBus +
 // UnitOfWork of its own — only what is lower in this chain provides to it.
-const DomainEventBusTestLive = makeDomainEventBusLive();
+const DomainEventBusTestLive = makeEventBus();
+const UnitOfWorkLive = makeUnitOfWork().pipe(Layer.provide(TransactionDriverLive));
 
 const withBusUnder = (
   commandBus: Layer.Layer<CommandBus, never, DomainEventBus | UnitOfWork | Database.Database>,
@@ -157,7 +163,7 @@ const withBusUnder = (
   OrganizationEventAdapterLive.pipe(
     Layer.provideMerge(commandBus),
     Layer.provideMerge(Layer.mergeAll(DomainEventBusTestLive, UnitOfWorkLive)),
-    Layer.provideMerge(makeIntegrationEventBusLive()),
+    Layer.provideMerge(makeEventBus()),
     Layer.provideMerge(TestDatabaseLive),
   );
 

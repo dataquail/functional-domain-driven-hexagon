@@ -117,10 +117,20 @@ an id but can never report absence, so `NotFound` sat unreachably in
 every one of its call sites' error channels, and each defended against
 it with a dead branch.
 
-A resource therefore declares whether resolving it can fail. An echo
-declares `notFound: never`, which both forbids its adapter from failing
-and removes `NotFound` from every caller's channel. The dead branches
-are not merely deleted — they become unrepresentable.
+A resource therefore declares whether resolving it can report absence. An
+echo declares `notFound: never`, which removes `NotFound` from every
+caller's channel. The dead branches are not merely deleted — they become
+unrepresentable.
+
+Absence is the only axis the resource declares. The transient-store
+signal rides in every resolver's channel unconditionally, echo or not, for
+the same reason a policy check carries it: authorization reads the store
+twice — once to resolve the resource, once inside the check — and both
+reads face the same outage. A resolver that demoted it to a defect would
+report a retryable outage as a 500 while the identical outage one step
+later produced a 503, making the status a caller sees depend on which of
+two adjacent reads happened to reach the store first. The boundary that
+translates it to a status is the endpoint, and it can only see a failure.
 
 ### Actions are CRUD; business operations live in commands
 

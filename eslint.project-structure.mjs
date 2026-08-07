@@ -116,6 +116,10 @@ const MSG = {
     "An interface *.util.ts is a pure leaf helper (ADR-0023); its sibling *.util.test.ts is the anti-drift guard — the extraction must be justified by a unit test.",
   eventAdapterTest:
     "Every event adapter (*.event-adapter.ts) needs a sibling *.event-adapter.test.ts (ADR-0007 ACL).",
+  sagas:
+    "`sagas/` holds long-running process managers only, one `*.saga.ts` per saga (ADR-0002, ADR-0007). A saga correlates SEVERAL eventual events over time and compensates when a later step fails. If one event decides the outcome, it is an inbound event adapter — put it in `interface/events/` instead.",
+  sagaTest:
+    "Every saga (*.saga.ts) needs a sibling *.saga.test.ts. A saga's whole value is behaviour across several events and over time, which is exactly what nothing else in the suite covers.",
   oidcExempt:
     "The OIDC flow endpoints (login/callback exchange with Zitadel, logout end-session) keep unit-token coverage: their happy path needs a live IdP and is covered by Playwright + the SessionRepositoryLive integration test. See CLAUDE.md 'Endpoint test naming'.",
   policies:
@@ -300,6 +304,20 @@ export const serverModules = createFolderStructure({
           ],
         },
 
+        // ── sagas/ (long-running process managers — ADR-0002, ADR-0007) ──
+        {
+          name: "sagas",
+          message: MSG.sagas,
+          children: [
+            {
+              name: "*.saga.ts",
+              enforceExistence: "{node-name}.test.ts",
+              message: MSG.sagaTest,
+            },
+            TEST_TS,
+          ],
+        },
+
         // ── infrastructure/ (container: adapter buckets only) ──
         {
           name: "infrastructure",
@@ -461,6 +479,31 @@ export const webFeatures = createFolderStructure({
     dir: { name: "*", children: webFeatureFolderChildren },
   },
   structure: webFeatureFolderChildren,
+});
+
+// ---------------------------------------------------------------------------
+// @org/cqrs (packages/cqrs/src) — a published library, not a DDD module, so
+// there is no stereotype taxonomy to enforce. What this does enforce is the one
+// structural property the package's own architecture rules depend on: `internal/`
+// is the only subfolder, so the machinery that must not leak (the transport, the
+// message internals) has exactly one place to live and the dependency rules that
+// fence it have exactly one path to match. A stray `utils/` or `helpers.ts` is
+// how that erodes.
+// ---------------------------------------------------------------------------
+
+const CQRS_MSG =
+  "packages/cqrs/src admits source files and their sibling tests, plus the single `internal/` folder for machinery consumers must not reach. A new subfolder needs a dependency rule to go with it — add both deliberately, or put the file at the top level next to its peers.";
+
+export const cqrsPackage = createFolderStructure({
+  structureRoot: "packages/cqrs/src",
+  structure: [
+    { name: "*.ts", message: CQRS_MSG },
+    {
+      name: "internal",
+      message: CQRS_MSG,
+      children: [{ name: "*.ts", message: CQRS_MSG }],
+    },
+  ],
 });
 
 // ---------------------------------------------------------------------------

@@ -1,3 +1,4 @@
+import { PersistenceUnavailable } from "@org/cqrs";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -9,7 +10,6 @@ import {
   SessionRevoked,
   type SessionView,
 } from "@/modules/auth/queries/find-session.query.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // Looks up a session by id and validates its lifecycle (revoked /

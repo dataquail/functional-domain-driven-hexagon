@@ -33,7 +33,7 @@ import { SessionRepositoryLive } from "@/modules/auth/infrastructure/repositorie
 // module to name it. Provisioning joins sign-in's transaction (ADR-0007 +
 // `UnitOfWorkLive` re-entrancy), which is why it is a dispatched command rather than an
 // event reaction.
-const authCommandGroup = Command.group(
+export const authCommandGroup = Command.group(
   SignInCommand,
   TouchSessionCommand,
   RevokeSessionCommand,

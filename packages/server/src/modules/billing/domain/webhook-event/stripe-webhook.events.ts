@@ -1,14 +1,14 @@
 import * as Schema from "effect/Schema";
 
 import { StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.js";
-import { DomainEvent } from "@/platform/ddd/contracts/domain-event.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/span-attributable.js";
+import * as Event from "@/platform/ddd/contracts/domain-event.js";
+import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/domain-event.js";
 
 // Emitted by `IngestStripeWebhookCommand` after a fresh webhook
 // delivery has been verified and the idempotency claim is held.
 // Carries the parsed Stripe event so a subscriber can fan out by `type`
 // without re-reading the wire payload.
-export const StripeWebhookIngested = DomainEvent("StripeWebhookIngested", {
+export const StripeWebhookIngested = Event.make("StripeWebhookIngested", {
   stripeEvent: StripeWebhookEvent,
 });
 export type StripeWebhookIngested = typeof StripeWebhookIngested.Type;
