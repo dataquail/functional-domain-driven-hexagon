@@ -1,4 +1,3 @@
-import { PersistenceUnavailable } from "@org/cqrs";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -11,6 +10,7 @@ import {
   type SessionView,
 } from "@/modules/auth/queries/find-session.query.js";
 import { UserId } from "@/platform/ids/user-id.js";
+import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 // Looks up a session by id and validates its lifecycle (revoked /
 // expired). Used by the auth middleware via `QueryBus.execute(...)` —
@@ -27,12 +27,7 @@ export const findSessionHandler = Effect.fn("findSessionHandler")(function* (
         `),
       ),
     )()
-    .pipe(
-      Effect.catchTag("DatabaseError", Effect.die),
-      Effect.catchTag("DatabaseUnavailable", (e) =>
-        Effect.fail(new PersistenceUnavailable({ message: e.message })),
-      ),
-    );
+    .pipe(translateDatabaseErrors);
   if (row === null) {
     return yield* new SessionNotFound({ sessionId: query.sessionId });
   }

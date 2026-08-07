@@ -27,7 +27,7 @@ export const TodosRepositoryFake = Layer.effect(
         const found = HashMap.get(m, todo.id);
         return found._tag === "Some" && found.value.organizationId === todo.organizationId
           ? Ref.update(store, HashMap.set(todo.id, todo))
-          : Effect.fail(new TodoNotFound({ todoId: todo.id }));
+          : new TodoNotFound({ todoId: todo.id });
       });
 
     const deleteOne = (
@@ -38,7 +38,7 @@ export const TodosRepositoryFake = Layer.effect(
         const found = HashMap.get(m, id);
         return found._tag === "Some" && found.value.organizationId === organizationId
           ? Ref.update(store, HashMap.remove(id))
-          : Effect.fail(new TodoNotFound({ todoId: id }));
+          : new TodoNotFound({ todoId: id });
       });
 
     // The spec IS the in-memory predicate — the same object the live repo

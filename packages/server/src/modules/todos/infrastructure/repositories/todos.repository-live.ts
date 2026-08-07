@@ -9,7 +9,7 @@ import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js
 import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
-import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
+import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 import * as TodoMapper from "./todo.mapper.js";
 
@@ -32,12 +32,7 @@ export const TodosRepositoryLive = Layer.effect(
             ${sql.timestamp(row.updated_at)}
           )
         `),
-      ).pipe(
-        Effect.asVoid,
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
-        Effect.withSpan("TodosRepository.insertOne"),
-      );
+      ).pipe(Effect.asVoid, translateDatabaseErrors, Effect.withSpan("TodosRepository.insertOne"));
     });
 
     // Scoped on organization_id as well as id: an update aimed at a todo
@@ -56,8 +51,7 @@ export const TodosRepositoryLive = Layer.effect(
       ).pipe(
         orFail(() => new TodoNotFound({ todoId: todo.id })),
         Effect.asVoid,
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("TodosRepository.updateOne"),
       );
     });
@@ -72,8 +66,7 @@ export const TodosRepositoryLive = Layer.effect(
       ).pipe(
         orFail(() => new TodoNotFound({ todoId: args.id })),
         Effect.asVoid,
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("TodosRepository.deleteOne"),
       ),
     );
@@ -90,8 +83,7 @@ export const TodosRepositoryLive = Layer.effect(
         `),
       ).pipe(
         Effect.map((row) => (row === null ? null : TodoMapper.toDomain(row))),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("TodosRepository.findOne"),
       ),
     );

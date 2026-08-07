@@ -38,7 +38,7 @@ export const recoverPersistenceUnavailable: <A, E, R>(
     effect as Effect.Effect<A, PersistenceUnavailable, R>,
     "PersistenceUnavailable",
     (e: PersistenceUnavailable) =>
-      Effect.fail(new CustomHttpApiError.ServiceUnavailable({ message: e.message })),
+      new CustomHttpApiError.ServiceUnavailable({ message: e.message }),
   ) as Effect.Effect<
     A,
     Exclude<E, PersistenceUnavailable> | CustomHttpApiError.ServiceUnavailable,

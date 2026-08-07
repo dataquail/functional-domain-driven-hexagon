@@ -1,4 +1,3 @@
-import { PersistenceUnavailable } from "@org/cqrs";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -8,6 +7,7 @@ import {
   type PendingInvitationView,
 } from "@/modules/organization/queries/find-pending-invitations.query.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";
+import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 // Only *open* invitations (not accepted, not revoked) belong on the
 // pending list — accepted invitees are members and revoked ones are
@@ -38,11 +38,6 @@ export const findPendingInvitationsHandler = Effect.fn("findPendingInvitationsHa
         `),
       ),
     )()
-    .pipe(
-      Effect.catchTag("DatabaseError", Effect.die),
-      Effect.catchTag("DatabaseUnavailable", (e) =>
-        Effect.fail(new PersistenceUnavailable({ message: e.message })),
-      ),
-    );
+    .pipe(translateDatabaseErrors);
   return rows.map((row) => toView(row, now));
 });

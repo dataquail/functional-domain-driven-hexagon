@@ -1,8 +1,8 @@
-import { PersistenceUnavailable } from "@org/cqrs";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
 import { type FindUserOrganizationRolesPayload } from "@/modules/organization/queries/find-user-organization-roles.policy-query.js";
+import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 export const findUserOrganizationRolesHandler = Effect.fn("findUserOrganizationRolesHandler")(
   function* (query: FindUserOrganizationRolesPayload) {
@@ -18,12 +18,7 @@ export const findUserOrganizationRolesHandler = Effect.fn("findUserOrganizationR
         `),
         ),
       )()
-      .pipe(
-        Effect.catchTag("DatabaseError", Effect.die),
-        Effect.catchTag("DatabaseUnavailable", (e) =>
-          Effect.fail(new PersistenceUnavailable({ message: e.message })),
-        ),
-      );
+      .pipe(translateDatabaseErrors);
     return {
       userId: query.userId,
       organizationId: query.organizationId,

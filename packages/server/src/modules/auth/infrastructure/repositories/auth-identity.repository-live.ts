@@ -8,7 +8,7 @@ import {
 } from "@/modules/auth/domain/auth-identity/auth-identity.repository.js";
 import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
-import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
+import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 import * as AuthIdentityMapper from "./auth-identity.mapper.js";
 
@@ -29,8 +29,7 @@ export const AuthIdentityRepositoryLive = Layer.effect(
         `),
       ).pipe(
         Effect.map((row) => (row === null ? null : AuthIdentityMapper.toDomain(row))),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("AuthIdentityRepository.findOne"),
       ),
     );
@@ -43,8 +42,7 @@ export const AuthIdentityRepositoryLive = Layer.effect(
         `),
       ).pipe(
         Effect.asVoid,
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("AuthIdentityRepository.insertOne"),
       ),
     );

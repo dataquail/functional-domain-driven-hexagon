@@ -8,7 +8,7 @@ import { type RolesRoot } from "@/modules/role/domain/roles/roles.root.js";
 import * as RoleMapper from "@/modules/role/infrastructure/repositories/role.mapper.js";
 import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
-import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
+import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 export const RolesRepositoryLive = Layer.effect(
   RolesRepository,
@@ -35,14 +35,15 @@ export const RolesRepositoryLive = Layer.effect(
             DELETE FROM platform.roles WHERE user_id = ${roles.userId}
           `),
         );
-        for (const role of roles.roles) {
-          yield* tx((client) =>
-            client.query(sql.unsafe`
-              INSERT INTO platform.roles (user_id, role)
-              VALUES (${roles.userId}, ${role})
-            `),
-          );
-        }
+        // One statement rather than one per role. `unnest` over an empty array
+        // yields zero rows, so the revoke-everything case needs no guard.
+        yield* tx((client) =>
+          client.query(sql.unsafe`
+            INSERT INTO platform.roles (user_id, role)
+            SELECT ${roles.userId}, role
+            FROM unnest(${sql.array(roles.roles, "text")}) AS role
+          `),
+        );
       });
 
     const upsertOne = (roles: RolesRoot) =>
@@ -54,8 +55,7 @@ export const RolesRepositoryLive = Layer.effect(
                 writeStatements(roles).pipe(Database.TransactionContext.provide(tx)),
               ),
         ),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("RolesRepository.upsertOne"),
       );
 
@@ -72,8 +72,7 @@ export const RolesRepositoryLive = Layer.effect(
         `),
       ).pipe(
         Effect.map((rows) => RoleMapper.toDomain(rows)),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("RolesRepository.findOne"),
       ),
     );

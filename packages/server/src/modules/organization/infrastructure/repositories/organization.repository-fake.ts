@@ -21,7 +21,7 @@ export const OrganizationRepositoryFake = Layer.effect(
       Effect.flatMap(Ref.get(store), (m) =>
         HashMap.has(m, organization.id)
           ? Ref.update(store, HashMap.set(organization.id, organization))
-          : Effect.fail(new OrganizationNotFound({ organizationId: organization.id })),
+          : new OrganizationNotFound({ organizationId: organization.id }),
       );
 
     // The spec IS the in-memory predicate — the same object the live repo

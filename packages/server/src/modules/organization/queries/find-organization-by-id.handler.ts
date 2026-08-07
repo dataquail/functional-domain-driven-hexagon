@@ -1,4 +1,3 @@
-import { PersistenceUnavailable } from "@org/cqrs";
 import { Database, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
@@ -8,6 +7,7 @@ import {
   type OrganizationAuthzView,
 } from "@/modules/organization/queries/find-organization-by-id.query.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
+import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 const IdRowStd = Schema.toStandardSchemaV1(Schema.Struct({ id: Schema.String }));
 
@@ -26,12 +26,7 @@ export const findOrganizationByIdHandler = Effect.fn("findOrganizationByIdHandle
       `),
     ),
   );
-  const row = yield* readOrganization().pipe(
-    Effect.catchTag("DatabaseError", Effect.die),
-    Effect.catchTag("DatabaseUnavailable", (e) =>
-      Effect.fail(new PersistenceUnavailable({ message: e.message })),
-    ),
-  );
+  const row = yield* readOrganization().pipe(translateDatabaseErrors);
   return row === null
     ? null
     : ({ organizationId: OrganizationId.make(row.id) } satisfies OrganizationAuthzView);

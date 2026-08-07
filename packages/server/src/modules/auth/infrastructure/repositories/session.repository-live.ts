@@ -8,7 +8,7 @@ import { SessionRepository } from "@/modules/auth/domain/session/session.reposit
 import { type SessionRoot } from "@/modules/auth/domain/session/session.root.js";
 import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
-import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
+import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 import * as SessionMapper from "./session.mapper.js";
 
@@ -36,8 +36,7 @@ export const SessionRepositoryLive = Layer.effect(
         `),
       ).pipe(
         Effect.asVoid,
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("SessionRepository.insertOne"),
       );
     });
@@ -54,8 +53,7 @@ export const SessionRepositoryLive = Layer.effect(
         `),
       ).pipe(
         Effect.map((row) => (row === null ? null : SessionMapper.toDomain(row))),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("SessionRepository.findOne"),
       ),
     );
@@ -70,8 +68,7 @@ export const SessionRepositoryLive = Layer.effect(
       ).pipe(
         orFail(() => new SessionNotFound({ sessionId: id })),
         Effect.asVoid,
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("SessionRepository.deleteOne"),
       ),
     );
@@ -89,8 +86,7 @@ export const SessionRepositoryLive = Layer.effect(
       ).pipe(
         orFail(() => new SessionNotFound({ sessionId: session.id })),
         Effect.asVoid,
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("SessionRepository.updateOne"),
       );
     });

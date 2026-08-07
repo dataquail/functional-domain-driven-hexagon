@@ -8,7 +8,10 @@ import { type UserRoot } from "@/modules/user/domain/user/user.root.js";
 import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
-import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
+import {
+  translateDatabaseErrors,
+  translatePersistenceUnavailable,
+} from "@/platform/translate-database-errors.js";
 
 import * as UserMapper from "./user.mapper.js";
 
@@ -36,7 +39,7 @@ export const UserRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", (e) =>
           e.type === "unique_violation"
-            ? Effect.fail(new UserAlreadyExists({ email: user.email }))
+            ? new UserAlreadyExists({ email: user.email })
             : Effect.die(e),
         ),
         translatePersistenceUnavailable,
@@ -60,8 +63,7 @@ export const UserRepositoryLive = Layer.effect(
       ).pipe(
         orFail(() => new UserNotFound({ userId: user.id })),
         Effect.asVoid,
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("UserRepository.updateOne"),
       );
     });
@@ -74,8 +76,7 @@ export const UserRepositoryLive = Layer.effect(
       ).pipe(
         orFail(() => new UserNotFound({ userId: id })),
         Effect.asVoid,
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("UserRepository.deleteOne"),
       ),
     );
@@ -92,8 +93,7 @@ export const UserRepositoryLive = Layer.effect(
         `),
       ).pipe(
         Effect.map((row) => (row === null ? null : UserMapper.toDomain(row))),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("UserRepository.findOne"),
       ),
     );

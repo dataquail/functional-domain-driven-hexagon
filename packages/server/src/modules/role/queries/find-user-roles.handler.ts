@@ -1,8 +1,8 @@
-import { PersistenceUnavailable } from "@org/cqrs";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
 import { type FindUserRolesPayload } from "@/modules/role/queries/find-user-roles.policy-query.js";
+import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 // `makeQuery` (not bare `execute`) so the read joins the ambient
 // transaction when one exists — this query is dispatched by consumers' ACL adapters
@@ -20,11 +20,6 @@ export const findUserRolesHandler = Effect.fn("findUserRolesHandler")(function* 
         `),
     ),
   );
-  const rows = yield* readRoles().pipe(
-    Effect.catchTag("DatabaseError", Effect.die),
-    Effect.catchTag("DatabaseUnavailable", (e) =>
-      Effect.fail(new PersistenceUnavailable({ message: e.message })),
-    ),
-  );
+  const rows = yield* readRoles().pipe(translateDatabaseErrors);
   return { userId: query.userId, roles: rows.map((row) => row.role) };
 });

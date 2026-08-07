@@ -10,7 +10,7 @@ import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
-import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
+import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 export const MembershipRepositoryLive = Layer.effect(
   MembershipRepository,
@@ -34,8 +34,7 @@ export const MembershipRepositoryLive = Layer.effect(
         `),
       ).pipe(
         Effect.asVoid,
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("MembershipRepository.insertOne"),
       );
     });
@@ -53,16 +52,13 @@ export const MembershipRepositoryLive = Layer.effect(
           // MembershipNotFound so the command layer can produce a 404.
           Effect.flatMap((result) =>
             result.rowCount === 0
-              ? Effect.fail(
-                  new MembershipNotFound({
-                    userId: args.userId,
-                    organizationId: args.organizationId,
-                  }),
-                )
+              ? new MembershipNotFound({
+                  userId: args.userId,
+                  organizationId: args.organizationId,
+                })
               : Effect.void,
           ),
-          Effect.catchTag("DatabaseError", Effect.die),
-          translatePersistenceUnavailable,
+          translateDatabaseErrors,
           Effect.withSpan("MembershipRepository.deleteOne"),
         ),
     );
@@ -79,8 +75,7 @@ export const MembershipRepositoryLive = Layer.effect(
         `),
       ).pipe(
         Effect.map((row) => (row === null ? null : MembershipMapper.toDomain(row))),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("MembershipRepository.findOne"),
       ),
     );

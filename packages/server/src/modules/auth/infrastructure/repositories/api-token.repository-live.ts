@@ -8,7 +8,7 @@ import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.re
 import { type ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root.js";
 import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
-import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
+import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 import * as ApiTokenMapper from "./api-token.mapper.js";
 
@@ -37,8 +37,7 @@ export const ApiTokenRepositoryLive = Layer.effect(
         `),
       ).pipe(
         Effect.asVoid,
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("ApiTokenRepository.insertOne"),
       );
     });
@@ -55,8 +54,7 @@ export const ApiTokenRepositoryLive = Layer.effect(
         `),
       ).pipe(
         Effect.map((row) => (row === null ? null : ApiTokenMapper.toDomain(row))),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("ApiTokenRepository.findOne"),
       ),
     );
@@ -72,8 +70,7 @@ export const ApiTokenRepositoryLive = Layer.effect(
         `),
       ).pipe(
         Effect.map((rows) => rows.map(ApiTokenMapper.toDomain)),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("ApiTokenRepository.findMany"),
       ),
     );
@@ -88,8 +85,7 @@ export const ApiTokenRepositoryLive = Layer.effect(
       ).pipe(
         orFail(() => new ApiTokenNotFound()),
         Effect.asVoid,
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("ApiTokenRepository.deleteOne"),
       ),
     );
@@ -106,8 +102,7 @@ export const ApiTokenRepositoryLive = Layer.effect(
       ).pipe(
         orFail(() => new ApiTokenNotFound()),
         Effect.asVoid,
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("ApiTokenRepository.updateOne"),
       );
     });

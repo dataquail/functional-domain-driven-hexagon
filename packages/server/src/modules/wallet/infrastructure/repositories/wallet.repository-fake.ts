@@ -31,9 +31,7 @@ export const WalletRepositoryFake = Layer.effect(
     ): Effect.Effect<void, WalletAlreadyExistsForOrganization> =>
       Effect.flatMap(Ref.get(store), (m) =>
         Option.isSome(findByOrganizationIdIn(m, wallet.organizationId))
-          ? Effect.fail(
-              new WalletAlreadyExistsForOrganization({ organizationId: wallet.organizationId }),
-            )
+          ? new WalletAlreadyExistsForOrganization({ organizationId: wallet.organizationId })
           : Ref.update(store, HashMap.set(wallet.id, wallet)),
       );
 

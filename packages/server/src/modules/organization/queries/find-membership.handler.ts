@@ -1,9 +1,9 @@
-import { PersistenceUnavailable } from "@org/cqrs";
 import { Database, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 import { type FindMembershipPayload } from "@/modules/organization/queries/find-membership.policy-query.js";
+import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 const CountRowStd = Schema.toStandardSchemaV1(Schema.Struct({ value: Schema.Number }));
 
@@ -23,11 +23,6 @@ export const findMembershipHandler = Effect.fn("findMembershipHandler")(function
         `),
     ),
   );
-  const row = yield* readCount().pipe(
-    Effect.catchTag("DatabaseError", Effect.die),
-    Effect.catchTag("DatabaseUnavailable", (e) =>
-      Effect.fail(new PersistenceUnavailable({ message: e.message })),
-    ),
-  );
+  const row = yield* readCount().pipe(translateDatabaseErrors);
   return { isMember: row.value > 0 };
 });
