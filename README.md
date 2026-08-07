@@ -38,7 +38,14 @@ docker-compose --profile migrate up flyway
 # (optional) create + migrate the test DB used by *.integration.test.ts
 docker-compose exec postgres psql -U postgres -c 'CREATE DATABASE "effect-monorepo-test"'
 docker-compose --profile migrate-test up flyway-test
+
+# (recommended) clone the Effect v4 source for reference — see below
+pnpm effect:source
 ```
+
+### Effect v4 source reference
+
+Effect v4 is a beta with no published API docs, so the upstream source is the reference — for you and for any coding agent. `pnpm effect:source` shallow-clones [Effect-TS/effect](https://github.com/Effect-TS/effect) (v4 is its `main`; the `effect-smol` incubator repo is archived and its history merged here) into `reference/effect` (~38 MB, gitignored) at the tag matching the `effect` version pinned in the root `package.json`, so what you read is what you compile against. Re-run it after bumping that pin. `--ref main` looks at unreleased upstream, `--force` re-clones. The checkout is read-only reference: it is outside every package root and excluded from eslint/prettier, so no build or gate sees it. Start at its `LLMS.md` and `ai-docs/`; agent-facing guidance lives in `.claude/rules/effect-v4-source.md`.
 
 ## Authentication (Zitadel)
 
