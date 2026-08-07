@@ -19,8 +19,9 @@ export const revokeTokenEndpoint = Effect.fn("AuthLive.tokens.revoke")(
       userId: currentUser.userId,
     });
   },
-  Effect.catchTag("ApiTokenNotFound", () =>
-    Effect.fail(new CustomHttpApiError.NotFound({ message: "API token not found" })),
+  Effect.catchTag(
+    "ApiTokenNotFound",
+    () => new CustomHttpApiError.NotFound({ message: "API token not found" }),
   ),
   recoverPersistenceUnavailable,
 );

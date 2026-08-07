@@ -1,5 +1,6 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as Result from "effect/Result";
 
 import { type Specification } from "@/platform/ddd/contracts/specification.js";
@@ -35,14 +36,15 @@ describe("OrganizationRolesSpecifications.hasRole", () => {
   });
 
   it("returns true once the role is granted", () => {
-    const result = OrganizationRolesRootOps.grantRole(
-      OrganizationRolesRootOps.empty(userId, orgId),
-      "admin",
-      issuedBy,
+    const result = Result.getOrThrow(
+      OrganizationRolesRootOps.grantRole(
+        OrganizationRolesRootOps.empty(userId, orgId),
+        "admin",
+        issuedBy,
+      ),
     );
-    if (Result.isFailure(result)) throw new Error("expected Right");
     deepStrictEqual(
-      OrganizationRolesSpecifications.hasRole("admin")(result.success.organizationRoles),
+      OrganizationRolesSpecifications.hasRole("admin")(result.organizationRoles),
       true,
     );
   });

@@ -1,6 +1,7 @@
+import { deepStrictEqual, ok } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
-import { deepStrictEqual } from "assert";
 import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -66,12 +67,10 @@ suite("WalletRepositoryLive (integration)", () => {
         const repo = yield* WalletRepository;
         yield* repo.insertOne(acmeWallet);
         const found = yield* repo.findOne(WalletSpecifications.forOrganization(organizationId));
-        deepStrictEqual(found !== null, true);
-        if (found !== null) {
-          deepStrictEqual(found.id, acmeWallet.id);
-          deepStrictEqual(found.organizationId, organizationId);
-          deepStrictEqual(found.balance, 0);
-        }
+        ok(found !== null);
+        deepStrictEqual(found.id, acmeWallet.id);
+        deepStrictEqual(found.organizationId, organizationId);
+        deepStrictEqual(found.balance, 0);
       }).pipe(Effect.provide(TestLayer)),
     );
 

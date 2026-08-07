@@ -1,5 +1,6 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
 
@@ -40,11 +41,9 @@ describe("InvitationSpecifications.statusAt / isOpen", () => {
   });
 
   it("accepted and revoked invitations are not open", () => {
-    const accepted = InvitationRootOps.accept(seed(), { userId, now: inOneDay });
-    if (Result.isFailure(accepted)) throw new Error("expected Right");
-    deepStrictEqual(InvitationSpecifications.isOpen(accepted.success.invitation), false);
-    const revoked = InvitationRootOps.revoke(seed(), { now: inOneDay });
-    if (Result.isFailure(revoked)) throw new Error("expected Right");
-    deepStrictEqual(InvitationSpecifications.isOpen(revoked.success.invitation), false);
+    const accepted = Result.getOrThrow(InvitationRootOps.accept(seed(), { userId, now: inOneDay }));
+    deepStrictEqual(InvitationSpecifications.isOpen(accepted.invitation), false);
+    const revoked = Result.getOrThrow(InvitationRootOps.revoke(seed(), { now: inOneDay }));
+    deepStrictEqual(InvitationSpecifications.isOpen(revoked.invitation), false);
   });
 });

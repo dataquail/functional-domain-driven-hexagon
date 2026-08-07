@@ -1,3 +1,5 @@
+import { UnroutableTags } from "../dispatch-table.js";
+
 /**
  * The boot-time half of "is this application wired up?".
  *
@@ -27,9 +29,5 @@ export const assertEveryTagRoutable = (
   );
   if (unroutable.length === 0) return;
 
-  throw new Error(
-    `[${busName}] declared tags that nothing routes: ${unroutable
-      .map((tag) => `'${tag}'`)
-      .join(", ")}. Is every module's dispatch surface merged at the composition root?`,
-  );
+  throw new UnroutableTags({ bus: busName, tags: unroutable });
 };

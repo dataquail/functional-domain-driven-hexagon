@@ -3,7 +3,6 @@ import * as crypto from "node:crypto";
 import { withUnitOfWork } from "@org/cqrs";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Result from "effect/Result";
 
 import { type CreateOrganizationPayload } from "@/modules/organization/commands/create-organization.command.js";
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
@@ -59,16 +58,14 @@ export const createOrganizationHandler = Effect.fn("createOrganizationHandler")(
     organizationId: id,
     now,
   });
-  // `grantRole` returns `Either<Result, AlreadyHasOrganizationRole>`.
-  // We just constructed `empty(...)` so the only way this could be a
-  // Left is a domain-model defect — die explicitly so the typed
-  // error channel stays clean for the bus signature.
+  // `grantRole` returns `Result<GrantResult, AlreadyHasOrganizationRole>`. We
+  // just constructed `empty(...)`, so the only way this could fail is a
+  // domain-model defect — die explicitly so the typed error channel stays
+  // clean for the bus signature.
   const seedRoles = OrganizationRolesRootOps.empty(cmd.actorUserId, id);
-  const grantEither = OrganizationRolesRootOps.grantRole(seedRoles, "admin", cmd.actorUserId);
-  if (Result.isFailure(grantEither)) {
-    return yield* Effect.die(grantEither.failure);
-  }
-  const grantResult = grantEither.success;
+  const grantResult = yield* Effect.orDie(
+    Effect.fromResult(OrganizationRolesRootOps.grantRole(seedRoles, "admin", cmd.actorUserId)),
+  );
 
   yield* orgRepo.insertOne(organization);
   yield* memberRepo.insertOne(membership);

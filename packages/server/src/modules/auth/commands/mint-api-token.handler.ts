@@ -23,36 +23,35 @@ import { CredentialHash } from "@/modules/auth/domain/domain-services/credential
 // Exposed sans-uow so a caller already inside a transaction (the device-flow
 // poll) can mint + consume its grant atomically without nesting a second
 // unit of work. `mintApiTokenHandler` adds the boundary for direct bus dispatch.
-export const mintApiTokenCore = (
+export const mintApiTokenCore = Effect.fnUntraced(function* (
   input: MintApiTokenInput,
-): Effect.Effect<MintApiTokenResult, PersistenceUnavailable, ApiTokenRepository> =>
-  Effect.gen(function* () {
-    const repo = yield* ApiTokenRepository;
-    const { publicId, secret } = yield* Effect.sync(() => ({
-      publicId: randomBytes(4).toString("hex"),
-      secret: randomBytes(32).toString("base64url"),
-    }));
-    const token = ApiTokenRootOps.assembleToken(publicId, secret);
-    const id = ApiTokenId.make(yield* Effect.sync(() => randomUUID()));
-    const now = yield* DateTime.now;
-    const apiToken = ApiTokenRootOps.mint({
-      id,
-      userId: input.userId,
-      tokenHash: CredentialHash.of(token),
-      prefix: ApiTokenRootOps.displayPrefix(publicId),
-      label: input.label,
-      now,
-      expiresAt: DateTime.add(now, { days: input.expiresInDays }),
-    });
-    yield* repo.insertOne(apiToken);
-    yield* Effect.annotateCurrentSpan("user.id", input.userId);
-    return { apiToken, token };
+): Effect.fn.Return<MintApiTokenResult, PersistenceUnavailable, ApiTokenRepository> {
+  const repo = yield* ApiTokenRepository;
+  const { publicId, secret } = yield* Effect.sync(() => ({
+    publicId: randomBytes(4).toString("hex"),
+    secret: randomBytes(32).toString("base64url"),
+  }));
+  const token = ApiTokenRootOps.assembleToken(publicId, secret);
+  const id = ApiTokenId.make(yield* Effect.sync(() => randomUUID()));
+  const now = yield* DateTime.now;
+  const apiToken = ApiTokenRootOps.mint({
+    id,
+    userId: input.userId,
+    tokenHash: CredentialHash.of(token),
+    prefix: ApiTokenRootOps.displayPrefix(publicId),
+    label: input.label,
+    now,
+    expiresAt: DateTime.add(now, { days: input.expiresInDays }),
   });
+  yield* repo.insertOne(apiToken);
+  yield* Effect.annotateCurrentSpan("user.id", input.userId);
+  return { apiToken, token };
+});
 
 // The registered use case: `mintApiTokenCore` + the transaction boundary.
 // `Effect.fn` names the use-case span (`mintApiTokenHandler`) inside the command-bus
-// boundary span; `mintApiTokenCore` stays span-less (a shared sub-step below
-// use-case granularity) so its `annotateCurrentSpan` lands on whichever use
+// boundary span; `fnUntraced` above keeps the core span-less (a shared sub-step
+// below use-case granularity) so its `annotateCurrentSpan` lands on whichever use
 // case invoked it (this one, or `pollDeviceGrantHandler`).
 export const mintApiTokenHandler = Effect.fn("mintApiTokenHandler")(function* (
   cmd: MintApiTokenPayload,

@@ -34,7 +34,7 @@ export const MembershipRepositoryFake = Layer.effect(
       Effect.flatMap(Ref.get(store), (m) => {
         const k = key(userId, organizationId);
         if (!HashMap.has(m, k)) {
-          return Effect.fail(new MembershipNotFound({ userId, organizationId }));
+          return new MembershipNotFound({ userId, organizationId });
         }
         return Ref.update(store, HashMap.remove(k));
       });

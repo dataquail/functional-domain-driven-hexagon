@@ -1,4 +1,3 @@
-import { PersistenceUnavailable } from "@org/cqrs";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
@@ -8,6 +7,7 @@ import {
   type OrganizationMemberView,
 } from "@/modules/organization/queries/find-organization-memberships.query.js";
 import { UserId } from "@/platform/ids/user-id.js";
+import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 export const findOrganizationMembershipsHandler = Effect.fn("findOrganizationMembershipsHandler")(
   function* (query: FindOrganizationMembershipsPayload) {
@@ -24,12 +24,7 @@ export const findOrganizationMembershipsHandler = Effect.fn("findOrganizationMem
         `),
         ),
       )()
-      .pipe(
-        Effect.catchTag("DatabaseError", Effect.die),
-        Effect.catchTag("DatabaseUnavailable", (e) =>
-          Effect.fail(new PersistenceUnavailable({ message: e.message })),
-        ),
-      );
+      .pipe(translateDatabaseErrors);
 
     const adminRows = yield* db
       .makeQuery((execute) =>
@@ -41,12 +36,7 @@ export const findOrganizationMembershipsHandler = Effect.fn("findOrganizationMem
         `),
         ),
       )()
-      .pipe(
-        Effect.catchTag("DatabaseError", Effect.die),
-        Effect.catchTag("DatabaseUnavailable", (e) =>
-          Effect.fail(new PersistenceUnavailable({ message: e.message })),
-        ),
-      );
+      .pipe(translateDatabaseErrors);
     const adminUserIds = new Set(adminRows.map((row) => row.user_id));
 
     // ADR-0020 forbids cross-schema SQL, so each member's email comes from

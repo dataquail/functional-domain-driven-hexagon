@@ -3,9 +3,10 @@
 // SendInvitationEmailCommand handler test, and the rendering by the mailer
 // adapter's own test.
 
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
 import { makeEventBus, UnitOfWork } from "@org/cqrs";
-import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 

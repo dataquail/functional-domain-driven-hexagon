@@ -19,7 +19,7 @@ export const WebhookEventRepositoryFake = Layer.effect(
     const insertOne = (stripeEventId: string): Effect.Effect<void, WebhookEventAlreadyRecorded> =>
       Effect.flatMap(Ref.get(store), (m) =>
         HashMap.has(m, stripeEventId)
-          ? Effect.fail(new WebhookEventAlreadyRecorded({ stripeEventId }))
+          ? new WebhookEventAlreadyRecorded({ stripeEventId })
           : Effect.flatMap(DateTime.now, (now) =>
               Ref.update(store, HashMap.set(stripeEventId, { stripeEventId, receivedAt: now })),
             ),

@@ -26,16 +26,17 @@ export const startSubscriptionEndpoint = Effect.fn("BillingLive.startSubscriptio
       currentPeriodEnd: subscription.currentPeriodEnd,
     });
   },
-  Effect.catchTag("SubscriptionAlreadyExistsForOrganization", (err) =>
-    Effect.fail(
+  Effect.catchTag(
+    "SubscriptionAlreadyExistsForOrganization",
+    (err) =>
       new BillingContract.SubscriptionAlreadyExistsError({
         organizationId: err.organizationId,
         message: `An active subscription already exists for organization ${err.organizationId}`,
       }),
-    ),
   ),
-  Effect.catchTag("BillingGatewayUnavailable", (err) =>
-    Effect.fail(new CustomHttpApiError.BadGateway({ message: err.message })),
+  Effect.catchTag(
+    "BillingGatewayUnavailable",
+    (err) => new CustomHttpApiError.BadGateway({ message: err.message }),
   ),
   recoverPersistenceUnavailable,
 );

@@ -1,11 +1,11 @@
 import type * as Cause from "effect/Cause";
 import * as Context from "effect/Context";
-import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
+import * as Schema from "effect/Schema";
 import * as Slonik from "slonik";
 
 export type Client = Slonik.DatabasePool;
@@ -40,16 +40,19 @@ export class TransactionContext extends Context.Service<
 // `Effect.catchTag("DatabaseError", Effect.die)` — they can still die on
 // unhandled constraint violations (those mean the repo missed a case)
 // while letting `DatabaseUnavailable` flow through.
-export class DatabaseError extends Data.TaggedError("DatabaseError")<{
-  readonly type: "unique_violation" | "foreign_key_violation";
-  readonly cause: unknown;
-  readonly errorMessage: string;
-}> {
+export class DatabaseError extends Schema.TaggedErrorClass<DatabaseError>("DatabaseError")(
+  "DatabaseError",
+  {
+    type: Schema.Literals(["unique_violation", "foreign_key_violation"]),
+    cause: Schema.Defect(),
+    errorMessage: Schema.String,
+  },
+) {
   public override toString() {
     return `DatabaseError: ${this.errorMessage}`;
   }
 
-  public get message() {
+  public override get message() {
     return this.errorMessage;
   }
 }
@@ -59,15 +62,17 @@ export class DatabaseError extends Data.TaggedError("DatabaseError")<{
 // pool-level connection listener and tears the server down for a
 // restart). `DatabaseUnavailable` is a per-query signal — the right
 // reaction is a 503 to this caller; the next request might succeed.
-export class DatabaseUnavailable extends Data.TaggedError("DatabaseUnavailable")<{
-  readonly cause: unknown;
-  readonly errorMessage: string;
-}> {
+export class DatabaseUnavailable extends Schema.TaggedErrorClass<DatabaseUnavailable>(
+  "DatabaseUnavailable",
+)("DatabaseUnavailable", {
+  cause: Schema.Defect(),
+  errorMessage: Schema.String,
+}) {
   public override toString() {
     return `DatabaseUnavailable: ${this.errorMessage}`;
   }
 
-  public get message() {
+  public override get message() {
     return this.errorMessage;
   }
 }
@@ -100,10 +105,12 @@ const matchSlonikError = (error: unknown): DatabaseError | DatabaseUnavailable |
   return null;
 };
 
-export class DatabaseConnectionLostError extends Data.TaggedError("DatabaseConnectionLostError")<{
-  cause: unknown;
-  message: string;
-}> {}
+export class DatabaseConnectionLostError extends Schema.TaggedErrorClass<DatabaseConnectionLostError>(
+  "DatabaseConnectionLostError",
+)("DatabaseConnectionLostError", {
+  cause: Schema.Defect(),
+  message: Schema.String,
+}) {}
 
 export type Config = {
   url: Redacted.Redacted;
@@ -182,12 +189,10 @@ const makeService = (config: Config) =>
       Effect.timeoutOrElse({
         duration: "10 seconds",
         orElse: () =>
-          Effect.fail(
-            new DatabaseConnectionLostError({
-              cause: new Error("[Database] Failed to connect: timeout"),
-              message: "[Database] Failed to connect: timeout",
-            }),
-          ),
+          new DatabaseConnectionLostError({
+            cause: new Error("[Database] Failed to connect: timeout"),
+            message: "[Database] Failed to connect: timeout",
+          }),
       }),
       Effect.catchTag(
         "UnknownError",
@@ -217,12 +222,10 @@ const makeService = (config: Config) =>
             return;
           }
           resume(
-            Effect.fail(
-              new DatabaseConnectionLostError({
-                cause: error,
-                message: error.message,
-              }),
-            ),
+            new DatabaseConnectionLostError({
+              cause: error,
+              message: error.message,
+            }),
           );
         });
 
@@ -240,7 +243,7 @@ const makeService = (config: Config) =>
       },
     ).pipe(Effect.map(([, initialized]) => initialized));
 
-    const execute = Effect.fn(<T>(fn: (client: Client) => Promise<T>) =>
+    const execute = Effect.fn("Database.execute")(<T>(fn: (client: Client) => Promise<T>) =>
       Effect.tryPromise({
         try: () => fn(pool),
         catch: (cause) => {

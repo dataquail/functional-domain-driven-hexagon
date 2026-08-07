@@ -9,10 +9,8 @@ import { Actions } from "@/platform/auth/actions.js";
 import * as Authz from "@/platform/auth/authz.js";
 import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
-export const revokeInvitationEndpoint = (
-  request: EndpointRequest<typeof OrganizationContract.Group, "revokeInvitation">,
-) =>
-  Effect.gen(function* () {
+export const revokeInvitationEndpoint = Effect.fn("OrganizationLive.revokeInvitation")(
+  function* (request: EndpointRequest<typeof OrganizationContract.Group, "revokeInvitation">) {
     yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.params.orgId);
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
@@ -20,36 +18,28 @@ export const revokeInvitationEndpoint = (
       invitationId: request.params.invitationId,
       actorUserId: currentUser.userId,
     });
-  }).pipe(
-    Effect.catchTag("NotFound", () =>
-      Effect.fail(
-        new OrganizationContract.OrganizationNotFoundError({
-          organizationId: request.params.orgId,
-          message: `Organization ${request.params.orgId} not found`,
-        }),
-      ),
+  },
+  (effect, request) =>
+    effect.pipe(
+      Effect.catchTags({
+        NotFound: () =>
+          new OrganizationContract.OrganizationNotFoundError({
+            organizationId: request.params.orgId,
+            message: `Organization ${request.params.orgId} not found`,
+          }),
+        InvitationNotFound: () =>
+          new OrganizationContract.InvitationNotFoundError({ message: "Invitation not found" }),
+        InvitationAlreadyAccepted: () =>
+          new OrganizationContract.InvitationGoneError({
+            reason: "accepted",
+            message: "Invitation already accepted; use removeMember to undo.",
+          }),
+        InvitationAlreadyRevoked: () =>
+          new OrganizationContract.InvitationGoneError({
+            reason: "revoked",
+            message: "Invitation already revoked.",
+          }),
+      }),
+      recoverPersistenceUnavailable,
     ),
-    Effect.catchTag("InvitationNotFound", () =>
-      Effect.fail(
-        new OrganizationContract.InvitationNotFoundError({ message: "Invitation not found" }),
-      ),
-    ),
-    Effect.catchTag("InvitationAlreadyAccepted", () =>
-      Effect.fail(
-        new OrganizationContract.InvitationGoneError({
-          reason: "accepted",
-          message: "Invitation already accepted; use removeMember to undo.",
-        }),
-      ),
-    ),
-    Effect.catchTag("InvitationAlreadyRevoked", () =>
-      Effect.fail(
-        new OrganizationContract.InvitationGoneError({
-          reason: "revoked",
-          message: "Invitation already revoked.",
-        }),
-      ),
-    ),
-    recoverPersistenceUnavailable,
-    Effect.withSpan("OrganizationLive.revokeInvitation"),
-  );
+);

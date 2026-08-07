@@ -2,7 +2,7 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 
 import type * as Command from "./command.js";
-import type { DispatchTable } from "./dispatch-table.js";
+import { type DispatchTable, MissingHandler } from "./dispatch-table.js";
 import { assertEveryTagRoutable } from "./internal/completeness.js";
 
 /**
@@ -65,7 +65,7 @@ export const makeCommandBus = (
     execute: ((command: { readonly tag: string }, payload: never) => {
       const dispatcher = dispatch[command.tag];
       if (dispatcher === undefined) {
-        return Effect.die(new Error(`[CommandBus] no handler registered for '${command.tag}'`));
+        return Effect.die(new MissingHandler({ bus: "CommandBus", tag: command.tag }));
       }
       return dispatcher(payload);
     }) as CommandBusShape["execute"],

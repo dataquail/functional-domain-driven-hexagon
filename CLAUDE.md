@@ -11,6 +11,7 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 | Writing or running server/jobs tests                  | `.claude/rules/server-testing.md`                | 0009                                    |
 | Handlers, layers, event buses, SQL, auth (server)     | `.claude/rules/server-effect-and-persistence.md` | 0004, 0006, 0007, 0012, 0016–0017, 0020 |
 | Frontend (`packages/web`, `packages/components`)      | `.claude/rules/frontend.md`                      | 0014, 0015, 0018                        |
+| Any Effect v4 API you are not certain of              | `.claude/rules/effect-v4-source.md`              | —                                       |
 | Writing comments (any package)                        | `.claude/rules/comments.md`                      | —                                       |
 
 ## Monorepo map
@@ -40,8 +41,9 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 | `pnpm test`                                            | vitest **unit** suite (excludes `*.integration.test.ts`), no DB                                 |
 | `DATABASE_URL_TEST=postgres://… pnpm test:integration` | **integration** suite only (`*.integration.test.ts`); hard-fails if no DB                       |
 | `pnpm lint:deps`                                       | dependency-cruiser architecture rules                                                           |
+| `pnpm effect:source`                                   | clone/refresh the Effect v4 source at `reference/effect` (gitignored, pinned to our beta)       |
 
 ## Always in scope
 
-- **Effect v4 baseline.** Pinned to `effect@4.0.0-beta.94` (exact — `effect/unstable/*` may break on beta bumps). Domain result idiom is `effect/Result` (not `Either`); errors are `Schema.TaggedErrorClass`; services are `Context.Service<Self, Shape>()("Id")` with an explicit `Layer`. HTTP is `effect/unstable/httpapi` + `effect/unstable/http`. Server-side gotchas and event-bus/UoW/span rules are in `.claude/rules/server-effect-and-persistence.md`.
+- **Effect v4 baseline.** Pinned to `effect@4.0.0-beta.94` (exact — `effect/unstable/*` may break on beta bumps). Domain result idiom is `effect/Result` (not `Either`); errors are `Schema.TaggedErrorClass`; services are `Context.Service<Self, Shape>()("Id")` with an explicit `Layer`. HTTP is `effect/unstable/httpapi` + `effect/unstable/http`. Server-side gotchas and event-bus/UoW/span rules are in `.claude/rules/server-effect-and-persistence.md`. The beta ships no API docs, so **read the v4 source instead of recalling its API** — `pnpm effect:source` puts a pinned, gitignored checkout at `reference/effect`; `.claude/rules/effect-v4-source.md` says what lives where.
 - **Comments are a last resort** — code is self-documenting, behavior is documented through tests. Full policy: `.claude/rules/comments.md`.

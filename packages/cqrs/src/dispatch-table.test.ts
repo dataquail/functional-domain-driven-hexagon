@@ -1,5 +1,6 @@
+import { deepStrictEqual, throws } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual, throws } from "assert";
 import * as Effect from "effect/Effect";
 
 import { mergeDispatchTables } from "./dispatch-table.js";

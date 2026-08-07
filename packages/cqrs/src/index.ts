@@ -1,3 +1,8 @@
+// `./testing.js` is deliberately absent from this barrel and from the generated
+// index: its serializability checks derive sample values with `fast-check`, a real
+// runtime import that has no business in a consumer's production process. Reach it
+// at `@org/cqrs/testing`, from a test.
+
 // Declaring and handling messages: `Command.make`, `Command.group`, `Command.handlersOf`,
 // and `Command.dispatcher` — a module's own dispatch surface, one method per tag it owns.
 export * as Command from "./command.js";
@@ -36,8 +41,17 @@ export {
 // composes per-module dispatchers into one. The Tags and their shapes are what ordinary
 // code depends on; `makeCommandBus` / `makeQueryBus` / `mergeDispatchTables` take the
 // whole table and belong only where an application is composed.
+// The three ways a routing table can be wrong travel as tagged defects, so a
+// host's boot check — or a test — can name the condition rather than match a
+// message string.
 export { CommandBus, type CommandBusShape, makeCommandBus } from "./command-bus.js";
-export { type DispatchTable, mergeDispatchTables } from "./dispatch-table.js";
+export {
+  type DispatchTable,
+  DuplicateDispatchTag,
+  mergeDispatchTables,
+  MissingHandler,
+  UnroutableTags,
+} from "./dispatch-table.js";
 export { makeQueryBus, QueryBus, type QueryBusShape } from "./query-bus.js";
 
 // The atomicity boundary a write-side use case declares once, at the end of its pipe.
@@ -62,4 +76,10 @@ export { UnitOfWorkScope } from "./unit-of-work-scope.js";
 // `subscribeAfterCommit` runs once it has committed, in its own unit of work, and
 // never can; `stream` feeds a saga and is never awaited. A producer says only that
 // something happened, so one event can serve consumers that need different things.
-export { EventBus, type EventBusShape, type EventHandler, makeEventBus } from "./event-bus.js";
+export {
+  EventBus,
+  type EventBusShape,
+  EventDispatchedOutsideUnitOfWork,
+  type EventHandler,
+  makeEventBus,
+} from "./event-bus.js";

@@ -28,7 +28,7 @@ export const UserRepositoryFake = Layer.effect(
     const insertOne = (user: UserRoot): Effect.Effect<void, UserAlreadyExists> =>
       Effect.flatMap(Ref.get(store), (m) =>
         Option.isSome(findUserByEmail(m, user.email))
-          ? Effect.fail(new UserAlreadyExists({ email: user.email }))
+          ? new UserAlreadyExists({ email: user.email })
           : Ref.update(store, HashMap.set(user.id, user)),
       );
 
@@ -36,14 +36,14 @@ export const UserRepositoryFake = Layer.effect(
       Effect.flatMap(Ref.get(store), (m) =>
         HashMap.has(m, user.id)
           ? Ref.update(store, HashMap.set(user.id, user))
-          : Effect.fail(new UserNotFound({ userId: user.id })),
+          : new UserNotFound({ userId: user.id }),
       );
 
     const deleteOne = (id: UserId): Effect.Effect<void, UserNotFound> =>
       Effect.flatMap(Ref.get(store), (m) =>
         HashMap.has(m, id)
           ? Ref.update(store, HashMap.remove(id))
-          : Effect.fail(new UserNotFound({ userId: id })),
+          : new UserNotFound({ userId: id }),
       );
 
     // The spec IS the in-memory predicate — the same object the live repo

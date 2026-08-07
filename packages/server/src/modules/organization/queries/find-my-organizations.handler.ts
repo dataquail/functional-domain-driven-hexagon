@@ -1,4 +1,3 @@
-import { PersistenceUnavailable } from "@org/cqrs";
 import { Database, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
@@ -8,6 +7,7 @@ import {
   type FindMyOrganizationsView,
 } from "@/modules/organization/queries/find-my-organizations.query.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
+import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 // Org columns plus a computed `is_admin` flag — the `EXISTS` subquery
 // below adds a column the standard `OrganizationRow` schema doesn't
@@ -60,12 +60,7 @@ export const findMyOrganizationsHandler = Effect.fn("findMyOrganizationsHandler"
         `),
       ),
     )()
-    .pipe(
-      Effect.catchTag("DatabaseError", Effect.die),
-      Effect.catchTag("DatabaseUnavailable", (e) =>
-        Effect.fail(new PersistenceUnavailable({ message: e.message })),
-      ),
-    );
+    .pipe(translateDatabaseErrors);
 
   return { organizations: rows.map(toView) };
 });

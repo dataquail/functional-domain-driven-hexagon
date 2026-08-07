@@ -32,7 +32,7 @@ export const OrganizationResolverEntryLive = Layer.effect(
         .execute(FindOrganizationByIdQuery, { organizationId })
         .pipe(
           Effect.flatMap((view) =>
-            view === null ? Effect.fail(new CustomHttpApiError.NotFound()) : Effect.succeed(view),
+            view === null ? new CustomHttpApiError.NotFound() : Effect.succeed(view),
           ),
         );
   }),

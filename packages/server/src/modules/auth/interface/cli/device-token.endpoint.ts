@@ -23,16 +23,17 @@ export const deviceTokenEndpoint = Effect.fn("CliAuthLive.deviceToken")(
       expires_at: apiToken.expiresAt,
     });
   },
-  Effect.catchTag("DeviceGrantPending", () =>
-    Effect.fail(
-      new CliAuthContract.DeviceAuthorizationPending({ message: "authorization_pending" }),
-    ),
+  Effect.catchTag(
+    "DeviceGrantPending",
+    () => new CliAuthContract.DeviceAuthorizationPending({ message: "authorization_pending" }),
   ),
-  Effect.catchTag("DeviceGrantExpired", () =>
-    Effect.fail(new CliAuthContract.DeviceTokenExpired({ message: "expired_token" })),
+  Effect.catchTag(
+    "DeviceGrantExpired",
+    () => new CliAuthContract.DeviceTokenExpired({ message: "expired_token" }),
   ),
-  Effect.catchTag("DeviceGrantNotFound", () =>
-    Effect.fail(new CliAuthContract.DeviceCodeNotFound({ message: "invalid device code" })),
+  Effect.catchTag(
+    "DeviceGrantNotFound",
+    () => new CliAuthContract.DeviceCodeNotFound({ message: "invalid device code" }),
   ),
   recoverPersistenceUnavailable,
 );

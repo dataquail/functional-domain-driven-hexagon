@@ -1,5 +1,6 @@
+import { deepStrictEqual, notStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -158,7 +159,7 @@ describe("UserRepositoryFake", () => {
         const repo1 = yield* UserRepository;
         yield* repo1.insertOne(alice);
         const exists = yield* repo1.findOne(UserSpecifications.withEmail(alice.email));
-        deepStrictEqual(exists !== null, true);
+        notStrictEqual(exists, null);
       }).pipe(provide, (first) =>
         Effect.andThen(
           first,

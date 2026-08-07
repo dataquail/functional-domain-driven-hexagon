@@ -7,7 +7,10 @@ import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.reposito
 import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.js";
 import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
-import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
+import {
+  translateDatabaseErrors,
+  translatePersistenceUnavailable,
+} from "@/platform/translate-database-errors.js";
 
 import * as WalletMapper from "./wallet.mapper.js";
 
@@ -33,11 +36,9 @@ export const WalletRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", (e) =>
           e.type === "unique_violation"
-            ? Effect.fail(
-                new WalletAlreadyExistsForOrganization({
-                  organizationId: wallet.organizationId,
-                }),
-              )
+            ? new WalletAlreadyExistsForOrganization({
+                organizationId: wallet.organizationId,
+              })
             : Effect.die(e),
         ),
         translatePersistenceUnavailable,
@@ -57,8 +58,7 @@ export const WalletRepositoryLive = Layer.effect(
         `),
       ).pipe(
         Effect.map((row) => (row === null ? null : WalletMapper.toDomain(row))),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("WalletRepository.findOne"),
       ),
     );

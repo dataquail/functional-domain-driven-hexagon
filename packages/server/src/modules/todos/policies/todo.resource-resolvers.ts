@@ -73,7 +73,7 @@ export const TodoResolverEntryLive = Layer.effect(
         .execute(FindTodoOrganizationQuery, { organizationId, todoId })
         .pipe(
           Effect.flatMap((view) =>
-            view === null ? Effect.fail(new CustomHttpApiError.NotFound()) : Effect.succeed(view),
+            view === null ? new CustomHttpApiError.NotFound() : Effect.succeed(view),
           ),
         );
   }),

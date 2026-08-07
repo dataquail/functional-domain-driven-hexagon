@@ -124,9 +124,7 @@ export const BillingGatewayFake = Layer.effect(
       input: VerifyWebhookInput,
     ): Effect.Effect<StripeWebhookEvent, InvalidWebhookSignature> => {
       if (input.signature !== FAKE_WEBHOOK_SIGNATURE) {
-        return Effect.fail(
-          new InvalidWebhookSignature({ message: "fake gateway: signature mismatch" }),
-        );
+        return new InvalidWebhookSignature({ message: "fake gateway: signature mismatch" });
       }
       return Effect.try({
         try: () => JSON.parse(input.payload) as unknown,

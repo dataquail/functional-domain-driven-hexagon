@@ -1,5 +1,6 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 
 import { makeIsTodoOrgMember } from "@/modules/todos/policies/is-todo-org-member.policy.js";

@@ -14,8 +14,7 @@ import * as Schema from "effect/Schema";
  * either translates it into a domain error or lets it die as a defect. This is
  * the transient-retry case.
  */
-export class PersistenceUnavailable extends Schema.TaggedErrorClass<PersistenceUnavailable>(
+export class PersistenceUnavailable extends Schema.TaggedErrorClass<PersistenceUnavailable>()(
   "PersistenceUnavailable",
-)("PersistenceUnavailable", {
-  message: Schema.String,
-}) {}
+  { message: Schema.String },
+) {}

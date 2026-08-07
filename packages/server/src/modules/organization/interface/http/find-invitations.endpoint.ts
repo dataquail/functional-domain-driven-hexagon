@@ -16,13 +16,13 @@ export const findInvitationsEndpoint = Effect.fn("OrganizationLive.findInvitatio
   request: EndpointRequest<typeof OrganizationContract.Group, "findInvitations">,
 ) {
   yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.params.orgId).pipe(
-    Effect.catchTag("NotFound", () =>
-      Effect.fail(
+    Effect.catchTag(
+      "NotFound",
+      () =>
         new OrganizationContract.OrganizationNotFoundError({
           organizationId: request.params.orgId,
           message: `Organization ${request.params.orgId} not found`,
         }),
-      ),
     ),
   );
 

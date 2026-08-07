@@ -1,4 +1,3 @@
-import { PersistenceUnavailable } from "@org/cqrs";
 import { Database, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
@@ -8,6 +7,7 @@ import {
   type TodoOrganizationView,
 } from "@/modules/todos/queries/find-todo-organization.query.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
+import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 const OrgIdRowStd = Schema.toStandardSchemaV1(Schema.Struct({ organization_id: Schema.String }));
 
@@ -26,12 +26,7 @@ export const findTodoOrganizationHandler = Effect.fn("findTodoOrganizationHandle
       `),
     ),
   );
-  const row = yield* readTodo().pipe(
-    Effect.catchTag("DatabaseError", Effect.die),
-    Effect.catchTag("DatabaseUnavailable", (e) =>
-      Effect.fail(new PersistenceUnavailable({ message: e.message })),
-    ),
-  );
+  const row = yield* readTodo().pipe(translateDatabaseErrors);
   return row === null
     ? null
     : ({

@@ -31,11 +31,9 @@ export const SubscriptionRepositoryFake = Layer.effect(
     ): Effect.Effect<void, SubscriptionAlreadyExistsForOrganization> =>
       Effect.flatMap(Ref.get(store), (m) =>
         Option.isSome(findByOrgIn(m, sub.organizationId))
-          ? Effect.fail(
-              new SubscriptionAlreadyExistsForOrganization({
-                organizationId: sub.organizationId,
-              }),
-            )
+          ? new SubscriptionAlreadyExistsForOrganization({
+              organizationId: sub.organizationId,
+            })
           : Ref.update(store, HashMap.set(sub.id, sub)),
       );
 

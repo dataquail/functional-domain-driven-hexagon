@@ -21,9 +21,7 @@ export const UserProvisioningLive = Layer.effect(
     return UserProvisioning.of({
       provision: (email) =>
         userCommands.CreateUserCommand({ email }).pipe(
-          Effect.catchTag("UserAlreadyExists", () =>
-            Effect.fail(new UserProvisioningConflict({ email })),
-          ),
+          Effect.catchTag("UserAlreadyExists", () => new UserProvisioningConflict({ email })),
           Effect.withSpan("UserProvisioning.provision"),
         ),
     });

@@ -22,7 +22,7 @@ export const InvitationRepositoryFake = Layer.effect(
       Effect.flatMap(Ref.get(store), (m) =>
         HashMap.has(m, invitation.id)
           ? Ref.update(store, HashMap.set(invitation.id, invitation))
-          : Effect.fail(new InvitationNotFound({ invitationId: invitation.id })),
+          : new InvitationNotFound({ invitationId: invitation.id }),
       );
 
     // Newest-first, matching the live repo's `ORDER BY created_at DESC`. The

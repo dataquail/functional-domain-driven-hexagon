@@ -171,7 +171,7 @@ module.exports = {
       name: "queries-isolation",
       severity: "error",
       comment:
-        "Module queries are read-side projections and must NOT reach the write-side consistency boundary: they build their own read models by reading SQL directly via @org/database, never by loading aggregates through repositories. A query may import: sibling queries, `@org/cqrs` (the message vocabulary a query is declared in — ADR-0006), the DDD shared kernel ports under platform/ddd/, platform/ids/, @org/database, and — from its OWN domain — only two things that are not the write model: branded IDs (domain/<sub>/*.id.ts, identity vocabulary) and cross-context ACL ports (domain/ports/acl/, read facades over OTHER modules; ADR-0020 bans cross-schema SQL so there is no SQL alternative). Everything else in domain is off-limits: roots, *.root-ops.ts, repositories, specifications, value-objects, entities, domain-services, errors, events, and the repository/client ports. May NOT import platform/*-live.ts, own commands, event-handlers, infrastructure, interface, @org/contracts (wire types belong in interface), or (ADR-0022) other modules' barrels. Test files excluded (they may seed via the live repository). See ADR-0002.",
+        "Module queries are read-side projections and must NOT reach the write-side consistency boundary: they build their own read models by reading SQL directly via @org/database, never by loading aggregates through repositories. A query may import: sibling queries, `@org/cqrs` (the message vocabulary a query is declared in — ADR-0006), the DDD shared kernel ports under platform/ddd/, platform/ids/, platform/translate-database-errors.ts (the persistence-error translation at the read boundary — a pure leaf whose own imports are @org/cqrs + @org/database types, so it grants a query no reach it does not already have), @org/database, and — from its OWN domain — only two things that are not the write model: branded IDs (domain/<sub>/*.id.ts, identity vocabulary) and cross-context ACL ports (domain/ports/acl/, read facades over OTHER modules; ADR-0020 bans cross-schema SQL so there is no SQL alternative). Everything else in domain is off-limits: roots, *.root-ops.ts, repositories, specifications, value-objects, entities, domain-services, errors, events, and the repository/client ports. May NOT import platform/*-live.ts, own commands, event-handlers, infrastructure, interface, @org/contracts (wire types belong in interface), or (ADR-0022) other modules' barrels. Test files excluded (they may seed via the live repository). See ADR-0002.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/queries/",
         pathNot: "\\.test\\.ts$",
@@ -185,6 +185,7 @@ module.exports = {
           "^packages/cqrs/src/",
           "^packages/server/src/platform/ddd/",
           "^packages/server/src/platform/ids/",
+          "^packages/server/src/platform/translate-database-errors\\.ts$",
           "^packages/database/",
         ],
       },

@@ -1,7 +1,8 @@
+import { deepStrictEqual, ok } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
 import { BillingContract, OrganizationContract } from "@org/contracts/api/Contracts";
 import { Database, sql } from "@org/database/index";
-import { deepStrictEqual, ok } from "assert";
 import * as Effect from "effect/Effect";
 import * as HttpClient from "effect/unstable/http/HttpClient";
 import * as HttpClientRequest from "effect/unstable/http/HttpClientRequest";

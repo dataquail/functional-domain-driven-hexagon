@@ -1,5 +1,6 @@
+import { deepStrictEqual, ok } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual, ok } from "assert";
 
 import { CredentialHash } from "./credential-hash.domain-service.js";
 

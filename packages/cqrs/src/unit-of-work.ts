@@ -61,80 +61,107 @@ export const makeUnitOfWork = (): Layer.Layer<UnitOfWork, never, TransactionDriv
        * dependency, which keeps this layer's requirement to the driver alone. If
        * no bus is wired there is nothing buffered to drain.
        */
-      const flushPostCommit = (buffered: ReadonlyArray<Event.Base>): Effect.Effect<void> =>
-        Effect.gen(function* () {
-          const bus = yield* Effect.serviceOption(EventBus);
-          if (Option.isNone(bus)) return;
-
-          // Stream consumers first, and not awaited: a process manager may run for
-          // days, so holding the flush for one would stall every later reaction.
-          // A handler failing below must not keep an event from reaching them.
-          yield* bus.value.broadcast(buffered);
-
-          for (const event of buffered) {
-            const handlers = yield* bus.value.afterCommitHandlersFor(event._tag);
-            for (const [index, handler] of handlers.entries()) {
-              yield* run(handler(event)).pipe(
-                Effect.catchCause((cause) =>
-                  reportUnhandled({
-                    // Handlers register as bare functions, so the position in the
-                    // tag's registration order is the only name one has.
-                    source: `${event._tag}#${index}`,
-                    kind: "after-commit-handler",
-                    eventTag: event._tag,
-                    cause,
-                  }),
-                ),
-                Effect.withSpan(`event.afterCommit.${event._tag}`),
-              );
-            }
+      const flushPostCommit = Effect.fnUntraced(function* (
+        buffered: ReadonlyArray<Event.Base>,
+      ): Effect.fn.Return<void> {
+        const bus = yield* Effect.serviceOption(EventBus);
+        if (Option.isNone(bus)) {
+          // A host that wired no bus can have buffered nothing, so the ordinary
+          // case is silent. A non-empty buffer means events were dispatched
+          // through a bus this fiber can no longer see — they are about to be
+          // dropped, and a dropped event whose producer already committed is
+          // the one outcome that must not pass unrecorded.
+          if (buffered.length > 0) {
+            yield* Effect.logError(
+              `Unit of work committed with ${String(buffered.length)} buffered after-commit event(s) and no EventBus in context; dropped: ${buffered.map((event) => event._tag).join(", ")}`,
+            );
           }
-        });
+          return;
+        }
 
-      const runOutermost = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-        Effect.gen(function* () {
-          const postCommitEvents = yield* Ref.make<ReadonlyArray<Event.Base>>([]);
-          // Sequencing is the commit guarantee: a failed scope never reaches the
-          // flush, so events from work that was discarded never fire.
-          const result = yield* driver.withTransaction(
-            Effect.provideService(effect, UnitOfWorkScope, { postCommitEvents }),
-          );
-          yield* flushPostCommit(yield* Ref.get(postCommitEvents));
-          return result;
-        });
+        // Stream consumers first, and not awaited: a process manager may run for
+        // days, so holding the flush for one would stall every later reaction.
+        // A handler failing below must not keep an event from reaching them.
+        yield* bus.value.broadcast(buffered);
 
-      const runNested = <A, E, R>(
+        for (const event of buffered) {
+          const handlers = yield* bus.value.afterCommitHandlersFor(event._tag);
+          for (const [index, handler] of handlers.entries()) {
+            yield* run(handler(event)).pipe(
+              Effect.catchCause((cause) =>
+                reportUnhandled({
+                  // Handlers register as bare functions, so the position in the
+                  // tag's registration order is the only name one has.
+                  source: `${event._tag}#${index}`,
+                  kind: "after-commit-handler",
+                  eventTag: event._tag,
+                  cause,
+                }),
+              ),
+              Effect.withSpan(`event.afterCommit.${event._tag}`),
+            );
+          }
+        }
+      });
+
+      const runOutermost = Effect.fnUntraced(function* <A, E, R>(
+        effect: Effect.Effect<A, E, R>,
+      ): Effect.fn.Return<A, E | TransactionFailed | PersistenceUnavailable, R> {
+        const postCommitEvents = yield* Ref.make<ReadonlyArray<Event.Base>>([]);
+        // Sequencing is the commit guarantee: a failed scope never reaches the
+        // flush, so events from work that was discarded never fire.
+        const result = yield* driver.withTransaction(
+          Effect.provideService(effect, UnitOfWorkScope, { postCommitEvents }),
+        );
+        // Uninterruptible: the transaction has committed, so an interrupt
+        // arriving now (a caller hanging up, a shutdown) would otherwise discard
+        // every reaction to work that is already durable. The caller was already
+        // waiting for this flush, so the only thing given up is the ability to
+        // cancel reactions that must happen anyway.
+        yield* Effect.uninterruptible(flushPostCommit(yield* Ref.get(postCommitEvents)));
+        return result;
+      });
+
+      const runNested = Effect.fnUntraced(function* <A, E, R>(
         effect: Effect.Effect<A, E, R>,
         postCommitEvents: Ref.Ref<ReadonlyArray<Event.Base>>,
-      ) =>
-        Effect.gen(function* () {
-          const lengthOnEntry = (yield* Ref.get(postCommitEvents)).length;
-          return yield* driver
-            .withSavepoint(Effect.provideService(effect, UnitOfWorkScope, { postCommitEvents }))
-            .pipe(
-              Effect.tapCause(() =>
-                Ref.update(postCommitEvents, (buffered) => buffered.slice(0, lengthOnEntry)),
-              ),
-            );
-        });
+      ): Effect.fn.Return<A, E | TransactionFailed | PersistenceUnavailable, R> {
+        const lengthOnEntry = (yield* Ref.get(postCommitEvents)).length;
+        return yield* driver
+          .withSavepoint(Effect.provideService(effect, UnitOfWorkScope, { postCommitEvents }))
+          .pipe(
+            Effect.tapCause(() =>
+              Ref.update(postCommitEvents, (buffered) => buffered.slice(0, lengthOnEntry)),
+            ),
+          );
+      });
 
-      const run = <A, E, R>(
+      const run = Effect.fnUntraced(function* <A, E, R>(
         effect: Effect.Effect<A, E, R>,
-      ): Effect.Effect<A, E | TransactionFailed | PersistenceUnavailable, R> =>
-        Effect.gen(function* () {
-          if (!(yield* driver.isActive)) return yield* runOutermost(effect);
+      ): Effect.fn.Return<A, E | TransactionFailed | PersistenceUnavailable, R> {
+        if (!(yield* driver.isActive)) return yield* runOutermost(effect);
 
-          // Nested runs share the enclosing scope's buffer so the whole
-          // operation flushes once, at the outermost commit. A host that opened
-          // its own scope without going through this boundary has no buffer to
-          // inherit; a throwaway keeps the branch total.
-          const enclosing = yield* Effect.serviceOption(UnitOfWorkScope);
-          const postCommitEvents = Option.isSome(enclosing)
-            ? enclosing.value.postCommitEvents
-            : yield* Ref.make<ReadonlyArray<Event.Base>>([]);
+        // Nested runs share the enclosing scope's buffer so the whole
+        // operation flushes once, at the outermost commit.
+        const enclosing = yield* Effect.serviceOption(UnitOfWorkScope);
+        if (Option.isSome(enclosing)) {
+          return yield* runNested(effect, enclosing.value.postCommitEvents);
+        }
 
-          return yield* runNested(effect, postCommitEvents);
-        });
+        // A host that opened its own scope without going through this boundary
+        // has no buffer to inherit. A throwaway keeps the branch total, but
+        // nothing will ever drain it — so report what it caught instead of
+        // letting those events disappear.
+        const orphanedBuffer = yield* Ref.make<ReadonlyArray<Event.Base>>([]);
+        const result = yield* runNested(effect, orphanedBuffer);
+        const orphaned = yield* Ref.get(orphanedBuffer);
+        if (orphaned.length > 0) {
+          yield* Effect.logError(
+            `Unit of work nested inside a scope it did not open, so ${String(orphaned.length)} after-commit event(s) have nothing to drain them; dropped: ${orphaned.map((event) => event._tag).join(", ")}`,
+          );
+        }
+        return result;
+      });
 
       return UnitOfWork.of({ run });
     }),
@@ -152,5 +179,5 @@ export const makeUnitOfWork = (): Layer.Layer<UnitOfWork, never, TransactionDriv
  */
 export const withUnitOfWork = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
   Effect.flatMap(UnitOfWork, (uow) => uow.run(effect)).pipe(
-    Effect.catchTag("TransactionFailed", (error) => Effect.die(error)),
+    Effect.catchTag("TransactionFailed", Effect.die),
   );

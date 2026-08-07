@@ -1,11 +1,13 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
 import * as Command from "./command.js";
 import * as Event from "./event.js";
 import * as Query from "./query.js";
+import { checkEventsSerializable, checkSerializable } from "./testing.js";
 
 const UserId = Schema.String.pipe(Schema.brand("UserId"));
 
@@ -45,9 +47,9 @@ describe("checkSerializable", () => {
   // until someone reaches for an escape hatch.
   it.effect("passes a group whose every channel is JSON-representable", () =>
     Effect.gen(function* () {
-      deepStrictEqual(yield* Command.checkSerializable(Command.group(CreateUser, TouchUser)), []);
-      deepStrictEqual(yield* Query.checkSerializable(Query.group(FindUser)), []);
-      deepStrictEqual(yield* Event.checkSerializable([UserCreated]), []);
+      deepStrictEqual(yield* checkSerializable(Command.group(CreateUser, TouchUser)), []);
+      deepStrictEqual(yield* checkSerializable(Query.group(FindUser)), []);
+      deepStrictEqual(yield* checkEventsSerializable([UserCreated]), []);
     }),
   );
 
@@ -60,7 +62,7 @@ describe("checkSerializable", () => {
         payload: { wallet: Schema.instanceOf(WalletRoot), amount: Schema.Number },
       });
 
-      const found = yield* Command.checkSerializable(Command.group(smuggler));
+      const found = yield* checkSerializable(Command.group(smuggler));
 
       deepStrictEqual(
         found.map(({ channel, tag }) => ({ channel, tag })),
@@ -78,7 +80,7 @@ describe("checkSerializable", () => {
         success: Schema.Unknown,
       });
 
-      const found = yield* Query.checkSerializable(Query.group(vague));
+      const found = yield* checkSerializable(Query.group(vague));
 
       deepStrictEqual(
         found.map(({ channel, tag }) => ({ channel, tag })),
@@ -94,7 +96,7 @@ describe("checkSerializable", () => {
         success: Schema.Unknown,
       });
 
-      const found = yield* Command.checkSerializable(Command.group(doubly));
+      const found = yield* checkSerializable(Command.group(doubly));
 
       deepStrictEqual(
         found.map((incompatibility) => incompatibility.channel),
@@ -107,7 +109,7 @@ describe("checkSerializable", () => {
   // round-trip would report a problem that does not exist.
   it.effect("says nothing about channels that carry nothing", () =>
     Effect.gen(function* () {
-      deepStrictEqual(yield* Command.checkSerializable(Command.group(TouchUser)), []);
+      deepStrictEqual(yield* checkSerializable(Command.group(TouchUser)), []);
     }),
   );
 
@@ -117,7 +119,7 @@ describe("checkSerializable", () => {
         payload: { wallet: Schema.instanceOf(WalletRoot) },
       });
 
-      const found = yield* Command.checkSerializable(Command.group(smuggler));
+      const found = yield* checkSerializable(Command.group(smuggler));
 
       deepStrictEqual(
         found.map((incompatibility) => incompatibility.reason.length > 0),

@@ -4,7 +4,7 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as PubSub from "effect/PubSub";
 import * as Ref from "effect/Ref";
-import type * as Schema from "effect/Schema";
+import * as Schema from "effect/Schema";
 import type * as Scope from "effect/Scope";
 import * as Stream from "effect/Stream";
 
@@ -12,6 +12,22 @@ import type * as Event from "./event.js";
 import { UnitOfWorkScope } from "./unit-of-work-scope.js";
 
 export type EventHandler = (event: Event.Base) => Effect.Effect<void>;
+
+/**
+ * Something published without a unit of work open. A defect rather than a
+ * failure — no publisher declares it and none could handle it — but a tagged one,
+ * so a test can name the condition instead of matching on a sentence.
+ */
+export class EventDispatchedOutsideUnitOfWork extends Schema.TaggedErrorClass<EventDispatchedOutsideUnitOfWork>()(
+  "EventDispatchedOutsideUnitOfWork",
+  { tags: Schema.Array(Schema.String) },
+) {
+  override get message(): string {
+    return `EventBus.dispatch requires a unit of work: no UnitOfWorkScope in scope when dispatching ${this.tags
+      .map((tag) => `'${tag}'`)
+      .join(", ")} (did you forget withUnitOfWork?)`;
+  }
+}
 
 /**
  * One bus, three delivery contracts, chosen at **subscription** rather than at
@@ -40,9 +56,9 @@ export interface EventBusShape {
    * This is the contract for a reaction that is part of the same logical
    * operation — a wallet must not exist without its organization.
    */
-  readonly subscribe: <S extends Event.Any>(
-    event: S,
-    handler: (event: Schema.Schema.Type<S>) => Effect.Effect<void>,
+  readonly subscribe: <E extends Event.Any>(
+    event: E,
+    handler: (event: Event.Type<E>) => Effect.Effect<void>,
   ) => Effect.Effect<void>;
   /**
    * Runs after the outermost unit of work commits, each handler in a fresh unit
@@ -52,9 +68,9 @@ export interface EventBusShape {
    * has already committed, so a reaction must not undo it. Handlers are therefore
    * expected to be idempotent and independently retryable.
    */
-  readonly subscribeAfterCommit: <S extends Event.Any>(
-    event: S,
-    handler: (event: Schema.Schema.Type<S>) => Effect.Effect<void>,
+  readonly subscribeAfterCommit: <E extends Event.Any>(
+    event: E,
+    handler: (event: Event.Type<E>) => Effect.Effect<void>,
   ) => Effect.Effect<void>;
   /**
    * Subscribes to the events of the given tags and hands back their stream. Only
@@ -119,45 +135,44 @@ export const makeEventBus = (
       const subscribeAfterCommit: EventBusShape["subscribeAfterCommit"] = (event, handler) =>
         register(afterCommit, event.tag, handler as EventHandler);
 
-      const dispatch: EventBusShape["dispatch"] = (events) =>
-        Effect.gen(function* () {
-          const scope = yield* Effect.serviceOption(UnitOfWorkScope);
-          if (Option.isNone(scope)) {
-            return yield* Effect.die(
-              new Error(
-                "EventBus.dispatch requires a unit of work: no UnitOfWorkScope in scope (did you forget withUnitOfWork?)",
-              ),
-            );
-          }
+      const dispatch: EventBusShape["dispatch"] = Effect.fnUntraced(function* (
+        events: ReadonlyArray<Event.Base>,
+      ): Effect.fn.Return<void> {
+        const scope = yield* Effect.serviceOption(UnitOfWorkScope);
+        if (Option.isNone(scope)) {
+          return yield* Effect.die(
+            new EventDispatchedOutsideUnitOfWork({ tags: events.map((event) => event._tag) }),
+          );
+        }
 
-          const registered = yield* Ref.get(immediate);
-          for (const event of events) {
-            const forTag = registered.get(event._tag) ?? [];
-            const extractor = extractors[event._tag];
-            // Routing by tag is what guarantees this extractor was written for
-            // this event's type, which is what the `never` argument gives up.
-            const extracted: Record<string, Event.SpanAttributeValue> =
-              extractor !== undefined ? extractor(event as never) : {};
+        const registered = yield* Ref.get(immediate);
+        for (const event of events) {
+          const forTag = registered.get(event._tag) ?? [];
+          const extractor = extractors[event._tag];
+          // Routing by tag is what guarantees this extractor was written for
+          // this event's type, which is what the `never` argument gives up.
+          const extracted: Record<string, Event.SpanAttributeValue> =
+            extractor !== undefined ? extractor(event as never) : {};
 
-            yield* Effect.forEach(forTag, (handler) => handler(event), {
-              discard: true,
-            }).pipe(
-              Effect.withSpan(`event.${event._tag}`, {
-                attributes: {
-                  "event.tag": event._tag,
-                  "event.handler.count": forTag.length,
-                  ...extracted,
-                },
-              }),
-            );
-          }
+          yield* Effect.forEach(forTag, (handler) => handler(event), {
+            discard: true,
+          }).pipe(
+            Effect.withSpan(`event.${event._tag}`, {
+              attributes: {
+                "event.tag": event._tag,
+                "event.handler.count": forTag.length,
+                ...extracted,
+              },
+            }),
+          );
+        }
 
-          // Buffered unconditionally, and only once the immediate handlers have
-          // succeeded: their failure aborts the publisher, so there would be
-          // nothing left to notify after a commit that is no longer going to
-          // happen.
-          yield* Ref.update(scope.value.postCommitEvents, (buffered) => [...buffered, ...events]);
-        });
+        // Buffered unconditionally, and only once the immediate handlers have
+        // succeeded: their failure aborts the publisher, so there would be
+        // nothing left to notify after a commit that is no longer going to
+        // happen.
+        yield* Ref.update(scope.value.postCommitEvents, (buffered) => [...buffered, ...events]);
+      });
 
       const afterCommitHandlersFor: EventBusShape["afterCommitHandlersFor"] = (tag) =>
         Effect.map(Ref.get(afterCommit), (registered) => registered.get(tag) ?? []);

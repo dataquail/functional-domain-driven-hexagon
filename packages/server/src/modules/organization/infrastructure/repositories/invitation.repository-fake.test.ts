@@ -1,5 +1,6 @@
+import { deepStrictEqual, notStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -72,9 +73,8 @@ describe("InvitationRepositoryFake", () => {
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
       yield* repo.insertOne(seed());
-      const revoked = InvitationRootOps.revoke(seed(), { now });
-      if (Result.isFailure(revoked)) throw new Error("expected Right");
-      yield* repo.updateOne(revoked.success.invitation);
+      const revoked = Result.getOrThrow(InvitationRootOps.revoke(seed(), { now }));
+      yield* repo.updateOne(revoked.invitation);
       const open = yield* repo.findOne(InvitationSpecifications.isOpen);
       deepStrictEqual(open, null);
     }).pipe(provide),
@@ -84,12 +84,11 @@ describe("InvitationRepositoryFake", () => {
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
       yield* repo.insertOne(seed());
-      const accepted = InvitationRootOps.accept(seed(), { userId, now });
-      if (Result.isFailure(accepted)) throw new Error("expected Right");
-      yield* repo.updateOne(accepted.success.invitation);
+      const accepted = Result.getOrThrow(InvitationRootOps.accept(seed(), { userId, now }));
+      yield* repo.updateOne(accepted.invitation);
       const found = yield* repo.findOne(InvitationSpecifications.withId(invitationId));
       if (found === null) throw new Error("expected invitation");
-      deepStrictEqual(found.acceptedAt !== null, true);
+      notStrictEqual(found.acceptedAt, null);
     }).pipe(provide),
   );
 

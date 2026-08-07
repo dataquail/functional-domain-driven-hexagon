@@ -19,12 +19,12 @@ export const deleteEndpoint = Effect.fn("TodosLive.delete")(
       organizationId: request.params.orgId,
       todoId: request.params.id,
     }).pipe(
-      Effect.catchTag("NotFound", () =>
-        Effect.fail(
+      Effect.catchTag(
+        "NotFound",
+        () =>
           new TodosContract.TodoNotFoundError({
             message: `Todo with id ${request.params.id} not found`,
           }),
-        ),
       ),
     );
     const commandBus = yield* CommandBus;
@@ -35,12 +35,12 @@ export const deleteEndpoint = Effect.fn("TodosLive.delete")(
       userId: currentUser.userId,
     });
   },
-  Effect.catchTag("TodoNotFound", (err) =>
-    Effect.fail(
+  Effect.catchTag(
+    "TodoNotFound",
+    (err) =>
       new TodosContract.TodoNotFoundError({
         message: `Todo with id ${err.todoId} not found`,
       }),
-    ),
   ),
   recoverPersistenceUnavailable,
 );

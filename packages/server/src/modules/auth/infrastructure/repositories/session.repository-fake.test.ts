@@ -1,5 +1,6 @@
+import { deepStrictEqual, notStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -59,7 +60,7 @@ describe("SessionRepositoryFake", () => {
       yield* repo.deleteOne(idA);
       const found = yield* repo.findOne(SessionSpecifications.withId(idA));
       if (found === null) throw new Error("expected a session");
-      deepStrictEqual(found.revokedAt !== null, true);
+      notStrictEqual(found.revokedAt, null);
     }).pipe(provide),
   );
 

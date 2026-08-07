@@ -1,5 +1,6 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -25,16 +26,12 @@ describe("EventBus.subscribe (immediate)", () => {
   it.effect("runs a subscriber in the publisher's fiber", () =>
     Effect.gen(function* () {
       const bus = yield* EventBus;
-      let ran = false;
-      yield* bus.subscribe(TestEvent, () =>
-        Effect.sync(() => {
-          ran = true;
-        }),
-      );
+      const ran = yield* Ref.make(false);
+      yield* bus.subscribe(TestEvent, () => Ref.set(ran, true));
 
       yield* inUnitOfWork(bus.dispatch([TestEvent.make({ value: "a" })]));
 
-      deepStrictEqual(ran, true);
+      deepStrictEqual(yield* Ref.get(ran), true);
     }).pipe(Effect.provide(makeEventBus())),
   );
 
@@ -74,19 +71,15 @@ describe("EventBus.subscribeAfterCommit", () => {
     Effect.gen(function* () {
       const bus = yield* EventBus;
       const postCommitEvents = yield* Ref.make<ReadonlyArray<Event.Base>>([]);
-      let ran = false;
-      yield* bus.subscribeAfterCommit(TestEvent, () =>
-        Effect.sync(() => {
-          ran = true;
-        }),
-      );
+      const ran = yield* Ref.make(false);
+      yield* bus.subscribeAfterCommit(TestEvent, () => Ref.set(ran, true));
 
       yield* bus
         .dispatch([TestEvent.make({ value: "a" })])
         .pipe(Effect.provideService(UnitOfWorkScope, { postCommitEvents }));
 
       deepStrictEqual((yield* Ref.get(postCommitEvents)).length, 1);
-      deepStrictEqual(ran, false);
+      deepStrictEqual(yield* Ref.get(ran), false);
     }).pipe(Effect.provide(makeEventBus())),
   );
 

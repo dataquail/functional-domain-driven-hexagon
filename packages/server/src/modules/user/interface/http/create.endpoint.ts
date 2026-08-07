@@ -16,13 +16,13 @@ export const createEndpoint = Effect.fn("UserLive.create")(
     });
     return new UserContract.CreateUserResponse({ id });
   },
-  Effect.catchTag("UserAlreadyExists", (err) =>
-    Effect.fail(
+  Effect.catchTag(
+    "UserAlreadyExists",
+    (err) =>
       new UserContract.UserAlreadyExistsError({
         email: err.email,
         message: `A user with email ${err.email} already exists`,
       }),
-    ),
   ),
   recoverPersistenceUnavailable,
 );

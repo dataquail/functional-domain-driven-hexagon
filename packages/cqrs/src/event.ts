@@ -1,7 +1,6 @@
-import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import * as Serializable from "./internal/serializable.js";
+import type { SpanAttributeValue } from "./middleware.js";
 
 /**
  * The base an event satisfies: a tag the bus routes on. Deliberately minimal —
@@ -12,25 +11,48 @@ export interface Base {
   readonly _tag: string;
 }
 
-/**
- * What a tracing backend accepts as an attribute value. Narrower than
- * `unknown` on purpose: an attribute that cannot be represented is silently
- * dropped by most exporters, which is worse than not compiling.
- */
-export type SpanAttributeValue = string | number | boolean;
+export type { SpanAttributeValue };
 
 export type SpanAttributesExtractor<A> = (value: A) => Record<string, SpanAttributeValue>;
 
-const Brand = "~@org/cqrs/Event";
-
-export type Brand = { readonly __brand: typeof Brand };
+export type TypeId = "~@org/cqrs/Event";
+const TypeId: TypeId = "~@org/cqrs/Event";
 
 /**
- * Erased event schema, for constraints. Carries the brand and the static tag
- * that `subscribe` registers under, so an arbitrary struct schema cannot be
- * passed where an event is expected.
+ * A declared event: the tag a bus routes on, and the schema of what it carries.
+ *
+ * Deliberately *holds* its schema rather than being one. An event that was itself
+ * a schema could be annotated, made optional, or piped — and each of those returns
+ * a new schema carrying neither the tag nor the brand, so it would quietly stop
+ * being an event with nothing to say so. Holding it means the only way to derive
+ * is to name `.schema`, which is honest about what comes back.
+ *
+ * `make` and `Type` are forwarded because constructing an event and naming the
+ * value it carries are what nearly every call site does. `.schema` is for the
+ * rare one that genuinely wants a schema.
  */
-export type Any = Schema.Top & Brand & { readonly tag: string };
+export interface Event<Tag extends string, Fields extends Schema.Struct.Fields> {
+  readonly [TypeId]: TypeId;
+  readonly tag: Tag;
+  readonly schema: Schema.TaggedStruct<Tag, Fields>;
+  readonly make: Schema.TaggedStruct<Tag, Fields>["make"];
+  /** Phantom, mirroring a schema's own: the decoded value this event carries. */
+  readonly Type: Schema.TaggedStruct<Tag, Fields>["Type"];
+}
+
+/**
+ * Erased `Event`, for constraints. Structural rather than the schema-shaped
+ * intersection it replaced, so an arbitrary struct schema no longer satisfies it.
+ */
+export interface Any {
+  readonly [TypeId]: TypeId;
+  readonly tag: string;
+  readonly schema: Schema.Top;
+  readonly Type: unknown;
+}
+
+/** The value an event carries — what a subscriber receives and a saga streams. */
+export type Type<E> = E extends { readonly Type: infer T } ? T : never;
 
 /**
  * Declares an event. The third message kind alongside `Command.make` and
@@ -42,14 +64,20 @@ export type Any = Schema.Top & Brand & { readonly tag: string };
  * describe an event dispatched in-process today and one read back off a durable
  * log later, with no "did I remember to decode this?" question in between.
  */
-export const make = <Tag extends string, Fields extends Schema.Struct.Fields>(
+export const make = <const Tag extends string, Fields extends Schema.Struct.Fields>(
   tag: Tag,
   fields: Fields,
-): Schema.TaggedStruct<Tag, Fields> & Brand & { readonly tag: Tag } =>
-  Object.assign(Schema.TaggedStruct(tag, fields), {
+): Event<Tag, Fields> => {
+  const schema = Schema.TaggedStruct(tag, fields);
+  // `Type` is a phantom with no runtime counterpart, the same way a schema's own
+  // is, so the assembled object cannot satisfy the interface without this.
+  return {
+    [TypeId]: TypeId,
     tag,
-    __brand: Brand,
-  }) as Schema.TaggedStruct<Tag, Fields> & Brand & { readonly tag: Tag };
+    schema,
+    make: (input, options) => schema.make(input, options),
+  } as Event<Tag, Fields>;
+};
 
 /**
  * Per-event span-attribute extractors, keyed by tag — a module declares its own
@@ -74,22 +102,5 @@ export const spanAttributes = <const M extends SpanAttributes>(map: M): M => map
 export const is = (u: unknown): u is Any =>
   typeof u === "object" &&
   u !== null &&
-  (u as { readonly __brand?: unknown }).__brand === Brand &&
+  (u as { readonly [TypeId]?: unknown })[TypeId] === TypeId &&
   typeof (u as { readonly tag?: unknown }).tag === "string";
-
-/**
- * Reports any event in the list that cannot survive a round-trip through JSON.
- *
- * Events are the messages most likely to be persisted or replayed later — an
- * outbox row, a durable log — so an event that cannot be encoded is the most
- * expensive kind to discover late.
- */
-export const checkSerializable = (
-  events: ReadonlyArray<Any>,
-): Effect.Effect<ReadonlyArray<Serializable.Incompatibility>> =>
-  Serializable.check(
-    events.map((event) => ({
-      tag: event.tag,
-      schemas: { payload: event, success: Schema.Void, failure: Schema.Never },
-    })) as never,
-  );

@@ -4,7 +4,6 @@ import type * as Schema from "effect/Schema";
 import type * as Scope from "effect/Scope";
 
 import * as Message from "./internal/message.js";
-import * as Serializable from "./internal/serializable.js";
 import * as Middleware from "./middleware.js";
 
 /**
@@ -135,7 +134,7 @@ export const dispatcher = <G extends AnyGroup>(
   Message.dispatcher(commandGroup, [
     // Outermost, so a caller's middleware runs inside the dispatch span and its
     // work is attributed there rather than to whatever ran before it.
-    Middleware.span({ spanPrefix: "command", attributes: options.spanAttributes as never }),
+    Middleware.span({ spanPrefix: "command", attributes: options.spanAttributes }),
     ...(options.middleware ?? []),
   ]);
 
@@ -149,16 +148,3 @@ export const is = (u: unknown): u is Any => Message.isMessage("command", u);
 
 /** Whether a value is a command group — the group counterpart of `is`. */
 export const isGroup = (u: unknown): u is AnyGroup => Message.isGroup("command", u);
-
-/**
- * Reports any channel of any command in the group that cannot survive a round-trip
- * through JSON. Empty means every declared contract is portable.
- *
- * In-process dispatch never encodes anything, so this is the only thing standing
- * between "these are schemas, so a module could be extracted" and a payload that
- * quietly cannot travel. Call it from a test.
- */
-export const checkSerializable = (
-  commandGroup: AnyGroup,
-): Effect.Effect<ReadonlyArray<Serializable.Incompatibility>> =>
-  Serializable.check(commandGroup.messages);

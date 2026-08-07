@@ -1,7 +1,7 @@
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 
-import type { DispatchTable } from "./dispatch-table.js";
+import { type DispatchTable, MissingHandler } from "./dispatch-table.js";
 import { assertEveryTagRoutable } from "./internal/completeness.js";
 import type * as Query from "./query.js";
 
@@ -38,7 +38,7 @@ export const makeQueryBus = (
     execute: ((query: { readonly tag: string }, payload: never) => {
       const dispatcher = dispatch[query.tag];
       if (dispatcher === undefined) {
-        return Effect.die(new Error(`[QueryBus] no handler registered for '${query.tag}'`));
+        return Effect.die(new MissingHandler({ bus: "QueryBus", tag: query.tag }));
       }
       return dispatcher(payload);
     }) as QueryBusShape["execute"],

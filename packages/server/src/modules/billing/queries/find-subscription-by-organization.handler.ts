@@ -1,9 +1,9 @@
-import { PersistenceUnavailable } from "@org/cqrs";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
 import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
+import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 import {
   type FindSubscriptionByOrganizationPayload,
@@ -32,11 +32,6 @@ export const findSubscriptionByOrganizationHandler = Effect.fn(
           `),
       ),
     )()
-    .pipe(
-      Effect.catchTag("DatabaseError", Effect.die),
-      Effect.catchTag("DatabaseUnavailable", (e) =>
-        Effect.fail(new PersistenceUnavailable({ message: e.message })),
-      ),
-    );
+    .pipe(translateDatabaseErrors);
   return row === null ? null : toView(row);
 });

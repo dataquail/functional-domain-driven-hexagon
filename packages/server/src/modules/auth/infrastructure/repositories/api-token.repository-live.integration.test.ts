@@ -1,6 +1,7 @@
+import { deepStrictEqual, notStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
-import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -101,7 +102,7 @@ suite("ApiTokenRepositoryLive (integration)", () => {
       yield* repo.deleteOne(idA);
       const found = yield* repo.findOne(ApiTokenSpecifications.withId(idA));
       if (found === null) throw new Error("expected a token");
-      deepStrictEqual(found.revokedAt !== null, true);
+      notStrictEqual(found.revokedAt, null);
       const second = yield* Effect.exit(repo.deleteOne(idA));
       deepStrictEqual(Exit.isFailure(second), true);
     }).pipe(Effect.provide(TestLayer)),

@@ -9,7 +9,10 @@ import {
 } from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
 import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
-import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
+import {
+  translateDatabaseErrors,
+  translatePersistenceUnavailable,
+} from "@/platform/translate-database-errors.js";
 
 import * as WebhookEventMapper from "./webhook-event.mapper.js";
 
@@ -33,7 +36,7 @@ export const WebhookEventRepositoryLive = Layer.effect(
         Effect.asVoid,
         Effect.catchTag("DatabaseError", (e) =>
           e.type === "unique_violation"
-            ? Effect.fail(new WebhookEventAlreadyRecorded({ stripeEventId }))
+            ? new WebhookEventAlreadyRecorded({ stripeEventId })
             : Effect.die(e),
         ),
         translatePersistenceUnavailable,
@@ -53,8 +56,7 @@ export const WebhookEventRepositoryLive = Layer.effect(
         `),
       ).pipe(
         Effect.map((row) => (row === null ? null : WebhookEventMapper.toDomain(row))),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("WebhookEventRepository.findOne"),
       ),
     );

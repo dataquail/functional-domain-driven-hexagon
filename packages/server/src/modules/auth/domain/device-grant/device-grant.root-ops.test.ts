@@ -1,5 +1,6 @@
+import { deepStrictEqual, ok, throws } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual, ok, throws } from "assert";
 import * as DateTime from "effect/DateTime";
 
 import { UserId } from "@/platform/ids/user-id.js";

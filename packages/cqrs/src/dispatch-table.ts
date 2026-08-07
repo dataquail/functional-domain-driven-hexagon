@@ -1,4 +1,43 @@
 import type * as Effect from "effect/Effect";
+import * as Schema from "effect/Schema";
+
+/**
+ * The three ways a routing table can be wrong. All are wiring mistakes rather
+ * than anything a call site can act on, so they arrive as defects — but as
+ * *tagged* ones, because "the application is mis-wired" is exactly the condition
+ * a host's boot check, or a test, wants to match on rather than parse out of a
+ * message string.
+ */
+export class DuplicateDispatchTag extends Schema.TaggedErrorClass<DuplicateDispatchTag>()(
+  "DuplicateDispatchTag",
+  { tag: Schema.String },
+) {
+  override get message(): string {
+    return `[DispatchTable] tag '${this.tag}' is claimed by more than one module`;
+  }
+}
+
+/** A tag a group declared that no module's dispatch surface answers. */
+export class UnroutableTags extends Schema.TaggedErrorClass<UnroutableTags>()("UnroutableTags", {
+  bus: Schema.String,
+  tags: Schema.Array(Schema.String),
+}) {
+  override get message(): string {
+    return `[${this.bus}] declared tags that nothing routes: ${this.tags
+      .map((tag) => `'${tag}'`)
+      .join(", ")}. Is every module's dispatch surface merged at the composition root?`;
+  }
+}
+
+/** A dispatch reached a bus for a tag its table has no entry for. */
+export class MissingHandler extends Schema.TaggedErrorClass<MissingHandler>()("MissingHandler", {
+  bus: Schema.String,
+  tag: Schema.String,
+}) {
+  override get message(): string {
+    return `[${this.bus}] no handler registered for '${this.tag}'`;
+  }
+}
 
 /**
  * Erased view of a bus's routing table: message tag to a dispatch function whose
@@ -28,7 +67,7 @@ export const mergeDispatchTables = (...tables: ReadonlyArray<DispatchTable>): Di
   for (const table of tables) {
     for (const [tag, dispatch] of Object.entries(table)) {
       if (tag in merged) {
-        throw new Error(`[DispatchTable] tag '${tag}' is claimed by more than one module`);
+        throw new DuplicateDispatchTag({ tag });
       }
       merged[tag] = dispatch;
     }

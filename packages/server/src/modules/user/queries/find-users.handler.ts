@@ -1,4 +1,3 @@
-import { PersistenceUnavailable } from "@org/cqrs";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
@@ -8,6 +7,7 @@ import {
   type FindUsersUserView,
 } from "@/modules/user/queries/find-users.query.js";
 import { UserId } from "@/platform/ids/user-id.js";
+import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 const CountRowStd = Schema.toStandardSchemaV1(Schema.Struct({ value: Schema.Number }));
 
@@ -41,12 +41,7 @@ export const findUsersHandler = Effect.fn("findUsersHandler")(function* (query: 
         ]),
       ),
     )()
-    .pipe(
-      Effect.catchTag("DatabaseError", Effect.die),
-      Effect.catchTag("DatabaseUnavailable", (e) =>
-        Effect.fail(new PersistenceUnavailable({ message: e.message })),
-      ),
-    );
+    .pipe(translateDatabaseErrors);
 
   const [rows, countRow] = result;
 

@@ -8,7 +8,7 @@ import { type OrganizationRoot } from "@/modules/organization/domain/organizatio
 import * as OrganizationMapper from "@/modules/organization/infrastructure/repositories/organization.mapper.js";
 import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
-import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
+import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 export const OrganizationRepositoryLive = Layer.effect(
   OrganizationRepository,
@@ -30,8 +30,7 @@ export const OrganizationRepositoryLive = Layer.effect(
         `),
       ).pipe(
         Effect.asVoid,
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("OrganizationRepository.insertOne"),
       );
     });
@@ -50,8 +49,7 @@ export const OrganizationRepositoryLive = Layer.effect(
       ).pipe(
         orFail(() => new OrganizationNotFound({ organizationId: organization.id })),
         Effect.asVoid,
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("OrganizationRepository.updateOne"),
       );
     });
@@ -69,8 +67,7 @@ export const OrganizationRepositoryLive = Layer.effect(
         `),
       ).pipe(
         Effect.map((row) => (row === null ? null : OrganizationMapper.toDomain(row))),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("OrganizationRepository.findOne"),
       ),
     );

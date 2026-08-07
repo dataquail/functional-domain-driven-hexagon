@@ -1,8 +1,9 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { type CurrentUser, CurrentUser as CurrentUserTag } from "@org/contracts/Policy";
 import { PersistenceUnavailable } from "@org/cqrs";
-import { deepStrictEqual } from "assert";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";

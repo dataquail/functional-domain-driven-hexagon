@@ -6,9 +6,10 @@
 // the full HTTP → ingest → event → adapter → sync chain by
 // stripe-webhook.endpoint.integration.test.ts.
 
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
 import { makeEventBus, UnitOfWork } from "@org/cqrs";
-import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 

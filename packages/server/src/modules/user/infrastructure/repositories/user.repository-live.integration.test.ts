@@ -1,6 +1,7 @@
+import { deepStrictEqual, notStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
 import { Database } from "@org/database/index";
-import { deepStrictEqual } from "assert";
 import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -179,7 +180,7 @@ suite("UserRepositoryLive (integration)", () => {
           repo.insertOne(alice).pipe(Database.TransactionContext.provide(tx)),
         );
         const found = yield* repo.findOne(UserSpecifications.withEmail(alice.email));
-        deepStrictEqual(found !== null, true);
+        notStrictEqual(found, null);
       }).pipe(Effect.provide(TestLayer)),
     );
 

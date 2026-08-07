@@ -83,6 +83,12 @@ export const hasPermissions = <R extends PolicyResource, A extends ActionFor<R>>
     // runtime `id !== undefined` branch above IS the scoped/unscoped split
     // that `ErrorsFor` keys on, so `NotFound` is only reachable when
     // `R extends ResourceName` — which TS can't verify through the erased
-    // name-keyed resolver lookup.
-    (effect) => effect as Effect.Effect<void, ErrorsFor<R>, never>,
+    // name-keyed resolver lookup. Only the error channel is narrowed here:
+    // erasing `R` too would mask a genuinely unsatisfied requirement.
+    (effect) =>
+      effect as Effect.Effect<
+        void,
+        ErrorsFor<R>,
+        CurrentUser | PolicyRegistry | ResourceResolverRegistry
+      >,
   );

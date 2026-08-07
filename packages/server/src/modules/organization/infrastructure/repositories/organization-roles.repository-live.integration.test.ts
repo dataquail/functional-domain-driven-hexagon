@@ -1,6 +1,7 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
-import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Result from "effect/Result";
@@ -85,13 +86,14 @@ suite("OrganizationRolesRepositoryLive (integration)", () => {
       Effect.gen(function* () {
         yield* seedFixtures;
         const repo = yield* OrganizationRolesRepository;
-        const granted = OrganizationRolesRootOps.grantRole(
-          OrganizationRolesRootOps.empty(userId, orgId),
-          "admin",
-          issuedBy,
+        const granted = Result.getOrThrow(
+          OrganizationRolesRootOps.grantRole(
+            OrganizationRolesRootOps.empty(userId, orgId),
+            "admin",
+            issuedBy,
+          ),
         );
-        if (Result.isFailure(granted)) throw new Error("expected Right");
-        yield* repo.upsertOne(granted.success.organizationRoles);
+        yield* repo.upsertOne(granted.organizationRoles);
         const fetched = yield* repo.findOne(forPair);
         if (fetched === null) throw new Error("expected aggregate");
         deepStrictEqual(
@@ -105,19 +107,18 @@ suite("OrganizationRolesRepositoryLive (integration)", () => {
       Effect.gen(function* () {
         yield* seedFixtures;
         const repo = yield* OrganizationRolesRepository;
-        const granted = OrganizationRolesRootOps.grantRole(
-          OrganizationRolesRootOps.empty(userId, orgId),
-          "admin",
-          issuedBy,
+        const granted = Result.getOrThrow(
+          OrganizationRolesRootOps.grantRole(
+            OrganizationRolesRootOps.empty(userId, orgId),
+            "admin",
+            issuedBy,
+          ),
         );
-        if (Result.isFailure(granted)) throw new Error("expected Right");
-        yield* repo.upsertOne(granted.success.organizationRoles);
-        const revoked = OrganizationRolesRootOps.revokeRole(
-          granted.success.organizationRoles,
-          "admin",
+        yield* repo.upsertOne(granted.organizationRoles);
+        const revoked = Result.getOrThrow(
+          OrganizationRolesRootOps.revokeRole(granted.organizationRoles, "admin"),
         );
-        if (Result.isFailure(revoked)) throw new Error("expected Right");
-        yield* repo.upsertOne(revoked.success.organizationRoles);
+        yield* repo.upsertOne(revoked.organizationRoles);
         // Revoking the last role deletes every row, so there is nothing to
         // reconstitute — findOne reports null (no rows = no roles).
         const fetched = yield* repo.findOne(forPair);

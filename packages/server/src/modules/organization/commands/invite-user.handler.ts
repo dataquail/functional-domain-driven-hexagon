@@ -37,8 +37,8 @@ export const inviteUserHandler = Effect.fn("inviteUserHandler")(function* (cmd: 
   );
   if (openInvite !== null) {
     const result = InvitationRootOps.reissue(openInvite, { token, expiresAt, now });
-    // `openInvite` is open by construction, so reissue can't reject it;
-    // a Left here would mean a concurrent accept/revoke — treat as a
+    // `openInvite` is open by construction, so reissue can't reject it; a
+    // failure here would mean a concurrent accept/revoke — treat as a
     // defect (same posture as the accept handler's concurrent-revoke).
     if (Result.isFailure(result)) return yield* Effect.die(result.failure);
     // The row was found moments ago; a missing row on update means a

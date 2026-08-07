@@ -5,9 +5,10 @@
 // integration test; this asserts only the adapter glue (subscribe +
 // translate + dispatch).
 
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
 import { makeEventBus, UnitOfWork } from "@org/cqrs";
-import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 

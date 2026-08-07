@@ -18,12 +18,12 @@ export const leaveEndpoint = Effect.fn("OrganizationLive.leave")(
       organizationId: request.params.orgId,
     });
   },
-  Effect.catchTag("MembershipNotFound", () =>
-    Effect.fail(
+  Effect.catchTag(
+    "MembershipNotFound",
+    () =>
       new OrganizationContract.MembershipNotFoundError({
         message: "You aren't a member of this organization",
       }),
-    ),
   ),
   recoverPersistenceUnavailable,
 );

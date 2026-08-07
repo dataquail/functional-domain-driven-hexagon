@@ -8,7 +8,7 @@ import { type InvitationRoot } from "@/modules/organization/domain/invitation/in
 import * as InvitationMapper from "@/modules/organization/infrastructure/repositories/invitation.mapper.js";
 import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
-import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
+import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 export const InvitationRepositoryLive = Layer.effect(
   InvitationRepository,
@@ -36,8 +36,7 @@ export const InvitationRepositoryLive = Layer.effect(
         `),
       ).pipe(
         Effect.asVoid,
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("InvitationRepository.insertOne"),
       );
     });
@@ -62,8 +61,7 @@ export const InvitationRepositoryLive = Layer.effect(
       ).pipe(
         orFail(() => new InvitationNotFound({ invitationId: invitation.id })),
         Effect.asVoid,
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("InvitationRepository.updateOne"),
       );
     });
@@ -82,8 +80,7 @@ export const InvitationRepositoryLive = Layer.effect(
         `),
       ).pipe(
         Effect.map((row) => (row === null ? null : InvitationMapper.toDomain(row))),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("InvitationRepository.findOne"),
       ),
     );
@@ -97,8 +94,7 @@ export const InvitationRepositoryLive = Layer.effect(
         `),
       ).pipe(
         Effect.map((rows) => rows.map(InvitationMapper.toDomain)),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("InvitationRepository.findMany"),
       ),
     );

@@ -38,6 +38,9 @@
     "generateIndex": {
       "include": [
         "*.ts"
+      ],
+      "exclude": [
+        "testing.ts"
       ]
     }
   }

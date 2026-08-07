@@ -29,14 +29,19 @@ const readBearer = (authorization: string | undefined): string | null => {
 };
 
 // Distinguish "the DB is down" (503, retry) from "your session is bad"
-// (401, log back in). `Effect.mapError(() => Unauthorized)` would collapse
-// the former into the latter and confuse clients into a re-auth loop.
-const toAuthError = (e: {
-  readonly _tag: string;
-}): CustomHttpApiError.Unauthorized | CustomHttpApiError.ServiceUnavailable =>
-  e._tag === "PersistenceUnavailable"
-    ? new CustomHttpApiError.ServiceUnavailable({ message: "Auth store is unavailable" })
-    : new CustomHttpApiError.Unauthorized();
+// (401, log back in). Collapsing the former into the latter would confuse
+// clients into a re-auth loop instead of a backoff-and-retry.
+//
+// Spelled out per tag rather than defaulted, so a new failure member on
+// either lookup query is a type error here (the middleware may only fail
+// with Unauthorized | ServiceUnavailable) instead of silently becoming a 401.
+// `catchTags` is applied inline at each lookup rather than hoisted: it infers
+// its error union from the effect it is piped into, so a hoisted combinator
+// would widen the channel to `unknown` and defeat the exhaustiveness this is
+// here for.
+const storeUnavailable = () =>
+  new CustomHttpApiError.ServiceUnavailable({ message: "Auth store is unavailable" });
+const rejectCredential = () => new CustomHttpApiError.Unauthorized();
 
 export const UserAuthMiddlewareLive = Layer.effect(
   UserAuthMiddleware,
@@ -60,7 +65,14 @@ export const UserAuthMiddlewareLive = Layer.effect(
       if (bearer !== null) {
         const apiToken = yield* queryBus
           .execute(FindApiTokenByHashQuery, { tokenHash: CredentialHash.of(bearer) })
-          .pipe(Effect.mapError(toAuthError));
+          .pipe(
+            Effect.catchTags({
+              PersistenceUnavailable: storeUnavailable,
+              ApiTokenNotFound: rejectCredential,
+              ApiTokenExpired: rejectCredential,
+              ApiTokenRevoked: rejectCredential,
+            }),
+          );
         // Last-used stamp, forked off the request fiber (`forkDetach`) so its
         // lookup + throttle never sit on the auth critical path. Detached from
         // the request scope so it outlives the response; throttled +
@@ -82,9 +94,14 @@ export const UserAuthMiddlewareLive = Layer.effect(
       const verified = codec.verify(raw);
       if (verified === null) return yield* new CustomHttpApiError.Unauthorized();
       const sessionId = SessionId.make(verified);
-      const session = yield* queryBus
-        .execute(FindSessionQuery, { sessionId })
-        .pipe(Effect.mapError(toAuthError));
+      const session = yield* queryBus.execute(FindSessionQuery, { sessionId }).pipe(
+        Effect.catchTags({
+          PersistenceUnavailable: storeUnavailable,
+          SessionNotFound: rejectCredential,
+          SessionExpired: rejectCredential,
+          SessionRevoked: rejectCredential,
+        }),
+      );
       // Sliding-TTL refresh, forked off the request fiber (`forkDetach`) so it
       // stays off the auth critical path and outlives the response. The
       // command's own throttle decides whether to write; failures are

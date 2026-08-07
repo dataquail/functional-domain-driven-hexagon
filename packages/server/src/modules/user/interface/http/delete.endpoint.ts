@@ -10,13 +10,13 @@ export const deleteEndpoint = Effect.fn("UserLive.delete")(
     const commandBus = yield* CommandBus;
     yield* commandBus.execute(DeleteUserCommand, { userId: request.params.id });
   },
-  Effect.catchTag("UserNotFound", (err) =>
-    Effect.fail(
+  Effect.catchTag(
+    "UserNotFound",
+    (err) =>
       new UserContract.UserNotFoundError({
         userId: err.userId,
         message: `User ${err.userId} not found`,
       }),
-    ),
   ),
   recoverPersistenceUnavailable,
 );

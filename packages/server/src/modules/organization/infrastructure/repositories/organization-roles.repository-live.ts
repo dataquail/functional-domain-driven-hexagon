@@ -8,7 +8,7 @@ import { type OrganizationRolesRoot } from "@/modules/organization/domain/organi
 import * as OrganizationRolesMapper from "@/modules/organization/infrastructure/repositories/organization-roles.mapper.js";
 import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
-import { translatePersistenceUnavailable } from "@/platform/translate-persistence-unavailable.js";
+import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 export const OrganizationRolesRepositoryLive = Layer.effect(
   OrganizationRolesRepository,
@@ -32,20 +32,30 @@ export const OrganizationRolesRepositoryLive = Layer.effect(
               AND organization_id = ${organizationRoles.organizationId}
           `),
         );
-        for (const r of organizationRoles.roles) {
-          yield* tx((client) =>
-            client.query(sql.unsafe`
-              INSERT INTO "organization".organization_roles
-                (organization_id, user_id, role, issued_by)
-              VALUES (
-                ${organizationRoles.organizationId},
-                ${organizationRoles.userId},
-                ${r.role},
-                ${r.issuedBy}
-              )
-            `),
-          );
-        }
+        // One statement rather than one per role. The two arrays are unnested in
+        // lockstep, so `role` and `issued_by` stay paired; an empty aggregate
+        // yields zero rows, so the revoke-everything case needs no guard.
+        yield* tx((client) =>
+          client.query(sql.unsafe`
+            INSERT INTO "organization".organization_roles
+              (organization_id, user_id, role, issued_by)
+            SELECT
+              ${organizationRoles.organizationId},
+              ${organizationRoles.userId},
+              granted.role,
+              granted.issued_by
+            FROM unnest(
+              ${sql.array(
+                organizationRoles.roles.map((r) => r.role),
+                "text",
+              )},
+              ${sql.array(
+                organizationRoles.roles.map((r) => r.issuedBy),
+                "uuid",
+              )}
+            ) AS granted(role, issued_by)
+          `),
+        );
       });
 
     const upsertOne = (organizationRoles: OrganizationRolesRoot) =>
@@ -59,8 +69,7 @@ export const OrganizationRolesRepositoryLive = Layer.effect(
                 writeStatements(organizationRoles).pipe(Database.TransactionContext.provide(tx)),
               ),
         ),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("OrganizationRolesRepository.upsertOne"),
       );
 
@@ -77,8 +86,7 @@ export const OrganizationRolesRepositoryLive = Layer.effect(
         `),
       ).pipe(
         Effect.map((rows) => OrganizationRolesMapper.toDomain(rows)),
-        Effect.catchTag("DatabaseError", Effect.die),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
         Effect.withSpan("OrganizationRolesRepository.findOne"),
       ),
     );

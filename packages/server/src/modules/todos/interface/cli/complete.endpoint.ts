@@ -18,12 +18,12 @@ export const completeEndpoint = Effect.fn("CliTodosLive.complete")(
       organizationId: request.params.orgId,
       todoId: request.params.id,
     }).pipe(
-      Effect.catchTag("NotFound", () =>
-        Effect.fail(
+      Effect.catchTag(
+        "NotFound",
+        () =>
           new CliTodosContract.CliTodoNotFoundError({
             message: `Todo with id ${request.params.id} not found`,
           }),
-        ),
       ),
     );
     const commandBus = yield* CommandBus;
@@ -39,12 +39,12 @@ export const completeEndpoint = Effect.fn("CliTodosLive.complete")(
       completed: todo.completed,
     });
   },
-  Effect.catchTag("TodoNotFound", (err) =>
-    Effect.fail(
+  Effect.catchTag(
+    "TodoNotFound",
+    (err) =>
       new CliTodosContract.CliTodoNotFoundError({
         message: `Todo with id ${err.todoId} not found`,
       }),
-    ),
   ),
   recoverPersistenceUnavailable,
 );

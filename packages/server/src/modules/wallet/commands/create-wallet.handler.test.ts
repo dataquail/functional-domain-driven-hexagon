@@ -1,5 +1,6 @@
+import { deepStrictEqual, ok } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
@@ -25,11 +26,9 @@ describe("createWalletHandler", () => {
       yield* createWalletHandler({ organizationId });
 
       const stored = yield* repo.findOne(WalletSpecifications.forOrganization(organizationId));
-      deepStrictEqual(stored !== null, true);
-      if (stored !== null) {
-        deepStrictEqual(stored.balance, 0);
-        deepStrictEqual(stored.organizationId, organizationId);
-      }
+      ok(stored !== null);
+      deepStrictEqual(stored.balance, 0);
+      deepStrictEqual(stored.organizationId, organizationId);
 
       const tags = (yield* rec.all).map((e) => e._tag);
       deepStrictEqual(tags, ["WalletCreated"]);

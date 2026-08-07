@@ -1,13 +1,15 @@
 import { spawn } from "node:child_process";
 
 import { makeCliClient, readCredentials, resolveBaseUrl, resolveToken } from "@org/api-client";
-import * as Data from "effect/Data";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 // The CLI's user-facing failure. Everything fatal is funnelled here so the
 // entrypoint can print one clean line and exit non-zero (no stack dump).
-export class CliError extends Data.TaggedError("CliError")<{ readonly message: string }> {}
+export class CliError extends Schema.TaggedErrorClass<CliError>("CliError")("CliError", {
+  message: Schema.String,
+}) {}
 
 // Builds an authenticated CLI client from the stored/env token, or fails with
 // a friendly nudge to sign in.

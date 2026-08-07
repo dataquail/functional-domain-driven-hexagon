@@ -1,6 +1,7 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
-import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -81,13 +82,14 @@ const seedMember = (userId: UserId, organizationId: OrganizationId) =>
 const seedAdmin = (userId: UserId, organizationId: OrganizationId) =>
   Effect.gen(function* () {
     const rolesRepo = yield* OrganizationRolesRepository;
-    const granted = OrganizationRolesRootOps.grantRole(
-      OrganizationRolesRootOps.empty(userId, organizationId),
-      "admin",
-      issuer,
+    const granted = Result.getOrThrow(
+      OrganizationRolesRootOps.grantRole(
+        OrganizationRolesRootOps.empty(userId, organizationId),
+        "admin",
+        issuer,
+      ),
     );
-    if (Result.isFailure(granted)) throw new Error("expected Right");
-    yield* rolesRepo.upsertOne(granted.success.organizationRoles);
+    yield* rolesRepo.upsertOne(granted.organizationRoles);
   });
 
 const suite = describe.sequential;

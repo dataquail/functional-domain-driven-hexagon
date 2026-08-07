@@ -11,6 +11,10 @@ scratchpad/*
 .direnv/
 .idea/
 .claude/settings.local.json
+
+# Read-only third-party source checked out for reference (`pnpm effect:source`).
+# Never imported or built — already excluded from eslint and prettier.
+reference/
 .env
 .env.local
 .env.development.local

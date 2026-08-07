@@ -24,9 +24,7 @@ export const makeUserProvisioningFake = (options?: {
     UserProvisioning,
     UserProvisioning.of({
       provision: (email) =>
-        conflicts.has(email)
-          ? Effect.fail(new UserProvisioningConflict({ email }))
-          : Effect.succeed(assignedId),
+        conflicts.has(email) ? new UserProvisioningConflict({ email }) : Effect.succeed(assignedId),
     }),
   );
 };

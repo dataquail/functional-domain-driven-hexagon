@@ -1,6 +1,7 @@
+import { deepStrictEqual, notStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
-import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -81,7 +82,7 @@ suite("SessionRepositoryLive (integration)", () => {
       yield* repo.deleteOne(sessionId);
       const found = yield* repo.findOne(SessionSpecifications.withId(sessionId));
       if (found === null) throw new Error("expected a session");
-      deepStrictEqual(found.revokedAt !== null, true);
+      notStrictEqual(found.revokedAt, null);
 
       const second = yield* Effect.exit(repo.deleteOne(sessionId));
       deepStrictEqual(Exit.isFailure(second), true);

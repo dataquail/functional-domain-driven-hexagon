@@ -42,8 +42,9 @@ export const stripeWebhookEndpoint = Effect.fn("BillingLive.stripeWebhook")(func
   yield* commandBus
     .execute(IngestStripeWebhookCommand, { payload, signature })
     .pipe(
-      Effect.catchTag("InvalidWebhookSignature", (err) =>
-        Effect.fail(new CustomHttpApiError.Unauthorized({ message: err.message })),
+      Effect.catchTag(
+        "InvalidWebhookSignature",
+        (err) => new CustomHttpApiError.Unauthorized({ message: err.message }),
       ),
     );
   return undefined;
