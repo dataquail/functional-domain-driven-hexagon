@@ -1,10 +1,14 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as Cause from "effect/Cause";
 import * as Context from "effect/Context";
+import * as Deferred from "effect/Deferred";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as Fiber from "effect/Fiber";
 import * as Layer from "effect/Layer";
+import * as Logger from "effect/Logger";
 import * as Ref from "effect/Ref";
 import * as Schema from "effect/Schema";
 
@@ -278,6 +282,67 @@ describe("UnitOfWork post-commit flush", () => {
 
       deepStrictEqual(Exit.isSuccess(afterCommitOnly), true);
       deepStrictEqual(Exit.isFailure(alsoImmediate), true);
+    }),
+  );
+
+  // The producer is already durable by the time the flush starts, so a caller
+  // that goes away — a client hanging up, a shutdown — must not take the
+  // reactions to it down too.
+  it.live("finishes the flush even when the caller is interrupted partway through it", () =>
+    Effect.gen(function* () {
+      const { bus, provide, uow } = yield* stagedUnitOfWork;
+      const reacting = yield* Deferred.make<void>();
+      const reacted = yield* Ref.make(false);
+      yield* bus.subscribeAfterCommit(Buffered, () =>
+        Effect.gen(function* () {
+          yield* Deferred.succeed(reacting, undefined);
+          yield* Effect.sleep("100 millis");
+          yield* Ref.set(reacted, true);
+        }),
+      );
+
+      const committing = yield* Effect.forkChild(
+        provide(uow.run(bus.dispatch([Buffered.make({ value: "a" })]))),
+      );
+      yield* Deferred.await(reacting);
+      yield* Fiber.interrupt(committing);
+
+      deepStrictEqual(yield* Ref.get(reacted), true);
+    }),
+  );
+
+  // Dropping an event whose producer committed is the one outcome that must not
+  // pass unrecorded, so the two branches that can reach it say so.
+  it.effect("reports buffered events it has nothing to deliver them with", () =>
+    Effect.gen(function* () {
+      const logged: Array<string> = [];
+      const { driver } = yield* makeRecordingDriver;
+      const uow = yield* Effect.provide(
+        UnitOfWork,
+        makeUnitOfWork().pipe(Layer.provide(Layer.succeed(TransactionDriver, driver))),
+      );
+
+      // The bus is visible to the publisher but not to the flush, which is the
+      // shape a host produces by wiring one deeper than its unit-of-work boundary.
+      yield* uow
+        .run(
+          Effect.gen(function* () {
+            const bus = yield* EventBus;
+            yield* bus.dispatch([Buffered.make({ value: "a" })]);
+          }).pipe(Effect.provide(makeEventBus())),
+        )
+        .pipe(
+          Effect.provide(
+            Logger.layer([
+              Logger.make<unknown, void>(({ message }) => {
+                logged.push(String(message));
+              }),
+            ]),
+          ),
+        );
+
+      deepStrictEqual(logged.length, 1);
+      deepStrictEqual(logged[0]?.includes("BufferedEvent"), true);
     }),
   );
 });

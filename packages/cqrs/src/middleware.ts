@@ -32,14 +32,25 @@ export type Middleware = <A, E>(
 ) => (payload: never) => Effect.Effect<A, E>;
 
 /**
+ * What a tracing backend accepts as an attribute value. Narrower than `unknown`
+ * on purpose: an attribute that cannot be represented is silently dropped by
+ * most exporters, which is worse than not compiling. Every registry in the
+ * package — commands, queries, events — is built from this one type, so an
+ * extractor that would be dropped fails to compile wherever it is written.
+ */
+export type SpanAttributeValue = string | number | boolean;
+
+/**
  * Per-message attribute extractors, keyed by tag.
  *
  * `never` in argument position is the contravariance trick the event registry
  * also uses: it lets one map hold extractors written against their own concrete
- * payloads. Routing by tag before invocation is what makes that safe.
+ * payloads. Routing by tag before invocation is what makes that safe. The
+ * `undefined` is what lets a per-tag registry, whose entries are optional, be
+ * read here without a cast.
  */
 export type AttributeExtractors = Readonly<
-  Record<string, (payload: never) => Record<string, string | number | boolean>>
+  Record<string, ((payload: never) => Record<string, SpanAttributeValue>) | undefined>
 >;
 
 /**
@@ -53,7 +64,7 @@ export type AttributeExtractors = Readonly<
  */
 export const span = (options: {
   readonly spanPrefix: string;
-  readonly attributes?: AttributeExtractors;
+  readonly attributes?: AttributeExtractors | undefined;
 }): Middleware => {
   const extractors = options.attributes ?? {};
 
@@ -78,24 +89,28 @@ export const span = (options: {
  * of how the *host* chose to dispatch — no definition declares it, so no call site
  * can be expected to handle it.
  */
-export class DeadlineExceeded extends Schema.TaggedErrorClass<DeadlineExceeded>("DeadlineExceeded")(
+export class DeadlineExceeded extends Schema.TaggedErrorClass<DeadlineExceeded>()(
   "DeadlineExceeded",
   {
     tag: Schema.String,
     side: Schema.String,
     after: Schema.String,
   },
-) {}
+) {
+  override get message(): string {
+    return `${this.side} '${this.tag}' outlived its ${this.after} deadline`;
+  }
+}
 
 /**
- * Gives every dispatch a time limit, and **aborts the handler** when it expires.
+ * Gives every dispatch a time limit, and aborts the handler when it expires: the
+ * timeout interrupts from inside the dispatching fiber, which reaches the handler
+ * and rolls back the transaction it was running in.
  *
- * That second half is the reason this exists rather than being left to callers.
- * The transport does not propagate interruption applied from outside a dispatching
- * fiber, so a handler normally runs to completion even once nobody is waiting for
- * it. A timeout is interruption from the *inside*, which does reach the handler —
- * so a deadline is the one place a dispatch can be genuinely called off, and the
- * transaction it was running in rolls back.
+ * It exists to make that limit a property of the bus rather than an obligation on
+ * every call site — not because a dispatch is otherwise uncancellable. External
+ * interruption does reach a handler (see the transport-contract tests), so a
+ * caller's own `Effect.timeout` or a client hanging up abort it too.
  *
  * Not installed by default. What a sensible limit is, and whether abandoning work
  * partway is better than finishing it, are decisions only the host can make.

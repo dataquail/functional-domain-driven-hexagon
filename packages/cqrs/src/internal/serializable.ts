@@ -43,73 +43,72 @@ const SAMPLES = 20;
  * A checker rather than an assertion: it reports what it found so a caller can
  * present every problem at once, instead of stopping at the first.
  */
-export const check = (
+export const check = Effect.fnUntraced(function* (
   messages: ReadonlyArray<Message.Any<string>>,
-): Effect.Effect<ReadonlyArray<Incompatibility>> =>
-  Effect.gen(function* () {
-    const found: Array<Incompatibility> = [];
+): Effect.fn.Return<ReadonlyArray<Incompatibility>> {
+  const found: Array<Incompatibility> = [];
 
-    for (const message of messages) {
-      for (const channel of ["payload", "success", "failure"] as const) {
-        const schema = message.schemas[channel];
-        if (carriesNothing(schema)) continue;
+  for (const message of messages) {
+    for (const channel of ["payload", "success", "failure"] as const) {
+      const schema = message.schemas[channel];
+      if (carriesNothing(schema)) continue;
 
-        const reason = yield* checkChannel(schema);
-        if (reason !== undefined) found.push({ tag: message.tag, channel, reason });
-      }
+      const reason = yield* checkChannel(schema);
+      if (reason !== undefined) found.push({ tag: message.tag, channel, reason });
+    }
+  }
+
+  return found;
+});
+
+const checkChannel = Effect.fnUntraced(function* (
+  schema: Schema.Top,
+): Effect.fn.Return<string | undefined> {
+  // Deriving the generator is itself a check: a schema whose values cannot be
+  // constructed generically — a class behind `instanceOf`, a custom declaration —
+  // throws here, and that is exactly the shape that cannot be serialized either.
+  // Kept out of the checker's own error channel: an unusable schema is a finding
+  // to report, not a failure of the checker.
+  const generated = yield* Effect.result(
+    Effect.try({
+      try: () => FastCheck.sample(Schema.toArbitrary(schema), SAMPLES),
+      catch: (cause) => `no generator could be derived: ${String(cause)}`,
+    }),
+  );
+
+  if (Result.isFailure(generated)) return generated.failure;
+
+  const codec = Schema.toCodecJson(schema);
+  // A schema that needed services to encode could not be a wire contract in the
+  // first place, so the checker treats them as absent. If one ever did, the
+  // missing service surfaces as a defect here — still a failure the author must
+  // fix, which is the outcome either way.
+  type Codec = (input: unknown) => Effect.Effect<unknown, unknown>;
+  const encode = Schema.encodeUnknownEffect(codec) as Codec;
+  const decode = Schema.decodeUnknownEffect(codec) as Codec;
+
+  for (const sample of generated.success) {
+    const encoded = yield* Effect.result(encode(sample));
+    if (Result.isFailure(encoded)) {
+      return `cannot be encoded to JSON: ${String(encoded.failure)}`;
     }
 
-    return found;
-  });
-
-const checkChannel = (schema: Schema.Top): Effect.Effect<string | undefined> =>
-  Effect.gen(function* () {
-    // Deriving the generator is itself a check: a schema whose values cannot be
-    // constructed generically — a class behind `instanceOf`, a custom declaration —
-    // throws here, and that is exactly the shape that cannot be serialized either.
-    // Kept out of the error channel: an unusable schema is a finding to report, not
-    // a failure of the checker.
-    const generated = yield* Effect.sync(() => {
-      try {
-        return { samples: FastCheck.sample(Schema.toArbitrary(schema), SAMPLES) };
-      } catch (cause) {
-        return { reason: `no generator could be derived: ${String(cause)}` };
-      }
-    });
-
-    if (generated.samples === undefined) return generated.reason;
-
-    const codec = Schema.toCodecJson(schema);
-    // A schema that needed services to encode could not be a wire contract in the
-    // first place, so the checker treats them as absent. If one ever did, the
-    // missing service surfaces as a defect here — still a failure the author must
-    // fix, which is the outcome either way.
-    type Codec = (input: unknown) => Effect.Effect<unknown, unknown>;
-    const encode = Schema.encodeUnknownEffect(codec) as Codec;
-    const decode = Schema.decodeUnknownEffect(codec) as Codec;
-
-    for (const sample of generated.samples) {
-      const encoded = yield* Effect.result(encode(sample));
-      if (Result.isFailure(encoded)) {
-        return `cannot be encoded to JSON: ${String(encoded.failure)}`;
-      }
-
-      const decoded = yield* Effect.result(decode(encoded.success));
-      if (Result.isFailure(decoded)) {
-        return `encodes to JSON but cannot be read back: ${String(decoded.failure)}`;
-      }
-
-      // Re-encoding the decoded value compares like with like, which sidesteps
-      // needing structural equality over decoded domain types. An asymmetric
-      // codec shows up here as two different encodings of the same value.
-      const reEncoded = yield* Effect.result(encode(decoded.success));
-      if (Result.isFailure(reEncoded)) {
-        return `round-trips once but not twice: ${String(reEncoded.failure)}`;
-      }
-      if (JSON.stringify(reEncoded.success) !== JSON.stringify(encoded.success)) {
-        return `does not round-trip: ${JSON.stringify(encoded.success)} became ${JSON.stringify(reEncoded.success)}`;
-      }
+    const decoded = yield* Effect.result(decode(encoded.success));
+    if (Result.isFailure(decoded)) {
+      return `encodes to JSON but cannot be read back: ${String(decoded.failure)}`;
     }
 
-    return undefined;
-  });
+    // Re-encoding the decoded value compares like with like, which sidesteps
+    // needing structural equality over decoded domain types. An asymmetric
+    // codec shows up here as two different encodings of the same value.
+    const reEncoded = yield* Effect.result(encode(decoded.success));
+    if (Result.isFailure(reEncoded)) {
+      return `round-trips once but not twice: ${String(reEncoded.failure)}`;
+    }
+    if (JSON.stringify(reEncoded.success) !== JSON.stringify(encoded.success)) {
+      return `does not round-trip: ${JSON.stringify(encoded.success)} became ${JSON.stringify(reEncoded.success)}`;
+    }
+  }
+
+  return undefined;
+});

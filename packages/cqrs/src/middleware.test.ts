@@ -1,8 +1,11 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as Cause from "effect/Cause";
+import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as Layer from "effect/Layer";
 import * as Metric from "effect/Metric";
 import * as Ref from "effect/Ref";
 import * as Schema from "effect/Schema";
@@ -30,18 +33,32 @@ const Slow = Command.make("SlowCommand", {
 
 const group = Command.group(Echo, Fail, Slow);
 
-/** Set only if the slow handler is allowed to run to completion. */
-const slowFinished = Effect.runSync(Ref.make(false));
+/** Records whether the slow handler was allowed to run to completion. */
+class SlowProbe extends Context.Service<SlowProbe, { readonly finished: Ref.Ref<boolean> }>()(
+  "test/middleware/SlowProbe",
+) {}
 
-const handlers = Command.handlersOf(group, {
-  EchoCommand: (payload) => Effect.succeed(payload.subject),
-  FailCommand: (payload) => new Rejected({ subject: payload.subject }),
-  SlowCommand: (payload) =>
-    Effect.sleep("200 millis").pipe(
-      Effect.andThen(Ref.set(slowFinished, true)),
-      Effect.as(payload.subject),
-    ),
-});
+const SlowProbeLive = Layer.effect(
+  SlowProbe,
+  Effect.map(Ref.make(false), (finished) => ({ finished })),
+);
+
+/**
+ * Built per test rather than once per module: the suite runs its tests
+ * concurrently, so a single shared probe would have them writing over each other.
+ */
+const handlers = () =>
+  Command.handlersOf(group, {
+    EchoCommand: (payload) => Effect.succeed(payload.subject),
+    FailCommand: (payload) => new Rejected({ subject: payload.subject }),
+    SlowCommand: (payload) =>
+      Effect.gen(function* () {
+        const probe = yield* SlowProbe;
+        yield* Effect.sleep("200 millis");
+        yield* Ref.set(probe.finished, true);
+        return payload.subject;
+      }),
+  }).pipe(Layer.provideMerge(SlowProbeLive));
 
 /** Appends a label on the way in and on the way out, to expose nesting order. */
 const recording =
@@ -63,7 +80,7 @@ describe("Middleware", () => {
 
       deepStrictEqual(yield* bus.EchoCommand({ subject: "hello" }), "hello");
       deepStrictEqual(yield* Ref.get(log), [">outer", ">inner", "<inner", "<outer"]);
-    }).pipe(Effect.provide(handlers)),
+    }).pipe(Effect.provide(handlers())),
   );
 
   it.effect("sees the tag and side of the message it wraps", () =>
@@ -79,7 +96,7 @@ describe("Middleware", () => {
       yield* Effect.ignore(bus.FailCommand({ subject: "nope" }));
 
       deepStrictEqual(yield* Ref.get(seen), ["command:EchoCommand", "command:FailCommand"]);
-    }).pipe(Effect.provide(handlers)),
+    }).pipe(Effect.provide(handlers())),
   );
 
   // A middleware that widened the error channel would invalidate every `catchTag`
@@ -107,7 +124,7 @@ describe("Middleware", () => {
         .pipe(Effect.catchTag("Rejected", (error) => Effect.succeed(`caught:${error.subject}`)));
 
       deepStrictEqual(caught, "caught:nope");
-    }).pipe(Effect.provide(handlers)),
+    }).pipe(Effect.provide(handlers())),
   );
 });
 
@@ -145,7 +162,7 @@ describe("Middleware.metrics", () => {
         }),
       );
       deepStrictEqual(timed.count, 1);
-    }).pipe(Effect.provide(handlers)),
+    }).pipe(Effect.provide(handlers())),
   );
 });
 
@@ -157,7 +174,7 @@ describe("Middleware.deadline", () => {
       });
 
       deepStrictEqual(yield* bus.EchoCommand({ subject: "hello" }), "hello");
-    }).pipe(Effect.provide(handlers)),
+    }).pipe(Effect.provide(handlers())),
   );
 
   // A deadline is a property of how the host dispatches, not of the message, so no
@@ -180,25 +197,25 @@ describe("Middleware.deadline", () => {
           deepStrictEqual(defect.after, "20ms");
         }
       }
-    }).pipe(Effect.provide(handlers)),
+    }).pipe(Effect.provide(handlers())),
   );
 
-  // The whole reason this middleware exists. The transport does not propagate
-  // interruption applied from outside a dispatching fiber, so a handler normally
-  // finishes even once nobody is waiting. A deadline interrupts from the inside,
-  // which does reach it — and takes its transaction down with it.
+  // Expiry has to reach the handler, not just release the caller: the point of a
+  // deadline is that the work stops and the transaction it was running in rolls
+  // back, rather than a dispatch nobody is waiting for carrying on writing.
   it.live("aborts the handler instead of leaving it running", () =>
     Effect.gen(function* () {
       const bus = yield* Command.dispatcher(group, {
         middleware: [Middleware.deadline("20 millis")],
       });
+      const probe = yield* SlowProbe;
 
       // `exit`, not `ignore`: the deadline raises a defect, which `ignore` lets through.
       yield* Effect.exit(bus.SlowCommand({ subject: "wait" }));
       yield* Effect.sleep("400 millis");
 
-      deepStrictEqual(yield* Ref.get(slowFinished), false);
-    }).pipe(Effect.provide(handlers)),
+      deepStrictEqual(yield* Ref.get(probe.finished), false);
+    }).pipe(Effect.provide(handlers())),
   );
 
   it.effect("leaves a declared failure alone", () =>
@@ -212,6 +229,6 @@ describe("Middleware.deadline", () => {
         .pipe(Effect.catchTag("Rejected", (error) => Effect.succeed(`caught:${error.subject}`)));
 
       deepStrictEqual(caught, "caught:nope");
-    }).pipe(Effect.provide(handlers)),
+    }).pipe(Effect.provide(handlers())),
   );
 });

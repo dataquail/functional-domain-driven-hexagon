@@ -1,5 +1,6 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Command, Event, Query } from "@org/cqrs";
+import { checkEventsSerializable, checkSerializable } from "@org/cqrs/testing";
 import * as Effect from "effect/Effect";
 
 import * as authModule from "@/modules/auth/index.js";
@@ -50,7 +51,7 @@ describe("every published message can travel as JSON", () => {
       Effect.runPromise(
         Effect.gen(function* () {
           const found = yield* Effect.forEach(exported.filter(Command.isGroup), (group) =>
-            Command.checkSerializable(group),
+            checkSerializable(group),
           );
           expect(found.flat()).toEqual([]);
         }),
@@ -60,7 +61,7 @@ describe("every published message can travel as JSON", () => {
       Effect.runPromise(
         Effect.gen(function* () {
           const found = yield* Effect.forEach(exported.filter(Query.isGroup), (group) =>
-            Query.checkSerializable(group),
+            checkSerializable(group),
           );
           expect(found.flat()).toEqual([]);
         }),
@@ -69,7 +70,7 @@ describe("every published message can travel as JSON", () => {
     it(`${name} events`, () =>
       Effect.runPromise(
         Effect.gen(function* () {
-          const found = yield* Event.checkSerializable(exported.filter(Event.is));
+          const found = yield* checkEventsSerializable(exported.filter(Event.is));
           expect(found).toEqual([]);
         }),
       ));

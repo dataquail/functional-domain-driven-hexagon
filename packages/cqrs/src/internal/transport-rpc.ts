@@ -96,9 +96,11 @@ type ClientEnd = Effect.Success<
 >;
 
 /**
- * Wires a group's dispatch surface in-process: payloads and results pass by
- * reference, so a message may carry a domain type (an aggregate root, an `Option`,
- * a branded id) that no wire format would survive.
+ * Wires a group's dispatch surface in-process: nothing is encoded, so a message
+ * may carry a domain type (an aggregate root, an `Option`, a branded id) that no
+ * wire format would survive. The payload is still *constructed* through its own
+ * schema on every dispatch — a value that violates the schema it was declared
+ * with is rejected here rather than reaching a handler.
  *
  * A dispatched message's requirement channel is empty — the handlers' services were
  * discharged where the group was registered. Handlers observe the dispatching
@@ -109,52 +111,66 @@ type ClientEnd = Effect.Success<
  * around each tag. The transport adds none, so what a dispatch does beyond delivery
  * is decided in one place and does not move if this file is ever replaced.
  */
-export const makeDispatcher = (
+export const makeDispatcher = Effect.fnUntraced(function* (
   groupCarrier: AnyGroupCarrier,
   tags: ReadonlyArray<string>,
   side: "command" | "query",
   middleware: ReadonlyArray<Middleware>,
-): Effect.Effect<
+): Effect.fn.Return<
   Record<string, (payload: never) => Effect.Effect<unknown, unknown>>,
   never,
   Scope.Scope
-> =>
-  Effect.gen(function* () {
-    const group = groupCarrier as RpcGroup.RpcGroup<Rpc.Any>;
+> {
+  const group = groupCarrier as RpcGroup.RpcGroup<Rpc.Any>;
 
-    // Each end writes to the other, so one of them has to be referenced before it
-    // exists. The latch defers only that reference: it is resolved as soon as the
-    // client is built, before any dispatch can happen.
-    const clientLatch = yield* Deferred.make<ClientEnd>();
-    const server = yield* RpcServer.makeNoSerialization(group, {
-      disableTracing: true,
-      onFromServer: (response) =>
-        Effect.flatMap(Deferred.await(clientLatch), (client) => client.write(response)),
-    });
-    const client = yield* RpcClient.makeNoSerialization(group, {
-      supportsAck: true,
-      // No `spanPrefix`: the client would otherwise open a span of its own, and a
-      // dispatch would be traced twice once the span middleware is installed.
-      disableTracing: true,
-      onFromClient: ({ message }) => server.write(0, message),
-    });
-    yield* Deferred.succeed(clientLatch, client);
-
-    const dispatch = client.client as Record<
-      string,
-      (payload: never) => Effect.Effect<unknown, unknown>
-    >;
-    const wrapped: Record<string, (payload: never) => Effect.Effect<unknown, unknown>> = {};
-    for (const tag of tags) {
-      const forTag = dispatch[tag];
-      // The tags come from the same group the client was built over, so this is
-      // total; the guard is here because the lookup cannot say so.
-      if (forTag === undefined) continue;
-
-      const context = { tag, side };
-      // Reduced from the right so the first middleware given is the outermost,
-      // which is the order a reader assumes from the list.
-      wrapped[tag] = middleware.reduceRight((next, wrap) => wrap(next, context), forTag);
-    }
-    return wrapped;
+  // Each end writes to the other, so one of them has to be referenced before it
+  // exists. The latch defers only that reference: it is resolved as soon as the
+  // client is built, before any dispatch can happen. Upstream's own in-memory
+  // harness closes the same loop with a `let` and a definite-assignment
+  // assertion, trading this await on the response path for an unsound binding.
+  const clientLatch = yield* Deferred.make<ClientEnd>();
+  const server = yield* RpcServer.makeNoSerialization(group, {
+    disableTracing: true,
+    // A handler's defect is a property of its own request, not of the connection
+    // carrying it. Left at its default, the server reports one as a transport
+    // defect, and the client answers that by failing EVERY entry it is holding —
+    // so one handler dying would take down every dispatch in flight beside it.
+    // Here that is not a rare bug path: `withUnitOfWork` demotes a failed commit
+    // to a defect, `Middleware.deadline` raises expiry as one, and dispatching
+    // outside a unit of work is one. This keeps a defect with its own caller.
+    disableFatalDefects: true,
+    onFromServer: (response) =>
+      Effect.flatMap(Deferred.await(clientLatch), (client) => client.write(response)),
   });
+  const client = yield* RpcClient.makeNoSerialization(group, {
+    supportsAck: true,
+    // No `spanPrefix`: the client would otherwise open a span of its own, and a
+    // dispatch would be traced twice once the span middleware is installed.
+    disableTracing: true,
+    onFromClient: ({ message }) => server.write(0, message),
+  });
+  yield* Deferred.succeed(clientLatch, client);
+
+  const dispatch = client.client as Record<
+    string,
+    (payload: never) => Effect.Effect<unknown, unknown>
+  >;
+  const wrapped: Record<string, (payload: never) => Effect.Effect<unknown, unknown>> = {};
+  for (const tag of tags) {
+    const forTag = dispatch[tag];
+    // The tags come from the same group the client was built over, so this is
+    // total; the guard is here because the lookup cannot say so.
+    if (forTag === undefined) continue;
+
+    const context = { tag, side };
+    // Suspended because the client constructs the payload through its schema
+    // eagerly, in the function body: without this, a payload that fails its own
+    // schema throws where the effect is *built* rather than failing where it is
+    // run, escaping Effect entirely at any call site outside a fiber.
+    const suspended = (payload: never) => Effect.suspend(() => forTag(payload));
+    // Reduced from the right so the first middleware given is the outermost,
+    // which is the order a reader assumes from the list.
+    wrapped[tag] = middleware.reduceRight((next, wrap) => wrap(next, context), suspended);
+  }
+  return wrapped;
+});

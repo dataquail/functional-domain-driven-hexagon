@@ -1,6 +1,7 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
 import { Command, type CommandBusShape, Query, type QueryBusShape } from "@org/cqrs";
-import { deepStrictEqual } from "assert";
 import * as Schema from "effect/Schema";
 
 // The reason there are two facades instead of one. A command group and a query group

@@ -1,5 +1,6 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as Cause from "effect/Cause";
 import * as Context from "effect/Context";
 import * as Deferred from "effect/Deferred";
@@ -12,7 +13,7 @@ import * as Schema from "effect/Schema";
 
 import * as Command from "./command.js";
 import { makeCommandBus } from "./command-bus.js";
-import { mergeDispatchTables } from "./dispatch-table.js";
+import { mergeDispatchTables, MissingHandler } from "./dispatch-table.js";
 
 // What this package relies on the transport to do. None of it is behaviour we
 // implement, all of it is behaviour a consumer depends on, and the transport is an
@@ -104,39 +105,77 @@ describe("transport contract", () => {
     }).pipe(Effect.provide(handlersWithProbe())),
   );
 
-  // Interruption from OUTSIDE the dispatching fiber does not reach the handler:
-  // the caller unblocks promptly, but the handler runs to completion on the
-  // transport's own fiber.
+  // A defect belongs to the request that raised it. The transport can be asked to
+  // treat one as fatal to the *connection* instead, and with one client/server
+  // pair per module, shared process-wide, that would fail every dispatch in flight
+  // beside it — one handler's bug 500-ing unrelated callers. Defects are not a
+  // rare path here: a failed commit, an expired deadline and a forgotten unit of
+  // work are all defects by design.
+  it.live("a handler's defect leaves concurrent dispatches alone", () =>
+    Effect.gen(function* () {
+      const bus = yield* Command.dispatcher(group);
+      const probe = yield* HangProbe;
+
+      const bystander = yield* Effect.forkChild(Effect.exit(bus.SlowCommand({ subject: "wait" })));
+      yield* Deferred.await(probe.started);
+
+      const exploded = yield* Effect.exit(bus.DefectCommand({ subject: "boom" }));
+      const survived = yield* Fiber.join(bystander);
+
+      // The defect still reaches its own caller, and only its own caller.
+      deepStrictEqual(Exit.isFailure(exploded), true);
+      deepStrictEqual(Exit.isSuccess(survived), true);
+      deepStrictEqual(yield* Ref.get(probe.finished), true);
+    }).pipe(Effect.provide(handlersWithProbe())),
+  );
+
+  // The client builds the payload through its schema on the way in, so a value
+  // that violates the schema it was declared with never reaches a handler. What
+  // this pins is *where* it is rejected: an Effect-returning function must not
+  // throw where it is called, or the failure escapes every combinator the caller
+  // wrapped around it and, outside a fiber, Effect entirely.
+  it.effect("a payload that fails its own schema dies in the effect, not at the call site", () =>
+    Effect.gen(function* () {
+      const bus = yield* Command.dispatcher(group);
+
+      // Constructed, not run: this line throwing is the regression.
+      const dispatch = bus.EchoCommand({ subject: 42 as never });
+      const exit = yield* Effect.exit(dispatch);
+
+      deepStrictEqual(Exit.isFailure(exit), true);
+      if (Exit.isFailure(exit)) deepStrictEqual(Cause.hasDies(exit.cause), true);
+    }).pipe(Effect.provide(handlersWithProbe())),
+  );
+
+  // Interruption from outside the dispatching fiber DOES reach the handler: the
+  // client sends an interrupt for the request and the server interrupts the fiber
+  // running it, so a caller that hangs up aborts the work and rolls its
+  // transaction back rather than leaving it writing with nobody waiting.
   //
-  // Pinned as the behaviour it is, not the behaviour one would want. Neither
-  // transport end exposes an option for it, and converting external interruption
-  // into a race the handler loses fails the same way — both fixes would have to run
-  // during the caller's teardown, which is exactly what does not complete. The
-  // exposure is a client hanging up mid-request: the command still commits, all of
-  // it or none. A transport that propagates this will fail the test, which is the
-  // point, because that is a behaviour change worth noticing.
-  it.live("leaves the handler running when the caller is interrupted from outside", () =>
+  // One qualification, which the scheduler turn below deliberately steps over: an
+  // interrupt delivered before the server has registered the handler's fiber finds
+  // nothing to interrupt and that dispatch runs on orphaned. Only reachable by
+  // interrupting in the same turn the handler starts in, which no real caller does.
+  it.live("aborts the handler when the caller is interrupted from outside", () =>
     Effect.gen(function* () {
       const bus = yield* Command.dispatcher(group);
       const probe = yield* HangProbe;
 
       const dispatching = yield* Effect.forkChild(bus.SlowCommand({ subject: "wait" }));
       yield* Deferred.await(probe.started);
+      yield* Effect.sleep(0);
 
-      // The caller does unblock — interruption is not simply ignored.
       yield* Fiber.interrupt(dispatching);
 
       // Well past the handler's own work.
       yield* Effect.sleep("400 millis");
 
-      deepStrictEqual(yield* Ref.get(probe.finished), true);
+      deepStrictEqual(yield* Ref.get(probe.finished), false);
     }).pipe(Effect.provide(handlersWithProbe())),
   );
 
-  // The complement, and the reason the limitation above is narrow: interruption
-  // that originates *inside* the dispatching fiber does abort the handler. This is
-  // what makes a deadline at the dispatch site work, and it is pinned so nobody
-  // "fixes" a case that already behaves correctly.
+  // Interruption that originates *inside* the dispatching fiber aborts the handler
+  // too. This is what makes a deadline at the dispatch site work.
   it.live("aborts the handler when the dispatch itself times out", () =>
     Effect.gen(function* () {
       const bus = yield* Command.dispatcher(group);
@@ -184,13 +223,20 @@ describe("app-wide bus routing", () => {
   // The consequence ADR-0006 accepts for an erased routing table. Boot-time
   // `declaredIn` is what makes this unreachable in a wired application, but the
   // fallback still has to be a defect rather than a silent success.
-  it.effect("dispatching a tag nothing routes is a defect", () =>
+  it.effect("dispatching a tag nothing routes is a defect naming the bus and the tag", () =>
     Effect.gen(function* () {
       const bus = makeCommandBus(mergeDispatchTables({}));
       const exit = yield* Effect.exit(bus.execute(Echo, { subject: "hello" }));
 
       deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) deepStrictEqual(Cause.hasDies(exit.cause), true);
+      if (Exit.isFailure(exit)) {
+        const defect = Cause.squash(exit.cause);
+        deepStrictEqual(defect instanceof MissingHandler, true);
+        if (defect instanceof MissingHandler) {
+          deepStrictEqual(defect.bus, "CommandBus");
+          deepStrictEqual(defect.tag, "EchoCommand");
+        }
+      }
     }),
   );
 });

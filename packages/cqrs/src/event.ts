@@ -1,7 +1,6 @@
-import type * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import * as Serializable from "./internal/serializable.js";
+import type { SpanAttributeValue } from "./middleware.js";
 
 /**
  * The base an event satisfies: a tag the bus routes on. Deliberately minimal —
@@ -12,18 +11,14 @@ export interface Base {
   readonly _tag: string;
 }
 
-/**
- * What a tracing backend accepts as an attribute value. Narrower than
- * `unknown` on purpose: an attribute that cannot be represented is silently
- * dropped by most exporters, which is worse than not compiling.
- */
-export type SpanAttributeValue = string | number | boolean;
+export type { SpanAttributeValue };
 
 export type SpanAttributesExtractor<A> = (value: A) => Record<string, SpanAttributeValue>;
 
-const Brand = "~@org/cqrs/Event";
+export type TypeId = "~@org/cqrs/Event";
+const TypeId: TypeId = "~@org/cqrs/Event";
 
-export type Brand = { readonly __brand: typeof Brand };
+export type Brand = { readonly [TypeId]: TypeId };
 
 /**
  * Erased event schema, for constraints. Carries the brand and the static tag
@@ -41,6 +36,12 @@ export type Any = Schema.Top & Brand & { readonly tag: string };
  * and its serialized shape are the same. That is what lets the same definition
  * describe an event dispatched in-process today and one read back off a durable
  * log later, with no "did I remember to decode this?" question in between.
+ *
+ * The identity is carried on the schema itself rather than in a wrapper, so an
+ * event reads as the schema it is at every call site. The cost is that a schema
+ * *derived* from one — annotated, made optional, piped — is a new object that
+ * carries neither the brand nor the tag, and is no longer an event to `is`.
+ * Derive from the fields, not from the event.
  */
 export const make = <Tag extends string, Fields extends Schema.Struct.Fields>(
   tag: Tag,
@@ -48,8 +49,8 @@ export const make = <Tag extends string, Fields extends Schema.Struct.Fields>(
 ): Schema.TaggedStruct<Tag, Fields> & Brand & { readonly tag: Tag } =>
   Object.assign(Schema.TaggedStruct(tag, fields), {
     tag,
-    __brand: Brand,
-  }) as Schema.TaggedStruct<Tag, Fields> & Brand & { readonly tag: Tag };
+    [TypeId]: TypeId,
+  });
 
 /**
  * Per-event span-attribute extractors, keyed by tag — a module declares its own
@@ -74,22 +75,5 @@ export const spanAttributes = <const M extends SpanAttributes>(map: M): M => map
 export const is = (u: unknown): u is Any =>
   typeof u === "object" &&
   u !== null &&
-  (u as { readonly __brand?: unknown }).__brand === Brand &&
+  (u as { readonly [TypeId]?: unknown })[TypeId] === TypeId &&
   typeof (u as { readonly tag?: unknown }).tag === "string";
-
-/**
- * Reports any event in the list that cannot survive a round-trip through JSON.
- *
- * Events are the messages most likely to be persisted or replayed later — an
- * outbox row, a durable log — so an event that cannot be encoded is the most
- * expensive kind to discover late.
- */
-export const checkSerializable = (
-  events: ReadonlyArray<Any>,
-): Effect.Effect<ReadonlyArray<Serializable.Incompatibility>> =>
-  Serializable.check(
-    events.map((event) => ({
-      tag: event.tag,
-      schemas: { payload: event, success: Schema.Void, failure: Schema.Never },
-    })) as never,
-  );

@@ -3,7 +3,7 @@ import type * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 import type * as Scope from "effect/Scope";
 
-import type { Middleware } from "../middleware.js";
+import type { Middleware, SpanAttributeValue } from "../middleware.js";
 import * as Transport from "./transport-rpc.js";
 
 // Machinery shared by the write side and the read side. Dispatching a command and
@@ -208,14 +208,11 @@ export const handlersOf = <G extends AnyGroup<string>, H extends Handlers<G>>(
 export type SpanAttributes<G extends AnyGroup<string>> =
   G extends Group<string, infer Messages>
     ? {
-        readonly [M in Messages as M["tag"]]?: (payload: PayloadOf<M>) => Record<string, unknown>;
+        readonly [M in Messages as M["tag"]]?: (
+          payload: PayloadOf<M>,
+        ) => Record<string, SpanAttributeValue>;
       }
     : never;
-
-/** Erased view of the above, for a bus's by-tag lookup. */
-export type SpanAttributesErased = Readonly<
-  Record<string, (payload: never) => Record<string, unknown>>
->;
 
 /** The dispatch surface a built bus exposes: one method per message tag. */
 export type Dispatcher<G extends AnyGroup<string>> =
