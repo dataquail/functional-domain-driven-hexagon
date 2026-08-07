@@ -1,3 +1,6 @@
+import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
+
 // Pure pack/unpack of the PKCE cookie payload — `{state, codeVerifier}` is
 // serialized to a base64url-encoded JSON string before being signed by the
 // CookieCodec and stamped into the browser. Lives next to the login/callback
@@ -5,10 +8,19 @@
 // (and its rejection behavior on malformed input) be unit-tested without an
 // OIDC client or HTTP runtime.
 
-export type PkcePayload = {
-  readonly state: string;
-  readonly codeVerifier: string;
-};
+const PkcePayloadSchema = Schema.Struct({
+  state: Schema.String,
+  codeVerifier: Schema.String,
+});
+
+export type PkcePayload = Schema.Schema.Type<typeof PkcePayloadSchema>;
+
+// The cookie carries browser-supplied input, so the JSON structure is decoded
+// by the schema rather than by hand. Base64url stays with `Buffer` — that half
+// is a transport encoding, not a shape to validate.
+const PkcePayloadAsJson = Schema.fromJsonString(PkcePayloadSchema);
+const encodeAsJson = Schema.encodeSync(PkcePayloadAsJson);
+const decodeFromJson = Schema.decodeUnknownOption(PkcePayloadAsJson);
 
 export const PKCE_COOKIE_NAME = "oidc_pkce";
 
@@ -18,18 +30,7 @@ export const PKCE_COOKIE_NAME = "oidc_pkce";
 export const PKCE_COOKIE_MAX_AGE_MS = 300_000;
 
 export const encodePkcePayload = (payload: PkcePayload): string =>
-  Buffer.from(
-    JSON.stringify({ state: payload.state, codeVerifier: payload.codeVerifier }),
-  ).toString("base64url");
+  Buffer.from(encodeAsJson(payload)).toString("base64url");
 
-export const decodePkcePayload = (encoded: string): PkcePayload | null => {
-  try {
-    const parsed = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8")) as unknown;
-    if (typeof parsed !== "object" || parsed === null) return null;
-    const obj = parsed as Record<string, unknown>;
-    if (typeof obj.state !== "string" || typeof obj.codeVerifier !== "string") return null;
-    return { state: obj.state, codeVerifier: obj.codeVerifier };
-  } catch {
-    return null;
-  }
-};
+export const decodePkcePayload = (encoded: string): PkcePayload | null =>
+  Option.getOrNull(decodeFromJson(Buffer.from(encoded, "base64url").toString("utf8")));

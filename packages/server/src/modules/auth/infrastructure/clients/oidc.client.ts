@@ -2,6 +2,7 @@ import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Predicate from "effect/Predicate";
 import * as Redacted from "effect/Redacted";
 import * as openid from "openid-client";
 
@@ -88,12 +89,14 @@ const make = Effect.gen(function* () {
           pkceCodeVerifier: codeVerifier,
         });
         const claims = tokens.claims();
-        if (claims === undefined || typeof claims.sub !== "string") {
+        if (claims === undefined || !Predicate.isString(claims.sub)) {
           throw new Error("id_token missing subject");
         }
-        const readEmail = (source: { email?: unknown }): string | null =>
-          typeof source.email === "string" ? (source.email ?? null) : null;
-        let email = readEmail(claims as { email?: unknown });
+        const readEmail = (source: unknown): string | null =>
+          Predicate.hasProperty(source, "email") && Predicate.isString(source.email)
+            ? source.email
+            : null;
+        let email = readEmail(claims);
         // Zitadel omits the `email` claim from the id_token by default —
         // it's only guaranteed at the userinfo endpoint. Pre-seeded users
         // (e.g. the admin) already have an `auth_identities` row so sign-in
@@ -118,16 +121,11 @@ const make = Effect.gen(function* () {
         // Without unpacking, every failure looks like the same generic
         // "ResponseBodyError" string and you can't tell a bad client
         // secret from a stale code from a redirect URI mismatch.
-        const detail =
-          cause !== null && typeof cause === "object"
-            ? [
-                (cause as { error?: unknown }).error,
-                (cause as { error_description?: unknown }).error_description,
-                (cause as { code?: unknown }).code,
-              ]
-                .filter((v) => v !== undefined && v !== null && v !== "")
-                .join(" — ")
-            : "";
+        const field = (key: string): unknown =>
+          Predicate.hasProperty(cause, key) ? cause[key] : undefined;
+        const detail = [field("error"), field("error_description"), field("code")]
+          .filter((v) => v !== undefined && v !== null && v !== "")
+          .join(" — ");
         return new CustomHttpApiError.Unauthorized({
           message:
             detail !== ""
