@@ -1,5 +1,6 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
 
@@ -48,17 +49,15 @@ describe("InvitationRootOps.accept", () => {
   const seed = () => InvitationRootOps.issue(inputs).invitation;
 
   it("sets acceptedAt and emits InvitationAccepted (membership is the domain service's job)", () => {
-    const result = InvitationRootOps.accept(seed(), { userId, now: inOneDay });
-    if (Result.isFailure(result)) throw new Error("expected Right");
-    deepStrictEqual(result.success.invitation.acceptedAt, inOneDay);
-    const tags = result.success.events.map((e) => e._tag);
+    const result = Result.getOrThrow(InvitationRootOps.accept(seed(), { userId, now: inOneDay }));
+    deepStrictEqual(result.invitation.acceptedAt, inOneDay);
+    const tags = result.events.map((e) => e._tag);
     deepStrictEqual(tags, ["InvitationAccepted"]);
   });
 
   it("fails InvitationAlreadyAccepted when accepted twice", () => {
-    const first = InvitationRootOps.accept(seed(), { userId, now: inOneDay });
-    if (Result.isFailure(first)) throw new Error("expected Right");
-    const second = InvitationRootOps.accept(first.success.invitation, { userId, now: inOneDay });
+    const first = Result.getOrThrow(InvitationRootOps.accept(seed(), { userId, now: inOneDay }));
+    const second = InvitationRootOps.accept(first.invitation, { userId, now: inOneDay });
     deepStrictEqual(Result.isFailure(second), true);
     if (Result.isFailure(second)) {
       deepStrictEqual(second.failure instanceof InvitationAlreadyAccepted, true);
@@ -66,9 +65,8 @@ describe("InvitationRootOps.accept", () => {
   });
 
   it("fails InvitationRevoked when the invitation was revoked", () => {
-    const revoked = InvitationRootOps.revoke(seed(), { now: inOneDay });
-    if (Result.isFailure(revoked)) throw new Error("expected Right");
-    const result = InvitationRootOps.accept(revoked.success.invitation, { userId, now: inOneDay });
+    const revoked = Result.getOrThrow(InvitationRootOps.revoke(seed(), { now: inOneDay }));
+    const result = InvitationRootOps.accept(revoked.invitation, { userId, now: inOneDay });
     deepStrictEqual(Result.isFailure(result), true);
     if (Result.isFailure(result)) {
       deepStrictEqual(result.failure instanceof InvitationRevoked, true);
@@ -89,16 +87,14 @@ describe("InvitationRootOps.revoke", () => {
   const seed = () => InvitationRootOps.issue(inputs).invitation;
 
   it("sets revokedAt and emits InvitationRevoked", () => {
-    const result = InvitationRootOps.revoke(seed(), { now: inOneDay });
-    if (Result.isFailure(result)) throw new Error("expected Right");
-    deepStrictEqual(result.success.invitation.revokedAt, inOneDay);
-    deepStrictEqual(result.success.events[0]?._tag, "InvitationRevoked");
+    const result = Result.getOrThrow(InvitationRootOps.revoke(seed(), { now: inOneDay }));
+    deepStrictEqual(result.invitation.revokedAt, inOneDay);
+    deepStrictEqual(result.events[0]?._tag, "InvitationRevoked");
   });
 
   it("fails InvitationAlreadyAccepted when the invitation was accepted", () => {
-    const accepted = InvitationRootOps.accept(seed(), { userId, now: inOneDay });
-    if (Result.isFailure(accepted)) throw new Error("expected Right");
-    const result = InvitationRootOps.revoke(accepted.success.invitation, { now: inOneDay });
+    const accepted = Result.getOrThrow(InvitationRootOps.accept(seed(), { userId, now: inOneDay }));
+    const result = InvitationRootOps.revoke(accepted.invitation, { now: inOneDay });
     deepStrictEqual(Result.isFailure(result), true);
     if (Result.isFailure(result)) {
       deepStrictEqual(result.failure instanceof InvitationAlreadyAccepted, true);
@@ -106,9 +102,8 @@ describe("InvitationRootOps.revoke", () => {
   });
 
   it("fails InvitationAlreadyRevoked on a second revoke", () => {
-    const first = InvitationRootOps.revoke(seed(), { now: inOneDay });
-    if (Result.isFailure(first)) throw new Error("expected Right");
-    const second = InvitationRootOps.revoke(first.success.invitation, { now: inOneDay });
+    const first = Result.getOrThrow(InvitationRootOps.revoke(seed(), { now: inOneDay }));
+    const second = InvitationRootOps.revoke(first.invitation, { now: inOneDay });
     deepStrictEqual(Result.isFailure(second), true);
     if (Result.isFailure(second)) {
       deepStrictEqual(second.failure instanceof InvitationAlreadyRevoked, true);
@@ -121,17 +116,18 @@ describe("InvitationRootOps.reissue", () => {
   const newExpiry = DateTime.makeUnsafe(new Date("2026-01-15T00:00:00Z"));
 
   it("rotates the token, resets the expiry, and emits InvitationReissued", () => {
-    const result = InvitationRootOps.reissue(seed(), {
-      token: "tok-fresh",
-      expiresAt: newExpiry,
-      now: inOneDay,
-    });
-    if (Result.isFailure(result)) throw new Error("expected Right");
-    deepStrictEqual(result.success.invitation.token, "tok-fresh");
-    deepStrictEqual(result.success.invitation.expiresAt, newExpiry);
-    deepStrictEqual(result.success.invitation.acceptedAt, null);
-    deepStrictEqual(result.success.invitation.revokedAt, null);
-    deepStrictEqual(result.success.events[0]?._tag, "InvitationReissued");
+    const result = Result.getOrThrow(
+      InvitationRootOps.reissue(seed(), {
+        token: "tok-fresh",
+        expiresAt: newExpiry,
+        now: inOneDay,
+      }),
+    );
+    deepStrictEqual(result.invitation.token, "tok-fresh");
+    deepStrictEqual(result.invitation.expiresAt, newExpiry);
+    deepStrictEqual(result.invitation.acceptedAt, null);
+    deepStrictEqual(result.invitation.revokedAt, null);
+    deepStrictEqual(result.events[0]?._tag, "InvitationReissued");
   });
 
   it("re-issues an expired (but open) invitation", () => {
@@ -145,9 +141,8 @@ describe("InvitationRootOps.reissue", () => {
   });
 
   it("fails InvitationAlreadyAccepted when the invitation was accepted", () => {
-    const accepted = InvitationRootOps.accept(seed(), { userId, now: inOneDay });
-    if (Result.isFailure(accepted)) throw new Error("expected Right");
-    const result = InvitationRootOps.reissue(accepted.success.invitation, {
+    const accepted = Result.getOrThrow(InvitationRootOps.accept(seed(), { userId, now: inOneDay }));
+    const result = InvitationRootOps.reissue(accepted.invitation, {
       token: "tok-fresh",
       expiresAt: newExpiry,
       now: inOneDay,
@@ -159,9 +154,8 @@ describe("InvitationRootOps.reissue", () => {
   });
 
   it("fails InvitationAlreadyRevoked when the invitation was revoked", () => {
-    const revoked = InvitationRootOps.revoke(seed(), { now: inOneDay });
-    if (Result.isFailure(revoked)) throw new Error("expected Right");
-    const result = InvitationRootOps.reissue(revoked.success.invitation, {
+    const revoked = Result.getOrThrow(InvitationRootOps.revoke(seed(), { now: inOneDay }));
+    const result = InvitationRootOps.reissue(revoked.invitation, {
       token: "tok-fresh",
       expiresAt: newExpiry,
       now: inOneDay,

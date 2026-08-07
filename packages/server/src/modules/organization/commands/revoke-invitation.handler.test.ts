@@ -1,5 +1,6 @@
+import { deepStrictEqual, notStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -56,7 +57,7 @@ describe("revokeInvitationHandler", () => {
 
       const updated = yield* repo.findOne(InvitationSpecifications.withId(invitationId));
       if (updated === null) throw new Error("expected invitation");
-      deepStrictEqual(updated.revokedAt !== null, true);
+      notStrictEqual(updated.revokedAt, null);
 
       const events = yield* rec.byTag<InvitationRevoked>("InvitationRevoked");
       deepStrictEqual(events.length, 1);
@@ -82,9 +83,8 @@ describe("revokeInvitationHandler", () => {
   it.effect("fails InvitationAlreadyAccepted when the invitation was accepted", () =>
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
-      const accepted = InvitationRootOps.accept(seed(), { userId, now });
-      if (Result.isFailure(accepted)) throw new Error("expected Right");
-      yield* repo.insertOne(accepted.success.invitation);
+      const accepted = Result.getOrThrow(InvitationRootOps.accept(seed(), { userId, now }));
+      yield* repo.insertOne(accepted.invitation);
 
       const exit = yield* Effect.exit(revokeInvitationHandler({ invitationId, actorUserId }));
       deepStrictEqual(Exit.isFailure(exit), true);
@@ -100,9 +100,8 @@ describe("revokeInvitationHandler", () => {
   it.effect("fails InvitationAlreadyRevoked on a second revoke", () =>
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
-      const revoked = InvitationRootOps.revoke(seed(), { now });
-      if (Result.isFailure(revoked)) throw new Error("expected Right");
-      yield* repo.insertOne(revoked.success.invitation);
+      const revoked = Result.getOrThrow(InvitationRootOps.revoke(seed(), { now }));
+      yield* repo.insertOne(revoked.invitation);
 
       const exit = yield* Effect.exit(revokeInvitationHandler({ invitationId, actorUserId }));
       deepStrictEqual(Exit.isFailure(exit), true);

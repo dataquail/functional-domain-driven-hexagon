@@ -1,5 +1,6 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -87,13 +88,13 @@ suite("findPendingInvitationsHandler (integration)", () => {
       yield* repo.insertOne(toAccept);
       yield* repo.insertOne(otherOrg);
 
-      const revoked = InvitationRootOps.revoke(toRevoke, { now: issuedAt });
-      if (Result.isFailure(revoked)) throw new Error("expected Right");
-      yield* repo.updateOne(revoked.success.invitation);
+      const revoked = Result.getOrThrow(InvitationRootOps.revoke(toRevoke, { now: issuedAt }));
+      yield* repo.updateOne(revoked.invitation);
 
-      const accepted = InvitationRootOps.accept(toAccept, { userId, now: issuedAt });
-      if (Result.isFailure(accepted)) throw new Error("expected Right");
-      yield* repo.updateOne(accepted.success.invitation);
+      const accepted = Result.getOrThrow(
+        InvitationRootOps.accept(toAccept, { userId, now: issuedAt }),
+      );
+      yield* repo.updateOne(accepted.invitation);
 
       const result = yield* findPendingInvitationsHandler({ organizationId: orgId });
 

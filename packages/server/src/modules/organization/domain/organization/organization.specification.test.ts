@@ -1,5 +1,6 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
 
@@ -17,10 +18,9 @@ describe("OrganizationSpecifications.isDeleted / notDeleted", () => {
     const { organization } = OrganizationRootOps.create({ id, name: "Acme", now });
     deepStrictEqual(OrganizationSpecifications.isDeleted(organization), false);
     deepStrictEqual(OrganizationSpecifications.notDeleted(organization), true);
-    const result = OrganizationRootOps.softDelete(organization, { now: later });
-    if (Result.isFailure(result)) throw new Error("expected Right");
-    deepStrictEqual(OrganizationSpecifications.isDeleted(result.success.organization), true);
-    deepStrictEqual(OrganizationSpecifications.notDeleted(result.success.organization), false);
+    const result = Result.getOrThrow(OrganizationRootOps.softDelete(organization, { now: later }));
+    deepStrictEqual(OrganizationSpecifications.isDeleted(result.organization), true);
+    deepStrictEqual(OrganizationSpecifications.notDeleted(result.organization), false);
   });
 
   it("carry criteria complementary over deletedAt", () => {

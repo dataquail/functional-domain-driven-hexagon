@@ -1,5 +1,6 @@
+import { deepStrictEqual, notStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -73,7 +74,7 @@ describe("acceptInvitationHandler", () => {
 
       const updated = yield* inv.findOne(InvitationSpecifications.withId(invitationId));
       if (updated === null) throw new Error("expected invitation");
-      deepStrictEqual(updated.acceptedAt !== null, true);
+      notStrictEqual(updated.acceptedAt, null);
 
       const membership = yield* members.findOne(
         Spec.and(
@@ -112,9 +113,8 @@ describe("acceptInvitationHandler", () => {
   it.effect("fails InvitationAlreadyAccepted on a second accept", () =>
     Effect.gen(function* () {
       const inv = yield* InvitationRepository;
-      const accepted = InvitationRootOps.accept(seed(), { userId, now });
-      if (Result.isFailure(accepted)) throw new Error("expected Right");
-      yield* inv.insertOne(accepted.success.invitation);
+      const accepted = Result.getOrThrow(InvitationRootOps.accept(seed(), { userId, now }));
+      yield* inv.insertOne(accepted.invitation);
 
       const exit = yield* Effect.exit(acceptInvitationHandler({ token: "tok-abc", userId }));
       deepStrictEqual(Exit.isFailure(exit), true);
@@ -130,9 +130,8 @@ describe("acceptInvitationHandler", () => {
   it.effect("fails InvitationRevoked when the invitation was revoked", () =>
     Effect.gen(function* () {
       const inv = yield* InvitationRepository;
-      const revoked = InvitationRootOps.revoke(seed(), { now });
-      if (Result.isFailure(revoked)) throw new Error("expected Right");
-      yield* inv.insertOne(revoked.success.invitation);
+      const revoked = Result.getOrThrow(InvitationRootOps.revoke(seed(), { now }));
+      yield* inv.insertOne(revoked.invitation);
 
       const exit = yield* Effect.exit(acceptInvitationHandler({ token: "tok-abc", userId }));
       deepStrictEqual(Exit.isFailure(exit), true);

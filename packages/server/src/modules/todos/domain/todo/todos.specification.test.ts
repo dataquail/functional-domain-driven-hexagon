@@ -1,5 +1,6 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 
 import { OrganizationId } from "@/platform/ids/organization-id.js";

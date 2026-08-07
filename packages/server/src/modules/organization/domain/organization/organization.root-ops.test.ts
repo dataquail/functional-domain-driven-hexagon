@@ -1,5 +1,6 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
 
@@ -47,18 +48,16 @@ describe("OrganizationRootOps.softDelete", () => {
   const seed = () => OrganizationRootOps.create({ id, name: "Acme", now }).organization;
 
   it("sets deletedAt and updatedAt; emits OrganizationSoftDeleted", () => {
-    const result = OrganizationRootOps.softDelete(seed(), { now: later });
-    if (Result.isFailure(result)) throw new Error("expected Right");
-    deepStrictEqual(result.success.organization.deletedAt, later);
-    deepStrictEqual(result.success.organization.updatedAt, later);
-    const event = expectEvent(result.success.events, "OrganizationSoftDeleted");
+    const result = Result.getOrThrow(OrganizationRootOps.softDelete(seed(), { now: later }));
+    deepStrictEqual(result.organization.deletedAt, later);
+    deepStrictEqual(result.organization.updatedAt, later);
+    const event = expectEvent(result.events, "OrganizationSoftDeleted");
     deepStrictEqual(event.organizationId, id);
   });
 
   it("fails OrganizationAlreadyDeleted when the org is already soft-deleted", () => {
-    const first = OrganizationRootOps.softDelete(seed(), { now: later });
-    if (Result.isFailure(first)) throw new Error("expected Right");
-    const second = OrganizationRootOps.softDelete(first.success.organization, { now: later });
+    const first = Result.getOrThrow(OrganizationRootOps.softDelete(seed(), { now: later }));
+    const second = OrganizationRootOps.softDelete(first.organization, { now: later });
     deepStrictEqual(Result.isFailure(second), true);
     if (Result.isFailure(second)) {
       deepStrictEqual(second.failure instanceof OrganizationAlreadyDeleted, true);
@@ -69,16 +68,14 @@ describe("OrganizationRootOps.softDelete", () => {
 describe("OrganizationRootOps.restore", () => {
   const seed = () => OrganizationRootOps.create({ id, name: "Acme", now }).organization;
   const deleted = () => {
-    const result = OrganizationRootOps.softDelete(seed(), { now: later });
-    if (Result.isFailure(result)) throw new Error("expected Right");
-    return result.success.organization;
+    const result = Result.getOrThrow(OrganizationRootOps.softDelete(seed(), { now: later }));
+    return result.organization;
   };
 
   it("clears deletedAt and emits OrganizationRestored", () => {
-    const restored = OrganizationRootOps.restore(deleted(), { now: later });
-    if (Result.isFailure(restored)) throw new Error("expected Right");
-    deepStrictEqual(restored.success.organization.deletedAt, null);
-    const event = expectEvent(restored.success.events, "OrganizationRestored");
+    const restored = Result.getOrThrow(OrganizationRootOps.restore(deleted(), { now: later }));
+    deepStrictEqual(restored.organization.deletedAt, null);
+    const event = expectEvent(restored.events, "OrganizationRestored");
     deepStrictEqual(event.organizationId, id);
   });
 

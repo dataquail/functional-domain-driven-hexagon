@@ -1,5 +1,6 @@
+import { deepStrictEqual, notStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -31,7 +32,7 @@ describe("revokeApiTokenHandler", () => {
       const repo = yield* ApiTokenRepository;
       const found = yield* repo.findOne(ApiTokenSpecifications.withId(apiToken.id));
       if (found === null) throw new Error("expected an api token");
-      deepStrictEqual(found.revokedAt !== null, true);
+      notStrictEqual(found.revokedAt, null);
     }).pipe(Effect.provide(TestLayer)),
   );
 

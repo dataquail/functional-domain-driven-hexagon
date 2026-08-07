@@ -1,9 +1,11 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
-import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Result from "effect/Result";
 import { beforeEach } from "vitest";
 
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
@@ -135,9 +137,8 @@ suite("findMyOrganizationsHandler (integration)", () => {
       yield* memberships.insertOne(
         MembershipRootOps.create({ userId: aliceId, organizationId: acmeId, now }).membership,
       );
-      const deleted = OrganizationRootOps.softDelete(acme, { now });
-      if (deleted._tag !== "Success") throw new Error("expected Right");
-      yield* orgs.updateOne(deleted.success.organization);
+      const deleted = Result.getOrThrow(OrganizationRootOps.softDelete(acme, { now }));
+      yield* orgs.updateOne(deleted.organization);
 
       const result = yield* findMyOrganizationsHandler({ userId: aliceId });
       deepStrictEqual([...result.organizations], []);

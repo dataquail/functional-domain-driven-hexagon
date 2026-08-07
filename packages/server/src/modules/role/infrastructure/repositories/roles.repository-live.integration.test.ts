@@ -1,6 +1,7 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
-import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Result from "effect/Result";
@@ -59,9 +60,10 @@ suite("RolesRepositoryLive (integration)", () => {
       Effect.gen(function* () {
         yield* seedUser;
         const repo = yield* RolesRepository;
-        const granted = RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin");
-        if (Result.isFailure(granted)) throw new Error("expected Right");
-        yield* repo.upsertOne(granted.success.roles);
+        const granted = Result.getOrThrow(
+          RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin"),
+        );
+        yield* repo.upsertOne(granted.roles);
         const fetched = yield* repo.findOne(forUser);
         if (fetched === null) throw new Error("expected aggregate");
         deepStrictEqual([...fetched.roles], ["super_admin"]);
@@ -72,12 +74,12 @@ suite("RolesRepositoryLive (integration)", () => {
       Effect.gen(function* () {
         yield* seedUser;
         const repo = yield* RolesRepository;
-        const granted = RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin");
-        if (Result.isFailure(granted)) throw new Error("expected Right");
-        yield* repo.upsertOne(granted.success.roles);
-        const revoked = RolesRootOps.revoke(granted.success.roles, "super_admin");
-        if (Result.isFailure(revoked)) throw new Error("expected Right");
-        yield* repo.upsertOne(revoked.success.roles);
+        const granted = Result.getOrThrow(
+          RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin"),
+        );
+        yield* repo.upsertOne(granted.roles);
+        const revoked = Result.getOrThrow(RolesRootOps.revoke(granted.roles, "super_admin"));
+        yield* repo.upsertOne(revoked.roles);
         // Revoking the last role deletes every row, so there is nothing to
         // reconstitute — findOne reports null (no rows = no roles).
         const fetched = yield* repo.findOne(forUser);

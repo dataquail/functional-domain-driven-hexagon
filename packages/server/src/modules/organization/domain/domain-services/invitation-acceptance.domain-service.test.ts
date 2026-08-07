@@ -1,5 +1,6 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
 
@@ -29,19 +30,21 @@ const seed = () =>
 
 describe("InvitationAcceptance.accept", () => {
   it("accepts the invitation, produces the membership, and emits both events", () => {
-    const result = InvitationAcceptance.accept(seed(), { userId, now: inOneDay });
-    if (Result.isFailure(result)) throw new Error("expected success");
-    deepStrictEqual(result.success.invitation.acceptedAt, inOneDay);
-    deepStrictEqual(result.success.membership.userId, userId);
-    deepStrictEqual(result.success.membership.organizationId, organizationId);
-    const tags = result.success.events.map((e) => e._tag);
+    const result = Result.getOrThrow(
+      InvitationAcceptance.accept(seed(), { userId, now: inOneDay }),
+    );
+    deepStrictEqual(result.invitation.acceptedAt, inOneDay);
+    deepStrictEqual(result.membership.userId, userId);
+    deepStrictEqual(result.membership.organizationId, organizationId);
+    const tags = result.events.map((e) => e._tag);
     deepStrictEqual(tags, ["InvitationAccepted", "MembershipCreated"]);
   });
 
   it("propagates the invitation's failure and produces no membership", () => {
-    const accepted = InvitationAcceptance.accept(seed(), { userId, now: inOneDay });
-    if (Result.isFailure(accepted)) throw new Error("expected success");
-    const twice = InvitationAcceptance.accept(accepted.success.invitation, {
+    const accepted = Result.getOrThrow(
+      InvitationAcceptance.accept(seed(), { userId, now: inOneDay }),
+    );
+    const twice = InvitationAcceptance.accept(accepted.invitation, {
       userId,
       now: inOneDay,
     });
@@ -52,9 +55,8 @@ describe("InvitationAcceptance.accept", () => {
   });
 
   it("propagates InvitationRevoked", () => {
-    const revoked = InvitationRootOps.revoke(seed(), { now: inOneDay });
-    if (Result.isFailure(revoked)) throw new Error("expected success");
-    const result = InvitationAcceptance.accept(revoked.success.invitation, {
+    const revoked = Result.getOrThrow(InvitationRootOps.revoke(seed(), { now: inOneDay }));
+    const result = InvitationAcceptance.accept(revoked.invitation, {
       userId,
       now: inOneDay,
     });

@@ -1,6 +1,7 @@
+import { deepStrictEqual, ok } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
 import { UserContract } from "@org/contracts/api/Contracts";
-import { deepStrictEqual, ok } from "assert";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";

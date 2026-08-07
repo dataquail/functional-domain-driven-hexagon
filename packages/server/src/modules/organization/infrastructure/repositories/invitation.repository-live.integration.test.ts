@@ -1,6 +1,7 @@
+import { deepStrictEqual, notStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
-import { deepStrictEqual } from "assert";
 import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -102,12 +103,11 @@ suite("InvitationRepositoryLive (integration)", () => {
         yield* seedOrg;
         const repo = yield* InvitationRepository;
         yield* repo.insertOne(seed());
-        const accepted = InvitationRootOps.accept(seed(), { userId, now });
-        if (Result.isFailure(accepted)) throw new Error("expected Right");
-        yield* repo.updateOne(accepted.success.invitation);
+        const accepted = Result.getOrThrow(InvitationRootOps.accept(seed(), { userId, now }));
+        yield* repo.updateOne(accepted.invitation);
         const found = yield* repo.findOne(InvitationSpecifications.withId(invitationId));
         if (found === null) throw new Error("expected invitation");
-        deepStrictEqual(found.acceptedAt !== null, true);
+        notStrictEqual(found.acceptedAt, null);
       }).pipe(Effect.provide(TestLayer)),
     );
 
@@ -117,13 +117,14 @@ suite("InvitationRepositoryLive (integration)", () => {
         const repo = yield* InvitationRepository;
         yield* repo.insertOne(seed());
         const newExpiresAt = DateTime.makeUnsafe(new Date("2026-02-01T00:00:00Z"));
-        const reissued = InvitationRootOps.reissue(seed(), {
-          token: "tok-rotated",
-          expiresAt: newExpiresAt,
-          now,
-        });
-        if (Result.isFailure(reissued)) throw new Error("expected Right");
-        yield* repo.updateOne(reissued.success.invitation);
+        const reissued = Result.getOrThrow(
+          InvitationRootOps.reissue(seed(), {
+            token: "tok-rotated",
+            expiresAt: newExpiresAt,
+            now,
+          }),
+        );
+        yield* repo.updateOne(reissued.invitation);
 
         // The new token must resolve...
         const byNew = yield* repo.findOne(InvitationSpecifications.withToken("tok-rotated"));
@@ -174,16 +175,15 @@ suite("InvitationRepositoryLive (integration)", () => {
         yield* seedOrg;
         const repo = yield* InvitationRepository;
         yield* repo.insertOne(seed());
-        const revoked = InvitationRootOps.revoke(seed(), { now });
-        if (Result.isFailure(revoked)) throw new Error("expected Right");
-        yield* repo.updateOne(revoked.success.invitation);
+        const revoked = Result.getOrThrow(InvitationRootOps.revoke(seed(), { now }));
+        yield* repo.updateOne(revoked.invitation);
 
         // open spec filters it out...
         deepStrictEqual(yield* repo.findOne(openForAlice), null);
         // ...but the row is still there when the spec doesn't demand open.
         const all = yield* repo.findMany(InvitationSpecifications.forOrganization(orgId));
         deepStrictEqual(all.length, 1);
-        deepStrictEqual(all[0]?.revokedAt !== null, true);
+        notStrictEqual(all[0]?.revokedAt, null);
       }).pipe(Effect.provide(TestLayer)),
     );
 

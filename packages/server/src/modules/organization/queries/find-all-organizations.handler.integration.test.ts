@@ -1,5 +1,6 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -37,9 +38,8 @@ suite("findAllOrganizationsHandler (integration)", () => {
       );
       const { organization: betaOrg } = OrganizationRootOps.create({ id: beta, name: "Beta", now });
       yield* repo.insertOne(betaOrg);
-      const deletedEither = OrganizationRootOps.softDelete(betaOrg, { now: later });
-      if (Result.isFailure(deletedEither)) throw new Error("expected Right");
-      yield* repo.updateOne(deletedEither.success.organization);
+      const deleted = Result.getOrThrow(OrganizationRootOps.softDelete(betaOrg, { now: later }));
+      yield* repo.updateOne(deleted.organization);
 
       const result = yield* findAllOrganizationsHandler({
         page: 1,
@@ -59,9 +59,8 @@ suite("findAllOrganizationsHandler (integration)", () => {
       );
       const { organization: betaOrg } = OrganizationRootOps.create({ id: beta, name: "Beta", now });
       yield* repo.insertOne(betaOrg);
-      const deletedEither = OrganizationRootOps.softDelete(betaOrg, { now: later });
-      if (Result.isFailure(deletedEither)) throw new Error("expected Right");
-      yield* repo.updateOne(deletedEither.success.organization);
+      const deleted = Result.getOrThrow(OrganizationRootOps.softDelete(betaOrg, { now: later }));
+      yield* repo.updateOne(deleted.organization);
 
       const result = yield* findAllOrganizationsHandler({
         page: 1,

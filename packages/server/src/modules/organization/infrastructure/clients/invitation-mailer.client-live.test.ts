@@ -1,5 +1,6 @@
+import { ok, strictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { ok, strictEqual } from "assert";
 import * as ConfigProvider from "effect/ConfigProvider";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";

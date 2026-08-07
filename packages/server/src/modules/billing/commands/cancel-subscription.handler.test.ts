@@ -1,5 +1,6 @@
+import { deepStrictEqual, ok } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual, ok } from "assert";
 import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";

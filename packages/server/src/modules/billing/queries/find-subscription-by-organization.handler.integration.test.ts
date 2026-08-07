@@ -1,6 +1,7 @@
+import { deepStrictEqual, ok } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
-import { deepStrictEqual, ok } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";

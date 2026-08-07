@@ -1,6 +1,7 @@
+import { ok } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
 import { AuthContract } from "@org/contracts/api/Contracts";
-import { ok } from "assert";
 import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 

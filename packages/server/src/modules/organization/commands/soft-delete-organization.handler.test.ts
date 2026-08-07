@@ -1,5 +1,6 @@
+import { deepStrictEqual, notStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -41,7 +42,7 @@ describe("softDeleteOrganizationHandler", () => {
       yield* softDeleteOrganizationHandler({ organizationId: id });
       const stored = yield* repo.findOne(OrganizationSpecifications.withId(id));
       if (stored === null) throw new Error("expected organization");
-      deepStrictEqual(stored.deletedAt !== null, true);
+      notStrictEqual(stored.deletedAt, null);
       const events = yield* rec.byTag<OrganizationSoftDeleted>("OrganizationSoftDeleted");
       deepStrictEqual(events.length, 1);
     }).pipe(Effect.provide(TestLayer)),

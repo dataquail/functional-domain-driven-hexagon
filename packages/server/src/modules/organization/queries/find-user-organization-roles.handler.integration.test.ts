@@ -1,6 +1,7 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
-import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -72,13 +73,14 @@ suite("findUserOrganizationRolesHandler (integration)", () => {
       yield* seedUsers;
       yield* seedOrg;
       const repo = yield* OrganizationRolesRepository;
-      const granted = OrganizationRolesRootOps.grantRole(
-        OrganizationRolesRootOps.empty(userId, orgId),
-        "admin",
-        issuedBy,
+      const granted = Result.getOrThrow(
+        OrganizationRolesRootOps.grantRole(
+          OrganizationRolesRootOps.empty(userId, orgId),
+          "admin",
+          issuedBy,
+        ),
       );
-      if (Result.isFailure(granted)) throw new Error("expected Right");
-      yield* repo.upsertOne(granted.success.organizationRoles);
+      yield* repo.upsertOne(granted.organizationRoles);
       const result = yield* findUserOrganizationRolesHandler({ userId, organizationId: orgId });
       deepStrictEqual([...result.roles], ["admin"]);
     }).pipe(Effect.provide(TestLayer)),

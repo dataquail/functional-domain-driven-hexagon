@@ -1,5 +1,6 @@
+import { deepStrictEqual, ok } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual, ok } from "assert";
 import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -77,9 +78,10 @@ describe("resendInvitationHandler", () => {
   it.effect("fails InvitationAlreadyRevoked when the invitation was revoked", () =>
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
-      const revoked = InvitationRootOps.revoke(seedInvitation(), { now: issuedAt });
-      if (Result.isFailure(revoked)) throw new Error("expected Right");
-      yield* repo.insertOne(revoked.success.invitation);
+      const revoked = Result.getOrThrow(
+        InvitationRootOps.revoke(seedInvitation(), { now: issuedAt }),
+      );
+      yield* repo.insertOne(revoked.invitation);
 
       const exit = yield* Effect.exit(resendInvitationHandler(cmd));
       deepStrictEqual(Exit.isFailure(exit), true);
@@ -95,12 +97,13 @@ describe("resendInvitationHandler", () => {
   it.effect("fails InvitationAlreadyAccepted when the invitation was accepted", () =>
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
-      const accepted = InvitationRootOps.accept(seedInvitation(), {
-        userId: actorUserId,
-        now: issuedAt,
-      });
-      if (Result.isFailure(accepted)) throw new Error("expected Right");
-      yield* repo.insertOne(accepted.success.invitation);
+      const accepted = Result.getOrThrow(
+        InvitationRootOps.accept(seedInvitation(), {
+          userId: actorUserId,
+          now: issuedAt,
+        }),
+      );
+      yield* repo.insertOne(accepted.invitation);
 
       const exit = yield* Effect.exit(resendInvitationHandler(cmd));
       deepStrictEqual(Exit.isFailure(exit), true);

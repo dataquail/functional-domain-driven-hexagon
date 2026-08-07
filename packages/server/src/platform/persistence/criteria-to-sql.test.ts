@@ -1,5 +1,6 @@
+import { deepStrictEqual, throws } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual, throws } from "assert";
 
 import { Spec } from "@/platform/ddd/contracts/specification.js";
 

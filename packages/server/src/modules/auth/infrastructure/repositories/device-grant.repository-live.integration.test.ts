@@ -1,6 +1,7 @@
+import { deepStrictEqual, notStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
 import { Database, sql } from "@org/database/index";
-import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -74,7 +75,7 @@ suite("DeviceGrantRepositoryLive (integration)", () => {
       if (after === null) throw new Error("expected a grant");
       deepStrictEqual(after.status, "approved");
       deepStrictEqual(after.userId, userId);
-      deepStrictEqual(after.approvedAt !== null, true);
+      notStrictEqual(after.approvedAt, null);
     }).pipe(Effect.provide(TestLayer)),
   );
 

@@ -1,5 +1,6 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as Effect from "effect/Effect";
 import * as Result from "effect/Result";
 
@@ -33,13 +34,14 @@ describe("OrganizationRolesRepositoryFake", () => {
   it.effect("round-trips a saved aggregate via findOne", () =>
     Effect.gen(function* () {
       const repo = yield* OrganizationRolesRepository;
-      const granted = OrganizationRolesRootOps.grantRole(
-        OrganizationRolesRootOps.empty(userId, orgId),
-        "admin",
-        issuedBy,
+      const granted = Result.getOrThrow(
+        OrganizationRolesRootOps.grantRole(
+          OrganizationRolesRootOps.empty(userId, orgId),
+          "admin",
+          issuedBy,
+        ),
       );
-      if (Result.isFailure(granted)) throw new Error("expected Right");
-      yield* repo.upsertOne(granted.success.organizationRoles);
+      yield* repo.upsertOne(granted.organizationRoles);
       const fetched = yield* repo.findOne(forPair);
       if (fetched === null) throw new Error("expected aggregate");
       deepStrictEqual(

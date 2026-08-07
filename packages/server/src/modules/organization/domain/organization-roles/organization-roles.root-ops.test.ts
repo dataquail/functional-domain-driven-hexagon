@@ -1,5 +1,6 @@
+import { deepStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as Result from "effect/Result";
 
 import { OrganizationId } from "@/platform/ids/organization-id.js";
@@ -38,17 +39,18 @@ describe("OrganizationRolesRootOps.empty", () => {
 
 describe("OrganizationRolesRootOps.grantRole", () => {
   it("adds the role and emits OrganizationRoleGranted carrying issuedBy", () => {
-    const result = OrganizationRolesRootOps.grantRole(
-      OrganizationRolesRootOps.empty(userId, orgId),
-      "admin",
-      issuedBy,
+    const result = Result.getOrThrow(
+      OrganizationRolesRootOps.grantRole(
+        OrganizationRolesRootOps.empty(userId, orgId),
+        "admin",
+        issuedBy,
+      ),
     );
-    if (Result.isFailure(result)) throw new Error("expected Right");
     deepStrictEqual(
-      result.success.organizationRoles.roles.map((r) => ({ role: r.role, issuedBy: r.issuedBy })),
+      result.organizationRoles.roles.map((r) => ({ role: r.role, issuedBy: r.issuedBy })),
       [{ role: "admin", issuedBy }],
     );
-    const event = expectEvent(result.success.events, "OrganizationRoleGranted");
+    const event = expectEvent(result.events, "OrganizationRoleGranted");
     deepStrictEqual(event.userId, userId);
     deepStrictEqual(event.organizationId, orgId);
     deepStrictEqual(event.role, "admin");
@@ -56,17 +58,14 @@ describe("OrganizationRolesRootOps.grantRole", () => {
   });
 
   it("fails AlreadyHasOrganizationRole when the role is already held", () => {
-    const first = OrganizationRolesRootOps.grantRole(
-      OrganizationRolesRootOps.empty(userId, orgId),
-      "admin",
-      issuedBy,
+    const first = Result.getOrThrow(
+      OrganizationRolesRootOps.grantRole(
+        OrganizationRolesRootOps.empty(userId, orgId),
+        "admin",
+        issuedBy,
+      ),
     );
-    if (Result.isFailure(first)) throw new Error("expected Right");
-    const second = OrganizationRolesRootOps.grantRole(
-      first.success.organizationRoles,
-      "admin",
-      issuedBy,
-    );
+    const second = OrganizationRolesRootOps.grantRole(first.organizationRoles, "admin", issuedBy);
     deepStrictEqual(Result.isFailure(second), true);
     if (Result.isFailure(second)) {
       deepStrictEqual(second.failure instanceof AlreadyHasOrganizationRole, true);
@@ -76,16 +75,18 @@ describe("OrganizationRolesRootOps.grantRole", () => {
 
 describe("OrganizationRolesRootOps.revokeRole", () => {
   it("removes the role and emits OrganizationRoleRevoked", () => {
-    const granted = OrganizationRolesRootOps.grantRole(
-      OrganizationRolesRootOps.empty(userId, orgId),
-      "admin",
-      issuedBy,
+    const granted = Result.getOrThrow(
+      OrganizationRolesRootOps.grantRole(
+        OrganizationRolesRootOps.empty(userId, orgId),
+        "admin",
+        issuedBy,
+      ),
     );
-    if (Result.isFailure(granted)) throw new Error("expected Right");
-    const result = OrganizationRolesRootOps.revokeRole(granted.success.organizationRoles, "admin");
-    if (Result.isFailure(result)) throw new Error("expected Right");
-    deepStrictEqual([...result.success.organizationRoles.roles], []);
-    const event = expectEvent(result.success.events, "OrganizationRoleRevoked");
+    const result = Result.getOrThrow(
+      OrganizationRolesRootOps.revokeRole(granted.organizationRoles, "admin"),
+    );
+    deepStrictEqual([...result.organizationRoles.roles], []);
+    const event = expectEvent(result.events, "OrganizationRoleRevoked");
     deepStrictEqual(event.userId, userId);
     deepStrictEqual(event.organizationId, orgId);
     deepStrictEqual(event.role, "admin");

@@ -1,5 +1,6 @@
+import { deepStrictEqual, notStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -76,7 +77,7 @@ describe("ApiTokenRepositoryFake", () => {
       yield* repo.deleteOne(idA);
       const found = yield* repo.findOne(ApiTokenSpecifications.withId(idA));
       if (found === null) throw new Error("expected a token");
-      deepStrictEqual(found.revokedAt !== null, true);
+      notStrictEqual(found.revokedAt, null);
       deepStrictEqual((yield* repo.findMany(ApiTokenSpecifications.forUser(userId))).length, 0);
       const second = yield* Effect.exit(repo.deleteOne(idA));
       deepStrictEqual(Exit.isFailure(second), true);

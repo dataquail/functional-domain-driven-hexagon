@@ -1,5 +1,6 @@
+import { deepStrictEqual, notStrictEqual } from "node:assert";
+
 import { describe, it } from "@effect/vitest";
-import { deepStrictEqual } from "assert";
 import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -65,16 +66,17 @@ suite("OrganizationRepositoryLive (integration)", () => {
         const repo = yield* OrganizationRepository;
         const { organization } = OrganizationRootOps.create({ id, name: "Acme", now });
         yield* repo.insertOne(organization);
-        const deletedEither = OrganizationRootOps.softDelete(organization, { now: later });
-        if (Result.isFailure(deletedEither)) throw new Error("expected Right");
-        yield* repo.updateOne(deletedEither.success.organization);
+        const deleted = Result.getOrThrow(
+          OrganizationRootOps.softDelete(organization, { now: later }),
+        );
+        yield* repo.updateOne(deleted.organization);
 
         const hidden = yield* repo.findOne(activeById(id));
         deepStrictEqual(hidden, null);
 
         const visible = yield* repo.findOne(OrganizationSpecifications.withId(id));
         if (visible === null) throw new Error("expected organization");
-        deepStrictEqual(visible.deletedAt !== null, true);
+        notStrictEqual(visible.deletedAt, null);
       }).pipe(Effect.provide(TestLayer)),
     );
 
