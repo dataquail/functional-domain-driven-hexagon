@@ -27,7 +27,7 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/effect-monorepo-test
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup
 
