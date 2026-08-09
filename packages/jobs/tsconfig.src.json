@@ -9,7 +9,6 @@
     "tsBuildInfoFile": ".tsbuildinfo/src.tsbuildinfo",
     "rootDir": "src",
 
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@org/database": ["../database/src/index.js"],
