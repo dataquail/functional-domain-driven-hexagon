@@ -78,6 +78,48 @@ quoted schema — which ADR-0020 requires for the `user` schema. ADR-0020's stat
 enforcement is therefore not currently effective on production code. That is
 tracked as its own concern; it is not a regression from this change.
 
+### The Effect rules, and why TypeScript stays on 5
+
+`@effect/tsgo` adds type-aware Effect rules to oxlint, but only after
+`effect-tsgo patch --oxlint` rewrites the oxlint binary, and its discovery
+requires a TypeScript at major >= 7.
+
+Upgrading `typescript` to 7 is not currently possible here, for a reason that
+has nothing to do with our code: `typescript@7.0.2` is the native Go build and
+exports exactly two things, `version` and `versionMajorMinor`. There is no
+JavaScript compiler API and no `tsserver`. Every tool that calls
+`require("typescript")` breaks — including `@typescript-eslint/typescript-estree`,
+whose latest release still declares `typescript: ">=4.8.4 <6.1.0"`, and on which
+both the taxonomy plugin and the data-boundaries plugin depend. Upgrading
+outright would take ADR-0008 and ADR-0020 enforcement with it.
+
+Our own code is already TypeScript 7 clean: under a straight `typescript@7.0.2`,
+`tsc -b` compiled with zero errors and the whole unit suite passed. Only the
+tooling is behind.
+
+So TypeScript 7 is installed under an alias — `@typescript/native` resolving to
+`npm:typescript@7.0.2` — which is the second name tsgo's discovery accepts.
+`typescript` itself stays at 5.9.3 with its API intact, and the plugins keep
+working.
+
+One consequence needs stating because it is silent: the aliased package also
+declares a `tsc` binary, so `node_modules/.bin/tsc` becomes the patched
+TypeScript 7. `check`, `check:recursive` and `build` therefore invoke
+`node_modules/typescript/bin/tsc` by path rather than the shim, which keeps the
+compiler an explicit choice. Folding `check:effect` into a TypeScript 7 `tsc`
+run remains available later; it was not taken here.
+
+The `recommended` preset is enabled via `extends`, which oxlint honours and
+merges with our own rules and overrides — verified by the probes, which still
+report all rules firing. `prefer-schema-over-json` is off, carrying over the
+same decision already recorded in the language-service plugin config: every JSON
+boundary here is a deliberate wire or test seam.
+
+`prepare` reapplies the patch on every install, including
+`pnpm install --frozen-lockfile`. Verified from an unpatched tree: without the
+patch oxlint refuses to start rather than skipping the rules, and a frozen
+install restores it.
+
 ## Consequences
 
 - `pnpm lint` is 3.3 seconds rather than 30, in editors as well as CI.

@@ -1,5 +1,6 @@
 {
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "$schema": "./node_modules/@effect/tsgo/oxlint-schema.json",
+  "extends": ["./node_modules/@effect/tsgo/oxlint-presets/recommended.json"],
   "plugins": ["typescript", "import"],
   "jsPlugins": [
     {
@@ -229,7 +230,8 @@
     "local/prefer-named-exports": "error",
     "local/no-array-push-spread": "error",
     "local/lucide-icon-suffix": "error",
-    "no-use-before-define": "warn"
+    "no-use-before-define": "warn",
+    "effecttsgo/prefer-schema-over-json": "off"
   },
   "overrides": [
     {

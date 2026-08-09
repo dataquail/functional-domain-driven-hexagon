@@ -71,6 +71,15 @@ const PROBES = [
     source: 'import { Effect } from "effect";\n\nexport const probe = Effect;\n',
   },
   {
+    // The effecttsgo rules exist only while `effect-tsgo patch --oxlint` is
+    // applied to the oxlint binary, and that patch is reapplied by `prepare` on
+    // every install. This probe is what catches a reinstall that silently
+    // dropped it.
+    rule: "effecttsgo/global-date",
+    file: "packages/server/src/__probe-global-date.ts",
+    source: "export const probe = (): Date => new Date();\n",
+  },
+  {
     rule: "@synapsestudios/data-boundaries/no-cross-schema-slonik-access",
     file: "packages/server/src/modules/todos/queries/__probe-cross-schema.handler.ts",
     source:

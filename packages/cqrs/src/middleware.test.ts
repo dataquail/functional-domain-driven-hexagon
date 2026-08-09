@@ -105,6 +105,7 @@ describe("Middleware", () => {
   it("cannot widen the declared channels", () => {
     const widensError: Middleware.Middleware = (dispatch) => (payload) =>
       // @ts-expect-error a middleware may not add an error the definition never declared
+      // eslint-disable-next-line effecttsgo/missing-effect-error -- the undeclared error is the assertion
       Effect.andThen(dispatch(payload), Effect.fail("surprise" as const));
     const changesSuccess: Middleware.Middleware = (dispatch) => (payload) =>
       // @ts-expect-error a middleware may not change the success type

@@ -15,9 +15,9 @@
   },
   "scripts": {
     "codegen": "pnpm --recursive --parallel run codegen",
-    "build": "tsc -b tsconfig.build.json && pnpm --recursive --parallel run build",
-    "check": "tsc -b tsconfig.json",
-    "check:recursive": "pnpm --recursive exec tsc -b tsconfig.json",
+    "build": "node node_modules/typescript/bin/tsc -b tsconfig.build.json && pnpm --recursive --parallel run build",
+    "check": "node node_modules/typescript/bin/tsc -b tsconfig.json",
+    "check:recursive": "pnpm --recursive exec node ../../node_modules/typescript/bin/tsc -b tsconfig.json",
     "check:effect": "node scripts/check-effect-diagnostics.mjs",
     "check:all": "pnpm lint && pnpm lint:rules && pnpm lint:deps && pnpm check && pnpm check:effect && pnpm test && pnpm -F @org/components build-storybook",
     "lint": "oxlint --type-aware --quiet packages",
@@ -40,7 +40,7 @@
     "format": "prettier --write \"**/*.{js,ts,mjs,jsx,tsx,json,md,css,html,yaml,yml,mdx}\"",
     "format:check": "prettier --check \"**/*.{js,ts,mjs,jsx,tsx,json,md,css,html,yaml,yml,mdx}\"",
     "coverage": "vitest --coverage",
-    "prepare": "husky"
+    "prepare": "husky && effect-tsgo patch --oxlint"
   },
   "devDependencies": {
     "@babel/cli": "^7.29.7",
@@ -49,9 +49,11 @@
     "@babel/plugin-transform-modules-commonjs": "^7.29.7",
     "@effect/build-utils": "0.8.9",
     "@effect/language-service": "0.85.1",
+    "@effect/tsgo": "^0.36.1",
     "@effect/vitest": "4.0.0-beta.94",
     "@synapsestudios/eslint-plugin-data-boundaries": "^2.0.4",
     "@types/node": "^25.9.4",
+    "@typescript/native": "npm:typescript@7.0.2",
     "babel-plugin-annotate-pure-calls": "^0.4.0",
     "dependency-cruiser": "^17.4.3",
     "effect": "4.0.0-beta.94",
