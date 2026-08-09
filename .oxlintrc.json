@@ -225,7 +225,11 @@
       }
     ],
     "typescript/dot-notation": "error",
-    "typescript/consistent-return": "warn"
+    "typescript/consistent-return": "warn",
+    "local/prefer-named-exports": "error",
+    "local/no-array-push-spread": "error",
+    "local/lucide-icon-suffix": "error",
+    "no-use-before-define": "warn"
   },
   "overrides": [
     {
@@ -428,6 +432,42 @@
       "files": ["packages/cqrs/src/**/*.ts"],
       "rules": {
         "project-structure/cqrs-package": "error"
+      }
+    },
+    {
+      "files": ["packages/acceptance/playwright.config.ts", "packages/acceptance/global-setup.ts"],
+      "rules": {
+        "local/prefer-named-exports": "off"
+      }
+    },
+    {
+      "files": ["**/*.stories.tsx", "**/.storybook/*.ts"],
+      "rules": {
+        "local/prefer-named-exports": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/web/app/**/page.{ts,tsx}",
+        "packages/web/app/**/layout.{ts,tsx}",
+        "packages/web/app/**/loading.{ts,tsx}",
+        "packages/web/app/**/error.{ts,tsx}",
+        "packages/web/app/**/not-found.{ts,tsx}",
+        "packages/web/app/**/template.{ts,tsx}",
+        "packages/web/app/**/route.{ts,tsx}",
+        "packages/web/app/**/default.{ts,tsx}",
+        "packages/web/next.config.ts",
+        "packages/web/middleware.{ts,tsx}",
+        "packages/web/instrumentation.ts"
+      ],
+      "rules": {
+        "local/prefer-named-exports": "off"
+      }
+    },
+    {
+      "files": ["**/test-utils/global-setup.ts"],
+      "rules": {
+        "local/prefer-named-exports": "off"
       }
     }
   ]
