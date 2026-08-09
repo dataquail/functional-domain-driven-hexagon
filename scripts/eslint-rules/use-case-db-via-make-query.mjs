@@ -10,10 +10,12 @@
  * transaction's connection when one exists, falling back to the pool otherwise,
  * so the same handler is correct whether or not it is dispatched inside a UoW.
  *
- * Scoped (via eslint.config.mjs) to non-test files under:
- *   packages/server/src/modules/<m>/{commands,queries}/**
- * Test files keep bare `db.execute` for seeding (they run outside any UoW).
+ * Scoped by lint config to packages/server/src/modules/<m>/{commands,queries}/**.
+ * Test files keep bare `db.execute` for seeding (they run outside any UoW), and
+ * that exemption lives in the rule rather than the config.
  */
+
+import { isTestFile } from "./is-test-file.mjs";
 
 //------------------------------------------------------------------------------
 // Rule Definition
@@ -32,6 +34,10 @@ export default {
   },
 
   create: function (context) {
+    if (isTestFile(context.filename)) {
+      return {};
+    }
+
     return {
       // Matches `db.execute(...)`. The DB service is bound as `const db =
       // yield* Database.Database` everywhere, so keying on the `db` receiver

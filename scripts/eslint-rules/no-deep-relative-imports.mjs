@@ -86,7 +86,7 @@ export default {
         return; // skip external imports and non-strings
       }
 
-      const fileName = context.getFilename();
+      const fileName = context.filename;
 
       // Only apply this rule within specific packages
       if (!isInAliasedPackage(fileName)) {

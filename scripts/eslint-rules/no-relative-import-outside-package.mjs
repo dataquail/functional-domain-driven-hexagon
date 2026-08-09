@@ -62,7 +62,7 @@ export default {
         return null;
       }
 
-      const fileName = context.getFilename();
+      const fileName = context.filename;
       const fileDir = path.dirname(fileName);
       const importDir = path.resolve(fileDir, importBase);
 
