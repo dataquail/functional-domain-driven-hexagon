@@ -4,7 +4,7 @@
   "jsPlugins": [
     {
       "name": "local",
-      "specifier": "./scripts/eslint-rules/index.mjs"
+      "specifier": "./scripts/lint-rules/index.mjs"
     },
     {
       "name": "project-structure",
@@ -469,6 +469,13 @@
       "rules": {
         "local/prefer-named-exports": "off"
       }
+    },
+    {
+      "files": ["packages/components/primitives/**/*.tsx", "packages/components/patterns/**/*.tsx"],
+      "rules": {
+        "react/only-export-components": "off"
+      },
+      "plugins": ["react"]
     }
   ]
 }

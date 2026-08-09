@@ -52,7 +52,7 @@ The architecture does not name the whole — it names the parts. Hexagonal at th
 
 ### Enforcement
 
-Per ADR-0008, layering is enforced by `pnpm lint:deps` (the dependency-cruiser web pass) and the `project-structure/folder-structure` ESLint rule (`eslint.project-structure.mjs`, `webFeatures`, run under `pnpm lint`) for file-existence parity.
+Per ADR-0008, layering is enforced by `pnpm lint:deps` (the dependency-cruiser web pass) and the `project-structure/folder-structure` lint rule (`project-structure.config.mjs`, `webFeatures`, run under `pnpm lint`) for file-existence parity.
 
 **Dependency-cruiser:**
 

@@ -21,7 +21,7 @@ export type PolicyErrors = PersistenceUnavailable;
 
 // Must stay an `interface` (declaration merging does not work on `type`); the
 // lint rules that would fight the empty interface and rewrite it to `type` are
-// disabled for the registry seam files in eslint.config.mjs.
+// disabled for the registry seam files in .oxlintrc.json.
 export interface PolicyMap {}
 
 export type PolicyResource = keyof PolicyMap;

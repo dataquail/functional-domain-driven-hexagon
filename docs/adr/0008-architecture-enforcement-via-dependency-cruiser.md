@@ -1,4 +1,4 @@
-# ADR-0008: Architecture enforcement via dependency-cruiser and the folder-structure ESLint rule
+# ADR-0008: Architecture enforcement via dependency-cruiser and the folder-structure lint rule
 
 - Status: Accepted
 - Date: 2026-04-25
@@ -12,7 +12,7 @@ A code-review-only enforcement strategy fails predictably. The first time someon
 Two distinct properties need enforcing, and they call for two tools:
 
 - **Import-graph rules** — "this set of paths may not depend on this other set." This is edge reachability; dependency-cruiser is built for it.
-- **File-taxonomy rules** — which file _kinds_ a folder admits (layout), which sibling files a stereotype requires (parity: tests, fakes, stories), and which subfolders a container admits. These are about file _existence_, not edges — dependency-cruiser cannot express them. The `project-structure/folder-structure` ESLint rule expresses exactly this as declarative config.
+- **File-taxonomy rules** — which file _kinds_ a folder admits (layout), which sibling files a stereotype requires (parity: tests, fakes, stories), and which subfolders a container admits. These are about file _existence_, not edges — dependency-cruiser cannot express them. The `project-structure/folder-structure` lint rule expresses exactly this as declarative config.
 
 The forces: rules need to fail fast in CI with a clear message that says which rule was violated and how; rule authoring should be cheap; rules should be auditable as a single artifact; and tests need narrowly-scoped, obvious exemptions.
 
@@ -56,9 +56,9 @@ The shared kernel that was under `platform/ddd/` now lives in the CQRS package (
 
 **A rule about a workspace package is only live if that package resolves.** Every rule here matches on resolved paths, so an import dependency-cruiser cannot resolve is reported as `unknown` and silently satisfies every rule that mentions it — the rule does not fail, it stops existing. Two things make `@org/*` resolvable and must stay that way. The path mappings in the resolution-only tsconfigs are **extensionless**: `tsc` rewrites a mapped `.js` target to the `.ts` on disk, dependency-cruiser's resolver does not, and a `.js` target therefore resolves to nothing. Node resolution cannot cover for it either, because the workspace links `@org/*` at `packages/*/dist`, which exists only after a publish build. When adding a workspace package, add its extensionless mapping and add its source root to the cruise targets — otherwise rules written about it are decoration. A rule asserting a package's internals stay private is worth proving by writing the violation and watching it fail.
 
-### File-taxonomy rules — the folder-structure ESLint rule (`pnpm lint`)
+### File-taxonomy rules — the folder-structure lint rule (`pnpm lint`)
 
-The hexagonal/DDD file taxonomy — layout, sibling parity, and subfolder allowlists — is one declarative config, `eslint.project-structure.mjs`, enforced by the `project-structure/folder-structure` rule under `pnpm lint` (in-editor + CI). A single config file is the machine-readable specification of layout + parity for server modules, web features, the TanStack-query bridge, and the component library.
+The hexagonal/DDD file taxonomy — layout, sibling parity, and subfolder allowlists — is one declarative config, `project-structure.config.mjs`, enforced by the `project-structure/folder-structure` rule under `pnpm lint` (in-editor + CI). A single config file is the machine-readable specification of layout + parity for server modules, web features, the TanStack-query bridge, and the component library.
 
 - **Layout is deny-by-default.** A folder that enumerates its `children` rejects any file or subfolder not matched — the layout allowlist. This is the inverse of parity: parity asks whether a required sibling exists; layout asks whether a file is allowed to exist at all. It stops convention drift — the stray `session-utils.ts` in a subdomain folder or `todo-helpers.ts` in `commands/` that should have been an aggregate op or a named stereotype. **Container folders** (`domain/`, `domain/ports/`, `infrastructure/`, `interface/`) list only folder-typed child rules, so they admit no direct files: `domain/` admits only its subdomain folders (one per aggregate, holding that aggregate's stereotypes and its `*.repository.ts` port), `domain-services/`, and `ports/` — and `domain/ports/` in turn admits only `clients/` and `acl/` (the repository port having moved into the subdomain folder). Subfolders are allowlisted too: a module admits only `domain/ commands/ queries/ infrastructure/ interface/ policies/`, so a stray `modules/x/helpers/`, `modules/x/event-handlers/`, or `interface/grpc/` fails like a stray file.
 - **Parity is `enforceExistence`.** A rule node requires sibling files, resolved against the real filesystem. The requirement is an append onto the matched file's base name, so **adapter parity is anchored on the port**: a subdomain's `domain/<subdomain>/*.repository.ts` requires its `-live` / `-fake` / `-live.integration.test.ts` under `infrastructure/repositories/`. A consequence and a benefit: a port and its adapters must share a base name; a self-contained client with no port is correctly not required to have a live/fake.

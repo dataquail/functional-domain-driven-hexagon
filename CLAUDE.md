@@ -13,6 +13,7 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 | Frontend (`packages/web`, `packages/components`)      | `.claude/rules/frontend.md`                      | 0014, 0015, 0018                        |
 | Any Effect v4 API you are not certain of              | `.claude/rules/effect-v4-source.md`              | —                                       |
 | Writing comments (any package)                        | `.claude/rules/comments.md`                      | —                                       |
+| Lint config, custom rules, rule probes                | `.oxlintrc.json`, `scripts/lint-rules/`          | 0008, 0025                              |
 
 ## Monorepo map
 
@@ -33,15 +34,16 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 
 ## Commands
 
-| Command                                                | What it runs                                                                                    |
-| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| `pnpm check:all`                                       | lint + lint:deps + typecheck + check:effect + tests + storybook (the full gate)                 |
-| `pnpm lint`                                            | ESLint — includes the `project-structure/folder-structure` file-taxonomy rule (layout + parity) |
-| `pnpm check:effect`                                    | `@effect/language-service` diagnostics across all projects; fails on any finding                |
-| `pnpm test`                                            | vitest **unit** suite (excludes `*.integration.test.ts`), no DB                                 |
-| `DATABASE_URL_TEST=postgres://… pnpm test:integration` | **integration** suite only (`*.integration.test.ts`); hard-fails if no DB                       |
-| `pnpm lint:deps`                                       | dependency-cruiser architecture rules                                                           |
-| `pnpm effect:source`                                   | clone/refresh the Effect v4 source at `reference/effect` (gitignored, pinned to our beta)       |
+| Command                                                | What it runs                                                                                                 |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `pnpm check:all`                                       | lint + lint:rules + lint:deps + typecheck + check:effect + tests + storybook (the full gate)                 |
+| `pnpm lint`                                            | oxlint (type-aware) — includes the `project-structure/folder-structure` file-taxonomy rule (layout + parity) |
+| `pnpm check:effect`                                    | `@effect/language-service` diagnostics across all projects; fails on any finding                             |
+| `pnpm lint:rules`                                      | asserts each architectural rule still fires on a planted violation (ADR-0025)                                |
+| `pnpm test`                                            | vitest **unit** suite (excludes `*.integration.test.ts`), no DB                                              |
+| `DATABASE_URL_TEST=postgres://… pnpm test:integration` | **integration** suite only (`*.integration.test.ts`); hard-fails if no DB                                    |
+| `pnpm lint:deps`                                       | dependency-cruiser architecture rules                                                                        |
+| `pnpm effect:source`                                   | clone/refresh the Effect v4 source at `reference/effect` (gitignored, pinned to our beta)                    |
 
 ## Always in scope
 

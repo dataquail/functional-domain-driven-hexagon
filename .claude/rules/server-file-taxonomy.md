@@ -5,12 +5,12 @@
 
 The file taxonomy — layout (which file kinds a folder admits), sibling parity
 (required tests/fakes/stories), and subfolder allowlists — is one declarative
-config, `eslint.project-structure.mjs`, enforced by the
-`project-structure/folder-structure` ESLint rule under `pnpm lint` (in-editor + CI).
+config, `project-structure.config.mjs`, enforced by the
+`project-structure/folder-structure` lint rule under `pnpm lint` (in-editor + CI).
 It replaced the bespoke `check-folder-layout.mjs` / `check-test-parity.mjs`
 scripts (ADR-0008). Each rule carries a didactic `message` telling you _what to
 do_, not just that a file is misplaced. To add a genuinely new file kind or
-stereotype, declare it in `eslint.project-structure.mjs` — deliberately, not by
+stereotype, declare it in `project-structure.config.mjs` — deliberately, not by
 working around the check.
 
 **Parity.** If you create any of these without its sibling, `pnpm lint` fails:

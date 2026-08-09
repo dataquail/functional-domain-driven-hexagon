@@ -15,7 +15,7 @@
  * constraining the port's method names transitively keeps the implementations
  * dumb too.
  *
- * Scoped (via eslint.config.mjs) to:
+ * Scoped (via .oxlintrc.json) to:
  *   packages/server/src/modules/<m>/domain/ports/repositories/*.repository.ts
  */
 

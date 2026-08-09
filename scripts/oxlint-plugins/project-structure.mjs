@@ -1,5 +1,5 @@
 // oxlint's config is JSON, but the file taxonomy (ADR-0008) is authored in
-// `eslint.project-structure.mjs`, where helper functions keep the repetitive
+// `project-structure.config.mjs`, where helper functions keep the repetitive
 // port/adapter parity rules DRY. Serialising those configs into the JSON would
 // make the JSON the source of truth and cost us the helpers, so instead each
 // taxonomy gets a rule here with its config already bound. `.oxlintrc.json`
@@ -13,7 +13,7 @@ import {
   serverModules,
   webFeatures,
   webTanstackBridge,
-} from "../../eslint.project-structure.mjs";
+} from "../../project-structure.config.mjs";
 
 const folderStructure = projectStructurePlugin.rules["folder-structure"];
 
