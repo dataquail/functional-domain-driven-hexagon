@@ -64,7 +64,7 @@ No deconstruction, no logic. Adding an endpoint is a two-line change here plus a
 
 ### Test parity is enforced by the folder-structure rule
 
-Each `<endpoint>.endpoint.ts` must have a sibling `<endpoint>.endpoint.integration.test.ts`. This is one required-sibling obligation in the `project-structure/folder-structure` ESLint rule (`eslint.project-structure.mjs`, run under `pnpm lint` — ADR-0008), which resolves the sibling against the real filesystem. dependency-cruiser cannot express "for every file matching X there must exist a sibling matching Y" — it checks edges, not file existence — so the file taxonomy is the ESLint rule's job and the import graph is dependency-cruiser's.
+Each `<endpoint>.endpoint.ts` must have a sibling `<endpoint>.endpoint.integration.test.ts`. This is one required-sibling obligation in the `project-structure/folder-structure` lint rule (`project-structure.config.mjs`, run under `pnpm lint` — ADR-0008), which resolves the sibling against the real filesystem. dependency-cruiser cannot express "for every file matching X there must exist a sibling matching Y" — it checks edges, not file existence — so the file taxonomy is the ESLint rule's job and the import graph is dependency-cruiser's.
 
 Because the rule's `enforceExistence` is AND-only (no "either sibling"), endpoints carry **one canonical requirement**: `*.endpoint.integration.test.ts`, which exercises the real HTTP layer against a live database via `useServerTestRuntime(...)`. Two exceptions, encoded as explicitly named rules:
 
@@ -91,11 +91,11 @@ Each per-endpoint test file uses `useServerTestRuntime(["users"])` from `test-ut
 - **Endpoint takes deconstructed args** (e.g. `findEndpoint(urlParams)`). Rejected — pushes deconstruction into the registration file and creates a two-file change every time an endpoint's request envelope grows.
 - **"Handler" as the file/function name.** Rejected — the contract calls these endpoints; aligning vocabulary reduces translation cost.
 - **Per-endpoint Layer composition.** `HttpApiBuilder` requires a group be assembled in one call; the chosen shape achieves the same separation with normal function imports and one thin `index.ts`.
-- **Enforce parity via dependency-cruiser.** Rejected — "this file must exist" is not expressible as an edge rule; the integration tests go through `HttpApiClient`, so reachability isn't the right property. The folder-structure ESLint rule is the right tool.
+- **Enforce parity via dependency-cruiser.** Rejected — "this file must exist" is not expressible as an edge rule; the integration tests go through `HttpApiClient`, so reachability isn't the right property. The folder-structure lint rule is the right tool.
 
 ## Related
 
-- ADR-0008 (architecture enforcement) — dependency-cruiser covers import-graph rules; the folder-structure ESLint rule covers file-existence rules.
+- ADR-0008 (architecture enforcement) — dependency-cruiser covers import-graph rules; the folder-structure lint rule covers file-existence rules.
 - ADR-0009 (testing pyramid) — the per-endpoint integration test is the HTTP E2E test described there.
 - ADR-0010 (HTTP-only contracts) — the contract shape these endpoint files implement.
 - ADR-0024 (dot-delimited filenames) — the `.endpoint` / `.endpoint.integration.test` naming.

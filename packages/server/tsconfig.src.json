@@ -12,7 +12,6 @@
     "tsBuildInfoFile": ".tsbuildinfo/src.tsbuildinfo",
     "rootDir": "src",
 
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@org/contracts": ["../contracts/src/index.js"],

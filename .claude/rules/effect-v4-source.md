@@ -25,6 +25,6 @@ If the directory is absent, run the script rather than answering from memory. Do
 | Anti-patterns the maintainers call out     | `.patterns/effect.md`, `.patterns/testing.md`                                               |
 | What changed between betas                 | `.changeset/`, `packages/effect/CHANGELOG.md`                                               |
 
-- **Read-only reference, not a dependency.** Never import from it, add it to a tsconfig or the pnpm workspace, or copy a file out of it — take the idiom, not the file. It sits outside every package root, so `tsc -b`, vitest, dependency-cruiser and prettier never see it, and `reference/**` is a global eslint ignore. Keep it that way.
+- **Read-only reference, not a dependency.** Never import from it, add it to a tsconfig or the pnpm workspace, or copy a file out of it — take the idiom, not the file. It sits outside every package root, so `tsc -b`, vitest, dependency-cruiser and prettier never see it, and `reference/**` is a global lint ignore. Keep it that way.
 - **The checkout must match the pin.** A signature from a different beta is a wrong answer wearing the right shape. After bumping `effect` in the root `package.json`, re-run `pnpm effect:source`.
 - **Keep it out of repo-wide searches.** Project-wide grep and glob stay under `packages/`; reach into the reference deliberately, with a `reference/effect/…` path prefix.

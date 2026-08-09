@@ -16,7 +16,7 @@ import * as Layer from "effect/Layer";
 // the seam they extend. It must stay an `interface` (declaration merging does not
 // work on `type`); the lint rules that would fight the empty interface and
 // rewrite it to `type` are disabled for the registry seam files in
-// eslint.config.mjs.
+// .oxlintrc.json.
 export interface ResourceResolverMap {}
 
 export type ResourceName = keyof ResourceResolverMap;

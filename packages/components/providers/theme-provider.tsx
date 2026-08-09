@@ -43,6 +43,8 @@ export const ThemeProvider = ({
   // a template, and the recommended fix (an inline blocking script
   // that sets the html class before hydration) is left as a Phase 6
   // polish item.
+  // Not `setTheme` — that name belongs to the context method below, which also persists.
+  // eslint-disable-next-line react/hook-use-state
   const [theme, setThemeState] = React.useState<Theme>(defaultTheme);
 
   React.useEffect(() => {

@@ -8,7 +8,6 @@
     "declarationMap": false,
     "rootDir": ".",
     "types": ["node"],
-    "baseUrl": ".",
     // Playwright's runtime uses bundler-style resolution (no .js extension on
     // relative imports). Override the workspace-default NodeNext for this
     // package so tsc agrees with how Playwright actually loads files.

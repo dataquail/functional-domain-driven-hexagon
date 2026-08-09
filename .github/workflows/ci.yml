@@ -25,8 +25,12 @@ jobs:
       - uses: ./.github/actions/setup
       - name: Prettier
         run: pnpm format:check
-      - name: ESLint
+      - name: Oxlint
         run: pnpm lint
+      # A rule that stops firing still "passes". Assert each architectural rule
+      # reports on a known violation.
+      - name: Lint rule probes
+        run: pnpm lint:rules
 
   typecheck:
     name: Typecheck

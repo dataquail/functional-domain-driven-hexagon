@@ -42,7 +42,7 @@ Postgres permits FKs across schemas, and we keep a handful as a physical safety 
 
 ### Static enforcement via `@synapsestudios/eslint-plugin-data-boundaries`
 
-The rule `no-cross-schema-slonik-access` is configured in `eslint.config.mjs` with `modulePath: "/modules/"`. For any file under `packages/server/src/modules/<name>/`, the rule requires fully-qualified table names in slonik tagged templates and forbids access to tables in any schema other than the one that module owns.
+The rule `no-cross-schema-slonik-access` is configured in `.oxlintrc.json` with `modulePath: "/modules/"`. For any file under `packages/server/src/modules/<name>/`, the rule requires fully-qualified table names in slonik tagged templates and forbids access to tables in any schema other than the one that module owns.
 
 `packages/server/src/test-utils/` and `packages/jobs/src/test-utils/` are **not** scoped by the rule — they legitimately TRUNCATE across schemas to reset state between tests. The lint scope is also restricted to non-test files because integration tests sometimes seed via raw SQL into the owning module's neighbour (e.g. a `wallet` test seeding a `user.users` row through `@org/database` rather than the user repository).
 
