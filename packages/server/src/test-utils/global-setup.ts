@@ -1,7 +1,6 @@
 import { assertTestDatabaseConfigured, runMigrations } from "./test-database.js";
 
-// Vitest expects globalSetup to default-export a function. The eslint rule
-// prefers named exports, but the framework contract overrides that here.
+// Vitest expects globalSetup to default-export a function.
 export default async function globalSetup(): Promise<void> {
   // Integration mode must fail — never skip — when there's no database.
   // Assert the URL is set, then let `runMigrations` connect (it throws if the
