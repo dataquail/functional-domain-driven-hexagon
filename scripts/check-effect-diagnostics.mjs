@@ -1,11 +1,15 @@
 #!/usr/bin/env node
-// CI gate for effect-language-service diagnostics. Runs the LS diagnostics
-// over every project that contains Effect code and fails if any are reported.
-// Per-rule severities (e.g. `preferSchemaOverJson: off`) live in the shared
-// tsconfig plugin config (tsconfig.base.json), so what's reported here is
-// exactly what the editor shows. Keeping this green means the v4 idioms the
-// migration adopted (yieldable errors, Effect.fn handlers/endpoints, merged
-// provides) don't regress.
+// CI gate for the Effect language-service diagnostics, run through
+// `effect-tsgo diagnostics` (the LSP-based linter) rather than the standalone
+// language-service binary.
+//
+// Errors and warnings fail the build. `message`-severity diagnostics are
+// reported but do not gate: tsgo surfaces a class of advisory suggestions the
+// previous backend did not, and adopting them is separate work from changing
+// which tool reports them.
+//
+// Per-rule severities live in the shared tsconfig plugin config
+// (tsconfig.base.json), so what's reported here is what the editor shows.
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -26,22 +30,22 @@ const PROJECTS = [
   "packages/server/tsconfig.src.json",
   "packages/server/tsconfig.test.json",
   "packages/jobs/tsconfig.src.json",
-  // packages/jobs/tsconfig.test.json is omitted: loading it standalone trips a
-  // TypeScript-internal "Debug Failure" in the LS graph worker (a tooling flake,
-  // not an effect finding). The jobs source is gated above; its test surface is
-  // one trivial integration file. Re-add if a TS/LS bump resolves the crash.
+  "packages/jobs/tsconfig.test.json",
   "packages/cli/tsconfig.src.json",
   "packages/mcp/tsconfig.src.json",
   "packages/web/tsconfig.json",
   "packages/components/tsconfig.json",
 ].filter((p) => existsSync(join(ROOT, p)));
 
-let totalFindings = 0;
+const GATING = new Set(["error", "warning"]);
+
+let gatingTotal = 0;
+let messageTotal = 0;
 
 for (const project of PROJECTS) {
   const res = spawnSync(
     "pnpm",
-    ["exec", "effect-language-service", "diagnostics", "--project", project, "--format", "json"],
+    ["exec", "effect-tsgo", "diagnostics", "--project", project, "--format", "json"],
     { cwd: ROOT, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
   );
   let diagnostics = [];
@@ -53,23 +57,31 @@ for (const project of PROJECTS) {
     if (res.stderr) console.error(res.stderr.slice(0, 2000));
     process.exit(2);
   }
-  if (diagnostics.length > 0) {
-    totalFindings += diagnostics.length;
-    console.error(`✗ ${project}: ${diagnostics.length} effect diagnostic(s)`);
-    for (const d of diagnostics) {
+
+  const gating = diagnostics.filter((d) => GATING.has(d.severity));
+  const messages = diagnostics.length - gating.length;
+  messageTotal += messages;
+
+  if (gating.length > 0) {
+    gatingTotal += gating.length;
+    console.error(`✗ ${project}: ${gating.length} effect diagnostic(s)`);
+    for (const d of gating) {
       const rel = (d.file ?? "").replace(`${ROOT}/`, "");
-      console.error(`    ${rel}:${d.line}:${d.column}  ${d.name}`);
+      console.error(`    ${rel}:${d.line}:${d.column}  ${d.severity} ${d.name}`);
     }
   } else {
-    console.log(`✓ ${project}`);
+    console.log(`✓ ${project}${messages > 0 ? `  (${messages} message-level)` : ""}`);
   }
 }
 
-if (totalFindings > 0) {
+if (gatingTotal > 0) {
   console.error(
-    `\n${totalFindings} effect diagnostic(s) found. Fix them, or adjust the rule severity in ` +
-      `tsconfig.base.json's @effect/language-service plugin config if the rule doesn't apply.`,
+    `\n${gatingTotal} effect diagnostic(s) found. Fix them, disable the rule for a line with ` +
+      `\`// @effect-diagnostics-next-line <rule>:off\`, or adjust the severity in ` +
+      `tsconfig.base.json's plugin config if the rule doesn't apply.`,
   );
   process.exit(1);
 }
-console.log("\nNo effect-language-service diagnostics.");
+console.log(
+  `\nNo gating effect diagnostics.${messageTotal > 0 ? ` ${messageTotal} message-level suggestion(s) not gated.` : ""}`,
+);

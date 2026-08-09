@@ -120,6 +120,29 @@ boundary here is a deliberate wire or test seam.
 patch oxlint refuses to start rather than skipping the rules, and a frozen
 install restores it.
 
+### The LSP-based linter
+
+`check:effect` now runs `effect-tsgo diagnostics` instead of the standalone
+`effect-language-service` binary. Same diagnostics, same tsconfig plugin config,
+a better engine underneath: it checks `packages/jobs/tsconfig.test.json`, which
+the previous backend could not — that project was excluded because loading it
+standalone tripped a TypeScript-internal failure in the language-service graph
+worker.
+
+Errors and warnings gate; `message`-severity diagnostics are reported but do
+not. tsgo surfaces 198 advisory suggestions the previous backend did not, and
+acting on those is separate work from changing which tool reports them.
+Suppression for a single line is `// @effect-diagnostics-next-line <rule>:off`,
+which covers both this gate and the matching oxlint `effecttsgo/*` rule — one
+directive, both runners.
+
+`effect-tsgo setup` was deliberately **not** run. It proposes two changes this
+repo does not want: adding `--typescript` to the patch, which is the compiler
+swap declined above, and deleting the `diagnosticSeverity` block from the plugin
+config — including `preferSchemaOverJson: "off"` and the reasoning recorded
+beside it. The tsconfig plugin therefore still names `@effect/language-service`,
+which is what the editor loads.
+
 ## Consequences
 
 - `pnpm lint` is 3.3 seconds rather than 30, in editors as well as CI.
