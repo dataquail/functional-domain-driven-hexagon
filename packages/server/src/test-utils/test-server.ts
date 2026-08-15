@@ -1,4 +1,5 @@
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
+import { makePolicyRegistry, makeResourceResolverRegistry } from "@org/authz";
 import { type UserAuthMiddleware } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -53,8 +54,6 @@ import {
 } from "@/modules/todos/index.js";
 import { UserCommandsLive, UserModuleLive, UserQueriesLive } from "@/modules/user/index.js";
 import { WalletCommandsLive, WalletModuleLive } from "@/modules/wallet/index.js";
-import { makePolicyRegistry } from "@/platform/auth/policy-registry.js";
-import { makeResourceResolverRegistry } from "@/platform/auth/resource-resolver-registry.js";
 import {
   UserAuthMiddlewareFake,
   UserAuthMiddlewareFakeAsMember,

@@ -377,14 +377,16 @@
     },
     {
       "files": [
-        "packages/server/src/platform/auth/policy-registry.ts",
-        "packages/server/src/platform/auth/resource-resolver-registry.ts",
+        "packages/authz/src/config.ts",
+        "packages/authz/src/policy-registry.ts",
+        "packages/authz/src/resource-resolver-registry.ts",
+        "packages/authz/src/authz.test.ts",
         "packages/server/src/modules/**/*.command-handlers.ts",
         "packages/server/src/modules/**/*.query-handlers.ts",
         "packages/server/src/modules/**/queries/*.query.ts",
         "packages/server/src/modules/**/policies/*.policies.ts",
         "packages/server/src/modules/**/policies/*.resource-resolver*.ts",
-        "packages/server/src/platform/auth/authz.test.ts"
+        "packages/server/src/platform/auth/authz.ts"
       ],
       "rules": {
         "typescript/consistent-type-definitions": "off"
@@ -392,8 +394,9 @@
     },
     {
       "files": [
-        "packages/server/src/platform/auth/policy-registry.ts",
-        "packages/server/src/platform/auth/resource-resolver-registry.ts"
+        "packages/authz/src/config.ts",
+        "packages/authz/src/policy-registry.ts",
+        "packages/authz/src/resource-resolver-registry.ts"
       ],
       "rules": {
         "typescript/no-empty-interface": "off",

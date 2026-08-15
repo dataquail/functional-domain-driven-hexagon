@@ -8,6 +8,7 @@
   "references": [
     { "path": "packages/contracts/tsconfig.build.json" },
     { "path": "packages/cqrs/tsconfig.build.json" },
+    { "path": "packages/authz/tsconfig.build.json" },
     { "path": "packages/database/tsconfig.build.json" },
     { "path": "packages/api-client/tsconfig.build.json" },
     { "path": "packages/server/tsconfig.build.json" },

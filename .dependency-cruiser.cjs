@@ -208,7 +208,7 @@ module.exports = {
       name: "policies-isolation",
       severity: "error",
       comment:
-        "A module's `policies/` ring answers 'may this caller do this?' and must never reach the write-side consistency boundary to do it. It may import: sibling policy files, its OWN `queries/` (the read models its checks and resolvers ask), its own `domain/ports/acl/` + the `infrastructure/acl/` adapters its contribution layer provides, its own branded IDs (`domain/<sub>/*.id.ts`), `platform/auth/`, `@org/cqrs` (the QueryBus it dispatches through), `platform/ddd/` (PersistenceUnavailable), `platform/ids/`, `@org/database` (to capture Database for a bus dispatch), and `@org/contracts` (CurrentUser + the Forbidden/NotFound wire errors authz lifts to). Everything else in `domain/` is off-limits: roots, *.root-ops.ts, repositories, specifications, value-objects, entities, and domain-services. Also barred: own commands and event-handlers, `interface/`, `platform/*-live.ts`, and (ADR-0022) another module's barrel — a cross-module answer comes from an `acl/` port, not a direct reach. An authorization check reading aggregate state is the violation this rule exists to stop: model the question as a read model instead. Test files excluded. See ADR-0021, ADR-0022.",
+        "A module's `policies/` ring answers 'may this caller do this?' and must never reach the write-side consistency boundary to do it. It may import: sibling policy files, its OWN `queries/` (the read models its checks and resolvers ask), its own `domain/ports/acl/` + the `infrastructure/acl/` adapters its contribution layer provides, its own branded IDs (`domain/<sub>/*.id.ts`), `@org/authz` (the check/resolver vocabulary it registers against), `@org/cqrs` (the QueryBus it dispatches through), `platform/ddd/` (PersistenceUnavailable), `platform/ids/`, `@org/database` (to capture Database for a bus dispatch), and `@org/contracts` (CurrentUser + the Forbidden/NotFound wire errors authz lifts to). Everything else in `domain/` is off-limits: roots, *.root-ops.ts, repositories, specifications, value-objects, entities, and domain-services. Also barred: own commands and event-handlers, `interface/`, `platform/*-live.ts`, and (ADR-0022) another module's barrel — a cross-module answer comes from an `acl/` port, not a direct reach. An authorization check reading aggregate state is the violation this rule exists to stop: model the question as a read model instead. Test files excluded. See ADR-0021, ADR-0022.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/policies/",
         pathNot: "\\.test\\.ts$",
@@ -221,8 +221,8 @@ module.exports = {
           "^packages/server/src/modules/$1/domain/ports/acl/",
           "^packages/server/src/modules/$1/infrastructure/acl/",
           "^packages/server/src/modules/$1/domain/[^/]+/[^/]+\\.id\\.ts$",
+          "^packages/authz/src/",
           "^packages/cqrs/src/",
-          "^packages/server/src/platform/auth/",
           "^packages/server/src/platform/ddd/",
           "^packages/server/src/platform/ids/",
           "^packages/database/",
@@ -328,6 +328,36 @@ module.exports = {
         ],
       },
       to: { path: "^packages/server/src/modules/[^/]+/domain/ports/acl/" },
+    },
+    {
+      name: "authz-package-stays-standalone",
+      severity: "error",
+      comment:
+        "`@org/authz` is a self-contained library headed for npm: it is written against three host types it does not own (the caller, what a check may fail with, how a resolver reports absence) and one host value (the error a denial becomes), all supplied through the `AuthzConfig` augmentation and `makeHasPermissions`. Reaching into another workspace package here would nail the DSL back to this application — a wire error, a session shape, a persistence vocabulary — and the seam that exists to prevent exactly that would be dead weight. Widen `AuthzConfig` instead.",
+      from: { path: "^packages/authz/src/" },
+      to: { path: "^packages/(?!authz/)" },
+    },
+    {
+      name: "authz-no-external-beyond-effect",
+      severity: "error",
+      comment:
+        "`@org/authz` declares `effect` as its only peer dependency, so an npm import beyond it would install as a surprise transitive dependency of every consumer. `npm-no-pkg` is in the list because the undeclared import — one that resolves through the workspace root but appears in no package.json — is the way this actually breaks. Test files excluded.",
+      from: {
+        path: "^packages/authz/src/",
+        pathNot: "\\.test\\.ts$",
+      },
+      to: {
+        dependencyTypes: [
+          "npm",
+          "npm-dev",
+          "npm-peer",
+          "npm-optional",
+          "npm-bundled",
+          "npm-no-pkg",
+          "npm-unknown",
+        ],
+        pathNot: "/node_modules/effect/",
+      },
     },
     {
       name: "cqrs-internals-stay-inside-the-cqrs-package",

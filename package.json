@@ -24,7 +24,7 @@
     "lint:fix": "oxlint --type-aware packages --fix",
     "lint:rules": "node scripts/lint-rule-probes.mjs",
     "graph": "node scripts/service-graph.mjs",
-    "lint:deps": "depcruise --config .dependency-cruiser.cjs packages/server/src packages/contracts/src packages/jobs/src packages/cqrs/src && depcruise --config .dependency-cruiser.cjs --ts-config tsconfig.depcruise-web.json packages/web packages/components",
+    "lint:deps": "depcruise --config .dependency-cruiser.cjs packages/server/src packages/contracts/src packages/jobs/src packages/cqrs/src packages/authz/src && depcruise --config .dependency-cruiser.cjs --ts-config tsconfig.depcruise-web.json packages/web packages/components",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:integration": "TEST_INTEGRATION=true pnpm --workspace-concurrency=1 --filter @org/server --filter @org/jobs run test --run",

@@ -69,8 +69,9 @@ yield * Authz.hasPermissions(UserResource, Actions.Update, request.path.id);
 ```
 
 - **Resource** is a name like `"user"` keyed into `ResourceResolverMap`.
-- **Action** is one of `Actions.{Create, Read, Update, Delete}` —
-  the platform-wide CRUD vocabulary.
+- **Action** is one of `Actions.{Create, Read, Update, Delete}` — this
+  application's declared vocabulary, which the DSL takes as given rather
+  than defines.
 - **id** is decided by the resource, not the action. The variadic-tuple
   type on the third arg gives `Expected 3 arguments, but got 2` if you
   forget it, which is clearer than the `not assignable to never`
@@ -132,7 +133,11 @@ later produced a 503, making the status a caller sees depend on which of
 two adjacent reads happened to reach the store first. The boundary that
 translates it to a status is the endpoint, and it can only see a failure.
 
-### Actions are CRUD; business operations live in commands
+### This application's actions are CRUD; business operations live in commands
+
+The vocabulary is declared by this application, not by the DSL — the library
+takes whatever union the host names, so a different application is free to model
+per-resource verbs or a richer set. What follows is this application's choice.
 
 Two endpoints that both UPDATE a user — promote-to-super-admin and
 demote-from-super-admin — share the same `(user, update)` policy
@@ -239,6 +244,53 @@ ambient transaction, so this is only immediate while the read path stays
 synchronous and same-database. A query backing an authorization decision
 must never be served from a replica or a projection — see ADR-0022.
 
+### Shipped as a standalone package
+
+The DSL lives in a standalone `@org/authz` workspace package that the server
+imports, staged for eventual publication alongside the CQRS package. Its only
+dependency is Effect. Nothing else about the decisions above changes: the two
+declaration-merged registries, the resource-decides-the-id rule, the CRUD
+vocabulary, and the fully-closed checks are the package's own design.
+
+What the split forces into the open is everything the DSL is written against but
+does not own. There are five, and each was previously named directly: the caller
+identity, what a check or a resolver may fail with, how a resolver reports
+absence, the vocabulary of actions, and the error a denial becomes. A library
+that names any of them is not a library. Four are this application's session
+shape, its persistence vocabulary, and two HTTP statuses, so the first consumer
+with a different transport would have to fork it. The fifth is worse, because it
+is not a technical coupling at all: shipping CRUD inside the mechanism would
+impose an authorization taxonomy on every consumer, and the argument for CRUD
+made above is a modelling decision this application reached, not a property of
+registries and resolvers.
+
+The four types arrive as one augmented interface the host declares once — the
+same mechanism the two registries already use, which is what keeps the surface
+uniform rather than adding a second style of configuration. They are not generic
+parameters because the registries are themselves declaration-merged: a module
+writes a check type for a resource name at the type level, with no value to
+infer from, so parameters would have to be restated at every registration site
+instead of decided once. The action slot left unconfigured is `string`, which
+constrains nothing; declaring it is what turns a shared vocabulary into
+something the compiler holds every resource to.
+
+The fifth is a value the library constructs, so it arrives as a constructor
+passed where the endpoint-facing function is built. It takes the caller's
+identity key alongside it, which is also what puts that key — and nothing more
+— in the returned function's requirement channel. Both fields are supplied as
+Effects rather than as a key and an error value, because a service key and a
+yieldable error already are Effects: the host writes the same two expressions it
+would have written inline, and the denial type is inferred rather than declared
+a second time.
+
+Two consequences. The library compiles against empty registries, where every
+resource type collapses to nothing — so a handful of assertions that are
+load-bearing in a host's program read as redundant when the package is linted
+alone. And a host's type-level configuration has to be present in every
+TypeScript program that names a check, which is a property of module
+augmentation generally, not of this design: a test program that includes only
+test files needs the configuring file added to it explicitly.
+
 ### Wiring respects the composition-root rule
 
 Each module publishes its policy contribution and its resource
@@ -308,7 +360,9 @@ and module barrels stay barrel-content-discipline compliant.
   match jaclp's vocabulary exactly and reduce surface area.
 - **Per-resource action enums** (e.g. `UserActions.PromoteToSuperAdmin`).
   Tried briefly; rejected because business operations don't belong in
-  the authz vocabulary. Same complaint as bespoke action strings.
+  the authz vocabulary. Same complaint as bespoke action strings. Rejected for
+  this application only — the vocabulary is a host declaration, so nothing in
+  the DSL stands in the way of an application that wants them.
 
 ## Related
 

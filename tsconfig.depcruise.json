@@ -11,6 +11,8 @@
     "paths": {
       "@/*": ["./packages/server/src/*"],
       "@org/contracts/*": ["./packages/contracts/src/*"],
+      "@org/authz": ["./packages/authz/src/index.ts"],
+      "@org/authz/*": ["./packages/authz/src/*"],
       "@org/cqrs": ["./packages/cqrs/src/index.ts"],
       "@org/cqrs/*": ["./packages/cqrs/src/*"],
       "@org/database": ["./packages/database/src/index.ts"],

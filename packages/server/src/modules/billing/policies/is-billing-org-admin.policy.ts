@@ -1,5 +1,6 @@
+import { type ResourceCheck } from "@org/authz";
+
 import { type OrganizationAccess } from "@/modules/billing/domain/ports/acl/organization-access.acl.js";
-import { type ResourceCheck } from "@/platform/auth/policy-registry.js";
 
 import { type BillingResourceContext } from "./billing.resource-resolver.js";
 

@@ -54,6 +54,8 @@
       "@org/server": ["./packages/server/src/index.js"],
       "@org/server/*": ["./packages/server/src/*.js"],
       "@org/server/test/*": ["./packages/server/test/*.js"],
+      "@org/authz": ["./packages/authz/src/index.js"],
+      "@org/authz/*": ["./packages/authz/src/*.js"],
       "@org/cqrs": ["./packages/cqrs/src/index.js"],
       "@org/cqrs/*": ["./packages/cqrs/src/*.js"],
       "@org/database": ["./packages/database/src/index.js"],

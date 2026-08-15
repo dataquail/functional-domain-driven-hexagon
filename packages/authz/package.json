@@ -1,0 +1,44 @@
+{
+  "name": "@org/authz",
+  "version": "0.0.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "Declarative per-route authorization for Effect: policy checks registered against (resource, action) pairs, per-request resource resolution, and composable check combinators",
+  "publishConfig": {
+    "access": "public",
+    "directory": "dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dataquail/functional-domain-driven-hexagon.git",
+    "directory": "packages/authz"
+  },
+  "scripts": {
+    "codegen": "build-utils prepare-v2",
+    "build": "tsc -b tsconfig.build.json",
+    "build-esm": "tsc -b tsconfig.build.json",
+    "build-cjs": "babel build/esm --plugins @babel/transform-export-namespace-from --plugins @babel/transform-modules-commonjs --out-dir build/cjs --source-maps",
+    "build-annotate": "babel build/esm --plugins annotate-pure-calls --out-dir build/esm --source-maps",
+    "check": "tsc -b tsconfig.json",
+    "test": "vitest",
+    "coverage": "vitest --coverage"
+  },
+  "peerDependencies": {
+    "effect": "4.0.0-beta.94"
+  },
+  "devDependencies": {
+    "effect": "4.0.0-beta.94"
+  },
+  "effect": {
+    "generateExports": {
+      "include": [
+        "*.ts"
+      ]
+    },
+    "generateIndex": {
+      "include": [
+        "*.ts"
+      ]
+    }
+  }
+}

@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
+import { makePolicyRegistry, makeResourceResolverRegistry } from "@org/authz";
 import { Database } from "@org/database/index";
 import * as dotenv from "dotenv";
 import * as Duration from "effect/Duration";
@@ -63,8 +64,6 @@ import {
 } from "./modules/todos/index.js";
 import { UserCommandsLive, UserModuleLive, UserQueriesLive } from "./modules/user/index.js";
 import { WalletCommandsLive, WalletModuleLive } from "./modules/wallet/index.js";
-import { makePolicyRegistry } from "./platform/auth/policy-registry.js";
-import { makeResourceResolverRegistry } from "./platform/auth/resource-resolver-registry.js";
 import { DatabaseLive } from "./platform/database-live.js";
 import { UserAuthMiddlewareLive } from "./platform/middlewares/auth-middleware-live.js";
 

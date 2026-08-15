@@ -1,3 +1,4 @@
+import { type Resolver } from "@org/authz";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { QueryBus } from "@org/cqrs";
 import * as Context from "effect/Context";
@@ -6,7 +7,6 @@ import * as Layer from "effect/Layer";
 
 import { type TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { FindTodoOrganizationQuery } from "@/modules/todos/queries/find-todo-organization.query.js";
-import { type Resolver } from "@/platform/auth/resource-resolver-registry.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 // Todos expose two policy resources, split by what is actually being
@@ -32,7 +32,7 @@ export type TodoResourceId = {
   readonly todoId: TodoId;
 };
 
-declare module "@/platform/auth/resource-resolver-registry.js" {
+declare module "@org/authz/resource-resolver-registry" {
   interface ResourceResolverMap {
     todoCollection: {
       resourceType: TodoOrgContext;

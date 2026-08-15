@@ -1,3 +1,4 @@
+import { Check, type CheckFor, type PolicyContribution } from "@org/authz";
 import { QueryBus } from "@org/cqrs";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
@@ -8,8 +9,6 @@ import { PlatformRolesLive } from "@/modules/organization/infrastructure/acl/pla
 import { FindMembershipQuery } from "@/modules/organization/queries/find-membership.policy-query.js";
 import { type OrganizationAuthzView } from "@/modules/organization/queries/find-organization-by-id.query.js";
 import { FindUserOrganizationRolesQuery } from "@/modules/organization/queries/find-user-organization-roles.policy-query.js";
-import * as Check from "@/platform/auth/check.js";
-import type * as PolicyRegistry from "@/platform/auth/policy-registry.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 import { makeIsMember, type UserOrganizationLookup } from "./is-member.policy.js";
@@ -33,21 +32,21 @@ import { makeIsOrgSuperAdmin } from "./is-org-super-admin.policy.js";
 // policy it gates rather than in the check, so the check stays a question.
 const ORG_ADMIN_ROLE = "admin";
 
-declare module "@/platform/auth/resource-resolver-registry.js" {
+declare module "@org/authz/resource-resolver-registry" {
   interface ResourceResolverMap {
     organization: { resourceType: OrganizationAuthzView; idType: OrganizationId };
   }
 }
 
-declare module "@/platform/auth/policy-registry.js" {
+declare module "@org/authz/policy-registry" {
   interface PolicyMap {
     organization: {
-      read: PolicyRegistry.CheckFor<"organization">;
-      update: PolicyRegistry.CheckFor<"organization">;
-      delete: PolicyRegistry.CheckFor<"organization">;
+      read: CheckFor<"organization">;
+      update: CheckFor<"organization">;
+      delete: CheckFor<"organization">;
     };
     organizationCollection: {
-      read: PolicyRegistry.CheckFor<"organizationCollection">;
+      read: CheckFor<"organizationCollection">;
     };
   }
 }
@@ -61,7 +60,7 @@ export const OrganizationCollectionResource = "organizationCollection" as const;
 // they are its own policy-queries dispatched through the bus.
 export class OrganizationPolicyContribution extends Context.Service<
   OrganizationPolicyContribution,
-  PolicyRegistry.PolicyContribution
+  PolicyContribution
 >()("OrganizationPolicyContribution") {}
 
 export const OrganizationPoliciesLive = Layer.effect(

@@ -50,6 +50,7 @@ const config: ViteUserConfig = {
     // don't skip" when the DB is missing.
     passWithNoTests: true,
     alias: {
+      ...alias("authz"),
       ...alias("cli"),
       ...alias("contracts"),
       ...alias("cqrs"),
