@@ -1,5 +1,6 @@
+import { type ResourceCheck } from "@org/authz";
+
 import { type OrganizationAuthzView } from "@/modules/organization/queries/find-organization-by-id.query.js";
-import { type ResourceCheck } from "@/platform/auth/policy-registry.js";
 
 import { type UserOrganizationLookup } from "./is-member.policy.js";
 

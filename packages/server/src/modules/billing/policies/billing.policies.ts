@@ -1,3 +1,4 @@
+import { Check, type CheckFor, type PolicyContribution } from "@org/authz";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -6,8 +7,6 @@ import { OrganizationAccess } from "@/modules/billing/domain/ports/acl/organizat
 import { PlatformRoles } from "@/modules/billing/domain/ports/acl/platform-roles.acl.js";
 import { OrganizationAccessLive } from "@/modules/billing/infrastructure/acl/organization-access.acl-live.js";
 import { PlatformRolesLive } from "@/modules/billing/infrastructure/acl/platform-roles.acl-live.js";
-import * as Check from "@/platform/auth/check.js";
-import type * as PolicyRegistry from "@/platform/auth/policy-registry.js";
 
 import { makeIsBillingOrgAdmin } from "./is-billing-org-admin.policy.js";
 import { makeIsBillingOrgMember } from "./is-billing-org-member.policy.js";
@@ -24,11 +23,11 @@ import { makeIsBillingSuperAdmin } from "./is-billing-super-admin.policy.js";
 // it has no policy; authentication is by signature, verified inside the
 // endpoint.
 
-declare module "@/platform/auth/policy-registry.js" {
+declare module "@org/authz/policy-registry" {
   interface PolicyMap {
     billing: {
-      read: PolicyRegistry.CheckFor<"billing">;
-      update: PolicyRegistry.CheckFor<"billing">;
+      read: CheckFor<"billing">;
+      update: CheckFor<"billing">;
     };
   }
 }
@@ -39,7 +38,7 @@ export const BillingResource = "billing" as const;
 // makes every registered check `R = never`.
 export class BillingPolicyContribution extends Context.Service<
   BillingPolicyContribution,
-  PolicyRegistry.PolicyContribution
+  PolicyContribution
 >()("BillingPolicyContribution") {}
 
 export const BillingPoliciesLive = Layer.effect(

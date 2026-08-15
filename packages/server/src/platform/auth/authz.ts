@@ -1,94 +1,33 @@
+import { makeHasPermissions } from "@org/authz";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { CurrentUser } from "@org/contracts/Policy";
 import { type PersistenceUnavailable } from "@org/cqrs";
-import * as Effect from "effect/Effect";
 
-import { type ActionFor, PolicyRegistry, type PolicyResource } from "./policy-registry.js";
-import {
-  type IdFor,
-  type NotFoundFor,
-  type ResourceName,
-  ResourceResolverRegistry,
-} from "./resource-resolver-registry.js";
+// Aliased: an augmentation body resolves unqualified names in the target
+// module's scope, where `Action` is the library's own alias for this slot.
+import { type Action as AppAction } from "./actions.js";
 
-// Endpoint-facing API. Mirrors jaclp's `hasPermission(resource, action, id)`.
+// This application's half of `@org/authz`. The library owns the mechanism —
+// the (resource, action) registry, per-request resource resolution, the check
+// combinators — and names none of the five things below, so that it stays free
+// of HTTP statuses, of this application's session shape, of `@org/cqrs`, and of
+// any opinion about how authorization should be modelled.
 //
-// The resource decides whether an id is taken, on every action:
-//   - Scoped resource (registered in `ResourceResolverMap`): id is
-//     REQUIRED. The framework loads the resource via the registered
-//     resolver and hands it to the check, so a check can never receive
-//     `undefined`. Resource-not-found propagates as `NotFound`, which the
-//     endpoint translates to a domain-specific `*NotFoundError`.
-//   - Unscoped resource (absent from that map): id is FORBIDDEN, no
-//     resolver runs, and `NotFound` is absent from the error channel — so
-//     an unscoped call site has no unreachable branch to defend against.
-//
-// A policy returning `false` becomes `Forbidden` in either case.
-//
-// Variadic-tuple shape on the third arg gives clearer TS errors than
-// overloads would: missing-id mistakes turn into "Expected 3 arguments,
-// but got 2," not "not assignable to type 'never'."
+// The four types are declared once here and reach every registration site
+// through the library's own aliases. The denial is a value rather than a type,
+// so it arrives as a constructor: a `Schema.TaggedErrorClass` instance is
+// already a failed Effect, which is why the lambda needs no lifting.
 
-type IdArgsFor<R extends PolicyResource> = R extends ResourceName ? [id: IdFor<R>] : [];
+declare module "@org/authz/config" {
+  interface AuthzConfig {
+    caller: CurrentUser["Service"];
+    checkFailure: PersistenceUnavailable;
+    resourceMissing: CustomHttpApiError.NotFound;
+    action: AppAction;
+  }
+}
 
-type ErrorsFor<R extends PolicyResource> = R extends ResourceName
-  ? CustomHttpApiError.Forbidden | PersistenceUnavailable | NotFoundFor<R>
-  : CustomHttpApiError.Forbidden | PersistenceUnavailable;
-
-export const hasPermissions = <R extends PolicyResource, A extends ActionFor<R>>(
-  resource: R,
-  action: A,
-  ...args: IdArgsFor<R>
-): Effect.Effect<void, ErrorsFor<R>, CurrentUser | PolicyRegistry | ResourceResolverRegistry> =>
-  Effect.gen(function* () {
-    const caller = yield* CurrentUser;
-    const registry = yield* PolicyRegistry;
-    const check = registry.get(resource, action);
-    if (check === undefined) {
-      return yield* Effect.die(
-        `PolicyRegistry: no policy registered for "${String(resource)}.${String(action)}"`,
-      );
-    }
-
-    // Erase the per-call generics for the runtime lookup: the resolver
-    // is a name-keyed map (`Map<string, fn>` under the hood) and the
-    // variadic-tuple input type already guarantees `(resource, id)` are
-    // a valid pair at the call site. With multiple registered resources
-    // `IdFor<R>` widens to a union of brands; the cast on `id` says
-    // "this id belongs to *this* resource" — TS can't track that
-    // through the erased pair lookup.
-    type AnyResource = PolicyResource & ResourceName;
-    const id = (args as ReadonlyArray<unknown>)[0] as IdFor<AnyResource> | undefined;
-    let loaded: unknown = undefined;
-    if (id !== undefined) {
-      const resolvers = yield* ResourceResolverRegistry;
-      // `resolve(R, IdFor<R>)` doesn't see the connection between
-      // `id`'s widened union brand and the specific `resource` we have
-      // here. The cast forces them into the same `AnyResource` slot —
-      // sound because the variadic-tuple input already guarantees the
-      // pair at the call site.
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-      loaded = yield* resolvers.resolve(resource as AnyResource, id);
-    }
-
-    const allowed = yield* check(caller, loaded);
-    if (!allowed) {
-      return yield* new CustomHttpApiError.Forbidden({
-        message: `Not permitted: ${String(resource)}.${String(action)}`,
-      });
-    }
-  }).pipe(
-    Effect.withSpan(`authz.hasPermissions.${String(resource)}.${String(action)}`),
-    // The body's error union is the widest case (`NotFound` included). The
-    // runtime `id !== undefined` branch above IS the scoped/unscoped split
-    // that `ErrorsFor` keys on, so `NotFound` is only reachable when
-    // `R extends ResourceName` — which TS can't verify through the erased
-    // name-keyed resolver lookup. Only the error channel is narrowed here:
-    // erasing `R` too would mask a genuinely unsatisfied requirement.
-    (effect) =>
-      effect as Effect.Effect<
-        void,
-        ErrorsFor<R>,
-        CurrentUser | PolicyRegistry | ResourceResolverRegistry
-      >,
-  );
+export const hasPermissions = makeHasPermissions({
+  caller: CurrentUser,
+  forbidden: (message) => new CustomHttpApiError.Forbidden({ message }),
+});

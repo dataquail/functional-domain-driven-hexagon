@@ -27,6 +27,7 @@
   "dependencies": {
     "@aws-sdk/client-sesv2": "^3.1081.0",
     "@effect/platform-node": "4.0.0-beta.94",
+    "@org/authz": "workspace:^",
     "@org/contracts": "workspace:^",
     "@org/cqrs": "workspace:^",
     "@org/database": "workspace:^",

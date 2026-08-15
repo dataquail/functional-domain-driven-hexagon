@@ -1,8 +1,8 @@
+import { type Resolver } from "@org/authz";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { type Resolver } from "@/platform/auth/resource-resolver-registry.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 // Billing exposes a single org-scoped policy resource. The "resource"
@@ -13,7 +13,7 @@ import { type OrganizationId } from "@/platform/ids/organization-id.js";
 // own ACL port and decide.
 export type BillingResourceContext = { readonly organizationId: OrganizationId };
 
-declare module "@/platform/auth/resource-resolver-registry.js" {
+declare module "@org/authz/resource-resolver-registry" {
   interface ResourceResolverMap {
     billing: {
       resourceType: BillingResourceContext;

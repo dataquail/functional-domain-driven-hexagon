@@ -1,3 +1,4 @@
+import { type Resolver } from "@org/authz";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { QueryBus } from "@org/cqrs";
 import * as Context from "effect/Context";
@@ -5,7 +6,6 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { FindOrganizationByIdQuery } from "@/modules/organization/queries/find-organization-by-id.query.js";
-import { type Resolver } from "@/platform/auth/resource-resolver-registry.js";
 
 // Resolves the `organization` authz resource off the read side: the checks only
 // need the org id, and the load exists to distinguish "no such organization"

@@ -1,3 +1,4 @@
+import { Check, type CheckFor, type PolicyContribution } from "@org/authz";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -6,8 +7,6 @@ import { OrganizationAccess } from "@/modules/todos/domain/ports/acl/organizatio
 import { PlatformRoles } from "@/modules/todos/domain/ports/acl/platform-roles.acl.js";
 import { OrganizationAccessLive } from "@/modules/todos/infrastructure/acl/organization-access.acl-live.js";
 import { PlatformRolesLive } from "@/modules/todos/infrastructure/acl/platform-roles.acl-live.js";
-import * as Check from "@/platform/auth/check.js";
-import type * as PolicyRegistry from "@/platform/auth/policy-registry.js";
 
 import { makeIsTodoOrgMember } from "./is-todo-org-member.policy.js";
 import { makeIsTodoSuperAdmin } from "./is-todo-super-admin.policy.js";
@@ -19,15 +18,15 @@ import { makeIsTodoSuperAdmin } from "./is-todo-super-admin.policy.js";
 //   - `todo` (by the (orgId, todoId) pair) — `update` / `delete` one todo.
 // All gate on org membership; super-admin bypasses.
 
-declare module "@/platform/auth/policy-registry.js" {
+declare module "@org/authz/policy-registry" {
   interface PolicyMap {
     todoCollection: {
-      create: PolicyRegistry.CheckFor<"todoCollection">;
-      read: PolicyRegistry.CheckFor<"todoCollection">;
+      create: CheckFor<"todoCollection">;
+      read: CheckFor<"todoCollection">;
     };
     todo: {
-      update: PolicyRegistry.CheckFor<"todo">;
-      delete: PolicyRegistry.CheckFor<"todo">;
+      update: CheckFor<"todo">;
+      delete: CheckFor<"todo">;
     };
   }
 }
@@ -41,7 +40,7 @@ export const TodoResource = "todo" as const;
 // shape the resource resolvers already use.
 export class TodoPolicyContribution extends Context.Service<
   TodoPolicyContribution,
-  PolicyRegistry.PolicyContribution
+  PolicyContribution
 >()("TodoPolicyContribution") {}
 
 export const TodoPoliciesLive = Layer.effect(

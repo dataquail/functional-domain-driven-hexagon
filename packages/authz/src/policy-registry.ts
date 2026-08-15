@@ -1,23 +1,17 @@
-import { type CurrentUser } from "@org/contracts/Policy";
-import { type PersistenceUnavailable } from "@org/cqrs";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { type Action } from "./actions.js";
+import { type Action, type Caller, type CheckFailure } from "./config.js";
 import { type ResourceName, type ResourceTypeFor } from "./resource-resolver-registry.js";
 
-export type PolicyErrors = PersistenceUnavailable;
-
-// Registry of policy checks, keyed by (resource, action). Actions are
-// the platform-wide CRUD verbs from `actions.ts`. Each module registers
+// Registry of policy checks, keyed by (resource, action). The action
+// vocabulary is the host's, declared on `AuthzConfig`. Each module registers
 // the subset of (resource, action) pairs it owns; the check callback
 // encapsulates all the nuance — owner-vs-admin, scoped grants, etc.
 //
-// Modules extend `PolicyMap` via declaration merging from their
-// per-module `policies/<module>-policies.ts` files. The composition
-// root Layer-merges the per-module contributions into a single
-// registry.
+// A host extends `PolicyMap` via declaration merging, and its composition
+// root Layer-merges the per-module contributions into a single registry.
 
 // Must stay an `interface` (declaration merging does not work on `type`); the
 // lint rules that would fight the empty interface and rewrite it to `type` are
@@ -33,13 +27,11 @@ export type ActionFor<R extends PolicyResource> = keyof PolicyMap[R] & Action;
 // than reaching a shared service through the environment. That is what keeps
 // `R = never`, and what lets a policy unit test provide nothing at all.
 export type ResourceCheck<Resource> = (
-  caller: CurrentUser["Service"],
+  caller: Caller,
   resource: Resource,
-) => Effect.Effect<boolean, PolicyErrors, never>;
+) => Effect.Effect<boolean, CheckFailure, never>;
 
-export type UnscopedCheck = (
-  caller: CurrentUser["Service"],
-) => Effect.Effect<boolean, PolicyErrors, never>;
+export type UnscopedCheck = (caller: Caller) => Effect.Effect<boolean, CheckFailure, never>;
 
 // Per-resource callback type. Registration in `ResourceResolverMap` is the
 // switch: a resource with a resolver always hands its resolved value to the
@@ -57,8 +49,8 @@ export type CheckFor<R extends PolicyResource> = R extends ResourceName
 // keeps the call site readable as checks grow.
 export type CheckOrArray<R extends PolicyResource> = CheckFor<R> | ReadonlyArray<CheckFor<R>>;
 
-// Module contributions are typed as a partial nested object — modules
-// only fill in entries for resources/actions they own.
+// Contributions are typed as a partial nested object — a module only
+// fills in entries for resources/actions it owns.
 export type PolicyContribution = {
   readonly [R in PolicyResource]?: {
     readonly [A in ActionFor<R>]?: CheckOrArray<R>;
@@ -67,11 +59,11 @@ export type PolicyContribution = {
 
 // Internal lookup signature — returns whatever check was registered
 // for `(resource, action)`. The Authz API narrows the result to the
-// correct shape based on whether the action is flat or scoped.
+// correct shape based on whether the resource is unscoped or scoped.
 type AnyRegisteredCheck = (
-  caller: CurrentUser["Service"],
+  caller: Caller,
   resource?: unknown,
-) => Effect.Effect<boolean, PolicyErrors, never>;
+) => Effect.Effect<boolean, CheckFailure, never>;
 
 export class PolicyRegistry extends Context.Service<
   PolicyRegistry,

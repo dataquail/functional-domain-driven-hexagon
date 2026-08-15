@@ -20,6 +20,8 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 // Leaf tsconfigs with a non-empty `include` (the aggregator tsconfig.json in
 // referenced packages has an empty include and would check nothing).
 const PROJECTS = [
+  "packages/authz/tsconfig.src.json",
+  "packages/authz/tsconfig.test.json",
   "packages/cqrs/tsconfig.src.json",
   "packages/cqrs/tsconfig.test.json",
   "packages/contracts/tsconfig.src.json",

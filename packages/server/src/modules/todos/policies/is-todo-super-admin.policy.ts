@@ -1,8 +1,8 @@
+import { type CallerCheck } from "@org/authz";
 import { type CurrentUser } from "@org/contracts/Policy";
 import { type PersistenceUnavailable } from "@org/cqrs";
 
 import { type PlatformRoles } from "@/modules/todos/domain/ports/acl/platform-roles.acl.js";
-import { type CallerCheck } from "@/platform/auth/check.js";
 
 // Super-admin bypass, owned by this module rather than shared from platform:
 // each module asks the role module through its own port, so extracting todos

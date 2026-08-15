@@ -1,19 +1,17 @@
-import type * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
-import { type PersistenceUnavailable } from "@org/cqrs";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { type CheckFailure, type ResourceMissing } from "./config.js";
+
 // Registry mapping a resource name (the "resource" half of a
 // "resource.action" policy key) to a function that loads that resource
-// by id. Phase 1.5 ships with `user`. Each module adds entries via
-// declaration merging on `ResourceResolverMap` from its own
-// `<module>/policies/<module>-resource-resolver.ts` file, and the
-// composition root (`server.ts` / `test-server.ts`) Layer-merges the
-// resolvers into a single registry. See `docs/scratch/authz-dsl-plan.md`.
+// by id. A host adds entries via declaration merging on
+// `ResourceResolverMap`, and its composition root Layer-merges the
+// resolvers into a single registry.
 
-// Modules contribute entries via declaration merging; this empty declaration is
-// the seam they extend. It must stay an `interface` (declaration merging does not
+// A host contributes entries via declaration merging; this empty declaration is
+// the seam it extends. It must stay an `interface` (declaration merging does not
 // work on `type`); the lint rules that would fight the empty interface and
 // rewrite it to `type` are disabled for the registry seam files in
 // .oxlintrc.json.
@@ -43,16 +41,17 @@ export type NotFoundFor<R extends ResourceName> = ResourceResolverMap[R] extends
   notFound: infer N;
 }
   ? N
-  : CustomHttpApiError.NotFound;
+  : ResourceMissing;
 
-// `PersistenceUnavailable` is in the channel regardless of `notFound`, and for
-// the same reason a policy check may raise it: resolving a resource reads the
-// store, and a transient outage there is the caller's 503. A resolver that died
-// on it instead would report a retryable outage as a 500 — while the identical
-// outage one step later, inside the check or the use case, produced a 503.
+// The configured `CheckFailure` is in the channel regardless of `notFound`, and
+// for the same reason a policy check may raise it: resolving a resource reads
+// the store, and a transient outage there is the caller's problem to retry. A
+// resolver that died on it instead would report a retryable outage as an
+// internal error — while the identical outage one step later, inside the check
+// or the use case, propagated as a failure.
 export type Resolver<R extends ResourceName> = (
   id: IdFor<R>,
-) => Effect.Effect<ResourceTypeFor<R>, NotFoundFor<R> | PersistenceUnavailable, never>;
+) => Effect.Effect<ResourceTypeFor<R>, NotFoundFor<R> | CheckFailure, never>;
 
 type ResolversObject = { [R in ResourceName]: Resolver<R> };
 
@@ -62,7 +61,7 @@ export class ResourceResolverRegistry extends Context.Service<
     readonly resolve: <R extends ResourceName>(
       resource: R,
       id: IdFor<R>,
-    ) => Effect.Effect<ResourceTypeFor<R>, NotFoundFor<R> | PersistenceUnavailable, never>;
+    ) => Effect.Effect<ResourceTypeFor<R>, NotFoundFor<R> | CheckFailure, never>;
   }
 >()("ResourceResolverRegistry") {}
 
