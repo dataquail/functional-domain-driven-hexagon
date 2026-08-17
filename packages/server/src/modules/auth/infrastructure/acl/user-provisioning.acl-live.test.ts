@@ -1,7 +1,7 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import { type PersistenceUnavailable } from "@org/cqrs";
+import { type PersistenceUnavailable } from "@effect-server-utils/cqrs";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";

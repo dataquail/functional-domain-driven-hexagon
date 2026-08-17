@@ -1,4 +1,4 @@
-import { type ResourceCheck } from "@org/authz";
+import { type ResourceCheck } from "@effect-server-utils/authz";
 
 import { type OrganizationAuthzView } from "@/modules/organization/queries/find-organization-by-id.query.js";
 

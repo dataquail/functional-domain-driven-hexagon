@@ -1,5 +1,5 @@
+import { type PersistenceUnavailable } from "@effect-server-utils/cqrs";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
-import { type PersistenceUnavailable } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 import type * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
 import type * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";

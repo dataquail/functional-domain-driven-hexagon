@@ -1,4 +1,4 @@
-import { type Resolver } from "@org/authz";
+import { type Resolver } from "@effect-server-utils/authz";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -13,7 +13,7 @@ import { type OrganizationId } from "@/platform/ids/organization-id.js";
 // own ACL port and decide.
 export type BillingResourceContext = { readonly organizationId: OrganizationId };
 
-declare module "@org/authz/resource-resolver-registry" {
+declare module "@effect-server-utils/authz/resource-resolver-registry" {
   interface ResourceResolverMap {
     billing: {
       resourceType: BillingResourceContext;

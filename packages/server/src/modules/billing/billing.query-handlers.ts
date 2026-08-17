@@ -1,4 +1,4 @@
-import { Query } from "@org/cqrs";
+import { Query } from "@effect-server-utils/cqrs";
 import * as Context from "effect/Context";
 import * as Layer from "effect/Layer";
 

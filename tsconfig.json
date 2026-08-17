@@ -4,8 +4,6 @@
   "exclude": [],
   "references": [
     { "path": "packages/contracts" },
-    { "path": "packages/authz" },
-    { "path": "packages/cqrs" },
     { "path": "packages/server" },
     { "path": "packages/database" },
     { "path": "packages/jobs" },

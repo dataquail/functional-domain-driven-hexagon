@@ -4,9 +4,7 @@
   // tsconfig.src.json's references, so a package missing here resolves through the
   // inherited `paths` with no declarations behind it and degrades to `any`.
   "references": [
-    { "path": "../authz/tsconfig.build.json" },
     { "path": "../contracts/tsconfig.build.json" },
-    { "path": "../cqrs/tsconfig.build.json" },
     { "path": "../database/tsconfig.build.json" }
   ],
   "compilerOptions": {

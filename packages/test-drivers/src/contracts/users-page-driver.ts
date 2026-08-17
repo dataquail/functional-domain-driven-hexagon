@@ -26,7 +26,7 @@ export type CreateUserField = keyof CreateUserInput;
 
 export type ToastKind = "success" | "error";
 
-export interface UsersPageDriver {
+export type UsersPageDriver = {
   // Visit the users page. Acceptance: navigate. Integration:
   // render the page component. Presenter: render the create-user
   // form only (no page chrome).
@@ -48,4 +48,4 @@ export interface UsersPageDriver {
   // RecordingToast — caller wires `expectToast` via the
   // presenter-harness adapter, not this one.
   readonly expectToast: (kind: ToastKind, message: string) => Promise<void>;
-}
+};

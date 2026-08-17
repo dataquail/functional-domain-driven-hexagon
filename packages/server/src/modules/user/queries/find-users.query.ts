@@ -1,4 +1,4 @@
-import { PersistenceUnavailable, Query } from "@org/cqrs";
+import { PersistenceUnavailable, Query } from "@effect-server-utils/cqrs";
 import * as Schema from "effect/Schema";
 
 import { UserId } from "@/platform/ids/user-id.js";

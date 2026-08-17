@@ -1,5 +1,5 @@
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
-import { makePolicyRegistry, makeResourceResolverRegistry } from "@org/authz";
+import { makePolicyRegistry, makeResourceResolverRegistry } from "@effect-server-utils/authz";
 import { type UserAuthMiddleware } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";

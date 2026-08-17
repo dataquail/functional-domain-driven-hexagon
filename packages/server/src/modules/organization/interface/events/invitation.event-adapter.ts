@@ -10,7 +10,7 @@
 // Bus-only, like every adapter: the dispatched command owns the repository read
 // and the send.
 
-import { CommandBus } from "@org/cqrs";
+import { CommandBus } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 

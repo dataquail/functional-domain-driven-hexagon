@@ -1,15 +1,13 @@
 {
   "extends": "../../tsconfig.base.json",
-  // `platform/auth/authz.ts` carries the `@org/authz` AuthzConfig augmentation,
+  // `platform/auth/authz.ts` carries the `@effect-server-utils/authz` AuthzConfig augmentation,
   // which has to be in every program that names a policy check — a test that
   // reaches one without transitively importing this file would otherwise see
   // the library's unconfigured `never` caller.
   "include": ["src/**/*.test.ts", "src/platform/auth/authz.ts"],
   "references": [
     { "path": "tsconfig.src.json" },
-    { "path": "../authz" },
     { "path": "../contracts" },
-    { "path": "../cqrs" },
     { "path": "../database" }
   ],
   "compilerOptions": {
@@ -19,12 +17,8 @@
     "noEmit": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@org/authz": ["../authz/src/index.js"],
-      "@org/authz/*": ["../authz/src/*.js"],
       "@org/contracts": ["../contracts/src/index.js"],
       "@org/contracts/*": ["../contracts/src/*.js"],
-      "@org/cqrs": ["../cqrs/src/index.js"],
-      "@org/cqrs/*": ["../cqrs/src/*.js"],
       "@org/database": ["../database/src/index.js"],
       "@org/database/*": ["../database/src/*.js"]
     }

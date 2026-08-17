@@ -1,6 +1,6 @@
+import { CommandBus } from "@effect-server-utils/cqrs";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
-import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { ResendInvitationCommand } from "@/modules/organization/commands/resend-invitation.command.js";

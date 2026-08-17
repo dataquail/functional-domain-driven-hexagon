@@ -9,7 +9,6 @@ import { projectStructurePlugin } from "eslint-plugin-project-structure";
 import {
   componentsPatterns,
   componentsPrimitives,
-  cqrsPackage,
   serverModules,
   webFeatures,
   webTanstackBridge,
@@ -34,7 +33,6 @@ export const rules = {
   "components-patterns": withBoundConfig(componentsPatterns),
   "web-features": withBoundConfig(webFeatures),
   "web-tanstack-bridge": withBoundConfig(webTanstackBridge),
-  "cqrs-package": withBoundConfig(cqrsPackage),
 };
 
 export default { meta: { name: "project-structure" }, rules };

@@ -1,5 +1,5 @@
-import { type ResourceCheck } from "@org/authz";
-import { type PersistenceUnavailable } from "@org/cqrs";
+import { type ResourceCheck } from "@effect-server-utils/authz";
+import { type PersistenceUnavailable } from "@effect-server-utils/cqrs";
 import type * as Effect from "effect/Effect";
 
 import { type OrganizationAuthzView } from "@/modules/organization/queries/find-organization-by-id.query.js";

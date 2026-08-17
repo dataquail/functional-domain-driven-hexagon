@@ -1,6 +1,6 @@
+import { QueryBus } from "@effect-server-utils/cqrs";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
-import { QueryBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import {

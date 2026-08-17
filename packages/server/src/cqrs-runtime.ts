@@ -7,7 +7,7 @@ import {
   makeUnitOfWork,
   mergeDispatchTables,
   QueryBus,
-} from "@org/cqrs";
+} from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
@@ -140,6 +140,6 @@ export const DomainEventBusLive = makeEventBus({
 // caller. This gives them somewhere to be observed besides a log line.
 export const UnhandledFailuresLive = makeUnhandledFailures();
 
-// The boundary's semantics live in `@org/cqrs`; `TransactionDriverLive` is the
+// The boundary's semantics live in `@effect-server-utils/cqrs`; `TransactionDriverLive` is the
 // only piece that knows they are implemented as a SQL transaction.
 export const UnitOfWorkLive = makeUnitOfWork().pipe(Layer.provide(TransactionDriverLive));

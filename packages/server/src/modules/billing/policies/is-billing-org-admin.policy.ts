@@ -1,4 +1,4 @@
-import { type ResourceCheck } from "@org/authz";
+import { type ResourceCheck } from "@effect-server-utils/authz";
 
 import { type OrganizationAccess } from "@/modules/billing/domain/ports/acl/organization-access.acl.js";
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Command, Query } from "@org/cqrs";
+import { Command, Query } from "@effect-server-utils/cqrs";
 
 import * as authModule from "@/modules/auth/index.js";
 import * as billingModule from "@/modules/billing/index.js";

@@ -1,4 +1,4 @@
-import { Event } from "@org/cqrs";
+import { Event } from "@effect-server-utils/cqrs";
 
 import {
   roleGrantedSpanAttributes,

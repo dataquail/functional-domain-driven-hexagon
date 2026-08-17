@@ -1,4 +1,4 @@
-import { EventBus, UnitOfWork, UnitOfWorkScope } from "@org/cqrs";
+import { EventBus, UnitOfWork, UnitOfWorkScope } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";

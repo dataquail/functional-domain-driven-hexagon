@@ -5,12 +5,8 @@
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"],
-      "@org/authz": ["../authz/src/index.js"],
-      "@org/authz/*": ["../authz/src/*.js"],
       "@org/contracts": ["../contracts/src/index.js"],
       "@org/contracts/*": ["../contracts/src/*.js"],
-      "@org/cqrs": ["../cqrs/src/index.js"],
-      "@org/cqrs/*": ["../cqrs/src/*.js"],
       "@org/database": ["../database/src/index.js"],
       "@org/database/*": ["../database/src/*.js"]
     }

@@ -7,7 +7,7 @@
 // ADR-0022 mutation boundary). If organization adds a field to the event,
 // only this translation changes.
 
-import { CommandBus } from "@org/cqrs";
+import { CommandBus } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 

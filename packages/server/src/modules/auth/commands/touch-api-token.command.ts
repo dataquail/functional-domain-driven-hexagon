@@ -1,4 +1,4 @@
-import { Command } from "@org/cqrs";
+import { Command } from "@effect-server-utils/cqrs";
 import * as Schema from "effect/Schema";
 
 import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";

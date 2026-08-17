@@ -1,7 +1,6 @@
 import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import { OrganizationContract } from "@org/contracts/api/Contracts";
 import {
   Command,
   CommandBus,
@@ -10,7 +9,8 @@ import {
   makeUnitOfWork,
   mergeDispatchTables,
   UnitOfWork,
-} from "@org/cqrs";
+} from "@effect-server-utils/cqrs";
+import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
