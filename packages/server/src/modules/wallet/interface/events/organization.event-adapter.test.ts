@@ -8,7 +8,7 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import { makeEventBus, UnitOfWork } from "@org/cqrs";
+import { makeEventBus, UnitOfWork } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 

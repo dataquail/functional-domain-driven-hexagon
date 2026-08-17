@@ -68,7 +68,7 @@ module.exports = {
       name: "domain-isolation",
       severity: "error",
       comment:
-        "Module domain may only import from its own folder, effect (external), the DDD kernel's *contracts* tier (`platform/ddd/contracts/`), and `platform/ids/` for branded entity IDs referenced cross-module (ADR-0002). The domain does not name `@org/cqrs` at all: the library's domain-safe modules are re-exported under this application's vocabulary from `platform/ddd/contracts/`, and the buses and `UnitOfWork` are deliberately NOT — admitting them here would let a `domain/ports/` port name a bus in its requirement channel, the exclusion ADR-0006's per-module dispatch surfaces depend on. Tiering by folder rather than by package path is what keeps this rule independent of another package's internal file layout, which that package generates its published surface from. No contracts package, no cross-module domain, no infrastructure/commands/queries/event-handlers/interface. See ADR-0008.",
+        "Module domain may only import from its own folder, effect (external), the DDD kernel's *contracts* tier (`platform/ddd/contracts/`), and `platform/ids/` for branded entity IDs referenced cross-module (ADR-0002). The domain does not name `@effect-server-utils/cqrs` at all: the library's domain-safe modules are re-exported under this application's vocabulary from `platform/ddd/contracts/`, and the buses and `UnitOfWork` are deliberately NOT — admitting them here would let a `domain/ports/` port name a bus in its requirement channel, the exclusion ADR-0006's per-module dispatch surfaces depend on. Tiering by folder rather than by package path is what keeps this rule independent of the library's internal file layout, and is why nothing here changed when the library moved from a workspace package to an installed one — the domain never named it either way; `domain-no-external-beyond-effect` is what holds the line now. No contracts package, no cross-module domain, no infrastructure/commands/queries/event-handlers/interface. See ADR-0008.",
       from: { path: "^packages/server/src/modules/[^/]+/domain/" },
       to: {
         path: "^packages/",
@@ -137,7 +137,7 @@ module.exports = {
       name: "commands-isolation",
       severity: "error",
       comment:
-        "Module commands (write-side use cases) may only import: own module's domain and sibling commands, `@org/cqrs` (the message vocabulary a command is declared in — ADR-0006), the DDD shared kernel ports under platform/ddd/ (CommandBus, QueryBus, DomainEventBus, UnitOfWork, DomainEvent, SpanAttributesExtractor), platform/ids/, and platform/notifications/ port files (e.g. Mailer Tag — same shape as platform/ddd/, just a different infrastructure surface). No platform/*-live.ts (Lives are wired at the composition root), no infrastructure, no interface, no queries, no event-handlers, no @org/contracts (a command's failure channel names domain errors; the endpoint maps them to wire errors — ADR-0004), no @org/database, and (ADR-0022) no other modules' barrels — cross-module calls go through a `domain/ports/acl/` port whose adapter lives in `infrastructure/acl/`. Test files excluded.",
+        "Module commands (write-side use cases) may only import: own module's domain and sibling commands, `@effect-server-utils/cqrs` (the message vocabulary a command is declared in — ADR-0006), the DDD shared kernel ports under platform/ddd/ (CommandBus, QueryBus, DomainEventBus, UnitOfWork, DomainEvent, SpanAttributesExtractor), platform/ids/, and platform/notifications/ port files (e.g. Mailer Tag — same shape as platform/ddd/, just a different infrastructure surface). No platform/*-live.ts (Lives are wired at the composition root), no infrastructure, no interface, no queries, no event-handlers, no @org/contracts (a command's failure channel names domain errors; the endpoint maps them to wire errors — ADR-0004), no @org/database, and (ADR-0022) no other modules' barrels — cross-module calls go through a `domain/ports/acl/` port whose adapter lives in `infrastructure/acl/`. Test files excluded.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/commands/",
         pathNot: "\\.test\\.ts$",
@@ -146,7 +146,6 @@ module.exports = {
         path: "^packages/",
         pathNot: [
           "^packages/server/src/modules/$1/(domain|commands)/",
-          "^packages/cqrs/src/",
           "^packages/server/src/platform/ddd/",
           "^packages/server/src/platform/ids/",
           "^packages/server/src/platform/notifications/(?!.*-live\\.ts$)",
@@ -157,21 +156,21 @@ module.exports = {
       name: "commands-no-external-beyond-effect",
       severity: "error",
       comment:
-        "Commands are runtime-pure: only 'effect' allowed externally. No drivers, no clients, no framework code.",
+        "Commands are runtime-pure: only 'effect' and the CQRS library allowed externally. No drivers, no clients, no framework code. `@effect-server-utils/cqrs` is the message vocabulary a command is declared in (ADR-0006); since it became an installed dependency rather than a workspace package, this rule — not `commands-isolation`, whose `to.path` only sees `packages/` — is what admits it.",
       from: {
         path: "^packages/server/src/modules/[^/]+/commands/",
         pathNot: "\\.test\\.ts$",
       },
       to: {
         dependencyTypes: ["npm", "npm-dev", "npm-peer", "npm-optional"],
-        pathNot: "/node_modules/effect/",
+        pathNot: "/node_modules/(effect|@effect-server-utils/cqrs)/",
       },
     },
     {
       name: "queries-isolation",
       severity: "error",
       comment:
-        "Module queries are read-side projections and must NOT reach the write-side consistency boundary: they build their own read models by reading SQL directly via @org/database, never by loading aggregates through repositories. A query may import: sibling queries, `@org/cqrs` (the message vocabulary a query is declared in — ADR-0006), the DDD shared kernel ports under platform/ddd/, platform/ids/, platform/translate-database-errors.ts (the persistence-error translation at the read boundary — a pure leaf whose own imports are @org/cqrs + @org/database types, so it grants a query no reach it does not already have), @org/database, and — from its OWN domain — only two things that are not the write model: branded IDs (domain/<sub>/*.id.ts, identity vocabulary) and cross-context ACL ports (domain/ports/acl/, read facades over OTHER modules; ADR-0020 bans cross-schema SQL so there is no SQL alternative). Everything else in domain is off-limits: roots, *.root-ops.ts, repositories, specifications, value-objects, entities, domain-services, errors, events, and the repository/client ports. May NOT import platform/*-live.ts, own commands, event-handlers, infrastructure, interface, @org/contracts (wire types belong in interface), or (ADR-0022) other modules' barrels. Test files excluded (they may seed via the live repository). See ADR-0002.",
+        "Module queries are read-side projections and must NOT reach the write-side consistency boundary: they build their own read models by reading SQL directly via @org/database, never by loading aggregates through repositories. A query may import: sibling queries, `@effect-server-utils/cqrs` (the message vocabulary a query is declared in — ADR-0006), the DDD shared kernel ports under platform/ddd/, platform/ids/, platform/translate-database-errors.ts (the persistence-error translation at the read boundary — a pure leaf whose own imports are @effect-server-utils/cqrs + @org/database types, so it grants a query no reach it does not already have), @org/database, and — from its OWN domain — only two things that are not the write model: branded IDs (domain/<sub>/*.id.ts, identity vocabulary) and cross-context ACL ports (domain/ports/acl/, read facades over OTHER modules; ADR-0020 bans cross-schema SQL so there is no SQL alternative). Everything else in domain is off-limits: roots, *.root-ops.ts, repositories, specifications, value-objects, entities, domain-services, errors, events, and the repository/client ports. May NOT import platform/*-live.ts, own commands, event-handlers, infrastructure, interface, @org/contracts (wire types belong in interface), or (ADR-0022) other modules' barrels. Test files excluded (they may seed via the live repository). See ADR-0002.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/queries/",
         pathNot: "\\.test\\.ts$",
@@ -182,7 +181,6 @@ module.exports = {
           "^packages/server/src/modules/$1/queries/",
           "^packages/server/src/modules/$1/domain/[^/]+/[^/]+\\.id\\.ts$",
           "^packages/server/src/modules/$1/domain/ports/acl/",
-          "^packages/cqrs/src/",
           "^packages/server/src/platform/ddd/",
           "^packages/server/src/platform/ids/",
           "^packages/server/src/platform/translate-database-errors\\.ts$",
@@ -194,21 +192,21 @@ module.exports = {
       name: "queries-no-external-beyond-effect-and-database",
       severity: "error",
       comment:
-        "Queries may use 'effect' and the workspace database package. No other npm drivers/clients/frameworks.",
+        "Queries may use 'effect', the workspace database package, and the CQRS library they declare their message in. No other npm drivers/clients/frameworks. Same note as the commands rule: now that `@effect-server-utils/cqrs` is installed rather than a workspace package, this rule is what admits it.",
       from: {
         path: "^packages/server/src/modules/[^/]+/queries/",
         pathNot: "\\.test\\.ts$",
       },
       to: {
         dependencyTypes: ["npm", "npm-dev", "npm-peer", "npm-optional"],
-        pathNot: "/node_modules/(effect|@org/database)/",
+        pathNot: "/node_modules/(effect|@org/database|@effect-server-utils/cqrs)/",
       },
     },
     {
       name: "policies-isolation",
       severity: "error",
       comment:
-        "A module's `policies/` ring answers 'may this caller do this?' and must never reach the write-side consistency boundary to do it. It may import: sibling policy files, its OWN `queries/` (the read models its checks and resolvers ask), its own `domain/ports/acl/` + the `infrastructure/acl/` adapters its contribution layer provides, its own branded IDs (`domain/<sub>/*.id.ts`), `@org/authz` (the check/resolver vocabulary it registers against), `@org/cqrs` (the QueryBus it dispatches through), `platform/ddd/` (PersistenceUnavailable), `platform/ids/`, `@org/database` (to capture Database for a bus dispatch), and `@org/contracts` (CurrentUser + the Forbidden/NotFound wire errors authz lifts to). Everything else in `domain/` is off-limits: roots, *.root-ops.ts, repositories, specifications, value-objects, entities, and domain-services. Also barred: own commands and event-handlers, `interface/`, `platform/*-live.ts`, and (ADR-0022) another module's barrel — a cross-module answer comes from an `acl/` port, not a direct reach. An authorization check reading aggregate state is the violation this rule exists to stop: model the question as a read model instead. Test files excluded. See ADR-0021, ADR-0022.",
+        "A module's `policies/` ring answers 'may this caller do this?' and must never reach the write-side consistency boundary to do it. It may import: sibling policy files, its OWN `queries/` (the read models its checks and resolvers ask), its own `domain/ports/acl/` + the `infrastructure/acl/` adapters its contribution layer provides, its own branded IDs (`domain/<sub>/*.id.ts`), `@effect-server-utils/authz` (the check/resolver vocabulary it registers against), `@effect-server-utils/cqrs` (the QueryBus it dispatches through), `platform/ddd/` (PersistenceUnavailable), `platform/ids/`, `@org/database` (to capture Database for a bus dispatch), and `@org/contracts` (CurrentUser + the Forbidden/NotFound wire errors authz lifts to). Everything else in `domain/` is off-limits: roots, *.root-ops.ts, repositories, specifications, value-objects, entities, and domain-services. Also barred: own commands and event-handlers, `interface/`, `platform/*-live.ts`, and (ADR-0022) another module's barrel — a cross-module answer comes from an `acl/` port, not a direct reach. An authorization check reading aggregate state is the violation this rule exists to stop: model the question as a read model instead. Test files excluded. See ADR-0021, ADR-0022.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/policies/",
         pathNot: "\\.test\\.ts$",
@@ -221,8 +219,6 @@ module.exports = {
           "^packages/server/src/modules/$1/domain/ports/acl/",
           "^packages/server/src/modules/$1/infrastructure/acl/",
           "^packages/server/src/modules/$1/domain/[^/]+/[^/]+\\.id\\.ts$",
-          "^packages/authz/src/",
-          "^packages/cqrs/src/",
           "^packages/server/src/platform/ddd/",
           "^packages/server/src/platform/ids/",
           "^packages/database/",
@@ -234,7 +230,7 @@ module.exports = {
       name: "interface-events-isolation",
       severity: "error",
       comment:
-        "ADR-0007: an event adapter (interface/events/*.event-adapter.ts) is a bus-only inbound port — structurally identical to an HTTP endpoint. It subscribes to a domain event and dispatches a command; it must NOT reach the consistency boundary directly. It may import: its own module's domain events/ids (to subscribe), its own commands' *.command.ts definitions (to dispatch), `@org/cqrs` (CommandBus/QueryBus), the DDD kernel ports under platform/ddd/ (the event buses/UnitOfWork), platform/ids/, and (via foreign-barrel-only-from-outbound-adapter) another module's index.ts barrel for cross-module events. No domain/ports/, no domain ops (*.root-ops.ts etc.), no repositories/infrastructure, no command *.handler.ts, no @org/database — the dispatched command owns all of that. Test files excluded.",
+        "ADR-0007: an event adapter (interface/events/*.event-adapter.ts) is a bus-only inbound port — structurally identical to an HTTP endpoint. It subscribes to a domain event and dispatches a command; it must NOT reach the consistency boundary directly. It may import: its own module's domain events/ids (to subscribe), its own commands' *.command.ts definitions (to dispatch), `@effect-server-utils/cqrs` (CommandBus/QueryBus), the DDD kernel ports under platform/ddd/ (the event buses/UnitOfWork), platform/ids/, and (via foreign-barrel-only-from-outbound-adapter) another module's index.ts barrel for cross-module events. No domain/ports/, no domain ops (*.root-ops.ts etc.), no repositories/infrastructure, no command *.handler.ts, no @org/database — the dispatched command owns all of that. Test files excluded.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/interface/events/",
         pathNot: "\\.test\\.ts$",
@@ -245,7 +241,6 @@ module.exports = {
           "^packages/server/src/modules/$1/domain/[^/]+/[^/]+\\.(events|id)\\.ts$",
           "^packages/server/src/modules/$1/commands/[^/]+\\.command\\.ts$",
           "^packages/server/src/modules/[^/]+/index\\.ts$",
-          "^packages/cqrs/src/",
           "^packages/server/src/platform/ddd/",
           "^packages/server/src/platform/ids/",
         ],
@@ -255,7 +250,7 @@ module.exports = {
       name: "sagas-isolation",
       severity: "error",
       comment:
-        "ADR-0002/ADR-0007: a saga (sagas/*.saga.ts) is a long-running process manager over EVENTUAL events. Like an event adapter it is bus-only — it correlates events and dispatches its own module's commands, and must NOT reach the consistency boundary itself. It may import: its own module's domain events/ids (to declare what it watches), its own commands' *.command.ts definitions (to dispatch), `@org/cqrs` (Saga, CommandBus/QueryBus, the event buses), platform/ids/, and another module's index.ts barrel for cross-module events. No domain/ports/, no domain ops (*.root-ops.ts etc.), no repositories/infrastructure, no command *.handler.ts, no @org/database — the dispatched command owns all of that. A saga runs on its own fiber with no publisher's transaction to inherit, so reaching for a repository here would write outside every unit of work. Test files excluded.",
+        "ADR-0002/ADR-0007: a saga (sagas/*.saga.ts) is a long-running process manager over EVENTUAL events. Like an event adapter it is bus-only — it correlates events and dispatches its own module's commands, and must NOT reach the consistency boundary itself. It may import: its own module's domain events/ids (to declare what it watches), its own commands' *.command.ts definitions (to dispatch), `@effect-server-utils/cqrs` (Saga, CommandBus/QueryBus, the event buses), platform/ids/, and another module's index.ts barrel for cross-module events. No domain/ports/, no domain ops (*.root-ops.ts etc.), no repositories/infrastructure, no command *.handler.ts, no @org/database — the dispatched command owns all of that. A saga runs on its own fiber with no publisher's transaction to inherit, so reaching for a repository here would write outside every unit of work. Test files excluded.",
       from: {
         path: "^packages/server/src/modules/([^/]+)/sagas/",
         pathNot: "\\.test\\.ts$",
@@ -267,7 +262,6 @@ module.exports = {
           "^packages/server/src/modules/$1/commands/[^/]+\\.command\\.ts$",
           "^packages/server/src/modules/$1/sagas/",
           "^packages/server/src/modules/[^/]+/index\\.ts$",
-          "^packages/cqrs/src/",
           "^packages/server/src/platform/ids/",
         ],
       },
@@ -330,67 +324,18 @@ module.exports = {
       to: { path: "^packages/server/src/modules/[^/]+/domain/ports/acl/" },
     },
     {
-      name: "authz-package-stays-standalone",
+      name: "rpc-stays-behind-the-cqrs-package",
       severity: "error",
       comment:
-        "`@org/authz` is a self-contained library headed for npm: it is written against three host types it does not own (the caller, what a check may fail with, how a resolver reports absence) and one host value (the error a denial becomes), all supplied through the `AuthzConfig` augmentation and `makeHasPermissions`. Reaching into another workspace package here would nail the DSL back to this application — a wire error, a session shape, a persistence vocabulary — and the seam that exists to prevent exactly that would be dead weight. Widen `AuthzConfig` instead.",
-      from: { path: "^packages/authz/src/" },
-      to: { path: "^packages/(?!authz/)" },
-    },
-    {
-      name: "authz-no-external-beyond-effect",
-      severity: "error",
-      comment:
-        "`@org/authz` declares `effect` as its only peer dependency, so an npm import beyond it would install as a surprise transitive dependency of every consumer. `npm-no-pkg` is in the list because the undeclared import — one that resolves through the workspace root but appears in no package.json — is the way this actually breaks. Test files excluded.",
-      from: {
-        path: "^packages/authz/src/",
-        pathNot: "\\.test\\.ts$",
-      },
-      to: {
-        dependencyTypes: [
-          "npm",
-          "npm-dev",
-          "npm-peer",
-          "npm-optional",
-          "npm-bundled",
-          "npm-no-pkg",
-          "npm-unknown",
-        ],
-        pathNot: "/node_modules/effect/",
-      },
-    },
-    {
-      name: "cqrs-internals-stay-inside-the-cqrs-package",
-      severity: "error",
-      comment:
-        "`@org/cqrs/internal/*` is the shared machinery behind the `Command` and `Query` facades — it is parameterized by side and enforces nothing about which side a caller is on. Reaching it directly bypasses the CQRS separation the facades exist to express. Consume `Command` / `CommandBus` / `Query` / `QueryBus`.",
-      from: { path: "^packages/(?!cqrs/)" },
-      to: { path: "^packages/cqrs/src/internal/" },
-    },
-    {
-      name: "rpc-stays-inside-the-cqrs-package",
-      severity: "error",
-      comment:
-        "`@org/cqrs` exists so that the transport carrying commands and queries is an implementation detail. A feature module declares a message with `Command.make` and implements it with `Command.handlersOf`; it must never name the underlying rpc primitives, or the package is a pass-through and the transport can no longer change without touching every module. If you need something rpc offers that the package does not expose, widen the package's own surface.",
-      from: { path: "^packages/(?!cqrs/)" },
-      to: { path: "/node_modules/effect/(dist|src)/unstable/rpc/" },
-    },
-    {
-      name: "rpc-stays-in-the-transport-file",
-      severity: "error",
-      comment:
-        "Inside `@org/cqrs`, the rpc primitives belong to `internal/transport-rpc.ts` and nowhere else. `effect/unstable/rpc` is explicitly unstable and pinned to an exact beta, and this package is published — confining it to one file is what keeps the blast radius of a bump to one file, and what makes swapping the transport a rewrite of that file rather than a hunt through the package. Everything else works against the carrier type aliases and the functions that file exports. If you need something rpc offers that it does not expose, widen that file's surface.",
-      from: {
-        path: "^packages/cqrs/src/",
-        pathNot: "^packages/cqrs/src/internal/transport-rpc\\.ts$",
-      },
+        "`@effect-server-utils/cqrs` exists so that the transport carrying commands and queries is an implementation detail. A feature module declares a message with `Command.make` and implements it with `Command.handlersOf`; it must never name the underlying rpc primitives, or the library is a pass-through and the transport can no longer change without touching every module. Now that the library is installed rather than vendored, nothing in this repository has any business naming rpc — if you need something rpc offers that the library does not expose, widen the library's surface in its own repository.",
+      from: { path: "^packages/" },
       to: { path: "/node_modules/effect/(dist|src)/unstable/rpc/" },
     },
     {
       name: "lives-only-from-composition-roots",
       severity: "error",
       comment:
-        "Live implementations of DDD shared kernel ports (platform/*-live.ts) are wired only by the composition roots (server.ts and cqrs-runtime.ts, the slice of it production and the test runtime share verbatim), the test runtime (test-utils/), and integration tests that intentionally stage a sub-graph. Production-path code — commands, queries, event-handlers, domain, interface, middlewares — depends on the ports under platform/ddd/ and `@org/cqrs`, never on these Lives. Lives may import each other. The command/query bus factories are the same kind of thing but live in `@org/cqrs`, where a path rule cannot reach them through the package barrel; the eslint `no-restricted-imports` entry for `makeCommandBus`/`makeQueryBus`/`mergeDispatchTables` is what keeps those at a composition root.",
+        "Live implementations of DDD shared kernel ports (platform/*-live.ts) are wired only by the composition roots (server.ts and cqrs-runtime.ts, the slice of it production and the test runtime share verbatim), the test runtime (test-utils/), and integration tests that intentionally stage a sub-graph. Production-path code — commands, queries, event-handlers, domain, interface, middlewares — depends on the ports under platform/ddd/ and `@effect-server-utils/cqrs`, never on these Lives. Lives may import each other. The command/query bus factories are the same kind of thing but live in `@effect-server-utils/cqrs`, where a path rule cannot reach them through the package barrel; the eslint `no-restricted-imports` entry for `makeCommandBus`/`makeQueryBus`/`mergeDispatchTables` is what keeps those at a composition root.",
       from: {
         path: "^packages/server/src/",
         pathNot: [
@@ -414,7 +359,7 @@ module.exports = {
       to: {
         path: [
           "^packages/server/src/modules/[^/]+/(commands|queries)/",
-          "^packages/cqrs/src/(command-bus|query-bus|event-bus|unit-of-work)\\.ts$",
+          "/node_modules/@effect-server-utils/cqrs/dist/[^/]+/(command-bus|query-bus|event-bus|unit-of-work)\\.js$",
           "^packages/server/src/platform/ddd/event-bus\\.ts$",
         ],
       },
@@ -432,7 +377,7 @@ module.exports = {
         path: [
           "^packages/server/src/modules/[^/]+/domain/ports/",
           "^packages/server/src/modules/[^/]+/(commands|queries|infrastructure)/",
-          "^packages/cqrs/src/(command-bus|query-bus|event-bus|unit-of-work)\\.ts$",
+          "/node_modules/@effect-server-utils/cqrs/dist/[^/]+/(command-bus|query-bus|event-bus|unit-of-work)\\.js$",
           "^packages/server/src/platform/ddd/event-bus\\.ts$",
           "^packages/server/src/modules/[^/]+/index\\.ts$",
         ],

@@ -1,4 +1,4 @@
-import { Command } from "@org/cqrs";
+import { Command } from "@effect-server-utils/cqrs";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";

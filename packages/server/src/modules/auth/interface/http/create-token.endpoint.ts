@@ -1,6 +1,6 @@
+import { CommandBus } from "@effect-server-utils/cqrs";
 import { AuthContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
-import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { EnvVars } from "@/common/env-vars.js";

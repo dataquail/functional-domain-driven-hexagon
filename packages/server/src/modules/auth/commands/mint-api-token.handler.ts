@@ -1,6 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
 
-import { type PersistenceUnavailable, withUnitOfWork } from "@org/cqrs";
+import { type PersistenceUnavailable, withUnitOfWork } from "@effect-server-utils/cqrs";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 

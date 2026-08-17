@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
-import { makePolicyRegistry, makeResourceResolverRegistry } from "@org/authz";
+import { makePolicyRegistry, makeResourceResolverRegistry } from "@effect-server-utils/authz";
 import { Database } from "@org/database/index";
 import * as dotenv from "dotenv";
 import * as Duration from "effect/Duration";

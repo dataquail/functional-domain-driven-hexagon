@@ -1,5 +1,5 @@
+import { QueryBus } from "@effect-server-utils/cqrs";
 import { BillingContract } from "@org/contracts/api/Contracts";
-import { QueryBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { BillingResource } from "@/modules/billing/policies/billing.policies.js";

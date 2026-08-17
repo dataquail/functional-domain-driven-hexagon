@@ -482,31 +482,6 @@ export const webFeatures = createFolderStructure({
 });
 
 // ---------------------------------------------------------------------------
-// @org/cqrs (packages/cqrs/src) — a published library, not a DDD module, so
-// there is no stereotype taxonomy to enforce. What this does enforce is the one
-// structural property the package's own architecture rules depend on: `internal/`
-// is the only subfolder, so the machinery that must not leak (the transport, the
-// message internals) has exactly one place to live and the dependency rules that
-// fence it have exactly one path to match. A stray `utils/` or `helpers.ts` is
-// how that erodes.
-// ---------------------------------------------------------------------------
-
-const CQRS_MSG =
-  "packages/cqrs/src admits source files and their sibling tests, plus the single `internal/` folder for machinery consumers must not reach. A new subfolder needs a dependency rule to go with it — add both deliberately, or put the file at the top level next to its peers.";
-
-export const cqrsPackage = createFolderStructure({
-  structureRoot: "packages/cqrs/src",
-  structure: [
-    { name: "*.ts", message: CQRS_MSG },
-    {
-      name: "internal",
-      message: CQRS_MSG,
-      children: [{ name: "*.ts", message: CQRS_MSG }],
-    },
-  ],
-});
-
-// ---------------------------------------------------------------------------
 // Web TanStack-query bridge (packages/web/lib/tanstack-query) — every
 // non-barrel source file bridges two runtimes and needs a sibling test; the
 // test extension mirrors the source (.ts→.test.ts, .tsx→.test.tsx). The barrel

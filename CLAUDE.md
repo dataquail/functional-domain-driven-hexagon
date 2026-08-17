@@ -17,21 +17,25 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 
 ## Monorepo map
 
-| Package             | What it is                                                                                                                                                                                                                                                     |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@org/server`       | The Effect BFF backend (`src/modules/`, `src/platform/`, HTTP). Bulk of the rules.                                                                                                                                                                             |
-| `@org/web`          | Next.js App Router renderer + `/api/*` proxy; the server stays the BFF (ADR-0018).                                                                                                                                                                             |
-| `@org/components`   | Bespoke component library (primitives + patterns) + Storybook (ADR-0015).                                                                                                                                                                                      |
-| `@org/contracts`    | Shared HTTP API contracts, schemas, errors — consumed by server and clients.                                                                                                                                                                                   |
-| `@org/cqrs`         | Standalone typed CQRS library: `Command`/`Query`/`Event`, per-module dispatchers, one event bus whose subscriptions pick their consistency model, the `UnitOfWork` port, sagas, middleware — ADR-0006/0007.                                                    |
-| `@org/authz`        | Standalone per-route authorization library: the `(resource, action)` policy registry, per-request resource resolvers, `Check` combinators — ADR-0021. Effect-only; the host declares its caller, error and **action** types via an `AuthzConfig` augmentation. |
-| `@org/database`     | DB access kernel (slonik, `RowSchemas`, `db.makeQuery`) + migrations.                                                                                                                                                                                          |
-| `@org/jobs`         | Background/cron jobs.                                                                                                                                                                                                                                          |
-| `@org/cli`          | Command-line client (device-flow auth, organizations, todos).                                                                                                                                                                                                  |
-| `@org/mcp`          | MCP (stdio) server exposing the CLI surface as tools.                                                                                                                                                                                                          |
-| `@org/api-client`   | Shared typed client + credential store for the CLI and MCP.                                                                                                                                                                                                    |
-| `@org/acceptance`   | Playwright acceptance tests (specs / drivers / pages / infrastructure).                                                                                                                                                                                        |
-| `@org/test-drivers` | Tier-agnostic page-driver contracts + per-tier adapters (Playwright / RTL).                                                                                                                                                                                    |
+| Package             | What it is                                                                         |
+| ------------------- | ---------------------------------------------------------------------------------- |
+| `@org/server`       | The Effect BFF backend (`src/modules/`, `src/platform/`, HTTP). Bulk of the rules. |
+| `@org/web`          | Next.js App Router renderer + `/api/*` proxy; the server stays the BFF (ADR-0018). |
+| `@org/components`   | Bespoke component library (primitives + patterns) + Storybook (ADR-0015).          |
+| `@org/contracts`    | Shared HTTP API contracts, schemas, errors — consumed by server and clients.       |
+| `@org/database`     | DB access kernel (slonik, `RowSchemas`, `db.makeQuery`) + migrations.              |
+| `@org/jobs`         | Background/cron jobs.                                                              |
+| `@org/cli`          | Command-line client (device-flow auth, organizations, todos).                      |
+| `@org/mcp`          | MCP (stdio) server exposing the CLI surface as tools.                              |
+| `@org/api-client`   | Shared typed client + credential store for the CLI and MCP.                        |
+| `@org/acceptance`   | Playwright acceptance tests (specs / drivers / pages / infrastructure).            |
+| `@org/test-drivers` | Tier-agnostic page-driver contracts + per-tier adapters (Playwright / RTL).        |
+
+**Installed, not vendored.** The CQRS and authorization patterns this codebase teaches now ship as
+published libraries from a separate repository (`dataquail/effect-server-utils`) and are consumed
+here as ordinary dependencies: `@effect-server-utils/cqrs` and `@effect-server-utils/authz`, both
+pinned to `0.1.0-beta.1`. ADR-0006 and ADR-0021 still describe their design and the constraints this
+application relies on; changing either library means a release there, not an edit here.
 
 ## Commands
 

@@ -1,5 +1,5 @@
+import { QueryBus } from "@effect-server-utils/cqrs";
 import { CliTodosContract } from "@org/contracts/api/Contracts";
-import { QueryBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { TodoCollectionResource } from "@/modules/todos/policies/todos.policies.js";

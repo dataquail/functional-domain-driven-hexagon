@@ -1,4 +1,4 @@
-import { Check, type CheckFor, type PolicyContribution } from "@org/authz";
+import { Check, type CheckFor, type PolicyContribution } from "@effect-server-utils/authz";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -18,7 +18,7 @@ import { makeIsTodoSuperAdmin } from "./is-todo-super-admin.policy.js";
 //   - `todo` (by the (orgId, todoId) pair) — `update` / `delete` one todo.
 // All gate on org membership; super-admin bypasses.
 
-declare module "@org/authz/policy-registry" {
+declare module "@effect-server-utils/authz/policy-registry" {
   interface PolicyMap {
     todoCollection: {
       create: CheckFor<"todoCollection">;

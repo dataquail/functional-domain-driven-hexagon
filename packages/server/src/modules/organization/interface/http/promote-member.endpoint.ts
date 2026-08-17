@@ -1,7 +1,7 @@
+import { CommandBus } from "@effect-server-utils/cqrs";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { CurrentUser } from "@org/contracts/Policy";
-import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { GrantOrganizationRoleCommand } from "@/modules/organization/commands/grant-organization-role.command.js";

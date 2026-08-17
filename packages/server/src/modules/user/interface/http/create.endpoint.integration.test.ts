@@ -1,8 +1,8 @@
 import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { QueryBus } from "@effect-server-utils/cqrs";
 import { UserContract } from "@org/contracts/api/Contracts";
-import { QueryBus } from "@org/cqrs";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";

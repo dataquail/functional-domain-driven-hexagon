@@ -2,11 +2,11 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-export interface RequestContext {
+export type RequestContext = {
   readonly requestId: string;
   readonly userId: Option.Option<string>;
   readonly traceId: Option.Option<string>;
-}
+};
 
 const empty: RequestContext = {
   requestId: "unknown",

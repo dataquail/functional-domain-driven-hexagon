@@ -1,4 +1,4 @@
-// This application's action vocabulary, declared to `@org/authz` in authz.ts.
+// This application's action vocabulary, declared to `@effect-server-utils/authz` in authz.ts.
 // Policies are written per (resource, action) — the action is one of these four
 // CRUD verbs and the check callback encapsulates the nuance (super-admin-only,
 // owner-or-admin, member-with-grant, etc.). Resisting custom action names per

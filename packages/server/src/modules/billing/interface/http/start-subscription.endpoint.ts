@@ -1,6 +1,6 @@
+import { CommandBus } from "@effect-server-utils/cqrs";
 import { BillingContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
-import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { StartSubscriptionCommand } from "@/modules/billing/commands/start-subscription.command.js";

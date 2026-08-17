@@ -1,4 +1,4 @@
-import { CommandBus } from "@org/cqrs";
+import { CommandBus } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 

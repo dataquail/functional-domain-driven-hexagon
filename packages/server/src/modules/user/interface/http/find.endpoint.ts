@@ -1,5 +1,5 @@
+import { QueryBus } from "@effect-server-utils/cqrs";
 import { UserContract } from "@org/contracts/api/Contracts";
-import { QueryBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { FindUsersQuery, type FindUsersResult } from "@/modules/user/queries/find-users.query.js";

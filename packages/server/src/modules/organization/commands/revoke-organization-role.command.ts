@@ -1,4 +1,4 @@
-import { Command, PersistenceUnavailable } from "@org/cqrs";
+import { Command, PersistenceUnavailable } from "@effect-server-utils/cqrs";
 import * as Schema from "effect/Schema";
 
 import { DoesNotHaveOrganizationRole } from "@/modules/organization/domain/organization-roles/organization-role.errors.js";

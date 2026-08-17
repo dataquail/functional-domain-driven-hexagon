@@ -1,6 +1,6 @@
+import { CommandBus } from "@effect-server-utils/cqrs";
 import { TodosContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
-import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { DeleteTodoCommand } from "@/modules/todos/commands/delete-todo.command.js";

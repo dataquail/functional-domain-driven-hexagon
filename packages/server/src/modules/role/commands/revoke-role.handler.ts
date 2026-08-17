@@ -1,4 +1,4 @@
-import { withUnitOfWork } from "@org/cqrs";
+import { withUnitOfWork } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 
 import { type RevokeRolePayload } from "@/modules/role/commands/revoke-role.command.js";

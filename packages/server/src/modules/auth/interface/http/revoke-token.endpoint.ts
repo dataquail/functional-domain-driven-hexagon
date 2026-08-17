@@ -1,7 +1,7 @@
+import { CommandBus } from "@effect-server-utils/cqrs";
 import { type AuthContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { CurrentUser } from "@org/contracts/Policy";
-import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { RevokeApiTokenCommand } from "@/modules/auth/commands/revoke-api-token.command.js";

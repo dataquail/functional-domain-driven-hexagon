@@ -246,9 +246,8 @@ must never be served from a replica or a projection — see ADR-0022.
 
 ### Shipped as a standalone package
 
-The DSL lives in a standalone `@org/authz` workspace package that the server
-imports, staged for eventual publication alongside the CQRS package. Its only
-dependency is Effect. Nothing else about the decisions above changes: the two
+The DSL lives in a standalone package, since published and consumed here as
+`@effect-server-utils/authz` at an exact beta. Its only dependency is Effect. Nothing else about the decisions above changes: the two
 declaration-merged registries, the resource-decides-the-id rule, the CRUD
 vocabulary, and the fully-closed checks are the package's own design.
 

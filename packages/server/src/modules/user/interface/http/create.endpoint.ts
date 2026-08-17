@@ -1,5 +1,5 @@
+import { CommandBus } from "@effect-server-utils/cqrs";
 import { UserContract } from "@org/contracts/api/Contracts";
-import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { CreateUserCommand } from "@/modules/user/commands/create-user.command.js";

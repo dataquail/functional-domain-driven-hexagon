@@ -1,4 +1,4 @@
-import { Check, type CheckFor, type PolicyContribution } from "@org/authz";
+import { Check, type CheckFor, type PolicyContribution } from "@effect-server-utils/authz";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -23,7 +23,7 @@ import { makeIsBillingSuperAdmin } from "./is-billing-super-admin.policy.js";
 // it has no policy; authentication is by signature, verified inside the
 // endpoint.
 
-declare module "@org/authz/policy-registry" {
+declare module "@effect-server-utils/authz/policy-registry" {
   interface PolicyMap {
     billing: {
       read: CheckFor<"billing">;

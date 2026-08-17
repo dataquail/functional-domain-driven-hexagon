@@ -35,11 +35,6 @@ const PROBES = [
     source: "export const Probe = () => null;\n",
   },
   {
-    rule: "project-structure/cqrs-package",
-    file: "packages/cqrs/src/__probe-stray/probe.ts",
-    source: "export const probe = 1;\n",
-  },
-  {
     rule: "local/use-case-db-via-make-query",
     file: "packages/server/src/modules/todos/commands/__probe.handler.ts",
     source: "export const probe = (db) => db.execute((client) => client.query());\n",
@@ -47,7 +42,8 @@ const PROBES = [
   {
     rule: "local/bus-factories-at-composition-roots",
     file: "packages/server/src/modules/todos/commands/__probe-bus.handler.ts",
-    source: 'import { makeCommandBus } from "@org/cqrs";\n\nexport const probe = makeCommandBus;\n',
+    source:
+      'import { makeCommandBus } from "@effect-server-utils/cqrs";\n\nexport const probe = makeCommandBus;\n',
   },
   {
     rule: "local/prefer-named-exports",
@@ -96,10 +92,6 @@ const cleanup = () => {
   for (const file of written.toReversed()) {
     rmSync(path.join(repoRoot, file), { force: true });
   }
-  rmSync(path.join(repoRoot, "packages/cqrs/src/__probe-stray"), {
-    force: true,
-    recursive: true,
-  });
 };
 
 process.on("exit", cleanup);

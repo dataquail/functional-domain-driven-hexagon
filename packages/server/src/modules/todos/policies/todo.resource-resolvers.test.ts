@@ -1,8 +1,8 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { PersistenceUnavailable, QueryBus, type QueryBusShape } from "@effect-server-utils/cqrs";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
-import { PersistenceUnavailable, QueryBus, type QueryBusShape } from "@org/cqrs";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";

@@ -377,10 +377,6 @@
     },
     {
       "files": [
-        "packages/authz/src/config.ts",
-        "packages/authz/src/policy-registry.ts",
-        "packages/authz/src/resource-resolver-registry.ts",
-        "packages/authz/src/authz.test.ts",
         "packages/server/src/modules/**/*.command-handlers.ts",
         "packages/server/src/modules/**/*.query-handlers.ts",
         "packages/server/src/modules/**/queries/*.query.ts",
@@ -390,17 +386,6 @@
       ],
       "rules": {
         "typescript/consistent-type-definitions": "off"
-      }
-    },
-    {
-      "files": [
-        "packages/authz/src/config.ts",
-        "packages/authz/src/policy-registry.ts",
-        "packages/authz/src/resource-resolver-registry.ts"
-      ],
-      "rules": {
-        "typescript/no-empty-interface": "off",
-        "typescript/no-empty-object-type": "off"
       }
     },
     {
@@ -431,12 +416,6 @@
       "files": ["packages/web/lib/tanstack-query/**/*.{ts,tsx}"],
       "rules": {
         "project-structure/web-tanstack-bridge": "error"
-      }
-    },
-    {
-      "files": ["packages/cqrs/src/**/*.ts"],
-      "rules": {
-        "project-structure/cqrs-package": "error"
       }
     },
     {

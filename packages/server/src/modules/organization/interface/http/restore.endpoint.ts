@@ -1,5 +1,5 @@
+import { CommandBus } from "@effect-server-utils/cqrs";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
-import { CommandBus } from "@org/cqrs";
 import * as Effect from "effect/Effect";
 
 import { RestoreOrganizationCommand } from "@/modules/organization/commands/restore-organization.command.js";

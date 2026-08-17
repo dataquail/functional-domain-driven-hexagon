@@ -1,5 +1,5 @@
-import { Check, type CheckFor, type PolicyContribution } from "@org/authz";
-import { QueryBus } from "@org/cqrs";
+import { Check, type CheckFor, type PolicyContribution } from "@effect-server-utils/authz";
+import { QueryBus } from "@effect-server-utils/cqrs";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -32,13 +32,13 @@ import { makeIsOrgSuperAdmin } from "./is-org-super-admin.policy.js";
 // policy it gates rather than in the check, so the check stays a question.
 const ORG_ADMIN_ROLE = "admin";
 
-declare module "@org/authz/resource-resolver-registry" {
+declare module "@effect-server-utils/authz/resource-resolver-registry" {
   interface ResourceResolverMap {
     organization: { resourceType: OrganizationAuthzView; idType: OrganizationId };
   }
 }
 
-declare module "@org/authz/policy-registry" {
+declare module "@effect-server-utils/authz/policy-registry" {
   interface PolicyMap {
     organization: {
       read: CheckFor<"organization">;

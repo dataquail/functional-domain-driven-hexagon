@@ -1,10 +1,14 @@
-import { PersistenceUnavailable, TransactionDriver, TransactionFailed } from "@org/cqrs";
+import {
+  PersistenceUnavailable,
+  TransactionDriver,
+  TransactionFailed,
+} from "@effect-server-utils/cqrs";
 import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-// The slonik binding for the atomicity primitive `@org/cqrs` needs. This is the
+// The slonik binding for the atomicity primitive `@effect-server-utils/cqrs` needs. This is the
 // only file that knows a unit of work is implemented as a SQL transaction; the
 // boundary's semantics live in the package.
 //

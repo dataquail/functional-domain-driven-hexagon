@@ -1,6 +1,6 @@
-import { type Resolver } from "@org/authz";
+import { type Resolver } from "@effect-server-utils/authz";
+import { QueryBus } from "@effect-server-utils/cqrs";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
-import { QueryBus } from "@org/cqrs";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";

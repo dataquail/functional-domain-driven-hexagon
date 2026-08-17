@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Command, Event, Query } from "@org/cqrs";
-import { checkEventsSerializable, checkSerializable } from "@org/cqrs/testing";
+import { Command, Event, Query } from "@effect-server-utils/cqrs";
+import { checkEventsSerializable, checkSerializable } from "@effect-server-utils/cqrs/testing";
 import * as Effect from "effect/Effect";
 
 import * as authModule from "@/modules/auth/index.js";

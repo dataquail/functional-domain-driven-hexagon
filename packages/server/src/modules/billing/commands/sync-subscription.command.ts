@@ -1,4 +1,4 @@
-import { Command, PersistenceUnavailable } from "@org/cqrs";
+import { Command, PersistenceUnavailable } from "@effect-server-utils/cqrs";
 import * as Schema from "effect/Schema";
 
 // Syncs the local Subscription projection to a Stripe-reported status.
