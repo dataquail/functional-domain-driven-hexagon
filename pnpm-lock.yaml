@@ -372,11 +372,11 @@ importers:
         specifier: ^3.1081.0
         version: 3.1081.0
       '@effect-server-utils/authz':
-        specifier: 0.1.0-beta.1
-        version: 0.1.0-beta.1(effect@4.0.0-beta.94)
+        specifier: 0.1.0-beta.2
+        version: 0.1.0-beta.2(effect@4.0.0-beta.94)
       '@effect-server-utils/cqrs':
-        specifier: 0.1.0-beta.1
-        version: 0.1.0-beta.1(effect@4.0.0-beta.94)
+        specifier: 0.1.0-beta.2
+        version: 0.1.0-beta.2(effect@4.0.0-beta.94)
       '@effect/platform-node':
         specifier: 4.0.0-beta.94
         version: 4.0.0-beta.94(effect@4.0.0-beta.94)(ioredis@5.11.1)
@@ -787,13 +787,13 @@ packages:
     resolution: {integrity: sha512-Xc3VhU02wqZ1HvHRJUwL09HkZSTvidqY5Ya0NXBSYOxAp+Ln9dcJr9fySI+CkONzP3PekQo9WdzCv0PGER/mOA==}
     engines: {node: '>=14.17.0'}
 
-  '@effect-server-utils/authz@0.1.0-beta.1':
-    resolution: {integrity: sha512-GohG6f4nLcZh9nGK2q7p0Vk90M/FSvrvGQc9sJNMKP9Tyl1Iupsi4LPlkU5b3GfXszLXPmc7SkZNAQaKTlqzdQ==}
+  '@effect-server-utils/authz@0.1.0-beta.2':
+    resolution: {integrity: sha512-XeH12DQEFE5qb/r8csTwp4lEGwid9i3bhg8pxceXAmwnWdya+iQ4Li108efDhgI65pQuFpDAP1DTGWYNm8miMA==}
     peerDependencies:
       effect: 4.0.0-beta.94
 
-  '@effect-server-utils/cqrs@0.1.0-beta.1':
-    resolution: {integrity: sha512-rGg2e9yNsLWVcINxFHzfd59h1QvrXO2wJi0uptUqhn0XJSbB+L2A+s3n3ZiP+b3FeYDIBxzLT6+x1WG425gb6g==}
+  '@effect-server-utils/cqrs@0.1.0-beta.2':
+    resolution: {integrity: sha512-DON10PFNAlEfJiY12EjtzKAbEmxlYWi2QL2NvxkcuqW431FKzVM7S2NyjfCdy3iLsRueQCFjTxTz23oX2tXiBA==}
     peerDependencies:
       effect: 4.0.0-beta.94
 
@@ -7482,11 +7482,11 @@ snapshots:
 
   '@discoveryjs/json-ext@1.1.0': {}
 
-  '@effect-server-utils/authz@0.1.0-beta.1(effect@4.0.0-beta.94)':
+  '@effect-server-utils/authz@0.1.0-beta.2(effect@4.0.0-beta.94)':
     dependencies:
       effect: 4.0.0-beta.94
 
-  '@effect-server-utils/cqrs@0.1.0-beta.1(effect@4.0.0-beta.94)':
+  '@effect-server-utils/cqrs@0.1.0-beta.2(effect@4.0.0-beta.94)':
     dependencies:
       effect: 4.0.0-beta.94
 
@@ -10720,7 +10720,7 @@ snapshots:
       eslint: 9.39.4(jiti@2.7.0)
       eslint-import-resolver-node: 0.3.10
       eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0))
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0))
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.7.0))
       eslint-plugin-jsx-a11y: 6.10.2(eslint@9.39.4(jiti@2.7.0))
       eslint-plugin-react: 7.37.5(eslint@9.39.4(jiti@2.7.0))
       eslint-plugin-react-hooks: 7.1.1(eslint@9.39.4(jiti@2.7.0))
@@ -10753,7 +10753,7 @@ snapshots:
       tinyglobby: 0.2.17
       unrs-resolver: 1.12.2
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0))
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.7.0))
     transitivePeerDependencies:
       - supports-color
 
@@ -10805,7 +10805,7 @@ snapshots:
       - eslint
       - supports-color
 
-  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0)):
+  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.7.0)):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9
