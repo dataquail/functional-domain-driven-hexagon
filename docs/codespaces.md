@@ -7,7 +7,7 @@ A codespace gives each branch its own fully provisioned stack — Postgres (app 
 1. **Code → Create codespace on branch**. Provisioning takes a few minutes on a cold start.
 2. When the terminal prints `Dev environment ready`, check whether it also printed **`ACTION REQUIRED — port 8080 could not be published`**. If so, open the **PORTS** panel, right-click port `8080` → **Port Visibility** → **Public**. See [Why port 8080 must be public](#why-port-8080-must-be-public).
 3. `pnpm dev` — Next on `:3000`, the BFF on `:3001`.
-4. Open the forwarded `:3000` URL and sign in at `/api/auth/login`. Credentials are `ZITADEL_ADMIN_EMAIL` / `ZITADEL_ADMIN_PASSWORD` in `.env`, and are echoed in the ready message.
+4. Open the forwarded `:3000` URL and sign in at `/api/auth/login`. Credentials are `ZITADEL_ADMIN_EMAIL` / `ZITADEL_ADMIN_PASSWORD` in `.env` — provisioning deliberately doesn't echo the password, because lifecycle output lands in the codespace creation log.
 
 Everything else is already running: Mailpit on `:8025`, Jaeger on `:16686`, the Zitadel console on `:8080/ui/console`, Postgres on `:5432`.
 

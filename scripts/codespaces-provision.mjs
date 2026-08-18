@@ -142,11 +142,16 @@ function runSeed(pat) {
     },
   });
 
-  if (result.stdout !== "") process.stdout.write(result.stdout);
-  if (result.stderr !== "") process.stderr.write(result.stderr);
+  const combined = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
+  const match = /^.*__seed__\s+(.+)$/m.exec(combined);
+
+  // Mirrored so a failing seed is debuggable, minus the credentials line —
+  // lifecycle output lands in the codespace creation log.
+  const redact = (text) => text.replace(/^.*__seed__\s+.+$/gm, "__seed__ <redacted>");
+  if (result.stdout !== "") process.stdout.write(redact(result.stdout));
+  if (result.stderr !== "") process.stderr.write(redact(result.stderr));
   if (result.status !== 0) throw new Error("the Zitadel seed exited non-zero");
 
-  const match = /^.*__seed__\s+(.+)$/m.exec(`${result.stdout ?? ""}\n${result.stderr ?? ""}`);
   if (match === null) return null;
 
   const out = {};
@@ -210,7 +215,7 @@ Dev environment ready.
 
   pnpm dev        web on :3000, BFF on :3001
   Sign in         ${env.APP_URL ?? "http://localhost:3000"}/api/auth/login
-  Credentials     ${env.ZITADEL_ADMIN_EMAIL ?? "admin@example.com"} / ${env.ZITADEL_ADMIN_PASSWORD ?? "(see .env)"}
+  Credentials     ${env.ZITADEL_ADMIN_EMAIL ?? "admin@example.com"} — password in .env (ZITADEL_ADMIN_PASSWORD)
   Mailpit :8025   Jaeger :16686   Zitadel console :8080/ui/console
 `);
 
