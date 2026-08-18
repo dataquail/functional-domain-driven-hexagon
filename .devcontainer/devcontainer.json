@@ -1,0 +1,75 @@
+{
+  "name": "functional-domain-driven-hexagon",
+
+  // The root compose file MUST stay first: Compose resolves every relative
+  // path in the override against the *first* file's directory, so paths in
+  // .devcontainer/docker-compose.yml are written relative to the repo root.
+  "dockerComposeFile": ["../docker-compose.yml", "docker-compose.yml"],
+  "service": "workspace",
+  "workspaceFolder": "/workspaces/functional-domain-driven-hexagon",
+
+  "features": {
+    // Talks to the VM's daemon over the mounted socket — enough for
+    // `docker logs effect-monorepo-zitadel` / `docker exec`, which is how you
+    // debug the stack from inside. Not used for `compose up`.
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": { "moby": true },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  // Runs on the VM *before* Compose starts anything, which is the only point
+  // at which we can still tell Zitadel which external domain it is about to
+  // be reached on. CODESPACE_NAME is available here; it is not during a
+  // prebuild, and the script degrades to the localhost defaults there.
+  "initializeCommand": "bash .devcontainer/initialize.sh",
+  "onCreateCommand": "bash .devcontainer/on-create.sh",
+  // Zitadel provisioning lives here, not in postCreate: prebuilds run
+  // postCreate but have no codespace name, so a prebuilt Zitadel would be
+  // keyed to the wrong domain. postStart never runs during a prebuild.
+  "postStartCommand": "bash .devcontainer/post-start.sh",
+  "waitFor": "onCreateCommand",
+
+  "forwardPorts": [
+    3000,
+    3001,
+    "zitadel:8080",
+    "mailpit:8025",
+    "jaeger:16686",
+    "jaeger:4318",
+    "postgres:5432"
+  ],
+
+  "portsAttributes": {
+    "3000": { "label": "web (Next.js)", "onAutoForward": "notify" },
+    "3001": { "label": "server (BFF)", "onAutoForward": "silent" },
+    "8080": { "label": "Zitadel — must be PUBLIC", "onAutoForward": "silent" },
+    "8025": { "label": "Mailpit", "onAutoForward": "silent" },
+    "16686": { "label": "Jaeger UI", "onAutoForward": "silent" },
+    "4318": { "label": "Jaeger OTLP/HTTP", "onAutoForward": "silent" },
+    "5432": { "label": "Postgres", "onAutoForward": "silent" }
+  },
+
+  "remoteEnv": {
+    "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "oxc.oxc-vscode",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "effectful-tech.effect-vscode",
+        "ms-playwright.playwright",
+        "github.vscode-github-actions"
+      ],
+      "settings": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "typescript.tsdk": "node_modules/typescript/lib",
+        "typescript.enablePromptUseWorkspaceTsdk": true
+      }
+    }
+  },
+
+  "remoteUser": "node"
+}

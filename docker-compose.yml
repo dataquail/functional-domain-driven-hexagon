@@ -84,7 +84,14 @@ services:
       ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: postgres
       ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: postgres
       ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
-      ZITADEL_EXTERNALSECURE: "false"
+      # Zitadel keys every instance by the host it is reached on, and stamps
+      # that host into the OIDC `issuer`. Behind a TLS-terminating proxy
+      # (Codespaces port forwarding) the browser-facing origin is https on
+      # :443 while the container still speaks plaintext, hence EXTERNALSECURE
+      # without TLS. Defaults reproduce the plain localhost setup.
+      ZITADEL_EXTERNALDOMAIN: ${ZITADEL_EXTERNAL_DOMAIN:-localhost}
+      ZITADEL_EXTERNALPORT: ${ZITADEL_EXTERNAL_PORT:-8080}
+      ZITADEL_EXTERNALSECURE: ${ZITADEL_EXTERNAL_SECURE:-false}
       ZITADEL_FIRSTINSTANCE_ORG_HUMAN_EMAIL_ADDRESS: ${ZITADEL_ADMIN_EMAIL:-admin@example.com}
       ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: ${ZITADEL_ADMIN_PASSWORD:-ChangeMe!1}
     ports:
@@ -121,6 +128,10 @@ services:
     network_mode: "service:zitadel"
     environment:
       ZITADEL_ISSUER: http://localhost:8080
+      # The address above is what we dial; this is the Host header Zitadel
+      # must see to resolve the instance. They differ whenever the instance
+      # is registered under an external domain.
+      ZITADEL_INSTANCE_HOST: ${ZITADEL_INSTANCE_HOST:-localhost:8080}
       ZITADEL_BOOTSTRAP_PAT: ${ZITADEL_BOOTSTRAP_PAT:-}
       ZITADEL_ADMIN_EMAIL: ${ZITADEL_ADMIN_EMAIL:-admin@example.com}
       APP_REDIRECT_URI: ${APP_REDIRECT_URI:-${ZITADEL_REDIRECT_URI:-http://localhost:3001/auth/callback}}

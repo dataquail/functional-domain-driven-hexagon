@@ -1,0 +1,76 @@
+# GitHub Codespaces
+
+A codespace gives each branch its own fully provisioned stack — Postgres (app DB, test DB and Zitadel's DB), Zitadel with a seeded OIDC app and admin user, Flyway-migrated schemas, Mailpit and Jaeger — so several features can be developed in parallel without them fighting over one laptop's ports, database and Zitadel instance.
+
+## Quick start
+
+1. **Code → Create codespace on branch**. Provisioning takes a few minutes on a cold start.
+2. When the terminal prints `Dev environment ready`, check whether it also printed **`ACTION REQUIRED — port 8080 could not be published`**. If so, open the **PORTS** panel, right-click port `8080` → **Port Visibility** → **Public**. See [Why port 8080 must be public](#why-port-8080-must-be-public).
+3. `pnpm dev` — Next on `:3000`, the BFF on `:3001`.
+4. Open the forwarded `:3000` URL and sign in at `/api/auth/login`. Credentials are `ZITADEL_ADMIN_EMAIL` / `ZITADEL_ADMIN_PASSWORD` in `.env`, and are echoed in the ready message.
+
+Everything else is already running: Mailpit on `:8025`, Jaeger on `:16686`, the Zitadel console on `:8080/ui/console`, Postgres on `:5432`.
+
+## What runs where
+
+The dev container is a **service in the repo's own Compose project** ([`.devcontainer/docker-compose.yml`](../.devcontainer/docker-compose.yml) merged over [`docker-compose.yml`](../docker-compose.yml)), joined to `jaeger-network`. So inside the codespace, `postgres`, `zitadel`, `mailpit` and `jaeger` resolve as hostnames, exactly as they do between containers — that is why `.env` there points at `postgres:5432` rather than `localhost:5432`. The app processes you start with `pnpm dev` run in that same container, so `:3000` and `:3001` are plain `localhost`.
+
+Docker itself is reachable (`docker-outside-of-docker`) for `docker logs effect-monorepo-zitadel` and friends, but the stack is started by the dev container lifecycle, not by `docker compose up`.
+
+## Why port 8080 must be public
+
+`oidc.client.ts` uses `openid.discovery()`, which **validates that the issuer it discovers equals `ZITADEL_ISSUER`**. Zitadel keys each instance by the host it is reached on and stamps that host into the issuer. So the browser and the server's back channel (token exchange, JWKS) have to reach Zitadel at the _same_ URL — the forwarded `https://<codespace>-8080.app.github.dev`. A private forwarded port answers a server-to-server call with GitHub's authentication wall, which the OIDC client cannot satisfy.
+
+`postStartCommand` tries `gh codespace ports visibility 8080:public` automatically; the token in a codespace often lacks the scope for it, hence the manual fallback.
+
+**This puts a Zitadel on the open internet for the life of the codespace** (at an unguessable URL). Provisioning therefore gives every codespace its own random `ZITADEL_ADMIN_PASSWORD` and `ZITADEL_MASTERKEY` instead of the template's well-known ones. Don't put real data in a codespace Zitadel, and delete codespaces you're done with.
+
+If your organization forbids public ports, the alternative is to keep them private and teach `oidc.client.ts` to split the browser-facing endpoints from the back-channel ones — that trade was considered and rejected here, because it puts dev-only branching in production auth code.
+
+## How provisioning is sequenced
+
+Zitadel's external domain has to be decided _before its first boot_ — `FirstInstance` only fires against a brand-new database. That constrains where each step can live:
+
+| Hook                                                              | Runs                          | Does                                                                                   |
+| ----------------------------------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------- |
+| [`initialize.sh`](../.devcontainer/initialize.sh)                 | on the VM, **before** Compose | writes `.env` — codespace URLs, Compose hostnames, generated secrets                   |
+| Compose                                                           | container creation            | Postgres (+ both peer DBs), Flyway on the dev and test DBs, Zitadel, Mailpit, Jaeger   |
+| [`on-create.sh`](../.devcontainer/on-create.sh)                   | in the container, once        | `pnpm install`, build `@org/contracts`                                                 |
+| [`codespaces-provision.mjs`](../scripts/codespaces-provision.mjs) | in the container, every start | waits for Zitadel, reads the bootstrap PAT, runs the seed, writes the client id/secret |
+
+Two constraints are worth knowing before you move anything:
+
+- `CODESPACE_NAME` is available to `initializeCommand` but **not during a prebuild**, so `initialize.sh` falls back to the localhost defaults there.
+- Prebuilds run `postCreateCommand`, so Zitadel provisioning lives in `postStartCommand` instead — otherwise a prebuilt Zitadel would be keyed to a domain no codespace actually uses.
+
+## Running the test suites
+
+Unit tests need nothing extra. The integration suite needs the test DB, which Compose has already created and migrated:
+
+```sh
+pnpm test              # unit
+pnpm test:integration  # reads DATABASE_URL_TEST → postgres:5432/effect-monorepo-test
+```
+
+## Troubleshooting
+
+**Sign-in bounces, or the server logs an issuer mismatch.** Port `8080` is still private, or `ZITADEL_ISSUER` in `.env` doesn't match `https://<codespace>-8080.app.github.dev`.
+
+**`Bootstrap PAT never appeared`.** Zitadel's `FirstInstance` only runs against a brand-new database, so a half-initialized volume never produces one. `docker logs effect-monorepo-zitadel` will say why; rebuilding the codespace is the quickest way back.
+
+**Provisioning didn't finish.** It's idempotent — re-run `node scripts/codespaces-provision.mjs`.
+
+**Provisioning reports a 3xx while waiting for Zitadel.** It dials Zitadel over plain HTTP on the Compose network while the instance is configured as externally-secure; if a build of Zitadel starts redirecting those to HTTPS, dial the public URL instead:
+`ZITADEL_INTERNAL_URL=$ZITADEL_ISSUER node scripts/codespaces-provision.mjs` (port 8080 has to be public first).
+
+**Browser traces don't reach Jaeger.** `NEXT_PUBLIC_OTLP_URL` points at the forwarded `:4318`; make that port public too. Server-side tracing is unaffected — it goes to `jaeger:4318` over the Compose network.
+
+## Prebuilds
+
+Enabling prebuilds (repo **Settings → Codespaces → Set up prebuild**) caches the image, the pnpm store and `node_modules`, which is the slow part of a cold start. Zitadel is deliberately _not_ prebaked, for the domain reason above.
+
+## Related
+
+- [Local development setup](dev-setup.md) — the laptop equivalent, via `pnpm bootstrap`
+- [ADR-0016 — Authentication with self-hosted Zitadel](adr/0016-authentication-with-self-hosted-zitadel.md)
+- [ADR-0018 — Next.js renderer and proxy](adr/0018-frontend-nextjs-renderer-and-proxy.md)

@@ -29,6 +29,7 @@
     "test:watch": "vitest",
     "test:integration": "TEST_INTEGRATION=true pnpm --workspace-concurrency=1 --filter @org/server --filter @org/jobs run test --run",
     "test:acceptance": "pnpm -F @org/acceptance test",
+    "dev": "pnpm --parallel --filter @org/server --filter @org/web run dev",
     "bootstrap": "node scripts/dev-bootstrap.mjs",
     "effect:source": "node scripts/sync-effect-source.mjs",
     "auth:up": "docker compose up -d zitadel",

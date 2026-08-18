@@ -14,6 +14,9 @@ pnpm dev      # see Run the app for what `dev` actually starts
 
 If something goes sideways and you'd rather start over: [`pnpm auth:reset` then `pnpm bootstrap`](#start-over).
 
+Prefer not to run any of it on your laptop? A codespace does all of the below
+on creation — see [codespaces.md](codespaces.md).
+
 ## Prerequisites
 
 - **Node** 22.13.x (see [package.json](../package.json) → `engines.node`)
@@ -175,6 +178,10 @@ The seed found `effect-monorepo-bff` already in Zitadel and skipped creation. Zi
 ### Login UI gets stuck on "2-Factor Setup"
 
 Zitadel's hosted UI prompts every fresh user to set up MFA. The Playwright drivers handle this automatically (see [packages/acceptance/drivers/pages/zitadel-login-page.ts](../packages/acceptance/drivers/pages/zitadel-login-page.ts)); for human logins, click "Skip" once and Zitadel won't ask again for `MFAInitSkipLifetime` (default 30 days).
+
+## Related
+
+- [GitHub Codespaces](codespaces.md) — the same environment, provisioned on creation
 
 ## Related ADRs
 
