@@ -21,7 +21,7 @@ public) is called out there.
 
 To run locally instead, install these on your machine:
 
-- **Node 22.14.0** — match `engines.node` in `package.json`. Use whatever version manager you like (`mise`, `fnm`, `nvm`, `asdf`).
+- **Node 22** — `.nvmrc` pins the exact version CI runs (22.13.1); `engines.node` accepts any 22.x at or above it. Use whatever version manager you like (`mise`, `fnm`, `nvm`, `asdf`).
 - **pnpm 10.3.0** — auto-activated by [corepack](https://nodejs.org/api/corepack.html), which ships with Node. Run `corepack enable` once after installing Node.
 - **Docker Desktop** (or any Docker + docker-compose) — runs Postgres, Flyway migrations, and Jaeger.
   - [Install Docker](https://docs.docker.com/get-docker/)

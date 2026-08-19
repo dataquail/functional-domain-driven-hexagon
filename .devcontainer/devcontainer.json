@@ -13,7 +13,11 @@
     // `docker logs effect-monorepo-zitadel` / `docker exec`, which is how you
     // debug the stack from inside. Not used for `compose up`.
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": { "moby": true },
-    "ghcr.io/devcontainers/features/github-cli:1": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    // Lets `gh codespace ssh` in, which is the only way to inspect a codespace
+    // whose lifecycle failed — the creation log alone shows the error but not
+    // the state that produced it.
+    "ghcr.io/devcontainers/features/sshd:1": {}
   },
 
   // Runs on the VM *before* Compose starts anything, which is the only point
@@ -41,7 +45,8 @@
     "8025": { "label": "Mailpit", "onAutoForward": "silent" },
     "16686": { "label": "Jaeger UI", "onAutoForward": "silent" },
     "4318": { "label": "Jaeger OTLP/HTTP", "onAutoForward": "silent" },
-    "5432": { "label": "Postgres", "onAutoForward": "silent" }
+    "5432": { "label": "Postgres", "onAutoForward": "silent" },
+    "2222": { "label": "sshd", "onAutoForward": "silent" }
   },
 
   "remoteEnv": {

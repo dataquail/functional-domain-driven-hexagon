@@ -54,6 +54,14 @@ pnpm test              # unit
 pnpm test:integration  # reads DATABASE_URL_TEST → postgres:5432/effect-monorepo-test
 ```
 
+## Getting a shell
+
+```sh
+gh codespace ssh -c <codespace-name>
+```
+
+The `sshd` feature is enabled for this. Use the full name (`gh codespace list`), not the two-word display name. Worth knowing when a lifecycle command fails: the creation log shows the error but not the state that produced it, and the recovery container the codespace falls back to has neither your tooling nor Docker.
+
 ## Troubleshooting
 
 **`Failed to build authorize URL: ClientError: unexpected HTTP response status code`.** The server's OIDC discovery is reaching GitHub's port-forwarding error page instead of Zitadel. Either port `8080` isn't forwarded (`gh codespace ports` should list it — if not, the forwarder isn't running: check `/tmp/codespaces-port-forwarder.log`) or it's forwarded but still **private**, so the request hits the authentication wall.
