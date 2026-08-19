@@ -28,15 +28,11 @@
   "postStartCommand": "bash .devcontainer/post-start.sh",
   "waitFor": "onCreateCommand",
 
-  "forwardPorts": [
-    3000,
-    3001,
-    "zitadel:8080",
-    "mailpit:8025",
-    "jaeger:16686",
-    "jaeger:4318",
-    "postgres:5432"
-  ],
+  // Numbers only. The spec's "service:port" form, which would forward straight
+  // from a sibling Compose service, is not implemented by Codespaces — it is
+  // ignored silently, which is why scripts/codespaces-port-forwarder.mjs
+  // republishes those services inside this container.
+  "forwardPorts": [3000, 3001, 8080, 8025, 16686, 4318, 5432],
 
   "portsAttributes": {
     "3000": { "label": "web (Next.js)", "onAutoForward": "notify" },

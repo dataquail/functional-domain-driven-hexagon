@@ -15,7 +15,9 @@ Everything else is already running: Mailpit on `:8025`, Jaeger on `:16686`, the 
 
 The dev container is a **service in the repo's own Compose project** ([`.devcontainer/docker-compose.yml`](../.devcontainer/docker-compose.yml) merged over [`docker-compose.yml`](../docker-compose.yml)), joined to `jaeger-network`. So inside the codespace, `postgres`, `zitadel`, `mailpit` and `jaeger` resolve as hostnames, exactly as they do between containers — that is why `.env` there points at `postgres:5432` rather than `localhost:5432`. The app processes you start with `pnpm dev` run in that same container, so `:3000` and `:3001` are plain `localhost`.
 
-Docker itself is reachable (`docker-outside-of-docker`) for `docker logs effect-monorepo-zitadel` and friends, but the stack is started by the dev container lifecycle, not by `docker compose up`.
+Docker itself is reachable (`docker-outside-of-docker`) for `docker logs effect-monorepo-zitadel` and friends, but the stack is started by the dev container lifecycle, not by `docker compose up`. **Don't run the `Docker: *` VS Code tasks in a codespace** — they shell out to `docker compose` with paths that only resolve on a laptop, and can spawn a duplicate, half-configured set of containers.
+
+Codespaces only forwards ports that something is listening on in the _primary_ container. The dev-containers spec has a `"service:port"` form of `forwardPorts` for exactly this case, but Codespaces does not implement it — the entries are ignored silently, and the service never appears in the PORTS panel at all. [`scripts/codespaces-port-forwarder.mjs`](../scripts/codespaces-port-forwarder.mjs), started from `postStartCommand`, therefore listens on 8080/8025/16686/4318/5432 in the dev container and pipes each to its service.
 
 ## Why port 8080 must be public
 
@@ -54,7 +56,9 @@ pnpm test:integration  # reads DATABASE_URL_TEST → postgres:5432/effect-monore
 
 ## Troubleshooting
 
-**Sign-in bounces, or the server logs an issuer mismatch.** Port `8080` is still private, or `ZITADEL_ISSUER` in `.env` doesn't match `https://<codespace>-8080.app.github.dev`.
+**`Failed to build authorize URL: ClientError: unexpected HTTP response status code`.** The server's OIDC discovery is reaching GitHub's port-forwarding error page instead of Zitadel. Either port `8080` isn't forwarded (`gh codespace ports` should list it — if not, the forwarder isn't running: check `/tmp/codespaces-port-forwarder.log`) or it's forwarded but still **private**, so the request hits the authentication wall.
+
+**Sign-in bounces, or the server logs an issuer mismatch.** `ZITADEL_ISSUER` in `.env` doesn't match `https://<codespace>-8080.app.github.dev`.
 
 **`Bootstrap PAT never appeared`.** Zitadel's `FirstInstance` only runs against a brand-new database, so a half-initialized volume never produces one. `docker logs effect-monorepo-zitadel` will say why; rebuilding the codespace is the quickest way back.
 
