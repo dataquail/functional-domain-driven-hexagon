@@ -165,14 +165,25 @@ function runSeed(pat) {
 // The server validates that the issuer it discovers equals ZITADEL_ISSUER, so
 // browser and back channel have to reach Zitadel at the same URL. A private
 // forwarded port answers a server-to-server call with GitHub's auth wall.
-function publishZitadelPort() {
+async function publishZitadelPort() {
   if (process.env.CODESPACE_NAME === undefined) return "not a codespace — nothing to publish";
-  const result = spawnSync(
-    "gh",
-    ["codespace", "ports", "visibility", "8080:public", "-c", process.env.CODESPACE_NAME],
-    { encoding: "utf8" },
-  );
-  if (result.status === 0) return "port 8080 is public";
+
+  // Codespaces registers a forwarded port a little after the listener appears,
+  // and until it does this fails with `error getting tunnel port: 404`. Retry
+  // rather than sending the reader to the PORTS panel for a race.
+  const deadline = Date.now() + 60_000;
+  let lastError = "";
+  while (Date.now() < deadline) {
+    const result = spawnSync(
+      "gh",
+      ["codespace", "ports", "visibility", "8080:public", "-c", process.env.CODESPACE_NAME],
+      { encoding: "utf8" },
+    );
+    if (result.status === 0) return "port 8080 is public";
+    lastError = `${result.stderr ?? ""}`.trim();
+    await sleep(5_000);
+  }
+  console.error(`  publishing port 8080 kept failing — last: ${lastError}`);
   return null;
 }
 
@@ -208,7 +219,7 @@ async function main() {
     }
   }
 
-  const published = publishZitadelPort();
+  const published = await publishZitadelPort();
 
   console.log(`
 Dev environment ready.
