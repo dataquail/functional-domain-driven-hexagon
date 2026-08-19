@@ -15,7 +15,7 @@ Everything else is already running: Mailpit on `:8025`, Jaeger on `:16686`, the 
 
 The dev container is a **service in the repo's own Compose project** ([`.devcontainer/docker-compose.yml`](../.devcontainer/docker-compose.yml) merged over [`docker-compose.yml`](../docker-compose.yml)), joined to `jaeger-network`. So inside the codespace, `postgres`, `zitadel`, `mailpit` and `jaeger` resolve as hostnames, exactly as they do between containers — that is why `.env` there points at `postgres:5432` rather than `localhost:5432`. The app processes you start with `pnpm dev` run in that same container, so `:3000` and `:3001` are plain `localhost`.
 
-Docker itself is reachable (`docker-outside-of-docker`) for `docker logs effect-monorepo-zitadel` and friends, but the stack is started by the dev container lifecycle, not by `docker compose up`. **Don't run the `Docker: *` VS Code tasks in a codespace** — they shell out to `docker compose` with paths that only resolve on a laptop, and can spawn a duplicate, half-configured set of containers.
+Docker itself is reachable (`docker-outside-of-docker`) for `docker logs effect-monorepo-zitadel` and friends, but the stack is **not** driven with `docker compose` from here. Compose run from the workspace resolves the relative bind paths to container-side paths the VM's daemon cannot see; it creates them as empty directories, and because the services use fixed `container_name`s the resulting broken containers replace the working ones — which takes the whole codespace down on its next start. `pnpm bootstrap`, `pnpm auth:*`, `pnpm auth:reset` and the `Docker: *` VS Code tasks all refuse to run here for that reason (`scripts/local-only.sh`).
 
 Codespaces only forwards ports that something is listening on in the _primary_ container. The dev-containers spec has a `"service:port"` form of `forwardPorts` for exactly this case, but Codespaces does not implement it — the entries are ignored silently, and the service never appears in the PORTS panel at all. [`scripts/codespaces-port-forwarder.mjs`](../scripts/codespaces-port-forwarder.mjs), started from `postStartCommand`, therefore listens on 8080/8025/16686/4318/5432 in the dev container and pipes each to its service.
 
@@ -63,6 +63,8 @@ pnpm test:integration  # reads DATABASE_URL_TEST → postgres:5432/effect-monore
 **`Bootstrap PAT never appeared`.** Zitadel's `FirstInstance` only runs against a brand-new database, so a half-initialized volume never produces one. `docker logs effect-monorepo-zitadel` will say why; rebuilding the codespace is the quickest way back.
 
 **Provisioning didn't finish.** It's idempotent — re-run `node scripts/codespaces-provision.mjs`.
+
+**The codespace starts into a recovery container**, with `error mounting "/workspaces/…"` in the creation log. Something ran `docker compose` from inside the workspace and left a service pointing at a path that only exists in the dev container. Recreating the codespace is the reliable fix; the guards above exist to stop it happening again.
 
 **Provisioning reports a 3xx while waiting for Zitadel.** It dials Zitadel over plain HTTP on the Compose network while the instance is configured as externally-secure; if a build of Zitadel starts redirecting those to HTTPS, dial the public URL instead:
 `ZITADEL_INTERNAL_URL=$ZITADEL_ISSUER node scripts/codespaces-provision.mjs` (port 8080 has to be public first).
