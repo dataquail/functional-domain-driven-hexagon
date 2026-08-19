@@ -1,3 +1,4 @@
 node_modules/
 package-lock.json
 .machinekey/
+zitadel.codespaces.yaml

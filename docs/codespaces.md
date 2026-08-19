@@ -19,6 +19,16 @@ Docker itself is reachable (`docker-outside-of-docker`) for `docker logs effect-
 
 Codespaces only forwards ports that something is listening on in the _primary_ container. The dev-containers spec has a `"service:port"` form of `forwardPorts` for exactly this case, but Codespaces does not implement it — the entries are ignored silently, and the service never appears in the PORTS panel at all. [`scripts/codespaces-port-forwarder.mjs`](../scripts/codespaces-port-forwarder.mjs), started from `postStartCommand`, therefore listens on 8080/8025/16686/4318/5432 in the dev container and pipes each to its service.
 
+Zitadel's port needs its traffic repaired rather than just relayed, which is why that one is proxied at the HTTP layer. GitHub's forwarder rewrites the inbound `Host` to `localhost:<port>` and moves the real hostname to `X-Forwarded-Host`. Zitadel resolves its instance from `Host` and derives the domain of its `zitadel.useragent` cookie from `ExternalDomain`, so the two have to agree with the address the browser is using:
+
+| `ExternalDomain` | inbound `Host`   | result                                                                                                                                                    |
+| ---------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `localhost`      | `localhost:8080` | resolves, but the cookie is scoped to `localhost`, the browser drops it, and the login screen fails every request with **User Agent does not correspond** |
+| codespace host   | `localhost:8080` | **Instance not found** — Zitadel cannot match the origin at all                                                                                           |
+| codespace host   | codespace host   | correct: cookie scoped to the origin the browser is on                                                                                                    |
+
+So `initialize.sh` generates `infra/zitadel/zitadel.codespaces.yaml` with the codespace's own domain baked in (compose mounts whatever `ZITADEL_CONFIG_FILE` names), _and_ the forwarder puts the `Host` header back. The `ZITADEL_EXTERNAL*` env vars carry the same values; a plain Zitadel prefers those over its config file, but this deployment was observed doing the opposite, so both agree rather than relying on the precedence. `X-Forwarded-Proto: https` from the forwarder is what makes the discovered issuer `https://`, which is what the server checks it against.
+
 ## Why port 8080 must be public
 
 `oidc.client.ts` uses `openid.discovery()`, which **validates that the issuer it discovers equals `ZITADEL_ISSUER`**. Zitadel keys each instance by the host it is reached on and stamps that host into the issuer. So the browser and the server's back channel (token exchange, JWKS) have to reach Zitadel at the _same_ URL — the forwarded `https://<codespace>-8080.app.github.dev`. A private forwarded port answers a server-to-server call with GitHub's authentication wall, which the OIDC client cannot satisfy.
@@ -63,6 +73,8 @@ gh codespace ssh -c <codespace-name>
 The `sshd` feature is enabled for this. Use the full name (`gh codespace list`), not the two-word display name. Worth knowing when a lifecycle command fails: the creation log shows the error but not the state that produced it, and the recovery container the codespace falls back to has neither your tooling nor Docker.
 
 ## Troubleshooting
+
+**Zitadel's login screen shows "User Agent does not correspond (EVENT-adk13)".** Its user-agent cookie is scoped to a domain the browser isn't on, so it never comes back. Check `Domain=` on the `zitadel.useragent` cookie against the host in the address bar — see the table above.
 
 **`Failed to build authorize URL: ClientError: unexpected HTTP response status code`.** The server's OIDC discovery is reaching GitHub's port-forwarding error page instead of Zitadel. Either port `8080` isn't forwarded (`gh codespace ports` should list it — if not, the forwarder isn't running: check `/tmp/codespaces-port-forwarder.log`) or it's forwarded but still **private**, so the request hits the authentication wall.
 

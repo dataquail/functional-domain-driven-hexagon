@@ -97,7 +97,11 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./infra/zitadel/zitadel.yaml:/etc/zitadel/zitadel.yaml:ro
+      # Which file this is matters: the values below are also passed as
+      # ZITADEL_EXTERNAL* env vars, and Zitadel has been observed preferring
+      # the file over the environment, so a codespace generates a variant
+      # with its own domain baked in rather than relying on precedence.
+      - ${ZITADEL_CONFIG_FILE:-./infra/zitadel/zitadel.yaml}:/etc/zitadel/zitadel.yaml:ro
       # Zitadel writes the bootstrap-bot PAT here on first boot (see
       # FirstInstance.PatPath in zitadel.yaml). Read by `pnpm auth:seed` and
       # by CI to skip the manual "console → service user → PAT" step.
