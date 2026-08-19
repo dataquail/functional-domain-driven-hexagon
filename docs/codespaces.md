@@ -62,6 +62,8 @@ pnpm test:integration  # reads DATABASE_URL_TEST → postgres:5432/effect-monore
 
 **`Bootstrap PAT never appeared`.** Zitadel's `FirstInstance` only runs against a brand-new database, so a half-initialized volume never produces one. `docker logs effect-monorepo-zitadel` will say why; rebuilding the codespace is the quickest way back.
 
+**`EACCES: permission denied, open '.../.env'` during provisioning.** `initializeCommand` runs as root on the host while the container runs as `node`, so `.env` has to be handed over deliberately — `initialize.sh` chowns it and rewrites it in place. A workspace left root-owned by an older revision heals on its next start; to unblock one immediately, `sudo chown node:node .env`.
+
 **Provisioning didn't finish.** It's idempotent — re-run `node scripts/codespaces-provision.mjs`.
 
 **The codespace starts into a recovery container**, with `error mounting "/workspaces/…"` in the creation log. Something ran `docker compose` from inside the workspace and left a service pointing at a path that only exists in the dev container. Recreating the codespace is the reliable fix; the guards above exist to stop it happening again.

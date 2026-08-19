@@ -16,13 +16,20 @@ ENV_FILE=".env"
 [ -f ".env.example" ] || { echo "initialize: no .env.example; nothing to do"; exit 0; }
 [ -f "$ENV_FILE" ] || cp .env.example "$ENV_FILE"
 
+# Root here, `node` (uid 1000 in this base image) in the container — which has
+# to read this at boot and write the provisioned client id/secret back into it.
+# Unconditional so a workspace left root-owned by an earlier run recovers.
+if [ "$(id -u)" = "0" ]; then chown 1000:1000 "$ENV_FILE"; fi
+chmod 0600 "$ENV_FILE"
+
 get_env() {
   grep -E "^$1=" "$ENV_FILE" 2>/dev/null | tail -n 1 | cut -d= -f2- || true
 }
 
 set_env() {
   local key="$1" value="$2" tmp found=0
-  tmp="$(mktemp)"
+  tmp="${ENV_FILE}.tmp"
+  : > "$tmp"
   while IFS= read -r line || [ -n "$line" ]; do
     case "$line" in
       "$key"=*) printf '%s=%s\n' "$key" "$value" >> "$tmp"; found=1 ;;
@@ -30,7 +37,10 @@ set_env() {
     esac
   done < "$ENV_FILE"
   [ "$found" -eq 1 ] || printf '%s=%s\n' "$key" "$value" >> "$tmp"
-  mv "$tmp" "$ENV_FILE"
+  # Rewrite in place rather than `mv`: this runs as root, and replacing the
+  # file would hand it root's ownership and the temp file's mode.
+  cat "$tmp" > "$ENV_FILE"
+  rm -f "$tmp"
 }
 
 random_hex() { head -c "$1" /dev/urandom | od -An -tx1 | tr -d ' \n'; }
