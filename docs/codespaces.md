@@ -19,15 +19,14 @@ Docker itself is reachable (`docker-outside-of-docker`) for `docker logs effect-
 
 Codespaces only forwards ports that something is listening on in the _primary_ container. The dev-containers spec has a `"service:port"` form of `forwardPorts` for exactly this case, but Codespaces does not implement it — the entries are ignored silently, and the service never appears in the PORTS panel at all. [`scripts/codespaces-port-forwarder.mjs`](../scripts/codespaces-port-forwarder.mjs), started from `postStartCommand`, therefore listens on 8080/8025/16686/4318/5432 in the dev container and pipes each to its service.
 
-Zitadel's port needs its traffic repaired rather than just relayed, which is why that one is proxied at the HTTP layer. GitHub's forwarder rewrites the inbound `Host` to `localhost:<port>` and moves the real hostname to `X-Forwarded-Host`. Zitadel resolves its instance from `Host` and derives the domain of its `zitadel.useragent` cookie from `ExternalDomain`, so the two have to agree with the address the browser is using:
+Zitadel's port needs its traffic repaired rather than just relayed, which is why that one is proxied at the HTTP layer while the rest stay raw byte pipes. GitHub's forwarder rewrites the inbound `Host` to `localhost:<port>` and moves the real hostname to `X-Forwarded-Host`. Zitadel sets its `zitadel.useragent` cookie with the domain taken straight from the request's `Host` (`setUserAgent(w, r.Host, …)` in its user-agent middleware), so it would scope that cookie to `localhost`, the browser would drop it as not matching the origin, and every request would then look like a new user agent — which the login UI reports as **User Agent does not correspond (EVENT-adk13)**.
 
-| `ExternalDomain` | inbound `Host`   | result                                                                                                                                                    |
-| ---------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `localhost`      | `localhost:8080` | resolves, but the cookie is scoped to `localhost`, the browser drops it, and the login screen fails every request with **User Agent does not correspond** |
-| codespace host   | `localhost:8080` | **Instance not found** — Zitadel cannot match the origin at all                                                                                           |
-| codespace host   | codespace host   | correct: cookie scoped to the origin the browser is on                                                                                                    |
+Two consequences worth knowing before changing any of this:
 
-So `initialize.sh` generates `infra/zitadel/zitadel.codespaces.yaml` with the codespace's own domain baked in (compose mounts whatever `ZITADEL_CONFIG_FILE` names), _and_ the forwarder puts the `Host` header back. The `ZITADEL_EXTERNAL*` env vars carry the same values; a plain Zitadel prefers those over its config file, but this deployment was observed doing the opposite, so both agree rather than relying on the precedence. `X-Forwarded-Proto: https` from the forwarder is what makes the discovered issuer `https://`, which is what the server checks it against.
+- The proxy can only repair the header if it is the thing the tunnel reaches, so Zitadel must **not** also publish 8080 on the VM. `ZITADEL_HOST_PORT` moves it to 18080 in a codespace.
+- The forwarder is started with `setsid`. A plain `&` background job dies with `postStartCommand`'s shell, which leaves 8080 unclaimed and silently sends the tunnel to Zitadel directly.
+
+`ExternalDomain` is a separate concern: it decides which domain `FirstInstance` registers the instance under, so a request carrying the repaired `Host` can be matched to it. It comes from the `ZITADEL_EXTERNAL*` env vars alone — `infra/zitadel/zitadel.yaml` deliberately does not set it. `X-Forwarded-Proto: https` from the forwarder is what makes the discovered issuer `https://`, which is what the server checks it against.
 
 ## Why port 8080 must be public
 
@@ -74,7 +73,7 @@ The `sshd` feature is enabled for this. Use the full name (`gh codespace list`),
 
 ## Troubleshooting
 
-**Zitadel's login screen shows "User Agent does not correspond (EVENT-adk13)".** Its user-agent cookie is scoped to a domain the browser isn't on, so it never comes back. Check `Domain=` on the `zitadel.useragent` cookie against the host in the address bar — see the table above.
+**Zitadel's login screen shows "User Agent does not correspond (EVENT-adk13)".** Its user-agent cookie is scoped to a domain the browser isn't on, so it never comes back. Check `Domain=` on the `zitadel.useragent` cookie against the host in the address bar; if it says `localhost`, the request reached Zitadel without passing through the Host-rewriting proxy. Confirm something in the dev container is listening on 8080 (`ss -ltn | grep 8080`) and that Zitadel is not also publishing it (`docker port effect-monorepo-zitadel` should show 18080).
 
 **`Failed to build authorize URL: ClientError: unexpected HTTP response status code`.** The server's OIDC discovery is reaching GitHub's port-forwarding error page instead of Zitadel. Either port `8080` isn't forwarded (`gh codespace ports` should list it — if not, the forwarder isn't running: check `/tmp/codespaces-port-forwarder.log`) or it's forwarded but still **private**, so the request hits the authentication wall.
 

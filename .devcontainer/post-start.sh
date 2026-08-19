@@ -11,8 +11,16 @@ cd "$(dirname "$0")/.."
 # forwards what the primary container listens on. Backgrounded — it runs for the
 # life of the container, and postStart must not block.
 echo "Forwarding Compose service ports into the dev container:"
-nohup node scripts/codespaces-port-forwarder.mjs > /tmp/codespaces-port-forwarder.log 2>&1 &
-sleep 1
+# setsid, not a bare `&`: postStartCommand's shell is torn down when the hook
+# returns and takes an ordinary background child with it. That left nothing
+# listening on 8080, so the tunnel bound to Zitadel's own published port
+# instead — where nothing repairs the Host header.
+setsid nohup node scripts/codespaces-port-forwarder.mjs \
+  > /tmp/codespaces-port-forwarder.log 2>&1 < /dev/null &
+sleep 2
 cat /tmp/codespaces-port-forwarder.log || true
+if ! (ss -ltn 2>/dev/null || netstat -ltn 2>/dev/null) | grep -q ":8080"; then
+  echo "WARNING: nothing is listening on 8080 — sign-in will fail." >&2
+fi
 
 node scripts/codespaces-provision.mjs

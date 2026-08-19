@@ -2,9 +2,9 @@
 # Most secrets/host-specific values come from env (see docker-compose.yml).
 # Reference: https://zitadel.com/docs/self-hosting/manage/configure
 
-ExternalDomain: localhost
-ExternalPort: 8080
-ExternalSecure: false
+# ExternalDomain / ExternalPort / ExternalSecure deliberately live in the
+# environment only (see docker-compose.yml), so there is one source of truth
+# for them and a codespace can supply its own forwarded host.
 
 TLS:
   Enabled: false
