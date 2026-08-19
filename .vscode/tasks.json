@@ -10,7 +10,7 @@
       // points at; it isn't profile-gated, but naming services means compose
       // starts only the ones listed, so it has to be named here too.
       "type": "shell",
-      "command": "bash scripts/local-only.sh && docker-compose up -d postgres jaeger zitadel mailpit",
+      "command": "bash scripts/local-only.sh --skip docker-compose up -d postgres jaeger zitadel mailpit",
       "options": { "cwd": "${workspaceFolder}" },
       "presentation": {
         "reveal": "always",
@@ -24,7 +24,7 @@
       "label": "Docker: Down",
       "detail": "Stop all docker-compose services (keeps the postgres volume)",
       "type": "shell",
-      "command": "bash scripts/local-only.sh && docker-compose down",
+      "command": "bash scripts/local-only.sh --skip docker-compose down",
       "options": { "cwd": "${workspaceFolder}" },
       "presentation": {
         "reveal": "always",
@@ -37,7 +37,7 @@
       "label": "Docker: Migrate (dev DB)",
       "detail": "Run flyway migrations against effect-monorepo",
       "type": "shell",
-      "command": "bash scripts/local-only.sh && docker-compose --profile migrate up flyway",
+      "command": "bash scripts/local-only.sh --skip docker-compose --profile migrate up flyway",
       "options": { "cwd": "${workspaceFolder}" },
       "presentation": {
         "reveal": "always",
@@ -50,7 +50,7 @@
       "label": "Docker: Migrate (test DB)",
       "detail": "Run flyway migrations against effect-monorepo-test",
       "type": "shell",
-      "command": "bash scripts/local-only.sh && docker-compose --profile migrate-test up flyway-test",
+      "command": "bash scripts/local-only.sh --skip docker-compose --profile migrate-test up flyway-test",
       "options": { "cwd": "${workspaceFolder}" },
       "presentation": {
         "reveal": "always",
@@ -67,7 +67,7 @@
       // and writes the admin row into the app DB. Safe to re-run; second
       // run prints `[exists]` for everything and exits clean.
       "type": "shell",
-      "command": "pnpm auth:seed",
+      "command": "bash scripts/local-only.sh --skip pnpm auth:seed",
       "options": { "cwd": "${workspaceFolder}" },
       "presentation": {
         "reveal": "always",
