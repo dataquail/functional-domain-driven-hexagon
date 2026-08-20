@@ -1,0 +1,57 @@
+# Merged on top of the repo-root docker-compose.yml (which is listed first in
+# devcontainer.json, making the repo root the Compose project directory — every
+# relative path below is therefore repo-root-relative, not .devcontainer-relative).
+#
+# The dev container joins `jaeger-network`, so `postgres`, `zitadel`, `mailpit`
+# and `jaeger` resolve by service name exactly as they do between containers.
+services:
+  workspace:
+    image: mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm
+    command: sleep infinity
+    volumes:
+      - ..:/workspaces:cached
+    networks:
+      - jaeger-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      flyway-dev:
+        condition: service_completed_successfully
+      flyway-test-dev:
+        condition: service_completed_successfully
+
+  # The root compose file gates Flyway behind the `migrate` / `migrate-test`
+  # profiles so a plain `docker compose up` doesn't migrate. The dev container
+  # does want both applied before it starts, and a profile can't be cleared by
+  # a merge, so these are separate services that the workspace waits on.
+  flyway-dev:
+    image: flyway/flyway:10
+    command:
+      - -url=jdbc:postgresql://postgres:5432/effect-monorepo
+      - -user=postgres
+      - -password=postgres
+      - -connectRetries=20
+      - migrate
+    volumes:
+      - ./packages/database/migrations:/flyway/sql
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - jaeger-network
+
+  flyway-test-dev:
+    image: flyway/flyway:10
+    command:
+      - -url=jdbc:postgresql://postgres:5432/effect-monorepo-test
+      - -user=postgres
+      - -password=postgres
+      - -connectRetries=20
+      - migrate
+    volumes:
+      - ./packages/database/migrations:/flyway/sql
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - jaeger-network

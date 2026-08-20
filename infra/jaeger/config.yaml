@@ -47,6 +47,8 @@ receivers:
           allowed_origins:
             - http://localhost:*
             - http://127.0.0.1:*
+            # Codespaces forwards the browser origin; see docs/codespaces.md.
+            - https://*.app.github.dev
           allowed_headers:
             - "*"
 

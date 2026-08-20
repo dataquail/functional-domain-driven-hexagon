@@ -35,6 +35,20 @@ const READY_TIMEOUT_MS = 180_000;
 const PAT_TIMEOUT_MS = 60_000;
 const POLL_INTERVAL_MS = 2_000;
 
+// This drives `docker compose` from the workspace, which in a codespace is
+// itself a container: Compose would resolve the relative bind paths to
+// container-side paths the VM's daemon cannot see, and the fixed
+// `container_name`s mean the resulting broken containers replace the working
+// ones. Provisioning there goes through scripts/codespaces-provision.mjs.
+if (process.env.CODESPACES !== undefined) {
+  console.error(
+    "This drives `docker compose` from the workspace and only works on a laptop.\n" +
+      "In a codespace the stack is already running — use `node scripts/codespaces-provision.mjs`.\n" +
+      "See docs/codespaces.md.",
+  );
+  process.exit(1);
+}
+
 async function main() {
   step(1, "ensure .env exists", ensureEnvFile);
   step(2, "ensure SESSION_COOKIE_SECRET is set", ensureSessionSecret);

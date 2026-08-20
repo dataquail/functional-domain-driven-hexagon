@@ -27,6 +27,20 @@ const MACHINEKEY_DIR = join(ROOT, "infra/zitadel/.machinekey");
 
 const FIELDS_TO_CLEAR = ["ZITADEL_BOOTSTRAP_PAT", "ZITADEL_CLIENT_ID", "ZITADEL_CLIENT_SECRET"];
 
+// This drives `docker compose` from the workspace, which in a codespace is
+// itself a container: Compose would resolve the relative bind paths to
+// container-side paths the VM's daemon cannot see, and the fixed
+// `container_name`s mean the resulting broken containers replace the working
+// ones. Provisioning there goes through scripts/codespaces-provision.mjs.
+if (process.env.CODESPACES !== undefined) {
+  console.error(
+    "This drives `docker compose` from the workspace and only works on a laptop.\n" +
+      "In a codespace the stack is already running — use `node scripts/codespaces-provision.mjs`.\n" +
+      "See docs/codespaces.md.",
+  );
+  process.exit(1);
+}
+
 function main() {
   step("stop zitadel container", () => {
     spawnSync("docker", ["compose", "stop", "zitadel"], {

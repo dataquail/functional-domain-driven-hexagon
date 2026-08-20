@@ -13,13 +13,15 @@
 
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { request as httpRequest } from "node:http";
+import { request as httpsRequest } from "node:https";
 import pg from "pg";
 
 const issuer = process.env.ZITADEL_ISSUER ?? "http://localhost:8080";
-// Zitadel keys instances by domain. The default instance is registered for
-// `localhost` (= ExternalDomain in zitadel.yaml). Calls from the seed
-// container connect to `zitadel:8080` over Docker DNS, but Zitadel must
-// see Host=localhost:8080 to find the instance. Override here.
+// Zitadel keys instances by domain, so every request must carry the Host
+// header the instance is registered under, whatever address we dialled.
+// `fetch` silently drops a `host` header (it is forbidden by the Fetch
+// spec), so `zitadelRequest` below dials with node:http instead.
 const instanceHost = process.env.ZITADEL_INSTANCE_HOST ?? "localhost:8080";
 const adminEmail = process.env.ZITADEL_ADMIN_EMAIL ?? "admin@example.com";
 // `APP_REDIRECT_URI` is comma-separated to support multiple origins when
@@ -127,14 +129,49 @@ For other environments, see .env.example for the full list and documentation.
   process.exit(2);
 }
 
+function zitadelRequest(path, { method = "GET", headers = {}, body } = {}) {
+  const url = new URL(`${issuer}${path}`);
+  const send = url.protocol === "https:" ? httpsRequest : httpRequest;
+  return new Promise((resolve, reject) => {
+    const req = send(
+      {
+        protocol: url.protocol,
+        hostname: url.hostname,
+        port: url.port !== "" ? url.port : url.protocol === "https:" ? 443 : 80,
+        path: `${url.pathname}${url.search}`,
+        method,
+        headers: {
+          ...headers,
+          host: instanceHost,
+          ...(body === undefined ? {} : { "content-length": Buffer.byteLength(body) }),
+        },
+      },
+      (res) => {
+        const chunks = [];
+        res.on("data", (c) => chunks.push(c));
+        res.on("end", () => {
+          const text = Buffer.concat(chunks).toString("utf8");
+          resolve({
+            ok: res.statusCode >= 200 && res.statusCode < 300,
+            status: res.statusCode,
+            statusText: res.statusMessage ?? "",
+            text,
+          });
+        });
+      },
+    );
+    req.on("error", reject);
+    if (body !== undefined) req.write(body);
+    req.end();
+  });
+}
+
 async function waitForZitadel() {
   const deadline = Date.now() + 120_000;
   let lastError;
   while (Date.now() < deadline) {
     try {
-      const r = await fetch(`${issuer}/debug/ready`, {
-        headers: { host: instanceHost },
-      });
+      const r = await zitadelRequest("/debug/ready");
       if (r.ok) return;
       lastError = `${r.status} ${r.statusText}`;
     } catch (err) {
@@ -148,28 +185,26 @@ async function waitForZitadel() {
 }
 
 async function api(path, init = {}) {
-  const { tolerate, ...fetchInit } = init;
-  const r = await fetch(`${issuer}${path}`, {
-    ...fetchInit,
+  const { tolerate, ...requestInit } = init;
+  const r = await zitadelRequest(path, {
+    ...requestInit,
     headers: {
       "content-type": "application/json",
       authorization: `Bearer ${pat}`,
-      host: instanceHost,
-      ...(fetchInit.headers ?? {}),
+      ...(requestInit.headers ?? {}),
     },
   });
   if (!r.ok) {
-    const text = await r.text();
     if (
       tolerate !== undefined &&
       r.status === tolerate.status &&
-      text.includes(tolerate.messageIncludes)
+      r.text.includes(tolerate.messageIncludes)
     ) {
       return null;
     }
-    throw new Error(`${init.method ?? "GET"} ${path} -> ${r.status} ${r.statusText}\n${text}`);
+    throw new Error(`${init.method ?? "GET"} ${path} -> ${r.status} ${r.statusText}\n${r.text}`);
   }
-  return r.json();
+  return r.text === "" ? null : JSON.parse(r.text);
 }
 
 const PROJECT_NAME = "effect-monorepo";

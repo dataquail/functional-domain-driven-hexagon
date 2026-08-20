@@ -63,8 +63,12 @@ jobs:
           # infra/postgres/init/ runs and creates the `zitadel` database
           # alongside the app DB.
           docker compose up -d --wait postgres
-          docker compose exec -T postgres psql -U postgres -c \
-            'CREATE DATABASE "effect-monorepo-test"'
+          # infra/postgres/init/ already creates this database when the volume
+          # is first initialized, so the create has to tolerate finding it.
+          docker compose exec -T postgres psql -U postgres -v ON_ERROR_STOP=1 <<'SQL'
+          SELECT 'CREATE DATABASE "effect-monorepo-test"'
+          WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'effect-monorepo-test')\gexec
+          SQL
 
       - name: Apply database migrations
         env:

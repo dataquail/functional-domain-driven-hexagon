@@ -9,11 +9,19 @@ A monorepo containing:
 - `packages/jobs`: Background-job runner (cron-style)
 - `packages/acceptance`: Playwright acceptance suite
 
+## Setup in a codespace
+
+The whole stack — Postgres, migrations, Zitadel with a seeded OIDC app and admin
+user, Mailpit, Jaeger — comes up provisioned when you create a codespace on a
+branch, which is the quickest way to work several features in parallel. See
+[docs/codespaces.md](docs/codespaces.md); one manual step (making port 8080
+public) is called out there.
+
 ## Prerequisites
 
-Install these on your machine:
+To run locally instead, install these on your machine:
 
-- **Node 22.14.0** — match `engines.node` in `package.json`. Use whatever version manager you like (`mise`, `fnm`, `nvm`, `asdf`).
+- **Node 22** — `.nvmrc` pins the exact version CI runs (22.13.1); `engines.node` accepts any 22.x at or above it. Use whatever version manager you like (`mise`, `fnm`, `nvm`, `asdf`).
 - **pnpm 10.3.0** — auto-activated by [corepack](https://nodejs.org/api/corepack.html), which ships with Node. Run `corepack enable` once after installing Node.
 - **Docker Desktop** (or any Docker + docker-compose) — runs Postgres, Flyway migrations, and Jaeger.
   - [Install Docker](https://docs.docker.com/get-docker/)
@@ -35,8 +43,8 @@ docker-compose up -d postgres jaeger
 # 4. Run migrations against the dev DB
 docker-compose --profile migrate up flyway
 
-# (optional) create + migrate the test DB used by *.integration.test.ts
-docker-compose exec postgres psql -U postgres -c 'CREATE DATABASE "effect-monorepo-test"'
+# (optional) migrate the test DB used by *.integration.test.ts. The database
+# itself is created by infra/postgres/init/ on the volume's first boot.
 docker-compose --profile migrate-test up flyway-test
 
 # (recommended) clone the Effect v4 source for reference — see below

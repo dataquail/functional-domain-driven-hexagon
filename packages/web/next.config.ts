@@ -13,6 +13,11 @@ import type { NextConfig } from "next";
 const SERVER_INTERNAL_URL = process.env.SERVER_INTERNAL_URL ?? "http://localhost:3001";
 
 const nextConfig: NextConfig = {
+  // In a codespace the browser reaches this dev server through a forwarded
+  // origin rather than localhost, which `next dev` otherwise treats as a
+  // cross-origin request.
+  allowedDevOrigins: ["*.app.github.dev"],
+
   async rewrites() {
     return [
       {
