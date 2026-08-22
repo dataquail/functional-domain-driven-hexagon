@@ -50,6 +50,7 @@ application relies on; changing either library means a release there, not an edi
 | `pnpm lint:deps`                                       | dependency-cruiser architecture rules                                                                        |
 | `pnpm effect:source`                                   | clone/refresh the Effect v4 source at `reference/effect` (gitignored, pinned to our beta)                    |
 | `pnpm diagrams`                                        | render the architecture from the code as mermaid into `docs/diagrams/` (gitignored); `--help` for the set    |
+| `pnpm diagrams:preview`                                | serve those diagrams as a clickable index — a module map drills into any one command or query                |
 
 ## Always in scope
 
