@@ -127,6 +127,14 @@ const dispatchesIn = (node) => {
   return tags;
 };
 
+const kebab = (tag) =>
+  tag
+    .replace(/(Command|Query)$/, "")
+    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+    .toLowerCase();
+
+export const useCaseSlug = (module, tag) => `server-usecase-${module}-${kebab(tag)}`;
+
 export const readServerModel = () => {
   const { program } = loadProgram("packages/server/tsconfig.src.json");
   const contracts = readContracts(program);
@@ -142,6 +150,7 @@ export const readServerModel = () => {
         queries: new Map(),
         ports: new Map(),
         adapters: new Map(),
+        roots: new Set(),
         resources: new Map(),
         checks: new Set(),
         policyPorts: new Set(),
@@ -176,6 +185,13 @@ export const readServerModel = () => {
         module.events.add(name);
       }
     }
+  }
+
+  for (const { inner, module, sourceFile } of files) {
+    if (!/\.root\.ts$/.test(inner)) continue;
+    sourceFile.forEachChild((node) => {
+      if (ts.isClassDeclaration(node) && node.name !== undefined) module.roots.add(node.name.text);
+    });
   }
 
   for (const { inner, module, sourceFile } of files) {
@@ -222,7 +238,11 @@ export const readServerModel = () => {
     if (tier === undefined) continue;
     sourceFile.forEachChild((node) => {
       if (ts.isClassDeclaration(node) && node.name !== undefined) {
-        module.ports.set(node.name.text, { tier, file: inner });
+        module.ports.set(node.name.text, {
+          tier,
+          file: inner,
+          roots: [...module.roots].filter((root) => sourceFile.text.includes(root)),
+        });
       }
     });
   }
@@ -282,6 +302,9 @@ export const readServerModel = () => {
         readSide: inner.startsWith("queries/"),
         readsDatabase: importsOf(sourceFile).some((d) => d.specifier.startsWith("@org/database")),
         ports: [...module.ports.keys()].filter((tag) => referenced.has(tag)),
+        roots: [...module.roots].filter(
+          (root) => referenced.has(root) || referenced.has(`${root}Ops`),
+        ),
       });
     }
   }

@@ -5,10 +5,19 @@ import { generator as packages } from "./packages.mjs";
 import { generator as serverHexagon } from "./server-hexagon.mjs";
 import { generator as serverModule } from "./server-module.mjs";
 import { generator as serverModules } from "./server-modules.mjs";
+import { generator as serverUseCase } from "./server-usecase.mjs";
 import { generator as webFeature } from "./web-feature.mjs";
 import { generator as webOverview } from "./web-overview.mjs";
 
-const GENERATORS = [packages, serverModules, serverHexagon, serverModule, webOverview, webFeature];
+const GENERATORS = [
+  packages,
+  serverModules,
+  serverHexagon,
+  serverUseCase,
+  serverModule,
+  webOverview,
+  webFeature,
+];
 
 const cli = readCli();
 

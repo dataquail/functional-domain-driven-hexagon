@@ -18,6 +18,7 @@ const KINDS = {
   module: { shape: "rect", fill: "#dbeafe", stroke: "#2563eb" },
   composition: { shape: "hexagon", fill: "#ede9fe", stroke: "#7c3aed" },
   domain: { shape: "hexagon", fill: "#fef3c7", stroke: "#d97706" },
+  event: { shape: "stadium", fill: "#fde68a", stroke: "#b45309" },
   port: { shape: "round", fill: "#fef9c3", stroke: "#ca8a04" },
   application: { shape: "rect", fill: "#dcfce7", stroke: "#16a34a" },
   message: { shape: "subroutine", fill: "#d1fae5", stroke: "#059669" },
@@ -149,6 +150,12 @@ export const toMermaid = (graph) => {
     lines.push(
       `  linkStyle ${implementsLinks.join(",")} stroke:#ca8a04,stroke-width:2px,color:#a16207`,
     );
+  }
+
+  for (const node of nodes) {
+    if (node.link === undefined) continue;
+    const tooltip = node.tooltip === undefined ? "" : ` "${escape(node.tooltip)}"`;
+    lines.push(`  click ${idOf.get(node.id)} href "${node.link}"${tooltip}`);
   }
 
   lines.push("");

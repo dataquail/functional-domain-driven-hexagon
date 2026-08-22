@@ -1,28 +1,19 @@
 import { isMain, runGenerator } from "../lib/diagram/generator.mjs";
 import { addEdge, addNode, makeGraph } from "../lib/diagram/graph.mjs";
-import { readServerModel } from "../lib/diagram/server-model.mjs";
+import { readServerModel, useCaseSlug } from "../lib/diagram/server-model.mjs";
 
 // Dependency points inward, so the lanes run outward → inward, left → right.
-// A driving adapter and a driven adapter both point right: one into a use case,
-// one into the port it implements. Nothing in a lane depends on a lane to its left.
-const OUTER = "1 · adapters — interface &amp; infrastructure";
-const APPLICATION = "2 · use cases — commands &amp; queries";
+// This is the map, not the territory: no adapters, no handlers, no guards —
+// click a use case for those. Every node here is something a reader would name
+// when describing the module out loud.
+const INTERFACE = "1 · interface";
+const APPLICATION = "2 · use cases";
 const DOMAIN = "3 · domain";
-
-const COLUMNS = {
-  driving: `${OUTER}/driving · interface`,
-  driven: `${OUTER}/driven · infrastructure`,
-  authorization: `${APPLICATION}/authorization`,
-  messages: `${APPLICATION}/messages on the bus`,
-  useCases: `${APPLICATION}/handlers`,
-  ports: `${DOMAIN}/ports`,
-  events: `${DOMAIN}/domain events`,
-};
 
 const readable = (tag) => tag.replace(/(Command|Query)$/, "");
 
 const build = (cli) => {
-  const { modules, ownerOfCommand } = readServerModel();
+  const { modules } = readServerModel();
   const only = cli.flag("module");
   const selected = only === undefined ? undefined : new Set(only.split(","));
 
@@ -32,158 +23,108 @@ const build = (cli) => {
     .map((module) => {
       const graph = makeGraph({
         slug: `server-hexagon-${module.name}`,
-        title: `modules/${module.name} — ports and adapters`,
+        title: `modules/${module.name} — what depends on what`,
         direction: "LR",
       });
 
-      const boundary = () => COLUMNS.ports;
-      let firstDriving;
-      const driving = (id, label) => {
-        addNode(graph, { id, label, kind: "interface", group: COLUMNS.driving });
-        firstDriving = firstDriving ?? id;
-        return id;
-      };
-
       const messageNode = (tag) => {
-        const owner = ownerOfCommand.get(tag) ?? module.name;
+        const id = `msg:${tag}`;
+        if (graph.nodes.has(id)) return id;
         const isQuery = module.queries.has(tag);
-        addNode(graph, {
-          id: `msg:${tag}`,
-          label: owner === module.name ? readable(tag) : `${readable(tag)}<br/>(${owner})`,
-          kind: isQuery ? "query" : "message",
-          group: COLUMNS.messages,
-        });
-        return `msg:${tag}`;
-      };
-
-      // Every guard resolves through one registry, and the registry closes over
-      // the ports and queries below — per-action edges would invent specificity
-      // the contribution does not have.
-      const registryNode = () => {
-        const id = "authz:registry";
+        if (!isQuery && !module.commands.has(tag)) return undefined;
         addNode(graph, {
           id,
-          label: `policies/<br/>${module.checks.size} check${module.checks.size === 1 ? "" : "s"}`,
-          kind: "policy",
-          group: COLUMNS.authorization,
+          label: readable(tag),
+          kind: isQuery ? "query" : "message",
+          group: `${APPLICATION}/${isQuery ? "queries" : "commands"}`,
+          link: `#${useCaseSlug(module.name, tag)}`,
+          tooltip: `${tag} — open the use case in full detail`,
         });
-        for (const port of module.policyPorts) {
-          addNode(graph, { id: `port:${port}`, label: port, kind: "port", group: boundary() });
-          addEdge(graph, { from: id, to: `port:${port}`, label: "consults" });
-        }
-        for (const tag of module.policyQueries) {
-          addEdge(graph, { from: id, to: messageNode(tag), label: "asks" });
-        }
         return id;
       };
 
       for (const endpoint of module.endpoints) {
-        const id = driving(
-          `in:${endpoint.span}`,
-          endpoint.route === undefined
-            ? `${endpoint.protocol.toUpperCase()}<br/>${endpoint.span}`
-            : `${endpoint.route}<br/>${endpoint.span}`,
-        );
-
-        let from = id;
-        for (const policy of endpoint.policies) {
-          const resource = module.resources.get(policy.resource) ?? policy.resource;
-          const guard = `authz:${resource}.${policy.action}`;
-          addNode(graph, {
-            id: guard,
-            label: `${resource}<br/>${(policy.action ?? "?").toLowerCase()}`,
-            kind: "policy",
-            group: COLUMNS.authorization,
-          });
-          addEdge(graph, { from, to: guard, label: "guards" });
-          addEdge(graph, { from: guard, to: registryNode(), label: "checked by" });
-          from = guard;
-        }
+        const id = `in:${endpoint.span}`;
+        addNode(graph, {
+          id,
+          label:
+            endpoint.route === undefined
+              ? `${endpoint.protocol.toUpperCase()} ${endpoint.span}`
+              : `${endpoint.route}`,
+          kind: "interface",
+          group: `${INTERFACE}/${endpoint.protocol === "cli" ? "cli" : "http"}`,
+        });
         for (const tag of endpoint.dispatches) {
-          addEdge(graph, { from, to: messageNode(tag), label: "dispatches" });
+          const message = messageNode(tag);
+          if (message !== undefined) addEdge(graph, { from: id, to: message });
         }
       }
 
       for (const subscription of module.subscriptions) {
-        const id = driving(
-          `on:${subscription.event}`,
-          `on ${subscription.event}<br/>${subscription.mode}`,
-        );
+        const id = `on:${subscription.event}`;
+        addNode(graph, {
+          id,
+          label: `on ${subscription.event}`,
+          kind: "interface",
+          group: `${INTERFACE}/events`,
+        });
         for (const tag of subscription.dispatches) {
-          addEdge(graph, { from: id, to: messageNode(tag), label: "dispatches" });
+          const message = messageNode(tag);
+          if (message !== undefined) addEdge(graph, { from: id, to: message });
         }
       }
 
       for (const [tag, handlerName] of module.bindings) {
         const handler = module.handlers.get(handlerName);
-        if (handler === undefined) continue;
-        const id = `use:${handlerName}`;
-        addNode(graph, {
-          id,
-          label:
-            handler.readSide && handler.readsDatabase
-              ? `${handlerName}<br/>reads SQL directly — no port`
-              : handlerName,
-          kind: handler.readSide ? "query" : "application",
-          group: COLUMNS.useCases,
-        });
-        addEdge(graph, { from: messageNode(tag), to: id, label: "handled by" });
+        const message = messageNode(tag);
+        if (handler === undefined || message === undefined) continue;
 
-        for (const port of handler.ports) {
+        if (handler.readSide) {
           addNode(graph, {
-            id: `port:${port}`,
-            label: port,
-            kind: "port",
-            group: boundary(),
+            id: "read-model",
+            label: "read model<br/>SQL, no port",
+            kind: "infrastructure",
+            group: `${DOMAIN}/read side`,
           });
-          addEdge(graph, { from: id, to: `port:${port}`, label: "uses" });
+          addEdge(graph, { from: message, to: "read-model" });
         }
 
+        for (const port of handler.ports) {
+          const tier = module.ports.get(port)?.tier;
+          addEdge(graph, { from: message, to: portNode(graph, module, port, tier) });
+        }
+        for (const root of handler.roots) {
+          addNode(graph, {
+            id: `root:${root}`,
+            label: root,
+            kind: "domain",
+            group: `${DOMAIN}/aggregates`,
+          });
+          addEdge(graph, { from: message, to: `root:${root}`, label: "ops" });
+        }
         for (const event of handler.events) {
           addNode(graph, {
             id: `event:${event}`,
             label: event,
-            kind: "domain",
-            group: COLUMNS.events,
+            kind: "event",
+            group: `${DOMAIN}/events`,
           });
-          addEdge(graph, { from: id, to: `event:${event}`, label: "emits" });
-        }
-
-        for (const dispatched of handler.dispatches) {
-          if (dispatched === tag) continue;
-          addEdge(graph, { from: id, to: messageNode(dispatched), label: "dispatches" });
+          addEdge(graph, { from: message, to: `event:${event}`, label: "emits" });
         }
       }
 
-      for (const [name, adapter] of module.adapters) {
-        if (adapter.kind === "fake" && !cli.has("fakes")) continue;
-        const implemented = module.ports.has(adapter.provides);
-        const talksTo = [...new Set([...adapter.externals, ...adapter.tables])];
+      for (const port of module.policyPorts) {
+        const guard = "authz:registry";
         addNode(graph, {
-          id: `adapter:${name}`,
-          label: talksTo.length === 0 ? name : `${name}<br/>→ ${talksTo.join(" · ")}`,
-          kind: "infrastructure",
-          group: COLUMNS.driven,
+          id: guard,
+          label: `authorization<br/>${module.checks.size} check${module.checks.size === 1 ? "" : "s"}`,
+          kind: "policy",
+          group: `${APPLICATION}/authorization`,
         });
-        // Without this the adapter ranks next to the port it implements, and the
-        // outer lane stretches across the whole diagram to reach it.
-        if (firstDriving !== undefined) {
-          addEdge(graph, { from: firstDriving, to: `adapter:${name}`, relation: "layout" });
-        }
-        if (implemented) {
-          addNode(graph, {
-            id: `port:${adapter.provides}`,
-            label: adapter.provides,
-            kind: "port",
-            group: boundary(),
-          });
-          addEdge(graph, {
-            from: `adapter:${name}`,
-            to: `port:${adapter.provides}`,
-            label: "implements",
-            relation: "implements",
-          });
-        }
+        addEdge(graph, {
+          from: guard,
+          to: portNode(graph, module, port, module.ports.get(port)?.tier),
+        });
       }
 
       return graph;
@@ -191,12 +132,22 @@ const build = (cli) => {
     .filter((graph) => graph.nodes.size > 0);
 };
 
+const portNode = (graph, module, port, tier) => {
+  const id = `port:${port}`;
+  const roots = module.ports.get(port)?.roots ?? [];
+  addNode(graph, {
+    id,
+    label: roots.length === 0 ? port : `${port}<br/>«${roots.join(", ")}»`,
+    kind: "port",
+    group: `${DOMAIN}/${tier === "acl" ? "acl ports" : "repository ports"}`,
+  });
+  return id;
+};
+
 export const generator = {
   name: "server-hexagon",
-  describe:
-    "one diagram per server module: driving adapters → messages → use cases → ports ← driven adapters",
+  describe: "one map per server module: endpoints → use cases → ports and aggregates",
   options: `  --module <a,b>        only these modules   [all]
-  --fakes               include the *-fake adapters (the test seam on the same port)
 `,
   build,
 };
