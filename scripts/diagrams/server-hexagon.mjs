@@ -2,15 +2,21 @@ import { isMain, runGenerator } from "../lib/diagram/generator.mjs";
 import { addEdge, addNode, makeGraph } from "../lib/diagram/graph.mjs";
 import { readServerModel } from "../lib/diagram/server-model.mjs";
 
+// Dependency points inward, so the lanes run outward → inward, left → right.
+// A driving adapter and a driven adapter both point right: one into a use case,
+// one into the port it implements. Nothing in a lane depends on a lane to its left.
+const OUTER = "1 · adapters — interface &amp; infrastructure";
+const APPLICATION = "2 · use cases — commands &amp; queries";
+const DOMAIN = "3 · domain";
+
 const COLUMNS = {
-  driving: "1 · driving adapters",
-  authorization: "2 · authorization",
-  messages: "3 · messages (CQRS bus)",
-  useCases: "4 · use cases",
-  events: "5 · domain events",
-  ports: "6 · the boundary: port ← adapters",
-  driven: "7 · driven adapters",
-  outside: "8 · outside the hexagon",
+  driving: `${OUTER}/driving · interface`,
+  driven: `${OUTER}/driven · infrastructure`,
+  authorization: `${APPLICATION}/authorization`,
+  messages: `${APPLICATION}/messages on the bus`,
+  useCases: `${APPLICATION}/handlers`,
+  ports: `${DOMAIN}/ports`,
+  events: `${DOMAIN}/domain events`,
 };
 
 const readable = (tag) => tag.replace(/(Command|Query)$/, "");
@@ -30,7 +36,13 @@ const build = (cli) => {
         direction: "LR",
       });
 
-      const boundary = (port) => `${COLUMNS.ports}/${port}`;
+      const boundary = () => COLUMNS.ports;
+      let firstDriving;
+      const driving = (id, label) => {
+        addNode(graph, { id, label, kind: "interface", group: COLUMNS.driving });
+        firstDriving = firstDriving ?? id;
+        return id;
+      };
 
       const messageNode = (tag) => {
         const owner = ownerOfCommand.get(tag) ?? module.name;
@@ -56,7 +68,7 @@ const build = (cli) => {
           group: COLUMNS.authorization,
         });
         for (const port of module.policyPorts) {
-          addNode(graph, { id: `port:${port}`, label: port, kind: "port", group: boundary(port) });
+          addNode(graph, { id: `port:${port}`, label: port, kind: "port", group: boundary() });
           addEdge(graph, { from: id, to: `port:${port}`, label: "consults" });
         }
         for (const tag of module.policyQueries) {
@@ -66,16 +78,12 @@ const build = (cli) => {
       };
 
       for (const endpoint of module.endpoints) {
-        const id = `in:${endpoint.span}`;
-        addNode(graph, {
-          id,
-          label:
-            endpoint.route === undefined
-              ? `${endpoint.protocol.toUpperCase()}<br/>${endpoint.span}`
-              : `${endpoint.route}<br/>${endpoint.span}`,
-          kind: "interface",
-          group: COLUMNS.driving,
-        });
+        const id = driving(
+          `in:${endpoint.span}`,
+          endpoint.route === undefined
+            ? `${endpoint.protocol.toUpperCase()}<br/>${endpoint.span}`
+            : `${endpoint.route}<br/>${endpoint.span}`,
+        );
 
         let from = id;
         for (const policy of endpoint.policies) {
@@ -97,13 +105,10 @@ const build = (cli) => {
       }
 
       for (const subscription of module.subscriptions) {
-        const id = `on:${subscription.event}`;
-        addNode(graph, {
-          id,
-          label: `on ${subscription.event}<br/>${subscription.mode}`,
-          kind: "interface",
-          group: COLUMNS.driving,
-        });
+        const id = driving(
+          `on:${subscription.event}`,
+          `on ${subscription.event}<br/>${subscription.mode}`,
+        );
         for (const tag of subscription.dispatches) {
           addEdge(graph, { from: id, to: messageNode(tag), label: "dispatches" });
         }
@@ -115,7 +120,10 @@ const build = (cli) => {
         const id = `use:${handlerName}`;
         addNode(graph, {
           id,
-          label: handlerName,
+          label:
+            handler.readSide && handler.readsDatabase
+              ? `${handlerName}<br/>reads SQL directly — no port`
+              : handlerName,
           kind: handler.readSide ? "query" : "application",
           group: COLUMNS.useCases,
         });
@@ -126,19 +134,9 @@ const build = (cli) => {
             id: `port:${port}`,
             label: port,
             kind: "port",
-            group: boundary(port),
+            group: boundary(),
           });
           addEdge(graph, { from: id, to: `port:${port}`, label: "uses" });
-        }
-
-        if (handler.readSide && handler.readsDatabase) {
-          addNode(graph, {
-            id: "read-model",
-            label: "SQL read model<br/>@org/database",
-            kind: "infrastructure",
-            group: COLUMNS.driven,
-          });
-          addEdge(graph, { from: id, to: "read-model", label: "reads (no port)" });
         }
 
         for (const event of handler.events) {
@@ -160,18 +158,24 @@ const build = (cli) => {
       for (const [name, adapter] of module.adapters) {
         if (adapter.kind === "fake" && !cli.has("fakes")) continue;
         const implemented = module.ports.has(adapter.provides);
+        const talksTo = [...new Set([...adapter.externals, ...adapter.tables])];
         addNode(graph, {
           id: `adapter:${name}`,
-          label: name,
+          label: talksTo.length === 0 ? name : `${name}<br/>→ ${talksTo.join(" · ")}`,
           kind: "infrastructure",
-          group: implemented ? boundary(adapter.provides) : COLUMNS.driven,
+          group: COLUMNS.driven,
         });
+        // Without this the adapter ranks next to the port it implements, and the
+        // outer lane stretches across the whole diagram to reach it.
+        if (firstDriving !== undefined) {
+          addEdge(graph, { from: firstDriving, to: `adapter:${name}`, relation: "layout" });
+        }
         if (implemented) {
           addNode(graph, {
             id: `port:${adapter.provides}`,
             label: adapter.provides,
             kind: "port",
-            group: boundary(adapter.provides),
+            group: boundary(),
           });
           addEdge(graph, {
             from: `adapter:${name}`,
@@ -180,26 +184,6 @@ const build = (cli) => {
             relation: "implements",
           });
         }
-        for (const external of [...adapter.externals, ...adapter.tables]) {
-          addNode(graph, {
-            id: `out:${external}`,
-            label: external,
-            kind: "external",
-            group: COLUMNS.outside,
-          });
-          addEdge(graph, { from: `adapter:${name}`, to: `out:${external}` });
-        }
-      }
-
-      const readModel = graph.nodes.get("read-model");
-      if (readModel !== undefined) {
-        addNode(graph, {
-          id: "out:Postgres",
-          label: "Postgres",
-          kind: "external",
-          group: COLUMNS.outside,
-        });
-        addEdge(graph, { from: "read-model", to: "out:Postgres" });
       }
 
       return graph;

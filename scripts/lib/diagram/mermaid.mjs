@@ -95,6 +95,14 @@ export const toMermaid = (graph) => {
     const to = idOf.get(edge.to);
     if (from === undefined || to === undefined) continue;
 
+    // An invisible link carries no meaning of its own: it exists to hold a node
+    // in the lane its layer belongs to, which dagre would otherwise collapse.
+    if (edge.relation === "layout") {
+      lines.push(`  ${from} ~~~ ${to}`);
+      linkSerial += 1;
+      continue;
+    }
+
     const violated = isViolation(edge);
     const label = violated
       ? [...edge.violations].join(" · ")
