@@ -2,12 +2,13 @@ import process from "node:process";
 
 import { DEFAULT_OUT_DIR, readCli, runGenerator } from "../lib/diagram/generator.mjs";
 import { generator as packages } from "./packages.mjs";
+import { generator as serverHexagon } from "./server-hexagon.mjs";
 import { generator as serverModule } from "./server-module.mjs";
 import { generator as serverModules } from "./server-modules.mjs";
 import { generator as webFeature } from "./web-feature.mjs";
 import { generator as webOverview } from "./web-overview.mjs";
 
-const GENERATORS = [packages, serverModules, serverModule, webOverview, webFeature];
+const GENERATORS = [packages, serverModules, serverHexagon, serverModule, webOverview, webFeature];
 
 const cli = readCli();
 
@@ -44,12 +45,14 @@ if (cli.flag("out-dir") === undefined) argv.push("--out-dir", DEFAULT_OUT_DIR);
 
 const written = [];
 for (const generator of selected) {
-  written.push(...(await runGenerator(generator, argv)));
-  // A module's file-level graph is precise but wide; the folder view is the one
-  // you can read at a glance.
-  if (generator === serverModule && !cli.argv.includes("--granularity")) {
-    written.push(...(await runGenerator(generator, [...argv, "--granularity", "folder"])));
-  }
+  // A module's file-level import graph mostly redraws what the folder layout
+  // already guarantees; its one real use is showing a forbidden edge, so the
+  // default is the folder view and the file view is opt-in.
+  const options =
+    generator === serverModule && !cli.argv.includes("--granularity")
+      ? [...argv, "--granularity", "folder"]
+      : argv;
+  written.push(...(await runGenerator(generator, options)));
 }
 
 process.stderr.write(`\n${written.length} diagrams written:\n`);

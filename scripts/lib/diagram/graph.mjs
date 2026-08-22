@@ -23,7 +23,7 @@ export const addNode = (graph, node) => {
 
 const edgeKey = (from, to) => `${from} -> ${to}`;
 
-export const addEdge = (graph, { from, label, to, typeOnly = false, violation }) => {
+export const addEdge = (graph, { from, label, relation, to, typeOnly = false, violation }) => {
   if (from === to) return;
   const key = edgeKey(from, to);
   const edge = graph.edges.get(key) ?? {
@@ -33,8 +33,10 @@ export const addEdge = (graph, { from, label, to, typeOnly = false, violation })
     labels: new Set(),
     violations: new Set(),
     typeOnly: true,
+    relation: undefined,
   };
   edge.count += 1;
+  if (relation !== undefined) edge.relation = relation;
   edge.typeOnly = edge.typeOnly && typeOnly;
   if (label !== undefined) edge.labels.add(label);
   if (violation !== undefined) edge.violations.add(violation);

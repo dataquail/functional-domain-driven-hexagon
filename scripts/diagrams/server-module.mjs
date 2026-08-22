@@ -49,7 +49,8 @@ const build = (cli) => {
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([module, files]) => {
       const graph = makeGraph({
-        slug: granularity === "folder" ? `server-module-${module}-folders` : `server-module-${module}`,
+        slug:
+          granularity === "folder" ? `server-module-${module}-folders` : `server-module-${module}`,
         title:
           granularity === "folder"
             ? `modules/${module} — folders`
