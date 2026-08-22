@@ -30,6 +30,9 @@ playwright-report/
 playwright/.cache/
 packages/acceptance/playwright/.auth/
 
+# Architecture diagrams (regenerate with `pnpm diagrams`)
+docs/diagrams/
+
 # eslint-plugin-project-structure cache
 projectStructure.cache.json
 

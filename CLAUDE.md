@@ -49,6 +49,7 @@ application relies on; changing either library means a release there, not an edi
 | `DATABASE_URL_TEST=postgres://… pnpm test:integration` | **integration** suite only (`*.integration.test.ts`); hard-fails if no DB                                    |
 | `pnpm lint:deps`                                       | dependency-cruiser architecture rules                                                                        |
 | `pnpm effect:source`                                   | clone/refresh the Effect v4 source at `reference/effect` (gitignored, pinned to our beta)                    |
+| `pnpm diagrams`                                        | render the architecture from the code as mermaid into `docs/diagrams/` (gitignored); `--help` for the set    |
 
 ## Always in scope
 
