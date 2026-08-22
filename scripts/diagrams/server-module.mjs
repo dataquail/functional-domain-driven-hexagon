@@ -49,9 +49,12 @@ const build = (cli) => {
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([module, files]) => {
       const graph = makeGraph({
-        slug: `server-module-${module}`,
-        title: `modules/${module} — hexagon layers`,
-        direction: "LR",
+        slug: granularity === "folder" ? `server-module-${module}-folders` : `server-module-${module}`,
+        title:
+          granularity === "folder"
+            ? `modules/${module} — folders`
+            : `modules/${module} — hexagon layers`,
+        direction: granularity === "folder" ? "LR" : "TB",
       });
 
       const declare = (inner) => {

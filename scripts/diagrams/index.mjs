@@ -45,6 +45,11 @@ if (cli.flag("out-dir") === undefined) argv.push("--out-dir", DEFAULT_OUT_DIR);
 const written = [];
 for (const generator of selected) {
   written.push(...(await runGenerator(generator, argv)));
+  // A module's file-level graph is precise but wide; the folder view is the one
+  // you can read at a glance.
+  if (generator === serverModule && !cli.argv.includes("--granularity")) {
+    written.push(...(await runGenerator(generator, [...argv, "--granularity", "folder"])));
+  }
 }
 
 process.stderr.write(`\n${written.length} diagrams written:\n`);
