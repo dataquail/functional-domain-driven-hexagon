@@ -4,42 +4,37 @@
 // prefetch (surfaces as a Suspense error). Phase 9 can route the 403
 // through a friendlier server-side check.
 
-import { Card } from "@org/components/primitives/card";
+import { CardSection } from "@org/components/patterns/card-section";
+import { PageShell } from "@org/components/patterns/page-shell";
 import { Skeleton } from "@org/components/primitives/skeleton";
+import { Stack } from "@org/components/primitives/stack";
 import React from "react";
 
 import { OrgsList } from "@/features/admin/orgs-list/orgs-list.view";
-import { ServerHydrationBoundary } from "@/lib/tanstack-query/server-hydration-boundary";
-import { prefetchAdminOrgs } from "@/services/data-access/orgs-queries.server";
+import { AtomHydrationBoundary } from "@/services/atom/hydration-boundary";
+import { prefetchAdminOrgs } from "@/services/data-access/orgs.server";
 
 const PAGE_SIZE = 10;
 
 const Fallback: React.FC = () => (
-  <div className="space-y-2">
-    {Array.from({ length: PAGE_SIZE }, (_, i) => (
-      <Skeleton key={i} className="h-14 w-full rounded-md" />
+  <Stack direction="column" gap="sm">
+    {Array.from({ length: PAGE_SIZE }, (_, index) => (
+      <Skeleton key={index} height="row" />
     ))}
-  </div>
+  </Stack>
 );
 
 export default function AdminOrgsPage() {
   return (
-    <div className="mx-auto w-full max-w-3xl px-4">
-      <Card className="shadow-md">
-        <Card.Header>
-          <Card.Title className="text-2xl font-semibold">All organizations</Card.Title>
-        </Card.Header>
-        <Card.Content>
-          <ServerHydrationBoundary
-            prefetch={[
-              prefetchAdminOrgs({ page: 1, pageSize: PAGE_SIZE, includeDeleted: "false" }),
-            ]}
-            fallback={<Fallback />}
-          >
-            <OrgsList />
-          </ServerHydrationBoundary>
-        </Card.Content>
-      </Card>
-    </div>
+    <PageShell>
+      <CardSection title="All organizations">
+        <AtomHydrationBoundary
+          prefetch={[prefetchAdminOrgs({ page: 1, pageSize: PAGE_SIZE, includeDeleted: "false" })]}
+          fallback={<Fallback />}
+        >
+          <OrgsList />
+        </AtomHydrationBoundary>
+      </CardSection>
+    </PageShell>
   );
 }

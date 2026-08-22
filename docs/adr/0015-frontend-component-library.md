@@ -1,6 +1,9 @@
 # ADR-0015: Frontend component library — primitives, patterns, and the encapsulation of third-party UI
 
 - Status: Accepted
+- Amended: 2026-08-21 — the prop-API contract (no `className`, no `style`, no DOM
+  spread), the layout/typography/surface primitive set, and the widened
+  `forbid-elements` ban. See "The prop API is the contract" below.
 - Date: 2026-04-29
 
 ## Context and Problem Statement
@@ -31,7 +34,7 @@ Class-name utilities (`clsx`, `tailwind-merge`, `class-variance-authority`) are 
 
 Compositions built from primitives (and other patterns) doing one focused job. The atomic-design vocabulary distinguishes molecules (small, single-job: `FormField`, `SearchInput`, `FilterPill`, `EmptyState`) from organisms (larger, often stateful: `DataTable`, `FilterBar`, `Pagination`, `AppHeader`). The vocabulary is useful for design conversation; the codebase does not need three folders to express it. Two tiers in folders, three in vocabulary.
 
-A pattern that carries state plugs into ADR-0014's tiering: an organism with non-trivial logic ships as a folder containing the component, its `*.view-model.ts` or `*.presenter.{ts,tsx}`, and tests, co-located. The organism remains domain-agnostic; the consuming feature passes data and intents in.
+A pattern that carries state plugs into ADR-0026's layering: an organism with non-trivial logic ships as a folder containing the component, its `*.view-model.ts`, and tests, co-located. The organism remains domain-agnostic; the consuming feature passes data and intents in.
 
 Patterns may import primitives and other patterns. Patterns may not import third-party visual libraries directly; they go through primitives. Patterns may not import `features/`.
 
@@ -59,12 +62,13 @@ CLAUDE.md points future agents at Storybook (and the README as a fallback), so t
 
 Per ADR-0008, layering is enforced by `pnpm lint:deps`. This ADR adds:
 
-- `client-primitives-only-touch-ui-libs` — `@radix-ui/*`, `lucide-react`, `recharts`, and `sonner` may only be imported from `components/primitives/**`. Any other path fails CI. Test files exempted.
-- `client-patterns-no-features` — `components/patterns/**` may not import `features/**`. The dependency is one-way.
+- `components-primitives-only-touch-ui-libs` — `@radix-ui/*`, `lucide-react`, `recharts`, and `sonner` may only be imported from `components/primitives/**`. Any other path fails CI. Test files exempted.
+- `components-patterns-no-features` — `components/patterns/**` may not import `features/**`. The dependency is one-way.
 
-ESLint (`pnpm lint`) adds:
+oxlint (`pnpm lint`) adds:
 
-- `react/forbid-elements` scoped to `features/**/*.tsx` and `patterns/**/*.tsx` — bans the raw HTML elements that have a primitive equivalent (`<button>`, `<input>`, `<label>`, `<select>`, `<form>`). Layout and text elements (`<div>`, `<span>`, `<section>`, headings, `<p>`, `<ul>`, `<li>`, `<a>`, `<img>`, `<textarea>`) remain free until they get a bespoke wrapper. The forbid-list grows when a new primitive is added; that growth is the design-system signal, not a maintenance burden — the moment a primitive replaces a raw element is also the moment to add the corresponding entry. Test and story files exempted.
+- `react/forbid-elements` scoped to `features/**/*.tsx` and `patterns/**/*.tsx` — bans **every** raw HTML element that has a primitive equivalent, which is now the whole set a screen would reach for: `<div>`, `<span>`, `<p>`, `<h1>`–`<h4>`, `<ul>`, `<ol>`, `<li>`, `<nav>`, `<a>`, `<button>`, `<input>`, `<label>`, `<select>`, `<form>`, `<section>`, `<header>`, `<footer>`, `<main>`, plus `<table>` and `<img>`, which have no primitive yet and must get one. Each entry's message names the primitive to use instead. Test and story files exempted.
+- `local/no-inline-styling` scoped to the same paths — bans `className` and `style` as JSX attributes. See "The prop API is the contract".
 
 Test parity (`project-structure/folder-structure`, `componentsPrimitives` / `componentsPatterns`) adds:
 
@@ -74,14 +78,34 @@ CI gate (`pnpm check:all`) adds:
 
 - `pnpm -F @org/components build-storybook` runs after the test suite. Broken stories — bad imports, type errors in story bodies, missing decorators — fail the build before merge. Storybook drift is mechanically prevented, not policed in review.
 
-What is _not_ enforced: raw `<div>`/`<span>`/heading usage. Banning these is unworkable — layout containers and text legitimately need them. The rule covers the elements where the wrapper-vs-raw choice is mechanical; everything else is left to design judgment.
+### The prop API is the contract
+
+Amended 2026-08-21. The original ADR left `<div>`, `<span>`, headings and text free on the reasoning that "layout containers and text legitimately need them", and left `className` alone entirely. Both concessions turned out to be the same hole.
+
+A consumer-supplied class is a design decision made **outside** the design system. It is invisible to Storybook, invisible to the a11y addon, invisible to review, and impossible to change centrally afterwards. It also makes the intrinsic-element ban vacuous: banning `<button>` while allowing `<div className="flex items-center gap-2">` moves the design decision one element sideways rather than removing it. Of the 103 `className` sites in the views before this amendment, only six were on a library component; the other 97 were on intrinsics — so the two bans collapse into one edit per view.
+
+So:
+
+- **Every primitive exposes explicit props with closed unions, and spreads nothing onto the DOM.** `primitives/icon/icon.tsx` was the reference shape; as of this amendment it is simply the shape. The asymmetry the original ADR flagged — icons constrained, `Button`/`Input` extending `React.ComponentProps<"button" | "input">` — is closed, not preserved. `Button`, `Input`, `Checkbox`, `Select`, `Form`, `Card`, `Badge`, `Skeleton`, `Dialog`, `Label` and `Toaster` all took a `className` and spread the rest of the element's surface; none of them do now. The original reasoning ("HTML element interfaces are stable and well-known") was true and beside the point: the leak that mattered was never lucide's evolving API, it was that a screen could make a visual decision at all.
+
+  **This is what makes the ban real rather than cosmetic.** While `Card` accepted a `className`, banning it was a lint rule one disable-comment away from vacuous. With the prop closed, `<Card className="shadow-md">` is a _type error_ — TypeScript rejects it at the call site with no rule involved, and the lint rule becomes the backstop for the case a primitive regresses to a DOM spread.
+
+- **The class strings stay literal in the primitive.** Tailwind's scanner needs them written out, and a `Record<Variant, string>` is what keeps a screen from inventing spacing the design system has not agreed to.
+- **Layout, typography and surfaces are primitives too.** `Stack`, `Grid`, `Container`, `Surface`, `Text`, `Heading`, `List`, `Nav`, `Link`, `Spinner`, `Reveal` — the set that absorbs the `flex items-center gap-2` and `rounded-md border bg-card p-3` clusters that would otherwise be pasted into every screen.
+- **`app/**` is exempt.\*\* It is framework surface, not a screen: page shells and route-level skeletons keep their intrinsics.
+
+**When a prop API is too narrow to express a real design, the answer is always "widen the primitive" — never "reopen `className`".** The story file is where the new variant is proven. Expect two or three rounds of widening as screens land; that is the system working, not the approach failing.
 
 ## Consequences
 
 - **The third-party UI library is swappable.** Replacing shadcn/Radix or lucide is a `components/primitives/` edit. No feature code changes. The dep-cruiser rule guarantees there is no escape hatch.
 - **Icon props are stable.** Features see `<TrashIcon size="md" tone="destructive" />`, never lucide's `strokeWidth` or `absoluteStrokeWidth`. Accessibility defaults to the right thing.
 - **Compositions have a home.** "Where does this filter pill go?" has one answer. The atomic-design vocabulary stays alive in PR review without forcing a third folder.
-- **Stateful organisms compose with ADR-0014.** A `DataTable` ships as `patterns/data-table/{data-table.tsx, data-table.view-model.ts, data-table.view-model.test.ts}`. The tiering and parity rules from ADR-0014 apply unchanged.
+- **Stateful organisms compose with ADR-0026.** A `DataTable` ships as `patterns/data-table/{data-table.tsx, data-table.view-model.ts, data-table.view-model.test.ts}`. The layering and parity rules from ADR-0026 apply unchanged.
+- **The prop API is now the whole contract, and the type system enforces it.** A screen cannot express a visual decision the design system has not agreed to, in either direction: not by reaching for a raw element, and not by decorating a primitive with a class. `className` is not a prop that is discouraged; it is a prop that does not exist. The cost is real — a narrow prop API generates pressure, and answering it means editing the primitive and its story rather than the screen.
+- **Swapping the styling implementation is now a `packages/components` change.** That was the original ADR's headline claim for third-party libraries; leaving `className` open meant it was never true of the styling engine itself, because every consumer was coupled to Tailwind's class vocabulary. It is true now: the class strings live only inside primitives.
+- **Controlled components are strictly controlled.** `Input`, `Checkbox` and `Select` require their value and change handler. `defaultValue` / `defaultChecked` are gone, because uncontrolled state in a View is state outside the ViewModel (ADR-0026). Stories hold that state locally, which is the one place it is fine.
+- **`Card.Title` and `Card.Description` are gone.** A title is a `Heading` and a description is `Text`. Two ways to render a heading is how a type scale drifts, and the fifteen call sites had already drifted into three different sizes.
 - **Adding an icon is friction by design.** A developer who needs a new icon must add a one-line wrapper. That friction is the moment the design system gets to confirm the icon is wanted; it is the moment an impatient agent might try to skip via a direct lucide import. The dep-cruiser rule catches the skip.
 - **Migration cost is small but real.** `components/ui/` becomes `components/primitives/`; four feature files change their imports; three features lose their direct lucide imports in favor of the icon wrappers. `components.json` (shadcn config) updates aliases. One migration commit.
 - **Raw HTML for primitive equivalents is lint-banned.** `react/forbid-elements` blocks `<button>`, `<input>`, `<label>`, `<select>`, `<form>` in `features/` and `patterns/`. The rule's catch rate scales with the library: every new primitive that replaces a raw element earns a one-line entry. Forgetting to update the list means losing future enforcement for that one element, not breaking anything; the cost is bounded.

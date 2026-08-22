@@ -16,9 +16,7 @@ import { UserList } from "@/features/users/user-list.view";
 import { makePaginatedUsers, makeUser } from "@/test/fixtures";
 import { handlers } from "@/test/handlers";
 import { renderWithHarness } from "@/test/integration-harness";
-import { installMswLifecycle, server } from "@/test/msw-server";
-
-installMswLifecycle();
+import { server } from "@/test/msw-server";
 
 const TestUsersPage: React.FC = () => (
   <div>

@@ -1,15 +1,17 @@
-import { Toaster as Sonner } from "sonner";
+import { toast, Toaster as Sonner } from "sonner";
 
 import { useTheme } from "../providers/theme-provider";
 
-type ToasterProps = React.ComponentProps<typeof Sonner>;
+type SonnerProps = React.ComponentProps<typeof Sonner>;
 
-const Toaster = ({ ...props }: ToasterProps) => {
+// No props: where toasts appear, how long they stay, and what they look like are
+// design decisions, not per-call-site ones.
+const Toaster: React.FC = () => {
   const { theme } = useTheme();
 
   return (
     <Sonner
-      theme={theme satisfies ToasterProps["theme"]}
+      theme={theme satisfies SonnerProps["theme"]}
       className="toaster group"
       position="top-center"
       toastOptions={{
@@ -25,9 +27,18 @@ const Toaster = ({ ...props }: ToasterProps) => {
         },
         duration: 5000,
       }}
-      {...props}
     />
   );
 };
 
-export { Toaster };
+// The imperative half of the same primitive. Consumers announce through this
+// rather than reaching for sonner, so the toast library stays behind the
+// component library's boundary in both directions.
+export type ToastKind = "success" | "error";
+
+const showToast = (kind: ToastKind, message: string): void => {
+  if (kind === "success") toast.success(message);
+  else toast.error(message);
+};
+
+export { showToast, Toaster };

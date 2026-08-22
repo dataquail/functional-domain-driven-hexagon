@@ -42,18 +42,16 @@ export const playwrightUsersDriver = (page: Page): UsersPageDriver => {
     },
 
     expectUserInList: async (email: string) => {
-      await expect(
-        list.locator(`[data-testid="user-list-item"][data-user-email="${email}"]`),
-      ).toBeVisible();
+      // By what the user can read, not by a data attribute the markup happens
+      // to carry — this driver's contract is user-perceivable state.
+      await expect(list.getByText(email)).toBeVisible();
     },
 
     expectFieldError: async (field: CreateUserField) => {
-      // Each input is wrapped in a Form.Control; the sibling
-      // Form.Error renders a span with the error message. The
-      // exact text varies per Schema rule, so we assert presence
-      // by walking up from the field's label.
+      // Each input sits in a Form.Control alongside its Form.Error, which is
+      // announced. Assert on the role; the message text varies per Schema rule.
       const control = page.locator(`label[for="${field}"]`).locator("..");
-      await expect(control.locator("span.text-red-500")).toBeVisible();
+      await expect(control.getByRole("alert")).toBeVisible();
     },
 
     expectToast: async (kind: ToastKind, message: string) => {

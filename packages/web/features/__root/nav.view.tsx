@@ -1,64 +1,78 @@
-// Top-level nav for the authed shell. Server component; renders the
-// client-side org switcher inline only for regular users. Super-admins
-// are a disjoint user type — they don't own or join organizations
-// (enforced server-side in `createOrganization` /
-// `acceptInvitation`), so the org switcher + create-new button are
-// hidden for them. Their nav surfaces the admin links (Users + Admin
-// orgs) instead. Regular users see neither admin link.
+// Top-level nav for the authed shell. A dumb projection: the caller's user
+// type is resolved once by the layout and handed down, so this file has no
+// data access of its own.
+//
+// Super-admins are a disjoint user type — they don't own or join organizations
+// (enforced server-side in `createOrganization` / `acceptInvitation`), so the
+// org switcher + create-new button are hidden for them. Their nav surfaces the
+// admin links (Users + Admin orgs) instead; regular users see neither.
 
-import Link from "next/link";
+import { Container } from "@org/components/primitives/container";
+import { Link } from "@org/components/primitives/link";
+import { Nav as NavBar } from "@org/components/primitives/nav";
+import { Skeleton } from "@org/components/primitives/skeleton";
+import { Stack } from "@org/components/primitives/stack";
 import * as React from "react";
 
 import { OrgSwitcher } from "@/features/__root/org-switcher/org-switcher.view";
-import { fetchCurrentUser } from "@/services/data-access/me.server";
 
-export const Nav = async () => {
-  const me = await fetchCurrentUser();
-  const isSuperAdmin = me?.isSuperAdmin ?? false;
+const SwitcherFallback: React.FC = () => <Skeleton width="switcher" height="control" />;
 
+export const Nav: React.FC<{ readonly isSuperAdmin: boolean }> = ({ isSuperAdmin }) => {
   return (
-    <nav className="border-b bg-card">
-      <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 py-3">
-        <Link
-          href={isSuperAdmin ? "/admin/orgs" : "/"}
-          className="rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent"
-        >
-          Home
-        </Link>
-        {isSuperAdmin ? null : (
-          <React.Suspense
-            fallback={<div className="h-9 w-[200px] animate-pulse rounded-md bg-muted/40" />}
+    <NavBar orientation="block" tone="bar" aria-label="Main">
+      <Container width="lg" paddingX="md" paddingY="sm">
+        <Stack direction="row" gap="sm" align="center">
+          <Link
+            href={isSuperAdmin ? "/admin/orgs" : "/"}
+            appearance="nav-item"
+            tone="default"
+            underline="none"
           >
-            <OrgSwitcher />
-          </React.Suspense>
-        )}
-        <div className="ml-auto flex items-center gap-1">
-          {isSuperAdmin ? (
-            <React.Fragment>
-              <Link
-                href="/users"
-                className="rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent"
-                data-testid="nav-users"
-              >
-                Users
-              </Link>
-              <Link
-                href="/admin/orgs"
-                className="rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent"
-                data-testid="nav-admin"
-              >
-                Admin
-              </Link>
-            </React.Fragment>
-          ) : null}
-          <a
-            href="/api/auth/logout"
-            className="rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent"
-          >
-            Sign out
-          </a>
-        </div>
-      </div>
-    </nav>
+            Home
+          </Link>
+
+          {isSuperAdmin ? null : (
+            <React.Suspense fallback={<SwitcherFallback />}>
+              <OrgSwitcher />
+            </React.Suspense>
+          )}
+
+          <Stack direction="row" gap="xs" align="center" grow justify="end">
+            {isSuperAdmin ? (
+              <React.Fragment>
+                <Link
+                  href="/users"
+                  appearance="nav-item"
+                  tone="default"
+                  underline="none"
+                  data-testid="nav-users"
+                >
+                  Users
+                </Link>
+                <Link
+                  href="/admin/orgs"
+                  appearance="nav-item"
+                  tone="default"
+                  underline="none"
+                  data-testid="nav-admin"
+                >
+                  Admin
+                </Link>
+              </React.Fragment>
+            ) : null}
+            <Link
+              href="/api/auth/logout"
+              external
+              appearance="nav-item"
+              tone="default"
+              underline="none"
+            >
+              Sign out
+            </Link>
+          </Stack>
+        </Stack>
+      </Container>
+    </NavBar>
   );
 };

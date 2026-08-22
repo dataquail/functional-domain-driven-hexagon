@@ -1,65 +1,101 @@
-import * as React from "react";
-
 import { cn } from "../lib/utils/cn";
 
-const CardRoot = ({ className, ...props }: React.ComponentProps<"div">) => {
-  return (
-    <div
-      data-slot="card"
-      className={cn("rounded-xl border bg-card text-card-foreground shadow-sm", className)}
-      {...props}
-    />
-  );
+// A card. `Card.Title` and `Card.Description` are deliberately absent: a title
+// is a `Heading` and a description is `Text`, and having two ways to render a
+// heading is how a type scale drifts. The card owns its chrome; the typography
+// primitives own their type.
+
+export type CardElevation = "none" | "sm" | "md";
+export type CardInteractive = "none" | "raise";
+export type CardHeaderPadding = "default" | "tight";
+export type CardContentGap = "none" | "sm" | "md" | "lg";
+
+const ELEVATION: Record<CardElevation, string> = {
+  none: "",
+  sm: "shadow-sm",
+  md: "shadow-md",
 };
 
-const CardHeader = ({ className, ...props }: React.ComponentProps<"div">) => {
-  return (
-    <div
-      data-slot="card-header"
-      className={cn("flex flex-col gap-1.5 p-6", className)}
-      {...props}
-    />
-  );
+const INTERACTIVE: Record<CardInteractive, string> = {
+  none: "",
+  raise: "transition-shadow hover:shadow-md",
 };
 
-const CardTitle = ({ className, ...props }: React.ComponentProps<"div">) => {
-  return (
-    <div
-      data-slot="card-title"
-      className={cn("leading-none font-semibold tracking-tight", className)}
-      {...props}
-    />
-  );
+const HEADER_PADDING: Record<CardHeaderPadding, string> = {
+  default: "p-6",
+  tight: "px-6 pt-6 pb-2",
 };
 
-const CardDescription = ({ className, ...props }: React.ComponentProps<"div">) => {
-  return (
-    <div
-      data-slot="card-description"
-      className={cn("text-sm text-muted-foreground", className)}
-      {...props}
-    />
-  );
+const CONTENT_GAP: Record<CardContentGap, string> = {
+  none: "",
+  sm: "space-y-2",
+  md: "space-y-3",
+  lg: "space-y-4",
 };
 
-const CardContent = ({ className, ...props }: React.ComponentProps<"div">) => {
-  return <div data-slot="card-content" className={cn("p-6 pt-0", className)} {...props} />;
+export type CardProps = {
+  readonly elevation?: CardElevation;
+  /** Lift on hover — for a card that is itself a link target. */
+  readonly interactive?: CardInteractive;
+  readonly children?: React.ReactNode;
+  readonly "data-testid"?: string;
 };
 
-const CardFooter = ({ className, ...props }: React.ComponentProps<"div">) => {
-  return (
-    <div
-      data-slot="card-footer"
-      className={cn("flex items-center p-6 pt-0", className)}
-      {...props}
-    />
-  );
+const CardRoot: React.FC<CardProps> = ({
+  children,
+  "data-testid": testId,
+  elevation = "sm",
+  interactive = "none",
+}) => (
+  <div
+    data-slot="card"
+    data-testid={testId}
+    className={cn(
+      "rounded-xl border bg-card text-card-foreground",
+      ELEVATION[elevation],
+      INTERACTIVE[interactive],
+    )}
+  >
+    {children}
+  </div>
+);
+
+export type CardHeaderProps = {
+  readonly padding?: CardHeaderPadding;
+  readonly children?: React.ReactNode;
 };
 
-export const Card = Object.assign(CardRoot, {
+const CardHeader: React.FC<CardHeaderProps> = ({ children, padding = "default" }) => (
+  <div data-slot="card-header" className={cn("flex flex-col gap-1.5", HEADER_PADDING[padding])}>
+    {children}
+  </div>
+);
+
+export type CardContentProps = {
+  readonly gap?: CardContentGap;
+  readonly children?: React.ReactNode;
+};
+
+const CardContent: React.FC<CardContentProps> = ({ children, gap = "none" }) => (
+  <div data-slot="card-content" className={cn("p-6 pt-0", CONTENT_GAP[gap])}>
+    {children}
+  </div>
+);
+
+export type CardFooterProps = {
+  readonly children?: React.ReactNode;
+};
+
+const CardFooter: React.FC<CardFooterProps> = ({ children }) => (
+  <div data-slot="card-footer" className="flex items-center p-6 pt-0">
+    {children}
+  </div>
+);
+
+const Card = Object.assign(CardRoot, {
   Header: CardHeader,
-  Title: CardTitle,
-  Description: CardDescription,
   Content: CardContent,
   Footer: CardFooter,
 });
+
+export { Card };

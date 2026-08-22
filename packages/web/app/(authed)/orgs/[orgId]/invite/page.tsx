@@ -4,7 +4,8 @@
 // enforces the org-admin check (403), so the guard is defense-in-depth
 // + a clean UX rather than the security boundary.
 
-import { Card } from "@org/components/primitives/card";
+import { CardSection } from "@org/components/patterns/card-section";
+import { PageShell } from "@org/components/patterns/page-shell";
 import { OrganizationId } from "@org/contracts/EntityIds";
 import { notFound } from "next/navigation";
 import React from "react";
@@ -23,15 +24,10 @@ export default async function InvitePage({
   if ((await fetchMyOrgRole(orgId)) !== "admin") notFound();
 
   return (
-    <div className="mx-auto w-full max-w-lg px-4">
-      <Card className="shadow-md">
-        <Card.Header>
-          <Card.Title className="text-2xl font-semibold">Invite a teammate</Card.Title>
-        </Card.Header>
-        <Card.Content>
-          <InviteForm orgId={orgId} />
-        </Card.Content>
-      </Card>
-    </div>
+    <PageShell width="sm">
+      <CardSection title="Invite a teammate">
+        <InviteForm orgId={orgId} />
+      </CardSection>
+    </PageShell>
   );
 }

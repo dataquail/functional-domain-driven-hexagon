@@ -1,6 +1,8 @@
 # ADR-0018: Frontend renderer is Next.js; the Effect server stays the BFF
 
 - Status: Accepted
+- Amended: 2026-08-21 — sub-decision 1 restated over Effect Atom (ADR-0026). The
+  proxy/BFF decisions (2, 3, 4) are untouched.
 - Date: 2026-05-08
 
 ## Context and Problem Statement
@@ -20,9 +22,11 @@ The forces:
 
 The frontend renderer is **Next.js (App Router, deployed as a Node server)**. Four sub-decisions lock the shape.
 
-### 1. Server-side prefetch + `<HydrationBoundary>` + `useSuspenseQuery` is the default
+### 1. Server-side prefetch + hydration boundary + suspense read is the default
 
-Each route's `page.tsx` runs `prefetchEffectQuery(...)` on the server for the data it owns, dehydrates, and wraps the client subtree in `<HydrationBoundary>`. The leaf component uses `useEffectSuspenseQuery` so the cache is populated before paint and the client never shows an initial spinner for prefetched data. Plain `useQuery` is allowed only for client-only side data (search-as-you-type, polling, optimistic reads). Mutations stay client-side via `useEffectMutation`. Server Actions are not adopted.
+Each route's `page.tsx` composes `<AtomHydrationBoundary prefetch={[...]}>` around the client subtree. The boundary runs each `prefetch*` helper on the per-request runtime, encodes the results, and hands them to the browser registry; the leaf View reads with `useAtomSuspense`, so the atom is populated before paint and the client never shows an initial spinner for prefetched data. Writes are ViewModel actions over `ApiAtoms.mutation`. Server Actions are not adopted.
+
+Amended 2026-08-21: this was `prefetchEffectQuery` → `<HydrationBoundary>` → `useEffectSuspenseQuery` over TanStack Query. The flow is the same shape; the substrate is Effect Atom (ADR-0026), which additionally means the hydrated value has been decoded through the endpoint's own schema rather than arriving as raw JSON. **No atom runtime is built on the server** — see ADR-0026's memo-map hazard for why that matters.
 
 ### 2. The Effect server remains the BFF
 
@@ -45,7 +49,7 @@ Next initializes the Node OTEL SDK in `packages/web/instrumentation.ts` on boot 
 
 - **One renderer buys SSR optionality forever.** Future engagements pick "ship as-is" (CSR-effective, SSR-shell) without architectural changes.
 - **Hosting is "Node server + CDN," not "S3 + CDN."** A static SPA can be a cheap CloudFront + S3; Next needs a runtime. For a one-person consulting template the cognitive consistency of one deploy story is worth the marginal hosting cost.
-- **`useSuspenseQuery` shifts the error-handling model.** Errors throw and propagate to the nearest `error.tsx` boundary; each route picks its boundary deliberately. The toast path remains available for client-only `useQuery` callers.
+- **A suspense read shifts the error-handling model.** Errors throw and propagate to the nearest `error.tsx` boundary; each route picks its boundary deliberately. The notification path remains available to any ViewModel action that would rather report than throw.
 - **Per-request Effect runtime on the server.** `ManagedRuntime` is constructed per request (cached on the request via `React.cache`), not as a module singleton — module-singleton state would leak between requests.
 - **App Router cognitive overhead.** Server vs client component boundaries, `"use client"`, request-scoped vs module-scoped state — real overhead a SPA didn't impose.
 
@@ -54,11 +58,11 @@ Next initializes the Node OTEL SDK in `packages/web/instrumentation.ts` on boot 
 - **Static export as the deploy target.** Rejected: defers the SSR migration to mid-engagement, at a worse time with more accumulated code. Prefetch + hydrate + suspense requires a server, so `output: 'export'` is out.
 - **TanStack Start instead of Next.js.** Genuinely close. Chosen against because (a) Next is the industry default clients recognize, which matters for a delivery-positioned template; (b) Next's instrumentation hook and middleware story are more mature for OTEL; (c) the BFF concern disappears once we commit to "Next is a proxy, not an auth authority."
 - **Make Next.js the BFF; talk to the Effect server with a service token.** Rejected: doubles the auth surface area (two refresh paths, two revocation stories, a service credential to rotate). "The user's cookie is the only credential" is strictly simpler and no less secure.
-- **Server Actions for mutations.** Deferred. Every existing mutation flows through `useEffectMutation` cleanly; adopt per-feature when the form-without-JS UX matters.
+- **Server Actions for mutations.** Deferred. Every existing write flows through a ViewModel action cleanly; adopt per-feature when the form-without-JS UX matters.
 
 ## Related
 
-- ADR-0014 — frontend view-layer tiering (ViewModels are framework-agnostic Effect, reusable on both runtimes).
+- ADR-0026 — Effect Atom as the state substrate and the Model/ViewModel/View layering (supersedes ADR-0014).
 - ADR-0015 — frontend component library.
 - ADR-0016 — server-side authentication (the Effect server remains the BFF).
 - ADR-0017 — frontend auth flow (the server-component guard and `/api/*` rewrite).

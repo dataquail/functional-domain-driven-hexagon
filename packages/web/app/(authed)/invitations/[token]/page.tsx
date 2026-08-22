@@ -3,7 +3,8 @@
 // the way back, Next preserves the URL and the user lands here ready
 // to accept.
 
-import { Card } from "@org/components/primitives/card";
+import { CardSection } from "@org/components/patterns/card-section";
+import { PageShell } from "@org/components/patterns/page-shell";
 import React from "react";
 
 import { AcceptInvitation } from "@/features/invite/accept-invitation/accept-invitation.view";
@@ -16,15 +17,10 @@ export default async function AcceptInvitationPage({
   const { token } = await params;
 
   return (
-    <div className="mx-auto w-full max-w-md px-4">
-      <Card className="shadow-md">
-        <Card.Header>
-          <Card.Title className="text-2xl font-semibold">You&apos;re invited</Card.Title>
-        </Card.Header>
-        <Card.Content>
-          <AcceptInvitation token={token} />
-        </Card.Content>
-      </Card>
-    </div>
+    <PageShell width="xs">
+      <CardSection title="You're invited">
+        <AcceptInvitation token={token} />
+      </CardSection>
+    </PageShell>
   );
 }

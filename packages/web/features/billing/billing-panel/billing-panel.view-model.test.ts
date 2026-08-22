@@ -1,26 +1,37 @@
-import { OrganizationId, SubscriptionId } from "@org/contracts/EntityIds";
+import * as Effect from "effect/Effect";
+import * as AtomRegistry from "effect/unstable/reactivity/AtomRegistry";
 import { describe, expect, it } from "vitest";
 
-import { computeBillingPanelView } from "./billing-panel.view-model";
+import { apiTransportAtom } from "@/services/atom/api-transport.shared";
+import { notificationAtom } from "@/services/atom/notifications.shared";
+import { BILLING_ORG_ID, makeSubscription } from "@/test/fixtures/billing";
+import { billingHandlers } from "@/test/handlers/billing";
+import { server } from "@/test/msw-server";
+import { TEST_API_BASE } from "@/test/typed-handler";
 
-const orgId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
-const subId = SubscriptionId.make("22222222-2222-2222-2222-222222222222");
+import {
+  billingPanelAtom,
+  cancelSubscriptionActionAtom,
+  computeBillingPanelView,
+  startSubscriptionActionAtom,
+  subscriptionResultAtom,
+} from "./billing-panel.view-model";
 
-// Period-end comes through as an ISO string on the client — that's what
-// dehydrate → JSON → hydrate produces from `Schema.DateTimeUtc`. See the
-// view-model's `formatDate` comment.
-const makeSub = (status: string, currentPeriodEnd: string | null = null) =>
-  ({
-    id: subId,
-    organizationId: orgId,
-    status,
-    currentPeriodEnd,
-  }) as never;
+const makeRegistry = () =>
+  AtomRegistry.make({
+    initialValues: [[apiTransportAtom, { baseUrl: TEST_API_BASE, headers: {} }]],
+  });
+
+const settle = (registry: AtomRegistry.AtomRegistry) =>
+  Effect.runPromise(
+    AtomRegistry.getResult(registry, subscriptionResultAtom(BILLING_ORG_ID), {
+      suspendOnWaiting: true,
+    }),
+  );
 
 describe("computeBillingPanelView", () => {
   it("returns the empty-state shape when there's no subscription", () => {
-    const view = computeBillingPanelView(null);
-    expect(view).toEqual({
+    expect(computeBillingPanelView(null)).toEqual({
       hasSubscription: false,
       statusLabel: "No subscription",
       statusVariant: "secondary",
@@ -30,39 +41,117 @@ describe("computeBillingPanelView", () => {
     });
   });
 
-  it("maps active → default variant, cancelable", () => {
-    const view = computeBillingPanelView(makeSub("active"));
-    expect(view.statusLabel).toBe("Active");
-    expect(view.statusVariant).toBe("default");
-    expect(view.canStart).toBe(false);
-    expect(view.canCancel).toBe(true);
+  it.each([
+    ["active", "Active", "default", true],
+    ["trialing", "Trialing", "default", true],
+    ["past_due", "Past due", "destructive", true],
+    ["unpaid", "Unpaid", "destructive", true],
+    ["incomplete", "Incomplete", "secondary", true],
+    ["incomplete_expired", "Incomplete (expired)", "secondary", false],
+    ["canceled", "Canceled", "outline", false],
+    ["paused", "Paused", "secondary", true],
+  ] as const)("maps Stripe's %s to %s", (status, label, variant, cancelable) => {
+    const view = computeBillingPanelView(makeSubscription({ status }));
+    expect(view).toMatchObject({
+      hasSubscription: true,
+      statusLabel: label,
+      statusVariant: variant,
+      canStart: false,
+      canCancel: cancelable,
+    });
   });
 
-  it("maps past_due → destructive, cancelable", () => {
-    const view = computeBillingPanelView(makeSub("past_due"));
-    expect(view.statusVariant).toBe("destructive");
-    expect(view.canCancel).toBe(true);
-  });
-
-  it("maps canceled → outline, NOT cancelable", () => {
-    const view = computeBillingPanelView(makeSub("canceled"));
-    expect(view.statusVariant).toBe("outline");
-    expect(view.canCancel).toBe(false);
-  });
-
-  it("falls back to the raw status string for unknown statuses", () => {
-    const view = computeBillingPanelView(makeSub("future_stripe_status"));
-    expect(view.statusLabel).toBe("future_stripe_status");
+  it("renders a status it has never seen verbatim, rather than crashing", () => {
+    const view = computeBillingPanelView(makeSubscription({ status: "some_new_stripe_status" }));
+    expect(view.statusLabel).toBe("some_new_stripe_status");
     expect(view.statusVariant).toBe("secondary");
   });
 
-  it("formats the period-end date as ISO yyyy-mm-dd", () => {
-    const view = computeBillingPanelView(makeSub("active", "2026-12-31T00:00:00.000Z"));
-    expect(view.currentPeriodEndLabel).toBe("2026-12-31");
+  it("formats the period end as a day", () => {
+    expect(computeBillingPanelView(makeSubscription()).currentPeriodEndLabel).toBe("2026-03-01");
   });
 
-  it("null period-end yields null label", () => {
-    const view = computeBillingPanelView(makeSub("active", null));
-    expect(view.currentPeriodEndLabel).toBeNull();
+  it("has no period-end label when the subscription carries none", () => {
+    expect(
+      computeBillingPanelView(makeSubscription({ currentPeriodEnd: null })).currentPeriodEndLabel,
+    ).toBeNull();
+  });
+});
+
+describe("billing panel ViewModel", () => {
+  it("reads the org's current subscription", async () => {
+    server.use(billingHandlers.current(makeSubscription({ status: "trialing" })));
+
+    const registry = makeRegistry();
+    await settle(registry);
+
+    expect(registry.get(billingPanelAtom(BILLING_ORG_ID))).toMatchObject({
+      hasSubscription: true,
+      statusLabel: "Trialing",
+    });
+  });
+
+  it("treats the server's 404 as 'no subscription yet', not as a failure", async () => {
+    server.use(billingHandlers.current(null));
+
+    const registry = makeRegistry();
+    await settle(registry);
+
+    expect(registry.get(billingPanelAtom(BILLING_ORG_ID))).toMatchObject({
+      hasSubscription: false,
+      canStart: true,
+      canCancel: false,
+    });
+  });
+
+  it("announces a started subscription", async () => {
+    server.use(billingHandlers.current(null), billingHandlers.start());
+
+    const registry = makeRegistry();
+    await settle(registry);
+
+    registry.set(startSubscriptionActionAtom, BILLING_ORG_ID);
+    await Effect.runPromise(
+      AtomRegistry.getResult(registry, startSubscriptionActionAtom, { suspendOnWaiting: true }),
+    );
+
+    expect(registry.get(notificationAtom)).toMatchObject({
+      kind: "success",
+      message: "Subscription started!",
+    });
+  });
+
+  it("surfaces a Stripe outage rather than claiming the subscription started", async () => {
+    server.use(billingHandlers.current(null), billingHandlers.start({ result: "BadGateway" }));
+
+    const registry = makeRegistry();
+    await settle(registry);
+
+    registry.set(startSubscriptionActionAtom, BILLING_ORG_ID);
+    await Effect.runPromise(
+      AtomRegistry.getResult(registry, startSubscriptionActionAtom, { suspendOnWaiting: true }),
+    ).catch(() => undefined);
+
+    expect(registry.get(notificationAtom)).toMatchObject({
+      kind: "error",
+      message: "Stripe is unreachable.",
+    });
+  });
+
+  it("announces a cancellation", async () => {
+    server.use(billingHandlers.current(), billingHandlers.cancel());
+
+    const registry = makeRegistry();
+    await settle(registry);
+
+    registry.set(cancelSubscriptionActionAtom, BILLING_ORG_ID);
+    await Effect.runPromise(
+      AtomRegistry.getResult(registry, cancelSubscriptionActionAtom, { suspendOnWaiting: true }),
+    );
+
+    expect(registry.get(notificationAtom)).toMatchObject({
+      kind: "success",
+      message: "Subscription canceled.",
+    });
   });
 });

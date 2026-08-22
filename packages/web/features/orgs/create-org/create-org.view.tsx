@@ -1,47 +1,45 @@
 "use client";
 
+import { useAtomSet, useAtomValue } from "@effect/atom-react";
 import { Button } from "@org/components/primitives/button";
 import { Form } from "@org/components/primitives/form";
 import { Input } from "@org/components/primitives/input";
 import { Label } from "@org/components/primitives/label";
 
-import { useCreateOrgPresenter } from "./create-org.presenter";
+import { fieldsAtom, setNameAtom, submitAtom, visibleErrorsAtom } from "./create-org.view-model";
 
 export const CreateOrg: React.FC = () => {
-  const { form } = useCreateOrgPresenter();
+  const fields = useAtomValue(fieldsAtom);
+  const errors = useAtomValue(visibleErrorsAtom);
+  const submitState = useAtomValue(submitAtom);
+  const setName = useAtomSet(setNameAtom);
+  const submit = useAtomSet(submitAtom);
+
+  const isSubmitting = submitState.waiting;
 
   return (
-    <Form onSubmit={form.handleSubmit}>
-      <form.Field name="name">
-        {(field) => (
-          <Form.Control>
-            <Label htmlFor={field.name}>Organization name</Label>
-            <Input
-              id={field.name}
-              value={field.state.value}
-              onChange={(e) => {
-                field.handleChange(e.target.value);
-              }}
-              placeholder="Acme Inc."
-              data-testid="create-org-name"
-            />
-            <Form.Error error={form.state.errorMap.onSubmit?.name} />
-          </Form.Control>
-        )}
-      </form.Field>
+    <Form
+      onSubmit={() => {
+        submit();
+      }}
+    >
+      <Form.Control>
+        <Label htmlFor="create-org-name">Organization name</Label>
+        <Input
+          id="create-org-name"
+          value={fields.name}
+          onChange={(event) => {
+            setName(event.target.value);
+          }}
+          placeholder="Acme Inc."
+          data-testid="create-org-name"
+        />
+        <Form.Error error={errors?.name} />
+      </Form.Control>
 
-      <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting] as const}>
-        {([canSubmit, isSubmitting]) => (
-          <Button
-            type="submit"
-            disabled={!canSubmit}
-            className="mt-4 w-full"
-            data-testid="create-org-submit"
-          >
-            {isSubmitting ? "Creating…" : "Create organization"}
-          </Button>
-        )}
-      </form.Subscribe>
+      <Button type="submit" width="full" disabled={isSubmitting} data-testid="create-org-submit">
+        {isSubmitting ? "Creating…" : "Create organization"}
+      </Button>
     </Form>
   );
 };

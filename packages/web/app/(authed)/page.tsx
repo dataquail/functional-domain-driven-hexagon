@@ -5,11 +5,13 @@
 //   type, they don't own organizations, and their natural landing
 //   page is the platform-wide org admin view.
 //
-// The `myOrgs` cache is prefetched by the parent (authed) layout for
-// the nav switcher (regular users only); the picker hydrates from
-// that same key without a duplicate fetch.
+// The `myOrgs` atom is prefetched by the parent (authed) layout for the
+// nav switcher (regular users only); the picker reads the same atom and
+// hydrates from that entry without a duplicate fetch.
 
-import { Card } from "@org/components/primitives/card";
+import { CardSection } from "@org/components/patterns/card-section";
+import { PageShell } from "@org/components/patterns/page-shell";
+import { Grid } from "@org/components/primitives/grid";
 import { Skeleton } from "@org/components/primitives/skeleton";
 import { redirect } from "next/navigation";
 import React from "react";
@@ -19,11 +21,13 @@ import { OrgPicker } from "@/features/orgs/org-picker/org-picker.view";
 import { fetchCurrentUser } from "@/services/data-access/me.server";
 
 const Fallback: React.FC = () => (
-  <div className="grid gap-3 sm:grid-cols-2">
-    {Array.from({ length: 2 }, (_, i) => (
-      <Skeleton key={i} className="h-20 w-full rounded-lg" />
+  <Grid columnsAbove={2} gap="md">
+    {Array.from({ length: 2 }, (_, index) => (
+      <Grid.Item key={index}>
+        <Skeleton height="card" radius="lg" />
+      </Grid.Item>
     ))}
-  </div>
+  </Grid>
 );
 
 export default async function RootPickerPage() {
@@ -33,26 +37,16 @@ export default async function RootPickerPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4 px-4">
-      <Card className="shadow-md">
-        <Card.Header>
-          <Card.Title className="text-2xl font-semibold">Your organizations</Card.Title>
-        </Card.Header>
-        <Card.Content>
-          <React.Suspense fallback={<Fallback />}>
-            <OrgPicker />
-          </React.Suspense>
-        </Card.Content>
-      </Card>
+    <PageShell>
+      <CardSection title="Your organizations">
+        <React.Suspense fallback={<Fallback />}>
+          <OrgPicker />
+        </React.Suspense>
+      </CardSection>
 
-      <Card className="shadow-md">
-        <Card.Header>
-          <Card.Title className="text-2xl font-semibold">Create a new organization</Card.Title>
-        </Card.Header>
-        <Card.Content>
-          <CreateOrg />
-        </Card.Content>
-      </Card>
-    </div>
+      <CardSection title="Create a new organization">
+        <CreateOrg />
+      </CardSection>
+    </PageShell>
   );
 }

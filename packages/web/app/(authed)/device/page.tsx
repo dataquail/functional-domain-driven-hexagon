@@ -3,7 +3,10 @@
 // signed-in caller, so approving binds the grant to the right user. Pure
 // client interaction from here — the form posts to `/auth/device/approve`.
 
-import { Card } from "@org/components/primitives/card";
+import { CardSection } from "@org/components/patterns/card-section";
+import { PageShell } from "@org/components/patterns/page-shell";
+import { Text } from "@org/components/primitives/text";
+import React from "react";
 
 import { ApproveDevice } from "@/features/device/approve-device/approve-device.view";
 
@@ -15,18 +18,13 @@ export default async function DeviceApprovalPage({
   const { code } = await searchParams;
 
   return (
-    <div className="mx-auto w-full max-w-md space-y-4 px-4">
-      <Card className="shadow-md">
-        <Card.Header>
-          <Card.Title className="text-2xl font-semibold">Approve a device</Card.Title>
-        </Card.Header>
-        <Card.Content>
-          <p className="mb-4 text-sm text-muted-foreground">
-            Enter the code shown in your terminal to authorize the CLI on your account.
-          </p>
-          <ApproveDevice initialCode={code ?? ""} />
-        </Card.Content>
-      </Card>
-    </div>
+    <PageShell width="xs">
+      <CardSection title="Approve a device">
+        <Text tone="muted">
+          Enter the code shown in your terminal to authorize the CLI on your account.
+        </Text>
+        <ApproveDevice initialCode={code ?? ""} />
+      </CardSection>
+    </PageShell>
   );
 }

@@ -3,74 +3,101 @@ import * as React from "react";
 import { expect, userEvent, within } from "storybook/test";
 
 import { Button } from "./button";
+import { Container } from "./container";
 import { Form } from "./form";
 
 const meta = {
   title: "Primitives/Form",
   component: Form,
   parameters: { layout: "centered" },
+  args: { onSubmit: () => undefined },
 } satisfies Meta<typeof Form>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
-  render: () => (
-    <Form
-      className="w-72"
-      onSubmit={() => {
-        /* demo */
-      }}
-    >
-      <Form.Control>
-        <Form.Label htmlFor="name">Name</Form.Label>
-        <Form.Input id="name" placeholder="Ada Lovelace" />
-      </Form.Control>
-      <Form.Control>
-        <Form.Label htmlFor="email" required>
-          Email
-        </Form.Label>
-        <Form.Input id="email" type="email" placeholder="ada@example.com" />
-        <Form.Error error="Email is required" />
-      </Form.Control>
-      <Button type="submit">Submit</Button>
-    </Form>
-  ),
+const DemoForm: React.FC<{ readonly error?: string | null }> = ({ error = null }) => {
+  const [name, setName] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  return (
+    <Container width="xs" paddingX="none">
+      <Form onSubmit={() => undefined}>
+        <Form.Control>
+          <Form.Label htmlFor="name">Name</Form.Label>
+          <Form.Input
+            id="name"
+            value={name}
+            onChange={(event) => {
+              setName(event.target.value);
+            }}
+            placeholder="Ada Lovelace"
+          />
+        </Form.Control>
+        <Form.Control>
+          <Form.Label htmlFor="email" required>
+            Email
+          </Form.Label>
+          <Form.Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(event) => {
+              setEmail(event.target.value);
+            }}
+            placeholder="ada@example.com"
+          />
+          <Form.Error error={error} />
+        </Form.Control>
+        <Button type="submit">Submit</Button>
+      </Form>
+    </Container>
+  );
 };
 
-// Play-test: the Form.Error contract is "shows when error is a
-// non-empty string, hides when null/empty". Wraps the form in a
-// state-toggle so the play function exercises both branches.
+export const Default: Story = { render: () => <DemoForm /> };
+export const WithFieldError: Story = { render: () => <DemoForm error="Email is required" /> };
+
+// Play-test: the Form.Error contract is "shows when error is a non-empty
+// string, hides when null/empty". Wraps the form in a state toggle so the play
+// function exercises both branches.
 const ToggleErrorForm: React.FC = () => {
   const [error, setError] = React.useState<string | null>(null);
+  const [email, setEmail] = React.useState("");
   return (
-    <Form className="w-72" onSubmit={() => undefined}>
-      <Form.Control>
-        <Form.Label htmlFor="play-email" required>
-          Email
-        </Form.Label>
-        <Form.Input id="play-email" type="email" />
-        <Form.Error error={error} />
-      </Form.Control>
-      <Button
-        type="button"
-        data-testid="trigger-error"
-        onClick={() => {
-          setError("Email is required");
-        }}
-      >
-        Trigger error
-      </Button>
-      <Button
-        type="button"
-        data-testid="clear-error"
-        onClick={() => {
-          setError(null);
-        }}
-      >
-        Clear error
-      </Button>
-    </Form>
+    <Container width="xs" paddingX="none">
+      <Form onSubmit={() => undefined}>
+        <Form.Control>
+          <Form.Label htmlFor="play-email" required>
+            Email
+          </Form.Label>
+          <Form.Input
+            id="play-email"
+            type="email"
+            value={email}
+            onChange={(event) => {
+              setEmail(event.target.value);
+            }}
+          />
+          <Form.Error error={error} />
+        </Form.Control>
+        <Button
+          data-testid="trigger-error"
+          onClick={() => {
+            setError("Email is required");
+          }}
+        >
+          Trigger error
+        </Button>
+        <Button
+          data-testid="clear-error"
+          onClick={() => {
+            setError(null);
+          }}
+        >
+          Clear error
+        </Button>
+      </Form>
+    </Container>
   );
 };
 
@@ -80,8 +107,8 @@ export const ErrorContract: Story = {
     const canvas = within(canvasElement);
 
     await step("error is hidden initially", async () => {
-      // Form.Error renders `null` when error is null/empty — there
-      // should be no node with that error message yet.
+      // Form.Error renders `null` when error is null/empty — there should be no
+      // node with that message yet.
       await expect(canvas.queryByText("Email is required")).toBeNull();
     });
 
@@ -92,7 +119,6 @@ export const ErrorContract: Story = {
 
     await step("error disappears after clearing", async () => {
       await userEvent.click(canvas.getByTestId("clear-error"));
-      // Form.Error returns null on empty/null — the node is unmounted.
       await expect(canvas.queryByText("Email is required")).toBeNull();
     });
   },

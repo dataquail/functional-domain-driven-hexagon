@@ -1,7 +1,15 @@
 # ADR-0014: Frontend layering — data-access ports, ViewModels, and Presenters
 
-- Status: Accepted
+- Status: Superseded by [ADR-0026](0026-effect-atom-and-frontend-mvvm.md)
 - Date: 2026-04-28
+- Superseded: 2026-08-21
+
+> **Superseded.** The three-tier scheme below exists because TanStack Query and
+> TanStack Form are React-coupled and needed a tier that could hold them. Effect
+> Atom replaced both, so the presenter tier has nothing left to hold and the
+> frontend is now layered Model → ViewModel → View. See ADR-0026. This record is
+> kept for the reasoning that produced the tiering, which ADR-0026 argues
+> against explicitly.
 
 ## Context and Problem Statement
 

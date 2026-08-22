@@ -11,7 +11,6 @@ import {
   componentsPrimitives,
   serverModules,
   webFeatures,
-  webTanstackBridge,
 } from "../../project-structure.config.mjs";
 
 const folderStructure = projectStructurePlugin.rules["folder-structure"];
@@ -32,7 +31,6 @@ export const rules = {
   "components-primitives": withBoundConfig(componentsPrimitives),
   "components-patterns": withBoundConfig(componentsPatterns),
   "web-features": withBoundConfig(webFeatures),
-  "web-tanstack-bridge": withBoundConfig(webTanstackBridge),
 };
 
 export default { meta: { name: "project-structure" }, rules };

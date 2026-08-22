@@ -1,54 +1,62 @@
 "use client";
 
+import { useAtomSet } from "@effect/atom-react";
+import { ListRow } from "@org/components/patterns/list-row";
 import { Button } from "@org/components/primitives/button";
 import { Checkbox } from "@org/components/primitives/checkbox";
 import { TrashIcon } from "@org/components/primitives/icon";
 import { Label } from "@org/components/primitives/label";
+import { Text } from "@org/components/primitives/text";
 import type { TodosContract } from "@org/contracts/api/Contracts";
 import type { OrganizationId } from "@org/contracts/EntityIds";
 
-import { useTodoItemPresenter } from "./todo-item.presenter";
+import { deleteTodoActionAtom, toggleTodoAtom } from "./todo-item.view-model";
 
 export const TodoItem: React.FC<{ todo: TodosContract.Todo; orgId: OrganizationId }> = ({
   orgId,
   todo,
 }) => {
-  const { deleteThis, toggleCompleted } = useTodoItemPresenter(todo, orgId);
+  const toggle = useAtomSet(toggleTodoAtom);
+  const remove = useAtomSet(deleteTodoActionAtom);
+  const checkboxId = `todo-${todo.id}`;
 
   return (
-    <li
-      key={todo.id}
+    <ListRow
       data-testid="todo-item"
-      data-todo-title={todo.title}
-      className="group flex items-center justify-between rounded-md border bg-card p-3 transition-all hover:shadow-sm"
-    >
-      <div className="flex min-w-0 flex-1 items-center gap-3">
+      revealTrailing
+      leading={
         <Checkbox
-          id={`todo-${todo.id}`}
+          id={checkboxId}
           checked={todo.completed}
-          onCheckedChange={toggleCompleted}
+          onCheckedChange={() => {
+            toggle({ orgId, todo });
+          }}
         />
-
-        <Label
-          htmlFor={`todo-${todo.id}`}
-          className={`flex-1 cursor-pointer truncate ${
-            todo.completed ? "text-muted-foreground line-through" : "text-foreground"
-          }`}
+      }
+      trailing={
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            remove({ orgId, id: todo.id });
+          }}
+          data-testid="todo-item-delete"
         >
-          {todo.title}
-        </Label>
-      </div>
-
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100"
-        onClick={deleteThis}
+          <TrashIcon tone="destructive" />
+          <Text as="span" srOnly>
+            Delete
+          </Text>
+        </Button>
+      }
+    >
+      <Label
+        htmlFor={checkboxId}
+        truncate
+        tone={todo.completed ? "muted" : "default"}
+        decoration={todo.completed ? "line-through" : "none"}
       >
-        <TrashIcon tone="destructive" />
-        <span className="sr-only">Delete</span>
-      </Button>
-    </li>
+        {todo.title}
+      </Label>
+    </ListRow>
   );
 };

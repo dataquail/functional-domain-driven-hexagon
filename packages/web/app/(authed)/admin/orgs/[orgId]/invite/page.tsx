@@ -2,9 +2,10 @@
 // feature — the underlying `inviteUser` endpoint's policy lets SAs
 // through via the `SuperAdminOnly` OR chain.
 
-import { Card } from "@org/components/primitives/card";
+import { CardSection } from "@org/components/patterns/card-section";
+import { PageShell } from "@org/components/patterns/page-shell";
+import { Link } from "@org/components/primitives/link";
 import { OrganizationId } from "@org/contracts/EntityIds";
-import Link from "next/link";
 import React from "react";
 
 import { InviteForm } from "@/features/invite/invite-form/invite-form.view";
@@ -18,23 +19,17 @@ export default async function AdminOrgInvitePage({
   const orgId = OrganizationId.make(raw);
 
   return (
-    <div className="mx-auto w-full max-w-lg px-4">
-      <Card className="shadow-md">
-        <Card.Header>
-          <div className="flex items-center justify-between gap-3">
-            <Card.Title className="text-2xl font-semibold">Invite a user</Card.Title>
-            <Link
-              href={`/admin/orgs/${orgId}`}
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              ← Back to org
-            </Link>
-          </div>
-        </Card.Header>
-        <Card.Content>
-          <InviteForm orgId={orgId} />
-        </Card.Content>
-      </Card>
-    </div>
+    <PageShell width="sm">
+      <CardSection
+        title="Invite a user"
+        action={
+          <Link href={`/admin/orgs/${orgId}`} tone="muted" underline="none">
+            ← Back to org
+          </Link>
+        }
+      >
+        <InviteForm orgId={orgId} />
+      </CardSection>
+    </PageShell>
   );
 }

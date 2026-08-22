@@ -1,12 +1,20 @@
-// View-model for the pending-invitations section of the member-
-// management surface. Maps the contract's invitation rows into the row
-// shape the leaf renders, with a formatted expiry label and an
-// `isExpired` flag driving the status badge. The date formatter is
-// defensive about the DateTime shape for the same reason as the
-// members view-model: dehydrate strips DateTime.Utc to ISO strings.
+// ViewModel for the pending-invitations section of the member-management
+// surface: the open invitations and the two writes each row offers.
 
-import type { OrganizationContract } from "@org/contracts/api/Contracts";
-import type { InvitationId } from "@org/contracts/EntityIds";
+import type { InvitationId, OrganizationId } from "@org/contracts/EntityIds";
+import * as Array from "effect/Array";
+import * as AsyncResult from "effect/unstable/reactivity/AsyncResult";
+import * as Atom from "effect/unstable/reactivity/Atom";
+
+import { ApiAtoms } from "@/services/atom/api-atoms.shared";
+import { notify } from "@/services/atom/notifications.shared";
+import { ReactivityKeys } from "@/services/atom/reactivity-keys";
+import {
+  orgInvitationsQueryAtom,
+  resendInvitationAtom,
+  revokeInvitationAtom,
+} from "@/services/data-access/org-members.atoms";
+import { formatDay } from "@/services/format/date.shared";
 
 export type InvitationRowView = {
   readonly invitationId: InvitationId;
@@ -20,27 +28,60 @@ export type OrgInvitationsListView = {
   readonly isEmpty: boolean;
 };
 
-const formatDate = (value: unknown): string => {
-  if (value === null || value === undefined) return "";
-  if (typeof value === "string") return value.slice(0, 10);
-  if (value instanceof Date) return value.toISOString().slice(0, 10);
-  if (typeof value === "object" && "epochMillis" in value) {
-    const millis = value.epochMillis;
-    if (typeof millis === "number" && Number.isFinite(millis)) {
-      return new Date(millis).toISOString().slice(0, 10);
-    }
-  }
-  return "";
+export const orgInvitationsResultAtom = Atom.family((orgId: OrganizationId) =>
+  Atom.make((get) => get(orgInvitationsQueryAtom(orgId))),
+);
+
+export const orgInvitationsListAtom = Atom.family((orgId: OrganizationId) =>
+  Atom.make((get): OrgInvitationsListView => {
+    const result = get(orgInvitationsResultAtom(orgId));
+    const invitations = AsyncResult.isSuccess(result) ? result.value.invitations : [];
+    return {
+      rows: Array.map(invitations, (invitation) => ({
+        invitationId: invitation.invitationId,
+        email: invitation.inviteeEmail,
+        isExpired: invitation.status === "expired",
+        expiresAtLabel: formatDay(invitation.expiresAt),
+      })),
+      isEmpty: AsyncResult.isSuccess(result) && Array.isReadonlyArrayEmpty(invitations),
+    };
+  }),
+);
+
+export type InvitationAction = {
+  readonly orgId: OrganizationId;
+  readonly invitationId: InvitationId;
 };
 
-export const computeOrgInvitationsListView = (
-  response: OrganizationContract.PendingInvitationsResponse,
-): OrgInvitationsListView => {
-  const rows = response.invitations.map((invitation) => ({
-    invitationId: invitation.invitationId,
-    email: invitation.inviteeEmail,
-    isExpired: invitation.status === "expired",
-    expiresAtLabel: formatDate(invitation.expiresAt),
-  }));
-  return { rows, isEmpty: rows.length === 0 };
-};
+const invitationKeys = ReactivityKeys.organizationInvitations;
+
+const INVITATION_ERRORS = {
+  OrganizationNotFoundError: (error: { readonly message: string }) => error.message,
+  InvitationNotFoundError: (error: { readonly message: string }) => error.message,
+  InvitationGoneError: (error: { readonly message: string }) => error.message,
+  Forbidden: (error: { readonly message: string }) => error.message,
+} as const;
+
+export const resendInvitationActionAtom = ApiAtoms.runtime.fn<InvitationAction>()(
+  ({ invitationId, orgId }, get) =>
+    get
+      .setResult(resendInvitationAtom, {
+        params: { orgId, invitationId },
+        reactivityKeys: invitationKeys,
+      })
+      .pipe(notify(get, { success: () => "Invitation resent.", errors: INVITATION_ERRORS })),
+);
+
+export const revokeInvitationActionAtom = ApiAtoms.runtime.fn<InvitationAction>()(
+  ({ invitationId, orgId }, get) =>
+    get
+      .setResult(revokeInvitationAtom, {
+        params: { orgId, invitationId },
+        reactivityKeys: invitationKeys,
+      })
+      .pipe(notify(get, { success: () => "Invitation revoked.", errors: INVITATION_ERRORS })),
+);
+
+export const isResendingAtom = Atom.make((get): boolean => get(resendInvitationActionAtom).waiting);
+
+export const isRevokingAtom = Atom.make((get): boolean => get(revokeInvitationActionAtom).waiting);
