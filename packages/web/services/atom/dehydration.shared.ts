@@ -21,14 +21,30 @@ export class NotSerializableError extends Error {
   }
 }
 
+// A query declaring `reactivityKeys` is handed back wrapped: `AtomHttpApi`
+// applies `withReactivity`, which is a `transform`, and a transform builds a new
+// atom rather than copying the serialization metadata off the one it wraps. The
+// wrapper does carry `initialValueTarget` pointing at the atom underneath -- the
+// same link hydration uses to seed through a wrapper -- so the metadata is one
+// hop away rather than gone. Every query in this app declares both keys, so this
+// unwrapping is the normal path, not an edge case.
+const serializationOf = (atom: Atom.Atom<unknown>) => {
+  let target: Atom.Atom<unknown> | undefined = atom;
+  while (target !== undefined) {
+    if (Atom.isSerializable(target)) return target[Atom.SerializableTypeId];
+    target = target.initialValueTarget;
+  }
+  return undefined;
+};
+
 export const dehydrateQuery = <A, E>(
   atom: Atom.Atom<AsyncResult.AsyncResult<A, E>>,
   value: A,
 ): Hydration.DehydratedAtom => {
-  if (!Atom.isSerializable(atom)) {
+  const serializable = serializationOf(atom);
+  if (serializable === undefined) {
     throw new NotSerializableError(String(atom.label ?? "<unlabelled>"));
   }
-  const serializable = atom[Atom.SerializableTypeId];
   return {
     "~effect/reactivity/DehydratedAtom": true,
     key: serializable.key,

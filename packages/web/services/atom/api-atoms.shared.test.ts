@@ -6,6 +6,7 @@ import * as AtomRegistry from "effect/unstable/reactivity/AtomRegistry";
 import * as Hydration from "effect/unstable/reactivity/Hydration";
 import { describe, expect, it } from "vitest";
 
+import { usersQueryAtom } from "@/services/data-access/users.atoms";
 import { makePaginatedUsers, makeUser } from "@/test/fixtures/user";
 import { usersHandlers } from "@/test/handlers/users";
 import { server } from "@/test/msw-server";
@@ -66,5 +67,33 @@ describe("ApiAtoms", () => {
     const before = Atom.defaultMemoMap;
     dehydrateQuery(usersQuery(7), makePaginatedUsers());
     expect(Atom.defaultMemoMap).toBe(before);
+  });
+
+  // Regression: the spike originally declared its own query atom here, *without*
+  // `reactivityKeys` -- a configuration no feature actually uses. Every real
+  // query declares both keys, and `AtomHttpApi` wraps a reactivity-keyed atom in
+  // a `transform` that does not carry the serialization metadata, so dehydrating
+  // the atom a feature actually exports threw. These exercise the exported atom.
+  it("dehydrates the atom a feature actually exports, reactivity keys and all", () => {
+    const page = makePaginatedUsers({ users: [makeUser({ email: "carol@example.com" })] });
+
+    const [dehydrated] = Hydration.toValues([
+      dehydrateQuery(usersQueryAtom({ page: 1, pageSize: 10 }), page),
+    ]) as [Hydration.DehydratedAtomValue];
+
+    expect(dehydrated.key).toContain("user");
+  });
+
+  it("hydrates a production query atom into a fresh registry without an HTTP call", async () => {
+    // No MSW handler is registered and the lifecycle errors on any unhandled
+    // request, so a fetch here fails the test outright.
+    const page = makePaginatedUsers({ users: [makeUser({ email: "dave@example.com" })] });
+    const variables = { page: 1, pageSize: 10 } as const;
+
+    const registry = makeRegistry();
+    Hydration.hydrate(registry, [dehydrateQuery(usersQueryAtom(variables), page)]);
+
+    const value = await settle(registry, usersQueryAtom(variables));
+    expect(value.users.map((user) => user.email)).toEqual(["dave@example.com"]);
   });
 });
