@@ -66,26 +66,23 @@ export const rtlUsersDriver = (
     },
 
     expectUserInList: async (email: string) => {
+      // By what the user can read, not by a data attribute the markup happens
+      // to carry — this driver's contract is user-perceivable state.
       await waitFor(() => {
-        const list = formScope.getByTestId("user-list");
-        const match = list.querySelector(`[data-user-email="${email}"]`);
-        if (match === null) {
-          throw new Error(`user-list does not contain user with email ${email}`);
-        }
+        within(formScope.getByTestId("user-list")).getByText(email);
       });
     },
 
     expectFieldError: async (field: CreateUserField) => {
+      // The error is announced, so assert on the role rather than on the
+      // colour class it happens to be painted with.
       await waitFor(() => {
-        // The form's `Form.Error` span renders adjacent to each
-        // input. Locate it by walking up from the field's input.
         const input = fieldInput(field);
-        const parent = input.closest("div");
-        if (parent === null) throw new Error(`no enclosing control for ${field}`);
-        const errorSpan = parent.querySelector("span.text-red-500");
-        const text = errorSpan?.textContent;
-        if (text === undefined || text.length === 0) {
-          throw new Error(`no error for ${field}`);
+        const control = input.closest("div");
+        if (control === null) throw new Error(`no enclosing control for ${field}`);
+        const alert = within(control).queryByRole("alert");
+        if (alert === null || alert.textContent.length === 0) {
+          throw new Error(`no error announced for ${field}`);
         }
       });
     },

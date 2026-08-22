@@ -284,35 +284,144 @@
       "plugins": ["react"]
     },
     {
-      "files": ["packages/web/features/**/*.tsx", "packages/components/patterns/**/*.tsx"],
+      "files": [
+        "packages/web/features/**/*.tsx",
+        "packages/web/app/**/*.tsx",
+        "packages/components/patterns/**/*.tsx"
+      ],
       "rules": {
+        "local/no-inline-styling": "error",
         "react/forbid-elements": [
           "error",
           {
             "forbid": [
               {
+                "element": "div",
+                "message": "Use Stack (layout) or Surface (a bordered/tinted region) from @org/components/primitives instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "span",
+                "message": "Use Text from @org/components/primitives/text (use `as='span'`) instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "p",
+                "message": "Use Text from @org/components/primitives/text instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "h1",
+                "message": "Use Heading from @org/components/primitives/heading instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "h2",
+                "message": "Use Heading from @org/components/primitives/heading instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "h3",
+                "message": "Use Heading from @org/components/primitives/heading instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "h4",
+                "message": "Use Heading from @org/components/primitives/heading instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "ul",
+                "message": "Use List from @org/components/primitives/list instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "ol",
+                "message": "Use List from @org/components/primitives/list (use `as='ol'`) instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "li",
+                "message": "Use List.Item from @org/components/primitives/list instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "nav",
+                "message": "Use Nav from @org/components/primitives/nav instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "a",
+                "message": "Use Link from @org/components/primitives/link (use `external` for a full page load) instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
                 "element": "button",
-                "message": "Use <Button> from @org/components/primitives/button instead."
+                "message": "Use Button from @org/components/primitives/button instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
               },
               {
                 "element": "input",
-                "message": "Use <Input> from @org/components/primitives/input instead."
+                "message": "Use Input from @org/components/primitives/input instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
               },
               {
                 "element": "label",
-                "message": "Use <Label> from @org/components/primitives/label instead."
+                "message": "Use Label from @org/components/primitives/label instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
               },
               {
                 "element": "select",
-                "message": "Use <Select> from @org/components/primitives/select instead."
+                "message": "Use Select from @org/components/primitives/select instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
               },
               {
                 "element": "form",
-                "message": "Use <Form> from @org/components/primitives/form instead."
+                "message": "Use Form from @org/components/primitives/form instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "section",
+                "message": "Use Stack or Surface from @org/components/primitives (both take `as='section'`) instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "header",
+                "message": "Use Stack or Surface from @org/components/primitives (both take `as='header'`) instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "footer",
+                "message": "Use Stack or Surface from @org/components/primitives (both take `as='footer'`) instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "main",
+                "message": "Use Container from @org/components/primitives/container (`as='main'`) instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "table",
+                "message": "Use no primitive yet — add one to @org/components/primitives and prove it in a story instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "img",
+                "message": "Use no primitive yet — add one to @org/components/primitives and prove it in a story instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
               }
             ]
           }
         ]
+      },
+      "plugins": ["react"]
+    },
+    {
+      "files": ["packages/web/features/**/*.view.tsx"],
+      "rules": {
+        "local/view-hooks-allowlist": "error"
+      }
+    },
+    {
+      "files": [
+        "packages/web/features/**/*.test.tsx",
+        "packages/components/patterns/**/*.stories.tsx"
+      ],
+      "rules": {
+        "local/no-inline-styling": "off",
+        "react/forbid-elements": "off"
+      },
+      "plugins": ["react"]
+    },
+    {
+      "files": ["packages/components/primitives/button.tsx"],
+      "rules": {
+        "react/button-has-type": "off"
+      },
+      "plugins": ["react"]
+    },
+    {
+      "files": ["packages/web/app/layout.tsx"],
+      "rules": {
+        "local/no-inline-styling": "off",
+        "react/forbid-elements": "off"
       },
       "plugins": ["react"]
     },
@@ -413,19 +522,13 @@
       }
     },
     {
-      "files": ["packages/web/lib/tanstack-query/**/*.{ts,tsx}"],
-      "rules": {
-        "project-structure/web-tanstack-bridge": "error"
-      }
-    },
-    {
       "files": ["packages/acceptance/playwright.config.ts", "packages/acceptance/global-setup.ts"],
       "rules": {
         "local/prefer-named-exports": "off"
       }
     },
     {
-      "files": ["**/*.stories.tsx", "**/.storybook/*.ts"],
+      "files": ["**/*.stories.tsx", "**/.storybook/*.{ts,tsx}"],
       "rules": {
         "local/prefer-named-exports": "off"
       }

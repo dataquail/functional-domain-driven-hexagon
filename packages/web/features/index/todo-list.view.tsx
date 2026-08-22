@@ -1,27 +1,29 @@
 "use client";
 
+import { useAtomSuspense, useAtomValue } from "@effect/atom-react";
+import { EmptyState } from "@org/components/patterns/empty-state";
+import { List } from "@org/components/primitives/list";
 import type { OrganizationId } from "@org/contracts/EntityIds";
 import * as Array from "effect/Array";
 
 import { TodoItem } from "./todo-item/todo-item.view";
-import { useTodoListPresenter } from "./todo-list.presenter";
+import { todoListAtom, todosResultAtom } from "./todo-list.view-model";
 
 export const TodoList: React.FC<{ orgId: OrganizationId }> = ({ orgId }) => {
-  const { isEmpty, todos } = useTodoListPresenter(orgId);
+  const todos = useAtomSuspense(todosResultAtom(orgId)).value;
+  const { isEmpty } = useAtomValue(todoListAtom(orgId));
 
   if (isEmpty) {
-    return (
-      <div className="rounded-lg bg-muted/50 py-8 text-center">
-        <p className="text-sm text-muted-foreground">No tasks yet. Add one above!</p>
-      </div>
-    );
+    return <EmptyState message="No tasks yet. Add one above!" />;
   }
 
   return (
-    <ul className="space-y-2" data-testid="todo-list">
+    <List gap="sm" data-testid="todo-list">
       {Array.map(todos, (todo) => (
-        <TodoItem key={todo.id} todo={todo} orgId={orgId} />
+        <List.Item key={todo.id}>
+          <TodoItem todo={todo} orgId={orgId} />
+        </List.Item>
       ))}
-    </ul>
+    </List>
   );
 };

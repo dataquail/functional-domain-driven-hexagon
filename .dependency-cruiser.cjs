@@ -390,80 +390,64 @@ module.exports = {
     // surface added). Run via the second pass in `lint:deps` against
     // `tsconfig.depcruise-web.json`.
     {
-      name: "web-tanstack-allowlist",
+      name: "web-no-tanstack",
       severity: "error",
       comment:
-        "TanStack Query (@tanstack/react-query, @tanstack/query-core) may only be imported by services/data-access/, services/common/query-client.ts, services/runtime.client.tsx, lib/tanstack-query/, lib/query-client.{shared,server}.ts, app/providers.tsx (the QueryClientProvider mount), and shared test helpers in test/. App Router pages do NOT import TanStack directly — they compose `<ServerHydrationBoundary>` (from lib/tanstack-query/) with per-feature prefetch helpers from services/data-access/. Test/story files exempted. ADR-0014.",
-      from: {
-        path: "^packages/web/",
-        pathNot: [
-          "^packages/web/services/data-access/",
-          "^packages/web/services/common/query-client\\.ts$",
-          "^packages/web/services/runtime\\.client\\.tsx$",
-          "^packages/web/lib/tanstack-query/",
-          "^packages/web/lib/query-client\\.(shared|server)\\.ts$",
-          "^packages/web/app/providers\\.tsx$",
-          "^packages/web/test/",
-          "\\.(stories|test|spec)\\.(ts|tsx)$",
-        ],
-      },
-      to: { path: "/node_modules/@tanstack/(react-query|query-core)/" },
+        "TanStack Query and TanStack Form are gone: the frontend state substrate is Effect Atom (ADR-0026). Reads are `ApiAtoms.query`, writes are `ApiAtoms.mutation`, invalidation is a reactivity key, and form state is plain atoms in a ViewModel. If you are reaching for @tanstack/* you are re-introducing the layer this architecture replaced.",
+      from: { path: "^packages/web/" },
+      to: { path: "/node_modules/@tanstack/" },
     },
     {
-      name: "web-app-no-tanstack-internals",
+      name: "web-view-reaches-only-its-view-model",
       severity: "error",
       comment:
-        "App Router pages must consume the data-access port (per-feature `prefetch*` helpers + `use*Suspense` hooks) and the `<ServerHydrationBoundary>` component, not the TanStack glue beneath them. Reaching for `prefetchEffectQuery` (lib/tanstack-query/effect-prefetch.server.ts) or the per-request `getQueryClient` (lib/query-client.server.ts) from `app/` skips the data-access port that ADR-0014 requires. The boundary component encapsulates both. ADR-0014, ADR-0018.",
-      from: { path: "^packages/web/app/" },
-      to: {
-        path: [
-          "^packages/web/lib/tanstack-query/effect-prefetch\\.server\\.ts$",
-          "^packages/web/lib/query-client\\.server\\.ts$",
-        ],
+        "MVVM dependency direction (ADR-0026): a View depends on its ViewModel, and a ViewModel depends on the Model. A View may not reach past its ViewModel into `services/` — not the API atoms, not the notification or navigation seams, not the runtime. Everything a View renders or dispatches arrives as an atom its own ViewModel exposes; that is what lets the ViewModel be tested with no renderer and the View with no server. `app/` is framework surface and composes the Model directly (prefetch + hydration boundary), so it is exempt.",
+      from: {
+        path: "^packages/web/features/.*\\.view\\.tsx$",
+        pathNot: "\\.(stories|test|spec)\\.(ts|tsx)$",
       },
+      to: { path: "^packages/web/services/" },
     },
     {
-      name: "web-component-no-effect-runtime",
+      name: "web-view-model-no-view",
       severity: "error",
       comment:
-        "Components in features/ may not import Effect runtime primitives. Reaching for Effect/Stream/Fiber/Ref/SubscriptionRef/Layer/Scope/Runtime/ManagedRuntime/Cause/Exit/Match means extracting to a presenter (*.presenter.{ts,tsx}) or view-model (*.view-model.ts). Allowed effect modules in components: Schema, Function, Either, Option, Predicate, Duration. App Router files (app/) are framework-coupled and exempt. See ADR-0014.",
+        "MVVM dependency direction (ADR-0026): the arrow points View → ViewModel, never back. A ViewModel that imports a View has made itself untestable without a renderer, which is the whole thing this layering buys.",
+      from: { path: "^packages/web/features/.*\\.view-model\\.ts$" },
+      to: { path: "^packages/web/features/.*\\.view\\.tsx$" },
+    },
+    {
+      name: "web-model-no-features",
+      severity: "error",
+      comment:
+        "MVVM dependency direction (ADR-0026): the Model (`services/`) is the innermost tier and knows nothing about the features that read it. A `services/` file importing from `features/` inverts the arrow and couples the API surface to a screen.",
       from: {
-        path: "^packages/web/features/.*\\.tsx$",
-        pathNot: [
-          "^packages/web/features/.*\\.presenter\\.tsx$",
-          "\\.(stories|test|spec)\\.(ts|tsx)$",
-        ],
+        path: "^packages/web/services/",
+        pathNot: "\\.(stories|test|spec)\\.(ts|tsx)$",
+      },
+      to: { path: "^packages/web/features/" },
+    },
+    {
+      name: "web-view-no-effect-runtime",
+      severity: "error",
+      comment:
+        "Views (*.view.tsx) may not import Effect runtime primitives. Reaching for Effect/Stream/Fiber/Ref/SubscriptionRef/Layer/Scope/Runtime/ManagedRuntime/Cause/Exit/Match means the logic belongs in the ViewModel (*.view-model.ts). Allowed effect modules in a View: Schema, Function, Result, Option, Predicate, Duration, Array, and the reactivity types it renders (AsyncResult). App Router files (app/) are framework-coupled and exempt. See ADR-0026.",
+      from: {
+        path: "^packages/web/features/.*\\.view\\.tsx$",
+        pathNot: "\\.(stories|test|spec)\\.(ts|tsx)$",
       },
       to: {
         path: "/node_modules/effect/.*/(Effect|Stream|Fiber|Ref|SubscriptionRef|Layer|Scope|Runtime|ManagedRuntime|Cause|Exit|Match)\\.",
       },
     },
     {
-      name: "web-react-form-presenter-only",
+      name: "web-ui-libs-only-in-components",
       severity: "error",
       comment:
-        "React-coupled form libraries (@tanstack/react-form, react-hook-form) may only be imported by *.presenter.{ts,tsx} files in features/ and shared form helpers in lib/tanstack-query/. Importing useForm directly from a feature component is the ADR-0014 violation that triggered this rule — extract the form orchestration to a sibling presenter and consume the returned form instance from JSX. Test files exempted.",
+        "Third-party visual libraries (@radix-ui/*, lucide-react, recharts, sonner) live with the bespoke component library in @org/components. Web code may not import them directly — consume the wrapped primitive instead, and widen the primitive when it cannot express what you need. Test files exempted. See ADR-0015.",
       from: {
         path: "^packages/web/",
-        pathNot: [
-          "^packages/web/features/.*\\.presenter\\.(ts|tsx)$",
-          "^packages/web/lib/tanstack-query/",
-          "\\.(stories|test|spec)\\.(ts|tsx)$",
-        ],
-      },
-      to: { path: "/node_modules/(@tanstack/react-form|react-hook-form)/" },
-    },
-    {
-      name: "web-ui-libs-only-in-components-or-toast",
-      severity: "error",
-      comment:
-        "Third-party visual libraries (@radix-ui/*, lucide-react, recharts, sonner) live with the bespoke component library in @org/components. Web code may not import them directly — consume the wrapped primitive instead. Sole exception: services/common/toast.ts is the imperative sonner adapter and dispatches Effect Toast calls to the sonner runtime. Test files exempted. See ADR-0015.",
-      from: {
-        path: "^packages/web/",
-        pathNot: [
-          "^packages/web/services/common/toast\\.ts$",
-          "\\.(stories|test|spec)\\.(ts|tsx)$",
-        ],
+        pathNot: "\\.(stories|test|spec)\\.(ts|tsx)$",
       },
       to: { path: "/node_modules/(@radix-ui/|lucide-react/|recharts/|sonner/)" },
     },
@@ -505,13 +489,13 @@ module.exports = {
       name: "web-view-model-no-react",
       severity: "error",
       comment:
-        "ViewModels (*.view-model.ts) are framework-agnostic. They may not import react, react-dom, or any React-coupled package (@tanstack/react-*, react-hook-form, etc.). If you need React or a React-coupled library, use a presenter instead. See ADR-0014.",
+        "ViewModels (*.view-model.ts) are framework-agnostic: they run under a bare `AtomRegistry` in a test with no renderer anywhere. They may not import react, react-dom, the atom React bindings (@effect/atom-react), or any other React-coupled package. A ViewModel that needs a hook is a View that has been misfiled. See ADR-0026.",
       from: {
         path: "^packages/web/features/.*\\.view-model\\.ts$",
         pathNot: "\\.(stories|test|spec)\\.(ts|tsx)$",
       },
       to: {
-        path: "/node_modules/(react|react-dom|@tanstack/react-|react-hook-form)",
+        path: "/node_modules/(react|react-dom|@effect/atom-react|@tanstack/|react-hook-form)",
       },
     },
     {
@@ -529,7 +513,7 @@ module.exports = {
       name: "web-features-not-from-app",
       severity: "error",
       comment:
-        "Routes under packages/web/app/ compose features; features must not import app/ pages, layouts, or providers. The dependency direction is app → features, never reversed. Server-only or shared infra files in app/ are not feature dependencies — promote them to /services or /lib first.",
+        "Routes under packages/web/app/ compose features; features must not import app/ pages, layouts, or providers. The dependency direction is app → features, never reversed. Server-only or shared infra files in app/ are not feature dependencies — promote them to /services first.",
       from: { path: "^packages/web/features/" },
       to: { path: "^packages/web/app/" },
     },

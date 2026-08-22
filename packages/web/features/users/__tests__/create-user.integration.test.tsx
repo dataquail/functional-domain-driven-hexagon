@@ -24,9 +24,7 @@ import { UserList } from "@/features/users/user-list.view";
 import { makeUser } from "@/test/fixtures";
 import { handlers } from "@/test/handlers";
 import { renderWithHarness } from "@/test/integration-harness";
-import { installMswLifecycle, server } from "@/test/msw-server";
-
-installMswLifecycle();
+import { server } from "@/test/msw-server";
 
 // Inline `<Suspense>` wrapper — the real `app/(authed)/users/page.tsx`
 // uses a `<ServerHydrationBoundary>` that prefetches on the server

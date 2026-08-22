@@ -1,4 +1,4 @@
-// Vitest config for @org/web. Presenter tests run against jsdom with
+// Vitest config for @org/web. ViewModel and View tests run against jsdom with
 // React's JSX transform (esbuild's "automatic" runtime — no Vite plugin
 // dependency, no Babel pipeline). The setup file mounts
 // @testing-library/jest-dom matchers and registers cleanup() between
@@ -39,6 +39,10 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./test/setup.ts"],
     globals: true,
-    include: ["features/**/*.test.{ts,tsx}", "test/**/*.test.{ts,tsx}", "lib/**/*.test.{ts,tsx}"],
+    include: [
+      "features/**/*.test.{ts,tsx}",
+      "services/**/*.test.{ts,tsx}",
+      "test/**/*.test.{ts,tsx}",
+    ],
   },
 });

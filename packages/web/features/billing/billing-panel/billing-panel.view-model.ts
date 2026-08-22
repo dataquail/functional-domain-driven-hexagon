@@ -1,6 +1,4 @@
-// View-model for BillingPanel (ADR-0014 Tier 3). Pure data → data:
-// translate a Stripe subscription record (or its absence) into the
-// shape the panel renders.
+// ViewModel for the org's billing panel.
 //
 // We don't collapse Stripe's status vocabulary at the backend
 // (BillingContract carries it verbatim) — the mapping from raw status
@@ -10,6 +8,20 @@
 // no UI crash on a never-before-seen status.
 
 import type { BillingContract } from "@org/contracts/api/Contracts";
+import type { OrganizationId } from "@org/contracts/EntityIds";
+import * as AsyncResult from "effect/unstable/reactivity/AsyncResult";
+import * as Atom from "effect/unstable/reactivity/Atom";
+
+import { ApiAtoms } from "@/services/atom/api-atoms.shared";
+import { notify } from "@/services/atom/notifications.shared";
+import { ReactivityKeys } from "@/services/atom/reactivity-keys";
+import {
+  cancelSubscriptionAtom,
+  makeStartSubscriptionPayload,
+  startSubscriptionAtom,
+  subscriptionQueryAtom,
+} from "@/services/data-access/billing.atoms";
+import { formatDayOrNull } from "@/services/format/date.shared";
 
 export type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
 
@@ -20,24 +32,6 @@ export type BillingPanelView = {
   readonly currentPeriodEndLabel: string | null;
   readonly canStart: boolean;
   readonly canCancel: boolean;
-};
-
-// TanStack Query's dehydrate → JSON → hydrate round-trip turns
-// `Schema.DateTimeUtc` into its toJSON() form (an ISO string) — the
-// Schema decode does NOT re-run on hydration. On the client, the runtime
-// shape is `string`, not `DateTime.Utc`, despite the contract type.
-// Treat anything we get as string-or-date-like and slice the ISO prefix.
-const formatDate = (value: unknown): string | null => {
-  if (value === null || value === undefined) return null;
-  if (typeof value === "string") return value.slice(0, 10);
-  if (value instanceof Date) return value.toISOString().slice(0, 10);
-  if (typeof value === "object" && "epochMillis" in value) {
-    const millis = value.epochMillis;
-    if (typeof millis === "number" && Number.isFinite(millis)) {
-      return new Date(millis).toISOString().slice(0, 10);
-    }
-  }
-  return null;
 };
 
 export const computeBillingPanelView = (
@@ -60,7 +54,7 @@ export const computeBillingPanelView = (
     hasSubscription: true,
     statusLabel: mapped.label,
     statusVariant: mapped.variant,
-    currentPeriodEndLabel: formatDate(subscription.currentPeriodEnd),
+    currentPeriodEndLabel: formatDayOrNull(subscription.currentPeriodEnd),
     canStart: false,
     canCancel: mapped.cancelable,
   };
@@ -90,3 +84,59 @@ const mapStatus = (
       return { label: status, variant: "secondary", cancelable: true };
   }
 };
+
+export const subscriptionResultAtom = Atom.family((orgId: OrganizationId) =>
+  Atom.make((get) => get(subscriptionQueryAtom(orgId))),
+);
+
+export const billingPanelAtom = Atom.family((orgId: OrganizationId) =>
+  Atom.make((get): BillingPanelView => {
+    const result = get(subscriptionResultAtom(orgId));
+    return computeBillingPanelView(AsyncResult.isSuccess(result) ? result.value : null);
+  }),
+);
+
+const BILLING_ERRORS = {
+  BadGateway: (error: { readonly message: string }) => error.message,
+  Forbidden: (error: { readonly message: string }) => error.message,
+} as const;
+
+export const startSubscriptionActionAtom = ApiAtoms.runtime.fn<OrganizationId>()((orgId, get) =>
+  get
+    .setResult(startSubscriptionAtom, {
+      params: { orgId },
+      payload: makeStartSubscriptionPayload(),
+      reactivityKeys: ReactivityKeys.billing,
+    })
+    .pipe(
+      notify(get, {
+        success: () => "Subscription started!",
+        errors: {
+          ...BILLING_ERRORS,
+          SubscriptionAlreadyExistsError: (error) => error.message,
+        },
+      }),
+    ),
+);
+
+export const cancelSubscriptionActionAtom = ApiAtoms.runtime.fn<OrganizationId>()((orgId, get) =>
+  get
+    .setResult(cancelSubscriptionAtom, {
+      params: { orgId },
+      reactivityKeys: ReactivityKeys.billing,
+    })
+    .pipe(
+      notify(get, {
+        success: () => "Subscription canceled.",
+        errors: {
+          ...BILLING_ERRORS,
+          SubscriptionNotFoundError: (error) => error.message,
+        },
+      }),
+    ),
+);
+
+export const isStartingAtom = Atom.make((get): boolean => get(startSubscriptionActionAtom).waiting);
+export const isCancelingAtom = Atom.make(
+  (get): boolean => get(cancelSubscriptionActionAtom).waiting,
+);

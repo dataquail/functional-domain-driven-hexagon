@@ -432,42 +432,32 @@ export const serverModules = createFolderStructure({
 });
 
 // ---------------------------------------------------------------------------
-// Web features (packages/web/features) — view-tiering layout + parity (ADR-0014).
-// Deny-by-default: a feature source file must carry one of the three view-tier
-// stereotypes — *.view.tsx (naked component), *.presenter.{ts,tsx}, or
-// *.view-model.ts. Tests are siblings, not stereotypes, so any *.test.{ts,tsx}
-// (incl. *.integration.test.*) is admitted; every ViewModel/Presenter still owes
-// its sibling test. Self-recursive `dir` so both fire at any nesting depth.
+// Web features (packages/web/features) — MVVM layout + parity (ADR-0026).
+// Deny-by-default: a feature source file is either a View (*.view.tsx) or a
+// ViewModel (*.view-model.ts). There is no third tier: a "presenter" was the
+// seam that existed to hold a React-coupled library, and with TanStack gone
+// there is no such library left to hold. Tests are siblings, not stereotypes,
+// so any *.test.{ts,tsx} (incl. *.integration.test.*) is admitted; every
+// ViewModel still owes its sibling test. Self-recursive `dir` so both fire at
+// any nesting depth.
 // ---------------------------------------------------------------------------
 
 const VIEW_MODEL_MSG =
-  "Every *.view-model.ts needs a sibling *.view-model.test.ts (ADR-0014 view tiering — the ViewModel is pure Effect and must be unit-tested).";
-const PRESENTER_MSG =
-  "Every *.presenter.{ts,tsx} needs a sibling *.presenter.test.tsx (ADR-0014 — the presenter binds a React-coupled library and is tested through a JSX wrapper).";
+  "Every *.view-model.ts needs a sibling *.view-model.test.ts (ADR-0026 — the ViewModel holds all of a feature's behaviour and runs under a bare AtomRegistry, so it is the tier that must be unit-tested).";
 const VIEW_STEREOTYPE_MSG =
-  "Files in packages/web/features/** must carry a view-tier stereotype (ADR-0014): a naked component is *.view.tsx, orchestration is *.presenter.{ts,tsx} or *.view-model.ts, and tests are *.test.{ts,tsx}. A bare component file has no stereotype — rename it *.view.tsx.";
+  "Files in packages/web/features/** must carry a view-tier stereotype (ADR-0026): a naked component is *.view.tsx, all behaviour is *.view-model.ts, and tests are *.test.{ts,tsx}. A bare component file has no stereotype — rename it *.view.tsx. There is no presenter tier.";
 
 // One folder's contents; the same shape applies at the structureRoot and every
-// nested folder. Tests pass through first, then the three source stereotypes
-// (with parity on presenter/view-model — views are dumb projection and carry
-// none), then recurse into subfolders. No catch-all: deny-by-default.
+// nested folder. Tests pass through first, then the two source stereotypes
+// (with parity on the view-model — views are dumb projection and carry none),
+// then recurse into subfolders. No catch-all: deny-by-default.
 const webFeatureFolderChildren = [
   { name: "*.test.ts", message: VIEW_STEREOTYPE_MSG }, // incl. *.integration.test.ts + *.view-model.test.ts
-  { name: "*.test.tsx", message: VIEW_STEREOTYPE_MSG }, // incl. *.presenter.test.tsx + *.integration.test.tsx
+  { name: "*.test.tsx", message: VIEW_STEREOTYPE_MSG }, // incl. *.view.test.tsx + *.integration.test.tsx
   {
     name: "*.view-model.ts",
     enforceExistence: "{node-name}.test.ts",
     message: VIEW_MODEL_MSG,
-  },
-  {
-    name: "*.presenter.ts",
-    enforceExistence: "{node-name}.test.tsx",
-    message: PRESENTER_MSG,
-  },
-  {
-    name: "*.presenter.tsx",
-    enforceExistence: "{node-name}.test.tsx",
-    message: PRESENTER_MSG,
   },
   { name: "*.view.tsx", message: VIEW_STEREOTYPE_MSG },
   { name: "*", ruleId: "dir", message: VIEW_STEREOTYPE_MSG }, // recurse into any subfolder
@@ -479,26 +469,4 @@ export const webFeatures = createFolderStructure({
     dir: { name: "*", children: webFeatureFolderChildren },
   },
   structure: webFeatureFolderChildren,
-});
-
-// ---------------------------------------------------------------------------
-// Web TanStack-query bridge (packages/web/lib/tanstack-query) — every
-// non-barrel source file bridges two runtimes and needs a sibling test; the
-// test extension mirrors the source (.ts→.test.ts, .tsx→.test.tsx). The barrel
-// (index.ts) and server-hydration-boundary.tsx are exempt.
-// ---------------------------------------------------------------------------
-
-const BRIDGE_MSG =
-  "Every tanstack-query bridge file needs a sibling test (it carries branch logic invisible to presenter tests: toast surfacing, defect extraction, RSC/CC JSON round-trip, ParseError formatting).";
-
-export const webTanstackBridge = createFolderStructure({
-  structureRoot: "packages/web/lib/tanstack-query",
-  structure: [
-    { name: "index.ts" },
-    { name: "server-hydration-boundary.tsx" },
-    { name: "*.test.ts" },
-    { name: "*.test.tsx" },
-    { name: "*.ts", enforceExistence: "{node-name}.test.ts", message: BRIDGE_MSG },
-    { name: "*.tsx", enforceExistence: "{node-name}.test.tsx", message: BRIDGE_MSG },
-  ],
 });

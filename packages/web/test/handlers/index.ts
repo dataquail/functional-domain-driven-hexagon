@@ -3,10 +3,18 @@
 // responses with `server.use(...)`.
 
 import { authHandlers } from "./auth";
+import { billingHandlers } from "./billing";
+import { deviceHandlers } from "./device";
+import { orgsHandlers } from "./orgs";
+import { todosHandlers } from "./todos";
 import { usersHandlers } from "./users";
 
 export const handlers = {
   auth: authHandlers,
+  billing: billingHandlers,
+  device: deviceHandlers,
+  orgs: orgsHandlers,
+  todos: todosHandlers,
   users: usersHandlers,
 };
 

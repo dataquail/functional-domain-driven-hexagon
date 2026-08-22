@@ -1,10 +1,24 @@
 "use client";
 
+import { useAtomSet, useAtomSuspense, useAtomValue } from "@effect/atom-react";
+import { EmptyState } from "@org/components/patterns/empty-state";
+import { ListRow } from "@org/components/patterns/list-row";
 import { Badge } from "@org/components/primitives/badge";
 import { Button } from "@org/components/primitives/button";
+import { List } from "@org/components/primitives/list";
+import { Stack } from "@org/components/primitives/stack";
+import { Text } from "@org/components/primitives/text";
 import type { OrganizationId } from "@org/contracts/EntityIds";
 
-import { useOrgMembersListPresenter } from "./org-members-list.presenter";
+import {
+  demoteMemberActionAtom,
+  isChangingRoleAtom,
+  isRemovingAtom,
+  orgMembersListAtom,
+  orgMembersResultAtom,
+  promoteMemberActionAtom,
+  removeMemberActionAtom,
+} from "./org-members-list.view-model";
 
 // Shared member roster. Rendered by the super-admin drill-in
 // (/admin/orgs/[orgId]), the org-admin members page, and — read-only —
@@ -17,83 +31,83 @@ export const OrgMembersList: React.FC<{
   readonly orgId: OrganizationId;
   readonly canManage?: boolean;
 }> = ({ canManage = true, orgId }) => {
-  const { isChangingRole, isEmpty, isRemoving, onDemote, onPromote, onRemove, rows } =
-    useOrgMembersListPresenter(orgId);
+  useAtomSuspense(orgMembersResultAtom(orgId));
+  const { isEmpty, rows } = useAtomValue(orgMembersListAtom(orgId));
+  const isChangingRole = useAtomValue(isChangingRoleAtom);
+  const isRemoving = useAtomValue(isRemovingAtom);
+  const remove = useAtomSet(removeMemberActionAtom);
+  const promote = useAtomSet(promoteMemberActionAtom);
+  const demote = useAtomSet(demoteMemberActionAtom);
 
   if (isEmpty) {
-    return (
-      <div className="rounded-lg bg-muted/50 py-6 text-center">
-        <p className="text-sm text-muted-foreground">No members in this organization yet.</p>
-      </div>
-    );
+    return <EmptyState message="No members in this organization yet." />;
   }
 
   return (
-    <ul className="space-y-2" data-testid="admin-org-members">
+    <List gap="sm" data-testid="admin-org-members">
       {rows.map((row) => (
-        <li
-          key={row.userId}
-          data-testid="admin-org-members-row"
-          data-user-id={row.userId}
-          data-is-admin={row.isAdmin}
-          className="flex items-center justify-between gap-3 rounded-md border bg-card p-3"
-        >
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <p className="truncate font-medium text-foreground">{row.email}</p>
-              {row.isAdmin ? (
+        <List.Item key={row.userId}>
+          <ListRow
+            data-testid="admin-org-members-row"
+            trailing={
+              canManage ? (
+                <Stack direction="row" gap="sm" align="center">
+                  {row.isAdmin ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={isChangingRole}
+                      onClick={() => {
+                        demote({ orgId, userId: row.userId });
+                      }}
+                      data-testid="admin-org-members-demote"
+                    >
+                      Demote
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={isChangingRole}
+                      onClick={() => {
+                        promote({ orgId, userId: row.userId });
+                      }}
+                      data-testid="admin-org-members-promote"
+                    >
+                      Promote
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    disabled={isRemoving}
+                    onClick={() => {
+                      remove({ orgId, userId: row.userId });
+                    }}
+                    data-testid="admin-org-members-remove"
+                  >
+                    Remove
+                  </Button>
+                </Stack>
+              ) : undefined
+            }
+          >
+            <Stack direction="row" gap="sm" align="center">
+              <Text weight="medium" truncate>
+                {row.email}
+              </Text>
+              {row.isAdmin && (
                 <Badge variant="default" data-testid="admin-org-members-admin-badge">
                   Admin
                 </Badge>
-              ) : null}
-            </div>
-            <p className="text-xs text-muted-foreground">Joined {row.joinedAtLabel}</p>
-          </div>
-          {canManage ? (
-            <div className="flex shrink-0 items-center gap-2">
-              {row.isAdmin ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  disabled={isChangingRole}
-                  onClick={() => {
-                    onDemote(row);
-                  }}
-                  data-testid="admin-org-members-demote"
-                >
-                  Demote
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  disabled={isChangingRole}
-                  onClick={() => {
-                    onPromote(row);
-                  }}
-                  data-testid="admin-org-members-promote"
-                >
-                  Promote
-                </Button>
               )}
-              <Button
-                type="button"
-                size="sm"
-                variant="destructive"
-                disabled={isRemoving}
-                onClick={() => {
-                  onRemove(row);
-                }}
-                data-testid="admin-org-members-remove"
-              >
-                Remove
-              </Button>
-            </div>
-          ) : null}
-        </li>
+            </Stack>
+            <Text size="xs" tone="muted">
+              Joined {row.joinedAtLabel}
+            </Text>
+          </ListRow>
+        </List.Item>
       ))}
-    </ul>
+    </List>
   );
 };

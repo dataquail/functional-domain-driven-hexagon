@@ -1,97 +1,93 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import * as React from "react";
 import { expect, userEvent, waitFor, within } from "storybook/test";
 
 import { Button } from "./button";
 import { Dialog } from "./dialog";
+import { Text } from "./text";
 
 const meta = {
   title: "Primitives/Dialog",
   component: Dialog,
   parameters: { layout: "centered" },
+  args: {
+    open: true,
+    onOpenChange: () => undefined,
+    title: "Delete organization",
+    description: "This cannot be undone.",
+  },
 } satisfies Meta<typeof Dialog>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
-  render: () => (
-    <Dialog>
-      <Dialog.Trigger asChild>
-        <Button variant="outline">Open dialog</Button>
-      </Dialog.Trigger>
-      <Dialog.Content>
-        <Dialog.Header>
-          <Dialog.Title>Are you sure?</Dialog.Title>
-          <Dialog.Description>This action cannot be undone.</Dialog.Description>
-        </Dialog.Header>
-        <Dialog.Footer className="justify-end gap-2">
-          <Dialog.Close asChild>
-            <Button variant="ghost">Cancel</Button>
-          </Dialog.Close>
-          <Button variant="destructive">Delete</Button>
-        </Dialog.Footer>
-      </Dialog.Content>
+// Openness is a prop, so the app's own state lives wherever it belongs — an atom
+// in a ViewModel — rather than hidden inside the primitive.
+const Controlled: React.FC<{ readonly withFooter?: boolean }> = ({ withFooter = false }) => {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <React.Fragment>
+      <Button
+        data-testid="open-dialog"
+        onClick={() => {
+          setOpen(true);
+        }}
+      >
+        Open
+      </Button>
+      <Dialog
+        open={open}
+        onOpenChange={setOpen}
+        title="Delete organization"
+        description="This cannot be undone."
+        data-testid="demo-dialog"
+        footer={
+          withFooter ? (
+            <React.Fragment>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setOpen(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button variant="destructive">Delete</Button>
+            </React.Fragment>
+          ) : undefined
+        }
+      >
+        <Text tone="muted">Every todo in this organization goes with it.</Text>
+      </Dialog>
+    </React.Fragment>
+  );
+};
+
+export const Open: Story = {
+  render: (args) => (
+    <Dialog {...args}>
+      <Text tone="muted">Every todo in this organization goes with it.</Text>
     </Dialog>
   ),
 };
 
-export const OpenByDefault: Story = {
-  render: () => (
-    <Dialog defaultOpen>
-      <Dialog.Trigger asChild>
-        <Button variant="outline">Reopen</Button>
-      </Dialog.Trigger>
-      <Dialog.Content>
-        <Dialog.Header>
-          <Dialog.Title>Welcome</Dialog.Title>
-          <Dialog.Description>This dialog renders open for visual review.</Dialog.Description>
-        </Dialog.Header>
-      </Dialog.Content>
-    </Dialog>
-  ),
-};
+export const WithActions: Story = { render: () => <Controlled withFooter /> };
 
-// Play-test: clicking the trigger opens the dialog, Escape closes
-// it. Covers the keyboard-dismiss path users rely on.
-export const OpenAndCloseViaEscape: Story = {
-  render: () => (
-    <Dialog>
-      <Dialog.Trigger asChild>
-        <Button variant="outline" data-testid="play-trigger">
-          Open dialog
-        </Button>
-      </Dialog.Trigger>
-      <Dialog.Content>
-        <Dialog.Header>
-          <Dialog.Title>Confirm</Dialog.Title>
-          <Dialog.Description>Press Escape to dismiss.</Dialog.Description>
-        </Dialog.Header>
-      </Dialog.Content>
-    </Dialog>
-  ),
-  play: async ({ canvasElement, step }) => {
+// Play-test: the dialog opens on demand and the built-in close affordance
+// dismisses it. A modal you cannot dismiss is a bug, not a variant.
+export const OpenAndDismiss: Story = {
+  render: () => <Controlled />,
+  play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    // Radix portals the dialog into document.body, so reach for the
-    // body scope when asserting on dialog presence.
-    const body = within(canvasElement.ownerDocument.body);
+    await userEvent.click(canvas.getByTestId("open-dialog"));
 
-    await step("dialog is not in the document before clicking the trigger", async () => {
-      await expect(body.queryByRole("dialog")).toBeNull();
-    });
+    // Radix portals the content outside the canvas element.
+    const dialog = await within(document.body).findByRole("dialog");
+    await expect(dialog).toBeInTheDocument();
 
-    await step("clicking the trigger opens the dialog", async () => {
-      await userEvent.click(canvas.getByTestId("play-trigger"));
-      await expect(await body.findByRole("dialog")).toBeInTheDocument();
-    });
-
-    await step("pressing Escape dismisses the dialog", async () => {
-      await userEvent.keyboard("{Escape}");
-      // waitFor retries on synchronous throws; we void-cast the
-      // assertion to satisfy no-floating-promises (the assertion's
-      // promise is for chained matchers, which we don't need here).
-      await waitFor(() => {
-        void expect(body.queryByRole("dialog")).toBeNull();
-      });
+    await userEvent.click(within(dialog).getByRole("button", { name: "Close" }));
+    await waitFor(async () => {
+      await expect(within(document.body).queryByRole("dialog")).toBeNull();
     });
   },
 };

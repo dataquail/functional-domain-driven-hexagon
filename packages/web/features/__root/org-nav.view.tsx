@@ -7,8 +7,12 @@
 // roster for non-admins. The backend independently gates each endpoint,
 // so hiding the links is a UX affordance, not the security boundary.
 
+import { Container } from "@org/components/primitives/container";
+import { Link } from "@org/components/primitives/link";
+import { Nav } from "@org/components/primitives/nav";
+import { Stack } from "@org/components/primitives/stack";
+import { Surface } from "@org/components/primitives/surface";
 import type { OrganizationId } from "@org/contracts/EntityIds";
-import Link from "next/link";
 
 export const OrgNav: React.FC<{ readonly orgId: OrganizationId; readonly isAdmin: boolean }> = ({
   isAdmin,
@@ -27,19 +31,25 @@ export const OrgNav: React.FC<{ readonly orgId: OrganizationId; readonly isAdmin
   ];
 
   return (
-    <div className="border-b bg-muted/40">
-      <div className="mx-auto flex max-w-5xl items-center gap-1 px-4 py-2">
-        {links.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            data-testid={link.testid}
-            className="rounded-md px-3 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
-          >
-            {link.label}
-          </Link>
-        ))}
-      </div>
-    </div>
+    <Surface tone="subtle" border="bottom">
+      <Nav orientation="block" aria-label="Organization">
+        <Container width="lg" paddingX="md" paddingY="xs">
+          <Stack direction="row" gap="xs" align="center">
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                appearance="nav-item"
+                tone="muted"
+                underline="none"
+                data-testid={link.testid}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </Stack>
+        </Container>
+      </Nav>
+    </Surface>
   );
 };

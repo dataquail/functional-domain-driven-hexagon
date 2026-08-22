@@ -62,6 +62,22 @@ const PROBES = [
     source: 'import { Clock } from "lucide-react";\n\nexport const probe = Clock;\n',
   },
   {
+    rule: "local/no-inline-styling",
+    file: "packages/web/features/__probe/probe-styling.view.tsx",
+    source: 'export const Probe = () => <Probe className="p-4" />;\n',
+  },
+  {
+    rule: "local/view-hooks-allowlist",
+    file: "packages/web/features/__probe/probe-hooks.view.tsx",
+    source:
+      'import * as React from "react";\n\nexport const Probe = () => {\n  const [n] = React.useState(0);\n  return n;\n};\n',
+  },
+  {
+    rule: "react/forbid-elements",
+    file: "packages/web/features/__probe/probe-intrinsic.view.tsx",
+    source: "export const Probe = () => <div />;\n",
+  },
+  {
     rule: "local/no-effect-namespace-imports",
     file: "packages/server/src/__probe-effect-ns.ts",
     source: 'import { Effect } from "effect";\n\nexport const probe = Effect;\n',

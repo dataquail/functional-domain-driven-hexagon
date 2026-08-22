@@ -6,6 +6,7 @@
 // who aren't a member fall out the same way — Phase 9 can add an
 // "impersonate org" path if needed.
 
+import { Stack } from "@org/components/primitives/stack";
 import { OrganizationId } from "@org/contracts/EntityIds";
 import { notFound } from "next/navigation";
 import * as React from "react";
@@ -30,7 +31,9 @@ export default async function OrgScopedLayout({
   return (
     <React.Fragment>
       <OrgNav orgId={typedOrgId} isAdmin={member.isAdmin} />
-      <div className="flex flex-1 flex-col py-8">{children}</div>
+      <Stack direction="column" grow paddingY="md">
+        {children}
+      </Stack>
     </React.Fragment>
   );
 }

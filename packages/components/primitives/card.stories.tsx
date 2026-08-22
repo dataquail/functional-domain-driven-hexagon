@@ -2,29 +2,51 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { Button } from "./button";
 import { Card } from "./card";
+import { Heading } from "./heading";
+import { Stack } from "./stack";
+import { Text } from "./text";
 
 const meta = {
   title: "Primitives/Card",
   component: Card,
-  parameters: { layout: "centered" },
+  parameters: { layout: "padded" },
+  args: {
+    children: (
+      <Card.Content>
+        <Text>Card body content lives here.</Text>
+      </Card.Content>
+    ),
+  },
+  argTypes: {
+    elevation: { control: "select", options: ["none", "sm", "md"] },
+  },
 } satisfies Meta<typeof Card>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
-  render: () => (
-    <Card className="w-80">
+export const Default: Story = {};
+export const Raised: Story = { args: { elevation: "md" } };
+
+// A title is a `Heading` and a description is `Text` — the card owns chrome,
+// the typography primitives own type.
+export const Titled: Story = {
+  render: (args) => (
+    <Card {...args}>
       <Card.Header>
-        <Card.Title>Card title</Card.Title>
-        <Card.Description>A short description of the card.</Card.Description>
+        <Heading level={2} size="lg">
+          Card title
+        </Heading>
+        <Text tone="muted">A short description of the card.</Text>
       </Card.Header>
-      <Card.Content>
-        <p className="text-sm">Card body content lives here.</p>
+      <Card.Content gap="md">
+        <Text>Card body content lives here.</Text>
       </Card.Content>
-      <Card.Footer className="justify-end gap-2">
-        <Button variant="ghost">Cancel</Button>
-        <Button>Save</Button>
+      <Card.Footer>
+        <Stack direction="row" gap="sm" justify="end" width="full">
+          <Button variant="ghost">Cancel</Button>
+          <Button>Save</Button>
+        </Stack>
       </Card.Footer>
     </Card>
   ),

@@ -1,103 +1,75 @@
-// Integration-tier render harness. Wraps `@testing-library/react`'s
-// `render` with the providers a real route's `page.tsx` would compose:
-// `ThemeProvider` → `QueryClientProvider` → `RuntimeProvider` (with an
-// `ApiClient` pointed at `TEST_API_BASE` so MSW intercepts) →
-// `<Toaster>`. Fresh `QueryClient` per test prevents cache bleed.
+// Integration-tier render harness. Mounts what a real route's `page.tsx`
+// composes -- `ThemeProvider` → registry → notification bridge → `<Toaster />`
+// -- with the API transport pointed at the base URL MSW intercepts.
 //
-// Tests register the handlers their scenario needs via
-// `server.use(...)` before calling `renderWithHarness(<RoutePage />)`,
-// then drive the UI through the RTL page driver in `packages/test-drivers`.
+// The navigation bridge is deliberately absent: it holds the Next router, which
+// has no meaning outside an App Router render. A test that cares where the app
+// tried to go reads `navigationRequestAtom` instead, which is exactly what the
+// bridge would have read.
+//
+// Tests register the handlers their scenario needs via `server.use(...)` before
+// calling `renderWithHarness(<RoutePage />)`, then drive the UI through the RTL
+// page driver in `packages/test-drivers`.
 
+import { RegistryContext } from "@effect/atom-react";
 import { Toaster } from "@org/components/primitives/toaster";
 import { ThemeProvider } from "@org/components/providers/theme-provider";
-import { DomainApi } from "@org/contracts/DomainApi";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, type RenderOptions, type RenderResult } from "@testing-library/react";
-import * as Effect from "effect/Effect";
-import * as Layer from "effect/Layer";
-import * as ManagedRuntime from "effect/ManagedRuntime";
-import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
+import * as AtomRegistry from "effect/unstable/reactivity/AtomRegistry";
 import * as React from "react";
 
-import { ApiClient } from "@/services/api-client.shared";
-import { QueryClient as QueryClientService } from "@/services/common/query-client";
-import { Toast } from "@/services/common/toast";
-import { WebSdkLive } from "@/services/common/web-sdk.client";
-import { type ClientManagedRuntime, RuntimeContext } from "@/services/runtime.client";
+import { apiTransportAtom } from "@/services/atom/api-transport.shared";
+import { NotificationBridge } from "@/services/atom/notification-bridge.client";
 
 import { TEST_API_BASE } from "./typed-handler";
 
-const ApiClientTestLive = Layer.effect(
-  ApiClient,
-  Effect.gen(function* () {
-    const client = yield* HttpApiClient.make(DomainApi, { baseUrl: TEST_API_BASE });
-    return { client };
-  }),
-).pipe(Layer.provide(FetchHttpClient.layer));
-
-const buildTestLive = (queryClient: QueryClient) =>
-  Layer.mergeAll(ApiClientTestLive, Toast.layer, QueryClientService.make(queryClient)).pipe(
-    Layer.provide(WebSdkLive),
-  );
-
-const makeQueryClient = (): QueryClient =>
-  new QueryClient({
-    defaultOptions: {
-      queries: { retry: false, gcTime: 0 },
-      mutations: { retry: false },
-    },
-  });
-
 export type IntegrationHarness = {
-  readonly queryClient: QueryClient;
-  readonly runtime: ClientManagedRuntime;
+  readonly registry: AtomRegistry.AtomRegistry;
   readonly dispose: () => Promise<void>;
 };
 
+// Node's fetch needs an absolute URL, which is why this cannot simply be the
+// app's relative `/api`.
+const makeRegistry = (): AtomRegistry.AtomRegistry =>
+  AtomRegistry.make({
+    initialValues: [[apiTransportAtom, { baseUrl: TEST_API_BASE, headers: {} }]],
+  });
+
 const HarnessProviders: React.FC<{
   children: React.ReactNode;
-  queryClient: QueryClient;
-  runtime: ClientManagedRuntime;
-}> = ({ children, queryClient, runtime }) => (
+  registry: AtomRegistry.AtomRegistry;
+}> = ({ children, registry }) => (
   <ThemeProvider>
-    <QueryClientProvider client={queryClient}>
-      <RuntimeContext.Provider value={runtime}>
-        {children}
-        <Toaster />
-      </RuntimeContext.Provider>
-    </QueryClientProvider>
+    <RegistryContext.Provider value={registry}>
+      <React.Suspense fallback="loading">{children}</React.Suspense>
+      <NotificationBridge />
+      <Toaster />
+    </RegistryContext.Provider>
   </ThemeProvider>
 );
 
 /**
- * Render a component inside the integration providers. Returns the
- * usual RTL result plus the per-test `queryClient` and `runtime` so
- * tests that need to assert on cache state or run an Effect directly
- * can do so. `dispose()` is wired into vitest's afterEach via the
- * `cleanup()` call in `test/setup.ts` — the runtime is also disposed
- * when its closure goes out of scope at process exit.
+ * Render a component inside the integration providers. Returns the usual RTL
+ * result plus the per-test `registry`, so a test can seed an atom before
+ * rendering or read one back afterwards. `dispose()` is wired into vitest's
+ * afterEach via the `cleanup()` call in `test/setup.ts`.
  */
 export const renderWithHarness = (
   ui: React.ReactElement,
   options?: Omit<RenderOptions, "wrapper">,
 ): RenderResult & IntegrationHarness => {
-  const queryClient = makeQueryClient();
-  const runtime: ClientManagedRuntime = ManagedRuntime.make(buildTestLive(queryClient));
+  const registry = makeRegistry();
 
   const result = render(ui, {
     ...options,
-    wrapper: ({ children }) => (
-      <HarnessProviders queryClient={queryClient} runtime={runtime}>
-        {children}
-      </HarnessProviders>
-    ),
+    wrapper: ({ children }) => <HarnessProviders registry={registry}>{children}</HarnessProviders>,
   });
 
   return {
     ...result,
-    queryClient,
-    runtime,
-    dispose: () => runtime.dispose(),
+    registry,
+    dispose: async () => {
+      registry.dispose();
+    },
   };
 };

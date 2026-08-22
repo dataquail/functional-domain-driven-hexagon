@@ -6,22 +6,24 @@
 // the guard is defense-in-depth + a clean UX. It prefetches the current
 // subscription so the panel hydrates on first paint.
 
-import { Card } from "@org/components/primitives/card";
+import { CardSection } from "@org/components/patterns/card-section";
+import { PageShell } from "@org/components/patterns/page-shell";
 import { Skeleton } from "@org/components/primitives/skeleton";
+import { Stack } from "@org/components/primitives/stack";
 import { OrganizationId } from "@org/contracts/EntityIds";
 import { notFound } from "next/navigation";
 import React from "react";
 
 import { BillingPanel } from "@/features/billing/billing-panel/billing-panel.view";
-import { ServerHydrationBoundary } from "@/lib/tanstack-query/server-hydration-boundary";
-import { prefetchCurrentSubscription } from "@/services/data-access/billing-queries.server";
+import { AtomHydrationBoundary } from "@/services/atom/hydration-boundary";
+import { prefetchSubscription } from "@/services/data-access/billing.server";
 import { fetchMyOrgRole } from "@/services/data-access/my-orgs.server";
 
 const Fallback: React.FC = () => (
-  <div className="space-y-4">
-    <Skeleton className="h-12 w-1/2" />
-    <Skeleton className="h-10 w-40" />
-  </div>
+  <Stack direction="column" gap="lg">
+    <Skeleton height="control" width="half" />
+    <Skeleton height="control" width="half" />
+  </Stack>
 );
 
 export default async function BillingPage({
@@ -35,20 +37,12 @@ export default async function BillingPage({
   if ((await fetchMyOrgRole(orgId)) !== "admin") notFound();
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4">
-      <Card className="shadow-md">
-        <Card.Header>
-          <Card.Title className="text-2xl font-semibold">Billing</Card.Title>
-        </Card.Header>
-        <Card.Content>
-          <ServerHydrationBoundary
-            prefetch={[prefetchCurrentSubscription(orgId)]}
-            fallback={<Fallback />}
-          >
-            <BillingPanel orgId={orgId} />
-          </ServerHydrationBoundary>
-        </Card.Content>
-      </Card>
-    </div>
+    <PageShell>
+      <CardSection title="Billing">
+        <AtomHydrationBoundary prefetch={[prefetchSubscription(orgId)]} fallback={<Fallback />}>
+          <BillingPanel orgId={orgId} />
+        </AtomHydrationBoundary>
+      </CardSection>
+    </PageShell>
   );
 }

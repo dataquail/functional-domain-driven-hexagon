@@ -1,10 +1,23 @@
 "use client";
 
+import { useAtomSet, useAtomSuspense, useAtomValue } from "@effect/atom-react";
+import { EmptyState } from "@org/components/patterns/empty-state";
+import { ListRow } from "@org/components/patterns/list-row";
 import { Badge } from "@org/components/primitives/badge";
 import { Button } from "@org/components/primitives/button";
+import { List } from "@org/components/primitives/list";
+import { Stack } from "@org/components/primitives/stack";
+import { Text } from "@org/components/primitives/text";
 import type { OrganizationId } from "@org/contracts/EntityIds";
 
-import { useOrgInvitationsListPresenter } from "./org-invitations-list.presenter";
+import {
+  isResendingAtom,
+  isRevokingAtom,
+  orgInvitationsListAtom,
+  orgInvitationsResultAtom,
+  resendInvitationActionAtom,
+  revokeInvitationActionAtom,
+} from "./org-invitations-list.view-model";
 
 // Pending-invitations section of the member-management surface. Rendered
 // below OrgMembersList on both the org-admin members page and the
@@ -12,67 +25,67 @@ import { useOrgInvitationsListPresenter } from "./org-invitations-list.presenter
 // Resend and Revoke actions; the backing endpoints are `update`-gated,
 // matching the members list.
 export const OrgInvitationsList: React.FC<{ readonly orgId: OrganizationId }> = ({ orgId }) => {
-  const { isEmpty, isResending, isRevoking, onResend, onRevoke, rows } =
-    useOrgInvitationsListPresenter(orgId);
+  useAtomSuspense(orgInvitationsResultAtom(orgId));
+  const { isEmpty, rows } = useAtomValue(orgInvitationsListAtom(orgId));
+  const isResending = useAtomValue(isResendingAtom);
+  const isRevoking = useAtomValue(isRevokingAtom);
+  const resend = useAtomSet(resendInvitationActionAtom);
+  const revoke = useAtomSet(revokeInvitationActionAtom);
 
   if (isEmpty) {
-    return (
-      <div className="rounded-lg bg-muted/50 py-6 text-center">
-        <p className="text-sm text-muted-foreground">No pending invitations.</p>
-      </div>
-    );
+    return <EmptyState message="No pending invitations." />;
   }
 
   return (
-    <ul className="space-y-2" data-testid="org-invitations">
+    <List gap="sm" data-testid="org-invitations">
       {rows.map((row) => (
-        <li
-          key={row.invitationId}
-          data-testid="org-invitations-row"
-          data-invitation-id={row.invitationId}
-          data-expired={row.isExpired}
-          className="flex items-center justify-between gap-3 rounded-md border bg-card p-3"
-        >
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <p className="truncate font-medium text-foreground">{row.email}</p>
+        <List.Item key={row.invitationId}>
+          <ListRow
+            data-testid="org-invitations-row"
+            trailing={
+              <Stack direction="row" gap="sm" align="center">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={isResending}
+                  onClick={() => {
+                    resend({ orgId, invitationId: row.invitationId });
+                  }}
+                  data-testid="org-invitations-resend"
+                >
+                  Resend
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  disabled={isRevoking}
+                  onClick={() => {
+                    revoke({ orgId, invitationId: row.invitationId });
+                  }}
+                  data-testid="org-invitations-revoke"
+                >
+                  Revoke
+                </Button>
+              </Stack>
+            }
+          >
+            <Stack direction="row" gap="sm" align="center">
+              <Text weight="medium" truncate>
+                {row.email}
+              </Text>
               <Badge
                 variant={row.isExpired ? "destructive" : "secondary"}
                 data-testid="org-invitations-status"
               >
                 {row.isExpired ? "Expired" : "Pending"}
               </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground">Expires {row.expiresAtLabel}</p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={isResending}
-              onClick={() => {
-                onResend(row);
-              }}
-              data-testid="org-invitations-resend"
-            >
-              Resend
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="destructive"
-              disabled={isRevoking}
-              onClick={() => {
-                onRevoke(row);
-              }}
-              data-testid="org-invitations-revoke"
-            >
-              Revoke
-            </Button>
-          </div>
-        </li>
+            </Stack>
+            <Text size="xs" tone="muted">
+              Expires {row.expiresAtLabel}
+            </Text>
+          </ListRow>
+        </List.Item>
       ))}
-    </ul>
+    </List>
   );
 };

@@ -1,126 +1,131 @@
 "use client";
 
+import { useAtomSet, useAtomSuspense, useAtomValue } from "@effect/atom-react";
+import { EmptyState } from "@org/components/patterns/empty-state";
+import { ListRow } from "@org/components/patterns/list-row";
+import { Pagination } from "@org/components/patterns/pagination";
 import { Badge } from "@org/components/primitives/badge";
 import { Button } from "@org/components/primitives/button";
-import { ChevronLeftIcon, ChevronRightIcon } from "@org/components/primitives/icon";
-import Link from "next/link";
+import { Link } from "@org/components/primitives/link";
+import { List } from "@org/components/primitives/list";
+import { Stack } from "@org/components/primitives/stack";
+import { Text } from "@org/components/primitives/text";
 
-import { useOrgsListPresenter } from "./orgs-list.presenter";
+import {
+  adminOrgsResultAtom,
+  changePageAtom,
+  type OrgRowView,
+  orgsListAtom,
+  restoreOrgActionAtom,
+  softDeleteOrgActionAtom,
+  toggleIncludeDeletedAtom,
+} from "./orgs-list.view-model";
+
+const RowName: React.FC<{ readonly row: OrgRowView }> = ({ row }) =>
+  row.href === null ? (
+    <Text weight="medium" truncate>
+      {row.name}
+    </Text>
+  ) : (
+    <Link href={row.href} tone="default" underline="hover" data-testid="admin-orgs-row-link">
+      <Text weight="medium" truncate>
+        {row.name}
+      </Text>
+    </Link>
+  );
 
 export const OrgsList: React.FC = () => {
-  const {
-    goNext,
-    goPrev,
-    hasNext,
-    hasPrev,
-    includeDeleted,
-    isEmpty,
-    onRestore,
-    onSoftDelete,
-    page,
-    rows,
-    toggleIncludeDeleted,
-    total,
-    totalPages,
-  } = useOrgsListPresenter();
+  useAtomSuspense(adminOrgsResultAtom);
+  const view = useAtomValue(orgsListAtom);
+  const changePage = useAtomSet(changePageAtom);
+  const toggleIncludeDeleted = useAtomSet(toggleIncludeDeletedAtom);
+  const softDelete = useAtomSet(softDeleteOrgActionAtom);
+  const restore = useAtomSet(restoreOrgActionAtom);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <Stack direction="column" gap="lg">
+      <Stack direction="row" align="center" justify="between">
         <Button
-          type="button"
           variant="outline"
           size="sm"
-          onClick={toggleIncludeDeleted}
+          onClick={() => {
+            toggleIncludeDeleted();
+          }}
           data-testid="orgs-toggle-deleted"
         >
-          {includeDeleted ? "Hide deleted" : "Show deleted"}
+          {view.includeDeleted ? "Hide deleted" : "Show deleted"}
         </Button>
-        <p className="text-sm text-muted-foreground">{total} total</p>
-      </div>
+        <Text tone="muted">{view.total} total</Text>
+      </Stack>
 
-      {isEmpty ? (
-        <div className="rounded-lg bg-muted/50 py-8 text-center">
-          <p className="text-sm text-muted-foreground">No organizations.</p>
-        </div>
+      {view.isEmpty ? (
+        <EmptyState message="No organizations." />
       ) : (
-        <ul className="space-y-2" data-testid="admin-orgs-list">
-          {rows.map((row) => (
-            <li
-              key={row.id}
-              data-testid="admin-orgs-row"
-              data-org-id={row.id}
-              className="flex items-center justify-between gap-3 rounded-md border bg-card p-3"
-            >
-              <div className="min-w-0 flex-1">
-                {row.isDeleted ? (
-                  <p className="truncate font-medium text-foreground">{row.name}</p>
-                ) : (
-                  <Link
-                    href={`/admin/orgs/${row.id}`}
-                    className="block truncate font-medium text-foreground hover:underline"
-                    data-testid="admin-orgs-row-link"
-                  >
-                    {row.name}
-                  </Link>
+        <List gap="sm" data-testid="admin-orgs-list">
+          {view.rows.map((row) => (
+            <List.Item key={row.id}>
+              <ListRow
+                data-testid="admin-orgs-row"
+                trailing={
+                  <Stack direction="row" gap="sm" align="center">
+                    <Badge variant={row.isDeleted ? "outline" : "default"}>
+                      {row.isDeleted ? "Deleted" : "Active"}
+                    </Badge>
+                    {row.isDeleted ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          restore(row.id);
+                        }}
+                        data-testid="admin-orgs-restore"
+                      >
+                        Restore
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => {
+                          softDelete(row.id);
+                        }}
+                        data-testid="admin-orgs-delete"
+                      >
+                        Delete
+                      </Button>
+                    )}
+                  </Stack>
+                }
+              >
+                <RowName row={row} />
+                <Text size="xs" tone="muted">
+                  Created {row.createdAtLabel}
+                </Text>
+                {row.deletedAtLabel !== null && (
+                  <Text size="xs" tone="destructive">
+                    Deleted {row.deletedAtLabel}
+                  </Text>
                 )}
-                <p className="text-xs text-muted-foreground">Created {row.createdAtLabel}</p>
-                {row.isDeleted && row.deletedAtLabel !== null ? (
-                  <p className="text-xs text-destructive">Deleted {row.deletedAtLabel}</p>
-                ) : null}
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                {row.isDeleted ? (
-                  <Badge variant="outline">Deleted</Badge>
-                ) : (
-                  <Badge variant="default">Active</Badge>
-                )}
-                {row.isDeleted ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      onRestore(row);
-                    }}
-                    data-testid="admin-orgs-restore"
-                  >
-                    Restore
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => {
-                      onSoftDelete(row);
-                    }}
-                    data-testid="admin-orgs-delete"
-                  >
-                    Delete
-                  </Button>
-                )}
-              </div>
-            </li>
+              </ListRow>
+            </List.Item>
           ))}
-        </ul>
+        </List>
       )}
 
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Page {page} of {totalPages}
-        </p>
-        <div className="flex items-center gap-2">
-          <Button type="button" variant="outline" size="icon" disabled={!hasPrev} onClick={goPrev}>
-            <ChevronLeftIcon />
-            <span className="sr-only">Previous page</span>
-          </Button>
-          <Button type="button" variant="outline" size="icon" disabled={!hasNext} onClick={goNext}>
-            <ChevronRightIcon />
-            <span className="sr-only">Next page</span>
-          </Button>
-        </div>
-      </div>
-    </div>
+      <Pagination
+        page={view.page}
+        totalPages={view.totalPages}
+        total={view.total}
+        hasPrevious={view.hasPrevious}
+        hasNext={view.hasNext}
+        onPrevious={() => {
+          changePage("previous");
+        }}
+        onNext={() => {
+          changePage("next");
+        }}
+        itemLabel="organizations"
+      />
+    </Stack>
   );
 };

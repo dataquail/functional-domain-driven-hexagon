@@ -1,26 +1,31 @@
 "use client";
 
+import { useAtomSet, useAtomValue } from "@effect/atom-react";
 import { Button } from "@org/components/primitives/button";
+import { Stack } from "@org/components/primitives/stack";
+import { Text } from "@org/components/primitives/text";
 
-import { useAcceptInvitationPresenter } from "./accept-invitation.presenter";
+import { acceptAtom, isAcceptingAtom } from "./accept-invitation.view-model";
 
 export const AcceptInvitation: React.FC<{ readonly token: string }> = ({ token }) => {
-  const { isAccepting, onAccept } = useAcceptInvitationPresenter(token);
+  const isAccepting = useAtomValue(isAcceptingAtom);
+  const accept = useAtomSet(acceptAtom);
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
+    <Stack direction="column" gap="lg">
+      <Text tone="muted">
         You&apos;ve been invited to join an organization. Click below to accept.
-      </p>
+      </Text>
       <Button
-        type="button"
-        onClick={onAccept}
+        width="full"
+        onClick={() => {
+          accept(token);
+        }}
         disabled={isAccepting}
-        className="w-full"
         data-testid="invitation-accept"
       >
         {isAccepting ? "Accepting…" : "Accept invitation"}
       </Button>
-    </div>
+    </Stack>
   );
 };

@@ -10,7 +10,7 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 | New file kind, test, fake, stereotype (parity/layout) | `.claude/rules/server-file-taxonomy.md`          | 0008                                    |
 | Writing or running server/jobs tests                  | `.claude/rules/server-testing.md`                | 0009                                    |
 | Handlers, layers, event buses, SQL, auth (server)     | `.claude/rules/server-effect-and-persistence.md` | 0004, 0006, 0007, 0012, 0016–0017, 0020 |
-| Frontend (`packages/web`, `packages/components`)      | `.claude/rules/frontend.md`                      | 0014, 0015, 0018                        |
+| Frontend (`packages/web`, `packages/components`)      | `.claude/rules/frontend.md`                      | 0015, 0018, 0019, 0026                  |
 | Any Effect v4 API you are not certain of              | `.claude/rules/effect-v4-source.md`              | —                                       |
 | Writing comments (any package)                        | `.claude/rules/comments.md`                      | —                                       |
 | Lint config, custom rules, rule probes                | `.oxlintrc.json`, `scripts/lint-rules/`          | 0008, 0025                              |
@@ -20,7 +20,7 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 | Package             | What it is                                                                         |
 | ------------------- | ---------------------------------------------------------------------------------- |
 | `@org/server`       | The Effect BFF backend (`src/modules/`, `src/platform/`, HTTP). Bulk of the rules. |
-| `@org/web`          | Next.js App Router renderer + `/api/*` proxy; the server stays the BFF (ADR-0018). |
+| `@org/web`          | Next.js App Router renderer + `/api/*` proxy; Effect Atom + MVVM (ADR-0026, 0018). |
 | `@org/components`   | Bespoke component library (primitives + patterns) + Storybook (ADR-0015).          |
 | `@org/contracts`    | Shared HTTP API contracts, schemas, errors — consumed by server and clients.       |
 | `@org/database`     | DB access kernel (slonik, `RowSchemas`, `db.makeQuery`) + migrations.              |

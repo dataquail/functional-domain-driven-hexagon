@@ -1,26 +1,37 @@
 "use client";
 
-// Org switcher leaf component. Naked JSX over the presenter's hook —
-// no logic, no Effect, no router calls. The Select primitive's
-// `onValueChange` carries through to the presenter's `onSelect`. A
-// sibling `+` button routes to the create-org flow at `/` so the
-// create surface is reachable from any route without polluting the
-// switcher's selection state.
-
+import { useAtomSet, useAtomSuspense, useAtomValue } from "@effect/atom-react";
 import { Button } from "@org/components/primitives/button";
+import { PlusIcon } from "@org/components/primitives/icon";
 import { Select } from "@org/components/primitives/select";
+import { Stack } from "@org/components/primitives/stack";
+import { Text } from "@org/components/primitives/text";
+import { OrganizationId } from "@org/contracts/EntityIds";
 
-import { useOrgSwitcherPresenter } from "./org-switcher.presenter";
+import {
+  createNewOrgAtom,
+  orgSwitcherAtom,
+  orgSwitcherResultAtom,
+  selectOrgAtom,
+} from "./org-switcher.view-model";
 
 export const OrgSwitcher: React.FC = () => {
-  const { activeOrgId, isEmpty, onCreateNew, onSelect, options } = useOrgSwitcherPresenter();
+  useAtomSuspense(orgSwitcherResultAtom);
+  const { activeOrgId, isEmpty, options } = useAtomValue(orgSwitcherAtom);
+  const selectOrg = useAtomSet(selectOrgAtom);
+  const createNew = useAtomSet(createNewOrgAtom);
 
   if (isEmpty) return null;
 
   return (
-    <div className="flex items-center gap-1">
-      <Select value={activeOrgId ?? undefined} onValueChange={onSelect}>
-        <Select.Trigger className="w-[200px]" data-testid="org-switcher">
+    <Stack direction="row" gap="xs" align="center">
+      <Select
+        value={activeOrgId ?? undefined}
+        onValueChange={(value) => {
+          selectOrg(OrganizationId.make(value));
+        }}
+      >
+        <Select.Trigger width="md" data-testid="org-switcher">
           <Select.Value placeholder="Select an organization…" />
         </Select.Trigger>
         <Select.Content>
@@ -35,13 +46,17 @@ export const OrgSwitcher: React.FC = () => {
         type="button"
         size="icon"
         variant="ghost"
-        onClick={onCreateNew}
-        title="Create a new organization"
+        onClick={() => {
+          createNew();
+        }}
         aria-label="Create a new organization"
         data-testid="org-switcher-create-new"
       >
-        +
+        <PlusIcon />
+        <Text as="span" srOnly>
+          Create a new organization
+        </Text>
       </Button>
-    </div>
+    </Stack>
   );
 };

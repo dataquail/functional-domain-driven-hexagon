@@ -1,11 +1,14 @@
 # ADR-0019: FE integration test seam is at the network boundary
 
 - Status: Accepted
+- Amended: 2026-08-21 — the tier below the integration seam is now the ViewModel
+  test, not the presenter test, and the harness mounts an `AtomRegistry` rather
+  than a `QueryClientProvider` (ADR-0026). The seam itself is unchanged.
 - Date: 2026-05-14
 
 ## Context and Problem Statement
 
-The template has presenter tests for client-side logic (ADR-0014) and Playwright acceptance tests for cross-process flows (ADR-0009). Neither covers a third, valuable tier: **page-level integration tests** that render a real `(authed)/<route>/page.tsx` against a fake API, exercise the full presenter + data-access + cache + suspense + hydration stack, and assert on user-visible behavior. Presenter tests substitute the data-access layer; acceptance tests are too slow and too coarse to drive negative-path coverage at the page level. The integration tier sits between them.
+The template has ViewModel and View tests for client-side logic (ADR-0026) and Playwright acceptance tests for cross-process flows (ADR-0009). Neither covers a third, valuable tier: **page-level integration tests** that render a real `(authed)/<route>/page.tsx` against a fake API, exercise the full View + ViewModel + Model + reactivity + suspense stack, and assert on user-visible behavior. ViewModel tests exercise one tier in isolation; acceptance tests are too slow and too coarse to drive negative-path coverage at the page level. The integration tier sits between them.
 
 The question this ADR settles: **what's the seam where the fake replaces the real API?**
 
@@ -94,7 +97,7 @@ Rejected on Synapse-doc grounds: this is the canonical mockist anti-pattern. Tes
 
 **Some setup verbosity is accepted.** A test that exercises three endpoints declares three handlers. Helpers and builders amortize this; the cost is real but bounded.
 
-**Test files live at `packages/web/features/<feature>/__tests__/*.integration.test.tsx`.** Sibling to feature code, separate from presenter tests (`*.presenter.test.tsx`). The `*.integration.test.tsx` suffix mirrors the server-side convention from ADR-0009.
+**Test files live at `packages/web/features/<feature>/__tests__/*.integration.test.tsx`.** Sibling to feature code, separate from the per-tier tests (`*.view-model.test.ts`, `*.view.test.tsx`). The `*.integration.test.tsx` suffix mirrors the server-side convention from ADR-0009.
 
 **Shared infrastructure lives at `packages/web/test/`** — private to the web package for now. Promoted to a workspace package only if feature-level Storybook stories appear and need to share fixtures.
 

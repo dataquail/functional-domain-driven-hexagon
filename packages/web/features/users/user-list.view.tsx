@@ -1,70 +1,82 @@
 "use client";
 
-// Page 1 hydrates from the server prefetch (no client spinner on first
-// paint); subsequent pages refetch via Suspense, with the skeleton
-// fallback supplied by the parent `<Suspense>` in the page. Pagination
-// state stays client-side per ADR-0018.
-
-import { Button } from "@org/components/primitives/button";
-import { ChevronLeftIcon, ChevronRightIcon } from "@org/components/primitives/icon";
+import { useAtomSet, useAtomSuspense, useAtomValue } from "@effect/atom-react";
+import { EmptyState } from "@org/components/patterns/empty-state";
+import { Pagination } from "@org/components/patterns/pagination";
+import { List } from "@org/components/primitives/list";
+import { Stack } from "@org/components/primitives/stack";
+import { Surface } from "@org/components/primitives/surface";
+import { Text } from "@org/components/primitives/text";
+import type { UserContract } from "@org/contracts/api/Contracts";
 import * as Array from "effect/Array";
-import * as React from "react";
 
-import { useUserListPresenter } from "./user-list.presenter";
+import { changePageAtom, paginationAtom, usersResultAtom } from "./user-list.view-model";
+
+const describeAddress = (user: UserContract.User): string =>
+  user.address !== null
+    ? `${user.address.street}, ${user.address.postalCode} ${user.address.country}`
+    : "No address on file";
 
 export const UserList: React.FC = () => {
-  const { goNext, goPrev, hasNext, hasPrev, isEmpty, page, total, totalPages, users } =
-    useUserListPresenter();
+  const users = useAtomSuspense(usersResultAtom).value.users;
+  const pagination = useAtomValue(paginationAtom);
+  const changePage = useAtomSet(changePageAtom);
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        {isEmpty ? (
-          <div className="rounded-lg bg-muted/50 py-8 text-center">
-            <p className="text-sm text-muted-foreground">No users yet.</p>
-          </div>
-        ) : (
-          <ul className="space-y-2" data-testid="user-list">
-            {Array.map(users, (user) => (
-              <li
-                key={user.id}
+    <Stack direction="column" gap="lg">
+      {pagination.isEmpty ? (
+        <EmptyState message="No users yet." />
+      ) : (
+        <List gap="sm" data-testid="user-list">
+          {Array.map(users, (user) => (
+            <List.Item key={user.id}>
+              <Surface
+                tone="card"
+                radius="md"
+                border="all"
+                padding="md"
+                interactive="raise"
                 data-testid="user-list-item"
-                data-user-email={user.email}
-                className="flex flex-col gap-1 rounded-md border bg-card p-3 transition-all hover:shadow-sm sm:flex-row sm:items-center sm:justify-between"
               >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-foreground">{user.email}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {user.address !== null
-                      ? `${user.address.street}, ${user.address.postalCode} ${user.address.country}`
-                      : "No address on file"}
-                  </p>
-                </div>
-                <p className="shrink-0 text-xs text-muted-foreground">
-                  Joined {user.createdAt.toString().slice(0, 10)}
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+                <Stack
+                  direction="column"
+                  directionAbove="row"
+                  gap="xs"
+                  justify="between"
+                  align="start"
+                >
+                  <Stack direction="column" grow shrinkBelowContent>
+                    <Text weight="medium" truncate>
+                      {user.email}
+                    </Text>
+                    <Text size="xs" tone="muted" truncate>
+                      {describeAddress(user)}
+                    </Text>
+                  </Stack>
+                  <Text size="xs" tone="muted">
+                    Joined {user.createdAt.toString().slice(0, 10)}
+                  </Text>
+                </Stack>
+              </Surface>
+            </List.Item>
+          ))}
+        </List>
+      )}
 
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Page {page} of {totalPages} · {total} total
-        </p>
-
-        <div className="flex items-center gap-2">
-          <Button type="button" variant="outline" size="icon" disabled={!hasPrev} onClick={goPrev}>
-            <ChevronLeftIcon />
-            <span className="sr-only">Previous page</span>
-          </Button>
-          <Button type="button" variant="outline" size="icon" disabled={!hasNext} onClick={goNext}>
-            <ChevronRightIcon />
-            <span className="sr-only">Next page</span>
-          </Button>
-        </div>
-      </div>
-    </div>
+      <Pagination
+        page={pagination.page}
+        totalPages={pagination.totalPages}
+        total={pagination.total}
+        hasPrevious={pagination.hasPrevious}
+        hasNext={pagination.hasNext}
+        onPrevious={() => {
+          changePage("previous");
+        }}
+        onNext={() => {
+          changePage("next");
+        }}
+        itemLabel="total"
+      />
+    </Stack>
   );
 };

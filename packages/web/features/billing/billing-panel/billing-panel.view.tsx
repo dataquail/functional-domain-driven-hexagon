@@ -1,64 +1,77 @@
 "use client";
 
-// Leaf component for the org's billing panel. Pure JSX over the
-// presenter's view-model output.
-
+import { useAtomSet, useAtomSuspense, useAtomValue } from "@effect/atom-react";
 import { Badge } from "@org/components/primitives/badge";
 import { Button } from "@org/components/primitives/button";
+import { Stack } from "@org/components/primitives/stack";
+import { Text } from "@org/components/primitives/text";
 import type { OrganizationId } from "@org/contracts/EntityIds";
 
-import { useBillingPanelPresenter } from "./billing-panel.presenter";
+import {
+  billingPanelAtom,
+  cancelSubscriptionActionAtom,
+  isCancelingAtom,
+  isStartingAtom,
+  startSubscriptionActionAtom,
+  subscriptionResultAtom,
+} from "./billing-panel.view-model";
 
 export const BillingPanel: React.FC<{ readonly orgId: OrganizationId }> = ({ orgId }) => {
-  const {
-    canCancel,
-    canStart,
-    currentPeriodEndLabel,
-    isCanceling,
-    isStarting,
-    onCancel,
-    onStart,
-    statusLabel,
-    statusVariant,
-  } = useBillingPanelPresenter(orgId);
+  useAtomSuspense(subscriptionResultAtom(orgId));
+  const view = useAtomValue(billingPanelAtom(orgId));
+  const isStarting = useAtomValue(isStartingAtom);
+  const isCanceling = useAtomValue(isCancelingAtom);
+  const start = useAtomSet(startSubscriptionActionAtom);
+  const cancel = useAtomSet(cancelSubscriptionActionAtom);
 
   return (
-    <div className="space-y-4" data-testid="billing-panel">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">Status</p>
-          <Badge variant={statusVariant} data-testid="billing-status">
-            {statusLabel}
+    <Stack direction="column" gap="lg" data-testid="billing-panel">
+      <Stack direction="row" align="start" justify="between">
+        <Stack direction="column" gap="xs">
+          <Text weight="medium" tone="muted">
+            Status
+          </Text>
+          <Badge variant={view.statusVariant} data-testid="billing-status">
+            {view.statusLabel}
           </Badge>
-        </div>
-        {currentPeriodEndLabel !== null ? (
-          <div className="space-y-1 text-right">
-            <p className="text-sm font-medium text-muted-foreground">Current period ends</p>
-            <p className="text-sm" data-testid="billing-period-end">
-              {currentPeriodEndLabel}
-            </p>
-          </div>
-        ) : null}
-      </div>
+        </Stack>
+        {view.currentPeriodEndLabel !== null && (
+          <Stack direction="column" gap="xs" align="end">
+            <Text weight="medium" tone="muted" align="end">
+              Current period ends
+            </Text>
+            <Text align="end" data-testid="billing-period-end">
+              {view.currentPeriodEndLabel}
+            </Text>
+          </Stack>
+        )}
+      </Stack>
 
-      <div className="flex gap-2">
-        {canStart ? (
-          <Button type="button" onClick={onStart} disabled={isStarting} data-testid="billing-start">
+      <Stack direction="row" gap="sm">
+        {view.canStart && (
+          <Button
+            onClick={() => {
+              start(orgId);
+            }}
+            disabled={isStarting}
+            data-testid="billing-start"
+          >
             {isStarting ? "Starting…" : "Start subscription"}
           </Button>
-        ) : null}
-        {canCancel ? (
+        )}
+        {view.canCancel && (
           <Button
-            type="button"
             variant="destructive"
-            onClick={onCancel}
+            onClick={() => {
+              cancel(orgId);
+            }}
             disabled={isCanceling}
             data-testid="billing-cancel"
           >
             {isCanceling ? "Canceling…" : "Cancel subscription"}
           </Button>
-        ) : null}
-      </div>
-    </div>
+        )}
+      </Stack>
+    </Stack>
   );
 };

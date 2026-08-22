@@ -39,9 +39,7 @@ export class OrgTasksPage {
   }
 
   public async expectTodoVisible(title: string): Promise<void> {
-    await expect(
-      this.list.locator(`[data-testid="todo-item"][data-todo-title="${title}"]`),
-    ).toBeVisible();
+    await expect(this.list.getByText(title, { exact: true })).toBeVisible();
   }
 
   public async expectInputCleared(): Promise<void> {

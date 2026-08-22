@@ -12,13 +12,14 @@
 // rendering. It must NOT be wrapped in try/catch — otherwise the marker
 // is swallowed and the redirect silently fails.
 
+import { AppShell } from "@org/components/patterns/app-shell";
 import { redirect } from "next/navigation";
 import * as React from "react";
 
 import { Nav } from "@/features/__root/nav.view";
-import { ServerHydrationBoundary } from "@/lib/tanstack-query/server-hydration-boundary";
+import { AtomHydrationBoundary } from "@/services/atom/hydration-boundary";
 import { fetchCurrentUser } from "@/services/data-access/me.server";
-import { prefetchMyOrgs } from "@/services/data-access/orgs-queries.server";
+import { prefetchMyOrgs } from "@/services/data-access/orgs.server";
 
 export default async function AuthedLayout({ children }: { children: React.ReactNode }) {
   const me = await fetchCurrentUser();
@@ -29,11 +30,8 @@ export default async function AuthedLayout({ children }: { children: React.React
   const prefetch = me.isSuperAdmin ? [] : [prefetchMyOrgs()];
 
   return (
-    <ServerHydrationBoundary prefetch={prefetch} fallback={null}>
-      <main className="flex min-h-screen flex-col bg-background">
-        <Nav />
-        <div className="flex flex-1 flex-col py-12">{children}</div>
-      </main>
-    </ServerHydrationBoundary>
+    <AtomHydrationBoundary prefetch={prefetch} fallback={null}>
+      <AppShell nav={<Nav isSuperAdmin={me.isSuperAdmin} />}>{children}</AppShell>
+    </AtomHydrationBoundary>
   );
 }
