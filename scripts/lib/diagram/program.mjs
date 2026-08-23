@@ -9,7 +9,21 @@ export const repoRoot = path.resolve(import.meta.dirname, "../../..");
 export const relativeToRepo = (fileName) =>
   path.relative(repoRoot, fileName).split(path.sep).join("/");
 
+const programs = new Map();
+
+// Loading the program is ~1s and drawing a diagram from it is ~1ms, so every
+// reader shares one per tsconfig. `clearPrograms` is what a file watcher calls.
 export const loadProgram = (tsconfig) => {
+  const held = programs.get(tsconfig);
+  if (held !== undefined) return held;
+  const built = buildProgram(tsconfig);
+  programs.set(tsconfig, built);
+  return built;
+};
+
+export const clearPrograms = () => programs.clear();
+
+const buildProgram = (tsconfig) => {
   const configPath = path.resolve(repoRoot, tsconfig);
   if (!fs.existsSync(configPath)) throw new Error(`no tsconfig at ${configPath}`);
 

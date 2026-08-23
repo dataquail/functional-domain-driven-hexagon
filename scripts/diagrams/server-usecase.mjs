@@ -1,6 +1,6 @@
 import { isMain, runGenerator } from "../lib/diagram/generator.mjs";
 import { addEdge, addNode, makeGraph } from "../lib/diagram/graph.mjs";
-import { readServerModel, useCaseSlug } from "../lib/diagram/server-model.mjs";
+import { serverModel, useCaseSlug } from "../lib/diagram/server-model.mjs";
 
 const INTERFACE = "1 · interface";
 const APPLICATION = "2 · use case";
@@ -9,18 +9,33 @@ const INFRASTRUCTURE = "4 · infrastructure — adapters behind the ports";
 
 const readable = (tag) => tag.replace(/(Command|Query)$/, "");
 
-const build = (cli) => {
-  const { modules, ownerOfCommand } = readServerModel();
-  const only = cli.flag("module");
-  const selected = only === undefined ? undefined : new Set(only.split(","));
+// A use case is addressed by its slug, so the reader keeps the map from slug
+// back to the (module, tag) pair the model is keyed by.
+const index = () => {
+  const found = new Map();
+  for (const module of serverModel.get().modules.values()) {
+    for (const tag of module.bindings.keys()) {
+      found.set(useCaseSlug(module.name, tag).replace("server-usecase-", ""), {
+        module: module.name,
+        tag,
+      });
+    }
+  }
+  return found;
+};
+
+const drawUseCase = ({ module: moduleName, tag }, options) => {
+  const { modules, ownerOfCommand } = serverModel.get();
+  const cli = { has: (name) => options?.[name] === true };
   const graphs = [];
 
   for (const module of modules.values()) {
-    if (selected !== undefined && !selected.has(module.name)) continue;
+    if (module.name !== moduleName) continue;
 
-    for (const [tag, handlerName] of module.bindings) {
+    {
+      const handlerName = module.bindings.get(tag);
       const handler = module.handlers.get(handlerName);
-      if (handler === undefined) continue;
+      if (handler === undefined) return undefined;
       const isQuery = module.queries.has(tag);
 
       const graph = makeGraph({
@@ -182,7 +197,32 @@ const build = (cli) => {
     }
   }
 
-  return graphs;
+  return graphs[0];
+};
+
+export const reader = {
+  kind: "server-usecase",
+  title: "Use cases",
+  subjects: () =>
+    [...index()].map(([id, { module, tag }]) => ({
+      id,
+      label: tag.replace(/(Command|Query)$/, ""),
+      group: module,
+    })),
+  draw: (id, options) => {
+    const subject = index().get(id);
+    return subject === undefined ? undefined : drawUseCase(subject, options);
+  },
+};
+
+const build = (cli) => {
+  const only = cli.flag("module");
+  const selected = only === undefined ? undefined : new Set(only.split(","));
+  return reader
+    .subjects()
+    .filter(({ group }) => selected === undefined || selected.has(group))
+    .map(({ id }) => reader.draw(id, { fakes: cli.has("fakes") }))
+    .filter((graph) => graph !== undefined);
 };
 
 export const generator = {

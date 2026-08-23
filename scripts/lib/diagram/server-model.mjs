@@ -1,3 +1,4 @@
+import { cached } from "./model-cache.mjs";
 import { importsOf, loadProgram, relativeToRepo, ts } from "./program.mjs";
 
 const MODULES_ROOT = "packages/server/src/modules/";
@@ -419,3 +420,5 @@ export const readServerModel = () => {
 
 export const importedNamesOf = (sourceFile) =>
   importsOf(sourceFile).flatMap((declaration) => declaration.names);
+
+export const serverModel = cached(readServerModel);

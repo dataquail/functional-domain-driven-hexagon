@@ -1,6 +1,6 @@
 import { isMain, runGenerator } from "../lib/diagram/generator.mjs";
 import { addEdge, addNode, makeGraph } from "../lib/diagram/graph.mjs";
-import { readServerModel, useCaseSlug } from "../lib/diagram/server-model.mjs";
+import { serverModel, useCaseSlug } from "../lib/diagram/server-model.mjs";
 
 // Dependency points inward, so the lanes run outward → inward, left → right.
 // This is the map, not the territory: no adapters, no handlers, no guards —
@@ -12,15 +12,9 @@ const DOMAIN = "3 · domain";
 
 const readable = (tag) => tag.replace(/(Command|Query)$/, "");
 
-const build = (cli) => {
-  const { modules } = readServerModel();
-  const only = cli.flag("module");
-  const selected = only === undefined ? undefined : new Set(only.split(","));
-
-  return [...modules.values()]
-    .filter((module) => selected === undefined || selected.has(module.name))
-    .sort((left, right) => left.name.localeCompare(right.name))
-    .map((module) => {
+const drawModule = (module) => {
+  {
+    {
       const graph = makeGraph({
         slug: `server-hexagon-${module.name}`,
         title: `modules/${module.name} — what depends on what`,
@@ -127,9 +121,32 @@ const build = (cli) => {
         });
       }
 
-      return graph;
-    })
-    .filter((graph) => graph.nodes.size > 0);
+      return graph.nodes.size === 0 ? undefined : graph;
+    }
+  }
+};
+
+export const reader = {
+  kind: "server-hexagon",
+  title: "Modules — the map",
+  subjects: () =>
+    [...serverModel.get().modules.values()]
+      .sort((left, right) => left.name.localeCompare(right.name))
+      .map((module) => ({ id: module.name, label: module.name })),
+  draw: (id) => {
+    const module = serverModel.get().modules.get(id);
+    return module === undefined ? undefined : drawModule(module);
+  },
+};
+
+const build = (cli) => {
+  const only = cli.flag("module");
+  const selected = only === undefined ? undefined : new Set(only.split(","));
+  return reader
+    .subjects()
+    .filter(({ id }) => selected === undefined || selected.has(id))
+    .map(({ id }) => reader.draw(id))
+    .filter((graph) => graph !== undefined);
 };
 
 const portNode = (graph, module, port, tier) => {

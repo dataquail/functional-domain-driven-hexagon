@@ -1,23 +1,12 @@
+import fs from "node:fs";
+import path from "node:path";
 import process from "node:process";
 
-import { DEFAULT_OUT_DIR, readCli, runGenerator } from "../lib/diagram/generator.mjs";
-import { generator as packages } from "./packages.mjs";
-import { generator as serverHexagon } from "./server-hexagon.mjs";
-import { generator as serverModule } from "./server-module.mjs";
-import { generator as serverModules } from "./server-modules.mjs";
-import { generator as serverUseCase } from "./server-usecase.mjs";
-import { generator as webFeature } from "./web-feature.mjs";
-import { generator as webOverview } from "./web-overview.mjs";
-
-const GENERATORS = [
-  packages,
-  serverModules,
-  serverHexagon,
-  serverUseCase,
-  serverModule,
-  webOverview,
-  webFeature,
-];
+import { DEFAULT_OUT_DIR, readCli } from "../lib/diagram/generator.mjs";
+import { analyse, filterGraph } from "../lib/diagram/graph.mjs";
+import { toMermaid } from "../lib/diagram/mermaid.mjs";
+import { repoRoot } from "../lib/diagram/program.mjs";
+import { allSlugs, draw, readers } from "../lib/diagram/registry.mjs";
 
 const cli = readCli();
 
@@ -25,44 +14,62 @@ if (cli.has("help")) {
   process.stdout.write(`
 diagrams — render the architecture from the code, as mermaid
 
-  node scripts/diagrams/index.mjs [--only <name,name>] [--out-dir <path>]
+  node scripts/diagrams/index.mjs [--only <kind,kind>] [--out-dir <path>]
   node scripts/diagrams/<name>.mjs --help     per-generator options
+  pnpm diagrams:preview                       browse them, drilling in by click
 
-generators:
-${GENERATORS.map((generator) => `  ${generator.name.padEnd(16)}${generator.describe}`).join("\n")}
+kinds:
+${readers.map((reader) => `  ${reader.kind}`).join("\n")}
 
-Output defaults to ${DEFAULT_OUT_DIR}/<slug>.mmd (gitignored). Run a generator
-directly for stdout plus a mermaid.live URL.
+Output defaults to ${DEFAULT_OUT_DIR}/<slug>.mmd (gitignored).
 
 `);
   process.exit(0);
 }
 
 const only = cli.flag("only");
-const selected =
-  only === undefined
-    ? GENERATORS
-    : GENERATORS.filter((generator) => only.split(",").includes(generator.name));
+const kinds = only === undefined ? undefined : new Set(only.split(","));
+const outDir = path.resolve(repoRoot, cli.flag("out-dir", DEFAULT_OUT_DIR));
+const exclude = cli.flag("exclude") ? new RegExp(cli.flag("exclude")) : undefined;
+const focus = cli.flag("focus") ? new RegExp(cli.flag("focus")) : undefined;
 
-if (selected.length === 0) {
-  process.stderr.write(`diagrams: --only matched no generator\n`);
+const wanted = allSlugs().filter((entry) => kinds === undefined || kinds.has(entry.kind));
+if (wanted.length === 0) {
+  process.stderr.write("diagrams: --only matched no kind\n");
   process.exit(1);
 }
 
-const argv = [...cli.argv, "--no-link"];
-if (cli.flag("out-dir") === undefined) argv.push("--out-dir", DEFAULT_OUT_DIR);
+fs.mkdirSync(outDir, { recursive: true });
 
-const written = [];
-for (const generator of selected) {
-  // A module's file-level import graph mostly redraws what the folder layout
-  // already guarantees; its one real use is showing a forbidden edge, so the
-  // default is the folder view and the file view is opt-in.
-  const options =
-    generator === serverModule && !cli.argv.includes("--granularity")
-      ? [...argv, "--granularity", "folder"]
-      : argv;
-  written.push(...(await runGenerator(generator, options)));
+let violations = 0;
+let cycles = 0;
+let written = 0;
+for (const { slug } of wanted) {
+  const drawn = draw(slug);
+  if (drawn === undefined) continue;
+  const graph = filterGraph(drawn, { exclude, focus });
+  if (graph.nodes.size === 0) continue;
+
+  const report = analyse(graph);
+  violations += report.violations.length;
+  cycles += report.cycles.length;
+  for (const edge of report.violations) {
+    const label = (id) => graph.nodes.get(id)?.label ?? id;
+    process.stderr.write(
+      `  ✗ ${slug}: ${label(edge.from)} → ${label(edge.to)} — ${[...edge.violations].join("; ")}\n`,
+    );
+  }
+  for (const cycle of report.cycles) {
+    process.stderr.write(`  ↻ ${slug}: ${cycle.join(" → ")}\n`);
+  }
+
+  fs.writeFileSync(path.join(outDir, `${slug}.mmd`), `${toMermaid(graph)}\n`, "utf8");
+  written += 1;
 }
 
-process.stderr.write(`\n${written.length} diagrams written:\n`);
-for (const file of written.sort()) process.stderr.write(`  ${file}\n`);
+process.stderr.write(
+  `\n${written} diagrams → ${path.relative(repoRoot, outDir)}/` +
+    `${violations > 0 ? ` · ${violations} forbidden import(s)` : ""}` +
+    `${cycles > 0 ? ` · ${cycles} cycle(s)` : ""}\n` +
+    `browse them with \`pnpm diagrams:preview\`\n`,
+);
