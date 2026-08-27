@@ -52,7 +52,7 @@ Migration replay is destructive (it drops every module schema; ADR-0011, ADR-002
 Three layered components together make use-case unit tests possible without a database:
 
 - **Recording event bus.** Implements the `DomainEventBus` interface by appending dispatched events to an in-memory ref. Subscribers are no-ops. Tests assert against the recorded log via a `byTag` helper.
-- **`IdentityUnitOfWork`.** Implements the `UnitOfWork` port as the identity function on its inner effect. No transaction is opened. Fake repositories don't consult transaction context, so this is a faithful pass-through (ADR-0007).
+- **`PassThroughUnitOfWork`.** The real boundary built over an in-memory driver, shipped by the unit-of-work package's `testing` entry point. No transaction is opened, and fake repositories don't consult transaction context, so this is a faithful pass-through — but it is the real `run`, so a unit test sees the same re-entrancy, the same after-commit ordering, and the same discard-on-rollback production gets, which is what a hand-rolled identity function gets wrong (ADR-0007).
 - **In-memory fake repositories.** Per-module, port-shaped, backed by `Ref<Map<EntityId, Entity>>`. Satisfies the same port as the live implementation (ADR-0005).
 
 These three plus the Effect runtime are the entire dependency graph for a use-case unit test.

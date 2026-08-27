@@ -1,6 +1,7 @@
 import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -12,7 +13,6 @@ import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subsc
 import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.js";
 import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
 const acme = OrganizationId.make("11111111-1111-1111-1111-111111111111");
@@ -20,7 +20,11 @@ const subId = SubscriptionId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const seedNow = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
 const stripeSubId = "sub_test";
 
-const TestLayer = Layer.mergeAll(SubscriptionRepositoryFake, RecordingEventBus, IdentityUnitOfWork);
+const TestLayer = Layer.mergeAll(
+  SubscriptionRepositoryFake,
+  RecordingEventBus,
+  PassThroughUnitOfWork,
+);
 
 const seedSubscription = () =>
   Effect.gen(function* () {

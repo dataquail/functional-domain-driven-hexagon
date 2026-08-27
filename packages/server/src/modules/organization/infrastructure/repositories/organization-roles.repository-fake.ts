@@ -16,7 +16,7 @@ const key = (userId: UserId, organizationId: OrganizationId): string =>
   `${userId}|${organizationId}`;
 
 // In-memory `OrganizationRolesRepository` for use-case unit tests.
-// Composes with `IdentityUnitOfWork` and `RecordingEventBus` the same
+// Composes with `PassThroughUnitOfWork` and `RecordingEventBus` the same
 // way `RolesRepositoryFake` does.
 export const OrganizationRolesRepositoryFake = Layer.effect(
   OrganizationRolesRepository,

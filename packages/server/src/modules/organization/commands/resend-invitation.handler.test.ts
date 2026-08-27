@@ -1,6 +1,7 @@
 import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
 import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -23,7 +24,6 @@ import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
 const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");
@@ -45,7 +45,11 @@ const seedInvitation = () =>
     now: issuedAt,
   }).invitation;
 
-const TestLayer = Layer.mergeAll(InvitationRepositoryFake, RecordingEventBus, IdentityUnitOfWork);
+const TestLayer = Layer.mergeAll(
+  InvitationRepositoryFake,
+  RecordingEventBus,
+  PassThroughUnitOfWork,
+);
 
 const cmd = {
   invitationId,

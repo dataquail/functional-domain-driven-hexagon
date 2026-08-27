@@ -1,5 +1,5 @@
 import { makeHasPermissions } from "@effect-server-utils/authz";
-import { type PersistenceUnavailable } from "@effect-server-utils/cqrs";
+import { type PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { CurrentUser } from "@org/contracts/Policy";
 

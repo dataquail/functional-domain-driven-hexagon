@@ -1,4 +1,4 @@
-import { PersistenceUnavailable } from "@effect-server-utils/cqrs";
+import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import { type Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 

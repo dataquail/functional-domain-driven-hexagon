@@ -1,6 +1,7 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -12,12 +13,11 @@ import { type UserCreated } from "@/modules/user/domain/user/user.events.js";
 import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
 import { UserSpecifications } from "@/modules/user/domain/user/user.specification.js";
 import { UserRepositoryFake } from "@/modules/user/infrastructure/repositories/user.repository-fake.js";
-import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
 import { createUserHandler } from "./create-user.handler.js";
 
-const TestLayer = Layer.mergeAll(UserRepositoryFake, RecordingEventBus, IdentityUnitOfWork);
+const TestLayer = Layer.mergeAll(UserRepositoryFake, RecordingEventBus, PassThroughUnitOfWork);
 
 const baseCmd = {
   email: "alice@example.com",

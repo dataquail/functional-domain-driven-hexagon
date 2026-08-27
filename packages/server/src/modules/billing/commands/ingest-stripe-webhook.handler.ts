@@ -1,4 +1,4 @@
-import { withUnitOfWork } from "@effect-server-utils/cqrs";
+import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as Effect from "effect/Effect";
 
 import { BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client.js";

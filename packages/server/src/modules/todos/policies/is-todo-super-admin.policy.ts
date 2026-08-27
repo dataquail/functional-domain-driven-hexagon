@@ -1,5 +1,5 @@
 import { type CallerCheck } from "@effect-server-utils/authz";
-import { type PersistenceUnavailable } from "@effect-server-utils/cqrs";
+import { type PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import { type CurrentUser } from "@org/contracts/Policy";
 
 import { type PlatformRoles } from "@/modules/todos/domain/ports/acl/platform-roles.acl.js";

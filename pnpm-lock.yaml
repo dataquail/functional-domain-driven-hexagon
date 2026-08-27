@@ -376,11 +376,14 @@ importers:
         specifier: ^3.1081.0
         version: 3.1081.0
       '@effect-server-utils/authz':
-        specifier: 0.1.0-beta.2
-        version: 0.1.0-beta.2(effect@4.0.0-beta.94)
+        specifier: 0.1.0-beta.3
+        version: 0.1.0-beta.3(effect@4.0.0-beta.94)
       '@effect-server-utils/cqrs':
-        specifier: 0.1.0-beta.2
-        version: 0.1.0-beta.2(effect@4.0.0-beta.94)
+        specifier: 0.1.0-beta.4
+        version: 0.1.0-beta.4(effect@4.0.0-beta.94)
+      '@effect-server-utils/unit-of-work':
+        specifier: 0.1.0-beta.4
+        version: 0.1.0-beta.4(@effect-server-utils/cqrs@0.1.0-beta.4(effect@4.0.0-beta.94))(effect@4.0.0-beta.94)
       '@effect/platform-node':
         specifier: 4.0.0-beta.94
         version: 4.0.0-beta.94(effect@4.0.0-beta.94)(ioredis@5.11.1)
@@ -791,14 +794,20 @@ packages:
     resolution: {integrity: sha512-Xc3VhU02wqZ1HvHRJUwL09HkZSTvidqY5Ya0NXBSYOxAp+Ln9dcJr9fySI+CkONzP3PekQo9WdzCv0PGER/mOA==}
     engines: {node: '>=14.17.0'}
 
-  '@effect-server-utils/authz@0.1.0-beta.2':
-    resolution: {integrity: sha512-XeH12DQEFE5qb/r8csTwp4lEGwid9i3bhg8pxceXAmwnWdya+iQ4Li108efDhgI65pQuFpDAP1DTGWYNm8miMA==}
+  '@effect-server-utils/authz@0.1.0-beta.3':
+    resolution: {integrity: sha512-AHUoJsYHsjhqhvSdfLVP/Sv1wGXVjWVA7UVtxz2Z9jDSy5YcxhjcJTI1vIfukmEDTsPDtNhY9Z4d9d0TSs3yNg==}
     peerDependencies:
       effect: 4.0.0-beta.94
 
-  '@effect-server-utils/cqrs@0.1.0-beta.2':
-    resolution: {integrity: sha512-DON10PFNAlEfJiY12EjtzKAbEmxlYWi2QL2NvxkcuqW431FKzVM7S2NyjfCdy3iLsRueQCFjTxTz23oX2tXiBA==}
+  '@effect-server-utils/cqrs@0.1.0-beta.4':
+    resolution: {integrity: sha512-bEdA+QOTqDHQ8dfPdD6In0n2i3szu1Sxt9QxZuXXAcQbPeV16KFY7B8Qe7q6w8twSqPFzHTR2Jh3RkwKEFLwJQ==}
     peerDependencies:
+      effect: 4.0.0-beta.94
+
+  '@effect-server-utils/unit-of-work@0.1.0-beta.4':
+    resolution: {integrity: sha512-LJ4mm9f2GDc86LM15hqeC6XSN6vH3T50dbBsV9KHtKUSauD5akQhWn5DPqlopepJ9Lqq26WMjYvo6iyP19P5Qw==}
+    peerDependencies:
+      '@effect-server-utils/cqrs': 0.1.0-beta.4
       effect: 4.0.0-beta.94
 
   '@effect/atom-react@4.0.0-beta.94':
@@ -7361,12 +7370,17 @@ snapshots:
 
   '@discoveryjs/json-ext@1.1.0': {}
 
-  '@effect-server-utils/authz@0.1.0-beta.2(effect@4.0.0-beta.94)':
+  '@effect-server-utils/authz@0.1.0-beta.3(effect@4.0.0-beta.94)':
     dependencies:
       effect: 4.0.0-beta.94
 
-  '@effect-server-utils/cqrs@0.1.0-beta.2(effect@4.0.0-beta.94)':
+  '@effect-server-utils/cqrs@0.1.0-beta.4(effect@4.0.0-beta.94)':
     dependencies:
+      effect: 4.0.0-beta.94
+
+  '@effect-server-utils/unit-of-work@0.1.0-beta.4(@effect-server-utils/cqrs@0.1.0-beta.4(effect@4.0.0-beta.94))(effect@4.0.0-beta.94)':
+    dependencies:
+      '@effect-server-utils/cqrs': 0.1.0-beta.4(effect@4.0.0-beta.94)
       effect: 4.0.0-beta.94
 
   '@effect/atom-react@4.0.0-beta.94(effect@4.0.0-beta.94)(react@19.2.4)(scheduler@0.27.0)':

@@ -1,6 +1,7 @@
 import { deepStrictEqual, notStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -15,11 +16,10 @@ import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.re
 import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
 import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const otherUserId = UserId.make("22222222-2222-2222-2222-222222222222");
-const TestLayer = Layer.mergeAll(ApiTokenRepositoryFake, IdentityUnitOfWork);
+const TestLayer = Layer.mergeAll(ApiTokenRepositoryFake, PassThroughUnitOfWork);
 
 const mint = (owner: UserId) =>
   mintApiTokenHandler({ userId: owner, label: "ci", expiresInDays: 90 });

@@ -1,6 +1,7 @@
 import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -18,14 +19,13 @@ import {
   FAKE_WEBHOOK_SIGNATURE,
 } from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake.js";
 import { WebhookEventRepositoryFake } from "@/modules/billing/infrastructure/repositories/webhook-event.repository-fake.js";
-import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
 const TestLayer = Layer.mergeAll(
   BillingGatewayFake,
   WebhookEventRepositoryFake,
   RecordingEventBus,
-  IdentityUnitOfWork,
+  PassThroughUnitOfWork,
 );
 
 const subscriptionUpdated = (eventId: string): StripeWebhookEvent => ({

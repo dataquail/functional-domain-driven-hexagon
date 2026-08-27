@@ -1,6 +1,7 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -23,7 +24,6 @@ import { makeUserProvisioningFake } from "@/modules/auth/infrastructure/acl/user
 import { makeAuthIdentityRepositoryFake } from "@/modules/auth/infrastructure/repositories/auth-identity.repository-fake.js";
 import { SessionRepositoryFake } from "@/modules/auth/infrastructure/repositories/session.repository-fake.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const provisionedUserId = UserId.make("22222222-2222-2222-2222-222222222222");
@@ -37,7 +37,7 @@ const TestLayer = Layer.mergeAll(
   SessionRepositoryFake,
   makeAuthIdentityRepositoryFake(seededIdentities),
   makeUserProvisioningFake({ userId: provisionedUserId }),
-  IdentityUnitOfWork,
+  PassThroughUnitOfWork,
 );
 
 const command = {
@@ -111,7 +111,7 @@ describe("signInHandler", () => {
                 SessionRepositoryFake,
                 makeAuthIdentityRepositoryFake(seededIdentities),
                 makeUserProvisioningFake({ conflicts: new Set(["taken@example.com"]) }),
-                IdentityUnitOfWork,
+                PassThroughUnitOfWork,
               ),
             ),
           ),

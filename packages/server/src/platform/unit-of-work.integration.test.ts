@@ -1,13 +1,8 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import {
-  Event,
-  EventBus,
-  makeEventBus,
-  makeUnitOfWork,
-  UnitOfWork,
-} from "@effect-server-utils/cqrs";
+import { Event, EventBus, makeEventBus } from "@effect-server-utils/cqrs";
+import { makeUnitOfWork, UnitOfWork } from "@effect-server-utils/unit-of-work";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
