@@ -4,10 +4,10 @@ import {
   makeEventBus,
   makeQueryBus,
   makeUnhandledFailures,
-  makeUnitOfWork,
   mergeDispatchTables,
   QueryBus,
 } from "@effect-server-utils/cqrs";
+import { makeUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
@@ -140,6 +140,8 @@ export const DomainEventBusLive = makeEventBus({
 // caller. This gives them somewhere to be observed besides a log line.
 export const UnhandledFailuresLive = makeUnhandledFailures();
 
-// The boundary's semantics live in `@effect-server-utils/cqrs`; `TransactionDriverLive` is the
-// only piece that knows they are implemented as a SQL transaction.
+// The boundary's semantics live in `@effect-server-utils/unit-of-work`;
+// `TransactionDriverLive` is the only piece that knows they are implemented as a
+// SQL transaction. The layer also carries the `DeferralSink` the event bus looks
+// for, which is what makes an after-commit subscription mean after *this* commit.
 export const UnitOfWorkLive = makeUnitOfWork().pipe(Layer.provide(TransactionDriverLive));

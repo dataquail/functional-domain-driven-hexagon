@@ -1,6 +1,7 @@
 import { deepStrictEqual, notStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
 import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -31,7 +32,6 @@ import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
 const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");
@@ -55,7 +55,7 @@ const TestLayer = Layer.mergeAll(
   InvitationRepositoryFake,
   MembershipRepositoryFake,
   RecordingEventBus,
-  IdentityUnitOfWork,
+  PassThroughUnitOfWork,
   // Default: caller is a regular user. The super-admin-rejection test
   // composes its own PlatformRoles fake.
   makePlatformRolesFake(),
@@ -192,7 +192,7 @@ describe("acceptInvitationHandler", () => {
           InvitationRepositoryFake,
           MembershipRepositoryFake,
           RecordingEventBus,
-          IdentityUnitOfWork,
+          PassThroughUnitOfWork,
           makePlatformRolesFake(new Set([superAdminUserId])),
         ),
       ),

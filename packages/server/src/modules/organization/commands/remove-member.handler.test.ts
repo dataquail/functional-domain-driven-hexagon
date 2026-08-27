@@ -1,6 +1,7 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
 import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -22,7 +23,6 @@ import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastr
 import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
 const actorUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
@@ -33,7 +33,7 @@ const TestLayer = Layer.mergeAll(
   MembershipRepositoryFake,
   OrganizationRolesRepositoryFake,
   RecordingEventBus,
-  IdentityUnitOfWork,
+  PassThroughUnitOfWork,
   makePlatformRolesFake(),
 );
 

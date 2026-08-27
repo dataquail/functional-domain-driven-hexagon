@@ -9,8 +9,8 @@
 // makes "which of the library is domain-safe?" a file a reviewer can read whole.
 //
 // Re-exported wholesale because this module *is* domain-safe in its entirety: the
-// bus and the unit of work are separate modules, and admitting them is what the
-// tiering exists to prevent.
+// bus is a separate module and the unit of work a separate package, and admitting
+// either is what the tiering exists to prevent.
 export * from "@effect-server-utils/cqrs/event";
 
 /** `Event.Base` under the name the aggregates use for it. */

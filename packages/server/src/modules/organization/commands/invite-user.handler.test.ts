@@ -1,6 +1,7 @@
 import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
@@ -14,13 +15,16 @@ import { InvitationSpecifications } from "@/modules/organization/domain/invitati
 import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
 const actorUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const organizationId = OrganizationId.make("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
 
-const TestLayer = Layer.mergeAll(InvitationRepositoryFake, RecordingEventBus, IdentityUnitOfWork);
+const TestLayer = Layer.mergeAll(
+  InvitationRepositoryFake,
+  RecordingEventBus,
+  PassThroughUnitOfWork,
+);
 
 describe("inviteUserHandler", () => {
   it.effect("inserts an invitation and publishes InvitationIssued", () =>

@@ -1,4 +1,4 @@
-import { withUnitOfWork } from "@effect-server-utils/cqrs";
+import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as Effect from "effect/Effect";
 
 import { type LeaveOrganizationPayload } from "@/modules/organization/commands/leave-organization.command.js";

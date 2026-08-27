@@ -1,4 +1,5 @@
-import { PersistenceUnavailable, Query } from "@effect-server-utils/cqrs";
+import { Query } from "@effect-server-utils/cqrs";
+import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
 import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";

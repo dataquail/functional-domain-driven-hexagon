@@ -1,6 +1,7 @@
 import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
@@ -10,12 +11,11 @@ import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.reposito
 import { WalletSpecifications } from "@/modules/wallet/domain/wallet/wallet.specification.js";
 import { WalletRepositoryFake } from "@/modules/wallet/infrastructure/repositories/wallet.repository-fake.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
 const organizationId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 
-const TestLayer = Layer.mergeAll(WalletRepositoryFake, RecordingEventBus, IdentityUnitOfWork);
+const TestLayer = Layer.mergeAll(WalletRepositoryFake, RecordingEventBus, PassThroughUnitOfWork);
 
 describe("createWalletHandler", () => {
   it.effect("inserts a wallet with balance 0 and dispatches WalletCreated", () =>

@@ -6,10 +6,9 @@ import {
   CommandBus,
   makeCommandBus,
   makeEventBus,
-  makeUnitOfWork,
   mergeDispatchTables,
-  UnitOfWork,
 } from "@effect-server-utils/cqrs";
+import { makeUnitOfWork, UnitOfWork } from "@effect-server-utils/unit-of-work";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { Database, RowSchemas, sql } from "@org/database/index";
 import * as Effect from "effect/Effect";

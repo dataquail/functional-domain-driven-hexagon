@@ -9,7 +9,7 @@ import { type Specification } from "@/platform/ddd/contracts/specification.js";
 import { type UserId } from "@/platform/ids/user-id.js";
 
 // In-memory `RolesRepository` for use-case unit tests. Composes with
-// `IdentityUnitOfWork` and `RecordingEventBus` the same way
+// `PassThroughUnitOfWork` and `RecordingEventBus` the same way
 // `UserRepositoryFake` does.
 export const RolesRepositoryFake = Layer.effect(
   RolesRepository,

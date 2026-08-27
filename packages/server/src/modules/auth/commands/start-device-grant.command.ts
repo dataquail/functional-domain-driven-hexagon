@@ -1,4 +1,5 @@
-import { Command, PersistenceUnavailable } from "@effect-server-utils/cqrs";
+import { Command } from "@effect-server-utils/cqrs";
+import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import type * as DateTime from "effect/DateTime";
 import * as Schema from "effect/Schema";
 

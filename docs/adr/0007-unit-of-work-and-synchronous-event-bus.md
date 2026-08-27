@@ -60,7 +60,7 @@ The transaction is declared once, visibly, at the boundary. `withUnitOfWork` als
 
 `UnitOfWork.run` remains the escape hatch: integration tests drive it directly, and a handler with work that must stay _outside_ the transaction (external IO like a Stripe call, or a post-commit email) wraps only the transactional sub-block in `withUnitOfWork` and leaves the rest outside.
 
-A test-only identity implementation (`IdentityUnitOfWork` in `test-utils/`) makes `run` a pass-through: the inner effect runs as-is, no transaction is opened. Fake repositories don't consult `TransactionContext`, so use cases depend on this port — not on `Database` — and unit-test without a database (`lives-only-from-composition-roots` keeps that enforceable in the dep graph).
+A pass-through implementation (`PassThroughUnitOfWork`, from the unit-of-work package's `testing` entry point) runs the inner effect as-is over an in-memory driver: no transaction is opened. Fake repositories don't consult `TransactionContext`, so use cases depend on this port — not on `Database` — and unit-test without a database (`lives-only-from-composition-roots` keeps that enforceable in the dep graph). It is the real boundary over a fake driver rather than a hand-rolled identity function, which is what makes a unit test see the same re-entrancy, the same after-commit ordering, and the same discard-on-rollback that production gets.
 
 ### Nested savepoints
 
@@ -80,25 +80,28 @@ So `dispatch` says only that the events happened, and each subscriber declares w
 
 One event can therefore serve consumers that need different things — a wallet that must be atomic with its organization, and a welcome email that must not be — which two buses could only express by dispatching the same event twice.
 
-`subscribe(eventSchema, handler)` registers under the schema's tag at Layer construction time. `dispatch(events)` runs the immediate handlers in the publisher's fiber, then buffers the events for the flush:
+`subscribe(eventSchema, handler)` registers under the schema's tag at Layer construction time. `dispatch(events)` hands the events to whatever owns the boundary, then runs the immediate handlers in the publisher's fiber:
 
 ```ts
 const dispatch: DomainEventBusShape["dispatch"] = (events) =>
   Effect.gen(function* () {
-    // Dispatch presumes a unit of work. Absent → defect (see below).
+    // Handed over first. The unit of work's sink dies here if no scope is
+    // open (see below); a host with no sink installed drains at the end.
+    const sink = yield* Effect.serviceOption(DeferralSink);
+    if (Option.isSome(sink)) yield* sink.value.defer(events);
+
     const map = yield* Ref.get(immediate);
     for (const event of events) {
       for (const handler of map.get(event._tag) ?? []) {
         yield* handler(event);
       }
     }
-    yield* Ref.update(scope.postCommitEvents, (buffered) => [...buffered, ...events]);
   });
 ```
 
 Because immediate handlers run in the publisher's fiber, they inherit `TransactionContext`: a subscriber's write joins the publisher's transaction, and its failure propagates out of `dispatch`, up through the unit of work, and rolls the transaction back. That is the right surface when two aggregates are one logical unit.
 
-Everything is buffered, unconditionally, and only once the immediate handlers have succeeded — their failure aborts the publisher, so there would be nothing left to notify after a commit that is no longer going to happen. The **outermost** `run` drains the buffer **after** its transaction commits, each after-commit handler through its own `run`, so each gets a fresh transaction and its own scope with its failure isolated. Giving a handler its own scope rather than a bare transaction is what lets a reaction publish events of its own; it also means a cycle among reactions would loop, which is inherent to any at-least-once relay and is the author's to avoid.
+Everything is handed over, unconditionally, and **before** the first immediate handler runs. A dispatch that forgot its boundary is therefore reported while it is still whole rather than after half of it has executed, and nothing is lost by taking the events early: a boundary that does not succeed never drains what it took. The **outermost** `run` drains what it holds **after** its transaction commits, each after-commit handler through its own `run`, so each gets a fresh transaction and its own scope with its failure isolated. Giving a handler its own scope rather than a bare transaction is what lets a reaction publish events of its own; it also means a cycle among reactions would loop, which is inherent to any at-least-once relay and is the author's to avoid.
 
 Subscriptions are declared in `interface/events/*.event-adapter.ts`. Default new cross-aggregate reactions to `subscribeAfterCommit`; reserve `subscribe` for the case where the reaction genuinely must be able to abort its trigger.
 
@@ -108,7 +111,7 @@ Subscriptions are declared in `interface/events/*.event-adapter.ts`. Default new
 
 Dispatching outside a unit of work is a defect, and fails fast.
 
-`dispatch` asserts an ambient `UnitOfWorkScope`; absent → die. Its presence _is_ the answer to "am I inside a unit of work". The bus previously asked the database whether a transaction was open — a unit-of-work question answered by the wrong service, and the reason the bus knew about SQL at all.
+`dispatch` hands its events to an ambient deferral sink before any handler runs, and the unit of work's sink asserts an open `UnitOfWorkScope`; absent → die. Its presence _is_ the answer to "am I inside a unit of work". The assertion sits in the sink rather than in the bus because "there must be a transaction" is the boundary's opinion and not the bus's — but this application installs the boundary, so the guarantee at every dispatch site is the same one described here. The bus previously asked the database whether a transaction was open — a unit-of-work question answered by the wrong service, and the reason the bus knew about SQL at all.
 
 Absent a scope the alternatives are worse than a defect: immediate subscribers would run with no transaction to inherit, and after-commit ones would buffer onto nothing.
 
@@ -145,6 +148,14 @@ A saga's `run` may not fail. A process manager that ends in an unhandled error h
 
 Reach for an adapter first. A saga earns its state only when no single event decides the outcome.
 
+### Split from the CQRS package (since published)
+
+The unit of work shipped inside the CQRS library at first, and that was one decision too many for a message bus to be making. `dispatch` died without an open scope, so publishing an event at all required a transaction, and the bus exposed its buffer-and-flush plumbing purely so the boundary could drive it — a transaction-shaped interface imposed on consumers who had never asked about consistency models.
+
+The boundary now lives in `@effect-server-utils/unit-of-work`, at an exact beta, and the one edge that carried the opinion was cut down to a `DeferralSink`: an optional service with a single method, which takes ownership of a dispatch's deferred events and promises to drain them later. It names no transaction, no savepoint, and no connection. Absent a sink the bus runs those handlers itself at the end of the dispatch — still after every immediate one, still isolated — so a handler written against `subscribeAfterCommit` is correct in both wirings, and a host can adopt a unit of work later without revisiting one of them. Installing the boundary is what makes "after commit" mean after _this_ commit, and installing it is what this application does: the layer that builds the unit of work builds the sink with it, so everything above still holds here.
+
+Two things improved on the way. The sink resolves the bus at defer time and buffers a closed-over drain rather than the bare events, so a bus wired deeper than the boundary is still the bus that gets drained — the old shape looked one up at commit time, found none, and logged the events as dropped. And the package's `testing` entry point ships the pass-through boundary and the in-memory drivers, which is the double a consumer would otherwise hand-roll and get wrong on rollback.
+
 ## Consequences
 
 - Multi-aggregate writes triggered by immediate domain events are atomic: every aggregate in a logical unit of work commits, or none does. A subscriber's failure aborts the publisher's command — the correct behavior given the goal.
@@ -153,7 +164,7 @@ Reach for an adapter first. A saga earns its state only when no single event dec
 - Nested units of work gain a recoverable-failure option via savepoints; flows that want all-or-nothing simply let the nested failure propagate.
 - A forgotten `withUnitOfWork` is caught at dispatch (a defect) rather than producing an out-of-transaction subscriber run or a silently dropped after-commit reaction.
 - Slow immediate subscribers slow their publishers — accepted, since they are part of the same logical operation.
-- Use-case unit tests don't need a database: the identity unit of work makes `run` a pass-through and fake repositories ignore `TransactionContext`.
+- Use-case unit tests don't need a database: the pass-through unit of work runs over an in-memory driver and fake repositories ignore `TransactionContext`.
 - The in-memory flush is **lossy on a crash between commit and flush** — if the process dies after the transaction commits but before the buffer drains, those after-commit reactions are lost. Accepted for now; the durable replacement is the deferred outbox below. (A similar at-most-once window exists for immediate subscribers on process death between commit and HTTP response; mitigated by idempotent subscribers and deterministic upstream ids.)
 
 ## Deferred: transactional outbox and durable process managers
@@ -220,4 +231,4 @@ The pattern is enforced by the `interface-events-isolation` dep-cruiser rule, a 
 
 - ADR-0003 (events as values) — both buses carry the same value-typed `DomainEvent`.
 - ADR-0005 (repository pattern) — the per-call `TransactionContext` check is what makes transaction and savepoint joining automatic for repositories.
-- ADR-0009 (testing) — the identity unit of work, recording event bus, and the integration tests that exercise the savepoint and post-commit-flush semantics.
+- ADR-0009 (testing) — the pass-through unit of work, recording event bus, and the integration tests that exercise the savepoint and post-commit-drain semantics.

@@ -7,14 +7,15 @@
  * notifies, a transaction nobody joins, or reports nobody reads.
  *
  * This is a lint rule rather than a dependency-cruiser one because the
- * factories live in `@effect-server-utils/cqrs` and are re-exported from its
- * barrel: dep-cruiser matches resolved paths and every importer resolves to the
- * same barrel, so a path rule cannot tell the factories apart from the Tags that
- * everything legitimately imports. Matching the named import can.
+ * factories live in `@effect-server-utils/cqrs` and `@effect-server-utils/unit-of-work`
+ * and are re-exported from their barrels: dep-cruiser matches resolved paths and
+ * every importer resolves to the same barrel, so a path rule cannot tell the
+ * factories apart from the Tags that everything legitimately imports. Matching
+ * the named import can.
  *
- * The library publishes each module as its own export subpath as well as through
- * the barrel, so the source test accepts both — a deep import is otherwise a
- * one-character way around this rule.
+ * Each library publishes its modules as their own export subpaths as well as
+ * through the barrel, so the source test accepts both — a deep import is
+ * otherwise a one-character way around this rule.
  *
  * The composition-root allowlist lives here rather than in lint config because
  * oxlint overrides have no `ignores`, and keeping it beside the restriction
@@ -32,9 +33,10 @@ const RESTRICTED_IMPORTS = new Set([
   "makeUnhandledFailures",
 ]);
 
-const PACKAGE = "@effect-server-utils/cqrs";
+const PACKAGES = ["@effect-server-utils/cqrs", "@effect-server-utils/unit-of-work"];
 
-const isPackageSource = (source) => source === PACKAGE || source.startsWith(`${PACKAGE}/`);
+const isPackageSource = (source) =>
+  PACKAGES.some((pkg) => source === pkg || source.startsWith(`${pkg}/`));
 
 const COMPOSITION_ROOTS = [
   /packages\/server\/src\/server\.ts$/,
@@ -50,7 +52,7 @@ export default {
     type: "problem",
     docs: {
       description:
-        "Bus/unit-of-work factories from @effect-server-utils/cqrs may only be called at a composition root (ADR-0006)",
+        "Bus/unit-of-work factories from @effect-server-utils/{cqrs,unit-of-work} may only be called at a composition root (ADR-0006)",
       category: "Best Practices",
       recommended: true,
     },

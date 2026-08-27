@@ -1,6 +1,7 @@
 import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
@@ -9,9 +10,8 @@ import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device
 import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification.js";
 import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service.js";
 import { DeviceGrantRepositoryFake } from "@/modules/auth/infrastructure/repositories/device-grant.repository-fake.js";
-import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 
-const TestLayer = Layer.mergeAll(DeviceGrantRepositoryFake, IdentityUnitOfWork);
+const TestLayer = Layer.mergeAll(DeviceGrantRepositoryFake, PassThroughUnitOfWork);
 
 describe("startDeviceGrantHandler", () => {
   it.effect("returns codes and persists a pending grant keyed by the device-code hash", () =>

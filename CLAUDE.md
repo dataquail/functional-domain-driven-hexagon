@@ -31,11 +31,13 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 | `@org/acceptance`   | Playwright acceptance tests (specs / drivers / pages / infrastructure).            |
 | `@org/test-drivers` | Tier-agnostic page-driver contracts + per-tier adapters (Playwright / RTL).        |
 
-**Installed, not vendored.** The CQRS and authorization patterns this codebase teaches now ship as
-published libraries from a separate repository (`dataquail/effect-server-utils`) and are consumed
-here as ordinary dependencies: `@effect-server-utils/cqrs` and `@effect-server-utils/authz`, both
-pinned to `0.1.0-beta.1`. ADR-0006 and ADR-0021 still describe their design and the constraints this
-application relies on; changing either library means a release there, not an edit here.
+**Installed, not vendored.** The CQRS, unit-of-work and authorization patterns this codebase
+teaches now ship as published libraries from a separate repository (`dataquail/effect-server-utils`)
+and are consumed here as ordinary dependencies, each pinned to an exact beta:
+`@effect-server-utils/cqrs` (`0.1.0-beta.4`), `@effect-server-utils/unit-of-work` (`0.1.0-beta.4`)
+and `@effect-server-utils/authz` (`0.1.0-beta.3`). ADR-0006, ADR-0007 and ADR-0021 still describe
+their design and the constraints this application relies on; changing any of them means a release
+there, not an edit here.
 
 ## Commands
 

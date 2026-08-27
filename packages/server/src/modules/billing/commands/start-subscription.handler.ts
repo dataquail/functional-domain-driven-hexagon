@@ -1,4 +1,4 @@
-import { withUnitOfWork } from "@effect-server-utils/cqrs";
+import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 

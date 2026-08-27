@@ -1,6 +1,7 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -20,7 +21,6 @@ import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastr
 import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
 const userId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
@@ -30,7 +30,7 @@ const TestLayer = Layer.mergeAll(
   MembershipRepositoryFake,
   OrganizationRolesRepositoryFake,
   RecordingEventBus,
-  IdentityUnitOfWork,
+  PassThroughUnitOfWork,
   // Seed `createOrganizationHandler` calls need `PlatformRoles`; defaulting to
   // "caller has no platform roles" matches the regular-user path.
   makePlatformRolesFake(),

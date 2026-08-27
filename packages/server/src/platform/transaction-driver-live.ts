@@ -2,15 +2,15 @@ import {
   PersistenceUnavailable,
   TransactionDriver,
   TransactionFailed,
-} from "@effect-server-utils/cqrs";
+} from "@effect-server-utils/unit-of-work";
 import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-// The slonik binding for the atomicity primitive `@effect-server-utils/cqrs` needs. This is the
-// only file that knows a unit of work is implemented as a SQL transaction; the
-// boundary's semantics live in the package.
+// The slonik binding for the atomicity primitive `@effect-server-utils/unit-of-work`
+// needs. This is the only file that knows a unit of work is implemented as a SQL
+// transaction; the boundary's semantics live in the package.
 //
 // Both scopes make the scoped client ambient as a `TransactionContext`, which is
 // what a repository's `makeQuery` picks up to join the scope rather than taking a

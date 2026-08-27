@@ -6,7 +6,9 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import { makeEventBus, UnitOfWork } from "@effect-server-utils/cqrs";
+import { makeEventBus } from "@effect-server-utils/cqrs";
+import { UnitOfWork } from "@effect-server-utils/unit-of-work";
+import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
@@ -19,13 +21,12 @@ import { InvitationEventAdapterLive } from "@/modules/organization/interface/eve
 import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedCommands, RecordingCommandBus } from "@/test-utils/recording-command-bus.js";
 
 const TestLayer = InvitationEventAdapterLive.pipe(
   Layer.provideMerge(makeEventBus()),
   Layer.provideMerge(RecordingCommandBus),
-  Layer.provideMerge(IdentityUnitOfWork),
+  Layer.provideMerge(PassThroughUnitOfWork),
 );
 
 const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");

@@ -1,6 +1,7 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -24,7 +25,6 @@ import { OrganizationRepositoryFake } from "@/modules/organization/infrastructur
 import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.js";
 import { Spec } from "@/platform/ddd/contracts/specification.js";
 import { UserId } from "@/platform/ids/user-id.js";
-import { IdentityUnitOfWork } from "@/test-utils/identity-unit-of-work.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
 const actorUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
@@ -35,7 +35,7 @@ const TestLayer = Layer.mergeAll(
   MembershipRepositoryFake,
   OrganizationRolesRepositoryFake,
   RecordingEventBus,
-  IdentityUnitOfWork,
+  PassThroughUnitOfWork,
   // Default: caller is a regular user (no platform roles). The
   // super-admin-rejection test composes its own PlatformRoles fake.
   makePlatformRolesFake(),
@@ -130,7 +130,7 @@ describe("createOrganizationHandler", () => {
           MembershipRepositoryFake,
           OrganizationRolesRepositoryFake,
           RecordingEventBus,
-          IdentityUnitOfWork,
+          PassThroughUnitOfWork,
           makePlatformRolesFake(new Set([superAdminUserId])),
         ),
       ),
