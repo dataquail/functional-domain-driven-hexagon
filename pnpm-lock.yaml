@@ -152,8 +152,8 @@ importers:
         specifier: 4.0.0-beta.94
         version: 4.0.0-beta.94
       pg:
-        specifier: 8.13.1
-        version: 8.13.1
+        specifier: ^8.20.0
+        version: 8.22.0
       typescript:
         specifier: ~5.7.3
         version: 5.7.3
@@ -287,18 +287,15 @@ importers:
       '@effect/platform-node':
         specifier: 4.0.0-beta.94
         version: 4.0.0-beta.94(effect@4.0.0-beta.94)(ioredis@5.11.1)
-      '@standard-schema/spec':
-        specifier: ^1.1.0
-        version: 1.1.0
+      '@effect/sql-pg':
+        specifier: 4.0.0-beta.94
+        version: 4.0.0-beta.94(effect@4.0.0-beta.94)
       effect:
         specifier: 4.0.0-beta.94
         version: 4.0.0-beta.94
       pg:
-        specifier: 8.13.1
-        version: 8.13.1
-      slonik:
-        specifier: ^48.19.0
-        version: 48.19.0
+        specifier: ^8.20.0
+        version: 8.22.0
     devDependencies:
       '@types/dotenv':
         specifier: ^8.2.3
@@ -326,8 +323,8 @@ importers:
         specifier: 4.0.0-beta.94
         version: 4.0.0-beta.94
       pg:
-        specifier: 8.13.1
-        version: 8.13.1
+        specifier: ^8.20.0
+        version: 8.22.0
       slonik:
         specifier: ^48.19.0
         version: 48.19.0
@@ -412,8 +409,8 @@ importers:
         specifier: ^6.8.4
         version: 6.8.4
       pg:
-        specifier: 8.13.1
-        version: 8.13.1
+        specifier: ^8.20.0
+        version: 8.22.0
       react:
         specifier: 19.2.4
         version: 19.2.4
@@ -838,6 +835,11 @@ packages:
     peerDependencies:
       effect: 4.0.0-beta.94
       ioredis: ^5.7.0
+
+  '@effect/sql-pg@4.0.0-beta.94':
+    resolution: {integrity: sha512-70LcCeOrfsq+NAaiVIl2uknGzRG1VnvbxsBHuPuIV3LuTDGKS6H/Jei4+jgyySMdyeKRC6EPaRuNEIAPgvTBEg==}
+    peerDependencies:
+      effect: 4.0.0-beta.94
 
   '@effect/tsgo-darwin-arm64@0.36.1':
     resolution: {integrity: sha512-jhoWW+d06Dvl9+LanikNBu9oyqFsN3xuuTMo+h6/yCbR/DvUICbs8KRJrWaq9IcHLiXE/2OySxljysDhT1yvsw==}
@@ -5658,6 +5660,9 @@ packages:
   pg-cloudflare@1.4.0:
     resolution: {integrity: sha512-Vo7z/6rrQYxpNRylp4Tlob2elzbh+N/MOQbxFVWCxS7oEx6jF53GTJFxK2WWpKuBRkmiin4Mt+xofFDjx09R0A==}
 
+  pg-connection-string@2.12.0:
+    resolution: {integrity: sha512-U7qg+bpswf3Cs5xLzRqbXbQl85ng0mfSV/J0nnA31MCLgvEaAo7CIhmeyrmJpOr7o+zm0rXK+hNnT5l9RHkCkQ==}
+
   pg-connection-string@2.14.0:
     resolution: {integrity: sha512-XwWDGcLRGCXAR8F/AM5bG7Q+A3Wm2s6QeEjlOKZLlH3UYcguiqCWKyWXVag5TLTIjR7oOJUY8kcADaZgWPyLeg==}
 
@@ -5695,15 +5700,6 @@ packages:
     resolution: {integrity: sha512-o2XFanIMy/3+mThw69O8d4n1E5zsLhdO+OPqswezu7Z5ekP4hYDqlDjlmOpYMbzY2Br0ufCwJLdDIXeNVwcWFg==}
     engines: {node: '>=10'}
 
-  pg@8.13.1:
-    resolution: {integrity: sha512-OUir1A0rPNZlX//c7ksiu7crsGZTKSOXJPgtNiHGIlC9H0lO+NC6ZDYksSgBYY/thSWhnSRBv8w1lieNNGATNQ==}
-    engines: {node: '>= 8.0.0'}
-    peerDependencies:
-      pg-native: '>=3.0.1'
-    peerDependenciesMeta:
-      pg-native:
-        optional: true
-
   pg@8.22.0:
     resolution: {integrity: sha512-8wih1vVIBMxoUM2oB4soJsD9tDnDpLv4OXBJ+EJzFsvycD+lfyIreC2gGHq78f8jbLLt+bvlPTFdFZfJkOuzAA==}
     engines: {node: '>= 16.0.0'}
@@ -5715,9 +5711,6 @@ packages:
 
   pgpass@1.0.5:
     resolution: {integrity: sha512-FdW9r/jQZhSeohs1Z3sI1yxFQNFvMcnmfuj4WBMUTxOrAyLMaTcE1aAMBiTlbMNaXvBCQuVi0R7hd8udDSP7ug==}
-
-  pgpass@1.0.6:
-    resolution: {integrity: sha512-lqIfH7bdgsxHAY/ZnUOwm+aCFKrsHBDhSFuk9O0B9uCqJAIkrKTo/+LQqLPLUS4e04+jCmQVikxE3QipH5chPw==}
 
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
@@ -7415,6 +7408,17 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+
+  '@effect/sql-pg@4.0.0-beta.94(effect@4.0.0-beta.94)':
+    dependencies:
+      effect: 4.0.0-beta.94
+      pg: 8.22.0
+      pg-connection-string: 2.12.0
+      pg-cursor: 2.21.0(pg@8.22.0)
+      pg-pool: 3.14.0(pg@8.22.0)
+      pg-types: 4.1.0
+    transitivePeerDependencies:
+      - pg-native
 
   '@effect/tsgo-darwin-arm64@0.36.1':
     optional: true
@@ -12305,6 +12309,8 @@ snapshots:
   pg-cloudflare@1.4.0:
     optional: true
 
+  pg-connection-string@2.12.0: {}
+
   pg-connection-string@2.14.0: {}
 
   pg-cursor@2.21.0(pg@8.22.0):
@@ -12314,10 +12320,6 @@ snapshots:
   pg-int8@1.0.1: {}
 
   pg-numeric@1.0.2: {}
-
-  pg-pool@3.14.0(pg@8.13.1):
-    dependencies:
-      pg: 8.13.1
 
   pg-pool@3.14.0(pg@8.22.0):
     dependencies:
@@ -12348,16 +12350,6 @@ snapshots:
       postgres-interval: 3.0.0
       postgres-range: 1.1.4
 
-  pg@8.13.1:
-    dependencies:
-      pg-connection-string: 2.14.0
-      pg-pool: 3.14.0(pg@8.13.1)
-      pg-protocol: 1.15.0
-      pg-types: 2.2.0
-      pgpass: 1.0.6
-    optionalDependencies:
-      pg-cloudflare: 1.4.0
-
   pg@8.22.0:
     dependencies:
       pg-connection-string: 2.14.0
@@ -12371,8 +12363,6 @@ snapshots:
   pgpass@1.0.5:
     dependencies:
       split2: 4.2.0
-
-  pgpass@1.0.6: {}
 
   picocolors@1.1.1: {}
 

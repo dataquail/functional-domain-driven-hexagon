@@ -1,4 +1,3 @@
-import type { StandardSchemaV1 } from "@standard-schema/spec";
 import * as Schema from "effect/Schema";
 
 export const UserRow = Schema.Struct({
@@ -14,5 +13,3 @@ export const UserRow = Schema.Struct({
   updated_at: Schema.DateTimeUtcFromDate,
 });
 export type UserRow = typeof UserRow.Type;
-
-export const UserRowStd: StandardSchemaV1<unknown, UserRow> = Schema.toStandardSchemaV1(UserRow);

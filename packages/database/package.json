@@ -22,16 +22,15 @@
     "check": "tsc -b tsconfig.json",
     "test": "vitest",
     "coverage": "vitest --coverage",
-    "db:migrate": "docker compose --profile migrate run --rm flyway",
-    "db:migrate:test": "docker compose --profile migrate-test run --rm flyway-test",
+    "db:migrate": "tsx ./src/scripts/migrate.ts",
+    "db:migrate:test": "DATABASE_URL=$DATABASE_URL_TEST tsx ./src/scripts/migrate.ts",
     "db:reset": "tsx ./src/scripts/reset-database.ts"
   },
   "dependencies": {
     "@effect/platform-node": "4.0.0-beta.94",
-    "@standard-schema/spec": "^1.1.0",
+    "@effect/sql-pg": "4.0.0-beta.94",
     "effect": "4.0.0-beta.94",
-    "pg": "8.13.1",
-    "slonik": "^48.19.0"
+    "pg": "^8.20.0"
   },
   "effect": {
     "generateExports": {
