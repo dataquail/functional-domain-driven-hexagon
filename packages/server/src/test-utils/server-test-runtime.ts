@@ -1,4 +1,4 @@
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import type * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
@@ -56,23 +56,19 @@ export const useServerTestRuntime = (
     if (opts.seedSuperAdminCaller === true) {
       await runtime.runPromise(
         Effect.gen(function* () {
-          const db = yield* Database.Database;
-          yield* db.execute((client) =>
-            client.query(sql.unsafe`
-              INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
-              VALUES
-                (${SUPER_ADMIN_CALLER_ID}, 'super-admin@test.local', 'USA', '1 St', '00000', now(), now()),
-                (${MEMBER_CALLER_ID}, 'member@test.local', 'USA', '2 St', '00000', now(), now())
-              ON CONFLICT (id) DO NOTHING
-            `),
-          );
-          yield* db.execute((client) =>
-            client.query(sql.unsafe`
-              INSERT INTO platform.roles (user_id, role)
-              VALUES (${SUPER_ADMIN_CALLER_ID}, 'super_admin')
-              ON CONFLICT (user_id, role) DO NOTHING
-            `),
-          );
+          const sql = yield* Database.Database;
+          yield* sql`
+            INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
+            VALUES
+              (${SUPER_ADMIN_CALLER_ID}, 'super-admin@test.local', 'USA', '1 St', '00000', now(), now()),
+              (${MEMBER_CALLER_ID}, 'member@test.local', 'USA', '2 St', '00000', now(), now())
+            ON CONFLICT (id) DO NOTHING
+          `;
+          yield* sql`
+            INSERT INTO platform.roles (user_id, role)
+            VALUES (${SUPER_ADMIN_CALLER_ID}, 'super_admin')
+            ON CONFLICT (user_id, role) DO NOTHING
+          `;
         }).pipe(Effect.orDie),
       );
     }

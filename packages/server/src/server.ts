@@ -3,7 +3,6 @@ import { createServer } from "node:http";
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
 import { makePolicyRegistry, makeResourceResolverRegistry } from "@effect-server-utils/authz";
-import { Database } from "@org/database/index";
 import * as dotenv from "dotenv";
 import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
@@ -15,6 +14,7 @@ import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 import * as OtlpSerialization from "effect/unstable/observability/OtlpSerialization";
 import * as OtlpTracer from "effect/unstable/observability/OtlpTracer";
+import { isSqlError } from "effect/unstable/sql/SqlError";
 
 import { Api } from "./api.js";
 import { EnvVars } from "./common/env-vars.js";
@@ -241,7 +241,6 @@ const HttpLive = HttpRouter.serve(ApiLive, {
   // alone; the policy registry sits above with the buses it now dispatches
   // through.
   Layer.provide(AuthSharedDepsLive),
-  Layer.merge(Layer.effectDiscard(Database.Database.use((db) => db.setupConnectionListeners))),
   Layer.provide(DatabaseLive),
   Layer.provide(TracerLive),
   Layer.provide(EnvVars.layer),
@@ -251,11 +250,11 @@ const HttpLive = HttpRouter.serve(ApiLive, {
 Layer.launch(HttpLive).pipe(
   Effect.tapCause(Effect.logError),
   Effect.retry({
-    while: (error: unknown) =>
-      typeof error === "object" &&
-      error !== null &&
-      "_tag" in error &&
-      error._tag === "DatabaseConnectionLostError",
+    // A database that isn't accepting connections yet — the compose race on a
+    // cold boot. The pool reports it as a retryable `SqlError`; a pool that dies
+    // later surfaces per-request as `DatabaseUnavailable` (503) instead of
+    // taking the process down, and node-postgres reconnects on the next acquire.
+    while: (error: unknown) => isSqlError(error) && error.isRetryable,
     // Capped, jittered exponential backoff. v4 folded `modifyDelayEffect`
     // into `modifyDelay` (now always effectful), so the per-attempt log
     // line and the 8s cap live in one step.

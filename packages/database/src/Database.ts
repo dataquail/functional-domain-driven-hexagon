@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { type SqlError } from "effect/unstable/sql/SqlError";
+import { SqlError } from "effect/unstable/sql/SqlError";
 
 import { type Config, driverLayer } from "./pg-driver.js";
 
@@ -74,13 +74,19 @@ const toDatabaseFailure = (error: SqlError): DatabaseError | DatabaseUnavailable
 
 // A failure the application has no vocabulary for — a syntax error, a NOT NULL
 // violation, a schema that drifted — is a programmer error, not a typed outcome.
-export const mapSqlError = <A, R>(
-  self: Effect.Effect<A, SqlError, R>,
-): Effect.Effect<A, DatabaseError | DatabaseUnavailable, R> =>
-  Effect.catch(self, (error) => {
+//
+// `catchTag` on a generic union channel resists inference, so the implementation
+// catches on the widened type and re-asserts the narrowed result. The casts are
+// contained here so callers stay clean.
+export const mapSqlError: <A, E, R>(
+  self: Effect.Effect<A, E | SqlError, R>,
+) => Effect.Effect<A, Exclude<E, SqlError> | DatabaseError | DatabaseUnavailable, R> = <A, E, R>(
+  self: Effect.Effect<A, E | SqlError, R>,
+) =>
+  Effect.catchTag(self as Effect.Effect<A, SqlError, R>, "SqlError", (error: SqlError) => {
     const failure = toDatabaseFailure(error);
     return failure === null ? Effect.die(error) : Effect.fail(failure);
-  });
+  }) as Effect.Effect<A, Exclude<E, SqlError> | DatabaseError | DatabaseUnavailable, R>;
 
 export class Database extends Context.Service<Database, SqlClient>()("Database") {}
 
