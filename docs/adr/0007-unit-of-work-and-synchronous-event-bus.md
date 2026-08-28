@@ -28,7 +28,7 @@ Two further concerns shape the design:
 
 Two collaborating services — `UnitOfWork` and a single `DomainEventBus` — plus a use-case-facing `withUnitOfWork` combinator. **The bus offers both consistency models, and a subscription chooses between them.**
 
-These live in the CQRS package (ADR-0006), not in the application. The boundary's _semantics_ — re-entrancy, post-commit buffering, flush ordering, failure isolation — are the same wherever it runs; only the SQL is ours. What the application supplies is a `TransactionDriver`: open a scope, open a nested scope, say whether one is already open. The slonik binding for it is the one file that knows a unit of work is implemented as a database transaction, and it is wired at the composition root.
+These live in the CQRS package (ADR-0006), not in the application. The boundary's _semantics_ — re-entrancy, post-commit buffering, flush ordering, failure isolation — are the same wherever it runs; only the SQL is ours. What the application supplies is a `TransactionDriver`: open a scope, open a nested scope, say whether one is already open. The SQL binding for it is the one file that knows a unit of work is implemented as a database transaction, and it is wired at the composition root.
 
 Two consequences of that split are worth recording because both were load-bearing and neither is obvious.
 
@@ -38,9 +38,9 @@ The port's error channel names `TransactionFailed`, not the database's own error
 
 ### UnitOfWork and the `withUnitOfWork` boundary
 
-`UnitOfWork.run` is the low-level primitive: it opens a transaction, provides a `TransactionContext` to the inner effect (so repository calls and query-handler reads join it via the database's per-call `makeQuery` check), and rolls back if anything inside fails. Its error channel surfaces `DatabaseError` (constraint violations) and the domain-language `PersistenceUnavailable` (transient store outage), never the raw `@org/database` signal.
+`UnitOfWork.run` is the low-level primitive: it opens a transaction, puts the scoped connection in context (the SQL client resolves it before every statement, so repository calls and query-handler reads join it automatically), and rolls back if anything inside fails. Its error channel surfaces `DatabaseError` (constraint violations) and the domain-language `PersistenceUnavailable` (transient store outage), never the raw `@org/database` signal.
 
-This is why use-case DB access — repositories and read-side query handlers alike — goes through the transaction-aware `makeQuery`, never the bare pool `execute`. A read dispatched inside a unit of work (a CQRS query is not confined to request-time reads: a policy/ACL query is resolved during a command's authorization, inside its transaction) must join the ambient transaction, or it runs on a foreign pool connection and fails. A lint rule enforces `makeQuery` over bare `execute` across commands and queries; bare `execute` is reserved for test seeding and background jobs, which run outside any unit of work.
+Joining is automatic and unconditional: the SQL client checks for an ambient transaction connection before every statement and falls back to the pool when there is none. This matters because a read dispatched inside a unit of work — a CQRS query is not confined to request-time reads; a policy/ACL query is resolved during a command's authorization, inside its transaction — must run on the transaction's connection, not a foreign pool one. Earlier this was a per-call opt-in (`makeQuery` vs. a bare pool `execute`) that a lint rule had to police; the client makes the distinction, and the rule, unnecessary.
 
 Use cases don't call `run` directly; they apply the **`withUnitOfWork`** combinator at the end of the handler's pipe, the way Cosmic-Python writes `with uow:` at the top of a handler:
 
@@ -60,11 +60,11 @@ The transaction is declared once, visibly, at the boundary. `withUnitOfWork` als
 
 `UnitOfWork.run` remains the escape hatch: integration tests drive it directly, and a handler with work that must stay _outside_ the transaction (external IO like a Stripe call, or a post-commit email) wraps only the transactional sub-block in `withUnitOfWork` and leaves the rest outside.
 
-A pass-through implementation (`PassThroughUnitOfWork`, from the unit-of-work package's `testing` entry point) runs the inner effect as-is over an in-memory driver: no transaction is opened. Fake repositories don't consult `TransactionContext`, so use cases depend on this port — not on `Database` — and unit-test without a database (`lives-only-from-composition-roots` keeps that enforceable in the dep graph). It is the real boundary over a fake driver rather than a hand-rolled identity function, which is what makes a unit test see the same re-entrancy, the same after-commit ordering, and the same discard-on-rollback that production gets.
+A pass-through implementation (`PassThroughUnitOfWork`, from the unit-of-work package's `testing` entry point) runs the inner effect as-is over an in-memory driver: no transaction is opened. Fake repositories never touch the SQL client, so use cases depend on this port — not on `Database` — and unit-test without a database (`lives-only-from-composition-roots` keeps that enforceable in the dep graph). It is the real boundary over a fake driver rather than a hand-rolled identity function, which is what makes a unit test see the same re-entrancy, the same after-commit ordering, and the same discard-on-rollback that production gets.
 
 ### Nested savepoints
 
-`run` is re-entrant. A bare (top-level) call opens a real `db.transaction`. A nested call (a `TransactionContext` already in scope) opens a real **savepoint** on the ambient transaction. A nested failure that the caller **catches** rolls back only to the savepoint, leaving the outer unit of work free to commit; an **uncaught** nested failure propagates and rolls the whole thing back. This gives callers a per-call-site choice — is a sub-operation's failure fatal to the whole unit of work, or recoverable? — that a flatten-into-parent strategy could not express.
+`run` is re-entrant, because the SQL client's own transaction wrapper is depth-aware. A bare (top-level) call emits `BEGIN`. A nested call (a transaction connection already in scope) opens a real **savepoint** on it. A nested failure that the caller **catches** rolls back only to the savepoint, leaving the outer unit of work free to commit; an **uncaught** nested failure propagates and rolls the whole thing back. This gives callers a per-call-site choice — is a sub-operation's failure fatal to the whole unit of work, or recoverable? — that a flatten-into-parent strategy could not express.
 
 ### One bus; the subscription picks the consistency model
 
@@ -99,7 +99,7 @@ const dispatch: DomainEventBusShape["dispatch"] = (events) =>
   });
 ```
 
-Because immediate handlers run in the publisher's fiber, they inherit `TransactionContext`: a subscriber's write joins the publisher's transaction, and its failure propagates out of `dispatch`, up through the unit of work, and rolls the transaction back. That is the right surface when two aggregates are one logical unit.
+Because immediate handlers run in the publisher's fiber, they inherit its transaction connection: a subscriber's write joins the publisher's transaction, and its failure propagates out of `dispatch`, up through the unit of work, and rolls the transaction back. That is the right surface when two aggregates are one logical unit.
 
 Everything is handed over, unconditionally, and **before** the first immediate handler runs. A dispatch that forgot its boundary is therefore reported while it is still whole rather than after half of it has executed, and nothing is lost by taking the events early: a boundary that does not succeed never drains what it took. The **outermost** `run` drains what it holds **after** its transaction commits, each after-commit handler through its own `run`, so each gets a fresh transaction and its own scope with its failure isolated. Giving a handler its own scope rather than a bare transaction is what lets a reaction publish events of its own; it also means a cycle among reactions would loop, which is inherent to any at-least-once relay and is the author's to avoid.
 
@@ -164,7 +164,7 @@ Two things improved on the way. The sink resolves the bus at defer time and buff
 - Nested units of work gain a recoverable-failure option via savepoints; flows that want all-or-nothing simply let the nested failure propagate.
 - A forgotten `withUnitOfWork` is caught at dispatch (a defect) rather than producing an out-of-transaction subscriber run or a silently dropped after-commit reaction.
 - Slow immediate subscribers slow their publishers — accepted, since they are part of the same logical operation.
-- Use-case unit tests don't need a database: the pass-through unit of work runs over an in-memory driver and fake repositories ignore `TransactionContext`.
+- Use-case unit tests don't need a database: the pass-through unit of work runs over an in-memory driver and fake repositories never reach for a connection.
 - The in-memory flush is **lossy on a crash between commit and flush** — if the process dies after the transaction commits but before the buffer drains, those after-commit reactions are lost. Accepted for now; the durable replacement is the deferred outbox below. (A similar at-most-once window exists for immediate subscribers on process death between commit and HTTP response; mitigated by idempotent subscribers and deterministic upstream ids.)
 
 ## Deferred: transactional outbox and durable process managers
@@ -221,7 +221,7 @@ The pattern is enforced by the `interface-events-isolation` dep-cruiser rule, a 
 - **Two buses, the publisher choosing between them.** How this was first built, and reversed. It put the consistency decision on the party that must not know its consumers, so one event could not serve two reactions with different needs; and because both the publisher and every subscriber named a bus, the two had to agree with nothing checking that they did. A subscriber on the wrong bus was a silent no-op.
 - **A distinct `IntegrationEvent` type family.** Rejected — a parallel type hierarchy would double the event definitions without buying clarity. Note this leaves the term free for what the literature means by it: a versioned cross-boundary contract, which this package may want later and which is not a delivery mode.
 - **Positional dispatch as the post-commit mechanism.** Rejected; see "One bus" above.
-- **Pub/sub-backed immediate delivery with forked subscribers.** Rejected — the delivery model precludes the subscriber inheriting `TransactionContext` from the publisher, which is exactly the property `subscribe` needs.
+- **Pub/sub-backed immediate delivery with forked subscribers.** Rejected — the delivery model precludes the subscriber inheriting the publisher's transaction connection, which is exactly the property `subscribe` needs.
 - **Skip the unit-of-work abstraction; open transactions directly in use cases.** Rejected — it forces use cases to depend on the database service, which the unit-test fakes don't provide.
 - **Flatten nested runs into the parent transaction.** Rejected — flatten cannot express a recoverable sub-operation, and the database already supports savepoints.
 - **Fail-soft immediate subscribers** (a failed `subscribe` handler logs and the publisher commits anyway). Rejected — that is the partial-failure-with-logged-silence behavior that surface exists to prevent. A reaction that _should_ tolerate failure uses `subscribeAfterCommit`.
@@ -230,5 +230,5 @@ The pattern is enforced by the `interface-events-isolation` dep-cruiser rule, a 
 ## Related
 
 - ADR-0003 (events as values) — both buses carry the same value-typed `DomainEvent`.
-- ADR-0005 (repository pattern) — the per-call `TransactionContext` check is what makes transaction and savepoint joining automatic for repositories.
+- ADR-0005 (repository pattern) — the client's per-statement connection lookup is what makes transaction and savepoint joining automatic for repositories.
 - ADR-0009 (testing) — the pass-through unit of work, recording event bus, and the integration tests that exercise the savepoint and post-commit-drain semantics.

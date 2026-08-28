@@ -71,12 +71,18 @@ match, linted, and asserted on. `pnpm lint:rules` runs them, and CI runs it
 beside `pnpm lint`.
 
 The probes justified themselves immediately by finding a live vacuity that
-pre-dated this migration and behaved identically under ESLint:
-`no-cross-schema-slonik-access` matches only a bare `sql` tag, while every
-server SQL site uses `sql.type(Schema)`, and its `FROM` pattern cannot match a
-quoted schema — which ADR-0020 requires for the `user` schema. ADR-0020's static
-enforcement is therefore not currently effective on production code. That is
-tracked as its own concern; it is not a regression from this change.
+pre-dated this migration and behaved identically under ESLint: the third-party
+`no-cross-schema-slonik-access` matched only a bare `sql` tag, while every
+server SQL site was `sql.type(Schema)`, and its `FROM` pattern could not match a
+quoted schema — which ADR-0020 requires for the `user` schema. ADR-0020 was
+therefore not statically enforced at all.
+
+It is now. The rule is a local one (`local/no-cross-schema-sql-access`) that
+understands quoted identifiers, knows a module can own a schema under a
+different name, and does not mistake `unnest(...)` or a CTE for a table. The
+third-party plugin is gone. Two probes cover it — a cross-schema read and an
+unqualified table — because a rule this easy to write vacuously is exactly the
+kind the probes exist for.
 
 ### The Effect rules, and why TypeScript stays on 5
 

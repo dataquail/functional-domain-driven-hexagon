@@ -52,7 +52,6 @@
     "@effect/language-service": "0.85.1",
     "@effect/tsgo": "^0.36.1",
     "@effect/vitest": "4.0.0-beta.94",
-    "@synapsestudios/eslint-plugin-data-boundaries": "^2.0.4",
     "@types/node": "^25.9.4",
     "@typescript/native": "npm:typescript@7.0.2",
     "babel-plugin-annotate-pure-calls": "^0.4.0",

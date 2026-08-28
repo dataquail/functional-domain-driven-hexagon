@@ -67,7 +67,7 @@ The `Criteria` AST has only **root-level scalar** nodes (`Eq`, `IsNull`, `IsNotN
 
 ### Live implementation
 
-The live implementation lives in `infrastructure/repositories/<feature>.repository-live.ts` as a `Layer` that depends on the shared `Database` service. Every method is built via the database's `makeQuery` helper, which automatically joins any active transaction context (see ADR-0007). A read runs `SELECT <projection> FROM <tables/joins> WHERE ${criteriaToWhere(spec.criteria, columns)}` — the repo owns everything but the `WHERE`. Database-level errors are translated at this boundary; a transient outage surfaces as `PersistenceUnavailable`, and non-domain failures drop to defects (`Effect.die`).
+The live implementation lives in `infrastructure/repositories/<feature>.repository-live.ts` as a `Layer` that depends on the shared `Database` service. Every method is a tagged-template statement off the shared client, which joins any active transaction automatically (see ADR-0007). A read runs `SELECT <projection> FROM <tables/joins> WHERE ${criteriaToWhere(sql, spec.criteria, columns)}` — the repo owns everything but the `WHERE` — and decodes its rows through the row schema at the boundary. Database-level errors are translated at this boundary; a transient outage surfaces as `PersistenceUnavailable`, and non-domain failures drop to defects (`Effect.die`).
 
 ### Fake implementation
 
@@ -101,7 +101,7 @@ Static analysis allows test files in `commands/` and `queries/` to import from `
 
 - **Cardinality-explicit keyed finders** (`findOneById`, `findManyByOrganizationId`, `findOneOpenBy…`) — the previous decision. Rejected — every new variant added a port method plus a bespoke `WHERE`, and the same predicate expressed in the fake (in memory) and the live (as SQL) drifted. The specification collapses both into one object.
 - **Query-object specifications that own the whole query** (FROM/JOIN/projection). Rejected — a spec that knows table and column layout leaks persistence into the domain and re-introduces an ORM. The spec owns only the predicate; the repository owns the physical query.
-- **No repository abstraction; use cases call `db.execute(sql...)` directly.** Rejected — couples the domain to SQL, prevents fake-based unit tests, and concentrates persistence knowledge at every call site.
+- **No repository abstraction; use cases write SQL directly.** Rejected — couples the domain to SQL, prevents fake-based unit tests, and concentrates persistence knowledge at every call site.
 - **Generic `Repository<T>` base class** with CRUD operations. Rejected — writes stay per-aggregate and honest; only the read surface (`findOne`/`findMany` over a spec) is uniform.
 - **ORM-managed entities** (proxies / change-tracking). Rejected — leaks persistence concerns into the domain via lazy-loading and identity-map semantics.
 - **Domain-verb methods on the port** (`repo.creditFunds(...)`). Rejected — that is business logic; it belongs on the aggregate's `RootOps`. The `dumb-repository-ports` rule rejects it by name.

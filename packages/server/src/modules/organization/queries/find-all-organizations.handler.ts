@@ -19,10 +19,9 @@ const toView = (row: RowSchemas.OrganizationRow): FindAllOrganizationsView => ({
   deletedAt: row.deleted_at,
 });
 
-// `includeDeleted` toggles the tombstone filter. Slonik's tag template
-// doesn't compose well with conditional WHERE clauses so the two
-// branches are parallel; the query is small enough that duplication
-// reads better than abstracting.
+// `includeDeleted` toggles the tombstone filter. The two branches are written
+// out rather than composed: the query is small enough that duplication reads
+// better than a conditional WHERE fragment.
 export const findAllOrganizationsHandler = Effect.fn("findAllOrganizationsHandler")(function* (
   query: FindAllOrganizationsPayload,
 ) {
