@@ -1,9 +1,10 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Schema from "effect/Schema";
 import { beforeEach } from "vitest";
 
 import { TestDatabaseLive, truncate } from "../test-utils/test-database.js";
@@ -11,51 +12,55 @@ import { purgeExpiredSessions } from "./purge-expired-sessions.js";
 
 const userId = "11111111-1111-1111-1111-111111111111";
 
-const seedUser = Effect.gen(function* () {
-  const db = yield* Database.Database;
-  yield* db.execute((client) =>
-    client.query(sql.unsafe`
-      INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
-      VALUES (${userId}, 'admin@example.com', 'N/A', 'N/A', 'N/A', now(), now())
-    `),
-  );
-}).pipe(Effect.orDie);
+const CountRow = Schema.Struct({ value: Schema.Number });
+const IdRow = Schema.Struct({ id: Schema.String });
+
+const seedUser = Effect.flatMap(
+  Database.Database,
+  (sql) => sql`
+    INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
+    VALUES (${userId}, 'admin@example.com', 'N/A', 'N/A', 'N/A', now(), now())
+  `,
+).pipe(Effect.orDie);
 
 type SessionShape = {
   readonly id: string;
-  readonly expiresAtSql: string;
-  readonly absoluteExpiresAtSql: string;
-  readonly revokedAtSql: string | null;
+  readonly expiresAt: string;
+  readonly absoluteExpiresAt: string;
+  readonly revokedAt: string | null;
 };
 
 const seedSession = (s: SessionShape) =>
-  Effect.flatMap(Database.Database, (db) =>
-    db.execute((client) =>
-      client.query(sql.unsafe`
-        INSERT INTO auth.sessions (id, user_id, subject, expires_at, absolute_expires_at, revoked_at, created_at, last_used_at)
-        VALUES (
-          ${s.id},
-          ${userId},
-          'zitadel-sub',
-          ${sql.unsafe`${sql.literalValue(s.expiresAtSql)}::timestamptz`},
-          ${sql.unsafe`${sql.literalValue(s.absoluteExpiresAtSql)}::timestamptz`},
-          ${s.revokedAtSql === null ? sql.unsafe`NULL` : sql.unsafe`${sql.literalValue(s.revokedAtSql)}::timestamptz`},
-          now(),
-          now()
-        )
-      `),
-    ),
+  Effect.flatMap(
+    Database.Database,
+    (sql) => sql`
+      INSERT INTO auth.sessions (id, user_id, subject, expires_at, absolute_expires_at, revoked_at, created_at, last_used_at)
+      VALUES (
+        ${s.id},
+        ${userId},
+        'zitadel-sub',
+        ${s.expiresAt}::timestamptz,
+        ${s.absoluteExpiresAt}::timestamptz,
+        ${s.revokedAt}::timestamptz,
+        now(),
+        now()
+      )
+    `,
   ).pipe(Effect.orDie);
 
-const countSessions = Effect.flatMap(Database.Database, (db) =>
-  db.execute((client) => client.oneFirst(sql.unsafe`SELECT count(*)::int FROM auth.sessions`)),
-).pipe(Effect.orDie) as Effect.Effect<number, never, Database.Database>;
+const countSessions = Effect.flatMap(Database.Database, (sql) =>
+  sql`SELECT count(*)::int AS value FROM auth.sessions`.pipe(Database.row(CountRow)),
+).pipe(
+  Effect.map((row) => row.value),
+  Effect.orDie,
+);
 
-const findSessionIds = Effect.flatMap(Database.Database, (db) =>
-  db.execute((client) =>
-    client.anyFirst(sql.unsafe`SELECT id::text FROM auth.sessions ORDER BY id`),
-  ),
-).pipe(Effect.orDie) as Effect.Effect<ReadonlyArray<string>, never, Database.Database>;
+const findSessionIds = Effect.flatMap(Database.Database, (sql) =>
+  sql`SELECT id::text AS id FROM auth.sessions ORDER BY id`.pipe(Database.rows(IdRow)),
+).pipe(
+  Effect.map((rows) => rows.map((row) => row.id)),
+  Effect.orDie,
+);
 
 const TestLayer = Layer.provideMerge(Layer.empty, TestDatabaseLive);
 
@@ -73,15 +78,15 @@ suite("purgeExpiredSessions (integration)", () => {
       yield* seedUser;
       yield* seedSession({
         id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-        expiresAtSql: "1999-01-01T00:00:00Z",
-        absoluteExpiresAtSql: "1999-01-02T00:00:00Z",
-        revokedAtSql: null,
+        expiresAt: "1999-01-01T00:00:00Z",
+        absoluteExpiresAt: "1999-01-02T00:00:00Z",
+        revokedAt: null,
       });
       yield* seedSession({
         id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-        expiresAtSql: "2099-01-01T00:00:00Z",
-        absoluteExpiresAtSql: "2099-01-02T00:00:00Z",
-        revokedAtSql: null,
+        expiresAt: "2099-01-01T00:00:00Z",
+        absoluteExpiresAt: "2099-01-02T00:00:00Z",
+        revokedAt: null,
       });
 
       const result = yield* purgeExpiredSessions;
@@ -101,14 +106,14 @@ suite("purgeExpiredSessions (integration)", () => {
         // Revoked beyond the 7-day audit window — should be purged.
         yield* seedSession({
           id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
-          expiresAtSql: "2099-01-01T00:00:00Z",
-          absoluteExpiresAtSql: "2099-01-02T00:00:00Z",
-          revokedAtSql: "1999-01-01T00:00:00Z",
+          expiresAt: "2099-01-01T00:00:00Z",
+          absoluteExpiresAt: "2099-01-02T00:00:00Z",
+          revokedAt: "1999-01-01T00:00:00Z",
         });
         // Revoked recently (1 hour ago) — within grace, should remain.
-        yield* Effect.flatMap(Database.Database, (db) =>
-          db.execute((client) =>
-            client.query(sql.unsafe`
+        yield* Effect.flatMap(
+          Database.Database,
+          (sql) => sql`
               INSERT INTO auth.sessions (id, user_id, subject, expires_at, absolute_expires_at, revoked_at, created_at, last_used_at)
               VALUES (
                 'dddddddd-dddd-dddd-dddd-dddddddddddd',
@@ -120,15 +125,14 @@ suite("purgeExpiredSessions (integration)", () => {
                 now(),
                 now()
               )
-            `),
-          ),
+            `,
         ).pipe(Effect.orDie);
         // Unrevoked, far-future expiry — should remain.
         yield* seedSession({
           id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
-          expiresAtSql: "2099-01-01T00:00:00Z",
-          absoluteExpiresAtSql: "2099-01-02T00:00:00Z",
-          revokedAtSql: null,
+          expiresAt: "2099-01-01T00:00:00Z",
+          absoluteExpiresAt: "2099-01-02T00:00:00Z",
+          revokedAt: null,
         });
 
         const result = yield* purgeExpiredSessions;

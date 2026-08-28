@@ -3,7 +3,7 @@ import { deepStrictEqual, ok } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -26,17 +26,13 @@ suite("GET /admin/orgs (integration)", () => {
   );
 
   const seedOrgs = Effect.gen(function* () {
-    const db = yield* Database.Database;
-    yield* db
-      .execute((c) =>
-        c.query(sql.unsafe`
+    const sql = yield* Database.Database;
+    yield* sql`
           INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
           VALUES
             ('11111111-1111-1111-1111-111111111111', 'Acme', now(), now(), null),
             ('22222222-2222-2222-2222-222222222222', 'Beta', now(), now(), now())
-        `),
-      )
-      .pipe(Effect.orDie);
+        `.pipe(Effect.orDie);
   });
 
   it("returns created orgs (active-only by default)", async () => {

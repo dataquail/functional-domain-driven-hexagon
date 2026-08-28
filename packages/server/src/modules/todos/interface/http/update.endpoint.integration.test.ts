@@ -3,7 +3,7 @@ import { deepStrictEqual, ok } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import { OrganizationContract, TodosContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -133,23 +133,15 @@ nonMemberSuite("PUT /orgs/:orgId/todos/:id (integration, non-member caller)", ()
         // so the denial comes from the policy rather than from NotFound.
         const orgId = "11111111-1111-1111-1111-111111111111" as never;
         const todoId = "33333333-3333-3333-3333-333333333333" as never;
-        const db = yield* Database.Database;
-        yield* db
-          .execute((c) =>
-            c.query(sql.unsafe`
+        const sql = yield* Database.Database;
+        yield* sql`
               INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
               VALUES (${orgId}, 'Acme', now(), now(), null)
-            `),
-          )
-          .pipe(Effect.orDie);
-        yield* db
-          .execute((c) =>
-            c.query(sql.unsafe`
+            `.pipe(Effect.orDie);
+        yield* sql`
               INSERT INTO todos.todos (id, organization_id, title, completed, created_at, updated_at)
               VALUES (${todoId}, ${orgId}, 'Someone else''s todo', false, now(), now())
-            `),
-          )
-          .pipe(Effect.orDie);
+            `.pipe(Effect.orDie);
 
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(

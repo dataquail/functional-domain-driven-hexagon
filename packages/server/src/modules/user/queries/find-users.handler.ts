@@ -1,4 +1,4 @@
-import { Database, RowSchemas, sql } from "@org/database/index";
+import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
@@ -9,7 +9,7 @@ import {
 import { UserId } from "@/platform/ids/user-id.js";
 import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
-const CountRowStd = Schema.toStandardSchemaV1(Schema.Struct({ value: Schema.Number }));
+const CountRow = Schema.Struct({ value: Schema.Number });
 
 const toUserView = (row: RowSchemas.UserRow): FindUsersUserView => ({
   id: UserId.make(row.id),
@@ -23,27 +23,21 @@ const toUserView = (row: RowSchemas.UserRow): FindUsersUserView => ({
 });
 
 export const findUsersHandler = Effect.fn("findUsersHandler")(function* (query: FindUsersPayload) {
-  const db = yield* Database.Database;
+  const sql = yield* Database.Database;
   const offset = (query.page - 1) * query.pageSize;
 
-  const result = yield* db
-    .makeQuery((execute) =>
-      execute((client) =>
-        Promise.all([
-          client.any(sql.type(RowSchemas.UserRowStd)`
-            SELECT * FROM "user".users
-            ORDER BY created_at DESC
-            LIMIT ${query.pageSize} OFFSET ${offset}
-          `),
-          client.one(sql.type(CountRowStd)`
-            SELECT COUNT(*)::int AS value FROM "user".users
-          `),
-        ]),
-      ),
-    )()
-    .pipe(translateDatabaseErrors);
-
-  const [rows, countRow] = result;
+  // Sequential, not concurrent: inside a unit of work both statements share the
+  // ambient transaction connection, which cannot serve two queries at once.
+  const [rows, countRow] = yield* Effect.all([
+    sql`
+      SELECT * FROM "user".users
+      ORDER BY created_at DESC
+      LIMIT ${query.pageSize} OFFSET ${offset}
+    `.pipe(Database.rows(RowSchemas.UserRow)),
+    sql`
+      SELECT COUNT(*)::int AS value FROM "user".users
+    `.pipe(Database.row(CountRow)),
+  ]).pipe(translateDatabaseErrors);
 
   return {
     users: rows.map(toUserView),

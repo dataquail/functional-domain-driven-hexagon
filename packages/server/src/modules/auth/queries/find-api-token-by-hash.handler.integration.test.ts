@@ -1,7 +1,7 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -34,15 +34,11 @@ const past = DateTime.makeUnsafe(new Date("2020-01-01T00:00:00Z"));
 const TestLayer = ApiTokenRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
 const seedUser = Effect.gen(function* () {
-  const db = yield* Database.Database;
-  yield* db
-    .execute((client) =>
-      client.query(sql.unsafe`
+  const sql = yield* Database.Database;
+  yield* sql`
         INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
         VALUES (${userId}, 'owner@example.com', 'USA', '123 Main St', '12345', now(), now())
-      `),
-    )
-    .pipe(Effect.orDie);
+      `.pipe(Effect.orDie);
 });
 
 const insert = (opts: { expiresAt: DateTime.Utc | null; revokedAt?: DateTime.Utc }) =>
@@ -63,15 +59,11 @@ const insert = (opts: { expiresAt: DateTime.Utc | null; revokedAt?: DateTime.Utc
     if (revokedAt !== undefined) {
       // Revocation isn't a mint-time concern, and the live repo's write
       // surface doesn't expose it — stamp `revoked_at` directly.
-      const db = yield* Database.Database;
-      yield* db
-        .execute((client) =>
-          client.query(sql.unsafe`
-            UPDATE auth.api_tokens SET revoked_at = ${sql.timestamp(DateTime.toDate(revokedAt))}
+      const sql = yield* Database.Database;
+      yield* sql`
+            UPDATE auth.api_tokens SET revoked_at = ${DateTime.toDate(revokedAt)}
             WHERE id = ${apiTokenId}
-          `),
-        )
-        .pipe(Effect.orDie);
+          `.pipe(Effect.orDie);
     }
   });
 

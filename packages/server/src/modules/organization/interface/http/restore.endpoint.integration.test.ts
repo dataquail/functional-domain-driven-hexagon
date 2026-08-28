@@ -3,7 +3,7 @@ import { ok } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -15,9 +15,7 @@ import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
-const DeletedAtRowStd = Schema.toStandardSchemaV1(
-  Schema.Struct({ deleted_at: Schema.NullOr(Schema.DateTimeUtcFromDate) }),
-);
+const DeletedAtRow = Schema.Struct({ deleted_at: Schema.NullOr(Schema.DateTimeUtcFromDate) });
 
 const suite = describe.sequential;
 
@@ -32,22 +30,11 @@ suite("POST /orgs/:id/restore (integration)", () => {
   const orgId = "11111111-1111-1111-1111-111111111111" as never;
   const seedOrg = (deleted: boolean) =>
     Effect.gen(function* () {
-      const db = yield* Database.Database;
-      yield* db
-        .execute((c) =>
-          c.query(
-            deleted
-              ? sql.unsafe`
-                  INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
-                  VALUES (${orgId}, 'Acme', now(), now(), now())
-                `
-              : sql.unsafe`
-                  INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
-                  VALUES (${orgId}, 'Acme', now(), now(), null)
-                `,
-          ),
-        )
-        .pipe(Effect.orDie);
+      const sql = yield* Database.Database;
+      yield* sql`
+        INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
+        VALUES (${orgId}, 'Acme', now(), now(), ${deleted ? sql`now()` : sql`null`})
+      `.pipe(Effect.orDie);
     });
 
   it("clears the tombstone", async () => {
@@ -56,14 +43,10 @@ suite("POST /orgs/:id/restore (integration)", () => {
         yield* seedOrg(true);
         const client = yield* HttpApiClient.make(Api);
         yield* client.organization.restore({ params: { id: orgId } });
-        const db = yield* Database.Database;
-        const rows = yield* db
-          .execute((c) =>
-            c.any(sql.type(DeletedAtRowStd)`
+        const sql = yield* Database.Database;
+        const rows = yield* sql`
               SELECT deleted_at FROM "organization".organizations WHERE id = ${orgId}
-            `),
-          )
-          .pipe(Effect.orDie);
+        `.pipe(Database.rows(DeletedAtRow), Effect.orDie);
         ok(rows[0]?.deleted_at === null);
       }),
     );
@@ -122,15 +105,11 @@ memberSuite("POST /orgs/:id/restore (integration, non-super-admin caller)", () =
     await run(
       Effect.gen(function* () {
         const orgId = "11111111-1111-1111-1111-111111111111" as never;
-        const db = yield* Database.Database;
-        yield* db
-          .execute((c) =>
-            c.query(sql.unsafe`
+        const sql = yield* Database.Database;
+        yield* sql`
               INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
               VALUES (${orgId}, 'Acme', now(), now(), now())
-            `),
-          )
-          .pipe(Effect.orDie);
+            `.pipe(Effect.orDie);
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(client.organization.restore({ params: { id: orgId } }));
         ok(Exit.isFailure(exit));

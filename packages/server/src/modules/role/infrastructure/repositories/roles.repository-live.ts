@@ -1,7 +1,6 @@
-import { Database, RowSchemas, sql } from "@org/database/index";
+import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 
 import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
 import { type RolesRoot } from "@/modules/role/domain/roles/roles.root.js";
@@ -13,67 +12,44 @@ import { translateDatabaseErrors } from "@/platform/translate-database-errors.js
 export const RolesRepositoryLive = Layer.effect(
   RolesRepository,
   Effect.gen(function* () {
-    const db = yield* Database.Database;
+    const sql = yield* Database.Database;
 
-    // Aggregate persistence: replace the user's row set with whatever
-    // the aggregate now holds. The DELETE + N INSERTs must run on the
-    // same connection to be atomic. `db.makeQuery`'s ambient-vs-pool
-    // resolution is per-call, so a bare invocation without an outer
-    // `TransactionContext` would spread the statements across separate
-    // pool connections and lose atomicity.
-    //
-    // Strategy: reuse `TransactionContext` if already in scope (the
-    // command handler wrapped us in `UnitOfWork.run`) so the writes
-    // compose with the outer transaction; otherwise open our own
-    // `db.transaction` so the repo is internally atomic even when
-    // called bare. Either way the statements share one connection.
-    const writeStatements = (roles: RolesRoot) =>
-      Effect.gen(function* () {
-        const tx = yield* Database.TransactionContext;
-        yield* tx((client) =>
-          client.query(sql.unsafe`
-            DELETE FROM platform.roles WHERE user_id = ${roles.userId}
-          `),
-        );
-        // One statement rather than one per role. `unnest` over an empty array
-        // yields zero rows, so the revoke-everything case needs no guard.
-        yield* tx((client) =>
-          client.query(sql.unsafe`
-            INSERT INTO platform.roles (user_id, role)
-            SELECT ${roles.userId}, role
-            FROM unnest(${sql.array(roles.roles, "text")}) AS role
-          `),
-        );
-      });
-
-    const upsertOne = (roles: RolesRoot) =>
-      Effect.serviceOption(Database.TransactionContext).pipe(
-        Effect.flatMap((existing) =>
-          Option.isSome(existing)
-            ? writeStatements(roles).pipe(Database.TransactionContext.provide(existing.value))
-            : db.transaction((tx) =>
-                writeStatements(roles).pipe(Database.TransactionContext.provide(tx)),
-              ),
-        ),
-        translateDatabaseErrors,
-        Effect.withSpan("RolesRepository.upsertOne"),
-      );
+    // Aggregate persistence: replace the user's row set with whatever the
+    // aggregate now holds. `withTransaction` is depth-aware — it joins the
+    // command's unit of work when one is open and opens its own transaction
+    // otherwise, so the DELETE and the INSERT are always atomic together.
+    const upsertOne = Effect.fn("RolesRepository.upsertOne")((roles: RolesRoot) =>
+      sql
+        .withTransaction(
+          Effect.gen(function* () {
+            yield* sql`DELETE FROM platform.roles WHERE user_id = ${roles.userId}`;
+            // One statement rather than one per role. `unnest` over an empty
+            // array yields zero rows, so the revoke-everything case needs no
+            // guard.
+            yield* sql`
+              INSERT INTO platform.roles (user_id, role)
+              SELECT ${roles.userId}, role
+              FROM unnest(${roles.roles}::text[]) AS role
+            `;
+          }),
+        )
+        .pipe(Database.mapSqlError, translateDatabaseErrors),
+    );
 
     // The spec pins the user id, so every matched row belongs to one aggregate;
     // the mapper groups them (or returns null for zero rows). The compiler
     // contributes only the WHERE — this repo owns the projection and, for a
     // multi-row aggregate, the reconstitution.
-    const findOne = db.makeQuery((execute, spec: Specification<RolesRoot>) =>
-      execute((client) =>
-        client.any(sql.type(RowSchemas.PlatformRoleRowStd)`
+    const findOne = Effect.fn("RolesRepository.findOne")((spec: Specification<RolesRoot>) =>
+      sql`
           SELECT user_id, role, granted_at
           FROM platform.roles
-          WHERE ${criteriaToWhere(spec.criteria, RoleMapper.columns)}
-        `),
-      ).pipe(
+          WHERE ${criteriaToWhere(sql, spec.criteria, RoleMapper.columns)}
+        `.pipe(
+        Database.rows(RowSchemas.PlatformRoleRow),
+
         Effect.map((rows) => RoleMapper.toDomain(rows)),
         translateDatabaseErrors,
-        Effect.withSpan("RolesRepository.findOne"),
       ),
     );
 

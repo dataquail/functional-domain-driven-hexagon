@@ -1,4 +1,4 @@
-import { Database, RowSchemas, sql } from "@org/database/index";
+import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
@@ -17,12 +17,11 @@ import * as SubscriptionMapper from "./subscription.mapper.js";
 export const SubscriptionRepositoryLive = Layer.effect(
   SubscriptionRepository,
   Effect.gen(function* () {
-    const db = yield* Database.Database;
+    const sql = yield* Database.Database;
 
-    const insertOne = db.makeQuery((execute, sub: SubscriptionRoot) => {
+    const insertOne = Effect.fn("SubscriptionRepository.insertOne")((sub: SubscriptionRoot) => {
       const row = SubscriptionMapper.toPersistence(sub);
-      return execute((client) =>
-        client.query(sql.unsafe`
+      return sql`
           INSERT INTO billing.subscriptions (
             id,
             organization_id,
@@ -39,13 +38,12 @@ export const SubscriptionRepositoryLive = Layer.effect(
             ${row.stripe_customer_id},
             ${row.stripe_subscription_id},
             ${row.status},
-            ${row.current_period_end === null ? null : sql.timestamp(row.current_period_end)},
-            ${sql.timestamp(row.created_at)},
-            ${sql.timestamp(row.updated_at)}
+            ${row.current_period_end},
+            ${row.created_at},
+            ${row.updated_at}
           )
-        `),
-      ).pipe(
-        Effect.asVoid,
+        `.pipe(
+        Database.exec,
         Effect.catchTag("DatabaseError", (e) =>
           e.type === "unique_violation"
             ? new SubscriptionAlreadyExistsForOrganization({
@@ -54,46 +52,37 @@ export const SubscriptionRepositoryLive = Layer.effect(
             : Effect.die(e),
         ),
         translatePersistenceUnavailable,
-        Effect.withSpan("SubscriptionRepository.insertOne"),
       );
     });
 
-    const updateOne = db.makeQuery((execute, sub: SubscriptionRoot) => {
+    const updateOne = Effect.fn("SubscriptionRepository.updateOne")((sub: SubscriptionRoot) => {
       const row = SubscriptionMapper.toPersistence(sub);
-      return execute((client) =>
-        client.query(sql.unsafe`
+      return sql`
           UPDATE billing.subscriptions
           SET
             status = ${row.status},
-            current_period_end = ${
-              row.current_period_end === null ? null : sql.timestamp(row.current_period_end)
-            },
-            updated_at = ${sql.timestamp(row.updated_at)}
+            current_period_end = ${row.current_period_end},
+            updated_at = ${row.updated_at}
           WHERE id = ${row.id}
-        `),
-      ).pipe(
-        Effect.asVoid,
-        translateDatabaseErrors,
-        Effect.withSpan("SubscriptionRepository.updateOne"),
-      );
+        `.pipe(Database.exec, translateDatabaseErrors);
     });
 
     // The spec contributes only the WHERE; the repository owns FROM and the
     // projection. `LIMIT 1` is safe because every spec used with findOne
     // selects at most one row (the unique organization_id, the unique
     // stripe_subscription_id).
-    const findOne = db.makeQuery((execute, spec: Specification<SubscriptionRoot>) =>
-      execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.SubscriptionRowStd)`
+    const findOne = Effect.fn("SubscriptionRepository.findOne")(
+      (spec: Specification<SubscriptionRoot>) =>
+        sql`
           SELECT * FROM billing.subscriptions
-          WHERE ${criteriaToWhere(spec.criteria, SubscriptionMapper.columns)}
+          WHERE ${criteriaToWhere(sql, spec.criteria, SubscriptionMapper.columns)}
           LIMIT 1
-        `),
-      ).pipe(
-        Effect.map((row) => (row === null ? null : SubscriptionMapper.toDomain(row))),
-        translateDatabaseErrors,
-        Effect.withSpan("SubscriptionRepository.findOne"),
-      ),
+        `.pipe(
+          Database.maybeRow(RowSchemas.SubscriptionRow),
+
+          Effect.map((row) => (row === null ? null : SubscriptionMapper.toDomain(row))),
+          translateDatabaseErrors,
+        ),
     );
 
     return SubscriptionRepository.of({

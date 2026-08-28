@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { SqlError } from "effect/unstable/sql/SqlError";
+import { type SqlError } from "effect/unstable/sql/SqlError";
 
 import { type Config, driverLayer } from "./pg-driver.js";
 

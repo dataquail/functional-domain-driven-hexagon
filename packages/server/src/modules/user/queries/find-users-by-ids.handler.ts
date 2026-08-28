@@ -1,4 +1,4 @@
-import { Database, RowSchemas, sql } from "@org/database/index";
+import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
 import { type FindUsersUserView } from "@/modules/user/queries/find-users.query.js";
@@ -21,17 +21,11 @@ export const findUsersByIdsHandler = Effect.fn("findUsersByIdsHandler")(function
   query: FindUsersByIdsPayload,
 ) {
   if (query.ids.length === 0) return [];
-  const db = yield* Database.Database;
-  const rows = yield* db
-    .makeQuery((execute) =>
-      execute((client) =>
-        client.any(sql.type(RowSchemas.UserRowStd)`
-          SELECT * FROM "user".users
-          WHERE id = ANY(${sql.array(query.ids, "uuid")})
-          ORDER BY created_at ASC
-        `),
-      ),
-    )()
-    .pipe(translateDatabaseErrors);
+  const sql = yield* Database.Database;
+  const rows = yield* sql`
+    SELECT * FROM "user".users
+    WHERE id = ANY(${query.ids}::uuid[])
+    ORDER BY created_at ASC
+  `.pipe(Database.rows(RowSchemas.UserRow), translateDatabaseErrors);
   return rows.map(toUserView);
 });

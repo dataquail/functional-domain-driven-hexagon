@@ -1,7 +1,7 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -32,24 +32,16 @@ const byPair = (u: UserId, o: OrganizationId) =>
 // organization.organizations(id) — seed both via raw SQL since neither
 // repository's barrel exposes its internals to a sibling integration test.
 const seedFks = Effect.gen(function* () {
-  const db = yield* Database.Database;
-  yield* db
-    .execute((client) =>
-      client.query(sql.unsafe`
+  const sql = yield* Database.Database;
+  yield* sql`
         INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
         VALUES (${userId}, 'alice@example.com', 'USA', '123 Main St', '12345', now(), now()),
                (${otherUserId}, 'bob@example.com', 'USA', '456 Main St', '12345', now(), now())
-      `),
-    )
-    .pipe(Effect.orDie);
-  yield* db
-    .execute((client) =>
-      client.query(sql.unsafe`
+      `.pipe(Effect.orDie);
+  yield* sql`
         INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
         VALUES (${organizationId}, 'Acme', now(), now(), NULL)
-      `),
-    )
-    .pipe(Effect.orDie);
+      `.pipe(Effect.orDie);
 });
 
 const TestLayer = MembershipRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));

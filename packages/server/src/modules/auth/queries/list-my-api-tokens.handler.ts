@@ -1,4 +1,4 @@
-import { Database, RowSchemas, sql } from "@org/database/index";
+import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
 import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
@@ -20,17 +20,13 @@ const toView = (row: RowSchemas.ApiTokenRow): ApiTokenView => ({
 export const listMyApiTokensHandler = Effect.fn("listMyApiTokensHandler")(function* (
   query: ListMyApiTokensPayload,
 ) {
-  const db = yield* Database.Database;
-  const rows = yield* db
-    .makeQuery((execute) =>
-      execute((client) =>
-        client.any(sql.type(RowSchemas.ApiTokenRowStd)`
+  const sql = yield* Database.Database;
+  const rows = yield* sql`
           SELECT * FROM auth.api_tokens
           WHERE user_id = ${query.userId} AND revoked_at IS NULL
           ORDER BY created_at DESC
-        `),
-      ),
-    )()
+        `
+    .pipe(Database.rows(RowSchemas.ApiTokenRow))
     .pipe(translateDatabaseErrors);
   return rows.map(toView);
 });

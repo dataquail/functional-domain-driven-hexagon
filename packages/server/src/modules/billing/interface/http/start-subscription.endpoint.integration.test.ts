@@ -3,7 +3,7 @@ import { deepStrictEqual, ok } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import { BillingContract, OrganizationContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -102,15 +102,11 @@ memberSuite("POST /orgs/:orgId/billing/subscriptions (non-admin caller)", () => 
         // Seed the org directly — going through the create endpoint as
         // the member caller would auto-grant them admin (creator becomes
         // admin per Phase 4), defeating the test.
-        const db = yield* Database.Database;
-        yield* db
-          .execute((c) =>
-            c.query(sql.unsafe`
+        const sql = yield* Database.Database;
+        yield* sql`
               INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
               VALUES (${orgId}, 'Acme', now(), now(), null)
-            `),
-          )
-          .pipe(Effect.orDie);
+            `.pipe(Effect.orDie);
 
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(

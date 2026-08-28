@@ -2,7 +2,7 @@ import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -23,27 +23,19 @@ const UNKNOWN_ORG_ID = "99999999-9999-9999-9999-999999999999" as never;
 const TARGET_ID = MEMBER_CALLER_ID as never;
 
 const seedOrg = Effect.gen(function* () {
-  const db = yield* Database.Database;
-  yield* db
-    .execute((c) =>
-      c.query(sql.unsafe`
+  const sql = yield* Database.Database;
+  yield* sql`
         INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
         VALUES (${ORG_ID}, 'Acme', now(), now(), null)
-      `),
-    )
-    .pipe(Effect.orDie);
+      `.pipe(Effect.orDie);
 });
 
 const seedTargetMembership = Effect.gen(function* () {
-  const db = yield* Database.Database;
-  yield* db
-    .execute((c) =>
-      c.query(sql.unsafe`
+  const sql = yield* Database.Database;
+  yield* sql`
         INSERT INTO "organization".memberships (user_id, organization_id, created_at)
         VALUES (${TARGET_ID}, ${ORG_ID}, now())
-      `),
-    )
-    .pipe(Effect.orDie);
+      `.pipe(Effect.orDie);
 });
 
 suite("DELETE /orgs/:orgId/members/:userId (integration, super-admin caller)", () => {

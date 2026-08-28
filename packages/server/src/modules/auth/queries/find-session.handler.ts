@@ -1,4 +1,4 @@
-import { Database, RowSchemas, sql } from "@org/database/index";
+import { Database, RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
@@ -18,16 +18,10 @@ import { translateDatabaseErrors } from "@/platform/translate-database-errors.js
 export const findSessionHandler = Effect.fn("findSessionHandler")(function* (
   query: FindSessionPayload,
 ) {
-  const db = yield* Database.Database;
-  const row = yield* db
-    .makeQuery((execute) =>
-      execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.SessionRowStd)`
-          SELECT * FROM auth.sessions WHERE id = ${query.sessionId}
-        `),
-      ),
-    )()
-    .pipe(translateDatabaseErrors);
+  const sql = yield* Database.Database;
+  const row = yield* sql`
+    SELECT * FROM auth.sessions WHERE id = ${query.sessionId}
+  `.pipe(Database.maybeRow(RowSchemas.SessionRow), translateDatabaseErrors);
   if (row === null) {
     return yield* new SessionNotFound({ sessionId: query.sessionId });
   }

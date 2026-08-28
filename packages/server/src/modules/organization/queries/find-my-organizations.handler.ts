@@ -1,4 +1,4 @@
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
@@ -20,7 +20,6 @@ const MyOrganizationRow = Schema.Struct({
   deleted_at: Schema.NullOr(Schema.DateTimeUtcFromDate),
   is_admin: Schema.Boolean,
 });
-const MyOrganizationRowStd = Schema.toStandardSchemaV1(MyOrganizationRow);
 
 const toView = (row: typeof MyOrganizationRow.Type): FindMyOrganizationsView => ({
   id: OrganizationId.make(row.id),
@@ -32,17 +31,14 @@ const toView = (row: typeof MyOrganizationRow.Type): FindMyOrganizationsView => 
 
 // All three tables live in the `organization` schema, so the joins/
 // subquery are intra-schema (allowed by ADR-0020's
-// `no-cross-schema-slonik-access` rule). Tombstoned orgs are filtered
+// cross-schema rule). Tombstoned orgs are filtered
 // out — a soft-deleted org should not appear in the caller's chooser.
 // `is_admin` is the caller's own `admin` OrganizationRole in each org.
 export const findMyOrganizationsHandler = Effect.fn("findMyOrganizationsHandler")(function* (
   query: FindMyOrganizationsPayload,
 ) {
-  const db = yield* Database.Database;
-  const rows = yield* db
-    .makeQuery((execute) =>
-      execute((client) =>
-        client.any(sql.type(MyOrganizationRowStd)`
+  const sql = yield* Database.Database;
+  const rows = yield* sql`
           SELECT
             o.*,
             EXISTS (
@@ -57,9 +53,8 @@ export const findMyOrganizationsHandler = Effect.fn("findMyOrganizationsHandler"
           WHERE m.user_id = ${query.userId}
             AND o.deleted_at IS NULL
           ORDER BY o.created_at DESC
-        `),
-      ),
-    )()
+        `
+    .pipe(Database.rows(MyOrganizationRow))
     .pipe(translateDatabaseErrors);
 
   return { organizations: rows.map(toView) };

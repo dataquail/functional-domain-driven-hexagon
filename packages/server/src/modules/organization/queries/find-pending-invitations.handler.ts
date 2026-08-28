@@ -1,4 +1,4 @@
-import { Database, RowSchemas, sql } from "@org/database/index";
+import { Database, RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
@@ -24,20 +24,16 @@ const toView = (row: RowSchemas.InvitationRow, now: DateTime.Utc): PendingInvita
 export const findPendingInvitationsHandler = Effect.fn("findPendingInvitationsHandler")(function* (
   query: FindPendingInvitationsPayload,
 ) {
-  const db = yield* Database.Database;
+  const sql = yield* Database.Database;
   const now = yield* DateTime.now;
-  const rows = yield* db
-    .makeQuery((execute) =>
-      execute((client) =>
-        client.any(sql.type(RowSchemas.InvitationRowStd)`
+  const rows = yield* sql`
           SELECT * FROM "organization".invitations
           WHERE organization_id = ${query.organizationId}
             AND accepted_at IS NULL
             AND revoked_at IS NULL
           ORDER BY created_at DESC
-        `),
-      ),
-    )()
+        `
+    .pipe(Database.rows(RowSchemas.InvitationRow))
     .pipe(translateDatabaseErrors);
   return rows.map((row) => toView(row, now));
 });

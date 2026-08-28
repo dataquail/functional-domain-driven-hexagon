@@ -1,4 +1,4 @@
-import { Database, RowSchemas, sql } from "@org/database/index";
+import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
@@ -17,23 +17,21 @@ import * as WalletMapper from "./wallet.mapper.js";
 export const WalletRepositoryLive = Layer.effect(
   WalletRepository,
   Effect.gen(function* () {
-    const db = yield* Database.Database;
+    const sql = yield* Database.Database;
 
-    const insertOne = db.makeQuery((execute, wallet: WalletRoot) => {
+    const insertOne = Effect.fn("WalletRepository.insertOne")((wallet: WalletRoot) => {
       const row = WalletMapper.toPersistence(wallet);
-      return execute((client) =>
-        client.query(sql.unsafe`
+      return sql`
           INSERT INTO wallet.wallets (id, organization_id, balance, created_at, updated_at)
           VALUES (
             ${row.id},
             ${row.organization_id},
             ${row.balance},
-            ${sql.timestamp(row.created_at)},
-            ${sql.timestamp(row.updated_at)}
+            ${row.created_at},
+            ${row.updated_at}
           )
-        `),
-      ).pipe(
-        Effect.asVoid,
+        `.pipe(
+        Database.exec,
         Effect.catchTag("DatabaseError", (e) =>
           e.type === "unique_violation"
             ? new WalletAlreadyExistsForOrganization({
@@ -42,24 +40,22 @@ export const WalletRepositoryLive = Layer.effect(
             : Effect.die(e),
         ),
         translatePersistenceUnavailable,
-        Effect.withSpan("WalletRepository.insertOne"),
       );
     });
 
     // The spec contributes only the WHERE; the repository owns FROM, projection,
     // and the `LIMIT 1` (every spec used with findOne selects at most one row —
     // the unique organization_id index guarantees at most one wallet per org).
-    const findOne = db.makeQuery((execute, spec: Specification<WalletRoot>) =>
-      execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.WalletRowStd)`
+    const findOne = Effect.fn("WalletRepository.findOne")((spec: Specification<WalletRoot>) =>
+      sql`
           SELECT * FROM wallet.wallets
-          WHERE ${criteriaToWhere(spec.criteria, WalletMapper.columns)}
+          WHERE ${criteriaToWhere(sql, spec.criteria, WalletMapper.columns)}
           LIMIT 1
-        `),
-      ).pipe(
+        `.pipe(
+        Database.maybeRow(RowSchemas.WalletRow),
+
         Effect.map((row) => (row === null ? null : WalletMapper.toDomain(row))),
         translateDatabaseErrors,
-        Effect.withSpan("WalletRepository.findOne"),
       ),
     );
 

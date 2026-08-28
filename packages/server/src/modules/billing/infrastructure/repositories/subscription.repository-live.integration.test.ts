@@ -1,7 +1,7 @@
 import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -48,15 +48,11 @@ const mk = (
 // module FK row.
 const seedOrgRow = (id: OrganizationId, name: string) =>
   Effect.gen(function* () {
-    const db = yield* Database.Database;
-    yield* db
-      .execute((c) =>
-        c.query(sql.unsafe`
+    const sql = yield* Database.Database;
+    yield* sql`
           INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
           VALUES (${id}, ${name}, NOW(), NOW(), null)
-        `),
-      )
-      .pipe(Effect.orDie);
+        `.pipe(Effect.orDie);
   });
 
 const TestLayer = SubscriptionRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));

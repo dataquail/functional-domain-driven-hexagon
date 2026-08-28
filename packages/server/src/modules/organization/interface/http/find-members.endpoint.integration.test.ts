@@ -2,7 +2,7 @@ import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -26,40 +26,24 @@ const ADMIN_MEMBER_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa" as never;
 // single-caller HTTP path can assemble a multi-member org (create-org
 // rejects super-admins, and accept needs the invitee's own session).
 const seedOrgWithMembers = Effect.gen(function* () {
-  const db = yield* Database.Database;
-  yield* db
-    .execute((c) =>
-      c.query(sql.unsafe`
+  const sql = yield* Database.Database;
+  yield* sql`
         INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
         VALUES (${ADMIN_MEMBER_ID}, 'admin-member@test.local', 'USA', '3 St', '00000', now(), now())
         ON CONFLICT (id) DO NOTHING
-      `),
-    )
-    .pipe(Effect.orDie);
-  yield* db
-    .execute((c) =>
-      c.query(sql.unsafe`
+      `.pipe(Effect.orDie);
+  yield* sql`
         INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
         VALUES (${ORG_ID}, 'Acme', now(), now(), null)
-      `),
-    )
-    .pipe(Effect.orDie);
-  yield* db
-    .execute((c) =>
-      c.query(sql.unsafe`
+      `.pipe(Effect.orDie);
+  yield* sql`
         INSERT INTO "organization".memberships (user_id, organization_id, created_at)
         VALUES (${MEMBER_CALLER_ID}, ${ORG_ID}, now()), (${ADMIN_MEMBER_ID}, ${ORG_ID}, now())
-      `),
-    )
-    .pipe(Effect.orDie);
-  yield* db
-    .execute((c) =>
-      c.query(sql.unsafe`
+      `.pipe(Effect.orDie);
+  yield* sql`
         INSERT INTO "organization".organization_roles (organization_id, user_id, role, issued_by, created_at)
         VALUES (${ORG_ID}, ${ADMIN_MEMBER_ID}, 'admin', ${SUPER_ADMIN_CALLER_ID}, now())
-      `),
-    )
-    .pipe(Effect.orDie);
+      `.pipe(Effect.orDie);
 });
 
 suite("GET /orgs/:orgId/members (integration, super-admin caller)", () => {
@@ -110,31 +94,23 @@ memberSuite("GET /orgs/:orgId/members (integration, plain-member caller)", () =>
   );
 
   const seedOrg = Effect.gen(function* () {
-    const db = yield* Database.Database;
-    yield* db
-      .execute((c) =>
-        c.query(sql.unsafe`
+    const sql = yield* Database.Database;
+    yield* sql`
           INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
           VALUES (${ORG_ID}, 'Acme', now(), now(), null)
-        `),
-      )
-      .pipe(Effect.orDie);
+        `.pipe(Effect.orDie);
   });
 
   it("lets a plain member (no admin role) read the roster", async () => {
     await run(
       Effect.gen(function* () {
         yield* seedOrg;
-        const db = yield* Database.Database;
+        const sql = yield* Database.Database;
         // The caller is a member but holds no `admin` role.
-        yield* db
-          .execute((c) =>
-            c.query(sql.unsafe`
+        yield* sql`
               INSERT INTO "organization".memberships (user_id, organization_id, created_at)
               VALUES (${MEMBER_CALLER_ID}, ${ORG_ID}, now())
-            `),
-          )
-          .pipe(Effect.orDie);
+            `.pipe(Effect.orDie);
 
         const client = yield* HttpApiClient.make(Api);
         const res = yield* client.organization.findMembers({ params: { orgId: ORG_ID } });

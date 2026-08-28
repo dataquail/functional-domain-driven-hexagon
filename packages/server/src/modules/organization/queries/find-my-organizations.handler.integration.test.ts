@@ -1,7 +1,7 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -30,16 +30,12 @@ const TestLayer = Layer.mergeAll(OrganizationRepositoryLive, MembershipRepositor
 );
 
 const seedUsers = Effect.gen(function* () {
-  const db = yield* Database.Database;
-  yield* db
-    .execute((client) =>
-      client.query(sql.unsafe`
+  const sql = yield* Database.Database;
+  yield* sql`
         INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
         VALUES (${aliceId}, 'alice@example.com', 'USA', '123 Main St', '12345', now(), now()),
                (${bobId}, 'bob@example.com', 'USA', '456 Main St', '12345', now(), now())
-      `),
-    )
-    .pipe(Effect.orDie);
+      `.pipe(Effect.orDie);
 });
 
 const suite = describe.sequential;
@@ -101,16 +97,12 @@ suite("findMyOrganizationsHandler (integration)", () => {
         MembershipRootOps.create({ userId: aliceId, organizationId: betaId, now }).membership,
       );
       // Alice holds the `admin` role in Acme only.
-      const db = yield* Database.Database;
-      yield* db
-        .execute((client) =>
-          client.query(sql.unsafe`
+      const sql = yield* Database.Database;
+      yield* sql`
             INSERT INTO "organization".organization_roles
               (organization_id, user_id, role, issued_by, created_at)
             VALUES (${acmeId}, ${aliceId}, 'admin', ${aliceId}, now())
-          `),
-        )
-        .pipe(Effect.orDie);
+          `.pipe(Effect.orDie);
 
       const result = yield* findMyOrganizationsHandler({ userId: aliceId });
       const isAdminByName = new Map(result.organizations.map((o) => [o.name, o.isAdmin]));

@@ -1,4 +1,4 @@
-import { Database, RowSchemas, sql } from "@org/database/index";
+import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
@@ -15,75 +15,58 @@ import { translateDatabaseErrors } from "@/platform/translate-database-errors.js
 export const MembershipRepositoryLive = Layer.effect(
   MembershipRepository,
   Effect.gen(function* () {
-    const db = yield* Database.Database;
+    const sql = yield* Database.Database;
 
     // Idempotent: re-driving a create for an existing (userId, orgId)
     // pair is a no-op (PK conflict ignored). Lets upstream commands
     // treat membership creation as safe to retry.
-    const insertOne = db.makeQuery((execute, membership: MembershipRoot) => {
+    const insertOne = Effect.fn("MembershipRepository.insertOne")((membership: MembershipRoot) => {
       const row = MembershipMapper.toPersistence(membership);
-      return execute((client) =>
-        client.query(sql.unsafe`
+      return sql`
           INSERT INTO "organization".memberships (user_id, organization_id, created_at)
           VALUES (
             ${row.user_id},
             ${row.organization_id},
-            ${sql.timestamp(row.created_at)}
+            ${row.created_at}
           )
           ON CONFLICT (user_id, organization_id) DO NOTHING
-        `),
-      ).pipe(
-        Effect.asVoid,
-        translateDatabaseErrors,
-        Effect.withSpan("MembershipRepository.insertOne"),
-      );
+        `.pipe(Database.exec, translateDatabaseErrors);
     });
 
-    const deleteRow = db.makeQuery(
-      (execute, args: { userId: UserId; organizationId: OrganizationId }) =>
-        execute((client) =>
-          client.query(sql.unsafe`
-            DELETE FROM "organization".memberships
-            WHERE user_id = ${args.userId}
-              AND organization_id = ${args.organizationId}
-          `),
-        ).pipe(
-          // `query.rowCount` is 0 when the row didn't exist — surface as
+    const deleteOne = Effect.fn("MembershipRepository.deleteOne")(
+      (userId: UserId, organizationId: OrganizationId) =>
+        sql`
+          DELETE FROM "organization".memberships
+          WHERE user_id = ${userId}
+            AND organization_id = ${organizationId}
+          RETURNING *
+        `.pipe(
+          Database.maybeRow(RowSchemas.MembershipRow),
+          // No returned row means it didn't exist — surface as
           // MembershipNotFound so the command layer can produce a 404.
-          Effect.flatMap((result) =>
-            result.rowCount === 0
-              ? new MembershipNotFound({
-                  userId: args.userId,
-                  organizationId: args.organizationId,
-                })
-              : Effect.void,
+          Effect.flatMap((row) =>
+            row === null ? new MembershipNotFound({ userId, organizationId }) : Effect.void,
           ),
           translateDatabaseErrors,
-          Effect.withSpan("MembershipRepository.deleteOne"),
         ),
     );
 
     // The spec contributes only the WHERE (the composite identity); the
     // repository owns FROM and projection. `LIMIT 1` is safe because the
     // composite key selects at most one row.
-    const findOne = db.makeQuery((execute, spec: Specification<MembershipRoot>) =>
-      execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.MembershipRowStd)`
+    const findOne = Effect.fn("MembershipRepository.findOne")(
+      (spec: Specification<MembershipRoot>) =>
+        sql`
           SELECT * FROM "organization".memberships
-          WHERE ${criteriaToWhere(spec.criteria, MembershipMapper.columns)}
+          WHERE ${criteriaToWhere(sql, spec.criteria, MembershipMapper.columns)}
           LIMIT 1
-        `),
-      ).pipe(
-        Effect.map((row) => (row === null ? null : MembershipMapper.toDomain(row))),
-        translateDatabaseErrors,
-        Effect.withSpan("MembershipRepository.findOne"),
-      ),
+        `.pipe(
+          Database.maybeRow(RowSchemas.MembershipRow),
+          Effect.map((row) => (row === null ? null : MembershipMapper.toDomain(row))),
+          translateDatabaseErrors,
+        ),
     );
 
-    return MembershipRepository.of({
-      insertOne,
-      deleteOne: (userId, organizationId) => deleteRow({ userId, organizationId }),
-      findOne,
-    });
+    return MembershipRepository.of({ insertOne, deleteOne, findOne });
   }),
 );
