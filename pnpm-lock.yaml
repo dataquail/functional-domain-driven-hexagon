@@ -130,9 +130,15 @@ importers:
 
   packages/acceptance:
     devDependencies:
+      '@effect/platform-node':
+        specifier: 4.0.0-beta.94
+        version: 4.0.0-beta.94(effect@4.0.0-beta.94)(ioredis@5.11.1)
       '@org/contracts':
         specifier: workspace:^
         version: link:../contracts/dist
+      '@org/database':
+        specifier: workspace:^
+        version: link:../database/dist
       '@org/test-drivers':
         specifier: workspace:^
         version: link:../test-drivers

@@ -1,12 +1,8 @@
-import * as fs from "node:fs/promises";
-import * as path from "node:path";
-import { fileURLToPath } from "node:url";
-
-import { Database, sql } from "@org/database/index";
+import * as NodeServices from "@effect/platform-node/NodeServices";
+import { Database, MIGRATIONS_DIRECTORY, resetAndMigrate } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Redacted from "effect/Redacted";
-import * as pg from "pg";
 
 const rawUrl = process.env.DATABASE_URL_TEST;
 export const TEST_DATABASE_URL: string | undefined =
@@ -35,11 +31,6 @@ const assertTestDbName = (url: string): string => {
   return url;
 };
 
-const migrationsFolder = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../../../database/migrations",
-);
-
 export const TestDatabaseLive =
   TEST_DATABASE_URL !== undefined
     ? Database.layer({
@@ -51,47 +42,21 @@ export const TestDatabaseLive =
         Effect.die(new Error("DATABASE_URL_TEST is not set")),
       ) as ReturnType<typeof Database.layer>);
 
-// Tests always migrate from scratch, so we drop every module schema and replay
-// the Flyway-named migration files in order. This intentionally avoids
-// Flyway's checksum/history semantics — those matter for production drift,
-// not for a per-run test database. Memoized so concurrent test files that
-// each call runMigrations in beforeAll don't race the destructive reset.
+// Tests always migrate from scratch: every module schema is dropped and the
+// migrations replayed. Memoized so concurrent test files that each call
+// runMigrations in beforeAll don't race the destructive reset.
 let migrationsPromise: Promise<void> | undefined;
-
-// Kept in sync with packages/database/migrations/V00*__create_schema_*.sql.
-// Each module owns its own schema (ADR-0020).
-const MODULE_SCHEMAS = [
-  "user",
-  "todos",
-  "wallet",
-  "auth",
-  "platform",
-  "organization",
-  "billing",
-] as const;
 
 const doRunMigrations = async (): Promise<void> => {
   if (TEST_DATABASE_URL === undefined) return;
-  assertTestDbName(TEST_DATABASE_URL);
-  const pool = new pg.Pool({ connectionString: TEST_DATABASE_URL });
-  try {
-    const dropList = MODULE_SCHEMAS.map((s) => `"${s}"`).join(", ");
-    await pool.query(`DROP SCHEMA IF EXISTS ${dropList} CASCADE;`);
-    const entries = await fs.readdir(migrationsFolder);
-    const sqlFiles = entries
-      .filter((f) => /^V\d+__.*\.sql$/.test(f))
-      .sort((a, b) => {
-        const na = Number(/^V(\d+)__/.exec(a)?.[1] ?? 0);
-        const nb = Number(/^V(\d+)__/.exec(b)?.[1] ?? 0);
-        return na - nb;
-      });
-    for (const file of sqlFiles) {
-      const body = await fs.readFile(path.join(migrationsFolder, file), "utf8");
-      await pool.query(body);
-    }
-  } finally {
-    await pool.end();
-  }
+  const url = Redacted.make(assertTestDbName(TEST_DATABASE_URL));
+  await Effect.runPromise(
+    resetAndMigrate({ url, ssl: false }, MIGRATIONS_DIRECTORY).pipe(
+      Effect.asVoid,
+      Effect.provide(NodeServices.layer),
+      Effect.orDie,
+    ),
+  );
 };
 
 export const runMigrations = (): Promise<void> => {
@@ -99,10 +64,9 @@ export const runMigrations = (): Promise<void> => {
   return migrationsPromise;
 };
 
-// Each table reference must be schema-qualified ("schema.table") so we can
-// build a "schema"."table" identifier. Cross-schema TRUNCATE CASCADE remains
-// the test seam — application code never crosses schemas (enforced by
-// no-cross-schema-slonik-access).
+// Each table reference must be schema-qualified ("schema.table"). Cross-schema
+// TRUNCATE CASCADE remains the test seam — application code never crosses
+// schemas (enforced by the cross-schema lint rule).
 const splitQualified = (qualified: string): readonly [string, string] => {
   const [schema, table, ...rest] = qualified.split(".");
   if (schema === undefined || table === undefined || rest.length > 0) {
@@ -115,11 +79,9 @@ const splitQualified = (qualified: string): readonly [string, string] => {
 
 export const truncate = (...tables: ReadonlyArray<string>) =>
   Effect.gen(function* () {
-    const db = yield* Database.Database;
+    const sql = yield* Database.Database;
     for (const qualified of tables) {
       const [schema, table] = splitQualified(qualified);
-      yield* db.execute((client) =>
-        client.query(sql.unsafe`TRUNCATE TABLE ${sql.identifier([schema, table])} CASCADE`),
-      );
+      yield* sql`TRUNCATE TABLE ${sql(`${schema}.${table}`)} CASCADE`;
     }
   }).pipe(Effect.orDie);

@@ -27,7 +27,7 @@ You do **not** need anything Zitadel-related installed on the host. Everything r
 
 ## What `pnpm bootstrap` does
 
-The script lives at [scripts/dev-bootstrap.mjs](../scripts/dev-bootstrap.mjs). It walks through the nine phases below in order; each phase's effect on disk is described so you can run any step by hand if you need to. The bootstrap script is idempotent at every phase — values already present are left alone.
+The script lives at [scripts/dev-bootstrap.mjs](../scripts/dev-bootstrap.mjs). It walks through the ten phases below in order; each phase's effect on disk is described so you can run any step by hand if you need to. The bootstrap script is idempotent at every phase — values already present are left alone.
 
 ### 1. Materialize `.env`
 
@@ -59,7 +59,22 @@ Two containers end up running, with `postgres` pulled in by `zitadel`'s `depends
 
 The compose command passes both `--config` (runtime) and `--steps` (FirstInstance) at the same yaml file. Without `--steps`, Zitadel silently ignores the `FirstInstance` block and the bootstrap PAT below is never generated.
 
-### 4. Wait for Zitadel to be ready
+### 4. Migrate the databases
+
+```sh
+pnpm --filter @org/database db:migrate
+pnpm --filter @org/database db:migrate:test
+```
+
+Applies every `packages/database/migrations/V*.sql` that the target database has
+not recorded yet, tracked in an `effect_sql_migrations` table (ADR-0011). Both
+databases are migrated because the integration suite reads
+`DATABASE_URL_TEST`. Idempotent — a second run reports no pending migrations.
+
+The seed in step 9 writes the admin row into `"user".users`, so the schema has to
+exist first.
+
+### 5. Wait for Zitadel to be ready
 
 ```sh
 curl -f http://localhost:8080/debug/ready
@@ -67,7 +82,7 @@ curl -f http://localhost:8080/debug/ready
 
 The bootstrap polls this endpoint every 2s with a 180s deadline. On a cold start Zitadel sometimes loses the race to the DB and exits on its first attempt — `restart: unless-stopped` in compose means it'll come back up automatically, but the wait window has to be patient.
 
-### 5. Wait for the bootstrap PAT
+### 6. Wait for the bootstrap PAT
 
 ```
 infra/zitadel/.machinekey/zitadel-bootstrap.pat
@@ -77,11 +92,11 @@ infra/zitadel/.machinekey/zitadel-bootstrap.pat
 
 The directory is gitignored. Re-running setup against an existing Zitadel does nothing here — `FirstInstance` only fires on a brand-new Zitadel database.
 
-### 6. Persist `ZITADEL_BOOTSTRAP_PAT`
+### 7. Persist `ZITADEL_BOOTSTRAP_PAT`
 
-The bootstrap reads the file from step 5 and writes it into `.env`. The seed script in step 8 reads either the env var or the file (whichever is present), so this is somewhat redundant — but having the value in `.env` makes the running server able to call back into Zitadel as the bootstrap user if we need that later.
+The bootstrap reads the file from step 6 and writes it into `.env`. The seed script in step 9 reads either the env var or the file (whichever is present), so this is somewhat redundant — but having the value in `.env` makes the running server able to call back into Zitadel as the bootstrap user if we need that later.
 
-### 7. Wait for the gRPC management API
+### 8. Wait for the gRPC management API
 
 ```sh
 curl -fsS -X POST http://localhost:8080/management/v1/projects/_search \
@@ -92,7 +107,7 @@ curl -fsS -X POST http://localhost:8080/management/v1/projects/_search \
 
 `/debug/ready` only reflects HTTP server health; the gRPC backend that backs `/management/*` can lag a few seconds behind on cold boots. Without this extra wait the seed sometimes races in and gets a 503 with `transport: connection refused`. The bootstrap polls `/management/v1/projects/_search` with the bootstrap PAT until it returns 200.
 
-### 8. Run the seed
+### 9. Run the seed
 
 ```sh
 docker compose --profile seed-zitadel up --abort-on-container-exit seed-zitadel
@@ -113,7 +128,7 @@ __seed__ ZITADEL_CLIENT_ID=<id> ZITADEL_CLIENT_SECRET=<secret>
 
 The bootstrap captures this line. On subsequent runs the line is omitted; the script handles that gracefully and doesn't touch `.env`.
 
-### 9. Persist `ZITADEL_CLIENT_ID` + `ZITADEL_CLIENT_SECRET`
+### 10. Persist `ZITADEL_CLIENT_ID` + `ZITADEL_CLIENT_SECRET`
 
 Parsed from the `__seed__` line and written to `.env`. If the seed didn't emit one (re-running against an already-configured Zitadel), the existing values in `.env` are left alone.
 

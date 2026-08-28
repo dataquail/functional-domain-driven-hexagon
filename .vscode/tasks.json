@@ -35,9 +35,9 @@
     },
     {
       "label": "Docker: Migrate (dev DB)",
-      "detail": "Run flyway migrations against effect-monorepo",
+      "detail": "Apply migrations to effect-monorepo",
       "type": "shell",
-      "command": "bash scripts/local-only.sh --skip docker-compose --profile migrate up flyway",
+      "command": "pnpm --filter @org/database db:migrate",
       "options": { "cwd": "${workspaceFolder}" },
       "presentation": {
         "reveal": "always",
@@ -48,9 +48,9 @@
     },
     {
       "label": "Docker: Migrate (test DB)",
-      "detail": "Run flyway migrations against effect-monorepo-test",
+      "detail": "Apply migrations to effect-monorepo-test",
       "type": "shell",
-      "command": "bash scripts/local-only.sh --skip docker-compose --profile migrate-test up flyway-test",
+      "command": "pnpm --filter @org/database db:migrate:test",
       "options": { "cwd": "${workspaceFolder}" },
       "presentation": {
         "reveal": "always",

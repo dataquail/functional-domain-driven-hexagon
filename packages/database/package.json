@@ -23,7 +23,7 @@
     "test": "vitest",
     "coverage": "vitest --coverage",
     "db:migrate": "tsx ./src/scripts/migrate.ts",
-    "db:migrate:test": "DATABASE_URL=$DATABASE_URL_TEST tsx ./src/scripts/migrate.ts",
+    "db:migrate:test": "tsx ./src/scripts/migrate.ts --test",
     "db:reset": "tsx ./src/scripts/reset-database.ts"
   },
   "dependencies": {

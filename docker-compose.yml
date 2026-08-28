@@ -24,40 +24,6 @@ services:
       timeout: 3s
       retries: 20
 
-  flyway:
-    image: flyway/flyway:10
-    command:
-      - -url=jdbc:postgresql://postgres:5432/effect-monorepo
-      - -user=postgres
-      - -password=postgres
-      - -connectRetries=10
-      - migrate
-    volumes:
-      - ./packages/database/migrations:/flyway/sql
-    depends_on:
-      - postgres
-    networks:
-      - jaeger-network
-    profiles:
-      - migrate
-
-  flyway-test:
-    image: flyway/flyway:10
-    command:
-      - -url=jdbc:postgresql://postgres:5432/effect-monorepo-test
-      - -user=postgres
-      - -password=postgres
-      - -connectRetries=10
-      - migrate
-    volumes:
-      - ./packages/database/migrations:/flyway/sql
-    depends_on:
-      - postgres
-    networks:
-      - jaeger-network
-    profiles:
-      - migrate-test
-
   zitadel:
     container_name: effect-monorepo-zitadel
     # Pinned for reproducibility; bump after checking https://github.com/zitadel/zitadel/releases

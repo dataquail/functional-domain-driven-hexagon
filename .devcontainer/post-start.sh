@@ -23,4 +23,10 @@ if ! (ss -ltn 2>/dev/null || netstat -ltn 2>/dev/null) | grep -q ":8080"; then
   echo "WARNING: nothing is listening on 8080 — sign-in will fail." >&2
 fi
 
+# Both databases, before provisioning: the Zitadel seed inserts an admin row
+# into the app DB and needs the schema to exist. Idempotent, so a restart is a
+# no-op.
+pnpm --filter @org/database db:migrate
+pnpm --filter @org/database db:migrate:test
+
 node scripts/codespaces-provision.mjs

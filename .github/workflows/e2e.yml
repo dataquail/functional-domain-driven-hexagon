@@ -72,13 +72,8 @@ jobs:
 
       - name: Apply database migrations
         env:
-          PGPASSWORD: postgres
-        run: |
-          set -euo pipefail
-          for f in packages/database/migrations/V*.sql; do
-            echo "Applying $f"
-            psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d effect-monorepo-test -f "$f"
-          done
+          DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/effect-monorepo-test
+        run: pnpm --filter @org/database db:migrate:test
 
       - name: Bootstrap Zitadel + .env
         env:
