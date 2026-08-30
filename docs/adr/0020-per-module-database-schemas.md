@@ -30,7 +30,7 @@ Each feature module owns a Postgres schema; application SQL addresses tables by 
 | `billing`      | `billing`      | `billing.subscriptions`, `billing.webhook_events`                                   |
 | `role`         | `platform`     | `platform.roles` (platform-level, cross-cutting)                                    |
 
-Migrations live in `packages/database/migrations/` as one-thing-per-file versioned SQL (ADR-0011): `V001__create_schema_user.sql`, `V007__create_table_user_users.sql`, etc. FK dependencies dictate the order — every `CREATE SCHEMA` lands before any `CREATE TABLE`, and any table that references another table's id (including cross-schema) is numbered after the referenced table.
+Migrations live in `packages/database/src/migrations/` as one-thing-per-file TypeScript modules (ADR-0011): `0001_create_schema_user.ts`, `0007_create_table_user_users.ts`, etc. FK dependencies dictate the order — every `CREATE SCHEMA` lands before any `CREATE TABLE`, and any table that references another table's id (including cross-schema) is numbered after the referenced table.
 
 ### All application SQL must be schema-qualified
 

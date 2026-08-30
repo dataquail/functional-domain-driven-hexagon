@@ -66,7 +66,7 @@ pnpm --filter @org/database db:migrate
 pnpm --filter @org/database db:migrate:test
 ```
 
-Applies every `packages/database/migrations/V*.sql` that the target database has
+Applies every migration in `packages/database/src/migrations/` that the target database has
 not recorded yet, tracked in an `effect_sql_migrations` table (ADR-0011). Both
 databases are migrated because the integration suite reads
 `DATABASE_URL_TEST`. Idempotent — a second run reports no pending migrations.

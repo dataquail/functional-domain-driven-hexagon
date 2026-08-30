@@ -1,5 +1,5 @@
 import * as NodeServices from "@effect/platform-node/NodeServices";
-import { Database, MIGRATIONS_DIRECTORY, resetAndMigrate } from "@org/database/index";
+import { Database, resetAndMigrate } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Redacted from "effect/Redacted";
@@ -56,7 +56,7 @@ const doRunMigrations = async (): Promise<void> => {
   if (TEST_DATABASE_URL === undefined) return;
   const url = Redacted.make(assertTestDbName(TEST_DATABASE_URL));
   await Effect.runPromise(
-    resetAndMigrate({ url, ssl: false }, MIGRATIONS_DIRECTORY).pipe(
+    resetAndMigrate({ url, ssl: false }).pipe(
       Effect.asVoid,
       Effect.provide(NodeServices.layer),
       Effect.orDie,

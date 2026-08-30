@@ -4,7 +4,7 @@ import { config as dotenv } from "dotenv";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 
-import { MIGRATIONS_DIRECTORY, runMigrations } from "../migrations.js";
+import { runMigrations } from "../migrator.js";
 
 dotenv({
   path: "../../.env",
@@ -16,7 +16,7 @@ const variable = process.argv.includes("--test") ? "DATABASE_URL_TEST" : "DATABA
 
 const migrate = Effect.gen(function* () {
   const url = yield* Config.redacted(variable);
-  const applied = yield* runMigrations({ url, ssl: false }, MIGRATIONS_DIRECTORY);
+  const applied = yield* runMigrations({ url, ssl: false });
   yield* applied.length === 0
     ? Effect.log(`No pending migrations (${variable})`)
     : Effect.log(`Applied ${applied.length} migration(s): ${applied.map(([, n]) => n).join(", ")}`);

@@ -1,5 +1,5 @@
 import * as NodeServices from "@effect/platform-node/NodeServices";
-import { MIGRATIONS_DIRECTORY, resetAndMigrate } from "@org/database/index";
+import { resetAndMigrate } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Redacted from "effect/Redacted";
 import pg from "pg";
@@ -24,7 +24,7 @@ const assertTestDbName = (url: string): string => {
 export const runMigrations = async (databaseUrl: string): Promise<void> => {
   const url = Redacted.make(assertTestDbName(databaseUrl));
   await Effect.runPromise(
-    resetAndMigrate({ url, ssl: false }, MIGRATIONS_DIRECTORY).pipe(
+    resetAndMigrate({ url, ssl: false }).pipe(
       Effect.asVoid,
       Effect.provide(NodeServices.layer),
       Effect.orDie,
