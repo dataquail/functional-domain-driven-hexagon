@@ -50,28 +50,29 @@ jobs:
       - uses: ./.github/actions/setup
       - run: pnpm lint:deps
 
-  server-unit:
-    name: Server unit tests
+  unit:
+    name: Unit tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup
-      - name: Run server, contracts, and database unit tests
-        run: pnpm -F @org/server -F @org/contracts -F @org/database run test --run
+      # One root workspace run rather than a job per package: coverage is a
+      # root-level concern in workspace mode, and only a root run attributes
+      # @org/contracts and @org/database to the suites that exercise them.
+      - name: Run the unit suite with coverage
+        run: pnpm test:coverage:unit
         env:
           NODE_OPTIONS: --max_old_space_size=8192
-
-  web-unit:
-    name: Web unit tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v6
-      - uses: ./.github/actions/setup
-      - run: pnpm -F @org/web run test --run
-        env:
-          NODE_OPTIONS: --max_old_space_size=8192
+      - name: Upload unit coverage blob
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-blob-unit
+          path: .vitest-reports/
+          # Vitest writes blobs to a dot-directory, and the default is to skip
+          # hidden paths — without this the upload silently matches nothing.
+          include-hidden-files: true
+          retention-days: 1
 
   storybook:
     name: Storybook build
@@ -85,3 +86,36 @@ jobs:
   integration:
     name: Integration
     uses: ./.github/workflows/integration.yml
+
+  coverage:
+    name: Coverage thresholds
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [unit, integration]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup
+      - name: Download coverage blobs
+        uses: actions/download-artifact@v8
+        with:
+          pattern: coverage-blob-*
+          merge-multiple: true
+          path: .vitest-reports/
+      # The unit and integration suites each miss code the other covers (HTTP
+      # endpoints are integration-only, command handlers unit-only), so the
+      # thresholds are checked here, against the merged number, and nowhere
+      # else. `vitest.config.ts` enables them only for a `--merge-reports` run.
+      - name: Merge coverage and check thresholds
+        run: pnpm coverage:merge
+        env:
+          NODE_OPTIONS: --max_old_space_size=8192
+      - name: Write coverage summary
+        if: always()
+        run: node scripts/coverage-step-summary.mjs
+      - name: Upload merged coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14

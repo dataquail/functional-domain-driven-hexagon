@@ -35,6 +35,18 @@ Tests requiring a real database are suffixed `.integration.test.ts`. The two sui
 
 Integration tests are **dumb — they do not self-skip.** The integration global-setup hard-fails: it asserts `DATABASE_URL_TEST` is set (and that its name contains `test`), then connects, so a missing or unreachable database aborts the whole run rather than silently skipping. Provide `DATABASE_URL_TEST` before running `pnpm test:integration`. A silent skip would let a coverage regression pass green; a hard failure cannot.
 
+### Coverage: one merged number, gated in CI
+
+Neither suite is gated on its own. HTTP endpoints are reachable only from the integration suite and command handlers only from the unit suite, so a per-suite threshold would have to be set low enough to accommodate code the other suite already covers — a gate that passes anything.
+
+Instead each suite emits a Vitest **blob** report, and a dedicated CI job merges the blobs into a single coverage report and checks the thresholds against that. The suites keep running as separate jobs (the unit job needs no database), and their coverage is combined afterwards rather than duplicated.
+
+Coverage configuration is **root-only**. In workspace mode a project config's `test.coverage` is ignored, and a per-package run discards every file outside that package's own root — which would attribute the shared contracts and database packages to nothing, even though the server suites are what exercise them. So the root config owns the included sources, the exclusions and the thresholds, and every coverage run is a root workspace run.
+
+Thresholds are a **ratchet, not an aspiration**: each floor sits a couple of points under what the merged suites actually reach, is global _and_ per package (so a gain in one package cannot mask a rot in another), and is raised when coverage rises. Lowering a floor to turn a red build green is the one move the ratchet exists to prevent; the fix is a test.
+
+Exclusion is reserved for code no Vitest suite can reach at all — process entrypoints, migration and reset scripts, `server-only` modules that cannot load in the jsdom tier, and in-memory fakes, which are production-graph files that only a test constructs and would otherwise credit the number with code no user runs. A view or endpoint that merely lacks a test is _not_ excluded; that is the gap the gate is for. Packages whose tests live at another tier (the Playwright acceptance suite, the Storybook build) are outside the measured set entirely rather than reported as zero.
+
 ### Test database safety
 
 The test infrastructure refuses to migrate or truncate any database whose name does not contain `test`:
@@ -72,6 +84,7 @@ HTTP integration tests use `useServerTestRuntime(["table1", "table2"])` from `te
 - The vast majority of tests run in milliseconds with no auxiliary infrastructure. A first-day contributor runs the full unit suite with nothing beyond `pnpm install`.
 - The integration suite is deliberate and separate — `pnpm test:integration` against a real Postgres — and cannot be run by accident, nor silently skipped.
 - Fake-vs-live drift is a real risk. Two mitigations: (1) the shared port type makes signature drift a compile error; (2) the fake has its own integration-style test exercising it through the same scenarios as the live implementation.
+- Coverage is a number the whole test strategy produces together, not a per-suite score, and a drop fails the build. The cost is one extra CI job and the discipline of raising floors rather than lowering them.
 - The HTTP E2E test for cross-module event subscribers is the only test that proves transactional event dispatch end-to-end. Treat it as load-bearing: if it gets disabled, that's a coverage regression even if every unit test passes — the _interaction_ between the unit of work, the synchronous event bus, and the live repositories is what makes ADR-0007 work in production.
 
 ## Alternatives considered
@@ -79,6 +92,8 @@ HTTP integration tests use `useServerTestRuntime(["table1", "table2"])` from `te
 - **All tests require a real database.** Rejected — makes the unit suite slow and discourages fine-grained tests.
 - **All tests use fakes.** Rejected — leaves no integration coverage of persistence or event dispatch; bugs that only surface against a real Postgres are invisible.
 - **Integration tests that self-skip when the DB is absent.** Rejected — a skip-when-unset toggle silently drops coverage; the hard-failing global-setup makes a missing DB a loud error, so "the integration suite ran" means it actually ran.
+- **A coverage threshold per suite.** Rejected — each suite is blind to what the other covers, so every floor would have to be set below the weaker view of the code, and the gate would stop detecting anything.
+- **A coverage threshold over the acceptance suite too.** Rejected — acceptance tests are reserved for the handful of most important behaviors, and a percentage target on them creates pressure to add breadth exactly where breadth is least affordable.
 - **Behavior-driven tests with Gherkin scenarios.** Rejected for this codebase — the indirection costs more than it pays back; plain `describe` / `it` is just as readable to engineers.
 
 ## Related
