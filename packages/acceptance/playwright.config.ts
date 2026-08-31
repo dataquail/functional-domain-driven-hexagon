@@ -121,6 +121,13 @@ export default defineConfig({
       name: "bff",
       command: "pnpm -F @org/server exec tsx src/server.ts",
       url: `${BFF_PROBE_URL}/auth/me`,
+      // The listening socket opens before the `request` handler is attached
+      // (effect builds `NodeHttpServer.layer` first, `HttpRouter.serve` last),
+      // and a request accepted in that window is never answered. Playwright's
+      // URL probe has no per-request timeout and retries serially, so one probe
+      // landing there stalls readiness until `timeout`. "Listening on" is logged
+      // after the handler is attached; `url` stays as the port-in-use guard.
+      wait: { stdout: /Listening on/ },
       cwd: "../../",
       env: {
         ...process.env,
