@@ -1,4 +1,5 @@
 coverage/
+.vitest-reports/
 *.tsbuildinfo
 node_modules/
 .DS_Store

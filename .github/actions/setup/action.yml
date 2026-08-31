@@ -21,7 +21,7 @@ runs:
     # @org/web's tsconfig paths and vitest aliases (matching the
     # runtime exports map). Locally `predev`/`prebuild` keep this
     # fresh; CI jobs don't run those, so build once here so every
-    # consuming job (lint, typecheck, web-unit, storybook) sees a
+    # consuming job (lint, typecheck, unit, storybook) sees a
     # populated packages/contracts/build/ tree.
     - name: Build @org/contracts
       shell: bash

@@ -54,5 +54,16 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup
-      - name: Run integration suite (server + jobs)
-        run: pnpm test:integration
+      # Two sequential root workspace runs (server, then jobs) rather than one
+      # run over both projects: they share a single test database and truncate
+      # between cases, so they must never overlap.
+      - name: Run integration suite (server + jobs) with coverage
+        run: pnpm test:coverage:integration
+        env:
+          NODE_OPTIONS: --max_old_space_size=8192
+      - name: Upload integration coverage blobs
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-blob-integration
+          path: .vitest-reports/
+          retention-days: 1

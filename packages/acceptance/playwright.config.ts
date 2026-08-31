@@ -63,7 +63,9 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: isCi,
   retries: 0,
-  reporter: isCi ? "line" : "list",
+  // A terminal-only reporter writes no `playwright-report/`, which the CI
+  // artifact upload expects — pair `line` with `html` so the run leaves one.
+  reporter: isCi ? [["line"], ["html", { open: "never" }]] : "list",
 
   globalSetup: "./global-setup.ts",
 

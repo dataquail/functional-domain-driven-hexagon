@@ -49,6 +49,7 @@ there, not an edit here.
 | `pnpm lint:rules`                                      | asserts each architectural rule still fires on a planted violation (ADR-0025)                                |
 | `pnpm test`                                            | vitest **unit** suite (excludes `*.integration.test.ts`), no DB                                              |
 | `DATABASE_URL_TEST=postgres://… pnpm test:integration` | **integration** suite only (`*.integration.test.ts`); hard-fails if no DB                                    |
+| `DATABASE_URL_TEST=postgres://… pnpm coverage`         | unit + integration merged into ONE coverage number; thresholds in `vitest.config.ts` gate CI                 |
 | `pnpm lint:deps`                                       | dependency-cruiser architecture rules                                                                        |
 | `pnpm effect:source`                                   | clone/refresh the Effect v4 source at `reference/effect` (gitignored, pinned to our beta)                    |
 
