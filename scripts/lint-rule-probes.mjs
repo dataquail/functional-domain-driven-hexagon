@@ -15,59 +15,64 @@ import path from "node:path";
 
 const repoRoot = process.cwd();
 
+// Probe filenames must not start with an underscore. The folder-structure
+// plugin mangles a leading `_` when substituting `{node-name}`, so an
+// `enforceExistence` rule fires on such a file whether or not its sibling
+// exists — a parity probe named that way passes vacuously, which is the exact
+// failure mode this script exists to catch.
 /** @type {Array<{rule: string, file: string, source: string}>} */
 const PROBES = [
   {
     rule: "project-structure/server-modules",
-    file: "packages/server/src/modules/todos/__probe-stray.ts",
+    file: "packages/server/src/modules/todos/zzprobe-stray.ts",
     source: "export const probe = 1;\n",
   },
   {
     rule: "project-structure/web-features",
-    file: "packages/web/features/__probe-untiered.tsx",
+    file: "packages/web/features/zzprobe-untiered.tsx",
     source: "export const Probe = () => null;\n",
   },
   {
     rule: "local/bus-factories-at-composition-roots",
-    file: "packages/server/src/modules/todos/commands/__probe-bus.handler.ts",
+    file: "packages/server/src/modules/todos/commands/zzprobe-bus.handler.ts",
     source:
       'import { makeCommandBus } from "@effect-server-utils/cqrs";\n\nexport const probe = makeCommandBus;\n',
   },
   {
     rule: "local/prefer-named-exports",
-    file: "packages/server/src/__probe-default.ts",
+    file: "packages/server/src/zzprobe-default.ts",
     source: "const probe = 1;\nexport default probe;\n",
   },
   {
     rule: "local/no-array-push-spread",
-    file: "packages/server/src/__probe-push.ts",
+    file: "packages/server/src/zzprobe-push.ts",
     source:
       "const items: Array<number> = [];\nconst target: Array<number> = [];\ntarget.push(...items);\n\nexport const probe = target;\n",
   },
   {
     rule: "local/lucide-icon-suffix",
-    file: "packages/components/primitives/__probe-lucide.ts",
+    file: "packages/components/primitives/zzprobe-lucide.ts",
     source: 'import { Clock } from "lucide-react";\n\nexport const probe = Clock;\n',
   },
   {
     rule: "local/no-inline-styling",
-    file: "packages/web/features/__probe/probe-styling.view.tsx",
+    file: "packages/web/features/zzprobe/probe-styling.view.tsx",
     source: 'export const Probe = () => <Probe className="p-4" />;\n',
   },
   {
     rule: "local/view-hooks-allowlist",
-    file: "packages/web/features/__probe/probe-hooks.view.tsx",
+    file: "packages/web/features/zzprobe/probe-hooks.view.tsx",
     source:
       'import * as React from "react";\n\nexport const Probe = () => {\n  const [n] = React.useState(0);\n  return n;\n};\n',
   },
   {
     rule: "react/forbid-elements",
-    file: "packages/web/features/__probe/probe-intrinsic.view.tsx",
+    file: "packages/web/features/zzprobe/probe-intrinsic.view.tsx",
     source: "export const Probe = () => <div />;\n",
   },
   {
     rule: "local/no-effect-namespace-imports",
-    file: "packages/server/src/__probe-effect-ns.ts",
+    file: "packages/server/src/zzprobe-effect-ns.ts",
     source: 'import { Effect } from "effect";\n\nexport const probe = Effect;\n',
   },
   {
@@ -76,7 +81,7 @@ const PROBES = [
     // every install. This probe is what catches a reinstall that silently
     // dropped it.
     rule: "effecttsgo/global-date",
-    file: "packages/server/src/__probe-global-date.ts",
+    file: "packages/server/src/zzprobe-global-date.ts",
     source: "export const probe = (): Date => new Date();\n",
   },
   {
@@ -84,7 +89,7 @@ const PROBES = [
     // tag reading another module's schema, with the quotes ADR-0020 requires on
     // a reserved word. The rule this replaced could see neither.
     rule: "local/no-cross-schema-sql-access",
-    file: "packages/server/src/modules/todos/queries/__probe-cross-schema.handler.ts",
+    file: "packages/server/src/modules/todos/queries/zzprobe-cross-schema.handler.ts",
     source:
       'import { Database } from "@org/database/index";\n' +
       'import * as Effect from "effect/Effect";\n\n' +
@@ -96,7 +101,7 @@ const PROBES = [
   {
     // The other half of the rule: a table with no schema at all.
     rule: "local/no-cross-schema-sql-access",
-    file: "packages/server/src/modules/todos/queries/__probe-unqualified.handler.ts",
+    file: "packages/server/src/modules/todos/queries/zzprobe-unqualified.handler.ts",
     source:
       'import { Database } from "@org/database/index";\n' +
       'import * as Effect from "effect/Effect";\n\n' +
@@ -104,6 +109,73 @@ const PROBES = [
       "  Database.Database,\n" +
       "  (sql) => sql`SELECT id FROM todos`,\n" +
       ");\n",
+  },
+  {
+    // The alias root differs per package (server: src/, web: package root), so
+    // each aliased package is probed separately — a package missing from the
+    // rule's map makes it silently vacuous there, which is how web went
+    // unenforced while being configured for it.
+    rule: "local/no-deep-relative-imports",
+    file: "packages/server/src/zzprobe/deep/probe.ts",
+    source: 'import { probe as p } from "../../platform/ids";\n\nexport const probe = p;\n',
+  },
+  {
+    rule: "local/no-deep-relative-imports",
+    file: "packages/web/features/zzprobe/deep/probe.view.tsx",
+    source:
+      'import { probe as p } from "../../../services/format/probe";\n\nexport const Probe = () => p;\n',
+  },
+  {
+    rule: "local/no-relative-import-outside-package",
+    file: "packages/server/src/zzprobe-outside-pkg.ts",
+    source:
+      'import { probe as p } from "../../contracts/src/index.js";\n\nexport const probe = p;\n',
+  },
+  {
+    rule: "local/dumb-repository-ports",
+    file: "packages/server/src/modules/todos/domain/todo/zzprobe-dumb.repository.ts",
+    source:
+      "export type ProbeRepositoryShape = {\n  readonly findOneById: (id: string) => string;\n};\n",
+  },
+  {
+    rule: "local/enforce-react-namespace",
+    file: "packages/components/primitives/zzprobe-react-ns.tsx",
+    source: 'import { useState } from "react";\n\nexport const probe = useState;\n',
+  },
+  {
+    rule: "project-structure/components-primitives",
+    file: "packages/components/primitives/zzprobe/probe.tsx",
+    source: "export const Probe = () => null;\n",
+  },
+  {
+    rule: "project-structure/components-patterns",
+    file: "packages/components/patterns/zzprobe/probe.tsx",
+    source: "export const Probe = () => null;\n",
+  },
+  {
+    // The parity half of the taxonomy (21 enforceExistence rules) was entirely
+    // unprobed — only layout was. These three cover its distinct mechanisms:
+    // the cross-folder port trio, a same-folder {node-name}.test.ts, and the
+    // {node-name}.integration.test.ts variant.
+    rule: "project-structure/server-modules",
+    file: "packages/server/src/modules/todos/domain/todo/zzprobe-parity.repository.ts",
+    source:
+      "export type ProbeRepositoryShape = {\n  readonly findOne: (spec: unknown) => unknown;\n};\n",
+  },
+  {
+    rule: "project-structure/server-modules",
+    file: "packages/server/src/modules/todos/commands/zzprobe-parity.handler.ts",
+    source: "export const probeParityHandler = () => null;\n",
+  },
+  {
+    rule: "project-structure/server-modules",
+    file: "packages/server/src/modules/todos/interface/http/zzprobe-parity.endpoint.ts",
+    source: "export const probeParityEndpoint = () => null;\n",
+  },
+  {
+    rule: "project-structure/web-features",
+    file: "packages/web/features/zzprobe/probe.view-model.ts",
+    source: "export const probeAtom = null;\n",
   },
 ];
 

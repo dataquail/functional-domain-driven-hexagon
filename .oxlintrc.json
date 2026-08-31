@@ -266,7 +266,6 @@
         "react/self-closing-comp": "error",
         "react/no-unstable-nested-components": "error",
         "local/enforce-react-namespace": "error",
-        "local/no-deep-relative-imports": "error",
         "react/rules-of-hooks": "error",
         "react/exhaustive-deps": "warn",
         "react/only-export-components": [
@@ -421,7 +420,7 @@
       "plugins": ["react"]
     },
     {
-      "files": ["packages/server/**/*.{ts,tsx,js,jsx}"],
+      "files": ["packages/server/**/*.{ts,tsx,js,jsx}", "packages/web/**/*.{ts,tsx,js,jsx}"],
       "rules": {
         "local/no-deep-relative-imports": "error"
       }
