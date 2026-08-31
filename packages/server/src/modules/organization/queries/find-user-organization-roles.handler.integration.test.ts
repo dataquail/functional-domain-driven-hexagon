@@ -1,7 +1,7 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -29,16 +29,12 @@ const TestLayer = Layer.mergeAll(OrganizationRolesRepositoryLive, OrganizationRe
 );
 
 const seedUsers = Effect.gen(function* () {
-  const db = yield* Database.Database;
-  yield* db
-    .execute((client) =>
-      client.query(sql.unsafe`
+  const sql = yield* Database.Database;
+  yield* sql`
         INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
         VALUES (${userId}, 'member@example.com', 'USA', '1 St', '12345', now(), now()),
                (${issuedBy}, 'issuer@example.com', 'USA', '2 St', '12345', now(), now())
-      `),
-    )
-    .pipe(Effect.orDie);
+      `.pipe(Effect.orDie);
 });
 
 const seedOrg = Effect.gen(function* () {

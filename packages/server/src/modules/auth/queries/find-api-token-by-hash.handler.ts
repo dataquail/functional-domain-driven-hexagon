@@ -1,4 +1,4 @@
-import { Database, RowSchemas, sql } from "@org/database/index";
+import { Database, RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
@@ -20,16 +20,10 @@ import { translateDatabaseErrors } from "@/platform/translate-database-errors.js
 export const findApiTokenByHashHandler = Effect.fn("findApiTokenByHashHandler")(function* (
   query: FindApiTokenByHashPayload,
 ) {
-  const db = yield* Database.Database;
-  const row = yield* db
-    .makeQuery((execute) =>
-      execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.ApiTokenRowStd)`
-          SELECT * FROM auth.api_tokens WHERE token_hash = ${query.tokenHash}
-        `),
-      ),
-    )()
-    .pipe(translateDatabaseErrors);
+  const sql = yield* Database.Database;
+  const row = yield* sql`
+    SELECT * FROM auth.api_tokens WHERE token_hash = ${query.tokenHash}
+  `.pipe(Database.maybeRow(RowSchemas.ApiTokenRow), translateDatabaseErrors);
   if (row === null) {
     return yield* new ApiTokenNotFound();
   }

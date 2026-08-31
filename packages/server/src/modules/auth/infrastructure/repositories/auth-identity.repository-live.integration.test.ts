@@ -1,7 +1,7 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
@@ -18,19 +18,15 @@ const subject = "zitadel-sub-integration";
 const TestLayer = AuthIdentityRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
 const seedUserAndIdentity = Effect.gen(function* () {
-  const db = yield* Database.Database;
-  yield* db.execute((client) =>
-    client.query(sql.unsafe`
+  const sql = yield* Database.Database;
+  yield* sql`
       INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
       VALUES (${userId}, 'admin@example.com', 'N/A', 'N/A', 'N/A', now(), now())
-    `),
-  );
-  yield* db.execute((client) =>
-    client.query(sql.unsafe`
+    `;
+  yield* sql`
       INSERT INTO auth.auth_identities (subject, user_id, provider, created_at)
       VALUES (${subject}, ${userId}, 'zitadel', now())
-    `),
-  );
+    `;
 }).pipe(Effect.orDie);
 
 const suite = describe.sequential;
@@ -56,15 +52,11 @@ suite("AuthIdentityRepositoryLive (integration)", () => {
     Effect.gen(function* () {
       // Seed only the user row (the FK target); the identity is created via
       // the repository's write path, mirroring JIT provisioning.
-      const db = yield* Database.Database;
-      yield* db
-        .execute((client) =>
-          client.query(sql.unsafe`
+      const sql = yield* Database.Database;
+      yield* sql`
             INSERT INTO "user".users (id, email, created_at, updated_at)
             VALUES (${userId}, 'jit@example.com', now(), now())
-          `),
-        )
-        .pipe(Effect.orDie);
+          `.pipe(Effect.orDie);
 
       const repo = yield* AuthIdentityRepository;
       yield* repo.insertOne({ subject: "jit-sub", userId, provider: "zitadel" });

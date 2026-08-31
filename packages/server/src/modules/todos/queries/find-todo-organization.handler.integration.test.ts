@@ -1,7 +1,7 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import { beforeEach } from "vitest";
 
@@ -16,25 +16,17 @@ const todoId = TodoId.make("33333333-3333-3333-3333-333333333333");
 const unknownTodoId = TodoId.make("44444444-4444-4444-4444-444444444444");
 
 const seed = Effect.gen(function* () {
-  const db = yield* Database.Database;
-  yield* db
-    .execute((client) =>
-      client.query(sql.unsafe`
+  const sql = yield* Database.Database;
+  yield* sql`
         INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
         VALUES
           (${orgId}, 'Owner', now(), now(), null),
           (${otherOrgId}, 'Other', now(), now(), null)
-      `),
-    )
-    .pipe(Effect.orDie);
-  yield* db
-    .execute((client) =>
-      client.query(sql.unsafe`
+      `.pipe(Effect.orDie);
+  yield* sql`
         INSERT INTO todos.todos (id, organization_id, title, completed, created_at, updated_at)
         VALUES (${todoId}, ${orgId}, 'Buy milk', false, now(), now())
-      `),
-    )
-    .pipe(Effect.orDie);
+      `.pipe(Effect.orDie);
 });
 
 const suite = describe.sequential;

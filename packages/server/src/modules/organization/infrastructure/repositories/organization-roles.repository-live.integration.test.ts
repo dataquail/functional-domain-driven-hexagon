@@ -1,7 +1,7 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Result from "effect/Result";
@@ -30,31 +30,19 @@ const forPair = Spec.and(
 // seeds the FK rows via raw SQL since the org module's barrel doesn't
 // (and shouldn't) re-export the user module's repository internals.
 const seedFixtures = Effect.gen(function* () {
-  const db = yield* Database.Database;
-  yield* db
-    .execute((client) =>
-      client.query(sql.unsafe`
+  const sql = yield* Database.Database;
+  yield* sql`
         INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
         VALUES (${userId}, 'alice@example.com', 'USA', '123 Main St', '12345', now(), now())
-      `),
-    )
-    .pipe(Effect.orDie);
-  yield* db
-    .execute((client) =>
-      client.query(sql.unsafe`
+      `.pipe(Effect.orDie);
+  yield* sql`
         INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
         VALUES (${issuedBy}, 'admin@example.com', 'USA', '1 Admin Way', '12345', now(), now())
-      `),
-    )
-    .pipe(Effect.orDie);
-  yield* db
-    .execute((client) =>
-      client.query(sql.unsafe`
+      `.pipe(Effect.orDie);
+  yield* sql`
         INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
         VALUES (${orgId}, 'Acme', now(), now(), null)
-      `),
-    )
-    .pipe(Effect.orDie);
+      `.pipe(Effect.orDie);
 });
 
 const TestLayer = OrganizationRolesRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));

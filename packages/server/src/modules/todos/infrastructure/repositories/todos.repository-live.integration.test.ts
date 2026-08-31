@@ -1,7 +1,7 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -36,19 +36,15 @@ const byOrgAndId = (organizationId: OrganizationId, id: TodoId) =>
 // seed both orgs via raw SQL since the todos repo can't (and shouldn't)
 // reach the org module's internals.
 const seedOrgs = Effect.gen(function* () {
-  const db = yield* Database.Database;
+  const sql = yield* Database.Database;
   for (const [id, name] of [
     [orgA, "Acme"],
     [orgB, "Beta"],
   ] as const) {
-    yield* db
-      .execute((client) =>
-        client.query(sql.unsafe`
+    yield* sql`
           INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
           VALUES (${id}, ${name}, now(), now(), null)
-        `),
-      )
-      .pipe(Effect.orDie);
+        `.pipe(Effect.orDie);
   }
 });
 
@@ -191,11 +187,11 @@ suite("TodosRepositoryLive (integration)", () => {
       Effect.gen(function* () {
         yield* seedOrgs;
         const repo = yield* TodosRepository;
-        const db = yield* Database.Database;
+        const sql = yield* Database.Database;
         const exit = yield* Effect.exit(
-          db.transaction((tx) =>
+          sql.withTransaction(
             Effect.gen(function* () {
-              yield* repo.insertOne(buyMilk).pipe(Database.TransactionContext.provide(tx));
+              yield* repo.insertOne(buyMilk);
               return yield* new TodoNotFound({ todoId: bobId });
             }),
           ),

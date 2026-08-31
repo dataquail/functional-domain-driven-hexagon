@@ -1,4 +1,4 @@
-import { Database, orFail, RowSchemas, sql } from "@org/database/index";
+import { Database, orFail, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
@@ -13,44 +13,41 @@ import { translateDatabaseErrors } from "@/platform/translate-database-errors.js
 export const OrganizationRepositoryLive = Layer.effect(
   OrganizationRepository,
   Effect.gen(function* () {
-    const db = yield* Database.Database;
+    const sql = yield* Database.Database;
 
-    const insertOne = db.makeQuery((execute, organization: OrganizationRoot) => {
+    const insertOne = Effect.fn("OrganizationRepository.insertOne")((
+      organization: OrganizationRoot,
+    ) => {
       const row = OrganizationMapper.toPersistence(organization);
-      return execute((client) =>
-        client.query(sql.unsafe`
+      return sql`
           INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
           VALUES (
             ${row.id},
             ${row.name},
-            ${sql.timestamp(row.created_at)},
-            ${sql.timestamp(row.updated_at)},
-            ${row.deleted_at === null ? null : sql.timestamp(row.deleted_at)}
+            ${row.created_at},
+            ${row.updated_at},
+            ${row.deleted_at}
           )
-        `),
-      ).pipe(
-        Effect.asVoid,
-        translateDatabaseErrors,
-        Effect.withSpan("OrganizationRepository.insertOne"),
-      );
+        `.pipe(Database.exec, translateDatabaseErrors);
     });
 
-    const updateOne = db.makeQuery((execute, organization: OrganizationRoot) => {
+    const updateOne = Effect.fn("OrganizationRepository.updateOne")((
+      organization: OrganizationRoot,
+    ) => {
       const row = OrganizationMapper.toPersistence(organization);
-      return execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.OrganizationRowStd)`
+      return sql`
           UPDATE "organization".organizations SET
             name = ${row.name},
-            updated_at = ${sql.timestamp(row.updated_at)},
-            deleted_at = ${row.deleted_at === null ? null : sql.timestamp(row.deleted_at)}
+            updated_at = ${row.updated_at},
+            deleted_at = ${row.deleted_at}
           WHERE id = ${row.id}
           RETURNING *
-        `),
-      ).pipe(
+        `.pipe(
+        Database.maybeRow(RowSchemas.OrganizationRow),
+
         orFail(() => new OrganizationNotFound({ organizationId: organization.id })),
         Effect.asVoid,
         translateDatabaseErrors,
-        Effect.withSpan("OrganizationRepository.updateOne"),
       );
     });
 
@@ -58,18 +55,18 @@ export const OrganizationRepositoryLive = Layer.effect(
     // reads — `deleted_at IS NULL`); the repository owns FROM and projection.
     // `LIMIT 1` is safe because every spec used with findOne selects at most
     // one row (identity keys).
-    const findOne = db.makeQuery((execute, spec: Specification<OrganizationRoot>) =>
-      execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.OrganizationRowStd)`
+    const findOne = Effect.fn("OrganizationRepository.findOne")(
+      (spec: Specification<OrganizationRoot>) =>
+        sql`
           SELECT * FROM "organization".organizations
-          WHERE ${criteriaToWhere(spec.criteria, OrganizationMapper.columns)}
+          WHERE ${criteriaToWhere(sql, spec.criteria, OrganizationMapper.columns)}
           LIMIT 1
-        `),
-      ).pipe(
-        Effect.map((row) => (row === null ? null : OrganizationMapper.toDomain(row))),
-        translateDatabaseErrors,
-        Effect.withSpan("OrganizationRepository.findOne"),
-      ),
+        `.pipe(
+          Database.maybeRow(RowSchemas.OrganizationRow),
+
+          Effect.map((row) => (row === null ? null : OrganizationMapper.toDomain(row))),
+          translateDatabaseErrors,
+        ),
     );
 
     return OrganizationRepository.of({

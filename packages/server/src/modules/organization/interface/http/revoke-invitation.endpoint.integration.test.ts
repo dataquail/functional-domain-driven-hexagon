@@ -3,7 +3,7 @@ import { deepStrictEqual, ok } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -20,15 +20,11 @@ const ORG_ID = "11111111-1111-1111-1111-111111111111" as never;
 const UNKNOWN_INVITATION_ID = "22222222-2222-2222-2222-222222222222" as never;
 
 const seedOrg = Effect.gen(function* () {
-  const db = yield* Database.Database;
-  yield* db
-    .execute((c) =>
-      c.query(sql.unsafe`
+  const sql = yield* Database.Database;
+  yield* sql`
         INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
         VALUES (${ORG_ID}, 'Acme', now(), now(), null)
-      `),
-    )
-    .pipe(Effect.orDie);
+      `.pipe(Effect.orDie);
 });
 
 suite("DELETE /orgs/:orgId/invitations/:invitationId (integration, super-admin caller)", () => {
@@ -115,19 +111,15 @@ suite(
       await run(
         Effect.gen(function* () {
           yield* seedOrg;
-          const db = yield* Database.Database;
+          const sql = yield* Database.Database;
           // Seed a pending invitation directly — a non-admin can't create one to
           // then attempt revoking it, and the 403 must fire before any lookup.
-          yield* db
-            .execute((c) =>
-              c.query(sql.unsafe`
+          yield* sql`
               INSERT INTO "organization".invitations
                 (id, organization_id, invitee_email, token, expires_at, created_at)
               VALUES (${UNKNOWN_INVITATION_ID}, ${ORG_ID}, 'alice@example.com',
                 'seed-token-revoke-forbidden', now() + interval '7 days', now())
-            `),
-            )
-            .pipe(Effect.orDie);
+            `.pipe(Effect.orDie);
 
           const client = yield* HttpApiClient.make(Api);
           const exit = yield* Effect.exit(

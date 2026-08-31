@@ -6,7 +6,6 @@
     "composite": false,
     "declaration": false,
     "declarationMap": false,
-    "rootDir": ".",
     "types": ["node"],
     // Playwright's runtime uses bundler-style resolution (no .js extension on
     // relative imports). Override the workspace-default NodeNext for this
@@ -16,7 +15,9 @@
     "paths": {
       "@/*": ["./*"],
       "@org/contracts": ["../contracts/src/index.ts"],
-      "@org/contracts/*": ["../contracts/src/*"]
+      "@org/contracts/*": ["../contracts/src/*"],
+      "@org/database": ["../database/src/index.ts"],
+      "@org/database/*": ["../database/src/*"]
     }
   }
 }

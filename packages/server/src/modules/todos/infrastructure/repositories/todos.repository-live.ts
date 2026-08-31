@@ -1,4 +1,4 @@
-import { Database, orFail, RowSchemas, sql } from "@org/database/index";
+import { Database, orFail, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
@@ -16,83 +16,71 @@ import * as TodoMapper from "./todo.mapper.js";
 export const TodosRepositoryLive = Layer.effect(
   TodosRepository,
   Effect.gen(function* () {
-    const db = yield* Database.Database;
+    const sql = yield* Database.Database;
 
-    const insertOne = db.makeQuery((execute, todo: TodoRoot) => {
+    const insertOne = Effect.fn("TodosRepository.insertOne")((todo: TodoRoot) => {
       const row = TodoMapper.toPersistence(todo);
-      return execute((client) =>
-        client.query(sql.unsafe`
-          INSERT INTO todos.todos (id, organization_id, title, completed, created_at, updated_at)
-          VALUES (
-            ${row.id},
-            ${row.organization_id},
-            ${row.title},
-            ${row.completed},
-            ${sql.timestamp(row.created_at)},
-            ${sql.timestamp(row.updated_at)}
-          )
-        `),
-      ).pipe(Effect.asVoid, translateDatabaseErrors, Effect.withSpan("TodosRepository.insertOne"));
+      return sql`
+        INSERT INTO todos.todos (id, organization_id, title, completed, created_at, updated_at)
+        VALUES (
+          ${row.id},
+          ${row.organization_id},
+          ${row.title},
+          ${row.completed},
+          ${row.created_at},
+          ${row.updated_at}
+        )
+      `.pipe(Database.exec, translateDatabaseErrors);
     });
 
     // Scoped on organization_id as well as id: an update aimed at a todo
     // in another org matches no row and surfaces as TodoNotFound.
-    const updateOne = db.makeQuery((execute, todo: TodoRoot) => {
+    const updateOne = Effect.fn("TodosRepository.updateOne")((todo: TodoRoot) => {
       const row = TodoMapper.toPersistence(todo);
-      return execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.TodoRowStd)`
-          UPDATE todos.todos SET
-            title = ${row.title},
-            completed = ${row.completed},
-            updated_at = ${sql.timestamp(row.updated_at)}
-          WHERE id = ${row.id} AND organization_id = ${row.organization_id}
-          RETURNING *
-        `),
-      ).pipe(
+      return sql`
+        UPDATE todos.todos SET
+          title = ${row.title},
+          completed = ${row.completed},
+          updated_at = ${row.updated_at}
+        WHERE id = ${row.id} AND organization_id = ${row.organization_id}
+        RETURNING *
+      `.pipe(
+        Database.maybeRow(RowSchemas.TodoRow),
         orFail(() => new TodoNotFound({ todoId: todo.id })),
         Effect.asVoid,
         translateDatabaseErrors,
-        Effect.withSpan("TodosRepository.updateOne"),
       );
     });
 
-    const remove = db.makeQuery((execute, args: { organizationId: OrganizationId; id: TodoId }) =>
-      execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.TodoRowStd)`
-            DELETE FROM todos.todos
-            WHERE id = ${args.id} AND organization_id = ${args.organizationId}
-            RETURNING *
-          `),
-      ).pipe(
-        orFail(() => new TodoNotFound({ todoId: args.id })),
-        Effect.asVoid,
-        translateDatabaseErrors,
-        Effect.withSpan("TodosRepository.deleteOne"),
-      ),
+    const deleteOne = Effect.fn("TodosRepository.deleteOne")(
+      (organizationId: OrganizationId, id: TodoId) =>
+        sql`
+          DELETE FROM todos.todos
+          WHERE id = ${id} AND organization_id = ${organizationId}
+          RETURNING *
+        `.pipe(
+          Database.maybeRow(RowSchemas.TodoRow),
+          orFail(() => new TodoNotFound({ todoId: id })),
+          Effect.asVoid,
+          translateDatabaseErrors,
+        ),
     );
 
     // The spec contributes only the WHERE; the repository owns FROM and the
     // projection. `LIMIT 1` is safe because every spec used with findOne pins
     // the (id, organization_id) primary key, selecting at most one row.
-    const findOne = db.makeQuery((execute, spec: Specification<TodoRoot>) =>
-      execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.TodoRowStd)`
-          SELECT * FROM todos.todos
-          WHERE ${criteriaToWhere(spec.criteria, TodoMapper.columns)}
-          LIMIT 1
-        `),
-      ).pipe(
+    const findOne = Effect.fn("TodosRepository.findOne")((spec: Specification<TodoRoot>) =>
+      sql`
+        SELECT * FROM todos.todos
+        WHERE ${criteriaToWhere(sql, spec.criteria, TodoMapper.columns)}
+        LIMIT 1
+      `.pipe(
+        Database.maybeRow(RowSchemas.TodoRow),
         Effect.map((row) => (row === null ? null : TodoMapper.toDomain(row))),
         translateDatabaseErrors,
-        Effect.withSpan("TodosRepository.findOne"),
       ),
     );
 
-    return TodosRepository.of({
-      insertOne,
-      updateOne,
-      deleteOne: (organizationId, id) => remove({ organizationId, id }),
-      findOne,
-    });
+    return TodosRepository.of({ insertOne, updateOne, deleteOne, findOne });
   }),
 );

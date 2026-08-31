@@ -1,7 +1,7 @@
 import { deepStrictEqual, notStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -22,13 +22,11 @@ const id = DeviceGrantId.make("22222222-2222-2222-2222-222222222222");
 const TestLayer = DeviceGrantRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
 const insertUserRow = Effect.gen(function* () {
-  const db = yield* Database.Database;
-  yield* db.execute((client) =>
-    client.query(sql.unsafe`
+  const sql = yield* Database.Database;
+  yield* sql`
       INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
       VALUES (${userId}, 'device@example.com', 'N/A', 'N/A', 'N/A', now(), now())
-    `),
-  );
+    `;
 }).pipe(Effect.orDie);
 
 const start = (now: DateTime.Utc) =>

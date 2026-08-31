@@ -175,10 +175,8 @@ suite("UserRepositoryLive (integration)", () => {
     it.effect("commits inserts when the body succeeds", () =>
       Effect.gen(function* () {
         const repo = yield* UserRepository;
-        const db = yield* Database.Database;
-        yield* db.transaction((tx) =>
-          repo.insertOne(alice).pipe(Database.TransactionContext.provide(tx)),
-        );
+        const sql = yield* Database.Database;
+        yield* sql.withTransaction(repo.insertOne(alice));
         const found = yield* repo.findOne(UserSpecifications.withEmail(alice.email));
         notStrictEqual(found, null);
       }).pipe(Effect.provide(TestLayer)),
@@ -187,11 +185,11 @@ suite("UserRepositoryLive (integration)", () => {
     it.effect("rolls back inserts when the body fails (surfaces typed error)", () =>
       Effect.gen(function* () {
         const repo = yield* UserRepository;
-        const db = yield* Database.Database;
+        const sql = yield* Database.Database;
         const exit = yield* Effect.exit(
-          db.transaction((tx) =>
+          sql.withTransaction(
             Effect.gen(function* () {
-              yield* repo.insertOne(alice).pipe(Database.TransactionContext.provide(tx));
+              yield* repo.insertOne(alice);
               return yield* new UserNotFound({ userId: bobId });
             }),
           ),

@@ -45,3 +45,6 @@ packages/*/src/**/*.mjs
 packages/*/src/**/*.cjs
 packages/*/src/**/*.d.ts
 packages/*/src/**/*.map
+
+# Scratch git worktrees created by tooling; never part of the repo.
+.claude/worktrees/

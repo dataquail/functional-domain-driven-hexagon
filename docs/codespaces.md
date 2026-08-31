@@ -1,6 +1,6 @@
 # GitHub Codespaces
 
-A codespace gives each branch its own fully provisioned stack — Postgres (app DB, test DB and Zitadel's DB), Zitadel with a seeded OIDC app and admin user, Flyway-migrated schemas, Mailpit and Jaeger — so several features can be developed in parallel without them fighting over one laptop's ports, database and Zitadel instance.
+A codespace gives each branch its own fully provisioned stack — Postgres (app DB, test DB and Zitadel's DB), Zitadel with a seeded OIDC app and admin user, migrated schemas, Mailpit and Jaeger — so several features can be developed in parallel without them fighting over one laptop's ports, database and Zitadel instance.
 
 ## Quick start
 
@@ -42,12 +42,12 @@ If your organization forbids public ports, the alternative is to keep them priva
 
 Zitadel's external domain has to be decided _before its first boot_ — `FirstInstance` only fires against a brand-new database. That constrains where each step can live:
 
-| Hook                                                              | Runs                          | Does                                                                                   |
-| ----------------------------------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------- |
-| [`initialize.sh`](../.devcontainer/initialize.sh)                 | on the VM, **before** Compose | writes `.env` — codespace URLs, Compose hostnames, generated secrets                   |
-| Compose                                                           | container creation            | Postgres (+ both peer DBs), Flyway on the dev and test DBs, Zitadel, Mailpit, Jaeger   |
-| [`on-create.sh`](../.devcontainer/on-create.sh)                   | in the container, once        | `pnpm install`, build `@org/contracts`                                                 |
-| [`codespaces-provision.mjs`](../scripts/codespaces-provision.mjs) | in the container, every start | waits for Zitadel, reads the bootstrap PAT, runs the seed, writes the client id/secret |
+| Hook                                              | Runs                          | Does                                                                                              |
+| ------------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------- |
+| [`initialize.sh`](../.devcontainer/initialize.sh) | on the VM, **before** Compose | writes `.env` — codespace URLs, Compose hostnames, generated secrets                              |
+| Compose                                           | container creation            | Postgres (+ both peer DBs), Zitadel, Mailpit, Jaeger                                              |
+| [`on-create.sh`](../.devcontainer/on-create.sh)   | in the container, once        | `pnpm install`, build `@org/contracts`                                                            |
+| [`post-start.sh`](../.devcontainer/post-start.sh) | in the container, every start | migrates the dev and test DBs, then waits for Zitadel, runs the seed, writes the client id/secret |
 
 Two constraints are worth knowing before you move anything:
 

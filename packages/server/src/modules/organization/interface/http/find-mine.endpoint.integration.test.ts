@@ -2,7 +2,7 @@ import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
@@ -74,14 +74,10 @@ suite("GET /orgs (integration — findMine)", () => {
         });
         // Soft-delete is super-admin-only, so the member can't tombstone via
         // the endpoint; set the tombstone directly to exercise findMine's filter.
-        const db = yield* Database.Database;
-        yield* db
-          .execute((c) =>
-            c.query(sql.unsafe`
+        const sql = yield* Database.Database;
+        yield* sql`
               UPDATE "organization".organizations SET deleted_at = now() WHERE id = ${betaId}
-            `),
-          )
-          .pipe(Effect.orDie);
+            `.pipe(Effect.orDie);
 
         const orgs = yield* client.organization.findMine();
         deepStrictEqual(

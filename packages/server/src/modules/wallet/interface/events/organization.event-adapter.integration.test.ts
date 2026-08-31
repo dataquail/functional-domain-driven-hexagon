@@ -10,7 +10,7 @@ import {
 } from "@effect-server-utils/cqrs";
 import { makeUnitOfWork, UnitOfWork } from "@effect-server-utils/unit-of-work";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
-import { Database, RowSchemas, sql } from "@org/database/index";
+import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
@@ -67,12 +67,10 @@ suite("organization → wallet adapter (integration)", () => {
         // public read surface, so this drops to `Database.Database` and
         // queries the wallets table by schema (only the row schema is
         // coupled — not a cross-module port reach).
-        const db = yield* Database.Database;
-        const rows = yield* db.execute((c) =>
-          c.any(sql.type(RowSchemas.WalletRowStd)`
+        const sql = yield* Database.Database;
+        const rows = yield* sql`
             SELECT * FROM wallet.wallets WHERE organization_id = ${id}
-          `),
-        );
+          `.pipe(Database.rows(RowSchemas.WalletRow));
         deepStrictEqual(rows.length, 1);
         const wallet = rows[0];
         ok(wallet !== undefined);
@@ -94,19 +92,15 @@ suite("organization → wallet adapter (integration)", () => {
 const probeOrgId = OrganizationId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const probeName = "Rollback Probe Org";
 
-// The publisher's own write. `makeQuery`, not `execute`: inside a unit of work
-// only `makeQuery` joins the ambient transaction, and a bare `execute` takes a
-// foreign pool connection and dies — which would satisfy "the unit of work
-// failed" without the dispatch ever having run.
-const insertProbeOrg = Effect.flatMap(Database.Database, (db) =>
-  db.makeQuery((execute) =>
-    execute((client) =>
-      client.query(sql.unsafe`
-        INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
-        VALUES (${probeOrgId}, ${probeName}, NOW(), NOW(), null)
-      `),
-    ),
-  )(),
+// The publisher's own write. It has to join the ambient transaction so that a
+// rolled-back unit of work takes this row with it — otherwise the assertion
+// would pass without the dispatch ever having run.
+const insertProbeOrg = Effect.flatMap(
+  Database.Database,
+  (sql) => sql`
+    INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
+    VALUES (${probeOrgId}, ${probeName}, NOW(), NOW(), null)
+  `,
 );
 
 const FailingWalletRepository = Layer.succeed(
@@ -182,7 +176,7 @@ suite("organization → wallet adapter (rollback integration)", () => {
     Effect.gen(function* () {
       const uow = yield* UnitOfWork;
       const bus = yield* DomainEventBus;
-      const db = yield* Database.Database;
+      const sql = yield* Database.Database;
 
       const exit = yield* Effect.exit(
         uow.run(
@@ -196,11 +190,9 @@ suite("organization → wallet adapter (rollback integration)", () => {
       );
       deepStrictEqual(Exit.isFailure(exit), true);
 
-      const rows = yield* db.execute((c) =>
-        c.any(sql.type(RowSchemas.OrganizationRowStd)`
+      const rows = yield* sql`
           SELECT * FROM "organization".organizations WHERE id = ${probeOrgId}
-        `),
-      );
+        `.pipe(Database.rows(RowSchemas.OrganizationRow));
       deepStrictEqual(rows.length, 0);
     }).pipe(Effect.provide(RollbackTestLayer)),
   );
@@ -225,7 +217,7 @@ suite("organization → wallet adapter (transaction-join integration)", () => {
     Effect.gen(function* () {
       const uow = yield* UnitOfWork;
       const bus = yield* DomainEventBus;
-      const db = yield* Database.Database;
+      const sql = yield* Database.Database;
 
       yield* uow.run(
         Effect.gen(function* () {
@@ -236,11 +228,9 @@ suite("organization → wallet adapter (transaction-join integration)", () => {
         }),
       );
 
-      const wallets = yield* db.execute((c) =>
-        c.any(sql.type(RowSchemas.WalletRowStd)`
+      const wallets = yield* sql`
           SELECT * FROM wallet.wallets WHERE organization_id = ${probeOrgId}
-        `),
-      );
+        `.pipe(Database.rows(RowSchemas.WalletRow));
       deepStrictEqual(wallets.length, 1);
     }).pipe(Effect.provide(JoinTestLayer)),
   );
@@ -249,7 +239,7 @@ suite("organization → wallet adapter (transaction-join integration)", () => {
     Effect.gen(function* () {
       const uow = yield* UnitOfWork;
       const bus = yield* DomainEventBus;
-      const db = yield* Database.Database;
+      const sql = yield* Database.Database;
 
       const exit = yield* Effect.exit(
         uow.run(
@@ -265,11 +255,9 @@ suite("organization → wallet adapter (transaction-join integration)", () => {
       );
       deepStrictEqual(Exit.isFailure(exit), true);
 
-      const wallets = yield* db.execute((c) =>
-        c.any(sql.type(RowSchemas.WalletRowStd)`
+      const wallets = yield* sql`
           SELECT * FROM wallet.wallets WHERE organization_id = ${probeOrgId}
-        `),
-      );
+        `.pipe(Database.rows(RowSchemas.WalletRow));
       deepStrictEqual(wallets.length, 0);
     }).pipe(Effect.provide(JoinTestLayer)),
   );

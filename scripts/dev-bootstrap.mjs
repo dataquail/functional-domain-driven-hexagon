@@ -6,12 +6,13 @@
 //   1. ensure .env exists (copy from .env.example)
 //   2. ensure SESSION_COOKIE_SECRET is generated
 //   3. bring up Zitadel (compose pulls postgres in via depends_on)
-//   4. wait for Zitadel /debug/ready
-//   5. wait for the FirstInstance bootstrap PAT to land on disk
-//   6. write the PAT into .env as ZITADEL_BOOTSTRAP_PAT
-//   7. wait for the gRPC management API to actually answer requests
-//   8. run the seed (creates the OIDC app, seeds the admin user)
-//   9. write ZITADEL_CLIENT_ID + ZITADEL_CLIENT_SECRET into .env
+//   4. migrate the dev and test databases
+//   5. wait for Zitadel /debug/ready
+//   6. wait for the FirstInstance bootstrap PAT to land on disk
+//   7. write the PAT into .env as ZITADEL_BOOTSTRAP_PAT
+//   8. wait for the gRPC management API to actually answer requests
+//   9. run the seed (creates the OIDC app, seeds the admin user)
+//  10. write ZITADEL_CLIENT_ID + ZITADEL_CLIENT_SECRET into .env
 
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
@@ -53,14 +54,15 @@ async function main() {
   step(1, "ensure .env exists", ensureEnvFile);
   step(2, "ensure SESSION_COOKIE_SECRET is set", ensureSessionSecret);
   step(3, "bring up Zitadel containers", authUp);
-  await stepAsync(4, "wait for Zitadel /debug/ready", waitForReady);
-  const pat = await stepAsync(5, "wait for bootstrap PAT", waitForPat);
-  step(6, "persist ZITADEL_BOOTSTRAP_PAT in .env", () =>
+  step(4, "migrate the dev + test databases", migrate);
+  await stepAsync(5, "wait for Zitadel /debug/ready", waitForReady);
+  const pat = await stepAsync(6, "wait for bootstrap PAT", waitForPat);
+  step(7, "persist ZITADEL_BOOTSTRAP_PAT in .env", () =>
     updateEnv(ENV_PATH, { ZITADEL_BOOTSTRAP_PAT: pat }),
   );
-  await stepAsync(7, "wait for Zitadel management API", () => waitForManagementApi(pat));
-  const seedOutput = step(8, "run seed (idempotent)", runSeed);
-  step(9, "persist ZITADEL_CLIENT_ID + ZITADEL_CLIENT_SECRET in .env", () => {
+  await stepAsync(8, "wait for Zitadel management API", () => waitForManagementApi(pat));
+  const seedOutput = step(9, "run seed (idempotent)", runSeed);
+  step(10, "persist ZITADEL_CLIENT_ID + ZITADEL_CLIENT_SECRET in .env", () => {
     if (seedOutput === null) {
       console.log(
         "    (seed didn't emit a __seed__ line — the OIDC app already existed; .env unchanged)",
@@ -104,6 +106,19 @@ function authUp() {
   });
   if (result.status !== 0) throw new Error("docker compose up failed");
   return "postgres + zitadel up";
+}
+
+// Ahead of the seed, which writes the admin row into "user".users and needs the
+// schema to exist.
+function migrate() {
+  for (const script of ["db:migrate", "db:migrate:test"]) {
+    const result = spawnSync("pnpm", ["--filter", "@org/database", script], {
+      cwd: ROOT,
+      stdio: "inherit",
+    });
+    if (result.status !== 0) throw new Error(`pnpm ${script} failed`);
+  }
+  return "dev + test databases migrated";
 }
 
 async function waitForReady() {

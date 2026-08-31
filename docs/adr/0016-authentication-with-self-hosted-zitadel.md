@@ -64,9 +64,9 @@ WHERE expires_at < now()
 
 The 7-day grace on revoked rows preserves a short audit window ("did this user actually sign out before X happened?"). A Postgres transaction-scoped advisory lock (`pg_try_advisory_xact_lock`) guards the run so concurrent replicas don't race on the DELETE — it auto-releases at transaction end. A second concurrent replica short-circuits with `{ skipped: true }`. `@org/jobs` is its own deployable: it depends on `@org/database` and owns its DELETE SQL directly — it does **not** import `@org/server` or share the auth module's `SessionRepository`. Duplicating one DELETE statement is cheaper than a cross-package domain extraction until a second job needs the same domain.
 
-### Slonik validation actually runs
+### Row validation actually runs
 
-Slonik stores a query's `resultParser` (StandardSchemaV1) but does not invoke it without an interceptor. `Database.ts`'s `result-parser` interceptor runs the schema's `~standard.validate` on every row, throwing `SchemaValidationError` on issues and returning the validated value otherwise. Row schemas use `Schema.DateTimeUtcFromDate` so reads decode `Date → DateTime.Utc` directly; belt-and-suspenders `typeParsers` convert pg's millis-numbers to `Date` at the slonik layer. Not auth-specific, but session timestamps were the first columns to round-trip the validation path.
+A statement returns untyped rows, so decoding is an explicit step: `Database.rows`/`maybeRow`/`row` run the row schema over what came back and treat a mismatch as a defect, since it means schema drift rather than a recoverable outcome. Row schemas use `Schema.DateTimeUtcFromDate`, so reads decode `Date → DateTime.Utc` directly. Not auth-specific, but session timestamps were the first columns to round-trip the validation path.
 
 ## Enforcement
 

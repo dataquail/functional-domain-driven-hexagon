@@ -23,7 +23,7 @@ To run locally instead, install these on your machine:
 
 - **Node 22** — `.nvmrc` pins the exact version CI runs (22.13.1); `engines.node` accepts any 22.x at or above it. Use whatever version manager you like (`mise`, `fnm`, `nvm`, `asdf`).
 - **pnpm 10.3.0** — auto-activated by [corepack](https://nodejs.org/api/corepack.html), which ships with Node. Run `corepack enable` once after installing Node.
-- **Docker Desktop** (or any Docker + docker-compose) — runs Postgres, Flyway migrations, and Jaeger.
+- **Docker Desktop** (or any Docker + docker-compose) — runs Postgres, Zitadel, and Jaeger.
   - [Install Docker](https://docs.docker.com/get-docker/)
 
 That's it. The server uses [tsx](https://github.com/privatenumber/tsx) (already a dev dependency) to run TypeScript directly, so no extra runtime is needed.
@@ -41,15 +41,21 @@ cp .env.example .env
 docker-compose up -d postgres jaeger
 
 # 4. Run migrations against the dev DB
-docker-compose --profile migrate up flyway
+pnpm --filter @org/database db:migrate
 
 # (optional) migrate the test DB used by *.integration.test.ts. The database
 # itself is created by infra/postgres/init/ on the volume's first boot.
-docker-compose --profile migrate-test up flyway-test
+pnpm --filter @org/database db:migrate:test
 
 # (recommended) clone the Effect v4 source for reference — see below
 pnpm effect:source
 ```
+
+Migrations are applied by the `@effect/sql` migrator, which tracks what it has run
+in an `effect_sql_migrations` table. A database last migrated by Flyway has no such
+table, so it has to be replayed once — `pnpm --filter @org/database db:reset` drops
+every module schema (and the leftover `flyway_schema_history`), then `db:migrate`
+rebuilds it.
 
 ### Effect v4 source reference
 

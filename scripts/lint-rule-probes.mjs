@@ -9,13 +9,6 @@
 // globs actually match, linted, and asserted on. A rule that stops firing fails
 // this script loudly instead of quietly disarming an ADR.
 
-// Known coverage gap, pre-dating this migration and identical under ESLint:
-// no-cross-schema-slonik-access matches only a bare `sql` tag, while all 49
-// server SQL sites use `sql.type(Schema)`, and its FROM/JOIN regexes cannot
-// match a quoted schema like `"user".users` — which ADR-0020 requires. The probe
-// below therefore proves the plugin loads and fires under oxlint; it does not
-// prove ADR-0020 is enforced on production code. Tracked separately.
-
 import { execFileSync } from "node:child_process";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -33,11 +26,6 @@ const PROBES = [
     rule: "project-structure/web-features",
     file: "packages/web/features/__probe-untiered.tsx",
     source: "export const Probe = () => null;\n",
-  },
-  {
-    rule: "local/use-case-db-via-make-query",
-    file: "packages/server/src/modules/todos/commands/__probe.handler.ts",
-    source: "export const probe = (db) => db.execute((client) => client.query());\n",
   },
   {
     rule: "local/bus-factories-at-composition-roots",
@@ -92,14 +80,30 @@ const PROBES = [
     source: "export const probe = (): Date => new Date();\n",
   },
   {
-    rule: "@synapsestudios/data-boundaries/no-cross-schema-slonik-access",
+    // A real violation in the shape production code actually takes: a bare `sql`
+    // tag reading another module's schema, with the quotes ADR-0020 requires on
+    // a reserved word. The rule this replaced could see neither.
+    rule: "local/no-cross-schema-sql-access",
     file: "packages/server/src/modules/todos/queries/__probe-cross-schema.handler.ts",
     source:
-      // Bare `sql` tag on purpose. The plugin's isSlonikSqlCall only accepts an
-      // `sql` identifier or `x.sql` member tag, so it cannot see the
-      // `sql.type(Schema)` form every real query here uses — see the note above.
-      'import { sql } from "@org/database/index";\n\n' +
-      "export const probe = sql`SELECT id FROM wallet.wallets`;\n",
+      'import { Database } from "@org/database/index";\n' +
+      'import * as Effect from "effect/Effect";\n\n' +
+      "export const probe = Effect.flatMap(\n" +
+      "  Database.Database,\n" +
+      '  (sql) => sql`SELECT id FROM "user".users`,\n' +
+      ");\n",
+  },
+  {
+    // The other half of the rule: a table with no schema at all.
+    rule: "local/no-cross-schema-sql-access",
+    file: "packages/server/src/modules/todos/queries/__probe-unqualified.handler.ts",
+    source:
+      'import { Database } from "@org/database/index";\n' +
+      'import * as Effect from "effect/Effect";\n\n' +
+      "export const probe = Effect.flatMap(\n" +
+      "  Database.Database,\n" +
+      "  (sql) => sql`SELECT id FROM todos`,\n" +
+      ");\n",
   },
 ];
 

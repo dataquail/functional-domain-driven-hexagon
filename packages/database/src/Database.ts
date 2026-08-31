@@ -1,45 +1,19 @@
-import type * as Cause from "effect/Cause";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
-import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
-import * as Slonik from "slonik";
+import { SqlClient } from "effect/unstable/sql/SqlClient";
+import { type SqlError } from "effect/unstable/sql/SqlError";
 
-export type Client = Slonik.DatabasePool;
-export type TxClient = Slonik.DatabaseTransactionConnection;
-export type AnyClient = Client | TxClient;
+import { type Config, driverLayer } from "./pg-driver.js";
 
-type TransactionContextShape = <U>(
-  fn: (client: TxClient) => Promise<U>,
-) => Effect.Effect<U, DatabaseError | DatabaseUnavailable>;
+export type { Config };
 
-export class TransactionContext extends Context.Service<
-  TransactionContext,
-  TransactionContextShape
->()("TransactionContext") {
-  public static readonly provide = (
-    transaction: TransactionContextShape,
-  ): (<A, E, R>(
-    self: Effect.Effect<A, E, R>,
-  ) => Effect.Effect<A, E, Exclude<R, TransactionContext>>) =>
-    Effect.provideService(this, transaction);
-}
-
-// `DatabaseError` now carries only *permanent* failures — constraint
-// violations the application is expected to either translate to a domain
-// error (e.g. `unique_violation` → `UserAlreadyExists`) or treat as a
-// defect (programmer error or schema drift). Transient failures
-// (connection lost, backend terminated) are surfaced as
-// `DatabaseUnavailable` so use cases can propagate them through their
-// typed error channel and the HTTP layer can map them to 503.
-//
-// This split lets command handlers drop the blanket
-// `Effect.catchTag("DatabaseError", Effect.die)` — they can still die on
-// unhandled constraint violations (those mean the repo missed a case)
-// while letting `DatabaseUnavailable` flow through.
+// `DatabaseError` carries only *permanent* failures — constraint violations the
+// application is expected to either translate to a domain error (e.g.
+// `unique_violation` → `UserAlreadyExists`) or treat as a defect. Transient
+// failures are surfaced as `DatabaseUnavailable` so use cases can propagate them
+// through their typed error channel and the HTTP layer can map them to 503.
 export class DatabaseError extends Schema.TaggedErrorClass<DatabaseError>("DatabaseError")(
   "DatabaseError",
   {
@@ -57,11 +31,6 @@ export class DatabaseError extends Schema.TaggedErrorClass<DatabaseError>("Datab
   }
 }
 
-// Transient failure: the pool is unable to talk to Postgres right now.
-// Distinct from `DatabaseConnectionLostError` (which is raised by the
-// pool-level connection listener and tears the server down for a
-// restart). `DatabaseUnavailable` is a per-query signal — the right
-// reaction is a 503 to this caller; the next request might succeed.
 export class DatabaseUnavailable extends Schema.TaggedErrorClass<DatabaseUnavailable>(
   "DatabaseUnavailable",
 )("DatabaseUnavailable", {
@@ -77,295 +46,105 @@ export class DatabaseUnavailable extends Schema.TaggedErrorClass<DatabaseUnavail
   }
 }
 
-const matchSlonikError = (error: unknown): DatabaseError | DatabaseUnavailable | null => {
-  if (error instanceof Slonik.UniqueIntegrityConstraintViolationError) {
-    return new DatabaseError({
-      type: "unique_violation",
-      cause: error,
-      errorMessage: error.message,
-    });
-  }
-  if (error instanceof Slonik.ForeignKeyIntegrityConstraintViolationError) {
-    return new DatabaseError({
-      type: "foreign_key_violation",
-      cause: error,
-      errorMessage: error.message,
-    });
+const FOREIGN_KEY_VIOLATION = "23503";
+
+// `classifyError` folds every SQLSTATE 23xxx except 23505 into `ConstraintError`,
+// so foreign-key violations are only distinguishable by the code on the cause.
+const sqlStateOf = (cause: unknown): string | undefined =>
+  typeof cause === "object" && cause !== null && "code" in cause && typeof cause.code === "string"
+    ? cause.code
+    : undefined;
+
+const toDatabaseFailure = (error: SqlError): DatabaseError | DatabaseUnavailable | null => {
+  const errorMessage = error.message;
+  if (error.reason._tag === "UniqueViolation") {
+    return new DatabaseError({ type: "unique_violation", cause: error, errorMessage });
   }
   if (
-    error instanceof Slonik.ConnectionError ||
-    error instanceof Slonik.BackendTerminatedError ||
-    error instanceof Slonik.BackendTerminatedUnexpectedlyError
+    error.reason._tag === "ConstraintError" &&
+    sqlStateOf(error.reason.cause) === FOREIGN_KEY_VIOLATION
   ) {
-    return new DatabaseUnavailable({
-      cause: error,
-      errorMessage: error.message,
-    });
+    return new DatabaseError({ type: "foreign_key_violation", cause: error, errorMessage });
+  }
+  if (error.isRetryable) {
+    return new DatabaseUnavailable({ cause: error, errorMessage });
   }
   return null;
 };
 
-export class DatabaseConnectionLostError extends Schema.TaggedErrorClass<DatabaseConnectionLostError>(
-  "DatabaseConnectionLostError",
-)("DatabaseConnectionLostError", {
-  cause: Schema.Defect(),
-  message: Schema.String,
-}) {}
+// A failure the application has no vocabulary for — a syntax error, a NOT NULL
+// violation, a schema that drifted — is a programmer error, not a typed outcome.
+//
+// `catchTag` on a generic union channel resists inference, so the implementation
+// catches on the widened type and re-asserts the narrowed result. The casts are
+// contained here so callers stay clean.
+export const mapSqlError: <A, E, R>(
+  self: Effect.Effect<A, E | SqlError, R>,
+) => Effect.Effect<A, Exclude<E, SqlError> | DatabaseError | DatabaseUnavailable, R> = <A, E, R>(
+  self: Effect.Effect<A, E | SqlError, R>,
+) =>
+  Effect.catchTag(self as Effect.Effect<A, SqlError, R>, "SqlError", (error: SqlError) => {
+    const failure = toDatabaseFailure(error);
+    return failure === null ? Effect.die(error) : Effect.fail(failure);
+  }) as Effect.Effect<A, Exclude<E, SqlError> | DatabaseError | DatabaseUnavailable, R>;
 
-export type Config = {
-  url: Redacted.Redacted;
-  ssl: boolean;
+export class Database extends Context.Service<Database, SqlClient>()("Database") {}
+
+export const layer = (config: Config): Layer.Layer<Database, SqlError> =>
+  Layer.effect(Database, SqlClient).pipe(Layer.provide(driverLayer(config)));
+
+type Statement<A> = Effect.Effect<ReadonlyArray<A>, SqlError>;
+
+// A row that does not match its schema is drift — a programmer error, not a typed outcome.
+const decoder = <S extends Schema.Constraint>(rowSchema: S) => {
+  const decode = Schema.decodeUnknownEffect(rowSchema);
+  return (raw: unknown): Effect.Effect<S["Type"], never, S["DecodingServices"]> =>
+    Effect.orDie(decode(raw));
 };
 
-const makeService = (config: Config) =>
-  Effect.gen(function* () {
-    // Slonik's default int8 parser returns native BigInt. Match the prior
-    // drizzle config (`bigint(..., { mode: "number" })`) by parsing int8 to
-    // a Number, accepting the precision loss above 2^53 just like before.
-    //
-    // Slonik also defaults timestamp / timestamptz to a Unix-millis number,
-    // but our row schemas (RowSchemas.*) declare these columns as
-    // `Schema.DateFromSelf` (i.e. real `Date` instances). Override the two
-    // parsers so reads produce Dates and the mappers' `DateTime.unsafeFromDate`
-    // calls work without a conversion shim in every mapper.
-    const typeParsers = Slonik.createTypeParserPreset().map((p) => {
-      if (p.name === "int8") {
-        return { name: "int8" as const, parse: (value: string) => Number(value) };
-      }
-      if (p.name === "timestamp") {
-        return {
-          name: "timestamp" as const,
-          parse: (value: string) => new Date(`${value} UTC`),
-        };
-      }
-      if (p.name === "timestamptz") {
-        return {
-          name: "timestamptz" as const,
-          parse: (value: string) => new Date(value),
-        };
-      }
-      return p;
-    });
+export const rows =
+  <S extends Schema.Constraint>(rowSchema: S) =>
+  (
+    self: Statement<unknown>,
+  ): Effect.Effect<
+    ReadonlyArray<S["Type"]>,
+    DatabaseError | DatabaseUnavailable,
+    S["DecodingServices"]
+  > => {
+    const decode = decoder(rowSchema);
+    return mapSqlError(self).pipe(Effect.flatMap(Effect.forEach(decode)));
+  };
 
-    // Slonik 48 stores the row's `resultParser` (StandardSchemaV1) in the
-    // query context but doesn't actually execute it — it expects an
-    // interceptor to run validation. Without this, `sql.type(SchemaStd)` is a
-    // type-level annotation only, and rows are passed through unchecked
-    // (which is how a Date column claiming `Schema.DateFromSelf` reached a
-    // mapper as a number). This interceptor closes the loop: every read row
-    // is validated and decoded by the schema, so mappers can trust types.
-    const resultParserInterceptor: Slonik.Interceptor = {
-      name: "effect-monorepo/result-parser",
-      transformRowAsync: async (queryContext, query, row) => {
-        const parser = queryContext.resultParser;
-        if (parser === undefined) return row;
-        const validation = parser["~standard"].validate(row);
-        const result = validation instanceof Promise ? await validation : validation;
-        if (result.issues !== undefined) {
-          throw new Slonik.SchemaValidationError(query, row, result.issues);
-        }
-        return result.value as Slonik.QueryResultRow;
-      },
-    };
-
-    const pool: Slonik.DatabasePool = yield* Effect.acquireRelease(
-      Effect.tryPromise({
-        try: () =>
-          Slonik.createPool(Redacted.value(config.url), {
-            ssl: config.ssl ? { rejectUnauthorized: true } : undefined,
-            typeParsers,
-            interceptors: [resultParserInterceptor],
-          } as Slonik.ClientConfigurationInput),
-        catch: (cause) =>
-          new DatabaseConnectionLostError({
-            cause,
-            message: "[Database] Failed to create pool",
-          }),
-      }),
-      (p) => Effect.promise(() => p.end()),
+export const maybeRow =
+  <S extends Schema.Constraint>(rowSchema: S) =>
+  (
+    self: Statement<unknown>,
+  ): Effect.Effect<
+    S["Type"] | null,
+    DatabaseError | DatabaseUnavailable,
+    S["DecodingServices"]
+  > => {
+    const decode = decoder(rowSchema);
+    return mapSqlError(self).pipe(
+      Effect.flatMap((raw) => (raw.length === 0 ? Effect.succeed(null) : decode(raw[0]))),
     );
+  };
 
-    yield* Effect.tryPromise(() => pool.query(Slonik.sql.unsafe`SELECT 1`)).pipe(
-      Effect.timeoutOrElse({
-        duration: "10 seconds",
-        orElse: () =>
-          new DatabaseConnectionLostError({
-            cause: new Error("[Database] Failed to connect: timeout"),
-            message: "[Database] Failed to connect: timeout",
-          }),
-      }),
-      Effect.catchTag(
-        "UnknownError",
-        (error) =>
-          new DatabaseConnectionLostError({
-            cause: error.cause,
-            message: "[Database] Failed to connect",
-          }),
-      ),
-      Effect.tap(() =>
-        Effect.logInfo("[Database client]: Connection to the database established."),
+export const row =
+  <S extends Schema.Constraint>(rowSchema: S) =>
+  (
+    self: Statement<unknown>,
+  ): Effect.Effect<S["Type"], DatabaseError | DatabaseUnavailable, S["DecodingServices"]> => {
+    const decode = decoder(rowSchema);
+    return mapSqlError(self).pipe(
+      Effect.flatMap((raw) =>
+        raw.length === 0
+          ? Effect.die(new Error("[Database.row] expected one row, got none"))
+          : decode(raw[0]),
       ),
     );
+  };
 
-    const setupConnectionListeners = Effect.zip(
-      Effect.callback<void, DatabaseConnectionLostError>((resume) => {
-        pool.on("error", (error) => {
-          // Slonik emits pool 'error' for every query error, not just connection
-          // loss. Only tear the pool down on actual connection failures —
-          // integrity violations are surfaced through the query's own error
-          // channel and must not crash the server.
-          if (
-            !(error instanceof Slonik.ConnectionError) &&
-            !(error instanceof Slonik.BackendTerminatedError) &&
-            !(error instanceof Slonik.BackendTerminatedUnexpectedlyError)
-          ) {
-            return;
-          }
-          resume(
-            new DatabaseConnectionLostError({
-              cause: error,
-              message: error.message,
-            }),
-          );
-        });
-
-        return Effect.sync(() => {
-          // Slonik's StrictEventEmitter intersection makes
-          // removeAllListeners' type lose its callable signature for the
-          // narrowed event union. The runtime call is safe.
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-          pool.removeAllListeners("error");
-        });
-      }),
-      Effect.logInfo("[Database client]: Connection error listeners initialized."),
-      {
-        concurrent: true,
-      },
-    ).pipe(Effect.map(([, initialized]) => initialized));
-
-    const execute = Effect.fn("Database.execute")(<T>(fn: (client: Client) => Promise<T>) =>
-      Effect.tryPromise({
-        try: () => fn(pool),
-        catch: (cause) => {
-          const error = matchSlonikError(cause);
-          if (error !== null) {
-            return error;
-          }
-          throw cause;
-        },
-      }),
-    );
-
-    // Slonik rolls back when the transaction handler throws. Returning normally
-    // commits, so on inner Effect failure we throw a sentinel carrying the
-    // Cause and re-surface it via Effect.failCause in the outer handler — which
-    // preserves the original typed error channel.
-    class TxFailure<E> {
-      constructor(public readonly cause: Cause.Cause<E>) {}
-    }
-
-    // Shared Effect↔Slonik bridge for both top-level transactions and nested
-    // savepoints. `open` is the Slonik call that begins the scope and runs our
-    // handler against the scoped connection — `pool.transaction` for a
-    // top-level transaction, a transaction connection's own `.transaction`
-    // (which Slonik implements as `SAVEPOINT` / `ROLLBACK TO SAVEPOINT`) for a
-    // nested savepoint. The handler provides the scoped client as a
-    // `TransactionContext`, runs the caller's effect to an `Exit`, and either
-    // returns its value (commit / release) or throws `TxFailure` carrying the
-    // Cause (rollback). On the Effect side we re-surface that Cause verbatim so
-    // the caller's typed error channel survives the round-trip through Slonik.
-    const runInSlonikTx = <T, E, R>(
-      open: (handler: (client: TxClient) => Promise<T>) => Promise<T>,
-      txExecute: (tx: TransactionContextShape) => Effect.Effect<T, E, R>,
-    ): Effect.Effect<T, DatabaseError | DatabaseUnavailable | E, R> =>
-      Effect.context<R>().pipe(
-        Effect.map((context) => Effect.runPromiseExitWith(context)),
-        Effect.flatMap((runPromiseExit) =>
-          Effect.callback<T, DatabaseError | DatabaseUnavailable | E, R>((resume) => {
-            open(async (client: TxClient) => {
-              const txWrapper = (fn: (c: TxClient) => Promise<any>) =>
-                Effect.tryPromise({
-                  try: () => fn(client),
-                  catch: (cause) => {
-                    const error = matchSlonikError(cause);
-                    if (error !== null) {
-                      return error;
-                    }
-                    throw cause;
-                  },
-                });
-
-              const result = await runPromiseExit(txExecute(txWrapper));
-              if (Exit.isSuccess(result)) {
-                return result.value;
-              }
-              throw new TxFailure(result.cause);
-            }).then(
-              (value) => {
-                resume(Effect.succeed(value));
-              },
-              (cause: unknown) => {
-                if (cause instanceof TxFailure) {
-                  resume(Effect.failCause(cause.cause as Cause.Cause<E>));
-                  return;
-                }
-                const error = matchSlonikError(cause);
-                resume(error !== null ? Effect.fail(error) : Effect.die(cause));
-              },
-            );
-          }),
-        ),
-      );
-
-    const transaction = Effect.fn("Database.transaction")(
-      <T, E, R>(txExecute: (tx: TransactionContextShape) => Effect.Effect<T, E, R>) =>
-        runInSlonikTx<T, E, R>((handler) => pool.transaction(handler), txExecute),
-    );
-
-    // Open a nested savepoint on the ambient transaction. Requires a
-    // `TransactionContext` in scope — it is the re-entrant arm of a unit of
-    // work (`UnitOfWorkLive.run` calls this when a `run` is nested inside
-    // another). We pull the live transaction connection out of the ambient
-    // context and ask Slonik for a nested transaction on it, which emits a
-    // `SAVEPOINT`. A caught failure inside rolls back only to the savepoint,
-    // leaving the outer transaction free to commit; success releases it.
-    const savepoint = Effect.fn("Database.savepoint")(
-      <T, E, R>(spExecute: (sp: TransactionContextShape) => Effect.Effect<T, E, R>) =>
-        Effect.flatMap(TransactionContext, (existingTx) =>
-          existingTx((tx) => Promise.resolve(tx)).pipe(
-            Effect.flatMap((tx) =>
-              runInSlonikTx<T, E, R>((handler) => tx.transaction(handler), spExecute),
-            ),
-          ),
-        ),
-    );
-
-    type ExecuteFn = <T>(
-      fn: (client: AnyClient) => Promise<T>,
-    ) => Effect.Effect<T, DatabaseError | DatabaseUnavailable>;
-    const makeQuery =
-      <A, E, R, Input = never>(
-        queryFn: (execute: ExecuteFn, input: Input) => Effect.Effect<A, E, R>,
-      ) =>
-      (...args: [Input] extends [never] ? [] : [input: Input]): Effect.Effect<A, E, R> => {
-        const input = args[0] as Input;
-        return Effect.serviceOption(TransactionContext).pipe(
-          Effect.map(Option.getOrNull),
-          Effect.flatMap((txOrNull) => queryFn(txOrNull ?? execute, input)),
-        );
-      };
-
-    return {
-      execute,
-      transaction,
-      savepoint,
-      setupConnectionListeners,
-      makeQuery,
-    } as const;
-  });
-
-type Shape = Effect.Success<ReturnType<typeof makeService>>;
-
-export class Database extends Context.Service<Database, Shape>()("Database") {}
-
-export const layer = (config: Config) => Layer.effect(Database, makeService(config));
+export const exec = <R>(
+  self: Effect.Effect<unknown, SqlError, R>,
+): Effect.Effect<void, DatabaseError | DatabaseUnavailable, R> => Effect.asVoid(mapSqlError(self));

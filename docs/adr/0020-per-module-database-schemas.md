@@ -30,7 +30,7 @@ Each feature module owns a Postgres schema; application SQL addresses tables by 
 | `billing`      | `billing`      | `billing.subscriptions`, `billing.webhook_events`                                   |
 | `role`         | `platform`     | `platform.roles` (platform-level, cross-cutting)                                    |
 
-Migrations live in `packages/database/migrations/` as one-thing-per-file Flyway-versioned SQL (ADR-0011): `V001__create_schema_user.sql`, `V007__create_table_user_users.sql`, etc. FK dependencies dictate the order — every `CREATE SCHEMA` lands before any `CREATE TABLE`, and any table that references another table's id (including cross-schema) is numbered after the referenced table.
+Migrations live in `packages/database/src/migrations/` as one-thing-per-file TypeScript modules (ADR-0011): `0001_create_schema_user.ts`, `0007_create_table_user_users.ts`, etc. FK dependencies dictate the order — every `CREATE SCHEMA` lands before any `CREATE TABLE`, and any table that references another table's id (including cross-schema) is numbered after the referenced table.
 
 ### All application SQL must be schema-qualified
 
@@ -42,7 +42,7 @@ Postgres permits FKs across schemas, and we keep a handful as a physical safety 
 
 ### Static enforcement via `@synapsestudios/eslint-plugin-data-boundaries`
 
-The rule `no-cross-schema-slonik-access` is configured in `.oxlintrc.json` with `modulePath: "/modules/"`. For any file under `packages/server/src/modules/<name>/`, the rule requires fully-qualified table names in slonik tagged templates and forbids access to tables in any schema other than the one that module owns.
+The rule `local/no-cross-schema-sql-access` applies to any non-test file under `packages/server/src/modules/<name>/`. It requires fully-qualified table names in `sql` tagged templates and forbids access to any schema other than the one that module owns — reading quoted identifiers (`"user".users`), consulting a small map for modules whose schema is named differently (`role` owns `platform`), and ignoring set-returning functions and CTE names, which are not tables.
 
 `packages/server/src/test-utils/` and `packages/jobs/src/test-utils/` are **not** scoped by the rule — they legitimately TRUNCATE across schemas to reset state between tests. The lint scope is also restricted to non-test files because integration tests sometimes seed via raw SQL into the owning module's neighbour (e.g. a `wallet` test seeding a `user.users` row through `@org/database` rather than the user repository).
 
@@ -68,11 +68,11 @@ The rule `no-cross-schema-slonik-access` is configured in `.oxlintrc.json` with 
 
 - **Schemas + drop cross-schema FKs entirely.** Pure logical decoupling. Rejected: a wallet without a user is a money-shaped bug; the physical safety net is cheap insurance and does not introduce coupling beyond what already existed.
 - **No schemas; rely on a custom dep-cruise rule that parses SQL strings.** Rejected: parsing arbitrary tagged-template SQL is fragile and would not catch dynamic identifiers. Per-module schemas make the constraint structural.
-- **Switch off Flyway to get OSS down migrations.** Rejected as out of scope; the value-per-effort of schemas + lint is much higher than down-migration tooling on a template repo.
+- **Down migrations.** Rejected as out of scope; the value-per-effort of schemas + lint is much higher than down-migration tooling on a template repo.
 
 ## Related
 
 - ADR-0002: hexagonal module layout (the boundary we're now also enforcing at the DB).
 - ADR-0007: synchronous event bus + interface/events ACL (the legitimate cross-module read seam).
 - ADR-0008: dependency-cruiser sibling-isolation rules (the import-layer equivalent of this rule).
-- ADR-0011: forward-only Flyway migrations (the format these schema migrations use).
+- ADR-0011: forward-only SQL migrations (the format these schema migrations use).

@@ -1,4 +1,3 @@
-import type { StandardSchemaV1 } from "@standard-schema/spec";
 import * as Schema from "effect/Schema";
 
 export const WebhookEventRow = Schema.Struct({
@@ -6,6 +5,3 @@ export const WebhookEventRow = Schema.Struct({
   received_at: Schema.DateTimeUtcFromDate,
 });
 export type WebhookEventRow = typeof WebhookEventRow.Type;
-
-export const WebhookEventRowStd: StandardSchemaV1<unknown, WebhookEventRow> =
-  Schema.toStandardSchemaV1(WebhookEventRow);

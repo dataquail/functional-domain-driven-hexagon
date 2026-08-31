@@ -1,4 +1,4 @@
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
@@ -25,26 +25,30 @@ export type PurgeResult = {
   readonly skipped: boolean;
 };
 
-const LockRow = Schema.toStandardSchemaV1(Schema.Struct({ acquired: Schema.Boolean }));
+const LockRow = Schema.Struct({ acquired: Schema.Boolean });
 
 export const purgeExpiredSessions: Effect.Effect<PurgeResult, never, Database.Database> =
   Effect.gen(function* () {
-    const db = yield* Database.Database;
-    const result = yield* db
-      .execute((client) =>
-        client.transaction(async (tx) => {
-          const lockRow = await tx.one(sql.type(LockRow)`
-            SELECT pg_try_advisory_xact_lock(${PURGE_EXPIRED_SESSIONS_LOCK_KEY}) AS acquired
-          `);
-          if (!lockRow.acquired) {
+    const sql = yield* Database.Database;
+    const result = yield* sql
+      .withTransaction(
+        Effect.gen(function* () {
+          const lock = yield* sql`
+            SELECT pg_try_advisory_xact_lock(${PURGE_EXPIRED_SESSIONS_LOCK_KEY.toString()}::bigint)
+              AS acquired
+          `.pipe(Database.row(LockRow));
+          if (!lock.acquired) {
             return { rowsPurged: 0, skipped: true } satisfies PurgeResult;
           }
-          const deleted = await tx.query(sql.unsafe`
+          // RETURNING, because a statement yields rows rather than a driver
+          // result object — the row count is the length of what comes back.
+          const deleted = yield* sql`
             DELETE FROM auth.sessions
             WHERE expires_at < now()
                OR (revoked_at IS NOT NULL AND revoked_at < now() - interval '7 days')
-          `);
-          return { rowsPurged: deleted.rowCount, skipped: false } satisfies PurgeResult;
+            RETURNING id
+          `;
+          return { rowsPurged: deleted.length, skipped: false } satisfies PurgeResult;
         }),
       )
       .pipe(Effect.orDie);

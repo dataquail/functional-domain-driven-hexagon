@@ -1,4 +1,4 @@
-import { Database, orFail, RowSchemas, sql } from "@org/database/index";
+import { Database, orFail, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
@@ -15,12 +15,11 @@ import * as ApiTokenMapper from "./api-token.mapper.js";
 export const ApiTokenRepositoryLive = Layer.effect(
   ApiTokenRepository,
   Effect.gen(function* () {
-    const db = yield* Database.Database;
+    const sql = yield* Database.Database;
 
-    const insertOne = db.makeQuery((execute, token: ApiTokenRoot) => {
+    const insertOne = Effect.fn("ApiTokenRepository.insertOne")((token: ApiTokenRoot) => {
       const row = ApiTokenMapper.toPersistence(token);
-      return execute((client) =>
-        client.query(sql.unsafe`
+      return sql`
           INSERT INTO auth.api_tokens
             (id, user_id, token_hash, prefix, label, expires_at, revoked_at, created_at, last_used_at)
           VALUES (
@@ -29,81 +28,72 @@ export const ApiTokenRepositoryLive = Layer.effect(
             ${row.token_hash},
             ${row.prefix},
             ${row.label},
-            ${row.expires_at === null ? null : sql.timestamp(row.expires_at)},
-            ${row.revoked_at === null ? null : sql.timestamp(row.revoked_at)},
-            ${sql.timestamp(row.created_at)},
-            ${sql.timestamp(row.last_used_at)}
+            ${row.expires_at},
+            ${row.revoked_at},
+            ${row.created_at},
+            ${row.last_used_at}
           )
-        `),
-      ).pipe(
-        Effect.asVoid,
-        translateDatabaseErrors,
-        Effect.withSpan("ApiTokenRepository.insertOne"),
-      );
+        `.pipe(Database.exec, translateDatabaseErrors);
     });
 
     // The spec contributes only the WHERE; the repository owns FROM and the
     // projection. `LIMIT 1` is safe because every spec used with findOne
     // selects at most one row (the id primary key, the unique token_hash).
-    const findOne = db.makeQuery((execute, spec: Specification<ApiTokenRoot>) =>
-      execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.ApiTokenRowStd)`
+    const findOne = Effect.fn("ApiTokenRepository.findOne")((spec: Specification<ApiTokenRoot>) =>
+      sql`
           SELECT * FROM auth.api_tokens
-          WHERE ${criteriaToWhere(spec.criteria, ApiTokenMapper.columns)}
+          WHERE ${criteriaToWhere(sql, spec.criteria, ApiTokenMapper.columns)}
           LIMIT 1
-        `),
-      ).pipe(
+        `.pipe(
+        Database.maybeRow(RowSchemas.ApiTokenRow),
+
         Effect.map((row) => (row === null ? null : ApiTokenMapper.toDomain(row))),
         translateDatabaseErrors,
-        Effect.withSpan("ApiTokenRepository.findOne"),
       ),
     );
 
     // The repository owns the newest-first ordering; the spec (e.g. forUser)
     // contributes the WHERE, including the `revoked_at IS NULL` active filter.
-    const findMany = db.makeQuery((execute, spec: Specification<ApiTokenRoot>) =>
-      execute((client) =>
-        client.any(sql.type(RowSchemas.ApiTokenRowStd)`
+    const findMany = Effect.fn("ApiTokenRepository.findMany")((spec: Specification<ApiTokenRoot>) =>
+      sql`
           SELECT * FROM auth.api_tokens
-          WHERE ${criteriaToWhere(spec.criteria, ApiTokenMapper.columns)}
+          WHERE ${criteriaToWhere(sql, spec.criteria, ApiTokenMapper.columns)}
           ORDER BY created_at DESC
-        `),
-      ).pipe(
+        `.pipe(
+        Database.rows(RowSchemas.ApiTokenRow),
+
         Effect.map((rows) => rows.map(ApiTokenMapper.toDomain)),
         translateDatabaseErrors,
-        Effect.withSpan("ApiTokenRepository.findMany"),
       ),
     );
 
-    const deleteById = db.makeQuery((execute, id: ApiTokenId) =>
-      execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.ApiTokenRowStd)`
+    const deleteById = Effect.fn("ApiTokenRepository.deleteOne")((id: ApiTokenId) =>
+      sql`
           UPDATE auth.api_tokens SET revoked_at = now()
           WHERE id = ${id} AND revoked_at IS NULL
           RETURNING *
-        `),
-      ).pipe(
+        `.pipe(
+        Database.maybeRow(RowSchemas.ApiTokenRow),
+
         orFail(() => new ApiTokenNotFound()),
         Effect.asVoid,
         translateDatabaseErrors,
-        Effect.withSpan("ApiTokenRepository.deleteOne"),
       ),
     );
 
-    const updateOne = db.makeQuery((execute, token: ApiTokenRoot) => {
+    const updateOne = Effect.fn("ApiTokenRepository.updateOne")((token: ApiTokenRoot) => {
       const row = ApiTokenMapper.toPersistence(token);
-      return execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.ApiTokenRowStd)`
+      return sql`
           UPDATE auth.api_tokens
-          SET last_used_at = ${sql.timestamp(row.last_used_at)}
+          SET last_used_at = ${row.last_used_at}
           WHERE id = ${row.id} AND revoked_at IS NULL
           RETURNING *
-        `),
-      ).pipe(
+        `.pipe(
+        Database.maybeRow(RowSchemas.ApiTokenRow),
+
         orFail(() => new ApiTokenNotFound()),
         Effect.asVoid,
         translateDatabaseErrors,
-        Effect.withSpan("ApiTokenRepository.updateOne"),
       );
     });
 

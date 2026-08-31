@@ -332,6 +332,20 @@ module.exports = {
       to: { path: "/node_modules/effect/(dist|src)/unstable/rpc/" },
     },
     {
+      name: "sql-driver-only-in-database-package",
+      severity: "error",
+      comment:
+        "`@org/database` exists to hide which SQL driver is underneath: application code names `Database` and writes statements through the tagged template it exposes, never the driver. Only `packages/database/src/` may import `@effect/sql-pg` — and inside it, only `pg-driver.ts` and the migrator. The one exception is a test that asserts compiled Postgres SQL (criteria-to-sql), which is about the dialect rather than the connection.",
+      from: {
+        path: "^packages/",
+        pathNot: [
+          "^packages/database/src/",
+          "^packages/server/src/platform/persistence/criteria-to-sql\\.test\\.ts$",
+        ],
+      },
+      to: { dependencyTypes: ["npm", "npm-dev"], path: "/node_modules/@effect/sql-pg/" },
+    },
+    {
       name: "lives-only-from-composition-roots",
       severity: "error",
       comment:

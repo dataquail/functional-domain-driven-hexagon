@@ -1,7 +1,7 @@
-import * as fs from "node:fs/promises";
-import * as path from "node:path";
-import { fileURLToPath } from "node:url";
-
+import * as NodeServices from "@effect/platform-node/NodeServices";
+import { resetAndMigrate } from "@org/database/index";
+import * as Effect from "effect/Effect";
+import * as Redacted from "effect/Redacted";
 import pg from "pg";
 
 import { MEMBER_EMAIL } from "./member-credentials";
@@ -10,9 +10,6 @@ import { MEMBER_EMAIL } from "./member-credentials";
 // `test-utils/test-database.ts` approach: drop+replay migrations from the
 // shared `packages/database/migrations/` directory, and refuse to operate
 // on any DB whose name doesn't contain `test`.
-
-const here = path.dirname(fileURLToPath(import.meta.url));
-const migrationsFolder = path.resolve(here, "../../database/migrations");
 
 const assertTestDbName = (url: string): string => {
   const name = new URL(url).pathname.replace(/^\//, "");
@@ -24,39 +21,15 @@ const assertTestDbName = (url: string): string => {
   return url;
 };
 
-// Kept in sync with packages/database/migrations/V00*__create_schema_*.sql
-// (ADR-0020). Each module owns its own schema.
-const MODULE_SCHEMAS = [
-  "user",
-  "todos",
-  "wallet",
-  "auth",
-  "platform",
-  "organization",
-  "billing",
-] as const;
-
 export const runMigrations = async (databaseUrl: string): Promise<void> => {
-  assertTestDbName(databaseUrl);
-  const pool = new pg.Pool({ connectionString: databaseUrl });
-  try {
-    const dropList = MODULE_SCHEMAS.map((s) => `"${s}"`).join(", ");
-    await pool.query(`DROP SCHEMA IF EXISTS ${dropList} CASCADE;`);
-    const entries = await fs.readdir(migrationsFolder);
-    const sqlFiles = entries
-      .filter((f) => /^V\d+__.*\.sql$/.test(f))
-      .sort((a, b) => {
-        const na = Number(/^V(\d+)__/.exec(a)?.[1] ?? 0);
-        const nb = Number(/^V(\d+)__/.exec(b)?.[1] ?? 0);
-        return na - nb;
-      });
-    for (const file of sqlFiles) {
-      const body = await fs.readFile(path.join(migrationsFolder, file), "utf8");
-      await pool.query(body);
-    }
-  } finally {
-    await pool.end();
-  }
+  const url = Redacted.make(assertTestDbName(databaseUrl));
+  await Effect.runPromise(
+    resetAndMigrate({ url, ssl: false }).pipe(
+      Effect.asVoid,
+      Effect.provide(NodeServices.layer),
+      Effect.orDie,
+    ),
+  );
 };
 
 const splitQualified = (qualified: string): readonly [string, string] => {

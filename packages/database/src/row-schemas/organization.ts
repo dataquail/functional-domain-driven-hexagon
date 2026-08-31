@@ -1,4 +1,3 @@
-import type { StandardSchemaV1 } from "@standard-schema/spec";
 import * as Schema from "effect/Schema";
 
 export const OrganizationRow = Schema.Struct({
@@ -10,18 +9,12 @@ export const OrganizationRow = Schema.Struct({
 });
 export type OrganizationRow = typeof OrganizationRow.Type;
 
-export const OrganizationRowStd: StandardSchemaV1<unknown, OrganizationRow> =
-  Schema.toStandardSchemaV1(OrganizationRow);
-
 export const MembershipRow = Schema.Struct({
   user_id: Schema.String.check(Schema.isGUID()),
   organization_id: Schema.String.check(Schema.isGUID()),
   created_at: Schema.DateTimeUtcFromDate,
 });
 export type MembershipRow = typeof MembershipRow.Type;
-
-export const MembershipRowStd: StandardSchemaV1<unknown, MembershipRow> =
-  Schema.toStandardSchemaV1(MembershipRow);
 
 export const InvitationRow = Schema.Struct({
   id: Schema.String.check(Schema.isGUID()),
@@ -35,9 +28,6 @@ export const InvitationRow = Schema.Struct({
 });
 export type InvitationRow = typeof InvitationRow.Type;
 
-export const InvitationRowStd: StandardSchemaV1<unknown, InvitationRow> =
-  Schema.toStandardSchemaV1(InvitationRow);
-
 export const OrganizationRoleRow = Schema.Struct({
   organization_id: Schema.String.check(Schema.isGUID()),
   user_id: Schema.String.check(Schema.isGUID()),
@@ -46,6 +36,3 @@ export const OrganizationRoleRow = Schema.Struct({
   created_at: Schema.DateTimeUtcFromDate,
 });
 export type OrganizationRoleRow = typeof OrganizationRoleRow.Type;
-
-export const OrganizationRoleRowStd: StandardSchemaV1<unknown, OrganizationRoleRow> =
-  Schema.toStandardSchemaV1(OrganizationRoleRow);

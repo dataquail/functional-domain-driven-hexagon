@@ -11,10 +11,6 @@
       "name": "project-structure",
       "specifier": "./scripts/oxlint-plugins/project-structure.mjs"
     },
-    {
-      "name": "@synapsestudios/data-boundaries",
-      "specifier": "@synapsestudios/eslint-plugin-data-boundaries"
-    },
     "eslint-plugin-codegen",
     "eslint-plugin-simple-import-sort",
     "eslint-plugin-sort-destructure-keys",
@@ -438,12 +434,6 @@
       }
     },
     {
-      "files": ["packages/server/src/modules/*/{commands,queries}/**/*.{ts,tsx}"],
-      "rules": {
-        "local/use-case-db-via-make-query": "error"
-      }
-    },
-    {
       "files": ["packages/server/src/**/*.ts", "packages/jobs/src/**/*.ts"],
       "rules": {
         "local/bus-factories-at-composition-roots": "error"
@@ -452,12 +442,7 @@
     {
       "files": ["packages/server/src/modules/**/*.{ts,tsx}"],
       "rules": {
-        "@synapsestudios/data-boundaries/no-cross-schema-slonik-access": [
-          "error",
-          {
-            "modulePath": "/modules/"
-          }
-        ]
+        "local/no-cross-schema-sql-access": "error"
       }
     },
     {
@@ -553,6 +538,12 @@
     },
     {
       "files": ["**/test-utils/global-setup.ts"],
+      "rules": {
+        "local/prefer-named-exports": "off"
+      }
+    },
+    {
+      "files": ["packages/database/src/migrations/*.ts"],
       "rules": {
         "local/prefer-named-exports": "off"
       }

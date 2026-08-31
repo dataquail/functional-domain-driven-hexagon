@@ -1,7 +1,7 @@
 import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -17,27 +17,19 @@ const suite = describe.sequential;
 const ORG_ID = "11111111-1111-1111-1111-111111111111" as never;
 
 const seedOrg = Effect.gen(function* () {
-  const db = yield* Database.Database;
-  yield* db
-    .execute((c) =>
-      c.query(sql.unsafe`
+  const sql = yield* Database.Database;
+  yield* sql`
         INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
         VALUES (${ORG_ID}, 'Acme', now(), now(), null)
-      `),
-    )
-    .pipe(Effect.orDie);
+      `.pipe(Effect.orDie);
 });
 
 const seedCallerMembership = Effect.gen(function* () {
-  const db = yield* Database.Database;
-  yield* db
-    .execute((c) =>
-      c.query(sql.unsafe`
+  const sql = yield* Database.Database;
+  yield* sql`
         INSERT INTO "organization".memberships (user_id, organization_id, created_at)
         VALUES (${SUPER_ADMIN_CALLER_ID}, ${ORG_ID}, now())
-      `),
-    )
-    .pipe(Effect.orDie);
+      `.pipe(Effect.orDie);
 });
 
 suite("POST /orgs/:orgId/leave (integration)", () => {

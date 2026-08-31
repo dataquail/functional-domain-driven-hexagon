@@ -1,4 +1,4 @@
-import { Database, orFail, RowSchemas, sql } from "@org/database/index";
+import { Database, orFail, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
@@ -15,12 +15,11 @@ import * as DeviceGrantMapper from "./device-grant.mapper.js";
 export const DeviceGrantRepositoryLive = Layer.effect(
   DeviceGrantRepository,
   Effect.gen(function* () {
-    const db = yield* Database.Database;
+    const sql = yield* Database.Database;
 
-    const insertOne = db.makeQuery((execute, grant: DeviceGrantRoot) => {
+    const insertOne = Effect.fn("DeviceGrantRepository.insertOne")((grant: DeviceGrantRoot) => {
       const row = DeviceGrantMapper.toPersistence(grant);
-      return execute((client) =>
-        client.query(sql.unsafe`
+      return sql`
           INSERT INTO auth.device_grants
             (id, device_code_hash, user_code, status, user_id, created_at, expires_at, approved_at)
           VALUES (
@@ -29,64 +28,57 @@ export const DeviceGrantRepositoryLive = Layer.effect(
             ${row.user_code},
             ${row.status},
             ${row.user_id},
-            ${sql.timestamp(row.created_at)},
-            ${sql.timestamp(row.expires_at)},
-            ${row.approved_at === null ? null : sql.timestamp(row.approved_at)}
+            ${row.created_at},
+            ${row.expires_at},
+            ${row.approved_at}
           )
-        `),
-      ).pipe(
-        Effect.asVoid,
-        translateDatabaseErrors,
-        Effect.withSpan("DeviceGrantRepository.insertOne"),
-      );
+        `.pipe(Database.exec, translateDatabaseErrors);
     });
 
     // The spec contributes only the WHERE; the repository owns FROM and the
     // projection. `LIMIT 1` is safe because every spec used with findOne
     // selects at most one row (the unique device_code_hash / user_code).
-    const findOne = db.makeQuery((execute, spec: Specification<DeviceGrantRoot>) =>
-      execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.DeviceGrantRowStd)`
+    const findOne = Effect.fn("DeviceGrantRepository.findOne")(
+      (spec: Specification<DeviceGrantRoot>) =>
+        sql`
           SELECT * FROM auth.device_grants
-          WHERE ${criteriaToWhere(spec.criteria, DeviceGrantMapper.columns)}
+          WHERE ${criteriaToWhere(sql, spec.criteria, DeviceGrantMapper.columns)}
           LIMIT 1
-        `),
-      ).pipe(
-        Effect.map((row) => (row === null ? null : DeviceGrantMapper.toDomain(row))),
-        translateDatabaseErrors,
-        Effect.withSpan("DeviceGrantRepository.findOne"),
-      ),
+        `.pipe(
+          Database.maybeRow(RowSchemas.DeviceGrantRow),
+
+          Effect.map((row) => (row === null ? null : DeviceGrantMapper.toDomain(row))),
+          translateDatabaseErrors,
+        ),
     );
 
-    const updateOne = db.makeQuery((execute, grant: DeviceGrantRoot) => {
+    const updateOne = Effect.fn("DeviceGrantRepository.updateOne")((grant: DeviceGrantRoot) => {
       const row = DeviceGrantMapper.toPersistence(grant);
-      return execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.DeviceGrantRowStd)`
+      return sql`
           UPDATE auth.device_grants
           SET status = ${row.status},
               user_id = ${row.user_id},
-              approved_at = ${row.approved_at === null ? null : sql.timestamp(row.approved_at)}
+              approved_at = ${row.approved_at}
           WHERE id = ${row.id}
           RETURNING *
-        `),
-      ).pipe(
+        `.pipe(
+        Database.maybeRow(RowSchemas.DeviceGrantRow),
+
         orFail(() => new DeviceGrantNotFound()),
         Effect.asVoid,
         translateDatabaseErrors,
-        Effect.withSpan("DeviceGrantRepository.updateOne"),
       );
     });
 
-    const deleteById = db.makeQuery((execute, id: DeviceGrantId) =>
-      execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.DeviceGrantRowStd)`
+    const deleteById = Effect.fn("DeviceGrantRepository.deleteOne")((id: DeviceGrantId) =>
+      sql`
           DELETE FROM auth.device_grants WHERE id = ${id} RETURNING *
-        `),
-      ).pipe(
+        `.pipe(
+        Database.maybeRow(RowSchemas.DeviceGrantRow),
+
         orFail(() => new DeviceGrantNotFound()),
         Effect.asVoid,
         translateDatabaseErrors,
-        Effect.withSpan("DeviceGrantRepository.deleteOne"),
       ),
     );
 

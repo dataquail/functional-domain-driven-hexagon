@@ -3,7 +3,7 @@ import { deepStrictEqual, ok } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -15,9 +15,7 @@ import { Api } from "@/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
-const DeletedAtRowStd = Schema.toStandardSchemaV1(
-  Schema.Struct({ deleted_at: Schema.NullOr(Schema.DateTimeUtcFromDate) }),
-);
+const DeletedAtRow = Schema.Struct({ deleted_at: Schema.NullOr(Schema.DateTimeUtcFromDate) });
 
 const suite = describe.sequential;
 
@@ -33,15 +31,11 @@ suite("DELETE /orgs/:id (integration)", () => {
   const seededOrgId = "11111111-1111-1111-1111-111111111111" as never;
   const seedOrg = (id: string, name: string) =>
     Effect.gen(function* () {
-      const db = yield* Database.Database;
-      yield* db
-        .execute((c) =>
-          c.query(sql.unsafe`
+      const sql = yield* Database.Database;
+      yield* sql`
             INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
             VALUES (${id}, ${name}, now(), now(), null)
-          `),
-        )
-        .pipe(Effect.orDie);
+          `.pipe(Effect.orDie);
     });
 
   it("tombstones the org", async () => {
@@ -50,13 +44,11 @@ suite("DELETE /orgs/:id (integration)", () => {
         yield* seedOrg(seededOrgId, "Acme");
         const client = yield* HttpApiClient.make(Api);
         yield* client.organization.softDelete({ params: { id: seededOrgId } });
-        const db = yield* Database.Database;
-        const rows = yield* db
-          .execute((c) =>
-            c.any(sql.type(DeletedAtRowStd)`
+        const sql = yield* Database.Database;
+        const rows = yield* sql`
               SELECT deleted_at FROM "organization".organizations WHERE id = ${seededOrgId}
-            `),
-          )
+            `
+          .pipe(Database.rows(DeletedAtRow))
           .pipe(Effect.orDie);
         deepStrictEqual(rows.length, 1);
         ok(rows[0]?.deleted_at !== null);

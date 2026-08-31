@@ -1,7 +1,7 @@
 import { deepStrictEqual, notStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -23,13 +23,11 @@ const subject = "zitadel-sub-integration";
 const TestLayer = SessionRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
 const insertUserRow = Effect.gen(function* () {
-  const db = yield* Database.Database;
-  yield* db.execute((client) =>
-    client.query(sql.unsafe`
+  const sql = yield* Database.Database;
+  yield* sql`
       INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
       VALUES (${userId}, 'admin@example.com', 'N/A', 'N/A', 'N/A', now(), now())
-    `),
-  );
+    `;
 }).pipe(Effect.orDie);
 
 const makeSession = (now: DateTime.Utc) =>

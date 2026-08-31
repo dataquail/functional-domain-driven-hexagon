@@ -1,4 +1,4 @@
-import { Database, RowSchemas, sql } from "@org/database/index";
+import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
 import { UsersLookup } from "@/modules/organization/domain/ports/acl/users-lookup.acl.js";
@@ -11,31 +11,23 @@ import { translateDatabaseErrors } from "@/platform/translate-database-errors.js
 
 export const findOrganizationMembershipsHandler = Effect.fn("findOrganizationMembershipsHandler")(
   function* (query: FindOrganizationMembershipsPayload) {
-    const db = yield* Database.Database;
+    const sql = yield* Database.Database;
     const usersLookup = yield* UsersLookup;
 
-    const membershipRows = yield* db
-      .makeQuery((execute) =>
-        execute((client) =>
-          client.any(sql.type(RowSchemas.MembershipRowStd)`
+    const membershipRows = yield* sql`
           SELECT * FROM "organization".memberships
           WHERE organization_id = ${query.organizationId}
           ORDER BY created_at ASC
-        `),
-        ),
-      )()
+        `
+      .pipe(Database.rows(RowSchemas.MembershipRow))
       .pipe(translateDatabaseErrors);
 
-    const adminRows = yield* db
-      .makeQuery((execute) =>
-        execute((client) =>
-          client.any(sql.type(RowSchemas.OrganizationRoleRowStd)`
+    const adminRows = yield* sql`
           SELECT organization_id, user_id, role, issued_by, created_at
           FROM "organization".organization_roles
           WHERE organization_id = ${query.organizationId} AND role = 'admin'
-        `),
-        ),
-      )()
+        `
+      .pipe(Database.rows(RowSchemas.OrganizationRoleRow))
       .pipe(translateDatabaseErrors);
     const adminUserIds = new Set(adminRows.map((row) => row.user_id));
 

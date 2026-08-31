@@ -23,7 +23,7 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 | `@org/web`          | Next.js App Router renderer + `/api/*` proxy; Effect Atom + MVVM (ADR-0026, 0018). |
 | `@org/components`   | Bespoke component library (primitives + patterns) + Storybook (ADR-0015).          |
 | `@org/contracts`    | Shared HTTP API contracts, schemas, errors — consumed by server and clients.       |
-| `@org/database`     | DB access kernel (slonik, `RowSchemas`, `db.makeQuery`) + migrations.              |
+| `@org/database`     | DB access kernel (effect/sql client, `RowSchemas`, row decoding) + migrations.     |
 | `@org/jobs`         | Background/cron jobs.                                                              |
 | `@org/cli`          | Command-line client (device-flow auth, organizations, todos).                      |
 | `@org/mcp`          | MCP (stdio) server exposing the CLI surface as tools.                              |
@@ -54,5 +54,5 @@ there, not an edit here.
 
 ## Always in scope
 
-- **Effect v4 baseline.** Pinned to `effect@4.0.0-beta.94` (exact — `effect/unstable/*` may break on beta bumps). Domain result idiom is `effect/Result` (not `Either`); errors are `Schema.TaggedErrorClass`; services are `Context.Service<Self, Shape>()("Id")` with an explicit `Layer`. HTTP is `effect/unstable/httpapi` + `effect/unstable/http`. Server-side gotchas and event-bus/UoW/span rules are in `.claude/rules/server-effect-and-persistence.md`. The beta ships no API docs, so **read the v4 source instead of recalling its API** — `pnpm effect:source` puts a pinned, gitignored checkout at `reference/effect`; `.claude/rules/effect-v4-source.md` says what lives where.
+- **Effect v4 baseline.** Pinned to `effect@4.0.0-beta.94` (exact — `effect/unstable/*` may break on beta bumps). Domain result idiom is `effect/Result` (not `Either`); errors are `Schema.TaggedErrorClass`; services are `Context.Service<Self, Shape>()("Id")` with an explicit `Layer`. HTTP is `effect/unstable/httpapi` + `effect/unstable/http`. Persistence is `effect/unstable/sql` with the `@effect/sql-pg` driver, pinned to the same exact beta — bump them together. Server-side gotchas and event-bus/UoW/span rules are in `.claude/rules/server-effect-and-persistence.md`. The beta ships no API docs, so **read the v4 source instead of recalling its API** — `pnpm effect:source` puts a pinned, gitignored checkout at `reference/effect`; `.claude/rules/effect-v4-source.md` says what lives where.
 - **Comments are a last resort** — code is self-documenting, behavior is documented through tests. Full policy: `.claude/rules/comments.md`.

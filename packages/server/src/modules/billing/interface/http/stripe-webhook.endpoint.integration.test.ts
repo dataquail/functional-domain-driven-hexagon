@@ -2,7 +2,7 @@ import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
 import { BillingContract, OrganizationContract } from "@org/contracts/api/Contracts";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as HttpClient from "effect/unstable/http/HttpClient";
 import * as HttpClientRequest from "effect/unstable/http/HttpClientRequest";
@@ -21,15 +21,11 @@ import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 // id assigned to its freshly-subscribed org by reading the DB.
 const readStripeSubId = (orgId: OrganizationId) =>
   Effect.gen(function* () {
-    const db = yield* Database.Database;
-    const rows = yield* db
-      .execute((c) =>
-        c.any(sql.unsafe`
+    const sql = yield* Database.Database;
+    const rows = yield* sql`
           SELECT stripe_subscription_id FROM billing.subscriptions
           WHERE organization_id = ${orgId}
-        `),
-      )
-      .pipe(Effect.orDie);
+        `.pipe(Effect.orDie);
     const first = rows[0] as { stripe_subscription_id?: string } | undefined;
     if (first?.stripe_subscription_id === undefined) {
       throw new Error("readStripeSubId: no subscription row for org");

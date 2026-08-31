@@ -1,4 +1,3 @@
-import type { StandardSchemaV1 } from "@standard-schema/spec";
 import * as Schema from "effect/Schema";
 
 export const AuthIdentityRow = Schema.Struct({
@@ -8,9 +7,6 @@ export const AuthIdentityRow = Schema.Struct({
   created_at: Schema.DateTimeUtcFromDate,
 });
 export type AuthIdentityRow = typeof AuthIdentityRow.Type;
-
-export const AuthIdentityRowStd: StandardSchemaV1<unknown, AuthIdentityRow> =
-  Schema.toStandardSchemaV1(AuthIdentityRow);
 
 export const SessionRow = Schema.Struct({
   id: Schema.String.check(Schema.isGUID()),
@@ -23,9 +19,6 @@ export const SessionRow = Schema.Struct({
   last_used_at: Schema.DateTimeUtcFromDate,
 });
 export type SessionRow = typeof SessionRow.Type;
-
-export const SessionRowStd: StandardSchemaV1<unknown, SessionRow> =
-  Schema.toStandardSchemaV1(SessionRow);
 
 export const ApiTokenRow = Schema.Struct({
   id: Schema.String.check(Schema.isGUID()),
@@ -40,9 +33,6 @@ export const ApiTokenRow = Schema.Struct({
 });
 export type ApiTokenRow = typeof ApiTokenRow.Type;
 
-export const ApiTokenRowStd: StandardSchemaV1<unknown, ApiTokenRow> =
-  Schema.toStandardSchemaV1(ApiTokenRow);
-
 export const DeviceGrantRow = Schema.Struct({
   id: Schema.String.check(Schema.isGUID()),
   device_code_hash: Schema.String,
@@ -54,6 +44,3 @@ export const DeviceGrantRow = Schema.Struct({
   approved_at: Schema.NullOr(Schema.DateTimeUtcFromDate),
 });
 export type DeviceGrantRow = typeof DeviceGrantRow.Type;
-
-export const DeviceGrantRowStd: StandardSchemaV1<unknown, DeviceGrantRow> =
-  Schema.toStandardSchemaV1(DeviceGrantRow);

@@ -1,4 +1,4 @@
-import { Database, RowSchemas, sql } from "@org/database/index";
+import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
 import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
@@ -23,15 +23,11 @@ const toView = (row: RowSchemas.SubscriptionRow): SubscriptionView => ({
 export const findSubscriptionByOrganizationHandler = Effect.fn(
   "findSubscriptionByOrganizationHandler",
 )(function* (query: FindSubscriptionByOrganizationPayload) {
-  const db = yield* Database.Database;
-  const row = yield* db
-    .makeQuery((execute) =>
-      execute((client) =>
-        client.maybeOne(sql.type(RowSchemas.SubscriptionRowStd)`
+  const sql = yield* Database.Database;
+  const row = yield* sql`
             SELECT * FROM billing.subscriptions WHERE organization_id = ${query.organizationId}
-          `),
-      ),
-    )()
+          `
+    .pipe(Database.maybeRow(RowSchemas.SubscriptionRow))
     .pipe(translateDatabaseErrors);
   return row === null ? null : toView(row);
 });

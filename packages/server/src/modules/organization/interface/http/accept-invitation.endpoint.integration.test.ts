@@ -1,7 +1,7 @@
 import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import { Database, sql } from "@org/database/index";
+import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
@@ -18,15 +18,11 @@ const suite = describe.sequential;
 const ORG_ID = "11111111-1111-1111-1111-111111111111" as never;
 
 const seedOrg = Effect.gen(function* () {
-  const db = yield* Database.Database;
-  yield* db
-    .execute((c) =>
-      c.query(sql.unsafe`
+  const sql = yield* Database.Database;
+  yield* sql`
         INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
         VALUES (${ORG_ID}, 'Acme', now(), now(), null)
-      `),
-    )
-    .pipe(Effect.orDie);
+      `.pipe(Effect.orDie);
 });
 
 // The invite endpoint doesn't return the raw token (it's a bearer credential
@@ -42,11 +38,9 @@ const seedInvitation = (
   overrides: { acceptedAt?: string; revokedAt?: string; expiresAt?: string } = {},
 ) =>
   Effect.gen(function* () {
-    const db = yield* Database.Database;
+    const sql = yield* Database.Database;
     const expiresAt = overrides.expiresAt ?? iso(SEVEN_DAYS_MS);
-    yield* db
-      .execute((c) =>
-        c.query(sql.unsafe`
+    yield* sql`
           INSERT INTO "organization".invitations
             (organization_id, invitee_email, token, expires_at, accepted_at, revoked_at, created_at)
           VALUES (
@@ -55,9 +49,7 @@ const seedInvitation = (
             ${overrides.revokedAt ?? null},
             now()
           )
-        `),
-      )
-      .pipe(Effect.orDie);
+        `.pipe(Effect.orDie);
   });
 
 // Accepting provisions a membership keyed to CurrentUser — a super-admin can't
@@ -85,16 +77,12 @@ suite("POST /invitations/:token/accept (integration, member caller)", () => {
         });
         deepStrictEqual(organizationId, ORG_ID);
 
-        const db = yield* Database.Database;
-        const membership = yield* db
-          .execute((c) =>
-            c.query(sql.unsafe`
-              SELECT 1 FROM "organization".memberships
-              WHERE user_id = ${MEMBER_CALLER_ID} AND organization_id = ${ORG_ID}
-            `),
-          )
-          .pipe(Effect.orDie);
-        deepStrictEqual(membership.rowCount, 1);
+        const sql = yield* Database.Database;
+        const membership = yield* sql`
+          SELECT 1 FROM "organization".memberships
+          WHERE user_id = ${MEMBER_CALLER_ID} AND organization_id = ${ORG_ID}
+        `.pipe(Effect.orDie);
+        deepStrictEqual(membership.length, 1);
       }),
     );
   });
