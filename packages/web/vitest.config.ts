@@ -2,7 +2,7 @@
 // React's JSX transform (esbuild's "automatic" runtime — no Vite plugin
 // dependency, no Babel pipeline). The setup file mounts
 // @testing-library/jest-dom matchers and registers cleanup() between
-// tests. Listed in the root vitest.workspace.ts so `pnpm test` from the
+// tests. Listed in the root config's `test.projects` so `pnpm test` from the
 // repo root picks these up alongside the server suite.
 
 import * as path from "node:path";

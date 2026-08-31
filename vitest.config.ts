@@ -16,6 +16,16 @@ const isMergedRun = process.argv.some((arg) => arg.startsWith("--merge-reports")
 
 export default defineConfig({
   test: {
+    // Projects are listed explicitly so packages/acceptance/ (Playwright) isn't
+    // auto-discovered and its `*.spec.ts` files aren't loaded as Vitest tests.
+    // Acceptance specs run via `pnpm test:acceptance`.
+    projects: [
+      "packages/contracts",
+      "packages/database",
+      "packages/jobs",
+      "packages/server",
+      "packages/web",
+    ],
     coverage: {
       provider: "v8",
       reporter: isMergedRun ? ["text-summary", "html", "lcov", "json-summary"] : ["text-summary"],

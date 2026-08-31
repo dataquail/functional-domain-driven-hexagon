@@ -66,4 +66,7 @@ jobs:
         with:
           name: coverage-blob-integration
           path: .vitest-reports/
+          # Vitest writes blobs to a dot-directory, and the default is to skip
+          # hidden paths — without this the upload silently matches nothing.
+          include-hidden-files: true
           retention-days: 1
