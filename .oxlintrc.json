@@ -36,6 +36,7 @@
     "**/vitest.shared.ts",
     "reference/**",
     "website/**",
+    "**/architecture.mjs",
     "scratchpad/**",
     "**/.tmp-config-tests/**",
     "**/.tmp-facts-tests/**",
