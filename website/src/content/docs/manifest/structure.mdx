@@ -1,14 +1,14 @@
 ---
 title: Structure
-description: Which files a folder admits, which siblings a file owes, and the stray-folder catch-all.
+description: Which files a folder admits, what they may be called, which siblings they owe, and the stray-folder catch-all.
 ---
 
 The structure family is the inverse of the other three. They ask whether a file is doing
 something it should not; structure asks whether the file is allowed to _exist_ where it is,
 and whether the files that must exist beside it do.
 
-It comes from two fields — `children` and `requires` — and compiles into three kinds of
-rule.
+It comes from three fields — `children`, `name` and `requires` — and compiles into four
+kinds of rule.
 
 ## Layout: `children`
 
@@ -54,6 +54,74 @@ It still emits a layout rule — one admitting any filename — so the folder is
 That matters: the catch-all below fires on folders no rule governs, and an open folder that
 emitted nothing would trip it. The rule is skipped by the probe check, since a rule that
 admits everything has no path it must reject.
+
+## Naming: `name`
+
+`children` says which stereotypes a folder admits. It says nothing about the **concept
+name in front of the stereotype**: `*.handler.ts` is satisfied by `create-todo.handler.ts`,
+`CreateTodo.handler.ts` and `create_TODO.handler.ts` alike. That is the degree of freedom a
+taxonomy alone leaves open, and `name` closes it.
+
+```js
+"~/server/src/": { name: "kebab-case" },      // inherited by the whole subtree
+"~/contracts/src/": { name: "PascalCase" },
+"migrations/": { name: "snake_case" },
+```
+
+| Value                 | Shape                                         |
+| --------------------- | --------------------------------------------- |
+| `"kebab-case"`        | lowercase words joined by hyphens             |
+| `"camelCase"`         | a lowercase first word, then capitalised ones |
+| `"PascalCase"`        | capitalised words, no separators              |
+| `"snake_case"`        | lowercase words joined by underscores         |
+| `{ regex, message? }` | anything else, with a sentence saying why     |
+| `{ like, message? }`  | equal to an ancestor capture                  |
+
+`name` **inherits like `imports`**: state it once at a package root and every folder beneath
+it is covered. That is what keeps it to a handful of declarations rather than one per
+stereotype.
+
+### What it judges
+
+A folder node's `name` judges two things:
+
+- **its own segment**, when its key declares a capture — `@/modules/{module}/` with
+  `kebab-case` refuses a module folder named `Todos_V2`;
+- **the concept name of every file directly inside it.**
+
+A file's concept name is its basename **up to the first dot**, not what a `*` matched. That
+distinction matters: the key `*-live.ts` matches `todos.repository-live.ts`, whose wildcard
+spans a stereotype segment as well as the concept. The dot is the delimiter, so `todos` is
+the name and `repository-live` is the stereotype.
+
+### Named after its folder
+
+```js
+"@/modules/{module}/domain/{subdomain}/": {
+  children: {
+    "*.root.ts": { name: { like: "{subdomain}" } },
+  },
+},
+```
+
+`like` names an ancestor capture the concept name must **equal**. A subdomain folder is the
+aggregate, so `todo/` holds `todo.root.ts`; a `user.root.ts` sitting there means the folder
+holds two aggregates, or the wrong one. Nothing but a cross-reference can say that, and it
+is the one place `name` belongs on a file node rather than a folder.
+
+The reference is resolved against captures declared by the file's **ancestors**, so a `like`
+naming a capture no ancestor path declares fails to compile rather than never firing.
+
+### Probes for a convention
+
+A naming rule proves itself like everything else: its probe is the node's own probe path
+with the concept name replaced by one the convention rejects — `zzProbeStray` for
+kebab-case, `zz-probe-stray` for PascalCase.
+
+For a custom `regex`, the compiler tries a handful of candidate names and takes the first
+the pattern refuses. **If the pattern admits all of them, the manifest fails to compile**: a
+convention nothing can violate is a rule that never reports, which is the one thing this
+package will not ship.
 
 ## Parity: `requires`
 

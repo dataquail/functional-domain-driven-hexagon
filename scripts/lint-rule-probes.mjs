@@ -33,6 +33,20 @@ const PROBES = [
     source: "export const Probe = () => null;\n",
   },
   {
+    // Naming: the stereotype suffix is right, the concept name in front of it
+    // is not. Without this the layout rule admits the file and nothing else
+    // looks at the name.
+    rule: "architecture/structure",
+    file: "packages/server/src/modules/todos/commands/zzProbeStray.handler.ts",
+    source: "export const probe = 1;\n",
+  },
+  {
+    // Named after its folder: the right shape, the wrong aggregate.
+    rule: "architecture/structure",
+    file: "packages/server/src/modules/todos/domain/todo/zzprobe-stray.root.ts",
+    source: "export const probe = 1;\n",
+  },
+  {
     rule: "architecture/exports",
     file: "packages/server/src/modules/todos/commands/zzprobe-bus.handler.ts",
     source:

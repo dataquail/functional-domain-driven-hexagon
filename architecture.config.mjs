@@ -312,7 +312,17 @@ export default {
         external: ["effect", "vitest", "@effect/vitest"],
         allow: ["node:**", "~/contracts/**", "vitest.shared.ts"],
       },
-      children: { "**/": { layout: "open", children: {} } },
+      children: {
+        // Every module in src/ is an Effect-style module named for what it
+        // exports, so its concept name is that exported name rather than a
+        // kebab-case slug. The package's own config files are not.
+        "src/": {
+          name: "PascalCase",
+          layout: "open",
+          children: { "**/": { layout: "open", children: {} } },
+        },
+        "**/": { layout: "open", children: {} },
+      },
     },
 
     "~/database/": {
@@ -333,10 +343,29 @@ export default {
         ],
         allow: ["node:**", "~/database/**", "vitest.shared.ts"],
       },
-      children: { "**/": { layout: "open", children: {} } },
+      children: {
+        "src/": {
+          // Database.ts is an Effect-style module named for the service it
+          // exports; the helpers beside it are ordinary kebab-case files.
+          name: {
+            regex: "^(?:Database|[a-z0-9]+(?:-[a-z0-9]+)*)$",
+            message:
+              "A file in @org/database is kebab-case, except Database.ts, which is named for the service it exports.",
+          },
+          layout: "open",
+          children: {
+            // A migration's name is its ordinal and what it does, in the order
+            // the migrator runs them.
+            "migrations/": { name: "snake_case", layout: "open", children: {} },
+            "**/": { name: "kebab-case", layout: "open", children: {} },
+          },
+        },
+        "**/": { layout: "open", children: {} },
+      },
     },
 
     "~/api-client/": {
+      name: "kebab-case",
       message:
         "@org/api-client is the shared typed client and credential store the CLI and the MCP server sit on.",
       layout: "open",
@@ -350,6 +379,7 @@ export default {
     },
 
     "~/cli/": {
+      name: "kebab-case",
       message: "@org/cli is the command-line client: device-flow auth, organizations, todos.",
       layout: "open",
       imports: {
@@ -362,6 +392,7 @@ export default {
     },
 
     "~/mcp/": {
+      name: "kebab-case",
       message: "@org/mcp exposes the CLI surface as MCP tools over stdio.",
       layout: "open",
       imports: {
@@ -374,6 +405,7 @@ export default {
     },
 
     "~/jobs/": {
+      name: "kebab-case",
       message: "@org/jobs runs the background and cron jobs.",
       layout: "open",
       imports: {
@@ -389,6 +421,7 @@ export default {
     // The bespoke component library. Direction: features → patterns →
     // primitives → third-party (ADR-0015). Only primitives touch a UI library.
     "~/components/": {
+      name: "kebab-case",
       message:
         "@org/components holds two trees: primitives/ (atoms) and patterns/ (molecules and organisms), plus the class-name helpers in lib/, the providers/ and the Storybook config. A new folder here is a new tier — declare it deliberately.",
       imports: {
@@ -487,6 +520,7 @@ export default {
     // Next renderer over the Effect BFF. MVVM, and the arrow points one way:
     // Model (services/) ← ViewModel (*.view-model.ts) ← View (*.view.tsx).
     "~/web/": {
+      name: "kebab-case",
       message:
         "packages/web is the Next App Router renderer: app/ holds the routes, features/ the MVVM tiers, services/ the Model, lib/ and test/ the supporting code. There is no fifth folder — a new one is a new tier.",
       imports: {
@@ -530,6 +564,14 @@ export default {
             "Files in packages/web/features/** must carry a view-tier stereotype (ADR-0026): a naked component is *.view.tsx, all behaviour is *.view-model.ts, and tests are *.test.{ts,tsx}. A bare component file has no stereotype — rename it *.view.tsx. There is no presenter tier.",
           children: {
             "{feature}/": {
+              // __root holds the chrome every route shares — a slot in the
+              // layout rather than a feature, and the one folder here that is
+              // not named after one.
+              name: {
+                regex: "^(?:__root|[a-z0-9]+(?:-[a-z0-9]+)*)$",
+                message:
+                  "A feature folder is kebab-case, named after the feature. The one exception is __root, the chrome every route shares.",
+              },
               message:
                 "Files in packages/web/features/** must carry a view-tier stereotype (ADR-0026): *.view.tsx, *.view-model.ts, or *.test.{ts,tsx}. There is no presenter tier.",
               children: {
@@ -621,6 +663,7 @@ export default {
     // cipher. Being reachable from everywhere is exactly why this has to stay
     // the narrowest thing in the repo.
     "@/common/": {
+      name: "kebab-case",
       message:
         "common/ holds leaf utilities with no architectural position: the typed environment and the token cipher. A file here is reachable from every tier, so it may depend on nothing but effect and the node builtins. Anything that needs more than that is not common — it belongs to a tier that can name its dependencies.",
       imports: {
@@ -642,6 +685,7 @@ export default {
     // `@/platform/**` the modules were granted wholesale is now a set of tiers
     // that each say what they are.
     "@/platform/": {
+      name: "kebab-case",
       message:
         "platform/ holds the cross-cutting kernel: branded IDs, the DDD contracts tier, the auth and notification ports, the persistence helpers, and the Lives that bind them. A file here is shared by every module, so it earns its place by being needed by more than one.",
       imports: {
@@ -809,6 +853,7 @@ export default {
     },
 
     "@/modules/{module}/": {
+      name: "kebab-case",
       message:
         "The module root admits only aggregation files: index.ts (barrel), <feature>.module.ts (composed Layer), <feature>.command-handlers.ts / .query-handlers.ts (bus-registration maps), <feature>.event-span-attributes.ts, <feature>.shared-deps.ts. Feature code belongs in a stereotype subfolder (domain/, commands/, queries/, event-handlers/, infrastructure/, interface/, policies/).",
 
@@ -1338,7 +1383,11 @@ export default {
               },
 
               children: {
-                "*.root.ts": {},
+                // A subdomain folder is the aggregate, so its root carries the
+                // folder's own name: todo/ holds todo.root.ts. A root named
+                // anything else means the folder holds two aggregates, or the
+                // wrong one.
+                "*.root.ts": { name: { like: "{subdomain}" } },
                 "*.root-ops.ts": {
                   message:
                     "An aggregate root's operations bag (*.root-ops.ts) owns the invariants, so it carries the test-parity obligation: add the sibling *.root-ops.test.ts. (The *.root.ts data class is a dumb Schema and needs no test.)",

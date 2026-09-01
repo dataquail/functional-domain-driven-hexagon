@@ -448,3 +448,92 @@ describe("export restrictions", () => {
     expect(ruleNamed(lowered.exports, "no-factories").probe.to).toContain("node_modules/pkg");
   });
 });
+
+describe("naming", () => {
+  const tree = (name: unknown, extra: Record<string, unknown> = {}) =>
+    lowerManifest(
+      base({
+        "@/modules/{module}/": {
+          name,
+          children: {
+            "domain/{subdomain}/": {
+              children: { "*.root.ts": extra, "*.id.ts": {} },
+            },
+          },
+        },
+      } as never),
+    );
+
+  it("judges a folder's own segment where its key declares a capture", () => {
+    const rule = ruleNamed(tree("kebab-case").structure.naming, "modules-module/naming-folder");
+    expect(rule.convention).toBe("^[a-z0-9]+(?:-[a-z0-9]+)*$");
+    expect(rule.file[0]).toContain("pkg/src/modules");
+  });
+
+  // A literal key names nothing variable, so it has no segment to judge — only
+  // the files inside it.
+  it("emits no folder rule for a key with no variable segment", () => {
+    const names = tree("kebab-case").structure.naming.map((rule) => rule.name);
+    expect(names).not.toContain("modules-module/domain/{subdomain}/*.root.ts/naming-folder");
+  });
+
+  // Inheritance is the whole ergonomics: one declaration, not one per key.
+  it("carries the convention down to a folder that does not restate it", () => {
+    const names = tree("kebab-case").structure.naming.map((rule) => rule.name);
+    expect(names).toContain("modules-module/domain/{subdomain}/naming");
+  });
+
+  it("states nothing when no tier declares a convention", () => {
+    expect(tree(undefined).structure.naming).toEqual([]);
+  });
+
+  describe("named after an ancestor capture", () => {
+    it("compiles to a comparison between two groups of one match", () => {
+      const rule = ruleNamed(
+        tree("kebab-case", { name: { like: "{subdomain}" } }).structure.naming,
+        "*.root.ts/naming",
+      );
+      expect(rule.sameAs).toBeDefined();
+      expect(rule.subject).not.toBe(rule.sameAs);
+    });
+
+    it("refuses a reference no ancestor path declares", () => {
+      expect(() => tree("kebab-case", { name: { like: "{nowhere}" } })).toThrow(/no ancestor/);
+    });
+  });
+
+  // A convention nothing can violate is a rule that never reports, which is the
+  // one failure this package refuses to ship.
+  it("refuses a custom pattern that admits every name", () => {
+    expect(() => tree({ regex: ".*" })).toThrow(/admits every name/);
+  });
+
+  it("generates a probe its own convention rejects", () => {
+    const rule = ruleNamed(tree("PascalCase").structure.naming, "modules-module/naming");
+    expect(rule.probe.path).toMatch(/zz-probe-stray/);
+  });
+});
+
+describe("naming edge cases", () => {
+  const one = (node: unknown) => lowerManifest(base({ "@/a/": node } as never)).structure.naming;
+
+  it("refuses a convention it does not know", () => {
+    expect(() => one({ name: "SCREAMING_SNAKE", children: { "*.ts": {} } })).toThrow(
+      /unknown naming convention/,
+    );
+  });
+
+  it("carries a custom message rather than the generated one", () => {
+    const [rule] = one({
+      name: { regex: "^x[a-z]+$", message: "A file here starts with x." },
+      children: { "*.ts": {} },
+    });
+    expect(rule?.message).toBe("A file here starts with x.");
+  });
+
+  it.each(["camelCase", "snake_case"])("knows the shape of %s", (convention) => {
+    const [rule] = one({ name: convention, children: { "*.ts": {} } });
+    expect(rule?.message).toContain(convention);
+    expect(rule?.convention).toBeDefined();
+  });
+});

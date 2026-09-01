@@ -111,6 +111,42 @@ An`import "server-only"` side-effect import that a regex survey cannot see but
 an AST can. None of these were caught by reading; all were caught by running the
 policy against the real tree or against a planted violation.
 
+### Naming, because a taxonomy is only half a convention
+
+`children` enumerates the stereotypes a folder admits and says nothing about the
+concept name in front of one. `*.handler.ts` is satisfied by
+`create-todo.handler.ts`, `CreateTodo.handler.ts` and `create_TODO.handler.ts`
+alike, and a whole module folder called `Todos_V2` passed every rule we had. That
+is a real degree of freedom, and the one a contributor — or an agent working from
+the manifest — drifts through first, because nothing pushes back.
+
+A node therefore carries a `name`: one of four conventions, a regex with a
+sentence saying why, or `{ like: "{capture}" }`. It **inherits like `imports`**,
+so a tier states it once rather than on each of a hundred stereotype keys.
+
+Two decisions inside that are worth recording.
+
+**A file's concept name is its basename up to the first dot, not what a `*`
+matched.** The key `*-live.ts` matches `todos.repository-live.ts`, where the
+wildcard spans a stereotype segment as well as the concept; judging the wildcard
+would report every compound stereotype in the repo. ADR-0024 already makes the
+dot the delimiter, so the rule reads it the same way.
+
+**A custom regex still owes a counter-example.** The compiler tries a handful of
+candidate names and takes the first the pattern refuses; if the pattern admits
+all of them, the manifest fails to compile. A convention nothing can violate is a
+rule that never reports, and this is the same guarantee the generated probes give
+every other rule — held at the one place a human writes the pattern themselves.
+
+The conventions this repo declares are the ones it already followed: kebab-case
+for the server, web, components, jobs, CLI, MCP and API client (0 exceptions
+across ~900 files); PascalCase for `contracts/src`, whose files are Effect-style
+modules named for what they export; snake_case for the numbered migrations; and
+two regexes each carrying one named exception, `Database.ts` and
+`features/__root/`. Nothing needed a baseline entry. `domain/{subdomain}/*.root.ts`
+gets `{ like: "{subdomain}" }` — a subdomain folder is the aggregate, so `todo/`
+holds `todo.root.ts`, and all twelve already did.
+
 ## Alternatives considered
 
 - **Keep the flat config.** Rejected once the second subtree was ported: the
@@ -151,6 +187,14 @@ list because of two choices:
 govern?" it answers badly, and grep no longer helps. It prints the allowlist in
 force, every prohibition reaching the file with the first sentence of its
 reason, the folder rule that admits it, and the siblings it owes.
+
+### Rejected: a glob quantifier instead of a field
+
+`[a-z0-9-]+.root.ts` as a child key would need only a `+` token in the glob
+compiler, about ten lines. It was rejected because it puts the convention into
+each of a hundred keys, where copies drift; it cannot constrain a folder capture,
+which is where the worst case was (`modules/Todos_V2/`); and it cannot express
+"named after its folder" at all.
 
 ## Follow-ups
 

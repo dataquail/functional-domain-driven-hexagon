@@ -3,6 +3,7 @@ import * as Result from "effect/Result";
 import type {
   StructureConfig,
   StructureFolder,
+  StructureNaming,
   StructureParity,
   StructureRoot,
 } from "../domain/architecture-config.js";
@@ -35,13 +36,30 @@ export type CompiledStructureParity = {
   readonly probe: string;
 };
 
+export type CompiledStructureNaming = {
+  readonly name: string;
+  readonly message: string;
+  readonly file: ReadonlyArray<RegExp>;
+  readonly fileNot: ReadonlyArray<RegExp>;
+  readonly subject: number;
+  readonly convention: RegExp | null;
+  readonly sameAs: number | null;
+  readonly probe: string;
+};
+
 export type CompiledStructure = {
   readonly roots: ReadonlyArray<CompiledStructureRoot>;
   readonly folders: ReadonlyArray<CompiledStructureFolder>;
   readonly parity: ReadonlyArray<CompiledStructureParity>;
+  readonly naming: ReadonlyArray<CompiledStructureNaming>;
 };
 
-export const EMPTY_STRUCTURE: CompiledStructure = { roots: [], folders: [], parity: [] };
+export const EMPTY_STRUCTURE: CompiledStructure = {
+  roots: [],
+  folders: [],
+  parity: [],
+  naming: [],
+};
 
 const compileRoot = (rule: StructureRoot): Result.Result<CompiledStructureRoot, PatternInvalid> => {
   const path = compilePatterns(rule.name, "path", rule.path);
@@ -87,6 +105,27 @@ const compileParity = (
   });
 };
 
+const compileNaming = (
+  rule: StructureNaming,
+): Result.Result<CompiledStructureNaming, PatternInvalid> => {
+  const file = compilePatterns(rule.name, "file", rule.file);
+  if (Result.isFailure(file)) return Result.fail(file.failure);
+  const fileNot = compilePatterns(rule.name, "fileNot", rule.fileNot);
+  if (Result.isFailure(fileNot)) return Result.fail(fileNot.failure);
+  const convention = compilePatterns(rule.name, "convention", rule.convention);
+  if (Result.isFailure(convention)) return Result.fail(convention.failure);
+  return Result.succeed({
+    name: rule.name,
+    message: rule.message,
+    file: file.success,
+    fileNot: fileNot.success,
+    subject: rule.subject,
+    convention: convention.success[0] ?? null,
+    sameAs: rule.sameAs ?? null,
+    probe: rule.probe.path,
+  });
+};
+
 const compileAll = <A, B>(
   items: ReadonlyArray<A>,
   compile: (item: A) => Result.Result<B, PatternInvalid>,
@@ -111,11 +150,14 @@ export const compileStructure = (
   if (Result.isFailure(folders)) return Result.fail(folders.failure);
   const parity = compileAll(config.parity ?? [], compileParity);
   if (Result.isFailure(parity)) return Result.fail(parity.failure);
+  const naming = compileAll(config.naming ?? [], compileNaming);
+  if (Result.isFailure(naming)) return Result.fail(naming.failure);
 
   return Result.succeed({
     roots: roots.success,
     folders: folders.success,
     parity: parity.success,
+    naming: naming.success,
   });
 };
 
@@ -159,6 +201,37 @@ export const requiredSiblingsOf = (
   );
 };
 
+type NamingMatch = {
+  readonly subject: string;
+  readonly expected: string | null;
+  // Whether the rule asked for a comparison at all. Without this a `sameAs`
+  // naming a group the pattern never fills would fall back to "no convention"
+  // and admit every name — vacuous, in the one family added to stop that.
+  readonly comparing: boolean;
+};
+
+// The rule's pattern carries capture groups; `subject` says which one holds the
+// name being judged, and `sameAs` which one it has to equal.
+const firstNamingMatch = (rule: CompiledStructureNaming, file: string): NamingMatch | null => {
+  for (const pattern of rule.file) {
+    const found = pattern.exec(file);
+    if (found === null) continue;
+    const subject = found[rule.subject];
+    if (subject === undefined) continue;
+    return {
+      subject,
+      expected: rule.sameAs === null ? null : (found[rule.sameAs] ?? null),
+      comparing: rule.sameAs !== null,
+    };
+  }
+  return null;
+};
+
+const namingSatisfied = (rule: CompiledStructureNaming, named: NamingMatch): boolean =>
+  named.comparing
+    ? named.expected !== null && named.subject === named.expected
+    : rule.convention === null || rule.convention.test(named.subject);
+
 export const evaluateStructure = (
   structure: CompiledStructure,
   fileSystem: FileSystem,
@@ -180,6 +253,19 @@ export const evaluateStructure = (
         subject: sibling,
       });
     }
+  }
+
+  for (const rule of structure.naming) {
+    if (anyMatches(rule.fileNot, file)) continue;
+    const named = firstNamingMatch(rule, file);
+    if (named === null || namingSatisfied(rule, named)) continue;
+    violations.push({
+      kind: "structure",
+      ruleName: rule.name,
+      message: rule.message,
+      file,
+      subject: named.subject,
+    });
   }
 
   const governing = structure.folders.filter((rule) => anyMatches(rule.folder, folder));
@@ -225,6 +311,13 @@ export const structureRulesFailingTheirProbe = (
   structure: CompiledStructure,
 ): ReadonlyArray<string> => {
   const failing: Array<string> = [];
+
+  for (const rule of structure.naming) {
+    const named = firstNamingMatch(rule, rule.probe);
+    if (named === null || namingSatisfied(rule, named) || anyMatches(rule.fileNot, rule.probe)) {
+      failing.push(rule.name);
+    }
+  }
 
   for (const rule of structure.parity) {
     const selects = anyMatches(rule.file, rule.probe) && !anyMatches(rule.fileNot, rule.probe);
