@@ -1,9 +1,9 @@
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 
-import { Api } from "@/api.js";
 import { createEndpoint } from "@/modules/user/interface/http/create.endpoint.js";
 import { deleteEndpoint } from "@/modules/user/interface/http/delete.endpoint.js";
 import { findEndpoint } from "@/modules/user/interface/http/find.endpoint.js";
+import { Api } from "@/platform/api.js";
 
 export const UserLive = HttpApiBuilder.group(Api, "user", (handlers) =>
   handlers

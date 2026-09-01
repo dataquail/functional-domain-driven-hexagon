@@ -5,7 +5,7 @@ import { AuthContract, CliAuthContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
-import { Api } from "@/api.js";
+import { Api } from "@/platform/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 
 // Drives the full device flow through the real HTTP surface: the fake auth

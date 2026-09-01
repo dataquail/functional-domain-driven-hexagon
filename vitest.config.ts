@@ -23,6 +23,7 @@ export default defineConfig({
       "packages/contracts",
       "packages/database",
       "packages/jobs",
+      "packages/oxlint-architecture-rules",
       "packages/server",
       "packages/web",
     ],
@@ -37,6 +38,7 @@ export default defineConfig({
         "packages/contracts/src/**/*.ts",
         "packages/database/src/**/*.ts",
         "packages/jobs/src/**/*.ts",
+        "packages/oxlint-architecture-rules/src/**/*.ts",
         "packages/server/src/**/*.{ts,tsx}",
         "packages/web/features/**/*.{ts,tsx}",
         "packages/web/services/**/*.{ts,tsx}",
@@ -54,6 +56,10 @@ export default defineConfig({
         // process, or the Playwright acceptance tier.
         "packages/server/src/server.ts",
         "packages/jobs/src/main.ts",
+        // Loaded by oxlint's plugin host with a top-level await over
+        // `process.env` and the on-disk policy; no Vitest suite can import it.
+        // Its behaviour is covered through `loadPolicy` and the rule itself.
+        "packages/oxlint-architecture-rules/src/adapters/oxlint/plugin.ts",
         "packages/database/src/scripts/**",
         // `import "server-only"` — unloadable in the jsdom Model tier, so no
         // Vitest suite can reach them at all (ADR-0019, ADR-0026).

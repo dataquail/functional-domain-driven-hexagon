@@ -10,7 +10,7 @@
 // this script loudly instead of quietly disarming an ADR.
 
 import { execFileSync } from "node:child_process";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 const repoRoot = process.cwd();
@@ -23,17 +23,17 @@ const repoRoot = process.cwd();
 /** @type {Array<{rule: string, file: string, source: string}>} */
 const PROBES = [
   {
-    rule: "project-structure/server-modules",
+    rule: "architecture/structure",
     file: "packages/server/src/modules/todos/zzprobe-stray.ts",
     source: "export const probe = 1;\n",
   },
   {
-    rule: "project-structure/web-features",
+    rule: "architecture/structure",
     file: "packages/web/features/zzprobe-untiered.tsx",
     source: "export const Probe = () => null;\n",
   },
   {
-    rule: "local/bus-factories-at-composition-roots",
+    rule: "architecture/exports",
     file: "packages/server/src/modules/todos/commands/zzprobe-bus.handler.ts",
     source:
       'import { makeCommandBus } from "@effect-server-utils/cqrs";\n\nexport const probe = makeCommandBus;\n',
@@ -60,7 +60,7 @@ const PROBES = [
     source: 'export const Probe = () => <Probe className="p-4" />;\n',
   },
   {
-    rule: "local/view-hooks-allowlist",
+    rule: "architecture/members",
     file: "packages/web/features/zzprobe/probe-hooks.view.tsx",
     source:
       'import * as React from "react";\n\nexport const Probe = () => {\n  const [n] = React.useState(0);\n  return n;\n};\n',
@@ -71,7 +71,7 @@ const PROBES = [
     source: "export const Probe = () => <div />;\n",
   },
   {
-    rule: "local/no-effect-namespace-imports",
+    rule: "architecture/exports",
     file: "packages/server/src/zzprobe-effect-ns.ts",
     source: 'import { Effect } from "effect";\n\nexport const probe = Effect;\n',
   },
@@ -132,7 +132,7 @@ const PROBES = [
       'import { probe as p } from "../../contracts/src/index.js";\n\nexport const probe = p;\n',
   },
   {
-    rule: "local/dumb-repository-ports",
+    rule: "architecture/members",
     file: "packages/server/src/modules/todos/domain/todo/zzprobe-dumb.repository.ts",
     source:
       "export type ProbeRepositoryShape = {\n  readonly findOneById: (id: string) => string;\n};\n",
@@ -143,12 +143,12 @@ const PROBES = [
     source: 'import { useState } from "react";\n\nexport const probe = useState;\n',
   },
   {
-    rule: "project-structure/components-primitives",
+    rule: "architecture/structure",
     file: "packages/components/primitives/zzprobe/probe.tsx",
     source: "export const Probe = () => null;\n",
   },
   {
-    rule: "project-structure/components-patterns",
+    rule: "architecture/structure",
     file: "packages/components/patterns/zzprobe/probe.tsx",
     source: "export const Probe = () => null;\n",
   },
@@ -157,32 +157,84 @@ const PROBES = [
     // unprobed — only layout was. These three cover its distinct mechanisms:
     // the cross-folder port trio, a same-folder {node-name}.test.ts, and the
     // {node-name}.integration.test.ts variant.
-    rule: "project-structure/server-modules",
+    rule: "architecture/structure",
     file: "packages/server/src/modules/todos/domain/todo/zzprobe-parity.repository.ts",
     source:
       "export type ProbeRepositoryShape = {\n  readonly findOne: (spec: unknown) => unknown;\n};\n",
   },
   {
-    rule: "project-structure/server-modules",
+    rule: "architecture/structure",
     file: "packages/server/src/modules/todos/commands/zzprobe-parity.handler.ts",
     source: "export const probeParityHandler = () => null;\n",
   },
   {
-    rule: "project-structure/server-modules",
+    rule: "architecture/structure",
     file: "packages/server/src/modules/todos/interface/http/zzprobe-parity.endpoint.ts",
     source: "export const probeParityEndpoint = () => null;\n",
   },
   {
-    rule: "project-structure/web-features",
+    rule: "architecture/structure",
     file: "packages/web/features/zzprobe/probe.view-model.ts",
     source: "export const probeAtom = null;\n",
   },
+  {
+    // The architecture plugin's own per-rule coverage lives in
+    // `architecture.config.mjs` — every rule carries a `probe` the plugin
+    // refuses to load without. What these three prove is the WIRING: that the
+    // plugin is loaded, its rule is enabled, its globs match, and resolution is
+    // live rather than quietly failing open.
+    rule: "architecture/imports",
+    file: "packages/server/src/modules/todos/commands/zzprobe-arch.handler.ts",
+    source:
+      'import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";\n\nexport const probe = OrganizationRepository;\n',
+  },
+  {
+    // An import nobody can resolve is an import no rule can police, so the
+    // resolver failing open would disarm every rule at once without changing a
+    // single line of config.
+    rule: "architecture/imports",
+    file: "packages/server/src/zzprobe-unresolved.ts",
+    source: 'import { probe } from "@org/definitely-not-a-real-package";\n\nexport { probe };\n',
+  },
+  {
+    // Circularity is the one dependency-cruiser rule with no per-file
+    // equivalent; oxlint's own rule replaced it, so it needs the same proof.
+    rule: "import/no-cycle",
+    file: "packages/server/src/zzprobe-cycle-a.ts",
+    source: 'import { b } from "./zzprobe-cycle-b.js";\n\nexport const a = () => b;\n',
+  },
+  {
+    rule: "import/no-cycle",
+    file: "packages/server/src/zzprobe-cycle-b.ts",
+    source: 'import { a } from "./zzprobe-cycle-a.js";\n\nexport const b = () => a;\n',
+  },
 ];
 
+// Every folder of a probe path that did not already exist.
+const foldersOf = (file) => {
+  const folders = [];
+  const segments = path.dirname(file).split("/");
+  for (let depth = segments.length; depth > 0; depth -= 1) {
+    const folder = segments.slice(0, depth).join("/");
+    if (existsSync(path.join(repoRoot, folder))) break;
+    folders.push(folder);
+  }
+  return folders;
+};
+
 const written = [];
+// Folders the probes created. Removed after the files, deepest first — an empty
+// stray folder is invisible to git and to the taxonomy rule, so left behind it
+// accumulates silently.
+const createdFolders = new Set();
 const cleanup = () => {
   for (const file of written.toReversed()) {
     rmSync(path.join(repoRoot, file), { force: true });
+  }
+  for (const folder of [...createdFolders].sort((a, b) => b.length - a.length)) {
+    // Recursive is safe and deliberate: these are folders that did not exist
+    // before this run, so everything in them is the run's own.
+    rmSync(path.join(repoRoot, folder), { force: true, recursive: true });
   }
 };
 
@@ -191,6 +243,7 @@ process.on("SIGINT", () => process.exit(130));
 
 for (const probe of PROBES) {
   const absolute = path.join(repoRoot, probe.file);
+  for (const folder of foldersOf(probe.file)) createdFolders.add(folder);
   mkdirSync(path.dirname(absolute), { recursive: true });
   writeFileSync(absolute, probe.source);
   written.push(probe.file);

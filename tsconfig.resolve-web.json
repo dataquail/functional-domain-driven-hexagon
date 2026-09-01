@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    // Extensionless targets, for the reason spelled out in tsconfig.depcruise.json:
-    // a mapped `.js` target does not resolve here, and an unresolved import silently
+    // Extensionless targets, for the reason spelled out in tsconfig.resolve.json:
+    // a mapped `.js` target does not resolve here, and an unresolved import
     // voids every path-based rule about that package.
     "paths": {
       "@/*": ["./packages/web/*"],

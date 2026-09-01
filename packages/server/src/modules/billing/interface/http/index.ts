@@ -1,10 +1,10 @@
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 
-import { Api } from "@/api.js";
 import { cancelSubscriptionEndpoint } from "@/modules/billing/interface/http/cancel-subscription.endpoint.js";
 import { getCurrentSubscriptionEndpoint } from "@/modules/billing/interface/http/get-current-subscription.endpoint.js";
 import { startSubscriptionEndpoint } from "@/modules/billing/interface/http/start-subscription.endpoint.js";
 import { stripeWebhookEndpoint } from "@/modules/billing/interface/http/stripe-webhook.endpoint.js";
+import { Api } from "@/platform/api.js";
 
 // Two contract groups, both wired here:
 //   - `billing` (authenticated, org-scoped): the three subscription

@@ -1,0 +1,22 @@
+{
+  "name": "@org/oxlint-architecture-rules",
+  "version": "0.0.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "Architecture policy as configuration, enforced as one oxlint plugin: import boundaries over resolved module paths, restricted export sites, folder taxonomy with sibling parity, and declared-member allowlists.",
+  "scripts": {
+    "check": "tsc -b tsconfig.json",
+    "clean": "rm -rf build .tsbuildinfo",
+    "build": "tsc -b tsconfig.build.json",
+    "test": "vitest",
+    "coverage": "vitest --coverage"
+  },
+  "dependencies": {
+    "effect": "4.0.0-beta.94",
+    "unrs-resolver": "^1.12.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.4",
+    "oxlint": "^1.77.0"
+  }
+}

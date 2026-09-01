@@ -1,13 +1,16 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    // Resolution-only config for dependency-cruiser. These mirror tsconfig.base.json's
-    // paths but WITHOUT the trailing `.js` those carry: tsc rewrites a mapped `.js`
-    // target to the `.ts` on disk, dependency-cruiser's resolver does not. A `.js`
-    // target therefore fails to resolve, the import is reported as `unknown`, and every
-    // path-based rule about that package goes silently vacuous. Keep these extensionless.
-    // Node resolution cannot serve as a fallback either: the workspace links `@org/*` to
-    // `packages/*/dist`, which only exists after a publish build.
+    // Resolution-only config, consumed by the `architecture` lint plugin
+    // (`architecture.config.mjs`, `resolve.scopes`). These mirror
+    // tsconfig.base.json's paths but WITHOUT the trailing `.js` those carry: a
+    // mapped target is a template, so `@/x/y.js` against a `.js`-suffixed
+    // mapping would look for `y.js.js`. Keep these extensionless — the resolver
+    // maps `.js` to `.ts` on the specifier itself. An import that fails to
+    // resolve is a hard lint error precisely because a silently unresolved
+    // import voids every path rule about that package.
+    // Node resolution cannot serve as a fallback either: the workspace links
+    // `@org/*` to `packages/*/dist`, which only exists after a publish build.
     "paths": {
       "@/*": ["./packages/server/src/*"],
       "@org/contracts/*": ["./packages/contracts/src/*"],

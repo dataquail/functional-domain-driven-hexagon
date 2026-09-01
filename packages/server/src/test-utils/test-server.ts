@@ -6,15 +6,7 @@ import * as Layer from "effect/Layer";
 import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 
-import { Api } from "@/api.js";
 import { EnvVars } from "@/common/env-vars.js";
-import {
-  CommandBusLive,
-  DomainEventBusLive,
-  QueryBusLive,
-  UnhandledFailuresLive,
-  UnitOfWorkLive,
-} from "@/cqrs-runtime.js";
 import {
   AuthCommandsLive,
   AuthHttpDepsLive,
@@ -54,6 +46,14 @@ import {
 } from "@/modules/todos/index.js";
 import { UserCommandsLive, UserModuleLive, UserQueriesLive } from "@/modules/user/index.js";
 import { WalletCommandsLive, WalletModuleLive } from "@/modules/wallet/index.js";
+import { Api } from "@/platform/api.js";
+import {
+  CommandBusLive,
+  DomainEventBusLive,
+  QueryBusLive,
+  UnhandledFailuresLive,
+  UnitOfWorkLive,
+} from "@/platform/cqrs/cqrs-runtime.js";
 import {
   UserAuthMiddlewareFake,
   UserAuthMiddlewareFakeAsMember,

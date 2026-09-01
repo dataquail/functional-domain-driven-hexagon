@@ -9,7 +9,7 @@ import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
-import { Api } from "@/api.js";
+import { Api } from "@/platform/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 
 // The callback happy path (PKCE cookie present → Zitadel code exchange →
