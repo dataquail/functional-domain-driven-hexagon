@@ -10,8 +10,8 @@
     "build": "tsc -b tsconfig.build.json",
     "test": "vitest",
     "coverage": "vitest --coverage",
-    "docs:dev": "pnpm --dir website dev",
-    "docs:build": "pnpm --dir website build"
+    "docs:dev": "pnpm --dir ../../website dev",
+    "docs:build": "pnpm --dir ../../website build"
   },
   "dependencies": {
     "effect": "4.0.0-beta.94",

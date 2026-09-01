@@ -222,8 +222,7 @@ export default {
     // An import nobody can resolve is an import no rule can police. Loud by
     // default; anything listed here needs a reason next to it.
     unresolved: "error",
-    // Astro synthesises `astro:*` at build time; nothing resolves it on disk.
-    ignoreUnresolved: ["^astro:"],
+    ignoreUnresolved: [],
   },
 
   aliases: {

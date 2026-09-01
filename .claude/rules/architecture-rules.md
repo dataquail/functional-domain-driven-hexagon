@@ -13,10 +13,11 @@ Architectural enforcement runs entirely inside `pnpm lint`, from one file.
 | `scripts/architecture-edges.mjs`      | `pnpm lint:edges` — the policy still refuses and allows what it is supposed to |
 | `scripts/lint-rules/`                 | the eight hand-rolled `local/*` AST rules that are not boundary rules          |
 
-The library's own reference documentation is an Astro/Starlight site at
-`packages/oxlint-architecture-rules/website/` (`pnpm -F @org/oxlint-architecture-rules
-docs:dev`). It documents the **library**, not this repo's policy — it travels with the
-package when it is extracted. Everything below is the repo-specific half.
+The library's own reference documentation is an Astro/Starlight site at `website/`
+(`pnpm -F @org/oxlint-architecture-rules docs:dev`). It documents the **library**, not
+this repo's policy, and it sits outside `packages/` because it is not source this
+repo's own policy governs — its Astro dependencies are installed separately, so a
+lint run over `packages` would report every one of them as unresolved. Everything below is the repo-specific half.
 
 ## The manifest
 

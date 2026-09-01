@@ -35,7 +35,7 @@
     "**/setupTests.ts",
     "**/vitest.shared.ts",
     "reference/**",
-    "packages/oxlint-architecture-rules/website/**",
+    "website/**",
     "scratchpad/**",
     "**/.tmp-config-tests/**",
     "**/.tmp-facts-tests/**",
