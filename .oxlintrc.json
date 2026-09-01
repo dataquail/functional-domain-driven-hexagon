@@ -37,6 +37,8 @@
     "reference/**",
     "scratchpad/**",
     "**/.tmp-config-tests/**",
+    "**/.tmp-facts-tests/**",
+    "**/.tmp-cli-tests/**",
     "**/routeTree.gen.ts",
     "**/.next/**",
     "**/postcss.config.mjs"

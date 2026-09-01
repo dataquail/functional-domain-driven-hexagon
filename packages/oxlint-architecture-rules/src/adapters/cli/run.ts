@@ -13,11 +13,14 @@ import {
   staleEntriesOf,
   unbaselined,
 } from "../../core/baseline.js";
+import { evaluateSelectedBindings, exportRulesSelecting } from "../../core/exports.js";
 import { evaluateSelectedEdge, rulesSelecting } from "../../core/imports.js";
+import { evaluateMemberSite, memberRulesSelecting } from "../../core/members.js";
 import { evaluateStructure, requiredSiblingsOf } from "../../core/structure.js";
 import { fingerprintOf, formatMessage, type Violation } from "../../domain/violation.js";
 import { type LoadedPolicy, loadPolicy } from "../oxlint/config-loader.js";
-import { listSourceFiles, specifiersOf } from "./source-files.js";
+import { sourceFactsOf } from "./source-facts.js";
+import { listSourceFiles } from "./source-files.js";
 
 // The policy, run with no linter in the loop.
 //
@@ -26,10 +29,10 @@ import { listSourceFiles, specifiersOf } from "./source-files.js";
 // second way to ask the same question — and the only way to write a baseline,
 // since that needs every finding at once rather than one file at a time.
 //
-// It covers the two families that need no syntax tree: `imports` (specifiers,
-// read with TypeScript's own preprocessor) and `structure` (paths and the
-// filesystem). `exports` and `members` are about names inside a file, so they
-// stay where an AST already exists — the linter.
+// It covers all four families. The two that need a syntax tree read TypeScript's
+// rather than oxlint's; both adapters meet at the same vocabulary — a specifier,
+// a binding, a member site — so they answer to the same core rather than to each
+// other.
 
 export type CliFailure = { readonly _tag: "CliFailure"; readonly message: string };
 
@@ -51,21 +54,37 @@ export const collectFindings = (policy: LoadedPolicy, roots: ReadonlyArray<strin
       violations.push(violation);
     }
 
-    const selected = rulesSelecting(policy.importRules, file);
-    if (selected.length === 0) continue;
+    const selectedImports = rulesSelecting(policy.importRules, file);
+    const selectedExports = exportRulesSelecting(policy.exportRules, file);
+    const selectedMembers = memberRulesSelecting(policy.memberRules, file);
+    if (selectedImports.length + selectedExports.length + selectedMembers.length === 0) continue;
 
-    for (const specifier of specifiersOf(policy.repoRoot, file)) {
-      const outcome = evaluateSelectedEdge(selected, policy.resolver, {
-        importer: file,
-        specifier,
-      });
-      if (Result.isFailure(outcome)) {
+    const facts = sourceFactsOf(policy.repoRoot, file);
+
+    for (const site of facts.memberSites) {
+      for (const violation of evaluateMemberSite(selectedMembers, site)) violations.push(violation);
+    }
+
+    for (const specifier of facts.specifiers) {
+      const edge = { importer: file, specifier };
+
+      const imported = evaluateSelectedEdge(selectedImports, policy.resolver, edge);
+      if (Result.isFailure(imported)) {
         if (policy.config.resolve.unresolved === "off") continue;
         if (policy.ignoreUnresolved.some((pattern) => pattern.test(specifier))) continue;
-        unresolved.push(`${file} → ${specifier} (${outcome.failure.detail})`);
+        unresolved.push(`${file} → ${specifier} (${imported.failure.detail})`);
         continue;
       }
-      for (const violation of outcome.success) violations.push(violation);
+      for (const violation of imported.success) violations.push(violation);
+
+      const bound = facts.bindings.get(specifier) ?? [];
+      const exported = evaluateSelectedBindings(selectedExports, policy.resolver, {
+        ...edge,
+        bindings: bound,
+      });
+      if (!Result.isFailure(exported)) {
+        for (const { violation } of exported.success) violations.push(violation);
+      }
     }
   }
 

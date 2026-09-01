@@ -122,11 +122,11 @@ pnpm architecture:explain <file>    # what governs this file, and why
 ```
 
 oxlint's JS plugin API is alpha, and a policy that only one alpha host can
-evaluate has a single point of failure. The CLI covers the two families that
-need no syntax tree — `imports` (specifiers, read with TypeScript's own
-preprocessor, which sees the `import "server-only"` forms a regex cannot) and
-`structure`. `exports` and `members` are about names inside a file, so they stay
-where an AST already exists.
+evaluate has a single point of failure. The CLI covers **all four families**: it
+reads TypeScript's syntax tree where the plugin reads oxlint's, and the two meet
+at the same vocabulary — a specifier, a binding, a member site — so both answer
+to the same core rather than to each other. Parsing is what lets it see the
+`import "server-only"` forms a regex cannot.
 
 **The baseline is a ratchet, not a suppression list.** `.architecture-baseline.json`
 records violations a repository is carrying while it adopts a rule — the

@@ -29,6 +29,10 @@ const FOLDER_KEY = /\/$/;
 // no layout policy to prove.
 export const ANY_FILE = "^.*$";
 
+// The `from` side of a rule that applies to every file, wherever the repository
+// happens to keep its packages.
+const EVERY_FILE = "";
+
 // A key may name several patterns that share one node: the four `*-ops.ts`
 // stereotypes carry identical policy, and saying it once is the point of writing
 // the architecture as a tree.
@@ -387,7 +391,7 @@ export const lowerManifest = (manifest: Manifest): LoweredRules => {
           from: "packages/zzprobe/outsider.ts",
           to: probePathOf(joinedGlob, isFolder ? "zzprobe.ts" : ""),
         },
-        from: "^packages/",
+        from: EVERY_FILE,
         fromNot: globsOf(node.importedBy.allow).map(asTarget),
         to: isFolder ? prefixed(`${pathSource}/`) : selfPattern,
         ...(exempt.length > 0 ? { toNot: exempt } : {}),
@@ -457,7 +461,7 @@ export const lowerManifest = (manifest: Manifest): LoweredRules => {
       name: `repo/deny-${String(index)}`,
       message: denial.message,
       probe: { from: "packages/zzprobe/anywhere.ts", to: denial.probe },
-      from: "^packages/",
+      from: EVERY_FILE,
       ...(denial.except.length > 0 ? { fromNot: [...denial.except] } : {}),
       to: denial.match,
       ...(denial.matchNot.length > 0 ? { toNot: [...denial.matchNot] } : {}),
@@ -511,7 +515,7 @@ export const lowerManifest = (manifest: Manifest): LoweredRules => {
         to: probePathOf(expandAliases(globsOf(rule.module)[0] ?? "", aliases), ""),
         symbol: rule.symbols?.[0] ?? "zzProbeSymbol",
       },
-      from: "^packages/",
+      from: EVERY_FILE,
       ...(rule.except === undefined ? {} : { fromNot: globsOf(rule.except).map(asPattern) }),
       to: globsOf(rule.module).map(asPattern),
       ...(rule.symbols === undefined ? {} : { symbols: [...rule.symbols] }),

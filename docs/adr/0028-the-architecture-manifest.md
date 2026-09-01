@@ -121,11 +121,16 @@ policy against the real tree or against a planted violation.
 
 The package ships a second adapter: `architecture check | baseline | explain`,
 run here as `pnpm lint:architecture`. oxlint's JS plugin API is alpha, and a
-policy only one alpha host can evaluate has a single point of failure. The CLI
-covers `imports` and `structure` — the two families that need no syntax tree —
-reading specifiers with TypeScript's own preprocessor, which sees the
-`import "server-only"` forms a regex cannot. `exports` and `members` are about
-names inside a file and stay where an AST already exists.
+policy only one alpha host can evaluate has a single point of failure.
+
+It covers all four families. Where the plugin reads oxlint's syntax tree, the
+CLI reads TypeScript's, and the two meet at one vocabulary — a specifier, a
+binding, a member site — so both adapters answer to the same core rather than to
+each other. That vocabulary is where the divergence risk lives, so each
+extraction is tested against the forms that matter: side-effect imports,
+`export … from` renames, `import =`, dynamic `import()`, `require()`, string
+literal import names, method versus property signatures, computed keys, and
+calls inside JSX. One parse per file; 919 files in under a second.
 
 The baseline is what lets a repository turn a rule on before its code is clean;
 the alternative is not turning it on. It is a ratchet rather than a suppression

@@ -1,7 +1,5 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readdirSync, statSync } from "node:fs";
 import * as path from "node:path";
-
-import ts from "typescript";
 
 // Folders no policy is written about and no linter visits.
 const SKIPPED = new Set([
@@ -41,14 +39,4 @@ export const listSourceFiles = (
     else found.push(path.relative(repoRoot, absolute).replaceAll(path.sep, "/"));
   }
   return found.sort();
-};
-
-// TypeScript's own preprocessor rather than a regex: it sees `import "x"` with
-// no clause, `export … from`, dynamic `import()` and `require()`. A regex sees
-// none of the first and gets the rest wrong often enough to matter — the
-// `server-only` side-effect imports in packages/web were invisible to one.
-export const specifiersOf = (repoRoot: string, file: string): ReadonlyArray<string> => {
-  const source = readFileSync(path.join(repoRoot, file), "utf8");
-  const preprocessed = ts.preProcessFile(source, true, true);
-  return preprocessed.importedFiles.map((reference) => reference.fileName);
 };
