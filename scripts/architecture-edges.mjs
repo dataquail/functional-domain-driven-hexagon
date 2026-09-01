@@ -317,7 +317,7 @@ const REFUSED = [
     "node_modules/.pnpm/x/node_modules/lucide-react/dist/index.js",
   ],
   [
-    "web importing TanStack",
+    "web importing TanStack (refused by the web allowlist)",
     "packages/web/services/atom/api-atoms.shared.ts",
     "node_modules/.pnpm/x/node_modules/@tanstack/react-query/index.js",
   ],

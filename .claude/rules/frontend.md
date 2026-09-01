@@ -5,7 +5,7 @@
 
 The frontend is a Next.js (App Router) renderer that proxies `/api/*` to the Effect server. The Effect server stays the BFF — Next renders + proxies but does NOT terminate auth. See ADR-0018.
 
-**There is no TanStack.** State is Effect Atom (`effect/unstable/reactivity`, bundled in `effect`) with the React bindings from `@effect/atom-react`. Queries, mutations, invalidation and form state all live in that graph. A `@tanstack/*` import fails `pnpm lint` (`architecture/imports`, rule `web-no-tanstack`).
+**There is no TanStack.** State is Effect Atom (`effect/unstable/reactivity`, bundled in `effect`) with the React bindings from `@effect/atom-react`. Queries, mutations, invalidation and form state all live in that graph. A `@tanstack/*` import fails `pnpm lint`: no tier's allowlist in `architecture.config.mjs` names the package, so there is nowhere it can be imported from.
 
 ## MVVM: Model → ViewModel → View
 

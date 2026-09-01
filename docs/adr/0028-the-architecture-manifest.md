@@ -84,10 +84,13 @@ dependency direction between packages (`contracts ← api-client ← cli`,
 `database ← jobs`, and nothing reaching the server) is enforced for the first
 time.
 
-**Three rules were only half-applied.** `not-to-spec`, the SQL-driver fence and
-the TanStack ban are statements about the whole repo, so they became a
-manifest-level `deny`. Before that, web, components and the platform kernel were
-quietly outside them.
+**Two rules were only half-applied.** `not-to-spec` and the SQL-driver fence are
+statements about the whole repo, so they became a manifest-level `deny`. Before
+that, web, components and the platform kernel were quietly outside them. The
+TanStack ban was a third, and turned out not to need one: no tier's `external`
+list names the package, so every allowlist already refuses it. A denylist rule
+that an allowlist has made unreachable is exactly the debt this shape was
+supposed to retire, so it went.
 
 **Deliberate tightening, measured.** 49 edges that the previous config permitted
 are now refused — the tiers that carried no allowlist at all (`infrastructure/`,

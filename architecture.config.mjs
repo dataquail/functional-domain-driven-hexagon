@@ -252,11 +252,6 @@ export default {
       message:
         "The RPC transport stays behind @effect-server-utils/cqrs. Messages are declared with Command.make / Query.make and dispatched through the bus; reaching for effect/unstable/rpc directly bypasses the routing table, the middleware and the span the bus provides.",
     },
-    {
-      match: "**/node_modules/@tanstack/**",
-      message:
-        "TanStack Query and TanStack Form are gone: the frontend state substrate is Effect Atom (ADR-0026). Reads are ApiAtoms.query, writes are ApiAtoms.mutation, invalidation is a reactivity key, and form state is plain atoms in a ViewModel. Reaching for @tanstack/* re-introduces the layer this architecture replaced.",
-    },
   ],
 
   // Which importers may name a given exported symbol. A path rule cannot say
