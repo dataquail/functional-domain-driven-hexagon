@@ -147,6 +147,40 @@ two regexes each carrying one named exception, `Database.ts` and
 gets `{ like: "{subdomain}" }` — a subdomain folder is the aggregate, so `todo/`
 holds `todo.root.ts`, and all twelve already did.
 
+### One policy, several files, one evaluation
+
+The manifest passed 1500 lines, lopsidedly — the server's modules alone were 632.
+It is a JavaScript module, so each area now writes its own nodes beside its own
+code and `architecture.config.mjs` composes them. No library change was needed.
+
+**The split is of the authoring, not of the evaluation, and that distinction is
+the whole decision.** A rule fires when the checker visits the _importing_ file,
+so running one check per package would silently disarm every rule whose importer
+lives on the other side of the split: the four repo-wide prohibitions, which have
+to reach every file, and all six `importedBy` blocks. Measured before choosing:
+a violation planted in `packages/components` reports under `check packages` and
+vanishes under `check packages/web`. A disarmed rule is indistinguishable from a
+passing one.
+
+Keys stay repo-relative wherever they are written. Rerooting `packages/web`'s
+nodes to a `web/` base would need a per-file base in the compiler, and would make
+a pattern's meaning depend on which file it sits in — the opposite of a language
+whose patterns are absolute and resolved.
+
+The per-area files live inside the packages they describe, which makes them
+subject to the policy they state. They are `.mjs`, so the CLI never walks them,
+and they are ignored by oxlint for the same reason the docs site is.
+
+### The server gets a single root
+
+`packages/server/src` was four sibling top-level keys, so three taxonomy roots,
+no shared parent for inherited policy — the naming convention had to be written
+three times — and `test-utils/` governed by nothing at all (`explain` said "a
+folder no rule governs"). It is now one `~/server/src/` node with `server.ts`,
+`common/`, `platform/`, `modules/{module}/` and a new `test-utils/` as children:
+one taxonomy root, one naming declaration, and a stray `src/helpers/` is a
+violation rather than a gap.
+
 ## Alternatives considered
 
 - **Keep the flat config.** Rejected once the second subtree was ported: the
