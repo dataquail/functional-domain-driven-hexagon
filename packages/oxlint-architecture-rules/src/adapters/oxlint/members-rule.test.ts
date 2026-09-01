@@ -5,6 +5,7 @@ import * as Result from "effect/Result";
 import { RuleTester } from "oxlint/plugins-dev";
 import { describe, it } from "vitest";
 
+import { EMPTY_BASELINE, makeBaselineFilter } from "../../core/baseline.js";
 import { compileMemberRules } from "../../core/members.js";
 import { EMPTY_STRUCTURE } from "../../core/structure.js";
 import { makeFileSystemFake } from "../../infrastructure/file-system-fake.js";
@@ -58,6 +59,7 @@ const policy = (): LoadedPolicy => {
     fileSystem: makeFileSystemFake([]),
     resolver: makeModuleResolverFake({}),
     ignoreUnresolved: [],
+    baseline: makeBaselineFilter(EMPTY_BASELINE),
   };
 };
 

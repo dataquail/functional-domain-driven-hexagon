@@ -13,10 +13,14 @@
   },
   "dependencies": {
     "effect": "4.0.0-beta.94",
-    "unrs-resolver": "^1.12.2"
+    "unrs-resolver": "^1.12.2",
+    "typescript": "^5.9.0"
   },
   "devDependencies": {
     "@types/node": "^25.9.4",
     "oxlint": "^1.77.0"
+  },
+  "bin": {
+    "architecture": "./build/esm/adapters/cli/main.js"
   }
 }

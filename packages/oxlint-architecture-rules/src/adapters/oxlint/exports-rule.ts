@@ -106,6 +106,7 @@ export const makeExportsRule = (policy: LoadedPolicy): OxlintRule => ({
       }
 
       for (const { bindings, rule, violation } of outcome.success) {
+        if (policy.baseline.isBaselined(violation)) continue;
         const offending = bound.filter((one: Bound) =>
           bindings.some((binding) => binding.symbol === one.symbol && binding.kind === one.kind),
         );

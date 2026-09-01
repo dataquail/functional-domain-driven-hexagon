@@ -41,17 +41,18 @@ there, not an edit here.
 
 ## Commands
 
-| Command                                                | What it runs                                                                                   |
-| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| `pnpm check:all`                                       | lint + lint:rules + lint:edges + typecheck + check:effect + tests + storybook (the full gate)  |
-| `pnpm lint`                                            | oxlint (type-aware) — the whole architecture policy (`architecture/*`) plus the ordinary rules |
-| `pnpm check:effect`                                    | `@effect/language-service` diagnostics across all projects; fails on any finding               |
-| `pnpm lint:rules`                                      | asserts each architectural rule still fires on a planted violation (ADR-0025)                  |
-| `pnpm lint:edges`                                      | asserts the architecture policy still refuses — and allows — the edges it should (ADR-0028)    |
-| `pnpm test`                                            | vitest **unit** suite (excludes `*.integration.test.ts`), no DB                                |
-| `DATABASE_URL_TEST=postgres://… pnpm test:integration` | **integration** suite only (`*.integration.test.ts`); hard-fails if no DB                      |
-| `DATABASE_URL_TEST=postgres://… pnpm coverage`         | unit + integration merged into ONE coverage number; thresholds in `vitest.config.ts` gate CI   |
-| `pnpm effect:source`                                   | clone/refresh the Effect v4 source at `reference/effect` (gitignored, pinned to our beta)      |
+| Command                                                | What it runs                                                                                                      |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `pnpm check:all`                                       | lint + lint:rules + lint:edges + lint:architecture + typecheck + check:effect + tests + storybook (the full gate) |
+| `pnpm lint`                                            | oxlint (type-aware) — the whole architecture policy (`architecture/*`) plus the ordinary rules                    |
+| `pnpm check:effect`                                    | `@effect/language-service` diagnostics across all projects; fails on any finding                                  |
+| `pnpm lint:rules`                                      | asserts each architectural rule still fires on a planted violation (ADR-0025)                                     |
+| `pnpm lint:edges`                                      | asserts the architecture policy still refuses — and allows — the edges it should (ADR-0028)                       |
+| `pnpm lint:architecture`                               | the same policy evaluated without a linter, plus the baseline ratchet (ADR-0028)                                  |
+| `pnpm test`                                            | vitest **unit** suite (excludes `*.integration.test.ts`), no DB                                                   |
+| `DATABASE_URL_TEST=postgres://… pnpm test:integration` | **integration** suite only (`*.integration.test.ts`); hard-fails if no DB                                         |
+| `DATABASE_URL_TEST=postgres://… pnpm coverage`         | unit + integration merged into ONE coverage number; thresholds in `vitest.config.ts` gate CI                      |
+| `pnpm effect:source`                                   | clone/refresh the Effect v4 source at `reference/effect` (gitignored, pinned to our beta)                         |
 
 ## Always in scope
 

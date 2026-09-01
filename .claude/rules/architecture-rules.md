@@ -111,6 +111,40 @@ against a `.js`-suffixed mapping looks for `y.js.js`; the resolver maps `.js` to
 resolve is an import no rule can police, so failing open would disarm every rule
 about that package at once without changing a line of config.
 
+## The CLI, and the baseline
+
+The package ships a second way to ask the same question:
+
+```
+pnpm lint:architecture              # check, with no linter in the loop
+pnpm architecture:baseline          # record the violations this repo carries
+pnpm architecture:explain <file>    # what governs this file, and why
+```
+
+oxlint's JS plugin API is alpha, and a policy that only one alpha host can
+evaluate has a single point of failure. The CLI covers the two families that
+need no syntax tree — `imports` (specifiers, read with TypeScript's own
+preprocessor, which sees the `import "server-only"` forms a regex cannot) and
+`structure`. `exports` and `members` are about names inside a file, so they stay
+where an AST already exists.
+
+**The baseline is a ratchet, not a suppression list.** `.architecture-baseline.json`
+records violations a repository is carrying while it adopts a rule — the
+alternative to carrying them is not turning the rule on. Two properties make it
+a ratchet:
+
+- Entries are **line-independent fingerprints** (`kind|rule|file|subject`), so an
+  entry survives edits to the file it names. One keyed on a position would go
+  stale on the first reformat and silently re-admit what it recorded.
+- **A stale entry is an error.** Fix a violation and `lint:architecture` fails
+  until its line is gone. Otherwise the floor never rises and the file stops
+  describing anything real.
+
+`explain` exists because a tree answers "what governs this file?" well and "which
+files does this rule govern?" badly — the inverse of a flat config. It prints the
+allowlist in force, every prohibition that reaches the file with the first
+sentence of its reason, the folder rule that admits it, and the siblings it owes.
+
 ## The plugin is compiled JavaScript
 
 oxlint loads plugins with a bare `import()`, and `build/` is gitignored, so

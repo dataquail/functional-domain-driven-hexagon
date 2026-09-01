@@ -205,6 +205,11 @@ const aclPortConsumers = [...portConsumers, "@/modules/*/policies/**"];
 
 /** @type {import("@org/oxlint-architecture-rules").Manifest} */
 export default {
+  // Where a repository adopting this policy records the violations it is
+  // carrying. This one has none, so the file is absent — and `architecture
+  // baseline` would write an empty list rather than a place to hide.
+  baseline: ".architecture-baseline.json",
+
   resolve: {
     // Web and components resolve `@/*` and `@org/components/*` to their own
     // roots; everything else resolves through the server-side mapping. The

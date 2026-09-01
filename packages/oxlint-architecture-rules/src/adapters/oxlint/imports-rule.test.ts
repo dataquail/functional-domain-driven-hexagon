@@ -5,6 +5,7 @@ import * as Result from "effect/Result";
 import { RuleTester } from "oxlint/plugins-dev";
 import { describe, expect, it } from "vitest";
 
+import { EMPTY_BASELINE, makeBaselineFilter } from "../../core/baseline.js";
 import { compileImportRules } from "../../core/imports.js";
 import { EMPTY_STRUCTURE } from "../../core/structure.js";
 import { makeFileSystemFake } from "../../infrastructure/file-system-fake.js";
@@ -53,6 +54,7 @@ const makePolicy = (): LoadedPolicy => {
       "@org/contracts/Policy": "packages/contracts/src/Policy.ts",
     }),
     ignoreUnresolved: [],
+    baseline: makeBaselineFilter(EMPTY_BASELINE),
   };
 };
 

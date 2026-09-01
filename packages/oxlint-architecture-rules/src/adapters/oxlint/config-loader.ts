@@ -1,8 +1,15 @@
+import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import * as Result from "effect/Result";
 
+import {
+  type BaselineFilter,
+  decodeBaseline,
+  EMPTY_BASELINE,
+  makeBaselineFilter,
+} from "../../core/baseline.js";
 import {
   type CompiledExportRule,
   compileExportRules,
@@ -39,8 +46,21 @@ export type LoadedPolicy = {
   readonly memberRules: ReadonlyArray<CompiledMemberRule>;
   readonly structure: CompiledStructure;
   readonly fileSystem: FileSystem;
+  // Violations this repository is carrying while it adopts the policy. Applied
+  // at report time so a baselined finding costs nothing but a line in a file.
+  readonly baseline: BaselineFilter;
   readonly resolver: ModuleResolver;
   readonly ignoreUnresolved: ReadonlyArray<RegExp>;
+};
+
+const readBaselineAt = (repoRoot: string, at: string) => {
+  try {
+    return decodeBaseline(JSON.parse(readFileSync(path.resolve(repoRoot, at), "utf8")) as unknown);
+  } catch {
+    // An absent or unreadable baseline carries nothing, which is the safe
+    // direction: every violation reports.
+    return EMPTY_BASELINE;
+  }
 };
 
 export const DEFAULT_CONFIG_FILENAME = "architecture.config.mjs";
@@ -105,6 +125,9 @@ export const loadPolicy = async (
     memberRules: memberRules.success,
     structure: structure.success,
     fileSystem: makeFileSystemLive(repoRoot),
+    baseline: makeBaselineFilter(
+      config.baseline === undefined ? EMPTY_BASELINE : readBaselineAt(repoRoot, config.baseline),
+    ),
     resolver: makeModuleResolverLive(repoRoot, config.resolve),
     ignoreUnresolved: (config.resolve.ignoreUnresolved ?? []).map(
       (pattern: string) => new RegExp(pattern),

@@ -5,6 +5,7 @@ import * as Result from "effect/Result";
 import { RuleTester } from "oxlint/plugins-dev";
 import { describe, it } from "vitest";
 
+import { EMPTY_BASELINE, makeBaselineFilter } from "../../core/baseline.js";
 import { compileExportRules } from "../../core/exports.js";
 import { EMPTY_STRUCTURE } from "../../core/structure.js";
 import { makeFileSystemFake } from "../../infrastructure/file-system-fake.js";
@@ -65,6 +66,7 @@ const policy = (): LoadedPolicy => {
       "effect/Effect": "node_modules/.pnpm/effect@4.0.0-beta.94/node_modules/effect/dist/Effect.js",
     }),
     ignoreUnresolved: [],
+    baseline: makeBaselineFilter(EMPTY_BASELINE),
   };
 };
 

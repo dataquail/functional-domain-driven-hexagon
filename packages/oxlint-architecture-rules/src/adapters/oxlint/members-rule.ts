@@ -78,6 +78,7 @@ export const makeMembersRule = (policy: LoadedPolicy): OxlintRule => ({
         ...(declaration === undefined ? {} : { in: declaration }),
       });
       for (const violation of violations) {
+        if (policy.baseline.isBaselined(violation)) continue;
         context.report({ node, message: formatMessage(violation) });
       }
     };

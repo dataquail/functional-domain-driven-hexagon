@@ -35,6 +35,10 @@ jobs:
       # refuses and, just as importantly, the ones it allows.
       - name: Architecture edges
         run: pnpm lint:edges
+      # The same policy with no linter in the loop, and the ratchet: a baseline
+      # entry that no longer fires has to be pruned.
+      - name: Architecture check
+        run: pnpm lint:architecture
 
   typecheck:
     name: Typecheck

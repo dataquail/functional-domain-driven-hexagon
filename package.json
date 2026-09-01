@@ -19,7 +19,7 @@
     "check": "node node_modules/typescript/bin/tsc -b tsconfig.json",
     "check:recursive": "pnpm --recursive exec node ../../node_modules/typescript/bin/tsc -b tsconfig.json",
     "check:effect": "node scripts/check-effect-diagnostics.mjs",
-    "check:all": "pnpm lint && pnpm lint:rules && pnpm lint:edges && pnpm check && pnpm check:effect && pnpm test && pnpm -F @org/components build-storybook",
+    "check:all": "pnpm lint && pnpm lint:rules && pnpm lint:edges && pnpm lint:architecture && pnpm check && pnpm check:effect && pnpm test && pnpm -F @org/components build-storybook",
     "lint": "pnpm build:architecture-rules && oxlint --type-aware --quiet packages",
     "lint:fix": "pnpm build:architecture-rules && oxlint --type-aware packages --fix",
     "lint:rules": "pnpm build:architecture-rules && node scripts/lint-rule-probes.mjs",
@@ -45,7 +45,10 @@
     "format:check": "prettier --check \"**/*.{js,ts,mjs,jsx,tsx,json,md,css,html,yaml,yml,mdx}\"",
     "prepare": "husky && effect-tsgo patch --oxlint",
     "build:architecture-rules": "pnpm -F @org/oxlint-architecture-rules build",
-    "lint:edges": "pnpm build:architecture-rules && node scripts/architecture-edges.mjs"
+    "lint:edges": "pnpm build:architecture-rules && node scripts/architecture-edges.mjs",
+    "lint:architecture": "pnpm build:architecture-rules && node packages/oxlint-architecture-rules/build/esm/adapters/cli/main.js check packages",
+    "architecture:baseline": "pnpm build:architecture-rules && node packages/oxlint-architecture-rules/build/esm/adapters/cli/main.js baseline packages",
+    "architecture:explain": "pnpm build:architecture-rules && node packages/oxlint-architecture-rules/build/esm/adapters/cli/main.js explain"
   },
   "devDependencies": {
     "@babel/cli": "^7.29.7",

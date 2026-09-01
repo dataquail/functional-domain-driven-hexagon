@@ -47,6 +47,7 @@ export const makeImportsRule = (policy: LoadedPolicy): OxlintRule => ({
       }
 
       for (const violation of outcome.success) {
+        if (policy.baseline.isBaselined(violation)) continue;
         context.report({ node, message: formatMessage(violation) });
       }
     };

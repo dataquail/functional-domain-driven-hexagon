@@ -117,12 +117,38 @@ policy against the real tree or against a planted violation.
   rules were written and tested, an allowlist already lowers onto them
   naturally, and keeping them made the migration diffable at every step.
 
+## The CLI and the baseline
+
+The package ships a second adapter: `architecture check | baseline | explain`,
+run here as `pnpm lint:architecture`. oxlint's JS plugin API is alpha, and a
+policy only one alpha host can evaluate has a single point of failure. The CLI
+covers `imports` and `structure` — the two families that need no syntax tree —
+reading specifiers with TypeScript's own preprocessor, which sees the
+`import "server-only"` forms a regex cannot. `exports` and `members` are about
+names inside a file and stay where an AST already exists.
+
+The baseline is what lets a repository turn a rule on before its code is clean;
+the alternative is not turning it on. It is a ratchet rather than a suppression
+list because of two choices:
+
+- Entries are line-independent fingerprints (`kind|rule|file|subject`), so an
+  entry survives edits to the file it names. One keyed on a position would go
+  stale on the first reformat and silently re-admit what it recorded.
+- A **stale entry is an error**. Fixing a violation fails the check until its
+  line is deleted. A baseline allowed to keep entries the code no longer
+  produces stops being a record of debt and becomes a place to hide.
+
+`explain` answers the one question a tree config makes harder than a flat one.
+"What governs this file?" a tree answers well; "which files does this rule
+govern?" it answers badly, and grep no longer helps. It prints the allowlist in
+force, every prohibition reaching the file with the first sentence of its
+reason, the folder rule that admits it, and the siblings it owes.
+
 ## Follow-ups
 
-A ratcheting baseline (`fingerprintOf` is in place for it) and the CLI adapter,
-neither needed here yet. Then extract `@org/oxlint-architecture-rules` to its own
-repository and depend on a pinned beta; `architecture.config.mjs` stays, because
-it is this repo's policy rather than the library's.
+Extract `@org/oxlint-architecture-rules` to its own repository and depend on a
+pinned beta; `architecture.config.mjs` stays, because it is this repo's policy
+rather than the library's.
 
 ## References
 

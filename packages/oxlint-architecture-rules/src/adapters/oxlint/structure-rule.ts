@@ -23,6 +23,7 @@ export const makeStructureRule = (policy: LoadedPolicy): OxlintRule => ({
         if (file.startsWith("..")) return false;
 
         for (const violation of evaluateStructure(policy.structure, policy.fileSystem, file)) {
+          if (policy.baseline.isBaselined(violation)) continue;
           context.report({
             message: formatMessage(violation),
             loc: { line: 1, column: 0 },
