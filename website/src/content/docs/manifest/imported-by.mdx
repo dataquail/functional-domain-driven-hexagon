@@ -1,0 +1,72 @@
+---
+title: Imported by
+description: Stating who may reach a part of the tree, from the part of the tree being reached.
+---
+
+`importedBy` is the inbound direction: instead of _"what may this file reach"_, it says
+_"who may reach this file"_.
+
+```js
+"*.repository.ts": {
+  importedBy: {
+    message: "A repository is reached from a command handler, not from a query.",
+    allow: ["@/modules/*/commands/**", "@/modules/*/event-handlers/**"],
+  },
+},
+```
+
+Any file outside that allowlist that imports a `*.repository.ts` is a violation, reported
+against the importer with the message written here.
+
+## Why it exists
+
+Everything `importedBy` expresses could be written as `imports` rules on every tier that
+might reach the file. That is exactly what makes it worth having.
+
+A rule of the form _"this stereotype is private to that tier"_ written outbound becomes a
+prohibition on every other tier, and then a growing list of exclusions as the repository
+adds tiers. Each new folder is a chance to forget one — and forgetting one is silent. Stated
+inbound, it is one sentence, written beside the thing it protects, and a new tier is refused
+by default because it is not on the list.
+
+The practical test: if the sentence you would write starts with _"a repository is…"_ rather
+than _"a command handler may…"_, it is an `importedBy`.
+
+## Fields
+
+| Field      | Meaning                                                               |
+| ---------- | --------------------------------------------------------------------- |
+| `message`  | why the restriction exists — required, since this one always needs it |
+| `allow`    | globs matched against the **importing** file                          |
+| `matchNot` | files inside this node's subtree the restriction does not cover       |
+
+`matchNot` carves an escape out of the protected side, not the reaching side. It is matched
+relative to this node's own folder, and the module barrel is the canonical case: a module is
+private except through its `index.ts`, so the restriction covers the whole module and exempts
+that one file.
+
+```js
+"@/modules/{module}/": {
+  importedBy: {
+    message: "A module is private. Cross-module access goes through its barrel.",
+    allow: ["@/modules/**", "**/*.test.ts"],
+    matchNot: ["index.ts"],
+  },
+},
+```
+
+## Captures are refused here
+
+A `{capture}` may not appear in `importedBy.allow`. The list is matched against the
+importing file, but the capture was declared by _this_ node's path, so there is nothing
+coherent to bind it to — it would compile to an exemption that never matched anything. The
+compiler rejects the manifest rather than emit it, naming the captures it found.
+
+Write a `*` where you would have written the capture, as the example above does. That is
+weaker — it says _"any module's files"_ rather than _"this module's files"_ — and it is the
+honest reading of what the pattern can know. Where the stricter statement is what you need,
+put it on the outbound side: an `imports.allow` on the module node **can** use its own
+capture, because there both sides are the importer's path.
+
+`matchNot` is a different matter: it is matched inside this node's own subtree, so captures
+declared by the node work there normally.

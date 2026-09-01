@@ -1,0 +1,70 @@
+---
+title: Exports
+description: Restricting which importers may name a given exported symbol.
+---
+
+`exports` is the one family that is not about paths. It restricts which files may import a
+**named symbol** from a module.
+
+```js
+exports: [
+  {
+    name: "bus-factories-at-composition-roots",
+    message:
+      "makeCommandBus / makeQueryBus fold module dispatch tables into one routing " +
+      "table. Building a bus anywhere but a composition root gives you a second " +
+      "application with a different set of handlers.",
+    module: "**/node_modules/@effect-server-utils/cqrs/**",
+    symbols: ["makeCommandBus", "makeQueryBus", "mergeDispatchTables"],
+    except: ["@/server.ts", "@/platform/cqrs/**", "@/test-utils/test-server.ts"],
+  },
+],
+```
+
+It lives at the top level of the manifest rather than on a node, because the thing it
+governs is a symbol in some other package — there is no node in your tree to hang it on.
+
+## Why a path rule cannot say this
+
+Every importer of a barrel resolves to the same file. If a module exports both a factory
+that only a composition root may call and a Tag that everything may import, no rule about
+the resolved path can separate them. The imported **name** is the only thing that does.
+
+The same shape covers a second case with no name at all: banning an import _form_. Omit
+`symbols` and the rule means _"any named import from this module"_, which is how you insist
+a package be reached by subpath rather than by destructuring its barrel.
+
+## Fields
+
+| Field     | Meaning                                                                |
+| --------- | ---------------------------------------------------------------------- |
+| `name`    | the rule id, reported on a violation                                   |
+| `message` | why                                                                    |
+| `module`  | globs matched against the module's **resolved** path                   |
+| `symbols` | exact exported names. Omit to mean _any named import from that module_ |
+| `except`  | importers the restriction does not apply to                            |
+| `fix`     | `"subpath-namespace-import"` — offer an autofix                        |
+
+Names are read as they appear **in the source module**, not as the importer aliased them:
+`import { makeCommandBus as make }` is still `makeCommandBus`, and `export { a as b } from`
+is still `a`. Renaming at the import site is not an escape.
+
+A side-effect import (`import "m"`) carries no names, so the export family has nothing to
+judge there — the import family still sees the edge.
+
+## The autofix
+
+`fix: "subpath-namespace-import"` rewrites a named import into a namespace import from the
+matching subpath:
+
+```ts
+// before
+import { Effect, Layer } from "effect";
+
+// after
+import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
+```
+
+It applies to the _no-`symbols`_ form of the rule — the one that bans a binding form rather
+than particular names — since that is the case where the correct rewrite is mechanical.

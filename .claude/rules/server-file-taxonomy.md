@@ -1,17 +1,28 @@
 # Rule: server file taxonomy (layout + test parity)
 
 **Scope:** `packages/server/src/` — read before creating any new file kind, test, fake, or stereotype. Enforced by `pnpm lint`.
-**Backing ADR:** 0008 (architecture enforcement via the folder-structure rule).
+**Backing ADRs:** 0008 (architecture enforcement), 0027 (architecture rules as configuration).
 
 The file taxonomy — layout (which file kinds a folder admits), sibling parity
-(required tests/fakes/stories), and subfolder allowlists — is one declarative
-config, `project-structure.config.mjs`, enforced by the
-`project-structure/folder-structure` lint rule under `pnpm lint` (in-editor + CI).
-It replaced the bespoke `check-folder-layout.mjs` / `check-test-parity.mjs`
-scripts (ADR-0008). Each rule carries a didactic `message` telling you _what to
-do_, not just that a file is misplaced. To add a genuinely new file kind or
-stereotype, declare it in `project-structure.config.mjs` — deliberately, not by
-working around the check.
+(required tests/fakes/stories), and the folders a module may have — lives in
+`architecture.config.mjs` under `structure`, enforced by `architecture/structure`
+under `pnpm lint` (in-editor + CI). Each rule carries a didactic `message`
+telling you _what to do_, not just that a file is misplaced. To add a genuinely
+new file kind or stereotype, declare it there — deliberately, not by working
+around the check.
+
+`structure` asks three separate questions, and which one you are answering
+decides where the rule goes:
+
+| Question                                    | Where               |
+| ------------------------------------------- | ------------------- |
+| Is this folder part of the taxonomy at all? | `structure.roots`   |
+| Which basenames does this folder admit?     | `structure.folders` |
+| Which siblings does this file owe?          | `structure.parity`  |
+
+An exemption is a `fileNot` on the parity rule that would otherwise fire — the
+`login`/`logout` endpoints are the only ones. There is no "specific pattern beats
+the catch-all" precedence to reason about.
 
 **Parity.** If you create any of these without its sibling, `pnpm lint` fails:
 
@@ -48,5 +59,9 @@ event-handlers/ infrastructure/ interface/ policies/`, so a stray
 **Concessions** (ADR-0008): the old commands/queries "pair rule" (a `<base>.ts`
 handler admitted only if its schema sibling exists) is dropped — deny-by-default
 still blocks stray-named files, and an orphan handler still owes its test. A
-completely empty stray folder (no linted files) is not visited by the rule, so it
-escapes — low risk.
+completely empty stray folder (no linted files) is never visited, so it escapes —
+low risk, and inherent to a per-file check.
+
+**Every rule carries a `probe`** — a path it must reject — and the plugin refuses
+to load if any rule fails its own. A taxonomy rule that has drifted into matching
+nothing is the failure this whole apparatus exists to prevent.

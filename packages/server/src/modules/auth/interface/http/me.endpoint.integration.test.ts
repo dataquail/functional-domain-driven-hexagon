@@ -4,7 +4,7 @@ import { describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
-import { Api } from "@/api.js";
+import { Api } from "@/platform/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 // `TestServerLive` provides `UserAuthMiddlewareFake`, which always succeeds
 // with a deterministic admin CurrentUser. So `/auth/me` should always return

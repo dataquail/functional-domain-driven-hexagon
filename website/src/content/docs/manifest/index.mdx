@@ -1,0 +1,110 @@
+---
+title: Overview
+description: The shape of a manifest — nodes, the fields on one, and the repo-wide statements above the tree.
+---
+
+A manifest is a tree of nodes keyed by path pattern. A key ending in `/` is a folder;
+anything else is a file. Everything the architecture says about a part of the tree is
+written at that part of the tree.
+
+```js
+/** @type {import("oxlint-architecture-rules").Manifest} */
+export default {
+  resolve: { scopes: [{ files: "", tsconfig: "tsconfig.json" }], unresolved: "error" },
+  baseline: ".architecture-baseline.json",
+  aliases: { "@": "packages/server/src", "~": "packages" },
+  deny: [
+    /* prohibitions that hold everywhere */
+  ],
+  exports: [
+    /* who may name a given exported symbol */
+  ],
+  tree: {
+    /* the repository */
+  },
+};
+```
+
+## Top level
+
+| Field      | Meaning                                                                                                   |
+| ---------- | --------------------------------------------------------------------------------------------------------- |
+| `resolve`  | how an import specifier becomes a file — [Resolution](/oxlint-architecture-rules/enforcement/resolution/) |
+| `baseline` | path to the ratchet file — [Baseline](/oxlint-architecture-rules/enforcement/baseline/)                   |
+| `aliases`  | shorthands expanded in every glob, so a pattern reads the way your imports do                             |
+| `deny`     | prohibitions that hold everywhere, declared once                                                          |
+| `exports`  | which importers may name a given exported symbol                                                          |
+| `tree`     | the manifest proper                                                                                       |
+
+`deny` and `exports` sit above the tree because they are statements about the whole
+repository rather than about a tier. A rule like _"this SQL driver is imported from one
+package"_ put on every tree root would be six copies and a seventh forgotten.
+
+`aliases` are pure text substitution applied to every glob before compilation. With
+`{ "@": "packages/server/src" }`, the key `@/modules/{module}/domain/` is the pattern
+`packages/server/src/modules/{module}/domain/`. They exist so the manifest reads like the
+imports it governs, not so specifiers go unresolved — resolution is separate and always
+real.
+
+## A node
+
+```js
+"@/modules/{module}/domain/{subdomain}/": {
+  message: "domain/ holds the model for one subdomain.",
+  imports: { reset: true, external: ["effect"], allow: ["@/modules/{module}/domain/**"] },
+  children: {
+    "*.root.ts": {
+      requires: ["{base}.root.test.ts"],
+    },
+    "*.repository.ts": {
+      importedBy: {
+        message: "A repository is reached from a command handler.",
+        allow: ["@/modules/*/commands/**"],
+      },
+      members: [
+        {
+          message: 'A port method named "{name}" is a query in disguise.',
+          subject: "type-members",
+          in: "*RepositoryShape",
+          allow: ["findOneById", "save", "delete"],
+        },
+      ],
+    },
+  },
+},
+```
+
+| Field         | Question it answers                             | Page                                                            |
+| ------------- | ----------------------------------------------- | --------------------------------------------------------------- |
+| `message`     | what does this folder admit, and why            |                                                                 |
+| `imports`     | what may this reach?                            | [Imports](/oxlint-architecture-rules/manifest/imports/)         |
+| `importedBy`  | who may reach this?                             | [Imported by](/oxlint-architecture-rules/manifest/imported-by/) |
+| `members`     | which names may it declare or call?             | [Members](/oxlint-architecture-rules/manifest/members/)         |
+| `requires`    | which siblings does this file owe?              | [Structure](/oxlint-architecture-rules/manifest/structure/)     |
+| `requiresNot` | which filenames does that obligation skip?      | [Structure](/oxlint-architecture-rules/manifest/structure/)     |
+| `children`    | which files and folders does this folder admit? | [Structure](/oxlint-architecture-rules/manifest/structure/)     |
+| `partial`     | carry policy here without enumerating contents  | [Inheritance](/oxlint-architecture-rules/manifest/inheritance/) |
+| `layout`      | `"open"` — do not enumerate file names here     | [Structure](/oxlint-architecture-rules/manifest/structure/)     |
+
+Every field is optional. An empty node — `"*.root.ts": {}` — is meaningful and common: it
+says the file is admitted here and inherits everything above it. That is how a folder's
+`children` doubles as its file taxonomy.
+
+## What it compiles to
+
+The manifest is lowered to flat rules before anything is matched, one per family per node
+that states something. **Rule names are derived from node paths**: the top-level key is
+slugified and each child key is appended as written, so a violation reports something like
+
+```
+[modules-module/domain/{subdomain}/imports] domain/ holds the model for one subdomain.
+```
+
+for a rule declared at `"@/modules/{module}/" → "domain/{subdomain}/"`. Repo-wide entries are
+named `repo/deny-0`, `repo/deny-1`, … in declaration order. Given a rule name you find the
+sentence that caused it by reading down the same path in the manifest.
+
+The lowering is where inheritance is resolved, where a folder's allowlist becomes a rule
+over its whole subtree, and where each rule's probe is generated. It is worth understanding
+if you are debugging a rule that fires more or less than you expected —
+[Inheritance](/oxlint-architecture-rules/manifest/inheritance/) covers it.

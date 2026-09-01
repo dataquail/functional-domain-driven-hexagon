@@ -1,0 +1,66 @@
+---
+title: Probes
+description: Why a vacuous rule is worse than no rule, and how every compiled rule proves it can still fire.
+---
+
+The failure mode that makes architectural linting worse than useless is a rule that has
+stopped matching anything. A folder gets renamed, an alias changes, a pattern loses a
+segment — and the rule keeps passing, forever, on every commit, indistinguishable from a
+rule that is working.
+
+Nobody notices, because the signal for _"this rule is fine"_ and the signal for _"this rule
+is dead"_ are the same green check.
+
+## Every rule carries a probe
+
+When the manifest is lowered, each compiled rule is given a **probe** generated from its own
+node in the tree: a synthetic path (and for `members` and `exports`, a synthetic name) that
+the rule _must_ reject. The probe is derived from the same glob the rule was compiled from,
+so it moves when the node moves.
+
+**The plugin refuses to load if any rule fails its own probe.** Not a warning, not a separate
+script someone remembers to run — a load-time error that stops the lint run.
+
+| Family      | The probe is                                                            |
+| ----------- | ----------------------------------------------------------------------- |
+| `imports`   | a path the rule's `from` must select, importing a target it must refuse |
+| `exports`   | an importer outside `except`, naming a restricted symbol                |
+| `members`   | a file the rule selects, declaring or calling a name it must reject     |
+| `structure` | a filename the layout must reject; for parity, a sibling it must demand |
+
+A rule that admits everything by design — the layout rule emitted by
+[`layout: "open"`](/oxlint-architecture-rules/manifest/structure/) — has no path it must
+reject, and is skipped rather than given a probe it could not pass.
+
+Structure parity is checked _structurally_ — that the rule still selects its probe path and
+still renders a required sibling — rather than by consulting the real filesystem, so the
+guard does not depend on a fixture existing.
+
+## What a probe cannot check
+
+A probe proves a rule **can** fire. It does not prove the rule fires on the thing you meant,
+and it cannot: the probe is generated from the same pattern the rule was, so a pattern that
+is wrong in the same way in both places will pass.
+
+Two habits close that gap, and both are worth building into a repository that takes this
+seriously:
+
+**An edge table.** A list of `(importer, specifier, expected verdict)` rows checked on every
+run. The _allowed_ rows matter as much as the refused ones — a policy that refuses everything
+is as broken as one that refuses nothing, and only an allowed row catches an over-tightened
+rule. When migrating off an existing enforcement tool, generate the table against the old
+tool while both still run: the verdicts are then inherited evidence rather than assertions
+written to match whatever the new code happens to do.
+
+**Plant the violation.** Before trusting a rule you just wrote, create the file it exists to
+catch and watch it fail. It takes twenty seconds and it is the only check that tests the rule
+against your intent rather than against itself.
+
+## Related failure modes
+
+Two more ways a policy can be quietly not enforcing anything, both closed elsewhere:
+
+- **An unresolved import** — no rule can police an edge that does not resolve, so
+  [resolution failure is an error](/oxlint-architecture-rules/enforcement/resolution/).
+- **A stale build** — oxlint imports compiled JavaScript, so a stale build directory enforces
+  a stale policy and still lints green. Make the build a `prelint` step, not a convention.

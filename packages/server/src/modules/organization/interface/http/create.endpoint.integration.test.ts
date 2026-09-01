@@ -7,7 +7,7 @@ import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
-import { Api } from "@/api.js";
+import { Api } from "@/platform/api.js";
 import { MEMBER_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";

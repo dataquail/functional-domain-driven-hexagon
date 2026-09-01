@@ -1,0 +1,97 @@
+---
+title: Installation
+description: Installing the plugin, wiring it into oxlint, and a first manifest that fires.
+---
+
+## Install
+
+```bash
+pnpm add -D oxlint-architecture-rules
+```
+
+The plugin resolves modules with [`unrs-resolver`](https://www.npmjs.com/package/unrs-resolver),
+which ships its own native binary; there is nothing else to configure at the OS level.
+
+## Wire it into oxlint
+
+oxlint loads JS plugins with a bare dynamic `import()`, so the plugin is registered by
+specifier and its four rules are enabled by id:
+
+```json
+// .oxlintrc.json
+{
+  "jsPlugins": [{ "name": "architecture", "specifier": "oxlint-architecture-rules/plugin" }],
+  "rules": {
+    "architecture/imports": "error",
+    "architecture/exports": "error",
+    "architecture/members": "error",
+    "architecture/structure": "error",
+    "import/no-cycle": "error"
+  }
+}
+```
+
+`import/no-cycle` is oxlint's own, and it owns the one check a per-file rule cannot make.
+
+The plugin reads `architecture.config.mjs` from the repository root at module load, which
+is also when it runs the [probe check](/oxlint-architecture-rules/enforcement/probes/). A
+malformed manifest or a vacuous rule fails there, loudly, rather than lowering to a policy
+that matches nothing.
+
+## A first manifest
+
+```js
+// architecture.config.mjs
+/** @type {import("oxlint-architecture-rules").Manifest} */
+export default {
+  resolve: {
+    scopes: [{ files: "", tsconfig: "tsconfig.json" }],
+    unresolved: "error",
+  },
+  aliases: {
+    "@": "src",
+  },
+  tree: {
+    "@/domain/": {
+      message: "domain/ is the model. It reaches nothing but itself.",
+      imports: {
+        message: "domain/ may not reach the framework.",
+        reset: true,
+        external: ["effect"],
+        allow: ["@/domain/**"],
+      },
+      children: {
+        "*.ts": {},
+      },
+    },
+  },
+};
+```
+
+That is a complete policy. It says four things:
+
+- `src/domain/` admits `.ts` files and nothing else.
+- Files there may import from `src/domain/`, and from `effect`.
+- Anything else — another folder, another package — is refused with the message given.
+- Every import specifier in the repository must resolve to something.
+
+## Verify it fires
+
+Before trusting a new rule, plant the violation it exists to catch and watch it fail:
+
+```bash
+echo 'import "express";' > src/domain/probe.ts
+pnpm oxlint src
+rm src/domain/probe.ts
+```
+
+This is the habit the whole package is built around, and it is automated two ways: the
+plugin's own load-time probe check, and the
+[`architecture` CLI](/oxlint-architecture-rules/enforcement/cli/).
+
+## Build before you lint
+
+If you consume the plugin from a workspace package rather than from npm, the compiled
+output must exist before oxlint runs — oxlint imports JavaScript, and a stale build
+enforces a stale policy while still linting green. Make the build a `prelint` step rather
+than a convention.

@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts"],
+  "compilerOptions": {
+    "types": ["node"],
+    "outDir": "build/src",
+    "tsBuildInfoFile": ".tsbuildinfo/src.tsbuildinfo",
+    "rootDir": "src",
+    // No `@/*` alias here on purpose: oxlint loads this plugin's emitted
+    // JavaScript with a bare `import()`, and tsc does not rewrite path aliases
+    // on emit. Relative specifiers are what actually run.
+    "paths": {}
+  }
+}

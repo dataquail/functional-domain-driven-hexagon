@@ -1,0 +1,86 @@
+---
+title: Members
+description: Constraining the names a file may declare on a type, or call.
+---
+
+`members` restricts the names appearing inside a file, in one of two positions. It is how a
+policy states a _vocabulary_ — a set of names a stereotype is allowed to use — where the
+constraint is not about which modules are reached at all.
+
+```js
+"*.repository.ts": {
+  members: [
+    {
+      message:
+        'A repository port method named "{name}" is a query in disguise. A port ' +
+        "loads and saves an aggregate by identity; anything keyed on another " +
+        "column is a read model, and belongs in queries/.",
+      subject: "type-members",
+      in: "*RepositoryShape",
+      match: "find*",
+      matchNot: ["findOneById", "findManyByIds"],
+    },
+  ],
+},
+```
+
+| Field      | Meaning                                                            |
+| ---------- | ------------------------------------------------------------------ |
+| `subject`  | `"type-members"` or `"calls"`                                      |
+| `in`       | for `type-members`, globs against the declaration's own name       |
+| `match`    | names the rule is about. Omit to mean every name in that position  |
+| `matchNot` | names carved back out of `match`                                   |
+| `allow`    | names permitted; anything matched and not allowed is the violation |
+| `message`  | why. `{name}` is substituted with the offending name               |
+
+`match`/`matchNot` narrow _what the rule is about_; `allow` says which of those are fine.
+Either side can carry the exemption — the `find*` example above uses `matchNot`, and a hook
+allowlist below uses `allow` — and which reads better depends on whether the exceptions are
+the interesting part.
+
+## `type-members`
+
+The names declared on a type literal, with `in` selecting the declaration they sit in:
+
+```ts
+type UserRepositoryShape = {
+  readonly findOneById: (id: UserId) => Effect<UserRoot>;
+  readonly findOneByEmail: (email: string) => Effect<UserRoot>; // ← reported
+};
+```
+
+A computed key is skipped: it is not a name a vocabulary rule can speak about.
+
+## `calls`
+
+Called identifiers and called members — `useState(0)` and `React.useEffect(fn)` both
+produce a site named for the callee:
+
+```js
+"*.view.tsx": {
+  members: [
+    {
+      message: "`{name}` puts state in the View. It belongs in the ViewModel.",
+      subject: "calls",
+      match: "use[A-Z]*",
+      allow: ["useAtomValue", "useAtomSet", "useAtomSuspense", "useId", "useCallback"],
+    },
+  ],
+},
+```
+
+The `use[A-Z]*` pattern is the reason [character classes](/oxlint-architecture-rules/manifest/patterns/)
+exist in the glob language: it means _a hook_, without also matching `user` or `useful`.
+
+:::note
+`calls` is a syntactic check on the callee's name, not a type-directed one. It cannot tell
+`useState` imported from React apart from a local function of the same name — which is the
+right trade for a rule about a naming convention, since the convention is what it is
+policing.
+:::
+
+## Several rules on one node
+
+`members` is an array, and each entry is compiled to its own rule with its own probe. A
+node that constrains both what it declares and what it calls states both, and a violation
+names which one fired.

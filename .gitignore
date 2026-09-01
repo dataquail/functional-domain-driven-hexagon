@@ -49,3 +49,8 @@ packages/*/src/**/*.map
 
 # Scratch git worktrees created by tooling; never part of the repo.
 .claude/worktrees/
+
+# Config fixtures written by the architecture-rules loader tests.
+.tmp-config-tests/
+.tmp-facts-tests/
+.tmp-cli-tests/

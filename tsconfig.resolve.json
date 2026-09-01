@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    // Resolution-only config, consumed by the `architecture` lint plugin
+    // (`architecture.config.mjs`, `resolve.scopes`). These mirror
+    // tsconfig.base.json's paths but WITHOUT the trailing `.js` those carry: a
+    // mapped target is a template, so `@/x/y.js` against a `.js`-suffixed
+    // mapping would look for `y.js.js`. Keep these extensionless — the resolver
+    // maps `.js` to `.ts` on the specifier itself. An import that fails to
+    // resolve is a hard lint error precisely because a silently unresolved
+    // import voids every path rule about that package.
+    // Node resolution cannot serve as a fallback either: the workspace links
+    // `@org/*` to `packages/*/dist`, which only exists after a publish build.
+    "paths": {
+      "@/*": ["./packages/server/src/*"],
+      "@org/contracts/*": ["./packages/contracts/src/*"],
+      "@org/database": ["./packages/database/src/index.ts"],
+      "@org/database/*": ["./packages/database/src/*"],
+      "@org/api-client": ["./packages/api-client/src/index.ts"],
+      "@org/api-client/*": ["./packages/api-client/src/*"],
+      "@org/jobs": ["./packages/jobs/src/main.ts"],
+      "@org/jobs/*": ["./packages/jobs/src/*"],
+      "@org/server/*": ["./packages/server/src/*"],
+      "@org/test-drivers": ["./packages/test-drivers/src/index.ts"],
+      "@org/test-drivers/*": ["./packages/test-drivers/src/*"]
+    },
+    "moduleResolution": "NodeNext",
+    "module": "NodeNext",
+    "target": "ES2022"
+  }
+}

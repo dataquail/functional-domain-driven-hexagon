@@ -31,6 +31,14 @@ jobs:
       # reports on a known violation.
       - name: Lint rule probes
         run: pnpm lint:rules
+      # And that the policy still says what it is supposed to say: the edges it
+      # refuses and, just as importantly, the ones it allows.
+      - name: Architecture edges
+        run: pnpm lint:edges
+      # The same policy with no linter in the loop, and the ratchet: a baseline
+      # entry that no longer fires has to be pruned.
+      - name: Architecture check
+        run: pnpm lint:architecture
 
   typecheck:
     name: Typecheck
@@ -40,15 +48,6 @@ jobs:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup
       - run: pnpm check
-
-  lint-deps:
-    name: Dependency rules
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v6
-      - uses: ./.github/actions/setup
-      - run: pnpm lint:deps
 
   unit:
     name: Unit tests

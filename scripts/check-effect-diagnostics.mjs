@@ -31,6 +31,8 @@ const PROJECTS = [
   "packages/jobs/tsconfig.test.json",
   "packages/cli/tsconfig.src.json",
   "packages/mcp/tsconfig.src.json",
+  "packages/oxlint-architecture-rules/tsconfig.src.json",
+  "packages/oxlint-architecture-rules/tsconfig.test.json",
   "packages/web/tsconfig.json",
   "packages/components/tsconfig.json",
 ].filter((p) => existsSync(join(ROOT, p)));

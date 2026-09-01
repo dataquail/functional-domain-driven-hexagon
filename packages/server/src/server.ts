@@ -16,15 +16,16 @@ import * as OtlpSerialization from "effect/unstable/observability/OtlpSerializat
 import * as OtlpTracer from "effect/unstable/observability/OtlpTracer";
 import { isSqlError } from "effect/unstable/sql/SqlError";
 
-import { Api } from "./api.js";
-import { EnvVars } from "./common/env-vars.js";
+import { Api } from "@/platform/api.js";
 import {
   CommandBusLive,
   DomainEventBusLive,
   QueryBusLive,
   UnhandledFailuresLive,
   UnitOfWorkLive,
-} from "./cqrs-runtime.js";
+} from "@/platform/cqrs/cqrs-runtime.js";
+
+import { EnvVars } from "./common/env-vars.js";
 import {
   AuthCommandsLive,
   AuthHttpDepsLive,

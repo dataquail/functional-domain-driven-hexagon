@@ -11,7 +11,7 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
-import { Api } from "@/api.js";
+import { Api } from "@/platform/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 

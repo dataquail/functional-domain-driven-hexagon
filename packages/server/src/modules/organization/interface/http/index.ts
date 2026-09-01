@@ -1,6 +1,5 @@
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 
-import { Api } from "@/api.js";
 import { acceptInvitationEndpoint } from "@/modules/organization/interface/http/accept-invitation.endpoint.js";
 import { createEndpoint } from "@/modules/organization/interface/http/create.endpoint.js";
 import { demoteMemberEndpoint } from "@/modules/organization/interface/http/demote-member.endpoint.js";
@@ -16,6 +15,7 @@ import { resendInvitationEndpoint } from "@/modules/organization/interface/http/
 import { restoreEndpoint } from "@/modules/organization/interface/http/restore.endpoint.js";
 import { revokeInvitationEndpoint } from "@/modules/organization/interface/http/revoke-invitation.endpoint.js";
 import { softDeleteEndpoint } from "@/modules/organization/interface/http/soft-delete.endpoint.js";
+import { Api } from "@/platform/api.js";
 
 // User-facing org operations: create, soft-delete/restore (super-admin),
 // invite + revoke (org members), member listing + remove + promote +

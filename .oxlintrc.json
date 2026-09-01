@@ -8,8 +8,8 @@
       "specifier": "./scripts/lint-rules/index.mjs"
     },
     {
-      "name": "project-structure",
-      "specifier": "./scripts/oxlint-plugins/project-structure.mjs"
+      "name": "architecture",
+      "specifier": "./packages/oxlint-architecture-rules/build/esm/adapters/oxlint/plugin.js"
     },
     "eslint-plugin-codegen",
     "eslint-plugin-simple-import-sort",
@@ -35,12 +35,21 @@
     "**/setupTests.ts",
     "**/vitest.shared.ts",
     "reference/**",
+    "website/**",
     "scratchpad/**",
+    "**/.tmp-config-tests/**",
+    "**/.tmp-facts-tests/**",
+    "**/.tmp-cli-tests/**",
     "**/routeTree.gen.ts",
     "**/.next/**",
     "**/postcss.config.mjs"
   ],
   "rules": {
+    "architecture/imports": "error",
+    "architecture/exports": "error",
+    "architecture/members": "error",
+    "architecture/structure": "error",
+    "import/no-cycle": "error",
     "constructor-super": "error",
     "for-direction": "error",
     "getter-return": "error",
@@ -111,7 +120,6 @@
     "object-shorthand": "error",
     "no-console": "error",
     "local/no-relative-import-outside-package": "error",
-    "local/no-effect-namespace-imports": "error",
     "import/first": "error",
     "import/newline-after-import": "error",
     "import/no-duplicates": "error",
@@ -229,6 +237,12 @@
     "effecttsgo/prefer-schema-over-json": "off"
   },
   "overrides": [
+    {
+      "files": ["packages/oxlint-architecture-rules/src/adapters/oxlint/plugin.ts"],
+      "rules": {
+        "local/prefer-named-exports": "off"
+      }
+    },
     {
       "files": ["packages/web/**/*.{ts,tsx,js,jsx}", "packages/components/**/*.{ts,tsx,js,jsx}"],
       "rules": {
@@ -388,12 +402,6 @@
       "plugins": ["react"]
     },
     {
-      "files": ["packages/web/features/**/*.view.tsx"],
-      "rules": {
-        "local/view-hooks-allowlist": "error"
-      }
-    },
-    {
       "files": [
         "packages/web/features/**/*.test.tsx",
         "packages/components/patterns/**/*.stories.tsx"
@@ -423,18 +431,6 @@
       "files": ["packages/server/**/*.{ts,tsx,js,jsx}", "packages/web/**/*.{ts,tsx,js,jsx}"],
       "rules": {
         "local/no-deep-relative-imports": "error"
-      }
-    },
-    {
-      "files": ["packages/server/src/modules/*/domain/*/*.repository.ts"],
-      "rules": {
-        "local/dumb-repository-ports": "error"
-      }
-    },
-    {
-      "files": ["packages/server/src/**/*.ts", "packages/jobs/src/**/*.ts"],
-      "rules": {
-        "local/bus-factories-at-composition-roots": "error"
       }
     },
     {
@@ -482,27 +478,19 @@
     },
     {
       "files": ["packages/server/src/modules/**/*.{ts,tsx}"],
-      "rules": {
-        "project-structure/server-modules": "error"
-      }
+      "rules": {}
     },
     {
       "files": ["packages/components/primitives/**/*.{ts,tsx}"],
-      "rules": {
-        "project-structure/components-primitives": "error"
-      }
+      "rules": {}
     },
     {
       "files": ["packages/components/patterns/**/*.{ts,tsx}"],
-      "rules": {
-        "project-structure/components-patterns": "error"
-      }
+      "rules": {}
     },
     {
       "files": ["packages/web/features/**/*.{ts,tsx}"],
-      "rules": {
-        "project-structure/web-features": "error"
-      }
+      "rules": {}
     },
     {
       "files": ["packages/acceptance/playwright.config.ts", "packages/acceptance/global-setup.ts"],
