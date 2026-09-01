@@ -1,0 +1,101 @@
+---
+title: Patterns
+description: The glob language — wildcards, captures, character classes, and multi-pattern keys.
+---
+
+Every pattern in a manifest is a glob over a repository-relative path, compiled to a
+regular expression. Globs rather than regexes because the manifest is meant to read like a
+filesystem; everything not listed below is literal, including the dots that make up a
+compound file suffix.
+
+| Token    | Matches                                                    |
+| -------- | ---------------------------------------------------------- |
+| `*`      | part of one path segment                                   |
+| `**`     | any number of segments                                      |
+| `?`      | one character other than `/`                                |
+| `{name}` | one segment — a capture in a tree key, a back-reference elsewhere |
+| `[A-Z]`  | a character class, passed through as written                |
+| `a \| b` | several patterns sharing one node (tree keys only)          |
+
+## `a/**` matches `a` itself
+
+A trailing `/**` means *"…or nothing"*, so `@/domain/**` matches the folder `@/domain` as
+well as everything under it. This is what makes an allowlist entry for a folder read the
+way you expect rather than silently excluding the folder's own index file.
+
+## Captures
+
+A `{name}` in a **tree key** declares a capture of one segment. Anywhere below that node it
+is a back-reference to what the key captured:
+
+```js
+"@/modules/{module}/domain/": {
+  imports: {
+    // …the SAME module's domain, not any module's.
+    allow: ["@/modules/{module}/domain/**"],
+  },
+},
+```
+
+Without the capture you would have to write one node per module, or write a rule that lets
+every module reach every other module's internals — the two failure modes a capture exists
+to avoid.
+
+### Captures are refused in `importedBy.allow`
+
+`importedBy.allow` is matched against the **importing** file, while the capture was
+declared by *this* file's path. There is no coherent binding between them, so a capture
+there would compile to an exemption that silently never matched. The compiler rejects it
+rather than emit it.
+
+## Character classes
+
+The one place a pattern says something about a single character, and the reason is React:
+
+```js
+members: [
+  {
+    subject: "calls",
+    match: "use[A-Z]*",
+    allow: ["useAtomValue", "useAtomSet", "useAtomSuspense", "useId", "useCallback"],
+    message: "`{name}` puts state in the View. It belongs in the ViewModel.",
+  },
+],
+```
+
+`use[A-Z]*` is *"a hook"* — `useState`, `useEffect` — without also matching `user` or
+`useful`. Classes pass through to the regular expression as written.
+
+## Multi-pattern keys
+
+A tree key may hold several patterns separated by ` | `, which is how several file
+stereotypes share one node without repeating its body:
+
+```js
+children: {
+  "*.aggregate-ops.ts | *.entity-ops.ts | *.value-object-ops.ts": constituentOps,
+},
+```
+
+This is a **tree-key** feature. Inside a pattern used as a value — a `match`, an `allow`
+entry — `|` is a literal character. Where a value needs several patterns, every field that
+takes a glob also takes an array of them:
+
+```js
+// wrong — matches a file literally named "a.ts | b.ts"
+match: "**/*.test.ts | **/*.test.tsx",
+
+// right
+match: ["**/*.test.ts", "**/*.test.tsx"],
+```
+
+## Placeholders in messages and requirements
+
+Two substitutions are made outside the glob language itself:
+
+- `{name}` in a `members` message is the offending name.
+- `{base}` in a `requires` entry is the file's own name minus its final extension, so
+  `"{base}.test.ts"` beside `user.root.ts` means `user.root.test.ts`.
+
+`requires` entries also resolve `../` against the node's own folder, which is how a port
+in one folder demands an adapter in another.

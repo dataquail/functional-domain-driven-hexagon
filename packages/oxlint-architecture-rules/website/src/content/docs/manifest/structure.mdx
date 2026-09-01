@@ -1,0 +1,98 @@
+---
+title: Structure
+description: Which files a folder admits, which siblings a file owes, and the stray-folder catch-all.
+---
+
+The structure family is the inverse of the other three. They ask whether a file is doing
+something it should not; structure asks whether the file is allowed to *exist* where it is,
+and whether the files that must exist beside it do.
+
+It comes from two fields — `children` and `requires` — and compiles into three kinds of
+rule.
+
+## Layout: `children`
+
+A folder node's `children` is deny-by-default. A file matching none of the keys is a
+violation, reported with the folder's `message`.
+
+```js
+"@/modules/{module}/commands/": {
+  message:
+    "commands/ holds write-side use cases: a <verb-noun>.command.ts declaring the " +
+    "message and a <verb-noun>.handler.ts implementing it, each with its test. A " +
+    "shared helper here is a smell — it is domain logic, and belongs on an aggregate.",
+  children: {
+    "*.command.ts": {},
+    "*.handler.ts": { requires: ["{base}.test.ts"] },
+    "*.handler.test.ts": {},
+  },
+},
+```
+
+An empty node body is the normal case: the key's job is to say *this filename is admitted
+here*, and the body is where you would add policy if the stereotype had any.
+
+This is what stops convention drift — the stray `session-utils.ts` in a domain folder, the
+`todo-helpers.ts` in a use-case folder — long before anyone has to argue about it in review.
+
+### `layout: "open"`
+
+Some tiers are deliberately permissive about file names. A component library where each
+component names its own file has no taxonomy to enforce, and a layout rule there could never
+reject anything, which is exactly the vacuity the package refuses to ship.
+
+`layout: "open"` says so:
+
+```js
+"~/components/src/primitives/": {
+  layout: "open",
+  imports: { reset: true, allow: ["~/components/src/**"], external: ["react", "@radix-ui/*"] },
+},
+```
+
+It still emits a layout rule — one admitting any filename — so the folder is **claimed**.
+That matters: the catch-all below fires on folders no rule governs, and an open folder that
+emitted nothing would trip it. The rule is skipped by the probe check, since a rule that
+admits everything has no path it must reject.
+
+## Parity: `requires`
+
+`requires` names the files that must exist beside this one.
+
+```js
+"*.repository.ts": {
+  message: "A repository port owes a live adapter, a fake, and an integration test.",
+  requires: [
+    "../../infrastructure/repositories/{base}-live.ts",
+    "../../infrastructure/repositories/{base}-fake.ts",
+    "../../infrastructure/repositories/{base}-live.integration.test.ts",
+  ],
+  requiresNot: ["*.read-only.repository.ts"],
+},
+```
+
+- `{base}` is the filename minus its **final** extension, so `create-todo.handler.ts` yields
+  `create-todo.handler` and `"{base}.test.ts"` names `create-todo.handler.test.ts`. A
+  dot-delimited stereotype stays part of the base on purpose.
+- `../` is resolved against the file's own folder, which is how a port three folders away
+  from its adapters can name them.
+- `requiresNot` lists filenames the obligation skips. It lives **on the obligation it
+  exempts**, rather than as a separate, more-specific key that has to win a precedence
+  contest against the rule it is escaping.
+
+Each missing sibling is reported separately, naming the path it looked for. The naming
+convention is the detector, which is the one thing worth saying out loud to a team: renaming
+a file to dodge a parity rule works, and writing the test is the point.
+
+## The catch-all: stray folders
+
+A per-file check has a blind spot. If someone creates `modules/user/helpers/` and puts a
+file in it, no folder rule governs that folder, so no layout rule fires — the file is not in
+a folder that admits nothing, it is in a folder nobody described.
+
+Every top-level tree node that enumerates its contents therefore also compiles a **taxonomy
+root**: a rule that fires on any file under it living in a folder no folder rule governs. It
+reports the folder, not the file, because the folder is the mistake.
+
+This is why `layout: "open"` still claims its folder, and why `partial: true` exists —
+[Inheritance](/oxlint-architecture-rules/manifest/inheritance/) covers the second.

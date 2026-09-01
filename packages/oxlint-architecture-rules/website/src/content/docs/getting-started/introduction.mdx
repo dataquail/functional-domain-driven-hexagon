@@ -1,0 +1,82 @@
+---
+title: Introduction
+description: What the manifest is, the problem it replaces, and the two properties everything else rests on.
+---
+
+Most repositories that take architecture seriously end up with three enforcement systems
+that do not talk to each other: a dependency-graph tool with its own binary and its own
+resolution config, a folder-structure linter with its own config language, and a drawer
+of hand-rolled lint rules for the checks neither can express.
+
+They are the same mechanism. Each one matches a fact about a file — its path, the modules
+it imports, the names it declares or calls, the siblings beside it on disk — against a
+policy, and reports a message. Only the fact-gathering differs.
+
+This package is that mechanism, once. One config file, one oxlint plugin, four rule
+families.
+
+## What it enforces
+
+| Question                                       | Family      |
+| ---------------------------------------------- | ----------- |
+| What may this part of the repository reach?    | `imports`   |
+| Who may reach it?                              | `imports`   |
+| Which importers may name this exported symbol? | `exports`   |
+| Which names may this file declare or call?     | `members`   |
+| Which files may live in this folder?           | `structure` |
+| Which siblings does this file owe?             | `structure` |
+
+## The two properties everything rests on
+
+**Patterns are matched against resolved paths.** A specifier is turned into a real file
+through your `tsconfig` `paths`, your workspace links and npm's own resolution before any
+rule looks at it. A policy written against specifier text is a policy that a new alias
+silently disarms. An import that cannot be resolved is a hard error rather than a skip,
+because an edge nobody can resolve is an edge no rule can police — and failing open there
+would disarm every rule about a package at once, without changing a line of config.
+
+**Every rule proves it can still fire.** The manifest compiles to flat rules, and each one
+carries a probe path generated from its own node in the tree. The plugin refuses to load
+if any rule fails its own probe. A vacuous rule — one whose pattern has drifted until it
+matches nothing — is the failure mode that makes architectural linting worse than no
+linting at all, because it is indistinguishable from a clean build.
+
+## Why a tree
+
+The obvious shape for this is a flat list of rules, and that is what most tools ship. It
+scales badly in a specific way: to understand what governs one folder you have to read the
+whole file, because any rule anywhere might name it, and rules accumulate exclusion lists
+on their `from` side as the repository grows.
+
+A manifest inverts that. It reads like a directory listing, and everything the architecture
+says about a folder is written at that folder:
+
+```js
+"@/modules/{module}/domain/": {
+  message: "domain/ holds the model — no framework, no persistence, no bus.",
+  imports: {
+    reset: true,
+    external: ["effect"],
+    allow: ["@/modules/{module}/domain/**", "@/platform/ddd/contracts/**"],
+  },
+  children: {
+    "*.root.ts": { requires: ["{base}.root.test.ts"] },
+    "*.repository.ts": {
+      importedBy: {
+        message: "A repository is reached from a command handler, not a query.",
+        allow: ["@/modules/*/commands/**", "@/modules/*/event-handlers/**"],
+      },
+    },
+  },
+},
+```
+
+The trade is real and worth naming: a tree answers *"what governs this file?"* well and
+*"which files does this rule govern?"* badly. That is what
+[`architecture explain`](/oxlint-architecture-rules/enforcement/cli/) exists for.
+
+## What it does not do
+
+**Circularity.** Detecting an import cycle needs the whole dependency graph, which a
+per-file lint rule does not have. oxlint ships `import/no-cycle` natively; enable it
+alongside.

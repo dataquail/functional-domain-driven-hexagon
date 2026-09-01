@@ -1,0 +1,61 @@
+---
+title: Architecture Rules
+description: Architecture policy as one manifest of your repository, enforced by oxlint.
+template: splash
+hero:
+  tagline: Write down what each part of your repository may reach, who may reach it, what it may declare, and which files are allowed to live there — once, in a file that reads like a directory listing.
+  actions:
+    - text: Get Started
+      link: /oxlint-architecture-rules/getting-started/introduction/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/dataquail/oxlint-architecture-rules
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from "@astrojs/starlight/components";
+
+<CardGrid>
+  <Card title="One manifest, not a rule list" icon="document">
+    A tree keyed by path pattern, where everything the architecture says about a part of
+    the repository is written **at that part of the repository** — its imports, its
+    importers, its members, the siblings it owes, the children it admits.
+
+    [Read the overview →](/oxlint-architecture-rules/manifest/)
+
+  </Card>
+  <Card title="Real resolution" icon="approve-check">
+    Every pattern is matched against a **resolved** file path, through your `tsconfig`
+    `paths` and your workspace links. A rule about `@/modules/user` is a rule about the
+    file that specifier actually names.
+
+    [How resolution works →](/oxlint-architecture-rules/enforcement/resolution/)
+
+  </Card>
+</CardGrid>
+
+<CardGrid>
+  <Card title="Tight by default" icon="setting">
+    A folder admits only the children it lists; a file may import only what it or an
+    ancestor allows. Laxity is opted into by name — `reset`, `unrestricted`,
+    `layout: "open"` — so widening is a sentence someone wrote, and `grep` is the
+    adoption backlog.
+  </Card>
+  <Card title="Every rule proves itself" icon="warning">
+    Each compiled rule carries a probe generated from its own node path, and the plugin
+    **refuses to load** if any rule fails it. A rule that has drifted into matching
+    nothing is a load-time error, not something a separate script might notice later.
+  </Card>
+  <Card title="A ratchet, not a suppression list" icon="seti:config">
+    The baseline records violations a repository carries while it adopts a rule, keyed by
+    a line-independent fingerprint. Fix one and the build fails until its entry is gone,
+    so the floor only ever rises.
+  </Card>
+  <Card title="Two ways to ask" icon="seti:typescript">
+    An oxlint plugin for the editor and CI, and a CLI that evaluates the same policy with
+    no linter in the loop. Both answer to the same core, so an alpha plugin API is not a
+    single point of failure.
+  </Card>
+</CardGrid>

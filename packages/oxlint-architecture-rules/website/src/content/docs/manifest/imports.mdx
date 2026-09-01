@@ -1,0 +1,109 @@
+---
+title: Imports
+description: What a part of the tree may reach — allow, external, deny, and the two widening switches.
+---
+
+`imports` states what this node and everything under it may reach. It is the family that
+carries dependency-direction policy: which tiers may see which, and which may not.
+
+```js
+"@/modules/{module}/domain/": {
+  imports: {
+    message: "domain/ holds the model — no framework, no persistence, no bus.",
+    reset: true,
+    external: ["effect"],
+    allow: ["@/modules/{module}/domain/**", "@/platform/ddd/contracts/**"],
+    deny: [
+      {
+        match: "@/modules/*/index.ts",
+        message: "Cross-module access goes through a port, not another module's barrel.",
+      },
+    ],
+  },
+},
+```
+
+| Field          | Meaning                                                                 |
+| -------------- | ----------------------------------------------------------------------- |
+| `allow`        | repo-relative globs. A resolved target matching none of them is the violation. |
+| `external`     | npm package names. Omit to inherit; `[]` forbids every external.         |
+| `deny`         | prohibitions checked **before** `allow`, and winning over it.            |
+| `message`      | what the allowlist means, shown when a target falls outside it.          |
+| `reset`        | stop inheriting ancestors' allowances.                                   |
+| `unrestricted` | this tier has no allowlist yet.                                          |
+
+## `allow` is an allowlist over resolved paths
+
+Every entry is matched against the **resolved** target — the real file the specifier names
+after `paths`, workspace links and package `exports` have been applied. A target matching
+no entry is the violation, which means widening is something you do by name, in the open,
+in a diff someone reviews.
+
+Local and external targets are separate channels. `allow` governs files inside the
+repository; `external` governs npm packages, matched by package name:
+
+```js
+external: ["effect", "@effect-server-utils/cqrs"],
+```
+
+`external: []` is meaningful and strong — *"this tier reaches no third-party code at all"*.
+Omitting `external` inherits the nearest ancestor's list, which is usually what you want:
+one tier states the runtime it is allowed to name, and its subtree lives with it.
+
+:::caution
+An `external` entry matches by package name, so `"effect"` admits every subpath the package
+publishes. If some subpath is off-limits to a tier that may otherwise use the package, that
+is a `deny` against its resolved path, not something the `external` list can express.
+:::
+
+## `deny` for a better message
+
+A prohibition is checked first and wins over `allow`. That is not about strictness — a
+target outside the allowlist is already refused — it is about the message. `deny` is how a
+rule keeps a specific, useful sentence for a mistake that the allowlist would otherwise
+report generically:
+
+```js
+deny: [
+  {
+    match: "packages/*/src/**",
+    matchNot: "packages/contracts/src/**",
+    except: "**/*.test.ts",
+    message: "A domain type may not cross a package boundary except through contracts.",
+  },
+],
+```
+
+| Field      | Meaning                                                        |
+| ---------- | -------------------------------------------------------------- |
+| `match`    | the target this prohibits                                       |
+| `matchNot` | targets carved back out of `match`                              |
+| `except`   | **importers** the prohibition does not apply to                  |
+| `message`  | why                                                             |
+
+`except` is the important asymmetry: an exemption to a prohibition is declared *by the
+prohibition*, in the same breath, never by the tier escaping it. A descendant cannot opt
+itself out of a rule an ancestor wrote. See
+[Inheritance](/oxlint-architecture-rules/manifest/inheritance/).
+
+Prohibitions that hold everywhere go in the top-level `deny` array instead of on a node.
+
+## The two widening switches
+
+Both exist so that a loose tier is a sentence someone wrote rather than a gap nobody
+noticed, and both are greppable.
+
+**`reset: true`** stops inheriting ancestors' `allow` and `external`. A tier that is
+genuinely narrower than its parent — a domain layer inside an application package — states
+its own allowlist from scratch rather than trying to subtract. Inherited `deny` entries are
+unaffected: a prohibition only ever accumulates.
+
+**`unrestricted: true`** says *"this tier has no allowlist yet; only the prohibitions
+apply."* It implies `reset`. It is **required** whenever a node states `imports` without an
+`allow` — you cannot leave the allowlist off silently. That is the point: `grep unrestricted`
+over a manifest is the adoption backlog, and the number should go down.
+
+:::note
+An `unrestricted` tier still inherits every prohibition above it, and is still covered by
+the top-level `deny`. It is untightened, not exempt.
+:::
