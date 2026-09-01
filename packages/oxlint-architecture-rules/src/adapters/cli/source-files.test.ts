@@ -28,3 +28,13 @@ describe("listSourceFiles", () => {
     ).toBe(false);
   });
 });
+
+describe("roots", () => {
+  // `architecture check <file>` is a reasonable thing to type, so a root that
+  // names one file is that file rather than a directory to walk.
+  it("takes a root that names a file as the file itself", () => {
+    expect(
+      listSourceFiles(repoRoot, ["packages/oxlint-architecture-rules/src/core/baseline.ts"]),
+    ).toEqual(["packages/oxlint-architecture-rules/src/core/baseline.ts"]);
+  });
+});

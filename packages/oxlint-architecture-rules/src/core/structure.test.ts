@@ -252,3 +252,96 @@ describe("structureRulesFailingTheirProbe", () => {
     expect(structureRulesFailingTheirProbe(outcome.success)).toContain("server-module-taxonomy");
   });
 });
+
+describe("compileStructure", () => {
+  const broken = "^packages/(unclosed";
+
+  it("is empty when the policy declares no structure at all", () => {
+    const compiled = compileStructure(undefined);
+    expect(Result.isSuccess(compiled) && compiled.success).toEqual({
+      roots: [],
+      folders: [],
+      parity: [],
+    });
+  });
+
+  it("is empty when the policy declares a structure with no rules of any kind", () => {
+    const compiled = compileStructure({});
+    expect(Result.isSuccess(compiled) && compiled.success).toEqual({
+      roots: [],
+      folders: [],
+      parity: [],
+    });
+  });
+
+  // A pattern that cannot compile has to surface as a decode failure, not as a
+  // rule that silently governs nothing.
+  it.each([
+    ["a taxonomy root's path", { roots: [{ ...config.roots?.[0], path: broken }] }],
+    ["a folder rule's folder", { folders: [{ ...config.folders?.[0], folder: broken }] }],
+    ["a folder rule's files", { folders: [{ ...config.folders?.[0], files: [broken] }] }],
+    ["a parity rule's file", { parity: [{ ...config.parity?.[0], file: broken }] }],
+    ["a parity rule's fileNot", { parity: [{ ...config.parity?.[0], fileNot: [broken] }] }],
+  ])("refuses an invalid pattern in %s", (_, partial) => {
+    const compiled = compileStructure(partial as StructureConfig);
+    expect(Result.isFailure(compiled) && compiled.failure.pattern).toBe(broken);
+  });
+});
+
+describe("path arithmetic", () => {
+  it("governs a file sitting at the repository root, which has no folder", () => {
+    expect(namesAt("stray.ts", makeFileSystemFake([]))).toEqual([]);
+  });
+
+  // A leading dot is not an extension: `.gitignore` is its own base, or every
+  // dotfile would owe a sibling named after the empty string.
+  it("treats a leading dot as part of the name rather than an extension", () => {
+    expect(
+      requiredSiblingsOf(
+        {
+          name: "x",
+          message: "x",
+          file: [/.*/],
+          fileNot: [],
+          requires: ["{base}.md"],
+          probe: "x",
+        },
+        "docs/.gitignore",
+      ),
+    ).toEqual(["docs/.gitignore.md"]);
+  });
+
+  it("resolves `.` and empty segments in a required sibling", () => {
+    expect(
+      requiredSiblingsOf(
+        {
+          name: "x",
+          message: "x",
+          file: [/.*/],
+          fileNot: [],
+          requires: ["./{base}-live.ts", "..//{base}-fake.ts"],
+          probe: "x",
+        },
+        "a/b/thing.repository.ts",
+      ),
+    ).toEqual(["a/b/thing.repository-live.ts", "a/thing.repository-fake.ts"]);
+  });
+});
+
+describe("a required sibling of a file at the repository root", () => {
+  it("resolves against the root itself rather than against an empty segment", () => {
+    expect(
+      requiredSiblingsOf(
+        {
+          name: "x",
+          message: "x",
+          file: [/.*/],
+          fileNot: [],
+          requires: ["{base}.test.ts"],
+          probe: "x",
+        },
+        "index.ts",
+      ),
+    ).toEqual(["index.test.ts"]);
+  });
+});

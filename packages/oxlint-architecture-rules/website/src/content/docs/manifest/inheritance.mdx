@@ -43,7 +43,7 @@ narrow:
 A `deny` is emitted **once**, over the subtree of the node that declares it, and descendants
 neither re-emit it nor can escape it.
 
-This is why `reset: true` drops inherited *allowances only*. If reset also dropped
+This is why `reset: true` drops inherited _allowances only_. If reset also dropped
 prohibitions, a nested node could make its own subtree quieter than its ancestors — and the
 direction a mistake is dangerous in is the quiet one. As written, no arrangement of nodes
 can produce a subtree that refuses less than the tier above it.
@@ -58,18 +58,18 @@ constraint someone else wrote about it.
 Within one node, a prohibition wins. A target that a `deny` matches is reported with that
 `deny`'s message even if the allowlist would also have admitted it — which is the whole
 reason to write one, since the allowlist alone would already refuse anything outside it. The
-`deny` exists to say *why* this particular target is wrong, in a sentence the general
+`deny` exists to say _why_ this particular target is wrong, in a sentence the general
 allowlist message cannot.
 
 ## The three ways to widen
 
 Each is a distinct statement, each greppable, and none of them is silent.
 
-| Switch               | Says                                                      | Leaves in force              |
-| -------------------- | --------------------------------------------------------- | ---------------------------- |
-| `reset: true`        | this tier states its own allowlist from scratch            | all inherited prohibitions   |
-| `unrestricted: true` | this tier has no allowlist yet                             | all inherited prohibitions   |
-| `layout: "open"`     | this folder does not enumerate its file names              | its imports policy, its subfolders |
+| Switch               | Says                                            | Leaves in force                    |
+| -------------------- | ----------------------------------------------- | ---------------------------------- |
+| `reset: true`        | this tier states its own allowlist from scratch | all inherited prohibitions         |
+| `unrestricted: true` | this tier has no allowlist yet                  | all inherited prohibitions         |
+| `layout: "open"`     | this folder does not enumerate its file names   | its imports policy, its subfolders |
 
 `unrestricted` is **required** whenever a node states `imports` without an `allow`. You
 cannot leave an allowlist off by accident; the manifest will not decode. That turns an
@@ -78,7 +78,7 @@ untightened tier into a sentence someone wrote and a reviewer saw, and makes
 
 ## `partial: true`
 
-`partial` says *"do not enumerate this folder's own file list"*. The node compiles no layout
+`partial` says _"do not enumerate this folder's own file list"_. The node compiles no layout
 rule, so its direct children are not checked against its `children` keys — but everything
 else it states still applies to its whole subtree, and its child nodes still compile their
 own rules normally:
@@ -105,7 +105,7 @@ without first having to describe every file sitting beside it.
 a partial folder is therefore in a folder no folder rule governs, which is what the taxonomy
 root exists to catch — so it reports, with the node's own `message`.
 
-In practice that means `partial` fits a folder whose *subfolders* are what you are
+In practice that means `partial` fits a folder whose _subfolders_ are what you are
 describing. If the folder also holds loose files you are not ready to enumerate, reach for
 `layout: "open"` instead: it claims the folder, admits any filename, and suppresses the
 taxonomy root for that region.

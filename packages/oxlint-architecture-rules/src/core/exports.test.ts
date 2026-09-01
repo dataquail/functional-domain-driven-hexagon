@@ -165,3 +165,50 @@ describe("exportRulesFailingTheirProbe", () => {
     ]);
   });
 });
+
+describe("compileExportRules", () => {
+  const broken = "^packages/(unclosed";
+
+  // A pattern that cannot compile has to surface as a failure, not as a rule
+  // that silently restricts nothing.
+  it.each([
+    ["from", { from: broken }],
+    ["fromNot", { fromNot: [broken] }],
+    ["to", { to: broken }],
+    ["toNot", { toNot: [broken] }],
+  ])("refuses an invalid pattern in %s", (field, override) => {
+    const compiled = compileExportRules([{ ...busFactories, ...override }]);
+    expect(Result.isFailure(compiled) && compiled.failure.field).toBe(field);
+  });
+});
+
+describe("backreferences in a `to` pattern", () => {
+  // A rule whose `from` declares no capture still has to evaluate: there is
+  // nothing to substitute, and the target is matched as written.
+  const noCapture: ExportRule = {
+    ...busFactories,
+    from: "^packages/server/src/",
+    to: "/node_modules/@effect-server-utils/cqrs/",
+  };
+
+  it("matches a target when the rule's from side captured nothing", () => {
+    expect(
+      violationsOf([noCapture], HANDLER, "@effect-server-utils/cqrs", named("makeCommandBus")),
+    ).toEqual(["bus-factories-at-composition-roots"]);
+  });
+});
+
+describe("exportRulesFailingTheirProbe", () => {
+  // A probe the rule's own `from` side does not select is a probe the rule can
+  // never fail, which is the vacuity the guard exists to catch.
+  it("fails a rule whose probe importer its own from side rejects", () => {
+    const unselectable: ExportRule = {
+      ...busFactories,
+      probe: { ...busFactories.probe, from: "packages/web/features/todos/todos.view.tsx" },
+    };
+
+    expect(exportRulesFailingTheirProbe(compile([unselectable])).map((rule) => rule.name)).toEqual([
+      "bus-factories-at-composition-roots",
+    ]);
+  });
+});

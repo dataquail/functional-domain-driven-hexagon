@@ -8,21 +8,21 @@ stopped matching anything. A folder gets renamed, an alias changes, a pattern lo
 segment — and the rule keeps passing, forever, on every commit, indistinguishable from a
 rule that is working.
 
-Nobody notices, because the signal for *"this rule is fine"* and the signal for *"this rule
-is dead"* are the same green check.
+Nobody notices, because the signal for _"this rule is fine"_ and the signal for _"this rule
+is dead"_ are the same green check.
 
 ## Every rule carries a probe
 
 When the manifest is lowered, each compiled rule is given a **probe** generated from its own
 node in the tree: a synthetic path (and for `members` and `exports`, a synthetic name) that
-the rule *must* reject. The probe is derived from the same glob the rule was compiled from,
+the rule _must_ reject. The probe is derived from the same glob the rule was compiled from,
 so it moves when the node moves.
 
 **The plugin refuses to load if any rule fails its own probe.** Not a warning, not a separate
 script someone remembers to run — a load-time error that stops the lint run.
 
-| Family      | The probe is                                                          |
-| ----------- | --------------------------------------------------------------------- |
+| Family      | The probe is                                                            |
+| ----------- | ----------------------------------------------------------------------- |
 | `imports`   | a path the rule's `from` must select, importing a target it must refuse |
 | `exports`   | an importer outside `except`, naming a restricted symbol                |
 | `members`   | a file the rule selects, declaring or calling a name it must reject     |
@@ -32,7 +32,7 @@ A rule that admits everything by design — the layout rule emitted by
 [`layout: "open"`](/oxlint-architecture-rules/manifest/structure/) — has no path it must
 reject, and is skipped rather than given a probe it could not pass.
 
-Structure parity is checked *structurally* — that the rule still selects its probe path and
+Structure parity is checked _structurally_ — that the rule still selects its probe path and
 still renders a required sibling — rather than by consulting the real filesystem, so the
 guard does not depend on a fixture existing.
 
@@ -46,7 +46,7 @@ Two habits close that gap, and both are worth building into a repository that ta
 seriously:
 
 **An edge table.** A list of `(importer, specifier, expected verdict)` rows checked on every
-run. The *allowed* rows matter as much as the refused ones — a policy that refuses everything
+run. The _allowed_ rows matter as much as the refused ones — a policy that refuses everything
 is as broken as one that refuses nothing, and only an allowed row catches an over-tightened
 rule. When migrating off an existing enforcement tool, generate the table against the old
 tool while both still run: the verdicts are then inherited evidence rather than assertions

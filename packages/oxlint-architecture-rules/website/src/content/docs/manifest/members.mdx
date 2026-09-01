@@ -4,7 +4,7 @@ description: Constraining the names a file may declare on a type, or call.
 ---
 
 `members` restricts the names appearing inside a file, in one of two positions. It is how a
-policy states a *vocabulary* — a set of names a stereotype is allowed to use — where the
+policy states a _vocabulary_ — a set of names a stereotype is allowed to use — where the
 constraint is not about which modules are reached at all.
 
 ```js
@@ -26,14 +26,14 @@ constraint is not about which modules are reached at all.
 
 | Field      | Meaning                                                            |
 | ---------- | ------------------------------------------------------------------ |
-| `subject`  | `"type-members"` or `"calls"`                                       |
-| `in`       | for `type-members`, globs against the declaration's own name        |
-| `match`    | names the rule is about. Omit to mean every name in that position   |
-| `matchNot` | names carved back out of `match`                                    |
-| `allow`    | names permitted; anything matched and not allowed is the violation  |
-| `message`  | why. `{name}` is substituted with the offending name                |
+| `subject`  | `"type-members"` or `"calls"`                                      |
+| `in`       | for `type-members`, globs against the declaration's own name       |
+| `match`    | names the rule is about. Omit to mean every name in that position  |
+| `matchNot` | names carved back out of `match`                                   |
+| `allow`    | names permitted; anything matched and not allowed is the violation |
+| `message`  | why. `{name}` is substituted with the offending name               |
 
-`match`/`matchNot` narrow *what the rule is about*; `allow` says which of those are fine.
+`match`/`matchNot` narrow _what the rule is about_; `allow` says which of those are fine.
 Either side can carry the exemption — the `find*` example above uses `matchNot`, and a hook
 allowlist below uses `allow` — and which reads better depends on whether the exceptions are
 the interesting part.
@@ -70,7 +70,7 @@ produce a site named for the callee:
 ```
 
 The `use[A-Z]*` pattern is the reason [character classes](/oxlint-architecture-rules/manifest/patterns/)
-exist in the glob language: it means *a hook*, without also matching `user` or `useful`.
+exist in the glob language: it means _a hook_, without also matching `user` or `useful`.
 
 :::note
 `calls` is a syntactic check on the callee's name, not a type-directed one. It cannot tell

@@ -38,24 +38,23 @@ import { Card, CardGrid } from "@astrojs/starlight/components";
 
 <CardGrid>
   <Card title="Tight by default" icon="setting">
-    A folder admits only the children it lists; a file may import only what it or an
-    ancestor allows. Laxity is opted into by name — `reset`, `unrestricted`,
-    `layout: "open"` — so widening is a sentence someone wrote, and `grep` is the
-    adoption backlog.
+    A folder admits only the children it lists; a file may import only what it or an ancestor
+    allows. Laxity is opted into by name — `reset`, `unrestricted`, `layout: "open"` — so widening
+    is a sentence someone wrote, and `grep` is the adoption backlog.
   </Card>
   <Card title="Every rule proves itself" icon="warning">
-    Each compiled rule carries a probe generated from its own node path, and the plugin
-    **refuses to load** if any rule fails it. A rule that has drifted into matching
-    nothing is a load-time error, not something a separate script might notice later.
+    Each compiled rule carries a probe generated from its own node path, and the plugin **refuses to
+    load** if any rule fails it. A rule that has drifted into matching nothing is a load-time error,
+    not something a separate script might notice later.
   </Card>
   <Card title="A ratchet, not a suppression list" icon="seti:config">
-    The baseline records violations a repository carries while it adopts a rule, keyed by
-    a line-independent fingerprint. Fix one and the build fails until its entry is gone,
-    so the floor only ever rises.
+    The baseline records violations a repository carries while it adopts a rule, keyed by a
+    line-independent fingerprint. Fix one and the build fails until its entry is gone, so the floor
+    only ever rises.
   </Card>
   <Card title="Two ways to ask" icon="seti:typescript">
-    An oxlint plugin for the editor and CI, and a CLI that evaluates the same policy with
-    no linter in the loop. Both answer to the same core, so an alpha plugin API is not a
-    single point of failure.
+    An oxlint plugin for the editor and CI, and a CLI that evaluates the same policy with no linter
+    in the loop. Both answer to the same core, so an alpha plugin API is not a single point of
+    failure.
   </Card>
 </CardGrid>

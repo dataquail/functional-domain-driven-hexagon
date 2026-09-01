@@ -30,20 +30,20 @@ Every importer of a barrel resolves to the same file. If a module exports both a
 that only a composition root may call and a Tag that everything may import, no rule about
 the resolved path can separate them. The imported **name** is the only thing that does.
 
-The same shape covers a second case with no name at all: banning an import *form*. Omit
-`symbols` and the rule means *"any named import from this module"*, which is how you insist
+The same shape covers a second case with no name at all: banning an import _form_. Omit
+`symbols` and the rule means _"any named import from this module"_, which is how you insist
 a package be reached by subpath rather than by destructuring its barrel.
 
 ## Fields
 
-| Field     | Meaning                                                                        |
-| --------- | ------------------------------------------------------------------------------ |
-| `name`    | the rule id, reported on a violation                                            |
-| `message` | why                                                                             |
-| `module`  | globs matched against the module's **resolved** path                            |
-| `symbols` | exact exported names. Omit to mean *any named import from that module*          |
-| `except`  | importers the restriction does not apply to                                     |
-| `fix`     | `"subpath-namespace-import"` — offer an autofix                                 |
+| Field     | Meaning                                                                |
+| --------- | ---------------------------------------------------------------------- |
+| `name`    | the rule id, reported on a violation                                   |
+| `message` | why                                                                    |
+| `module`  | globs matched against the module's **resolved** path                   |
+| `symbols` | exact exported names. Omit to mean _any named import from that module_ |
+| `except`  | importers the restriction does not apply to                            |
+| `fix`     | `"subpath-namespace-import"` — offer an autofix                        |
 
 Names are read as they appear **in the source module**, not as the importer aliased them:
 `import { makeCommandBus as make }` is still `makeCommandBus`, and `export { a as b } from`
@@ -66,5 +66,5 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 ```
 
-It applies to the *no-`symbols`* form of the rule — the one that bans a binding form rather
+It applies to the _no-`symbols`_ form of the rule — the one that bans a binding form rather
 than particular names — since that is the case where the correct rewrite is mechanical.

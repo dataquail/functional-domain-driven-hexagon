@@ -152,3 +152,19 @@ describe("memberRulesFailingTheirProbe", () => {
     ]);
   });
 });
+
+describe("compileMemberRules", () => {
+  const broken = "^packages/(unclosed";
+
+  it.each([
+    ["from", { from: broken }],
+    ["fromNot", { fromNot: [broken] }],
+    ["in", { in: broken }],
+    ["match", { match: broken }],
+    ["matchNot", { matchNot: [broken] }],
+    ["allow", { allow: broken }],
+  ])("refuses an invalid pattern in %s", (field, override) => {
+    const compiled = compileMemberRules([{ ...dumbReads, ...override }]);
+    expect(Result.isFailure(compiled) && compiled.failure.field).toBe(field);
+  });
+});

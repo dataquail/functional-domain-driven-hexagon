@@ -4,7 +4,7 @@ description: Which files a folder admits, which siblings a file owes, and the st
 ---
 
 The structure family is the inverse of the other three. They ask whether a file is doing
-something it should not; structure asks whether the file is allowed to *exist* where it is,
+something it should not; structure asks whether the file is allowed to _exist_ where it is,
 and whether the files that must exist beside it do.
 
 It comes from two fields — `children` and `requires` — and compiles into three kinds of
@@ -29,8 +29,8 @@ violation, reported with the folder's `message`.
 },
 ```
 
-An empty node body is the normal case: the key's job is to say *this filename is admitted
-here*, and the body is where you would add policy if the stereotype had any.
+An empty node body is the normal case: the key's job is to say _this filename is admitted
+here_, and the body is where you would add policy if the stereotype had any.
 
 This is what stops convention drift — the stray `session-utils.ts` in a domain folder, the
 `todo-helpers.ts` in a use-case folder — long before anyone has to argue about it in review.

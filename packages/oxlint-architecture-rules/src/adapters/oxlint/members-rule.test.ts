@@ -106,3 +106,43 @@ new RuleTester({ cwd: repoRoot }).run("members", makeMembersRule(policy()), {
     },
   ],
 });
+
+new RuleTester({ cwd: repoRoot }).run("members (steps over)", makeMembersRule(policy()), {
+  valid: [
+    // Not a type literal, so there are no members to speak about.
+    { code: "type TodosRepositoryShape = string;", filename: PORT },
+    // A computed key and an index signature name nothing a vocabulary rule can
+    // speak about.
+    {
+      code: "const k = 'findAll';\ntype TodosRepositoryShape = { [k]: () => void };",
+      filename: PORT,
+    },
+    { code: "type TodosRepositoryShape = { [key: string]: () => void };", filename: PORT },
+  ],
+  invalid: [
+    {
+      code: 'type TodosRepositoryShape = { "findAllByOwner": () => void };',
+      filename: PORT,
+      errors: [{ message: /findAllByOwner/ }],
+    },
+  ],
+});
+
+new RuleTester({ cwd: repoRoot }).run(
+  "members (baselined)",
+  makeMembersRule({
+    ...policy(),
+    baseline: makeBaselineFilter({
+      version: 1,
+      entries: [
+        "member|dumb-repository-ports|packages/server/src/modules/todos/domain/todo/todos.repository.ts|findAllByOwner",
+      ],
+    }),
+  }),
+  {
+    valid: [
+      { code: "type TodosRepositoryShape = { findAllByOwner: () => void };", filename: PORT },
+    ],
+    invalid: [],
+  },
+);

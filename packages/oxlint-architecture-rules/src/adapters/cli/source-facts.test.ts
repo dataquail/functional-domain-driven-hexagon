@@ -126,3 +126,19 @@ describe("member sites", () => {
     expect(names).toContain("useState");
   });
 });
+
+describe("members the reader steps over", () => {
+  it("reads a string-literal member name and the alias it sits in", () => {
+    expect(factsFor(`type X = { "find-one": () => void };`).memberSites).toEqual([
+      expect.objectContaining({ name: "find-one", in: "X" }),
+    ]);
+  });
+
+  it("skips an index signature, which names nothing a vocabulary rule can speak about", () => {
+    expect(factsFor(`type X = { [key: string]: () => void };`).memberSites).toEqual([]);
+  });
+
+  it("skips a call whose callee is neither an identifier nor a member", () => {
+    expect(factsFor(`(() => 1)();`).memberSites).toEqual([]);
+  });
+});

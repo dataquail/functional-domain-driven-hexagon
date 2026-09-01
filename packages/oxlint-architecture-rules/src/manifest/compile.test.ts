@@ -395,3 +395,56 @@ describe("importedBy on a folder", () => {
     ).toBe(false);
   });
 });
+
+describe("aliases", () => {
+  it("expands an alias used as the whole pattern, not only as a prefix", () => {
+    const lowered = lowerManifest({
+      ...base({}),
+      deny: [{ match: "@", message: "Nothing may reach the package root." }],
+    });
+
+    expect(ruleNamed(lowered.imports, "deny-0").to).toBe("^pkg/src");
+  });
+});
+
+describe("a prohibition that carves targets back out", () => {
+  it("lowers matchNot onto the rule's toNot", () => {
+    const lowered = lowerManifest(
+      base({
+        "@/a/": {
+          imports: {
+            unrestricted: true,
+            deny: [
+              {
+                match: "@/b/**",
+                matchNot: "@/b/index.ts",
+                message: "b/ is private except through its barrel.",
+              },
+            ],
+          },
+          children: { "*.ts": {} },
+        },
+      }),
+    );
+
+    expect(ruleNamed(lowered.imports, "a/deny-0").toNot).toEqual(["^pkg/src/b/index\\.ts"]);
+  });
+});
+
+describe("export restrictions", () => {
+  it("takes the first pattern of a multi-pattern module as the probe target", () => {
+    const lowered = lowerManifest({
+      ...base({}),
+      exports: [
+        {
+          name: "no-factories",
+          message: "A factory is built at a composition root.",
+          module: ["**/node_modules/pkg/**", "**/node_modules/other/**"],
+          symbols: ["makeBus"],
+        },
+      ],
+    });
+
+    expect(ruleNamed(lowered.exports, "no-factories").probe.to).toContain("node_modules/pkg");
+  });
+});

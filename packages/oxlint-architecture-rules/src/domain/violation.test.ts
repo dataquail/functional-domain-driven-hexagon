@@ -46,3 +46,19 @@ describe("formatMessage", () => {
     );
   });
 });
+
+describe("a violation with no subject", () => {
+  // A structure root reports the folder, an import rule the target — but a rule
+  // that has nothing to name still has to render its message.
+  it("renders {name} as nothing rather than as the word undefined", () => {
+    expect(
+      formatMessage({
+        kind: "structure",
+        ruleName: "server/taxonomy",
+        message: "This folder is not part of the taxonomy: {name}.",
+        file: "packages/server/src/modules/alpha/helpers/x.ts",
+        subject: null,
+      }),
+    ).toBe("[server/taxonomy] This folder is not part of the taxonomy: .");
+  });
+});

@@ -117,3 +117,45 @@ new RuleTester({ cwd: repoRoot }).run("exports", makeExportsRule(policy()), {
     },
   ],
 });
+
+new RuleTester({ cwd: repoRoot }).run("exports (binding forms)", makeExportsRule(policy()), {
+  valid: [
+    // Nothing crosses a side-effect import, and a namespace import is the form
+    // the fix steers toward.
+    { code: 'import "@effect-server-utils/cqrs";', filename: HANDLER },
+    { code: 'import * as Cqrs from "@effect-server-utils/cqrs";', filename: HANDLER },
+    { code: "export const x = 1;", filename: HANDLER },
+  ],
+  invalid: [
+    {
+      // A re-export names the symbol in the source module just as an import does.
+      code: 'export { makeCommandBus } from "@effect-server-utils/cqrs";',
+      filename: HANDLER,
+      errors: [{ message: /^\[bus-factories-at-composition-roots\]/ }],
+    },
+    {
+      code: 'import { "makeCommandBus" as make } from "@effect-server-utils/cqrs";',
+      filename: HANDLER,
+      errors: [{ message: /^\[bus-factories-at-composition-roots\]/ }],
+    },
+  ],
+});
+
+new RuleTester({ cwd: repoRoot }).run(
+  "exports (baselined)",
+  makeExportsRule({
+    ...policy(),
+    baseline: makeBaselineFilter({
+      version: 1,
+      entries: [
+        `export|bus-factories-at-composition-roots|packages/server/src/modules/todos/commands/create-todo.handler.ts|${CQRS_BARREL}#makeCommandBus`,
+      ],
+    }),
+  }),
+  {
+    valid: [
+      { code: 'import { makeCommandBus } from "@effect-server-utils/cqrs";', filename: HANDLER },
+    ],
+    invalid: [],
+  },
+);

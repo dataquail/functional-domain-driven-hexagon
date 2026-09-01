@@ -8,18 +8,18 @@ regular expression. Globs rather than regexes because the manifest is meant to r
 filesystem; everything not listed below is literal, including the dots that make up a
 compound file suffix.
 
-| Token    | Matches                                                    |
-| -------- | ---------------------------------------------------------- |
-| `*`      | part of one path segment                                   |
-| `**`     | any number of segments                                      |
-| `?`      | one character other than `/`                                |
+| Token    | Matches                                                           |
+| -------- | ----------------------------------------------------------------- |
+| `*`      | part of one path segment                                          |
+| `**`     | any number of segments                                            |
+| `?`      | one character other than `/`                                      |
 | `{name}` | one segment — a capture in a tree key, a back-reference elsewhere |
-| `[A-Z]`  | a character class, passed through as written                |
-| `a \| b` | several patterns sharing one node (tree keys only)          |
+| `[A-Z]`  | a character class, passed through as written                      |
+| `a \| b` | several patterns sharing one node (tree keys only)                |
 
 ## `a/**` matches `a` itself
 
-A trailing `/**` means *"…or nothing"*, so `@/domain/**` matches the folder `@/domain` as
+A trailing `/**` means _"…or nothing"_, so `@/domain/**` matches the folder `@/domain` as
 well as everything under it. This is what makes an allowlist entry for a folder read the
 way you expect rather than silently excluding the folder's own index file.
 
@@ -44,7 +44,7 @@ to avoid.
 ### Captures are refused in `importedBy.allow`
 
 `importedBy.allow` is matched against the **importing** file, while the capture was
-declared by *this* file's path. There is no coherent binding between them, so a capture
+declared by _this_ file's path. There is no coherent binding between them, so a capture
 there would compile to an exemption that silently never matched. The compiler rejects it
 rather than emit it.
 
@@ -63,12 +63,12 @@ members: [
 ],
 ```
 
-`use[A-Z]*` is *"a hook"* — `useState`, `useEffect` — without also matching `user` or
+`use[A-Z]*` is _"a hook"_ — `useState`, `useEffect` — without also matching `user` or
 `useful`. Classes pass through to the regular expression as written.
 
 ## Multi-pattern keys
 
-A tree key may hold several patterns separated by ` | `, which is how several file
+A tree key may hold several patterns separated by `|`, which is how several file
 stereotypes share one node without repeating its body:
 
 ```js

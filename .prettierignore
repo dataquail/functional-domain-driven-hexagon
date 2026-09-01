@@ -8,3 +8,4 @@ scratchpad/
 pnpm-lock.yaml
 **/routeTree.gen.ts
 .next
+**/.astro/

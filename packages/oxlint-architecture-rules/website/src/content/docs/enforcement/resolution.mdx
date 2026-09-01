@@ -41,7 +41,7 @@ rebuilding a resolver per file is the difference between a fast run and an unusa
 
 `paths` targets in the tsconfigs a scope names should be **extensionless**. A mapped target
 is a template, so a `.js`-suffixed mapping turns `@/x/y.js` into a lookup for `y.js.js`. The
-resolver handles the `.js` → `.ts` rewrite on the *specifier* instead:
+resolver handles the `.js` → `.ts` rewrite on the _specifier_ instead:
 
 ```
 .js  → .ts, .tsx, .js
@@ -55,11 +55,11 @@ exists to make impossible.
 
 ## Three kinds of target
 
-| Kind      | What it is                        | Which field governs it        |
-| --------- | --------------------------------- | ----------------------------- |
-| `local`   | a file inside the repository      | `imports.allow`, `deny`       |
-| `external`| resolved under `node_modules/`    | `imports.external`            |
-| `builtin` | a Node builtin — `node:crypto`    | neither                       |
+| Kind       | What it is                     | Which field governs it  |
+| ---------- | ------------------------------ | ----------------------- |
+| `local`    | a file inside the repository   | `imports.allow`, `deny` |
+| `external` | resolved under `node_modules/` | `imports.external`      |
+| `builtin`  | a Node builtin — `node:crypto` | neither                 |
 
 Builtins are resolved and classified rather than treated as unresolved packages, so
 `node:crypto` does not need an entry in every tier's `external` list to avoid a false

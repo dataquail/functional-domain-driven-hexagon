@@ -49,3 +49,24 @@ describe("globToRegexSource", () => {
     );
   });
 });
+
+describe("single-character wildcards and back-references", () => {
+  it("matches exactly one non-separator character for `?`", () => {
+    expect(matches("a?.ts", "ab.ts")).toBe(true);
+    expect(matches("a?.ts", "abc.ts")).toBe(false);
+    expect(matches("a?.ts", "a/.ts")).toBe(false);
+  });
+
+  // A `{name}` outside the key that declared it is a back-reference, so the
+  // same segment has to appear on both sides.
+  it("compiles a non-declaring capture to a back-reference to the group above", () => {
+    const declared = globToRegexSource("modules/{module}/", {}, { declaring: true, nextGroup: 1 });
+    const referenced = globToRegexSource("modules/{module}/domain", declared.captures, {
+      declaring: false,
+      nextGroup: 2,
+    });
+
+    expect(declared.captures).toEqual({ module: 1 });
+    expect(referenced.source).toContain("$1");
+  });
+});

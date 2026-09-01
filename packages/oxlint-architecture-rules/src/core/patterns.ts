@@ -60,10 +60,15 @@ export const sourcesOf = (
   patterns: string | ReadonlyArray<string> | undefined,
 ): ReadonlyArray<string> => (patterns === undefined ? [] : [...patternsOf(patterns)]);
 
+// A capture is one path segment from the importer, spliced into a target
+// pattern as `$1`. It is data, not pattern syntax: a folder named `my.module`
+// must match itself, not "my" plus any character plus "module".
+const REGEX_METACHARACTER = /[.*+?^${}()|[\]\\]/g;
+
 const substitute = (pattern: string, captures: RegExpExecArray): string =>
   pattern.replaceAll(BACKREFERENCE, (whole, index: string) => {
     const capture = captures[Number(index)];
-    return capture ?? whole;
+    return capture === undefined ? whole : capture.replace(REGEX_METACHARACTER, "\\$&");
   });
 
 const targetCache = new Map<string, RegExp>();

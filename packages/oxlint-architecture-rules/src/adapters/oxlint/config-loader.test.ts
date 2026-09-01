@@ -98,3 +98,41 @@ describe("loadPolicy", () => {
     expect(policy.importRules.length).toBeGreaterThan(0);
   });
 });
+
+describe("uncompilable patterns in the other three families", () => {
+  const BROKEN = "[z-a]";
+
+  it("refuses an export restriction whose module pattern cannot compile", async () => {
+    const exports = `exports: [{ name: "x", message: "x", module: "**/${BROKEN}/**", symbols: ["y"] }]`;
+    await expect(
+      loadPolicy(repoRoot, writeConfig(`export default { ${RESOLVE}, ${exports}, ${TREE} };`)),
+    ).rejects.toThrow(/uncompilable/);
+  });
+
+  it("refuses a member rule whose pattern cannot compile", async () => {
+    const tree = TREE.replace(
+      'children: { "*.root.ts": {} },',
+      `children: { "*.root.ts": { members: [{ message: "x", subject: "calls", match: "${BROKEN}" }] } },`,
+    );
+    await expect(
+      loadPolicy(repoRoot, writeConfig(`export default { ${RESOLVE}, ${tree} };`)),
+    ).rejects.toThrow(/uncompilable/);
+  });
+
+  it("refuses a structure rule whose folder pattern cannot compile", async () => {
+    const tree = TREE.replace('domain/": {', `domain/${BROKEN}/": {`);
+    await expect(
+      loadPolicy(repoRoot, writeConfig(`export default { ${RESOLVE}, ${tree} };`)),
+    ).rejects.toThrow(/uncompilable/);
+  });
+
+  // A config module that exports the manifest directly rather than as a
+  // default is the CommonJS-ish shape a `.cjs` policy would produce.
+  it("accepts a manifest that is the module itself rather than its default export", async () => {
+    const at =
+      writeConfig(`export const resolve = { scopes: [{ files: "", tsconfig: "tsconfig.resolve.json" }] };
+export const tree = { "packages/server/src/modules/{module}/domain/": { message: "m", imports: { message: "m", allow: ["packages/server/src/modules/{module}/domain/**"] }, children: { "*.root.ts": {} } } };`);
+    const policy = await loadPolicy(repoRoot, at);
+    expect(policy.importRules.length).toBeGreaterThan(0);
+  });
+});

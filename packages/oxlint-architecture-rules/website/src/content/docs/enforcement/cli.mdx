@@ -51,7 +51,7 @@ the manifest — so the sentence that caused it is found by reading down the sam
 
 ## `explain`
 
-A tree answers *"what governs this file?"* well and *"which files does this rule govern?"*
+A tree answers _"what governs this file?"_ well and _"which files does this rule govern?"_
 badly — the exact inverse of a flat rule list. `explain` is the answer to the second
 question, asked one file at a time:
 
@@ -86,7 +86,7 @@ siblings it owes.
 The allowlist is shown as compiled regular expressions rather than as the globs you wrote,
 because what is in force after inheritance is not any single line of the manifest. `$1` is a
 [capture](/oxlint-architecture-rules/manifest/patterns/) resolved from this file's own path —
-the rule says *this module's own domain*, not any module's.
+the rule says _this module's own domain_, not any module's.
 
 When a rule seems to be firing too much or not at all, this is the first thing to run.
 

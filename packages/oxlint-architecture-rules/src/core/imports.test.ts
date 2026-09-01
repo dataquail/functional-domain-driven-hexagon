@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import type { ImportRule } from "../domain/architecture-config.js";
 import { makeModuleResolverFake } from "../infrastructure/module-resolver-fake.js";
 import { compileImportRules, evaluateImportEdge, rulesFailingTheirProbe } from "./imports.js";
+import { kindOfPath } from "./patterns.js";
 
 const compile = (rules: ReadonlyArray<ImportRule>) => {
   const compiled = compileImportRules(rules);
@@ -119,6 +120,35 @@ describe("evaluateImportEdge", () => {
     it("permits another module's barrel", () => {
       expect(violationsOf([barrelOnly], targets, from, "foreign-barrel")).toEqual([]);
     });
+
+    // A capture is one path segment, spliced in as data. A module named
+    // `my.module` must match itself and nothing else — if the dot stayed live
+    // the rule would also exempt `myXmodule`, and a segment carrying an unclosed
+    // `(` would throw while compiling a pattern nobody wrote.
+    it("splices a capture carrying regex metacharacters as a literal", () => {
+      const inMyModule = "packages/server/src/modules/my.module/commands/x.handler.ts";
+      const metacharacterTargets = {
+        own: "packages/server/src/modules/my.module/domain/a.root.ts",
+        lookalike: "packages/server/src/modules/myXmodule/domain/a.root.ts",
+      };
+
+      expect(violationsOf([barrelOnly], metacharacterTargets, inMyModule, "own")).toEqual([]);
+      expect(violationsOf([barrelOnly], metacharacterTargets, inMyModule, "lookalike")).toEqual([
+        "module-barrel-only-cross-module",
+      ]);
+    });
+
+    it("does not throw on a capture that would be an invalid pattern", () => {
+      const inBrokenModule = "packages/server/src/modules/a(b/commands/x.handler.ts";
+      expect(
+        violationsOf(
+          [barrelOnly],
+          { own: "packages/server/src/modules/a(b/domain/a.root.ts" },
+          inBrokenModule,
+          "own",
+        ),
+      ).toEqual([]);
+    });
   });
 
   describe("dependencyKind", () => {
@@ -209,5 +239,43 @@ describe("rulesFailingTheirProbe", () => {
       dependencyKind: "builtin",
     };
     expect(rulesFailingTheirProbe(compile([builtinRule]))).toEqual([]);
+  });
+});
+
+describe("compileImportRules failures", () => {
+  const broken = "^packages/(unclosed";
+
+  it.each([
+    ["from", { from: broken }],
+    ["fromNot", { fromNot: [broken] }],
+  ])("refuses an invalid pattern in %s", (field, override) => {
+    const compiled = compileImportRules([{ ...isolation, ...override }]);
+    expect(Result.isFailure(compiled) && compiled.failure.field).toBe(field);
+  });
+});
+
+describe("probe dependency kinds", () => {
+  // A probe states its target as a resolved path, so a rule that declares it is
+  // about externals but probes a repo file has a probe it can never satisfy.
+  it("fails a rule whose probe target is not the kind the rule is about", () => {
+    const mismatched: ImportRule = {
+      ...isolation,
+      dependencyKind: "external",
+      probe: { from: isolation.probe.from, to: "packages/database/src/index.ts" },
+    };
+
+    expect(rulesFailingTheirProbe(compile([mismatched])).map((rule) => rule.name)).toEqual([
+      "domain-isolation",
+    ]);
+  });
+});
+
+describe("kindOfPath", () => {
+  it.each([
+    ["node:crypto", "builtin"],
+    ["node_modules/effect/dist/index.js", "external"],
+    ["packages/server/src/server.ts", "local"],
+  ])("reads %s as %s", (path, kind) => {
+    expect(kindOfPath(path)).toBe(kind);
   });
 });

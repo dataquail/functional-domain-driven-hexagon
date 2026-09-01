@@ -23,14 +23,14 @@ carries dependency-direction policy: which tiers may see which, and which may no
 },
 ```
 
-| Field          | Meaning                                                                 |
-| -------------- | ----------------------------------------------------------------------- |
+| Field          | Meaning                                                                        |
+| -------------- | ------------------------------------------------------------------------------ |
 | `allow`        | repo-relative globs. A resolved target matching none of them is the violation. |
-| `external`     | npm package names. Omit to inherit; `[]` forbids every external.         |
-| `deny`         | prohibitions checked **before** `allow`, and winning over it.            |
-| `message`      | what the allowlist means, shown when a target falls outside it.          |
-| `reset`        | stop inheriting ancestors' allowances.                                   |
-| `unrestricted` | this tier has no allowlist yet.                                          |
+| `external`     | npm package names. Omit to inherit; `[]` forbids every external.               |
+| `deny`         | prohibitions checked **before** `allow`, and winning over it.                  |
+| `message`      | what the allowlist means, shown when a target falls outside it.                |
+| `reset`        | stop inheriting ancestors' allowances.                                         |
+| `unrestricted` | this tier has no allowlist yet.                                                |
 
 ## `allow` is an allowlist over resolved paths
 
@@ -46,7 +46,7 @@ repository; `external` governs npm packages, matched by package name:
 external: ["effect", "@effect-server-utils/cqrs"],
 ```
 
-`external: []` is meaningful and strong — *"this tier reaches no third-party code at all"*.
+`external: []` is meaningful and strong — _"this tier reaches no third-party code at all"_.
 Omitting `external` inherits the nearest ancestor's list, which is usually what you want:
 one tier states the runtime it is allowed to name, and its subtree lives with it.
 
@@ -74,15 +74,15 @@ deny: [
 ],
 ```
 
-| Field      | Meaning                                                        |
-| ---------- | -------------------------------------------------------------- |
-| `match`    | the target this prohibits                                       |
-| `matchNot` | targets carved back out of `match`                              |
-| `except`   | **importers** the prohibition does not apply to                  |
-| `message`  | why                                                             |
+| Field      | Meaning                                         |
+| ---------- | ----------------------------------------------- |
+| `match`    | the target this prohibits                       |
+| `matchNot` | targets carved back out of `match`              |
+| `except`   | **importers** the prohibition does not apply to |
+| `message`  | why                                             |
 
-`except` is the important asymmetry: an exemption to a prohibition is declared *by the
-prohibition*, in the same breath, never by the tier escaping it. A descendant cannot opt
+`except` is the important asymmetry: an exemption to a prohibition is declared _by the
+prohibition_, in the same breath, never by the tier escaping it. A descendant cannot opt
 itself out of a rule an ancestor wrote. See
 [Inheritance](/oxlint-architecture-rules/manifest/inheritance/).
 
@@ -98,8 +98,8 @@ genuinely narrower than its parent — a domain layer inside an application pack
 its own allowlist from scratch rather than trying to subtract. Inherited `deny` entries are
 unaffected: a prohibition only ever accumulates.
 
-**`unrestricted: true`** says *"this tier has no allowlist yet; only the prohibitions
-apply."* It implies `reset`. It is **required** whenever a node states `imports` without an
+**`unrestricted: true`** says _"this tier has no allowlist yet; only the prohibitions
+apply."_ It implies `reset`. It is **required** whenever a node states `imports` without an
 `allow` — you cannot leave the allowlist off silently. That is the point: `grep unrestricted`
 over a manifest is the adoption backlog, and the number should go down.
 

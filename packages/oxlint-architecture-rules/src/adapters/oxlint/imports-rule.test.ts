@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import * as Result from "effect/Result";
 import { RuleTester } from "oxlint/plugins-dev";
-import { describe, expect, it } from "vitest";
+import { describe, it } from "vitest";
 
 import { EMPTY_BASELINE, makeBaselineFilter } from "../../core/baseline.js";
 import { compileImportRules } from "../../core/imports.js";
@@ -94,22 +94,56 @@ new RuleTester({ cwd: repoRoot }).run("imports", makeImportsRule(makePolicy()), 
   ],
 });
 
-describe("makeImportsRule", () => {
-  it("honours resolve.unresolved: off without disabling the rules themselves", () => {
-    const policy: LoadedPolicy = {
-      ...makePolicy(),
-      config: { resolve: { ...config.resolve, unresolved: "off" as const }, tree: {} },
-    };
-    new RuleTester({ cwd: repoRoot }).run("imports", makeImportsRule(policy), {
-      valid: [{ code: 'import { x } from "@org/nowhere";', filename: DOMAIN_FILE }],
-      invalid: [
-        {
-          code: 'import { Database } from "@org/database";',
-          filename: DOMAIN_FILE,
-          errors: [{ message: /^\[domain-isolation\]/ }],
-        },
-      ],
-    });
-    expect(policy.config.resolve.unresolved).toBe("off");
-  });
-});
+// `resolve.unresolved: "off"` silences the unresolved diagnostic without
+// disabling the rules themselves. RuleTester registers its own suites, so this
+// runs at module level — inside an `it()` the cases would never execute.
+new RuleTester({ cwd: repoRoot }).run(
+  "imports (unresolved: off)",
+  makeImportsRule({
+    ...makePolicy(),
+    config: { resolve: { ...config.resolve, unresolved: "off" as const }, tree: {} },
+  }),
+  {
+    valid: [{ code: 'import { x } from "@org/nowhere";', filename: DOMAIN_FILE }],
+    invalid: [
+      {
+        code: 'import { Database } from "@org/database";',
+        filename: DOMAIN_FILE,
+        errors: [{ message: /^\[domain-isolation\]/ }],
+      },
+    ],
+  },
+);
+
+const DOMAIN_RELATIVE = "packages/server/src/modules/todos/domain/todo/todo.root.ts";
+
+new RuleTester({ cwd: repoRoot }).run(
+  "imports (edges the rule steps over)",
+  makeImportsRule({ ...makePolicy(), ignoreUnresolved: [/^virtual:/] }),
+  {
+    valid: [
+      // An export declaration that names no module is not an edge.
+      { code: "export const x = 1;", filename: DOMAIN_FILE },
+      // An unresolvable specifier the policy lists as expected.
+      { code: 'import { x } from "virtual:generated";', filename: DOMAIN_FILE },
+    ],
+    invalid: [],
+  },
+);
+
+// A baselined violation still fires inside the core; the adapter is what stays
+// quiet about it.
+new RuleTester({ cwd: repoRoot }).run(
+  "imports (baselined)",
+  makeImportsRule({
+    ...makePolicy(),
+    baseline: makeBaselineFilter({
+      version: 1,
+      entries: [`import|domain-isolation|${DOMAIN_RELATIVE}|packages/database/src/index.ts`],
+    }),
+  }),
+  {
+    valid: [{ code: 'import { Database } from "@org/database";', filename: DOMAIN_FILE }],
+    invalid: [],
+  },
+);
