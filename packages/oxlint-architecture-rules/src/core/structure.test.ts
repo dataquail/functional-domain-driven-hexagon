@@ -1,15 +1,19 @@
 import * as Result from "effect/Result";
 import { describe, expect, it } from "vitest";
 
-import type { StructureConfig } from "../domain/architecture-config.js";
+import type { StructureConfig, StructureNaming } from "../domain/architecture-config.js";
 import { makeFileSystemFake } from "../infrastructure/file-system-fake.js";
 import type { FileSystem } from "../ports/file-system.js";
 import {
+  type CompiledStructure,
   compileStructure,
+  EMPTY_STRUCTURE,
   evaluateStructure,
   requiredSiblingsOf,
   structureRulesFailingTheirProbe,
 } from "./structure.js";
+
+const PROBE_AT = "packages/server/src/modules/alpha/domain/thing";
 
 const MOD = "^packages/server/src/modules/[^/]+";
 
@@ -258,20 +262,12 @@ describe("compileStructure", () => {
 
   it("is empty when the policy declares no structure at all", () => {
     const compiled = compileStructure(undefined);
-    expect(Result.isSuccess(compiled) && compiled.success).toEqual({
-      roots: [],
-      folders: [],
-      parity: [],
-    });
+    expect(Result.isSuccess(compiled) && compiled.success).toEqual(EMPTY_STRUCTURE);
   });
 
   it("is empty when the policy declares a structure with no rules of any kind", () => {
     const compiled = compileStructure({});
-    expect(Result.isSuccess(compiled) && compiled.success).toEqual({
-      roots: [],
-      folders: [],
-      parity: [],
-    });
+    expect(Result.isSuccess(compiled) && compiled.success).toEqual(EMPTY_STRUCTURE);
   });
 
   // A pattern that cannot compile has to surface as a decode failure, not as a
@@ -343,5 +339,143 @@ describe("a required sibling of a file at the repository root", () => {
         "index.ts",
       ),
     ).toEqual(["index.test.ts"]);
+  });
+});
+
+describe("evaluateStructure naming", () => {
+  const kebab = "^[a-z0-9]+(?:-[a-z0-9]+)*$";
+
+  const naming = (rule: StructureNaming | null): CompiledStructure => {
+    const compiled = compileStructure({
+      naming: [
+        rule ?? {
+          name: "concept-name",
+          message: "A concept name here is kebab-case.",
+          probe: { path: `${PROBE_AT}/zzProbeStray.root.ts` },
+          file: [`^${PROBE_AT.replace("alpha", "[^/]+")}/([^/.]+)[^/]*$`],
+          subject: 1,
+          convention: kebab,
+        },
+      ],
+    });
+    if (Result.isFailure(compiled)) throw compiled.failure;
+    return compiled.success;
+  };
+
+  const at = (structure: CompiledStructure, file: string) =>
+    evaluateStructure(structure, ALL_PRESENT, file).map((violation) => violation.subject);
+
+  it("admits a name the convention accepts", () => {
+    expect(at(naming(null), `${PROBE_AT}/create-todo.root.ts`)).toEqual([]);
+  });
+
+  // The concept name is the basename up to the FIRST dot, so a compound
+  // stereotype is not mistaken for part of it.
+  it("judges the concept name, not the whole stem", () => {
+    expect(at(naming(null), `${PROBE_AT}/todos.repository-live.ts`)).toEqual([]);
+    expect(at(naming(null), `${PROBE_AT}/Todos.repository-live.ts`)).toEqual(["Todos"]);
+  });
+
+  it("reports a name the convention rejects, naming it", () => {
+    expect(at(naming(null), `${PROBE_AT}/TodoAggregate.root.ts`)).toEqual(["TodoAggregate"]);
+  });
+
+  it("ignores a file its own fileNot exempts", () => {
+    expect(
+      at(
+        naming({
+          name: "concept-name",
+          message: "A concept name here is kebab-case.",
+          probe: { path: `${PROBE_AT}/zzProbeStray.id.ts` },
+          file: [`^${PROBE_AT.replace("alpha", "[^/]+")}/([^/.]+)[^/]*$`],
+          fileNot: ["\\.root\\.ts$"],
+          subject: 1,
+          convention: kebab,
+        }),
+        `${PROBE_AT}/TodoAggregate.root.ts`,
+      ),
+    ).toEqual([]);
+  });
+
+  // `sameAs` is what "named after its folder" compiles to: two capture groups
+  // from one match, compared to each other.
+  describe("a name that has to equal another capture", () => {
+    const sameAs = naming({
+      name: "named-after-its-folder",
+      message: "A root is named after its folder.",
+      probe: { path: "modules/alpha/domain/beta/zz.root.ts" },
+      file: ["^modules/[^/]+/domain/([^/]+)/([^/.]+)\\.root\\.ts$"],
+      subject: 2,
+      sameAs: 1,
+    });
+
+    it("admits the file whose name is its folder's", () => {
+      expect(at(sameAs, "modules/todos/domain/todo/todo.root.ts")).toEqual([]);
+    });
+
+    it("reports one named after something else", () => {
+      expect(at(sameAs, "modules/todos/domain/todo/user.root.ts")).toEqual(["user"]);
+    });
+  });
+});
+
+describe("structureRulesFailingTheirProbe for naming", () => {
+  // The guard the package exists for: a convention that admits its own probe is
+  // a convention that could never report anything.
+  it("fails a rule whose probe its own convention accepts", () => {
+    const compiled = compileStructure({
+      naming: [
+        {
+          name: "vacuous",
+          message: "x",
+          probe: { path: `${PROBE_AT}/anything.ts` },
+          file: [`^${PROBE_AT.replace("alpha", "[^/]+")}/([^/.]+)[^/]*$`],
+          subject: 1,
+          convention: "^.*$",
+        },
+      ],
+    });
+    if (Result.isFailure(compiled)) throw compiled.failure;
+    expect(structureRulesFailingTheirProbe(compiled.success)).toEqual(["vacuous"]);
+  });
+});
+
+describe("compileStructure naming failures", () => {
+  const broken = "^packages/(unclosed";
+  const valid: StructureNaming = {
+    name: "concept-name",
+    message: "x",
+    probe: { path: "a/zzProbeStray.ts" },
+    file: ["^a/([^/.]+)[^/]*$"],
+    subject: 1,
+    convention: "^[a-z]+$",
+  };
+
+  it.each([
+    ["file", { file: broken }],
+    ["fileNot", { fileNot: [broken] }],
+    ["convention", { convention: broken }],
+  ])("refuses an invalid pattern in %s", (field, override) => {
+    const compiled = compileStructure({ naming: [{ ...valid, ...override }] });
+    expect(Result.isFailure(compiled) && compiled.failure.field).toBe(field);
+  });
+
+  // A `sameAs` pointing at a group the pattern does not have compares against
+  // nothing, so the name can never satisfy it.
+  it("reports a name whose sameAs group the pattern never fills", () => {
+    const { convention: _unused, ...withoutConvention } = valid;
+    const compiled = compileStructure({ naming: [{ ...withoutConvention, sameAs: 7 }] });
+    if (Result.isFailure(compiled)) throw compiled.failure;
+    expect(
+      evaluateStructure(compiled.success, ALL_PRESENT, "a/thing.ts").map((one) => one.subject),
+    ).toEqual(["thing"]);
+  });
+
+  it("ignores a file whose pattern matches without filling the subject", () => {
+    const compiled = compileStructure({
+      naming: [{ ...valid, file: ["^a/[^/]+$"], subject: 1 }],
+    });
+    if (Result.isFailure(compiled)) throw compiled.failure;
+    expect(evaluateStructure(compiled.success, ALL_PRESENT, "a/thing.ts")).toEqual([]);
   });
 });

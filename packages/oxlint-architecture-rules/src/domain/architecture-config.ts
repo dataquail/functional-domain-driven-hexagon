@@ -161,10 +161,29 @@ const StructureParity = Schema.Struct({
   requires: Schema.Array(Schema.String),
 });
 
+// What shape the variable part of a name may take. `folders` says which
+// stereotypes a folder admits; this says what the concept name in front of the
+// stereotype may look like — the degree of freedom a taxonomy alone leaves open.
+const StructureNaming = Schema.Struct({
+  name: Schema.String,
+  message: Schema.String,
+  probe: PathProbe,
+  // Matched against the whole repo-relative path, and carrying capture groups:
+  // `subject` says which of them holds the name being judged.
+  file: PatternList,
+  fileNot: Schema.optionalKey(PatternList),
+  subject: Schema.Finite,
+  // The shape the subject must have. Exactly one of these.
+  convention: Schema.optionalKey(Schema.String),
+  // A capture group the subject must equal, for "named after its folder".
+  sameAs: Schema.optionalKey(Schema.Finite),
+});
+
 const StructureConfig = Schema.Struct({
   roots: Schema.optionalKey(Schema.Array(StructureRoot)),
   folders: Schema.optionalKey(Schema.Array(StructureFolder)),
   parity: Schema.optionalKey(Schema.Array(StructureParity)),
+  naming: Schema.optionalKey(Schema.Array(StructureNaming)),
 });
 
 export type ImportRule = (typeof ImportRule)["Type"];
@@ -181,6 +200,7 @@ export type StructureConfig = (typeof StructureConfig)["Type"];
 export type StructureRoot = (typeof StructureRoot)["Type"];
 export type StructureFolder = (typeof StructureFolder)["Type"];
 export type StructureParity = (typeof StructureParity)["Type"];
+export type StructureNaming = (typeof StructureNaming)["Type"];
 
 export const patternsOf = (patterns: string | ReadonlyArray<string>): ReadonlyArray<string> =>
   typeof patterns === "string" ? [patterns] : patterns;

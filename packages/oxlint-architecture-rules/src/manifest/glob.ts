@@ -26,6 +26,9 @@ const TOKENS = new RegExp(`(${TOKEN_SOURCE})`, "g");
 export type GlobCompilation = {
   readonly source: string;
   readonly captures: CaptureIndex;
+  // Group indices for the `*`s, in source order, when `capturing` asked for
+  // them. A naming rule judges what one of these matched.
+  readonly wildcards: ReadonlyArray<number>;
 };
 
 // `declaring` compiles `{name}` to a new capture group and records its position;
@@ -34,9 +37,17 @@ export type GlobCompilation = {
 export const globToRegexSource = (
   glob: string,
   captures: CaptureIndex,
-  options: { readonly declaring: boolean; readonly nextGroup: number },
+  options: {
+    readonly declaring: boolean;
+    readonly nextGroup: number;
+    // Compile `*` to a capture rather than to `[^/]*`, so a caller can ask what
+    // the variable part of a name actually was. Off everywhere else: a stray
+    // group would renumber the back-references `{capture}` compiles to.
+    readonly capturing?: boolean;
+  },
 ): GlobCompilation => {
   const declared: Record<string, number> = { ...captures };
+  const wildcards: Array<number> = [];
   let group = options.nextGroup;
   let out = "";
 
@@ -48,7 +59,11 @@ export const globToRegexSource = (
       continue;
     }
     if (part === "*") {
-      out += "[^/]*";
+      if (options.capturing === true) {
+        wildcards.push(group);
+        out += "([^/]*)";
+        group += 1;
+      } else out += "[^/]*";
       continue;
     }
     if (part === "?") {
@@ -85,7 +100,7 @@ export const globToRegexSource = (
   }
 
   // `a/**` should match `a` itself, not just its descendants.
-  return { source: out.replace(/\/\.\*$/, "(/.*)?"), captures: declared };
+  return { source: out.replace(/\/\.\*$/, "(/.*)?"), captures: declared, wildcards };
 };
 
 export const anchored = (source: string): string => `^${source}$`;

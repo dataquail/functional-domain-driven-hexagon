@@ -199,6 +199,12 @@ export const explain = (policy: LoadedPolicy, file: string): Effect.Effect<void,
       rule.folder.some((pattern) => pattern.test(path.dirname(relative))),
     );
 
+    const naming = policy.structure.naming.filter(
+      (rule) =>
+        rule.file.some((pattern) => pattern.test(relative)) &&
+        !rule.fileNot.some((pattern) => pattern.test(relative)),
+    );
+
     const firstSentence = (message: string) => `${message.split(". ")[0] ?? message}.`;
 
     yield* report([
@@ -218,6 +224,15 @@ export const explain = (policy: LoadedPolicy, file: string): Effect.Effect<void,
         : prohibitions.map(([rule]) => `    ${rule.name} — ${firstSentence(rule.message)}`)),
       "",
       `  lives in: ${governing.length === 0 ? "a folder no rule governs" : governing.map((rule) => rule.name).join(", ")}`,
+      ...(naming.length === 0
+        ? []
+        : [
+            "  is named by:",
+            ...naming.map(
+              (rule) =>
+                `    ${rule.name} — ${rule.sameAs !== null ? "its folder's own name" : (rule.convention?.source ?? "")}`,
+            ),
+          ]),
       ...(owed.length === 0 ? [] : ["  owes:", ...owed.map((one) => `    ${one}`)]),
     ]);
   });

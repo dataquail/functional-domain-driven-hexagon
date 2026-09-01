@@ -54,6 +54,7 @@ real.
   imports: { reset: true, external: ["effect"], allow: ["@/modules/{module}/domain/**"] },
   children: {
     "*.root.ts": {
+      name: { like: "{subdomain}" },
       requires: ["{base}.root.test.ts"],
     },
     "*.repository.ts": {
@@ -80,6 +81,7 @@ real.
 | `imports`     | what may this reach?                            | [Imports](/oxlint-architecture-rules/manifest/imports/)         |
 | `importedBy`  | who may reach this?                             | [Imported by](/oxlint-architecture-rules/manifest/imported-by/) |
 | `members`     | which names may it declare or call?             | [Members](/oxlint-architecture-rules/manifest/members/)         |
+| `name`        | what may the variable part of a name look like? | [Structure](/oxlint-architecture-rules/manifest/structure/)     |
 | `requires`    | which siblings does this file owe?              | [Structure](/oxlint-architecture-rules/manifest/structure/)     |
 | `requiresNot` | which filenames does that obligation skip?      | [Structure](/oxlint-architecture-rules/manifest/structure/)     |
 | `children`    | which files and folders does this folder admit? | [Structure](/oxlint-architecture-rules/manifest/structure/)     |

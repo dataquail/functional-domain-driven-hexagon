@@ -38,6 +38,22 @@ narrow:
 },
 ```
 
+## `name` inherits the same way
+
+A naming convention is inherited by the whole subtree, and a descendant that states its own
+replaces it. There is no `reset` for naming, because a convention is a single value rather
+than a list: restating it _is_ the reset.
+
+```js
+"~/database/src/": {
+  name: { regex: "^(?:Database|[a-z0-9]+(?:-[a-z0-9]+)*)$" },
+  children: {
+    "migrations/": { name: "snake_case" },   // narrower, and stated
+    "**/": { name: "kebab-case" },
+  },
+},
+```
+
 ## Prohibitions only accumulate
 
 A `deny` is emitted **once**, over the subtree of the node that declares it, and descendants

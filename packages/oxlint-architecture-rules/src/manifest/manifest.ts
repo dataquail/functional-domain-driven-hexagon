@@ -58,6 +58,19 @@ const ImportedBy = Schema.Struct({
   matchNot: Schema.optionalKey(Globs),
 });
 
+// What shape the variable part of a name must have. A folder's `children` keys
+// already say which stereotypes it admits; this says what the concept name in
+// front of the stereotype may look like, which is the degree of freedom a
+// taxonomy alone leaves open.
+//
+// `like` names an ancestor capture the name must equal — a subdomain folder's
+// root is named after the folder, and nothing else could say so.
+const Naming = Schema.Union([
+  Schema.Literals(["kebab-case", "camelCase", "PascalCase", "snake_case"]),
+  Schema.Struct({ regex: Schema.String, message: Schema.optionalKey(Schema.String) }),
+  Schema.Struct({ like: Schema.String, message: Schema.optionalKey(Schema.String) }),
+]);
+
 const Members = Schema.Struct({
   message: Schema.String,
   subject: Schema.Literals(["type-members", "calls"]),
@@ -93,6 +106,9 @@ export type ManifestNode = {
   // library is, by design — says so, rather than carrying a layout rule that
   // could never reject anything.
   readonly layout?: "open";
+  // Inherited by the subtree, like `imports`, so a tier states its convention
+  // once rather than on every stereotype it admits.
+  readonly name?: typeof Naming.Type;
   readonly imports?: typeof Imports.Type;
   readonly importedBy?: typeof ImportedBy.Type;
   readonly members?: ReadonlyArray<typeof Members.Type>;
@@ -112,6 +128,7 @@ const ManifestNodeSchema: Schema.Codec<ManifestNode> = Schema.suspend(() =>
     message: Schema.optionalKey(Schema.String),
     partial: Schema.optionalKey(Schema.Boolean),
     layout: Schema.optionalKey(Schema.Literal("open")),
+    name: Schema.optionalKey(Naming),
     imports: Schema.optionalKey(Imports),
     importedBy: Schema.optionalKey(ImportedBy),
     members: Schema.optionalKey(Schema.Array(Members)),
@@ -143,6 +160,7 @@ export type Manifest = typeof Manifest.Type;
 export type ImportsSpec = typeof Imports.Type;
 export type ImportedBySpec = typeof ImportedBy.Type;
 export type MembersSpec = typeof Members.Type;
+export type NamingSpec = typeof Naming.Type;
 export type ExportRestriction = typeof ExportRestriction.Type;
 
 export const globsOf = (globs: string | ReadonlyArray<string>): ReadonlyArray<string> =>

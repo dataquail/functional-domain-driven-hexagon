@@ -3,11 +3,18 @@ import type {
   ImportRule,
   MemberRule,
   StructureFolder,
+  StructureNaming,
   StructureParity,
   StructureRoot,
 } from "../domain/architecture-config.js";
 import { anchored, type CaptureIndex, globToRegexSource, prefixed } from "./glob.js";
-import { globsOf, type ImportsSpec, type Manifest, type ManifestNode } from "./manifest.js";
+import {
+  globsOf,
+  type ImportsSpec,
+  type Manifest,
+  type ManifestNode,
+  type NamingSpec,
+} from "./manifest.js";
 
 // The manifest is the authoring surface; these flat rules are the machine's.
 // Lowering rather than interpreting keeps one evaluator, one probe mechanism and
@@ -20,6 +27,7 @@ export type LoweredRules = {
     readonly roots: ReadonlyArray<StructureRoot>;
     readonly folders: ReadonlyArray<StructureFolder>;
     readonly parity: ReadonlyArray<StructureParity>;
+    readonly naming: ReadonlyArray<StructureNaming>;
   };
 };
 
@@ -68,6 +76,8 @@ type Frame = {
   // Accumulated down the tree. `reset` is the only thing that clears it.
   readonly allow: ReadonlyArray<string>;
   readonly importsMessage: string;
+  // Inherited like the allowlist: a tier states its naming convention once.
+  readonly naming: NamingSpec | undefined;
 };
 
 // A probe is the node's own path with its wildcards filled in, so a rule is
@@ -98,6 +108,87 @@ const probeMemberName = (match: string | ReadonlyArray<string> | undefined): str
     // one it admits: `use[A-Z]*` has to be proven with `useA…`, not `use[A-Z]…`.
     .replace(/\[\^?([^\]])[^\]]*\]/g, "$1")
     .replace(/\*/g, "")}ZzProbe`;
+};
+
+// Each convention pairs the shape a name must have with a name that does not
+// have it, so the rule's probe is generated rather than written.
+const CONVENTIONS: Readonly<
+  Record<string, { readonly source: string; readonly violating: string; readonly shape: string }>
+> = {
+  "kebab-case": {
+    source: "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+    violating: "zzProbeStray",
+    shape: "lowercase words joined by hyphens",
+  },
+  camelCase: {
+    source: "^[a-z][a-zA-Z0-9]*$",
+    violating: "zz-probe-stray",
+    shape: "a lowercase first word, then capitalised ones, with no separators",
+  },
+  PascalCase: {
+    source: "^[A-Z][a-zA-Z0-9]*$",
+    violating: "zz-probe-stray",
+    shape: "capitalised words with no separators",
+  },
+  snake_case: {
+    source: "^[a-z0-9]+(?:_[a-z0-9]+)*$",
+    violating: "zzProbeStray",
+    shape: "lowercase words joined by underscores",
+  },
+};
+
+// The folder's file list already enforces the stereotype suffix; a naming rule
+// is about the concept name in front of it, so the message says which part it
+// is talking about.
+const namingMessageOf = (spec: NamingSpec, subject: "file" | "folder"): string => {
+  const what =
+    subject === "folder" ? "This folder's name" : "The concept name in front of the stereotype";
+  if (typeof spec === "string") {
+    return `${what} is ${spec} here — ${CONVENTIONS[spec]?.shape ?? ""}.`;
+  }
+  if (spec.message !== undefined) return spec.message;
+  if ("like" in spec) {
+    return "A file here is named after its folder, so its concept name is the folder's own.";
+  }
+  return `${what} matches /${spec.regex}/ here.`;
+};
+
+// A custom convention still owes a counter-example. If none of these fails it,
+// the pattern admits every name and the rule could never report anything —
+// which is the vacuity this package refuses to load.
+const VIOLATING_CANDIDATES = ["zzProbeStray", "zz-probe-stray", "ZZ_PROBE_STRAY", "zz probe.stray"];
+
+const violatingSampleFor = (spec: NamingSpec, ruleName: string): string => {
+  if (typeof spec === "string") {
+    const convention = CONVENTIONS[spec];
+    if (convention === undefined) throw new Error(`unknown naming convention "${spec}"`);
+    return convention.violating;
+  }
+  if ("like" in spec) return "zzprobestray";
+  const matcher = new RegExp(spec.regex);
+  const found = VIOLATING_CANDIDATES.find((candidate) => !matcher.test(candidate));
+  if (found === undefined) {
+    throw new Error(
+      `naming rule "${ruleName}" states /${spec.regex}/, which admits every name this ` +
+        `compiler can think of. A convention nothing can violate is a rule that never reports.`,
+    );
+  }
+  return found;
+};
+
+// The probe is the node's own probe path with the subject replaced by a name the
+// convention rejects — located by matching, so the compiler never has to reason
+// about which segment of a glob the subject came from.
+const namingProbeOf = (
+  patternSource: string,
+  subject: number,
+  probe: string,
+  violating: string,
+): string => {
+  const found = new RegExp(patternSource, "d").exec(probe);
+  const span = found?.indices?.[subject];
+  if (span === undefined) return probe;
+  return probe.slice(0, span[0]) + violating + probe.slice(span[1]);
 };
 
 type Denial = {
@@ -162,6 +253,7 @@ export const lowerManifest = (manifest: Manifest): LoweredRules => {
   const roots: Array<StructureRoot> = [];
   const folders: Array<StructureFolder> = [];
   const parity: Array<StructureParity> = [];
+  const namingRules: Array<StructureNaming> = [];
 
   const walk = (
     key: string,
@@ -224,10 +316,121 @@ export const lowerManifest = (manifest: Manifest): LoweredRules => {
       nextGroup,
       allow: merged.allow,
       importsMessage: merged.importsMessage,
+      naming: node.name ?? parent.naming,
     };
 
     const isFolder = isFolderKey(key) || node.children !== undefined;
     const selfPattern = anchored(pathSource);
+
+    // Naming, in two shapes. A folder judges its own segment (when its key
+    // declares a capture) and the concept name of every file directly inside
+    // it; a file node judges what its own `*` matched, which is where "named
+    // after its folder" lives.
+    //
+    // A file's concept name is its basename up to the FIRST dot, not what a `*`
+    // matched: the key `*-live.ts` matches `todos.repository-live.ts`, whose
+    // wildcard spans a stereotype segment as well as the concept.
+    const naming = frame.naming;
+    if (naming !== undefined) {
+      const declaredHere = Object.keys(compiled.captures).filter(
+        (one) => parent.captures[one] === undefined,
+      );
+      const lastDeclared = declaredHere[declaredHere.length - 1];
+      const isLike = typeof naming === "object" && "like" in naming;
+
+      const emit = (
+        ruleName: string,
+        patterns: ReadonlyArray<string>,
+        subject: number,
+        probe: string,
+        sameAs?: number,
+        judging: "file" | "folder" = "file",
+      ): void => {
+        namingRules.push({
+          name: ruleName,
+          message: namingMessageOf(naming, judging),
+          probe: {
+            path:
+              sameAs === undefined
+                ? namingProbeOf(
+                    patterns[0] ?? "",
+                    subject,
+                    probe,
+                    violatingSampleFor(naming, ruleName),
+                  )
+                : probe,
+          },
+          file: patterns,
+          subject,
+          ...(sameAs === undefined
+            ? {
+                convention:
+                  typeof naming === "string"
+                    ? (CONVENTIONS[naming]?.source ?? "")
+                    : "regex" in naming
+                      ? naming.regex
+                      : "",
+              }
+            : { sameAs }),
+        });
+      };
+
+      if (isFolder && !isLike) {
+        if (lastDeclared !== undefined) {
+          const subject = compiled.captures[lastDeclared];
+          if (subject !== undefined) {
+            emit(
+              `${name}/naming-folder`,
+              [prefixed(`${pathSource}/`)],
+              subject,
+              probePathOf(joinedGlob, "zzprobe.ts"),
+              undefined,
+              "folder",
+            );
+          }
+        }
+        emit(
+          `${name}/naming`,
+          [anchored(`${pathSource}/([^/.]+)[^/]*`)],
+          nextGroup,
+          probePathOf(joinedGlob, "zzprobe.ts"),
+        );
+      }
+
+      if (!isFolder && isLike) {
+        const namingCompiled = alternatives.map((one) =>
+          globToRegexSource(one, parent.captures, {
+            declaring: true,
+            nextGroup: parent.nextGroup,
+            capturing: true,
+          }),
+        );
+        const [firstNaming] = namingCompiled;
+        const subject = firstNaming?.wildcards[firstNaming.wildcards.length - 1];
+        const sameAs =
+          typeof naming === "object" && "like" in naming
+            ? parent.captures[naming.like.replace(/[{}]/g, "")]
+            : undefined;
+        if (typeof naming === "object" && "like" in naming && sameAs === undefined) {
+          throw new Error(
+            `naming at "${key}" is like ${naming.like}, which no ancestor path declares.`,
+          );
+        }
+        if (subject !== undefined && sameAs !== undefined) {
+          emit(
+            `${name}/naming`,
+            namingCompiled.map((one) =>
+              anchored(
+                parent.pathSource === "" ? one.source : `${parent.pathSource}/${one.source}`,
+              ),
+            ),
+            subject,
+            probePathOf(joinedGlob, ""),
+            sameAs,
+          );
+        }
+      }
+    }
 
     const childEntries = Object.entries(node.children ?? {});
     // The nearest descendants — at any depth — that state their own import
@@ -445,6 +648,7 @@ export const lowerManifest = (manifest: Manifest): LoweredRules => {
     nextGroup: 1,
     allow: [],
     importsMessage: "This import is not on this folder's allowlist.",
+    naming: undefined,
   };
 
   // Repo-wide prohibitions: `from` is every file, so no tier can be written
@@ -523,5 +727,10 @@ export const lowerManifest = (manifest: Manifest): LoweredRules => {
     });
   }
 
-  return { imports, exports, members, structure: { roots, folders, parity } };
+  return {
+    imports,
+    exports,
+    members,
+    structure: { roots, folders, parity, naming: namingRules },
+  };
 };

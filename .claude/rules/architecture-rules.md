@@ -53,6 +53,27 @@ Repo-wide statements — prohibitions that hold everywhere, and restrictions on
 who may import a given exported symbol — sit at the top level as `deny` and
 `exports`.
 
+## Naming
+
+`children` says which stereotypes a folder admits; `name` says what the concept
+name in front of the stereotype may look like — the degree of freedom a taxonomy
+alone leaves open, and the one an agent drifts through first. It takes
+`"kebab-case"`, `"camelCase"`, `"PascalCase"`, `"snake_case"`, `{ regex, message }`
+or `{ like: "{capture}" }`, and it **inherits like `imports`**, so a tier states it
+once.
+
+A file's concept name is its basename up to the **first dot** — `todos` in
+`todos.repository-live.ts` — not what a `*` matched, which would swallow a
+compound stereotype. A folder node's `name` also judges its own segment when its
+key declares a capture, which is what refuses a module folder named `Todos_V2`.
+
+`{ like: "{subdomain}" }` on `domain/{subdomain}/*.root.ts` is the cross-reference
+the other forms cannot express: a subdomain folder is the aggregate, so `todo/`
+holds `todo.root.ts`. This repo declares kebab-case for the server, web,
+components, jobs, cli, mcp and api-client; PascalCase for `contracts/src`
+(Effect-style module names); and two regexes carrying a named exception each —
+`Database.ts` and `features/__root/`.
+
 ## Patterns
 
 Globs over repo-relative paths, matched against **fully resolved** targets:

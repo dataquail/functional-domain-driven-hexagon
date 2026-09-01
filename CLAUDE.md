@@ -13,7 +13,7 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 | Frontend (`packages/web`, `packages/components`)      | `.claude/rules/frontend.md`                      | 0015, 0018, 0019, 0026                  |
 | Any Effect v4 API you are not certain of              | `.claude/rules/effect-v4-source.md`              | —                                       |
 | Writing comments (any package)                        | `.claude/rules/comments.md`                      | —                                       |
-| Any architectural boundary, lint config, rule probes  | `.claude/rules/architecture-rules.md`            | 0008, 0025, 0027, 0028                  |
+| Any architectural boundary, file naming, rule probes  | `.claude/rules/architecture-rules.md`            | 0008, 0025, 0027, 0028                  |
 
 ## Monorepo map
 

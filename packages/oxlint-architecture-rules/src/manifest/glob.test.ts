@@ -70,3 +70,26 @@ describe("single-character wildcards and back-references", () => {
     expect(referenced.source).toContain("$1");
   });
 });
+
+describe("capturing wildcards", () => {
+  // Off by default, and it has to stay that way: a stray group would renumber
+  // the back-references `{capture}` compiles to.
+  it("leaves * uncaptured unless asked", () => {
+    expect(compile("*.root.ts").wildcards).toEqual([]);
+    expect(compile("*.root.ts").source).toContain("[^/]*");
+  });
+
+  it("captures each * in source order when asked, alongside the named ones", () => {
+    const compiled = globToRegexSource(
+      "{module}/deep/*.test.ts",
+      {},
+      {
+        declaring: true,
+        nextGroup: 1,
+        capturing: true,
+      },
+    );
+    expect(compiled.captures).toEqual({ module: 1 });
+    expect(compiled.wildcards).toEqual([2]);
+  });
+});
