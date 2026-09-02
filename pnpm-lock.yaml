@@ -100,6 +100,9 @@ importers:
       oxlint:
         specifier: 1.77.0
         version: 1.77.0(oxlint-tsgolint@7.0.2001)
+      oxlint-architecture-rules:
+        specifier: 0.1.0-beta.0
+        version: 0.1.0-beta.0(oxlint@1.77.0(oxlint-tsgolint@7.0.2001))
       oxlint-tsgolint:
         specifier: 7.0.2001
         version: 7.0.2001
@@ -363,25 +366,6 @@ importers:
       tsx:
         specifier: ^4.23.0
         version: 4.23.0
-
-  packages/oxlint-architecture-rules:
-    dependencies:
-      effect:
-        specifier: 4.0.0-beta.94
-        version: 4.0.0-beta.94
-      typescript:
-        specifier: ^5.9.0
-        version: 5.9.3
-      unrs-resolver:
-        specifier: ^1.12.2
-        version: 1.12.2
-    devDependencies:
-      '@types/node':
-        specifier: ^25.9.4
-        version: 25.9.4
-      oxlint:
-        specifier: ^1.77.0
-        version: 1.77.0(oxlint-tsgolint@7.0.2001)
 
   packages/server:
     dependencies:
@@ -5459,6 +5443,12 @@ packages:
   oxc-resolver@11.23.0:
     resolution: {integrity: sha512-f0+l598CJMOLnYPXsXxttJALH0ljtivdRMKtvHhxRuWa5FYmw5+qODARl8oYjMC/brpzKcrpdORsOBrTqhBZ9A==}
 
+  oxlint-architecture-rules@0.1.0-beta.0:
+    resolution: {integrity: sha512-7inOekovHMpfMg5RsnP56csnFnYiKeWelWXwYh26WERY0A4hZZKjA6grioDX46rmxwQs7Hnu8rAMvtNjjxMNmA==}
+    hasBin: true
+    peerDependencies:
+      oxlint: '>=1.77.0'
+
   oxlint-tsgolint@7.0.2001:
     resolution: {integrity: sha512-KjK/XLcXr1DSyonKhsuFqJRiuKqcyG9j3LJ8nkOsrLzGvodBPqzHOKauy10asLMDI0sUpvb+1sxlzff3udZvfg==}
     hasBin: true
@@ -10282,7 +10272,7 @@ snapshots:
       eslint: 9.39.4(jiti@2.7.0)
       eslint-import-resolver-node: 0.3.10
       eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0))
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.7.0))
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0))
       eslint-plugin-jsx-a11y: 6.10.2(eslint@9.39.4(jiti@2.7.0))
       eslint-plugin-react: 7.37.5(eslint@9.39.4(jiti@2.7.0))
       eslint-plugin-react-hooks: 7.1.1(eslint@9.39.4(jiti@2.7.0))
@@ -10315,7 +10305,7 @@ snapshots:
       tinyglobby: 0.2.17
       unrs-resolver: 1.12.2
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.7.0))
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0))
     transitivePeerDependencies:
       - supports-color
 
@@ -10367,7 +10357,7 @@ snapshots:
       - eslint
       - supports-color
 
-  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.7.0)):
+  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0)):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9
@@ -11925,6 +11915,13 @@ snapshots:
       '@oxc-resolver/binding-wasm32-wasi': 11.23.0
       '@oxc-resolver/binding-win32-arm64-msvc': 11.23.0
       '@oxc-resolver/binding-win32-x64-msvc': 11.23.0
+
+  oxlint-architecture-rules@0.1.0-beta.0(oxlint@1.77.0(oxlint-tsgolint@7.0.2001)):
+    dependencies:
+      effect: 4.0.0-beta.94
+      oxlint: 1.77.0(oxlint-tsgolint@7.0.2001)
+      typescript: 5.9.3
+      unrs-resolver: 1.12.2
 
   oxlint-tsgolint@7.0.2001:
     optionalDependencies:

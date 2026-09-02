@@ -11,15 +11,16 @@
 // A row that changes verdict is either a regression or a decision. Both should
 // be visible in a diff.
 
+import * as Result from "effect/Result";
 import path from "node:path";
+import {
+  compileImportRules,
+  evaluateImportEdge,
+  lowerManifest,
+  makeModuleResolverFake,
+} from "oxlint-architecture-rules";
 
 const repoRoot = process.cwd();
-const P = (p) => path.join(repoRoot, "packages/oxlint-architecture-rules/build/esm", p);
-
-const { lowerManifest } = await import(P("manifest/compile.js"));
-const { compileImportRules, evaluateImportEdge } = await import(P("core/imports.js"));
-const { makeModuleResolverFake } = await import(P("infrastructure/module-resolver-fake.js"));
-const Result = await import("effect/Result");
 
 const manifest = (await import(path.join(repoRoot, "architecture.config.mjs"))).default;
 const compiled = compileImportRules(lowerManifest(manifest).imports);

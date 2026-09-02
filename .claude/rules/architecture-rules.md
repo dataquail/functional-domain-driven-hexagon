@@ -1,7 +1,7 @@
 # Rule: architecture rules (the manifest)
 
 **Scope:** the whole repo — read before adding, changing, or removing an architectural check.
-**Backing ADRs:** 0008 (architecture enforcement), 0025 (oxlint as the linter), 0027 (architecture rules as configuration), 0028 (the manifest).
+**Backing ADRs:** 0008 (architecture enforcement), 0025 (oxlint as the linter), 0027 (architecture rules as configuration), 0028 (the manifest), 0029 (the engine as a dependency).
 
 Architectural enforcement runs entirely inside `pnpm lint`, from one file.
 
@@ -10,16 +10,17 @@ Architectural enforcement runs entirely inside `pnpm lint`, from one file.
 | `architecture.config.mjs`                           | resolve, aliases, the repo-wide `deny`/`exports`, and the composed tree        |
 | `packages/architecture.mjs`                         | the six leaf packages, and the frontend test node both web tiers share         |
 | `packages/{server,web,components}/architecture.mjs` | that package's own nodes, beside its own code                                  |
-| `packages/oxlint-architecture-rules/`               | the engine: resolution, lowering, matching, the anti-vacuity guard             |
+| `oxlint-architecture-rules` (npm)                   | the engine: resolution, lowering, matching, the anti-vacuity guard             |
 | `scripts/lint-rule-probes.mjs`                      | `pnpm lint:rules` — each rule id still fires on a planted violation            |
 | `scripts/architecture-edges.mjs`                    | `pnpm lint:edges` — the policy still refuses and allows what it is supposed to |
 | `scripts/lint-rules/`                               | the eight hand-rolled `local/*` AST rules that are not boundary rules          |
 
-The library's own reference documentation is an Astro/Starlight site at `website/`
-(`pnpm -F @org/oxlint-architecture-rules docs:dev`). It documents the **library**, not
-this repo's policy, and it sits outside `packages/` because it is not source this
-repo's own policy governs — its Astro dependencies are installed separately, so a
-lint run over `packages` would report every one of them as unresolved. Everything below is the repo-specific half.
+**The engine is an installed dependency, not source here.** It ships from
+`dataquail/oxlint-utils` as `oxlint-architecture-rules`, pinned to an exact beta
+in the root `package.json`, and its reference documentation lives with it. This
+repo owns the **policy** — the manifest, the probes, the edge table — and nothing
+below describes the library. Changing how a rule family behaves means a release
+there, not an edit here (ADR-0029).
 
 **One policy, several files; one evaluation.** Each area writes its own nodes and
 the root composes them. Do **not** split the _run_ to match: a rule fires when the
@@ -182,12 +183,16 @@ files does this rule govern?" badly — the inverse of a flat config. It prints 
 allowlist in force, every prohibition that reaches the file with the first
 sentence of its reason, the folder rule that admits it, and the siblings it owes.
 
-## The plugin is compiled JavaScript
+## The plugin arrives built
 
-oxlint loads plugins with a bare `import()`, and `build/` is gitignored, so
-`pnpm lint`, `lint:fix`, `lint:rules` and `lint:edges` each build the package
-first. A stale `build/` would enforce a stale policy and still lint green — the
-same vacuity failure in a different disguise.
+oxlint loads plugins with a bare `import()`, and `.oxlintrc.json` names the
+package's own `oxlint-architecture-rules/plugin` export. The published tarball
+carries the compiled JavaScript, so no lint command builds anything first and
+there is no local `build/` to go stale — a stale one would enforce a stale policy
+and still lint green, the same vacuity failure in a different disguise. The
+pinned version is what makes that reproducible: bump it deliberately, then run
+`pnpm lint:rules` and `pnpm lint:edges`, which is where a behaviour change in the
+engine shows up.
 
 ## The one thing none of this can do
 

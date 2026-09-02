@@ -232,12 +232,13 @@ which is where the worst case was (`modules/Todos_V2/`); and it cannot express
 
 ## Follow-ups
 
-Extract `@org/oxlint-architecture-rules` to its own repository and depend on a
-pinned beta; `architecture.config.mjs` stays, because it is this repo's policy
-rather than the library's.
+Extract the engine to its own repository and depend on a pinned beta;
+`architecture.config.mjs` stays, because it is this repo's policy rather than the
+library's. Done in ADR-0029, and the manifest survived it unchanged.
 
 ## References
 
 - ADR-0027 — architecture rules as configuration; this ADR changes the shape of
   that configuration, not the engine under it.
+- ADR-0029 — the engine as a dependency; it carries out this ADR's follow-up.
 - ADR-0008, ADR-0025.
