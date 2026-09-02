@@ -72,6 +72,12 @@ is the regression test for an upgrade, and it is why the version is pinned exact
 rather than caret — a range would let the engine change under a green build with
 no diff to review.
 
+`website/` goes with the engine. The Astro/Starlight site documented the
+**library** — its manifest fields, its CLI, its resolution — and a reference
+application carrying the reference manual for a dependency it merely installs is
+the drift this ADR is removing. It is published from `dataquail/oxlint-utils`,
+which is where the package's own `homepage` already points.
+
 The baseline stays a ratchet and stays empty. A repository adopting the library
 from scratch is what `.architecture-baseline.json` exists for; this one has no
 violations to record, so the file remains absent.
