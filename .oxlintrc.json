@@ -9,7 +9,7 @@
     },
     {
       "name": "architecture",
-      "specifier": "./packages/oxlint-architecture-rules/build/esm/adapters/oxlint/plugin.js"
+      "specifier": "oxlint-architecture-rules/plugin"
     },
     "eslint-plugin-codegen",
     "eslint-plugin-simple-import-sort",
@@ -238,12 +238,6 @@
     "effecttsgo/prefer-schema-over-json": "off"
   },
   "overrides": [
-    {
-      "files": ["packages/oxlint-architecture-rules/src/adapters/oxlint/plugin.ts"],
-      "rules": {
-        "local/prefer-named-exports": "off"
-      }
-    },
     {
       "files": ["packages/web/**/*.{ts,tsx,js,jsx}", "packages/components/**/*.{ts,tsx,js,jsx}"],
       "rules": {

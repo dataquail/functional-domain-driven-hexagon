@@ -35,7 +35,7 @@ wearing the same shape. This was the real requirement.
 ## Decision
 
 Express architecture policy as **configuration** in `architecture.config.mjs`,
-enforced by one oxlint JS plugin, `@org/oxlint-architecture-rules`, that resolves
+enforced by one oxlint JS plugin, `oxlint-architecture-rules`, that resolves
 every import with `unrs-resolver` (the same native resolver oxlint uses
 internally) before matching. Delete dependency-cruiser and the vendored fork.
 
@@ -155,9 +155,14 @@ exactly. The 2 that did not are the `event-handlers/` gap below.
 A ratcheting baseline (`fingerprintOf` is in place for it) would let the package
 be adopted by a repo that is not already clean, and the CLI adapter would let the
 policy run with no linter at all. Neither is needed here yet. After that, extract
-to `dataquail/oxlint-architecture-rules` and depend on a pinned beta.
+to its own repository and depend on a pinned beta.
+
+Both landed. The extraction is ADR-0029: the plugin ships from
+`dataquail/oxlint-utils` as `oxlint-architecture-rules` and this repository
+installs it.
 
 ## References
 
 - ADR-0008 — architecture enforcement; this ADR replaces its dependency-cruiser half.
 - ADR-0025 — oxlint as the linter; this ADR extends its plugin model.
+- ADR-0029 — the engine as a dependency; the plugin described here is now installed.
