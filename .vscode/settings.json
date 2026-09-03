@@ -4,7 +4,7 @@
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "eslint.format.enable": true,
+  "oxc.enable": true,
   "[json]": {
     "editor.defaultFormatter": "vscode.json-language-features"
   },
@@ -25,9 +25,8 @@
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "eslint.validate": ["markdown", "javascript", "typescript"],
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
+    "source.fixAll.oxc": "explicit"
   },
   "editor.quickSuggestions": {
     "other": true,
