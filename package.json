@@ -47,7 +47,9 @@
     "lint:edges": "node scripts/architecture-edges.mjs",
     "lint:architecture": "architecture check packages",
     "architecture:baseline": "architecture baseline packages",
-    "architecture:explain": "architecture explain"
+    "architecture:explain": "architecture explain",
+    "architecture:coverage": "architecture coverage packages",
+    "architecture:facts": "architecture facts"
   },
   "devDependencies": {
     "@babel/cli": "^7.29.7",
@@ -71,7 +73,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.5.2",
     "oxlint": "1.81.0",
-    "oxlint-architecture-rules": "0.1.0-beta.0",
+    "oxlint-architecture-rules": "0.1.0-beta.1",
     "oxlint-tsgolint": "7.0.2001",
     "prettier": "3.8.3",
     "prettier-plugin-tailwindcss": "0.8.0",

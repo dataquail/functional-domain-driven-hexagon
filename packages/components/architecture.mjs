@@ -2,7 +2,7 @@
 // composes this with the other areas; everything here is written against
 // repo-relative paths, so the patterns read the same wherever the file lives.
 
-import { frontendTestFile } from "../architecture.mjs";
+import { frontendTestFile, noDefaultExports } from "../architecture.mjs";
 
 // A Storybook story: the component's living spec and visual test (ADR-0015). It
 // names the component it documents and the Storybook runtime.
@@ -30,6 +30,8 @@ export const componentsTree = {
     name: "kebab-case",
     message:
       "@org/components holds two trees: primitives/ (atoms) and patterns/ (molecules and organisms), plus the class-name helpers in lib/, the providers/ and the Storybook config. A new folder here is a new tier — declare it deliberately.",
+    // Storybook loads a story's meta and its own configuration by default export.
+    surface: [noDefaultExports(["**/*.stories.tsx", "~/components/.storybook/**"])],
     imports: {
       message:
         "@org/components is a leaf workspace package: components are consumed by web, never the reverse. It may not import @org/web or anything under packages/web/.",

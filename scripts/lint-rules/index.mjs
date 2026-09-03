@@ -8,7 +8,6 @@ import noCrossSchemaSqlAccess from "./no-cross-schema-sql-access.mjs";
 import noDeepRelativeImports from "./no-deep-relative-imports.mjs";
 import noInlineStyling from "./no-inline-styling.mjs";
 import noRelativeImportOutsidePackage from "./no-relative-import-outside-package.mjs";
-import preferNamedExports from "./prefer-named-exports.mjs";
 
 export const rules = {
   "enforce-react-namespace": enforceReactNamespace,
@@ -18,7 +17,6 @@ export const rules = {
   "no-deep-relative-imports": noDeepRelativeImports,
   "no-inline-styling": noInlineStyling,
   "no-relative-import-outside-package": noRelativeImportOutsidePackage,
-  "prefer-named-exports": preferNamedExports,
 };
 
 export const localRulesPlugin = { meta: { name: "local" }, rules };

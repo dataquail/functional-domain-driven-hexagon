@@ -48,7 +48,9 @@ there, not an edit here.
 | `pnpm check:effect`                                    | `@effect/language-service` diagnostics across all projects; fails on any finding                                  |
 | `pnpm lint:rules`                                      | asserts each architectural rule still fires on a planted violation (ADR-0025)                                     |
 | `pnpm lint:edges`                                      | asserts the architecture policy still refuses — and allows — the edges it should (ADR-0028)                       |
-| `pnpm lint:architecture`                               | the same policy evaluated without a linter, plus the baseline ratchet (ADR-0028)                                  |
+| `pnpm lint:architecture`                               | the same policy evaluated without a linter, plus the graph rules, the coverage floors and the baseline (ADR-0030) |
+| `pnpm architecture:coverage`                           | how much of the tree each rule family reaches, and the tiers not yet tightened (ADR-0030)                         |
+| `pnpm architecture:facts <file>`                       | what the parser reads from one file — edges, bindings, members, exports; write new rules against this             |
 | `pnpm test`                                            | vitest **unit** suite (excludes `*.integration.test.ts`), no DB                                                   |
 | `DATABASE_URL_TEST=postgres://… pnpm test:integration` | **integration** suite only (`*.integration.test.ts`); hard-fails if no DB                                         |
 | `DATABASE_URL_TEST=postgres://… pnpm coverage`         | unit + integration merged into ONE coverage number; thresholds in `vitest.config.ts` gate CI                      |

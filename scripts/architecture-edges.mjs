@@ -2,7 +2,8 @@
 // The architecture policy's semantics, as edges with expected verdicts.
 //
 // `lint:rules` proves each RULE ID still fires somewhere; this proves the POLICY
-// still says what it is supposed to say. Every row was verified against the
+// still says what it is supposed to say — per edge for the import rules, and
+// per shape for the graph rules at the bottom. Every row was verified against the
 // dependency-cruiser-era config before the manifest replaced it: the `allowed`
 // rows are edges that config permitted, the `refused` rows are edges it
 // forbade, and the `tightened` rows are edges it permitted that the manifest
@@ -15,6 +16,7 @@ import * as Result from "effect/Result";
 import path from "node:path";
 import {
   compileImportRules,
+  evaluateGraph,
   evaluateImportEdge,
   lowerManifest,
   makeModuleResolverFake,
@@ -23,7 +25,8 @@ import {
 const repoRoot = process.cwd();
 
 const manifest = (await import(path.join(repoRoot, "architecture.config.mjs"))).default;
-const compiled = compileImportRules(lowerManifest(manifest).imports);
+const lowered = lowerManifest(manifest);
+const compiled = compileImportRules(lowered.imports);
 if (Result.isFailure(compiled)) throw compiled.failure;
 const rules = compiled.success;
 
@@ -829,6 +832,136 @@ const ALLOWED = [
   ],
 ];
 
+// The graph rules, over small synthetic graphs. A per-edge row asks whether one
+// import is refused; these ask what a whole shape means — a route through two
+// files, a route that steps onto the mediating tier, a file nothing reaches.
+// Each row names the rule expected to report, or `null` for a shape the rules
+// must stay quiet on; a fourth element lists files that take part in the graph
+// with no edge of their own.
+const GRAPH = [
+  [
+    "a domain file reaching a repository Live through a sibling",
+    "domain-reaches-no-adapter",
+    [
+      [`${M}/alpha/domain/one/one.root.ts`, `${M}/alpha/domain/one/one.specification.ts`],
+      [
+        `${M}/alpha/domain/one/one.specification.ts`,
+        `${M}/alpha/infrastructure/repositories/one.repository-live.ts`,
+      ],
+    ],
+  ],
+  [
+    "a domain test reaching a repository fake (LEGAL)",
+    null,
+    [
+      [
+        `${M}/alpha/domain/one/one.root-ops.test.ts`,
+        `${M}/alpha/infrastructure/repositories/one.repository-fake.ts`,
+      ],
+    ],
+  ],
+  [
+    "a command reaching an endpoint through its message",
+    "use-cases-reach-no-adapter",
+    [
+      [`${M}/alpha/commands/do.handler.ts`, `${M}/alpha/commands/do.command.ts`],
+      [`${M}/alpha/commands/do.command.ts`, `${M}/alpha/interface/http/get.endpoint.ts`],
+    ],
+  ],
+  [
+    "a command reaching a port that reaches nothing (LEGAL)",
+    null,
+    [[`${M}/alpha/commands/do.handler.ts`, `${M}/alpha/domain/one/one.repository.ts`]],
+  ],
+  [
+    "the platform reaching a module Layer past its barrel",
+    "platform-reaches-modules-only-through-barrels",
+    [["packages/server/src/platform/cqrs/cqrs-runtime.ts", `${M}/alpha/alpha.module.ts`]],
+  ],
+  [
+    "the platform reaching a module Layer through its barrel (LEGAL)",
+    null,
+    [
+      ["packages/server/src/platform/cqrs/cqrs-runtime.ts", `${M}/alpha/index.ts`],
+      [`${M}/alpha/index.ts`, `${M}/alpha/alpha.module.ts`],
+    ],
+  ],
+  [
+    "web reaching the server through the contracts package",
+    "web-never-reaches-the-server",
+    [
+      ["packages/web/services/atom/api-atoms.shared.ts", "packages/contracts/src/Policy.ts"],
+      ["packages/contracts/src/Policy.ts", "packages/server/src/common/env-vars.ts"],
+    ],
+  ],
+  [
+    "web reaching the contracts package (LEGAL)",
+    null,
+    [["packages/web/services/atom/api-atoms.shared.ts", "packages/contracts/src/Policy.ts"]],
+  ],
+  [
+    "the contracts package reaching the database kernel",
+    "contracts-reach-nothing",
+    [["packages/contracts/src/Policy.ts", "packages/database/src/index.ts"]],
+  ],
+  [
+    "two platform files importing each other",
+    "no-cycles",
+    [
+      ["packages/server/src/platform/api.ts", "packages/server/src/platform/http-endpoint.ts"],
+      ["packages/server/src/platform/http-endpoint.ts", "packages/server/src/platform/api.ts"],
+    ],
+  ],
+  [
+    "a domain file nothing imports",
+    "no-orphans",
+    [[`${M}/alpha/commands/do.handler.ts`, `${M}/alpha/domain/one/one.repository.ts`]],
+    [`${M}/alpha/domain/one/one.errors.ts`],
+  ],
+  [
+    "a repository fake nothing imports (LEGAL)",
+    null,
+    [[`${M}/alpha/commands/do.handler.ts`, `${M}/alpha/domain/one/one.repository.ts`]],
+    [`${M}/alpha/infrastructure/repositories/one.repository-fake.ts`],
+  ],
+];
+
+// The lowered graph rules carry their patterns as regex sources; the evaluator
+// takes them compiled.
+const regexes = (patterns = []) => patterns.map((source) => new RegExp(source));
+const graphRules = {
+  cycles: lowered.graph.cycles.map((rule) => ({
+    ...rule,
+    within: regexes(rule.within),
+    withinNot: regexes(rule.withinNot),
+  })),
+  orphans: lowered.graph.orphans.map((rule) => ({
+    ...rule,
+    within: regexes(rule.within),
+    withinNot: regexes(rule.withinNot),
+    entry: regexes(rule.entry),
+  })),
+  reach: lowered.graph.reach.map((rule) => ({
+    ...rule,
+    from: regexes(rule.from),
+    fromNot: regexes(rule.fromNot),
+    to: regexes(rule.to),
+    toNot: regexes(rule.toNot),
+    via: regexes(rule.via),
+  })),
+};
+
+const graphOf = (edges, extraFiles = []) => {
+  const files = new Set(extraFiles);
+  const adjacency = new Map();
+  for (const [from, to] of edges) {
+    files.add(from);
+    files.add(to);
+    adjacency.set(from, [...(adjacency.get(from) ?? []), to]);
+  }
+  return { files: [...files].sort(), edges: adjacency };
+};
+
 const refuses = (from, to) => {
   const outcome = evaluateImportEdge(rules, makeModuleResolverFake({ "@probe": to }), {
     importer: from,
@@ -850,10 +983,33 @@ const check = (label, from, to, expected) => {
 for (const [label, from, to] of REFUSED) check(label, from, to, true);
 for (const [label, from, to] of ALLOWED) check(label, from, to, false);
 
+let graphWrong = 0;
+for (const [label, expected, edges, extraFiles = []] of GRAPH) {
+  // The origin of a synthetic route is reached by nothing, so the orphans rule
+  // is read only on the files a row lists as taking part without an edge.
+  const names = [
+    ...new Set(
+      evaluateGraph(graphRules, graphOf(edges, extraFiles))
+        .filter((v) => v.ruleName !== "no-orphans" || extraFiles.includes(v.file))
+        .map((v) => v.ruleName),
+    ),
+  ];
+  const ok = expected === null ? names.length === 0 : names.includes(expected);
+  if (!ok) graphWrong += 1;
+  process.stdout.write(
+    `${ok ? "  " : "!!"} ${expected === null ? "quiet " : "report"} ${ok ? "ok " : `GOT ${names.length === 0 ? "quiet" : names.join(",")}`}  ${label}\n`,
+  );
+}
+
 const total = REFUSED.length + ALLOWED.length;
 process.stdout.write(
   wrong === 0
     ? `\nAll ${total} architecture edges hold (${REFUSED.length} refused, ${ALLOWED.length} allowed).\n`
     : `\n${wrong} of ${total} architecture edges changed verdict.\n`,
 );
-process.exitCode = wrong === 0 ? 0 : 1;
+process.stdout.write(
+  graphWrong === 0
+    ? `All ${GRAPH.length} graph shapes hold.\n`
+    : `${graphWrong} of ${GRAPH.length} graph shapes changed verdict.\n`,
+);
+process.exitCode = wrong === 0 && graphWrong === 0 ? 0 : 1;

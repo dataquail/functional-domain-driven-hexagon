@@ -51,6 +51,19 @@ export default {
     ignoreUnresolved: [],
   },
 
+  // Ratchets on the policy itself. The ceilings are how many tiers may say
+  // "not tightened yet"; the floors are how much of the tree each family must
+  // reach, as `architecture coverage packages` reported it on the day the
+  // floor was written, rounded down. Raise a floor when coverage rises; never
+  // lower one to make a red run green — the fix is a rule that reaches the
+  // files, or a file moved under one. Structure counts enumerated folders
+  // only: an open folder is claimed, not policed by name.
+  limits: {
+    unrestricted: 1,
+    partial: 0,
+    coverage: { imports: 0.96, structure: 0.73, members: 0.03, surface: 0.91, graph: 1 },
+  },
+
   aliases: {
     "@": "packages/server/src",
     "~": "packages",
@@ -101,6 +114,32 @@ export default {
         "makeUnhandledFailures",
       ],
       except: ["@/server.ts", "@/platform/cqrs/**", "@/test-utils/**", "**/*.test.ts"],
+      // Named bindings only, deliberately: neither library publishes a default
+      // export, so `import makeCommandBus from` is a type error before it is a
+      // policy question. The namespace form is the real way around a symbols
+      // list, and the next restriction closes it.
+      probe: {
+        source: 'import { makeCommandBus } from "@effect-server-utils/cqrs";',
+        symbol: "makeCommandBus",
+      },
+    },
+    {
+      name: "no-whole-server-utils-imports",
+      message:
+        "Taking an @effect-server-utils package whole — `import * as`, `export *`, `import()` or `require()` — binds every name it publishes at once, including the bus, unit-of-work and unhandled-failure factories the previous restriction fences to composition roots; a namespace binding would carry them past it unnamed. Import the names you use.",
+      module: "**/node_modules/@effect-server-utils/**",
+      kinds: ["namespace"],
+      // The DDD contracts tier re-exports one domain-safe library module
+      // wholesale, on purpose and with its reasons written in the file; its
+      // own allowlist keeps it from naming the module that holds a factory.
+      except: [
+        "@/server.ts",
+        "@/platform/cqrs/**",
+        "@/test-utils/**",
+        "**/*.test.ts",
+        "@/platform/ddd/contracts/domain-event.ts",
+      ],
+      probe: { source: 'import * as Cqrs from "@effect-server-utils/cqrs";', symbol: "*" },
     },
     {
       name: "no-effect-namespace-imports",
@@ -118,8 +157,121 @@ export default {
         "**/node_modules/@effect/platform-node/dist/index.js",
       ],
       fix: "subpath-namespace-import",
+      probe: { source: 'import { Effect } from "effect";', symbol: "Effect" },
     },
   ],
+
+  // Rules about the shape of the whole import graph — cycles, files nothing
+  // imports, and what a tier can reach transitively. A per-edge allowlist cannot
+  // say these: they need every file resolved at once, so `architecture check`
+  // evaluates them and the plugin, which sees one file at a time, only compiles
+  // and probes them. A vacuous graph rule still fails `pnpm lint`; a violated
+  // one fails `pnpm lint:architecture`.
+  graph: {
+    cycles: [
+      {
+        name: "no-cycles",
+        message:
+          "These files import each other, so none of them can be understood, tested or loaded without the rest. Break the cycle by moving the shared piece below both, or by inverting one edge through a port.",
+        within: "~/**",
+      },
+    ],
+    orphans: [
+      {
+        name: "no-orphans",
+        message:
+          "Nothing imports this file and it is not an entry point, so it is code the type checker, the linter and the reader still pay for. Delete it — or, if something outside the walked tree loads it by design, list it under `entry` beside this rule.",
+        within: "~/**",
+        // A fake is owed to its port by the taxonomy, not to a consumer:
+        // whether a test takes it is that test's business, so an unused one is
+        // not an orphan. Everything else nothing imports is dead.
+        withinNot: "**/*-fake.ts",
+        // Imported by nothing, on purpose: what a process, a framework, a test
+        // runner or a package manifest loads directly rather than through an
+        // import. Each entry is a claim that something outside the graph reaches
+        // the file; a path listed here to silence a finding is a lie the
+        // policy then repeats.
+        entry: [
+          // Test runners load these by glob.
+          "**/*.test.ts",
+          "**/*.test.tsx",
+          "**/*.spec.ts",
+          "**/*.setup.ts",
+          "**/*.stories.tsx",
+          "**/vitest.config.ts",
+          "**/global-setup.ts",
+          "~/web/test/setup.ts",
+          "~/acceptance/playwright.config.ts",
+          // Process entrypoints and package bins.
+          "@/server.ts",
+          "~/cli/src/main.ts",
+          "~/jobs/src/main.ts",
+          "~/mcp/src/main.ts",
+          "~/database/src/scripts/**",
+          // Framework-loaded by convention.
+          "~/web/app/**",
+          "~/web/instrumentation.ts",
+          "~/web/next.config.ts",
+          "~/components/.storybook/**",
+        ],
+      },
+    ],
+    reach: [
+      {
+        name: "domain-reaches-no-adapter",
+        message:
+          "A module's domain transitively reaches an adapter. The domain may only ever see effect, the DDD contracts tier and platform/ids; a path from it to infrastructure/, interface/ or a platform Live means one of the tiers it names has widened past what the domain is allowed to know about.",
+        from: "@/modules/*/domain/**",
+        fromNot: "**/*.test.ts",
+        to: [
+          "@/modules/*/infrastructure/**",
+          "@/modules/*/interface/**",
+          "@/platform/*-live.ts",
+          "@/platform/**/*-live.ts",
+        ],
+      },
+      {
+        name: "use-cases-reach-no-adapter",
+        message:
+          "A use case transitively reaches an adapter. Commands, queries, event handlers and sagas depend on ports and messages; an adapter is wired against them at a composition root, never beneath them. Whichever file on the route named the adapter has stepped outside its tier.",
+        from: [
+          "@/modules/*/commands/**",
+          "@/modules/*/queries/**",
+          "@/modules/*/event-handlers/**",
+          "@/modules/*/sagas/**",
+        ],
+        fromNot: "**/*.test.ts",
+        to: ["@/modules/*/infrastructure/**", "@/modules/*/interface/**"],
+      },
+      {
+        // The `via` shape: a path is fine as long as it steps onto the
+        // mediating tier. platform/cqrs/ and platform/middlewares/ name a
+        // module's barrel, and the barrel may reach whatever it publishes;
+        // only a route that avoids every barrel is the violation.
+        name: "platform-reaches-modules-only-through-barrels",
+        message:
+          "The platform kernel reaches inside a module without passing through its barrel. platform/cqrs/ and platform/middlewares/ may name a module's index.ts; anything a route from platform/ touches without going through one is a module internal the module is free to change without telling the kernel.",
+        from: "@/platform/**",
+        fromNot: "**/*.test.ts",
+        to: "@/modules/*/**",
+        via: "@/modules/*/index.ts",
+      },
+      {
+        name: "web-never-reaches-the-server",
+        message:
+          "packages/web transitively reaches packages/server. The browser talks to the BFF over HTTP through the contracts package and nothing else; a route from web to the server means a package both depend on has grown a server dependency.",
+        from: "~/web/**",
+        to: "~/server/**",
+      },
+      {
+        name: "contracts-reach-nothing",
+        message:
+          "@org/contracts transitively reaches the server, web or the database. It is the root of the dependency graph — every package depends on it — so anything it reaches becomes a dependency of the whole repo.",
+        from: "~/contracts/**",
+        to: ["~/server/**", "~/web/**", "~/database/**"],
+      },
+    ],
+  },
 
   // The tree, composed from one file per area. Each area's file states its own
   // nodes against repo-relative paths; the policy is still evaluated as one, so
