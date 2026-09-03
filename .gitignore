@@ -51,6 +51,4 @@ packages/*/src/**/*.map
 .claude/worktrees/
 
 # Config fixtures written by the architecture-rules loader tests.
-.tmp-config-tests/
-.tmp-facts-tests/
-.tmp-cli-tests/
+.tmp-*/

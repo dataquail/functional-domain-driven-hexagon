@@ -2,9 +2,12 @@
 // composes this with the other areas; everything here is written against
 // repo-relative paths, so the patterns read the same wherever the file lives.
 
+import { noDefaultExports, testExportsNothing } from "../architecture.mjs";
+
 // A test may reach for its harness, so it carries no allowlist. It still inherits
 // every prohibition — a prohibition is not something a node can opt out of.
 const testFile = {
+  surface: [testExportsNothing],
   imports: {
     reset: true,
     message:
@@ -43,6 +46,36 @@ const specification = {
   requires: ["{base}.test.ts"],
 };
 
+// What a handler file may export: one handler, named for its use case
+// (ADR-0024). The count is over `*Handler` rather than over every value so a
+// handler may still publish a transaction-free core for a sibling that has to
+// run it inside its own unit of work.
+const handlerSurface = [
+  {
+    message:
+      "A handler file exports exactly one handler, named `<name>Handler` (ADR-0024). A second handler here is a second use case that wants its own file; none means this is not a handler.",
+    declares: ["function", "variable"],
+    match: "*Handler",
+    count: { min: 1, max: 1 },
+  },
+  {
+    message:
+      "A handler's value exports are camelCase — `{name}` is not (ADR-0024). The handler is `<name>Handler`; a helper it publishes is named the same way.",
+    declares: ["function", "variable"],
+    convention: "camelCase",
+  },
+];
+
+// A port is a declaration: the shape, and the Context.Service class that names
+// it. A value beside them is an implementation, which lives behind the port.
+const portSurface = [
+  {
+    message:
+      "A port declares a shape and the Tag that names it — types and the Context.Service class. `{name}` is a value: an implementation belongs in infrastructure/ behind the port, and a helper that operates on the port's input is a domain service or an aggregate op.",
+    declares: ["function", "variable"],
+  },
+];
+
 // A port is consumed by its module's own use cases and by the adapter that
 // implements it. Spelled once; the two tiers differ only in who else may ask.
 const portConsumers = [
@@ -74,6 +107,16 @@ export const serverTree = {
     message:
       "packages/server/src holds server.ts (the process entrypoint), common/ (leaf utilities), platform/ (the cross-cutting kernel), modules/ (the feature modules) and test-utils/ (the test harness). A new folder here is a new tier — declare it deliberately.",
     name: "kebab-case",
+    surface: [
+      // vitest loads a globalSetup by its default export.
+      noDefaultExports(["@/test-utils/global-setup.ts"]),
+      {
+        message:
+          "No `export *` in the server. A star re-export republishes every name of its target, which is how a symbol one restriction fences to composition roots gets laundered through a barrel nobody reads. Re-export by name. The one exemption is the DDD contracts tier, which re-exports a whole domain-safe library module on purpose.",
+        kinds: ["namespace"],
+        except: ["@/platform/ddd/contracts/domain-event.ts"],
+      },
+    ],
     children: {
       "server.ts": {
         imports: {
@@ -136,7 +179,6 @@ export const serverTree = {
           },
           "database-live.ts": {},
           "http-endpoint.ts": {},
-          "request-context.ts": {},
           "transaction-driver-live.ts": {},
           "translate-database-errors.ts": {},
           "*.test.ts": testFile,
@@ -347,6 +389,13 @@ export const serverTree = {
 
         children: {
           "index.ts": {
+            surface: [
+              {
+                message:
+                  "A module barrel re-exports; `{name}` is declared here. The barrel is the surface the module publishes, not a home for code — move the declaration into the stereotype folder that owns it and re-export it from there.",
+                reexport: false,
+              },
+            ],
             imports: {
               reset: true,
               message:
@@ -406,6 +455,7 @@ export const serverTree = {
                 message:
                   "Every command handler (*.handler.ts) needs a sibling *.handler.test.ts (use-case unit test with the repository fakes).",
                 requires: ["{base}.test.ts"],
+                surface: handlerSurface,
               },
               "*.test.ts": testFile,
             },
@@ -447,6 +497,7 @@ export const serverTree = {
                 message:
                   "Every query handler (*.handler.ts) needs a sibling *.handler.integration.test.ts — queries read real SQL projections, so the parity is on the integration test (seed via the live repository).",
                 requires: ["{base}.integration.test.ts"],
+                surface: handlerSurface,
               },
               "*.test.ts": testFile,
             },
@@ -478,6 +529,7 @@ export const serverTree = {
               "*.handler.ts": {
                 message: "Every event handler (*.handler.ts) needs a sibling *.handler.test.ts.",
                 requires: ["{base}.test.ts"],
+                surface: handlerSurface,
               },
               "*.test.ts": testFile,
               "triggers/": {
@@ -661,7 +713,6 @@ export const serverTree = {
                     "@/platform/api.ts",
                     "@/common/**",
                     "@/platform/http-endpoint.ts",
-                    "@/platform/request-context.ts",
                     "@/platform/auth/**",
                     "@/platform/ddd/**",
                     "@/platform/ids/**",
@@ -772,6 +823,7 @@ export const serverTree = {
                       "*.client.ts": {
                         message:
                           "Every client port (*.client.ts) needs a *.client-live.ts, a *.client-fake.ts, and a *.client-live.test.ts in ../../../infrastructure/clients/. (A self-contained client with no port lives directly in infrastructure/clients/ as *.client.ts and is not required here.)",
+                        surface: portSurface,
                         requires: [
                           "../../../infrastructure/clients/{base}-live.ts",
                           "../../../infrastructure/clients/{base}-fake.ts",
@@ -795,6 +847,7 @@ export const serverTree = {
                       "*.acl.ts": {
                         message:
                           "Every ACL port (*.acl.ts) needs a *.acl-live.ts, a *.acl-fake.ts, and a *.acl-live.test.ts in ../../../infrastructure/acl/.",
+                        surface: portSurface,
                         requires: [
                           "../../../infrastructure/acl/{base}-live.ts",
                           "../../../infrastructure/acl/{base}-fake.ts",
@@ -857,6 +910,7 @@ export const serverTree = {
                   "*.repository.ts": {
                     message:
                       "Every repository port (*.repository.ts) needs its infrastructure trio: a *.repository-live.ts, a *.repository-fake.ts, and a *.repository-live.integration.test.ts in ../../infrastructure/repositories/.",
+                    surface: portSurface,
                     requires: [
                       "../../infrastructure/repositories/{base}-live.ts",
                       "../../infrastructure/repositories/{base}-fake.ts",
@@ -879,7 +933,10 @@ export const serverTree = {
                       ],
                     },
                     // Both halves of the dumb-persistence vocabulary, each with the
-                    // advice that fits its half.
+                    // advice that fits its half. The probes are written in the
+                    // one shape a port could take that a synthetic probe never
+                    // meets a parser over: an intersection, whose own members
+                    // the rule must still read under the alias's name.
                     members: [
                       {
                         message:
@@ -888,6 +945,11 @@ export const serverTree = {
                         in: "*Repository*",
                         match: "find*",
                         allow: ["findOne", "findMany"],
+                        probe: {
+                          source:
+                            "export type ZzRepositoryShape = ZzBase & { readonly findOneByEmail: () => void };",
+                          name: "findOneByEmail",
+                        },
                       },
                       {
                         message:
@@ -905,6 +967,11 @@ export const serverTree = {
                           "upsertOne",
                           "upsertMany",
                         ],
+                        probe: {
+                          source:
+                            "export type ZzRepositoryShape = ZzBase & { readonly activate: () => void };",
+                          name: "activate",
+                        },
                       },
                     ],
                   },

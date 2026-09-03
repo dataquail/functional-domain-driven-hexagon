@@ -2,7 +2,7 @@
 // composes this with the other areas; everything here is written against
 // repo-relative paths, so the patterns read the same wherever the file lives.
 
-import { frontendTestFile } from "../architecture.mjs";
+import { frontendTestFile, noDefaultExports } from "../architecture.mjs";
 
 // The two MVVM tiers. Hoisted because a feature folder nests — the real shape
 // is features/<area>/<feature>/ — and the rules hold at every depth.
@@ -79,6 +79,16 @@ export const webTree = {
     name: "kebab-case",
     message:
       "packages/web is the Next App Router renderer: app/ holds the routes, features/ the MVVM tiers, services/ the Model, lib/ and test/ the supporting code. There is no fifth folder — a new one is a new tier.",
+    surface: [
+      // Next loads a route file and the config by their default exports.
+      noDefaultExports(["~/web/app/**", "~/web/next.config.ts"]),
+      {
+        message:
+          "No `export *` in web. A star re-export republishes every name of its target, so a barrel stops saying what it publishes. Re-export by name. The one exemption is the test fixtures barrel, a harness that exists to gather them.",
+        kinds: ["namespace"],
+        except: ["~/web/test/fixtures/index.ts"],
+      },
+    ],
     imports: {
       message:
         "packages/web consumes the component library and the shared contracts. It reaches a third-party visual library only through @org/components (ADR-0015), and there is no TanStack: state is Effect Atom (ADR-0026).",

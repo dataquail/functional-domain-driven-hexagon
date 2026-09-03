@@ -53,9 +53,23 @@ const PROBES = [
       'import { makeCommandBus } from "@effect-server-utils/cqrs";\n\nexport const probe = makeCommandBus;\n',
   },
   {
-    rule: "local/prefer-named-exports",
+    // The surface family: what a file may export. A default export where the
+    // manifest admits none, and a star re-export where it admits none.
+    rule: "architecture/surface",
     file: "packages/server/src/zzprobe-default.ts",
     source: "const probe = 1;\nexport default probe;\n",
+  },
+  {
+    rule: "architecture/surface",
+    file: "packages/server/src/modules/todos/commands/zzprobe-star.command.ts",
+    source: 'export * from "@/modules/todos/commands/create-todo.command.js";\n',
+  },
+  {
+    // A handler file with two handlers in it — the count demand, which is a
+    // statement about the file's whole surface rather than any one site.
+    rule: "architecture/surface",
+    file: "packages/server/src/modules/todos/commands/zzprobe-two.handler.ts",
+    source: "export const zzProbeOneHandler = 1;\nexport const zzProbeTwoHandler = 2;\n",
   },
   {
     rule: "local/no-array-push-spread",
@@ -88,6 +102,13 @@ const PROBES = [
     rule: "architecture/exports",
     file: "packages/server/src/zzprobe-effect-ns.ts",
     source: 'import { Effect } from "effect";\n\nexport const probe = Effect;\n',
+  },
+  {
+    // A namespace binding of a fenced library: the plugin now sees `import *
+    // as`, `export *`, `import()` and `require()` as the one `*` binding.
+    rule: "architecture/exports",
+    file: "packages/server/src/modules/todos/commands/zzprobe-ns.handler.ts",
+    source: 'import * as Cqrs from "@effect-server-utils/cqrs";\n\nexport const probe = Cqrs;\n',
   },
   {
     // The effecttsgo rules exist only while `effect-tsgo patch --oxlint` is
