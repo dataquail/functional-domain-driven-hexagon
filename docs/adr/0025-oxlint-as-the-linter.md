@@ -161,6 +161,18 @@ which is what the editor loads.
   `ignorePatterns`, which reproduces the previous 844-file set exactly.
 - JS plugin support is alpha. The probes are the standing guard against an
   upgrade breaking a plugin quietly.
+- The editor runs the same binary. `.vscode/` recommends the oxc extension,
+  which starts `node_modules/.bin/oxlint --lsp`, so in-editor diagnostics come
+  from the pinned, patched oxlint and the same `.oxlintrc.json` — including the
+  JS plugins. oxlint 1.77.0's language server panicked on any JS-plugin
+  diagnostic (oxc #25278, fixed in 1.78.0), which is what forced the first bump.
+- `oxlint` and `@effect/tsgo` move together: the patch targets one exact oxlint
+  version, so a bump is the pair (`1.81.0` with `@effect/tsgo` 0.40.0).
+- `no-redeclare` is off. From 1.79.0 oxlint's rule matches ESLint core and
+  reports TypeScript declaration merging — `export const X` beside
+  `export type X`, the Effect idiom on 74 sites here — and upstream declined to
+  change it (oxc #25936) or offer typescript-eslint's `ignoreDeclarationMerge`.
+  A real redeclaration is TS2451; the compiler owns it.
 
 ## Alternatives considered
 
