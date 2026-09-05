@@ -29,7 +29,7 @@ import { componentsTree } from "./packages/components/architecture.mjs";
 import { serverTree } from "./packages/server/architecture.mjs";
 import { webTree } from "./packages/web/architecture.mjs";
 
-/** @type {import("oxlint-architecture-rules").Manifest} */
+/** @type {import("@goodbones/core").Manifest} */
 export default {
   // Where a repository adopting this policy records the violations it is
   // carrying. This one has none, so the file is absent — and `architecture
@@ -41,9 +41,17 @@ export default {
     // roots; everything else resolves through the server-side mapping. The
     // catch-all must come last.
     scopes: [
-      { files: "^packages/(web|components)/", tsconfig: "tsconfig.resolve-web.json" },
-      { files: "^packages/acceptance/", tsconfig: "packages/acceptance/tsconfig.json" },
-      { files: "", tsconfig: "tsconfig.resolve.json" },
+      {
+        files: "^packages/(web|components)/",
+        language: "typescript",
+        options: { tsconfig: "tsconfig.resolve-web.json" },
+      },
+      {
+        files: "^packages/acceptance/",
+        language: "typescript",
+        options: { tsconfig: "packages/acceptance/tsconfig.json" },
+      },
+      { files: "", language: "typescript", options: { tsconfig: "tsconfig.resolve.json" } },
     ],
     // An import nobody can resolve is an import no rule can police. Loud by
     // default; anything listed here needs a reason next to it.

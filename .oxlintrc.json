@@ -9,7 +9,7 @@
     },
     {
       "name": "architecture",
-      "specifier": "oxlint-architecture-rules/plugin"
+      "specifier": "@goodbones/oxlint/plugin"
     },
     "eslint-plugin-codegen",
     "eslint-plugin-simple-import-sort",
