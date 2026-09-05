@@ -7,19 +7,24 @@ Architectural enforcement runs inside `pnpm lint`, from one file — plus the
 rules only a whole-repository walk can answer, which `pnpm lint:architecture`
 evaluates.
 
-| Where                                               | What it owns                                                                           |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `architecture.config.mjs`                           | resolve, aliases, the repo-wide `deny`/`exports`, `graph`, `limits`, the composed tree |
-| `packages/architecture.mjs`                         | the six leaf packages, and the surface and test nodes every area shares                |
-| `packages/{server,web,components}/architecture.mjs` | that package's own nodes, beside its own code                                          |
-| `oxlint-architecture-rules` (npm)                   | the engine: resolution, lowering, matching, the graph, the anti-vacuity guard          |
-| `scripts/lint-rule-probes.mjs`                      | `pnpm lint:rules` — each rule id still fires on a planted violation                    |
-| `scripts/architecture-edges.mjs`                    | `pnpm lint:edges` — the policy still refuses and allows the edges and shapes it should |
-| `scripts/lint-rules/`                               | the seven hand-rolled `local/*` AST rules that are not boundary rules                  |
+| Where                                               | What it owns                                                                                  |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `architecture.config.mjs`                           | resolve, aliases, the repo-wide `deny`/`exports`, `graph`, `limits`, the composed tree        |
+| `packages/architecture.mjs`                         | the six leaf packages, and the surface and test nodes every area shares                       |
+| `packages/{server,web,components}/architecture.mjs` | that package's own nodes, beside its own code                                                 |
+| `@goodbones/{core,typescript,cli,oxlint}` (npm)     | the engine: lowering, matching, the graph, the anti-vacuity guard; the TS pack; the two hosts |
+| `scripts/lint-rule-probes.mjs`                      | `pnpm lint:rules` — each rule id still fires on a planted violation                           |
+| `scripts/architecture-edges.mjs`                    | `pnpm lint:edges` — the policy still refuses and allows the edges and shapes it should        |
+| `scripts/lint-rules/`                               | the seven hand-rolled `local/*` AST rules that are not boundary rules                         |
 
 **The engine is an installed dependency, not source here.** It ships from
-`dataquail/oxlint-utils` as `oxlint-architecture-rules`, pinned to an exact beta
-in the root `package.json`, and its reference documentation lives with it. This
+`dataquail/goodbones` as four packages, each pinned to the same exact beta in the
+root `package.json`: `@goodbones/core` (the manifest schema, the evaluators, the
+`Manifest` type the config is annotated with, and the fakes under
+`@goodbones/core/testing`), `@goodbones/typescript` (the language pack:
+parser-backed facts and `unrs-resolver` resolution), `@goodbones/oxlint` (the
+plugin) and `@goodbones/cli` (the `architecture` bin). Its reference
+documentation lives with it at <https://dataquail.github.io/goodbones>. This
 repo owns the **policy** — the manifest, the probes, the edge table — and nothing
 below describes the library. Changing how a rule family behaves means a release
 there, not an edit here (ADR-0029).
@@ -47,7 +52,7 @@ written **at that part of the tree**:
     "*.repository.ts": {
       requires: ["../../infrastructure/repositories/{base}-live.ts", …],
       importedBy: { message: "…", allow: ["@/modules/*/commands/**", …] },
-      members: [{ subject: "type-members", in: "*Repository*", allow: […], probe: { source, name } }],
+      members: [{ subject: "members", declares: ["type", "interface"], in: "*Repository*", allow: […], probe: { source, name } }],
       surface: [{ message: "…", declares: ["function", "variable"] }],
     },
     "*.aggregate-ops.ts | *.entity-ops.ts | *.value-object-ops.ts": constituentOps,
@@ -249,8 +254,9 @@ Two gates back that up, and they answer different questions:
 
 ## Resolution
 
-`resolve.scopes` maps a file pattern to the tsconfig whose `paths` resolve it.
-The catch-all scope (`files: ""`) comes last. Those tsconfigs carry
+`resolve.scopes` maps a file pattern to a language pack and that pack's options —
+`{ files, language: "typescript", options: { tsconfig } }`, where the tsconfig is
+the one whose `paths` resolve the scope. The catch-all scope (`files: ""`) comes last. Those tsconfigs carry
 **extensionless** path targets: a mapped target is a template, so `@/x/y.js`
 against a `.js`-suffixed mapping looks for `y.js.js`; the resolver maps `.js` to
 `.ts` on the specifier itself.
@@ -305,7 +311,7 @@ entry.
 ## The plugin arrives built
 
 oxlint loads plugins with a bare `import()`, and `.oxlintrc.json` names the
-package's own `oxlint-architecture-rules/plugin` export. The published tarball
+package's own `@goodbones/oxlint/plugin` export. The published tarball
 carries the compiled JavaScript, so no lint command builds anything first and
 there is no local `build/` to go stale — a stale one would enforce a stale policy
 and still lint green, the same vacuity failure in a different disguise. The

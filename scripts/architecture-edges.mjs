@@ -19,13 +19,14 @@ import {
   evaluateGraph,
   evaluateImportEdge,
   lowerManifest,
-  makeModuleResolverFake,
-} from "oxlint-architecture-rules";
+} from "@goodbones/core";
+import { makeModuleResolverFake } from "@goodbones/core/testing";
+import { typescriptLanguage } from "@goodbones/typescript";
 
 const repoRoot = process.cwd();
 
 const manifest = (await import(path.join(repoRoot, "architecture.config.mjs"))).default;
-const lowered = lowerManifest(manifest);
+const lowered = lowerManifest(manifest, [typescriptLanguage()]);
 const compiled = compileImportRules(lowered.imports);
 if (Result.isFailure(compiled)) throw compiled.failure;
 const rules = compiled.success;

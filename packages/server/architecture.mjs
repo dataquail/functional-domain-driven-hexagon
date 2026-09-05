@@ -941,7 +941,8 @@ export const serverTree = {
                       {
                         message:
                           'Repository port method "{name}" is not in the dumb-persistence vocabulary (ADR-0005). A read is only findOne/findMany taking a Specification — turn this lookup or variant into a Specification the caller composes (e.g. repo.findOne(XSpecifications.withId(id))), so the rule lives in one place and the fake filters with the same object the live query uses. There are no keyed or variant finders.',
-                        subject: "type-members",
+                        subject: "members",
+                        declares: ["type", "interface"],
                         in: "*Repository*",
                         match: "find*",
                         allow: ["findOne", "findMany"],
@@ -954,7 +955,8 @@ export const serverTree = {
                       {
                         message:
                           'Repository port method "{name}" is not in the dumb-persistence vocabulary (ADR-0005). It reads like a domain verb — put that behaviour on the aggregate and have the use case persist the result. A port declares only insertOne/insertMany, updateOne/updateMany, deleteOne/deleteMany, upsertOne/upsertMany, and findOne/findMany.',
-                        subject: "type-members",
+                        subject: "members",
+                        declares: ["type", "interface"],
                         in: "*Repository*",
                         matchNot: "find*",
                         allow: [
