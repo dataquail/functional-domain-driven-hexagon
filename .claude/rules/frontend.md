@@ -5,7 +5,7 @@
 
 The frontend is a Next.js (App Router) renderer that proxies `/api/*` to the Effect server. The Effect server stays the BFF — Next renders + proxies but does NOT terminate auth. See ADR-0018.
 
-**There is no TanStack.** State is Effect Atom (`effect/unstable/reactivity`, bundled in `effect`) with the React bindings from `@effect/atom-react`. Queries, mutations, invalidation and form state all live in that graph. A `@tanstack/*` import fails `pnpm lint`: no tier's allowlist in `architecture.config.mjs` names the package, so there is nowhere it can be imported from.
+**There is no TanStack.** State is Effect Atom (`effect/unstable/reactivity`, bundled in `effect`) with the React bindings from `@effect/atom-react`. Queries, mutations, invalidation and form state all live in that graph. A `@tanstack/*` import fails `pnpm lint`: no tier's allowlist in `architecture.yaml` names the package, so there is nowhere it can be imported from.
 
 ## MVVM: Model → ViewModel → View
 
@@ -23,7 +23,7 @@ The arrow points one way and is enforced. Nothing else in this file matters as m
 - The **Model may not import `features/`.**
 - A **View may only call the atom-React hooks** (`useAtomValue`, `useAtomSet`, `useAtomSuspense`, …) plus `useId`/`useCallback`. No `useState`, no `useEffect`, no `useReducer` — that state belongs in the ViewModel. A prop you would have copied into state becomes an `Atom.family` key instead (see `approve-device.view-model.ts`).
 
-**File taxonomy** (`architecture.config.mjs`, `structure.folders`, deny-by-default): a file in `features/**` is a `*.view.tsx`, a `*.view-model.ts`, or a `*.test.{ts,tsx}`. Nothing else. Every `*.view-model.ts` owes a sibling `*.view-model.test.ts`; views carry no parity obligation. **There is no presenter tier** — it existed to hold TanStack, which is gone.
+**File taxonomy** (`architecture.yaml`, the `children` of the `features/` node, deny-by-default): a file in `features/**` is a `*.view.tsx`, a `*.view-model.ts`, or a `*.test.{ts,tsx}`. Nothing else. Every `*.view-model.ts` owes a sibling `*.view-model.test.ts`; views carry no parity obligation. **There is no presenter tier** — it existed to hold TanStack, which is gone.
 
 ## Layout (`packages/web/`, no `src/` wrapper)
 

@@ -5,24 +5,24 @@
 
 The file taxonomy — layout (which file kinds a folder admits), sibling parity
 (required tests/fakes/stories), and the folders a module may have — lives in
-`architecture.config.mjs` under `structure`, enforced by `architecture/structure`
-under `pnpm lint` (in-editor + CI). Each rule carries a didactic `message`
-telling you _what to do_, not just that a file is misplaced. To add a genuinely
-new file kind or stereotype, declare it there — deliberately, not by working
-around the check.
+`architecture.yaml`, written at the node of the tree it describes and enforced
+by `architecture/structure` under `pnpm lint` (in-editor + CI). Each node
+carries a didactic `message` telling you _what to do_, not just that a file is
+misplaced. To add a genuinely new file kind or stereotype, declare it there —
+deliberately, not by working around the check.
 
-`structure` asks three separate questions, and which one you are answering
-decides where the rule goes:
+The taxonomy asks three separate questions, and which one you are answering
+decides which field on the node you touch:
 
-| Question                                    | Where               |
-| ------------------------------------------- | ------------------- |
-| Is this folder part of the taxonomy at all? | `structure.roots`   |
-| Which basenames does this folder admit?     | `structure.folders` |
-| Which siblings does this file owe?          | `structure.parity`  |
+| Question                                    | Where                                              |
+| ------------------------------------------- | -------------------------------------------------- |
+| Is this folder part of the taxonomy at all? | the folder's own key under its parent's `children` |
+| Which basenames does this folder admit?     | that folder node's `children`                      |
+| Which siblings does this file owe?          | `requires` on the file node                        |
 
-An exemption is a `fileNot` on the parity rule that would otherwise fire — the
-`login`/`logout` endpoints are the only ones. There is no "specific pattern beats
-the catch-all" precedence to reason about.
+An exemption is a `requiresNot` on the file node that would otherwise owe the
+sibling — the `login`/`logout` endpoints are the only ones. There is no "specific
+pattern beats the catch-all" precedence to reason about.
 
 **Parity.** If you create any of these without its sibling, `pnpm lint` fails:
 

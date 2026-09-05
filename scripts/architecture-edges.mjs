@@ -16,17 +16,24 @@ import * as Result from "effect/Result";
 import path from "node:path";
 import {
   compileImportRules,
+  decodeManifest,
   evaluateGraph,
   evaluateImportEdge,
+  findManifestFile,
   lowerManifest,
+  readManifestFile,
 } from "@goodbones/core";
 import { makeModuleResolverFake } from "@goodbones/core/testing";
 import { typescriptLanguage } from "@goodbones/typescript";
 
 const repoRoot = process.cwd();
 
-const manifest = (await import(path.join(repoRoot, "architecture.config.mjs"))).default;
-const lowered = lowerManifest(manifest, [typescriptLanguage()]);
+// The same discovery and decode the two hosts run, so the edges are judged
+// against the manifest exactly as the plugin and the CLI read it.
+const read = await readManifestFile(findManifestFile(repoRoot));
+const decoded = decodeManifest(read.configPath, read.manifest, { locate: read.locate });
+if (Result.isFailure(decoded)) throw decoded.failure;
+const lowered = lowerManifest(decoded.success.manifest, [typescriptLanguage()]);
 const compiled = compileImportRules(lowered.imports);
 if (Result.isFailure(compiled)) throw compiled.failure;
 const rules = compiled.success;

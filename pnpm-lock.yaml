@@ -62,17 +62,17 @@ importers:
         specifier: 4.0.0-beta.94
         version: 4.0.0-beta.94(effect@4.0.0-beta.94)(vitest@3.2.7(@types/node@25.9.4)(jiti@2.7.0)(jsdom@26.1.0)(lightningcss@1.32.0)(msw@2.14.7(@types/node@25.9.4)(typescript@5.9.3))(terser@5.46.2)(tsx@4.23.0)(yaml@2.9.0))
       '@goodbones/cli':
-        specifier: 0.1.0-beta.1
-        version: 0.1.0-beta.1
+        specifier: 0.1.0-beta.2
+        version: 0.1.0-beta.2
       '@goodbones/core':
-        specifier: 0.1.0-beta.1
-        version: 0.1.0-beta.1
+        specifier: 0.1.0-beta.2
+        version: 0.1.0-beta.2
       '@goodbones/oxlint':
-        specifier: 0.1.0-beta.1
-        version: 0.1.0-beta.1(oxlint@1.81.0(oxlint-tsgolint@7.0.2001))
+        specifier: 0.1.0-beta.2
+        version: 0.1.0-beta.2(oxlint@1.81.0(oxlint-tsgolint@7.0.2001))
       '@goodbones/typescript':
-        specifier: 0.1.0-beta.1
-        version: 0.1.0-beta.1
+        specifier: 0.1.0-beta.2
+        version: 0.1.0-beta.2
       '@types/node':
         specifier: ^25.9.4
         version: 25.9.4
@@ -1127,20 +1127,20 @@ packages:
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
 
-  '@goodbones/cli@0.1.0-beta.1':
-    resolution: {integrity: sha512-SIUMsFTxOUcVd5yEGD5OQwiZ0IwKDvGQFzv7LCpuLkDkNsIZ6MDL/Rh8QCDdaOUYlqAOIXQ+1/Dqs70R4MwhNw==}
+  '@goodbones/cli@0.1.0-beta.2':
+    resolution: {integrity: sha512-uCnp+awr4yNTxncPMXEdFm3xOi3VVcgsXX+6AxQkIEKaaZx+w/6+/tKqOs3mcwgIO1c98nTtXTBg/Sv9MDFFAg==}
     hasBin: true
 
-  '@goodbones/core@0.1.0-beta.1':
-    resolution: {integrity: sha512-eAMWsoys+jMFa4KpBkZO5HSE0weJmqDxC+SLpHVxafhkWl4p9F9F4cmuFlujGKf2M4k+6uTGLXvcbQ3PgcY8vw==}
+  '@goodbones/core@0.1.0-beta.2':
+    resolution: {integrity: sha512-8+olY84dmP2qISpIyYLTsLU9URrlH5USwuwdLbAMx8CIKsVKWRGHL+t5B0w7sAOO5zeYV5rviqZgctH8fyN1qg==}
 
-  '@goodbones/oxlint@0.1.0-beta.1':
-    resolution: {integrity: sha512-8o0m3qCRJFbq+w41lVXiEE0WMR/Rh/F8XszH4dRxXNd0PePCoe4duBPaRpWffnpqj+H6DXwZJxPK4zMIULb+dQ==}
+  '@goodbones/oxlint@0.1.0-beta.2':
+    resolution: {integrity: sha512-b4pIuPy6otk9v8VaKzfWMQEuK4qaiwR3c4/BiZwqkr/dv+hWE5REvuyqjcEd+BaE+9o8Gc+rfvSQBj4Trm7byA==}
     peerDependencies:
       oxlint: '>=1.77.0'
 
-  '@goodbones/typescript@0.1.0-beta.1':
-    resolution: {integrity: sha512-Prz4cpffzJ0vLiWGrmgcgB338pedZfT9Mn3Zhz9IdUOycT5AOjrGSlRrMarzf0fAd+QyvxX1qgMqtxfpjc20Pg==}
+  '@goodbones/typescript@0.1.0-beta.2':
+    resolution: {integrity: sha512-uiPstSNR+hfPaIB/L1dK8yeqFakVwAg0HNGlf6/fcH6XR8SXX25/TaBepXJqGo9Nxkgx1IIO3uweD2v/cIN/rg==}
 
   '@hono/node-server@1.19.14':
     resolution: {integrity: sha512-GwtvgtXxnWsucXvbQXkRgqksiH2Qed37H9xHZocE5sA3N8O8O8/8FA3uclQXxXVzc9XBZuEOMK7+r02FmSpHtw==}
@@ -7511,26 +7511,27 @@ snapshots:
 
   '@floating-ui/utils@0.2.11': {}
 
-  '@goodbones/cli@0.1.0-beta.1':
+  '@goodbones/cli@0.1.0-beta.2':
     dependencies:
-      '@goodbones/core': 0.1.0-beta.1
-      '@goodbones/typescript': 0.1.0-beta.1
+      '@goodbones/core': 0.1.0-beta.2
+      '@goodbones/typescript': 0.1.0-beta.2
       effect: 4.0.0-beta.94
 
-  '@goodbones/core@0.1.0-beta.1':
+  '@goodbones/core@0.1.0-beta.2':
     dependencies:
       effect: 4.0.0-beta.94
+      yaml: 2.9.0
 
-  '@goodbones/oxlint@0.1.0-beta.1(oxlint@1.81.0(oxlint-tsgolint@7.0.2001))':
+  '@goodbones/oxlint@0.1.0-beta.2(oxlint@1.81.0(oxlint-tsgolint@7.0.2001))':
     dependencies:
-      '@goodbones/core': 0.1.0-beta.1
-      '@goodbones/typescript': 0.1.0-beta.1
+      '@goodbones/core': 0.1.0-beta.2
+      '@goodbones/typescript': 0.1.0-beta.2
       effect: 4.0.0-beta.94
       oxlint: 1.81.0(oxlint-tsgolint@7.0.2001)
 
-  '@goodbones/typescript@0.1.0-beta.1':
+  '@goodbones/typescript@0.1.0-beta.2':
     dependencies:
-      '@goodbones/core': 0.1.0-beta.1
+      '@goodbones/core': 0.1.0-beta.2
       effect: 4.0.0-beta.94
       typescript: 5.9.3
       unrs-resolver: 1.12.2
@@ -10315,7 +10316,7 @@ snapshots:
       eslint: 9.39.4(jiti@2.7.0)
       eslint-import-resolver-node: 0.3.10
       eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0))
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.7.0))
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0))
       eslint-plugin-jsx-a11y: 6.10.2(eslint@9.39.4(jiti@2.7.0))
       eslint-plugin-react: 7.37.5(eslint@9.39.4(jiti@2.7.0))
       eslint-plugin-react-hooks: 7.1.1(eslint@9.39.4(jiti@2.7.0))
@@ -10348,7 +10349,7 @@ snapshots:
       tinyglobby: 0.2.17
       unrs-resolver: 1.12.2
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.7.0))
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0))
     transitivePeerDependencies:
       - supports-color
 
@@ -10400,7 +10401,7 @@ snapshots:
       - eslint
       - supports-color
 
-  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.7.0)):
+  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.63.0(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0)):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9
