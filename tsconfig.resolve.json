@@ -2,7 +2,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     // Resolution-only config, consumed by the `architecture` lint plugin
-    // (`architecture.config.mjs`, `resolve.scopes`). These mirror
+    // (`architecture.yaml`, `resolve.scopes`). These mirror
     // tsconfig.base.json's paths but WITHOUT the trailing `.js` those carry: a
     // mapped target is a template, so `@/x/y.js` against a `.js`-suffixed
     // mapping would look for `y.js.js`. Keep these extensionless — the resolver
