@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://dataquail.github.io/goodbones/schema/architecture-node.schema.json
+#
+# @org/contracts — the shared HTTP API contracts, schemas and errors; the root of
+# the dependency graph. No internal tiers: it states what it may reach and leaves
+# its file layout open.
+#
+# One node of the architecture policy: the root architecture.yaml includes this
+# file at "~/contracts/". Patterns are repo-relative and use the root's
+# aliases; a fragment defined under `defs` here joins the one namespace every file
+# shares, so name it for what it is.
+
+message: >-
+  @org/contracts holds the shared HTTP API contracts, schemas and errors, consumed by the
+  server and every client. It is the root of the dependency graph.
+layout: open
+surface: [{ use: no-default-exports }]
+imports:
+  message: >-
+    @org/contracts depends on nobody. Not the server, not the database, not a client —
+    everything else depends on it, so anything it names becomes a dependency of the whole
+    repo.
+  external: [effect, vitest, "@effect/vitest"]
+  allow: ["node:**", "~/contracts/**", "vitest.shared.ts"]
+children:
+  # Every module in src/ is an Effect-style module named for what it
+  # exports, so its concept name is that exported name rather than a
+  # kebab-case slug. The package's own config files are not.
+  "src/":
+    name: PascalCase
+    layout: open
+    children:
+      "**/": { layout: open, children: {} }
+  "**/": { layout: open, children: {} }

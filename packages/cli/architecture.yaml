@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://dataquail.github.io/goodbones/schema/architecture-node.schema.json
+#
+# @org/cli — the command-line client. No internal tiers: it states what it may
+# reach and leaves its file layout open.
+#
+# One node of the architecture policy: the root architecture.yaml includes this
+# file at "~/cli/". Patterns are repo-relative and use the root's
+# aliases; a fragment defined under `defs` here joins the one namespace every file
+# shares, so name it for what it is.
+
+name: kebab-case
+message: "@org/cli is the command-line client: device-flow auth, organizations, todos."
+layout: open
+surface: [{ use: no-default-exports }]
+imports:
+  message: >-
+    The CLI talks to the server the same way any other client does: through @org/api-client
+    and the contracts. It never imports the server.
+  external: [effect, "@effect/platform-node"]
+  allow: ["node:**", "~/cli/**", "~/api-client/**", "~/contracts/**"]
+children:
+  "**/": { layout: open, children: {} }

@@ -236,6 +236,11 @@ Extract the engine to its own repository and depend on a pinned beta;
 `architecture.config.mjs` stays, because it is this repo's policy rather than the
 library's. Done in ADR-0029, and the manifest survived it unchanged.
 
+ADR-0031 moved the manifest to YAML and kept this split in the data form: the
+root `architecture.yaml` includes one node file per package, and the shared
+JavaScript constants became named fragments under `defs`. The evaluation was
+always one, and still is.
+
 ## References
 
 - ADR-0027 — architecture rules as configuration; this ADR changes the shape of

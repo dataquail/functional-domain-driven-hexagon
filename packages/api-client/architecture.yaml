@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=https://dataquail.github.io/goodbones/schema/architecture-node.schema.json
+#
+# @org/api-client — the typed client and credential store the CLI and MCP sit on.
+# No internal tiers: it states what it may reach and leaves its file layout open.
+#
+# One node of the architecture policy: the root architecture.yaml includes this
+# file at "~/api-client/". Patterns are repo-relative and use the root's
+# aliases; a fragment defined under `defs` here joins the one namespace every file
+# shares, so name it for what it is.
+
+name: kebab-case
+message: >-
+  @org/api-client is the shared typed client and credential store the CLI and the MCP server
+  sit on.
+layout: open
+surface: [{ use: no-default-exports }]
+imports:
+  message: >-
+    The API client speaks the contracts and nothing else. It must not reach the server it
+    calls — the contract is the whole interface.
+  external: [effect]
+  allow: ["node:**", "~/api-client/**", "~/contracts/**"]
+children:
+  "**/": { layout: open, children: {} }

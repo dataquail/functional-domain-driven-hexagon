@@ -35,7 +35,6 @@
     "**/setupTests.ts",
     "**/vitest.shared.ts",
     "reference/**",
-    "**/architecture.mjs",
     "scratchpad/**",
     "**/.tmp-*/**",
     "**/routeTree.gen.ts",

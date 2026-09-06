@@ -214,7 +214,7 @@ const PROBES = [
   },
   {
     // The architecture plugin's own per-rule coverage lives in
-    // `architecture.config.mjs` — every rule carries a `probe` the plugin
+    // `architecture.yaml` — every rule carries a `probe` the plugin
     // refuses to load without. What these three prove is the WIRING: that the
     // plugin is loaded, its rule is enabled, its globs match, and resolution is
     // live rather than quietly failing open.
