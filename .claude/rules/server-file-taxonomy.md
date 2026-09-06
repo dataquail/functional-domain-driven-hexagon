@@ -5,7 +5,7 @@
 
 The file taxonomy — layout (which file kinds a folder admits), sibling parity
 (required tests/fakes/stories), and the folders a module may have — lives in
-`architecture.yaml`, written at the node of the tree it describes and enforced
+`packages/server/architecture.yaml`, written at the node of the tree it describes and enforced
 by `architecture/structure` under `pnpm lint` (in-editor + CI). Each node
 carries a didactic `message` telling you _what to do_, not just that a file is
 misplaced. To add a genuinely new file kind or stereotype, declare it there —

@@ -1,0 +1,125 @@
+# yaml-language-server: $schema=https://dataquail.github.io/goodbones/schema/architecture-node.schema.json
+#
+# @org/components — the bespoke component library. Direction: features → patterns →
+# primitives → third-party (ADR-0015). Only primitives touch a UI library.
+#
+# One node of the architecture policy: the root architecture.yaml includes this
+# file at "~/components/". Patterns are repo-relative and use the root's
+# aliases; a fragment defined under `defs` here joins the one namespace every file
+# shares, so name it for what it is.
+
+defs:
+  # A Storybook story: the component's living spec and visual test (ADR-0015).
+  # It names the component it documents and the Storybook runtime.
+  story-file:
+    imports:
+      reset: true
+      message: >-
+        A story names the component it documents, the component library around it and the
+        Storybook runtime. Nothing from web, nothing from the server.
+      external:
+        - effect
+        - react
+        - react-dom
+        - storybook
+        - "@storybook/react-vite"
+        - "@storybook/addon-themes"
+        - sonner
+        - lucide-react
+      allow: ["node:**", "~/components/**"]
+
+  # Every primitive/pattern component owes its story.
+  component-story-parity:
+    requires: ["{base}.stories.tsx"]
+    requiresNot: ["index.tsx", "*.stories.tsx", "*.test.tsx"]
+
+name: kebab-case
+message: >-
+  @org/components holds two trees: primitives/ (atoms) and patterns/ (molecules and
+  organisms), plus the class-name helpers in lib/, the providers/ and the Storybook config. A
+  new folder here is a new tier — declare it deliberately.
+# Storybook loads a story's meta and its own configuration by default export.
+surface:
+  - use: no-default-exports
+    except: ["**/vitest.config.ts", "**/*.stories.tsx", "~/components/.storybook/**"]
+imports:
+  message: >-
+    @org/components is a leaf workspace package: components are consumed by web, never the
+    reverse. It may not import @org/web or anything under packages/web/.
+  external: [effect, react, react-dom, next, clsx, tailwind-merge]
+  allow: ["node:**", "~/components/**"]
+children:
+  # The only tier allowed to name a third-party visual library, so the
+  # prop surface of those libraries stops here.
+  "primitives/":
+    layout: open
+    message: >-
+      primitives/ wraps the third-party visual libraries so their prop surface is
+      encapsulated. Every primitive is explicit props and closed unions mapped through literal
+      class tables — no className, no DOM spread.
+    imports:
+      external:
+        - "@radix-ui/react-checkbox"
+        - "@radix-ui/react-dialog"
+        - "@radix-ui/react-label"
+        - "@radix-ui/react-select"
+        - lucide-react
+        - recharts
+        - sonner
+    children:
+      "*.tsx":
+        use: component-story-parity
+        message: >-
+          Every primitive/pattern component needs a sibling *.stories.tsx — the story is the
+          component's living spec and visual test (ADR-0015).
+      "*.stories.tsx": { use: story-file }
+      "*.ts": {}
+      "*.test.ts | *.test.tsx": { use: frontend-test-file }
+      "**/":
+        layout: open
+        children:
+          "*.tsx": { use: component-story-parity }
+          "*.stories.tsx": { use: story-file }
+          "*.ts": {}
+          "*.test.ts | *.test.tsx": { use: frontend-test-file }
+
+  "patterns/":
+    layout: open
+    message: >-
+      patterns/ composes primitives into molecules and organisms. It consumes the third-party
+      libraries only through primitives/, and it never reaches into a feature.
+    imports:
+      reset: true
+      external: [effect, react]
+      allow:
+        - "node:**"
+        - "~/components/primitives/**"
+        - "~/components/patterns/**"
+        - "~/components/lib/**"
+    children:
+      "*.tsx":
+        use: component-story-parity
+        message: >-
+          Every primitive/pattern component needs a sibling *.stories.tsx — the story is the
+          component's living spec and visual test (ADR-0015).
+      "*.stories.tsx": { use: story-file }
+      "*.ts": {}
+      "*.test.ts | *.test.tsx": { use: frontend-test-file }
+
+  "providers/":
+    layout: open
+    children: { "*.tsx": {}, "*.ts": {} }
+  "lib/":
+    layout: open
+    children:
+      "**/": { layout: open, children: {} }
+  ".storybook/":
+    layout: open
+    imports:
+      reset: true
+      message: >-
+        The Storybook configuration names Storybook and the component tree it renders. Nothing
+        else.
+      external: [storybook, "@storybook/react-vite", "@storybook/addon-themes", react]
+      allow: ["node:**", "~/components/**"]
+    children: {}

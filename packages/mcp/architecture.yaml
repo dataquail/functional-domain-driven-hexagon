@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://dataquail.github.io/goodbones/schema/architecture-node.schema.json
+#
+# @org/mcp — the CLI surface as MCP tools over stdio. No internal tiers: it states
+# what it may reach and leaves its file layout open.
+#
+# One node of the architecture policy: the root architecture.yaml includes this
+# file at "~/mcp/". Patterns are repo-relative and use the root's
+# aliases; a fragment defined under `defs` here joins the one namespace every file
+# shares, so name it for what it is.
+
+name: kebab-case
+message: "@org/mcp exposes the CLI surface as MCP tools over stdio."
+layout: open
+surface: [{ use: no-default-exports }]
+imports:
+  message: >-
+    The MCP server wraps the same client the CLI uses. It names the MCP SDK, @org/api-client
+    and the contracts — never the server, and never the CLI's own command implementations.
+  external: [effect, "@effect/platform-node", "@modelcontextprotocol/sdk", zod]
+  allow: ["node:**", "~/mcp/**", "~/api-client/**", "~/contracts/**"]
+children:
+  "**/": { layout: open, children: {} }

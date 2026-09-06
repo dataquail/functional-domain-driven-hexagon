@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://dataquail.github.io/goodbones/schema/architecture-node.schema.json
+#
+# @org/jobs — the background and cron jobs. No internal tiers: it states what it
+# may reach and leaves its file layout open.
+#
+# One node of the architecture policy: the root architecture.yaml includes this
+# file at "~/jobs/". Patterns are repo-relative and use the root's
+# aliases; a fragment defined under `defs` here joins the one namespace every file
+# shares, so name it for what it is.
+
+name: kebab-case
+message: "@org/jobs runs the background and cron jobs."
+layout: open
+# vitest loads a globalSetup by its default export.
+surface:
+  - use: no-default-exports
+    except: ["**/vitest.config.ts", "~/jobs/src/test-utils/global-setup.ts"]
+imports:
+  message: >-
+    A job reaches the database kernel directly and nothing else in the repo. It does not
+    import the server: a job that needs a use case should dispatch it, not compose the HTTP
+    application.
+  external: [effect, "@effect/platform-node", "@effect/vitest", dotenv, vitest]
+  allow: ["node:**", "~/jobs/**", "~/database/**", "vitest.shared.ts"]
+children:
+  "**/": { layout: open, children: {} }

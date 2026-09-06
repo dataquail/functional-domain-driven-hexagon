@@ -1,0 +1,48 @@
+# yaml-language-server: $schema=https://dataquail.github.io/goodbones/schema/architecture-node.schema.json
+#
+# @org/database — the DB access kernel and the migrations. No internal tiers: it
+# states what it may reach and leaves its file layout open.
+#
+# One node of the architecture policy: the root architecture.yaml includes this
+# file at "~/database/". Patterns are repo-relative and use the root's
+# aliases; a fragment defined under `defs` here joins the one namespace every file
+# shares, so name it for what it is.
+
+message: >-
+  @org/database is the DB access kernel: the effect/sql client, the shared RowSchemas, row
+  decoding, and the migrations.
+layout: open
+# The migrator loads each migration by its default export.
+surface:
+  - use: no-default-exports
+    except: ["**/vitest.config.ts", "~/database/src/migrations/**"]
+imports:
+  message: >-
+    @org/database is the one package that may name the SQL driver — encapsulating it is the
+    package's job. It depends on nothing else in the repo: it publishes a client, it does not
+    consume one.
+  external:
+    - effect
+    - "@effect/sql-pg"
+    - "@effect/platform-node"
+    - "@effect/vitest"
+    - pg
+    - dotenv
+    - vitest
+  allow: ["node:**", "~/database/**", "vitest.shared.ts"]
+children:
+  "src/":
+    # Database.ts is an Effect-style module named for the service it
+    # exports; the helpers beside it are ordinary kebab-case files.
+    name:
+      regex: "^(?:Database|[a-z0-9]+(?:-[a-z0-9]+)*)$"
+      message: >-
+        A file in @org/database is kebab-case, except Database.ts, which is named for the
+        service it exports.
+    layout: open
+    children:
+      # A migration's name is its ordinal and what it does, in the order
+      # the migrator runs them.
+      "migrations/": { name: snake_case, layout: open, children: {} }
+      "**/": { name: kebab-case, layout: open, children: {} }
+  "**/": { layout: open, children: {} }

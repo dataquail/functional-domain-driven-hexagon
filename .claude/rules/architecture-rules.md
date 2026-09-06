@@ -1,19 +1,20 @@
 # Rule: architecture rules (the manifest)
 
 **Scope:** the whole repo — read before adding, changing, or removing an architectural check.
-**Backing ADRs:** 0008 (architecture enforcement), 0025 (oxlint as the linter), 0027 (architecture rules as configuration), 0028 (the manifest), 0029 (the engine as a dependency), 0030 (surfaces, graph rules and ratchets), 0031 (the manifest as YAML).
+**Backing ADRs:** 0008 (architecture enforcement), 0025 (oxlint as the linter), 0027 (architecture rules as configuration), 0028 (the manifest), 0029 (the engine as a dependency), 0030 (surfaces, graph rules and ratchets), 0031 (the manifest as YAML, one file per package).
 
-Architectural enforcement runs inside `pnpm lint`, from one file — plus the
-rules only a whole-repository walk can answer, which `pnpm lint:architecture`
-evaluates.
+Architectural enforcement runs inside `pnpm lint`, from one assembled manifest —
+plus the rules only a whole-repository walk can answer, which
+`pnpm lint:architecture` evaluates.
 
-| Where                                           | What it owns                                                                                                    |
-| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `architecture.yaml`                             | the whole policy: resolve, aliases, the repo-wide `deny`/`exports`, `graph`, `limits`, the `defs`, and the tree |
-| `@goodbones/{core,typescript,cli,oxlint}` (npm) | the engine: lowering, matching, the graph, the anti-vacuity guard; the TS pack; the two hosts                   |
-| `scripts/lint-rule-probes.mjs`                  | `pnpm lint:rules` — each rule id still fires on a planted violation                                             |
-| `scripts/architecture-edges.mjs`                | `pnpm lint:edges` — the policy still refuses and allows the edges and shapes it should                          |
-| `scripts/lint-rules/`                           | the seven hand-rolled `local/*` AST rules that are not boundary rules                                           |
+| Where                                           | What it owns                                                                                                         |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `architecture.yaml`                             | the repo-wide policy: resolve, aliases, `deny`/`exports`, `graph`, `limits`, the shared `defs`, and the tree's index |
+| `packages/<package>/architecture.yaml`          | that package's node of the tree, beside its own code, with the `defs` only it uses                                   |
+| `@goodbones/{core,typescript,cli,oxlint}` (npm) | the engine: lowering, matching, the graph, the anti-vacuity guard; the TS pack; the two hosts                        |
+| `scripts/lint-rule-probes.mjs`                  | `pnpm lint:rules` — each rule id still fires on a planted violation                                                  |
+| `scripts/architecture-edges.mjs`                | `pnpm lint:edges` — the policy still refuses and allows the edges and shapes it should                               |
+| `scripts/lint-rules/`                           | the seven hand-rolled `local/*` AST rules that are not boundary rules                                                |
 
 **The engine is an installed dependency, not source here.** It ships from
 `dataquail/goodbones` as four packages, each pinned to the same exact beta in the
@@ -27,24 +28,34 @@ repo owns the **policy** — the manifest, the probes, the edge table — and no
 below describes the library. Changing how a rule family behaves means a release
 there, not an edit here (ADR-0029).
 
-**One policy, one file, one evaluation.** The manifest is a data file —
-`architecture.yaml` at the repo root, and nothing else: the engine discovers
-exactly one of `architecture.yaml`, `.yml`, `.json` or `.config.mjs` and refuses a
-repository that has two. There is no include mechanism, by design, so the policy
-is not split across files; what an area shares is a named fragment under `defs`
-(below). Do **not** split the _run_ either: a rule fires when the checker visits
-the **importing** file, so a per-package check would silently disarm every rule
-whose importer lives on the other side — the repo-wide prohibitions, which must
-reach every file, and every `importedBy`. One config, one baseline, one `explain`,
-one CI step.
+**One policy, several files, one evaluation.** The manifest is a data file —
+`architecture.yaml` at the repo root; the engine discovers exactly one of
+`architecture.yaml`, `.yml`, `.json` or `.config.mjs` there and refuses a
+repository that has two. Under `tree`, each package's key is
+`{ include: packages/<package>/architecture.yaml }`: the file beside the package
+holds that one node, and is **replaced whole** — nothing may be written beside
+`include`, and there is no merge. The root is therefore the index of the policy:
+read its `tree` and you have seen every file that takes part. A package's own
+file may carry a `$schema` (the node schema, `architecture-node.schema.json`) and
+a top-level `defs`; every file's `defs` share one namespace, and a name defined
+twice is refused naming both files. Put a fragment in the narrowest file that
+covers all its users — `server-test-file` in the server's file, `view-file` in
+web's, `frontend-test-file` (web _and_ components) in the root. Do **not** split
+the _run_ to match: a rule fires when the checker visits the **importing** file,
+so a per-package check would silently disarm every rule whose importer lives on
+the other side — the repo-wide prohibitions, which must reach every file, and
+every `importedBy`. Rules, probes, coverage and the baseline are computed on the
+assembled manifest; an error inside an included file is reported as
+`packages/server/architecture.yaml:12:5`. One config, one baseline, one
+`explain`, one CI step.
 
-The first line names the JSON Schema the engine generates from its own decoder,
-so an editor with the YAML language server completes every key and flags a
-misspelled one before the loader runs; what the schema does not catch, the loader
-reports with the file, line and column. **Quote every glob and every message**:
-a bare `*` opens an alias, `@` and a backtick are reserved, `{` opens a flow
-mapping, and ` #` starts a comment. Long messages are `>-` folded block scalars.
-Prettier formats the file on commit like any other YAML.
+The first line of each file names the JSON Schema the engine generates from its
+own decoder, so an editor with the YAML language server completes every key and
+flags a misspelled one before the loader runs; what the schema does not catch,
+the loader reports with the file, line and column. **Quote every glob and every
+message**: a bare `*` opens an alias, `@` and a backtick are reserved, `{` opens a
+flow mapping, and ` #` starts a comment. Long messages are `>-` folded block
+scalars. Prettier formats the files on commit like any other YAML.
 
 ## The manifest
 
@@ -97,9 +108,10 @@ manifest is decoded. A key written beside `use` overrides the fragment's key of
 the same name **shallowly**: a list replaces the list, it does not merge with it.
 That is why every root that adds a default-export exemption repeats
 `**/vitest.config.ts` beside its own — and why a fragment that would need a
-partial override is two fragments. There is no interpolation, no include and no
-deep merge; a fragment may itself `use` another, a cycle is refused, and so is a
-name `defs` does not contain. The schema admits `use` at node, `imports` and
+partial override is two fragments. There is no interpolation and no deep merge
+(`include` splits files, `use` shares fragments, and neither merges); a fragment
+may itself `use` another, a cycle is refused, and so is a name `defs` does not
+contain. The schema admits `use` at node, `imports` and
 rule-item positions, not inside an `allow` list — so a shared consumer list is a
 whole `importedBy` fragment (`port-consumers`, `acl-port-consumers`), not a list
 fragment. Reach for `defs` before a YAML anchor: an error inside a merged key
@@ -305,7 +317,7 @@ pnpm architecture:baseline          # record the violations this repo carries
 pnpm architecture:explain <file>    # which rules of every family select this file, and why
 pnpm architecture:facts <file>      # what the parser read: edges, bindings, members, calls, exports
 pnpm architecture:coverage          # reach per family, and the adoption backlog
-pnpm exec architecture migrate      # rewrite a .mjs manifest as architecture.yaml (done; ADR-0031)
+pnpm exec architecture migrate      # rewrite a .mjs manifest as one architecture.yaml (done; ADR-0031)
 ```
 
 oxlint's JS plugin API is alpha, and a policy that only one alpha host can
