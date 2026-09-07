@@ -14,6 +14,7 @@ plus the rules only a whole-repository walk can answer, which
 | `@goodbones/{core,typescript,cli,oxlint}` (npm) | the engine: lowering, matching, the graph, the anti-vacuity guard; the TS pack; the two hosts                        |
 | `scripts/lint-rule-probes.mjs`                  | `pnpm lint:rules` — each rule id still fires on a planted violation                                                  |
 | `scripts/architecture-edges.mjs`                | `pnpm lint:edges` — the policy still refuses and allows the edges and shapes it should                               |
+| `scripts/architecture-conformance.mjs`          | `pnpm lint:conformance` — residue, slack and cycles held to ceilings that only ratchet down                          |
 | `scripts/lint-rules/`                           | the seven hand-rolled `local/*` AST rules that are not boundary rules                                                |
 
 **The engine is an installed dependency, not source here.** It ships from
@@ -267,6 +268,28 @@ one to make a red run green — the fix is a rule that reaches the files, or a f
 moved under one. `structure` counts **enumerated** folders only; an open folder is
 claimed, not policed, and does not count.
 
+## Conformance: what `check` measures but does not gate
+
+`pnpm architecture:conformance` is a measurement, not a gate — it never fails, and
+`--against <manifest>` measures the tree against a policy it is not yet held to.
+`--json` emits a versioned snapshot (`manifest.sha256` says whether the policy moved;
+violations are keyed by fingerprint). Beyond what `check` reports it names three things:
+
+- **residue** — files no family reaches. The coverage floors bound the fraction; this
+  lists the files.
+- **slack** — `imports.allow` / `imports.external` entries no import in the tree uses.
+  A real allowance nobody uses is a line to delete; most of this repo's slack is a
+  shared `defs` fragment (`server-test-file`, `frontend-test-file`) landing on nodes
+  that use a subset of it, and is not debt. Widening an allowlist to make a build green
+  shows up here as one used entry beside several unused ones.
+- **cycles** — every cycle in the walked graph, inside a `cycles` rule's scope or not.
+
+`pnpm lint:conformance` holds all three to ceilings in `scripts/architecture-conformance.mjs`,
+ratcheted like the coverage floors: lower a ceiling when the number falls (the script
+says so), never raise one to make a red run green. `residue` and `cycles` sit at zero;
+`slack` is a ceiling, not a target, because a shared fragment's unused entries are the
+price of stating a tier once.
+
 ## Every rule proves itself
 
 The manifest compiles to flat rules, each with a probe. Most are generated from
@@ -317,6 +340,7 @@ pnpm architecture:baseline          # record the violations this repo carries
 pnpm architecture:explain <file>    # which rules of every family select this file, and why
 pnpm architecture:facts <file>      # what the parser read: edges, bindings, members, calls, exports
 pnpm architecture:coverage          # reach per family, and the adoption backlog
+pnpm architecture:conformance       # residue, slack, ordered violations — a measurement, never a failure
 pnpm exec architecture migrate      # rewrite a .mjs manifest as one architecture.yaml (done; ADR-0031)
 ```
 
