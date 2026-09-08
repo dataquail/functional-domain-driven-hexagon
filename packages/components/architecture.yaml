@@ -17,16 +17,25 @@ defs:
       message: >-
         A story names the component it documents, the component library around it and the
         Storybook runtime. Nothing from web, nothing from the server.
+      external: [storybook, "@storybook/react-vite"]
+      allow: ["~/components/**"]
+
+  # No component test exists yet; this is what one may name when it does.
+  component-test-file:
+    surface: [{ use: test-exports-nothing }]
+    imports:
+      reset: true
+      message: >-
+        A component test renders the component through the testing library and asserts on the
+        DOM. It reaches the component library and nothing from web or the server.
       external:
         - effect
         - react
-        - react-dom
-        - storybook
-        - "@storybook/react-vite"
-        - "@storybook/addon-themes"
-        - sonner
-        - lucide-react
-      allow: ["node:**", "~/components/**"]
+        - vitest
+        - "@testing-library/react"
+        - "@testing-library/jest-dom"
+        - "@testing-library/user-event"
+      allow: ["~/components/**"]
 
   # Every primitive/pattern component owes its story.
   component-story-parity:
@@ -72,16 +81,23 @@ children:
         message: >-
           Every primitive/pattern component needs a sibling *.stories.tsx — the story is the
           component's living spec and visual test (ADR-0015).
-      "*.stories.tsx": { use: story-file }
+      "*.stories.tsx":
+        imports:
+          reset: true
+          message: >-
+            A primitive's story is the one that renders live state and toasts, so it names
+            react and sonner beside what a story may.
+          external: [storybook, "@storybook/react-vite", react, sonner]
+          allow: ["~/components/**"]
       "*.ts": {}
-      "*.test.ts | *.test.tsx": { use: frontend-test-file }
+      "*.test.ts | *.test.tsx": { use: component-test-file }
       "**/":
         layout: open
         children:
           "*.tsx": { use: component-story-parity }
           "*.stories.tsx": { use: story-file }
           "*.ts": {}
-          "*.test.ts | *.test.tsx": { use: frontend-test-file }
+          "*.test.ts | *.test.tsx": { use: component-test-file }
 
   "patterns/":
     layout: open
@@ -104,7 +120,7 @@ children:
           component's living spec and visual test (ADR-0015).
       "*.stories.tsx": { use: story-file }
       "*.ts": {}
-      "*.test.ts | *.test.tsx": { use: frontend-test-file }
+      "*.test.ts | *.test.tsx": { use: component-test-file }
 
   "providers/":
     layout: open

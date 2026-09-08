@@ -1,8 +1,8 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
+import { describe, expect, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import { describe, expect, it } from "vitest";
 
 import { CookieCodec } from "@/platform/auth/cookie-codec.js";
 

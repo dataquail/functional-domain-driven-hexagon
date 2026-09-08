@@ -309,25 +309,6 @@ defs:
   # ── frontend (web + components) ───────────────────────────────────────
   # The frontend test node: a test there reaches its harness, the component
   # library and the contracts — never the server.
-  frontend-test-file:
-    surface: [{ use: test-exports-nothing }]
-    imports:
-      reset: true
-      message: >-
-        A web test may reach the tier it exercises, the harnesses under test/, the component
-        library and the contracts it asserts against. It never reaches the server.
-      external:
-        - effect
-        - "@effect/atom-react"
-        - react
-        - react-dom
-        - vitest
-        - "@testing-library/react"
-        - "@testing-library/jest-dom"
-        - "@testing-library/user-event"
-        - msw
-      allow: ["node:**", "~/web/**", "~/components/**", "~/contracts/**", "~/test-drivers/**"]
-
 # The tree, one file per package beside the package it governs. An `include` is
 # replaced whole by the node that file holds; the policy is still evaluated as
 # one, so an inbound rule and a repo-wide prohibition reach every file in the

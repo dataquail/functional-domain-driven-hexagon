@@ -65,6 +65,30 @@ defs:
             the sibling *.view-model.ts. A View may still use Schema, Option, Result, Predicate,
             Duration, Array and the reactivity types it renders.
 
+  # A feature's unit tests run under a bare AtomRegistry or renderView; its
+  # integration tests under __tests__/ render a route through the harness.
+  web-unit-test-file:
+    surface: [{ use: test-exports-nothing }]
+    imports:
+      reset: true
+      message: >-
+        A web unit test reaches the tier it exercises, the harnesses under test/, the renderer
+        testing library and the contracts it asserts against. It never reaches the server, and
+        it never renders a route — that is the integration test under __tests__/.
+      external: [effect, vitest, "@testing-library/react", "@testing-library/user-event"]
+      allow: ["~/web/**", "~/contracts/**"]
+
+  web-integration-test-file:
+    surface: [{ use: test-exports-nothing }]
+    imports:
+      reset: true
+      message: >-
+        A feature integration test renders a route through the integration harness and drives
+        it through the tier-agnostic page drivers, so it names react and @org/test-drivers
+        beside what a unit test may.
+      external: [vitest, react, "@testing-library/react", "@testing-library/user-event"]
+      allow: ["~/web/**", "~/contracts/**", "~/test-drivers/**"]
+
   view-model-file:
     message: >-
       Every *.view-model.ts needs a sibling *.view-model.test.ts (ADR-0026 — the ViewModel holds
@@ -154,12 +178,18 @@ children:
         children:
           "*.view.tsx": { use: view-file }
           "*.view-model.ts": { use: view-model-file }
-          "*.test.ts | *.test.tsx": { use: frontend-test-file }
+          "*.test.ts | *.test.tsx": { use: web-unit-test-file }
+          "__tests__/":
+            message: >-
+              __tests__/ holds a feature's integration tests, *.integration.test.tsx: a route
+              rendered through the integration harness and driven through the page drivers.
+            children:
+              "*.integration.test.ts | *.integration.test.tsx": { use: web-integration-test-file }
           "**/":
             children:
               "*.view.tsx": { use: view-file }
               "*.view-model.ts": { use: view-model-file }
-              "*.test.ts | *.test.tsx": { use: frontend-test-file }
+              "*.test.ts | *.test.tsx": { use: web-unit-test-file }
 
   "services/":
     layout: open
@@ -175,11 +205,11 @@ children:
       external: [effect, "@effect/atom-react", react, react-dom, next, server-only]
       allow: ["node:**", "~/web/services/**", "~/components/**", "~/contracts/**"]
     children:
-      "*.test.ts | *.test.tsx": { use: frontend-test-file }
+      "*.test.ts | *.test.tsx": { use: web-unit-test-file }
       "**/":
         layout: open
         children:
-          "*.test.ts | *.test.tsx": { use: frontend-test-file }
+          "*.test.ts | *.test.tsx": { use: web-unit-test-file }
 
   "lib/": { layout: open, children: {} }
 

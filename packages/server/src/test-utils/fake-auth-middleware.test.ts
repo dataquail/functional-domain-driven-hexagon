@@ -1,5 +1,5 @@
+import { describe, expect, it } from "@effect/vitest";
 import * as Layer from "effect/Layer";
-import { describe, expect, it } from "vitest";
 
 import { UserAuthMiddlewareFake } from "@/test-utils/fake-auth-middleware.js";
 

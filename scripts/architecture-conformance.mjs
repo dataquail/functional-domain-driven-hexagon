@@ -21,8 +21,8 @@ const ROOTS = ["packages"];
 const CEILINGS = {
   residue: 0,
   vacant: 13,
-  slack: 63,
-  concentration: 11,
+  slack: 52,
+  concentration: 0,
   cycles: 0,
 };
 
