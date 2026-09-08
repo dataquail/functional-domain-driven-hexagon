@@ -39,6 +39,10 @@ jobs:
       # entry that no longer fires has to be pruned.
       - name: Architecture check
         run: pnpm lint:architecture
+      # What `check` measures but does not gate — residue, slack and cycles —
+      # held to ceilings that only ratchet down.
+      - name: Architecture conformance
+        run: pnpm lint:conformance
 
   typecheck:
     name: Typecheck
