@@ -286,9 +286,10 @@ violations are keyed by fingerprint). Beyond what `check` reports it names five 
   the fragment, and only when no node granted it uses it. Every line here is a line to
   delete or a decision to write beside the node.
 - **concentration** — a fragment entry used at fewer than half the nodes granted it. Not
-  slack, but a per-file permission written as a many-node allowance (`@effect/sql-pg`
-  at 1 of 16 test nodes): the shape of an allowlist widened to make one build green. The
-  fix is a narrower node, not a wider fragment.
+  slack, but a per-file permission written as a many-node allowance (one test's SDK
+  granted to every test tier): the shape of an allowlist widened to make one build green.
+  The fix is a narrower node or a fragment per kind, never a wider fragment — which is
+  why the server has four test fragments and the singleton needs sit at their own node.
 - **cycles** — every cycle in the walked graph, inside a `cycles` rule's scope or not.
 
 `pnpm lint:conformance` holds all five to ceilings in `scripts/architecture-conformance.mjs`,

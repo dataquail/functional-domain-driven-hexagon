@@ -15,25 +15,62 @@ defs:
   # A test may reach for its harness, so it carries no allowlist. It still
   # inherits every prohibition — a prohibition is not something a node can opt
   # out of.
-  server-test-file:
+  # The four kinds of server test, told apart by what they may name. A test
+  # that needs more than its kind grants is a test of the next kind, and is
+  # named so — the filename stem is what picks the kind.
+  server-unit-test-file:
     surface: [{ use: test-exports-nothing }]
     imports:
       reset: true
       message: >-
-        A test may reach anything inside the server it is testing, plus its harness, the contracts
-        it asserts against and the database it seeds — and nothing else. It is still bound by the
-        module-wide prohibitions: a test reaches another module through that module's barrel, and
-        never imports another test.
+        A unit test names its subject, anything else inside the server (fakes, test-utils),
+        the effect test runner and node's assert — nothing else. No bus, no unit of work, no
+        database, no contracts: a test that needs a bus is a use-case test, one that needs the
+        database is an integration test.
+      external: [effect, "@effect/vitest"]
+      allow: ["node:**", "@/**"]
+
+  server-use-case-test-file:
+    surface: [{ use: test-exports-nothing }]
+    imports:
+      reset: true
+      message: >-
+        A use-case test runs a handler, adapter or policy over fakes, the recording bus and
+        PassThroughUnitOfWork, so it names the two application libraries beside what a unit
+        test may. Still no database and no contracts.
+      external:
+        - effect
+        - "@effect/vitest"
+        - "@effect-server-utils/cqrs"
+        - "@effect-server-utils/unit-of-work"
+      allow: ["node:**", "@/**"]
+
+  server-integration-test-file:
+    surface: [{ use: test-exports-nothing }]
+    imports:
+      reset: true
+      message: >-
+        An integration test seeds and reads the test runtime's database, so it names
+        @org/database beside what a unit test may. It takes its unit of work from the runtime
+        rather than opening its own, and it asserts on rows, not on the contracts — that is
+        the endpoint test's job.
+      external: [effect, "@effect/vitest", vitest]
+      allow: ["node:**", "@/**", "~/database/**"]
+
+  server-unit-of-work-test-file:
+    surface: [{ use: test-exports-nothing }]
+    imports:
+      reset: true
+      message: >-
+        An integration test that opens its own unit of work rather than taking the test
+        runtime's: the unit-of-work test itself, and an event adapter driven inside a
+        transaction the test builds.
       external:
         - effect
         - "@effect/vitest"
         - vitest
         - "@effect-server-utils/cqrs"
         - "@effect-server-utils/unit-of-work"
-        - stripe
-        # The one file allowed to name the SQL driver outside @org/database:
-        # criteria-to-sql's test asserts the SQL it emits.
-        - "@effect/sql-pg"
       allow: ["node:**", "@/**", "~/contracts/**", "~/database/**"]
 
   # The constituent operations bags: domain-private invariant logic on an
@@ -182,7 +219,7 @@ children:
     children:
       "env-vars.ts": {}
       "token-cipher.ts": {}
-      "*.test.ts": { use: server-test-file }
+      "*.test.ts": { use: server-unit-test-file }
 
   # ── platform/ ─────────────────────────────────────────────────────────
   # The cross-cutting kernel every module sits on. Snapshotted from what it
@@ -216,7 +253,7 @@ children:
       "http-endpoint.ts": {}
       "transaction-driver-live.ts": {}
       "translate-database-errors.ts": {}
-      "*.test.ts": { use: server-test-file }
+      "*.integration.test.ts": { use: server-unit-of-work-test-file }
 
       # The one tier the domain may name, so the one that must stay smallest.
       "ids/":
@@ -260,7 +297,7 @@ children:
               "domain-event.ts": {}
               "persistence-unavailable.ts": {}
               "specification.ts": {}
-              "*.test.ts": { use: server-test-file }
+              "*.test.ts": { use: server-unit-test-file }
           # One level outside contracts/, and that placement is the rule: it is
           # what keeps the bus out of reach of the domain.
           "event-bus.ts":
@@ -290,7 +327,7 @@ children:
             - "@/platform/ddd/**"
         children:
           "cqrs-runtime.ts": {}
-          "*.test.ts": { use: server-test-file }
+          "*.test.ts": { use: server-use-case-test-file }
 
       "auth/":
         message: >-
@@ -308,7 +345,7 @@ children:
           "actions.ts": {}
           "authz.ts": {}
           "cookie-codec.ts": {}
-          "*.test.ts": { use: server-test-file }
+          "*.test.ts": { use: server-unit-test-file }
 
       "notifications/":
         message: >-
@@ -326,7 +363,7 @@ children:
           "mailer.ts": {}
           "mail-errors.ts": {}
           "*-live.ts": {}
-          "*.test.ts": { use: server-test-file }
+          "*.test.ts": { use: server-unit-test-file }
 
       "middlewares/":
         message: >-
@@ -347,7 +384,7 @@ children:
             - "~/contracts/**"
         children:
           "*-live.ts": {}
-          "*.test.ts": { use: server-test-file }
+          "*.test.ts": { use: server-unit-test-file }
 
       "persistence/":
         message: >-
@@ -363,7 +400,15 @@ children:
           allow: ["@/platform/ddd/contracts/**", "@/platform/persistence/**"]
         children:
           "criteria-to-sql.ts": {}
-          "*.test.ts": { use: server-test-file }
+          "*.test.ts":
+            surface: [{ use: test-exports-nothing }]
+            imports:
+              reset: true
+              message: >-
+                criteria-to-sql's test asserts the SQL it emits, so it is the one test allowed
+                to name the SQL driver — beside what a unit test may.
+              external: [effect, "@effect/vitest", "@effect/sql-pg"]
+              allow: ["node:**", "@/**"]
 
   # ── modules/ ──────────────────────────────────────────────────────────
   "modules/{module}/":
@@ -503,7 +548,7 @@ children:
               unit test with the repository fakes).
             requires: ["{base}.test.ts"]
             surface: [{ use: one-handler-export }, { use: camel-case-value-exports }]
-          "*.test.ts": { use: server-test-file }
+          "*.test.ts": { use: server-use-case-test-file }
 
       "queries/":
         message: "queries/ holds a <verb-noun>.query.ts schema and its <verb-noun>.handler.ts handler."
@@ -548,7 +593,7 @@ children:
               via the live repository).
             requires: ["{base}.integration.test.ts"]
             surface: [{ use: one-handler-export }, { use: camel-case-value-exports }]
-          "*.test.ts": { use: server-test-file }
+          "*.integration.test.ts": { use: server-integration-test-file }
 
       "event-handlers/":
         message: >-
@@ -577,14 +622,14 @@ children:
             message: "Every event handler (*.handler.ts) needs a sibling *.handler.test.ts."
             requires: ["{base}.test.ts"]
             surface: [{ use: one-handler-export }, { use: camel-case-value-exports }]
-          "*.test.ts": { use: server-test-file }
+          "*.test.ts": { use: server-use-case-test-file }
           "triggers/":
             message: >-
               event-handlers/triggers/ holds one <publisher>.triggers.ts per upstream publisher
               whose events this module reacts to.
             children:
               "*.triggers.ts": {}
-              "*.test.ts": { use: server-test-file }
+              "*.test.ts": { use: server-use-case-test-file }
 
       "sagas/":
         message: >-
@@ -614,7 +659,7 @@ children:
               behaviour across several events and over time, which is exactly what nothing else
               in the suite covers.
             requires: ["{base}.test.ts"]
-          "*.test.ts": { use: server-test-file }
+          "*.test.ts": { use: server-use-case-test-file }
 
       "policies/":
         message: >-
@@ -650,7 +695,19 @@ children:
           "*.policies.ts": {}
           "*.resource-resolver.ts | *.resource-resolvers.ts": {}
           "*.policy.ts": {}
-          "*.test.ts": { use: server-test-file }
+          "*.test.ts":
+            surface: [{ use: test-exports-nothing }]
+            imports:
+              reset: true
+              message: >-
+                A policy test is a use-case test that also asserts the contract error a resolver
+                raises, so it names the contracts package beside what a use-case test may.
+              external:
+                - effect
+                - "@effect/vitest"
+                - "@effect-server-utils/cqrs"
+                - "@effect-server-utils/unit-of-work"
+              allow: ["node:**", "@/**", "~/contracts/**"]
 
       "infrastructure/":
         message: >-
@@ -706,7 +763,8 @@ children:
               "*.repository-live.ts": {}
               "*.repository-fake.ts": {}
               "*.mapper.ts": {}
-              "*.test.ts": { use: server-test-file }
+              "*.repository-fake.test.ts | *.mapper.test.ts": { use: server-unit-test-file }
+              "*.repository-live.integration.test.ts": { use: server-integration-test-file }
 
           "clients/":
             imports:
@@ -732,7 +790,15 @@ children:
               "*.client-fake.ts": {}
               "*.client.ts": {}
               "*.email.tsx": {}
-              "*.test.ts | *.test.tsx": { use: server-test-file }
+              "*.test.ts | *.test.tsx":
+                surface: [{ use: test-exports-nothing }]
+                imports:
+                  reset: true
+                  message: >-
+                    A client's test drives the SDK the client wraps, so it names that SDK beside
+                    what a unit test may.
+                  external: [effect, "@effect/vitest", stripe]
+                  allow: ["node:**", "@/**"]
 
           # One of the two folders allowed to name another module's barrel —
           # this is the anti-corruption seam (ADR-0022), so the foreign
@@ -748,7 +814,7 @@ children:
             children:
               "*.acl-live.ts": {}
               "*.acl-fake.ts": {}
-              "*.test.ts": { use: server-test-file }
+              "*.test.ts": { use: server-use-case-test-file }
 
       "interface/":
         message: >-
@@ -812,7 +878,17 @@ children:
                     gets.
                   external: [effect]
                   allow: ["node:**"]
-              "*.test.ts": { use: server-test-file }
+              "*.endpoint.test.ts | *.util.test.ts": { use: server-unit-test-file }
+              "*.endpoint.integration.test.ts":
+                surface: [{ use: test-exports-nothing }]
+                imports:
+                  reset: true
+                  message: >-
+                    An endpoint test exercises the contract over real HTTP against the test
+                    runtime's database, so it names @org/contracts, @org/database and the bus
+                    it seeds through, beside what a unit test may.
+                  external: [effect, "@effect/vitest", "@effect-server-utils/cqrs"]
+                  allow: ["node:**", "@/**", "~/contracts/**", "~/database/**"]
 
           "events/":
             message: >-
@@ -840,7 +916,8 @@ children:
                   Every event adapter (*.event-adapter.ts) needs a sibling
                   *.event-adapter.test.ts (ADR-0007 ACL).
                 requires: ["{base}.test.ts"]
-              "*.test.ts": { use: server-test-file }
+              "*.event-adapter.test.ts": { use: server-use-case-test-file }
+              "*.event-adapter.integration.test.ts": { use: server-unit-of-work-test-file }
 
       "domain/":
         message: >-
@@ -883,7 +960,7 @@ children:
                   A domain service is real domain logic (ADR-0023), so it needs a sibling
                   *.domain-service.test.ts.
                 requires: ["{base}.test.ts"]
-              "*.test.ts": { use: server-test-file }
+              "*.test.ts": { use: server-unit-test-file }
 
           "ports/":
             message: >-
@@ -1057,7 +1134,7 @@ children:
                     probe:
                       source: "export type ZzRepositoryShape = ZzBase & { readonly activate: () => void };"
                       name: activate
-              "*.test.ts": { use: server-test-file }
+              "*.test.ts": { use: server-unit-test-file }
 
               "value-objects/":
                 message: >-
@@ -1067,7 +1144,7 @@ children:
                   "*.value-object.ts": {}
                   "*.value-object-ops.ts": { use: constituent-ops }
                   "*.specification.ts": { use: specification }
-                  "*.test.ts": { use: server-test-file }
+                  "*.test.ts": { use: server-unit-test-file }
 
   # ── test-utils/ ───────────────────────────────────────────────────────
   # The third composition root: it builds the whole application from the
@@ -1107,4 +1184,4 @@ children:
       "test-*.ts": {}
       "*-test-runtime.ts": {}
       "global-setup.ts": {}
-      "*.test.ts": { use: server-test-file }
+      "*.test.ts": { use: server-unit-test-file }
