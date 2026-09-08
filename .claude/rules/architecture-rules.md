@@ -273,22 +273,29 @@ claimed, not policed, and does not count.
 `pnpm architecture:conformance` is a measurement, not a gate — it never fails, and
 `--against <manifest>` measures the tree against a policy it is not yet held to.
 `--json` emits a versioned snapshot (`manifest.sha256` says whether the policy moved;
-violations are keyed by fingerprint). Beyond what `check` reports it names three things:
+violations are keyed by fingerprint). Beyond what `check` reports it names five things:
 
 - **residue** — files no family reaches. The coverage floors bound the fraction; this
   lists the files.
-- **slack** — `imports.allow` / `imports.external` entries no import in the tree uses.
-  A real allowance nobody uses is a line to delete; most of this repo's slack is a
-  shared `defs` fragment (`server-test-file`, `frontend-test-file`) landing on nodes
-  that use a subset of it, and is not debt. Widening an allowlist to make a build green
-  shows up here as one used entry beside several unused ones.
+- **vacant** — nodes that state an import allowlist and select no walked file: a tier
+  declared ahead of its first file (`event-handlers/`, `sagas/`), or a pattern that no
+  longer matches anything (a `*.test.ts` node one folder above where the tests live).
+  Their allowances are not counted as slack. Delete the stale ones; keep the tiers.
+- **slack** — `imports.allow` / `imports.external` entries no import in the tree uses,
+  vacant nodes excluded. An entry that arrived through `use` is reported once against
+  the fragment, and only when no node granted it uses it. Every line here is a line to
+  delete or a decision to write beside the node.
+- **concentration** — a fragment entry used at fewer than half the nodes granted it. Not
+  slack, but a per-file permission written as a many-node allowance (`@effect/sql-pg`
+  at 1 of 16 test nodes): the shape of an allowlist widened to make one build green. The
+  fix is a narrower node, not a wider fragment.
 - **cycles** — every cycle in the walked graph, inside a `cycles` rule's scope or not.
 
-`pnpm lint:conformance` holds all three to ceilings in `scripts/architecture-conformance.mjs`,
+`pnpm lint:conformance` holds all five to ceilings in `scripts/architecture-conformance.mjs`,
 ratcheted like the coverage floors: lower a ceiling when the number falls (the script
 says so), never raise one to make a red run green. `residue` and `cycles` sit at zero;
-`slack` is a ceiling, not a target, because a shared fragment's unused entries are the
-price of stating a tier once.
+the other three are ceilings on acknowledged debt, each line of which is named by
+`pnpm architecture:conformance`.
 
 ## Every rule proves itself
 
@@ -340,7 +347,7 @@ pnpm architecture:baseline          # record the violations this repo carries
 pnpm architecture:explain <file>    # which rules of every family select this file, and why
 pnpm architecture:facts <file>      # what the parser read: edges, bindings, members, calls, exports
 pnpm architecture:coverage          # reach per family, and the adoption backlog
-pnpm architecture:conformance       # residue, slack, ordered violations — a measurement, never a failure
+pnpm architecture:conformance       # residue, vacancy, slack, concentration — a measurement, never a failure
 pnpm exec architecture migrate      # rewrite a .mjs manifest as one architecture.yaml (done; ADR-0031)
 ```
 

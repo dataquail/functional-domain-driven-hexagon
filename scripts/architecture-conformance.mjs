@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 // `architecture check` gates violations, coverage floors, the baseline and the
-// adoption ceilings. `architecture conformance` measures three things it does
-// not: residue (files no family reaches), slack (allowances nothing imports
-// through) and cycles anywhere in the graph. None of them fails a build on its
-// own, so this script holds them to ceilings that only ever go down — the same
-// ratchet the coverage floors follow, in the other direction.
+// adoption ceilings. `architecture conformance` measures what it does not:
+// residue (files no family reaches), vacancy (allowlisted nodes no file
+// reaches), slack (allowances nothing imports through), concentration (a
+// fragment entry used at few of the nodes granted it) and cycles anywhere in
+// the graph. None of them fails a build on its own, so this script holds them
+// to ceilings that only ever go down — the same ratchet the coverage floors
+// follow, in the other direction.
 
 import { execFileSync } from "node:child_process";
 import { appendFileSync } from "node:fs";
@@ -18,7 +20,9 @@ const ROOTS = ["packages"];
 // deleting the allowance, reaching the file, or breaking the cycle.
 const CEILINGS = {
   residue: 0,
-  slack: 339,
+  vacant: 13,
+  slack: 63,
+  concentration: 11,
   cycles: 0,
 };
 
@@ -39,7 +43,10 @@ if (snapshot.version !== 1) {
 
 const measured = {
   residue: snapshot.residue.files.length,
+  vacant: snapshot.vacant.length,
   slack: snapshot.slack.length,
+  // The report's own threshold: an entry used at fewer than half its nodes.
+  concentration: snapshot.concentration.filter((one) => one.usedAt * 2 < one.of).length,
   cycles: snapshot.cycles,
 };
 
@@ -55,7 +62,7 @@ console.log(
 console.log("");
 for (const { measure, actual, ceiling, verdict } of rows) {
   console.log(
-    `  ${measure.padEnd(8)} ${String(actual).padStart(5)}  ≤ ${String(ceiling).padEnd(5)} ${verdict}`,
+    `  ${measure.padEnd(14)} ${String(actual).padStart(5)}  ≤ ${String(ceiling).padEnd(5)} ${verdict}`,
   );
 }
 
@@ -81,6 +88,8 @@ if (over.length > 0) {
   console.error(
     `conformance fell: ${over.map((r) => `${r.measure} ${String(r.actual)} > ${String(r.ceiling)}`).join(", ")}.`,
   );
-  console.error("Run `pnpm architecture:conformance` to see which files, allowances or cycles.");
+  console.error(
+    "Run `pnpm architecture:conformance` to see which files, nodes, allowances or cycles.",
+  );
   process.exit(1);
 }
