@@ -25,6 +25,8 @@ const PROJECTS = [
   "packages/database/tsconfig.src.json",
   "packages/database/tsconfig.test.json",
   "packages/api-client/tsconfig.src.json",
+  "packages/module/tsconfig.src.json",
+  "packages/module/tsconfig.test.json",
   "packages/server/tsconfig.src.json",
   "packages/server/tsconfig.test.json",
   "packages/jobs/tsconfig.src.json",

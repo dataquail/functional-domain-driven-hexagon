@@ -315,6 +315,7 @@ defs:
 # repo, and this list is the index of every file that takes part.
 tree:
   "~/contracts/": { include: packages/contracts/architecture.yaml }
+  "~/module/": { include: packages/module/architecture.yaml }
   "~/database/": { include: packages/database/architecture.yaml }
   "~/api-client/": { include: packages/api-client/architecture.yaml }
   "~/cli/": { include: packages/cli/architecture.yaml }

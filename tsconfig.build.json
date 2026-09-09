@@ -7,6 +7,7 @@
   // needing the same dependency race to write its .tsbuildinfo.
   "references": [
     { "path": "packages/contracts/tsconfig.build.json" },
+    { "path": "packages/module/tsconfig.build.json" },
     { "path": "packages/database/tsconfig.build.json" },
     { "path": "packages/api-client/tsconfig.build.json" },
     { "path": "packages/server/tsconfig.build.json" },

@@ -32,6 +32,7 @@
     "@effect/platform-node": "4.0.0-beta.94",
     "@org/contracts": "workspace:^",
     "@org/database": "workspace:^",
+    "@org/module": "workspace:^",
     "@react-email/components": "^1.0.12",
     "@react-email/render": "^2.0.10",
     "cookie": "^1.1.1",

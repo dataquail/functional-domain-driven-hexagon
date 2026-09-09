@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "include": ["src"],
   "exclude": ["vitest.config.ts", "src/**/*.test.ts"],
-  "references": [{ "path": "../contracts" }, { "path": "../database" }],
+  "references": [{ "path": "../contracts" }, { "path": "../database" }, { "path": "../module" }],
   "compilerOptions": {
     "types": ["node"],
     // React Email templates (`infrastructure/external/*.tsx`) are authored as
@@ -17,7 +17,9 @@
       "@org/contracts": ["../contracts/src/index.js"],
       "@org/contracts/*": ["../contracts/src/*.js"],
       "@org/database": ["../database/src/index.js"],
-      "@org/database/*": ["../database/src/*.js"]
+      "@org/database/*": ["../database/src/*.js"],
+      "@org/module": ["../module/src/index.js"],
+      "@org/module/*": ["../module/src/*.js"]
     }
   }
 }

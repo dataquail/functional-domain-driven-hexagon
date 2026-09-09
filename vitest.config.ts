@@ -23,6 +23,7 @@ export default defineConfig({
       "packages/contracts",
       "packages/database",
       "packages/jobs",
+      "packages/module",
       "packages/server",
       "packages/web",
     ],
@@ -37,6 +38,7 @@ export default defineConfig({
         "packages/contracts/src/**/*.ts",
         "packages/database/src/**/*.ts",
         "packages/jobs/src/**/*.ts",
+        "packages/module/src/**/*.ts",
         "packages/server/src/**/*.{ts,tsx}",
         "packages/web/features/**/*.{ts,tsx}",
         "packages/web/services/**/*.{ts,tsx}",
@@ -89,6 +91,12 @@ export default defineConfig({
             },
             "packages/contracts/src/**": { statements: 95, lines: 95 },
             "packages/jobs/src/**": { statements: 80, lines: 80 },
+            "packages/module/src/**": {
+              statements: 100,
+              branches: 100,
+              functions: 100,
+              lines: 100,
+            },
           }
         : undefined,
     },

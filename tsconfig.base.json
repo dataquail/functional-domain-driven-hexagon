@@ -64,7 +64,9 @@
       "@org/cli": ["./packages/cli/src/main.js"],
       "@org/cli/*": ["./packages/cli/src/*.js"],
       "@org/mcp": ["./packages/mcp/src/main.js"],
-      "@org/mcp/*": ["./packages/mcp/src/*.js"]
+      "@org/mcp/*": ["./packages/mcp/src/*.js"],
+      "@org/module": ["./packages/module/src/index.js"],
+      "@org/module/*": ["./packages/module/src/*.js"]
     }
   }
 }

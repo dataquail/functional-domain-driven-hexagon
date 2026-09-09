@@ -54,6 +54,7 @@ const config: ViteUserConfig = {
       ...alias("contracts"),
       ...alias("database"),
       ...alias("jobs"),
+      ...alias("module"),
       ...alias("server"),
     },
   },

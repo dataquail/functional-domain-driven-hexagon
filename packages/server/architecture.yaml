@@ -329,6 +329,37 @@ children:
           "cqrs-runtime.ts": {}
           "*.test.ts": { use: server-use-case-test-file }
 
+      # The other half of the shared composition root: platform/cqrs/ folds the
+      # modules' dispatch surfaces into one routing table, this states the order
+      # they are built in. Both outer roots consume it, which is what keeps the
+      # order from being written twice.
+      "modules/":
+        message: >-
+          platform/modules/ states the application's module order once, checked: each module is
+          added after the modules it reaches, and the builder refuses a layer whose
+          requirements neither the declared platform nor the modules before it cover. It also
+          holds the two registries — policies and resource resolvers — that every composition
+          root builds identically.
+        imports:
+          reset: true
+          message: >-
+            The module registry names each module through its barrel, the composition kernel
+            that checks the order, and the platform services it declares as the modules' floor.
+            It reaches no module internals.
+          external:
+            - effect
+            - "@effect-server-utils/authz"
+            - "@effect-server-utils/unit-of-work"
+          allow:
+            - "~/module/**"
+            - "@/modules/*/index.ts"
+            - "@/platform/ddd/**"
+            - "@/common/**"
+            - "~/database/**"
+        children:
+          "application-modules.ts": {}
+          "*.test.ts": { use: server-unit-test-file }
+
       "auth/":
         message: >-
           platform/auth/ is the only server-side authorization configuration: the action
@@ -1167,7 +1198,6 @@ children:
         - vitest
         - "@effect/platform-node"
         - "@effect-server-utils/cqrs"
-        - "@effect-server-utils/authz"
       allow:
         - "node:**"
         - "@/common/**"

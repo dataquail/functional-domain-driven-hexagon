@@ -24,6 +24,7 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 | `@org/components`   | Bespoke component library (primitives + patterns) + Storybook (ADR-0015).          |
 | `@org/contracts`    | Shared HTTP API contracts, schemas, errors — consumed by server and clients.       |
 | `@org/database`     | DB access kernel (effect/sql client, `RowSchemas`, row decoding) + migrations.     |
+| `@org/module`       | The checked composition root: modules as values, dependency order verified by tsc. |
 | `@org/jobs`         | Background/cron jobs.                                                              |
 | `@org/cli`          | Command-line client (device-flow auth, organizations, todos).                      |
 | `@org/mcp`          | MCP (stdio) server exposing the CLI surface as tools.                              |

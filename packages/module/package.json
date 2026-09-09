@@ -1,0 +1,22 @@
+{
+  "name": "@org/module",
+  "version": "0.0.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "A checked composition root for Effect applications: modules as values, dependency order verified by the type checker, phase-aware provision.",
+  "scripts": {
+    "check": "tsc -b tsconfig.json",
+    "test": "vitest",
+    "clean": "rm -rf build .tsbuildinfo",
+    "build": "tsc -b tsconfig.build.json",
+    "lint": "eslint . --quiet",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "effect": "4.0.0-beta.94"
+  },
+  "devDependencies": {
+    "@effect/vitest": "4.0.0-beta.94",
+    "@types/node": "^25.9.4"
+  }
+}

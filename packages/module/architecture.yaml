@@ -1,0 +1,46 @@
+# yaml-language-server: $schema=https://dataquail.github.io/goodbones/schema/architecture-node.schema.json
+#
+# @org/module — the checked composition root. A module is a value carrying a
+# name and the three layers an application provides at three different points;
+# the builder folds them in order and refuses a module whose requirements
+# neither the declared platform nor the modules added before it cover.
+#
+# One node of the architecture policy: the root architecture.yaml includes this
+# file at "~/module/". Patterns are repo-relative and use the root's aliases; a
+# fragment defined under `defs` here joins the one namespace every file shares,
+# so name it for what it is.
+
+name: kebab-case
+message: >-
+  @org/module is the composition kernel. It knows about layers and nothing else — no
+  application, no HTTP framework, no persistence — which is what lets it be lifted out of this
+  repo unchanged.
+imports:
+  message: >-
+    The builder composes layers. It may name `effect`, the test runner and its own siblings;
+    naming a package, a feature module or a framework would make it this application's
+    composition root rather than a library for building one.
+  external: [effect, "@effect/vitest", vitest]
+  allow: ["node:**", "~/module/**", "vitest.shared.ts"]
+surface:
+  - use: no-default-exports
+    except: ["**/vitest.config.ts"]
+children:
+  "vitest.config.ts":
+    # Exempted from the no-default-export rule above, and then held to the
+    # export it was exempted for: vitest loads a config by its default.
+    surface:
+      - message: "vitest loads a config by its default export, so this file has exactly one."
+        kinds: [default]
+        count: { min: 1, max: 1 }
+  "src/":
+    message: >-
+      src/ holds the builder, the module value and the barrel that publishes both as
+      namespaces — the shape the @effect-server-utils siblings this package will join are
+      consumed in.
+    children:
+      "builder.ts": {}
+      "module.ts": {}
+      "index.ts": {}
+      "*.test.ts":
+        surface: [{ use: test-exports-nothing }]

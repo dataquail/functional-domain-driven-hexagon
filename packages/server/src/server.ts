@@ -2,7 +2,6 @@ import { createServer } from "node:http";
 
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
-import { makePolicyRegistry, makeResourceResolverRegistry } from "@effect-server-utils/authz";
 import * as dotenv from "dotenv";
 import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
@@ -26,118 +25,24 @@ import {
 } from "@/platform/cqrs/cqrs-runtime.js";
 
 import { EnvVars } from "./common/env-vars.js";
-import {
-  AuthCommandsLive,
-  AuthHttpDepsLive,
-  AuthModuleLive,
-  AuthQueriesLive,
-  AuthSharedDepsLive,
-} from "./modules/auth/index.js";
-import {
-  BillingCommandsLive,
-  BillingModuleLive,
-  BillingPoliciesLive,
-  BillingPolicyContribution,
-  BillingQueriesLive,
-  BillingResolverEntry,
-  BillingResolverEntryLive,
-} from "./modules/billing/index.js";
-import {
-  OrganizationCommandsLive,
-  OrganizationModuleLive,
-  OrganizationPoliciesLive,
-  OrganizationPolicyContribution,
-  OrganizationQueriesLive,
-  OrganizationResolverEntry,
-  OrganizationResolverEntryLive,
-} from "./modules/organization/index.js";
-import { RoleCommandsLive, RoleQueriesLive } from "./modules/role/index.js";
-import {
-  TodoCollectionResolverEntry,
-  TodoCollectionResolverEntryLive,
-  TodoCommandsLive,
-  TodoPoliciesLive,
-  TodoPolicyContribution,
-  TodoQueriesLive,
-  TodoResolverEntry,
-  TodoResolverEntryLive,
-  TodosModuleLive,
-} from "./modules/todos/index.js";
-import { UserCommandsLive, UserModuleLive, UserQueriesLive } from "./modules/user/index.js";
-import { WalletCommandsLive, WalletModuleLive } from "./modules/wallet/index.js";
+import { AuthSharedDepsLive } from "./modules/auth/index.js";
+import { BillingCommandsLive } from "./modules/billing/index.js";
 import { DatabaseLive } from "./platform/database-live.js";
 import { UserAuthMiddlewareLive } from "./platform/middlewares/auth-middleware-live.js";
+import {
+  applicationModules,
+  PolicyRegistryLive,
+  ResourceResolverRegistryLive,
+} from "./platform/modules/application-modules.js";
 
 dotenv.config({
   path: "../../.env",
 });
 
-// The module dependency order, stated once. A module whose handlers reach another
-// module through an outbound ACL port sits above the module it reaches, so the graph
-// the layers resolve is the real cross-module graph rather than the aggregate one a
-// single all-modules bus would impose. A genuine cycle between two modules would
-// surface here as an unresolvable layer, which is the point.
-const ModuleDispatchersLive = Layer.mergeAll(
-  // Reach downward through an outbound ACL port: auth provisions a user and asks role
-  // whether the caller is a super admin; organization asks role the same question and
-  // asks user for members' emails.
-  AuthCommandsLive,
-  AuthQueriesLive,
-  OrganizationCommandsLive,
-  OrganizationQueriesLive,
-  // Reach no other module; peers of the above only because nothing reaches them either.
-  BillingCommandsLive,
-  BillingQueriesLive,
-  TodoCommandsLive,
-  TodoQueriesLive,
-  WalletCommandsLive,
-).pipe(
-  // The modules the first group reaches into. They reach nothing themselves, which is
-  // what makes the ordering possible at all.
-  Layer.provideMerge(
-    Layer.mergeAll(RoleCommandsLive, RoleQueriesLive, UserCommandsLive, UserQueriesLive),
-  ),
-);
-
-// Every module publishes its policy contribution behind a Tag whose Layer closes
-// over that module's own ACL ports, so every registered check is R = never and
-// the registry holds no ambient service requirements.
-const PolicyRegistryLive = Layer.unwrap(
-  Effect.gen(function* () {
-    const todoPolicies = yield* TodoPolicyContribution;
-    const billingPolicies = yield* BillingPolicyContribution;
-    const organizationPolicies = yield* OrganizationPolicyContribution;
-    return makePolicyRegistry([todoPolicies, billingPolicies, organizationPolicies]);
-  }),
-).pipe(Layer.provide([TodoPoliciesLive, BillingPoliciesLive, OrganizationPoliciesLive]));
-
-// Resource resolvers are owned by each module: the module exports a
-// `*ResolverEntryLive` layer that internally satisfies its repository
-// dependency, so the composition root never sees module-internal
-// repository Tags. Adding a module to the registry: import its
-// `*ResolverEntry` Tag + `*ResolverEntryLive` layer, yield the Tag,
-// and provide the layer below.
-const ResourceResolverRegistryLive = Layer.unwrap(
-  Effect.gen(function* () {
-    const organizationResolver = yield* OrganizationResolverEntry;
-    const todoCollectionResolver = yield* TodoCollectionResolverEntry;
-    const todoResolver = yield* TodoResolverEntry;
-    const billingResolver = yield* BillingResolverEntry;
-    return makeResourceResolverRegistry({
-      organization: organizationResolver,
-      todoCollection: todoCollectionResolver,
-      todo: todoResolver,
-      billing: billingResolver,
-    });
-  }),
-).pipe(
-  Layer.provide([
-    OrganizationResolverEntryLive,
-    TodoCollectionResolverEntryLive,
-    TodoResolverEntryLive,
-    BillingResolverEntryLive,
-  ]),
-);
+// The application, assembled from the module order stated once in
+// platform/modules/. Production takes the live billing gateway; the test runtime
+// passes the fake to the same factory.
+const application = applicationModules(BillingCommandsLive);
 
 // v4 model: `HttpApiBuilder.layer` registers the group handlers into the
 // `HttpRouter`; the handlers' runtime dependencies are tracked as
@@ -145,14 +50,7 @@ const ResourceResolverRegistryLive = Layer.unwrap(
 // `HttpRouter.serve` unwraps them (see `AppServicesLive` below). So this
 // layer provides only the module group implementations at build time.
 const ApiLive = HttpApiBuilder.layer(Api).pipe(
-  Layer.provide([
-    TodosModuleLive,
-    UserModuleLive,
-    WalletModuleLive,
-    AuthModuleLive,
-    OrganizationModuleLive,
-    BillingModuleLive,
-  ]),
+  Layer.provide(application.http),
   // The middleware impl is a build-time requirement of the API (groups declare
   // `.middleware(UserAuthMiddleware)`); providing it here applies the wrapper,
   // which supplies `CurrentUser` to every gated endpoint. Its own deps
@@ -208,22 +106,12 @@ const HttpLive = HttpRouter.serve(ApiLive, {
   // The endpoints' per-request services, now unwrapped by `serve` into plain
   // requirements. The provide ORDER encodes the dependency graph (peers don't
   // satisfy each other) — it mirrors the pre-v4 ApiLive wiring.
-  // The policy registry and the endpoint-consumed module services are peers of the auth
-  // middleware: all consume the buses provided just below and feed upstream consumers
-  // (endpoints + policy checks). No module's ACL adapter appears here any more — each is
-  // provided inside the module that owns it. The Stripe-vs-fake `BillingGateway` swap
-  // ships as the module's `BillingHttpDeps{Live,Fake}` bundles: prod provides the live
-  // one here; `test-server.ts` provides the fake, so the `BillingGateway` Tag stays
-  // private to the module and only the opaque bundle appears here.
-  Layer.provide([
-    PolicyRegistryLive,
-    ResourceResolverRegistryLive,
-    // Endpoint-consumed, module-owned services that `serve` unwrapped from
-    // request-scoped into plain requirements (see the module Lives). Prod
-    // uses the live billing gateway; test-server.ts swaps the fake. Their
-    // deps (EnvVars, etc.) close below.
-    AuthHttpDepsLive,
-  ]),
+  // The policy registry and the modules' httpDeps are peers of the auth middleware:
+  // all consume the buses provided just below and feed upstream consumers (endpoints
+  // + policy checks). No module's ACL adapter appears here any more — each is
+  // provided inside the module that owns it, and each module's request-scoped
+  // dependency rides `application.httpDeps` rather than being named here.
+  Layer.provide([PolicyRegistryLive, ResourceResolverRegistryLive, application.httpDeps]),
   // CommandBus + QueryBus provide TO the middleware (which dispatches
   // FindSessionQuery). The event bus is not here: the unit of work resolves it from
   // the running fiber's context when it flushes, so a peer of `UnitOfWork` below
@@ -231,7 +119,7 @@ const HttpLive = HttpRouter.serve(ApiLive, {
   Layer.provide([CommandBusLive, QueryBusLive, UnhandledFailuresLive]),
   // Merged, not provided: the buses route through these, and so do the outbound ACL
   // adapters above, which name the module they reach rather than the bus.
-  Layer.provideMerge(ModuleDispatchersLive),
+  Layer.provideMerge(application.layer),
   // `provideMerge`, and below the dispatchers, because the demand runs both ways: the
   // layers above consume these, and so does every module dispatcher (`handlersOf`
   // hoists its handlers' requirements onto the layer). Merging one layer value in one
