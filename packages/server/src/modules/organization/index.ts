@@ -26,18 +26,10 @@ export {
   OrganizationRoleGranted,
   OrganizationRoleRevoked,
 } from "./domain/organization-roles/organization-role.events.js";
-export {
-  organizationCommandGroup,
-  OrganizationCommands,
-  OrganizationCommandsLive,
-} from "./organization.command-handlers.js";
+export { organizationCommandGroup, OrganizationCommands } from "./organization.command-handlers.js";
 export { organizationEventSpanAttributes } from "./organization.event-span-attributes.js";
-export { OrganizationModuleLive } from "./organization.module.js";
-export {
-  OrganizationQueries,
-  OrganizationQueriesLive,
-  organizationQueryGroup,
-} from "./organization.query-handlers.js";
+export { OrganizationModule } from "./organization.module.js";
+export { OrganizationQueries, organizationQueryGroup } from "./organization.query-handlers.js";
 export {
   OrganizationCollectionResource,
   OrganizationPoliciesLive,

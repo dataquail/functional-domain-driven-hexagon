@@ -470,6 +470,7 @@ children:
       external: [effect, "@effect-server-utils/cqrs"]
       allow:
         - "node:**"
+        - "~/module/**"
         - "@/modules/{module}/**"
         - "@/platform/ddd/**"
         - "@/platform/ids/**"

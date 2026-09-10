@@ -6,7 +6,7 @@ import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 
 import { EnvVars } from "@/common/env-vars.js";
 import { AuthSharedDepsLive } from "@/modules/auth/index.js";
-import { BillingCommandsFake } from "@/modules/billing/index.js";
+import { BillingModuleFake } from "@/modules/billing/index.js";
 import { Api } from "@/platform/api.js";
 import {
   CommandBusLive,
@@ -28,7 +28,7 @@ import { TestDatabaseLive } from "@/test-utils/test-database.js";
 
 // The same module order production runs, from the same factory — only billing's
 // gateway differs, and it differs by being passed in.
-const application = applicationModules(BillingCommandsFake);
+const application = applicationModules(BillingModuleFake);
 
 // `CommandBus` and `QueryBus` are cross-cutting public production APIs
 // (ADR-0006) — the same dispatch surface every HTTP handler uses. Exposing
@@ -41,10 +41,7 @@ const application = applicationModules(BillingCommandsFake);
 // and aren't meant to be driven directly from tests.
 // Factory: build a TestServer composition with a swappable
 // auth-middleware fake. Default callers (every existing integration
-// test) get the super-admin fake. The Stripe-vs-fake `BillingGateway`
-// swap lives inside `BillingModuleTestLive` (the test-variant module
-// Live exported from billing's barrel) — no gateway Layer threads
-// through the composition root.
+// test) get the super-admin fake.
 export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddleware>) => {
   // Same v4 shape as server.ts: `HttpApiBuilder.layer` registers the group
   // handlers + the auth middleware (build-time — the groups declare
