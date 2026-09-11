@@ -6,7 +6,7 @@ import * as Layer from "effect/Layer";
 
 import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.js";
 import { PlatformRolesLive } from "@/modules/organization/infrastructure/acl/platform-roles.acl-live.js";
-import { RoleQueries } from "@/modules/role/index.js";
+import { RoleQueries } from "@/modules/role/role.exports.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // Two consumers in this module: the policies' super-admin bypass, and the

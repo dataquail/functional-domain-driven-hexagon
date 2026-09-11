@@ -13,7 +13,7 @@ import {
   UserProvisioningConflict,
 } from "@/modules/auth/domain/ports/acl/user-provisioning.acl.js";
 import { UserProvisioningLive } from "@/modules/auth/infrastructure/acl/user-provisioning.acl-live.js";
-import { UserAlreadyExists, UserCommands } from "@/modules/user/index.js";
+import { UserAlreadyExists, UserCommands } from "@/modules/user/user.exports.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // `UserProvisioningLive` is a thin translation over the user module's own dispatch

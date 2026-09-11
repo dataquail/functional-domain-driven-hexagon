@@ -1,10 +1,7 @@
-export { CreateUserCommand } from "./commands/create-user.command.js";
-export { DeleteUserCommand } from "./commands/delete-user.command.js";
-// Part of `CreateUserCommand`'s published failure channel: a module that provisions
-// through this one has to be able to name the outcome it translates.
-export { UserAlreadyExists } from "./domain/user/user.errors.js";
-export { UserCreated } from "./domain/user/user.events.js";
-export { FindUsersQuery } from "./queries/find-users.query.js";
+// The wiring surface: what the platform names to assemble and drive this module.
+// What a peer module may reach is user.exports.ts. `UserCommands` and
+// `UserQueries` appear in both: the buses route them, and auth and organization
+// resolve them through their own ACL ports.
 export { userCommandGroup, UserCommands } from "./user.command-handlers.js";
 export { userEventSpanAttributes } from "./user.event-span-attributes.js";
 export { UserModule } from "./user.module.js";

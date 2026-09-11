@@ -703,9 +703,9 @@ const ALLOWED = [
     "packages/database/src/index.ts",
   ],
   [
-    "an ACL adapter naming a foreign barrel (LEGAL)",
+    "an ACL adapter naming a foreign peer surface (LEGAL)",
     `${M}/alpha/infrastructure/acl/beta.acl-live.ts`,
-    `${M}/beta/index.ts`,
+    `${M}/beta/beta.exports.ts`,
   ],
   [
     "a client adapter using a third-party SDK (LEGAL)",
@@ -723,9 +723,9 @@ const ALLOWED = [
     "packages/contracts/src/api/Users.ts",
   ],
   [
-    "an event adapter naming a foreign barrel (LEGAL)",
+    "an event adapter naming a foreign peer surface (LEGAL)",
     `${M}/alpha/interface/events/beta.event-adapter.ts`,
-    `${M}/beta/index.ts`,
+    `${M}/beta/beta.exports.ts`,
   ],
   [
     "an event adapter using its own command message (LEGAL)",

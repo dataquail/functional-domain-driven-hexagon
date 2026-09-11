@@ -1,3 +1,6 @@
+// The wiring surface: what the platform names to assemble and drive this module.
+// What a peer module may reach is billing.exports.ts, and it is empty — billing
+// is a leaf.
 export { billingCommandGroup, BillingCommands } from "./billing.command-handlers.js";
 export { billingEventSpanAttributes } from "./billing.event-span-attributes.js";
 // Two named modules ship the prod-vs-test gateway swap. The `BillingGateway`
@@ -5,22 +8,8 @@ export { billingEventSpanAttributes } from "./billing.event-span-attributes.js";
 // module and never sees the Tag.
 export { BillingModule, BillingModuleFake } from "./billing.module.js";
 export { BillingQueries, billingQueryGroup } from "./billing.query-handlers.js";
-export { CancelSubscriptionCommand } from "./commands/cancel-subscription.command.js";
-export { IngestStripeWebhookCommand } from "./commands/ingest-stripe-webhook.command.js";
-export { StartSubscriptionCommand } from "./commands/start-subscription.command.js";
-export {
-  SubscriptionCanceled,
-  SubscriptionStarted,
-  SubscriptionStatusChanged,
-} from "./domain/subscription/subscription.events.js";
-export { StripeWebhookIngested } from "./domain/webhook-event/stripe-webhook.events.js";
-export {
-  BillingPoliciesLive,
-  BillingPolicyContribution,
-  BillingResource,
-} from "./policies/billing.policies.js";
+export { BillingPoliciesLive, BillingPolicyContribution } from "./policies/billing.policies.js";
 export {
   BillingResolverEntry,
   BillingResolverEntryLive,
 } from "./policies/billing.resource-resolver.js";
-export { FindSubscriptionByOrganizationQuery } from "./queries/find-subscription-by-organization.query.js";

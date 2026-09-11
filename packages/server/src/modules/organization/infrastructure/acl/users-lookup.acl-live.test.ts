@@ -7,7 +7,7 @@ import * as Layer from "effect/Layer";
 
 import { UsersLookup } from "@/modules/organization/domain/ports/acl/users-lookup.acl.js";
 import { UsersLookupLive } from "@/modules/organization/infrastructure/acl/users-lookup.acl-live.js";
-import { UserQueries } from "@/modules/user/index.js";
+import { UserQueries } from "@/modules/user/user.exports.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // `UsersLookupLive` is a thin translation over the user module's dispatch surface: its

@@ -1,7 +1,7 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { OrganizationQueries } from "@/modules/organization/index.js";
+import { OrganizationQueries } from "@/modules/organization/organization.exports.js";
 import { OrganizationAccess } from "@/modules/todos/domain/ports/acl/organization-access.acl.js";
 
 // ADR-0022 outbound adapter. Dispatches the organization module's published

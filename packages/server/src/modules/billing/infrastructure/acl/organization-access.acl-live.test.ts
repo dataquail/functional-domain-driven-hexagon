@@ -6,7 +6,7 @@ import * as Layer from "effect/Layer";
 
 import { OrganizationAccess } from "@/modules/billing/domain/ports/acl/organization-access.acl.js";
 import { OrganizationAccessLive } from "@/modules/billing/infrastructure/acl/organization-access.acl-live.js";
-import { OrganizationQueries } from "@/modules/organization/index.js";
+import { OrganizationQueries } from "@/modules/organization/organization.exports.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 

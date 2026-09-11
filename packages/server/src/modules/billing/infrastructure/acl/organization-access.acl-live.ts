@@ -2,7 +2,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { OrganizationAccess } from "@/modules/billing/domain/ports/acl/organization-access.acl.js";
-import { OrganizationQueries } from "@/modules/organization/index.js";
+import { OrganizationQueries } from "@/modules/organization/organization.exports.js";
 
 // The org role that confers authority over an organization's billing. Deciding
 // this here — rather than in a policy — is what keeps the org module's role

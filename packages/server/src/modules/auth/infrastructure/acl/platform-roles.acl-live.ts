@@ -2,7 +2,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { PlatformRoles } from "@/modules/auth/domain/ports/acl/platform-roles.acl.js";
-import { RoleQueries } from "@/modules/role/index.js";
+import { RoleQueries } from "@/modules/role/role.exports.js";
 
 const SUPER_ADMIN = "super_admin";
 

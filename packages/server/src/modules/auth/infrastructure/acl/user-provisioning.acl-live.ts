@@ -5,7 +5,7 @@ import {
   UserProvisioning,
   UserProvisioningConflict,
 } from "@/modules/auth/domain/ports/acl/user-provisioning.acl.js";
-import { UserCommands } from "@/modules/user/index.js";
+import { UserCommands } from "@/modules/user/user.exports.js";
 
 // ADR-0022 outbound adapter. The one place in the auth module where the user
 // module's barrel is imported — sign-in depends on `UserProvisioning` instead.
