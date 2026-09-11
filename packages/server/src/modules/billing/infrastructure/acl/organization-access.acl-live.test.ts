@@ -6,7 +6,7 @@ import * as Layer from "effect/Layer";
 
 import { OrganizationAccess } from "@/modules/billing/domain/ports/acl/organization-access.acl.js";
 import { OrganizationAccessLive } from "@/modules/billing/infrastructure/acl/organization-access.acl-live.js";
-import { OrganizationQueries } from "@/modules/organization/organization.exports.js";
+import { OrganizationExports } from "@/modules/organization/organization.exports.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
@@ -19,17 +19,15 @@ const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 
 // The organization module's dispatch surface is a plain object of typed methods, so
 // standing in for it needs no cast. The tags this adapter must never reach are wired to
-// die rather than omitted, which is what makes "asks exactly these two questions" a
-// property the test enforces.
-const unreached = (tag: string) => () => Effect.die(`unexpected query ${tag}`);
-
+// property the surface itself now enforces: the two queries below are the whole of
+// what organization publishes, so a third question would not type-check.
 const stubOrganizationQueries = (opts: {
   readonly isMember?: boolean;
   readonly roles?: ReadonlyArray<string>;
 }) =>
   Layer.succeed(
-    OrganizationQueries,
-    OrganizationQueries.of({
+    OrganizationExports,
+    OrganizationExports.of({
       FindMembershipQuery: () => Effect.succeed({ isMember: opts.isMember ?? false }),
       FindUserOrganizationRolesQuery: (payload) =>
         Effect.succeed({
@@ -37,11 +35,6 @@ const stubOrganizationQueries = (opts: {
           organizationId: payload.organizationId,
           roles: opts.roles ?? [],
         }),
-      FindOrganizationMembershipsQuery: unreached("FindOrganizationMembershipsQuery"),
-      FindAllOrganizationsQuery: unreached("FindAllOrganizationsQuery"),
-      FindMyOrganizationsQuery: unreached("FindMyOrganizationsQuery"),
-      FindOrganizationByIdQuery: unreached("FindOrganizationByIdQuery"),
-      FindPendingInvitationsQuery: unreached("FindPendingInvitationsQuery"),
     }),
   );
 

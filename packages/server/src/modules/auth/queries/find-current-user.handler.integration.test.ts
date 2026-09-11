@@ -9,6 +9,7 @@ import { beforeEach } from "vitest";
 import { PlatformRolesLive } from "@/modules/auth/infrastructure/acl/platform-roles.acl-live.js";
 import { findCurrentUserHandler } from "@/modules/auth/queries/find-current-user.handler.js";
 import { RoleQueriesLive } from "@/modules/role/index.js";
+import { RoleExportsLive } from "@/modules/role/role.exports.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
@@ -21,7 +22,7 @@ const memberId = UserId.make("22222222-2222-2222-2222-222222222222");
 // cannot cover — a rename or shape change on the role module's published policy-query
 // fails here.
 const TestLayer = PlatformRolesLive.pipe(
-  Layer.provide(RoleQueriesLive),
+  Layer.provide(RoleExportsLive.pipe(Layer.provide(RoleQueriesLive))),
   Layer.provideMerge(TestDatabaseLive),
 );
 

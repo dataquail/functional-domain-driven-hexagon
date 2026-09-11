@@ -748,6 +748,10 @@ children:
           allow:
             - "@/modules/{module}/policies/**"
             - "@/modules/{module}/queries/**"
+            # Its own dispatch surface, to ask its own queries. Naming the
+            # app-wide bus here instead would make the module's layer depend on
+            # the bus its own surface is folded into — a cycle.
+            - "@/modules/{module}/*.query-handlers.ts"
             - "@/modules/{module}/domain/ports/acl/**"
             - "@/modules/{module}/infrastructure/acl/**"
             - "@/modules/{module}/domain/*/*.id.ts"

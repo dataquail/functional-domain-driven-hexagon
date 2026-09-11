@@ -2,7 +2,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { OrganizationAccess } from "@/modules/billing/domain/ports/acl/organization-access.acl.js";
-import { OrganizationQueries } from "@/modules/organization/organization.exports.js";
+import { OrganizationExports } from "@/modules/organization/organization.exports.js";
 
 // The org role that confers authority over an organization's billing. Deciding
 // this here — rather than in a policy — is what keeps the org module's role
@@ -16,7 +16,7 @@ const BILLING_ADMIN_ROLE = "admin";
 export const OrganizationAccessLive = Layer.effect(
   OrganizationAccess,
   Effect.gen(function* () {
-    const organizationQueries = yield* OrganizationQueries;
+    const organizationQueries = yield* OrganizationExports;
     return OrganizationAccess.of({
       isMember: (userId, organizationId) =>
         organizationQueries.FindMembershipQuery({ userId, organizationId }).pipe(

@@ -4,7 +4,7 @@ import { describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { RoleQueries } from "@/modules/role/role.exports.js";
+import { RoleExports } from "@/modules/role/role.exports.js";
 import { PlatformRoles } from "@/modules/todos/domain/ports/acl/platform-roles.acl.js";
 import { PlatformRolesLive } from "@/modules/todos/infrastructure/acl/platform-roles.acl-live.js";
 import { UserId } from "@/platform/ids/user-id.js";
@@ -18,8 +18,8 @@ const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 // in for it needs no cast.
 const stubRoleQueries = (roles: ReadonlyArray<string>) =>
   Layer.succeed(
-    RoleQueries,
-    RoleQueries.of({
+    RoleExports,
+    RoleExports.of({
       FindUserRolesQuery: ({ userId }) => Effect.succeed({ userId, roles }),
     }),
   );

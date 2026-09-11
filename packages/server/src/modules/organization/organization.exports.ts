@@ -1,16 +1,35 @@
+import { type Query } from "@effect-server-utils/cqrs";
 import { Module } from "@org/module";
+import * as Context from "effect/Context";
+import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 
-// The peer-facing surface, and the one place the two halves come apart.
-//
-// `OrganizationQueries` is resolved from the container by todos' and billing's
-// ACL adapters — a real DI edge — but those adapters are consumed by their
-// modules' POLICY layers, which the composition root wires through
-// `PolicyRegistryLive` rather than through the module builder. So the builder
-// never sees the edge and cannot check it: listing the Tag in `Module.exports`
-// would be refused as an export no module consumed. Until policy contributions
-// are part of a module's builder layer, that edge is governed by who may import
-// this file and nothing more.
-export const organizationExports = Module.exports();
+import { OrganizationQueries, type organizationQueryGroup } from "./organization.query-handlers.js";
+
+// The peer surface: the individual messages other modules may dispatch, named
+// one by one. Two of this module's seven queries — handing out
+// `OrganizationQueries` would have granted all seven, and any query added to the
+// group later.
+export class OrganizationExports extends Context.Service<
+  OrganizationExports,
+  Pick<
+    Query.Dispatcher<typeof organizationQueryGroup>,
+    "FindMembershipQuery" | "FindUserOrganizationRolesQuery"
+  >
+>()("@org/server/organization/OrganizationExports") {}
+
+export const OrganizationExportsLive = Layer.effect(
+  OrganizationExports,
+  Effect.map(OrganizationQueries, (queries) =>
+    OrganizationExports.of({
+      FindMembershipQuery: queries.FindMembershipQuery,
+      FindUserOrganizationRolesQuery: queries.FindUserOrganizationRolesQuery,
+    }),
+  ),
+);
+
+// Todos and billing ask about membership and organization roles from their
+// policy checks, through their own ACL ports.
+export const organizationExports = Module.exports(OrganizationExports);
 
 export { OrganizationCreated } from "./domain/organization/organization.events.js";
-export { OrganizationQueries } from "./organization.query-handlers.js";

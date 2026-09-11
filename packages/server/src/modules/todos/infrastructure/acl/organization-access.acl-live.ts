@@ -1,7 +1,7 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { OrganizationQueries } from "@/modules/organization/organization.exports.js";
+import { OrganizationExports } from "@/modules/organization/organization.exports.js";
 import { OrganizationAccess } from "@/modules/todos/domain/ports/acl/organization-access.acl.js";
 
 // ADR-0022 outbound adapter. Dispatches the organization module's published
@@ -13,7 +13,7 @@ import { OrganizationAccess } from "@/modules/todos/domain/ports/acl/organizatio
 export const OrganizationAccessLive = Layer.effect(
   OrganizationAccess,
   Effect.gen(function* () {
-    const organizationQueries = yield* OrganizationQueries;
+    const organizationQueries = yield* OrganizationExports;
     return OrganizationAccess.of({
       isMember: (userId, organizationId) =>
         organizationQueries.FindMembershipQuery({ userId, organizationId }).pipe(

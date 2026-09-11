@@ -6,12 +6,15 @@ import { OrgCliLive } from "./interface/cli/index.js";
 import { InvitationEventAdapterLive } from "./interface/events/invitation.event-adapter.js";
 import { InvitationLive, OrganizationAdminLive, OrganizationLive } from "./interface/http/index.js";
 import { OrganizationCommandsLive } from "./organization.command-handlers.js";
-import { organizationExports } from "./organization.exports.js";
+import { organizationExports, OrganizationExportsLive } from "./organization.exports.js";
 import { OrganizationQueriesLive } from "./organization.query-handlers.js";
+import { OrganizationPoliciesLive } from "./policies/organization.policies.js";
 
 export const OrganizationModule = Module.make(
   "organization",
-  Layer.mergeAll(OrganizationCommandsLive, OrganizationQueriesLive),
+  Layer.mergeAll(OrganizationExportsLive, OrganizationPoliciesLive).pipe(
+    Layer.provideMerge(Layer.mergeAll(OrganizationCommandsLive, OrganizationQueriesLive)),
+  ),
   {
     exports: organizationExports,
     http: Layer.mergeAll(

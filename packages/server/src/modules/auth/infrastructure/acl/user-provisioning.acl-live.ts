@@ -5,7 +5,7 @@ import {
   UserProvisioning,
   UserProvisioningConflict,
 } from "@/modules/auth/domain/ports/acl/user-provisioning.acl.js";
-import { UserCommands } from "@/modules/user/user.exports.js";
+import { UserExports } from "@/modules/user/user.exports.js";
 
 // ADR-0022 outbound adapter. The one place in the auth module where the user
 // module's barrel is imported — sign-in depends on `UserProvisioning` instead.
@@ -17,7 +17,7 @@ import { UserCommands } from "@/modules/user/user.exports.js";
 export const UserProvisioningLive = Layer.effect(
   UserProvisioning,
   Effect.gen(function* () {
-    const userCommands = yield* UserCommands;
+    const userCommands = yield* UserExports;
     return UserProvisioning.of({
       provision: (email) =>
         userCommands.CreateUserCommand({ email }).pipe(

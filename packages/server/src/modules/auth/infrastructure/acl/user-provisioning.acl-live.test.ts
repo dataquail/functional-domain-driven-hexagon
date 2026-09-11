@@ -13,7 +13,7 @@ import {
   UserProvisioningConflict,
 } from "@/modules/auth/domain/ports/acl/user-provisioning.acl.js";
 import { UserProvisioningLive } from "@/modules/auth/infrastructure/acl/user-provisioning.acl-live.js";
-import { UserAlreadyExists, UserCommands } from "@/modules/user/user.exports.js";
+import { UserAlreadyExists, UserExports } from "@/modules/user/user.exports.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // `UserProvisioningLive` is a thin translation over the user module's own dispatch
@@ -28,10 +28,10 @@ type OnCreateUser = (
 
 const stubUserCommands = (onCreateUser: OnCreateUser) =>
   Layer.succeed(
-    UserCommands,
-    UserCommands.of({
+    UserExports,
+    UserExports.of({
       CreateUserCommand: ({ email }) => onCreateUser(email),
-      DeleteUserCommand: () => Effect.die("unexpected DeleteUserCommand"),
+      FindUsersByIdsQuery: () => Effect.die("unexpected FindUsersByIdsQuery"),
     }),
   );
 

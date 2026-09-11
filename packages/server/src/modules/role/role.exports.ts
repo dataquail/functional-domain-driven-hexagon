@@ -1,17 +1,31 @@
+import { type Query } from "@effect-server-utils/cqrs";
 import { Module } from "@org/module";
+import * as Context from "effect/Context";
+import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 
-import { RoleQueries } from "./role.query-handlers.js";
+import { RoleQueries, type roleQueryGroup } from "./role.query-handlers.js";
 
-// The peer-facing surface: what another module may reach, by either route.
+// The peer surface: the individual messages other modules may dispatch, named
+// one by one. The `Pick` list is the whole of it, so adding a query to
+// `roleQueryGroup` cannot widen what peers may reach — which handing out
+// `RoleQueries` itself would.
 //
-// `Module.exports` is the DI half — the Tags a peer may resolve from the
-// container, which the builder checks. The re-exports below are the import half,
-// for what a peer names rather than resolves; goodbones governs who may reach
-// this file. Two mechanisms, one audience.
-export const roleExports = Module.exports(RoleQueries);
+// A projection of the module's own dispatch surface, not a second registration:
+// a dispatcher is one method per tag, so this picks methods off the real one and
+// the handlers stay registered once.
+export class RoleExports extends Context.Service<
+  RoleExports,
+  Pick<Query.Dispatcher<typeof roleQueryGroup>, "FindUserRolesQuery">
+>()("@org/server/role/RoleExports") {}
 
-// Auth and organization ask this module whether a caller is a super admin, and
-// todos and billing ask the same question from their policy checks — all four
-// through their own ACL ports. RoleCommands is deliberately absent: the bus
-// routes it from the composition root, and no peer dispatches against it.
-export { RoleQueries } from "./role.query-handlers.js";
+export const RoleExportsLive = Layer.effect(
+  RoleExports,
+  Effect.map(RoleQueries, (queries) =>
+    RoleExports.of({ FindUserRolesQuery: queries.FindUserRolesQuery }),
+  ),
+);
+
+// Auth, organization, todos and billing each ask whether a caller holds a role,
+// through their own ACL ports.
+export const roleExports = Module.exports(RoleExports);

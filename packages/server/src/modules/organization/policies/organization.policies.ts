@@ -1,14 +1,12 @@
 import { Check, type CheckFor, type PolicyContribution } from "@effect-server-utils/authz";
-import { QueryBus } from "@effect-server-utils/cqrs";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.js";
 import { PlatformRolesLive } from "@/modules/organization/infrastructure/acl/platform-roles.acl-live.js";
-import { FindMembershipQuery } from "@/modules/organization/queries/find-membership.policy-query.js";
+import { OrganizationQueries } from "@/modules/organization/organization.query-handlers.js";
 import { type OrganizationAuthzView } from "@/modules/organization/queries/find-organization-by-id.query.js";
-import { FindUserOrganizationRolesQuery } from "@/modules/organization/queries/find-user-organization-roles.policy-query.js";
 import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 import { makeIsMember, type UserOrganizationLookup } from "./is-member.policy.js";
@@ -57,7 +55,9 @@ export const OrganizationCollectionResource = "organizationCollection" as const;
 // Effectful because its checks close over their data sources, which makes every
 // registered check `R = never`. Super-admin comes from the role module through
 // this module's ACL port; membership and org roles are this module's own data, so
-// they are its own policy-queries dispatched through the bus.
+// they are its own policy-queries, dispatched through this module's own
+// surface rather than the app-wide bus: the bus aggregates every module's
+// dispatch surface including this one, so naming it here would be a cycle.
 export class OrganizationPolicyContribution extends Context.Service<
   OrganizationPolicyContribution,
   PolicyContribution
@@ -67,16 +67,16 @@ export const OrganizationPoliciesLive = Layer.effect(
   OrganizationPolicyContribution,
   Effect.gen(function* () {
     const roles = yield* PlatformRoles;
-    const queryBus = yield* QueryBus;
+    const organizationQueries = yield* OrganizationQueries;
 
     const isMember: UserOrganizationLookup = (userId, organizationId) =>
-      queryBus
-        .execute(FindMembershipQuery, { userId, organizationId })
+      organizationQueries
+        .FindMembershipQuery({ userId, organizationId })
         .pipe(Effect.map((result) => result.isMember));
 
     const isOrgAdmin: UserOrganizationLookup = (userId, organizationId) =>
-      queryBus
-        .execute(FindUserOrganizationRolesQuery, { userId, organizationId })
+      organizationQueries
+        .FindUserOrganizationRolesQuery({ userId, organizationId })
         .pipe(Effect.map((result) => result.roles.includes(ORG_ADMIN_ROLE)));
 
     const superAdmin = makeIsOrgSuperAdmin(roles);

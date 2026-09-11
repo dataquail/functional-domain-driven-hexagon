@@ -9,14 +9,12 @@ import type { EnvVars } from "@/common/env-vars.js";
 import { AuthModule } from "@/modules/auth/index.js";
 import {
   type BillingModule,
-  BillingPoliciesLive,
   BillingPolicyContribution,
   BillingResolverEntry,
   BillingResolverEntryLive,
 } from "@/modules/billing/index.js";
 import {
   OrganizationModule,
-  OrganizationPoliciesLive,
   OrganizationPolicyContribution,
   OrganizationResolverEntry,
   OrganizationResolverEntryLive,
@@ -25,7 +23,6 @@ import { RoleModule } from "@/modules/role/index.js";
 import {
   TodoCollectionResolverEntry,
   TodoCollectionResolverEntryLive,
-  TodoPoliciesLive,
   TodoPolicyContribution,
   TodoResolverEntry,
   TodoResolverEntryLive,
@@ -63,7 +60,11 @@ export const applicationModules = (billing: BillingModule) =>
 
 // Every module publishes its policy contribution behind a Tag whose Layer closes
 // over that module's own ACL ports, so every registered check is R = never and
-// the registry holds no ambient service requirements.
+// the registry holds no ambient service requirements. The contributions come
+// from the modules themselves — each folds its own `*PoliciesLive` into its
+// layer — so the cross-module edges a policy check reaches through (todos and
+// billing both ask organization about membership) are edges the builder sees and
+// checks, rather than ones satisfied behind its back at this composition root.
 export const PolicyRegistryLive = Layer.unwrap(
   Effect.gen(function* () {
     const todoPolicies = yield* TodoPolicyContribution;
@@ -71,7 +72,7 @@ export const PolicyRegistryLive = Layer.unwrap(
     const organizationPolicies = yield* OrganizationPolicyContribution;
     return makePolicyRegistry([todoPolicies, billingPolicies, organizationPolicies]);
   }),
-).pipe(Layer.provide([TodoPoliciesLive, BillingPoliciesLive, OrganizationPoliciesLive]));
+);
 
 // Resource resolvers are owned by each module: the module exports a
 // `*ResolverEntryLive` layer that internally satisfies its repository

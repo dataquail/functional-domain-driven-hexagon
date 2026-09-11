@@ -6,7 +6,7 @@ import * as Layer from "effect/Layer";
 
 import { PlatformRoles } from "@/modules/auth/domain/ports/acl/platform-roles.acl.js";
 import { PlatformRolesLive } from "@/modules/auth/infrastructure/acl/platform-roles.acl-live.js";
-import { RoleQueries } from "@/modules/role/role.exports.js";
+import { RoleExports } from "@/modules/role/role.exports.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // `/auth/me` reports whether the caller is a platform super admin. That fact is
@@ -18,8 +18,8 @@ const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 // in for it needs no cast.
 const stubRoleQueries = (roles: ReadonlyArray<string>) =>
   Layer.succeed(
-    RoleQueries,
-    RoleQueries.of({
+    RoleExports,
+    RoleExports.of({
       FindUserRolesQuery: ({ userId }) => Effect.succeed({ userId, roles }),
     }),
   );

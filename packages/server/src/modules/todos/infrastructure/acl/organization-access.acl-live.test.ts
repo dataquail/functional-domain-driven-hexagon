@@ -4,7 +4,7 @@ import { describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { OrganizationQueries } from "@/modules/organization/organization.exports.js";
+import { OrganizationExports } from "@/modules/organization/organization.exports.js";
 import { OrganizationAccess } from "@/modules/todos/domain/ports/acl/organization-access.acl.js";
 import { OrganizationAccessLive } from "@/modules/todos/infrastructure/acl/organization-access.acl-live.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
@@ -25,18 +25,13 @@ const stubOrganizationQueries = (
   seen: Array<{ userId: UserId; orgId: OrganizationId }>,
 ) =>
   Layer.succeed(
-    OrganizationQueries,
-    OrganizationQueries.of({
+    OrganizationExports,
+    OrganizationExports.of({
       FindMembershipQuery: (payload) => {
         seen.push({ userId: payload.userId, orgId: payload.organizationId });
         return Effect.succeed({ isMember });
       },
       FindUserOrganizationRolesQuery: unreached("FindUserOrganizationRolesQuery"),
-      FindOrganizationMembershipsQuery: unreached("FindOrganizationMembershipsQuery"),
-      FindAllOrganizationsQuery: unreached("FindAllOrganizationsQuery"),
-      FindMyOrganizationsQuery: unreached("FindMyOrganizationsQuery"),
-      FindOrganizationByIdQuery: unreached("FindOrganizationByIdQuery"),
-      FindPendingInvitationsQuery: unreached("FindPendingInvitationsQuery"),
     }),
   );
 
