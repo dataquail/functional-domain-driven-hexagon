@@ -1,7 +1,7 @@
 import * as Context from "effect/Context";
 import * as Layer from "effect/Layer";
 
-import type { Exported, ExportsDeclaration, Module } from "./module.js";
+import type { Exported, ExportsDeclaration, Listed, Module } from "./module.js";
 
 export type MissingDependencies<Name extends string, Missing> = {
   readonly _MissingDependencies: {
@@ -19,6 +19,10 @@ export type NotExported<Name extends string, Hidden> = {
 
 export type DuplicateModule<Name extends string> = {
   readonly _DuplicateModule: Name;
+};
+
+export type UnusedExports<Unused> = {
+  readonly _UnusedExports: Unused;
 };
 
 // The guards sit in an intersection with the parameter whose layer types they
@@ -59,14 +63,23 @@ export type App<
   readonly httpDeps: HttpDeps;
 };
 
-// Two accumulations, because the composition root is a privileged consumer and
-// a peer module is not. `Visible` is what a later module may resolve — only what
-// earlier modules exported. `Assembled` is everything built, which is what
-// `build().layer` publishes so the bus can route every module's surface.
+// Four accumulations, because the composition root is a privileged consumer, a
+// peer module is not, and an export nobody takes is debt rather than safety.
+//
+//   Visible   what a later module may resolve — every earlier export
+//   Listed    the subset declared as a list, which `"all"` opts out of
+//   Consumed  what the modules actually took out of `Visible`
+//   Assembled everything built, which is what `build().layer` publishes
+//
+// `.add` tests requirements against `Visible`; `build` refuses a `Listed` entry
+// that no module consumed, so an exports declaration stays exactly tight rather
+// than drifting into a ceiling.
 export type Builder<
   Platform,
   Names extends ReadonlyArray<string>,
   Visible,
+  ListedExports,
+  Consumed,
   Assembled,
   E,
   Http extends Layer.Any,
@@ -87,12 +100,18 @@ export type Builder<
     Platform,
     readonly [...Names, Name],
     Visible | Exported<Layer.Layer<ROut, E2, RIn>, Exports>,
+    ListedExports | Listed<Layer.Layer<ROut, E2, RIn>, Exports>,
+    Consumed | Extract<RIn, Visible>,
     Assembled | ROut,
     E | E2,
     Merged<Http, H>,
     Merged<HttpDeps, D>
   >;
-  readonly build: () => App<Platform, Names, Assembled, E, Http, HttpDeps>;
+  // Reported here rather than at `.add` because no module is known to be the
+  // last consumer until every module has been added.
+  readonly build: () => [Exclude<ListedExports, Consumed>] extends [never]
+    ? App<Platform, Names, Assembled, E, Http, HttpDeps>
+    : UnusedExports<Exclude<ListedExports, Consumed>>;
 };
 
 type ErasedLayer = Layer.Layer<never, never, never>;
@@ -151,12 +170,16 @@ export const app = <Platform>(): Builder<
   never,
   never,
   never,
+  never,
+  never,
   Layer.Layer<never>,
   Layer.Layer<never>
 > =>
   erasedBuilder([]) as unknown as Builder<
     Platform,
     readonly [],
+    never,
+    never,
     never,
     never,
     never,

@@ -38,7 +38,7 @@ const recording = <A>(name: string, service: A) =>
     return service;
   });
 
-// Provides two services and publishes only one of them.
+// Builds two services and publishes only one of them.
 const RoleLive = Layer.mergeAll(
   Layer.effect(Role, recording("role", Role.of({ of: (name) => `${name}:role` }))),
   Layer.succeed(RoleAdmin, RoleAdmin.of({ secret: "internal" })),
@@ -53,8 +53,23 @@ const UserLive = Layer.effect(
   }),
 );
 
-const roleModule = Module.make("role", RoleLive, { exports: [Role] });
-const userModule = Module.make("user", UserLive, { exports: [User] });
+const roleModule = Module.make("role", RoleLive, { exports: Module.exports(Role) });
+
+// Nothing is added after it, so it publishes nothing.
+const userModule = Module.make("user", UserLive);
+
+// Takes Role as a requirement and then reports what it was actually handed, so
+// the assertion is about the context at runtime and not about the types.
+const observing = (seen: Array<string>) =>
+  Layer.effectContext(
+    Effect.gen(function* () {
+      yield* Role;
+      const context = yield* Effect.context<never>();
+      if (Option.isSome(Context.getOption(context, Role))) seen.push("Role");
+      if (Option.isSome(Context.getOption(context, RoleAdmin))) seen.push("RoleAdmin");
+      return Context.empty();
+    }),
+  );
 
 describe("Builder", () => {
   it.effect("resolves a module against what the modules before it export", () =>
@@ -85,20 +100,11 @@ describe("Builder", () => {
 
   it.effect("hands a later module only the keys the earlier ones exported", () =>
     Effect.gen(function* () {
-      // Reads what it was actually given rather than declaring a requirement, so
-      // the assertion is about the context at runtime and not about the types.
       const seen: Array<string> = [];
-      const Observer = Layer.effectContext(
-        Effect.map(Effect.context<never>(), (context) => {
-          if (Option.isSome(Context.getOption(context, Role))) seen.push("Role");
-          if (Option.isSome(Context.getOption(context, RoleAdmin))) seen.push("RoleAdmin");
-          return Context.empty();
-        }),
-      );
 
       const app = Builder.app<Platform | Buildings>()
         .add(roleModule)
-        .add(Module.make("observer", Observer))
+        .add(Module.make("observer", observing(seen)))
         .build();
 
       yield* Layer.build(
@@ -112,17 +118,10 @@ describe("Builder", () => {
   it.effect('publishes everything a module builds when it exports "all"', () =>
     Effect.gen(function* () {
       const seen: Array<string> = [];
-      const Observer = Layer.effectContext(
-        Effect.map(Effect.context<never>(), (context) => {
-          if (Option.isSome(Context.getOption(context, Role))) seen.push("Role");
-          if (Option.isSome(Context.getOption(context, RoleAdmin))) seen.push("RoleAdmin");
-          return Context.empty();
-        }),
-      );
 
       const app = Builder.app<Platform | Buildings>()
         .add(Module.make("role", RoleLive, { exports: "all" }))
-        .add(Module.make("observer", Observer))
+        .add(Module.make("observer", observing(seen)))
         .build();
 
       yield* Layer.build(
@@ -194,6 +193,11 @@ describe("Builder", () => {
     }),
   );
 
+  it("declares an empty exports list without widening it", () => {
+    const empty = Module.exports();
+    assert.deepStrictEqual(empty, []);
+  });
+
   // The guards below are the point of the builder, and a guard written the
   // obvious way resolves its conditional at the parameter's constraint and
   // silently admits everything. `@ts-expect-error` is the probe: if a guard
@@ -238,8 +242,9 @@ describe("Builder", () => {
       );
 
       Builder.app<Platform | Buildings>()
-        .add(Module.make("role", RoleLive, { exports: [Role, RoleAdmin] }))
-        .add(needsRoleAdmin);
+        .add(Module.make("role", RoleLive, { exports: Module.exports(Role, RoleAdmin) }))
+        .add(needsRoleAdmin)
+        .build();
     });
 
     it("rejects a module that exports nothing being depended on", () => {
@@ -247,6 +252,27 @@ describe("Builder", () => {
         .add(Module.make("role", RoleLive))
         // @ts-expect-error `role` exports nothing, so Role is not resolvable
         .add(userModule);
+    });
+
+    it("rejects an export no module consumed", () => {
+      const app = Builder.app<Platform | Buildings>()
+        .add(Module.make("role", RoleLive, { exports: Module.exports(Role, RoleAdmin) }))
+        .add(userModule)
+        .build();
+
+      // @ts-expect-error RoleAdmin is published and nothing resolves it
+      const layer: unknown = app.layer;
+      // The value is a real App at runtime; only the type refuses it.
+      assert.isDefined(layer);
+    });
+
+    it('does not hold "all" to the unused-export check', () => {
+      const app = Builder.app<Platform | Buildings>()
+        .add(Module.make("role", RoleLive, { exports: "all" }))
+        .add(userModule)
+        .build();
+
+      assert.deepStrictEqual(app.names, ["role", "user"]);
     });
 
     it("rejects the same module name twice", () => {

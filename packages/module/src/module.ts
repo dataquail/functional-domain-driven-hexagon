@@ -37,6 +37,21 @@ export type Exported<
     ? Context.Service.Identifier<Exports[number]>
     : never;
 
+// Declares an exports list. A bare array literal would infer `any[]` when empty,
+// and `Context.Service.Identifier<any>` is `any` — which would silently widen the
+// builder's visibility to everything. This cannot.
+// What an explicit exports list contributes to the unused-export check. `"all"`
+// is the named escape hatch, so it contributes nothing: an escape hatch opts out
+// of the ratchet rather than failing it.
+export type Listed<
+  Services extends Layer.Any,
+  Exports extends ExportsDeclaration,
+> = Exports extends "all" ? never : Exported<Services, Exports>;
+
+export const exports = <const Tags extends ReadonlyArray<Context.Service.Any>>(
+  ...tags: Tags
+): Tags => tags;
+
 export const make = <
   Name extends string,
   ROut,

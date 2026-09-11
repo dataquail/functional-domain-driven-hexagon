@@ -531,6 +531,11 @@ children:
                 adapter part of the module's public surface, which is exactly what the barrel
                 exists to keep private.
       "*.module.ts": {}
+      # The module's DI contract, stated apart from its assembly: index.ts says
+      # which files may import what, this says which Tags another module may
+      # resolve from the container. Omitting the file is not the same as an
+      # empty one — write it, so a widening shows up in review.
+      "*.exports.ts": {}
       "*.command-handlers.ts | *.query-handlers.ts": {}
       "*.event-span-attributes.ts": {}
       "*.shared-deps.ts": {}
