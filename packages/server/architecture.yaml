@@ -879,6 +879,9 @@ children:
                 module publishes for its peers, never its index.ts wiring surface — and
                 translates what comes back into this module's own acl port. It needs nothing
                 else — no repositories, no use cases, no database.
+              # It builds a dispatcher over the subset the other module published,
+              # so it names the CQRS vocabulary as well as the subset itself.
+              external: [effect, "@effect-server-utils/cqrs"]
               allow:
                 - "@/modules/*/*.exports.ts"
                 - "@/modules/{module}/domain/ports/acl/**"

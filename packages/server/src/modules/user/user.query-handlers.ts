@@ -35,7 +35,10 @@ export class UserQueries extends Context.Service<
   Query.Dispatcher<typeof userQueryGroup>
 >()("@org/server/user/UserQueries") {}
 
+// `provideMerge`, not `provide`: a peer dispatching one of these messages needs
+// its registration in context. Which registrations a peer may reach is the subset
+// declared in the module's exports file, which the builder holds it to.
 export const UserQueriesLive = Layer.effect(
   UserQueries,
   Query.dispatcher(userQueryGroup, { spanAttributes: userQuerySpanAttributes }),
-).pipe(Layer.provide(UserQueryHandlersLive));
+).pipe(Layer.provideMerge(UserQueryHandlersLive));

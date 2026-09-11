@@ -1,7 +1,6 @@
-import * as Context from "effect/Context";
 import * as Layer from "effect/Layer";
 
-import type { Exported, ExportsDeclaration, Listed, Module } from "./module.js";
+import type { Module } from "./module.js";
 
 export type MissingDependencies<Name extends string, Missing> = {
   readonly _MissingDependencies: {
@@ -25,10 +24,10 @@ export type UnusedExports<Unused> = {
   readonly _UnusedExports: Unused;
 };
 
-// The guards sit in an intersection with the parameter whose layer types they
-// read, never in a conditional occupying that parameter alone: TypeScript does
-// not infer through a conditional type, so the latter shape resolves `RIn` at
-// its constraint and the check silently passes.
+// The guards sit in an intersection with the parameter whose types they read,
+// never in a conditional occupying that parameter alone: TypeScript does not
+// infer through a conditional type, so the latter shape resolves `RIn` at its
+// constraint and the check silently passes.
 //
 // A requirement an earlier module builds but does not export is reported apart
 // from one nothing builds at all: they are different mistakes, and only the
@@ -67,18 +66,19 @@ export type App<
 // peer module is not, and an export nobody takes is debt rather than safety.
 //
 //   Visible   what a later module may resolve — every earlier export
-//   Listed    the subset declared as a list, which `"all"` opts out of
+//   Exported  every export declared, which `build` holds to having a consumer
 //   Consumed  what the modules actually took out of `Visible`
 //   Assembled everything built, which is what `build().layer` publishes
 //
-// `.add` tests requirements against `Visible`; `build` refuses a `Listed` entry
-// that no module consumed, so an exports declaration stays exactly tight rather
-// than drifting into a ceiling.
+// The fence is type-level. What a module publishes is often a registration
+// token, which has no runtime identity to filter a context by — the value behind
+// it belongs to the transport. `Assembled` therefore carries everything at
+// runtime and `Visible` is what the type checker holds a peer to.
 export type Builder<
   Platform,
   Names extends ReadonlyArray<string>,
   Visible,
-  ListedExports,
+  Exported,
   Consumed,
   Assembled,
   E,
@@ -90,17 +90,17 @@ export type Builder<
     ROut,
     E2,
     RIn,
-    Exports extends ExportsDeclaration,
+    ModuleExports,
     H extends Layer.Any,
     D extends Layer.Any,
   >(
-    module: Module<Name, Layer.Layer<ROut, E2, RIn>, Exports, H, D> &
+    module: Module<Name, Layer.Layer<ROut, E2, RIn>, ModuleExports, H, D> &
       Guard<Name, Names, Assembled, Exclude<RIn, Platform | Visible>>,
   ) => Builder<
     Platform,
     readonly [...Names, Name],
-    Visible | Exported<Layer.Layer<ROut, E2, RIn>, Exports>,
-    ListedExports | Listed<Layer.Layer<ROut, E2, RIn>, Exports>,
+    Visible | ModuleExports,
+    Exported | ModuleExports,
     Consumed | Extract<RIn, Visible>,
     Assembled | ROut,
     E | E2,
@@ -109,9 +109,9 @@ export type Builder<
   >;
   // Reported here rather than at `.add` because no module is known to be the
   // last consumer until every module has been added.
-  readonly build: () => [Exclude<ListedExports, Consumed>] extends [never]
+  readonly build: () => [Exclude<Exported, Consumed>] extends [never]
     ? App<Platform, Names, Assembled, E, Http, HttpDeps>
-    : UnusedExports<Exclude<ListedExports, Consumed>>;
+    : UnusedExports<Exclude<Exported, Consumed>>;
 };
 
 type ErasedLayer = Layer.Layer<never, never, never>;
@@ -119,7 +119,6 @@ type ErasedLayer = Layer.Layer<never, never, never>;
 type ErasedModule = {
   readonly name: string;
   readonly layer: ErasedLayer;
-  readonly exports: ExportsDeclaration;
   readonly http: ErasedLayer;
   readonly httpDeps: ErasedLayer;
 };
@@ -134,30 +133,18 @@ type ErasedBuilder = {
   };
 };
 
-// The type-level fence, enforced at runtime too: what a later module is handed
-// is a context with the unexported keys actually removed, not merely a narrower
-// claim about the same one.
-const narrow = (layer: ErasedLayer, exports: ExportsDeclaration): ErasedLayer =>
-  exports === "all"
-    ? layer
-    : Layer.flatMap(layer, (context) => Layer.succeedContext(Context.pick(...exports)(context)));
-
 const erasedBuilder = (added: ReadonlyArray<ErasedModule>): ErasedBuilder => ({
   add: (module) => erasedBuilder([...added, module]),
   build: () => {
-    // Each module is built against the exports of the modules added before it
-    // and nothing else. Both accumulations reference the same resolved layer, so
-    // the memo map builds each module once however many times it is named.
-    let visible: ErasedLayer = Layer.empty;
-    let assembled: ErasedLayer = Layer.empty;
-    for (const module of added) {
-      const resolved = Layer.provide(module.layer, visible);
-      assembled = Layer.merge(assembled, resolved);
-      visible = Layer.merge(visible, narrow(resolved, module.exports));
-    }
+    // Each module is built against the modules added before it, and the type
+    // checker is what holds it to the subset they exported.
+    const layer = added.reduce<ErasedLayer>(
+      (accumulated, module) => Layer.provideMerge(module.layer, accumulated),
+      Layer.empty,
+    );
     return {
       names: added.map((module) => module.name),
-      layer: assembled,
+      layer,
       http: Layer.mergeAll(Layer.empty, ...added.map((module) => module.http)),
       httpDeps: Layer.mergeAll(Layer.empty, ...added.map((module) => module.httpDeps)),
     };

@@ -1,12 +1,13 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { Query } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { OrganizationAccess } from "@/modules/billing/domain/ports/acl/organization-access.acl.js";
 import { OrganizationAccessLive } from "@/modules/billing/infrastructure/acl/organization-access.acl-live.js";
-import { OrganizationExports } from "@/modules/organization/organization.exports.js";
+import { organizationAccessQueries } from "@/modules/organization/organization.exports.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
@@ -25,18 +26,15 @@ const stubOrganizationQueries = (opts: {
   readonly isMember?: boolean;
   readonly roles?: ReadonlyArray<string>;
 }) =>
-  Layer.succeed(
-    OrganizationExports,
-    OrganizationExports.of({
-      FindMembershipQuery: () => Effect.succeed({ isMember: opts.isMember ?? false }),
-      FindUserOrganizationRolesQuery: (payload) =>
-        Effect.succeed({
-          userId: payload.userId,
-          organizationId: payload.organizationId,
-          roles: opts.roles ?? [],
-        }),
-    }),
-  );
+  Query.handlersOf(organizationAccessQueries, {
+    FindMembershipQuery: () => Effect.succeed({ isMember: opts.isMember ?? false }),
+    FindUserOrganizationRolesQuery: (payload) =>
+      Effect.succeed({
+        userId: payload.userId,
+        organizationId: payload.organizationId,
+        roles: opts.roles ?? [],
+      }),
+  });
 
 const testLayer = (opts: { readonly isMember?: boolean; readonly roles?: ReadonlyArray<string> }) =>
   OrganizationAccessLive.pipe(Layer.provide(stubOrganizationQueries(opts)));

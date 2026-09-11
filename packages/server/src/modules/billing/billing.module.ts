@@ -6,7 +6,6 @@ import {
   BillingCommandsFake,
   BillingCommandsLive,
 } from "@/modules/billing/billing.command-handlers.js";
-import { billingExports } from "@/modules/billing/billing.exports.js";
 import { BillingQueriesLive } from "@/modules/billing/billing.query-handlers.js";
 import { StripeWebhookEventAdapterLive } from "@/modules/billing/interface/events/stripe-webhook.event-adapter.js";
 import { BillingLive, BillingWebhooksLive } from "@/modules/billing/interface/http/index.js";
@@ -31,8 +30,7 @@ import { BillingPoliciesLive } from "@/modules/billing/policies/billing.policies
 // created" handler; we chose lazy-on-subscribe instead to keep external IO out of
 // the org-create transaction).
 const makeBillingModule = <RIn>(commands: Layer.Layer<BillingCommands, never, RIn>) =>
-  Module.make("billing", Layer.mergeAll(commands, BillingQueriesLive, BillingPoliciesLive), {
-    exports: billingExports,
+  Module.make()("billing", Layer.mergeAll(commands, BillingQueriesLive, BillingPoliciesLive), {
     http: Layer.mergeAll(BillingLive, BillingWebhooksLive, StripeWebhookEventAdapterLive),
   });
 

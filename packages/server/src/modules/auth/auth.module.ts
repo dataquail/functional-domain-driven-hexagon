@@ -2,7 +2,6 @@ import { Module } from "@org/module";
 import * as Layer from "effect/Layer";
 
 import { AuthCommandsLive } from "./auth.command-handlers.js";
-import { authExports } from "./auth.exports.js";
 import { AuthQueriesLive } from "./auth.query-handlers.js";
 import { OidcClient } from "./infrastructure/clients/oidc.client.js";
 import { AuthIdentityRepositoryLive } from "./infrastructure/repositories/auth-identity.repository-live.js";
@@ -20,8 +19,7 @@ import { AuthLive } from "./interface/http/index.js";
 // request-scoped requirement, and only the assembled api layer can satisfy one
 // — `HttpRouter.provideRequest` on a group layer type-checks and then fails at
 // runtime.
-export const AuthModule = Module.make("auth", Layer.mergeAll(AuthCommandsLive, AuthQueriesLive), {
-  exports: authExports,
+export const AuthModule = Module.make()("auth", Layer.mergeAll(AuthCommandsLive, AuthQueriesLive), {
   http: AuthLive.pipe(
     Layer.provide(AuthIdentityRepositoryLive),
     Layer.provide(SessionRepositoryLive),

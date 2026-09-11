@@ -2,7 +2,6 @@ import { assert, describe, it } from "@effect/vitest";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
 import * as Builder from "./builder.js";
@@ -53,23 +52,10 @@ const UserLive = Layer.effect(
   }),
 );
 
-const roleModule = Module.make("role", RoleLive, { exports: Module.exports(Role) });
+const roleModule = Module.make<Role>()("role", RoleLive);
 
 // Nothing is added after it, so it publishes nothing.
-const userModule = Module.make("user", UserLive);
-
-// Takes Role as a requirement and then reports what it was actually handed, so
-// the assertion is about the context at runtime and not about the types.
-const observing = (seen: Array<string>) =>
-  Layer.effectContext(
-    Effect.gen(function* () {
-      yield* Role;
-      const context = yield* Effect.context<never>();
-      if (Option.isSome(Context.getOption(context, Role))) seen.push("Role");
-      if (Option.isSome(Context.getOption(context, RoleAdmin))) seen.push("RoleAdmin");
-      return Context.empty();
-    }),
-  );
+const userModule = Module.make()("user", UserLive);
 
 describe("Builder", () => {
   it.effect("resolves a module against what the modules before it export", () =>
@@ -96,40 +82,6 @@ describe("Builder", () => {
 
       assert.strictEqual(secret, "internal");
     }),
-  );
-
-  it.effect("hands a later module only the keys the earlier ones exported", () =>
-    Effect.gen(function* () {
-      const seen: Array<string> = [];
-
-      const app = Builder.app<Platform | Buildings>()
-        .add(roleModule)
-        .add(Module.make("observer", observing(seen)))
-        .build();
-
-      yield* Layer.build(
-        app.layer.pipe(Layer.provide(Layer.mergeAll(PlatformLive, BuildingsLive))),
-      );
-
-      assert.deepStrictEqual(seen, ["Role"]);
-    }).pipe(Effect.scoped),
-  );
-
-  it.effect('publishes everything a module builds when it exports "all"', () =>
-    Effect.gen(function* () {
-      const seen: Array<string> = [];
-
-      const app = Builder.app<Platform | Buildings>()
-        .add(Module.make("role", RoleLive, { exports: "all" }))
-        .add(Module.make("observer", observing(seen)))
-        .build();
-
-      yield* Layer.build(
-        app.layer.pipe(Layer.provide(Layer.mergeAll(PlatformLive, BuildingsLive))),
-      );
-
-      assert.deepStrictEqual(seen, ["Role", "RoleAdmin"]);
-    }).pipe(Effect.scoped),
   );
 
   it.effect("builds each module once, in the order it was added", () =>
@@ -159,9 +111,15 @@ describe("Builder", () => {
     Effect.gen(function* () {
       const app = Builder.app<Platform>()
         .add(
-          Module.make("a", Layer.empty, { http: Layer.succeed(Role, Role.of({ of: (n) => n })) }),
+          Module.make()("a", Layer.empty, {
+            http: Layer.succeed(Role, Role.of({ of: (n) => n })),
+          }),
         )
-        .add(Module.make("b", Layer.empty, { http: Layer.succeed(User, User.of({ greet: "b" })) }))
+        .add(
+          Module.make()("b", Layer.empty, {
+            http: Layer.succeed(User, User.of({ greet: "b" })),
+          }),
+        )
         .build();
 
       const greet = yield* Effect.provide(
@@ -177,11 +135,11 @@ describe("Builder", () => {
     Effect.gen(function* () {
       const app = Builder.app<Platform>()
         .add(
-          Module.make("a", Layer.empty, {
+          Module.make()("a", Layer.empty, {
             httpDeps: Layer.succeed(Role, Role.of({ of: (n) => `${n}!` })),
           }),
         )
-        .add(Module.make("b", Layer.empty))
+        .add(Module.make()("b", Layer.empty))
         .build();
 
       const shout = yield* Effect.provide(
@@ -192,11 +150,6 @@ describe("Builder", () => {
       assert.strictEqual(shout, "hi!");
     }),
   );
-
-  it("declares an empty exports list without widening it", () => {
-    const empty = Module.exports();
-    assert.deepStrictEqual(empty, []);
-  });
 
   // The guards below are the point of the builder, and a guard written the
   // obvious way resolves its conditional at the parameter's constraint and
@@ -218,7 +171,7 @@ describe("Builder", () => {
     });
 
     it("rejects a requirement an earlier module builds but does not export", () => {
-      const needsRoleAdmin = Module.make(
+      const needsRoleAdmin = Module.make()(
         "needsRoleAdmin",
         Layer.effect(
           User,
@@ -233,7 +186,7 @@ describe("Builder", () => {
     });
 
     it("admits that same requirement once the module exports it", () => {
-      const needsRoleAdmin = Module.make(
+      const needsRoleAdmin = Module.make()(
         "needsRoleAdmin",
         Layer.effect(
           User,
@@ -242,21 +195,21 @@ describe("Builder", () => {
       );
 
       Builder.app<Platform | Buildings>()
-        .add(Module.make("role", RoleLive, { exports: Module.exports(Role, RoleAdmin) }))
+        .add(Module.make<Role | RoleAdmin>()("role", RoleLive))
         .add(needsRoleAdmin)
         .build();
     });
 
     it("rejects a module that exports nothing being depended on", () => {
       Builder.app<Platform | Buildings>()
-        .add(Module.make("role", RoleLive))
+        .add(Module.make()("role", RoleLive))
         // @ts-expect-error `role` exports nothing, so Role is not resolvable
         .add(userModule);
     });
 
     it("rejects an export no module consumed", () => {
       const app = Builder.app<Platform | Buildings>()
-        .add(Module.make("role", RoleLive, { exports: Module.exports(Role, RoleAdmin) }))
+        .add(Module.make<Role | RoleAdmin>()("role", RoleLive))
         .add(userModule)
         .build();
 
@@ -266,20 +219,11 @@ describe("Builder", () => {
       assert.isDefined(layer);
     });
 
-    it('does not hold "all" to the unused-export check', () => {
-      const app = Builder.app<Platform | Buildings>()
-        .add(Module.make("role", RoleLive, { exports: "all" }))
-        .add(userModule)
-        .build();
-
-      assert.deepStrictEqual(app.names, ["role", "user"]);
-    });
-
     it("rejects the same module name twice", () => {
       Builder.app<Platform | Buildings>()
         .add(roleModule)
         // @ts-expect-error `role` is already in the application
-        .add(Module.make("role", Layer.empty));
+        .add(Module.make()("role", Layer.empty));
     });
 
     it("admits a module whose requirements are all satisfied", () => {

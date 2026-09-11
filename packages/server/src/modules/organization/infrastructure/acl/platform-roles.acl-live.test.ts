@@ -1,12 +1,13 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { Query } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.js";
 import { PlatformRolesLive } from "@/modules/organization/infrastructure/acl/platform-roles.acl-live.js";
-import { RoleExports } from "@/modules/role/role.exports.js";
+import { rolePeerQueries } from "@/modules/role/role.exports.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // Two consumers in this module: the policies' super-admin bypass, and the
@@ -17,12 +18,9 @@ const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 // The role module's dispatch surface is a plain object of typed methods, so standing
 // in for it needs no cast.
 const stubRoleQueries = (roles: ReadonlyArray<string>) =>
-  Layer.succeed(
-    RoleExports,
-    RoleExports.of({
-      FindUserRolesQuery: ({ userId }) => Effect.succeed({ userId, roles }),
-    }),
-  );
+  Query.handlersOf(rolePeerQueries, {
+    FindUserRolesQuery: ({ userId }) => Effect.succeed({ userId, roles }),
+  });
 
 const testLayer = (roles: ReadonlyArray<string>) =>
   PlatformRolesLive.pipe(Layer.provide(stubRoleQueries(roles)));

@@ -1,6 +1,7 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { Command } from "@effect-server-utils/cqrs";
 import { type PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
@@ -13,7 +14,7 @@ import {
   UserProvisioningConflict,
 } from "@/modules/auth/domain/ports/acl/user-provisioning.acl.js";
 import { UserProvisioningLive } from "@/modules/auth/infrastructure/acl/user-provisioning.acl-live.js";
-import { UserAlreadyExists, UserExports } from "@/modules/user/user.exports.js";
+import { UserAlreadyExists, userProvisioningCommands } from "@/modules/user/user.exports.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // `UserProvisioningLive` is a thin translation over the user module's own dispatch
@@ -27,13 +28,10 @@ type OnCreateUser = (
 ) => Effect.Effect<UserId, UserAlreadyExists | PersistenceUnavailable>;
 
 const stubUserCommands = (onCreateUser: OnCreateUser) =>
-  Layer.succeed(
-    UserExports,
-    UserExports.of({
-      CreateUserCommand: ({ email }) => onCreateUser(email),
-      FindUsersByIdsQuery: () => Effect.die("unexpected FindUsersByIdsQuery"),
-    }),
-  );
+  Command.handlersOf(userProvisioningCommands, {
+    CreateUserCommand: ({ email }) => onCreateUser(email),
+    FindUsersByIdsQuery: () => Effect.die("unexpected FindUsersByIdsQuery"),
+  });
 
 const testLayer = (onCreateUser: OnCreateUser) =>
   UserProvisioningLive.pipe(Layer.provide(stubUserCommands(onCreateUser)));
