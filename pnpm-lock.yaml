@@ -398,11 +398,11 @@ importers:
         specifier: 0.1.0-beta.3
         version: 0.1.0-beta.3(effect@4.0.0-beta.94)
       '@effect-server-utils/cqrs':
-        specifier: 0.1.0-beta.5
-        version: 0.1.0-beta.5(effect@4.0.0-beta.94)
+        specifier: 0.1.0-beta.6
+        version: 0.1.0-beta.6(effect@4.0.0-beta.94)
       '@effect-server-utils/unit-of-work':
-        specifier: 0.1.0-beta.5
-        version: 0.1.0-beta.5(@effect-server-utils/cqrs@0.1.0-beta.5(effect@4.0.0-beta.94))(effect@4.0.0-beta.94)
+        specifier: 0.1.0-beta.6
+        version: 0.1.0-beta.6(@effect-server-utils/cqrs@0.1.0-beta.6(effect@4.0.0-beta.94))(effect@4.0.0-beta.94)
       '@effect/platform-node':
         specifier: 4.0.0-beta.94
         version: 4.0.0-beta.94(effect@4.0.0-beta.94)(ioredis@5.11.1)
@@ -817,15 +817,15 @@ packages:
     peerDependencies:
       effect: 4.0.0-beta.94
 
-  '@effect-server-utils/cqrs@0.1.0-beta.5':
-    resolution: {integrity: sha512-kRi2PvREwcoC+vIzlb61cd/tJYZk6BziIQlasRidKnM24z1GlWgTOAfZ4uWXYpYuHogzDSNaUSuA9JEXY+zsiQ==}
+  '@effect-server-utils/cqrs@0.1.0-beta.6':
+    resolution: {integrity: sha512-O1K5meJZsAlC0HxNm9wZjhWN+oIenfSPacbk0KGrLwX1qFf/rdIi1FM3Nxst8dsMgugizfBfAmPPo2WfSU9sjA==}
     peerDependencies:
       effect: 4.0.0-beta.94
 
-  '@effect-server-utils/unit-of-work@0.1.0-beta.5':
-    resolution: {integrity: sha512-k3m3dHhnFyPG0agxjZP0A+f2CD+2AfQM9V4XhZznCwpnoJH9befBFWTs/7vyBblryG+b5U10iwRhOzsqluZYFQ==}
+  '@effect-server-utils/unit-of-work@0.1.0-beta.6':
+    resolution: {integrity: sha512-269Eyag/+XRDuhNH2hdHwnydk1n9nTvg/N0Bf8v3XUwkb2DuQd0ZMbQY7g636eb545kGV3feO1hMEwA5gU9IGg==}
     peerDependencies:
-      '@effect-server-utils/cqrs': 0.1.0-beta.5
+      '@effect-server-utils/cqrs': 0.1.0-beta.6
       effect: 4.0.0-beta.94
 
   '@effect/atom-react@4.0.0-beta.94':
@@ -7249,13 +7249,13 @@ snapshots:
     dependencies:
       effect: 4.0.0-beta.94
 
-  '@effect-server-utils/cqrs@0.1.0-beta.5(effect@4.0.0-beta.94)':
+  '@effect-server-utils/cqrs@0.1.0-beta.6(effect@4.0.0-beta.94)':
     dependencies:
       effect: 4.0.0-beta.94
 
-  '@effect-server-utils/unit-of-work@0.1.0-beta.5(@effect-server-utils/cqrs@0.1.0-beta.5(effect@4.0.0-beta.94))(effect@4.0.0-beta.94)':
+  '@effect-server-utils/unit-of-work@0.1.0-beta.6(@effect-server-utils/cqrs@0.1.0-beta.6(effect@4.0.0-beta.94))(effect@4.0.0-beta.94)':
     dependencies:
-      '@effect-server-utils/cqrs': 0.1.0-beta.5(effect@4.0.0-beta.94)
+      '@effect-server-utils/cqrs': 0.1.0-beta.6(effect@4.0.0-beta.94)
       effect: 4.0.0-beta.94
 
   '@effect/atom-react@4.0.0-beta.94(effect@4.0.0-beta.94)(react@19.2.4)(scheduler@0.27.0)':
