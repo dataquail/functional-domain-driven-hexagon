@@ -1,7 +1,7 @@
 import * as Layer from "effect/Layer";
 
-import { RoleLayer } from "@/modules/role/role.exports.js";
-import { UserLayer } from "@/modules/user/user.exports.js";
+import { roleLayer } from "@/modules/role/role.exports.js";
+import { userLayer } from "@/modules/user/user.exports.js";
 
 import { AuthCommandsLive } from "./auth.command-handlers.js";
 import { AuthQueriesLive } from "./auth.query-handlers.js";
@@ -10,17 +10,19 @@ import { AuthIdentityRepositoryLive } from "./infrastructure/repositories/auth-i
 import { SessionRepositoryLive } from "./infrastructure/repositories/session.repository-live.js";
 import { AuthLive } from "./interface/http/index.js";
 
-export const AuthLayer = Layer.mergeAll(AuthCommandsLive, AuthQueriesLive).pipe(
-  Layer.provide(RoleLayer),
-  Layer.provide(UserLayer),
-);
+export const AuthModule = {
+  layer: Layer.mergeAll(AuthCommandsLive, AuthQueriesLive).pipe(
+    Layer.provide(roleLayer),
+    Layer.provide(userLayer),
+  ),
 
-export const AuthHttpLayer = AuthLive.pipe(
-  Layer.provide(AuthIdentityRepositoryLive),
-  Layer.provide(SessionRepositoryLive),
-);
+  http: AuthLive.pipe(
+    Layer.provide(AuthIdentityRepositoryLive),
+    Layer.provide(SessionRepositoryLive),
+  ),
 
-// The endpoints consume this directly, so only the assembled api layer can
-// satisfy it — `HttpRouter.provideRequest` on a group layer type-checks and
-// then fails at runtime.
-export const AuthHttpDepsLayer = OidcClient.layer;
+  // The endpoints resolve this per request, so providing it onto the group
+  // layer above leaves it in that layer's requirements: only the assembled api
+  // layer, after `HttpRouter.serve` unwraps them, can satisfy it.
+  httpDeps: OidcClient.layer,
+};

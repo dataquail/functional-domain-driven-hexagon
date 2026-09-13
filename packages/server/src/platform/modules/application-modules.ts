@@ -2,56 +2,57 @@ import { makePolicyRegistry, makeResourceResolverRegistry } from "@effect-server
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { AuthHttpDepsLayer, AuthHttpLayer, AuthLayer } from "@/modules/auth/index.js";
+import { AuthModule } from "@/modules/auth/index.js";
 import {
-  BillingHttpLayer,
-  type BillingLayer,
+  type BillingModule,
   BillingPolicyContribution,
   BillingResolverEntry,
   BillingResolverEntryLive,
 } from "@/modules/billing/index.js";
 import {
-  OrganizationHttpLayer,
-  OrganizationLayer,
+  OrganizationModule,
   OrganizationPolicyContribution,
   OrganizationResolverEntry,
   OrganizationResolverEntryLive,
 } from "@/modules/organization/index.js";
-import { RoleLayer } from "@/modules/role/index.js";
+import { RoleModule } from "@/modules/role/index.js";
 import {
   TodoCollectionResolverEntry,
   TodoCollectionResolverEntryLive,
   TodoPolicyContribution,
   TodoResolverEntry,
   TodoResolverEntryLive,
-  TodosHttpLayer,
-  TodosLayer,
+  TodosModule,
 } from "@/modules/todos/index.js";
-import { UserHttpLayer, UserLayer } from "@/modules/user/index.js";
-import { WalletHttpLayer, WalletLayer } from "@/modules/wallet/index.js";
+import { UserModule } from "@/modules/user/index.js";
+import { WalletModule } from "@/modules/wallet/index.js";
 
 // A set, not a sequence: each module layer already provides the modules it
 // reaches, and Effect memoizes a layer by reference, so one provided at several
 // sites is built once.
-export const applicationModules = (billing: BillingLayer) => ({
+//
+// The three slots stay apart because they are provided at three depths of the
+// server pipeline: `http` into `HttpApiBuilder.layer`, `httpDeps` into the
+// result of `HttpRouter.serve`, and `layer` below the buses that route it.
+export const applicationModules = (billing: BillingModule) => ({
   layer: Layer.mergeAll(
-    RoleLayer,
-    UserLayer,
-    AuthLayer,
-    OrganizationLayer,
-    billing,
-    TodosLayer,
-    WalletLayer,
+    RoleModule.layer,
+    UserModule.layer,
+    AuthModule.layer,
+    OrganizationModule.layer,
+    billing.layer,
+    TodosModule.layer,
+    WalletModule.layer,
   ),
   http: Layer.mergeAll(
-    AuthHttpLayer,
-    UserHttpLayer,
-    OrganizationHttpLayer,
-    BillingHttpLayer,
-    TodosHttpLayer,
-    WalletHttpLayer,
+    AuthModule.http,
+    UserModule.http,
+    OrganizationModule.http,
+    billing.http,
+    TodosModule.http,
+    WalletModule.http,
   ),
-  httpDeps: AuthHttpDepsLayer,
+  httpDeps: AuthModule.httpDeps,
 });
 
 export const PolicyRegistryLive = Layer.unwrap(

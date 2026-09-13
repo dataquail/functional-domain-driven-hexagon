@@ -26,7 +26,7 @@ import {
 
 import { EnvVars } from "./common/env-vars.js";
 import { AuthSharedDepsLive } from "./modules/auth/index.js";
-import { BillingLayer } from "./modules/billing/index.js";
+import { BillingModule } from "./modules/billing/index.js";
 import { DatabaseLive } from "./platform/database-live.js";
 import { UserAuthMiddlewareLive } from "./platform/middlewares/auth-middleware-live.js";
 import {
@@ -42,7 +42,7 @@ dotenv.config({
 // The application, assembled from the module order stated once in
 // platform/modules/. Production takes the live billing gateway; the test runtime
 // passes the fake to the same factory.
-const application = applicationModules(BillingLayer);
+const application = applicationModules(BillingModule);
 
 // v4 model: `HttpApiBuilder.layer` registers the group handlers into the
 // `HttpRouter`; the handlers' runtime dependencies are tracked as

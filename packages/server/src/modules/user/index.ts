@@ -4,5 +4,5 @@
 // resolve them through their own ACL ports.
 export { userCommandGroup, UserCommands } from "./user.command-handlers.js";
 export { userEventSpanAttributes } from "./user.event-span-attributes.js";
-export { UserHttpLayer, UserLayer } from "./user.module.js";
+export { UserModule } from "./user.module.js";
 export { UserQueries, userQueryGroup } from "./user.query-handlers.js";

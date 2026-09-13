@@ -2,7 +2,7 @@
 // What a peer module may reach is auth.exports.ts, and it is empty — nothing
 // outside the platform depends on auth.
 export { authCommandGroup, AuthCommands } from "./auth.command-handlers.js";
-export { AuthHttpDepsLayer, AuthHttpLayer, AuthLayer } from "./auth.module.js";
+export { AuthModule } from "./auth.module.js";
 export { AuthQueries, authQueryGroup } from "./auth.query-handlers.js";
 // AuthSharedDepsLive narrowly exposes only CookieCodec for the
 // platform middleware. The auth-module's handlers wrap their own

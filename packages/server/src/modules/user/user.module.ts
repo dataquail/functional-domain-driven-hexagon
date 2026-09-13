@@ -5,6 +5,7 @@ import { UserLive } from "./interface/http/index.js";
 import { UserCommandsLive } from "./user.command-handlers.js";
 import { UserQueriesLive } from "./user.query-handlers.js";
 
-export const UserLayer = Layer.mergeAll(UserCommandsLive, UserQueriesLive);
-
-export const UserHttpLayer = UserLive.pipe(Layer.provide(UserRepositoryLive));
+export const UserModule = {
+  layer: Layer.mergeAll(UserCommandsLive, UserQueriesLive),
+  http: UserLive.pipe(Layer.provide(UserRepositoryLive)),
+};

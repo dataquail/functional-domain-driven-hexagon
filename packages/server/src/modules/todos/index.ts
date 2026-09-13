@@ -10,4 +10,4 @@ export {
 export { TodoPoliciesLive, TodoPolicyContribution } from "./policies/todos.policies.js";
 export { todoCommandGroup, TodoCommands } from "./todo.command-handlers.js";
 export { TodoQueries, todoQueryGroup } from "./todo.query-handlers.js";
-export { TodosHttpLayer, TodosLayer } from "./todos.module.js";
+export { TodosModule } from "./todos.module.js";

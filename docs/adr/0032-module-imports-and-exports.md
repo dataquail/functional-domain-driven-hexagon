@@ -17,32 +17,46 @@ We first addressed this with a checked composition root — a `Builder` in its o
 
 ## Decision
 
-**A module provides the modules it reaches.** `<Feature>Layer` closes over its imports:
+**A module provides the modules it reaches.** `<Feature>Module.layer` closes over its imports:
 
 ```ts
-export const AuthLayer = Layer.mergeAll(AuthCommandsLive, AuthQueriesLive).pipe(
-  Layer.provide(RoleLayer),
-  Layer.provide(UserLayer),
-);
+export const AuthModule = {
+  layer: Layer.mergeAll(AuthCommandsLive, AuthQueriesLive).pipe(
+    Layer.provide(roleLayer),
+    Layer.provide(userLayer),
+  ),
+  http: AuthLive.pipe(
+    Layer.provide(AuthIdentityRepositoryLive),
+    Layer.provide(SessionRepositoryLive),
+  ),
+  httpDeps: OidcClient.layer,
+};
 ```
+
+The three fields stay apart because the composition root provides them at three depths of the
+server pipeline — `layer` below the buses, `http` into `HttpApiBuilder.layer`, `httpDeps` into the
+result of `HttpRouter.serve`. That last one is not a style choice: providing such a service onto its
+own group layer leaves it in that layer's requirements, because `HttpApiBuilder` carries a handler's
+requirement through to the assembled api and only `serve` unwraps it. Merging the three would
+type-check and then fail to serve.
 
 `Layer.provide` is a private import — role does not appear in auth's output type — and `Layer.provideMerge` is a re-export. That distinction is the imports/exports mechanism, and Effect already had it. There is nothing to invent and nothing to check: a module that forgets an import fails to compile, in its own file, one line from the adapter that needed it.
 
 **There is therefore no order.** The composition root is a `Layer.mergeAll` over a set:
 
 ```ts
-export const applicationModules = (billing: BillingLayer) => ({
+export const applicationModules = (billing: BillingModule) => ({
   layer: Layer.mergeAll(
-    RoleLayer,
-    UserLayer,
-    AuthLayer,
-    OrganizationLayer,
-    billing,
-    TodosLayer,
-    WalletLayer,
+    RoleModule.layer,
+    UserModule.layer,
+    AuthModule.layer,
+    OrganizationModule.layer,
+    billing.layer,
+    TodosModule.layer,
+    WalletModule.layer,
   ),
-  http: Layer.mergeAll(AuthHttpLayer, UserHttpLayer /* … */),
-  httpDeps: AuthHttpDepsLayer,
+  http: Layer.mergeAll(AuthModule.http, UserModule.http /* … */),
+  httpDeps: AuthModule.httpDeps,
 });
 ```
 
@@ -52,8 +66,10 @@ Reordering those lines cannot break anything. A module provided at several sites
 
 ```ts
 export const rolePeerQueries = Query.subsetOf(roleQueryGroup, "FindUserRolesQuery");
-export { RoleLayer } from "./role.module.js";
+export const roleLayer = RoleModule.layer;
 ```
+
+The layer, not the module record: a peer has no business with another module's HTTP wiring.
 
 `subsetOf` (added to `@effect-server-utils/cqrs` for this) builds a group of exactly the named messages. A dispatcher over it demands only those tags' registrations, so a peer reaching for a query missing from the list needs a registration this module never published — and adding a query to `roleQueryGroup` cannot widen the grant. goodbones governs who may open the file at all.
 
@@ -67,7 +83,7 @@ We built it, migrated both roots onto it, and then measured it against plain lay
 - **That advantage is on a mistake the new design cannot make.** There is no ordering to misorder. The remaining mistake is a forgotten `Layer.provide`, in the file where you just wrote the adapter that needs it.
 - **`subsetOf` deflated the rest.** Once per-message narrowing lives at the producer and goodbones governs the import edge, the Builder's `Exports`/`Visible` accumulation is checking something two other mechanisms already check.
 - **A real cycle is now an ES module cycle**, reported by name by `import/no-cycle` and goodbones' `no-cycles`. The Builder only made a cycle unwriteable as a linear order, which is weaker and less legible.
-- **`Module` was a record of three layers.** Useful as documentation, not as enforcement.
+- **`Module.make` was a record of three layers.** An object literal says the same thing with no package behind it, and that is what a module file exports now.
 
 What the Builder did that nothing replaces: `UnusedExports` — refusing an export no module consumes, at message granularity. `no-orphans` and the conformance slack report cover the file and allowance granularities; the message granularity is genuinely lost, and is the price.
 

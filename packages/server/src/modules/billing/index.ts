@@ -6,7 +6,7 @@ export { billingEventSpanAttributes } from "./billing.event-span-attributes.js";
 // Two named modules ship the prod-vs-test gateway swap. The `BillingGateway`
 // Tag stays private to the module's use-case ring — a composition root picks a
 // module and never sees the Tag.
-export { BillingHttpLayer, BillingLayer, BillingLayerFake } from "./billing.module.js";
+export { BillingModule, BillingModuleFake } from "./billing.module.js";
 export { BillingQueries, billingQueryGroup } from "./billing.query-handlers.js";
 export { BillingPoliciesLive, BillingPolicyContribution } from "./policies/billing.policies.js";
 export {

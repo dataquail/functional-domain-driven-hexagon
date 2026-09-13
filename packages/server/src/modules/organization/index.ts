@@ -2,7 +2,7 @@
 // What a peer module may reach is organization.exports.ts.
 export { organizationCommandGroup, OrganizationCommands } from "./organization.command-handlers.js";
 export { organizationEventSpanAttributes } from "./organization.event-span-attributes.js";
-export { OrganizationHttpLayer, OrganizationLayer } from "./organization.module.js";
+export { OrganizationModule } from "./organization.module.js";
 export { OrganizationQueries, organizationQueryGroup } from "./organization.query-handlers.js";
 export {
   OrganizationPoliciesLive,

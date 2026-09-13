@@ -3,4 +3,4 @@
 // only inbound surface is an event adapter.
 export { walletCommandGroup, WalletCommands } from "./wallet.command-handlers.js";
 export { walletEventSpanAttributes } from "./wallet.event-span-attributes.js";
-export { WalletHttpLayer, WalletLayer } from "./wallet.module.js";
+export { WalletModule } from "./wallet.module.js";
