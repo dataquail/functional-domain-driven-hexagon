@@ -6,7 +6,7 @@ import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 
 import { EnvVars } from "@/common/env-vars.js";
 import { AuthSharedDepsLive } from "@/modules/auth/index.js";
-import { BillingModuleFake } from "@/modules/billing/index.js";
+import { BillingGatewayFake } from "@/modules/billing/index.js";
 import { Api } from "@/platform/api.js";
 import {
   CommandBusLive,
@@ -26,9 +26,10 @@ import {
 } from "@/test-utils/fake-auth-middleware.js";
 import { TestDatabaseLive } from "@/test-utils/test-database.js";
 
-// The same module order production runs, from the same factory — only billing's
-// gateway differs, and it differs by being passed in.
-const application = applicationModules(BillingModuleFake);
+// The same application production runs. What this root does differently is
+// provide a different environment below: a test database, a fake auth
+// middleware, an in-memory transport, and billing's fake gateway.
+const application = applicationModules;
 
 // `CommandBus` and `QueryBus` are cross-cutting public production APIs
 // (ADR-0006) — the same dispatch surface every HTTP handler uses. Exposing
@@ -70,7 +71,7 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
     // too (`handlersOf` hoists its handlers' requirements), and one layer value in
     // one place keeps it one instance. See server.ts.
     Layer.provideMerge(Layer.mergeAll(DomainEventBusLive, UnitOfWorkLive)),
-    Layer.provide(AuthSharedDepsLive),
+    Layer.provide([AuthSharedDepsLive, BillingGatewayFake]),
     Layer.provideMerge(TestDatabaseLive),
     Layer.provide(EnvVars.layer),
     Layer.provideMerge(NodeHttpServer.layerTest),

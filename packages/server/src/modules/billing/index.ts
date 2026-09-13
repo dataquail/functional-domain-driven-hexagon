@@ -3,11 +3,10 @@
 // is a leaf.
 export { billingCommandGroup, BillingCommands } from "./billing.command-handlers.js";
 export { billingEventSpanAttributes } from "./billing.event-span-attributes.js";
-// Two named modules ship the prod-vs-test gateway swap. The `BillingGateway`
-// Tag stays private to the module's use-case ring — a composition root picks a
-// module and never sees the Tag.
-export { BillingModule, BillingModuleFake } from "./billing.module.js";
+export { BillingModule } from "./billing.module.js";
+// The gateway adapter a composition root picks between.
 export { BillingQueries, billingQueryGroup } from "./billing.query-handlers.js";
+export { BillingGatewayFake, BillingGatewayLive } from "./billing.shared-deps.js";
 export { BillingPoliciesLive, BillingPolicyContribution } from "./policies/billing.policies.js";
 export {
   BillingResolverEntry,

@@ -45,19 +45,19 @@ type-check and then fail to serve.
 **There is therefore no order.** The composition root is a `Layer.mergeAll` over a set:
 
 ```ts
-export const applicationModules = (billing: BillingModule) => ({
+export const applicationModules = {
   layer: Layer.mergeAll(
     RoleModule.layer,
     UserModule.layer,
     AuthModule.layer,
     OrganizationModule.layer,
-    billing.layer,
+    BillingModule.layer,
     TodosModule.layer,
     WalletModule.layer,
   ),
   http: Layer.mergeAll(AuthModule.http, UserModule.http /* … */),
   httpDeps: AuthModule.httpDeps,
-});
+};
 ```
 
 Reordering those lines cannot break anything. A module provided at several sites is built once — Effect memoizes a layer by reference across one build — which is what makes closing over a shared module safe rather than a way to end up with two event buses.
@@ -76,6 +76,8 @@ There is a concrete payoff beyond tidiness. When the Layer lived on the peer sur
 
 `subsetOf` (added to `@effect-server-utils/cqrs` for this) builds a group of exactly the named messages. A dispatcher over it demands only those tags' registrations, so a peer reaching for a query missing from the list needs a registration this module never published — and adding a query to `roleQueryGroup` cannot widen the grant. goodbones governs who may open the file at all.
 
+**A service whose adapter differs between composition roots stays a requirement.** Billing's `BillingGateway` is the only one — Stripe in production, a fake in the test runtime — and it used to be expressed by shipping two whole module values and parameterizing the composition root on which one to take. That is backwards: `applicationModules` is the file both roots share _verbatim_, so it should not be the file parameterized by the thing that differs between them. The gateway now sits in the module layer's requirement channel, the module publishes both adapters from `billing.shared-deps.ts`, and each root provides the one it wants beside the database, auth middleware and HTTP transport it already chooses. `applicationModules` takes no parameters and every module is listed the same way.
+
 **A module's policy contribution lives in its own layer.** Otherwise the cross-module edges its policy checks reach through are satisfied at the composition root and appear in no module's requirement channel.
 
 ## Why not the Builder
@@ -93,6 +95,6 @@ What the Builder did that nothing replaces: `UnusedExports` — refusing an expo
 ## Consequences
 
 - The module graph moves out of the composition root and into the modules, next to the ACL adapters that create the edges. Reading `auth.module.ts` now tells you what auth depends on.
-- Neither composition root states an order, so the two cannot disagree about one.
+- Neither composition root states an order, so the two cannot disagree about one, and neither parameterizes the shared assembly on what differs between them.
 - The `@org/module` package is deleted.
 - `platform/modules/application-modules.ts` no longer displays the whole graph in one place. `pnpm architecture:facts` and the goodbones graph rules are where you ask that question now.

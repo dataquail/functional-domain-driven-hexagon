@@ -471,7 +471,6 @@ children:
         - "@/platform/ids/**"
         - "@/platform/auth/**"
         - "@/platform/notifications/**"
-        - "@/common/**"
       deny:
         - match: "@/platform/*-live.ts"
           except: ["@/server.ts", "@/platform/cqrs/**", "@/test-utils/**", "**/*.test.ts"]

@@ -26,7 +26,7 @@ import {
 
 import { EnvVars } from "./common/env-vars.js";
 import { AuthSharedDepsLive } from "./modules/auth/index.js";
-import { BillingModule } from "./modules/billing/index.js";
+import { BillingGatewayLive } from "./modules/billing/index.js";
 import { DatabaseLive } from "./platform/database-live.js";
 import { UserAuthMiddlewareLive } from "./platform/middlewares/auth-middleware-live.js";
 import {
@@ -39,10 +39,11 @@ dotenv.config({
   path: "../../.env",
 });
 
-// The application, assembled from the module order stated once in
-// platform/modules/. Production takes the live billing gateway; the test runtime
-// passes the fake to the same factory.
-const application = applicationModules(BillingModule);
+// The application, assembled once in platform/modules/ and identical in both
+// composition roots. What differs between them is the environment each provides
+// below — the database, the auth middleware, the HTTP transport, and billing's
+// gateway.
+const application = applicationModules;
 
 // v4 model: `HttpApiBuilder.layer` registers the group handlers into the
 // `HttpRouter`; the handlers' runtime dependencies are tracked as
@@ -129,7 +130,7 @@ const HttpLive = HttpRouter.serve(ApiLive, {
   // Resource resolvers read through repositories, so they close on Database
   // alone; the policy registry sits above with the buses it now dispatches
   // through.
-  Layer.provide(AuthSharedDepsLive),
+  Layer.provide([AuthSharedDepsLive, BillingGatewayLive]),
   Layer.provide(DatabaseLive),
   Layer.provide(TracerLive),
   Layer.provide(EnvVars.layer),

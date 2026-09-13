@@ -4,7 +4,7 @@ import * as Layer from "effect/Layer";
 
 import { AuthModule } from "@/modules/auth/index.js";
 import {
-  type BillingModule,
+  BillingModule,
   BillingPolicyContribution,
   BillingResolverEntry,
   BillingResolverEntryLive,
@@ -34,13 +34,13 @@ import { WalletModule } from "@/modules/wallet/index.js";
 // The three slots stay apart because they are provided at three depths of the
 // server pipeline: `http` into `HttpApiBuilder.layer`, `httpDeps` into the
 // result of `HttpRouter.serve`, and `layer` below the buses that route it.
-export const applicationModules = (billing: BillingModule) => ({
+export const applicationModules = {
   layer: Layer.mergeAll(
     RoleModule.layer,
     UserModule.layer,
     AuthModule.layer,
     OrganizationModule.layer,
-    billing.layer,
+    BillingModule.layer,
     TodosModule.layer,
     WalletModule.layer,
   ),
@@ -48,12 +48,12 @@ export const applicationModules = (billing: BillingModule) => ({
     AuthModule.http,
     UserModule.http,
     OrganizationModule.http,
-    billing.http,
+    BillingModule.http,
     TodosModule.http,
     WalletModule.http,
   ),
   httpDeps: AuthModule.httpDeps,
-});
+};
 
 export const PolicyRegistryLive = Layer.unwrap(
   Effect.gen(function* () {
