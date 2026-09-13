@@ -138,7 +138,6 @@ defs:
       - "@/modules/*/event-handlers/**"
       - "@/modules/*/sagas/**"
       - "@/modules/*/infrastructure/**"
-      - "@/modules/*/*.shared-deps.ts"
       - "@/modules/*/*.module.ts"
       - "@/modules/*/*.command-handlers.ts"
       - "@/modules/*/*.query-handlers.ts"
@@ -160,7 +159,6 @@ defs:
       - "@/modules/*/event-handlers/**"
       - "@/modules/*/sagas/**"
       - "@/modules/*/infrastructure/**"
-      - "@/modules/*/*.shared-deps.ts"
       - "@/modules/*/*.module.ts"
       - "@/modules/*/*.command-handlers.ts"
       - "@/modules/*/*.query-handlers.ts"
@@ -322,7 +320,7 @@ children:
             unit of work. It reaches no module internals and no database client of its own.
           external: [effect, "@effect-server-utils/cqrs", "@effect-server-utils/unit-of-work"]
           allow:
-            - "@/modules/*/index.ts"
+            - "@/modules/*/*.platform.ts"
             - "@/platform/transaction-driver-live.ts"
             - "@/platform/ddd/**"
         children:
@@ -348,7 +346,7 @@ children:
             - effect
             - "@effect-server-utils/authz"
           allow:
-            - "@/modules/*/index.ts"
+            - "@/modules/*/*.platform.ts"
         children:
           "application-modules.ts": {}
 
@@ -403,7 +401,7 @@ children:
             - "node:**"
             - "@/common/**"
             - "@/platform/auth/**"
-            - "@/modules/*/index.ts"
+            - "@/modules/*/*.platform.ts"
             - "~/contracts/**"
         children:
           "*-live.ts": {}
@@ -436,21 +434,21 @@ children:
   # ── modules/ ──────────────────────────────────────────────────────────
   "modules/{module}/":
     message: >-
-      The module root admits only aggregation files: index.ts (barrel), <feature>.module.ts
-      (composed Layer), <feature>.command-handlers.ts / .query-handlers.ts (bus-registration
-      maps), <feature>.event-span-attributes.ts, <feature>.shared-deps.ts. Feature code belongs
-      in a stereotype subfolder (domain/, commands/, queries/, event-handlers/, infrastructure/,
-      interface/, policies/).
+      The module root admits only aggregation files, each named for the plane it serves
+      (ADR-0024): <feature>.platform.ts (what the platform names), <feature>.exports.ts (what a
+      peer names), <feature>.module.ts (the module's Layers), <feature>.command-handlers.ts /
+      .query-handlers.ts (bus-registration maps), <feature>.event-span-attributes.ts. Feature
+      code belongs in a stereotype subfolder (domain/, commands/, queries/, event-handlers/,
+      infrastructure/, interface/, policies/).
 
     importedBy:
       message: >-
-        Files outside src/modules/ must import a module through its index.ts barrel. A module
-        is private except for the surface it publishes on purpose — reaching past the barrel
-        couples you to a shape the module is free to change without telling you.
+        Files outside src/modules/ must import a module through its <feature>.platform.ts
+        surface. A module is private except for what it publishes on purpose — reaching past
+        that file couples you to a shape the module is free to change without telling you.
       allow: ["@/modules/**", "**/*.test.ts"]
-      # The barrel itself is the public surface, so the restriction does not
-      # cover it.
-      matchNot: ["index.ts"]
+      # The platform surface is itself public, so the restriction does not cover it.
+      matchNot: ["*.platform.ts"]
 
     imports:
       message: >-
@@ -469,7 +467,6 @@ children:
         - "@/modules/*/*.module.ts"
         - "@/platform/ddd/**"
         - "@/platform/ids/**"
-        - "@/platform/auth/**"
         - "@/platform/notifications/**"
       deny:
         - match: "@/platform/*-live.ts"
@@ -482,35 +479,35 @@ children:
         - match: "@/modules/*/**"
           matchNot:
             - "@/modules/{module}/**"
-            - "@/modules/*/index.ts"
+            - "@/modules/*/*.platform.ts"
             - "@/modules/*/*.exports.ts"
             - "@/modules/*/*.module.ts"
           message: >-
             A module may only import another module through one of the three files it
-            publishes on purpose: <feature>.exports.ts for its peers, index.ts for the
-            platform, <feature>.module.ts for another module's wiring. Reaching anywhere else
-            couples you to a shape it is free to change.
-        - match: "@/modules/*/index.ts"
-          matchNot: ["@/modules/{module}/index.ts"]
+            publishes on purpose: <feature>.exports.ts for its peers, <feature>.platform.ts for
+            the platform, <feature>.module.ts for another module's wiring. Reaching anywhere
+            else couples you to a shape it is free to change.
+        - match: "@/modules/*/*.platform.ts"
+          matchNot: ["@/modules/{module}/*.platform.ts"]
           # Tests only. The two anti-corruption seams used to be exempted here;
           # they now reach <feature>.exports.ts, which states its own inbound
           # rule, so a module never names another module's wiring surface.
           except: ["**/*.test.ts"]
           message: >-
-            A module may not name another module's index.ts: that is the wiring surface, for
-            the composition roots and the platform. Reach <feature>.exports.ts instead — and
+            A module may not name another module's <feature>.platform.ts: that is the platform
+            surface, for the composition roots and the platform. Reach <feature>.exports.ts instead — and
             only from a cross-context ACL adapter (infrastructure/acl/) or an inbound event
             adapter (interface/events/). Everywhere else depends on a consumer-owned port in
             domain/ports/acl/, whose adapter is the one place the foreign vocabulary appears
             (ADR-0022). A client that reaches into a sibling module is a miscategorised ACL.
 
     children:
-      "index.ts":
+      "*.platform.ts":
         importedBy:
           message: >-
-            index.ts is the WIRING surface: what the platform names to assemble and drive this
-            module — its dispatch-surface Tags, its groups, its Module value, its policy
-            contribution and resolver entries. Only the composition roots and the platform
+            <feature>.platform.ts is the PLATFORM surface: what the platform names to assemble
+            and drive this module — its dispatch-surface Tags, its groups, its Module value, its
+            policy contribution and resolver entries. Only the composition roots and the platform
             kernel may reach it. A peer module wanting this module's vocabulary reaches
             <feature>.exports.ts instead, which is the surface published for that purpose;
             reaching in here couples a module to how the application is wired.
@@ -521,38 +518,46 @@ children:
             - "**/*.test.ts"
         surface:
           - message: >-
-              A module barrel re-exports; `{name}` is declared here. The barrel is the surface
-              the module publishes, not a home for code — move the declaration into the
-              stereotype folder that owns it and re-export it from there.
+              <feature>.platform.ts re-exports; `{name}` is declared here. It is the surface the
+              module publishes to the platform, not a home for code — move the declaration into
+              the stereotype folder that owns it and re-export it from there.
             reexport: false
         imports:
           reset: true
           message: >-
-            A module's barrel re-exports from its own module and nowhere else: domain types,
-            message definitions, handler-registration maps and the module's Live layer. It is
-            the surface other modules see, so anything it names becomes public.
+            <feature>.platform.ts re-exports from its own module and nowhere else: domain types,
+            message definitions, handler-registration maps and the module's Layers. It is the
+            surface the platform sees, so anything it names becomes public.
           allow: ["@/modules/{module}/**"]
           deny:
             - match: ["@/modules/*/infrastructure/**", "@/modules/*/interface/**"]
+              # The one publishable adapter: a third-party client's live/fake pair,
+              # which a composition root picks between the way it picks a database
+              # or a transport. A repository has no such choice — the environment
+              # varies the database, not the repository — and interface/ is inbound.
+              matchNot:
+                - "@/modules/*/infrastructure/clients/*.client-live.ts"
+                - "@/modules/*/infrastructure/clients/*.client-fake.ts"
               message: >-
-                A module's barrel publishes domain types, message definitions,
-                handler-registration maps and the module's Live layer — never its adapters.
-                Re-exporting from infrastructure/ or interface/ makes a driven or driving
-                adapter part of the module's public surface, which is exactly what the barrel
-                exists to keep private.
+                <feature>.platform.ts publishes domain types, message definitions,
+                handler-registration maps and the module's Layers — never its adapters, with one
+                exception: a third-party client's live/fake pair, because choosing between those
+                is a composition root's job. Re-exporting anything else from infrastructure/ or
+                interface/ makes a driven or driving adapter part of the module's public
+                surface, which is exactly what this file exists to keep private.
       "*.module.ts":
         importedBy:
           message: >-
             <feature>.module.ts is the WIRING plane: it holds the module's Layers, and the only
             thing that needs them is other wiring. Another module's <feature>.module.ts may
-            name it, to provide a module it imports, and this module's own index.ts publishes
-            it to the platform. Application code — a command, a query, a policy, an ACL or
+            name it, to provide a module it imports, and this module's own <feature>.platform.ts
+            publishes it to the platform. Application code — a command, a query, a policy, an ACL or
             event adapter — reaches <feature>.exports.ts instead. That file is the module's
             contract; this one is how the application happens to assemble it, and the two
             couple a consumer to different things.
           allow:
             - "@/modules/*/*.module.ts"
-            - "@/modules/*/index.ts"
+            - "@/modules/*/*.platform.ts"
             - "**/*.test.ts"
       # The module's peer-facing surface, stated apart from its wiring. The DI
       # half is the `Module.exports(...)` list the builder checks; the import
@@ -575,7 +580,6 @@ children:
             - "**/*.test.ts"
       "*.command-handlers.ts | *.query-handlers.ts": {}
       "*.event-span-attributes.ts": {}
-      "*.shared-deps.ts": {}
 
       "commands/":
         message: >-
@@ -886,7 +890,7 @@ children:
               message: >-
                 An ACL adapter is the one place a module's foreign vocabulary appears
                 (ADR-0022): it names another module's <feature>.exports.ts — the surface that
-                module publishes for its peers, never its index.ts wiring surface — and
+                module publishes for its peers, never its <feature>.platform.ts surface — and
                 translates what comes back into this module's own acl port. It needs nothing
                 else — no repositories, no use cases, no database.
               # It builds a dispatcher over the subset the other module published,
@@ -1171,7 +1175,6 @@ children:
                     - "@/modules/*/event-handlers/**"
                     - "@/modules/*/sagas/**"
                     - "@/modules/*/infrastructure/**"
-                    - "@/modules/*/*.shared-deps.ts"
                     - "@/modules/*/*.module.ts"
                     - "@/test-utils/**"
                     - "**/*.test.ts"
@@ -1255,7 +1258,7 @@ children:
         - "node:**"
         - "@/common/**"
         - "@/platform/**"
-        - "@/modules/*/index.ts"
+        - "@/modules/*/*.platform.ts"
         - "@/test-utils/**"
         - "~/contracts/**"
         - "~/database/**"

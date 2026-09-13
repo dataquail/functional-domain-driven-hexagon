@@ -256,14 +256,14 @@ graph:
     # only a route that avoids every barrel is the violation.
     - name: platform-reaches-modules-only-through-barrels
       message: >-
-        The platform kernel reaches inside a module without passing through its barrel.
-        platform/cqrs/ and platform/middlewares/ may name a module's index.ts; anything a route
-        from platform/ touches without going through one is a module internal the module is free
-        to change without telling the kernel.
+        The platform kernel reaches inside a module without passing through its platform surface.
+        platform/cqrs/ and platform/middlewares/ may name a module's <feature>.platform.ts;
+        anything a route from platform/ touches without going through one is a module internal the
+        module is free to change without telling the kernel.
       from: "@/platform/**"
       fromNot: "**/*.test.ts"
       to: "@/modules/*/**"
-      via: "@/modules/*/index.ts"
+      via: "@/modules/*/*.platform.ts"
     - name: web-never-reaches-the-server
       message: >-
         packages/web transitively reaches packages/server. The browser talks to the BFF over HTTP

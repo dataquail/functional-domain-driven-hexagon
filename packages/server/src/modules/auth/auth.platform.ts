@@ -4,10 +4,6 @@
 export { authCommandGroup, AuthCommands } from "./auth.command-handlers.js";
 export { AuthModule } from "./auth.module.js";
 export { AuthQueries, authQueryGroup } from "./auth.query-handlers.js";
-// AuthSharedDepsLive narrowly exposes only CookieCodec for the
-// platform middleware. The auth-module's handlers wrap their own
-// SessionRepository internally (Stage B).
-export { AuthSharedDepsLive } from "./auth.shared-deps.js";
 // Dispatched by the auth middleware on the bearer path (ADR-0005).
 export { TouchApiTokenCommand } from "./commands/touch-api-token.command.js";
 export { TouchSessionCommand } from "./commands/touch-session.command.js";

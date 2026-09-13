@@ -1,13 +1,13 @@
 import { describe, expect, it } from "@effect/vitest";
 import { Command, Query } from "@effect-server-utils/cqrs";
 
-import * as authModule from "@/modules/auth/index.js";
-import * as billingModule from "@/modules/billing/index.js";
-import * as organizationModule from "@/modules/organization/index.js";
-import * as roleModule from "@/modules/role/index.js";
-import * as todosModule from "@/modules/todos/index.js";
-import * as userModule from "@/modules/user/index.js";
-import * as walletModule from "@/modules/wallet/index.js";
+import * as authModule from "@/modules/auth/auth.platform.js";
+import * as billingModule from "@/modules/billing/billing.platform.js";
+import * as organizationModule from "@/modules/organization/organization.platform.js";
+import * as roleModule from "@/modules/role/role.platform.js";
+import * as todosModule from "@/modules/todos/todos.platform.js";
+import * as userModule from "@/modules/user/user.platform.js";
+import * as walletModule from "@/modules/wallet/wallet.platform.js";
 
 declare global {
   interface ImportMeta {

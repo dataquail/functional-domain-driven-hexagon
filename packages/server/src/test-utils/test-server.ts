@@ -5,9 +5,9 @@ import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 
 import { EnvVars } from "@/common/env-vars.js";
-import { AuthSharedDepsLive } from "@/modules/auth/index.js";
-import { BillingGatewayFake } from "@/modules/billing/index.js";
+import { BillingGatewayFake } from "@/modules/billing/billing.platform.js";
 import { Api } from "@/platform/api.js";
+import { CookieCodec } from "@/platform/auth/cookie-codec.js";
 import {
   CommandBusLive,
   DomainEventBusLive,
@@ -67,7 +67,7 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
     // too (`handlersOf` hoists its handlers' requirements), and one layer value in
     // one place keeps it one instance. See server.ts.
     Layer.provideMerge(Layer.mergeAll(DomainEventBusLive, UnitOfWorkLive)),
-    Layer.provide([AuthSharedDepsLive, BillingGatewayFake]),
+    Layer.provide([CookieCodec.layer, BillingGatewayFake]),
     Layer.provideMerge(TestDatabaseLive),
     Layer.provide(EnvVars.layer),
     Layer.provideMerge(NodeHttpServer.layerTest),

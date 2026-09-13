@@ -16,6 +16,7 @@ import * as OtlpTracer from "effect/unstable/observability/OtlpTracer";
 import { isSqlError } from "effect/unstable/sql/SqlError";
 
 import { Api } from "@/platform/api.js";
+import { CookieCodec } from "@/platform/auth/cookie-codec.js";
 import {
   CommandBusLive,
   DomainEventBusLive,
@@ -25,8 +26,7 @@ import {
 } from "@/platform/cqrs/cqrs-runtime.js";
 
 import { EnvVars } from "./common/env-vars.js";
-import { AuthSharedDepsLive } from "./modules/auth/index.js";
-import { BillingGatewayLive } from "./modules/billing/index.js";
+import { BillingGatewayLive } from "./modules/billing/billing.platform.js";
 import { DatabaseLive } from "./platform/database-live.js";
 import { UserAuthMiddlewareLive } from "./platform/middlewares/auth-middleware-live.js";
 import { applicationModules } from "./platform/modules/application-modules.js";
@@ -121,7 +121,9 @@ const HttpLive = HttpRouter.serve(ApiLive, {
   // Resource resolvers read through repositories, so they close on Database
   // alone; the policy registry sits above with the buses it now dispatches
   // through.
-  Layer.provide([AuthSharedDepsLive, BillingGatewayLive]),
+  // One CookieCodec: this module signs the session cookie and the platform
+  // middleware verifies it, so a second instance would verify with a different key.
+  Layer.provide([CookieCodec.layer, BillingGatewayLive]),
   Layer.provide(DatabaseLive),
   Layer.provide(TracerLive),
   Layer.provide(EnvVars.layer),

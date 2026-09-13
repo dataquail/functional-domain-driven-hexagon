@@ -116,7 +116,7 @@ const REFUSED = [
   [
     "a command reaching for another module's barrel",
     `${M}/alpha/commands/do.handler.ts`,
-    `${M}/beta/index.ts`,
+    `${M}/beta/beta.platform.ts`,
   ],
   [
     "a command naming a platform Live",
@@ -181,7 +181,7 @@ const REFUSED = [
   [
     "an interface util reaching for a module barrel",
     `${M}/alpha/interface/http/x.util.ts`,
-    `${M}/beta/index.ts`,
+    `${M}/beta/beta.platform.ts`,
   ],
   [
     "an interface util reaching for infrastructure",
@@ -201,7 +201,7 @@ const REFUSED = [
   [
     "a repository Live naming a foreign barrel",
     `${M}/alpha/infrastructure/repositories/x.repository-live.ts`,
-    `${M}/beta/index.ts`,
+    `${M}/beta/beta.platform.ts`,
   ],
   [
     "a repository Live reaching foreign internals",
@@ -211,12 +211,12 @@ const REFUSED = [
   [
     "an endpoint naming a foreign barrel",
     `${M}/alpha/interface/http/get.endpoint.ts`,
-    `${M}/beta/index.ts`,
+    `${M}/beta/beta.platform.ts`,
   ],
   [
     "an event-handler naming a foreign barrel",
     `${M}/alpha/event-handlers/on-thing.handler.ts`,
-    `${M}/beta/index.ts`,
+    `${M}/beta/beta.platform.ts`,
   ],
   [
     "a policy loading an aggregate root",
@@ -381,7 +381,7 @@ const REFUSED = [
   [
     "a module Layer naming another module's barrel",
     `${M}/alpha/alpha.module.ts`,
-    `${M}/beta/index.ts`,
+    `${M}/beta/beta.platform.ts`,
   ],
   [
     "an ACL adapter reaching another module's wiring plane",
@@ -393,7 +393,11 @@ const REFUSED = [
     `${M}/alpha/policies/alpha.policies.ts`,
     `${M}/beta/beta.module.ts`,
   ],
-  ["a barrel naming another module's barrel", `${M}/alpha/index.ts`, `${M}/beta/index.ts`],
+  [
+    "a platform surface naming another module's platform surface",
+    `${M}/alpha/alpha.platform.ts`,
+    `${M}/beta/beta.platform.ts`,
+  ],
   [
     "an interface util reaching for a command handler",
     `${M}/alpha/interface/http/x.util.ts`,
@@ -401,12 +405,12 @@ const REFUSED = [
   ],
   [
     "a barrel re-exporting infrastructure",
-    `${M}/alpha/index.ts`,
+    `${M}/alpha/alpha.platform.ts`,
     `${M}/alpha/infrastructure/repositories/x.repository-live.ts`,
   ],
   [
     "a barrel re-exporting interface",
-    `${M}/alpha/index.ts`,
+    `${M}/alpha/alpha.platform.ts`,
     `${M}/alpha/interface/http/get.endpoint.ts`,
   ],
   [
@@ -439,7 +443,7 @@ const REFUSED = [
     `${M}/alpha/alpha.module.ts`,
     "packages/contracts/src/Policy.ts",
   ],
-  ["barrel → effect", `${M}/alpha/index.ts`, NPM("effect")],
+  ["platform surface → effect", `${M}/alpha/alpha.platform.ts`, NPM("effect")],
   [
     "event-handler → @org/database",
     `${M}/alpha/event-handlers/on.handler.ts`,
@@ -511,7 +515,11 @@ const REFUSED = [
     "packages/server/src/platform/ids/user-id.ts",
     "packages/contracts/src/Policy.ts",
   ],
-  ["platform/ids → a module", "packages/server/src/platform/ids/user-id.ts", `${M}/alpha/index.ts`],
+  [
+    "platform/ids → a module",
+    "packages/server/src/platform/ids/user-id.ts",
+    `${M}/alpha/alpha.platform.ts`,
+  ],
   [
     "ddd/contracts → the event bus",
     "packages/server/src/platform/ddd/contracts/domain-event.ts",
@@ -550,7 +558,7 @@ const REFUSED = [
   [
     "a top-level platform file → a module",
     "packages/server/src/platform/http-endpoint.ts",
-    `${M}/alpha/index.ts`,
+    `${M}/alpha/alpha.platform.ts`,
   ],
   [
     "an endpoint → the persistence helpers",
@@ -572,7 +580,11 @@ const REFUSED = [
     "packages/server/src/common/env-vars.ts",
     "packages/server/src/platform/ids/user-id.ts",
   ],
-  ["common → a module barrel", "packages/server/src/common/env-vars.ts", `${M}/alpha/index.ts`],
+  [
+    "common → a module barrel",
+    "packages/server/src/common/env-vars.ts",
+    `${M}/alpha/alpha.platform.ts`,
+  ],
   [
     "platform/api.ts → @org/database",
     "packages/server/src/platform/api.ts",
@@ -834,7 +846,7 @@ const ALLOWED = [
   ],
   [
     "a barrel re-exporting its domain (LEGAL)",
-    `${M}/alpha/index.ts`,
+    `${M}/alpha/alpha.platform.ts`,
     `${M}/alpha/domain/one/one.id.ts`,
   ],
   [
@@ -852,7 +864,11 @@ const ALLOWED = [
     `${M}/alpha/alpha.command-handlers.ts`,
     `${M}/alpha/domain/ports/clients/x.client.ts`,
   ],
-  ["server.ts using a barrel (LEGAL)", "packages/server/src/server.ts", `${M}/alpha/index.ts`],
+  [
+    "server.ts using a barrel (LEGAL)",
+    "packages/server/src/server.ts",
+    `${M}/alpha/alpha.platform.ts`,
+  ],
   [
     "a handler map naming a notifications Live (LEGAL)",
     `${M}/alpha/alpha.command-handlers.ts`,
@@ -910,8 +926,8 @@ const GRAPH = [
     "the platform reaching a module Layer through its barrel (LEGAL)",
     null,
     [
-      ["packages/server/src/platform/cqrs/cqrs-runtime.ts", `${M}/alpha/index.ts`],
-      [`${M}/alpha/index.ts`, `${M}/alpha/alpha.module.ts`],
+      ["packages/server/src/platform/cqrs/cqrs-runtime.ts", `${M}/alpha/alpha.platform.ts`],
+      [`${M}/alpha/alpha.platform.ts`, `${M}/alpha/alpha.module.ts`],
     ],
   ],
   [

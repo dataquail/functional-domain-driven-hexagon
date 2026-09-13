@@ -14,7 +14,7 @@ import {
   SessionId,
   TouchApiTokenCommand,
   TouchSessionCommand,
-} from "@/modules/auth/index.js";
+} from "@/modules/auth/auth.platform.js";
 import { CookieCodec } from "@/platform/auth/cookie-codec.js";
 
 // `Authorization: Bearer <token>` — case-insensitive scheme. Returns the

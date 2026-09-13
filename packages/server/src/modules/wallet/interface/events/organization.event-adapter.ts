@@ -1,5 +1,5 @@
 // Inbound event adapter (ADR-0007): the only file in the wallet module
-// permitted to import `@/modules/organization/index.js`. It translates
+// permitted to import `@/modules/organization/organization.platform.js`. It translates
 // `OrganizationCreated` into a `CreateWalletCommand` and dispatches it
 // through the bus — a bus-only inbound port, structurally identical to an
 // HTTP endpoint. It never touches the wallet domain, its ops, or its

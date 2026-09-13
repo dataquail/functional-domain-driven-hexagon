@@ -16,40 +16,44 @@ import {
   AuthCommands,
   AuthQueries,
   authQueryGroup,
-} from "@/modules/auth/index.js";
+} from "@/modules/auth/auth.platform.js";
 import {
   billingCommandGroup,
   BillingCommands,
   billingEventSpanAttributes,
   BillingQueries,
   billingQueryGroup,
-} from "@/modules/billing/index.js";
+} from "@/modules/billing/billing.platform.js";
 import {
   organizationCommandGroup,
   OrganizationCommands,
   organizationEventSpanAttributes,
   OrganizationQueries,
   organizationQueryGroup,
-} from "@/modules/organization/index.js";
-import { roleCommandGroup, RoleCommands, roleEventSpanAttributes } from "@/modules/role/index.js";
+} from "@/modules/organization/organization.platform.js";
+import {
+  roleCommandGroup,
+  RoleCommands,
+  roleEventSpanAttributes,
+} from "@/modules/role/role.platform.js";
 import {
   todoCommandGroup,
   TodoCommands,
   TodoQueries,
   todoQueryGroup,
-} from "@/modules/todos/index.js";
+} from "@/modules/todos/todos.platform.js";
 import {
   userCommandGroup,
   UserCommands,
   userEventSpanAttributes,
   UserQueries,
   userQueryGroup,
-} from "@/modules/user/index.js";
+} from "@/modules/user/user.platform.js";
 import {
   walletCommandGroup,
   WalletCommands,
   walletEventSpanAttributes,
-} from "@/modules/wallet/index.js";
+} from "@/modules/wallet/wallet.platform.js";
 import { TransactionDriverLive } from "@/platform/transaction-driver-live.js";
 
 // The parts of the composition root that production and the test runtime share
