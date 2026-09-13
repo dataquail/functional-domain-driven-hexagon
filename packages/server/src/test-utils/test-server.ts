@@ -15,11 +15,7 @@ import {
   UnhandledFailuresLive,
   UnitOfWorkLive,
 } from "@/platform/cqrs/cqrs-runtime.js";
-import {
-  applicationModules,
-  PolicyRegistryLive,
-  ResourceResolverRegistryLive,
-} from "@/platform/modules/application-modules.js";
+import { applicationModules } from "@/platform/modules/application-modules.js";
 import {
   UserAuthMiddlewareFake,
   UserAuthMiddlewareFakeAsMember,
@@ -61,10 +57,10 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
   // `yield* CommandBus`/`QueryBus`, `yield* HttpApiClient.make(Api)`, and drive
   // the DB directly.
   return HttpRouter.serve(ApiLive).pipe(
-    // The modules' request-scoped services, which `serve` unwrapped into plain
-    // requirements — attached at the assembled api layer because that is the only
-    // point that can satisfy one. Their deps (EnvVars, etc.) close below.
-    Layer.provide([PolicyRegistryLive, ResourceResolverRegistryLive, application.httpDeps]),
+    // The application's request-scoped services, which `serve` unwrapped into
+    // plain requirements — attached at the assembled api layer because that is the
+    // only point that can satisfy one. Their deps (EnvVars, etc.) close below.
+    Layer.provide(application.httpDeps),
     Layer.provideMerge(Layer.mergeAll(CommandBusLive, QueryBusLive, UnhandledFailuresLive)),
     Layer.provideMerge(application.layer),
     // Below the dispatchers and merged, not provided: every dispatcher needs these

@@ -29,11 +29,7 @@ import { AuthSharedDepsLive } from "./modules/auth/index.js";
 import { BillingGatewayLive } from "./modules/billing/index.js";
 import { DatabaseLive } from "./platform/database-live.js";
 import { UserAuthMiddlewareLive } from "./platform/middlewares/auth-middleware-live.js";
-import {
-  applicationModules,
-  PolicyRegistryLive,
-  ResourceResolverRegistryLive,
-} from "./platform/modules/application-modules.js";
+import { applicationModules } from "./platform/modules/application-modules.js";
 
 dotenv.config({
   path: "../../.env",
@@ -105,14 +101,9 @@ const HttpLive = HttpRouter.serve(ApiLive, {
   disableLogger: true,
 }).pipe(
   // The endpoints' per-request services, now unwrapped by `serve` into plain
-  // requirements. The provide ORDER encodes the dependency graph (peers don't
-  // satisfy each other) — it mirrors the pre-v4 ApiLive wiring.
-  // The policy registry and the modules' httpDeps are peers of the auth middleware:
-  // all consume the buses provided just below and feed upstream consumers (endpoints
-  // + policy checks). No module's ACL adapter appears here any more — each is
-  // provided inside the module that owns it, and each module's request-scoped
-  // dependency rides `application.httpDeps` rather than being named here.
-  Layer.provide([PolicyRegistryLive, ResourceResolverRegistryLive, application.httpDeps]),
+  // requirements. They are peers of the auth middleware: all consume the buses
+  // provided just below and feed the endpoints and policy checks above.
+  Layer.provide(application.httpDeps),
   // CommandBus + QueryBus provide TO the middleware (which dispatches
   // FindSessionQuery). The event bus is not here: the unit of work resolves it from
   // the running fiber's context when it flushes, so a peer of `UnitOfWork` below

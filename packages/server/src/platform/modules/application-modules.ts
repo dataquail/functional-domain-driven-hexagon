@@ -27,34 +27,11 @@ import {
 import { UserModule } from "@/modules/user/index.js";
 import { WalletModule } from "@/modules/wallet/index.js";
 
-// A set, not a sequence: each module layer already provides the modules it
-// reaches, and Effect memoizes a layer by reference, so one provided at several
-// sites is built once.
-//
-// The three slots stay apart because they are provided at three depths of the
-// server pipeline: `http` into `HttpApiBuilder.layer`, `httpDeps` into the
-// result of `HttpRouter.serve`, and `layer` below the buses that route it.
-export const applicationModules = {
-  layer: Layer.mergeAll(
-    RoleModule.layer,
-    UserModule.layer,
-    AuthModule.layer,
-    OrganizationModule.layer,
-    BillingModule.layer,
-    TodosModule.layer,
-    WalletModule.layer,
-  ),
-  http: Layer.mergeAll(
-    AuthModule.http,
-    UserModule.http,
-    OrganizationModule.http,
-    BillingModule.http,
-    TodosModule.http,
-    WalletModule.http,
-  ),
-  httpDeps: AuthModule.httpDeps,
-};
-
+// The two cross-module registries. Neither is a module — no bounded context
+// owns a registry — but each is folded from one contribution per module, the
+// same shape as the command and query buses. A module publishes its
+// contribution behind a Tag whose Layer closes over its own ACL ports, so every
+// registered check is R = never and the registry holds no ambient requirements.
 export const PolicyRegistryLive = Layer.unwrap(
   Effect.gen(function* () {
     const todoPolicies = yield* TodoPolicyContribution;
@@ -85,3 +62,36 @@ export const ResourceResolverRegistryLive = Layer.unwrap(
     BillingResolverEntryLive,
   ]),
 );
+
+// A set, not a sequence: each module layer already provides the modules it
+// reaches, and Effect memoizes a layer by reference, so one provided at several
+// sites is built once.
+//
+// The three slots stay apart because they are provided at three depths of the
+// server pipeline: `http` into `HttpApiBuilder.layer`, `httpDeps` into the
+// result of `HttpRouter.serve`, and `layer` below the buses that route it.
+//
+// `httpDeps` carries the two cross-module registries beside the modules' own
+// request-scoped services. They are not a module — no bounded context owns
+// either — but they are resolved per request the same way, and both composition
+// roots want them identically, so neither root names them.
+export const applicationModules = {
+  layer: Layer.mergeAll(
+    RoleModule.layer,
+    UserModule.layer,
+    AuthModule.layer,
+    OrganizationModule.layer,
+    BillingModule.layer,
+    TodosModule.layer,
+    WalletModule.layer,
+  ),
+  http: Layer.mergeAll(
+    AuthModule.http,
+    UserModule.http,
+    OrganizationModule.http,
+    BillingModule.http,
+    TodosModule.http,
+    WalletModule.http,
+  ),
+  httpDeps: Layer.mergeAll(AuthModule.httpDeps, PolicyRegistryLive, ResourceResolverRegistryLive),
+};
