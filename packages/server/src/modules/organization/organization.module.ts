@@ -1,7 +1,7 @@
 import * as Layer from "effect/Layer";
 
-import { roleLayer } from "@/modules/role/role.exports.js";
-import { userLayer } from "@/modules/user/user.exports.js";
+import { RoleModule } from "@/modules/role/role.module.js";
+import { UserModule } from "@/modules/user/user.module.js";
 
 import { OrganizationRepositoryLive } from "./infrastructure/repositories/organization.repository-live.js";
 import { OrgCliLive } from "./interface/cli/index.js";
@@ -14,8 +14,8 @@ import { OrganizationPoliciesLive } from "./policies/organization.policies.js";
 export const OrganizationModule = {
   layer: OrganizationPoliciesLive.pipe(
     Layer.provideMerge(Layer.mergeAll(OrganizationCommandsLive, OrganizationQueriesLive)),
-    Layer.provide(roleLayer),
-    Layer.provide(userLayer),
+    Layer.provide(RoleModule.layer),
+    Layer.provide(UserModule.layer),
   ),
 
   http: Layer.mergeAll(

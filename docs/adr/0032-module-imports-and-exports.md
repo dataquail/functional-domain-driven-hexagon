@@ -17,13 +17,13 @@ We first addressed this with a checked composition root — a `Builder` in its o
 
 ## Decision
 
-**A module provides the modules it reaches.** `<Feature>Module.layer` closes over its imports:
+**A module provides the modules it reaches**, naming their `<feature>.module.ts` directly:
 
 ```ts
 export const AuthModule = {
   layer: Layer.mergeAll(AuthCommandsLive, AuthQueriesLive).pipe(
-    Layer.provide(roleLayer),
-    Layer.provide(userLayer),
+    Layer.provide(RoleModule.layer),
+    Layer.provide(UserModule.layer),
   ),
   http: AuthLive.pipe(
     Layer.provide(AuthIdentityRepositoryLive),
@@ -62,14 +62,17 @@ export const applicationModules = (billing: BillingModule) => ({
 
 Reordering those lines cannot break anything. A module provided at several sites is built once — Effect memoizes a layer by reference across one build — which is what makes closing over a shared module safe rather than a way to end up with two event buses.
 
-**A module publishes two surfaces, and the peer surface is per-message.** `index.ts` is the wiring surface, for the composition roots and the platform only. `<feature>.exports.ts` is the peer surface, reachable only from another module's `infrastructure/acl/**`, `interface/events/**` or `<feature>.module.ts`. It carries both halves of what a peer may reach:
+**Coupling and wiring are separate planes, and this is the part worth getting right.** A module needs another module's _Layer_ only because a DI container has to be told who provides what — that is a fact about how this application is assembled, and it would be a different fact if we assembled it differently or not at all. A module needs another module's _message contract_ because its ACL adapter genuinely asks that bounded context a question. Only the second is coupling. Putting both on one file would file incidental complexity next to the real thing and make the published surface stop meaning anything.
 
-```ts
-export const rolePeerQueries = Query.subsetOf(roleQueryGroup, "FindUserRolesQuery");
-export const roleLayer = RoleModule.layer;
-```
+So they sit on different planes, each with its own inbound rule:
 
-The layer, not the module record: a peer has no business with another module's HTTP wiring.
+- `<feature>.exports.ts` — the PEER surface. `Query.subsetOf(roleQueryGroup, "FindUserRolesQuery")` and domain vocabulary a peer names. Reachable only from a consumer's `infrastructure/acl/**` or `interface/events/**`. No Layer.
+- `<feature>.module.ts` — the WIRING plane. The module's Layers. Reachable only from another module's `<feature>.module.ts` and from its own `index.ts`.
+- `index.ts` — the wiring surface for the platform. Reachable only from `@/server.ts`, `@/platform/**`, `@/test-utils/**` and tests.
+
+`architecture/imports` refuses every other combination, and `lint:edges` pins both directions: a module file may name another module file, an ACL adapter or a policy may not.
+
+There is a concrete payoff beyond tidiness. When the Layer lived on the peer surface, `role.exports.ts` re-exported from `role.module.ts`, so every ACL adapter that imported a message contract transitively pulled in that module's entire assembly — handlers, repositories, the database. Separating the planes cuts that: a contract import now reaches a contract.
 
 `subsetOf` (added to `@effect-server-utils/cqrs` for this) builds a group of exactly the named messages. A dispatcher over it demands only those tags' registrations, so a peer reaching for a query missing from the list needs a registration this module never published — and adding a query to `roleQueryGroup` cannot widen the grant. goodbones governs who may open the file at all.
 

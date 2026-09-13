@@ -318,7 +318,7 @@ Two gates back that up, and they answer different questions:
 
 - `pnpm lint:rules` — the **wiring**: the plugin is loaded, each rule id is
   enabled, its globs match, resolution is live.
-- `pnpm lint:edges` — the **semantics**: 168 edges with expected verdicts (125
+- `pnpm lint:edges` — the **semantics**: 170 edges with expected verdicts (127
   refused, 43 allowed) and 12 graph shapes with expected reports. The allowed and
   quiet rows matter as much: a policy that refuses everything is as broken as one
   that refuses nothing. A row that changes verdict is either a regression or a

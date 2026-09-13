@@ -463,10 +463,10 @@ children:
       allow:
         - "node:**"
         - "@/modules/{module}/**"
-        # A module states its own imports by providing the layer a peer publishes
-        # beside its message subsets; the peer surface's own importedBy already
-        # names *.module.ts as a permitted consumer.
-        - "@/modules/*/*.exports.ts"
+        # A module states its own imports by providing the layers of the modules
+        # it reaches. That is wiring, not coupling, so it happens between module
+        # files and never touches a peer surface.
+        - "@/modules/*/*.module.ts"
         - "@/platform/ddd/**"
         - "@/platform/ids/**"
         - "@/platform/auth/**"
@@ -485,10 +485,12 @@ children:
             - "@/modules/{module}/**"
             - "@/modules/*/index.ts"
             - "@/modules/*/*.exports.ts"
+            - "@/modules/*/*.module.ts"
           message: >-
-            A module may only import another module through one of the two surfaces it
+            A module may only import another module through one of the three files it
             publishes on purpose: <feature>.exports.ts for its peers, index.ts for the
-            platform. Reaching anywhere else couples you to a shape it is free to change.
+            platform, <feature>.module.ts for another module's wiring. Reaching anywhere else
+            couples you to a shape it is free to change.
         - match: "@/modules/*/index.ts"
           matchNot: ["@/modules/{module}/index.ts"]
           # Tests only. The two anti-corruption seams used to be exempted here;
@@ -539,7 +541,20 @@ children:
                 Re-exporting from infrastructure/ or interface/ makes a driven or driving
                 adapter part of the module's public surface, which is exactly what the barrel
                 exists to keep private.
-      "*.module.ts": {}
+      "*.module.ts":
+        importedBy:
+          message: >-
+            <feature>.module.ts is the WIRING plane: it holds the module's Layers, and the only
+            thing that needs them is other wiring. Another module's <feature>.module.ts may
+            name it, to provide a module it imports, and this module's own index.ts publishes
+            it to the platform. Application code — a command, a query, a policy, an ACL or
+            event adapter — reaches <feature>.exports.ts instead. That file is the module's
+            contract; this one is how the application happens to assemble it, and the two
+            couple a consumer to different things.
+          allow:
+            - "@/modules/*/*.module.ts"
+            - "@/modules/*/index.ts"
+            - "**/*.test.ts"
       # The module's peer-facing surface, stated apart from its wiring. The DI
       # half is the `Module.exports(...)` list the builder checks; the import
       # half is what a peer names rather than resolves. Omitting the file is not
@@ -547,16 +562,17 @@ children:
       "*.exports.ts":
         importedBy:
           message: >-
-            <feature>.exports.ts is the PEER surface: what another module may reach, by
-            resolving it from the container or by naming it. Only the two anti-corruption
-            seams may — a cross-context ACL adapter (infrastructure/acl/) or an inbound event
-            adapter (interface/events/) — plus the module's own files. Everywhere else in a
-            consumer depends on a consumer-owned port in domain/ports/acl/, whose adapter is
-            the one place the foreign vocabulary appears (ADR-0022).
+            <feature>.exports.ts is the PEER surface: the vocabulary another module is actually
+            coupled to. Only the two anti-corruption seams may reach it — a cross-context ACL
+            adapter (infrastructure/acl/) or an inbound event adapter (interface/events/) —
+            plus the module's own files. Everywhere else in a consumer depends on a
+            consumer-owned port in domain/ports/acl/, whose adapter is the one place the
+            foreign vocabulary appears (ADR-0022). A module's Layer is deliberately absent:
+            needing it is a fact about how this application is wired, not about what one
+            bounded context asks of another, and it is reached on the wiring plane instead.
           allow:
             - "@/modules/*/infrastructure/acl/**"
             - "@/modules/*/interface/events/**"
-            - "@/modules/*/*.module.ts"
             - "**/*.test.ts"
       "*.command-handlers.ts | *.query-handlers.ts": {}
       "*.event-span-attributes.ts": {}

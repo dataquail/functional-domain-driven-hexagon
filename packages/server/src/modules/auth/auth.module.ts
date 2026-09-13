@@ -1,7 +1,7 @@
 import * as Layer from "effect/Layer";
 
-import { roleLayer } from "@/modules/role/role.exports.js";
-import { userLayer } from "@/modules/user/user.exports.js";
+import { RoleModule } from "@/modules/role/role.module.js";
+import { UserModule } from "@/modules/user/user.module.js";
 
 import { AuthCommandsLive } from "./auth.command-handlers.js";
 import { AuthQueriesLive } from "./auth.query-handlers.js";
@@ -12,8 +12,8 @@ import { AuthLive } from "./interface/http/index.js";
 
 export const AuthModule = {
   layer: Layer.mergeAll(AuthCommandsLive, AuthQueriesLive).pipe(
-    Layer.provide(roleLayer),
-    Layer.provide(userLayer),
+    Layer.provide(RoleModule.layer),
+    Layer.provide(UserModule.layer),
   ),
 
   http: AuthLive.pipe(

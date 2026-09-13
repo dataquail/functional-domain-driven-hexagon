@@ -1,7 +1,6 @@
 import { Command, Query } from "@effect-server-utils/cqrs";
 
 import { userCommandGroup } from "./user.command-handlers.js";
-import { UserModule } from "./user.module.js";
 import { userQueryGroup } from "./user.query-handlers.js";
 
 // The peer surface, one subset per consumer rather than one per module: auth
@@ -15,7 +14,3 @@ export const userLookupQueries = Query.subsetOf(userQueryGroup, "FindUsersByIdsQ
 // Part of `CreateUserCommand`'s published failure channel: a module that
 // provisions through this one has to be able to name the outcome it translates.
 export { UserAlreadyExists } from "./domain/user/user.errors.js";
-
-// The layer a peer provides in order to import this module. The module value
-// itself is not published here: its http slots are wiring, not a peer's business.
-export const userLayer = UserModule.layer;

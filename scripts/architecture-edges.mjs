@@ -383,6 +383,16 @@ const REFUSED = [
     `${M}/alpha/alpha.module.ts`,
     `${M}/beta/index.ts`,
   ],
+  [
+    "an ACL adapter reaching another module's wiring plane",
+    `${M}/alpha/infrastructure/acl/beta.acl-live.ts`,
+    `${M}/beta/beta.module.ts`,
+  ],
+  [
+    "a policy reaching another module's wiring plane",
+    `${M}/alpha/policies/alpha.policies.ts`,
+    `${M}/beta/beta.module.ts`,
+  ],
   ["a barrel naming another module's barrel", `${M}/alpha/index.ts`, `${M}/beta/index.ts`],
   [
     "an interface util reaching for a command handler",
@@ -833,9 +843,9 @@ const ALLOWED = [
     `${M}/alpha/infrastructure/repositories/x.repository-live.ts`,
   ],
   [
-    "a module Layer providing another module's peer surface (LEGAL)",
+    "a module Layer providing another module's Layer (LEGAL)",
     `${M}/alpha/alpha.module.ts`,
-    `${M}/beta/beta.exports.ts`,
+    `${M}/beta/beta.module.ts`,
   ],
   [
     "a handler map naming a port (LEGAL)",
