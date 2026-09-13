@@ -6,4 +6,4 @@
 // module's vocabulary, so the whole coupling surface is one file to review.
 
 export { roleAccessQueries } from "@/modules/role/role.exports.js";
-export { userAccessCommands } from "@/modules/user/user.exports.js";
+export { userAccessCommands, userAccessErrors } from "@/modules/user/user.exports.js";

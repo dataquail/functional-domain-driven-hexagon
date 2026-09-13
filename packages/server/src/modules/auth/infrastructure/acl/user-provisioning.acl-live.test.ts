@@ -9,12 +9,12 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
+import { userAccessCommands, userAccessErrors } from "@/modules/auth/auth.imports.js";
 import {
   UserProvisioning,
   UserProvisioningConflict,
 } from "@/modules/auth/domain/ports/acl/user-provisioning.acl.js";
 import { UserProvisioningLive } from "@/modules/auth/infrastructure/acl/user-provisioning.acl-live.js";
-import { userAccessCommands, UserAlreadyExists } from "@/modules/user/user.exports.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // `UserProvisioningLive` is a thin translation over the user module's own dispatch
@@ -25,7 +25,10 @@ const provisionedId = UserId.make("99999999-9999-9999-9999-999999999999");
 
 type OnCreateUser = (
   email: string,
-) => Effect.Effect<UserId, UserAlreadyExists | PersistenceUnavailable>;
+) => Effect.Effect<
+  UserId,
+  InstanceType<typeof userAccessErrors.UserAlreadyExists> | PersistenceUnavailable
+>;
 
 const stubUserCommands = (onCreateUser: OnCreateUser) =>
   Command.handlersOf(userAccessCommands, {
@@ -66,6 +69,10 @@ describe("UserProvisioningLive", () => {
         deepStrictEqual(error instanceof UserProvisioningConflict, true);
         deepStrictEqual((error as UserProvisioningConflict).email, "taken@example.com");
       }
-    }).pipe(Effect.provide(testLayer((email) => Effect.fail(new UserAlreadyExists({ email }))))),
+    }).pipe(
+      Effect.provide(
+        testLayer((email) => Effect.fail(new userAccessErrors.UserAlreadyExists({ email }))),
+      ),
+    ),
   );
 });

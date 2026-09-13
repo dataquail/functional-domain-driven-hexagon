@@ -1,5 +1,6 @@
 import { Command, Query } from "@effect-server-utils/cqrs";
 
+import { UserAlreadyExists } from "./domain/user/user.errors.js";
 import { userCommandGroup } from "./user.command-handlers.js";
 import { userQueryGroup } from "./user.query-handlers.js";
 
@@ -12,5 +13,6 @@ export const userAccessCommands = Command.subsetOf(userCommandGroup, "CreateUser
 export const userAccessQueries = Query.subsetOf(userQueryGroup, "FindUsersByIdsQuery");
 
 // Part of `CreateUserCommand`'s published failure channel: a module that
-// provisions through this one has to be able to name the outcome it translates.
-export { UserAlreadyExists } from "./domain/user/user.errors.js";
+// provisions through this one has to be able to name the outcome it translates,
+// whether it forks on the class or catches the tag.
+export const userAccessErrors = { UserAlreadyExists } as const;
