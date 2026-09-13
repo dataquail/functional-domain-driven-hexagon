@@ -6,4 +6,4 @@
 // module's vocabulary, so the whole coupling surface is one file to review.
 
 export { organizationAccessQueries } from "@/modules/organization/organization.exports.js";
-export { rolePeerQueries } from "@/modules/role/role.exports.js";
+export { roleAccessQueries } from "@/modules/role/role.exports.js";

@@ -7,7 +7,7 @@ import * as Layer from "effect/Layer";
 
 import { PlatformRoles } from "@/modules/billing/domain/ports/acl/platform-roles.acl.js";
 import { PlatformRolesLive } from "@/modules/billing/infrastructure/acl/platform-roles.acl-live.js";
-import { rolePeerQueries } from "@/modules/role/role.exports.js";
+import { roleAccessQueries } from "@/modules/role/role.exports.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
@@ -15,7 +15,7 @@ const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 // The role module's dispatch surface is a plain object of typed methods, so standing
 // in for it needs no cast.
 const stubRoleQueries = (roles: ReadonlyArray<string>) =>
-  Query.handlersOf(rolePeerQueries, {
+  Query.handlersOf(roleAccessQueries, {
     FindUserRolesQuery: ({ userId }) => Effect.succeed({ userId, roles }),
   });
 

@@ -2,7 +2,7 @@ import { Command } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { userProvisioningCommands } from "@/modules/auth/auth.imports.js";
+import { userAccessCommands } from "@/modules/auth/auth.imports.js";
 import {
   UserProvisioning,
   UserProvisioningConflict,
@@ -18,7 +18,7 @@ import {
 export const UserProvisioningLive = Layer.effect(
   UserProvisioning,
   Effect.gen(function* () {
-    const userCommands = yield* Command.dispatcher(userProvisioningCommands);
+    const userCommands = yield* Command.dispatcher(userAccessCommands);
     return UserProvisioning.of({
       provision: (email) =>
         userCommands.CreateUserCommand({ email }).pipe(

@@ -7,9 +7,9 @@ import { userQueryGroup } from "./user.query-handlers.js";
 // provisions a user and organization reads members' emails, and neither should
 // acquire the other's question. `DeleteUserCommand` and `FindUsersQuery` are in
 // neither subset, so no peer can reach them at all.
-export const userProvisioningCommands = Command.subsetOf(userCommandGroup, "CreateUserCommand");
+export const userAccessCommands = Command.subsetOf(userCommandGroup, "CreateUserCommand");
 
-export const userLookupQueries = Query.subsetOf(userQueryGroup, "FindUsersByIdsQuery");
+export const userAccessQueries = Query.subsetOf(userQueryGroup, "FindUsersByIdsQuery");
 
 // Part of `CreateUserCommand`'s published failure channel: a module that
 // provisions through this one has to be able to name the outcome it translates.

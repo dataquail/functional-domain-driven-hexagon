@@ -604,6 +604,22 @@ children:
           allow:
             - "@/modules/*/*.imports.ts"
             - "**/*.test.ts"
+        surface:
+          - message: >-
+              What the peer surface declares is named `<module>Access<Queries|Commands|DomainEvents>`
+              — `{name}` is not. One shape across every module, so a consumer's import line says
+              which context it is reaching and whether it is asking or telling, and a second
+              subset for a second consumer is a rename rather than a new vocabulary. The
+              A domain event a peer may subscribe to is collected into the DomainEvents object
+              rather than re-exported loose, so the grant is one name. Re-exports beside these
+              (an error a peer must name to translate it) keep their own names; this covers what
+              the file declares. The prefix is held to a shape, not to this
+              module's own name: a surface matcher does not interpolate the {module} capture, so
+              `roleAccessQueries` declared in user/ passes here and is caught by reading the
+              import line.
+            kinds: [named]
+            reexport: false
+            convention: { regex: "^[a-z][a-zA-Z0-9]*Access(Queries|Commands|DomainEvents)$" }
       "*.command-handlers.ts | *.query-handlers.ts": {}
       "*.event-span-attributes.ts": {}
 

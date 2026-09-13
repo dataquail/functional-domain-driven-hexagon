@@ -14,7 +14,7 @@ import {
   UserProvisioningConflict,
 } from "@/modules/auth/domain/ports/acl/user-provisioning.acl.js";
 import { UserProvisioningLive } from "@/modules/auth/infrastructure/acl/user-provisioning.acl-live.js";
-import { UserAlreadyExists, userProvisioningCommands } from "@/modules/user/user.exports.js";
+import { userAccessCommands, UserAlreadyExists } from "@/modules/user/user.exports.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // `UserProvisioningLive` is a thin translation over the user module's own dispatch
@@ -28,7 +28,7 @@ type OnCreateUser = (
 ) => Effect.Effect<UserId, UserAlreadyExists | PersistenceUnavailable>;
 
 const stubUserCommands = (onCreateUser: OnCreateUser) =>
-  Command.handlersOf(userProvisioningCommands, {
+  Command.handlersOf(userAccessCommands, {
     CreateUserCommand: ({ email }) => onCreateUser(email),
     FindUsersByIdsQuery: () => Effect.die("unexpected FindUsersByIdsQuery"),
   });

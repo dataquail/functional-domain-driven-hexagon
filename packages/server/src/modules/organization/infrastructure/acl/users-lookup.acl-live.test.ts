@@ -8,7 +8,7 @@ import * as Layer from "effect/Layer";
 
 import { UsersLookup } from "@/modules/organization/domain/ports/acl/users-lookup.acl.js";
 import { UsersLookupLive } from "@/modules/organization/infrastructure/acl/users-lookup.acl-live.js";
-import { userLookupQueries } from "@/modules/user/user.exports.js";
+import { userAccessQueries } from "@/modules/user/user.exports.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 // `UsersLookupLive` is a thin translation over the user module's dispatch surface: its
@@ -18,7 +18,7 @@ const userA = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const userB = UserId.make("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
 const seededAt = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
 
-const stubUserQueries = Query.handlersOf(userLookupQueries, {
+const stubUserQueries = Query.handlersOf(userAccessQueries, {
   CreateUserCommand: () => Effect.die("unexpected CreateUserCommand"),
   FindUsersByIdsQuery: ({ ids }) =>
     Effect.succeed(

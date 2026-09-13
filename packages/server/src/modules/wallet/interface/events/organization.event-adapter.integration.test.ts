@@ -17,7 +17,7 @@ import * as Layer from "effect/Layer";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { beforeEach } from "vitest";
 
-import { OrganizationCreated } from "@/modules/organization/organization.exports.js";
+import { organizationAccessDomainEvents } from "@/modules/organization/organization.exports.js";
 import { createWalletHandler } from "@/modules/wallet/commands/create-wallet.handler.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
 import { OrganizationEventAdapterLive } from "@/modules/wallet/interface/events/organization.event-adapter.js";
@@ -187,7 +187,10 @@ suite("organization → wallet adapter (rollback integration)", () => {
           Effect.gen(function* () {
             yield* insertProbeOrg;
             yield* bus.dispatch([
-              OrganizationCreated.make({ organizationId: probeOrgId, name: probeName }),
+              organizationAccessDomainEvents.OrganizationCreated.make({
+                organizationId: probeOrgId,
+                name: probeName,
+              }),
             ]);
           }),
         ),
@@ -227,7 +230,10 @@ suite("organization → wallet adapter (transaction-join integration)", () => {
         Effect.gen(function* () {
           yield* insertProbeOrg;
           yield* bus.dispatch([
-            OrganizationCreated.make({ organizationId: probeOrgId, name: probeName }),
+            organizationAccessDomainEvents.OrganizationCreated.make({
+              organizationId: probeOrgId,
+              name: probeName,
+            }),
           ]);
         }),
       );
@@ -251,7 +257,10 @@ suite("organization → wallet adapter (transaction-join integration)", () => {
             yield* insertProbeOrg;
             // Succeeds, inserting a wallet row inside the publisher's transaction.
             yield* bus.dispatch([
-              OrganizationCreated.make({ organizationId: probeOrgId, name: probeName }),
+              organizationAccessDomainEvents.OrganizationCreated.make({
+                organizationId: probeOrgId,
+                name: probeName,
+              }),
             ]);
             return yield* Effect.fail("publisher failed after the wallet was created");
           }),

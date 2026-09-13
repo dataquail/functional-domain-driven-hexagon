@@ -2,7 +2,7 @@ import { Query } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { rolePeerQueries } from "@/modules/auth/auth.imports.js";
+import { roleAccessQueries } from "@/modules/auth/auth.imports.js";
 import { PlatformRoles } from "@/modules/auth/domain/ports/acl/platform-roles.acl.js";
 
 const SUPER_ADMIN = "super_admin";
@@ -14,7 +14,7 @@ const SUPER_ADMIN = "super_admin";
 export const PlatformRolesLive = Layer.effect(
   PlatformRoles,
   Effect.gen(function* () {
-    const roleQueries = yield* Query.dispatcher(rolePeerQueries);
+    const roleQueries = yield* Query.dispatcher(roleAccessQueries);
     return PlatformRoles.of({
       isSuperAdmin: (userId) =>
         roleQueries.FindUserRolesQuery({ userId }).pipe(

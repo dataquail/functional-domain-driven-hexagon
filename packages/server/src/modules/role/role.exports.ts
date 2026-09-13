@@ -9,4 +9,4 @@ import { roleQueryGroup } from "./role.query-handlers.js";
 //
 // Adding a query to `roleQueryGroup` cannot widen it — the list here is the
 // whole grant.
-export const rolePeerQueries = Query.subsetOf(roleQueryGroup, "FindUserRolesQuery");
+export const roleAccessQueries = Query.subsetOf(roleQueryGroup, "FindUserRolesQuery");

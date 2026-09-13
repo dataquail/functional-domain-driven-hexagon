@@ -5,4 +5,4 @@
 // what it depends on. This is the only file here permitted to name another
 // module's vocabulary, so the whole coupling surface is one file to review.
 
-export { OrganizationCreated } from "@/modules/organization/organization.exports.js";
+export { organizationAccessDomainEvents } from "@/modules/organization/organization.exports.js";
