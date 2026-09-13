@@ -14,7 +14,7 @@ import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { type OrganizationCreated } from "@/modules/organization/index.js";
+import { type organizationAccessDomainEvents } from "@/modules/organization/organization.exports.js";
 import { CreateWalletCommand } from "@/modules/wallet/commands/create-wallet.command.js";
 import { OrganizationEventAdapterLive } from "@/modules/wallet/interface/events/organization.event-adapter.js";
 import { DomainEventBus } from "@/platform/ddd/event-bus.js";
@@ -41,7 +41,7 @@ describe("OrganizationEventAdapterLive", () => {
         _tag: "OrganizationCreated" as const,
         organizationId,
         name: "Acme",
-      } as unknown as OrganizationCreated;
+      } as unknown as typeof organizationAccessDomainEvents.OrganizationCreated.Type;
       // Dispatched inside a unit of work, as a publishing command would.
       yield* uow.run(bus.dispatch([event]));
 

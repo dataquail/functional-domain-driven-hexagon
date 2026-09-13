@@ -307,19 +307,23 @@ its own probe.**
 
 A generated probe never meets a parser, so a rule about a **declaration shape**
 can pass it and read nothing. `members`, `exports` and `surface` therefore accept
-an **authored** probe — `probe: { source, name | symbol }` — a snippet parsed at
-load, out of which the rule must report the named site. The two repository
-vocabulary rules carry one each, written as an intersection
-(`ZzBase & { readonly findOneByEmail … }`), because that is the shape the
-extractor once could not see. When a rule is about what a declaration looks
-like, write the probe in that shape.
+an **authored** probe — a snippet parsed at load, out of which the rule must
+report a site. `members` takes `probe: { source, name | symbol }`; `surface`
+takes `probe: { source }` alone. The two repository vocabulary rules carry one
+each, written as an intersection (`ZzBase & { readonly findOneByEmail … }`),
+because that is the shape the extractor once could not see. The two peer-surface
+rules carry one each too — a declaration whose name breaks the convention, and a
+bare re-export — because a `surface` rule is the one family `lint:edges` cannot
+reach. When a rule is about what a declaration looks like, write the probe in
+that shape, then weaken the probe once and confirm the loader refuses: it reports
+`these rules do not report their own probe, so they enforce nothing`.
 
 Two gates back that up, and they answer different questions:
 
 - `pnpm lint:rules` — the **wiring**: the plugin is loaded, each rule id is
   enabled, its globs match, resolution is live.
-- `pnpm lint:edges` — the **semantics**: 166 edges with expected verdicts (124
-  refused, 42 allowed) and 12 graph shapes with expected reports. The allowed and
+- `pnpm lint:edges` — the **semantics**: 173 edges with expected verdicts (130
+  refused, 43 allowed) and 12 graph shapes with expected reports. The allowed and
   quiet rows matter as much: a policy that refuses everything is as broken as one
   that refuses nothing. A row that changes verdict is either a regression or a
   decision.

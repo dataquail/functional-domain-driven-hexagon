@@ -138,7 +138,6 @@ defs:
       - "@/modules/*/event-handlers/**"
       - "@/modules/*/sagas/**"
       - "@/modules/*/infrastructure/**"
-      - "@/modules/*/*.shared-deps.ts"
       - "@/modules/*/*.module.ts"
       - "@/modules/*/*.command-handlers.ts"
       - "@/modules/*/*.query-handlers.ts"
@@ -160,7 +159,6 @@ defs:
       - "@/modules/*/event-handlers/**"
       - "@/modules/*/sagas/**"
       - "@/modules/*/infrastructure/**"
-      - "@/modules/*/*.shared-deps.ts"
       - "@/modules/*/*.module.ts"
       - "@/modules/*/*.command-handlers.ts"
       - "@/modules/*/*.query-handlers.ts"
@@ -322,12 +320,35 @@ children:
             unit of work. It reaches no module internals and no database client of its own.
           external: [effect, "@effect-server-utils/cqrs", "@effect-server-utils/unit-of-work"]
           allow:
-            - "@/modules/*/index.ts"
+            - "@/modules/*/*.platform.ts"
             - "@/platform/transaction-driver-live.ts"
             - "@/platform/ddd/**"
         children:
           "cqrs-runtime.ts": {}
           "*.test.ts": { use: server-use-case-test-file }
+
+      # The other half of the shared composition root: platform/cqrs/ folds the
+      # modules' dispatch surfaces into one routing table, this names the modules
+      # that table routes. Both outer roots consume it.
+      "modules/":
+        message: >-
+          platform/modules/ names the application's modules once, as a set: each module layer
+          already provides the modules it reaches, so there is no order here to state or to get
+          wrong. It also holds the two registries — policies and resource resolvers — that every
+          composition root builds identically.
+        imports:
+          reset: true
+          message: >-
+            The module registry names each module through its barrel and nothing else. It
+            reaches no module internals, and no platform service: a module layer declares its
+            own floor in its requirement channel, which the outer roots satisfy.
+          external:
+            - effect
+            - "@effect-server-utils/authz"
+          allow:
+            - "@/modules/*/*.platform.ts"
+        children:
+          "application-modules.ts": {}
 
       "auth/":
         message: >-
@@ -380,7 +401,7 @@ children:
             - "node:**"
             - "@/common/**"
             - "@/platform/auth/**"
-            - "@/modules/*/index.ts"
+            - "@/modules/*/*.platform.ts"
             - "~/contracts/**"
         children:
           "*-live.ts": {}
@@ -413,21 +434,22 @@ children:
   # ── modules/ ──────────────────────────────────────────────────────────
   "modules/{module}/":
     message: >-
-      The module root admits only aggregation files: index.ts (barrel), <feature>.module.ts
-      (composed Layer), <feature>.command-handlers.ts / .query-handlers.ts (bus-registration
-      maps), <feature>.event-span-attributes.ts, <feature>.shared-deps.ts. Feature code belongs
-      in a stereotype subfolder (domain/, commands/, queries/, event-handlers/, infrastructure/,
-      interface/, policies/).
+      The module root admits only aggregation files, each named for the plane it serves
+      (ADR-0024): <feature>.platform.ts (what the platform names), <feature>.exports.ts (what a
+      peer names), <feature>.imports.ts (what this module takes from other modules),
+      <feature>.module.ts (the module's Layers), <feature>.command-handlers.ts /
+      .query-handlers.ts (bus-registration maps), <feature>.event-span-attributes.ts. Feature
+      code belongs in a stereotype subfolder (domain/, commands/, queries/, event-handlers/,
+      infrastructure/, interface/, policies/).
 
     importedBy:
       message: >-
-        Files outside src/modules/ must import a module through its index.ts barrel. A module
-        is private except for the surface it publishes on purpose — reaching past the barrel
-        couples you to a shape the module is free to change without telling you.
+        Files outside src/modules/ must import a module through its <feature>.platform.ts
+        surface. A module is private except for what it publishes on purpose — reaching past
+        that file couples you to a shape the module is free to change without telling you.
       allow: ["@/modules/**", "**/*.test.ts"]
-      # The barrel itself is the public surface, so the restriction does not
-      # cover it.
-      matchNot: ["index.ts"]
+      # The platform surface is itself public, so the restriction does not cover it.
+      matchNot: ["*.platform.ts"]
 
     imports:
       message: >-
@@ -442,9 +464,7 @@ children:
         - "@/modules/{module}/**"
         - "@/platform/ddd/**"
         - "@/platform/ids/**"
-        - "@/platform/auth/**"
         - "@/platform/notifications/**"
-        - "@/common/**"
       deny:
         - match: "@/platform/*-live.ts"
           except: ["@/server.ts", "@/platform/cqrs/**", "@/test-utils/**", "**/*.test.ts"]
@@ -454,54 +474,169 @@ children:
             platform/cqrs/cqrs-runtime.ts or test-utils/.
         # Module-wide, so it holds for tiers that carry no allowlist too.
         - match: "@/modules/*/**"
-          matchNot: ["@/modules/{module}/**", "@/modules/*/index.ts"]
+          matchNot:
+            - "@/modules/{module}/**"
+            - "@/modules/*/*.platform.ts"
+            - "@/modules/*/*.exports.ts"
+            - "@/modules/*/*.module.ts"
           message: >-
-            A module may only import another module through its index.ts barrel. Reaching into
-            another module's internals couples you to a shape it is free to change; the barrel
-            is the surface it publishes on purpose.
-        - match: "@/modules/*/index.ts"
-          matchNot: ["@/modules/{module}/index.ts"]
-          # The two anti-corruption seams, exempted by the author of the
-          # prohibition rather than by the folders themselves — a tier cannot
-          # opt itself out of a prohibition.
-          except:
-            - "@/modules/*/infrastructure/acl/**"
-            - "@/modules/*/interface/events/**"
-            - "**/*.test.ts"
+            A module may only import another module through one of the three files it
+            publishes on purpose: <feature>.exports.ts for its peers, <feature>.platform.ts for
+            the platform, <feature>.module.ts for another module's wiring. Reaching anywhere
+            else couples you to a shape it is free to change.
+        - match: "@/modules/*/*.platform.ts"
+          matchNot: ["@/modules/{module}/*.platform.ts"]
+          # Tests only. The two anti-corruption seams used to be exempted here;
+          # they now reach <feature>.exports.ts, which states its own inbound
+          # rule, so a module never names another module's wiring surface.
+          except: ["**/*.test.ts"]
           message: >-
-            ADR-0022: only a cross-context ACL adapter (infrastructure/acl/) or an inbound event
-            adapter (interface/events/) may name another module's barrel. Everywhere else
-            depends on a consumer-owned port in domain/ports/acl/, whose adapter is the one
-            place the foreign vocabulary appears. A client that reaches into a sibling module
-            is a miscategorised ACL.
+            A module may not name another module's <feature>.platform.ts: that is the platform
+            surface, for the composition roots and the platform. Reach <feature>.exports.ts instead — and
+            only from a cross-context ACL adapter (infrastructure/acl/) or an inbound event
+            adapter (interface/events/). Everywhere else depends on a consumer-owned port in
+            domain/ports/acl/, whose adapter is the one place the foreign vocabulary appears
+            (ADR-0022). A client that reaches into a sibling module is a miscategorised ACL.
 
     children:
-      "index.ts":
+      "*.platform.ts":
+        importedBy:
+          message: >-
+            <feature>.platform.ts is the PLATFORM surface: what the platform names to assemble
+            and drive this module — its dispatch-surface Tags, its groups, its Module value, its
+            policy contribution and resolver entries. Only the composition roots and the platform
+            kernel may reach it. A peer module wanting this module's vocabulary reaches
+            <feature>.exports.ts instead, which is the surface published for that purpose;
+            reaching in here couples a module to how the application is wired.
+          allow:
+            - "@/server.ts"
+            - "@/platform/**"
+            - "@/test-utils/**"
+            - "**/*.test.ts"
         surface:
           - message: >-
-              A module barrel re-exports; `{name}` is declared here. The barrel is the surface
-              the module publishes, not a home for code — move the declaration into the
-              stereotype folder that owns it and re-export it from there.
+              <feature>.platform.ts re-exports; `{name}` is declared here. It is the surface the
+              module publishes to the platform, not a home for code — move the declaration into
+              the stereotype folder that owns it and re-export it from there.
             reexport: false
         imports:
           reset: true
           message: >-
-            A module's barrel re-exports from its own module and nowhere else: domain types,
-            message definitions, handler-registration maps and the module's Live layer. It is
-            the surface other modules see, so anything it names becomes public.
+            <feature>.platform.ts re-exports from its own module and nowhere else: domain types,
+            message definitions, handler-registration maps and the module's Layers. It is the
+            surface the platform sees, so anything it names becomes public.
           allow: ["@/modules/{module}/**"]
           deny:
             - match: ["@/modules/*/infrastructure/**", "@/modules/*/interface/**"]
+              # The one publishable adapter: a third-party client's live/fake pair,
+              # which a composition root picks between the way it picks a database
+              # or a transport. A repository has no such choice — the environment
+              # varies the database, not the repository — and interface/ is inbound.
+              matchNot:
+                - "@/modules/*/infrastructure/clients/*.client-live.ts"
+                - "@/modules/*/infrastructure/clients/*.client-fake.ts"
               message: >-
-                A module's barrel publishes domain types, message definitions,
-                handler-registration maps and the module's Live layer — never its adapters.
-                Re-exporting from infrastructure/ or interface/ makes a driven or driving
-                adapter part of the module's public surface, which is exactly what the barrel
-                exists to keep private.
-      "*.module.ts": {}
+                <feature>.platform.ts publishes domain types, message definitions,
+                handler-registration maps and the module's Layers — never its adapters, with one
+                exception: a third-party client's live/fake pair, because choosing between those
+                is a composition root's job. Re-exporting anything else from infrastructure/ or
+                interface/ makes a driven or driving adapter part of the module's public
+                surface, which is exactly what this file exists to keep private.
+      # The inbound gateway on the coupling plane, and the mirror of
+      # *.exports.ts. A Layer is not here: needing one is a fact about how the
+      # application is assembled, and assembly talks to assembly on its own
+      # plane. This file is the answer to "what vocabulary does this module
+      # depend on", and the one file a reviewer watches for a widening.
+      "*.imports.ts":
+        imports:
+          message: >-
+            <feature>.imports.ts names another module's <feature>.exports.ts and nothing else of
+            that module's. It is the only file here allowed to, which is what makes it a gateway
+            rather than a convention. A foreign Layer is not vocabulary — <feature>.module.ts
+            names another module's <feature>.module.ts for that.
+          allow:
+            - "@/modules/*/*.exports.ts"
+        importedBy:
+          message: >-
+            <feature>.imports.ts is this module's own inventory of what it takes from other
+            modules. Its own files read it; a peer reaching for it would be depending on a third
+            module through this one, which the module-wide prohibition refuses.
+          allow: ["@/modules/*/**", "**/*.test.ts"]
+
+      "*.module.ts":
+        imports:
+          message: >-
+            <feature>.module.ts provides the Layers of the modules it imports, so it names their
+            <feature>.module.ts: the wiring plane talking to the wiring plane. It is the only
+            file here allowed to. The vocabulary this module couples to arrives through
+            <feature>.imports.ts instead, and does not belong in an assembly file.
+          allow:
+            - "@/modules/*/*.module.ts"
+        importedBy:
+          message: >-
+            <feature>.module.ts is the WIRING plane: it holds the module's Layers, and the only
+            thing that needs them is other wiring. Another module's <feature>.module.ts may
+            name it, to provide a module it imports, and this module's own <feature>.platform.ts
+            publishes it to the platform. A consumer's <feature>.imports.ts may not: that file is
+            the coupling plane, and a Layer is not vocabulary. Application code — a command, a query, a policy, an ACL or
+            event adapter — reaches <feature>.exports.ts instead. That file is the module's
+            contract; this one is how the application happens to assemble it, and the two
+            couple a consumer to different things.
+          allow:
+            - "@/modules/*/*.module.ts"
+            - "@/modules/*/*.platform.ts"
+            - "**/*.test.ts"
+      # The module's peer-facing surface, stated apart from its wiring. The DI
+      # half is the `Module.exports(...)` list the builder checks; the import
+      # half is what a peer names rather than resolves. Omitting the file is not
+      # the same as an empty one — write it, so a widening shows up in review.
+      "*.exports.ts":
+        importedBy:
+          message: >-
+            <feature>.exports.ts is the PEER surface: the vocabulary another module is actually
+            coupled to. Only the two anti-corruption seams may reach it — a cross-context ACL
+            adapter (infrastructure/acl/) or an inbound event adapter (interface/events/) —
+            plus the module's own files. Everywhere else in a consumer depends on a
+            consumer-owned port in domain/ports/acl/, whose adapter is the one place the
+            foreign vocabulary appears (ADR-0022). A module's Layer is deliberately absent:
+            needing it is a fact about how this application is wired, not about what one
+            bounded context asks of another, and it is reached on the wiring plane instead.
+          allow:
+            - "@/modules/*/*.imports.ts"
+            - "**/*.test.ts"
+        surface:
+          - message: >-
+              What the peer surface declares is named `<module>Access<Queries|Commands|DomainEvents|Errors>`
+              — `{name}` is not. One shape across every module, so a consumer's import line says
+              which context it is reaching and whether it is asking or telling, and a second
+              subset for a second consumer is a rename rather than a new vocabulary. The
+              A domain event a peer may subscribe to, and an error from a published failure
+              channel that a peer has to name to translate, are each collected into their object
+              rather than re-exported loose, so every grant is one name. Nothing on this surface
+              is a bare re-export — the entry below holds that. The prefix is held to a shape, not to this
+              module's own name: a surface matcher does not interpolate the {module} capture, so
+              `roleAccessQueries` declared in user/ passes here and is caught by reading the
+              import line.
+            kinds: [named]
+            reexport: false
+            convention: { regex: "^[a-z][a-zA-Z0-9]*Access(Queries|Commands|DomainEvents|Errors)$" }
+            probe:
+              source: "export const zzPeerQueries = 1;"
+          - message: >-
+              <feature>.exports.ts declares its grants; `{name}` is a bare re-export, which
+              publishes whatever the origin file happens to export, under whatever name it
+              happens to use, and slips past the naming rule above. Collect it into the
+              <module>Access<...> object that names the grant. A peer that needs the type takes
+              it off the published value — InstanceType<typeof userAccessErrors.UserAlreadyExists>,
+              typeof organizationAccessDomainEvents.OrganizationCreated.Type — and a type-only
+              re-export is not exempted because the extractor cannot tell one from a value
+              re-export, so admitting either admits both.
+            kinds: [named]
+            reexport: true
+            probe:
+              source: 'export { ZzThing } from "./zz.js";'
       "*.command-handlers.ts | *.query-handlers.ts": {}
       "*.event-span-attributes.ts": {}
-      "*.shared-deps.ts": {}
 
       "commands/":
         message: >-
@@ -684,6 +819,10 @@ children:
           allow:
             - "@/modules/{module}/policies/**"
             - "@/modules/{module}/queries/**"
+            # Its own dispatch surface, to ask its own queries. Naming the
+            # app-wide bus here instead would make the module's layer depend on
+            # the bus its own surface is folded into — a cycle.
+            - "@/modules/{module}/*.query-handlers.ts"
             - "@/modules/{module}/domain/ports/acl/**"
             - "@/modules/{module}/infrastructure/acl/**"
             - "@/modules/{module}/domain/*/*.id.ts"
@@ -800,17 +939,23 @@ children:
                   external: [effect, "@effect/vitest", stripe]
                   allow: ["node:**", "@/**"]
 
-          # One of the two folders allowed to name another module's barrel —
-          # this is the anti-corruption seam (ADR-0022), so the foreign
-          # vocabulary is meant to stop here.
+          # The anti-corruption seam (ADR-0022): the foreign vocabulary is meant
+          # to stop here. It reaches that vocabulary through its own module's
+          # <feature>.imports.ts rather than naming the other module itself.
           "acl/":
             imports:
               message: >-
                 An ACL adapter is the one place a module's foreign vocabulary appears
-                (ADR-0022): it names another module's barrel and translates what comes back
-                into this module's own acl port. It needs nothing else — no repositories, no use
-                cases, no database.
-              allow: ["@/modules/*/index.ts", "@/modules/{module}/domain/ports/acl/**"]
+                (ADR-0022): it takes the message subset the other module published from this
+                module's own <feature>.imports.ts, and translates what comes back into this
+                module's own acl port. It needs nothing else — no repositories, no use cases,
+                no database, and no other module named directly.
+              # It builds a dispatcher over the subset the other module published,
+              # so it names the CQRS vocabulary as well as the subset itself.
+              external: [effect, "@effect-server-utils/cqrs"]
+              allow:
+                - "@/modules/{module}/*.imports.ts"
+                - "@/modules/{module}/domain/ports/acl/**"
             children:
               "*.acl-live.ts": {}
               "*.acl-fake.ts": {}
@@ -899,15 +1044,15 @@ children:
               message: >-
                 An inbound event adapter is an anti-corruption seam: it may name its own
                 module's domain events and branded IDs, its own commands' *.command.ts messages,
-                another module's index.ts barrel (this is one of the two folders allowed to),
-                and the DDD shared kernel. Nothing else — the foreign vocabulary stops here,
+                the upstream module's event through this module's own <feature>.imports.ts, and
+                the DDD shared kernel. Nothing else — the foreign vocabulary stops here,
                 translated into a command this module already understands.
               external: [effect, "@effect-server-utils/cqrs"]
               allow:
                 - "@/modules/{module}/domain/*/*.events.ts"
                 - "@/modules/{module}/domain/*/*.id.ts"
                 - "@/modules/{module}/commands/*.command.ts"
-                - "@/modules/*/index.ts"
+                - "@/modules/{module}/*.imports.ts"
                 - "@/platform/ddd/**"
                 - "@/platform/ids/**"
             children:
@@ -1087,7 +1232,6 @@ children:
                     - "@/modules/*/event-handlers/**"
                     - "@/modules/*/sagas/**"
                     - "@/modules/*/infrastructure/**"
-                    - "@/modules/*/*.shared-deps.ts"
                     - "@/modules/*/*.module.ts"
                     - "@/test-utils/**"
                     - "**/*.test.ts"
@@ -1167,12 +1311,11 @@ children:
         - vitest
         - "@effect/platform-node"
         - "@effect-server-utils/cqrs"
-        - "@effect-server-utils/authz"
       allow:
         - "node:**"
         - "@/common/**"
         - "@/platform/**"
-        - "@/modules/*/index.ts"
+        - "@/modules/*/*.platform.ts"
         - "@/test-utils/**"
         - "~/contracts/**"
         - "~/database/**"

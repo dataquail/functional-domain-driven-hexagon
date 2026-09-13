@@ -8,7 +8,7 @@ import { beforeEach } from "vitest";
 
 import { PlatformRolesLive } from "@/modules/auth/infrastructure/acl/platform-roles.acl-live.js";
 import { findCurrentUserHandler } from "@/modules/auth/queries/find-current-user.handler.js";
-import { RoleQueriesLive } from "@/modules/role/index.js";
+import { RoleQueriesLive } from "@/modules/role/role.platform.js";
 import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 

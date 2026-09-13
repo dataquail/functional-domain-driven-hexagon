@@ -1,8 +1,9 @@
+import { Query } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { UsersLookup } from "@/modules/organization/domain/ports/acl/users-lookup.acl.js";
-import { UserQueries } from "@/modules/user/index.js";
+import { userAccessQueries } from "@/modules/organization/organization.imports.js";
 
 // ADR-0022 outbound adapter. The one place in the org module where the user module's
 // barrel is imported — every other folder (commands, queries, interface/http) goes
@@ -12,7 +13,7 @@ import { UserQueries } from "@/modules/user/index.js";
 export const UsersLookupLive = Layer.effect(
   UsersLookup,
   Effect.gen(function* () {
-    const userQueries = yield* UserQueries;
+    const userQueries = yield* Query.dispatcher(userAccessQueries);
     return UsersLookup.of({
       findByIds: (ids) =>
         userQueries

@@ -5,7 +5,8 @@
   // inherited `paths` with no declarations behind it and degrades to `any`.
   "references": [
     { "path": "../contracts/tsconfig.build.json" },
-    { "path": "../database/tsconfig.build.json" }
+    { "path": "../database/tsconfig.build.json" },
+    { "path": "../module/tsconfig.build.json" }
   ],
   "compilerOptions": {
     "types": ["node"],
