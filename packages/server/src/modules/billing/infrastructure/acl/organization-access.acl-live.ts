@@ -2,8 +2,8 @@ import { Query } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { organizationAccessQueries } from "@/modules/billing/billing.imports.js";
 import { OrganizationAccess } from "@/modules/billing/domain/ports/acl/organization-access.acl.js";
-import { organizationAccessQueries } from "@/modules/organization/organization.exports.js";
 
 // The org role that confers authority over an organization's billing. Deciding
 // this here — rather than in a policy — is what keeps the org module's role

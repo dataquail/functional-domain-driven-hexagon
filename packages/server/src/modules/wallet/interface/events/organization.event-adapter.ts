@@ -11,8 +11,8 @@ import { CommandBus } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { OrganizationCreated } from "@/modules/organization/organization.exports.js";
 import { CreateWalletCommand } from "@/modules/wallet/commands/create-wallet.command.js";
+import { OrganizationCreated } from "@/modules/wallet/wallet.imports.js";
 import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 
 export const OrganizationEventAdapterLive = Layer.effectDiscard(

@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.js";
-import { rolePeerQueries } from "@/modules/role/role.exports.js";
+import { rolePeerQueries } from "@/modules/organization/organization.imports.js";
 
 const SUPER_ADMIN = "super_admin";
 

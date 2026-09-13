@@ -1,7 +1,6 @@
 import * as Layer from "effect/Layer";
 
-import { OrganizationModule } from "@/modules/organization/organization.module.js";
-import { RoleModule } from "@/modules/role/role.module.js";
+import { OrganizationModule, RoleModule } from "@/modules/todos/todos.imports.js";
 
 import { TodosRepositoryLive } from "./infrastructure/repositories/todos.repository-live.js";
 import { TodosCliLive } from "./interface/cli/index.js";

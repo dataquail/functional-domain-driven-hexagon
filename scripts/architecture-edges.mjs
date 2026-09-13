@@ -389,6 +389,21 @@ const REFUSED = [
     `${M}/beta/beta.module.ts`,
   ],
   [
+    "an ACL adapter bypassing the imports gateway",
+    `${M}/alpha/infrastructure/acl/beta.acl-live.ts`,
+    `${M}/beta/beta.exports.ts`,
+  ],
+  [
+    "an event adapter bypassing the imports gateway",
+    `${M}/alpha/interface/events/beta.event-adapter.ts`,
+    `${M}/beta/beta.exports.ts`,
+  ],
+  [
+    "a module Layer bypassing the imports gateway",
+    `${M}/alpha/alpha.module.ts`,
+    `${M}/beta/beta.module.ts`,
+  ],
+  [
     "a policy reaching another module's wiring plane",
     `${M}/alpha/policies/alpha.policies.ts`,
     `${M}/beta/beta.module.ts`,
@@ -730,11 +745,6 @@ const ALLOWED = [
     "packages/database/src/index.ts",
   ],
   [
-    "an ACL adapter naming a foreign peer surface (LEGAL)",
-    `${M}/alpha/infrastructure/acl/beta.acl-live.ts`,
-    `${M}/beta/beta.exports.ts`,
-  ],
-  [
     "a client adapter using a third-party SDK (LEGAL)",
     `${M}/alpha/infrastructure/clients/stripe.client-live.ts`,
     "node_modules/.pnpm/stripe@22/node_modules/stripe/esm/stripe.esm.node.js",
@@ -748,11 +758,6 @@ const ALLOWED = [
     "an endpoint using @org/contracts (LEGAL)",
     `${M}/alpha/interface/http/get.endpoint.ts`,
     "packages/contracts/src/api/Users.ts",
-  ],
-  [
-    "an event adapter naming a foreign peer surface (LEGAL)",
-    `${M}/alpha/interface/events/beta.event-adapter.ts`,
-    `${M}/beta/beta.exports.ts`,
   ],
   [
     "an event adapter using its own command message (LEGAL)",
@@ -855,9 +860,19 @@ const ALLOWED = [
     `${M}/alpha/infrastructure/repositories/x.repository-live.ts`,
   ],
   [
-    "a module Layer providing another module's Layer (LEGAL)",
-    `${M}/alpha/alpha.module.ts`,
+    "an imports gateway naming a foreign peer surface (LEGAL)",
+    `${M}/alpha/alpha.imports.ts`,
+    `${M}/beta/beta.exports.ts`,
+  ],
+  [
+    "an imports gateway naming a foreign module's Layers (LEGAL)",
+    `${M}/alpha/alpha.imports.ts`,
     `${M}/beta/beta.module.ts`,
+  ],
+  [
+    "an ACL adapter naming its own module's imports gateway (LEGAL)",
+    `${M}/alpha/infrastructure/acl/beta.acl-live.ts`,
+    `${M}/alpha/alpha.imports.ts`,
   ],
   [
     "a handler map naming a port (LEGAL)",

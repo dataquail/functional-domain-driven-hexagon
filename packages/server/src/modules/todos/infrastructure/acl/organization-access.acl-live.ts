@@ -2,8 +2,8 @@ import { Query } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { organizationAccessQueries } from "@/modules/organization/organization.exports.js";
 import { OrganizationAccess } from "@/modules/todos/domain/ports/acl/organization-access.acl.js";
+import { organizationAccessQueries } from "@/modules/todos/todos.imports.js";
 
 // ADR-0022 outbound adapter. Dispatches the organization module's published
 // policy-query so the membership determination stays an explicit question to the

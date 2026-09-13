@@ -436,7 +436,8 @@ children:
     message: >-
       The module root admits only aggregation files, each named for the plane it serves
       (ADR-0024): <feature>.platform.ts (what the platform names), <feature>.exports.ts (what a
-      peer names), <feature>.module.ts (the module's Layers), <feature>.command-handlers.ts /
+      peer names), <feature>.imports.ts (what this module takes from other modules),
+      <feature>.module.ts (the module's Layers), <feature>.command-handlers.ts /
       .query-handlers.ts (bus-registration maps), <feature>.event-span-attributes.ts. Feature
       code belongs in a stereotype subfolder (domain/, commands/, queries/, event-handlers/,
       infrastructure/, interface/, policies/).
@@ -461,10 +462,6 @@ children:
       allow:
         - "node:**"
         - "@/modules/{module}/**"
-        # A module states its own imports by providing the layers of the modules
-        # it reaches. That is wiring, not coupling, so it happens between module
-        # files and never touches a peer surface.
-        - "@/modules/*/*.module.ts"
         - "@/platform/ddd/**"
         - "@/platform/ids/**"
         - "@/platform/notifications/**"
@@ -545,6 +542,28 @@ children:
                 is a composition root's job. Re-exporting anything else from infrastructure/ or
                 interface/ makes a driven or driving adapter part of the module's public
                 surface, which is exactly what this file exists to keep private.
+      # The inbound gateway, and the mirror of *.exports.ts. Every foreign name a
+      # module uses enters here, whichever plane it belongs to: the message
+      # subsets a peer published, and the Layers this module provides to wire
+      # them. One file to read for "what does this module depend on", and one
+      # file a reviewer watches for a widening.
+      "*.imports.ts":
+        imports:
+          message: >-
+            <feature>.imports.ts names the two files another module publishes — its
+            <feature>.exports.ts contract and its <feature>.module.ts Layers — and nothing else
+            of that module's. It is the only file here allowed to, which is what makes it a
+            gateway rather than a convention.
+          allow:
+            - "@/modules/*/*.exports.ts"
+            - "@/modules/*/*.module.ts"
+        importedBy:
+          message: >-
+            <feature>.imports.ts is this module's own inventory of what it takes from other
+            modules. Its own files read it; a peer reaching for it would be depending on a third
+            module through this one, which the module-wide prohibition refuses.
+          allow: ["@/modules/*/**", "**/*.test.ts"]
+
       "*.module.ts":
         importedBy:
           message: >-
@@ -556,7 +575,7 @@ children:
             contract; this one is how the application happens to assemble it, and the two
             couple a consumer to different things.
           allow:
-            - "@/modules/*/*.module.ts"
+            - "@/modules/*/*.imports.ts"
             - "@/modules/*/*.platform.ts"
             - "**/*.test.ts"
       # The module's peer-facing surface, stated apart from its wiring. The DI
@@ -575,8 +594,7 @@ children:
             needing it is a fact about how this application is wired, not about what one
             bounded context asks of another, and it is reached on the wiring plane instead.
           allow:
-            - "@/modules/*/infrastructure/acl/**"
-            - "@/modules/*/interface/events/**"
+            - "@/modules/*/*.imports.ts"
             - "**/*.test.ts"
       "*.command-handlers.ts | *.query-handlers.ts": {}
       "*.event-span-attributes.ts": {}
@@ -882,22 +900,22 @@ children:
                   external: [effect, "@effect/vitest", stripe]
                   allow: ["node:**", "@/**"]
 
-          # One of the two folders allowed to name another module's barrel —
-          # this is the anti-corruption seam (ADR-0022), so the foreign
-          # vocabulary is meant to stop here.
+          # The anti-corruption seam (ADR-0022): the foreign vocabulary is meant
+          # to stop here. It reaches that vocabulary through its own module's
+          # <feature>.imports.ts rather than naming the other module itself.
           "acl/":
             imports:
               message: >-
                 An ACL adapter is the one place a module's foreign vocabulary appears
-                (ADR-0022): it names another module's <feature>.exports.ts — the surface that
-                module publishes for its peers, never its <feature>.platform.ts surface — and
-                translates what comes back into this module's own acl port. It needs nothing
-                else — no repositories, no use cases, no database.
+                (ADR-0022): it takes the message subset the other module published from this
+                module's own <feature>.imports.ts, and translates what comes back into this
+                module's own acl port. It needs nothing else — no repositories, no use cases,
+                no database, and no other module named directly.
               # It builds a dispatcher over the subset the other module published,
               # so it names the CQRS vocabulary as well as the subset itself.
               external: [effect, "@effect-server-utils/cqrs"]
               allow:
-                - "@/modules/*/*.exports.ts"
+                - "@/modules/{module}/*.imports.ts"
                 - "@/modules/{module}/domain/ports/acl/**"
             children:
               "*.acl-live.ts": {}
@@ -987,15 +1005,15 @@ children:
               message: >-
                 An inbound event adapter is an anti-corruption seam: it may name its own
                 module's domain events and branded IDs, its own commands' *.command.ts messages,
-                another module's <feature>.exports.ts (this is one of the two folders allowed
-                to), and the DDD shared kernel. Nothing else — the foreign vocabulary stops here,
+                the upstream module's event through this module's own <feature>.imports.ts, and
+                the DDD shared kernel. Nothing else — the foreign vocabulary stops here,
                 translated into a command this module already understands.
               external: [effect, "@effect-server-utils/cqrs"]
               allow:
                 - "@/modules/{module}/domain/*/*.events.ts"
                 - "@/modules/{module}/domain/*/*.id.ts"
                 - "@/modules/{module}/commands/*.command.ts"
-                - "@/modules/*/*.exports.ts"
+                - "@/modules/{module}/*.imports.ts"
                 - "@/platform/ddd/**"
                 - "@/platform/ids/**"
             children:
