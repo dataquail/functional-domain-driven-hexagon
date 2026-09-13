@@ -1,20 +1,13 @@
-export { CompleteTodoCommand } from "./commands/complete-todo.command.js";
-export { CreateTodoCommand } from "./commands/create-todo.command.js";
-export { DeleteTodoCommand } from "./commands/delete-todo.command.js";
-export { UpdateTodoCommand } from "./commands/update-todo.command.js";
+// The wiring surface: what the platform names to assemble and drive this module.
+// What a peer module may reach is todos.exports.ts, and it is empty — todos is
+// a leaf.
 export {
   TodoCollectionResolverEntry,
   TodoCollectionResolverEntryLive,
   TodoResolverEntry,
   TodoResolverEntryLive,
 } from "./policies/todo.resource-resolvers.js";
-export {
-  TodoCollectionResource,
-  TodoPoliciesLive,
-  TodoPolicyContribution,
-  TodoResource,
-} from "./policies/todos.policies.js";
-export { ListTodosQuery } from "./queries/list-todos.query.js";
-export { todoCommandGroup, TodoCommands, TodoCommandsLive } from "./todo.command-handlers.js";
-export { TodoQueries, TodoQueriesLive, todoQueryGroup } from "./todo.query-handlers.js";
-export { TodosModuleLive } from "./todos.module.js";
+export { TodoPoliciesLive, TodoPolicyContribution } from "./policies/todos.policies.js";
+export { todoCommandGroup, TodoCommands } from "./todo.command-handlers.js";
+export { TodoQueries, todoQueryGroup } from "./todo.query-handlers.js";
+export { TodosHttpLayer, TodosLayer } from "./todos.module.js";

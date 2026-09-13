@@ -27,7 +27,10 @@ export class RoleQueries extends Context.Service<
   Query.Dispatcher<typeof roleQueryGroup>
 >()("@org/server/role/RoleQueries") {}
 
+// `provideMerge`, not `provide`: a peer dispatching one of these messages needs
+// its registration in context. Which registrations a peer may reach is the subset
+// declared in the module's exports file, which the builder holds it to.
 export const RoleQueriesLive = Layer.effect(
   RoleQueries,
   Query.dispatcher(roleQueryGroup, { spanAttributes: roleQuerySpanAttributes }),
-).pipe(Layer.provide(RoleQueryHandlersLive));
+).pipe(Layer.provideMerge(RoleQueryHandlersLive));

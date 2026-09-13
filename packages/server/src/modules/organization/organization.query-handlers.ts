@@ -74,7 +74,10 @@ export class OrganizationQueries extends Context.Service<
   Query.Dispatcher<typeof organizationQueryGroup>
 >()("@org/server/organization/OrganizationQueries") {}
 
+// `provideMerge`, not `provide`: a peer dispatching one of these messages needs
+// its registration in context. Which registrations a peer may reach is the subset
+// declared in the module's exports file, which the builder holds it to.
 export const OrganizationQueriesLive = Layer.effect(
   OrganizationQueries,
   Query.dispatcher(organizationQueryGroup, { spanAttributes: organizationQuerySpanAttributes }),
-).pipe(Layer.provide(OrganizationQueryHandlersLive));
+).pipe(Layer.provideMerge(OrganizationQueryHandlersLive));

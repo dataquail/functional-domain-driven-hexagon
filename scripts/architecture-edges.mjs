@@ -378,6 +378,11 @@ const REFUSED = [
     `${M}/alpha/alpha.module.ts`,
     "packages/server/src/platform/database-live.ts",
   ],
+  [
+    "a module Layer naming another module's barrel",
+    `${M}/alpha/alpha.module.ts`,
+    `${M}/beta/index.ts`,
+  ],
   ["a barrel naming another module's barrel", `${M}/alpha/index.ts`, `${M}/beta/index.ts`],
   [
     "an interface util reaching for a command handler",
@@ -703,9 +708,9 @@ const ALLOWED = [
     "packages/database/src/index.ts",
   ],
   [
-    "an ACL adapter naming a foreign barrel (LEGAL)",
+    "an ACL adapter naming a foreign peer surface (LEGAL)",
     `${M}/alpha/infrastructure/acl/beta.acl-live.ts`,
-    `${M}/beta/index.ts`,
+    `${M}/beta/beta.exports.ts`,
   ],
   [
     "a client adapter using a third-party SDK (LEGAL)",
@@ -723,9 +728,9 @@ const ALLOWED = [
     "packages/contracts/src/api/Users.ts",
   ],
   [
-    "an event adapter naming a foreign barrel (LEGAL)",
+    "an event adapter naming a foreign peer surface (LEGAL)",
     `${M}/alpha/interface/events/beta.event-adapter.ts`,
-    `${M}/beta/index.ts`,
+    `${M}/beta/beta.exports.ts`,
   ],
   [
     "an event adapter using its own command message (LEGAL)",
@@ -826,6 +831,11 @@ const ALLOWED = [
     "a module Layer naming its own adapters (LEGAL)",
     `${M}/alpha/alpha.module.ts`,
     `${M}/alpha/infrastructure/repositories/x.repository-live.ts`,
+  ],
+  [
+    "a module Layer providing another module's peer surface (LEGAL)",
+    `${M}/alpha/alpha.module.ts`,
+    `${M}/beta/beta.exports.ts`,
   ],
   [
     "a handler map naming a port (LEGAL)",

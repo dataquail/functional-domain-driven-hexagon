@@ -1,42 +1,28 @@
 import * as Layer from "effect/Layer";
 
+import {
+  type BillingCommands,
+  BillingCommandsFake,
+  BillingCommandsLive,
+} from "@/modules/billing/billing.command-handlers.js";
+import { BillingQueriesLive } from "@/modules/billing/billing.query-handlers.js";
 import { StripeWebhookEventAdapterLive } from "@/modules/billing/interface/events/stripe-webhook.event-adapter.js";
 import { BillingLive, BillingWebhooksLive } from "@/modules/billing/interface/http/index.js";
+import { BillingPoliciesLive } from "@/modules/billing/policies/billing.policies.js";
+import { OrganizationLayer } from "@/modules/organization/organization.exports.js";
+import { RoleLayer } from "@/modules/role/role.exports.js";
 
-// Two things live behind this Layer:
-//   1. The HTTP groups (auth-gated + webhook).
-//   2. The stripe-webhook event adapter (interface/events): a bus-only
-//      inbound port that subscribes to `StripeWebhookIngested` and
-//      dispatches a `SyncSubscriptionCommand`. It runs in the ingest
-//      command's fiber and its dispatched command opens a nested savepoint
-//      (ADR-0007). The command handler (billing.command-handlers.ts) owns
-//      the SubscriptionRepository; the adapter touches no infrastructure,
-//      so its bus deps are satisfied at the composition root.
-//
-// The module owns its DI graph. `BillingGateway` is consumed by the billing
-// command handlers, whose requirement reaches the endpoints (via the typed
-// bus) and is tracked by `HttpApiBuilder` as a request-scoped requirement. In
-// v4 such a requirement is only satisfiable AFTER `HttpRouter.serve` unwraps
-// it into a plain one — `HttpRouter.provideRequest` cannot reach routes
-// registered through `HttpApiBuilder`'s group indirection (see
-// OrganizationModuleLive for the full rationale). So the module publishes the
-// gateway as an opaque bundled layer that the composition root provides
-// post-serve. Two named variants ship the swap:
-//   - `BillingHttpDepsLive` bundles `BillingGatewayLive` (prod).
-//   - `BillingHttpDepsFake` bundles `BillingGatewayFake` (tests).
-// Composition roots pick one. The `BillingGateway` Tag never leaves the
-// module — the root only sees the opaque bundle — so testability stops being
-// a reason to loosen `outbound-ports-private-to-use-cases`. If a future test
-// ever needs a third gateway shape ("Stripe is down" simulator, latency
-// injector), add a third named bundle here; don't reach for a factory that
-// takes `Layer.Layer<BillingGateway>` — that would re-leak the Tag through
-// its type signature.
-//
-// No cross-module event adapters: billing doesn't consume any upstream
-// module's events for MVP (the original outline had a "create Stripe
-// customer when org is created" handler; we chose lazy-on-subscribe
-// instead to keep external IO out of the org-create transaction).
-export const BillingModuleLive = Layer.mergeAll(
+const makeBillingLayer = <RIn>(commands: Layer.Layer<BillingCommands, never, RIn>) =>
+  Layer.mergeAll(commands, BillingQueriesLive, BillingPoliciesLive).pipe(
+    Layer.provide(OrganizationLayer),
+    Layer.provide(RoleLayer),
+  );
+
+export const BillingLayer = makeBillingLayer(BillingCommandsLive);
+export type BillingLayer = typeof BillingLayer;
+export const BillingLayerFake: BillingLayer = makeBillingLayer(BillingCommandsFake);
+
+export const BillingHttpLayer = Layer.mergeAll(
   BillingLive,
   BillingWebhooksLive,
   StripeWebhookEventAdapterLive,

@@ -34,7 +34,10 @@ export class UserCommands extends Context.Service<
   Command.Dispatcher<typeof userCommandGroup>
 >()("@org/server/user/UserCommands") {}
 
+// `provideMerge`, not `provide`: a peer dispatching one of these messages needs
+// its registration in context. Which registrations a peer may reach is the subset
+// declared in the module's exports file, which the builder holds it to.
 export const UserCommandsLive = Layer.effect(
   UserCommands,
   Command.dispatcher(userCommandGroup, { spanAttributes: userCommandSpanAttributes }),
-).pipe(Layer.provide(UserCommandHandlersLive));
+).pipe(Layer.provideMerge(UserCommandHandlersLive));

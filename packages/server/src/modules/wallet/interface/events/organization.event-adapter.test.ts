@@ -14,7 +14,7 @@ import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { type OrganizationCreated } from "@/modules/organization/index.js";
+import { type OrganizationCreated } from "@/modules/organization/organization.exports.js";
 import { CreateWalletCommand } from "@/modules/wallet/commands/create-wallet.command.js";
 import { OrganizationEventAdapterLive } from "@/modules/wallet/interface/events/organization.event-adapter.js";
 import { DomainEventBus } from "@/platform/ddd/event-bus.js";

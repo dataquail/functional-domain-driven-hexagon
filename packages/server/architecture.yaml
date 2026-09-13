@@ -329,6 +329,29 @@ children:
           "cqrs-runtime.ts": {}
           "*.test.ts": { use: server-use-case-test-file }
 
+      # The other half of the shared composition root: platform/cqrs/ folds the
+      # modules' dispatch surfaces into one routing table, this names the modules
+      # that table routes. Both outer roots consume it.
+      "modules/":
+        message: >-
+          platform/modules/ names the application's modules once, as a set: each module layer
+          already provides the modules it reaches, so there is no order here to state or to get
+          wrong. It also holds the two registries — policies and resource resolvers — that every
+          composition root builds identically.
+        imports:
+          reset: true
+          message: >-
+            The module registry names each module through its barrel and nothing else. It
+            reaches no module internals, and no platform service: a module layer declares its
+            own floor in its requirement channel, which the outer roots satisfy.
+          external:
+            - effect
+            - "@effect-server-utils/authz"
+          allow:
+            - "@/modules/*/index.ts"
+        children:
+          "application-modules.ts": {}
+
       "auth/":
         message: >-
           platform/auth/ is the only server-side authorization configuration: the action
@@ -440,6 +463,10 @@ children:
       allow:
         - "node:**"
         - "@/modules/{module}/**"
+        # A module states its own imports by providing the layer a peer publishes
+        # beside its message subsets; the peer surface's own importedBy already
+        # names *.module.ts as a permitted consumer.
+        - "@/modules/*/*.exports.ts"
         - "@/platform/ddd/**"
         - "@/platform/ids/**"
         - "@/platform/auth/**"
@@ -454,29 +481,43 @@ children:
             platform/cqrs/cqrs-runtime.ts or test-utils/.
         # Module-wide, so it holds for tiers that carry no allowlist too.
         - match: "@/modules/*/**"
-          matchNot: ["@/modules/{module}/**", "@/modules/*/index.ts"]
+          matchNot:
+            - "@/modules/{module}/**"
+            - "@/modules/*/index.ts"
+            - "@/modules/*/*.exports.ts"
           message: >-
-            A module may only import another module through its index.ts barrel. Reaching into
-            another module's internals couples you to a shape it is free to change; the barrel
-            is the surface it publishes on purpose.
+            A module may only import another module through one of the two surfaces it
+            publishes on purpose: <feature>.exports.ts for its peers, index.ts for the
+            platform. Reaching anywhere else couples you to a shape it is free to change.
         - match: "@/modules/*/index.ts"
           matchNot: ["@/modules/{module}/index.ts"]
-          # The two anti-corruption seams, exempted by the author of the
-          # prohibition rather than by the folders themselves — a tier cannot
-          # opt itself out of a prohibition.
-          except:
-            - "@/modules/*/infrastructure/acl/**"
-            - "@/modules/*/interface/events/**"
-            - "**/*.test.ts"
+          # Tests only. The two anti-corruption seams used to be exempted here;
+          # they now reach <feature>.exports.ts, which states its own inbound
+          # rule, so a module never names another module's wiring surface.
+          except: ["**/*.test.ts"]
           message: >-
-            ADR-0022: only a cross-context ACL adapter (infrastructure/acl/) or an inbound event
-            adapter (interface/events/) may name another module's barrel. Everywhere else
-            depends on a consumer-owned port in domain/ports/acl/, whose adapter is the one
-            place the foreign vocabulary appears. A client that reaches into a sibling module
-            is a miscategorised ACL.
+            A module may not name another module's index.ts: that is the wiring surface, for
+            the composition roots and the platform. Reach <feature>.exports.ts instead — and
+            only from a cross-context ACL adapter (infrastructure/acl/) or an inbound event
+            adapter (interface/events/). Everywhere else depends on a consumer-owned port in
+            domain/ports/acl/, whose adapter is the one place the foreign vocabulary appears
+            (ADR-0022). A client that reaches into a sibling module is a miscategorised ACL.
 
     children:
       "index.ts":
+        importedBy:
+          message: >-
+            index.ts is the WIRING surface: what the platform names to assemble and drive this
+            module — its dispatch-surface Tags, its groups, its Module value, its policy
+            contribution and resolver entries. Only the composition roots and the platform
+            kernel may reach it. A peer module wanting this module's vocabulary reaches
+            <feature>.exports.ts instead, which is the surface published for that purpose;
+            reaching in here couples a module to how the application is wired.
+          allow:
+            - "@/server.ts"
+            - "@/platform/**"
+            - "@/test-utils/**"
+            - "**/*.test.ts"
         surface:
           - message: >-
               A module barrel re-exports; `{name}` is declared here. The barrel is the surface
@@ -499,6 +540,24 @@ children:
                 adapter part of the module's public surface, which is exactly what the barrel
                 exists to keep private.
       "*.module.ts": {}
+      # The module's peer-facing surface, stated apart from its wiring. The DI
+      # half is the `Module.exports(...)` list the builder checks; the import
+      # half is what a peer names rather than resolves. Omitting the file is not
+      # the same as an empty one — write it, so a widening shows up in review.
+      "*.exports.ts":
+        importedBy:
+          message: >-
+            <feature>.exports.ts is the PEER surface: what another module may reach, by
+            resolving it from the container or by naming it. Only the two anti-corruption
+            seams may — a cross-context ACL adapter (infrastructure/acl/) or an inbound event
+            adapter (interface/events/) — plus the module's own files. Everywhere else in a
+            consumer depends on a consumer-owned port in domain/ports/acl/, whose adapter is
+            the one place the foreign vocabulary appears (ADR-0022).
+          allow:
+            - "@/modules/*/infrastructure/acl/**"
+            - "@/modules/*/interface/events/**"
+            - "@/modules/*/*.module.ts"
+            - "**/*.test.ts"
       "*.command-handlers.ts | *.query-handlers.ts": {}
       "*.event-span-attributes.ts": {}
       "*.shared-deps.ts": {}
@@ -684,6 +743,10 @@ children:
           allow:
             - "@/modules/{module}/policies/**"
             - "@/modules/{module}/queries/**"
+            # Its own dispatch surface, to ask its own queries. Naming the
+            # app-wide bus here instead would make the module's layer depend on
+            # the bus its own surface is folded into — a cycle.
+            - "@/modules/{module}/*.query-handlers.ts"
             - "@/modules/{module}/domain/ports/acl/**"
             - "@/modules/{module}/infrastructure/acl/**"
             - "@/modules/{module}/domain/*/*.id.ts"
@@ -807,10 +870,16 @@ children:
             imports:
               message: >-
                 An ACL adapter is the one place a module's foreign vocabulary appears
-                (ADR-0022): it names another module's barrel and translates what comes back
-                into this module's own acl port. It needs nothing else — no repositories, no use
-                cases, no database.
-              allow: ["@/modules/*/index.ts", "@/modules/{module}/domain/ports/acl/**"]
+                (ADR-0022): it names another module's <feature>.exports.ts — the surface that
+                module publishes for its peers, never its index.ts wiring surface — and
+                translates what comes back into this module's own acl port. It needs nothing
+                else — no repositories, no use cases, no database.
+              # It builds a dispatcher over the subset the other module published,
+              # so it names the CQRS vocabulary as well as the subset itself.
+              external: [effect, "@effect-server-utils/cqrs"]
+              allow:
+                - "@/modules/*/*.exports.ts"
+                - "@/modules/{module}/domain/ports/acl/**"
             children:
               "*.acl-live.ts": {}
               "*.acl-fake.ts": {}
@@ -899,15 +968,15 @@ children:
               message: >-
                 An inbound event adapter is an anti-corruption seam: it may name its own
                 module's domain events and branded IDs, its own commands' *.command.ts messages,
-                another module's index.ts barrel (this is one of the two folders allowed to),
-                and the DDD shared kernel. Nothing else — the foreign vocabulary stops here,
+                another module's <feature>.exports.ts (this is one of the two folders allowed
+                to), and the DDD shared kernel. Nothing else — the foreign vocabulary stops here,
                 translated into a command this module already understands.
               external: [effect, "@effect-server-utils/cqrs"]
               allow:
                 - "@/modules/{module}/domain/*/*.events.ts"
                 - "@/modules/{module}/domain/*/*.id.ts"
                 - "@/modules/{module}/commands/*.command.ts"
-                - "@/modules/*/index.ts"
+                - "@/modules/*/*.exports.ts"
                 - "@/platform/ddd/**"
                 - "@/platform/ids/**"
             children:
@@ -1167,7 +1236,6 @@ children:
         - vitest
         - "@effect/platform-node"
         - "@effect-server-utils/cqrs"
-        - "@effect-server-utils/authz"
       allow:
         - "node:**"
         - "@/common/**"

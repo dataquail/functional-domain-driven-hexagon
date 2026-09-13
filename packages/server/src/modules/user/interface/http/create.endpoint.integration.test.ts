@@ -9,7 +9,7 @@ import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
-import { FindUsersQuery } from "@/modules/user/index.js";
+import { FindUsersQuery } from "@/modules/user/queries/find-users.query.js";
 import { Api } from "@/platform/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 
