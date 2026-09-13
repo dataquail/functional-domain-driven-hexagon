@@ -1,6 +1,7 @@
 import * as Layer from "effect/Layer";
 
-import { RoleModule, UserModule } from "@/modules/organization/organization.imports.js";
+import { RoleModule } from "@/modules/role/role.module.js";
+import { UserModule } from "@/modules/user/user.module.js";
 
 import { OrganizationRepositoryLive } from "./infrastructure/repositories/organization.repository-live.js";
 import { OrgCliLive } from "./interface/cli/index.js";

@@ -64,13 +64,13 @@ Reordering those lines cannot break anything. A module provided at several sites
 
 **Coupling and wiring are separate planes, and this is the part worth getting right.** A module needs another module's _Layer_ only because a DI container has to be told who provides what — that is a fact about how this application is assembled, and it would be a different fact if we assembled it differently or not at all. A module needs another module's _message contract_ because its ACL adapter genuinely asks that bounded context a question. Only the second is coupling. Putting both on one file would file incidental complexity next to the real thing and make the published surface stop meaning anything.
 
-That is about what a module **publishes**. What it **consumes** funnels the other way: a module names another module in exactly one file.
+Each plane then gets one gateway in each direction, and they never mix.
 
 So they sit on different planes, each with its own inbound rule:
 
 - `<feature>.exports.ts` — the PEER surface. `Query.subsetOf(roleQueryGroup, "FindUserRolesQuery")` and domain vocabulary a peer names. Reachable only from a consumer's `infrastructure/acl/**` or `interface/events/**`. No Layer.
-- `<feature>.module.ts` — the WIRING plane. The module's Layers. Reachable only from another module's `<feature>.module.ts` and from its own `<feature>.platform.ts`.
-- `<feature>.imports.ts` — the inbound GATEWAY, and the mirror of the peer surface. Every foreign name a module uses enters here, from either plane: the message subsets it dispatches and the Layers it provides to wire them. An ACL adapter, an event adapter and `<feature>.module.ts` read their own module's gateway; none may name another module directly.
+- `<feature>.module.ts` — the wiring plane, in both directions. It holds this module's Layers and names other modules' `<feature>.module.ts` to provide theirs: assembly talking to assembly. Reachable only from another module's `<feature>.module.ts` and from its own `<feature>.platform.ts`.
+- `<feature>.imports.ts` — the inbound gateway on the coupling plane, mirroring the peer surface. The messages this module dispatches, the domain events it reacts to, and any service a peer offers. It is the only file in the module that may name another module's vocabulary, so an ACL adapter and an event adapter read it rather than reaching a foreign surface. No Layers: a Layer is not something a bounded context asks of another.
 - `<feature>.platform.ts` — the PLATFORM surface. Reachable only from `@/server.ts`, `@/platform/**`, `@/test-utils/**` and tests. There is no `index.ts` in a module root: every file there is a dot-delimited stereotype named for the plane it serves (ADR-0024).
 
 `architecture/imports` refuses every other combination, and `lint:edges` pins both directions: a module file may name another module file, an ACL adapter or a policy may not.

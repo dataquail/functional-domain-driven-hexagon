@@ -542,21 +542,20 @@ children:
                 is a composition root's job. Re-exporting anything else from infrastructure/ or
                 interface/ makes a driven or driving adapter part of the module's public
                 surface, which is exactly what this file exists to keep private.
-      # The inbound gateway, and the mirror of *.exports.ts. Every foreign name a
-      # module uses enters here, whichever plane it belongs to: the message
-      # subsets a peer published, and the Layers this module provides to wire
-      # them. One file to read for "what does this module depend on", and one
-      # file a reviewer watches for a widening.
+      # The inbound gateway on the coupling plane, and the mirror of
+      # *.exports.ts. A Layer is not here: needing one is a fact about how the
+      # application is assembled, and assembly talks to assembly on its own
+      # plane. This file is the answer to "what vocabulary does this module
+      # depend on", and the one file a reviewer watches for a widening.
       "*.imports.ts":
         imports:
           message: >-
-            <feature>.imports.ts names the two files another module publishes — its
-            <feature>.exports.ts contract and its <feature>.module.ts Layers — and nothing else
-            of that module's. It is the only file here allowed to, which is what makes it a
-            gateway rather than a convention.
+            <feature>.imports.ts names another module's <feature>.exports.ts and nothing else of
+            that module's. It is the only file here allowed to, which is what makes it a gateway
+            rather than a convention. A foreign Layer is not vocabulary — <feature>.module.ts
+            names another module's <feature>.module.ts for that.
           allow:
             - "@/modules/*/*.exports.ts"
-            - "@/modules/*/*.module.ts"
         importedBy:
           message: >-
             <feature>.imports.ts is this module's own inventory of what it takes from other
@@ -565,17 +564,26 @@ children:
           allow: ["@/modules/*/**", "**/*.test.ts"]
 
       "*.module.ts":
+        imports:
+          message: >-
+            <feature>.module.ts provides the Layers of the modules it imports, so it names their
+            <feature>.module.ts: the wiring plane talking to the wiring plane. It is the only
+            file here allowed to. The vocabulary this module couples to arrives through
+            <feature>.imports.ts instead, and does not belong in an assembly file.
+          allow:
+            - "@/modules/*/*.module.ts"
         importedBy:
           message: >-
             <feature>.module.ts is the WIRING plane: it holds the module's Layers, and the only
             thing that needs them is other wiring. Another module's <feature>.module.ts may
             name it, to provide a module it imports, and this module's own <feature>.platform.ts
-            publishes it to the platform. Application code — a command, a query, a policy, an ACL or
+            publishes it to the platform. A consumer's <feature>.imports.ts may not: that file is
+            the coupling plane, and a Layer is not vocabulary. Application code — a command, a query, a policy, an ACL or
             event adapter — reaches <feature>.exports.ts instead. That file is the module's
             contract; this one is how the application happens to assemble it, and the two
             couple a consumer to different things.
           allow:
-            - "@/modules/*/*.imports.ts"
+            - "@/modules/*/*.module.ts"
             - "@/modules/*/*.platform.ts"
             - "**/*.test.ts"
       # The module's peer-facing surface, stated apart from its wiring. The DI

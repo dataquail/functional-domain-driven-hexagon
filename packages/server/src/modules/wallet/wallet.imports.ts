@@ -1,7 +1,8 @@
 // Every other bounded context this module depends on, and exactly what it takes
-// from each. This is the only file in the module permitted to name another
-// module: an ACL adapter, an event adapter and the module's own assembly all
-// reach a foreign name through here, so the whole inbound surface is one file to
-// read and one file to review.
+// from each: the messages it dispatches, the domain events it reacts to, and any
+// service a peer offers. Nothing about how the application is wired — a Layer is
+// not something this module depends on, it is how an assembly happens to satisfy
+// what it depends on. This is the only file here permitted to name another
+// module's vocabulary, so the whole coupling surface is one file to review.
 
 export { OrganizationCreated } from "@/modules/organization/organization.exports.js";

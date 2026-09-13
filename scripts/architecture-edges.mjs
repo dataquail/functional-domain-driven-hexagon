@@ -399,8 +399,8 @@ const REFUSED = [
     `${M}/beta/beta.exports.ts`,
   ],
   [
-    "a module Layer bypassing the imports gateway",
-    `${M}/alpha/alpha.module.ts`,
+    "an imports gateway reaching the wiring plane",
+    `${M}/alpha/alpha.imports.ts`,
     `${M}/beta/beta.module.ts`,
   ],
   [
@@ -865,8 +865,8 @@ const ALLOWED = [
     `${M}/beta/beta.exports.ts`,
   ],
   [
-    "an imports gateway naming a foreign module's Layers (LEGAL)",
-    `${M}/alpha/alpha.imports.ts`,
+    "a module Layer providing another module's Layer (LEGAL)",
+    `${M}/alpha/alpha.module.ts`,
     `${M}/beta/beta.module.ts`,
   ],
   [
