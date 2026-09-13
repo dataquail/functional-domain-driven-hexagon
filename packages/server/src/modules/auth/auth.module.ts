@@ -21,8 +21,11 @@ export const AuthModule = {
     Layer.provide(SessionRepositoryLive),
   ),
 
-  // The endpoints resolve this per request, so providing it onto the group
-  // layer above leaves it in that layer's requirements: only the assembled api
-  // layer, after `HttpRouter.serve` unwraps them, can satisfy it.
+  // A handler's own requirement rides the group layer as `Request<"Requires",
+  // OidcClient>`, which `Layer.provide(OidcClient.layer)` does not match and
+  // `HttpRouter.provideRequest` matches only in the type: the group's routes are
+  // built before the router sees them, so its middleware never reaches them and
+  // the endpoint dies on this service. Only the assembled api layer, after
+  // `serve` unwraps the marker, can satisfy it.
   httpDeps: OidcClient.layer,
 };
