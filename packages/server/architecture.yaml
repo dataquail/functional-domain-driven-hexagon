@@ -620,6 +620,8 @@ children:
             kinds: [named]
             reexport: false
             convention: { regex: "^[a-z][a-zA-Z0-9]*Access(Queries|Commands|DomainEvents|Errors)$" }
+            probe:
+              source: "export const zzPeerQueries = 1;"
           - message: >-
               <feature>.exports.ts declares its grants; `{name}` is a bare re-export, which
               publishes whatever the origin file happens to export, under whatever name it
@@ -631,6 +633,8 @@ children:
               re-export, so admitting either admits both.
             kinds: [named]
             reexport: true
+            probe:
+              source: 'export { ZzThing } from "./zz.js";'
       "*.command-handlers.ts | *.query-handlers.ts": {}
       "*.event-span-attributes.ts": {}
 
