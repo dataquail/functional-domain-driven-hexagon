@@ -78,9 +78,9 @@ export class FindUsersParams extends Schema.Class<FindUsersParams>("FindUsersPar
 
 export class PaginatedUsers extends Schema.Class<PaginatedUsers>("PaginatedUsers")({
   users: Schema.Array(User),
-  page: Schema.Number,
-  pageSize: Schema.Number,
-  total: Schema.Number,
+  page: Schema.Int,
+  pageSize: Schema.Int,
+  total: Schema.Int,
 }) {}
 
 // ==========================================

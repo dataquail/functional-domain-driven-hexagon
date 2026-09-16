@@ -134,9 +134,9 @@ export class PaginatedOrganizations extends Schema.Class<PaginatedOrganizations>
   "PaginatedOrganizations",
 )({
   organizations: Schema.Array(Organization),
-  page: Schema.Number,
-  pageSize: Schema.Number,
-  total: Schema.Number,
+  page: Schema.Int,
+  pageSize: Schema.Int,
+  total: Schema.Int,
 }) {}
 
 export class InviteUserPayload extends Schema.Class<InviteUserPayload>("InviteUserPayload")({

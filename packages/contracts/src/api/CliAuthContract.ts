@@ -18,8 +18,8 @@ export class DeviceStartResponse extends Schema.Class<DeviceStartResponse>("Devi
   verification_uri: Schema.String,
   verification_uri_complete: Schema.String,
   // Seconds the CLI should wait between polls, and until the codes lapse.
-  interval: Schema.Number,
-  expires_in: Schema.Number,
+  interval: Schema.Int,
+  expires_in: Schema.Int,
 }) {}
 
 export class DeviceTokenPayload extends Schema.Class<DeviceTokenPayload>("DeviceTokenPayload")({
