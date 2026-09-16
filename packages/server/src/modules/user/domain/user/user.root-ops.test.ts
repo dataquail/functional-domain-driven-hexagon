@@ -44,7 +44,7 @@ const expectEvent = <T extends UserEvent["_tag"]>(
 
 describe("AddressValueObject", () => {
   it("accepts valid lengths", () => {
-    const result = Schema.decodeUnknownResult(AddressValueObject)({
+    const result = Schema.decodeResult(AddressValueObject)({
       country: "USA",
       street: "123 Main St",
       postalCode: "12345",
@@ -53,7 +53,7 @@ describe("AddressValueObject", () => {
   });
 
   it("rejects country shorter than 2 chars", () => {
-    const result = Schema.decodeUnknownResult(AddressValueObject)({
+    const result = Schema.decodeResult(AddressValueObject)({
       country: "X",
       street: "123 Main St",
       postalCode: "12345",
@@ -62,7 +62,7 @@ describe("AddressValueObject", () => {
   });
 
   it("rejects country longer than 50 chars", () => {
-    const result = Schema.decodeUnknownResult(AddressValueObject)({
+    const result = Schema.decodeResult(AddressValueObject)({
       country: "X".repeat(51),
       street: "123 Main St",
       postalCode: "12345",
@@ -71,7 +71,7 @@ describe("AddressValueObject", () => {
   });
 
   it("rejects street shorter than 2 chars", () => {
-    const result = Schema.decodeUnknownResult(AddressValueObject)({
+    const result = Schema.decodeResult(AddressValueObject)({
       country: "USA",
       street: "X",
       postalCode: "12345",
@@ -80,7 +80,7 @@ describe("AddressValueObject", () => {
   });
 
   it("rejects postalCode longer than 10 chars", () => {
-    const result = Schema.decodeUnknownResult(AddressValueObject)({
+    const result = Schema.decodeResult(AddressValueObject)({
       country: "USA",
       street: "123 Main St",
       postalCode: "12345678901",

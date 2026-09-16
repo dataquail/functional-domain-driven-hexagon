@@ -18,17 +18,13 @@ export const findOrganizationMembershipsHandler = Effect.fn("findOrganizationMem
           SELECT * FROM "organization".memberships
           WHERE organization_id = ${query.organizationId}
           ORDER BY created_at ASC
-        `
-      .pipe(Database.rows(RowSchemas.MembershipRow))
-      .pipe(translateDatabaseErrors);
+        `.pipe(Database.rows(RowSchemas.MembershipRow), translateDatabaseErrors);
 
     const adminRows = yield* sql`
           SELECT organization_id, user_id, role, issued_by, created_at
           FROM "organization".organization_roles
           WHERE organization_id = ${query.organizationId} AND role = 'admin'
-        `
-      .pipe(Database.rows(RowSchemas.OrganizationRoleRow))
-      .pipe(translateDatabaseErrors);
+        `.pipe(Database.rows(RowSchemas.OrganizationRoleRow), translateDatabaseErrors);
     const adminUserIds = new Set(adminRows.map((row) => row.user_id));
 
     // ADR-0020 forbids cross-schema SQL, so each member's email comes from

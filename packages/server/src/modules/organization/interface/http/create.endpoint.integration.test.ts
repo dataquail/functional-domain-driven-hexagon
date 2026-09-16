@@ -37,9 +37,7 @@ suite("POST /orgs (integration)", () => {
         const sql = yield* Database.Database;
         const orgRows = yield* sql`
               SELECT name FROM "organization".organizations WHERE id = ${id}
-            `
-          .pipe(Database.rows(NameRow))
-          .pipe(Effect.orDie);
+            `.pipe(Database.rows(NameRow), Effect.orDie);
         deepStrictEqual(
           orgRows.map((r) => r.name),
           ["Acme"],
@@ -47,9 +45,7 @@ suite("POST /orgs (integration)", () => {
 
         const memberRows = yield* sql`
               SELECT user_id FROM "organization".memberships WHERE organization_id = ${id}
-            `
-          .pipe(Database.rows(MembershipCountRow))
-          .pipe(Effect.orDie);
+            `.pipe(Database.rows(MembershipCountRow), Effect.orDie);
         deepStrictEqual(
           memberRows.map((r) => r.user_id),
           [MEMBER_CALLER_ID],

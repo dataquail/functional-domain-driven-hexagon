@@ -32,8 +32,6 @@ export const findPendingInvitationsHandler = Effect.fn("findPendingInvitationsHa
             AND accepted_at IS NULL
             AND revoked_at IS NULL
           ORDER BY created_at DESC
-        `
-    .pipe(Database.rows(RowSchemas.InvitationRow))
-    .pipe(translateDatabaseErrors);
+        `.pipe(Database.rows(RowSchemas.InvitationRow), translateDatabaseErrors);
   return rows.map((row) => toView(row, now));
 });
