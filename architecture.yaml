@@ -38,6 +38,10 @@
 # carrying. This one has none, so the file is absent — and `architecture
 # baseline` would write an empty list rather than a place to hide.
 baseline: .architecture-baseline.json
+# Where each campaign below keeps its ledger: `<ledger>/<id>.json`, the record
+# of every place the pattern still occurs and of every time the count was
+# allowed to rise. Unlike the baseline, these files exist on purpose.
+ledger: .architecture-campaigns
 
 resolve:
   # Web and components resolve `@/*` and `@org/components/*` to their own
@@ -278,6 +282,56 @@ graph:
         dependency of the whole repo.
       from: "~/contracts/**"
       to: ["~/server/**", "~/web/**", "~/database/**"]
+
+# Migrations the repository is running, each tracked as an object: what the
+# code is moving away from, why, what a reader at a hit does about it, and a
+# ledger of every place it still occurs. `check` fails on a hit the ledger does
+# not carry and on a ledger entry the code no longer produces, so the count
+# only rises through `architecture campaigns allow` with a reason, and only
+# falls through `architecture campaigns prune`. See
+# `.claude/rules/architecture-rules.md`, "Campaigns".
+campaigns:
+  - id: effect-diagnostics
+    title: Effect diagnostics at message severity, to zero and then gated
+    why: >-
+      `pnpm check:effect` fails on an error or a warning from the Effect language
+      service but only counts its message-level findings, so those grow unnoticed.
+      Each one is an idiom the Effect team steers away from — `Schema.Number` where
+      `Schema.Finite` is meant, a pipe chain that is one call, a catchTag chain that
+      is one catchTags — and the reason none is a warning yet is the backlog, not the
+      rule.
+    how: >-
+      Apply the fix the diagnostic names, then `pnpm exec architecture campaigns prune
+      effect-diagnostics packages`. If the finding is deliberate, disable it for that line with
+      `// @effect-diagnostics-next-line <rule>:off`. When a rule reaches zero, raise it
+      to "warning" in tsconfig.base.json's plugin config so `pnpm check:effect` gates it.
+      When every rule is gated the campaign is complete: delete it and its ledger.
+    owner: "@dataquail"
+    scope: ["packages/**"]
+    unit: match
+    detect:
+      report:
+        command: "node scripts/effect-diagnostics-report.mjs"
+        format: regex
+        # The report prints every severity; only the message-level lines are
+        # this campaign's, the others already fail `pnpm check:effect`.
+        pattern: '^(?<file>.+?)\((?<line>\d+),(?<column>\d+)\): message (?<code>\w+): (?<message>.*)$'
+    probes:
+      fires:
+        - path: packages/server/src/zzprobe.ts
+          source: 'import { Schema } from "effect"; export const Probe = Schema.Struct({ n: Schema.Number });'
+          edges: { effect: { external: effect } }
+          report:
+            - line: 1
+              column: 68
+              code: schemaNumber
+              message: "This Schema number API accepts `NaN`, `Infinity`, and `-Infinity`."
+      ignores:
+        - path: packages/server/src/zzprobe.ts
+          source: 'import { Schema } from "effect"; export const Probe = Schema.Struct({ n: Schema.Finite });'
+          edges: { effect: { external: effect } }
+    staleAfter: 30d
+    onComplete: remove
 
 # Fragments the tree reuses. `{ use: <name> }` anywhere below is replaced by a
 # copy of the fragment before the manifest is decoded; a key written beside
