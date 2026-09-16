@@ -19,13 +19,11 @@ export const deviceApproveEndpoint = Effect.fn("AuthLive.device.approve")(
       userId: currentUser.userId,
     });
   },
-  Effect.catchTag(
-    "DeviceGrantNotFound",
-    () => new CustomHttpApiError.NotFound({ message: "No pending device request for that code" }),
-  ),
-  Effect.catchTag(
-    "DeviceGrantExpired",
-    () => new CustomHttpApiError.Gone({ message: "That device code has expired" }),
-  ),
+  Effect.catchTags({
+    DeviceGrantNotFound: () =>
+      new CustomHttpApiError.NotFound({ message: "No pending device request for that code" }),
+    DeviceGrantExpired: () =>
+      new CustomHttpApiError.Gone({ message: "That device code has expired" }),
+  }),
   recoverPersistenceUnavailable,
 );

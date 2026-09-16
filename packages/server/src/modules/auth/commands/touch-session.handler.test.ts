@@ -3,13 +3,16 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 
 import { touchSessionHandler } from "@/modules/auth/commands/touch-session.handler.js";
+import { SessionNotFound } from "@/modules/auth/domain/session/session.errors.js";
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
 import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.js";
 import { SessionSpecifications } from "@/modules/auth/domain/session/session.specification.js";
 import { SessionRepositoryFake } from "@/modules/auth/infrastructure/repositories/session.repository-fake.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 const sessionId = SessionId.make("33333333-3333-3333-3333-333333333333");
@@ -38,10 +41,20 @@ const cmd = {
   thresholdSeconds: 60,
 };
 
+const updateOneFailingWith = (failure: SessionNotFound | PersistenceUnavailable) =>
+  Layer.effect(
+    SessionRepository,
+    Effect.gen(function* () {
+      const repo = yield* SessionRepository;
+      return SessionRepository.of({ ...repo, updateOne: () => failure });
+    }),
+  ).pipe(Layer.provide(SessionRepositoryFake));
+
+const farPast = DateTime.makeUnsafe("2000-01-01T00:00:00Z");
+
 describe("touchSessionHandler", () => {
   it.live("advances expiresAt and lastUsedAt when threshold has elapsed", () =>
     Effect.gen(function* () {
-      const farPast = DateTime.makeUnsafe(new Date("2000-01-01T00:00:00Z"));
       const seed = yield* seedSession(farPast);
       yield* touchSessionHandler(cmd);
       const repo = yield* SessionRepository;
@@ -71,7 +84,6 @@ describe("touchSessionHandler", () => {
 
   it.live("does not advance a revoked session", () =>
     Effect.gen(function* () {
-      const farPast = DateTime.makeUnsafe(new Date("2000-01-01T00:00:00Z"));
       const seed = yield* seedSession(farPast);
       const repo = yield* SessionRepository;
       yield* repo.deleteOne(sessionId);
@@ -81,5 +93,19 @@ describe("touchSessionHandler", () => {
       deepStrictEqual(after.expiresAt, seed.expiresAt);
       deepStrictEqual(after.lastUsedAt, seed.lastUsedAt);
     }).pipe(Effect.provide(SessionRepositoryFake)),
+  );
+
+  it.live("does not fail when the session is revoked between lookup and update (benign race)", () =>
+    Effect.gen(function* () {
+      yield* seedSession(farPast);
+      yield* touchSessionHandler(cmd);
+    }).pipe(Effect.provide(updateOneFailingWith(new SessionNotFound({ sessionId })))),
+  );
+
+  it.live("does not fail a request the session check already admitted when the store is down", () =>
+    Effect.gen(function* () {
+      yield* seedSession(farPast);
+      yield* touchSessionHandler(cmd);
+    }).pipe(Effect.provide(updateOneFailingWith(new PersistenceUnavailable({ message: "down" })))),
   );
 });

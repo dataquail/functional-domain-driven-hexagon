@@ -17,29 +17,22 @@ export const TransactionDriverLive: Layer.Layer<TransactionDriver, never, Databa
     Effect.gen(function* () {
       const sql = yield* Database.Database;
 
-      const translate = <A, E, R>(
-        effect: Effect.Effect<A, E | Database.DatabaseError | Database.DatabaseUnavailable, R>,
-      ): Effect.Effect<A, E | TransactionFailed | PersistenceUnavailable, R> =>
-        effect.pipe(
-          Effect.catchTag(
-            "DatabaseError",
-            (error) =>
-              new TransactionFailed({ message: (error as Database.DatabaseError).message }),
-          ),
-          Effect.catchTag(
-            "DatabaseUnavailable",
-            (error) =>
-              new PersistenceUnavailable({
-                message: (error as Database.DatabaseUnavailable).message,
-              }),
-          ),
-        );
+      const translateDatabaseFailure = <E>(
+        error: E | Database.DatabaseError | Database.DatabaseUnavailable,
+      ): E | TransactionFailed | PersistenceUnavailable =>
+        error instanceof Database.DatabaseError
+          ? new TransactionFailed({ message: error.message })
+          : error instanceof Database.DatabaseUnavailable
+            ? new PersistenceUnavailable({ message: error.message })
+            : error;
 
       // The client is depth-aware: the outermost call emits BEGIN and every
       // nested one a SAVEPOINT, against the connection already in context. Both
       // arms of the port are therefore the same call.
       const withTransaction = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-        translate(Database.mapSqlError(sql.withTransaction(effect)));
+        Database.mapSqlError(sql.withTransaction(effect)).pipe(
+          Effect.mapError(translateDatabaseFailure),
+        );
 
       return TransactionDriver.of({
         withTransaction,

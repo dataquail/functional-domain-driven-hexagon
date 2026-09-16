@@ -4,6 +4,7 @@ import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Predicate from "effect/Predicate";
 
 import { FindOrganizationByIdQuery } from "@/modules/organization/queries/find-organization-by-id.query.js";
 
@@ -30,10 +31,6 @@ export const OrganizationResolverEntryLive = Layer.effect(
     return (organizationId) =>
       queryBus
         .execute(FindOrganizationByIdQuery, { organizationId })
-        .pipe(
-          Effect.flatMap((view) =>
-            view === null ? new CustomHttpApiError.NotFound() : Effect.succeed(view),
-          ),
-        );
+        .pipe(Effect.filterOrElse(Predicate.isNotNull, () => new CustomHttpApiError.NotFound()));
   }),
 );

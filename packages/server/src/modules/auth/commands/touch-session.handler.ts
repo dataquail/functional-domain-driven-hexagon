@@ -37,7 +37,9 @@ export const touchSessionHandler = Effect.fn("touchSessionHandler")(function* (
 
   const touched = SessionRootOps.touch({ session, now, ttlSeconds: cmd.ttlSeconds });
   yield* repo.updateOne(touched).pipe(
-    Effect.catchTag("SessionNotFound", () => Effect.void),
-    Effect.catchTag("PersistenceUnavailable", () => Effect.void),
+    Effect.catchTags({
+      SessionNotFound: () => Effect.void,
+      PersistenceUnavailable: () => Effect.void,
+    }),
   );
 });

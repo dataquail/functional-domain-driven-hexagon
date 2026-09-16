@@ -13,8 +13,10 @@ export const revokeSessionHandler = Effect.fn("revokeSessionHandler")(function* 
 ) {
   const repo = yield* SessionRepository;
   yield* repo.deleteOne(cmd.sessionId).pipe(
-    Effect.catchTag("SessionNotFound", () => Effect.void),
-    Effect.catchTag("SessionRevoked", () => Effect.void),
-    Effect.catchTag("PersistenceUnavailable", () => Effect.void),
+    Effect.catchTags({
+      SessionNotFound: () => Effect.void,
+      SessionRevoked: () => Effect.void,
+      PersistenceUnavailable: () => Effect.void,
+    }),
   );
 });

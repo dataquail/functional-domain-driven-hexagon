@@ -21,40 +21,28 @@ export const acceptInvitationEndpoint = Effect.fn("OrganizationLive.acceptInvita
     });
     return new OrganizationContract.AcceptInvitationResponse({ organizationId });
   },
-  Effect.catchTag(
-    "InvitationTokenNotFound",
-    () => new OrganizationContract.InvitationNotFoundError({ message: "Invitation not found" }),
-  ),
-  Effect.catchTag(
-    "InvitationAlreadyAccepted",
-    () =>
+  Effect.catchTags({
+    InvitationTokenNotFound: () =>
+      new OrganizationContract.InvitationNotFoundError({ message: "Invitation not found" }),
+    InvitationAlreadyAccepted: () =>
       new OrganizationContract.InvitationGoneError({
         reason: "accepted",
         message: "This invitation has already been accepted.",
       }),
-  ),
-  Effect.catchTag(
-    "InvitationRevoked",
-    () =>
+    InvitationRevoked: () =>
       new OrganizationContract.InvitationGoneError({
         reason: "revoked",
         message: "This invitation has been revoked.",
       }),
-  ),
-  Effect.catchTag(
-    "InvitationExpired",
-    () =>
+    InvitationExpired: () =>
       new OrganizationContract.InvitationGoneError({
         reason: "expired",
         message: "This invitation has expired.",
       }),
-  ),
-  Effect.catchTag(
-    "SuperAdminCannotOwnOrganization",
-    () =>
+    SuperAdminCannotOwnOrganization: () =>
       new OrganizationContract.SuperAdminCannotOwnOrganizationError({
         message: "Super-admins don't join organizations.",
       }),
-  ),
+  }),
   recoverPersistenceUnavailable,
 );

@@ -31,7 +31,9 @@ export const touchApiTokenHandler = Effect.fn("touchApiTokenHandler")(function* 
   if (Duration.isLessThan(elapsed, Duration.seconds(cmd.thresholdSeconds))) return;
 
   yield* repo.updateOne(ApiTokenRootOps.touch({ token, now })).pipe(
-    Effect.catchTag("ApiTokenNotFound", () => Effect.void),
-    Effect.catchTag("PersistenceUnavailable", () => Effect.void),
+    Effect.catchTags({
+      ApiTokenNotFound: () => Effect.void,
+      PersistenceUnavailable: () => Effect.void,
+    }),
   );
 });

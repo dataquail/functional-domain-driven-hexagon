@@ -23,17 +23,13 @@ export const cancelSubscriptionEndpoint = Effect.fn("BillingLive.cancelSubscript
       currentPeriodEnd: subscription.currentPeriodEnd,
     });
   },
-  Effect.catchTag(
-    "SubscriptionNotFound",
-    (err) =>
+  Effect.catchTags({
+    SubscriptionNotFound: (err) =>
       new BillingContract.SubscriptionNotFoundError({
         organizationId: err.organizationId,
         message: `No subscription found for organization ${err.organizationId}`,
       }),
-  ),
-  Effect.catchTag(
-    "BillingGatewayUnavailable",
-    (err) => new CustomHttpApiError.BadGateway({ message: err.message }),
-  ),
+    BillingGatewayUnavailable: (err) => new CustomHttpApiError.BadGateway({ message: err.message }),
+  }),
   recoverPersistenceUnavailable,
 );
