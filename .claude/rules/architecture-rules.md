@@ -16,7 +16,7 @@ plus the rules only a whole-repository walk can answer, which
 | `scripts/architecture-edges.mjs`                | `pnpm lint:edges` — the policy still refuses and allows the edges and shapes it should                                            |
 | `scripts/architecture-conformance.mjs`          | `pnpm lint:conformance` — residue, slack and cycles held to ceilings that only ratchet down                                       |
 | `.architecture-campaigns/<id>.json`             | a campaign's ledger: every place its pattern still occurs, and every time the count was allowed to rise                           |
-| `scripts/effect-diagnostics-report.mjs`         | the report the `effect-diagnostics` campaign reads — one line per Effect language-service diagnostic                              |
+| `scripts/effect-diagnostics-report.mjs`         | `pnpm effect:report` — writes the report the `effect-diagnostics` campaign reads, one line per Effect diagnostic                  |
 | `scripts/lint-rules/`                           | the seven hand-rolled `local/*` AST rules that are not boundary rules                                                             |
 
 **The engine is an installed dependency, not source here.** It ships from
@@ -315,12 +315,16 @@ on, a `staleAfter`, and an `onComplete`. Its findings are judged against its **l
 `.architecture-campaigns/<id>.json`, never against the baseline.
 
 This repo runs one: **`effect-diagnostics`**. Its detector is a `report` term over
-`scripts/effect-diagnostics-report.mjs`, which prints one line per Effect language-service
-finding; the regex keeps only the `message`-severity lines, since `pnpm check:effect`
-already fails on an error or a warning. Each hit is keyed
-`file#Declaration#rule#hash(message)`, so the ledger reads per rule and survives a line
-moving. The report runs once per process — the CLI's one `check`, oxlint's one lint run,
-the editor's one session — and takes about four seconds.
+`.effect-diagnostics-report.txt`, one line per Effect language-service finding, written by
+`pnpm effect:report` (about four seconds; gitignored) — the regex keeps only the
+`message`-severity lines, since `pnpm check:effect` already fails on an error or a warning.
+Each hit is keyed `file#Declaration#rule#hash(message)`, so the ledger reads per rule and
+survives a line moving. The term reads a **file**, not a `command`: oxlint hosts the plugin
+inside the linter's own process, and forking a shell from it fails with `ENOMEM` on a CI
+runner. `pnpm lint`, `lint:architecture` and `lint:rules` rewrite the report before they
+read it, and `pnpm install` writes the first one, so the editor has one from the start —
+it reads the report as of when its session loaded the plugin, and a missing report is an
+error on every file the campaign selects.
 
 **The ledger is a burn-down, not a suppression list.** `entries.length` must equal
 `initial + Σ regressions.delta − fixed`, and `check` fails on:

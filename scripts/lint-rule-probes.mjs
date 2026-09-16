@@ -294,6 +294,10 @@ for (const probe of PROBES) {
   written.push(probe.file);
 }
 
+// The campaigns probe is found through the Effect diagnostics report, which
+// has to be rewritten now that the probe files exist.
+execFileSync("node", ["scripts/effect-diagnostics-report.mjs"], { cwd: repoRoot, stdio: "ignore" });
+
 let output = "";
 try {
   output = execFileSync("npx", ["oxlint", "--format=json", ...PROBES.map((p) => p.file)], {

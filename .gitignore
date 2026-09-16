@@ -1,5 +1,6 @@
 coverage/
 .vitest-reports/
+.effect-diagnostics-report.txt
 *.tsbuildinfo
 node_modules/
 .DS_Store

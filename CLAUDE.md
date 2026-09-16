@@ -41,23 +41,24 @@ there, not an edit here.
 
 ## Commands
 
-| Command                                                | What it runs                                                                                                                         |
-| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `pnpm check:all`                                       | lint + lint:rules + lint:edges + lint:architecture + lint:conformance + typecheck + check:effect + tests + storybook (the full gate) |
-| `pnpm lint`                                            | oxlint (type-aware) — the whole architecture policy (`architecture/*`) plus the ordinary rules                                       |
-| `pnpm check:effect`                                    | `@effect/language-service` diagnostics across all projects; fails on any error or warning (message-level ones are ledgered below)    |
-| `pnpm lint:rules`                                      | asserts each architectural rule still fires on a planted violation (ADR-0025)                                                        |
-| `pnpm lint:edges`                                      | asserts the architecture policy still refuses — and allows — the edges it should (ADR-0028)                                          |
-| `pnpm lint:architecture`                               | the same policy evaluated without a linter, plus the graph rules, the coverage floors and the baseline (ADR-0030)                    |
-| `pnpm lint:conformance`                                | residue, vacancy, slack, concentration and cycles held to ceilings that only ratchet down (`scripts/architecture-conformance.mjs`)   |
-| `pnpm architecture:conformance`                        | the full conformance report — residue, vacant nodes, slack (per fragment), concentration, ordered violations                         |
-| `pnpm architecture:campaigns`                          | the campaign status table; `pnpm exec architecture campaigns prune effect-diagnostics packages` after fixing a ledgered finding      |
-| `pnpm architecture:coverage`                           | how much of the tree each rule family reaches, and the tiers not yet tightened (ADR-0030)                                            |
-| `pnpm architecture:facts <file>`                       | what the parser reads from one file — edges, bindings, members, exports; write new rules against this                                |
-| `pnpm test`                                            | vitest **unit** suite (excludes `*.integration.test.ts`), no DB                                                                      |
-| `DATABASE_URL_TEST=postgres://… pnpm test:integration` | **integration** suite only (`*.integration.test.ts`); hard-fails if no DB                                                            |
-| `DATABASE_URL_TEST=postgres://… pnpm coverage`         | unit + integration merged into ONE coverage number; thresholds in `vitest.config.ts` gate CI                                         |
-| `pnpm effect:source`                                   | clone/refresh the Effect v4 source at `reference/effect` (gitignored, pinned to our beta)                                            |
+| Command                                                | What it runs                                                                                                                                           |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm check:all`                                       | lint + lint:rules + lint:edges + lint:architecture + lint:conformance + typecheck + check:effect + tests + storybook (the full gate)                   |
+| `pnpm lint`                                            | oxlint (type-aware) — the whole architecture policy (`architecture/*`) plus the ordinary rules                                                         |
+| `pnpm check:effect`                                    | `@effect/language-service` diagnostics across all projects; fails on any error or warning (message-level ones are ledgered below)                      |
+| `pnpm lint:rules`                                      | asserts each architectural rule still fires on a planted violation (ADR-0025)                                                                          |
+| `pnpm lint:edges`                                      | asserts the architecture policy still refuses — and allows — the edges it should (ADR-0028)                                                            |
+| `pnpm lint:architecture`                               | the same policy evaluated without a linter, plus the graph rules, the coverage floors and the baseline (ADR-0030)                                      |
+| `pnpm lint:conformance`                                | residue, vacancy, slack, concentration and cycles held to ceilings that only ratchet down (`scripts/architecture-conformance.mjs`)                     |
+| `pnpm architecture:conformance`                        | the full conformance report — residue, vacant nodes, slack (per fragment), concentration, ordered violations                                           |
+| `pnpm effect:report`                                   | writes `.effect-diagnostics-report.txt`, the report the `effect-diagnostics` campaign reads; `lint`, `lint:architecture` and `lint:rules` run it first |
+| `pnpm architecture:campaigns`                          | the campaign status table; `pnpm exec architecture campaigns prune effect-diagnostics packages` after fixing a ledgered finding                        |
+| `pnpm architecture:coverage`                           | how much of the tree each rule family reaches, and the tiers not yet tightened (ADR-0030)                                                              |
+| `pnpm architecture:facts <file>`                       | what the parser reads from one file — edges, bindings, members, exports; write new rules against this                                                  |
+| `pnpm test`                                            | vitest **unit** suite (excludes `*.integration.test.ts`), no DB                                                                                        |
+| `DATABASE_URL_TEST=postgres://… pnpm test:integration` | **integration** suite only (`*.integration.test.ts`); hard-fails if no DB                                                                              |
+| `DATABASE_URL_TEST=postgres://… pnpm coverage`         | unit + integration merged into ONE coverage number; thresholds in `vitest.config.ts` gate CI                                                           |
+| `pnpm effect:source`                                   | clone/refresh the Effect v4 source at `reference/effect` (gitignored, pinned to our beta)                                                              |
 
 ## Always in scope
 
