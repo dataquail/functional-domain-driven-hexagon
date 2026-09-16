@@ -311,12 +311,9 @@ campaigns:
     unit: match
     detect:
       report:
-        # Written by `pnpm effect:report`, which every lint script runs first.
-        # Not a `command`: oxlint hosts this plugin inside the linter's own
-        # process, and forking a shell from it fails with ENOMEM on a CI runner.
-        file: .effect-diagnostics-report.txt
+        command: "node scripts/effect-diagnostics-report.mjs"
         format: regex
-        # The report carries every severity; only the message-level lines are
+        # The report prints every severity; only the message-level lines are
         # this campaign's, the others already fail `pnpm check:effect`.
         pattern: '^(?<file>.+?)\((?<line>\d+),(?<column>\d+)\): message (?<code>\w+): (?<message>.*)$'
     probes:
