@@ -47,6 +47,7 @@
     "architecture/members": "error",
     "architecture/structure": "error",
     "architecture/surface": "error",
+    "architecture/campaigns": "error",
     "import/no-cycle": "error",
     "constructor-super": "error",
     "for-direction": "error",

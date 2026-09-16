@@ -7,15 +7,17 @@ Architectural enforcement runs inside `pnpm lint`, from one assembled manifest �
 plus the rules only a whole-repository walk can answer, which
 `pnpm lint:architecture` evaluates.
 
-| Where                                           | What it owns                                                                                                         |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `architecture.yaml`                             | the repo-wide policy: resolve, aliases, `deny`/`exports`, `graph`, `limits`, the shared `defs`, and the tree's index |
-| `packages/<package>/architecture.yaml`          | that package's node of the tree, beside its own code, with the `defs` only it uses                                   |
-| `@goodbones/{core,typescript,cli,oxlint}` (npm) | the engine: lowering, matching, the graph, the anti-vacuity guard; the TS pack; the two hosts                        |
-| `scripts/lint-rule-probes.mjs`                  | `pnpm lint:rules` — each rule id still fires on a planted violation                                                  |
-| `scripts/architecture-edges.mjs`                | `pnpm lint:edges` — the policy still refuses and allows the edges and shapes it should                               |
-| `scripts/architecture-conformance.mjs`          | `pnpm lint:conformance` — residue, slack and cycles held to ceilings that only ratchet down                          |
-| `scripts/lint-rules/`                           | the seven hand-rolled `local/*` AST rules that are not boundary rules                                                |
+| Where                                           | What it owns                                                                                                                      |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `architecture.yaml`                             | the repo-wide policy: resolve, aliases, `deny`/`exports`, `graph`, `limits`, `campaigns`, the shared `defs`, and the tree's index |
+| `packages/<package>/architecture.yaml`          | that package's node of the tree, beside its own code, with the `defs` only it uses                                                |
+| `@goodbones/{core,typescript,cli,oxlint}` (npm) | the engine: lowering, matching, the graph, the anti-vacuity guard; the TS pack; the two hosts                                     |
+| `scripts/lint-rule-probes.mjs`                  | `pnpm lint:rules` — each rule id still fires on a planted violation                                                               |
+| `scripts/architecture-edges.mjs`                | `pnpm lint:edges` — the policy still refuses and allows the edges and shapes it should                                            |
+| `scripts/architecture-conformance.mjs`          | `pnpm lint:conformance` — residue, slack and cycles held to ceilings that only ratchet down                                       |
+| `.architecture-campaigns/<id>.json`             | a campaign's ledger: every place its pattern still occurs, and every time the count was allowed to rise                           |
+| `scripts/effect-diagnostics-report.mjs`         | the report the `effect-diagnostics` campaign reads — one line per Effect language-service diagnostic                              |
+| `scripts/lint-rules/`                           | the seven hand-rolled `local/*` AST rules that are not boundary rules                                                             |
 
 **The engine is an installed dependency, not source here.** It ships from
 `dataquail/goodbones` as four packages, each pinned to the same exact beta in the
@@ -23,7 +25,9 @@ root `package.json`: `@goodbones/core` (the manifest schema, the evaluators, the
 `Manifest` type the config is annotated with, and the fakes under
 `@goodbones/core/testing`), `@goodbones/typescript` (the language pack:
 parser-backed facts and `unrs-resolver` resolution), `@goodbones/oxlint` (the
-plugin) and `@goodbones/cli` (the `architecture` bin). Its reference
+plugin) and `@goodbones/cli` (the `architecture` bin); both hosts depend on
+`@goodbones/ast-grep`, the syntax matcher a campaign's `syntax` term and `report`
+anchors read through, which this repo never names. Its reference
 documentation lives with it at <https://dataquail.github.io/goodbones>. This
 repo owns the **policy** — the manifest, the probes, the edge table — and nothing
 below describes the library. Changing how a rule family behaves means a release
@@ -98,7 +102,8 @@ written **at that part of the tree**:
 Repo-wide statements sit at the top level: `deny` (prohibitions that hold
 everywhere), `exports` (who may import a given exported symbol, and in which
 binding form), `graph` (cycles, orphans and transitive reach — see below) and
-`limits` (the policy's own ratchets).
+`limits` (the policy's own ratchets) and `campaigns` (migrations in progress, each with a
+ledger — see below).
 
 ## Reuse: `defs` and `use`
 
@@ -298,6 +303,54 @@ says so), never raise one to make a red run green. `residue` and `cycles` sit at
 the other three are ceilings on acknowledged debt, each line of which is named by
 `pnpm architecture:conformance`.
 
+## Campaigns: a migration as an object
+
+A rule says what may never happen. A **campaign** names what the code is moving _away
+from_, ledgers every place it still occurs, and refuses to let the count rise unrecorded.
+It is declared under the top-level `campaigns` — an `id`, a `why`, a `how` (the message
+every hit carries), an `owner`, a `scope`, a `unit` (`file`, `declaration` or `match`), a
+`detect` algebra (`all`/`any`/`not` over `path`, `imports`, `exports`, `members`,
+`requires`, `content`, `syntax`, `report`, `fn`), `probes` it must fire on and stay silent
+on, a `staleAfter`, and an `onComplete`. Its findings are judged against its **ledger**,
+`.architecture-campaigns/<id>.json`, never against the baseline.
+
+This repo runs one: **`effect-diagnostics`**. Its detector is a `report` term over
+`scripts/effect-diagnostics-report.mjs`, which prints one line per Effect language-service
+finding; the regex keeps only the `message`-severity lines, since `pnpm check:effect`
+already fails on an error or a warning. Each hit is keyed
+`file#Declaration#rule#hash(message)`, so the ledger reads per rule and survives a line
+moving. The report runs once per process — the CLI's one `check`, oxlint's one lint run,
+the editor's one session — and takes about four seconds.
+
+**The ledger is a burn-down, not a suppression list.** `entries.length` must equal
+`initial + Σ regressions.delta − fixed`, and `check` fails on:
+
+- a hit the ledger does not carry — _unrecorded growth_, printed with the campaign's
+  `how`. Fix it, or `architecture campaigns allow <id> --reason "<why>"`, which appends a
+  regression record naming the author;
+- a ledger entry the code no longer produces — _stale_. Run
+  `architecture campaigns prune <id>`, which bumps `fixed` and stamps `lastProgress`;
+- a campaign with hits and no ledger (`architecture campaigns init <id>`);
+- a **complete** campaign declared `onComplete: remove`, until it and its ledger are
+  deleted.
+
+A campaign whose `lastProgress` is older than `staleAfter` is **stalled** — a notice in
+`check` and the first thing `conformance` prints, never a failure. Roots follow the
+subcommand: `architecture campaigns prune effect-diagnostics packages`.
+
+**Closing `effect-diagnostics`.** Fix a finding, prune its line. When a rule's count reaches
+zero, raise that rule to `"warning"` in `tsconfig.base.json`'s plugin config: `check:effect`
+then gates it, its lines leave the report, and a recurrence fails CI as a warning rather
+than as growth. When every rule is gated the campaign is complete, and `onComplete: remove`
+makes `check` fail until the campaign and its ledger are deleted. A new message-level rule
+arriving with a language-service bump is growth like any other: `allow` it with the bump as
+the reason, or fix it in the same change.
+
+The plugin evaluates campaigns too (`architecture/campaigns`), reporting each unledgered hit
+at its position, so the editor shows growth before `check` does; the ledgered ones are
+silent. `pnpm lint:rules` plants a file the language service flags and asserts the rule fires
+— the one probe that runs the real report.
+
 ## Every rule proves itself
 
 The manifest compiles to flat rules, each with a probe. Most are generated from
@@ -353,6 +406,7 @@ pnpm architecture:explain <file>    # which rules of every family select this fi
 pnpm architecture:facts <file>      # what the parser read: edges, bindings, members, calls, exports
 pnpm architecture:coverage          # reach per family, and the adoption backlog
 pnpm architecture:conformance       # residue, vacancy, slack, concentration — a measurement, never a failure
+pnpm architecture:campaigns         # the status table; init / prune / allow take the id, then the root
 pnpm exec architecture migrate      # rewrite a .mjs manifest as one architecture.yaml (done; ADR-0031)
 ```
 
@@ -396,7 +450,7 @@ and still lint green, the same vacuity failure in a different disguise. The
 pinned version is what makes that reproducible: bump it deliberately, then run
 `pnpm lint:rules` and `pnpm lint:edges`, which is where a behaviour change in the
 engine shows up. Every `architecture/*` rule id — `imports`, `exports`,
-`members`, `structure`, `surface` — must be enabled in `.oxlintrc.json`; a family
+`members`, `structure`, `surface`, `campaigns` — must be enabled in `.oxlintrc.json`; a family
 left out runs in the CLI and not the editor, and the two adapters disagree.
 
 ## What the plugin still cannot do

@@ -1,71 +1,26 @@
 #!/usr/bin/env node
-// CI gate for the Effect language-service diagnostics, run through
-// `effect-tsgo diagnostics` (the LSP-based linter) rather than the standalone
-// language-service binary.
-//
-// Errors and warnings fail the build. `message`-severity diagnostics are
-// reported but do not gate: tsgo surfaces a class of advisory suggestions the
-// previous backend did not, and adopting them is separate work from changing
-// which tool reports them.
-//
-// Per-rule severities live in the shared tsconfig plugin config
-// (tsconfig.base.json), so what's reported here is what the editor shows.
-import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
-
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-
-// Leaf tsconfigs with a non-empty `include` (the aggregator tsconfig.json in
-// referenced packages has an empty include and would check nothing).
-const PROJECTS = [
-  "packages/contracts/tsconfig.src.json",
-  "packages/contracts/tsconfig.test.json",
-  "packages/database/tsconfig.src.json",
-  "packages/database/tsconfig.test.json",
-  "packages/api-client/tsconfig.src.json",
-  "packages/server/tsconfig.src.json",
-  "packages/server/tsconfig.test.json",
-  "packages/jobs/tsconfig.src.json",
-  "packages/jobs/tsconfig.test.json",
-  "packages/cli/tsconfig.src.json",
-  "packages/mcp/tsconfig.src.json",
-  "packages/web/tsconfig.json",
-  "packages/components/tsconfig.json",
-].filter((p) => existsSync(join(ROOT, p)));
+// CI gate for the Effect language-service diagnostics. Errors and warnings
+// fail the build. `message`-severity diagnostics are reported but do not
+// gate: they are ledgered by the `effect-diagnostics` campaign in
+// architecture.yaml, which is what ratchets them down.
+import { readEffectDiagnostics, uniqueDiagnostics } from "./effect-diagnostics.mjs";
 
 const GATING = new Set(["error", "warning"]);
 
+const perProject = await readEffectDiagnostics().catch((error) => {
+  console.error(`✗ ${error.message}`);
+  process.exit(2);
+});
+
 let gatingTotal = 0;
-let messageTotal = 0;
-
-for (const project of PROJECTS) {
-  const res = spawnSync(
-    "pnpm",
-    ["exec", "effect-tsgo", "diagnostics", "--project", project, "--format", "json"],
-    { cwd: ROOT, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
-  );
-  let diagnostics = [];
-  try {
-    const parsed = JSON.parse(res.stdout || "[]");
-    diagnostics = Array.isArray(parsed) ? parsed : (parsed.diagnostics ?? []);
-  } catch {
-    console.error(`✗ ${project}: could not parse diagnostics output`);
-    if (res.stderr) console.error(res.stderr.slice(0, 2000));
-    process.exit(2);
-  }
-
+for (const { diagnostics, project } of perProject) {
   const gating = diagnostics.filter((d) => GATING.has(d.severity));
   const messages = diagnostics.length - gating.length;
-  messageTotal += messages;
-
   if (gating.length > 0) {
     gatingTotal += gating.length;
     console.error(`✗ ${project}: ${gating.length} effect diagnostic(s)`);
     for (const d of gating) {
-      const rel = (d.file ?? "").replace(`${ROOT}/`, "");
-      console.error(`    ${rel}:${d.line}:${d.column}  ${d.severity} ${d.name}`);
+      console.error(`    ${d.file}:${d.line}:${d.column}  ${d.severity} ${d.name}`);
     }
   } else {
     console.log(`✓ ${project}${messages > 0 ? `  (${messages} message-level)` : ""}`);
@@ -80,6 +35,7 @@ if (gatingTotal > 0) {
   );
   process.exit(1);
 }
+const messageTotal = uniqueDiagnostics(perProject).filter((d) => !GATING.has(d.severity)).length;
 console.log(
-  `\nNo gating effect diagnostics.${messageTotal > 0 ? ` ${messageTotal} message-level suggestion(s) not gated.` : ""}`,
+  `\nNo gating effect diagnostics.${messageTotal > 0 ? ` ${messageTotal} message-level suggestion(s) not gated; the effect-diagnostics campaign ledgers them.` : ""}`,
 );
