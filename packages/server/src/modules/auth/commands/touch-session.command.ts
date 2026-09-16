@@ -10,8 +10,8 @@ import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 export const TouchSessionCommand = Command.make("TouchSessionCommand", {
   payload: {
     sessionId: SessionId,
-    ttlSeconds: Schema.Number,
-    thresholdSeconds: Schema.Number,
+    ttlSeconds: Schema.Int,
+    thresholdSeconds: Schema.Int,
   },
   success: Schema.Void,
 });

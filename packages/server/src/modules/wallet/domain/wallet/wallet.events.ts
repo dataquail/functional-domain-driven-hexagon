@@ -19,8 +19,8 @@ export const walletCreatedSpanAttributes: SpanAttributesExtractor<WalletCreated>
 
 export const WalletCredited = Event.make("WalletCredited", {
   walletId: WalletId,
-  amount: Schema.Number,
-  newBalance: Schema.Number,
+  amount: Schema.Finite,
+  newBalance: Schema.Finite,
 });
 export type WalletCredited = typeof WalletCredited.Type;
 
@@ -32,8 +32,8 @@ export const walletCreditedSpanAttributes: SpanAttributesExtractor<WalletCredite
 
 export const WalletDebited = Event.make("WalletDebited", {
   walletId: WalletId,
-  amount: Schema.Number,
-  newBalance: Schema.Number,
+  amount: Schema.Finite,
+  newBalance: Schema.Finite,
 });
 export type WalletDebited = typeof WalletDebited.Type;
 

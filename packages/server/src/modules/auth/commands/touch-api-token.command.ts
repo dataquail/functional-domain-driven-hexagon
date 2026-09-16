@@ -8,7 +8,7 @@ import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 // request. Unlike sessions there is no sliding TTL — this only stamps `lastUsedAt`, and there
 // is no failure channel because that stamp must never fail a request.
 export const TouchApiTokenCommand = Command.make("TouchApiTokenCommand", {
-  payload: { apiTokenId: ApiTokenId, thresholdSeconds: Schema.Number },
+  payload: { apiTokenId: ApiTokenId, thresholdSeconds: Schema.Int },
   success: Schema.Void,
 });
 export type TouchApiTokenPayload = Command.Payload<typeof TouchApiTokenCommand>;

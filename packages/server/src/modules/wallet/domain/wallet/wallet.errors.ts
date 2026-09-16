@@ -17,13 +17,15 @@ export class WalletInsufficientFunds extends Schema.TaggedErrorClass<WalletInsuf
   "WalletInsufficientFunds",
 )("WalletInsufficientFunds", {
   walletId: WalletId,
-  balance: Schema.Number,
-  attemptedDebit: Schema.Number,
+  balance: Schema.Finite,
+  attemptedDebit: Schema.Finite,
 }) {}
 
 export class WalletInvalidAmount extends Schema.TaggedErrorClass<WalletInvalidAmount>(
   "WalletInvalidAmount",
 )("WalletInvalidAmount", {
   walletId: WalletId,
+  // The rejected amount is what this error reports, and NaN or Infinity is one way to be rejected.
+  // @effect-diagnostics-next-line schemaNumber:off
   amount: Schema.Number,
 }) {}

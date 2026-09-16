@@ -51,7 +51,8 @@
           "flatMapConditionalToFilterOrFail": "warning",
           "lazyEffect": "warning",
           "unnecessaryPipeChain": "warning",
-          "preferTypedSchemaDecoder": "warning"
+          "preferTypedSchemaDecoder": "warning",
+          "schemaNumber": "warning"
         }
       }
     ],

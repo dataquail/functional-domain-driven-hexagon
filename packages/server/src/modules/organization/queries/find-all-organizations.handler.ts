@@ -9,7 +9,7 @@ import {
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
-const CountRow = Schema.Struct({ value: Schema.Number });
+const CountRow = Schema.Struct({ value: Schema.Int });
 
 const toView = (row: RowSchemas.OrganizationRow): FindAllOrganizationsView => ({
   id: OrganizationId.make(row.id),

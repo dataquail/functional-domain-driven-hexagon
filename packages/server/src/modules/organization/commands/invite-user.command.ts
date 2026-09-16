@@ -10,7 +10,7 @@ export const InviteUserCommand = Command.make("InviteUserCommand", {
   payload: {
     organizationId: OrganizationId,
     inviteeEmail: Schema.String.check(Schema.isMinLength(3), Schema.isMaxLength(320)),
-    ttlSeconds: Schema.Number,
+    ttlSeconds: Schema.Int,
     actorUserId: UserId,
   },
   success: InvitationId,

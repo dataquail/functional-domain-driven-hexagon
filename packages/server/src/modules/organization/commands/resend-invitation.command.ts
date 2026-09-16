@@ -13,7 +13,7 @@ import { UserId } from "@/platform/ids/user-id.js";
 export const ResendInvitationCommand = Command.make("ResendInvitationCommand", {
   payload: {
     invitationId: InvitationId,
-    ttlSeconds: Schema.Number,
+    ttlSeconds: Schema.Int,
     actorUserId: UserId,
   },
   success: Schema.Void,

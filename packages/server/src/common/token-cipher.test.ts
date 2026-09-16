@@ -158,7 +158,7 @@ describe("TokenCipher", () => {
     it.effect("should correctly encode and decode data through the schema", () =>
       Effect.gen(function* () {
         const TestData = Schema.Struct({
-          id: Schema.Number,
+          id: Schema.Int,
           name: Schema.String,
         });
 
@@ -183,7 +183,7 @@ describe("TokenCipher", () => {
       Effect.gen(function* () {
         const ComplexData = Schema.Struct({
           nested: Schema.Struct({
-            array: Schema.Array(Schema.Number),
+            array: Schema.Array(Schema.Int),
             optional: Schema.optional(Schema.String),
           }),
           date: Schema.String,
@@ -214,7 +214,7 @@ describe("TokenCipher", () => {
     it.effect("should fail when decrypting with invalid data", () =>
       Effect.gen(function* () {
         const TestData = Schema.Struct({
-          id: Schema.Number,
+          id: Schema.Int,
         });
 
         const schema = yield* TokenCipher.makeSchema(TestData, {
@@ -231,7 +231,7 @@ describe("TokenCipher", () => {
     it.effect("should fail when decoding invalid JSON after decryption", () =>
       Effect.gen(function* () {
         const TestData = Schema.Struct({
-          id: Schema.Number,
+          id: Schema.Int,
         });
 
         const schema1 = yield* TokenCipher.makeSchema(TestData, {
@@ -275,7 +275,7 @@ describe("TokenCipher", () => {
     it.effect("should use the specified encryption algorithm", () =>
       Effect.gen(function* () {
         const TestData = Schema.Struct({
-          id: Schema.Number,
+          id: Schema.Int,
         });
 
         const schema = yield* TokenCipher.makeSchema(TestData, {
@@ -299,7 +299,7 @@ describe("TokenCipher", () => {
     it.effect("should correctly encode and decode data through the schema", () =>
       Effect.gen(function* () {
         const TestData = Schema.Struct({
-          id: Schema.Number,
+          id: Schema.Int,
           name: Schema.String,
         });
 

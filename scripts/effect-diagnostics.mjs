@@ -74,18 +74,3 @@ export const readEffectDiagnostics = async () => {
   const perProject = await inLanes(PROJECTS, diagnosticsOfProject, CONCURRENCY);
   return PROJECTS.map((project, index) => ({ project, diagnostics: perProject[index] }));
 };
-
-// A project's program includes the files of the projects it references, so
-// one diagnostic is reported under several projects; this keeps it once.
-export const uniqueDiagnostics = (perProject) => {
-  const byPosition = new Map();
-  for (const { diagnostics } of perProject) {
-    for (const diagnostic of diagnostics) {
-      const key = `${diagnostic.file}:${diagnostic.line}:${diagnostic.column}:${diagnostic.name}`;
-      if (!byPosition.has(key)) byPosition.set(key, diagnostic);
-    }
-  }
-  return [...byPosition.values()].sort(
-    (a, b) => a.file.localeCompare(b.file) || a.line - b.line || a.column - b.column,
-  );
-};
