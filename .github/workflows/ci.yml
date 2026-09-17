@@ -36,13 +36,10 @@ jobs:
       - name: Architecture edges
         run: pnpm lint:edges
       # The same policy with no linter in the loop, and the ratchet: a baseline
-      # entry that no longer fires has to be pruned.
+      # entry that no longer fires has to be pruned, and the conformance
+      # ceilings (residue, vacancy, slack, concentration) that only ratchet down.
       - name: Architecture check
         run: pnpm lint:architecture
-      # What `check` measures but does not gate — residue, slack and cycles —
-      # held to ceilings that only ratchet down.
-      - name: Architecture conformance
-        run: pnpm lint:conformance
 
   typecheck:
     name: Typecheck

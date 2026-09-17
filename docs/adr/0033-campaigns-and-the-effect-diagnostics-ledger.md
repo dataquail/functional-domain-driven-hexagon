@@ -2,6 +2,7 @@
 
 - Status: Accepted; the campaign closed on 2026-09-16 with every rule it tracked raised to `"warning"` and `check:effect` gating every severity
 - Date: 2026-09-16
+- Superseded in part: 2026-09-17 — the fan-out script the detector below describes is no longer the shape a `report` term needs; since goodbones beta.10 the term takes a list of commands, runs them concurrently and dedupes across their outputs, and `check-effect-diagnostics.mjs` carries its own collector
 
 ## Context and Problem Statement
 

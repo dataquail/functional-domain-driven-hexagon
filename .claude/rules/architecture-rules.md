@@ -14,7 +14,6 @@ plus the rules only a whole-repository walk can answer, which
 | `@goodbones/{core,typescript,cli,oxlint}` (npm) | the engine: lowering, matching, the graph, the anti-vacuity guard; the TS pack; the two hosts                                     |
 | `scripts/lint-rule-probes.mjs`                  | `pnpm lint:rules` — each rule id still fires on a planted violation                                                               |
 | `scripts/architecture-edges.mjs`                | `pnpm lint:edges` — the policy still refuses and allows the edges and shapes it should                                            |
-| `scripts/architecture-conformance.mjs`          | `pnpm lint:conformance` — residue, slack and cycles held to ceilings that only ratchet down                                       |
 | `.architecture-campaigns/<id>.json`             | a campaign's ledger: every place its pattern still occurs, and every time the count was allowed to rise                           |
 | `scripts/lint-rules/`                           | the seven hand-rolled `local/*` AST rules that are not boundary rules                                                             |
 
@@ -262,10 +261,11 @@ limits:
   unrestricted: 1
   partial: 0
   coverage: { imports: 0.96, structure: 0.73, members: 0.03, surface: 0.91, graph: 1 }
+  conformance: { residue: 0, vacant: 13, slack: 52, concentration: 0 }
 ```
 
-The ceilings cap the tiers that say "not tightened yet"; both adapters check them
-at load. The floors are the fraction of walked files each family reaches, checked
+The `unrestricted`/`partial` ceilings cap the tiers that say "not tightened yet"; both
+adapters check them at load. The `conformance` ceilings are covered below. The floors are the fraction of walked files each family reaches, checked
 by `lint:architecture`; set each to what `pnpm architecture:coverage` reports,
 rounded **down** to two decimals. Raise a floor when coverage rises; never lower
 one to make a red run green — the fix is a rule that reaches the files, or a file
@@ -296,11 +296,14 @@ violations are keyed by fingerprint). Beyond what `check` reports it names five 
   why the server has four test fragments and the singleton needs sit at their own node.
 - **cycles** — every cycle in the walked graph, inside a `cycles` rule's scope or not.
 
-`pnpm lint:conformance` holds all five to ceilings in `scripts/architecture-conformance.mjs`,
-ratcheted like the coverage floors: lower a ceiling when the number falls (the script
-says so), never raise one to make a red run green. `residue` and `cycles` sit at zero;
-the other three are ceilings on acknowledged debt, each line of which is named by
-`pnpm architecture:conformance`.
+The first four are held to ceilings in the manifest, `limits.conformance`
+(`{ residue, vacant, slack, concentration }`), and `pnpm lint:architecture` fails
+"conformance above ceiling" when a count exceeds its line. They ratchet like the coverage
+floors: lower a ceiling when the number falls, never raise one to make a red run green.
+`pnpm architecture:conformance` prints each measure with its ceiling beside it and says
+when a count has fallen enough to lower one. There is no `cycles` ceiling: the `no-cycles`
+graph rule already fails `check` on any cycle. `residue` sits at zero; the other three are
+ceilings on acknowledged debt, each line of which the conformance report names.
 
 ## Campaigns: a migration as an object
 
@@ -319,7 +322,10 @@ finding, with a regex keeping only the `message`-severity lines; each hit was ke
 `file#Declaration#rule#hash(message)`, so the ledger read per rule and survived a line moving.
 It closed the same day with every rule it tracked raised to `"warning"`, and
 `pnpm check:effect` now fails on a finding at any severity, so the report script, the ledger
-and the `lint:rules` probe are gone. What a `report` term costs is worth knowing before the
+and the `lint:rules` probe are gone. Since goodbones beta.10 a `report` term takes a list of
+commands, runs them concurrently and dedupes across their outputs, so the next campaign over
+a per-project tool names the commands in the manifest rather than a fan-out script. What a
+`report` term costs is worth knowing before the
 next one: the report runs once per process — the CLI's one `check`, oxlint's one lint run,
 the editor's one session — and the plugin runs it as it loads, not lazily, because forking
 from the linter's process once its AST buffers are allocated fails with `ENOMEM` on a CI
@@ -401,12 +407,12 @@ The package ships a second way to ask the same question, and the only way to ask
 the graph ones:
 
 ```
-pnpm lint:architecture              # every family, the graph rules, the coverage floors, the baseline ratchet
+pnpm lint:architecture              # every family, the graph rules, the coverage floors, the conformance ceilings, the baseline ratchet
 pnpm architecture:baseline          # record the violations this repo carries
 pnpm architecture:explain <file>    # which rules of every family select this file, and why
 pnpm architecture:facts <file>      # what the parser read: edges, bindings, members, calls, exports
 pnpm architecture:coverage          # reach per family, and the adoption backlog
-pnpm architecture:conformance       # residue, vacancy, slack, concentration — a measurement, never a failure
+pnpm architecture:conformance       # residue, vacancy, slack, concentration, each beside its ceiling — a measurement, never a failure
 pnpm architecture:campaigns         # the status table; init / prune / allow take the id, then the root
 pnpm exec architecture migrate      # rewrite a .mjs manifest as one architecture.yaml (done; ADR-0031)
 ```
