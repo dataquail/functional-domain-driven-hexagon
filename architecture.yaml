@@ -284,6 +284,53 @@ graph:
       from: "~/contracts/**"
       to: ["~/server/**", "~/web/**", "~/database/**"]
 
+# A migration in progress: what the code is moving away from, ledgered in
+# `.architecture-campaigns/<id>.json`, where the count only rises through
+# `architecture campaigns allow` and only falls through `prune`.
+campaigns:
+  - id: lint-warnings
+    title: Every oxlint warning to zero, then warnings fail the lint
+    why: >-
+      `pnpm lint` runs with `--quiet`, so a rule at "warn" — most of the Effect rules the
+      oxlint preset enables, and a handful of ordinary ones — reports nothing and gates
+      nothing. The tree carries hundreds of them, and the reason none is an error yet is the
+      backlog, not the rule. Until each rule is fixed to zero or turned off with a reason,
+      this ledger is what keeps the count from rising.
+    how: >-
+      Apply the fix the warning names, then `pnpm exec architecture campaigns prune
+      lint-warnings packages`. If the finding is deliberate, disable it for that line with
+      `// oxlint-disable-next-line <rule>`. If the rule does not apply here, turn it off in
+      .oxlintrc.base.json with the reason beside it. When the ledger is empty the campaign
+      is complete: replace `--quiet` with `--deny-warnings` in `pnpm lint`, then delete the
+      campaign and its ledger.
+    owner: "@dataquail"
+    scope: ["packages/**"]
+    unit: match
+    detect:
+      report:
+        # The base config is the lint's own minus the architecture plugin, which would
+        # otherwise load this manifest and run this report again from inside it.
+        command: "pnpm exec oxlint --type-aware -c .oxlintrc.base.json --format unix packages"
+        format: regex
+        # Only the warning lines are this campaign's; an error already fails `pnpm lint`.
+        pattern: '^(?<file>.+?):(?<line>\d+):(?<column>\d+): (?<message>.*) \[Warning/(?<code>[^\]]+)\]$'
+    probes:
+      fires:
+        - path: packages/server/src/zzprobe.ts
+          source: 'import { Schema } from "effect"; export const Probe = Schema.Struct({ n: Schema.Number });'
+          edges: { effect: { external: effect } }
+          report:
+            - line: 1
+              column: 81
+              code: effecttsgo(schema-number)
+              message: "This Schema number API accepts `NaN`, `Infinity`, and `-Infinity`."
+      ignores:
+        - path: packages/server/src/zzprobe.ts
+          source: 'import { Schema } from "effect"; export const Probe = Schema.Struct({ n: Schema.Finite });'
+          edges: { effect: { external: effect } }
+    staleAfter: 30d
+    onComplete: remove
+
 # Fragments the tree reuses. `{ use: <name> }` anywhere below is replaced by a
 # copy of the fragment before the manifest is decoded; a key written beside
 # `use` overrides the fragment's key of the same name, shallowly — a list

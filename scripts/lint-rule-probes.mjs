@@ -111,6 +111,15 @@ const PROBES = [
     source: 'import * as Cqrs from "@effect-server-utils/cqrs";\n\nexport const probe = Cqrs;\n',
   },
   {
+    // The campaign's `report` term runs the lint for real, so the probe is a
+    // file oxlint warns on and the campaign's ledger does not carry.
+    rule: "architecture/campaigns",
+    file: "packages/server/src/zzprobe-lint-warnings.ts",
+    source:
+      'import { Schema } from "effect";\n\n' +
+      "export const probe = Schema.Struct({ count: Schema.Number });\n",
+  },
+  {
     // The effecttsgo rules exist only while `effect-tsgo patch --oxlint` is
     // applied to the oxlint binary, and that patch is reapplied by `prepare` on
     // every install. This probe is what catches a reinstall that silently
