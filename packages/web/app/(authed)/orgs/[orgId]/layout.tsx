@@ -14,13 +14,13 @@ import * as React from "react";
 import { OrgNav } from "@/features/__root/org-nav.view";
 import { fetchMyOrgs } from "@/services/data-access/my-orgs.server";
 
-export default async function OrgScopedLayout({
+const OrgScopedLayout = async ({
   children,
   params,
 }: {
   readonly children: React.ReactNode;
   readonly params: Promise<{ readonly orgId: string }>;
-}) {
+}) => {
   const { orgId } = await params;
   const orgs = await fetchMyOrgs();
   const member = orgs.find((o) => o.id === orgId);
@@ -36,4 +36,6 @@ export default async function OrgScopedLayout({
       </Stack>
     </React.Fragment>
   );
-}
+};
+
+export default OrgScopedLayout;

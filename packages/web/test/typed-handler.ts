@@ -28,6 +28,30 @@ import {
 
 type JsonValue = JsonBodyType;
 
+// v4 dropped `HttpApiSchema.getStatus`; the status lives as the
+// `httpApiStatus` annotation on the schema AST (mirrors the internal
+// `getStatusSuccess`/`getStatusError` helpers).
+const resolveStatus = SchemaAST.resolveAt<number>("httpApiStatus");
+const getStatus = (ast: SchemaAST.AST, fallback: number): number => resolveStatus(ast) ?? fallback;
+
+const decodeUnknown = (schema: Schema.Top, input: unknown) =>
+  Effect.runPromise(
+    Schema.decodeUnknownEffect(schema)(input) as Effect.Effect<unknown, unknown, never>,
+  );
+
+const encodeUnknown = (schema: Schema.Top, value: unknown) =>
+  Effect.runPromise(
+    Schema.encodeUnknownEffect(schema)(value) as Effect.Effect<unknown, unknown, never>,
+  );
+
+const queryToRecord = (params: URLSearchParams): Record<string, string> => {
+  const out: Record<string, string> = {};
+  params.forEach((value, key) => {
+    out[key] = value;
+  });
+  return out;
+};
+
 /**
  * Absolute base URL handlers register under. Tests use a matching base
  * on the `HttpApiClient` (e.g. `baseUrl: TEST_API_BASE`) so MSW node's
@@ -183,27 +207,3 @@ export const typedHandler = <E extends HttpApiEndpoint.Any>(
 };
 
 // ----- helpers -----
-
-// v4 dropped `HttpApiSchema.getStatus`; the status lives as the
-// `httpApiStatus` annotation on the schema AST (mirrors the internal
-// `getStatusSuccess`/`getStatusError` helpers).
-const resolveStatus = SchemaAST.resolveAt<number>("httpApiStatus");
-const getStatus = (ast: SchemaAST.AST, fallback: number): number => resolveStatus(ast) ?? fallback;
-
-const decodeUnknown = (schema: Schema.Top, input: unknown) =>
-  Effect.runPromise(
-    Schema.decodeUnknownEffect(schema)(input) as Effect.Effect<unknown, unknown, never>,
-  );
-
-const encodeUnknown = (schema: Schema.Top, value: unknown) =>
-  Effect.runPromise(
-    Schema.encodeUnknownEffect(schema)(value) as Effect.Effect<unknown, unknown, never>,
-  );
-
-const queryToRecord = (params: URLSearchParams): Record<string, string> => {
-  const out: Record<string, string> = {};
-  params.forEach((value, key) => {
-    out[key] = value;
-  });
-  return out;
-};

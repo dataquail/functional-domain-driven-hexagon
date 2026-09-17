@@ -17,12 +17,12 @@ const config: StorybookConfig = {
     getAbsolutePath("@storybook/addon-themes"),
   ],
   framework: getAbsolutePath("@storybook/react-vite"),
-  viteFinal: (config) => ({
-    ...config,
+  viteFinal: (viteConfig) => ({
+    ...viteConfig,
     resolve: {
-      ...config.resolve,
+      ...viteConfig.resolve,
       alias: {
-        ...config.resolve?.alias,
+        ...viteConfig.resolve?.alias,
         "next/link": fileURLToPath(new URL("./next-link-stub.tsx", import.meta.url)),
       },
     },

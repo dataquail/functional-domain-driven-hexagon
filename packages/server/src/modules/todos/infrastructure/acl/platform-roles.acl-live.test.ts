@@ -19,7 +19,7 @@ const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 // in for it needs no cast.
 const stubRoleQueries = (roles: ReadonlyArray<string>) =>
   Query.handlersOf(roleAccessQueries, {
-    FindUserRolesQuery: ({ userId }) => Effect.succeed({ userId, roles }),
+    FindUserRolesQuery: () => Effect.succeed({ userId, roles }),
   });
 
 const testLayer = (roles: ReadonlyArray<string>) =>

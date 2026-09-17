@@ -21,7 +21,7 @@ import { AtomHydrationBoundary } from "@/services/atom/hydration-boundary";
 import { fetchCurrentUser } from "@/services/data-access/me.server";
 import { prefetchMyOrgs } from "@/services/data-access/orgs.server";
 
-export default async function AuthedLayout({ children }: { children: React.ReactNode }) {
+const AuthedLayout = async ({ children }: { children: React.ReactNode }) => {
   const me = await fetchCurrentUser();
   if (me === null) {
     redirect("/api/auth/login");
@@ -34,4 +34,6 @@ export default async function AuthedLayout({ children }: { children: React.React
       <AppShell nav={<Nav isSuperAdmin={me.isSuperAdmin} />}>{children}</AppShell>
     </AtomHydrationBoundary>
   );
-}
+};
+
+export default AuthedLayout;

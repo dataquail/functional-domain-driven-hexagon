@@ -2,6 +2,20 @@ import { seedAdminInTestDb } from "./test-utils/admin-seed";
 import { runMigrations } from "./test-utils/database";
 import { seedMemberInZitadel } from "./test-utils/member-seed";
 
+const assertZitadelReachable = async (issuer: string): Promise<void> => {
+  try {
+    const response = await fetch(`${issuer}/debug/ready`);
+    if (!response.ok) {
+      throw new Error(`/debug/ready returned ${response.status}`);
+    }
+  } catch (cause) {
+    throw new Error(
+      `[acceptance/global-setup] Zitadel is not reachable at ${issuer}. ` +
+        `Run \`pnpm auth:up\` first.\n  cause: ${String(cause)}`,
+    );
+  }
+};
+
 // Runs once before specs (and before the auth-setup project). Three
 // responsibilities:
 //   1. Drop+replay migrations against the test DB so the API server boots
@@ -33,18 +47,4 @@ export default async (): Promise<void> => {
   await assertZitadelReachable(zitadelIssuer);
   await seedAdminInTestDb({ databaseUrl, zitadelIssuer, zitadelPat, adminEmail });
   await seedMemberInZitadel({ zitadelIssuer, zitadelPat });
-};
-
-const assertZitadelReachable = async (issuer: string): Promise<void> => {
-  try {
-    const response = await fetch(`${issuer}/debug/ready`);
-    if (!response.ok) {
-      throw new Error(`/debug/ready returned ${response.status}`);
-    }
-  } catch (cause) {
-    throw new Error(
-      `[acceptance/global-setup] Zitadel is not reachable at ${issuer}. ` +
-        `Run \`pnpm auth:up\` first.\n  cause: ${String(cause)}`,
-    );
-  }
 };

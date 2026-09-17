@@ -31,11 +31,11 @@ const Fallback: React.FC = () => (
   </Stack>
 );
 
-export default async function AdminOrgDetailPage({
+const AdminOrgDetailPage = async ({
   params,
 }: {
   readonly params: Promise<{ readonly orgId: string }>;
-}) {
+}) => {
   const { orgId: raw } = await params;
   const orgId = OrganizationId.make(raw);
 
@@ -67,4 +67,6 @@ export default async function AdminOrgDetailPage({
       </CardSection>
     </PageShell>
   );
-}
+};
+
+export default AdminOrgDetailPage;

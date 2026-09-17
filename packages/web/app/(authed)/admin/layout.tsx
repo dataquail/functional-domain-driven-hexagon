@@ -9,9 +9,11 @@ import * as React from "react";
 
 import { fetchCurrentUser } from "@/services/data-access/me.server";
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+const AdminLayout = async ({ children }: { children: React.ReactNode }) => {
   const me = await fetchCurrentUser();
   if (me?.isSuperAdmin !== true) notFound();
 
-  return <React.Fragment>{children}</React.Fragment>;
-}
+  return children;
+};
+
+export default AdminLayout;

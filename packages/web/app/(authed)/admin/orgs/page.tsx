@@ -24,7 +24,7 @@ const Fallback: React.FC = () => (
   </Stack>
 );
 
-export default function AdminOrgsPage() {
+const AdminOrgsPage = () => {
   return (
     <PageShell>
       <CardSection title="All organizations">
@@ -37,4 +37,6 @@ export default function AdminOrgsPage() {
       </CardSection>
     </PageShell>
   );
-}
+};
+
+export default AdminOrgsPage;

@@ -27,11 +27,11 @@ const themeInitScript = `
 })();
 `;
 
-export default function RootLayout({
+const RootLayout = ({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) {
+}>) => {
   return (
     <html lang="en" className="h-full antialiased" suppressHydrationWarning>
       <head>
@@ -42,4 +42,6 @@ export default function RootLayout({
       </body>
     </html>
   );
-}
+};
+
+export default RootLayout;

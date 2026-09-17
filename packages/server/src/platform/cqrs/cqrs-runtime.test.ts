@@ -10,6 +10,8 @@ import * as userModule from "@/modules/user/user.platform.js";
 import * as walletModule from "@/modules/wallet/wallet.platform.js";
 
 declare global {
+  // Merging into the global ImportMeta needs an interface.
+  // oxlint-disable-next-line typescript/consistent-type-definitions
   interface ImportMeta {
     readonly glob: (
       pattern: string,
