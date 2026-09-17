@@ -1,6 +1,6 @@
 # ADR-0033: Campaigns, and the Effect diagnostics as a ledgered migration
 
-- Status: Accepted
+- Status: Accepted; the campaign closed on 2026-09-16 with every rule it tracked raised to `"warning"` and `check:effect` gating every severity
 - Date: 2026-09-16
 
 ## Context and Problem Statement
