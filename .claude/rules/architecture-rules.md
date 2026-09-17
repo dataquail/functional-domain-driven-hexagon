@@ -316,18 +316,19 @@ every hit carries), an `owner`, a `scope`, a `unit` (`file`, `declaration` or `m
 on, a `staleAfter`, and an `onComplete`. Its findings are judged against its **ledger**,
 `.architecture-campaigns/<id>.json`, never against the baseline.
 
-This repo declares one, **`lint-warnings`**: every oxlint warning `pnpm lint`'s
-`--quiet` hides, keyed `file#Declaration#rule#hash(message)` so an entry survives a line
-moving and the ledger reads per rule. Its detector runs the lint itself against
-`.oxlintrc.base.json` — the ordinary config minus the architecture plugin, which would
-otherwise load this manifest and run the report again from inside it (`extends` merges
-`jsPlugins` and cannot drop one, hence the split; `ignorePatterns` is the one key `extends`
-does not carry, so both files list it). A rule reaches zero by the fix, by
-`// oxlint-disable-next-line <rule>` where the finding is deliberate, or by `"off"` in the
-base config with the reason beside it; when the ledger is empty, `--quiet` becomes
-`--deny-warnings` and the campaign and its ledger are deleted together.
+This repo declares none today; it has run two, and both closed with their pattern made
+impossible rather than merely at zero.
 
-The first one, **`effect-diagnostics`** (ADR-0033), ran a `report` term over a script
+**`lint-warnings`** ledgered every oxlint warning `pnpm lint`'s `--quiet` hid, keyed
+`file#Declaration#rule#hash(message)`. Its detector ran the lint itself, which needs a
+config without the architecture plugin — the plugin runs every report as it loads, so
+the report would otherwise run itself without end, and `extends` merges `jsPlugins` and
+cannot drop one — so `.oxlintrc.json` was split into a base and a top for the campaign's
+life and folded back when it closed. It closed with `pnpm lint` running `--deny-warnings`:
+a rule at `"warn"` now fails the lint, and a rule that does not apply is `"off"` in
+`.oxlintrc.json` with the reason beside it.
+
+**`effect-diagnostics`** (ADR-0033) ran a `report` term over a script
 printing one line per Effect language-service finding, with a regex keeping only the
 `message`-severity lines. It closed the same day with every rule it tracked raised to
 `"warning"`, and `pnpm check:effect` now fails on a finding at any severity. Since goodbones
@@ -363,8 +364,8 @@ deletion rides in the same change as the last fix, since nothing in between is g
 
 The plugin evaluates campaigns too (`architecture/campaigns`), reporting each unledgered hit
 at its position, so the editor shows growth before `check` does; the ledgered ones are
-silent. `pnpm lint:rules` probes it with a planted `Schema.Number`, the one probe that runs
-the real report.
+silent. A policy that declares no campaigns gives the rule nothing to report and nothing for
+`pnpm lint:rules` to probe; the rule id stays enabled for the next one.
 
 ## Every rule proves itself
 

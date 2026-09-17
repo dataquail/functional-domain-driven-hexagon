@@ -10,11 +10,11 @@ import React from "react";
 
 import { ApproveDevice } from "@/features/device/approve-device/approve-device.view";
 
-export default async function DeviceApprovalPage({
+const DeviceApprovalPage = async ({
   searchParams,
 }: {
   readonly searchParams: Promise<{ readonly code?: string }>;
-}) {
+}) => {
   const { code } = await searchParams;
 
   return (
@@ -27,4 +27,6 @@ export default async function DeviceApprovalPage({
       </CardSection>
     </PageShell>
   );
-}
+};
+
+export default DeviceApprovalPage;

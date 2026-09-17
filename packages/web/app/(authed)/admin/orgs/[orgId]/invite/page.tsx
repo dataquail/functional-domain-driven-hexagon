@@ -10,11 +10,11 @@ import React from "react";
 
 import { InviteForm } from "@/features/invite/invite-form/invite-form.view";
 
-export default async function AdminOrgInvitePage({
+const AdminOrgInvitePage = async ({
   params,
 }: {
   readonly params: Promise<{ readonly orgId: string }>;
-}) {
+}) => {
   const { orgId: raw } = await params;
   const orgId = OrganizationId.make(raw);
 
@@ -32,4 +32,6 @@ export default async function AdminOrgInvitePage({
       </CardSection>
     </PageShell>
   );
-}
+};
+
+export default AdminOrgInvitePage;

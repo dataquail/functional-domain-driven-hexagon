@@ -9,11 +9,11 @@ import React from "react";
 
 import { AcceptInvitation } from "@/features/invite/accept-invitation/accept-invitation.view";
 
-export default async function AcceptInvitationPage({
+const AcceptInvitationPage = async ({
   params,
 }: {
   readonly params: Promise<{ readonly token: string }>;
-}) {
+}) => {
   const { token } = await params;
 
   return (
@@ -23,4 +23,6 @@ export default async function AcceptInvitationPage({
       </CardSection>
     </PageShell>
   );
-}
+};
+
+export default AcceptInvitationPage;

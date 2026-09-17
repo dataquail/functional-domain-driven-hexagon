@@ -24,11 +24,11 @@ const Fallback: React.FC = () => (
   </Stack>
 );
 
-export default async function OrgTasksPage({
+const OrgTasksPage = async ({
   params,
 }: {
   readonly params: Promise<{ readonly orgId: string }>;
-}) {
+}) => {
   const { orgId: raw } = await params;
   const orgId = OrganizationId.make(raw);
 
@@ -42,4 +42,6 @@ export default async function OrgTasksPage({
       </CardSection>
     </PageShell>
   );
-}
+};
+
+export default OrgTasksPage;

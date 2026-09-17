@@ -8,7 +8,6 @@
 
 import { RegistryContext } from "@effect/atom-react";
 import { render, type RenderResult } from "@testing-library/react";
-import type * as Atom from "effect/unstable/reactivity/Atom";
 import * as AtomRegistry from "effect/unstable/reactivity/AtomRegistry";
 import * as React from "react";
 import { afterEach } from "vitest";
@@ -34,7 +33,7 @@ afterEach(() => {
 export const renderView = (
   ui: React.ReactElement,
   options: {
-    readonly initialValues?: Iterable<readonly [Atom.Atom<any>, any]>;
+    readonly initialValues?: NonNullable<Parameters<typeof AtomRegistry.make>[0]>["initialValues"];
     readonly fallback?: React.ReactNode;
   } = {},
 ): ViewHarness => {

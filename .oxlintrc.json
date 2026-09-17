@@ -1,8 +1,31 @@
 {
   "$schema": "./node_modules/@effect/tsgo/oxlint-schema.json",
-  "extends": ["./.oxlintrc.base.json"],
-  // `extends` merges rules and plugins but not ignorePatterns; the base carries the
-  // same list for the campaign report, which runs it without the architecture plugin.
+  "extends": ["./node_modules/@effect/tsgo/oxlint-presets/recommended.json"],
+  "plugins": ["typescript", "import"],
+  "jsPlugins": [
+    {
+      "name": "local",
+      "specifier": "./scripts/lint-rules/index.mjs"
+    },
+    {
+      "name": "architecture",
+      "specifier": "@goodbones/oxlint/plugin"
+    },
+    "eslint-plugin-codegen",
+    "eslint-plugin-simple-import-sort",
+    "eslint-plugin-sort-destructure-keys",
+    "eslint-plugin-storybook"
+  ],
+  "categories": {
+    "correctness": "off"
+  },
+  "options": {
+    "typeAware": true
+  },
+  "env": {
+    "builtin": true,
+    "es2018": true
+  },
   "ignorePatterns": [
     "**/dist",
     "**/build",
@@ -18,18 +41,548 @@
     "**/.next/**",
     "**/postcss.config.mjs"
   ],
-  "jsPlugins": [
-    {
-      "name": "architecture",
-      "specifier": "@goodbones/oxlint/plugin"
-    }
-  ],
   "rules": {
     "architecture/imports": "error",
     "architecture/exports": "error",
     "architecture/members": "error",
     "architecture/structure": "error",
     "architecture/surface": "error",
-    "architecture/campaigns": "error"
-  }
+    "architecture/campaigns": "error",
+    "import/no-cycle": "error",
+    "constructor-super": "error",
+    "for-direction": "error",
+    "getter-return": "error",
+    "no-async-promise-executor": "error",
+    "no-case-declarations": "error",
+    "no-class-assign": "error",
+    "no-compare-neg-zero": "error",
+    "no-cond-assign": "error",
+    "no-const-assign": "error",
+    "no-constant-binary-expression": "error",
+    "no-constant-condition": "error",
+    "no-control-regex": "error",
+    "no-debugger": "error",
+    "no-delete-var": "error",
+    "no-dupe-class-members": "error",
+    "no-dupe-else-if": "error",
+    "no-dupe-keys": "error",
+    "no-duplicate-case": "error",
+    "no-empty": "error",
+    "no-empty-character-class": "error",
+    "no-empty-pattern": "error",
+    "no-empty-static-block": "error",
+    "no-ex-assign": "error",
+    "no-extra-boolean-cast": "error",
+    "no-func-assign": "error",
+    "no-global-assign": "error",
+    "no-import-assign": "error",
+    "no-invalid-regexp": "error",
+    "no-loss-of-precision": "error",
+    "no-misleading-character-class": "error",
+    "no-new-native-nonconstructor": "error",
+    "no-nonoctal-decimal-escape": "error",
+    "no-obj-calls": "error",
+    "no-prototype-builtins": "error",
+    "no-redeclare": "off",
+    "no-regex-spaces": "error",
+    "no-self-assign": "error",
+    "no-setter-return": "error",
+    "no-shadow-restricted-names": "error",
+    "no-sparse-arrays": "error",
+    "no-this-before-super": "error",
+    "no-undef": "off",
+    "no-unexpected-multiline": "error",
+    "no-unreachable": "error",
+    "no-unsafe-finally": "error",
+    "no-unsafe-negation": "error",
+    "no-unsafe-optional-chaining": "error",
+    "no-unused-labels": "error",
+    "no-unused-private-class-members": "error",
+    "no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "vars": "all",
+        "args": "all",
+        "varsIgnorePattern": "^_"
+      }
+    ],
+    "no-useless-backreference": "error",
+    "no-useless-catch": "error",
+    "no-useless-escape": "error",
+    "no-with": "error",
+    "require-yield": "error",
+    "use-isnan": "error",
+    "valid-typeof": "error",
+    "no-unused-expressions": "error",
+    "codegen/codegen": "error",
+    "object-shorthand": "error",
+    "no-console": "error",
+    "local/no-relative-import-outside-package": "error",
+    "import/first": "error",
+    "import/newline-after-import": "error",
+    "import/no-duplicates": "error",
+    "simple-import-sort/imports": "error",
+    "simple-import-sort/exports": "error",
+    "sort-destructure-keys/sort-destructure-keys": "error",
+    "prefer-const": "error",
+    "no-var": "error",
+    "no-else-return": "error",
+    "eqeqeq": "error",
+    "no-lonely-if": "error",
+    "no-unneeded-ternary": "error",
+    "no-plusplus": [
+      "error",
+      {
+        "allowForLoopAfterthoughts": true
+      }
+    ],
+    "no-implicit-coercion": "error",
+    "no-shadow": "warn",
+    "no-self-compare": "error",
+    "typescript/no-duplicate-enum-values": "error",
+    "typescript/no-empty-object-type": "error",
+    "typescript/no-explicit-any": "warn",
+    "typescript/no-extra-non-null-assertion": "error",
+    "typescript/no-misused-new": "error",
+    "typescript/no-non-null-asserted-optional-chain": "error",
+    "typescript/no-require-imports": "error",
+    "typescript/no-this-alias": "error",
+    "typescript/no-unnecessary-type-constraint": "error",
+    "typescript/no-unsafe-declaration-merging": "error",
+    "typescript/no-unsafe-function-type": "error",
+    "typescript/no-wrapper-object-types": "error",
+    "typescript/prefer-as-const": "error",
+    "typescript/prefer-namespace-keyword": "error",
+    "typescript/triple-slash-reference": "error",
+    "typescript/array-type": [
+      "warn",
+      {
+        "default": "generic",
+        "readonly": "generic"
+      }
+    ],
+    "typescript/consistent-type-imports": [
+      "error",
+      {
+        "prefer": "type-imports",
+        "fixStyle": "inline-type-imports"
+      }
+    ],
+    "typescript/consistent-type-exports": [
+      "error",
+      {
+        "fixMixedExportsWithInlineTypeSpecifier": true
+      }
+    ],
+    "typescript/no-floating-promises": "error",
+    "typescript/no-unsafe-assignment": "error",
+    "typescript/no-unsafe-member-access": "error",
+    "typescript/no-unsafe-call": "error",
+    "typescript/no-unsafe-return": "error",
+    "typescript/no-unsafe-argument": "error",
+    "typescript/no-non-null-assertion": "error",
+    "typescript/no-unnecessary-type-assertion": "error",
+    "typescript/no-empty-interface": "error",
+    "typescript/no-misused-promises": [
+      "error",
+      {
+        "checksVoidReturn": {
+          "attributes": false
+        }
+      }
+    ],
+    "typescript/return-await": "error",
+    "typescript/consistent-type-definitions": ["warn", "type"],
+    "typescript/explicit-member-accessibility": [
+      "error",
+      {
+        "accessibility": "explicit",
+        "overrides": {
+          "accessors": "off",
+          "constructors": "no-public",
+          "methods": "explicit",
+          "properties": "explicit",
+          "parameterProperties": "explicit"
+        }
+      }
+    ],
+    "typescript/consistent-generic-constructors": "error",
+    "typescript/prefer-nullish-coalescing": "error",
+    "typescript/no-unnecessary-condition": "error",
+    "typescript/prefer-optional-chain": "error",
+    "typescript/no-confusing-non-null-assertion": "error",
+    "typescript/no-confusing-void-expression": "error",
+    "typescript/no-meaningless-void-operator": "error",
+    "typescript/strict-boolean-expressions": [
+      "error",
+      {
+        "allowString": false,
+        "allowNumber": false,
+        "allowNullableObject": false,
+        "allowNullableBoolean": false,
+        "allowNullableString": false,
+        "allowNullableNumber": false,
+        "allowNullableEnum": false,
+        "allowAny": false
+      }
+    ],
+    "typescript/dot-notation": "error",
+    // A generator's `return yield* error` is Effect's narrowing idiom — the value
+    // travels the Effect channel, not the return — and TypeScript already knows an
+    // exhaustive switch over a closed union returns on every path.
+    "typescript/consistent-return": "off",
+    // Effect v4's Random module carries no UUID; an id is minted from crypto inside
+    // Effect.sync, which is the seam the rule asks for.
+    "effecttsgo/crypto-random-uuid-in-effect": "off",
+    "local/no-array-push-spread": "error",
+    "local/lucide-icon-suffix": "error",
+    "no-use-before-define": "warn",
+    "effecttsgo/prefer-schema-over-json": "off"
+  },
+  "overrides": [
+    {
+      "files": ["packages/web/**/*.{ts,tsx,js,jsx}", "packages/components/**/*.{ts,tsx,js,jsx}"],
+      "rules": {
+        "react/function-component-definition": [
+          "warn",
+          {
+            "namedComponents": ["arrow-function"],
+            "unnamedComponents": "arrow-function"
+          }
+        ],
+        "react/display-name": "error",
+        "react/jsx-key": "error",
+        "react/jsx-no-comment-textnodes": "error",
+        "react/jsx-no-duplicate-props": "error",
+        "react/jsx-no-target-blank": "error",
+        "react/jsx-no-useless-fragment": "warn",
+        "react/no-children-prop": "off",
+        "react/no-danger-with-children": "error",
+        "react/no-direct-mutation-state": "error",
+        "react/no-find-dom-node": "error",
+        "react/no-is-mounted": "error",
+        "react/no-render-return-value": "error",
+        "react/no-string-refs": "error",
+        "react/no-unescaped-entities": "error",
+        "react/no-unknown-property": "error",
+        "react/no-unsafe": "error",
+        "react/require-render-return": "error",
+        "react/no-array-index-key": "warn",
+        "react/button-has-type": "error",
+        "react/hook-use-state": "error",
+        "react/jsx-fragments": ["error", "element"],
+        "react/react-in-jsx-scope": "off",
+        "react/jsx-curly-brace-presence": "error",
+        "react/jsx-boolean-value": "error",
+        "react/self-closing-comp": "error",
+        "react/no-unstable-nested-components": "error",
+        "local/enforce-react-namespace": "error",
+        "react/rules-of-hooks": "error",
+        "react/exhaustive-deps": "warn",
+        "react/only-export-components": [
+          "warn",
+          {
+            "allowConstantExport": true
+          }
+        ]
+      },
+      "plugins": ["react"]
+    },
+    {
+      "files": [
+        "packages/web/features/**/*.tsx",
+        "packages/web/app/**/*.tsx",
+        "packages/components/patterns/**/*.tsx"
+      ],
+      "rules": {
+        "local/no-inline-styling": "error",
+        "react/forbid-elements": [
+          "error",
+          {
+            "forbid": [
+              {
+                "element": "div",
+                "message": "Use Stack (layout) or Surface (a bordered/tinted region) from @org/components/primitives instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "span",
+                "message": "Use Text from @org/components/primitives/text (use `as='span'`) instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "p",
+                "message": "Use Text from @org/components/primitives/text instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "h1",
+                "message": "Use Heading from @org/components/primitives/heading instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "h2",
+                "message": "Use Heading from @org/components/primitives/heading instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "h3",
+                "message": "Use Heading from @org/components/primitives/heading instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "h4",
+                "message": "Use Heading from @org/components/primitives/heading instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "ul",
+                "message": "Use List from @org/components/primitives/list instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "ol",
+                "message": "Use List from @org/components/primitives/list (use `as='ol'`) instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "li",
+                "message": "Use List.Item from @org/components/primitives/list instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "nav",
+                "message": "Use Nav from @org/components/primitives/nav instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "a",
+                "message": "Use Link from @org/components/primitives/link (use `external` for a full page load) instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "button",
+                "message": "Use Button from @org/components/primitives/button instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "input",
+                "message": "Use Input from @org/components/primitives/input instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "label",
+                "message": "Use Label from @org/components/primitives/label instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "select",
+                "message": "Use Select from @org/components/primitives/select instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "form",
+                "message": "Use Form from @org/components/primitives/form instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "section",
+                "message": "Use Stack or Surface from @org/components/primitives (both take `as='section'`) instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "header",
+                "message": "Use Stack or Surface from @org/components/primitives (both take `as='header'`) instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "footer",
+                "message": "Use Stack or Surface from @org/components/primitives (both take `as='footer'`) instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "main",
+                "message": "Use Container from @org/components/primitives/container (`as='main'`) instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "table",
+                "message": "Use no primitive yet — add one to @org/components/primitives and prove it in a story instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              },
+              {
+                "element": "img",
+                "message": "Use no primitive yet — add one to @org/components/primitives and prove it in a story instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
+              }
+            ]
+          }
+        ]
+      },
+      "plugins": ["react"]
+    },
+    {
+      "files": [
+        "packages/web/features/**/*.test.tsx",
+        "packages/components/patterns/**/*.stories.tsx"
+      ],
+      "rules": {
+        "local/no-inline-styling": "off",
+        "react/forbid-elements": "off"
+      },
+      "plugins": ["react"]
+    },
+    {
+      "files": ["packages/components/primitives/button.tsx"],
+      "rules": {
+        "react/button-has-type": "off"
+      },
+      "plugins": ["react"]
+    },
+    {
+      "files": ["packages/web/app/layout.tsx"],
+      "rules": {
+        "local/no-inline-styling": "off",
+        "react/forbid-elements": "off"
+      },
+      "plugins": ["react"]
+    },
+    {
+      "files": ["packages/server/**/*.{ts,tsx,js,jsx}", "packages/web/**/*.{ts,tsx,js,jsx}"],
+      "rules": {
+        "local/no-deep-relative-imports": "error"
+      }
+    },
+    {
+      "files": ["packages/server/src/modules/**/*.{ts,tsx}"],
+      "rules": {
+        "local/no-cross-schema-sql-access": "error"
+      }
+    },
+    {
+      "files": ["**/*.stories.@(ts|tsx|js|jsx|mjs|cjs)", "**/*.story.@(ts|tsx|js|jsx|mjs|cjs)"],
+      "rules": {
+        "storybook/await-interactions": "error",
+        "storybook/context-in-play-function": "error",
+        "storybook/default-exports": "error",
+        "storybook/hierarchy-separator": "warn",
+        "storybook/no-redundant-story-name": "warn",
+        "storybook/no-renderer-packages": "error",
+        "storybook/prefer-pascal-case": "warn",
+        "storybook/story-exports": "error",
+        "storybook/use-storybook-expect": "error",
+        "storybook/use-storybook-testing-library": "error",
+        "import/no-anonymous-default-export": "off",
+        "react/rules-of-hooks": "off"
+      },
+      "plugins": ["react"]
+    },
+    {
+      "files": [".storybook/main.@(js|cjs|mjs|ts)"],
+      "rules": {
+        "storybook/no-uninstalled-addons": "error"
+      }
+    },
+    {
+      "files": [
+        "packages/server/src/modules/**/*.command-handlers.ts",
+        "packages/server/src/modules/**/*.query-handlers.ts",
+        "packages/server/src/modules/**/queries/*.query.ts",
+        "packages/server/src/modules/**/policies/*.policies.ts",
+        "packages/server/src/modules/**/policies/*.resource-resolver*.ts",
+        "packages/server/src/platform/auth/authz.ts"
+      ],
+      "rules": {
+        "typescript/consistent-type-definitions": "off"
+      }
+    },
+    {
+      "files": ["packages/server/src/modules/**/*.{ts,tsx}"],
+      "rules": {}
+    },
+    {
+      "files": ["packages/components/primitives/**/*.{ts,tsx}"],
+      "rules": {}
+    },
+    {
+      "files": ["packages/components/patterns/**/*.{ts,tsx}"],
+      "rules": {}
+    },
+    {
+      "files": ["packages/web/features/**/*.{ts,tsx}"],
+      "rules": {}
+    },
+    {
+      "files": ["packages/components/primitives/**/*.tsx", "packages/components/patterns/**/*.tsx"],
+      "rules": {
+        "react/only-export-components": "off"
+      },
+      "plugins": ["react"]
+    },
+    {
+      // A test, a fixture harness, a Playwright driver or a story is the async
+      // edge where an Effect is run, not where one is written: vitest, Playwright
+      // and Storybook hand each callback a promise contract. The same files read
+      // process.env because their runners set it before any Effect Config exists.
+      "files": [
+        "**/*.test.{ts,tsx}",
+        "**/test/**/*.{ts,tsx}",
+        "**/test-utils/**/*.{ts,tsx}",
+        "**/*.stories.tsx",
+        "packages/acceptance/**/*.ts",
+        "packages/test-drivers/**/*.ts"
+      ],
+      "rules": {
+        "effecttsgo/async-function": "off",
+        "effecttsgo/process-env": "off",
+        "effecttsgo/global-fetch": "off",
+        "effecttsgo/node-builtin-import": "off"
+      }
+    },
+    {
+      // Next owns these signatures: an async server component, layout or route
+      // handler, `instrumentation.ts`, the config, and the server-only prefetch
+      // helpers they call are the boundary where the Effect runtime is run.
+      // `process.env` stays too — `NEXT_PUBLIC_*` is inlined by Next at build,
+      // and the server-side URLs are read once at module load, outside any runtime.
+      "files": [
+        "packages/web/app/**/*.{ts,tsx}",
+        "packages/web/next.config.ts",
+        "packages/web/instrumentation.ts",
+        "packages/web/services/**/*.server.{ts,tsx}",
+        "packages/web/services/atom/hydration-boundary.tsx",
+        "packages/web/services/atom/tracing.client.ts"
+      ],
+      "rules": {
+        "effecttsgo/async-function": "off",
+        "effecttsgo/process-env": "off"
+      }
+    },
+    {
+      // A live client adapter is the seam over a promise SDK — openid-client, Stripe —
+      // and the async closure inside its Effect.tryPromise is that seam, not control
+      // flow that should have been an Effect.
+      "files": [
+        "**/infrastructure/clients/*.client.ts",
+        "**/infrastructure/clients/*.client-live.ts"
+      ],
+      "rules": {
+        "effecttsgo/async-function": "off"
+      }
+    },
+    {
+      // The CLI and MCP's environment boundary, read at call time by synchronous
+      // error mappers that have no runtime to resolve a Config in.
+      "files": ["packages/api-client/src/config.ts"],
+      "rules": {
+        "effecttsgo/process-env": "off"
+      }
+    },
+    {
+      // A Playwright spec is not Effect code; a unique fixture name needs a clock.
+      "files": ["packages/acceptance/**/*.ts"],
+      "rules": {
+        "effecttsgo/global-date": "off"
+      }
+    },
+    {
+      // Fast refresh is not what these files are for: a Next layout exports its
+      // `metadata` beside the component by convention, a provider publishes its
+      // hook beside it, and a test harness is a bundle of components and helpers.
+      "files": [
+        "packages/web/app/**/*.tsx",
+        "packages/web/test/**/*.tsx",
+        "packages/components/providers/**/*.tsx"
+      ],
+      "rules": {
+        "react/only-export-components": "off"
+      },
+      "plugins": ["react"]
+    },
+    {
+      // Storybook's config resolves its own paths with node's modules.
+      "files": ["**/.storybook/**/*.ts"],
+      "rules": {
+        "effecttsgo/node-builtin-import": "off"
+      }
+    }
+  ]
 }

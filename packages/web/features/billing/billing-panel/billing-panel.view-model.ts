@@ -34,6 +34,31 @@ export type BillingPanelView = {
   readonly canCancel: boolean;
 };
 
+const mapStatus = (
+  status: string,
+): { readonly label: string; readonly variant: BadgeVariant; readonly cancelable: boolean } => {
+  switch (status) {
+    case "active":
+      return { label: "Active", variant: "default", cancelable: true };
+    case "trialing":
+      return { label: "Trialing", variant: "default", cancelable: true };
+    case "past_due":
+      return { label: "Past due", variant: "destructive", cancelable: true };
+    case "unpaid":
+      return { label: "Unpaid", variant: "destructive", cancelable: true };
+    case "incomplete":
+      return { label: "Incomplete", variant: "secondary", cancelable: true };
+    case "incomplete_expired":
+      return { label: "Incomplete (expired)", variant: "secondary", cancelable: false };
+    case "canceled":
+      return { label: "Canceled", variant: "outline", cancelable: false };
+    case "paused":
+      return { label: "Paused", variant: "secondary", cancelable: true };
+    default:
+      return { label: status, variant: "secondary", cancelable: true };
+  }
+};
+
 export const computeBillingPanelView = (
   subscription: BillingContract.SubscriptionResponse | null,
 ): BillingPanelView => {
@@ -58,31 +83,6 @@ export const computeBillingPanelView = (
     canStart: false,
     canCancel: mapped.cancelable,
   };
-};
-
-const mapStatus = (
-  status: string,
-): { readonly label: string; readonly variant: BadgeVariant; readonly cancelable: boolean } => {
-  switch (status) {
-    case "active":
-      return { label: "Active", variant: "default", cancelable: true };
-    case "trialing":
-      return { label: "Trialing", variant: "default", cancelable: true };
-    case "past_due":
-      return { label: "Past due", variant: "destructive", cancelable: true };
-    case "unpaid":
-      return { label: "Unpaid", variant: "destructive", cancelable: true };
-    case "incomplete":
-      return { label: "Incomplete", variant: "secondary", cancelable: true };
-    case "incomplete_expired":
-      return { label: "Incomplete (expired)", variant: "secondary", cancelable: false };
-    case "canceled":
-      return { label: "Canceled", variant: "outline", cancelable: false };
-    case "paused":
-      return { label: "Paused", variant: "secondary", cancelable: true };
-    default:
-      return { label: status, variant: "secondary", cancelable: true };
-  }
 };
 
 export const subscriptionResultAtom = Atom.family((orgId: OrganizationId) =>

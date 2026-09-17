@@ -20,7 +20,7 @@
     "check:recursive": "pnpm --recursive exec node ../../node_modules/typescript/bin/tsc -b tsconfig.json",
     "check:effect": "node scripts/check-effect-diagnostics.mjs",
     "check:all": "pnpm lint && pnpm lint:rules && pnpm lint:edges && pnpm lint:architecture && pnpm check && pnpm check:effect && pnpm test && pnpm -F @org/components build-storybook",
-    "lint": "oxlint --type-aware --quiet packages",
+    "lint": "oxlint --type-aware --deny-warnings packages",
     "lint:fix": "oxlint --type-aware packages --fix",
     "lint:rules": "node scripts/lint-rule-probes.mjs",
     "graph": "node scripts/service-graph.mjs",
