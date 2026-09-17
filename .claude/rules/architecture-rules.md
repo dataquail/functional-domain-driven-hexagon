@@ -316,20 +316,27 @@ every hit carries), an `owner`, a `scope`, a `unit` (`file`, `declaration` or `m
 on, a `staleAfter`, and an `onComplete`. Its findings are judged against its **ledger**,
 `.architecture-campaigns/<id>.json`, never against the baseline.
 
-This repo declares none today. It ran one, **`effect-diagnostics`** (ADR-0033), whose
-detector was a `report` term over a script printing one line per Effect language-service
-finding, with a regex keeping only the `message`-severity lines; each hit was keyed
-`file#Declaration#rule#hash(message)`, so the ledger read per rule and survived a line moving.
-It closed the same day with every rule it tracked raised to `"warning"`, and
-`pnpm check:effect` now fails on a finding at any severity, so the report script, the ledger
-and the `lint:rules` probe are gone. Since goodbones beta.10 a `report` term takes a list of
-commands, runs them concurrently and dedupes across their outputs, so the next campaign over
-a per-project tool names the commands in the manifest rather than a fan-out script. What a
-`report` term costs is worth knowing before the
-next one: the report runs once per process — the CLI's one `check`, oxlint's one lint run,
-the editor's one session — and the plugin runs it as it loads, not lazily, because forking
-from the linter's process once its AST buffers are allocated fails with `ENOMEM` on a CI
-runner (goodbones beta.9).
+This repo declares one, **`lint-warnings`**: every oxlint warning `pnpm lint`'s
+`--quiet` hides, keyed `file#Declaration#rule#hash(message)` so an entry survives a line
+moving and the ledger reads per rule. Its detector runs the lint itself against
+`.oxlintrc.base.json` — the ordinary config minus the architecture plugin, which would
+otherwise load this manifest and run the report again from inside it (`extends` merges
+`jsPlugins` and cannot drop one, hence the split; `ignorePatterns` is the one key `extends`
+does not carry, so both files list it). A rule reaches zero by the fix, by
+`// oxlint-disable-next-line <rule>` where the finding is deliberate, or by `"off"` in the
+base config with the reason beside it; when the ledger is empty, `--quiet` becomes
+`--deny-warnings` and the campaign and its ledger are deleted together.
+
+The first one, **`effect-diagnostics`** (ADR-0033), ran a `report` term over a script
+printing one line per Effect language-service finding, with a regex keeping only the
+`message`-severity lines. It closed the same day with every rule it tracked raised to
+`"warning"`, and `pnpm check:effect` now fails on a finding at any severity. Since goodbones
+beta.10 a `report` term takes a list of commands, runs them concurrently and dedupes across
+their outputs, so a campaign over a per-project tool names the commands in the manifest
+rather than a fan-out script. What a `report` term costs is worth knowing: the report runs
+once per process — the CLI's one `check`, oxlint's one lint run, the editor's one session —
+and the plugin runs it as it loads, not lazily, because forking from the linter's process
+once its AST buffers are allocated fails with `ENOMEM` on a CI runner (goodbones beta.9).
 
 **The ledger is a burn-down, not a suppression list.** `entries.length` must equal
 `initial + Σ regressions.delta − fixed`, and `check` fails on:
@@ -349,14 +356,15 @@ subcommand: `architecture campaigns prune <id> packages`.
 
 **Closing one.** Fix a finding, prune its line. When the pattern can no longer occur — for
 `effect-diagnostics`, when each rule's count reached zero and it was raised to `"warning"` in
-`tsconfig.base.json` so `check:effect` gated it — the campaign is complete, and
+`tsconfig.base.json` so `check:effect` gated it; for `lint-warnings`, when `pnpm lint` fails
+on a warning — the campaign is complete, and
 `onComplete: remove` makes `check` fail until the campaign and its ledger are deleted. That
 deletion rides in the same change as the last fix, since nothing in between is green.
 
 The plugin evaluates campaigns too (`architecture/campaigns`), reporting each unledgered hit
 at its position, so the editor shows growth before `check` does; the ledgered ones are
-silent. A policy that declares no campaigns gives the rule nothing to report and nothing for
-`pnpm lint:rules` to probe; the rule id stays enabled for the next one.
+silent. `pnpm lint:rules` probes it with a planted `Schema.Number`, the one probe that runs
+the real report.
 
 ## Every rule proves itself
 
