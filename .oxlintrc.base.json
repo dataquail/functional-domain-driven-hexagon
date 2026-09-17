@@ -480,6 +480,52 @@
         "react/only-export-components": "off"
       },
       "plugins": ["react"]
+    },
+    {
+      // A test, a fixture harness, a Playwright driver or a story is the async
+      // edge where an Effect is run, not where one is written: vitest, Playwright
+      // and Storybook hand each callback a promise contract. The same files read
+      // process.env because their runners set it before any Effect Config exists.
+      "files": [
+        "**/*.test.{ts,tsx}",
+        "**/test/**/*.{ts,tsx}",
+        "**/test-utils/**/*.{ts,tsx}",
+        "**/*.stories.tsx",
+        "packages/acceptance/**/*.ts",
+        "packages/test-drivers/**/*.ts"
+      ],
+      "rules": {
+        "effecttsgo/async-function": "off",
+        "effecttsgo/process-env": "off",
+        "effecttsgo/global-fetch": "off",
+        "effecttsgo/node-builtin-import": "off"
+      }
+    },
+    {
+      // Next owns these signatures: an async server component, layout or route
+      // handler, `instrumentation.ts`, the config, and the server-only prefetch
+      // helpers they call are the boundary where the Effect runtime is run.
+      // `process.env` stays too — `NEXT_PUBLIC_*` is inlined by Next at build,
+      // and the server-side URLs are read once at module load, outside any runtime.
+      "files": [
+        "packages/web/app/**/*.{ts,tsx}",
+        "packages/web/next.config.ts",
+        "packages/web/instrumentation.ts",
+        "packages/web/services/**/*.server.{ts,tsx}",
+        "packages/web/services/atom/hydration-boundary.tsx",
+        "packages/web/services/atom/tracing.client.ts"
+      ],
+      "rules": {
+        "effecttsgo/async-function": "off",
+        "effecttsgo/process-env": "off"
+      }
+    },
+    {
+      // Storybook's config resolves its own paths with node's modules.
+      "files": ["**/.storybook/**/*.ts"],
+      "rules": {
+        "effecttsgo/node-builtin-import": "off"
+      }
     }
   ]
 }
