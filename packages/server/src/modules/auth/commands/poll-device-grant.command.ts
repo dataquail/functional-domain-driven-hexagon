@@ -13,7 +13,7 @@ import {
 // `tokenExpiresInDays` is resolved by the endpoint from config. It mints on the user's behalf,
 // so it returns the same result view the mint command does.
 export const PollDeviceGrantCommand = Command.make("PollDeviceGrantCommand", {
-  payload: { deviceCode: Schema.String, tokenExpiresInDays: Schema.Number },
+  payload: { deviceCode: Schema.String, tokenExpiresInDays: Schema.Int },
   success: MintApiTokenResultView,
   failure: Schema.Union([
     DeviceGrantNotFound,

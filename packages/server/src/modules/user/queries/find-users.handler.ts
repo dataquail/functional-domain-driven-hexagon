@@ -9,7 +9,7 @@ import {
 import { UserId } from "@/platform/ids/user-id.js";
 import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
-const CountRow = Schema.Struct({ value: Schema.Number });
+const CountRow = Schema.Struct({ value: Schema.Int });
 
 const toUserView = (row: RowSchemas.UserRow): FindUsersUserView => ({
   id: UserId.make(row.id),

@@ -15,9 +15,9 @@ export type FindAllOrganizationsView = typeof FindAllOrganizationsView.Type;
 
 export const FindAllOrganizationsResultView = Schema.Struct({
   organizations: Schema.Array(FindAllOrganizationsView),
-  page: Schema.Number,
-  pageSize: Schema.Number,
-  total: Schema.Number,
+  page: Schema.Int,
+  pageSize: Schema.Int,
+  total: Schema.Int,
 });
 export type FindAllOrganizationsResult = typeof FindAllOrganizationsResultView.Type;
 
@@ -26,7 +26,7 @@ export type FindAllOrganizationsResult = typeof FindAllOrganizationsResultView.T
 // query filters tombstones out so the regular admin browse doesn't
 // surface them.
 export const FindAllOrganizationsQuery = Query.make("FindAllOrganizationsQuery", {
-  payload: { page: Schema.Number, pageSize: Schema.Number, includeDeleted: Schema.Boolean },
+  payload: { page: Schema.Int, pageSize: Schema.Int, includeDeleted: Schema.Boolean },
   success: FindAllOrganizationsResultView,
   failure: PersistenceUnavailable,
 });

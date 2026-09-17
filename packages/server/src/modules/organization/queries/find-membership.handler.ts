@@ -5,7 +5,7 @@ import * as Schema from "effect/Schema";
 import { type FindMembershipPayload } from "@/modules/organization/queries/find-membership.policy-query.js";
 import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
-const CountRow = Schema.Struct({ value: Schema.Number });
+const CountRow = Schema.Struct({ value: Schema.Int });
 
 // `makeQuery` (not bare `execute`) so the read joins the ambient
 // transaction when one exists — this query is dispatched by

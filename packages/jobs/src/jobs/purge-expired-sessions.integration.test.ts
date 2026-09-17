@@ -12,7 +12,7 @@ import { purgeExpiredSessions } from "./purge-expired-sessions.js";
 
 const userId = "11111111-1111-1111-1111-111111111111";
 
-const CountRow = Schema.Struct({ value: Schema.Number });
+const CountRow = Schema.Struct({ value: Schema.Int });
 const IdRow = Schema.Struct({ id: Schema.String });
 
 const seedUser = Effect.flatMap(

@@ -23,8 +23,8 @@ export const SignInCommand = Command.make("SignInCommand", {
   payload: {
     subject: Schema.String,
     email: Schema.NullOr(Schema.String),
-    ttlSeconds: Schema.Number,
-    absoluteTtlSeconds: Schema.Number,
+    ttlSeconds: Schema.Int,
+    absoluteTtlSeconds: Schema.Int,
   },
   success: SignInResultView,
   failure: Schema.Union([

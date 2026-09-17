@@ -22,14 +22,14 @@ export type FindUsersUserView = typeof FindUsersUserView.Type;
 
 export const FindUsersResultView = Schema.Struct({
   users: Schema.Array(FindUsersUserView),
-  page: Schema.Number,
-  pageSize: Schema.Number,
-  total: Schema.Number,
+  page: Schema.Int,
+  pageSize: Schema.Int,
+  total: Schema.Int,
 });
 export type FindUsersResult = typeof FindUsersResultView.Type;
 
 export const FindUsersQuery = Query.make("FindUsersQuery", {
-  payload: { page: Schema.Number, pageSize: Schema.Number },
+  payload: { page: Schema.Int, pageSize: Schema.Int },
   success: FindUsersResultView,
   failure: PersistenceUnavailable,
 });

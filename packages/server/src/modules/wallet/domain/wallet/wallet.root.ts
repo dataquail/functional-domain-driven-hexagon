@@ -9,7 +9,7 @@ import { WalletId } from "./wallet.id.js";
 export class WalletRoot extends Schema.Class<WalletRoot>("WalletRoot")({
   id: WalletId,
   organizationId: OrganizationId,
-  balance: Schema.Number,
+  balance: Schema.Finite,
   createdAt: Schema.DateTimeUtc,
   updatedAt: Schema.DateTimeUtc,
 }) {}

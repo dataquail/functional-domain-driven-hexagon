@@ -22,7 +22,7 @@ export const StartDeviceGrantResultView = Schema.Struct({
 // endpoint from config so the handler computes `expiresAt` against the
 // server clock.
 export const StartDeviceGrantCommand = Command.make("StartDeviceGrantCommand", {
-  payload: { ttlSeconds: Schema.Number },
+  payload: { ttlSeconds: Schema.Int },
   success: StartDeviceGrantResultView,
   failure: PersistenceUnavailable,
 });

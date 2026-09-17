@@ -3,7 +3,7 @@ import * as Schema from "effect/Schema";
 export const WalletRow = Schema.Struct({
   id: Schema.String.check(Schema.isGUID()),
   organization_id: Schema.String.check(Schema.isGUID()),
-  balance: Schema.Number,
+  balance: Schema.Int,
   created_at: Schema.DateTimeUtcFromDate,
   updated_at: Schema.DateTimeUtcFromDate,
 });
