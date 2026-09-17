@@ -32,6 +32,8 @@ const defectOf = <A, E>(exit: Exit.Exit<A, E>): unknown => {
 };
 
 describe("row decoding", () => {
+  // A Date, because that is what the driver hands back for a timestamptz column.
+  // oxlint-disable-next-line effecttsgo/global-date
   const at = new Date("2026-01-02T03:04:05.000Z");
 
   it("decodes every row through the schema", async () => {

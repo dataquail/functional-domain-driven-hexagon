@@ -50,7 +50,7 @@ describe("removeMemberHandler", () => {
       const { membership: secondMember } = MembershipRootOps.create({
         userId: otherUserId,
         organizationId: orgId,
-        now: DateTime.makeUnsafe(new Date("2026-02-01T00:00:00Z")),
+        now: DateTime.makeUnsafe("2026-02-01T00:00:00Z"),
       });
       yield* memberships.insertOne(secondMember);
 

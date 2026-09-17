@@ -39,8 +39,8 @@ const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");
 const organizationId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const userId = UserId.make("33333333-3333-3333-3333-333333333333");
 const superAdminUserId = UserId.make("ssssssss-ssss-ssss-ssss-ssssssssssss");
-const now = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
-const inOneWeek = DateTime.makeUnsafe(new Date("2026-01-08T00:00:00Z"));
+const now = DateTime.makeUnsafe("2026-01-01T00:00:00Z");
+const inOneWeek = DateTime.makeUnsafe("2026-01-08T00:00:00Z");
 
 const seed = (): InvitationRoot =>
   InvitationRootOps.issue({
@@ -156,8 +156,8 @@ describe("acceptInvitationHandler", () => {
         organizationId,
         inviteeEmail: "alice@example.com",
         token: "tok-abc",
-        expiresAt: DateTime.makeUnsafe(new Date("2020-01-01T00:00:00Z")),
-        now: DateTime.makeUnsafe(new Date("2019-12-01T00:00:00Z")),
+        expiresAt: DateTime.makeUnsafe("2020-01-01T00:00:00Z"),
+        now: DateTime.makeUnsafe("2019-12-01T00:00:00Z"),
       }).invitation;
       yield* inv.insertOne(expired);
 

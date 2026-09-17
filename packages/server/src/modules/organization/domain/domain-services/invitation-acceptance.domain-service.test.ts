@@ -15,9 +15,9 @@ import { InvitationAcceptance } from "./invitation-acceptance.domain-service.js"
 
 const organizationId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const userId = UserId.make("33333333-3333-3333-3333-333333333333");
-const now = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
-const inOneDay = DateTime.makeUnsafe(new Date("2026-01-02T00:00:00Z"));
-const inOneWeek = DateTime.makeUnsafe(new Date("2026-01-08T00:00:00Z"));
+const now = DateTime.makeUnsafe("2026-01-01T00:00:00Z");
+const inOneDay = DateTime.makeUnsafe("2026-01-02T00:00:00Z");
+const inOneWeek = DateTime.makeUnsafe("2026-01-08T00:00:00Z");
 
 const seed = () =>
   InvitationRootOps.issue({

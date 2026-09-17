@@ -16,7 +16,7 @@ import { UserId } from "@/platform/ids/user-id.js";
 // the org module owns, dropping every field the org module has no business seeing.
 const userA = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const userB = UserId.make("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-const seededAt = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
+const seededAt = DateTime.makeUnsafe("2026-01-01T00:00:00Z");
 
 const stubUserQueries = Query.handlersOf(userAccessQueries, {
   CreateUserCommand: () => Effect.die("unexpected CreateUserCommand"),

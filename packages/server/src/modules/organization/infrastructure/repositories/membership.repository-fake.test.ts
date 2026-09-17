@@ -21,7 +21,7 @@ import { MembershipRepositoryFake } from "./membership.repository-fake.js";
 const userId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const otherUserId = UserId.make("cccccccc-cccc-cccc-cccc-cccccccccccc");
 const organizationId = OrganizationId.make("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-const now = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe("2026-01-01T00:00:00Z");
 const provide = Effect.provide(MembershipRepositoryFake);
 
 const byPair = (u: UserId, o: OrganizationId) =>

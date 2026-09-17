@@ -30,11 +30,11 @@ import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-
 const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");
 const organizationId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const actorUserId = UserId.make("33333333-3333-3333-3333-333333333333");
-const issuedAt = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
-const originalExpiry = DateTime.makeUnsafe(new Date("2026-01-08T00:00:00Z"));
+const issuedAt = DateTime.makeUnsafe("2026-01-01T00:00:00Z");
+const originalExpiry = DateTime.makeUnsafe("2026-01-08T00:00:00Z");
 // `it.effect` runs on a TestClock starting at epoch 0; pin it past the
 // original expiry so the reissued expiry is demonstrably pushed out.
-const clockNow = DateTime.makeUnsafe(new Date("2026-06-01T00:00:00Z"));
+const clockNow = DateTime.makeUnsafe("2026-06-01T00:00:00Z");
 
 const seedInvitation = () =>
   InvitationRootOps.issue({

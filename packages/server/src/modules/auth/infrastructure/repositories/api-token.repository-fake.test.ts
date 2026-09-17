@@ -18,7 +18,7 @@ const idB = ApiTokenId.make("22222222-2222-2222-2222-222222222222");
 const idMissing = ApiTokenId.make("99999999-9999-9999-9999-999999999999");
 const userId = UserId.make("33333333-3333-3333-3333-333333333333");
 const otherUserId = UserId.make("44444444-4444-4444-4444-444444444444");
-const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe("2025-01-01T00:00:00Z");
 
 const make = (id: ApiTokenId, opts: { userId?: UserId; hash?: string; createdAt?: DateTime.Utc }) =>
   ApiTokenRootOps.mint({
