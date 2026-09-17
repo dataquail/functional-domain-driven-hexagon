@@ -33,9 +33,9 @@ const userCreateEndpoint = getEndpoint(UserContract.Group, "create");
 // Match production's `baseUrl: "/api"` (api-client.client.ts), but make it
 // absolute so node fetch is happy — MSW intercepts on the path.
 const makeClient = () =>
-  Effect.gen(function* () {
-    return yield* HttpApiClient.make(DomainApi, { baseUrl: "http://localhost/api" });
-  }).pipe(Effect.provide(FetchHttpClient.layer));
+  HttpApiClient.make(DomainApi, { baseUrl: "http://localhost/api" }).pipe(
+    Effect.provide(FetchHttpClient.layer),
+  );
 
 describe("typedHandler", () => {
   it("round-trips Users.find with urlParams + paginated success body", async () => {

@@ -1,5 +1,6 @@
 import { homedir } from "node:os";
 
+import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Path from "effect/Path";
@@ -22,7 +23,9 @@ const empty = Credentials.make({});
 
 const credentialsPath = Effect.gen(function* () {
   const path = yield* Path.Path;
-  const base = process.env.XDG_CONFIG_HOME ?? path.join(homedir(), ".config");
+  const base = yield* Config.string("XDG_CONFIG_HOME").pipe(
+    Config.withDefault(path.join(homedir(), ".config")),
+  );
   return path.join(base, CONFIG_DIR, FILE_NAME);
 });
 

@@ -82,21 +82,20 @@ const jsonResult = (data: unknown) => textResult(JSON.stringify(data, null, 2));
 
 // Runs a tool effect through the shared runtime, mapping the outcome to an
 // MCP result. Defects (unexpected) become an error result rather than a crash.
-const dispatch = async <A>(
+const dispatch = <A>(
   effect: Effect.Effect<
     ToolOutcome<A>,
     never,
     ManagedRuntime.ManagedRuntime.Services<typeof runtime>
   >,
   format: (value: A) => ReturnType<typeof textResult>,
-) => {
-  try {
-    const outcome = await runtime.runPromise(effect);
-    return outcome.ok ? format(outcome.value) : errorResult(outcome.message);
-  } catch (error) {
-    return errorResult(friendlyError(error));
-  }
-};
+) =>
+  runtime.runPromise(
+    effect.pipe(
+      Effect.map((outcome) => (outcome.ok ? format(outcome.value) : errorResult(outcome.message))),
+      Effect.catchDefect((defect) => Effect.succeed(errorResult(friendlyError(defect)))),
+    ),
+  );
 
 const server = new McpServer({ name: "org-mcp", version: "0.0.0" });
 
@@ -191,13 +190,12 @@ server.registerTool(
     ),
 );
 
-async function main() {
-  await server.connect(new StdioServerTransport());
-  // stderr only — stdout is the JSON-RPC protocol channel.
-  process.stderr.write("org-mcp: ready on stdio\n");
-}
+// stderr only — stdout is the JSON-RPC protocol channel.
+const main = Effect.tryPromise(() => server.connect(new StdioServerTransport())).pipe(
+  Effect.andThen(Effect.sync(() => process.stderr.write("org-mcp: ready on stdio\n"))),
+);
 
-main().catch((error: unknown) => {
+Effect.runPromise(main).catch((error: unknown) => {
   process.stderr.write(`org-mcp: fatal ${String(error)}\n`);
   process.exit(1);
 });
