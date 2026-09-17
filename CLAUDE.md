@@ -50,7 +50,7 @@ there, not an edit here.
 | `pnpm lint:edges`                                      | asserts the architecture policy still refuses — and allows — the edges it should (ADR-0028)                                            |
 | `pnpm lint:architecture`                               | the same policy evaluated without a linter, plus the graph rules, the coverage floors, the conformance ceilings and the baseline       |
 | `pnpm architecture:conformance`                        | the full conformance report — residue, vacant nodes, slack (per fragment), concentration, each beside its `limits.conformance` ceiling |
-| `pnpm architecture:campaigns`                          | the campaign status table — none declared today; `init` / `prune` / `allow` take the id, then the root                                 |
+| `pnpm architecture:campaigns`                          | the campaign status table — `lint-warnings` (ADR-0034) is open; `init` / `prune` / `allow` take the id, then the root                  |
 | `pnpm architecture:coverage`                           | how much of the tree each rule family reaches, and the tiers not yet tightened (ADR-0030)                                              |
 | `pnpm architecture:facts <file>`                       | what the parser reads from one file — edges, bindings, members, exports; write new rules against this                                  |
 | `pnpm test`                                            | vitest **unit** suite (excludes `*.integration.test.ts`), no DB                                                                        |
