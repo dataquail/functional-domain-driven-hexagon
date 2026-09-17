@@ -65,10 +65,15 @@ resolve:
 # lower one to make a red run green — the fix is a rule that reaches the
 # files, or a file moved under one. Structure counts enumerated folders
 # only: an open folder is claimed, not policed by name.
+# The conformance ceilings are what `architecture conformance packages`
+# reports for residue, vacant nodes, slack and concentration; lower one when
+# the number falls, never raise one — the fix is deleting the allowance or
+# reaching the file.
 limits:
   unrestricted: 1
   partial: 0
   coverage: { imports: 0.96, structure: 0.73, members: 0.03, surface: 0.91, graph: 1 }
+  conformance: { residue: 0, vacant: 13, slack: 52, concentration: 0 }
 
 aliases:
   "@": packages/server/src
