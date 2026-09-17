@@ -8,16 +8,16 @@
 // the server keeps its plain `HttpApiClient` transport and no runtime is ever
 // built outside the browser.
 
+import * as Schema from "effect/Schema";
 import * as AsyncResult from "effect/unstable/reactivity/AsyncResult";
 import * as Atom from "effect/unstable/reactivity/Atom";
 import type * as Hydration from "effect/unstable/reactivity/Hydration";
 
-export class NotSerializableError extends Error {
-  constructor(label: string) {
-    super(
-      `Atom ${label} carries no serialization metadata. A query is only hydratable if it was declared with a \`serializationKey\`.`,
-    );
-    this.name = "NotSerializableError";
+export class NotSerializableError extends Schema.TaggedErrorClass<NotSerializableError>(
+  "NotSerializableError",
+)("NotSerializableError", { label: Schema.String }) {
+  override get message(): string {
+    return `Atom ${this.label} carries no serialization metadata. A query is only hydratable if it was declared with a \`serializationKey\`.`;
   }
 }
 
@@ -43,7 +43,7 @@ export const dehydrateQuery = <A, E>(
 ): Hydration.DehydratedAtom => {
   const serializable = serializationOf(atom);
   if (serializable === undefined) {
-    throw new NotSerializableError(String(atom.label ?? "<unlabelled>"));
+    throw new NotSerializableError({ label: String(atom.label ?? "<unlabelled>") });
   }
   return {
     "~effect/reactivity/DehydratedAtom": true,

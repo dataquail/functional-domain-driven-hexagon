@@ -1,3 +1,5 @@
+// NodeHttpServer.layer takes node's own server factory.
+// oxlint-disable-next-line effecttsgo/node-builtin-import
 import { createServer } from "node:http";
 
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
