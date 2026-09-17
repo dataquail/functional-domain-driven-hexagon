@@ -1,7 +1,7 @@
 # Rule: architecture rules (the manifest)
 
 **Scope:** the whole repo — read before adding, changing, or removing an architectural check.
-**Backing ADRs:** 0008 (architecture enforcement), 0025 (oxlint as the linter), 0027 (architecture rules as configuration), 0028 (the manifest), 0029 (the engine as a dependency), 0030 (surfaces, graph rules and ratchets), 0031 (the manifest as YAML, one file per package).
+**Backing ADRs:** 0008 (architecture enforcement), 0025 (oxlint as the linter), 0027 (architecture rules as configuration), 0028 (the manifest), 0029 (the engine as a dependency), 0030 (surfaces, graph rules and ratchets), 0031 (the manifest as YAML, one file per package), 0033 (campaigns).
 
 Architectural enforcement runs inside `pnpm lint`, from one assembled manifest —
 plus the rules only a whole-repository walk can answer, which
@@ -16,7 +16,6 @@ plus the rules only a whole-repository walk can answer, which
 | `scripts/architecture-edges.mjs`                | `pnpm lint:edges` — the policy still refuses and allows the edges and shapes it should                                            |
 | `scripts/architecture-conformance.mjs`          | `pnpm lint:conformance` — residue, slack and cycles held to ceilings that only ratchet down                                       |
 | `.architecture-campaigns/<id>.json`             | a campaign's ledger: every place its pattern still occurs, and every time the count was allowed to rise                           |
-| `scripts/effect-diagnostics-report.mjs`         | the report the `effect-diagnostics` campaign reads — one line per Effect language-service diagnostic                              |
 | `scripts/lint-rules/`                           | the seven hand-rolled `local/*` AST rules that are not boundary rules                                                             |
 
 **The engine is an installed dependency, not source here.** It ships from
@@ -314,16 +313,17 @@ every hit carries), an `owner`, a `scope`, a `unit` (`file`, `declaration` or `m
 on, a `staleAfter`, and an `onComplete`. Its findings are judged against its **ledger**,
 `.architecture-campaigns/<id>.json`, never against the baseline.
 
-This repo runs one: **`effect-diagnostics`**. Its detector is a `report` term over
-`scripts/effect-diagnostics-report.mjs`, which prints one line per Effect language-service
-finding; the regex keeps only the `message`-severity lines, since `pnpm check:effect`
-already fails on an error or a warning. Each hit is keyed
-`file#Declaration#rule#hash(message)`, so the ledger reads per rule and survives a line
-moving. The report runs once per process — the CLI's one `check`, oxlint's one lint run,
-the editor's one session — and takes about four seconds. The plugin runs it as it loads,
-not lazily: forking from the linter's process once its AST buffers are allocated fails with
-`ENOMEM` on a CI runner (goodbones beta.9 moved the run to load and made a command that
-cannot run one legible failure, not one per file).
+This repo declares none today. It ran one, **`effect-diagnostics`** (ADR-0033), whose
+detector was a `report` term over a script printing one line per Effect language-service
+finding, with a regex keeping only the `message`-severity lines; each hit was keyed
+`file#Declaration#rule#hash(message)`, so the ledger read per rule and survived a line moving.
+It closed the same day with every rule it tracked raised to `"warning"`, and
+`pnpm check:effect` now fails on a finding at any severity, so the report script, the ledger
+and the `lint:rules` probe are gone. What a `report` term costs is worth knowing before the
+next one: the report runs once per process — the CLI's one `check`, oxlint's one lint run,
+the editor's one session — and the plugin runs it as it loads, not lazily, because forking
+from the linter's process once its AST buffers are allocated fails with `ENOMEM` on a CI
+runner (goodbones beta.9).
 
 **The ledger is a burn-down, not a suppression list.** `entries.length` must equal
 `initial + Σ regressions.delta − fixed`, and `check` fails on:
@@ -339,20 +339,18 @@ cannot run one legible failure, not one per file).
 
 A campaign whose `lastProgress` is older than `staleAfter` is **stalled** — a notice in
 `check` and the first thing `conformance` prints, never a failure. Roots follow the
-subcommand: `architecture campaigns prune effect-diagnostics packages`.
+subcommand: `architecture campaigns prune <id> packages`.
 
-**Closing `effect-diagnostics`.** Fix a finding, prune its line. When a rule's count reaches
-zero, raise that rule to `"warning"` in `tsconfig.base.json`'s plugin config: `check:effect`
-then gates it, its lines leave the report, and a recurrence fails CI as a warning rather
-than as growth. When every rule is gated the campaign is complete, and `onComplete: remove`
-makes `check` fail until the campaign and its ledger are deleted. A new message-level rule
-arriving with a language-service bump is growth like any other: `allow` it with the bump as
-the reason, or fix it in the same change.
+**Closing one.** Fix a finding, prune its line. When the pattern can no longer occur — for
+`effect-diagnostics`, when each rule's count reached zero and it was raised to `"warning"` in
+`tsconfig.base.json` so `check:effect` gated it — the campaign is complete, and
+`onComplete: remove` makes `check` fail until the campaign and its ledger are deleted. That
+deletion rides in the same change as the last fix, since nothing in between is green.
 
 The plugin evaluates campaigns too (`architecture/campaigns`), reporting each unledgered hit
 at its position, so the editor shows growth before `check` does; the ledgered ones are
-silent. `pnpm lint:rules` plants a file the language service flags and asserts the rule fires
-— the one probe that runs the real report.
+silent. A policy that declares no campaigns gives the rule nothing to report and nothing for
+`pnpm lint:rules` to probe; the rule id stays enabled for the next one.
 
 ## Every rule proves itself
 
