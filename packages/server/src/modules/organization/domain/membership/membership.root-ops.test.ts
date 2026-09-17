@@ -11,7 +11,7 @@ import { MembershipRootOps } from "./membership.root-ops.js";
 
 const userId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const organizationId = OrganizationId.make("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-const now = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe("2026-01-01T00:00:00Z");
 
 const expectEvent = <T extends MembershipEvent["_tag"]>(
   events: ReadonlyArray<MembershipEvent>,

@@ -16,8 +16,8 @@ import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 const walletId = WalletId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const organizationId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
-const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
-const later = DateTime.makeUnsafe(new Date("2025-02-01T00:00:00Z"));
+const now = DateTime.makeUnsafe("2025-01-01T00:00:00Z");
+const later = DateTime.makeUnsafe("2025-02-01T00:00:00Z");
 
 const fresh = () => WalletRootOps.create({ id: walletId, organizationId, now }).wallet;
 

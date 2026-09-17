@@ -24,7 +24,7 @@ const aliceId = TodoId.make("11111111-1111-1111-1111-111111111111");
 const aliceUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const otherOrgId = OrganizationId.make("33333333-3333-3333-3333-333333333333");
-const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe("2025-01-01T00:00:00Z");
 
 describe("deleteTodoHandler", () => {
   it.effect("removes the todo from the repository", () =>

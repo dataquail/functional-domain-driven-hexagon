@@ -27,7 +27,7 @@ import {
   toggleIncludeDeletedAtom,
 } from "./orgs-list.view-model";
 
-const DELETED_AT = DateTime.makeUnsafe(new Date("2026-02-03T00:00:00Z"));
+const DELETED_AT = DateTime.makeUnsafe("2026-02-03T00:00:00Z");
 
 const makeRegistry = () =>
   AtomRegistry.make({

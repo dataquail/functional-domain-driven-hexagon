@@ -23,12 +23,12 @@ import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 const orgId = OrganizationId.make("55555555-5555-5555-5555-555555555555");
 const otherOrgId = OrganizationId.make("99999999-9999-9999-9999-999999999999");
 const userId = UserId.make("66666666-6666-6666-6666-666666666666");
-const issuedAt = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
+const issuedAt = DateTime.makeUnsafe("2026-01-01T00:00:00Z");
 // The handler reads `DateTime.now`; pin the TestClock so the pending-vs-expired
 // split is deterministic, with expiries placed on either side of "now".
-const clockNow = DateTime.makeUnsafe(new Date("2026-06-01T00:00:00Z"));
-const farFuture = DateTime.makeUnsafe(new Date("2099-01-01T00:00:00Z"));
-const farPast = DateTime.makeUnsafe(new Date("2020-01-01T00:00:00Z"));
+const clockNow = DateTime.makeUnsafe("2026-06-01T00:00:00Z");
+const farFuture = DateTime.makeUnsafe("2099-01-01T00:00:00Z");
+const farPast = DateTime.makeUnsafe("2020-01-01T00:00:00Z");
 
 const TestLayer = Layer.mergeAll(InvitationRepositoryLive, OrganizationRepositoryLive).pipe(
   Layer.provideMerge(TestDatabaseLive),

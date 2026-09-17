@@ -8,7 +8,7 @@ import { DeviceGrantRootOps } from "./device-grant.root-ops.js";
 import { DeviceGrantSpecifications } from "./device-grant.specification.js";
 
 const id = DeviceGrantId.make("11111111-1111-1111-1111-111111111111");
-const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe("2025-01-01T00:00:00Z");
 
 const start = () =>
   DeviceGrantRootOps.start({

@@ -49,6 +49,8 @@ export const dehydrateQuery = <A, E>(
     "~effect/reactivity/DehydratedAtom": true,
     key: serializable.key,
     value: serializable.encode(AsyncResult.success(value)),
+    // The Hydration contract takes epoch millis, not a DateTime.
+    // oxlint-disable-next-line effecttsgo/global-date
     dehydratedAt: Date.now(),
   } satisfies Hydration.DehydratedAtomValue as Hydration.DehydratedAtom;
 };

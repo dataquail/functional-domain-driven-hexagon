@@ -521,6 +521,13 @@
       }
     },
     {
+      // A Playwright spec is not Effect code; a unique fixture name needs a clock.
+      "files": ["packages/acceptance/**/*.ts"],
+      "rules": {
+        "effecttsgo/global-date": "off"
+      }
+    },
+    {
       // Storybook's config resolves its own paths with node's modules.
       "files": ["**/.storybook/**/*.ts"],
       "rules": {

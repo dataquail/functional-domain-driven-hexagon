@@ -16,8 +16,8 @@ import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const acmeId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const beta = OrganizationId.make("22222222-2222-2222-2222-222222222222");
-const now = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
-const later = DateTime.makeUnsafe(new Date("2026-02-01T00:00:00Z"));
+const now = DateTime.makeUnsafe("2026-01-01T00:00:00Z");
+const later = DateTime.makeUnsafe("2026-02-01T00:00:00Z");
 
 const TestLayer = OrganizationRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 

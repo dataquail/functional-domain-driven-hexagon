@@ -33,8 +33,7 @@ const decodeWebhookEvent = Schema.decodeUnknownEffect(StripeWebhookEvent);
 
 export const FAKE_WEBHOOK_SIGNATURE = "t=fake,v1=fake";
 
-const periodEnd30Days = (now: Date): DateTime.Utc =>
-  DateTime.makeUnsafe(new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000));
+const periodEnd30Days = (now: DateTime.Utc): DateTime.Utc => DateTime.add(now, { days: 30 });
 
 type CustomerState = {
   readonly stripeCustomerId: string;
@@ -80,7 +79,7 @@ export const BillingGatewayFake = Layer.effect(
     const createSubscription = (input: CreateSubscriptionInput): Effect.Effect<SubscriptionState> =>
       Effect.gen(function* () {
         const id = yield* nextId("sub");
-        const periodEnd = periodEnd30Days(new Date());
+        const periodEnd = periodEnd30Days(yield* DateTime.now);
         const record: SubscriptionRecord = {
           stripeSubscriptionId: id,
           stripeCustomerId: input.stripeCustomerId,
