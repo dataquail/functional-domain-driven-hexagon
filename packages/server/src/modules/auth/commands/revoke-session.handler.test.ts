@@ -3,14 +3,17 @@ import { deepStrictEqual, ok } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
 import { revokeSessionHandler } from "@/modules/auth/commands/revoke-session.handler.js";
+import { SessionRevoked } from "@/modules/auth/domain/session/session.errors.js";
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
 import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.js";
 import { SessionSpecifications } from "@/modules/auth/domain/session/session.specification.js";
 import { SessionRepositoryFake } from "@/modules/auth/infrastructure/repositories/session.repository-fake.js";
+import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
 import { UserId } from "@/platform/ids/user-id.js";
 
 const sessionId = SessionId.make("33333333-3333-3333-3333-333333333333");
@@ -32,6 +35,15 @@ const seedSession = () =>
   });
 
 const provide = Effect.provide(SessionRepositoryFake);
+
+const deleteOneFailingWith = (failure: SessionRevoked | PersistenceUnavailable) =>
+  Layer.effect(
+    SessionRepository,
+    Effect.gen(function* () {
+      const repo = yield* SessionRepository;
+      return SessionRepository.of({ ...repo, deleteOne: () => failure });
+    }),
+  ).pipe(Layer.provide(SessionRepositoryFake));
 
 describe("revokeSessionHandler", () => {
   it.effect("revokes an active session", () =>
@@ -63,5 +75,17 @@ describe("revokeSessionHandler", () => {
       yield* revokeSessionHandler({ sessionId });
       deepStrictEqual(true, true);
     }).pipe(provide),
+  );
+
+  it.effect("succeeds when the repository reports the session already revoked", () =>
+    revokeSessionHandler({ sessionId }).pipe(
+      Effect.provide(deleteOneFailingWith(new SessionRevoked({ sessionId }))),
+    ),
+  );
+
+  it.effect("succeeds through a persistence outage — signing out never fails the caller", () =>
+    revokeSessionHandler({ sessionId }).pipe(
+      Effect.provide(deleteOneFailingWith(new PersistenceUnavailable({ message: "down" }))),
+    ),
   );
 });

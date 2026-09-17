@@ -4,6 +4,7 @@ import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Predicate from "effect/Predicate";
 
 import { type TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { FindTodoOrganizationQuery } from "@/modules/todos/queries/find-todo-organization.query.js";
@@ -71,10 +72,6 @@ export const TodoResolverEntryLive = Layer.effect(
     return ({ organizationId, todoId }) =>
       queryBus
         .execute(FindTodoOrganizationQuery, { organizationId, todoId })
-        .pipe(
-          Effect.flatMap((view) =>
-            view === null ? new CustomHttpApiError.NotFound() : Effect.succeed(view),
-          ),
-        );
+        .pipe(Effect.filterOrElse(Predicate.isNotNull, () => new CustomHttpApiError.NotFound()));
   }),
 );

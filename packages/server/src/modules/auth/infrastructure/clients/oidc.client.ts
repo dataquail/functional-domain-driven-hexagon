@@ -44,10 +44,7 @@ const make = Effect.gen(function* () {
     return cached;
   };
 
-  const buildAuthorize = (): Effect.Effect<
-    AuthorizeRequest,
-    CustomHttpApiError.InternalServerError
-  > =>
+  const buildAuthorize: Effect.Effect<AuthorizeRequest, CustomHttpApiError.InternalServerError> =
     Effect.tryPromise({
       try: async () => {
         const config = await getConfig();
@@ -135,7 +132,7 @@ const make = Effect.gen(function* () {
       },
     });
 
-  const buildEndSessionUrl = (): Effect.Effect<URL, CustomHttpApiError.InternalServerError> =>
+  const buildEndSessionUrl: Effect.Effect<URL, CustomHttpApiError.InternalServerError> =
     Effect.tryPromise({
       try: async () => {
         const config = await getConfig();

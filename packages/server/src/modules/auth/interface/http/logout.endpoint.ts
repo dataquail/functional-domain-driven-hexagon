@@ -34,12 +34,12 @@ export const logoutEndpoint = Effect.fn("AuthLive.logout")(function* () {
     }
   }
 
-  const endSessionUrl = yield* oidc.buildEndSessionUrl().pipe(
+  const endSessionUrl = yield* oidc.buildEndSessionUrl.pipe(
     Effect.map((u) => u.toString()),
     // If discovery fails (Zitadel down), fall back to landing on the app
     // root — local logout still completes; the SSO cookie sticks around
     // until next interaction.
-    Effect.catch(() => Effect.succeed(env.APP_URL)),
+    Effect.orElseSucceed(() => env.APP_URL),
   );
 
   return HttpServerResponse.empty({ status: 302 }).pipe(
