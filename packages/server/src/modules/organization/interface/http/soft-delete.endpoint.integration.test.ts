@@ -66,8 +66,9 @@ suite("DELETE /orgs/:id (integration)", () => {
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(
-            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
-              OrganizationContract.OrganizationNotFoundError,
+            Schema.is(OrganizationContract.OrganizationNotFoundError)(
+              Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
+            ),
           );
         }
       }),
@@ -94,8 +95,9 @@ memberSuite("DELETE /orgs/:id (integration, non-super-admin caller)", () => {
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(
-            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
-              CustomHttpApiError.Forbidden,
+            Schema.is(CustomHttpApiError.Forbidden)(
+              Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
+            ),
           );
         }
       }),

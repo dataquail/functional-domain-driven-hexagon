@@ -9,6 +9,7 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
+import * as Schema from "effect/Schema";
 
 import { revokeInvitationHandler } from "@/modules/organization/commands/revoke-invitation.handler.js";
 import {
@@ -79,7 +80,7 @@ describe("revokeInvitationHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof InvitationNotFound, true);
+        deepStrictEqual(Schema.is(InvitationNotFound)(error), true);
       }
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -96,7 +97,7 @@ describe("revokeInvitationHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof InvitationAlreadyAccepted, true);
+        deepStrictEqual(Schema.is(InvitationAlreadyAccepted)(error), true);
       }
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -113,7 +114,7 @@ describe("revokeInvitationHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof InvitationAlreadyRevoked, true);
+        deepStrictEqual(Schema.is(InvitationAlreadyRevoked)(error), true);
       }
     }).pipe(Effect.provide(TestLayer)),
   );

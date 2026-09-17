@@ -8,6 +8,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 import * as TestClock from "effect/testing/TestClock";
 import { beforeEach } from "vitest";
 
@@ -105,7 +106,7 @@ suite("findApiTokenByHashHandler (integration)", () => {
       yield* seedUser;
       yield* insert({ expiresAt: future, revokedAt: clockNow });
       const exit = yield* Effect.exit(findApiTokenByHashHandler({ tokenHash: "hash-A" }));
-      deepStrictEqual(errorOf(exit) instanceof ApiTokenRevoked, true);
+      deepStrictEqual(Schema.is(ApiTokenRevoked)(errorOf(exit)), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -115,7 +116,7 @@ suite("findApiTokenByHashHandler (integration)", () => {
       yield* seedUser;
       yield* insert({ expiresAt: past });
       const exit = yield* Effect.exit(findApiTokenByHashHandler({ tokenHash: "hash-A" }));
-      deepStrictEqual(errorOf(exit) instanceof ApiTokenExpired, true);
+      deepStrictEqual(Schema.is(ApiTokenExpired)(errorOf(exit)), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 });

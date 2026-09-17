@@ -6,6 +6,7 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user/user.errors.js";
 import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
@@ -60,7 +61,7 @@ describe("UserRepositoryFake", () => {
           const error = Cause.hasFails(exit.cause)
             ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
             : null;
-          deepStrictEqual(error instanceof UserAlreadyExists, true);
+          deepStrictEqual(Schema.is(UserAlreadyExists)(error), true);
           deepStrictEqual((error as UserAlreadyExists).email, alice.email);
         }
       }).pipe(provide),
@@ -121,7 +122,7 @@ describe("UserRepositoryFake", () => {
           const error = Cause.hasFails(exit.cause)
             ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
             : null;
-          deepStrictEqual(error instanceof UserNotFound, true);
+          deepStrictEqual(Schema.is(UserNotFound)(error), true);
         }
       }).pipe(provide),
     );
@@ -147,7 +148,7 @@ describe("UserRepositoryFake", () => {
           const error = Cause.hasFails(exit.cause)
             ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
             : null;
-          deepStrictEqual(error instanceof UserNotFound, true);
+          deepStrictEqual(Schema.is(UserNotFound)(error), true);
         }
       }).pipe(provide),
     );

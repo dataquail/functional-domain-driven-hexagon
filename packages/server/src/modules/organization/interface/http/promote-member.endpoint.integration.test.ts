@@ -8,6 +8,7 @@ import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/platform/api.js";
@@ -78,7 +79,7 @@ suite("POST /orgs/:orgId/members/:userId/admin (integration, super-admin caller)
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           const error = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
-          ok(error instanceof OrganizationContract.OrganizationRoleConflictError);
+          ok(Schema.is(OrganizationContract.OrganizationRoleConflictError)(error));
           deepStrictEqual(error.reason, "already_admin");
         }
       }),
@@ -104,8 +105,9 @@ suite("POST /orgs/:orgId/members/:userId/admin (integration, super-admin caller)
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(
-            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
-              CustomHttpApiError.Forbidden,
+            Schema.is(CustomHttpApiError.Forbidden)(
+              Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
+            ),
           );
         }
       }),
@@ -178,8 +180,9 @@ orgAdminSuite("POST /orgs/:orgId/members/:userId/admin (integration, org-admin c
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(
-            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
-              CustomHttpApiError.Forbidden,
+            Schema.is(CustomHttpApiError.Forbidden)(
+              Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
+            ),
           );
         }
       }),

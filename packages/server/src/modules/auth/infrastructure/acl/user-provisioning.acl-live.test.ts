@@ -8,6 +8,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { userAccessCommands, userAccessErrors } from "@/modules/auth/auth.imports.js";
 import {
@@ -66,7 +67,7 @@ describe("UserProvisioningLive", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof UserProvisioningConflict, true);
+        deepStrictEqual(Schema.is(UserProvisioningConflict)(error), true);
         deepStrictEqual((error as UserProvisioningConflict).email, "taken@example.com");
       }
     }).pipe(

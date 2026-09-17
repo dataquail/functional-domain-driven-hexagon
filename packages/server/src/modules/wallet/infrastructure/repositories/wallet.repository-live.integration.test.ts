@@ -8,6 +8,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 import { beforeEach } from "vitest";
 
 import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors.js";
@@ -84,7 +85,7 @@ suite("WalletRepositoryLive (integration)", () => {
             const error = Cause.hasFails(exit.cause)
               ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
               : null;
-            deepStrictEqual(error instanceof WalletAlreadyExistsForOrganization, true);
+            deepStrictEqual(Schema.is(WalletAlreadyExistsForOrganization)(error), true);
             deepStrictEqual(
               (error as WalletAlreadyExistsForOrganization).organizationId,
               organizationId,

@@ -3,6 +3,7 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
+import * as Schema from "effect/Schema";
 
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
@@ -60,7 +61,7 @@ describe("InvitationRootOps.accept", () => {
     const second = InvitationRootOps.accept(first.invitation, { userId, now: inOneDay });
     deepStrictEqual(Result.isFailure(second), true);
     if (Result.isFailure(second)) {
-      deepStrictEqual(second.failure instanceof InvitationAlreadyAccepted, true);
+      deepStrictEqual(Schema.is(InvitationAlreadyAccepted)(second.failure), true);
     }
   });
 
@@ -69,7 +70,7 @@ describe("InvitationRootOps.accept", () => {
     const result = InvitationRootOps.accept(revoked.invitation, { userId, now: inOneDay });
     deepStrictEqual(Result.isFailure(result), true);
     if (Result.isFailure(result)) {
-      deepStrictEqual(result.failure instanceof InvitationRevoked, true);
+      deepStrictEqual(Schema.is(InvitationRevoked)(result.failure), true);
     }
   });
 
@@ -78,7 +79,7 @@ describe("InvitationRootOps.accept", () => {
     const result = InvitationRootOps.accept(seed(), { userId, now: past });
     deepStrictEqual(Result.isFailure(result), true);
     if (Result.isFailure(result)) {
-      deepStrictEqual(result.failure instanceof InvitationExpired, true);
+      deepStrictEqual(Schema.is(InvitationExpired)(result.failure), true);
     }
   });
 });
@@ -97,7 +98,7 @@ describe("InvitationRootOps.revoke", () => {
     const result = InvitationRootOps.revoke(accepted.invitation, { now: inOneDay });
     deepStrictEqual(Result.isFailure(result), true);
     if (Result.isFailure(result)) {
-      deepStrictEqual(result.failure instanceof InvitationAlreadyAccepted, true);
+      deepStrictEqual(Schema.is(InvitationAlreadyAccepted)(result.failure), true);
     }
   });
 
@@ -106,7 +107,7 @@ describe("InvitationRootOps.revoke", () => {
     const second = InvitationRootOps.revoke(first.invitation, { now: inOneDay });
     deepStrictEqual(Result.isFailure(second), true);
     if (Result.isFailure(second)) {
-      deepStrictEqual(second.failure instanceof InvitationAlreadyRevoked, true);
+      deepStrictEqual(Schema.is(InvitationAlreadyRevoked)(second.failure), true);
     }
   });
 });
@@ -149,7 +150,7 @@ describe("InvitationRootOps.reissue", () => {
     });
     deepStrictEqual(Result.isFailure(result), true);
     if (Result.isFailure(result)) {
-      deepStrictEqual(result.failure instanceof InvitationAlreadyAccepted, true);
+      deepStrictEqual(Schema.is(InvitationAlreadyAccepted)(result.failure), true);
     }
   });
 
@@ -162,7 +163,7 @@ describe("InvitationRootOps.reissue", () => {
     });
     deepStrictEqual(Result.isFailure(result), true);
     if (Result.isFailure(result)) {
-      deepStrictEqual(result.failure instanceof InvitationAlreadyRevoked, true);
+      deepStrictEqual(Schema.is(InvitationAlreadyRevoked)(result.failure), true);
     }
   });
 });

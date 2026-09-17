@@ -8,6 +8,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 import { beforeEach } from "vitest";
 
 import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.js";
@@ -129,7 +130,7 @@ suite("TodosRepositoryLive (integration)", () => {
           const error = Cause.hasFails(exit.cause)
             ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
             : null;
-          deepStrictEqual(error instanceof TodoNotFound, true);
+          deepStrictEqual(Schema.is(TodoNotFound)(error), true);
         }
       }).pipe(Effect.provide(TestLayer)),
     );
@@ -158,7 +159,7 @@ suite("TodosRepositoryLive (integration)", () => {
           const error = Cause.hasFails(exit.cause)
             ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
             : null;
-          deepStrictEqual(error instanceof TodoNotFound, true);
+          deepStrictEqual(Schema.is(TodoNotFound)(error), true);
         }
         const found = yield* repo.findOne(byOrgAndId(orgA, buyMilk.id));
         if (found === null) throw new Error("expected stored todo");
@@ -176,7 +177,7 @@ suite("TodosRepositoryLive (integration)", () => {
           const error = Cause.hasFails(exit.cause)
             ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
             : null;
-          deepStrictEqual(error instanceof TodoNotFound, true);
+          deepStrictEqual(Schema.is(TodoNotFound)(error), true);
         }
       }).pipe(Effect.provide(TestLayer)),
     );

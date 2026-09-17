@@ -7,6 +7,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { approveDeviceGrantHandler } from "@/modules/auth/commands/approve-device-grant.handler.js";
 import { pollDeviceGrantHandler } from "@/modules/auth/commands/poll-device-grant.handler.js";
@@ -42,7 +43,7 @@ describe("pollDeviceGrantHandler", () => {
     Effect.gen(function* () {
       const { deviceCode } = yield* startDeviceGrantHandler({ ttlSeconds: 600 });
       deepStrictEqual(
-        errorOf(yield* Effect.exit(poll(deviceCode))) instanceof DeviceGrantPending,
+        Schema.is(DeviceGrantPending)(errorOf(yield* Effect.exit(poll(deviceCode)))),
         true,
       );
     }).pipe(Effect.provide(TestLayer)),
@@ -70,7 +71,7 @@ describe("pollDeviceGrantHandler", () => {
       );
       deepStrictEqual(consumed, null);
       deepStrictEqual(
-        errorOf(yield* Effect.exit(poll(deviceCode))) instanceof DeviceGrantNotFound,
+        Schema.is(DeviceGrantNotFound)(errorOf(yield* Effect.exit(poll(deviceCode)))),
         true,
       );
     }).pipe(Effect.provide(TestLayer)),
@@ -80,7 +81,7 @@ describe("pollDeviceGrantHandler", () => {
     Effect.gen(function* () {
       const { deviceCode } = yield* startDeviceGrantHandler({ ttlSeconds: -10 });
       deepStrictEqual(
-        errorOf(yield* Effect.exit(poll(deviceCode))) instanceof DeviceGrantExpired,
+        Schema.is(DeviceGrantExpired)(errorOf(yield* Effect.exit(poll(deviceCode)))),
         true,
       );
     }).pipe(Effect.provide(TestLayer)),
@@ -89,7 +90,7 @@ describe("pollDeviceGrantHandler", () => {
   it.effect("fails DeviceGrantNotFound for an unknown device code", () =>
     Effect.gen(function* () {
       deepStrictEqual(
-        errorOf(yield* Effect.exit(poll("bogus"))) instanceof DeviceGrantNotFound,
+        Schema.is(DeviceGrantNotFound)(errorOf(yield* Effect.exit(poll("bogus")))),
         true,
       );
     }).pipe(Effect.provide(TestLayer)),

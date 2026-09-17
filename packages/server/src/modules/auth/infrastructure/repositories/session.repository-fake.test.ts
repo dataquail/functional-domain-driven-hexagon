@@ -6,6 +6,7 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { SessionNotFound } from "@/modules/auth/domain/session/session.errors.js";
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
@@ -108,7 +109,7 @@ describe("SessionRepositoryFake", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof SessionNotFound, true);
+        deepStrictEqual(Schema.is(SessionNotFound)(error), true);
       }
     }).pipe(provide),
   );
@@ -127,7 +128,7 @@ describe("SessionRepositoryFake", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof SessionNotFound, true);
+        deepStrictEqual(Schema.is(SessionNotFound)(error), true);
       }
     }).pipe(provide),
   );

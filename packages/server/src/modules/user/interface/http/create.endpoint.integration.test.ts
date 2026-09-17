@@ -7,6 +7,7 @@ import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { FindUsersQuery } from "@/modules/user/queries/find-users.query.js";
@@ -54,7 +55,7 @@ suite("POST /users (integration)", () => {
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           const err = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
-          ok(err instanceof UserContract.UserAlreadyExistsError);
+          ok(Schema.is(UserContract.UserAlreadyExistsError)(err));
           deepStrictEqual(err.email, basePayload.email);
         } else {
           throw new Error("expected a typed Fail, got " + JSON.stringify(exit));

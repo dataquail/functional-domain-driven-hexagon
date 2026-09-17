@@ -7,6 +7,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { UserNotFound } from "@/modules/user/domain/user/user.errors.js";
 import { type UserDeleted } from "@/modules/user/domain/user/user.events.js";
@@ -60,7 +61,7 @@ describe("deleteUserHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof UserNotFound, true);
+        deepStrictEqual(Schema.is(UserNotFound)(error), true);
       }
     }).pipe(Effect.provide(TestLayer)),
   );

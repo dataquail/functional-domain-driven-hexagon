@@ -9,6 +9,7 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
+import * as Schema from "effect/Schema";
 import { beforeEach } from "vitest";
 
 import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors.js";
@@ -147,7 +148,7 @@ suite("InvitationRepositoryLive (integration)", () => {
           const error = Cause.hasFails(exit.cause)
             ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
             : null;
-          deepStrictEqual(error instanceof InvitationNotFound, true);
+          deepStrictEqual(Schema.is(InvitationNotFound)(error), true);
         }
       }).pipe(Effect.provide(TestLayer)),
     );

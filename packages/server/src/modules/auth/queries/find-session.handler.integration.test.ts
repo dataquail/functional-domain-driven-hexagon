@@ -8,6 +8,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 import * as TestClock from "effect/testing/TestClock";
 import { beforeEach } from "vitest";
 
@@ -93,7 +94,7 @@ suite("findSessionHandler (integration)", () => {
     Effect.gen(function* () {
       yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
       const exit = yield* Effect.exit(findSessionHandler({ sessionId }));
-      deepStrictEqual(errorOf(exit) instanceof SessionNotFound, true);
+      deepStrictEqual(Schema.is(SessionNotFound)(errorOf(exit)), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -110,7 +111,7 @@ suite("findSessionHandler (integration)", () => {
         }),
       );
       const exit = yield* Effect.exit(findSessionHandler({ sessionId }));
-      deepStrictEqual(errorOf(exit) instanceof SessionRevoked, true);
+      deepStrictEqual(Schema.is(SessionRevoked)(errorOf(exit)), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -126,7 +127,7 @@ suite("findSessionHandler (integration)", () => {
         }),
       );
       const exit = yield* Effect.exit(findSessionHandler({ sessionId }));
-      deepStrictEqual(errorOf(exit) instanceof SessionExpired, true);
+      deepStrictEqual(Schema.is(SessionExpired)(errorOf(exit)), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -142,7 +143,7 @@ suite("findSessionHandler (integration)", () => {
         }),
       );
       const exit = yield* Effect.exit(findSessionHandler({ sessionId }));
-      deepStrictEqual(errorOf(exit) instanceof SessionExpired, true);
+      deepStrictEqual(Schema.is(SessionExpired)(errorOf(exit)), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 });

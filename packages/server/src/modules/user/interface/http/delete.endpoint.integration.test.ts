@@ -6,6 +6,7 @@ import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/platform/api.js";
@@ -49,8 +50,9 @@ suite("DELETE /users/:id (integration)", () => {
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(
-            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
-              UserContract.UserNotFoundError,
+            Schema.is(UserContract.UserNotFoundError)(
+              Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
+            ),
           );
         } else {
           throw new Error("expected a typed Fail");

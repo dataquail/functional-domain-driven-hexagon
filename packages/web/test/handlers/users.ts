@@ -5,6 +5,7 @@
 import * as UserContract from "@org/contracts/api/UserContract";
 import type { UserId } from "@org/contracts/EntityIds";
 import * as Effect from "effect/Effect";
+import * as Schema from "effect/Schema";
 
 import { makePaginatedUsers, makeUser } from "../fixtures/user";
 import { getEndpoint, typedHandler } from "../typed-handler";
@@ -18,7 +19,7 @@ export const usersHandlers = {
   list: (arg: ReadonlyArray<UserContract.User> | UserContract.PaginatedUsers = []) =>
     typedHandler(findEndpoint, ({ urlParams }) =>
       Effect.succeed(
-        arg instanceof UserContract.PaginatedUsers
+        Schema.is(UserContract.PaginatedUsers)(arg)
           ? arg
           : makePaginatedUsers({
               users: arg,

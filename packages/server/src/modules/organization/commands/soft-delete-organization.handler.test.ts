@@ -7,6 +7,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { createOrganizationHandler } from "@/modules/organization/commands/create-organization.handler.js";
 import { softDeleteOrganizationHandler } from "@/modules/organization/commands/soft-delete-organization.handler.js";
@@ -57,7 +58,7 @@ describe("softDeleteOrganizationHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof OrganizationNotFound, true);
+        deepStrictEqual(Schema.is(OrganizationNotFound)(error), true);
       }
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -72,7 +73,7 @@ describe("softDeleteOrganizationHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof OrganizationNotFound, true);
+        deepStrictEqual(Schema.is(OrganizationNotFound)(error), true);
       }
     }).pipe(Effect.provide(TestLayer)),
   );

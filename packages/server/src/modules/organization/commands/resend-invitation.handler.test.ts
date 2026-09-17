@@ -9,6 +9,7 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
+import * as Schema from "effect/Schema";
 import * as TestClock from "effect/testing/TestClock";
 
 import { resendInvitationHandler } from "@/modules/organization/commands/resend-invitation.handler.js";
@@ -93,7 +94,7 @@ describe("resendInvitationHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof InvitationAlreadyRevoked, true);
+        deepStrictEqual(Schema.is(InvitationAlreadyRevoked)(error), true);
       }
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -115,7 +116,7 @@ describe("resendInvitationHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof InvitationAlreadyAccepted, true);
+        deepStrictEqual(Schema.is(InvitationAlreadyAccepted)(error), true);
       }
     }).pipe(Effect.provide(TestLayer)),
   );

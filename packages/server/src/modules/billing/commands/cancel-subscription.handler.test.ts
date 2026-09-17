@@ -8,6 +8,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { cancelSubscriptionHandler } from "@/modules/billing/commands/cancel-subscription.handler.js";
 import { SubscriptionNotFound } from "@/modules/billing/domain/subscription/subscription.errors.js";
@@ -72,7 +73,9 @@ describe("cancelSubscriptionHandler", () => {
       ok(Exit.isFailure(exit));
       if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
         ok(
-          Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof SubscriptionNotFound,
+          Schema.is(SubscriptionNotFound)(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
+          ),
         );
       }
     }).pipe(Effect.provide(TestLayer)),
