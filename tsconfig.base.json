@@ -49,7 +49,9 @@
           "multipleCatchTag": "warning",
           "catchToOrElseSucceed": "warning",
           "flatMapConditionalToFilterOrFail": "warning",
-          "lazyEffect": "warning"
+          "lazyEffect": "warning",
+          "unnecessaryPipeChain": "warning",
+          "preferTypedSchemaDecoder": "warning"
         }
       }
     ],

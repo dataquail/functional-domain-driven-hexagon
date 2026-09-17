@@ -47,9 +47,7 @@ suite("DELETE /orgs/:id (integration)", () => {
         const sql = yield* Database.Database;
         const rows = yield* sql`
               SELECT deleted_at FROM "organization".organizations WHERE id = ${seededOrgId}
-            `
-          .pipe(Database.rows(DeletedAtRow))
-          .pipe(Effect.orDie);
+            `.pipe(Database.rows(DeletedAtRow), Effect.orDie);
         deepStrictEqual(rows.length, 1);
         ok(rows[0]?.deleted_at !== null);
       }),

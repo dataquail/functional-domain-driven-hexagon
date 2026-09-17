@@ -26,8 +26,6 @@ export const findSubscriptionByOrganizationHandler = Effect.fn(
   const sql = yield* Database.Database;
   const row = yield* sql`
             SELECT * FROM billing.subscriptions WHERE organization_id = ${query.organizationId}
-          `
-    .pipe(Database.maybeRow(RowSchemas.SubscriptionRow))
-    .pipe(translateDatabaseErrors);
+          `.pipe(Database.maybeRow(RowSchemas.SubscriptionRow), translateDatabaseErrors);
   return row === null ? null : toView(row);
 });

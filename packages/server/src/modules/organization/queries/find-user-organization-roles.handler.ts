@@ -12,9 +12,7 @@ export const findUserOrganizationRolesHandler = Effect.fn("findUserOrganizationR
           FROM "organization".organization_roles
           WHERE user_id = ${query.userId} AND organization_id = ${query.organizationId}
           ORDER BY created_at ASC
-        `
-      .pipe(Database.rows(RowSchemas.OrganizationRoleRow))
-      .pipe(translateDatabaseErrors);
+        `.pipe(Database.rows(RowSchemas.OrganizationRoleRow), translateDatabaseErrors);
     return {
       userId: query.userId,
       organizationId: query.organizationId,

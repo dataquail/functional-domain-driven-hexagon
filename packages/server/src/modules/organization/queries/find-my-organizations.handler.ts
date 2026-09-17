@@ -53,9 +53,7 @@ export const findMyOrganizationsHandler = Effect.fn("findMyOrganizationsHandler"
           WHERE m.user_id = ${query.userId}
             AND o.deleted_at IS NULL
           ORDER BY o.created_at DESC
-        `
-    .pipe(Database.rows(MyOrganizationRow))
-    .pipe(translateDatabaseErrors);
+        `.pipe(Database.rows(MyOrganizationRow), translateDatabaseErrors);
 
   return { organizations: rows.map(toView) };
 });
