@@ -5,6 +5,7 @@ import * as ConfigProvider from "effect/ConfigProvider";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Schema from "effect/Schema";
 import Stripe from "stripe";
 
 import { EnvVars } from "@/common/env-vars.js";
@@ -62,7 +63,7 @@ describe("BillingGatewayLive.verifyAndParseWebhook", () => {
         const error = yield* gw
           .verifyAndParseWebhook({ payload: "{}", signature: "t=1,v1=deadbeef" })
           .pipe(Effect.flip);
-        ok(error instanceof InvalidWebhookSignature);
+        ok(Schema.is(InvalidWebhookSignature)(error));
       }),
     ),
   );

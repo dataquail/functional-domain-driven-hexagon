@@ -7,6 +7,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { startSubscriptionHandler } from "@/modules/billing/commands/start-subscription.handler.js";
 import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.js";
@@ -61,8 +62,9 @@ describe("startSubscriptionHandler", () => {
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(
-            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
-              SubscriptionAlreadyExistsForOrganization,
+            Schema.is(SubscriptionAlreadyExistsForOrganization)(
+              Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
+            ),
           );
         }
       }).pipe(Effect.provide(TestLayer)),

@@ -3,6 +3,7 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
+import * as Schema from "effect/Schema";
 
 import { InvitationId } from "@/platform/ids/invitation-id.js";
 import { OrganizationId } from "@/platform/ids/organization-id.js";
@@ -50,7 +51,7 @@ describe("InvitationAcceptance.accept", () => {
     });
     deepStrictEqual(Result.isFailure(twice), true);
     if (Result.isFailure(twice)) {
-      deepStrictEqual(twice.failure instanceof InvitationAlreadyAccepted, true);
+      deepStrictEqual(Schema.is(InvitationAlreadyAccepted)(twice.failure), true);
     }
   });
 
@@ -62,7 +63,7 @@ describe("InvitationAcceptance.accept", () => {
     });
     deepStrictEqual(Result.isFailure(result), true);
     if (Result.isFailure(result)) {
-      deepStrictEqual(result.failure instanceof InvitationRevoked, true);
+      deepStrictEqual(Schema.is(InvitationRevoked)(result.failure), true);
     }
   });
 });

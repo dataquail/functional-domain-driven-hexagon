@@ -7,6 +7,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { createOrganizationHandler } from "@/modules/organization/commands/create-organization.handler.js";
 import { type MembershipCreated } from "@/modules/organization/domain/membership/membership.events.js";
@@ -121,7 +122,7 @@ describe("createOrganizationHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof SuperAdminCannotOwnOrganization, true);
+        deepStrictEqual(Schema.is(SuperAdminCannotOwnOrganization)(error), true);
       }
     }).pipe(
       Effect.provide(

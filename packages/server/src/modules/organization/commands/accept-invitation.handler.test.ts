@@ -9,6 +9,7 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
+import * as Schema from "effect/Schema";
 
 import { acceptInvitationHandler } from "@/modules/organization/commands/accept-invitation.handler.js";
 import {
@@ -105,7 +106,7 @@ describe("acceptInvitationHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof InvitationTokenNotFound, true);
+        deepStrictEqual(Schema.is(InvitationTokenNotFound)(error), true);
       }
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -122,7 +123,7 @@ describe("acceptInvitationHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof InvitationAlreadyAccepted, true);
+        deepStrictEqual(Schema.is(InvitationAlreadyAccepted)(error), true);
       }
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -139,7 +140,7 @@ describe("acceptInvitationHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof InvitationRevoked, true);
+        deepStrictEqual(Schema.is(InvitationRevoked)(error), true);
       }
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -166,7 +167,7 @@ describe("acceptInvitationHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof InvitationExpired, true);
+        deepStrictEqual(Schema.is(InvitationExpired)(error), true);
       }
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -184,7 +185,7 @@ describe("acceptInvitationHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof SuperAdminCannotOwnOrganization, true);
+        deepStrictEqual(Schema.is(SuperAdminCannotOwnOrganization)(error), true);
       }
     }).pipe(
       Effect.provide(

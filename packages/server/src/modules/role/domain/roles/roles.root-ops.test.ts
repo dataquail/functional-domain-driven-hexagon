@@ -2,6 +2,7 @@ import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
 import * as Result from "effect/Result";
+import * as Schema from "effect/Schema";
 
 import { UserId } from "@/platform/ids/user-id.js";
 
@@ -44,7 +45,7 @@ describe("RolesRootOps.grant", () => {
     const second = RolesRootOps.grant(first.roles, "super_admin");
     deepStrictEqual(Result.isFailure(second), true);
     if (Result.isFailure(second)) {
-      deepStrictEqual(second.failure instanceof AlreadyHasRole, true);
+      deepStrictEqual(Schema.is(AlreadyHasRole)(second.failure), true);
       deepStrictEqual(second.failure.role, "super_admin");
     }
   });
@@ -66,7 +67,7 @@ describe("RolesRootOps.revoke", () => {
     const result = RolesRootOps.revoke(RolesRootOps.empty(userId), "super_admin");
     deepStrictEqual(Result.isFailure(result), true);
     if (Result.isFailure(result)) {
-      deepStrictEqual(result.failure instanceof DoesNotHaveRole, true);
+      deepStrictEqual(Schema.is(DoesNotHaveRole)(result.failure), true);
     }
   });
 });

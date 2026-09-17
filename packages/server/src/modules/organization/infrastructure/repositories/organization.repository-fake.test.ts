@@ -7,6 +7,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
+import * as Schema from "effect/Schema";
 
 import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.js";
 import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
@@ -77,7 +78,7 @@ describe("OrganizationRepositoryFake", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof OrganizationNotFound, true);
+        deepStrictEqual(Schema.is(OrganizationNotFound)(error), true);
       }
     }).pipe(provide),
   );

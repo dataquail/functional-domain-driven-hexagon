@@ -7,6 +7,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { ingestStripeWebhookHandler } from "@/modules/billing/commands/ingest-stripe-webhook.handler.js";
 import { InvalidWebhookSignature } from "@/modules/billing/domain/subscription/subscription.errors.js";
@@ -75,8 +76,9 @@ describe("ingestStripeWebhookHandler", () => {
       ok(Exit.isFailure(exit));
       if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
         ok(
-          Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
-            InvalidWebhookSignature,
+          Schema.is(InvalidWebhookSignature)(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
+          ),
         );
       }
 

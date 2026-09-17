@@ -7,6 +7,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { type GrantOrganizationRolePayload } from "@/modules/organization/commands/grant-organization-role.command.js";
 import { grantOrganizationRoleHandler } from "@/modules/organization/commands/grant-organization-role.handler.js";
@@ -84,7 +85,7 @@ describe("grantOrganizationRoleHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof CannotPromoteSelfInOrganization, true);
+        deepStrictEqual(Schema.is(CannotPromoteSelfInOrganization)(error), true);
       }
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -104,7 +105,7 @@ describe("grantOrganizationRoleHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof AlreadyHasOrganizationRole, true);
+        deepStrictEqual(Schema.is(AlreadyHasOrganizationRole)(error), true);
       }
     }).pipe(Effect.provide(TestLayer)),
   );

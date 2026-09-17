@@ -8,6 +8,7 @@ import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/platform/api.js";
@@ -86,7 +87,7 @@ suite("DELETE /orgs/:orgId/members/:userId/admin (integration, super-admin calle
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           const error = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
-          ok(error instanceof OrganizationContract.OrganizationRoleConflictError);
+          ok(Schema.is(OrganizationContract.OrganizationRoleConflictError)(error));
           deepStrictEqual(error.reason, "not_admin");
         }
       }),
@@ -119,8 +120,9 @@ memberSuite("DELETE /orgs/:orgId/members/:userId/admin (integration, plain-membe
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(
-            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
-              CustomHttpApiError.Forbidden,
+            Schema.is(CustomHttpApiError.Forbidden)(
+              Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
+            ),
           );
         }
       }),

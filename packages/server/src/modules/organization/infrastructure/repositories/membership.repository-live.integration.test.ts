@@ -8,6 +8,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 import { beforeEach } from "vitest";
 
 import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.js";
@@ -117,7 +118,7 @@ suite("MembershipRepositoryLive (integration)", () => {
           const error = Cause.hasFails(exit.cause)
             ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
             : null;
-          deepStrictEqual(error instanceof MembershipNotFound, true);
+          deepStrictEqual(Schema.is(MembershipNotFound)(error), true);
         }
       }).pipe(Effect.provide(TestLayer)),
     );

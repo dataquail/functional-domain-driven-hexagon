@@ -8,6 +8,7 @@ import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
@@ -62,8 +63,9 @@ suite("DELETE /orgs/:orgId/todos/:id (integration)", () => {
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(
-            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
-              TodosContract.TodoNotFoundError,
+            Schema.is(TodosContract.TodoNotFoundError)(
+              Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
+            ),
           );
         } else {
           throw new Error("expected a typed Fail, got " + JSON.stringify(exit));
@@ -92,8 +94,9 @@ suite("DELETE /orgs/:orgId/todos/:id (integration)", () => {
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(
-            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
-              TodosContract.TodoNotFoundError,
+            Schema.is(TodosContract.TodoNotFoundError)(
+              Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
+            ),
           );
         } else {
           throw new Error("expected a typed Fail, got " + JSON.stringify(exit));
@@ -137,8 +140,9 @@ nonMemberSuite("DELETE /orgs/:orgId/todos/:id (integration, non-member caller)",
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(
-            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
-              CustomHttpApiError.Forbidden,
+            Schema.is(CustomHttpApiError.Forbidden)(
+              Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
+            ),
           );
         } else {
           throw new Error("expected a typed Fail, got " + JSON.stringify(exit));

@@ -3,6 +3,7 @@ import { deepStrictEqual, ok } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
+import * as Schema from "effect/Schema";
 
 import {
   WalletInsufficientFunds,
@@ -65,8 +66,8 @@ describe("WalletRootOps.credit", () => {
     const negative = WalletRootOps.credit(fresh(), { amount: -10, now: later });
     ok(Result.isFailure(zero));
     ok(Result.isFailure(negative));
-    if (Result.isFailure(zero)) ok(zero.failure instanceof WalletInvalidAmount);
-    if (Result.isFailure(negative)) ok(negative.failure instanceof WalletInvalidAmount);
+    if (Result.isFailure(zero)) ok(Schema.is(WalletInvalidAmount)(zero.failure));
+    if (Result.isFailure(negative)) ok(Schema.is(WalletInvalidAmount)(negative.failure));
   });
 
   it("rejects non-finite amounts (NaN, Infinity)", () => {
@@ -102,8 +103,8 @@ describe("WalletRootOps.debit", () => {
     const result = WalletRootOps.debit(funded(), { amount: 101, now: later });
     ok(Result.isFailure(result));
     if (!Result.isFailure(result)) throw new Error("unreachable");
-    ok(result.failure instanceof WalletInsufficientFunds);
-    if (result.failure instanceof WalletInsufficientFunds) {
+    ok(Schema.is(WalletInsufficientFunds)(result.failure));
+    if (Schema.is(WalletInsufficientFunds)(result.failure)) {
       deepStrictEqual(result.failure.balance, 100);
       deepStrictEqual(result.failure.attemptedDebit, 101);
     }
@@ -121,14 +122,14 @@ describe("WalletRootOps.debit", () => {
     const negative = WalletRootOps.debit(funded(), { amount: -1, now: later });
     ok(Result.isFailure(zero));
     ok(Result.isFailure(negative));
-    if (Result.isFailure(zero)) ok(zero.failure instanceof WalletInvalidAmount);
-    if (Result.isFailure(negative)) ok(negative.failure instanceof WalletInvalidAmount);
+    if (Result.isFailure(zero)) ok(Schema.is(WalletInvalidAmount)(zero.failure));
+    if (Result.isFailure(negative)) ok(Schema.is(WalletInvalidAmount)(negative.failure));
   });
 
   it("rejects a debit from a freshly-created wallet (balance is 0)", () => {
     const result = WalletRootOps.debit(fresh(), { amount: 1, now: later });
     ok(Result.isFailure(result));
-    if (Result.isFailure(result)) ok(result.failure instanceof WalletInsufficientFunds);
+    if (Result.isFailure(result)) ok(Schema.is(WalletInsufficientFunds)(result.failure));
   });
 });
 

@@ -7,6 +7,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { signInHandler } from "@/modules/auth/commands/sign-in.handler.js";
 import {
@@ -95,7 +96,7 @@ describe("signInHandler", () => {
           const error = Cause.hasFails(exit.cause)
             ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
             : null;
-          deepStrictEqual(error instanceof IdentityMissingEmail, true);
+          deepStrictEqual(Schema.is(IdentityMissingEmail)(error), true);
         }
       }).pipe(Effect.provide(TestLayer)),
   );
@@ -121,7 +122,7 @@ describe("signInHandler", () => {
           const error = Cause.hasFails(exit.cause)
             ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
             : null;
-          deepStrictEqual(error instanceof IdentityEmailAlreadyRegistered, true);
+          deepStrictEqual(Schema.is(IdentityEmailAlreadyRegistered)(error), true);
         }
       }),
   );

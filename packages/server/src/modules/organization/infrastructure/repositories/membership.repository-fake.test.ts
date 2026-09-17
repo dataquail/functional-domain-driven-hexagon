@@ -6,6 +6,7 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.js";
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
@@ -79,7 +80,7 @@ describe("MembershipRepositoryFake", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof MembershipNotFound, true);
+        deepStrictEqual(Schema.is(MembershipNotFound)(error), true);
       }
     }).pipe(provide),
   );

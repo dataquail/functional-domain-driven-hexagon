@@ -7,6 +7,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { createOrganizationHandler } from "@/modules/organization/commands/create-organization.handler.js";
 import { leaveOrganizationHandler } from "@/modules/organization/commands/leave-organization.handler.js";
@@ -71,7 +72,7 @@ describe("leaveOrganizationHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof MembershipNotFound, true);
+        deepStrictEqual(Schema.is(MembershipNotFound)(error), true);
       }
     }).pipe(Effect.provide(TestLayer)),
   );

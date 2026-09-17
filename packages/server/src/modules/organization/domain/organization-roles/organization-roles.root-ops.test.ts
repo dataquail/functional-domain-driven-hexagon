@@ -2,6 +2,7 @@ import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
 import * as Result from "effect/Result";
+import * as Schema from "effect/Schema";
 
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { UserId } from "@/platform/ids/user-id.js";
@@ -68,7 +69,7 @@ describe("OrganizationRolesRootOps.grantRole", () => {
     const second = OrganizationRolesRootOps.grantRole(first.organizationRoles, "admin", issuedBy);
     deepStrictEqual(Result.isFailure(second), true);
     if (Result.isFailure(second)) {
-      deepStrictEqual(second.failure instanceof AlreadyHasOrganizationRole, true);
+      deepStrictEqual(Schema.is(AlreadyHasOrganizationRole)(second.failure), true);
     }
   });
 });
@@ -99,7 +100,7 @@ describe("OrganizationRolesRootOps.revokeRole", () => {
     );
     deepStrictEqual(Result.isFailure(result), true);
     if (Result.isFailure(result)) {
-      deepStrictEqual(result.failure instanceof DoesNotHaveOrganizationRole, true);
+      deepStrictEqual(Schema.is(DoesNotHaveOrganizationRole)(result.failure), true);
     }
   });
 });

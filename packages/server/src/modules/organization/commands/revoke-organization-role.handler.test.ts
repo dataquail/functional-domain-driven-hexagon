@@ -7,6 +7,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { grantOrganizationRoleHandler } from "@/modules/organization/commands/grant-organization-role.handler.js";
 import { revokeOrganizationRoleHandler } from "@/modules/organization/commands/revoke-organization-role.handler.js";
@@ -83,7 +84,7 @@ describe("revokeOrganizationRoleHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof DoesNotHaveOrganizationRole, true);
+        deepStrictEqual(Schema.is(DoesNotHaveOrganizationRole)(error), true);
       }
     }).pipe(Effect.provide(TestLayer)),
   );
