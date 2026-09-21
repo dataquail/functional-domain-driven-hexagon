@@ -3,6 +3,7 @@ import { deepStrictEqual, ok } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
+import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
@@ -30,7 +31,8 @@ const seedOrg = Effect.gen(function* () {
 // accepting requires the invitee's own (non-super-admin) session. Seeding the
 // invitation row directly with a known token is the honest seam for the
 // cross-caller accept flow — mirrors how the sibling tests seed the org row.
-const iso = (offsetMs: number): string => new Date(Date.now() + offsetMs).toISOString();
+const iso = (offsetMs: number): string =>
+  DateTime.formatIso(DateTime.add(DateTime.nowUnsafe(), { milliseconds: offsetMs }));
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 const seedInvitation = (

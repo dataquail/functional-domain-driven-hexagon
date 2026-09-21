@@ -24,7 +24,7 @@ import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const otherUserId = UserId.make("22222222-2222-2222-2222-222222222222");
 const organizationId = OrganizationId.make("33333333-3333-3333-3333-333333333333");
-const now = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe("2026-01-01T00:00:00Z");
 
 const byPair = (u: UserId, o: OrganizationId) =>
   Spec.and(MembershipSpecifications.forUser(u), MembershipSpecifications.forOrganization(o));

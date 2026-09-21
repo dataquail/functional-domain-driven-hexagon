@@ -8,7 +8,7 @@ import * as BillingContract from "@org/contracts/api/BillingContract";
 import { OrganizationId, SubscriptionId } from "@org/contracts/EntityIds";
 import * as DateTime from "effect/DateTime";
 
-const FIXED_DATE = DateTime.makeUnsafe(new Date("2026-03-01T00:00:00Z"));
+const FIXED_DATE = DateTime.makeUnsafe("2026-03-01T00:00:00Z");
 
 export const BILLING_ORG_ID = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const SUBSCRIPTION_ID = SubscriptionId.make("22222222-2222-2222-2222-222222222222");

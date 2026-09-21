@@ -39,7 +39,7 @@ const makeClient = () =>
 
 describe("typedHandler", () => {
   it("round-trips Users.find with urlParams + paginated success body", async () => {
-    const fixedDate = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
+    const fixedDate = DateTime.makeUnsafe("2026-01-01T00:00:00Z");
     const sampleUser = new UserContract.User({
       id: UserId.make("11111111-1111-1111-1111-111111111111"),
       email: "alice@example.com",

@@ -12,7 +12,7 @@ import { WalletSpecifications } from "./wallet.specification.js";
 const acmeId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const betaId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const walletId = WalletId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
-const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe("2025-01-01T00:00:00Z");
 
 const acmeWallet = WalletRootOps.create({ id: walletId, organizationId: acmeId, now }).wallet;
 

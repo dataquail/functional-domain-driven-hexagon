@@ -28,9 +28,9 @@ const apiTokenId = ApiTokenId.make("11111111-1111-1111-1111-111111111111");
 const userId = UserId.make("22222222-2222-2222-2222-222222222222");
 // The handler reads `DateTime.now`; pin the TestClock to a fixed instant so
 // expiry assertions ("future"/"past") are deterministic.
-const clockNow = DateTime.makeUnsafe(new Date("2026-06-01T00:00:00Z"));
-const future = DateTime.makeUnsafe(new Date("2099-01-01T00:00:00Z"));
-const past = DateTime.makeUnsafe(new Date("2020-01-01T00:00:00Z"));
+const clockNow = DateTime.makeUnsafe("2026-06-01T00:00:00Z");
+const future = DateTime.makeUnsafe("2099-01-01T00:00:00Z");
+const past = DateTime.makeUnsafe("2020-01-01T00:00:00Z");
 
 const TestLayer = ApiTokenRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 

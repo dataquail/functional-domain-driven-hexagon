@@ -30,10 +30,10 @@ const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 
 // The handler reads `DateTime.now`; pin the TestClock so the lifecycle checks
 // against `expiresAt` / `absoluteExpiresAt` are deterministic.
-const clockNow = DateTime.makeUnsafe(new Date("2026-06-01T00:00:00Z"));
-const farPast = DateTime.makeUnsafe(new Date("2000-01-01T00:00:00Z"));
-const farFuture = DateTime.makeUnsafe(new Date("2099-01-01T00:00:00Z"));
-const farFutureLater = DateTime.makeUnsafe(new Date("2099-12-31T00:00:00Z"));
+const clockNow = DateTime.makeUnsafe("2026-06-01T00:00:00Z");
+const farPast = DateTime.makeUnsafe("2000-01-01T00:00:00Z");
+const farFuture = DateTime.makeUnsafe("2099-01-01T00:00:00Z");
+const farFutureLater = DateTime.makeUnsafe("2099-12-31T00:00:00Z");
 
 const TestLayer = SessionRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 

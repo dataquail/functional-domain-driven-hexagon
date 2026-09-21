@@ -8,7 +8,7 @@ import { WebhookEventSpecifications } from "./webhook-event.specification.js";
 
 const record: WebhookEventRecord = {
   stripeEventId: "evt_abc",
-  receivedAt: DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z")),
+  receivedAt: DateTime.makeUnsafe("2025-01-01T00:00:00Z"),
 };
 
 describe("WebhookEventSpecifications.withStripeEventId", () => {

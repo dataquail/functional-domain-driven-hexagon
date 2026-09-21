@@ -20,7 +20,7 @@ import { SessionRepositoryFake } from "./session.repository-fake.js";
 const idA = SessionId.make("11111111-1111-1111-1111-111111111111");
 const idMissing = SessionId.make("99999999-9999-9999-9999-999999999999");
 const userId = UserId.make("22222222-2222-2222-2222-222222222222");
-const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
+const now = DateTime.makeUnsafe("2025-01-01T00:00:00Z");
 
 const makeSession = (id: SessionId) =>
   SessionRootOps.create({

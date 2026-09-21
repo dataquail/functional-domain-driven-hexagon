@@ -20,9 +20,9 @@ import { InvitationRootOps } from "./invitation.root-ops.js";
 const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");
 const organizationId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const userId = UserId.make("33333333-3333-3333-3333-333333333333");
-const now = DateTime.makeUnsafe(new Date("2026-01-01T00:00:00Z"));
-const inOneDay = DateTime.makeUnsafe(new Date("2026-01-02T00:00:00Z"));
-const inOneWeek = DateTime.makeUnsafe(new Date("2026-01-08T00:00:00Z"));
+const now = DateTime.makeUnsafe("2026-01-01T00:00:00Z");
+const inOneDay = DateTime.makeUnsafe("2026-01-02T00:00:00Z");
+const inOneWeek = DateTime.makeUnsafe("2026-01-08T00:00:00Z");
 const inputs = {
   id: invitationId,
   organizationId,
@@ -75,7 +75,7 @@ describe("InvitationRootOps.accept", () => {
   });
 
   it("fails InvitationExpired when now > expiresAt", () => {
-    const past = DateTime.makeUnsafe(new Date("2026-01-09T00:00:00Z"));
+    const past = DateTime.makeUnsafe("2026-01-09T00:00:00Z");
     const result = InvitationRootOps.accept(seed(), { userId, now: past });
     deepStrictEqual(Result.isFailure(result), true);
     if (Result.isFailure(result)) {
@@ -114,7 +114,7 @@ describe("InvitationRootOps.revoke", () => {
 
 describe("InvitationRootOps.reissue", () => {
   const seed = () => InvitationRootOps.issue(inputs).invitation;
-  const newExpiry = DateTime.makeUnsafe(new Date("2026-01-15T00:00:00Z"));
+  const newExpiry = DateTime.makeUnsafe("2026-01-15T00:00:00Z");
 
   it("rotates the token, resets the expiry, and emits InvitationReissued", () => {
     const result = Result.getOrThrow(
@@ -132,7 +132,7 @@ describe("InvitationRootOps.reissue", () => {
   });
 
   it("re-issues an expired (but open) invitation", () => {
-    const past = DateTime.makeUnsafe(new Date("2026-02-01T00:00:00Z"));
+    const past = DateTime.makeUnsafe("2026-02-01T00:00:00Z");
     const result = InvitationRootOps.reissue(seed(), {
       token: "tok-fresh",
       expiresAt: newExpiry,

@@ -25,8 +25,8 @@ const aliceId = TodoId.make("11111111-1111-1111-1111-111111111111");
 const bobId = TodoId.make("22222222-2222-2222-2222-222222222222");
 const orgA = OrganizationId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const orgB = OrganizationId.make("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-const now = DateTime.makeUnsafe(new Date("2025-01-01T00:00:00Z"));
-const later = DateTime.makeUnsafe(new Date("2025-02-01T00:00:00Z"));
+const now = DateTime.makeUnsafe("2025-01-01T00:00:00Z");
+const later = DateTime.makeUnsafe("2025-02-01T00:00:00Z");
 
 const buyMilk = TodoRootOps.create({ id: aliceId, organizationId: orgA, title: "Buy milk", now });
 
