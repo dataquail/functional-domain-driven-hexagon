@@ -6,6 +6,7 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.js";
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
@@ -71,7 +72,7 @@ describe("updateTodoHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof TodoNotFound, true);
+        deepStrictEqual(Schema.is(TodoNotFound)(error), true);
       }
     }).pipe(Effect.provide(TodosRepositoryFake)),
   );
@@ -93,7 +94,7 @@ describe("updateTodoHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof TodoNotFound, true);
+        deepStrictEqual(Schema.is(TodoNotFound)(error), true);
       }
     }).pipe(Effect.provide(TodosRepositoryFake)),
   );

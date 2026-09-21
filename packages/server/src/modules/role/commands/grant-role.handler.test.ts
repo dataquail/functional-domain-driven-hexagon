@@ -7,6 +7,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { grantRoleHandler } from "@/modules/role/commands/grant-role.handler.js";
 import { AlreadyHasRole, CannotPromoteSelf } from "@/modules/role/domain/roles/role.errors.js";
@@ -53,7 +54,7 @@ describe("grantRoleHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof CannotPromoteSelf, true);
+        deepStrictEqual(Schema.is(CannotPromoteSelf)(error), true);
       }
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -69,7 +70,7 @@ describe("grantRoleHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof AlreadyHasRole, true);
+        deepStrictEqual(Schema.is(AlreadyHasRole)(error), true);
       }
     }).pipe(Effect.provide(TestLayer)),
   );

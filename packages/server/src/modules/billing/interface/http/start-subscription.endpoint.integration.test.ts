@@ -8,6 +8,7 @@ import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/platform/api.js";
@@ -74,8 +75,9 @@ suite("POST /orgs/:orgId/billing/subscriptions (integration)", () => {
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(
-            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
-              BillingContract.SubscriptionAlreadyExistsError,
+            Schema.is(BillingContract.SubscriptionAlreadyExistsError)(
+              Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
+            ),
           );
         }
       }),
@@ -118,8 +120,9 @@ memberSuite("POST /orgs/:orgId/billing/subscriptions (non-admin caller)", () => 
         ok(Exit.isFailure(exit));
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(
-            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
-              CustomHttpApiError.Forbidden,
+            Schema.is(CustomHttpApiError.Forbidden)(
+              Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
+            ),
           );
         } else {
           throw new Error("expected typed Fail, got " + JSON.stringify(exit));

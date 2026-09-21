@@ -7,6 +7,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
+import * as Schema from "effect/Schema";
 
 import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors.js";
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
@@ -101,7 +102,7 @@ describe("InvitationRepositoryFake", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof InvitationNotFound, true);
+        deepStrictEqual(Schema.is(InvitationNotFound)(error), true);
       }
     }).pipe(provide),
   );

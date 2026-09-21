@@ -7,6 +7,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { grantRoleHandler } from "@/modules/role/commands/grant-role.handler.js";
 import { revokeRoleHandler } from "@/modules/role/commands/revoke-role.handler.js";
@@ -54,7 +55,7 @@ describe("revokeRoleHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof DoesNotHaveRole, true);
+        deepStrictEqual(Schema.is(DoesNotHaveRole)(error), true);
       }
     }).pipe(Effect.provide(TestLayer)),
   );

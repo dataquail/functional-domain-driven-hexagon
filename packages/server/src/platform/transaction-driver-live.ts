@@ -7,6 +7,7 @@ import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 // The SQL binding for the atomicity primitive `@effect-server-utils/unit-of-work`
 // needs. This is the only file that knows a unit of work is implemented as a SQL
@@ -20,9 +21,9 @@ export const TransactionDriverLive: Layer.Layer<TransactionDriver, never, Databa
       const translateDatabaseFailure = <E>(
         error: E | Database.DatabaseError | Database.DatabaseUnavailable,
       ): E | TransactionFailed | PersistenceUnavailable =>
-        error instanceof Database.DatabaseError
+        Schema.is(Database.DatabaseError)(error)
           ? new TransactionFailed({ message: error.message })
-          : error instanceof Database.DatabaseUnavailable
+          : Schema.is(Database.DatabaseUnavailable)(error)
             ? new PersistenceUnavailable({ message: error.message })
             : error;
 

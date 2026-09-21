@@ -5,6 +5,7 @@ import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors.js";
 import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
@@ -32,8 +33,9 @@ describe("WebhookEventRepositoryFake.insert", () => {
       ok(Exit.isFailure(exit));
       if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
         ok(
-          Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
-            WebhookEventAlreadyRecorded,
+          Schema.is(WebhookEventAlreadyRecorded)(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
+          ),
         );
       }
     }).pipe(provide),

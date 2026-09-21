@@ -6,6 +6,7 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.js";
 import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
@@ -53,8 +54,9 @@ describe("SubscriptionRepositoryFake.insert", () => {
       ok(Exit.isFailure(exit));
       if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
         ok(
-          Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow) instanceof
-            SubscriptionAlreadyExistsForOrganization,
+          Schema.is(SubscriptionAlreadyExistsForOrganization)(
+            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
+          ),
         );
       }
     }).pipe(provide),

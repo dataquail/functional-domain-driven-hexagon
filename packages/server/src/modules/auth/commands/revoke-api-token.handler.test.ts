@@ -7,6 +7,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { mintApiTokenHandler } from "@/modules/auth/commands/mint-api-token.handler.js";
 import { revokeApiTokenHandler } from "@/modules/auth/commands/revoke-api-token.handler.js";
@@ -45,7 +46,7 @@ describe("revokeApiTokenHandler", () => {
         const error = Cause.hasFails(exit.cause)
           ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
           : null;
-        deepStrictEqual(error instanceof ApiTokenNotFound, true);
+        deepStrictEqual(Schema.is(ApiTokenNotFound)(error), true);
       }
       const repo = yield* ApiTokenRepository;
       const found = yield* repo.findOne(ApiTokenSpecifications.withId(apiToken.id));

@@ -56,7 +56,7 @@ export const maskToken = (token: string): string =>
 // command's body with `Effect.catch(toCliError)` so the entrypoint only
 // ever sees `CliError`.
 export const toCliError = (error: unknown): CliError => {
-  if (error instanceof CliError) return error;
+  if (Schema.is(CliError)(error)) return error;
   const tag =
     typeof error === "object" && error !== null && "_tag" in error
       ? String((error as { readonly _tag: unknown })._tag)

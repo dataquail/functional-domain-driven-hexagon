@@ -9,6 +9,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { type TodoOrganizationView } from "@/modules/todos/queries/find-todo-organization.query.js";
@@ -48,7 +49,7 @@ describe("TodoResolverEntry", () => {
       deepStrictEqual(Exit.isFailure(exit), true);
       if (Exit.isFailure(exit)) {
         const error = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
-        deepStrictEqual(error instanceof CustomHttpApiError.NotFound, true);
+        deepStrictEqual(Schema.is(CustomHttpApiError.NotFound)(error), true);
       }
     }).pipe(Effect.provide(resolverOver(Effect.succeed(null)))),
   );
@@ -65,7 +66,7 @@ describe("TodoResolverEntry", () => {
       if (Exit.isFailure(exit)) {
         deepStrictEqual(Cause.hasDies(exit.cause), false);
         const error = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
-        deepStrictEqual(error instanceof PersistenceUnavailable, true);
+        deepStrictEqual(Schema.is(PersistenceUnavailable)(error), true);
       }
     }).pipe(
       Effect.provide(resolverOver(new PersistenceUnavailable({ message: "connection lost" }))),

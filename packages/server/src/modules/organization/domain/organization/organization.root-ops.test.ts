@@ -3,6 +3,7 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
+import * as Schema from "effect/Schema";
 
 import { OrganizationId } from "@/platform/ids/organization-id.js";
 
@@ -60,7 +61,7 @@ describe("OrganizationRootOps.softDelete", () => {
     const second = OrganizationRootOps.softDelete(first.organization, { now: later });
     deepStrictEqual(Result.isFailure(second), true);
     if (Result.isFailure(second)) {
-      deepStrictEqual(second.failure instanceof OrganizationAlreadyDeleted, true);
+      deepStrictEqual(Schema.is(OrganizationAlreadyDeleted)(second.failure), true);
     }
   });
 });
@@ -83,7 +84,7 @@ describe("OrganizationRootOps.restore", () => {
     const result = OrganizationRootOps.restore(seed(), { now: later });
     deepStrictEqual(Result.isFailure(result), true);
     if (Result.isFailure(result)) {
-      deepStrictEqual(result.failure instanceof OrganizationNotDeleted, true);
+      deepStrictEqual(Schema.is(OrganizationNotDeleted)(result.failure), true);
     }
   });
 });

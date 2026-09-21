@@ -7,6 +7,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { approveDeviceGrantHandler } from "@/modules/auth/commands/approve-device-grant.handler.js";
 import { startDeviceGrantHandler } from "@/modules/auth/commands/start-device-grant.handler.js";
@@ -42,7 +43,7 @@ describe("approveDeviceGrantHandler", () => {
   it.effect("fails DeviceGrantNotFound for an unknown user code", () =>
     Effect.gen(function* () {
       const exit = yield* Effect.exit(approveDeviceGrantHandler({ userCode: "ZZZZ-9999", userId }));
-      deepStrictEqual(errorOf(exit) instanceof DeviceGrantNotFound, true);
+      deepStrictEqual(Schema.is(DeviceGrantNotFound)(errorOf(exit)), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -50,7 +51,7 @@ describe("approveDeviceGrantHandler", () => {
     Effect.gen(function* () {
       const { userCode } = yield* startDeviceGrantHandler({ ttlSeconds: -10 });
       const exit = yield* Effect.exit(approveDeviceGrantHandler({ userCode, userId }));
-      deepStrictEqual(errorOf(exit) instanceof DeviceGrantExpired, true);
+      deepStrictEqual(Schema.is(DeviceGrantExpired)(errorOf(exit)), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 });

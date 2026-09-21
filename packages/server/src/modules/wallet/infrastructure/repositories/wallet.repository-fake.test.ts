@@ -6,6 +6,7 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors.js";
 import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id.js";
@@ -59,8 +60,8 @@ describe("WalletRepositoryFake", () => {
           ok(Exit.isFailure(exit));
           if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
             const err = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
-            ok(err instanceof WalletAlreadyExistsForOrganization);
-            if (err instanceof WalletAlreadyExistsForOrganization) {
+            ok(Schema.is(WalletAlreadyExistsForOrganization)(err));
+            if (Schema.is(WalletAlreadyExistsForOrganization)(err)) {
               deepStrictEqual(err.organizationId, acmeId);
             }
           }

@@ -5,6 +5,7 @@
 import * as OrganizationContract from "@org/contracts/api/OrganizationContract";
 import type { OrganizationId } from "@org/contracts/EntityIds";
 import * as Effect from "effect/Effect";
+import * as Schema from "effect/Schema";
 
 import {
   makePaginatedOrganizations,
@@ -67,7 +68,7 @@ export const orgsHandlers = {
   ) =>
     typedHandler(findAllEndpoint, ({ urlParams }) =>
       Effect.succeed(
-        arg instanceof OrganizationContract.PaginatedOrganizations
+        Schema.is(OrganizationContract.PaginatedOrganizations)(arg)
           ? arg
           : makePaginatedOrganizations({
               organizations: arg,
