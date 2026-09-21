@@ -218,7 +218,13 @@
       }
     ],
     "typescript/dot-notation": "error",
-    "typescript/consistent-return": "warn",
+    // A generator's `return yield* error` is Effect's narrowing idiom — the value
+    // travels the Effect channel, not the return — and TypeScript already knows an
+    // exhaustive switch over a closed union returns on every path.
+    "typescript/consistent-return": "off",
+    // Effect v4's Random module carries no UUID; an id is minted from crypto inside
+    // Effect.sync, which is the seam the rule asks for.
+    "effecttsgo/crypto-random-uuid-in-effect": "off",
     "local/no-array-push-spread": "error",
     "local/lucide-icon-suffix": "error",
     "no-use-before-define": "warn",
@@ -517,6 +523,26 @@
       ],
       "rules": {
         "effecttsgo/async-function": "off",
+        "effecttsgo/process-env": "off"
+      }
+    },
+    {
+      // A live client adapter is the seam over a promise SDK — openid-client, Stripe —
+      // and the async closure inside its Effect.tryPromise is that seam, not control
+      // flow that should have been an Effect.
+      "files": [
+        "**/infrastructure/clients/*.client.ts",
+        "**/infrastructure/clients/*.client-live.ts"
+      ],
+      "rules": {
+        "effecttsgo/async-function": "off"
+      }
+    },
+    {
+      // The CLI and MCP's environment boundary, read at call time by synchronous
+      // error mappers that have no runtime to resolve a Config in.
+      "files": ["packages/api-client/src/config.ts"],
+      "rules": {
         "effecttsgo/process-env": "off"
       }
     },

@@ -1,6 +1,9 @@
+// A detached, never-awaited browser launch; nothing here asks the process for its exit.
+// oxlint-disable-next-line effecttsgo/node-builtin-import
 import { spawn } from "node:child_process";
 
 import { makeCliClient, readCredentials, resolveBaseUrl, resolveToken } from "@org/api-client";
+import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
@@ -40,12 +43,16 @@ export const resolveOrg = (explicit: Option.Option<string>) =>
 // fine — the URL is also printed. Skipped in headless/CI contexts
 // (`NO_BROWSER=1` or `CI` set) so automation doesn't spawn a browser.
 export const openBrowser = (url: string) =>
-  Effect.try(() => {
-    if (process.env.NO_BROWSER === "1" || (process.env.CI ?? "") !== "") return;
+  Effect.gen(function* () {
+    const noBrowser = yield* Config.string("NO_BROWSER").pipe(Config.withDefault(""));
+    const ci = yield* Config.string("CI").pipe(Config.withDefault(""));
+    if (noBrowser === "1" || ci !== "") return;
     const opener =
       process.platform === "darwin" ? "open" : process.platform === "win32" ? "cmd" : "xdg-open";
     const args = process.platform === "win32" ? ["/c", "start", "", url] : [url];
-    spawn(opener, args, { stdio: "ignore", detached: true }).unref();
+    yield* Effect.try(() => {
+      spawn(opener, args, { stdio: "ignore", detached: true }).unref();
+    });
   }).pipe(Effect.ignore);
 
 // Show enough of a token to recognise it, never the whole secret.
