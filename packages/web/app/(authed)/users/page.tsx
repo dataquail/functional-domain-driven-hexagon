@@ -20,7 +20,7 @@ const Fallback: React.FC = () => (
   </Stack>
 );
 
-export default function UsersPage() {
+const UsersPage = () => {
   return (
     <PageShell>
       <CardSection title="Create user">
@@ -37,4 +37,6 @@ export default function UsersPage() {
       </CardSection>
     </PageShell>
   );
-}
+};
+
+export default UsersPage;

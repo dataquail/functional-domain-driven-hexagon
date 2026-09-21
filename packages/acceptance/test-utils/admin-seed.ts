@@ -15,11 +15,6 @@ export type SeedAdminParams = {
   readonly adminEmail: string;
 };
 
-export const seedAdminInTestDb = async (params: SeedAdminParams): Promise<void> => {
-  const subject = await lookupZitadelSubject(params);
-  await insertAdminRow({ databaseUrl: params.databaseUrl, subject, adminEmail: params.adminEmail });
-};
-
 const lookupZitadelSubject = async ({
   adminEmail,
   zitadelIssuer,
@@ -101,4 +96,9 @@ const insertAdminRow = async ({
   } finally {
     await client.end();
   }
+};
+
+export const seedAdminInTestDb = async (params: SeedAdminParams): Promise<void> => {
+  const subject = await lookupZitadelSubject(params);
+  await insertAdminRow({ databaseUrl: params.databaseUrl, subject, adminEmail: params.adminEmail });
 };

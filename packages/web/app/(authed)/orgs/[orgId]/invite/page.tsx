@@ -13,11 +13,7 @@ import React from "react";
 import { InviteForm } from "@/features/invite/invite-form/invite-form.view";
 import { fetchMyOrgRole } from "@/services/data-access/my-orgs.server";
 
-export default async function InvitePage({
-  params,
-}: {
-  readonly params: Promise<{ readonly orgId: string }>;
-}) {
+const InvitePage = async ({ params }: { readonly params: Promise<{ readonly orgId: string }> }) => {
   const { orgId: raw } = await params;
   const orgId = OrganizationId.make(raw);
 
@@ -30,4 +26,6 @@ export default async function InvitePage({
       </CardSection>
     </PageShell>
   );
-}
+};
+
+export default InvitePage;

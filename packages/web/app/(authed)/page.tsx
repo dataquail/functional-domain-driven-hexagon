@@ -30,7 +30,7 @@ const Fallback: React.FC = () => (
   </Grid>
 );
 
-export default async function RootPickerPage() {
+const RootPickerPage = async () => {
   const me = await fetchCurrentUser();
   if (me?.isSuperAdmin === true) {
     redirect("/admin/orgs");
@@ -49,4 +49,6 @@ export default async function RootPickerPage() {
       </CardSection>
     </PageShell>
   );
-}
+};
+
+export default RootPickerPage;

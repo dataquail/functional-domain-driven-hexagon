@@ -40,7 +40,7 @@ import { dehydrateQuery } from "./dehydration.shared";
 
 type Prefetchable = {
   readonly name: string;
-  readonly atom: Atom.Atom<AsyncResult.AsyncResult<any, any>>;
+  readonly atom: Atom.Atom<AsyncResult.AsyncResult<unknown, unknown>>;
   readonly value: unknown;
 };
 
