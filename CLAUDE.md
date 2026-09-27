@@ -53,6 +53,7 @@ there, not an edit here.
 | `pnpm architecture:campaigns`                          | the campaign status table — none open today; `init` / `prune` / `allow` take the id, then the root                                     |
 | `pnpm architecture:coverage`                           | how much of the tree each rule family reaches, and the tiers not yet tightened (ADR-0030)                                              |
 | `pnpm architecture:facts <file>`                       | what the parser reads from one file — edges, bindings, members, exports; write new rules against this                                  |
+| `pnpm architecture:browser`                            | the Architecture Browser at http://127.0.0.1:4321 — the tree, every import as an arc, the manifest beside it; redraws as files change  |
 | `pnpm test`                                            | vitest **unit** suite (excludes `*.integration.test.ts`), no DB                                                                        |
 | `DATABASE_URL_TEST=postgres://… pnpm test:integration` | **integration** suite only (`*.integration.test.ts`); hard-fails if no DB                                                              |
 | `DATABASE_URL_TEST=postgres://… pnpm coverage`         | unit + integration merged into ONE coverage number; thresholds in `vitest.config.ts` gate CI                                           |

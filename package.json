@@ -51,7 +51,8 @@
     "architecture:coverage": "architecture coverage packages",
     "architecture:conformance": "architecture conformance packages",
     "architecture:campaigns": "architecture campaigns packages",
-    "architecture:facts": "architecture facts"
+    "architecture:facts": "architecture facts",
+    "architecture:browser": "goodbones-browser"
   },
   "devDependencies": {
     "@babel/cli": "^7.29.7",
@@ -62,10 +63,11 @@
     "@effect/language-service": "0.85.1",
     "@effect/tsgo": "^0.40.0",
     "@effect/vitest": "4.0.0-beta.94",
-    "@goodbones/cli": "0.1.0-beta.10",
-    "@goodbones/core": "0.1.0-beta.10",
-    "@goodbones/oxlint": "0.1.0-beta.10",
-    "@goodbones/typescript": "0.1.0-beta.10",
+    "@goodbones/browser": "0.1.0-beta.3",
+    "@goodbones/cli": "0.1.0-beta.14",
+    "@goodbones/core": "0.1.0-beta.14",
+    "@goodbones/oxlint": "0.1.0-beta.14",
+    "@goodbones/typescript": "0.1.0-beta.14",
     "@types/node": "^25.9.4",
     "@typescript/native": "npm:typescript@7.0.2",
     "@vitest/coverage-v8": "3.2.7",
