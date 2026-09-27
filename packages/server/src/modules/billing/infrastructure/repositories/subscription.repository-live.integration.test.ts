@@ -11,6 +11,7 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { beforeEach } from "vitest";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.js";
 import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
 import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
@@ -18,7 +19,6 @@ import { type SubscriptionRoot } from "@/modules/billing/domain/subscription/sub
 import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
 import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.js";
 import { SubscriptionRepositoryLive } from "@/modules/billing/infrastructure/repositories/subscription.repository-live.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const acme = OrganizationId.make("11111111-1111-1111-1111-111111111111");

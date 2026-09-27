@@ -5,7 +5,7 @@ import * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/platform/ids/user-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 
 import { type UserEvent } from "./user.events.js";
 import { type UserRoot } from "./user.root.js";

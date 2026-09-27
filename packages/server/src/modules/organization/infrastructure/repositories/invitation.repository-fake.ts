@@ -4,11 +4,11 @@ import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
 
+import { type InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
+import { type Specification } from "@/globals/application/ddd/specification.js";
 import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors.js";
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
 import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
-import { type InvitationId } from "@/platform/ids/invitation-id.js";
 
 export const InvitationRepositoryFake = Layer.effect(
   InvitationRepository,

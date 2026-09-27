@@ -6,10 +6,10 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { UsersLookup } from "@/modules/organization/domain/ports/acl/users-lookup.acl.js";
 import { UsersLookupLive } from "@/modules/organization/infrastructure/acl/users-lookup.acl-live.js";
 import { userAccessQueries } from "@/modules/user/user.exports.js";
-import { UserId } from "@/platform/ids/user-id.js";
 
 // `UsersLookupLive` is a thin translation over the user module's dispatch surface: its
 // job is to map that module's `FindUsersUserView[]` into the `UserLookupView[]` shape

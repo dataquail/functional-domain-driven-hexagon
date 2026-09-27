@@ -2,15 +2,15 @@ import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.js";
-import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
-import { type SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
-import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
+import { type Specification } from "@/globals/application/ddd/specification.js";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
 import {
   translateDatabaseErrors,
   translatePersistenceUnavailable,
-} from "@/platform/translate-database-errors.js";
+} from "@/globals/infrastructure/database/translate-database-errors.js";
+import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.js";
+import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
+import { type SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.js";
 
 import * as SubscriptionMapper from "./subscription.mapper.js";
 

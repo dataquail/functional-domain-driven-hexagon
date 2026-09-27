@@ -2,8 +2,8 @@ import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
 import { type FindMembershipPayload } from "@/modules/organization/queries/find-membership.policy-query.js";
-import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 const CountRow = Schema.Struct({ value: Schema.Int });
 

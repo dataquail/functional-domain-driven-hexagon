@@ -1,14 +1,14 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
+import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
+import { type Specification } from "@/globals/application/ddd/specification.js";
 import {
   type UserAlreadyExists,
   type UserNotFound,
 } from "@/modules/user/domain/user/user.errors.js";
 import { type UserRoot } from "@/modules/user/domain/user/user.root.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
-import { type UserId } from "@/platform/ids/user-id.js";
 
 // Dumb persistence, collapsed to the minimal vocabulary: insert/update/delete
 // the aggregate, and read it back by a Specification. Identity and natural-key

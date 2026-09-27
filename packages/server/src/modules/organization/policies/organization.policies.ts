@@ -3,11 +3,11 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.js";
 import { PlatformRolesLive } from "@/modules/organization/infrastructure/acl/platform-roles.acl-live.js";
 import { OrganizationQueries } from "@/modules/organization/organization.query-handlers.js";
 import { type OrganizationAuthzView } from "@/modules/organization/queries/find-organization-by-id.query.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 import { makeIsMember, type UserOrganizationLookup } from "./is-member.policy.js";
 import { makeIsOrgAdmin } from "./is-org-admin.policy.js";

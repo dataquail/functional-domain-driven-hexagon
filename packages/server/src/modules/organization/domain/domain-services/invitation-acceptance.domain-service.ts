@@ -1,6 +1,6 @@
 import * as Result from "effect/Result";
 
-import { type DomainEvent } from "@/platform/ddd/contracts/domain-event.js";
+import { type DomainEvent } from "@/globals/application/ddd/domain-event.js";
 
 import {
   type InvitationAlreadyAccepted,

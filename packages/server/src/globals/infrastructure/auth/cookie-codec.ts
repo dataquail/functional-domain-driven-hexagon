@@ -5,7 +5,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Redacted from "effect/Redacted";
 
-import { EnvVars } from "@/common/env-vars.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
 
 const make = Effect.gen(function* () {
   const env = yield* EnvVars;

@@ -2,9 +2,12 @@ import { CommandBus } from "@effect-server-utils/cqrs";
 import { CliAuthContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
-import { EnvVars } from "@/common/env-vars.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
+import {
+  type EndpointRequest,
+  recoverPersistenceUnavailable,
+} from "@/globals/infrastructure/framework/http/http-endpoint.js";
 import { PollDeviceGrantCommand } from "@/modules/auth/commands/poll-device-grant.command.js";
-import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // CLI adapter (ADR-0005): the poll/exchange endpoint. Maps the device-grant
 // domain errors to the RFC-8628-shaped contract errors the CLI switches on

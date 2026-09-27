@@ -6,7 +6,7 @@ import * as Predicate from "effect/Predicate";
 import * as Redacted from "effect/Redacted";
 import * as openid from "openid-client";
 
-import { EnvVars } from "@/common/env-vars.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
 
 // Wraps openid-client. The only file in the repo that imports `openid-client`.
 // Used exclusively by the auth login + callback paths — once we have a

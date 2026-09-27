@@ -5,13 +5,13 @@ import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { mintApiTokenHandler } from "@/modules/auth/commands/mint-api-token.handler.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import { API_TOKEN_PREFIX } from "@/modules/auth/domain/api-token/api-token.root-ops.js";
 import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
 import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service.js";
 import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake.js";
-import { UserId } from "@/platform/ids/user-id.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const TestLayer = Layer.mergeAll(ApiTokenRepositoryFake, PassThroughUnitOfWork);

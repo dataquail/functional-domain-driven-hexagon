@@ -7,13 +7,13 @@ import * as Layer from "effect/Layer";
 import * as Result from "effect/Result";
 import { beforeEach } from "vitest";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { Spec } from "@/globals/application/ddd/specification.js";
 import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
 import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.js";
 import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification.js";
 import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-live.js";
-import { Spec } from "@/platform/ddd/contracts/specification.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");

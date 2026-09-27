@@ -5,13 +5,13 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Result from "effect/Result";
 
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
+import { Spec } from "@/globals/application/ddd/specification.js";
+import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
 import { type InviteUserPayload } from "@/modules/organization/commands/invite-user.command.js";
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
 import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
 import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
-import { Spec } from "@/platform/ddd/contracts/specification.js";
-import { DomainEventBus } from "@/platform/ddd/event-bus.js";
-import { InvitationId } from "@/platform/ids/invitation-id.js";
 
 export const inviteUserHandler = Effect.fn("inviteUserHandler")(function* (cmd: InviteUserPayload) {
   const repo = yield* InvitationRepository;

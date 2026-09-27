@@ -3,8 +3,8 @@ import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Effect from "effect/Effect";
 import * as HttpServerRequest from "effect/unstable/http/HttpServerRequest";
 
+import { recoverPersistenceUnavailable } from "@/globals/infrastructure/framework/http/http-endpoint.js";
 import { IngestStripeWebhookCommand } from "@/modules/billing/commands/ingest-stripe-webhook.command.js";
-import { recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // Pure translation: read raw body (Stripe's `constructEvent` needs
 // the exact signed payload, so the endpoint opts out of `setPayload`),

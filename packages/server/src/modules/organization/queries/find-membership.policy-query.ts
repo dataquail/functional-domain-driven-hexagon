@@ -2,8 +2,8 @@ import { Query } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { UserId } from "@/platform/ids/user-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 
 // The projection, written down as a schema rather than a bare type alias: this is a
 // published cross-module contract (two other modules' ACL adapters read it), so the

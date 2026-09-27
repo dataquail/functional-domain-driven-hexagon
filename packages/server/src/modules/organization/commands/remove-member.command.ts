@@ -2,9 +2,9 @@ import { Command } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { UserId } from "@/platform/ids/user-id.js";
 
 // Removes another user from an org. `actorUserId` is recorded for
 // span attributes and (Phase 4) the policy layer's grant check; the

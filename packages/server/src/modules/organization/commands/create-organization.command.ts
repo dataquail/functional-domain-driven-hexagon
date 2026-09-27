@@ -2,9 +2,9 @@ import { Command } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { UserId } from "@/platform/ids/user-id.js";
 
 // `actorUserId` is the creator — recorded as the org's first Membership. Carried
 // explicitly rather than pulled from `CurrentUser` so the bus boundary stays uniform;

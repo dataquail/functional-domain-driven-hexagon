@@ -2,7 +2,7 @@ import { CurrentUser, UserAuthMiddleware } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { UserId } from "@/platform/ids/user-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 
 // Test-only middleware. Existing endpoint integration tests don't carry
 // a session cookie; the default returns a deterministic super-admin
@@ -11,7 +11,7 @@ import { UserId } from "@/platform/ids/user-id.js";
 //
 // Phase 1.5 also exposes a non-super-admin variant for authz tests —
 // see `UserAuthMiddlewareFakeAsMember` below. The real (cookie-based)
-// middleware lives in `platform/middlewares/auth-middleware-live.ts`
+// middleware lives in `globals/infrastructure/framework/middlewares/auth-middleware-live.ts`
 // and is exercised by auth-module integration tests + Playwright.
 
 export const makeUserAuthMiddlewareFake = (currentUser: CurrentUser["Service"]) =>

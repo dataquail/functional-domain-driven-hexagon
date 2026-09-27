@@ -3,8 +3,11 @@ import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
+import {
+  type EndpointRequest,
+  recoverPersistenceUnavailable,
+} from "@/globals/infrastructure/framework/http/http-endpoint.js";
 import { LeaveOrganizationCommand } from "@/modules/organization/commands/leave-organization.command.js";
-import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // No `Authz.hasPermissions` check — leaving is a self-action and the
 // membership-existence check (returns 404) is the gate. A caller who

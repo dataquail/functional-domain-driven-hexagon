@@ -5,6 +5,7 @@ import * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import {
   WalletInsufficientFunds,
   WalletInvalidAmount,
@@ -12,7 +13,6 @@ import {
 import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id.js";
 import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.js";
 import { WalletRootOps } from "@/modules/wallet/domain/wallet/wallet.root-ops.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 const walletId = WalletId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const organizationId = OrganizationId.make("11111111-1111-1111-1111-111111111111");

@@ -6,7 +6,8 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as HttpServerRequest from "effect/unstable/http/HttpServerRequest";
 
-import { EnvVars } from "@/common/env-vars.js";
+import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
 import {
   CredentialHash,
   FindApiTokenByHashQuery,
@@ -15,7 +16,6 @@ import {
   TouchApiTokenCommand,
   TouchSessionCommand,
 } from "@/modules/auth/auth.platform.js";
-import { CookieCodec } from "@/platform/auth/cookie-codec.js";
 
 // `Authorization: Bearer <token>` — case-insensitive scheme. Returns the
 // raw token, or null when the header is absent or not a bearer credential.

@@ -3,11 +3,11 @@ import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
 
+import { type Specification } from "@/globals/application/ddd/specification.js";
 import {
   type AuthIdentity,
   AuthIdentityRepository,
 } from "@/modules/auth/domain/auth-identity/auth-identity.repository.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
 
 // The fake exposes a constructor that accepts initial state so tests can
 // seed identities up front, and an in-memory `insert` mirroring the live

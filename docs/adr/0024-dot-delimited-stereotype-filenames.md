@@ -45,7 +45,7 @@ A filename suffix only helps a reader who is looking at the file. The exported i
 
 This applies to the module **stereotype folders** and the **module root** (whose aggregation/composition files — `<feature>.module.ts`, `<feature>.command-handlers.ts`, `<feature>.query-handlers.ts`, `<feature>.event-span-attributes.ts`, `<feature>.shared-deps.ts` — are dotted too, and are the _only_ files the module root admits; `index.ts` stays as the barrel). (ADR-0022 later withdrew the platform ACL tier, so `policies/public/` no longer exists; a module's outbound adapters live in `infrastructure/acl/` and are published to the composition root as a module-root bundle.)
 
-The `platform/`, `common/`, and `test-utils/` trees remain deliberately **excluded**: they hold kernel/wiring/support code with descriptive kebab names, not DDD stereotypes. Forcing a `.stereotype` onto `env-vars.ts` or `unit-of-work.ts` would invent a role that isn't there.
+The `globals/` and `test-utils/` trees remain deliberately **excluded**: they hold kernel/wiring/support code with descriptive kebab names, not DDD stereotypes. Forcing a `.stereotype` onto `env-vars.ts` or `unit-of-work.ts` would invent a role that isn't there.
 
 ## Enforcement
 
@@ -62,7 +62,7 @@ The `project-structure/folder-structure` layout and parity allowlists (ADR-0008)
 - **Leave the mixed dash/dot status quo.** Rejected — the ambiguity and inconsistency were the problem, and every new stereotype widened the split.
 - **Nested-dot compound impls (`.repository.live.ts`).** Considered; rejected in favor of the hyphen-compound (`.repository-live.ts`) so live/fake read as one stereotype alongside `.value-object`/`.event-adapter`, rather than a `repository` stereotype with a `live` qualifier.
 - **Explicit `.command-handler.ts` / `.query-handler.ts`.** Rejected as redundant with the folder; `.handler.ts` is unambiguous in context.
-- **Extend to platform/common/test-utils.** Rejected — those are not DDD stereotypes; a forced suffix would misrepresent kernel/support files.
+- **Extend to globals/test-utils.** Rejected — those are not DDD stereotypes; a forced suffix would misrepresent kernel/support files.
 
 ## Related
 

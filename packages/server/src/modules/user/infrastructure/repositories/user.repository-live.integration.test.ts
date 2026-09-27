@@ -11,13 +11,13 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import { beforeEach } from "vitest";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user/user.errors.js";
 import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
 import { UserRootOps } from "@/modules/user/domain/user/user.root-ops.js";
 import { UserSpecifications } from "@/modules/user/domain/user/user.specification.js";
 import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.js";
 import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live.js";
-import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const aliceId = UserId.make("11111111-1111-1111-1111-111111111111");

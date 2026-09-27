@@ -73,15 +73,15 @@ limits:
   unrestricted: 1
   partial: 0
   coverage: { imports: 0.96, structure: 0.73, members: 0.03, surface: 0.91, graph: 1 }
-  conformance: { residue: 0, vacant: 13, slack: 52, concentration: 0 }
+  conformance: { residue: 0, vacant: 11, slack: 45, concentration: 0 }
 
 aliases:
   "@": packages/server/src
   "~": packages
 
 # Prohibitions that hold for every file in the repo. Three of these used to
-# live on the module root, which meant web, components and the platform
-# kernel were quietly outside them.
+# live on the module root, which meant web, components and the shared
+# globals were quietly outside them.
 deny:
   # A list, not a `|` string: the alternation shorthand is a tree-key
   # feature, and in a pattern the pipe is a literal.
@@ -91,7 +91,8 @@ deny:
       code — if two tests need the same fixture, the fixture belongs beside them in a harness,
       not inside one of the tests.
   - match: "**/node_modules/@effect/sql-pg/**"
-    except: ["~/database/src/**", "~/server/src/platform/persistence/*.test.ts"]
+    except:
+      ["~/database/src/**", "~/server/src/globals/infrastructure/database/criteria-to-sql.test.ts"]
     message: >-
       The SQL driver is an implementation detail of @org/database. Everything else speaks the
       `Database` client and the row-decoding helpers that package publishes; reaching for
@@ -111,7 +112,8 @@ exports:
     message: >-
       Constructing a bus takes the WHOLE routing table, so anything that builds one could answer
       a message with a different module's handler than the composed application would. Only a
-      composition root may (ADR-0006): server.ts, platform/cqrs/cqrs-runtime.ts, or test-utils/.
+      composition root may (ADR-0006): server.ts, globals/infrastructure/cqrs/cqrs-runtime.ts, or
+      test-utils/.
       Depend on the CommandBus/QueryBus Tag instead, or — inside a module — publish that module's
       own surface with Command.dispatcher. The event bus, the unit of work and the
       unhandled-failure sink are fenced for a related reason: a second instance of any of them is
@@ -127,7 +129,7 @@ exports:
       - makeEventBus
       - makeUnitOfWork
       - makeUnhandledFailures
-    except: ["@/server.ts", "@/platform/cqrs/**", "@/test-utils/**", "**/*.test.ts"]
+    except: ["@/server.ts", "@/globals/infrastructure/cqrs/**", "@/test-utils/**", "**/*.test.ts"]
     # Named bindings only, deliberately: neither library publishes a default
     # export, so `import makeCommandBus from` is a type error before it is a
     # policy question. The namespace form is the real way around a symbols
@@ -148,10 +150,10 @@ exports:
     # own allowlist keeps it from naming the module that holds a factory.
     except:
       - "@/server.ts"
-      - "@/platform/cqrs/**"
+      - "@/globals/infrastructure/cqrs/**"
       - "@/test-utils/**"
       - "**/*.test.ts"
-      - "@/platform/ddd/contracts/domain-event.ts"
+      - "@/globals/application/ddd/domain-event.ts"
     probe:
       source: 'import * as Cqrs from "@effect-server-utils/cqrs";'
       symbol: "*"
@@ -231,17 +233,16 @@ graph:
   reach:
     - name: domain-reaches-no-adapter
       message: >-
-        A module's domain transitively reaches an adapter. The domain may only ever see effect,
-        the DDD contracts tier and platform/ids; a path from it to infrastructure/, interface/ or
-        a platform Live means one of the tiers it names has widened past what the domain is
-        allowed to know about.
+        A module's domain transitively reaches an adapter. The domain may only ever see effect
+        and the DDD kernel (globals/application/ddd/); a path from it to infrastructure/,
+        interface/ or a shared Live means one of the tiers it names has widened past what the
+        domain is allowed to know about.
       from: "@/modules/*/domain/**"
       fromNot: "**/*.test.ts"
       to:
         - "@/modules/*/infrastructure/**"
         - "@/modules/*/interface/**"
-        - "@/platform/*-live.ts"
-        - "@/platform/**/*-live.ts"
+        - "@/globals/infrastructure/**/*-live.ts"
     - name: use-cases-reach-no-adapter
       message: >-
         A use case transitively reaches an adapter. Commands, queries, event handlers and sagas
@@ -256,16 +257,16 @@ graph:
       fromNot: "**/*.test.ts"
       to: ["@/modules/*/infrastructure/**", "@/modules/*/interface/**"]
     # The `via` shape: a path is fine as long as it steps onto the
-    # mediating tier. platform/cqrs/ and platform/middlewares/ name a
+    # mediating tier. globals/infrastructure/cqrs/ and framework/ name a
     # module's barrel, and the barrel may reach whatever it publishes;
     # only a route that avoids every barrel is the violation.
-    - name: platform-reaches-modules-only-through-barrels
+    - name: globals-reach-modules-only-through-barrels
       message: >-
-        The platform kernel reaches inside a module without passing through its platform surface.
-        platform/cqrs/ and platform/middlewares/ may name a module's <feature>.platform.ts;
-        anything a route from platform/ touches without going through one is a module internal the
-        module is free to change without telling the kernel.
-      from: "@/platform/**"
+        A shared global reaches inside a module without passing through its platform surface.
+        globals/infrastructure/cqrs/ and globals/infrastructure/framework/ may name a module's
+        <feature>.platform.ts; anything a route from globals/ touches without going through one is
+        a module internal the module is free to change without telling the shared tier.
+      from: "@/globals/**"
       fromNot: "**/*.test.ts"
       to: "@/modules/*/**"
       via: "@/modules/*/*.platform.ts"

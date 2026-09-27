@@ -1,10 +1,10 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.js";
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { SessionRoot } from "@/modules/auth/domain/session/session.root.js";
-import { UserId } from "@/platform/ids/user-id.js";
-import { type ColumnMap } from "@/platform/persistence/criteria-to-sql.js";
 
 // Resolves the specification field names the live repository filters on to
 // physical columns of auth.sessions. Only filterable scalar fields need an

@@ -8,13 +8,13 @@ import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.js";
 import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
 import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
 import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
 import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.js";
 import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 const acme = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const beta = OrganizationId.make("22222222-2222-2222-2222-222222222222");

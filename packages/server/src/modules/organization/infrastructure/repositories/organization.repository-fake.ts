@@ -3,11 +3,11 @@ import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
 
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { type Specification } from "@/globals/application/ddd/specification.js";
 import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.js";
 import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
 import { type OrganizationRoot } from "@/modules/organization/domain/organization/organization.root.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 export const OrganizationRepositoryFake = Layer.effect(
   OrganizationRepository,

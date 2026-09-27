@@ -1,9 +1,9 @@
 import type * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
 
-import { type InvitationId } from "@/platform/ids/invitation-id.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
-import { type UserId } from "@/platform/ids/user-id.js";
+import { type InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
 
 import {
   InvitationAlreadyAccepted,

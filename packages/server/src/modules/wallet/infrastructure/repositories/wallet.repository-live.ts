@@ -2,15 +2,15 @@ import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors.js";
-import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
-import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
-import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
+import { type Specification } from "@/globals/application/ddd/specification.js";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
 import {
   translateDatabaseErrors,
   translatePersistenceUnavailable,
-} from "@/platform/translate-database-errors.js";
+} from "@/globals/infrastructure/database/translate-database-errors.js";
+import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors.js";
+import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
+import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.js";
 
 import * as WalletMapper from "./wallet.mapper.js";
 

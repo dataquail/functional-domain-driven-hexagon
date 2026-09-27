@@ -2,14 +2,17 @@ import { QueryBus } from "@effect-server-utils/cqrs";
 import { CliTodosContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
+import { Actions } from "@/globals/application/ports/actions.js";
+import * as Authz from "@/globals/infrastructure/auth/authz.js";
+import {
+  type EndpointRequest,
+  recoverPersistenceUnavailable,
+} from "@/globals/infrastructure/framework/http/http-endpoint.js";
 import { TodoCollectionResource } from "@/modules/todos/policies/todos.policies.js";
 import {
   ListTodosQuery,
   type ListTodosTodoView,
 } from "@/modules/todos/queries/list-todos.query.js";
-import { Actions } from "@/platform/auth/actions.js";
-import * as Authz from "@/platform/auth/authz.js";
-import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 const toCli = (view: ListTodosTodoView): CliTodosContract.CliTodo =>
   new CliTodosContract.CliTodo({ id: view.id, title: view.title, completed: view.completed });

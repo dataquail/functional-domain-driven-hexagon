@@ -1,9 +1,9 @@
+import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
 import {
   type Predicate,
   Spec,
   type Specification,
-} from "@/platform/ddd/contracts/specification.js";
-import { type UserId } from "@/platform/ids/user-id.js";
+} from "@/globals/application/ddd/specification.js";
 
 import { type RoleValueObject } from "./role.value-object.js";
 import { type RolesRoot } from "./roles.root.js";

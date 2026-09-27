@@ -12,6 +12,7 @@ import * as Schema from "effect/Schema";
 import * as TestClock from "effect/testing/TestClock";
 import { beforeEach } from "vitest";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
 import { SessionRoot } from "@/modules/auth/domain/session/session.root.js";
@@ -22,7 +23,6 @@ import {
   SessionNotFound,
   SessionRevoked,
 } from "@/modules/auth/queries/find-session.query.js";
-import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const sessionId = SessionId.make("22222222-2222-2222-2222-222222222222");

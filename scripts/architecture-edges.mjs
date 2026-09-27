@@ -119,9 +119,9 @@ const REFUSED = [
     `${M}/beta/beta.platform.ts`,
   ],
   [
-    "a command naming a platform Live",
+    "a command naming a shared Live",
     `${M}/alpha/commands/do.handler.ts`,
-    "packages/server/src/platform/notifications/mailer-live.ts",
+    "packages/server/src/globals/infrastructure/email/adapters/mailer-live.ts",
   ],
   [
     "a command reaching for a non-allowed npm package",
@@ -166,7 +166,7 @@ const REFUSED = [
   [
     "a repository Live reaching for the event bus",
     `${M}/alpha/infrastructure/repositories/one.repository-live.ts`,
-    "packages/server/src/platform/ddd/event-bus.ts",
+    "packages/server/src/globals/application/ports/event-bus.ts",
   ],
   [
     "an interface util reaching for a port",
@@ -251,7 +251,7 @@ const REFUSED = [
   [
     "contracts reaching the server",
     "packages/contracts/src/Policy.ts",
-    "packages/server/src/platform/api.ts",
+    "packages/server/src/globals/infrastructure/framework/http/api.ts",
   ],
   [
     "contracts reaching the database",
@@ -269,9 +269,9 @@ const REFUSED = [
     "packages/components/primitives/button.test.tsx",
   ],
   [
-    "a platform file importing a spec file",
-    "packages/server/src/platform/http-endpoint.ts",
-    "packages/server/src/platform/persistence/criteria-to-sql.test.ts",
+    "a globals file importing a spec file",
+    "packages/server/src/globals/infrastructure/framework/http/http-endpoint.ts",
+    "packages/server/src/globals/infrastructure/database/criteria-to-sql.test.ts",
   ],
   [
     "a command importing effect/unstable/rpc",
@@ -349,34 +349,34 @@ const REFUSED = [
     "packages/web/services/atom/api-atoms.shared.ts",
   ],
   [
-    "platform/api.ts → a module",
-    "packages/server/src/platform/api.ts",
+    "framework/http/api.ts → a module",
+    "packages/server/src/globals/infrastructure/framework/http/api.ts",
     `${M}/alpha/interface/http/index.ts`,
   ],
   [
     "cqrs runtime → a module's internals",
-    "packages/server/src/platform/cqrs/cqrs-runtime.ts",
+    "packages/server/src/globals/infrastructure/cqrs/cqrs-runtime.ts",
     `${M}/alpha/commands/do.handler.ts`,
   ],
   [
     "auth kernel → a module's internals",
-    "packages/server/src/platform/auth/authz.ts",
+    "packages/server/src/globals/infrastructure/auth/authz.ts",
     `${M}/alpha/domain/one/one.root.ts`,
   ],
   [
     "a middleware reaching past a barrel",
-    "packages/server/src/platform/middlewares/auth-middleware-live.ts",
+    "packages/server/src/globals/infrastructure/framework/middlewares/auth-middleware-live.ts",
     `${M}/alpha/commands/do.handler.ts`,
   ],
   [
     "persistence → a module",
-    "packages/server/src/platform/persistence/criteria-to-sql.ts",
+    "packages/server/src/globals/infrastructure/database/criteria-to-sql.ts",
     `${M}/alpha/domain/one/one.root.ts`,
   ],
   [
     "a module Layer → the database Live",
     `${M}/alpha/alpha.module.ts`,
-    "packages/server/src/platform/database-live.ts",
+    "packages/server/src/globals/infrastructure/database/database-live.ts",
   ],
   [
     "a module Layer naming another module's barrel",
@@ -434,19 +434,19 @@ const REFUSED = [
     `${M}/alpha/commands/do.handler.ts`,
   ],
   [
-    "platform reaching past a barrel",
-    "packages/server/src/platform/auth/authz.ts",
+    "globals reaching past a barrel",
+    "packages/server/src/globals/infrastructure/auth/authz.ts",
     `${M}/alpha/domain/one/one.root.ts`,
   ],
   [
-    "a use case naming a top-level platform Live",
+    "a use case naming a shared database Live",
     `${M}/alpha/commands/do.handler.ts`,
-    "packages/server/src/platform/transaction-driver-live.ts",
+    "packages/server/src/globals/infrastructure/database/transaction-driver-live.ts",
   ],
   [
     "a command naming a notifications Live",
     `${M}/alpha/commands/do.handler.ts`,
-    "packages/server/src/platform/notifications/mailer-live.ts",
+    "packages/server/src/globals/infrastructure/email/adapters/mailer-live.ts",
   ],
   [
     "module root file → @org/database",
@@ -526,88 +526,88 @@ const REFUSED = [
   ],
   ["test → an undeclared npm package", `${M}/alpha/domain/one/one.root-ops.test.ts`, NPM("lodash")],
   [
-    "platform/ids → the contracts package",
-    "packages/server/src/platform/ids/user-id.ts",
+    "ddd/ids → the contracts package",
+    "packages/server/src/globals/application/ddd/ids/user-id.ts",
     "packages/contracts/src/Policy.ts",
   ],
   [
-    "platform/ids → a module",
-    "packages/server/src/platform/ids/user-id.ts",
+    "ddd/ids → a module",
+    "packages/server/src/globals/application/ddd/ids/user-id.ts",
     `${M}/alpha/alpha.platform.ts`,
   ],
   [
     "ddd/contracts → the event bus",
-    "packages/server/src/platform/ddd/contracts/domain-event.ts",
-    "packages/server/src/platform/ddd/event-bus.ts",
+    "packages/server/src/globals/application/ddd/domain-event.ts",
+    "packages/server/src/globals/application/ports/event-bus.ts",
   ],
   [
     "ddd/contracts → @org/database",
-    "packages/server/src/platform/ddd/contracts/domain-event.ts",
+    "packages/server/src/globals/application/ddd/domain-event.ts",
     "packages/database/src/index.ts",
   ],
   [
     "ddd/event-bus → the contracts tier",
-    "packages/server/src/platform/ddd/event-bus.ts",
-    "packages/server/src/platform/ddd/contracts/specification.ts",
+    "packages/server/src/globals/application/ports/event-bus.ts",
+    "packages/server/src/globals/application/ddd/specification.ts",
   ],
   [
     "auth kernel → @org/database",
-    "packages/server/src/platform/auth/authz.ts",
+    "packages/server/src/globals/infrastructure/auth/authz.ts",
     "packages/database/src/index.ts",
   ],
   [
     "a mail transport → @org/database",
-    "packages/server/src/platform/notifications/ses-mailer-live.ts",
+    "packages/server/src/globals/infrastructure/email/adapters/ses-mailer-live.ts",
     "packages/database/src/index.ts",
   ],
   [
     "a mail transport → an undeclared SDK",
-    "packages/server/src/platform/notifications/ses-mailer-live.ts",
+    "packages/server/src/globals/infrastructure/email/adapters/ses-mailer-live.ts",
     NPM("mailgun"),
   ],
   [
-    "persistence → @org/database",
-    "packages/server/src/platform/persistence/criteria-to-sql.ts",
+    "criteria-to-sql → @org/database",
+    "packages/server/src/globals/infrastructure/database/criteria-to-sql.ts",
     "packages/database/src/index.ts",
   ],
   [
-    "a top-level platform file → a module",
-    "packages/server/src/platform/http-endpoint.ts",
+    "the endpoint helper → a module",
+    "packages/server/src/globals/infrastructure/framework/http/http-endpoint.ts",
     `${M}/alpha/alpha.platform.ts`,
   ],
   [
     "an endpoint → the persistence helpers",
     `${M}/alpha/interface/http/get.endpoint.ts`,
-    "packages/server/src/platform/persistence/criteria-to-sql.ts",
+    "packages/server/src/globals/infrastructure/database/criteria-to-sql.ts",
   ],
   [
-    "common → @org/contracts",
-    "packages/server/src/common/env-vars.ts",
+    "config → @org/contracts",
+    "packages/server/src/globals/infrastructure/config/env-vars.ts",
     "packages/contracts/src/Policy.ts",
   ],
   [
-    "common → @org/database",
-    "packages/server/src/common/token-cipher.ts",
+    "config → @org/database",
+    "packages/server/src/globals/infrastructure/config/env-vars.ts",
     "packages/database/src/index.ts",
   ],
   [
-    "common → the platform kernel",
-    "packages/server/src/common/env-vars.ts",
-    "packages/server/src/platform/ids/user-id.ts",
+    "config → the rest of globals",
+    "packages/server/src/globals/infrastructure/config/env-vars.ts",
+    "packages/server/src/globals/application/ddd/ids/user-id.ts",
   ],
   [
-    "common → a module barrel",
-    "packages/server/src/common/env-vars.ts",
+    "config → a module barrel",
+    "packages/server/src/globals/infrastructure/config/env-vars.ts",
     `${M}/alpha/alpha.platform.ts`,
   ],
   [
-    "platform/api.ts → @org/database",
-    "packages/server/src/platform/api.ts",
+    "framework/http/api.ts → @org/database",
+    "packages/server/src/globals/infrastructure/framework/http/api.ts",
     "packages/database/src/index.ts",
   ],
   [
     "cqrs runtime → @org/database",
-    "packages/server/src/platform/cqrs/cqrs-runtime.ts",
+    "packages/server/src/globals/infrastructure/cqrs/cqrs-runtime.ts",
     "packages/database/src/index.ts",
   ],
   [
@@ -633,7 +633,7 @@ const REFUSED = [
   [
     "api-client reaching the server",
     "packages/api-client/src/client.ts",
-    "packages/server/src/platform/api.ts",
+    "packages/server/src/globals/infrastructure/framework/http/api.ts",
   ],
   [
     "api-client reaching the database",
@@ -643,7 +643,7 @@ const REFUSED = [
   [
     "the CLI reaching the server",
     "packages/cli/src/main.ts",
-    "packages/server/src/platform/api.ts",
+    "packages/server/src/globals/infrastructure/framework/http/api.ts",
   ],
   [
     "the CLI reaching the database",
@@ -651,11 +651,15 @@ const REFUSED = [
     "packages/database/src/index.ts",
   ],
   ["mcp reaching into the CLI", "packages/mcp/src/main.ts", "packages/cli/src/commands/todos.ts"],
-  ["mcp reaching the server", "packages/mcp/src/main.ts", "packages/server/src/platform/api.ts"],
+  [
+    "mcp reaching the server",
+    "packages/mcp/src/main.ts",
+    "packages/server/src/globals/infrastructure/framework/http/api.ts",
+  ],
   [
     "jobs reaching the server",
     "packages/jobs/src/jobs/cleanup.ts",
-    "packages/server/src/platform/api.ts",
+    "packages/server/src/globals/infrastructure/framework/http/api.ts",
   ],
   [
     "jobs reaching a module",
@@ -716,7 +720,7 @@ const ALLOWED = [
   [
     "a command using a notifications port (LEGAL)",
     `${M}/alpha/commands/do.handler.ts`,
-    "packages/server/src/platform/notifications/mailer.ts",
+    "packages/server/src/globals/infrastructure/email/ports/mailer.ts",
   ],
   ["a command using node:crypto (LEGAL)", `${M}/alpha/commands/do.handler.ts`, "node:crypto"],
   [
@@ -887,7 +891,7 @@ const ALLOWED = [
   [
     "a handler map naming a notifications Live (LEGAL)",
     `${M}/alpha/alpha.command-handlers.ts`,
-    "packages/server/src/platform/notifications/mailer-live.ts",
+    "packages/server/src/globals/infrastructure/email/adapters/mailer-live.ts",
   ],
 ];
 
@@ -933,15 +937,23 @@ const GRAPH = [
     [[`${M}/alpha/commands/do.handler.ts`, `${M}/alpha/domain/one/one.repository.ts`]],
   ],
   [
-    "the platform reaching a module Layer past its barrel",
-    "platform-reaches-modules-only-through-barrels",
-    [["packages/server/src/platform/cqrs/cqrs-runtime.ts", `${M}/alpha/alpha.module.ts`]],
+    "globals reaching a module Layer past its barrel",
+    "globals-reach-modules-only-through-barrels",
+    [
+      [
+        "packages/server/src/globals/infrastructure/cqrs/cqrs-runtime.ts",
+        `${M}/alpha/alpha.module.ts`,
+      ],
+    ],
   ],
   [
-    "the platform reaching a module Layer through its barrel (LEGAL)",
+    "globals reaching a module Layer through its barrel (LEGAL)",
     null,
     [
-      ["packages/server/src/platform/cqrs/cqrs-runtime.ts", `${M}/alpha/alpha.platform.ts`],
+      [
+        "packages/server/src/globals/infrastructure/cqrs/cqrs-runtime.ts",
+        `${M}/alpha/alpha.platform.ts`,
+      ],
       [`${M}/alpha/alpha.platform.ts`, `${M}/alpha/alpha.module.ts`],
     ],
   ],
@@ -950,7 +962,10 @@ const GRAPH = [
     "web-never-reaches-the-server",
     [
       ["packages/web/services/atom/api-atoms.shared.ts", "packages/contracts/src/Policy.ts"],
-      ["packages/contracts/src/Policy.ts", "packages/server/src/common/env-vars.ts"],
+      [
+        "packages/contracts/src/Policy.ts",
+        "packages/server/src/globals/infrastructure/config/env-vars.ts",
+      ],
     ],
   ],
   [
@@ -964,11 +979,17 @@ const GRAPH = [
     [["packages/contracts/src/Policy.ts", "packages/database/src/index.ts"]],
   ],
   [
-    "two platform files importing each other",
+    "two globals files importing each other",
     "no-cycles",
     [
-      ["packages/server/src/platform/api.ts", "packages/server/src/platform/http-endpoint.ts"],
-      ["packages/server/src/platform/http-endpoint.ts", "packages/server/src/platform/api.ts"],
+      [
+        "packages/server/src/globals/infrastructure/framework/http/api.ts",
+        "packages/server/src/globals/infrastructure/framework/http/http-endpoint.ts",
+      ],
+      [
+        "packages/server/src/globals/infrastructure/framework/http/http-endpoint.ts",
+        "packages/server/src/globals/infrastructure/framework/http/api.ts",
+      ],
     ],
   ],
   [

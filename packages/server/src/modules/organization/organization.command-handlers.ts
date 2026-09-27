@@ -3,6 +3,7 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { MailerLive } from "@/globals/infrastructure/email/adapters/mailer-live.js";
 import { AcceptInvitationCommand } from "@/modules/organization/commands/accept-invitation.command.js";
 import { acceptInvitationHandler } from "@/modules/organization/commands/accept-invitation.handler.js";
 import { CreateOrganizationCommand } from "@/modules/organization/commands/create-organization.command.js";
@@ -33,7 +34,6 @@ import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/
 import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/repositories/membership.repository-live.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
 import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-live.js";
-import { MailerLive } from "@/platform/notifications/mailer-live.js";
 
 // `PlatformRolesLive` and `InvitationMailerLive` are provided here rather than at the
 // composition root. For the ACL adapter that is a requirement of the design: only a

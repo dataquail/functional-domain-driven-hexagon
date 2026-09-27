@@ -167,9 +167,8 @@ defs:
       - "@/modules/*/policies/**"
 
 message: >-
-  packages/server/src holds server.ts (the process entrypoint), common/ (leaf utilities),
-  platform/ (the cross-cutting kernel), modules/ (the feature modules) and test-utils/ (the
-  test harness). A new folder here is a new tier — declare it deliberately.
+  packages/server/src holds server.ts (the process entrypoint), globals/ (what every module
+  shares), modules/ (the feature modules) and test-utils/ (the test harness). A new folder here is a new tier — declare it deliberately.
 name: kebab-case
 surface:
   # vitest loads a globalSetup by its default export.
@@ -181,7 +180,7 @@ surface:
       barrel nobody reads. Re-export by name. The one exemption is the DDD contracts tier, which
       re-exports a whole domain-safe library module on purpose.
     kinds: [namespace]
-    except: ["@/platform/ddd/contracts/domain-event.ts"]
+    except: ["@/globals/application/ddd/domain-event.ts"]
 children:
   "server.ts":
     imports:
@@ -194,242 +193,299 @@ children:
         of being loaded, so importing it either duplicates the composition or drags the whole
         dependency graph into a cycle. Nothing imports it. A test that needs the composed
         application builds one from test-utils/test-server.ts, which shares the same runtime
-        slice through platform/cqrs/.
+        slice through globals/infrastructure/cqrs/.
       allow: []
 
-  # ── common/ ───────────────────────────────────────────────────────────
-  # Leaf utilities every tier may reach: the typed environment and the token
-  # cipher. Being reachable from everywhere is exactly why this has to stay
-  # the narrowest thing in the repo.
-  "common/":
+  # ── globals/ ──────────────────────────────────────────────────────────
+  # What every module shares, split the way a module is split: application/
+  # is the vocabulary a module's code is written against, infrastructure/ is
+  # the adapters and framework glue a composition root wires. Each tier
+  # states its own dependencies; nothing here is granted wholesale.
+  "globals/":
     message: >-
-      common/ holds leaf utilities with no architectural position: the typed environment and
-      the token cipher. A file here is reachable from every tier, so it may depend on nothing
-      but effect and the node builtins. Anything that needs more than that is not common — it
-      belongs to a tier that can name its dependencies.
-    imports:
-      message: >-
-        A common/ file may name effect, the node builtins and its own siblings. Nothing else —
-        not the contracts package, not the database, not a module, not the platform. That is
-        the whole reason it is safe to reach from anywhere.
-      external: [effect]
-      allow: ["node:**", "@/common/**"]
+      globals/ holds what every module shares, split the way a module is: application/ (the
+      DDD kernel and the ports a use case names) and infrastructure/ (the adapters, framework
+      glue and composition slices the roots wire). A file here is shared by every module, so it
+      earns its place by being needed by more than one.
     children:
-      "env-vars.ts": {}
-      "token-cipher.ts": {}
-      "*.test.ts": { use: server-unit-test-file }
-
-  # ── platform/ ─────────────────────────────────────────────────────────
-  # The cross-cutting kernel every module sits on. Snapshotted from what it
-  # actually imports today: each tier states its own dependencies, so the
-  # `@/platform/**` the modules were granted wholesale is now a set of tiers
-  # that each say what they are.
-  "platform/":
-    message: >-
-      platform/ holds the cross-cutting kernel: branded IDs, the DDD contracts tier, the auth
-      and notification ports, the persistence helpers, and the Lives that bind them. A file
-      here is shared by every module, so it earns its place by being needed by more than one.
-    imports:
-      message: >-
-        A top-level platform file is infrastructure for the whole server: it may name the
-        environment, its own siblings, the contracts package and the database kernel. It must
-        not reach into a module.
-      external: [effect, "@effect-server-utils/cqrs", "@effect-server-utils/unit-of-work"]
-      allow: ["node:**", "@/common/**", "@/platform/**", "~/contracts/**", "~/database/**"]
-    children:
-      # Framework glue: the HttpApi that the contracts describe and the
-      # endpoints implement. It names the contracts and nothing else.
-      "api.ts":
-        imports:
-          reset: true
-          message: >-
-            platform/api.ts assembles the HttpApi from the contracts package. It names the
-            contracts and effect — never a module, never the database.
-          external: [effect]
-          allow: ["~/contracts/**"]
-      "database-live.ts": {}
-      "http-endpoint.ts": {}
-      "transaction-driver-live.ts": {}
-      "translate-database-errors.ts": {}
-      "*.integration.test.ts": { use: server-unit-of-work-test-file }
-
-      # The one tier the domain may name, so the one that must stay smallest.
-      "ids/":
+      "application/":
         message: >-
-          platform/ids/ is the minimal shared kernel for cross-module branded entity IDs
-          (ADR-0002).
-        imports:
-          reset: true
-          message: >-
-            platform/ids/ may only depend on `effect`. Drizzle column types, validation
-            libraries, contract schemas and the like do not belong here — they leak
-            module-internal shape into the one thing every module's domain is allowed to name.
-          external: [effect]
-          allow: ["node:**"]
-        # Dash, not dot: platform's shared IDs are `user-id.ts`, where a
-        # module's own are `todo.id.ts`. Two conventions, snapshotted as they
-        # are rather than harmonised in passing.
+          globals/application/ is the vocabulary a module is written against: ddd/ is the
+          domain-safe kernel (the DDD contracts and the cross-module branded IDs), ports/ the
+          seams a use case or an inbound adapter names but a domain never may.
         children:
-          "*-id.ts": {}
-
-      "ddd/":
-        message: >-
-          platform/ddd/ re-imbues DDD vocabulary on the CQRS and unit-of-work libraries.
-          contracts/ is the domain-safe tier; event-bus.ts sits deliberately outside it.
-        children:
-          "contracts/":
+          "ddd/":
             message: >-
-              platform/ddd/contracts/ is the only part of the kernel a module's domain/ may
-              import (ADR-0006). It re-exports the domain-safe modules of the CQRS and
-              unit-of-work libraries under this application's vocabulary — and the buses are
-              deliberately NOT among them, which is what keeps a bus out of a domain port's
-              requirement channel.
+              globals/application/ddd/ is the only part of globals a module's domain/ may import
+              (ADR-0006). It re-exports the domain-safe modules of the CQRS and unit-of-work
+              libraries under this application's vocabulary — the buses are deliberately NOT
+              among them, which is what keeps a bus out of a domain port's requirement channel —
+              and holds the specification kit and the shared IDs.
             imports:
               reset: true
               message: >-
-                The contracts tier names the two libraries it re-exports and its own siblings.
+                The DDD kernel names the two libraries it re-exports and its own siblings.
                 Anything else here would become reachable from every module's domain.
               external: ["@effect-server-utils/cqrs", "@effect-server-utils/unit-of-work"]
-              allow: ["@/platform/ddd/contracts/**"]
+              allow: ["@/globals/application/ddd/**"]
             children:
               "domain-event.ts": {}
               "persistence-unavailable.ts": {}
               "specification.ts": {}
               "*.test.ts": { use: server-unit-test-file }
-          # One level outside contracts/, and that placement is the rule: it is
-          # what keeps the bus out of reach of the domain.
-          "event-bus.ts":
+
+              # The one tier the domain may name, so the one that must stay smallest.
+              "ids/":
+                message: >-
+                  globals/application/ddd/ids/ is the minimal shared kernel for cross-module
+                  branded entity IDs (ADR-0002).
+                imports:
+                  reset: true
+                  message: >-
+                    ids/ may only depend on `effect`. Column types, validation libraries,
+                    contract schemas and the like do not belong here — they leak module-internal
+                    shape into the one thing every module's domain is allowed to name.
+                  external: [effect]
+                  allow: ["node:**"]
+                # Dash, not dot: the shared IDs are `user-id.ts`, where a
+                # module's own are `todo.id.ts`. Two conventions, snapshotted as
+                # they are rather than harmonised in passing.
+                children:
+                  "*-id.ts": {}
+
+          # One folder outside ddd/, and that placement is the rule: it is
+          # what keeps the bus and the action vocabulary out of reach of the
+          # domain.
+          "ports/":
+            message: >-
+              globals/application/ports/ holds the seams a use case or an inbound adapter names
+              and a domain never may: the domain event bus alias and the authorization action
+              vocabulary.
             imports:
               reset: true
-              message: "The DDD event-bus alias names the CQRS library and nothing else."
+              message: "An application port names the CQRS library and nothing else."
               external: ["@effect-server-utils/cqrs"]
+              allow: []
+            children:
+              "actions.ts": {}
+              "event-bus.ts": {}
 
-      # A composition root, and the one place in platform/ that names every
-      # module — through their barrels, in dependency order.
-      "cqrs/":
+      "infrastructure/":
         message: >-
-          platform/cqrs/ builds the slice of the runtime that production and the test harness
-          share verbatim: the command and query buses, the event bus, the unit of work and the
-          unhandled-failure sink. It is a composition root, which is why the bus factories are
-          reachable here and nowhere else.
+          globals/infrastructure/ holds the shared adapters and framework glue a composition root
+          wires: the auth kernel, the typed environment, the CQRS runtime slice, the database
+          bindings and persistence helpers, the email port with its transports, and the HTTP
+          framework surface. A module
+          names a port or a helper here; only a composition root names a Live.
         imports:
-          reset: true
           message: >-
-            The CQRS runtime folds every module's dispatch surface into one routing table, so
-            it names each module through its barrel and the transaction driver that backs the
-            unit of work. It reaches no module internals and no database client of its own.
+            A shared adapter may name the environment, the rest of globals, the contracts package
+            and the database kernel. It must not reach into a module.
           external: [effect, "@effect-server-utils/cqrs", "@effect-server-utils/unit-of-work"]
-          allow:
-            - "@/modules/*/*.platform.ts"
-            - "@/platform/transaction-driver-live.ts"
-            - "@/platform/ddd/**"
+          allow: ["node:**", "@/globals/**", "~/contracts/**", "~/database/**"]
         children:
-          "cqrs-runtime.ts": {}
-          "*.test.ts": { use: server-use-case-test-file }
-
-      # The other half of the shared composition root: platform/cqrs/ folds the
-      # modules' dispatch surfaces into one routing table, this names the modules
-      # that table routes. Both outer roots consume it.
-      "modules/":
-        message: >-
-          platform/modules/ names the application's modules once, as a set: each module layer
-          already provides the modules it reaches, so there is no order here to state or to get
-          wrong. It also holds the two registries — policies and resource resolvers — that every
-          composition root builds identically.
-        imports:
-          reset: true
-          message: >-
-            The module registry names each module through its barrel and nothing else. It
-            reaches no module internals, and no platform service: a module layer declares its
-            own floor in its requirement channel, which the outer roots satisfy.
-          external:
-            - effect
-            - "@effect-server-utils/authz"
-          allow:
-            - "@/modules/*/*.platform.ts"
-        children:
-          "application-modules.ts": {}
-
-      "auth/":
-        message: >-
-          platform/auth/ is the only server-side authorization configuration: the action
-          vocabulary, the four host types the authz library does not own, and the session
-          cookie codec.
-        imports:
-          reset: true
-          message: >-
-            The auth kernel names the authz library it configures, the contracts that define
-            the caller, its own siblings and the environment. It must not reach into a module.
-          external: [effect, "@effect-server-utils/authz", "@effect-server-utils/unit-of-work"]
-          allow: ["node:**", "@/platform/auth/**", "@/common/**", "~/contracts/**"]
-        children:
-          "actions.ts": {}
-          "authz.ts": {}
-          "cookie-codec.ts": {}
-          "*.test.ts": { use: server-unit-test-file }
-
-      "notifications/":
-        message: >-
-          platform/notifications/ holds the Mailer port, its errors, and the transports that
-          satisfy it. The transport SDKs are enumerated here because this is the tier whose job
-          is to have them.
-        imports:
-          reset: true
-          message: >-
-            A notification transport names its port, its sibling transports, the environment
-            and its own SDK. Adding a transport means adding its SDK to this list, in the open.
-          external: [effect, "@aws-sdk/client-sesv2", nodemailer]
-          allow: ["@/platform/notifications/**", "@/common/**"]
-        children:
-          "mailer.ts": {}
-          "mail-errors.ts": {}
-          "*-live.ts": {}
-          "*.test.ts": { use: server-unit-test-file }
-
-      "middlewares/":
-        message: >-
-          platform/middlewares/ holds the HTTP middlewares wired at the composition root — the
-          one part of the kernel that legitimately names a module, and only through its barrel.
-        imports:
-          reset: true
-          message: >-
-            A middleware resolves the caller before any endpoint runs, so it names the auth
-            module through its barrel — never past it — plus the cookie codec, the contracts
-            that define the caller, and the environment.
-          external: [effect, "@effect-server-utils/cqrs", cookie]
-          allow:
-            - "node:**"
-            - "@/common/**"
-            - "@/platform/auth/**"
-            - "@/modules/*/*.platform.ts"
-            - "~/contracts/**"
-        children:
-          "*-live.ts": {}
-          "*.test.ts": { use: server-unit-test-file }
-
-      "persistence/":
-        message: >-
-          platform/persistence/ turns the specification kit into SQL. It is the seam between a
-          domain predicate and a query, so it names the contracts tier and nothing from a
-          module.
-        imports:
-          reset: true
-          message: >-
-            The persistence helpers name the specification kit they compile and effect. No
-            modules, no database client — the caller supplies that.
-          external: [effect]
-          allow: ["@/platform/ddd/contracts/**", "@/platform/persistence/**"]
-        children:
-          "criteria-to-sql.ts": {}
-          "*.test.ts":
-            surface: [{ use: test-exports-nothing }]
+          "auth/":
+            message: >-
+              globals/infrastructure/auth/ is the only server-side authorization configuration:
+              the four host types the authz library does not own, and the session cookie codec.
+              The action vocabulary they configure lives in globals/application/ports/.
             imports:
               reset: true
               message: >-
-                criteria-to-sql's test asserts the SQL it emits, so it is the one test allowed
-                to name the SQL driver — beside what a unit test may.
-              external: [effect, "@effect/vitest", "@effect/sql-pg"]
-              allow: ["node:**", "@/**"]
+                The auth kernel names the authz library it configures, the action vocabulary,
+                the contracts that define the caller, its own siblings and the environment. It
+                must not reach into a module.
+              external: [effect, "@effect-server-utils/authz", "@effect-server-utils/unit-of-work"]
+              allow:
+                - "node:**"
+                - "@/globals/infrastructure/auth/**"
+                - "@/globals/application/ports/actions.ts"
+                - "@/globals/infrastructure/config/**"
+                - "~/contracts/**"
+            children:
+              "authz.ts": {}
+              "cookie-codec.ts": {}
+
+          # An adapter over the process environment. Every other adapter reads
+          # it, and nothing beneath the adapters may: a use case that wants a
+          # value from here receives it through its port.
+          "config/":
+            message: >-
+              globals/infrastructure/config/ holds the typed environment — the one place the
+              process environment is read. It is reachable from the adapters and the composition
+              roots, never from a domain, a use case or a policy.
+            imports:
+              reset: true
+              message: >-
+                The typed environment names effect and nothing else: it is read by every adapter,
+                so anything it named would become reachable from all of them.
+              external: [effect]
+              allow: []
+            children:
+              "env-vars.ts": {}
+
+          # A composition root, and the one place in globals/ besides
+          # framework/ that names every module — through their barrels.
+          "cqrs/":
+            message: >-
+              globals/infrastructure/cqrs/ builds the slice of the runtime that production and
+              the test harness share verbatim: the command and query buses, the event bus, the
+              unit of work and the unhandled-failure sink. It is a composition root, which is why
+              the bus factories are reachable here and nowhere else.
+            imports:
+              reset: true
+              message: >-
+                The CQRS runtime folds every module's dispatch surface into one routing table, so
+                it names each module through its barrel and the transaction driver that backs the
+                unit of work. It reaches no module internals and no database client of its own.
+              external: [effect, "@effect-server-utils/cqrs", "@effect-server-utils/unit-of-work"]
+              allow:
+                - "@/modules/*/*.platform.ts"
+                - "@/globals/infrastructure/database/transaction-driver-live.ts"
+            children:
+              "cqrs-runtime.ts": {}
+              "*.test.ts": { use: server-use-case-test-file }
+
+          "database/":
+            message: >-
+              globals/infrastructure/database/ binds the database kernel to this server: the
+              Database Live, the transaction driver behind the unit of work, the SqlError
+              translation the ports speak, and the specification-to-SQL compiler.
+            imports:
+              reset: true
+              message: >-
+                The database bindings name the database kernel, the unit-of-work library, the
+                environment and their own siblings. No modules, no contracts.
+              external: [effect, "@effect-server-utils/unit-of-work"]
+              allow:
+                - "@/globals/infrastructure/config/**"
+                - "@/globals/infrastructure/database/**"
+                - "~/database/**"
+            children:
+              # The seam between a domain predicate and a query: it compiles
+              # the specification kit and names no client — the caller
+              # supplies that.
+              "criteria-to-sql.ts":
+                imports:
+                  reset: true
+                  message: >-
+                    criteria-to-sql names the specification kit it compiles and effect. No
+                    modules, no database client — the caller supplies that.
+                  external: [effect]
+                  allow: ["@/globals/application/ddd/specification.ts"]
+              "database-live.ts": {}
+              "transaction-driver-live.ts": {}
+              "translate-database-errors.ts": {}
+              "criteria-to-sql.test.ts":
+                surface: [{ use: test-exports-nothing }]
+                imports:
+                  reset: true
+                  message: >-
+                    criteria-to-sql's test asserts the SQL it emits, so it is the one test allowed
+                    to name the SQL driver — beside what a unit test may.
+                  external: [effect, "@effect/vitest", "@effect/sql-pg"]
+                  allow: ["node:**", "@/**"]
+              "*.integration.test.ts": { use: server-unit-of-work-test-file }
+
+          "email/":
+            message: >-
+              globals/infrastructure/email/ is the shared email seam, split like a module:
+              ports/ holds the Mailer port and its errors, adapters/ the transports that satisfy
+              it.
+            children:
+              "ports/":
+                imports:
+                  reset: true
+                  message: "The Mailer port names effect and its own siblings, nothing else."
+                  external: [effect]
+                  allow: ["@/globals/infrastructure/email/ports/**"]
+                children:
+                  "mailer.ts": {}
+                  "mail-errors.ts": {}
+              "adapters/":
+                message: >-
+                  The transport SDKs are enumerated here because this is the tier whose job is to
+                  have them.
+                imports:
+                  reset: true
+                  message: >-
+                    A mail transport names its port, its sibling transports, the environment and
+                    its own SDK. Adding a transport means adding its SDK to this list, in the open.
+                  external: [effect, "@aws-sdk/client-sesv2", nodemailer]
+                  allow: ["@/globals/infrastructure/email/**", "@/globals/infrastructure/config/**"]
+                children:
+                  "*-live.ts": {}
+
+          "framework/":
+            message: >-
+              globals/infrastructure/framework/ is what is specific to running this application
+              on the Effect HTTP server: the HttpApi the contracts describe, the endpoint
+              helper, the middlewares, and the module registry the composition roots consume.
+            children:
+              "http/":
+                children:
+                  # Framework glue: the HttpApi that the contracts describe and the
+                  # endpoints implement. It names the contracts and nothing else.
+                  "api.ts":
+                    imports:
+                      reset: true
+                      message: >-
+                        api.ts assembles the HttpApi from the contracts package. It names the
+                        contracts and effect — never a module, never the database.
+                      external: [effect]
+                      allow: ["~/contracts/**"]
+                  "http-endpoint.ts":
+                    imports:
+                      reset: true
+                      message: >-
+                        The endpoint helper names the unit-of-work library whose failure it
+                        translates and the contracts' error vocabulary it translates into.
+                      external: [effect, "@effect-server-utils/unit-of-work"]
+                      allow: ["~/contracts/**"]
+
+              "middlewares/":
+                message: >-
+                  framework/middlewares/ holds the HTTP middlewares wired at the composition root
+                  — the one part of globals besides cqrs/ that legitimately names a module, and
+                  only through its barrel.
+                imports:
+                  reset: true
+                  message: >-
+                    A middleware resolves the caller before any endpoint runs, so it names the
+                    auth module through its barrel — never past it — plus the cookie codec, the
+                    contracts that define the caller, and the environment.
+                  external: [effect, "@effect-server-utils/cqrs", cookie]
+                  allow:
+                    - "node:**"
+                    - "@/globals/infrastructure/config/**"
+                    - "@/globals/infrastructure/auth/**"
+                    - "@/modules/*/*.platform.ts"
+                    - "~/contracts/**"
+                children:
+                  "*-live.ts": {}
+
+              # The other half of the shared composition root: cqrs/ folds the
+              # modules' dispatch surfaces into one routing table, this names
+              # the modules that table routes. Both outer roots consume it.
+              "modules/":
+                message: >-
+                  framework/modules/ names the application's modules once, as a set: each module
+                  layer already provides the modules it reaches, so there is no order here to
+                  state or to get wrong. It also holds the two registries — policies and resource
+                  resolvers — that every composition root builds identically.
+                imports:
+                  reset: true
+                  message: >-
+                    The module registry names each module through its barrel and nothing else. It
+                    reaches no module internals, and no shared service: a module layer declares
+                    its own floor in its requirement channel, which the outer roots satisfy.
+                  external:
+                    - effect
+                    - "@effect-server-utils/authz"
+                  allow:
+                    - "@/modules/*/*.platform.ts"
+                children:
+                  "application-modules.ts": {}
 
   # ── modules/ ──────────────────────────────────────────────────────────
   "modules/{module}/":
@@ -455,23 +511,26 @@ children:
       message: >-
         A module's aggregation files compose it: *.module.ts assembles the Layer, the
         *-handlers.ts maps register handlers on the bus. They may name anything inside their
-        own module — including its adapters, which is the whole point — plus the platform ports
+        own module — including its adapters, which is the whole point — plus the shared ports
         and the CQRS vocabulary. They may not reach another module's internals, the database,
         or the contracts package.
       external: [effect, "@effect-server-utils/cqrs"]
       allow:
         - "node:**"
         - "@/modules/{module}/**"
-        - "@/platform/ddd/**"
-        - "@/platform/ids/**"
-        - "@/platform/notifications/**"
+        - "@/globals/application/ddd/**"
+        - "@/globals/application/ports/event-bus.ts"
+        - "@/globals/infrastructure/email/**"
       deny:
-        - match: "@/platform/*-live.ts"
-          except: ["@/server.ts", "@/platform/cqrs/**", "@/test-utils/**", "**/*.test.ts"]
+        - match:
+            - "@/globals/infrastructure/database/*-live.ts"
+            - "@/globals/infrastructure/framework/**/*-live.ts"
+          except:
+            ["@/server.ts", "@/globals/infrastructure/cqrs/**", "@/test-utils/**", "**/*.test.ts"]
           message: >-
             A Live is wired at a composition root, never named by a use case (ADR-0007). Depend
             on the port's Tag; the Layer that satisfies it is assembled in server.ts,
-            platform/cqrs/cqrs-runtime.ts or test-utils/.
+            globals/infrastructure/cqrs/cqrs-runtime.ts or test-utils/.
         # Module-wide, so it holds for tiers that carry no allowlist too.
         - match: "@/modules/*/**"
           matchNot:
@@ -504,13 +563,14 @@ children:
           message: >-
             <feature>.platform.ts is the PLATFORM surface: what the platform names to assemble
             and drive this module — its dispatch-surface Tags, its groups, its Module value, its
-            policy contribution and resolver entries. Only the composition roots and the platform
-            kernel may reach it. A peer module wanting this module's vocabulary reaches
+            policy contribution and resolver entries. Only the composition roots — server.ts,
+            the test harness, and the CQRS and framework slices under globals/ — may reach it. A peer module wanting this module's vocabulary reaches
             <feature>.exports.ts instead, which is the surface published for that purpose;
             reaching in here couples a module to how the application is wired.
           allow:
             - "@/server.ts"
-            - "@/platform/**"
+            - "@/globals/infrastructure/cqrs/**"
+            - "@/globals/infrastructure/framework/**"
             - "@/test-utils/**"
             - "**/*.test.ts"
         surface:
@@ -650,8 +710,8 @@ children:
             Module commands (write-side use cases) may only import: their own module's domain
             and sibling commands, the CQRS library (the message vocabulary a command is declared
             in — ADR-0006), the unit-of-work library (withUnitOfWork, PersistenceUnavailable),
-            the DDD shared-kernel ports under platform/ddd/, platform/ids/, and
-            platform/notifications/ port files. No platform/*-live.ts (Lives are wired at the
+            the DDD kernel under globals/application/ddd/, the event bus port, and the Mailer
+            port under globals/infrastructure/email/ports/. No *-live.ts (Lives are wired at the
             composition root), no infrastructure, no interface, no queries, no event-handlers,
             no @org/contracts (a command's failure channel names domain errors; the endpoint
             maps them to wire errors — ADR-0004), no @org/database, and no other module's barrel
@@ -662,18 +722,9 @@ children:
             - "node:**"
             - "@/modules/{module}/domain/**"
             - "@/modules/{module}/commands/**"
-            - "@/platform/ddd/**"
-            - "@/platform/ids/**"
-            - "@/platform/notifications/**"
-          deny:
-            # The allow/deny pair is how the manifest says "this folder, but
-            # not its Lives" — the nested config needed a lookahead inside
-            # the pattern to say the same thing, where the reason could not
-            # be read.
-            - match: "@/platform/notifications/*-live.ts"
-              message: >-
-                A use case depends on the notification port's Tag, never on the Live that
-                satisfies it (ADR-0007). The Layer is assembled at a composition root.
+            - "@/globals/application/ddd/**"
+            - "@/globals/application/ports/event-bus.ts"
+            - "@/globals/infrastructure/email/ports/**"
 
         children:
           "*.command.ts": {}
@@ -707,9 +758,8 @@ children:
             - "@/modules/{module}/queries/**"
             - "@/modules/{module}/domain/*/*.id.ts"
             - "@/modules/{module}/domain/ports/acl/**"
-            - "@/platform/ddd/**"
-            - "@/platform/ids/**"
-            - "@/platform/translate-database-errors.ts"
+            - "@/globals/application/ddd/**"
+            - "@/globals/infrastructure/database/translate-database-errors.ts"
             - "~/database/**"
 
         children:
@@ -740,8 +790,8 @@ children:
             An event handler is a write-side use case that happens to be triggered by an event
             rather than a command, and it runs in the publisher's fiber and transaction
             (ADR-0007). Its dependency shape is a command's: its own module's domain, its
-            sibling handlers, the CQRS and unit-of-work vocabulary, the DDD shared kernel,
-            platform IDs and notification ports. No infrastructure, no interface, no queries, no
+            sibling handlers, the CQRS and unit-of-work vocabulary, the DDD kernel, the event
+            bus port and the Mailer port. No infrastructure, no interface, no queries, no
             @org/database, no other module's barrel.
           external: [effect, "@effect-server-utils/cqrs", "@effect-server-utils/unit-of-work"]
           allow:
@@ -749,9 +799,9 @@ children:
             - "@/modules/{module}/domain/**"
             - "@/modules/{module}/event-handlers/**"
             - "@/modules/{module}/commands/*.command.ts"
-            - "@/platform/ddd/**"
-            - "@/platform/ids/**"
-            - "@/platform/notifications/**"
+            - "@/globals/application/ddd/**"
+            - "@/globals/application/ports/event-bus.ts"
+            - "@/globals/infrastructure/email/ports/**"
         children:
           "*.handler.ts":
             message: "Every event handler (*.handler.ts) needs a sibling *.handler.test.ts."
@@ -786,7 +836,7 @@ children:
             - "@/modules/{module}/domain/*/*.id.ts"
             - "@/modules/{module}/commands/*.command.ts"
             - "@/modules/{module}/sagas/**"
-            - "@/platform/ids/**"
+            - "@/globals/application/ddd/ids/**"
         children:
           "*.saga.ts":
             message: >-
@@ -826,8 +876,8 @@ children:
             - "@/modules/{module}/domain/ports/acl/**"
             - "@/modules/{module}/infrastructure/acl/**"
             - "@/modules/{module}/domain/*/*.id.ts"
-            - "@/platform/ddd/**"
-            - "@/platform/ids/**"
+            - "@/globals/application/ddd/**"
+            - "@/globals/application/ports/event-bus.ts"
             - "~/database/**"
             - "~/contracts/**"
         children:
@@ -864,7 +914,7 @@ children:
             counterpart it adapts to, so each bucket below states its own; this is the floor
             they share.
           external: [effect]
-          allow: ["node:**", "@/platform/ids/**"]
+          allow: ["node:**", "@/globals/application/ddd/ids/**"]
           deny:
             - match: "@/modules/*/interface/**"
               message: >-
@@ -884,15 +934,15 @@ children:
               allow:
                 - "@/modules/{module}/domain/**"
                 - "@/modules/{module}/infrastructure/repositories/**"
-                - "@/platform/ddd/contracts/**"
-                - "@/platform/persistence/**"
-                - "@/platform/translate-database-errors.ts"
+                - "@/globals/application/ddd/**"
+                - "@/globals/infrastructure/database/criteria-to-sql.ts"
+                - "@/globals/infrastructure/database/translate-database-errors.ts"
                 - "~/database/**"
               deny:
                 - match:
                     - "@/modules/*/commands/**"
                     - "@/modules/*/queries/**"
-                    - "@/platform/ddd/event-bus.ts"
+                    - "@/globals/application/ports/event-bus.ts"
                   message: >-
                     A repository is dumb persistence (ADR-0005). It must not import the module's
                     own use cases or the application-tier buses — a repository that reaches for
@@ -921,8 +971,8 @@ children:
               allow:
                 - "@/modules/{module}/domain/**"
                 - "@/modules/{module}/infrastructure/clients/**"
-                - "@/common/**"
-                - "@/platform/notifications/**"
+                - "@/globals/infrastructure/config/**"
+                - "@/globals/infrastructure/email/ports/**"
                 - "~/contracts/**"
             children:
               "*.client-live.ts": {}
@@ -976,18 +1026,16 @@ children:
               message: >-
                 An inbound adapter translates the wire into a use case: it may name its own
                 module's commands, queries and policies, the contracts it implements, the
-                platform's HTTP and auth surface, and a module-owned service its endpoints
-                consume. It may not reach its own repositories or aggregates directly — that is
+                shared HTTP framework and auth surface, and a module-owned service its
+                endpoints consume. It may not reach its own repositories or aggregates directly — that is
                 what the use case in the middle is for — nor another module's internals.
               external: [effect, "@effect-server-utils/cqrs", cookie]
               allow:
                 - "node:**"
-                - "@/platform/api.ts"
-                - "@/common/**"
-                - "@/platform/http-endpoint.ts"
-                - "@/platform/auth/**"
-                - "@/platform/ddd/**"
-                - "@/platform/ids/**"
+                - "@/globals/infrastructure/config/**"
+                - "@/globals/infrastructure/framework/http/**"
+                - "@/globals/infrastructure/auth/**"
+                - "@/globals/application/**"
                 - "@/modules/{module}/commands/**"
                 - "@/modules/{module}/queries/**"
                 - "@/modules/{module}/policies/**"
@@ -1053,8 +1101,8 @@ children:
                 - "@/modules/{module}/domain/*/*.id.ts"
                 - "@/modules/{module}/commands/*.command.ts"
                 - "@/modules/{module}/*.imports.ts"
-                - "@/platform/ddd/**"
-                - "@/platform/ids/**"
+                - "@/globals/application/ddd/**"
+                - "@/globals/application/ports/event-bus.ts"
             children:
               "*.event-adapter.ts":
                 message: >-
@@ -1077,17 +1125,17 @@ children:
         imports:
           reset: true
           message: >-
-            Module domain may only import from its own subdomain, effect (external), the DDD
-            kernel's contracts tier (platform/ddd/contracts/), and platform/ids/ for branded
-            entity IDs referenced cross-module (ADR-0002). The domain does not name
-            @effect-server-utils/cqrs or @effect-server-utils/unit-of-work at all: their
-            domain-safe modules are re-exported under this application's vocabulary from
-            platform/ddd/contracts/, and the buses and UnitOfWork are deliberately NOT —
+            Module domain may only import from its own subdomain, effect (external), and the
+            DDD kernel (globals/application/ddd/, which holds the branded entity IDs referenced
+            cross-module — ADR-0002). The domain does not name @effect-server-utils/cqrs or
+            @effect-server-utils/unit-of-work at all: their domain-safe modules are re-exported
+            under this application's vocabulary from globals/application/ddd/, and the buses,
+            the action vocabulary and UnitOfWork are deliberately NOT —
             admitting them here would let a domain/ports/ port name a bus in its requirement
             channel. No contracts package, no cross-module domain, no
             infrastructure/commands/queries/event-handlers/interface.
           external: [effect]
-          allow: ["node:**", "@/platform/ddd/contracts/**", "@/platform/ids/**"]
+          allow: ["node:**", "@/globals/application/ddd/**"]
 
         children:
           "domain-services/":
@@ -1167,7 +1215,7 @@ children:
             imports:
               message: >-
                 Within a module's domain, each subdomain folder is a boundary: it may import
-                only its own subdomain, plus effect, platform/ddd/contracts and platform/ids. It
+                only its own subdomain, plus effect and globals/application/ddd/. It
                 may NOT import another subdomain, domain/domain-services/, or domain/ports/.
                 Cross-subdomain composition is the job of a domain service in
                 domain/domain-services/.
@@ -1303,8 +1351,8 @@ children:
     imports:
       reset: true
       message: >-
-        The test harness composes the application, so it names module barrels, the platform
-        kernel and the runtime it runs on. It must not reach past a module's barrel into its
+        The test harness composes the application, so it names module barrels, the shared
+        globals and the runtime it runs on. It must not reach past a module's barrel into its
         internals — the harness is a consumer of the published surface like any other.
       external:
         - effect
@@ -1313,8 +1361,8 @@ children:
         - "@effect-server-utils/cqrs"
       allow:
         - "node:**"
-        - "@/common/**"
-        - "@/platform/**"
+        - "@/globals/infrastructure/config/**"
+        - "@/globals/**"
         - "@/modules/*/*.platform.ts"
         - "@/test-utils/**"
         - "~/contracts/**"

@@ -5,6 +5,8 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
 import { touchApiTokenHandler } from "@/modules/auth/commands/touch-api-token.handler.js";
 import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.js";
 import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
@@ -12,8 +14,6 @@ import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.re
 import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.js";
 import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
 import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake.js";
-import { PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { UserId } from "@/platform/ids/user-id.js";
 
 const apiTokenId = ApiTokenId.make("11111111-1111-1111-1111-111111111111");
 const userId = UserId.make("22222222-2222-2222-2222-222222222222");

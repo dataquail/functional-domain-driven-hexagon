@@ -8,6 +8,8 @@ import * as Layer from "effect/Layer";
 import * as Result from "effect/Result";
 import { beforeEach } from "vitest";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
 import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops.js";
 import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
@@ -20,8 +22,6 @@ import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
 import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-live.js";
 import { findOrganizationMembershipsHandler } from "@/modules/organization/queries/find-organization-memberships.handler.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const orgA = OrganizationId.make("11111111-1111-1111-1111-111111111111");

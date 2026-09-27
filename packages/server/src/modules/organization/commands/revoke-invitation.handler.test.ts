@@ -11,6 +11,9 @@ import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { revokeInvitationHandler } from "@/modules/organization/commands/revoke-invitation.handler.js";
 import {
   InvitationAlreadyAccepted,
@@ -23,9 +26,6 @@ import { type InvitationRoot } from "@/modules/organization/domain/invitation/in
 import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
 import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
 import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake.js";
-import { InvitationId } from "@/platform/ids/invitation-id.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { UserId } from "@/platform/ids/user-id.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
 const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");

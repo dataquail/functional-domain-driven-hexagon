@@ -7,11 +7,11 @@ import * as Layer from "effect/Layer";
 import * as Result from "effect/Result";
 import { beforeEach } from "vitest";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
 import { RolesRootOps } from "@/modules/role/domain/roles/roles.root-ops.js";
 import { RolesRepositoryLive } from "@/modules/role/infrastructure/repositories/roles.repository-live.js";
 import { findUserRolesHandler } from "@/modules/role/queries/find-user-roles.handler.js";
-import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");

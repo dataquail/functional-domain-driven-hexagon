@@ -2,8 +2,8 @@ import { Command } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root.js";
-import { UserId } from "@/platform/ids/user-id.js";
 
 // The resolved inputs the mint core needs. The command is one source of
 // these; the device-flow poll is another (it mints on the user's behalf).

@@ -2,11 +2,11 @@ import { Command } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import {
   OrganizationNotDeleted,
   OrganizationNotFound,
 } from "@/modules/organization/domain/organization/organization.errors.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 export const RestoreOrganizationCommand = Command.make("RestoreOrganizationCommand", {
   payload: { organizationId: OrganizationId },

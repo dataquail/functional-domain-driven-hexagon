@@ -11,7 +11,7 @@ import * as Schema from "effect/Schema";
 import type * as Statement from "effect/unstable/sql/Statement";
 import { beforeEach } from "vitest";
 
-import { TransactionDriverLive } from "@/platform/transaction-driver-live.js";
+import { TransactionDriverLive } from "@/globals/infrastructure/database/transaction-driver-live.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 // The unit of work reads `EventBus` from ambient context to flush it.

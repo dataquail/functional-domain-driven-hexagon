@@ -2,13 +2,13 @@ import { Database, orFail, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { type Specification } from "@/globals/application/ddd/specification.js";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
 import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.js";
 import { type ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import { type ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
-import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
-import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 import * as ApiTokenMapper from "./api-token.mapper.js";
 

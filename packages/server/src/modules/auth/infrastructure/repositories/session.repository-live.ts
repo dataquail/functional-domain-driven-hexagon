@@ -2,13 +2,13 @@ import { Database, orFail, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { type Specification } from "@/globals/application/ddd/specification.js";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
 import { SessionNotFound } from "@/modules/auth/domain/session/session.errors.js";
 import { type SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
 import { type SessionRoot } from "@/modules/auth/domain/session/session.root.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
-import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
-import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 import * as SessionMapper from "./session.mapper.js";
 

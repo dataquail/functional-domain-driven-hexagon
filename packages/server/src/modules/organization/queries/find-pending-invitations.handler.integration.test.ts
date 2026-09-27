@@ -8,6 +8,9 @@ import * as Result from "effect/Result";
 import * as TestClock from "effect/testing/TestClock";
 import { beforeEach } from "vitest";
 
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
 import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
 import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
@@ -15,9 +18,6 @@ import { OrganizationRootOps } from "@/modules/organization/domain/organization/
 import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/repositories/invitation.repository-live.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
 import { findPendingInvitationsHandler } from "@/modules/organization/queries/find-pending-invitations.handler.js";
-import { InvitationId } from "@/platform/ids/invitation-id.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const orgId = OrganizationId.make("55555555-5555-5555-5555-555555555555");

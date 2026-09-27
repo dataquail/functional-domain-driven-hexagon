@@ -1,7 +1,7 @@
 import type * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
 
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 
 import { WalletInsufficientFunds, WalletInvalidAmount } from "./wallet.errors.js";
 import { WalletCreated, WalletCredited, WalletDebited, type WalletEvent } from "./wallet.events.js";

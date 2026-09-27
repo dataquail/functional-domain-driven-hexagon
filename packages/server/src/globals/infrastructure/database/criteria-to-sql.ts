@@ -1,6 +1,6 @@
 import * as Statement from "effect/unstable/sql/Statement";
 
-import { type Criteria } from "@/platform/ddd/contracts/specification.js";
+import { type Criteria } from "@/globals/application/ddd/specification.js";
 
 // Maps a spec's logical field names to physical columns. Values may be
 // qualified (e.g. "m.role") so the fragment slots into a repository query that

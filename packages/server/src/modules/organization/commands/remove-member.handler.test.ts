@@ -10,6 +10,9 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { Spec } from "@/globals/application/ddd/specification.js";
 import { createOrganizationHandler } from "@/modules/organization/commands/create-organization.handler.js";
 import { removeMemberHandler } from "@/modules/organization/commands/remove-member.handler.js";
 import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.js";
@@ -21,9 +24,6 @@ import { makePlatformRolesFake } from "@/modules/organization/infrastructure/acl
 import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.js";
 import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization.repository-fake.js";
 import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.js";
-import { Spec } from "@/platform/ddd/contracts/specification.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { UserId } from "@/platform/ids/user-id.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
 const actorUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");

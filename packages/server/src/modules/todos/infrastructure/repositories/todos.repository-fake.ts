@@ -3,12 +3,12 @@ import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
 
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { type Specification } from "@/globals/application/ddd/specification.js";
 import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.js";
 import { type TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { type TodoRoot } from "@/modules/todos/domain/todo/todo.root.js";
 import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 // Keyed by TodoId; org scoping is enforced by guarding on the stored
 // todo's organizationId — a read/mutate for the wrong org behaves like

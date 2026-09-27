@@ -3,10 +3,10 @@ import * as Layer from "effect/Layer";
 import * as Redacted from "effect/Redacted";
 import * as nodemailer from "nodemailer";
 
-import { EnvVars } from "@/common/env-vars.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
 
-import { MailDeliveryError } from "./mail-errors.js";
-import { Mailer } from "./mailer.js";
+import { MailDeliveryError } from "../ports/mail-errors.js";
+import { Mailer } from "../ports/mailer.js";
 
 // SMTP transport (`MAILER=smtp`). Local dev points it at the Mailpit
 // container (`MAIL_SMTP_HOST=localhost`, port 1025); view delivered mail

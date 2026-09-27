@@ -2,11 +2,14 @@ import { CommandBus } from "@effect-server-utils/cqrs";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
+import { Actions } from "@/globals/application/ports/actions.js";
+import * as Authz from "@/globals/infrastructure/auth/authz.js";
+import {
+  type EndpointRequest,
+  recoverPersistenceUnavailable,
+} from "@/globals/infrastructure/framework/http/http-endpoint.js";
 import { SoftDeleteOrganizationCommand } from "@/modules/organization/commands/soft-delete-organization.command.js";
 import { OrganizationResource } from "@/modules/organization/policies/organization.policies.js";
-import { Actions } from "@/platform/auth/actions.js";
-import * as Authz from "@/platform/auth/authz.js";
-import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 export const softDeleteEndpoint = Effect.fn("OrganizationLive.softDelete")(
   function* (request: EndpointRequest<typeof OrganizationContract.Group, "softDelete">) {

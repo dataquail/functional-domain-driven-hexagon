@@ -152,7 +152,8 @@ const PROBES = [
     // unenforced while being configured for it.
     rule: "local/no-deep-relative-imports",
     file: "packages/server/src/zzprobe/deep/probe.ts",
-    source: 'import { probe as p } from "../../platform/ids";\n\nexport const probe = p;\n',
+    source:
+      'import { probe as p } from "../../globals/application/ddd/ids";\n\nexport const probe = p;\n',
   },
   {
     rule: "local/no-deep-relative-imports",

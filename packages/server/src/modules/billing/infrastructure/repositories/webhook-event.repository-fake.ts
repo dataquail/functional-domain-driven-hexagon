@@ -4,12 +4,12 @@ import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
 
+import { type Specification } from "@/globals/application/ddd/specification.js";
 import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors.js";
 import {
   type WebhookEventRecord,
   WebhookEventRepository,
 } from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
 
 export const WebhookEventRepositoryFake = Layer.effect(
   WebhookEventRepository,

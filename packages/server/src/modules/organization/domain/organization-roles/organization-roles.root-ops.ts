@@ -1,7 +1,7 @@
 import * as Result from "effect/Result";
 
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
-import { type UserId } from "@/platform/ids/user-id.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
 
 import {
   AlreadyHasOrganizationRole,

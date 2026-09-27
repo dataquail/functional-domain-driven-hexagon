@@ -2,12 +2,8 @@ import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { EnvVars } from "@/common/env-vars.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
 
-// Production binding for the `Database` Tag. Exposed at platform/
-// (not inline in server.ts) so module-root handler-registration files
-// can compose it into their wrapping chains when discharging persistence
-// dependencies upfront (ADR pending — Stage D-α handler encapsulation).
 export const DatabaseLive = Layer.unwrap(
   EnvVars.pipe(
     Effect.map((envVars) =>

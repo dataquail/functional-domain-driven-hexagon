@@ -1,8 +1,8 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { type UserId } from "@/platform/ids/user-id.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
 
 // ADR-0022 outbound port. Billing's policies give super-admins a bypass, which
 // means asking the role module a question. Stated as the single boolean billing

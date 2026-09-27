@@ -1,7 +1,7 @@
 import * as DateTime from "effect/DateTime";
 
-import { Spec, type Specification } from "@/platform/ddd/contracts/specification.js";
-import { type UserId } from "@/platform/ids/user-id.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { Spec, type Specification } from "@/globals/application/ddd/specification.js";
 
 import { type ApiTokenId } from "./api-token.id.js";
 import { type ApiTokenRoot } from "./api-token.root.js";

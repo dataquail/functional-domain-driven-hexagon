@@ -2,8 +2,8 @@ import { Query } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
-import { UserId } from "@/platform/ids/user-id.js";
 
 // Secret-free projection: only the display `prefix` and metadata, never
 // the `token_hash`.

@@ -3,8 +3,11 @@ import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
+import {
+  type EndpointRequest,
+  recoverPersistenceUnavailable,
+} from "@/globals/infrastructure/framework/http/http-endpoint.js";
 import { AcceptInvitationCommand } from "@/modules/organization/commands/accept-invitation.command.js";
-import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // Sits in the standalone InvitationGroup (`/api/invitations/:token/accept`)
 // because the caller doesn't have a membership yet and the URL is

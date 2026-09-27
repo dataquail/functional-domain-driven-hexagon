@@ -3,7 +3,7 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 
 // Billing exposes a single org-scoped policy resource. The "resource"
 // identity IS the org id — there is nothing to load before the check,

@@ -8,7 +8,7 @@ import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
-import { Api } from "@/platform/api.js";
+import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { SUPER_ADMIN_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 

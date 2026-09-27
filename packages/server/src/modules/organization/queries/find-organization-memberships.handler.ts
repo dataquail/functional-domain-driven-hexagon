@@ -1,13 +1,13 @@
 import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
 import { UsersLookup } from "@/modules/organization/domain/ports/acl/users-lookup.acl.js";
 import {
   type FindOrganizationMembershipsPayload,
   type OrganizationMemberView,
 } from "@/modules/organization/queries/find-organization-memberships.query.js";
-import { UserId } from "@/platform/ids/user-id.js";
-import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 export const findOrganizationMembershipsHandler = Effect.fn("findOrganizationMembershipsHandler")(
   function* (query: FindOrganizationMembershipsPayload) {

@@ -11,6 +11,10 @@ import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { Spec } from "@/globals/application/ddd/specification.js";
 import { acceptInvitationHandler } from "@/modules/organization/commands/accept-invitation.handler.js";
 import {
   InvitationAlreadyAccepted,
@@ -29,10 +33,6 @@ import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/o
 import { makePlatformRolesFake } from "@/modules/organization/infrastructure/acl/platform-roles.acl-fake.js";
 import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake.js";
 import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.js";
-import { Spec } from "@/platform/ddd/contracts/specification.js";
-import { InvitationId } from "@/platform/ids/invitation-id.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { UserId } from "@/platform/ids/user-id.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
 const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");

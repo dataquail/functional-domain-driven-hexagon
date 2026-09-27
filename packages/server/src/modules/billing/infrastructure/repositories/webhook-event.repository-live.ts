@@ -2,17 +2,17 @@ import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { type Specification } from "@/globals/application/ddd/specification.js";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
+import {
+  translateDatabaseErrors,
+  translatePersistenceUnavailable,
+} from "@/globals/infrastructure/database/translate-database-errors.js";
 import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors.js";
 import {
   type WebhookEventRecord,
   WebhookEventRepository,
 } from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
-import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
-import {
-  translateDatabaseErrors,
-  translatePersistenceUnavailable,
-} from "@/platform/translate-database-errors.js";
 
 import * as WebhookEventMapper from "./webhook-event.mapper.js";
 

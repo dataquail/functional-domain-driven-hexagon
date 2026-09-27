@@ -14,11 +14,11 @@ import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
 import { type organizationAccessDomainEvents } from "@/modules/organization/organization.exports.js";
 import { CreateWalletCommand } from "@/modules/wallet/commands/create-wallet.command.js";
 import { OrganizationEventAdapterLive } from "@/modules/wallet/interface/events/organization.event-adapter.js";
-import { DomainEventBus } from "@/platform/ddd/event-bus.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { RecordedCommands, RecordingCommandBus } from "@/test-utils/recording-command-bus.js";
 
 const TestLayer = OrganizationEventAdapterLive.pipe(

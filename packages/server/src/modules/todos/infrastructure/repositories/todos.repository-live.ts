@@ -2,14 +2,14 @@ import { Database, orFail, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { type Specification } from "@/globals/application/ddd/specification.js";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
 import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.js";
 import { type TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { type TodoRoot } from "@/modules/todos/domain/todo/todo.root.js";
 import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
-import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
-import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 import * as TodoMapper from "./todo.mapper.js";
 

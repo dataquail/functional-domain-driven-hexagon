@@ -5,11 +5,11 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.js";
 import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
 import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant/device-grant.root-ops.js";
 import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification.js";
-import { UserId } from "@/platform/ids/user-id.js";
 
 import { DeviceGrantRepositoryFake } from "./device-grant.repository-fake.js";
 

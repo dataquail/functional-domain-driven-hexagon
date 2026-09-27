@@ -71,7 +71,7 @@ So they sit on different planes, each with its own inbound rule:
 - `<feature>.exports.ts` — the PEER surface. `Query.subsetOf(roleQueryGroup, "FindUserRolesQuery")` and domain vocabulary a peer names. Reachable only from a consumer's `infrastructure/acl/**` or `interface/events/**`. No Layer.
 - `<feature>.module.ts` — the wiring plane, in both directions. It holds this module's Layers and names other modules' `<feature>.module.ts` to provide theirs: assembly talking to assembly. Reachable only from another module's `<feature>.module.ts` and from its own `<feature>.platform.ts`.
 - `<feature>.imports.ts` — the inbound gateway on the coupling plane, mirroring the peer surface. The messages this module dispatches, the domain events it reacts to, and any service a peer offers. It is the only file in the module that may name another module's vocabulary, so an ACL adapter and an event adapter read it rather than reaching a foreign surface. No Layers: a Layer is not something a bounded context asks of another.
-- `<feature>.platform.ts` — the PLATFORM surface. Reachable only from `@/server.ts`, `@/platform/**`, `@/test-utils/**` and tests. There is no `index.ts` in a module root: every file there is a dot-delimited stereotype named for the plane it serves (ADR-0024).
+- `<feature>.platform.ts` — the PLATFORM surface. Reachable only from `@/server.ts`, `globals/infrastructure/{cqrs,framework}/**`, `@/test-utils/**` and tests. There is no `index.ts` in a module root: every file there is a dot-delimited stereotype named for the plane it serves (ADR-0024).
 
 `architecture/imports` refuses every other combination, and `lint:edges` pins both directions: a module file may name another module file, an ACL adapter or a policy may not.
 
@@ -100,4 +100,4 @@ What the Builder did that nothing replaces: `UnusedExports` — refusing an expo
 - The module graph moves out of the composition root and into the modules, next to the ACL adapters that create the edges. Reading `auth.module.ts` now tells you what auth depends on.
 - Neither composition root states an order, so the two cannot disagree about one, and neither parameterizes the shared assembly on what differs between them.
 - The `@org/module` package is deleted.
-- `platform/modules/application-modules.ts` no longer displays the whole graph in one place. `pnpm architecture:facts` and the goodbones graph rules are where you ask that question now.
+- `globals/infrastructure/framework/modules/application-modules.ts` no longer displays the whole graph in one place. `pnpm architecture:facts` and the goodbones graph rules are where you ask that question now.

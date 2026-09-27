@@ -20,7 +20,7 @@ For each aggregate: a port in its subdomain folder (`domain/<subdomain>/`), a `L
 
 ### Port
 
-The port lives in its aggregate's subdomain folder, `domain/<subdomain>/<feature>.repository.ts`, as a `Context.Service`. Its method signatures are typed in terms of domain aggregates, not rows. The transient-store failure is the domain-language `PersistenceUnavailable` (from `platform/ddd/contracts/`). Absence is a plain `null` (for `findOne`) or an empty array (for `findMany`); mapping a `null` to a domain `NotFound` is the use case's job, since which not-found error applies depends on the caller.
+The port lives in its aggregate's subdomain folder, `domain/<subdomain>/<feature>.repository.ts`, as a `Context.Service`. Its method signatures are typed in terms of domain aggregates, not rows. The transient-store failure is the domain-language `PersistenceUnavailable` (from `globals/application/ddd/`). Absence is a plain `null` (for `findOne`) or an empty array (for `findMany`); mapping a `null` to a domain `NotFound` is the use case's job, since which not-found error applies depends on the caller.
 
 ```ts
 export type UserRepositoryShape = {
@@ -50,7 +50,7 @@ There are no `findOneById` / `findManyByX` / `findOneOpenBy…` methods. Identit
 
 ### Specification: one predicate, two interpreters
 
-A `Specification<T>` (in `platform/ddd/contracts/`) is a **callable predicate that also carries a translatable `Criteria` AST**. Builders — `Spec.eq`, `Spec.isNull`, `Spec.isNotNull`, `Spec.and`, `Spec.or`, `Spec.not` — produce both halves at once, so a spec is defined once and used three ways:
+A `Specification<T>` (in `globals/application/ddd/`) is a **callable predicate that also carries a translatable `Criteria` AST**. Builders — `Spec.eq`, `Spec.isNull`, `Spec.isNotNull`, `Spec.and`, `Spec.or`, `Spec.not` — produce both halves at once, so a spec is defined once and used three ways:
 
 - **Domain guards** (`RootOps`) call it as a predicate: `if (InvitationSpecifications.isAccepted(invitation)) …`.
 - **The fake repository** filters in memory with the same object: `rows.find(spec)`.

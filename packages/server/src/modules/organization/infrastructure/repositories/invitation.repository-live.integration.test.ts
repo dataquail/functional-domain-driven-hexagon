@@ -12,16 +12,16 @@ import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 import { beforeEach } from "vitest";
 
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { Spec } from "@/globals/application/ddd/specification.js";
 import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors.js";
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
 import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.js";
 import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
 import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
 import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/repositories/invitation.repository-live.js";
-import { Spec } from "@/platform/ddd/contracts/specification.js";
-import { InvitationId } from "@/platform/ids/invitation-id.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const invitationId = InvitationId.make("44444444-4444-4444-4444-444444444444");

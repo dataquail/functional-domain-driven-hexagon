@@ -1,9 +1,9 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.js";
 import { OrganizationRoot } from "@/modules/organization/domain/organization/organization.root.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { type ColumnMap } from "@/platform/persistence/criteria-to-sql.js";
 
 type Row = RowSchemas.OrganizationRow;
 

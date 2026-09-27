@@ -6,10 +6,10 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { AuthIdentityRepository } from "@/modules/auth/domain/auth-identity/auth-identity.repository.js";
 import { AuthIdentitySpecifications } from "@/modules/auth/domain/auth-identity/auth-identity.specification.js";
 import { AuthIdentityRepositoryLive } from "@/modules/auth/infrastructure/repositories/auth-identity.repository-live.js";
-import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");

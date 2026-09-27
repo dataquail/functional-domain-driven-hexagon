@@ -1,12 +1,12 @@
 import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
 import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 import {
   type ApiTokenView,
   type ListMyApiTokensPayload,
 } from "@/modules/auth/queries/list-my-api-tokens.query.js";
-import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 const toView = (row: RowSchemas.ApiTokenRow): ApiTokenView => ({
   id: ApiTokenId.make(row.id),

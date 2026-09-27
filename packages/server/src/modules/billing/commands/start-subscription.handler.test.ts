@@ -9,6 +9,7 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { startSubscriptionHandler } from "@/modules/billing/commands/start-subscription.handler.js";
 import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.js";
 import { type SubscriptionStarted } from "@/modules/billing/domain/subscription/subscription.events.js";
@@ -16,7 +17,6 @@ import { SubscriptionRepository } from "@/modules/billing/domain/subscription/su
 import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.js";
 import { BillingGatewayFake } from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake.js";
 import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
 const acme = OrganizationId.make("11111111-1111-1111-1111-111111111111");

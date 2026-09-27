@@ -2,7 +2,7 @@ import { Command } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/platform/ids/organization-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 
 // Creates the wallet for a freshly-created organization. Dispatched by the
 // organization → wallet event adapter (interface/events), not by an HTTP

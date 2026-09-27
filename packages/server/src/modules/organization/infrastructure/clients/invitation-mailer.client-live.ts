@@ -4,9 +4,9 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { createElement } from "react";
 
-import { EnvVars } from "@/common/env-vars.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
+import { Mailer } from "@/globals/infrastructure/email/ports/mailer.js";
 import { InvitationMailer } from "@/modules/organization/domain/ports/clients/invitation-mailer.client.js";
-import { Mailer } from "@/platform/notifications/mailer.js";
 
 import { InvitationEmail } from "./invitation.email.js";
 

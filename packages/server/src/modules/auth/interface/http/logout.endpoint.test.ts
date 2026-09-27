@@ -4,7 +4,7 @@ import { describe, expect, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { CookieCodec } from "@/platform/auth/cookie-codec.js";
+import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.js";
 
 import { logoutEndpoint } from "./logout.endpoint.js";
 

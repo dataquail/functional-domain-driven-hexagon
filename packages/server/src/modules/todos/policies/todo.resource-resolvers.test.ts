@@ -11,9 +11,9 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { type TodoOrganizationView } from "@/modules/todos/queries/find-todo-organization.query.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 import { TodoResolverEntry, TodoResolverEntryLive } from "./todo.resource-resolvers.js";
 

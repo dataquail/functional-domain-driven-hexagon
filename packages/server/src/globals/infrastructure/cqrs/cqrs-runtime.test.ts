@@ -34,8 +34,8 @@ declare global {
 // `cqrs-runtime.ts` covers the other direction: a group that exists but was
 // never merged at the composition root.
 const declaringFiles = {
-  ...import.meta.glob("../../modules/*/commands/*.command.ts", { eager: true }),
-  ...import.meta.glob("../../modules/*/queries/*.query.ts", { eager: true }),
+  ...import.meta.glob("../../../modules/*/commands/*.command.ts", { eager: true }),
+  ...import.meta.glob("../../../modules/*/queries/*.query.ts", { eager: true }),
 };
 
 const groupSources = {

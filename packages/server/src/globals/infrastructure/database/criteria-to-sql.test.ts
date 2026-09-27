@@ -5,7 +5,7 @@ import { describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as Statement from "effect/unstable/sql/Statement";
 
-import { Spec } from "@/platform/ddd/contracts/specification.js";
+import { Spec } from "@/globals/application/ddd/specification.js";
 
 import { type ColumnMap, criteriaToWhere } from "./criteria-to-sql.js";
 

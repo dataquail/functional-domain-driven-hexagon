@@ -4,12 +4,12 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { type Specification } from "@/globals/application/ddd/specification.js";
 import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors.js";
 import { type WalletId } from "@/modules/wallet/domain/wallet/wallet.id.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
 import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 const findByOrganizationIdIn = (
   store: HashMap.HashMap<WalletId, WalletRoot>,

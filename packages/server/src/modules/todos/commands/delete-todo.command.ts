@@ -2,10 +2,10 @@ import { Command } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.js";
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { UserId } from "@/platform/ids/user-id.js";
 
 export const DeleteTodoCommand = Command.make("DeleteTodoCommand", {
   payload: {

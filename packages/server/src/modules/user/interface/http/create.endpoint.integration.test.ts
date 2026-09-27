@@ -10,8 +10,8 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
+import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { FindUsersQuery } from "@/modules/user/queries/find-users.query.js";
-import { Api } from "@/platform/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 
 const basePayload = new UserContract.CreateUserPayload({

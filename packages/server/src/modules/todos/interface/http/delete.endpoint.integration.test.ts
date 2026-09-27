@@ -11,8 +11,8 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
+import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
-import { Api } from "@/platform/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 

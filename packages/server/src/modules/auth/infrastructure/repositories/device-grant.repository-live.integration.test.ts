@@ -8,12 +8,12 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.js";
 import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
 import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant/device-grant.root-ops.js";
 import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification.js";
 import { DeviceGrantRepositoryLive } from "@/modules/auth/infrastructure/repositories/device-grant.repository-live.js";
-import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");

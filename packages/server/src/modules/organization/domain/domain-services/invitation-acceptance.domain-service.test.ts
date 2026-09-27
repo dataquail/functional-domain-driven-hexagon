@@ -5,9 +5,9 @@ import * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
-import { InvitationId } from "@/platform/ids/invitation-id.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { UserId } from "@/platform/ids/user-id.js";
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 
 import { InvitationAlreadyAccepted, InvitationRevoked } from "../invitation/invitation.errors.js";
 import { InvitationRootOps } from "../invitation/invitation.root-ops.js";

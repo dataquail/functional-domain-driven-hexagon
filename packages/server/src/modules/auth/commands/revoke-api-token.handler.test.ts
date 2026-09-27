@@ -9,6 +9,7 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { mintApiTokenHandler } from "@/modules/auth/commands/mint-api-token.handler.js";
 import { revokeApiTokenHandler } from "@/modules/auth/commands/revoke-api-token.handler.js";
 import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.js";
@@ -16,7 +17,6 @@ import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
 import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake.js";
-import { UserId } from "@/platform/ids/user-id.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const otherUserId = UserId.make("22222222-2222-2222-2222-222222222222");

@@ -1,4 +1,4 @@
-import { Spec, type Specification } from "@/platform/ddd/contracts/specification.js";
+import { Spec, type Specification } from "@/globals/application/ddd/specification.js";
 
 import { type SessionId } from "./session.id.js";
 import { type SessionRoot } from "./session.root.js";

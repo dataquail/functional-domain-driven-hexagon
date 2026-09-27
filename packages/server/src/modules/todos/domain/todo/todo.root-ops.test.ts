@@ -3,9 +3,9 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { TodoRootOps } from "@/modules/todos/domain/todo/todo.root-ops.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 const todoId = TodoId.make("todo-1");
 const organizationId = OrganizationId.make("11111111-1111-1111-1111-111111111111");

@@ -2,11 +2,11 @@ import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
+import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
 import { type SyncSubscriptionPayload } from "@/modules/billing/commands/sync-subscription.command.js";
 import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
 import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
 import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.js";
-import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 
 // Syncs the local Subscription projection to a Stripe-reported status.
 // Out-of-order deliveries — a status update for a subscription whose

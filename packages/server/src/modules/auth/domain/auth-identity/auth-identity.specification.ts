@@ -1,4 +1,4 @@
-import { Spec, type Specification } from "@/platform/ddd/contracts/specification.js";
+import { Spec, type Specification } from "@/globals/application/ddd/specification.js";
 
 import { type AuthIdentity } from "./auth-identity.repository.js";
 

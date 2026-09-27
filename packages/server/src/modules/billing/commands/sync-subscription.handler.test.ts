@@ -6,13 +6,13 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { syncSubscriptionHandler } from "@/modules/billing/commands/sync-subscription.handler.js";
 import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
 import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
 import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
 import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.js";
 import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
 const acme = OrganizationId.make("11111111-1111-1111-1111-111111111111");

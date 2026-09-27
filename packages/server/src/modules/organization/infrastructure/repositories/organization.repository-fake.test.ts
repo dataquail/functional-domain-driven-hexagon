@@ -9,12 +9,12 @@ import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { Spec } from "@/globals/application/ddd/specification.js";
 import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.js";
 import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
 import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.js";
 import { OrganizationSpecifications } from "@/modules/organization/domain/organization/organization.specification.js";
-import { Spec } from "@/platform/ddd/contracts/specification.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 import { OrganizationRepositoryFake } from "./organization.repository-fake.js";
 

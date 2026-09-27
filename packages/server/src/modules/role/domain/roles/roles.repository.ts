@@ -1,9 +1,9 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
+import { type Specification } from "@/globals/application/ddd/specification.js";
 import { type RolesRoot } from "@/modules/role/domain/roles/roles.root.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
 
 // Dumb persistence, collapsed to upsert + spec-based read. The aggregate is
 // multi-row (one `platform.roles` row per granted role) keyed on `userId`.

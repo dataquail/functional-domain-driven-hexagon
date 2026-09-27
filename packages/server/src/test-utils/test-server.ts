@@ -4,18 +4,18 @@ import * as Layer from "effect/Layer";
 import * as HttpRouter from "effect/unstable/http/HttpRouter";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 
-import { EnvVars } from "@/common/env-vars.js";
-import { BillingGatewayFake } from "@/modules/billing/billing.platform.js";
-import { Api } from "@/platform/api.js";
-import { CookieCodec } from "@/platform/auth/cookie-codec.js";
+import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
 import {
   CommandBusLive,
   DomainEventBusLive,
   QueryBusLive,
   UnhandledFailuresLive,
   UnitOfWorkLive,
-} from "@/platform/cqrs/cqrs-runtime.js";
-import { applicationModules } from "@/platform/modules/application-modules.js";
+} from "@/globals/infrastructure/cqrs/cqrs-runtime.js";
+import { Api } from "@/globals/infrastructure/framework/http/api.js";
+import { applicationModules } from "@/globals/infrastructure/framework/modules/application-modules.js";
+import { BillingGatewayFake } from "@/modules/billing/billing.platform.js";
 import {
   UserAuthMiddlewareFake,
   UserAuthMiddlewareFakeAsMember,
