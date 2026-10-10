@@ -7,11 +7,17 @@ import {
   mergeDispatchTables,
   QueryBus,
 } from "@effect-server-utils/cqrs";
-import { makeUnitOfWork } from "@effect-server-utils/unit-of-work";
+import { makeDurableUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { TransactionDriverLive } from "@/globals/infrastructure/database/transaction-driver-live.js";
+import { DeliveryLedgerLive } from "@/globals/infrastructure/events/delivery-ledger-live.js";
+import {
+  InProcessDomainEventDeliveryLive,
+  InProcessDomainEventQueueLive,
+} from "@/globals/infrastructure/events/in-process-domain-event-queue-live.js";
+import { OutboxTransportLive } from "@/globals/infrastructure/events/outbox-transport-live.js";
 import {
   authCommandGroup,
   AuthCommands,
@@ -146,6 +152,16 @@ export const UnhandledFailuresLive = makeUnhandledFailures();
 
 // The boundary's semantics live in `@effect-server-utils/unit-of-work`;
 // `TransactionDriverLive` is the only piece that knows they are implemented as a
-// SQL transaction. The layer also carries the `DeferralSink` the event bus looks
-// for, which is what makes an after-commit subscription mean after *this* commit.
-export const UnitOfWorkLive = makeUnitOfWork().pipe(Layer.provide(TransactionDriverLive));
+// SQL transaction. Durable: each after-commit reaction is an outbox row written in
+// the publisher's transaction and relayed once it commits.
+export const AfterCommitTransportLive = OutboxTransportLive.pipe(
+  Layer.provide(InProcessDomainEventQueueLive),
+);
+
+export const UnitOfWorkLive = makeDurableUnitOfWork().pipe(
+  Layer.provide(Layer.mergeAll(TransactionDriverLive, AfterCommitTransportLive)),
+);
+
+export const DomainEventDeliveryLive = InProcessDomainEventDeliveryLive.pipe(
+  Layer.provide(Layer.mergeAll(InProcessDomainEventQueueLive, DeliveryLedgerLive)),
+);

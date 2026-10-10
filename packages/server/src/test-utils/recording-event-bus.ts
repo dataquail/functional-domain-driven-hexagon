@@ -32,6 +32,8 @@ export const RecordingEventBus: Layer.Layer<DomainEventBus | RecordedEvents> = L
           subscribeAfterCommit: () => Effect.void,
           drain: () => Effect.void,
           broadcast: () => Effect.void,
+          envelop: () => Effect.succeed([]),
+          deliver: () => Effect.die("RecordingEventBus records dispatches; it delivers nothing"),
           stream: () => Effect.succeed(Stream.empty),
         }),
       ),

@@ -19,8 +19,10 @@ import { isSqlError } from "effect/sql/SqlError";
 
 import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.js";
 import {
+  AfterCommitTransportLive,
   CommandBusLive,
   DomainEventBusLive,
+  DomainEventDeliveryLive,
   QueryBusLive,
   UnhandledFailuresLive,
   UnitOfWorkLive,
@@ -29,6 +31,7 @@ import { Api } from "@/globals/infrastructure/framework/http/api.js";
 
 import { EnvVars } from "./globals/infrastructure/config/env-vars.js";
 import { DatabaseLive } from "./globals/infrastructure/database/database-live.js";
+import { OutboxSweeperLive } from "./globals/infrastructure/events/outbox-sweeper-live.js";
 import { UserAuthMiddlewareLive } from "./globals/infrastructure/framework/middlewares/auth-middleware-live.js";
 import { applicationModules } from "./globals/infrastructure/framework/modules/application-modules.js";
 import { BillingGatewayLive } from "./modules/billing/billing.platform.js";
@@ -110,7 +113,13 @@ const HttpLive = HttpRouter.serve(ApiLive, {
   // FindSessionQuery). The event bus is not here: the unit of work resolves it from
   // the running fiber's context when it flushes, so a peer of `UnitOfWork` below
   // reaches it — and one instance is what keeps a subscriber notified.
-  Layer.provide([CommandBusLive, QueryBusLive, UnhandledFailuresLive]),
+  Layer.provide([
+    CommandBusLive,
+    QueryBusLive,
+    UnhandledFailuresLive,
+    DomainEventDeliveryLive,
+    OutboxSweeperLive.pipe(Layer.provide(AfterCommitTransportLive)),
+  ]),
   // Merged, not provided: the buses route through these, and so do the outbound ACL
   // adapters above, which name the module they reach rather than the bus.
   Layer.provideMerge(application.layer),

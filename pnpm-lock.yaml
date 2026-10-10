@@ -384,11 +384,11 @@ importers:
         specifier: 0.1.0-beta.5
         version: 0.1.0-beta.5(effect@4.0.2)
       '@effect-server-utils/cqrs':
-        specifier: 0.1.0-beta.8
-        version: 0.1.0-beta.8(effect@4.0.2)
+        specifier: 0.1.0-beta.9
+        version: 0.1.0-beta.9(effect@4.0.2)
       '@effect-server-utils/unit-of-work':
-        specifier: 0.1.0-beta.8
-        version: 0.1.0-beta.8(@effect-server-utils/cqrs@0.1.0-beta.8(effect@4.0.2))(effect@4.0.2)
+        specifier: 0.1.0-beta.9
+        version: 0.1.0-beta.9(@effect-server-utils/cqrs@0.1.0-beta.9(effect@4.0.2))(effect@4.0.2)
       '@effect/platform-node':
         specifier: 4.0.2
         version: 4.0.2(effect@4.0.2)(redis@6.3.0(@opentelemetry/api@1.9.1))
@@ -848,15 +848,15 @@ packages:
     peerDependencies:
       effect: 4.0.2
 
-  '@effect-server-utils/cqrs@0.1.0-beta.8':
-    resolution: {integrity: sha512-ESBxeswaUkrM3mk+zfvVu6iimwRnLy9D8h7n7/yZPMaCk3p7nIA74Ye29YJcQZx+wVyBA9pQoNw+C8vbQg03oQ==}
+  '@effect-server-utils/cqrs@0.1.0-beta.9':
+    resolution: {integrity: sha512-TFhuR2MPbGAtZJlHlKLdMbzb+uXiG1HnuI3mwNmkqQdmKEdnwHlF3N3Z5ODxtBrMLgKfxS8cCicepzI8Bc5ZDA==}
     peerDependencies:
       effect: 4.0.2
 
-  '@effect-server-utils/unit-of-work@0.1.0-beta.8':
-    resolution: {integrity: sha512-wT47vgx+jZpHMeq/nRo+vyeRu1/mfVoXdZYCxI2rhNBgAgOtf47UUrTamA1DDvI145i+KXPRvnopuNYwkdrTFA==}
+  '@effect-server-utils/unit-of-work@0.1.0-beta.9':
+    resolution: {integrity: sha512-XJMNp9+mNUlWxpaPEkaaRaWSHDq3R1slcEx1YCIQ118MS1y/qm2XBX2HZPj8M0LS8gwOSIbtMtPYQhJZSCZF5A==}
     peerDependencies:
-      '@effect-server-utils/cqrs': 0.1.0-beta.8
+      '@effect-server-utils/cqrs': 0.1.0-beta.9
       effect: 4.0.2
 
   '@effect/atom-react@4.0.2':
@@ -7389,13 +7389,13 @@ snapshots:
     dependencies:
       effect: 4.0.2
 
-  '@effect-server-utils/cqrs@0.1.0-beta.8(effect@4.0.2)':
+  '@effect-server-utils/cqrs@0.1.0-beta.9(effect@4.0.2)':
     dependencies:
       effect: 4.0.2
 
-  '@effect-server-utils/unit-of-work@0.1.0-beta.8(@effect-server-utils/cqrs@0.1.0-beta.8(effect@4.0.2))(effect@4.0.2)':
+  '@effect-server-utils/unit-of-work@0.1.0-beta.9(@effect-server-utils/cqrs@0.1.0-beta.9(effect@4.0.2))(effect@4.0.2)':
     dependencies:
-      '@effect-server-utils/cqrs': 0.1.0-beta.8(effect@4.0.2)
+      '@effect-server-utils/cqrs': 0.1.0-beta.9(effect@4.0.2)
       effect: 4.0.2
 
   '@effect/atom-react@4.0.2(effect@4.0.2)(react@19.2.4)(scheduler@0.27.0)':
