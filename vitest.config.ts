@@ -60,6 +60,8 @@ export default defineConfig({
         // Resource declarations: only the Alchemy engine evaluates them, under
         // `alchemy dev` or a deploy.
         "packages/infra/src/stack/**",
+        // Worker entrypoints run in workerd; `pnpm dev:cf:check` is their test.
+        "packages/infra/src/platform/worker/**",
         // `import "server-only"` — unloadable in the jsdom Model tier, so no
         // Vitest suite can reach them at all (ADR-0019, ADR-0026).
         "packages/web/**/*.server.ts",

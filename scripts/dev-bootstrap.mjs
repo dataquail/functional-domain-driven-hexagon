@@ -5,14 +5,15 @@
 // Phases:
 //   1. ensure .env exists (copy from .env.example)
 //   2. ensure SESSION_COOKIE_SECRET is generated
-//   3. bring up Zitadel (compose pulls postgres in via depends_on)
-//   4. migrate the dev and test databases
-//   5. wait for Zitadel /debug/ready
-//   6. wait for the FirstInstance bootstrap PAT to land on disk
-//   7. write the PAT into .env as ZITADEL_BOOTSTRAP_PAT
-//   8. wait for the gRPC management API to actually answer requests
-//   9. run the seed (creates the OIDC app, seeds the admin user)
-//  10. write ZITADEL_CLIENT_ID + ZITADEL_CLIENT_SECRET into .env
+//   3. bring up Zitadel, Mailpit and Jaeger (compose pulls postgres in via depends_on)
+//   4. ensure the identity database exists and IDENTITY_DATABASE_URL names it
+//   5. migrate the dev and test databases
+//   6. wait for Zitadel /debug/ready
+//   7. wait for the FirstInstance bootstrap PAT to land on disk
+//   8. write the PAT into .env as ZITADEL_BOOTSTRAP_PAT
+//   9. wait for the gRPC management API to actually answer requests
+//  10. run the seed (creates the OIDC app, seeds the admin user)
+//  11. write ZITADEL_CLIENT_ID + ZITADEL_CLIENT_SECRET into .env
 
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
@@ -32,6 +33,10 @@ const ZITADEL_READY_URL =
     ? `${process.env.ZITADEL_ISSUER}/debug/ready`
     : "http://localhost:8080/debug/ready";
 
+const IDENTITY_DATABASE = "effect-monorepo-identity";
+const IDENTITY_DATABASE_URL = `postgresql://postgres:postgres@localhost:5432/${IDENTITY_DATABASE}`;
+
+const TOTAL_STEPS = 11;
 const READY_TIMEOUT_MS = 180_000;
 const PAT_TIMEOUT_MS = 60_000;
 const POLL_INTERVAL_MS = 2_000;
@@ -53,16 +58,17 @@ if (process.env.CODESPACES !== undefined) {
 async function main() {
   step(1, "ensure .env exists", ensureEnvFile);
   step(2, "ensure SESSION_COOKIE_SECRET is set", ensureSessionSecret);
-  step(3, "bring up Zitadel containers", authUp);
-  step(4, "migrate the dev + test databases", migrate);
-  await stepAsync(5, "wait for Zitadel /debug/ready", waitForReady);
-  const pat = await stepAsync(6, "wait for bootstrap PAT", waitForPat);
-  step(7, "persist ZITADEL_BOOTSTRAP_PAT in .env", () =>
+  step(3, "bring up Zitadel, Mailpit and Jaeger", servicesUp);
+  step(4, "ensure the identity database exists", ensureIdentityDatabase);
+  step(5, "migrate the dev + test databases", migrate);
+  await stepAsync(6, "wait for Zitadel /debug/ready", waitForReady);
+  const pat = await stepAsync(7, "wait for bootstrap PAT", waitForPat);
+  step(8, "persist ZITADEL_BOOTSTRAP_PAT in .env", () =>
     updateEnv(ENV_PATH, { ZITADEL_BOOTSTRAP_PAT: pat }),
   );
-  await stepAsync(8, "wait for Zitadel management API", () => waitForManagementApi(pat));
-  const seedOutput = step(9, "run seed (idempotent)", runSeed);
-  step(10, "persist ZITADEL_CLIENT_ID + ZITADEL_CLIENT_SECRET in .env", () => {
+  await stepAsync(9, "wait for Zitadel management API", () => waitForManagementApi(pat));
+  const seedOutput = step(10, "run seed (idempotent)", runSeed);
+  step(11, "persist ZITADEL_CLIENT_ID + ZITADEL_CLIENT_SECRET in .env", () => {
     if (seedOutput === null) {
       console.log(
         "    (seed didn't emit a __seed__ line — the OIDC app already existed; .env unchanged)",
@@ -75,7 +81,7 @@ async function main() {
     });
   });
 
-  console.log("\nBootstrap complete. Next: `pnpm dev`.");
+  console.log("\nBootstrap complete. Next: `pnpm dev` (or `pnpm dev:cf` for the Workers stack).");
 }
 
 // Phases ---------------------------------------------------------------
@@ -96,27 +102,46 @@ function ensureSessionSecret() {
   return "generated 32-byte secret";
 }
 
-function authUp() {
+function servicesUp() {
   // zitadel's depends_on ensures postgres is healthy before zitadel starts.
   // Zitadel itself has no healthcheck (the image is distroless, so probing
-  // it from inside is awkward) — phase 4 polls /debug/ready from the host.
-  const result = spawnSync("docker", ["compose", "up", "-d", "zitadel"], {
+  // it from inside is awkward) — a later step polls /debug/ready from the host.
+  const result = spawnSync("docker", ["compose", "up", "-d", "zitadel", "mailpit", "jaeger"], {
     cwd: ROOT,
     stdio: "inherit",
   });
   if (result.status !== 0) throw new Error("docker compose up failed");
-  return "postgres + zitadel up";
+  return "postgres + zitadel + mailpit + jaeger up";
+}
+
+// `pnpm dev:cf` points the identity Hyperdrive at this database. Created here
+// rather than by a postgres init script, which only runs on a fresh volume.
+function ensureIdentityDatabase() {
+  const psql = (sql) =>
+    spawnSync(
+      "docker",
+      ["compose", "exec", "-T", "postgres", "psql", "-U", "postgres", "-tAc", sql],
+      { cwd: ROOT, encoding: "utf8" },
+    );
+  const existing = psql(`SELECT 1 FROM pg_database WHERE datname = '${IDENTITY_DATABASE}'`);
+  if (existing.status !== 0) throw new Error(`psql failed: ${existing.stderr}`);
+  if (existing.stdout.trim() !== "1") {
+    const created = psql(`CREATE DATABASE "${IDENTITY_DATABASE}"`);
+    if (created.status !== 0) throw new Error(`CREATE DATABASE failed: ${created.stderr}`);
+  }
+  const env = readEnv(ENV_PATH);
+  if (env.IDENTITY_DATABASE_URL === undefined || env.IDENTITY_DATABASE_URL === "") {
+    updateEnv(ENV_PATH, { IDENTITY_DATABASE_URL });
+  }
+  return IDENTITY_DATABASE;
 }
 
 // Ahead of the seed, which writes the admin row into "user".users and needs the
 // schema to exist.
 function migrate() {
-  for (const script of ["db:migrate", "db:migrate:test"]) {
-    const result = spawnSync("pnpm", ["--filter", "@org/database", script], {
-      cwd: ROOT,
-      stdio: "inherit",
-    });
-    if (result.status !== 0) throw new Error(`pnpm ${script} failed`);
+  for (const args of [["db:migrate"], ["--filter", "@org/database", "db:migrate:test"]]) {
+    const result = spawnSync("pnpm", args, { cwd: ROOT, stdio: "inherit" });
+    if (result.status !== 0) throw new Error(`pnpm ${args.join(" ")} failed`);
   }
   return "dev + test databases migrated";
 }
@@ -206,14 +231,14 @@ function runSeed() {
 // Logging --------------------------------------------------------------
 
 function step(n, label, fn) {
-  process.stdout.write(`[${n}/9] ${label}… `);
+  process.stdout.write(`[${n}/${TOTAL_STEPS}] ${label}… `);
   const result = fn();
   console.log(typeof result === "string" ? `✓ ${result}` : "✓");
   return result;
 }
 
 async function stepAsync(n, label, fn) {
-  process.stdout.write(`[${n}/9] ${label}… `);
+  process.stdout.write(`[${n}/${TOTAL_STEPS}] ${label}… `);
   const result = await fn();
   console.log(typeof result === "string" ? `✓ ${result}` : "✓");
   return result;

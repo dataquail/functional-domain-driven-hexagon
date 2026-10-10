@@ -12,11 +12,12 @@ name: kebab-case
 message: >-
   @org/infra declares the Alchemy stack: the Neon databases, the Hyperdrive configurations in
   front of them and the queues each stage provisions. alchemy.run.ts is the stack, src/stack/
-  holds one file per kind of resource, and src/ beside it holds the pure helpers they share.
-# Alchemy loads the stack by its default export.
+  holds one file per kind of resource, src/platform/worker/ the Worker entrypoints they bind to,
+  and src/ beside them the pure helpers they share.
+# Alchemy loads the stack, and each Worker entrypoint, by its default export.
 surface:
   - use: no-default-exports
-    except: ["**/vitest.config.ts", "~/infra/alchemy.run.ts"]
+    except: ["**/vitest.config.ts", "~/infra/alchemy.run.ts", "~/infra/src/platform/worker/*.ts"]
 imports:
   message: >-
     @org/infra describes infrastructure and runs none of the application. It names Alchemy and
@@ -62,6 +63,25 @@ children:
             needs the Alchemy engine and is what `alchemy dev` is for.
           external: [effect, "@effect/vitest"]
           allow: ["~/infra/src/**"]
+      "platform/":
+        message: >-
+          platform/ holds what runs on the host platform rather than describing it: worker/ is
+          the Worker entrypoints.
+        children:
+          "worker/":
+            message: >-
+              platform/worker/ holds Worker entrypoints, the only files the repo lets import
+              cloudflare:workers. Each is an Alchemy Worker class exported as its module's default;
+              the placeholder answers SELECT 1 through the app Hyperdrive until the server Worker
+              replaces it.
+            surface:
+              - message: >-
+                  A Worker entrypoint exports its Worker class as the default and nothing else:
+                  workerd treats every other export as a top-level entrypoint and refuses to start.
+                kinds: [named, namespace]
+                count: { max: 0 }
+            children:
+              "placeholder.ts": {}
       "stack/":
         message: >-
           stack/ declares resources, one file per kind (databases, queues, …). Each exports the
