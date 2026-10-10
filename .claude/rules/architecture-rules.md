@@ -390,9 +390,11 @@ that shape, then weaken the probe once and confirm the loader refuses: it report
 Two gates back that up, and they answer different questions:
 
 - `pnpm lint:rules` — the **wiring**: the plugin is loaded, each rule id is
-  enabled, its globs match, resolution is live.
-- `pnpm lint:edges` — the **semantics**: 173 edges with expected verdicts (130
-  refused, 43 allowed) and 12 graph shapes with expected reports. The allowed and
+  enabled, its globs match, resolution is live. A repo-wide `deny` shares the
+  `architecture/imports` id with every allowlist, so its probe also names the
+  message it must report.
+- `pnpm lint:edges` — the **semantics**: 177 edges with expected verdicts (132
+  refused, 45 allowed) and 12 graph shapes with expected reports. The allowed and
   quiet rows matter as much: a policy that refuses everything is as broken as one
   that refuses nothing. A row that changes verdict is either a regression or a
   decision.
@@ -409,6 +411,12 @@ against a `.js`-suffixed mapping looks for `y.js.js`; the resolver maps `.js` to
 **An unresolved import is a hard lint error**, not a skip — an import nobody can
 resolve is an import no rule can police, so failing open would disarm every rule
 about that package at once without changing a line of config.
+
+A runtime-provided module with no file on disk — `cloudflare:workers` — is not a
+Node builtin, so the resolver cannot see it. `tsconfig.resolve.json` maps it to
+its declaration in `@cloudflare/workers-types`, which is the path the
+`cloudflare:workers` deny matches; do not list it in `ignoreUnresolved`, which
+would skip the edge and the deny with it.
 
 ## The CLI, and the baseline
 

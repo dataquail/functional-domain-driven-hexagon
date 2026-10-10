@@ -284,6 +284,16 @@ const REFUSED = [
     "node_modules/.pnpm/x/node_modules/@effect/sql-pg/dist/index.js",
   ],
   [
+    "the server's composition root importing Alchemy",
+    "packages/server/src/server.ts",
+    "node_modules/.pnpm/x/node_modules/alchemy/lib/Cloudflare/index.js",
+  ],
+  [
+    "the server's composition root importing cloudflare:workers outside platform/worker/",
+    "packages/server/src/server.ts",
+    "node_modules/.pnpm/x/node_modules/@cloudflare/workers-types/index.d.ts",
+  ],
+  [
     "a View reaching into services/",
     "packages/web/features/orgs/org-picker/org-picker.view.tsx",
     "packages/web/services/atom/api-atoms.shared.ts",
@@ -807,6 +817,16 @@ const ALLOWED = [
     "@org/database using the driver (LEGAL)",
     "packages/database/src/Database.ts",
     "node_modules/.pnpm/x/node_modules/@effect/sql-pg/dist/index.js",
+  ],
+  [
+    "@org/infra declaring the stack with Alchemy (LEGAL)",
+    "packages/infra/alchemy.run.ts",
+    "node_modules/.pnpm/x/node_modules/alchemy/lib/index.js",
+  ],
+  [
+    "the server's Worker entrypoint importing cloudflare:workers (LEGAL)",
+    "packages/server/src/platform/worker/main.ts",
+    "node_modules/.pnpm/x/node_modules/@cloudflare/workers-types/index.d.ts",
   ],
   [
     "api-client using the contracts (LEGAL)",

@@ -1,0 +1,70 @@
+# yaml-language-server: $schema=https://dataquail.github.io/goodbones/schema/architecture-node.schema.json
+#
+# @org/infra — the Alchemy stack: every Cloudflare and Neon resource a stage
+# provisions. The only package that names Alchemy; nothing in the repo imports it.
+#
+# One node of the architecture policy: the root architecture.yaml includes this
+# file at "~/infra/". Patterns are repo-relative and use the root's
+# aliases; a fragment defined under `defs` here joins the one namespace every file
+# shares, so name it for what it is.
+
+name: kebab-case
+message: >-
+  @org/infra declares the Alchemy stack: the Neon databases, the Hyperdrive configurations in
+  front of them and the queues each stage provisions. alchemy.run.ts is the stack, src/stack/
+  holds one file per kind of resource, and src/ beside it holds the pure helpers they share.
+# Alchemy loads the stack by its default export.
+surface:
+  - use: no-default-exports
+    except: ["**/vitest.config.ts", "~/infra/alchemy.run.ts"]
+imports:
+  message: >-
+    @org/infra describes infrastructure and runs none of the application. It names Alchemy and
+    effect, and never the server, the database kernel or any other package — a resource that
+    needs application code takes it as a Worker entrypoint the stack points at, not as an import.
+  external: [alchemy, effect]
+  allow: ["~/infra/**"]
+importedBy:
+  message: >-
+    Nothing outside @org/infra imports the stack. Application code reaches a provisioned resource
+    through the binding its Worker is given, never by importing the declaration that created it.
+  allow: ["~/infra/**"]
+children:
+  "alchemy.run.ts":
+    surface:
+      - message: >-
+          alchemy.run.ts exports the stack as its default and nothing else. A resource another
+          file needs is declared in src/stack/ and imported from there, not off the stack.
+        kinds: [named, namespace]
+        count: { max: 0 }
+  "vitest.config.ts":
+    surface:
+      - message: "A vitest config exports its config as the default and nothing else."
+        kinds: [named, namespace]
+        count: { max: 0 }
+    imports:
+      reset: true
+      message: "A build-configuration file names the tool it configures and nothing else."
+      external: [vitest]
+      allow: ["vitest.shared.ts"]
+  "src/":
+    message: >-
+      src/ holds the stack's resource declarations under stack/, and the pure helpers they share
+      beside it. A helper here is tested; a declaration is exercised by `alchemy dev`.
+    children:
+      "stage.ts": {}
+      "*.test.ts":
+        surface: [{ use: test-exports-nothing }]
+        imports:
+          reset: true
+          message: >-
+            An infra test exercises a pure helper beside it. It does not run the stack: that
+            needs the Alchemy engine and is what `alchemy dev` is for.
+          external: [effect, "@effect/vitest"]
+          allow: ["~/infra/src/**"]
+      "stack/":
+        message: >-
+          stack/ declares resources, one file per kind (databases, queues, …). Each exports the
+          Effects alchemy.run.ts yields; a Worker binds to the same Effect it was declared with.
+        children:
+          "databases.ts | queues.ts": {}
