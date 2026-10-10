@@ -11,7 +11,7 @@
 
 import { type DomainApi } from "@org/contracts/DomainApi";
 import * as Context from "effect/Context";
-import type * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
+import type * as HttpApiClient from "effect/http-api/HttpApiClient";
 
 // Unwrap the inferred HttpApiClient client shape for `typeof DomainApi`.
 // `HttpApiClient.make` returns `Client<Groups>`; `ForApi` pulls the

@@ -7,7 +7,7 @@
 // sonner call site is one subscriber at the edge of the app.
 
 import * as Effect from "effect/Effect";
-import * as Atom from "effect/unstable/reactivity/Atom";
+import * as Atom from "effect/reactivity/Atom";
 
 export type NotificationKind = "success" | "error";
 

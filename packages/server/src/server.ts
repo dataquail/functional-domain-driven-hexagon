@@ -7,15 +7,15 @@ import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
 import * as dotenv from "dotenv";
 import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
+import * as FetchHttpClient from "effect/http/FetchHttpClient";
+import * as HttpMiddleware from "effect/http/HttpMiddleware";
+import * as HttpRouter from "effect/http/HttpRouter";
+import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 import * as Layer from "effect/Layer";
+import * as OtlpSerialization from "effect/observability/OtlpSerialization";
+import * as OtlpTracer from "effect/observability/OtlpTracer";
 import * as Schedule from "effect/Schedule";
-import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
-import * as HttpMiddleware from "effect/unstable/http/HttpMiddleware";
-import * as HttpRouter from "effect/unstable/http/HttpRouter";
-import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
-import * as OtlpSerialization from "effect/unstable/observability/OtlpSerialization";
-import * as OtlpTracer from "effect/unstable/observability/OtlpTracer";
-import { isSqlError } from "effect/unstable/sql/SqlError";
+import { isSqlError } from "effect/sql/SqlError";
 
 import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.js";
 import {
@@ -59,7 +59,7 @@ const ApiLive = HttpApiBuilder.layer(Api).pipe(
 );
 
 // v4 modernization (Phase 6): the `@effect/opentelemetry/NodeSdk` layer is
-// replaced by the first-party OTLP tracer from `effect/unstable/observability`.
+// replaced by the first-party OTLP tracer from `effect/observability`.
 // `OtlpTracer.layer` provides a `Tracer.Tracer` that batches ended spans and
 // POSTs them (JSON-serialized) to the OTLP `/v1/traces` endpoint — `OTLP_URL`
 // already points there. Its two requirements close locally: JSON serialization
@@ -138,15 +138,15 @@ Layer.launch(HttpLive).pipe(
     // A database that isn't accepting connections yet — the compose race on a
     // cold boot. The pool reports it as a retryable `SqlError`; a pool that dies
     // later surfaces per-request as `DatabaseUnavailable` (503) instead of
-    // taking the process down, and node-postgres reconnects on the next acquire.
+    // taking the process down, and the pool reconnects on the next acquire.
     while: (error: unknown) => isSqlError(error) && error.isRetryable,
     // Capped, jittered exponential backoff. v4 folded `modifyDelayEffect`
     // into `modifyDelay` (now always effectful), so the per-attempt log
     // line and the 8s cap live in one step.
     schedule: Schedule.exponential("1 second", 2).pipe(
       Schedule.jittered,
-      Schedule.modifyDelay((_output, delay) => {
-        const capped = Duration.min(delay, Duration.seconds(8));
+      Schedule.modifyDelay(({ duration }) => {
+        const capped = Duration.min(duration, Duration.seconds(8));
         return Effect.as(
           Effect.logError(`[Server crashed]: Retrying in ${Duration.format(capped)}`),
           capped,

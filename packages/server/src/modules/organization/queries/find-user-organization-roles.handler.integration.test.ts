@@ -42,9 +42,7 @@ const seedOrg = Effect.gen(function* () {
   yield* orgs.insertOne(OrganizationRootOps.create({ id: orgId, name: "Acme", now }).organization);
 });
 
-const suite = describe.sequential;
-
-suite("findUserOrganizationRolesHandler (integration)", () => {
+describe("findUserOrganizationRolesHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("organization.organization_roles", "organization.organizations", "user.users").pipe(

@@ -12,11 +12,11 @@
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import type * as HttpApiEndpoint from "effect/http-api/HttpApiEndpoint";
+import type * as HttpApiGroup from "effect/http-api/HttpApiGroup";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import * as SchemaAST from "effect/SchemaAST";
-import type * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
-import type * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 import {
   type DefaultBodyType,
   http,
@@ -65,22 +65,22 @@ export const TEST_API_BASE = "http://localhost/api";
  * `Group.endpoints` is typed as `Record<string, EndpointUnion>` — looking up
  * by name yields the union of all endpoints in the group, which loses the
  * concrete payload/path/error types for `typedHandler`. This helper narrows
- * the union by `name` so each call site sees only its endpoint's slot
+ * the union by `identifier` so each call site sees only its endpoint's slot
  * types.
  */
-export const getEndpoint = <G extends HttpApiGroup.Any, Name extends string>(
+export const getEndpoint = <G extends HttpApiGroup.Constraint, Name extends string>(
   group: G,
   name: Name,
-): Extract<HttpApiGroup.Endpoints<G>, { readonly name: Name }> => {
-  const eps = (group as unknown as HttpApiGroup.AnyWithProps).endpoints as Record<
+): Extract<HttpApiGroup.Endpoints<G>, { readonly identifier: Name }> => {
+  const eps = (group as unknown as HttpApiGroup.Top).endpoints as Record<
     string,
-    HttpApiEndpoint.Any | undefined
+    HttpApiEndpoint.Top | undefined
   >;
   const ep = eps[name];
   if (ep === undefined) {
     throw new Error(`No endpoint named "${name}" in group "${group.identifier}"`);
   }
-  return ep as unknown as Extract<HttpApiGroup.Endpoints<G>, { readonly name: Name }>;
+  return ep as unknown as Extract<HttpApiGroup.Endpoints<G>, { readonly identifier: Name }>;
 };
 
 /** Convert Effect's `HttpMethod` to MSW's `http.verb` accessor. */
@@ -97,9 +97,9 @@ const methodToHandler = {
 /**
  * Extract the resolver argument shape from an endpoint. Each schema is
  * conditionally present based on whether the endpoint declares it.
- * `Any` is the minimal interface the extractor types expect.
+ * `ConstraintRequest` is the minimal interface the extractor types expect.
  */
-type ResolverInput<E extends HttpApiEndpoint.Any> = {
+type ResolverInput<E extends HttpApiEndpoint.ConstraintRequest> = {
   readonly path: HttpApiEndpoint.Params<E>["Type"];
   readonly urlParams: HttpApiEndpoint.Query<E>["Type"];
   readonly payload: HttpApiEndpoint.Payload<E>["Type"];
@@ -107,12 +107,14 @@ type ResolverInput<E extends HttpApiEndpoint.Any> = {
 };
 
 /** Effect the resolver returns: success or any declared tagged error. */
-type ResolverEffect<E extends HttpApiEndpoint.Any> = Effect.Effect<
+type ResolverEffect<E extends HttpApiEndpoint.ConstraintRequest> = Effect.Effect<
   HttpApiEndpoint.Success<E>["Type"],
   HttpApiEndpoint.Error<E>["Type"]
 >;
 
-type Resolver<E extends HttpApiEndpoint.Any> = (input: ResolverInput<E>) => ResolverEffect<E>;
+type Resolver<E extends HttpApiEndpoint.ConstraintRequest> = (
+  input: ResolverInput<E>,
+) => ResolverEffect<E>;
 
 /**
  * Build an MSW handler for one endpoint. The URL is `TEST_API_BASE` +
@@ -121,18 +123,18 @@ type Resolver<E extends HttpApiEndpoint.Any> = (input: ResolverInput<E>) => Reso
  * encoded with the corresponding schemas plus the status annotations
  * declared via `HttpApiSchema.annotations({ status })`.
  *
- * The function signature only requires the minimal `Any` interface
+ * The function signature only requires the minimal `ConstraintRequest` interface
  * (concrete endpoints satisfy it trivially); we cast through `unknown`
- * to `AnyWithProps` inside to access the runtime properties. The
- * `AnyWithProps` interface in `@effect/platform` declares some
+ * to `Top` inside to access the runtime properties. The
+ * `Top` interface declares some
  * invariant generic slots, so it does NOT accept concrete endpoints
  * directly at call sites — this two-step cast is the workaround.
  */
-export const typedHandler = <E extends HttpApiEndpoint.Any>(
+export const typedHandler = <E extends HttpApiEndpoint.ConstraintRequest>(
   endpoint: E,
   resolver: Resolver<E>,
 ): HttpHandler => {
-  const ep = endpoint as unknown as HttpApiEndpoint.AnyWithProps;
+  const ep = endpoint as unknown as HttpApiEndpoint.Top;
   const verb = methodToHandler[ep.method as keyof typeof methodToHandler];
   // `ep.path` already includes the group's `.prefix(...)`, so we can
   // concatenate directly with the base URL.

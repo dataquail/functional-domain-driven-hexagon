@@ -15,7 +15,7 @@ dotenv({
 const variable = process.argv.includes("--test") ? "DATABASE_URL_TEST" : "DATABASE_URL";
 
 const migrate = Effect.gen(function* () {
-  const url = yield* Config.redacted(variable);
+  const url = yield* Config.Redacted(variable);
   const applied = yield* runMigrations({ url, ssl: false });
   yield* applied.length === 0
     ? Effect.log(`No pending migrations (${variable})`)

@@ -1,4 +1,4 @@
-import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
+import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { createEndpoint } from "@/modules/user/interface/http/create.endpoint.js";

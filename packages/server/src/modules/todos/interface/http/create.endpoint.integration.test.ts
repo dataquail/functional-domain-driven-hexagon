@@ -7,9 +7,9 @@ import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
@@ -24,9 +24,7 @@ const TODO_TABLES = [
   "user.users",
 ] as const;
 
-const suite = describe.sequential;
-
-suite("POST /orgs/:orgId/todos (integration)", () => {
+describe("POST /orgs/:orgId/todos (integration)", () => {
   const { run } = useServerTestRuntime(TODO_TABLES, {
     server: TestServerLiveAsMember,
     seedSuperAdminCaller: true,
@@ -51,9 +49,7 @@ suite("POST /orgs/:orgId/todos (integration)", () => {
   });
 });
 
-const memberSuite = describe.sequential;
-
-memberSuite("POST /orgs/:orgId/todos (integration, non-member caller)", () => {
+describe("POST /orgs/:orgId/todos (integration, non-member caller)", () => {
   const { run } = useServerTestRuntime(TODO_TABLES, {
     server: TestServerLiveAsMember,
     seedSuperAdminCaller: true,

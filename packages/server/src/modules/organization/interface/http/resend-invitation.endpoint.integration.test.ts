@@ -6,13 +6,11 @@ import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Option from "effect/Option";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-
-const suite = describe.sequential;
 
 const ORG_ID = "11111111-1111-1111-1111-111111111111" as never;
 const UNKNOWN_INVITATION_ID = "22222222-2222-2222-2222-222222222222" as never;
@@ -25,7 +23,7 @@ const seedOrg = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-suite("POST /orgs/:orgId/invitations/:invitationId/resend (integration)", () => {
+describe("POST /orgs/:orgId/invitations/:invitationId/resend (integration)", () => {
   const { run } = useServerTestRuntime(
     ["organization.invitations", "organization.organizations", "platform.roles", "user.users"],
     { seedSuperAdminCaller: true },

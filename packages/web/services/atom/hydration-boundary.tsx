@@ -1,7 +1,7 @@
 import "server-only";
 
 import { HydrationBoundary } from "@effect/atom-react";
-import type * as Hydration from "effect/unstable/reactivity/Hydration";
+import type * as Hydration from "effect/reactivity/Hydration";
 import * as React from "react";
 
 import { collectPrefetched } from "./prefetch.server";

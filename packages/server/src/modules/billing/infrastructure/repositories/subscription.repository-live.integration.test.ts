@@ -57,9 +57,8 @@ const seedOrgRow = (id: OrganizationId, name: string) =>
   });
 
 const TestLayer = SubscriptionRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
-const suite = describe.sequential;
 
-suite("SubscriptionRepositoryLive (integration)", () => {
+describe("SubscriptionRepositoryLive (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("billing.subscriptions", "organization.organizations").pipe(

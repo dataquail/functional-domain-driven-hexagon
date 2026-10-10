@@ -23,7 +23,7 @@ const empty = Credentials.make({});
 
 const credentialsPath = Effect.gen(function* () {
   const path = yield* Path.Path;
-  const base = yield* Config.string("XDG_CONFIG_HOME").pipe(
+  const base = yield* Config.String("XDG_CONFIG_HOME").pipe(
     Config.withDefault(path.join(homedir(), ".config")),
   );
   return path.join(base, CONFIG_DIR, FILE_NAME);

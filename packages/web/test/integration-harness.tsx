@@ -15,7 +15,7 @@ import { RegistryContext } from "@effect/atom-react";
 import { Toaster } from "@org/components/primitives/toaster";
 import { ThemeProvider } from "@org/components/providers/theme-provider";
 import { render, type RenderOptions, type RenderResult } from "@testing-library/react";
-import * as AtomRegistry from "effect/unstable/reactivity/AtomRegistry";
+import * as AtomRegistry from "effect/reactivity/AtomRegistry";
 import * as React from "react";
 
 import { apiTransportAtom } from "@/services/atom/api-transport.shared";

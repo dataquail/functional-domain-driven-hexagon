@@ -46,9 +46,7 @@ const seed = (id: TodoId, organizationId: OrganizationId, title: string, now: Da
     yield* repo.insertOne(TodoRootOps.create({ id, organizationId, title, now }));
   });
 
-const suite = describe.sequential;
-
-suite("listTodosHandler (integration)", () => {
+describe("listTodosHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("todos.todos", "organization.organizations").pipe(Effect.provide(TestDatabaseLive)),

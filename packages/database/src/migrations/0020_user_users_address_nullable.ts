@@ -1,5 +1,5 @@
 import * as Effect from "effect/Effect";
-import { SqlClient } from "effect/unstable/sql/SqlClient";
+import { SqlClient } from "effect/sql/SqlClient";
 
 // JIT user provisioning: a user provisioned on first OIDC sign-in has no
 // address yet (only email + Zitadel subject are known). Drop NOT NULL on the

@@ -3,7 +3,7 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import { CliTodosContract, OrganizationContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
@@ -19,9 +19,7 @@ const TODO_TABLES = [
   "user.users",
 ] as const;
 
-const suite = describe.sequential;
-
-suite("POST /cli/orgs/:orgId/todos/:id/complete (integration)", () => {
+describe("POST /cli/orgs/:orgId/todos/:id/complete (integration)", () => {
   const { run } = useServerTestRuntime(TODO_TABLES, {
     server: TestServerLiveAsMember,
     seedSuperAdminCaller: true,

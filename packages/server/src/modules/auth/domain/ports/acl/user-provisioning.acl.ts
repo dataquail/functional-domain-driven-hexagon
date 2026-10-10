@@ -9,7 +9,7 @@ import { type PersistenceUnavailable } from "@/globals/application/ddd/persisten
 // This module's own error, not the user module's `UserAlreadyExists` — the
 // adapter translates one into the other, which is what keeps sign-in free of
 // the user module's error vocabulary.
-export class UserProvisioningConflict extends Schema.TaggedErrorClass<UserProvisioningConflict>()(
+export class UserProvisioningConflict extends Schema.TaggedError<UserProvisioningConflict>()(
   "UserProvisioningConflict",
   {
     email: Schema.String,

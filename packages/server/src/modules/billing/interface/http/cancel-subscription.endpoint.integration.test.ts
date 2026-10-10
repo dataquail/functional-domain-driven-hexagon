@@ -7,9 +7,9 @@ import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
@@ -25,9 +25,7 @@ const BILLING_TABLES = [
   "user.users",
 ] as const;
 
-const suite = describe.sequential;
-
-suite("DELETE /orgs/:orgId/billing/subscriptions/current (integration)", () => {
+describe("DELETE /orgs/:orgId/billing/subscriptions/current (integration)", () => {
   const { run } = useServerTestRuntime(BILLING_TABLES, {
     server: TestServerLiveAsMember,
     seedSuperAdminCaller: true,
@@ -79,9 +77,8 @@ suite("DELETE /orgs/:orgId/billing/subscriptions/current (integration)", () => {
 // Non-admin caller: `TestServerLiveAsMember` reports `MEMBER_CALLER_ID`, who has
 // no `super_admin` platform role and no `admin` org-role on a foreign org.
 // Cancelling is `update`-gated like subscribing, so the composed check denies.
-const memberSuite = describe.sequential;
 
-memberSuite("DELETE /orgs/:orgId/billing/subscriptions/current (non-admin caller)", () => {
+describe("DELETE /orgs/:orgId/billing/subscriptions/current (non-admin caller)", () => {
   const { run } = useServerTestRuntime(BILLING_TABLES, {
     server: TestServerLiveAsMember,
     seedSuperAdminCaller: true,

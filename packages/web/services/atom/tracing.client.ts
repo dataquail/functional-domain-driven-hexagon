@@ -18,11 +18,11 @@
 // `NEXT_PUBLIC_OTLP_URL` (Next inlines `NEXT_PUBLIC_*` into the client bundle).
 // CORS for `http://localhost:*` is allowed in `infra/jaeger/config.yaml`.
 
+import * as FetchHttpClient from "effect/http/FetchHttpClient";
 import * as Layer from "effect/Layer";
-import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
-import * as OtlpSerialization from "effect/unstable/observability/OtlpSerialization";
-import * as OtlpTracer from "effect/unstable/observability/OtlpTracer";
-import * as Atom from "effect/unstable/reactivity/Atom";
+import * as OtlpSerialization from "effect/observability/OtlpSerialization";
+import * as OtlpTracer from "effect/observability/OtlpTracer";
+import * as Atom from "effect/reactivity/Atom";
 
 const OTLP_URL = process.env.NEXT_PUBLIC_OTLP_URL ?? "http://localhost:4318/v1/traces";
 

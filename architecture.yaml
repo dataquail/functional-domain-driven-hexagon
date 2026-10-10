@@ -98,10 +98,10 @@ deny:
       `Database` client and the row-decoding helpers that package publishes; reaching for
       @effect/sql-pg directly puts driver types in a signature the rest of the repo has to live
       with.
-  - match: "**/node_modules/effect/**/unstable/rpc/**"
+  - match: "**/node_modules/effect/dist/rpc/**"
     message: >-
       The RPC transport stays behind @effect-server-utils/cqrs. Messages are declared with
-      Command.make / Query.make and dispatched through the bus; reaching for effect/unstable/rpc
+      Command.make / Query.make and dispatched through the bus; reaching for effect/rpc
       directly bypasses the routing table, the middleware and the span the bus provides.
 
 # Which importers may name a given exported symbol. A path rule cannot say

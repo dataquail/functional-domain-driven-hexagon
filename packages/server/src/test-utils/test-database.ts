@@ -1,5 +1,6 @@
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import { Database, resetAndMigrate } from "@org/database/index";
+import * as Clock from "effect/Clock";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Redacted from "effect/Redacted";
@@ -31,12 +32,16 @@ const assertTestDbName = (url: string): string => {
   return url;
 };
 
+// The pool keeps the clock it was built with; a test that pins `TestClock`
+// would otherwise freeze the driver's connect and idle timers.
+const liveClock = Layer.succeed(Clock.Clock, Clock.Clock.defaultValue());
+
 export const TestDatabaseLive =
   TEST_DATABASE_URL !== undefined
     ? Database.layer({
         url: Redacted.make(assertTestDbName(TEST_DATABASE_URL)),
         ssl: false,
-      })
+      }).pipe(Layer.provide(liveClock))
     : (Layer.effect(
         Database.Database,
         Effect.die(new Error("DATABASE_URL_TEST is not set")),

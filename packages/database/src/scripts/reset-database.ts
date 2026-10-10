@@ -49,7 +49,7 @@ const resetDatabase = Effect.gen(function* () {
   Effect.provide(
     Layer.unwrap(
       Effect.gen(function* () {
-        const url = yield* Config.redacted("DATABASE_URL");
+        const url = yield* Config.Redacted("DATABASE_URL");
         return Database.layer({ url, ssl: false });
       }),
     ),

@@ -8,7 +8,7 @@ import {
   SqlError,
   SqlSyntaxError,
   UniqueViolation,
-} from "effect/unstable/sql/SqlError";
+} from "effect/sql/SqlError";
 
 import { exec, maybeRow, row, rows } from "../src/Database.js";
 

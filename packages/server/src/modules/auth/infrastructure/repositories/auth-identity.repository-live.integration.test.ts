@@ -29,9 +29,7 @@ const seedUserAndIdentity = Effect.gen(function* () {
     `;
 }).pipe(Effect.orDie);
 
-const suite = describe.sequential;
-
-suite("AuthIdentityRepositoryLive (integration)", () => {
+describe("AuthIdentityRepositoryLive (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(truncate("user.users").pipe(Effect.provide(TestDatabaseLive)));
   });

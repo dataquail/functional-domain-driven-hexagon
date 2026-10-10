@@ -41,9 +41,7 @@ const make = (id: ApiTokenId, hash: string, now: DateTime.Utc, createdAt?: DateT
     expiresAt: DateTime.add(createdAt ?? now, { days: 90 }),
   });
 
-const suite = describe.sequential;
-
-suite("ApiTokenRepositoryLive (integration)", () => {
+describe("ApiTokenRepositoryLive (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("auth.api_tokens", "user.users").pipe(Effect.provide(TestDatabaseLive)),

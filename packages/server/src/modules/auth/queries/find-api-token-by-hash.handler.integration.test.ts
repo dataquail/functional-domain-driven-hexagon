@@ -73,9 +73,7 @@ const errorOf = (exit: Exit.Exit<unknown, unknown>) =>
     ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
     : null;
 
-const suite = describe.sequential;
-
-suite("findApiTokenByHashHandler (integration)", () => {
+describe("findApiTokenByHashHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("auth.api_tokens", "user.users").pipe(Effect.provide(TestDatabaseLive)),

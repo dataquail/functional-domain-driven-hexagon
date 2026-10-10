@@ -6,16 +6,14 @@ import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { MEMBER_CALLER_ID, SUPER_ADMIN_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
-
-const suite = describe.sequential;
 
 const ORG_ID = "11111111-1111-1111-1111-111111111111" as never;
 // A second, plain (non-admin) member, distinct from the seeded callers.
@@ -47,7 +45,7 @@ const seedOrgWithMembers = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-suite("GET /orgs/:orgId/members (integration, super-admin caller)", () => {
+describe("GET /orgs/:orgId/members (integration, super-admin caller)", () => {
   const { run } = useServerTestRuntime(
     [
       "organization.organization_roles",
@@ -80,9 +78,7 @@ suite("GET /orgs/:orgId/members (integration, super-admin caller)", () => {
   });
 });
 
-const memberSuite = describe.sequential;
-
-memberSuite("GET /orgs/:orgId/members (integration, plain-member caller)", () => {
+describe("GET /orgs/:orgId/members (integration, plain-member caller)", () => {
   const { run } = useServerTestRuntime(
     [
       "organization.organization_roles",

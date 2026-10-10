@@ -27,10 +27,9 @@
     "db:reset": "tsx ./src/scripts/reset-database.ts"
   },
   "dependencies": {
-    "@effect/platform-node": "4.0.0-beta.94",
-    "@effect/sql-pg": "4.0.0-beta.94",
-    "effect": "4.0.0-beta.94",
-    "pg": "^8.20.0"
+    "@effect/platform-node": "4.0.2",
+    "@effect/sql-pg": "4.0.2",
+    "effect": "4.0.2"
   },
   "effect": {
     "generateExports": {
@@ -46,7 +45,6 @@
   },
   "devDependencies": {
     "@types/dotenv": "^8.2.3",
-    "@types/pg": "^8.20.0",
     "dotenv": "^16.6.1",
     "tsx": "^4.23.0"
   }

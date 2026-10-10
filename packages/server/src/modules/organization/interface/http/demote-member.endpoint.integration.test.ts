@@ -7,16 +7,14 @@ import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { SUPER_ADMIN_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
-
-const suite = describe.sequential;
 
 const ORG_ID = "11111111-1111-1111-1111-111111111111" as never;
 const TARGET_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa" as never;
@@ -47,7 +45,7 @@ const seedTargetMember = (asAdmin: boolean) =>
     }
   });
 
-suite("DELETE /orgs/:orgId/members/:userId/admin (integration, super-admin caller)", () => {
+describe("DELETE /orgs/:orgId/members/:userId/admin (integration, super-admin caller)", () => {
   const { run } = useServerTestRuntime(
     [
       "organization.organization_roles",
@@ -95,9 +93,7 @@ suite("DELETE /orgs/:orgId/members/:userId/admin (integration, super-admin calle
   });
 });
 
-const memberSuite = describe.sequential;
-
-memberSuite("DELETE /orgs/:orgId/members/:userId/admin (integration, plain-member caller)", () => {
+describe("DELETE /orgs/:orgId/members/:userId/admin (integration, plain-member caller)", () => {
   const { run } = useServerTestRuntime(
     [
       "organization.organization_roles",

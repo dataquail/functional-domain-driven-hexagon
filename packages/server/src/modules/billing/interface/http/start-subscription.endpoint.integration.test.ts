@@ -7,9 +7,9 @@ import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
@@ -25,9 +25,7 @@ const BILLING_TABLES = [
   "user.users",
 ] as const;
 
-const suite = describe.sequential;
-
-suite("POST /orgs/:orgId/billing/subscriptions (integration)", () => {
+describe("POST /orgs/:orgId/billing/subscriptions (integration)", () => {
   // The super-admin caller bypasses `IsBillingOrgAdmin` via the
   // `SuperAdminOnly` half of the composed check. Creates an org via
   // the public endpoint (so the FK + creator-admin row both exist),
@@ -89,9 +87,8 @@ suite("POST /orgs/:orgId/billing/subscriptions (integration)", () => {
 // as the CurrentUser. That user has no `super_admin` platform role and
 // no `admin` org-role on a foreign org — composed check returns false,
 // endpoint surfaces `Forbidden`.
-const memberSuite = describe.sequential;
 
-memberSuite("POST /orgs/:orgId/billing/subscriptions (non-admin caller)", () => {
+describe("POST /orgs/:orgId/billing/subscriptions (non-admin caller)", () => {
   const { run } = useServerTestRuntime(BILLING_TABLES, {
     server: TestServerLiveAsMember,
     seedSuperAdminCaller: true,

@@ -21,9 +21,7 @@ const later = DateTime.makeUnsafe("2026-02-01T00:00:00Z");
 
 const TestLayer = OrganizationRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-const suite = describe.sequential;
-
-suite("findAllOrganizationsHandler (integration)", () => {
+describe("findAllOrganizationsHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("organization.organizations").pipe(Effect.provide(TestDatabaseLive)),

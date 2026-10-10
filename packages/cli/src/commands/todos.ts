@@ -1,20 +1,20 @@
 import { OrganizationId, TodoId } from "@org/contracts/EntityIds";
+import * as Argument from "effect/cli/Argument";
+import * as Command from "effect/cli/Command";
+import * as Flag from "effect/cli/Flag";
 import * as Console from "effect/Console";
 import * as Effect from "effect/Effect";
-import * as Argument from "effect/unstable/cli/Argument";
-import * as Command from "effect/unstable/cli/Command";
-import * as Flag from "effect/unstable/cli/Flag";
 
 import { authedClient, resolveOrg, toCliError } from "../internal.js";
 
-const orgOption = Flag.string("org").pipe(
+const orgOption = Flag.String("org").pipe(
   Flag.optional,
   Flag.withAlias("o"),
   Flag.withDescription("Organization id (defaults to the configured org)"),
 );
 
-const titleArg = Argument.string("title");
-const todoIdArg = Argument.string("todoId");
+const titleArg = Argument.String("title");
+const todoIdArg = Argument.String("todoId");
 
 const list = Command.make("list", { org: orgOption }, ({ org }) =>
   Effect.gen(function* () {

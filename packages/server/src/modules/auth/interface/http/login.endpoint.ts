@@ -1,5 +1,5 @@
 import * as Effect from "effect/Effect";
-import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
+import * as HttpServerResponse from "effect/http/HttpServerResponse";
 
 import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.js";
 import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client.js";

@@ -43,9 +43,7 @@ const grantSuperAdmin = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-const suite = describe.sequential;
-
-suite("findCurrentUserHandler (integration)", () => {
+describe("findCurrentUserHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("platform.roles", "user.users").pipe(Effect.provide(TestDatabaseLive)),

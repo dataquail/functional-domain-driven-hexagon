@@ -2,14 +2,13 @@ import { ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 // Public endpoint — no caller identity needed.
-const suite = describe.sequential;
 
-suite("POST /cli/device/start (integration)", () => {
+describe("POST /cli/device/start (integration)", () => {
   const { run } = useServerTestRuntime(["auth.device_grants"]);
 
   it("returns device + user codes and a verification URL", async () => {

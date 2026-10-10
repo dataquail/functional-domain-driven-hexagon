@@ -8,7 +8,7 @@
 
 import { RegistryContext } from "@effect/atom-react";
 import { render, type RenderResult } from "@testing-library/react";
-import * as AtomRegistry from "effect/unstable/reactivity/AtomRegistry";
+import * as AtomRegistry from "effect/reactivity/AtomRegistry";
 import * as React from "react";
 import { afterEach } from "vitest";
 

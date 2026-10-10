@@ -4,8 +4,8 @@ import { describe, it } from "@effect/vitest";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Schema from "effect/Schema";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { MEMBER_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
@@ -15,9 +15,7 @@ import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 const NameRow = Schema.Struct({ name: Schema.String });
 const MembershipCountRow = Schema.Struct({ user_id: Schema.String.check(Schema.isGUID()) });
 
-const suite = describe.sequential;
-
-suite("POST /orgs (integration)", () => {
+describe("POST /orgs (integration)", () => {
   // Super-admins can't own orgs (they're a disjoint user type), so org
   // creation runs as a regular member; the creator becomes the first member.
   const { run } = useServerTestRuntime(

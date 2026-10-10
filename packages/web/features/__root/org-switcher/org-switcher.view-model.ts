@@ -8,8 +8,8 @@
 // another's lands on the other's billing page.
 
 import type { OrganizationId } from "@org/contracts/EntityIds";
-import * as AsyncResult from "effect/unstable/reactivity/AsyncResult";
-import * as Atom from "effect/unstable/reactivity/Atom";
+import * as AsyncResult from "effect/reactivity/AsyncResult";
+import * as Atom from "effect/reactivity/Atom";
 
 import { navigateTo, pathnameAtom } from "@/services/atom/navigation.shared";
 import { myOrgsQueryAtom } from "@/services/data-access/orgs.atoms";

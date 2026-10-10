@@ -3,7 +3,7 @@
 // leave them on the page with the server's own explanation.
 
 import * as Effect from "effect/Effect";
-import * as Atom from "effect/unstable/reactivity/Atom";
+import * as Atom from "effect/reactivity/Atom";
 
 import { ApiAtoms } from "@/services/atom/api-atoms.shared";
 import { navigateTo } from "@/services/atom/navigation.shared";

@@ -1,6 +1,6 @@
+import * as HttpApiEndpoint from "effect/http-api/HttpApiEndpoint";
+import * as HttpApiGroup from "effect/http-api/HttpApiGroup";
 import * as Schema from "effect/Schema";
-import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
-import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
 import { InvitationId, OrganizationId, UserId } from "../EntityIds.js";
@@ -10,9 +10,7 @@ import { UserAuthMiddleware } from "../Policy.js";
 // Errors
 // ==========================================
 
-export class OrganizationNotFoundError extends Schema.TaggedErrorClass<OrganizationNotFoundError>(
-  "OrganizationNotFoundError",
-)(
+export class OrganizationNotFoundError extends Schema.TaggedError<OrganizationNotFoundError>()(
   "OrganizationNotFoundError",
   { organizationId: OrganizationId, message: Schema.String },
   { httpApiStatus: 404 },
@@ -22,24 +20,22 @@ export class OrganizationNotFoundError extends Schema.TaggedErrorClass<Organizat
 // resource's current state contradicts it (restore on a non-deleted
 // org). Distinct status from `OrganizationNotFoundError` so clients
 // don't have to disambiguate "missing" vs. "wrong state."
-export class OrganizationNotDeletedError extends Schema.TaggedErrorClass<OrganizationNotDeletedError>(
-  "OrganizationNotDeletedError",
-)(
+export class OrganizationNotDeletedError extends Schema.TaggedError<OrganizationNotDeletedError>()(
   "OrganizationNotDeletedError",
   { organizationId: OrganizationId, message: Schema.String },
   { httpApiStatus: 409 },
 ) {}
 
-export class InvitationNotFoundError extends Schema.TaggedErrorClass<InvitationNotFoundError>(
+export class InvitationNotFoundError extends Schema.TaggedError<InvitationNotFoundError>()(
   "InvitationNotFoundError",
-)("InvitationNotFoundError", { message: Schema.String }, { httpApiStatus: 404 }) {}
+  { message: Schema.String },
+  { httpApiStatus: 404 },
+) {}
 
 // 410 Gone covers the three terminal/expired states (accepted, revoked,
 // expired). Clients see one error variant; the `reason` discriminates
 // so a UI can render the right message.
-export class InvitationGoneError extends Schema.TaggedErrorClass<InvitationGoneError>(
-  "InvitationGoneError",
-)(
+export class InvitationGoneError extends Schema.TaggedError<InvitationGoneError>()(
   "InvitationGoneError",
   {
     reason: Schema.Literals(["accepted", "revoked", "expired"]),
@@ -48,9 +44,11 @@ export class InvitationGoneError extends Schema.TaggedErrorClass<InvitationGoneE
   { httpApiStatus: 410 },
 ) {}
 
-export class MembershipNotFoundError extends Schema.TaggedErrorClass<MembershipNotFoundError>(
+export class MembershipNotFoundError extends Schema.TaggedError<MembershipNotFoundError>()(
   "MembershipNotFoundError",
-)("MembershipNotFoundError", { message: Schema.String }, { httpApiStatus: 404 }) {}
+  { message: Schema.String },
+  { httpApiStatus: 404 },
+) {}
 
 // 409 Conflict: model invariant — super-admins are a separate user
 // type from regular users; they don't own or join organizations.
@@ -61,9 +59,7 @@ export class MembershipNotFoundError extends Schema.TaggedErrorClass<MembershipN
 // already an admin; `not_admin` from demote when they aren't one. One
 // error variant, a `reason` discriminator — same shape as
 // `InvitationGoneError`.
-export class OrganizationRoleConflictError extends Schema.TaggedErrorClass<OrganizationRoleConflictError>(
-  "OrganizationRoleConflictError",
-)(
+export class OrganizationRoleConflictError extends Schema.TaggedError<OrganizationRoleConflictError>()(
   "OrganizationRoleConflictError",
   {
     reason: Schema.Literals(["already_admin", "not_admin"]),
@@ -72,9 +68,11 @@ export class OrganizationRoleConflictError extends Schema.TaggedErrorClass<Organ
   { httpApiStatus: 409 },
 ) {}
 
-export class SuperAdminCannotOwnOrganizationError extends Schema.TaggedErrorClass<SuperAdminCannotOwnOrganizationError>(
+export class SuperAdminCannotOwnOrganizationError extends Schema.TaggedError<SuperAdminCannotOwnOrganizationError>()(
   "SuperAdminCannotOwnOrganizationError",
-)("SuperAdminCannotOwnOrganizationError", { message: Schema.String }, { httpApiStatus: 409 }) {}
+  { message: Schema.String },
+  { httpApiStatus: 409 },
+) {}
 
 // ==========================================
 // Shapes

@@ -31,9 +31,7 @@ const seedUser = Effect.gen(function* () {
 
 const TestLayer = RolesRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-const suite = describe.sequential;
-
-suite("RolesRepositoryLive (integration)", () => {
+describe("RolesRepositoryLive (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("platform.roles", "user.users").pipe(Effect.provide(TestDatabaseLive)),

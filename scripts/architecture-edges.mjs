@@ -274,9 +274,9 @@ const REFUSED = [
     "packages/server/src/globals/infrastructure/database/criteria-to-sql.test.ts",
   ],
   [
-    "a command importing effect/unstable/rpc",
+    "a command importing effect/rpc",
     "packages/server/src/modules/alpha/commands/do.handler.ts",
-    "node_modules/.pnpm/effect@4/node_modules/effect/dist/unstable/rpc/RpcClient.js",
+    "node_modules/.pnpm/effect@4/node_modules/effect/dist/rpc/RpcClient.js",
   ],
   [
     "the CLI importing @effect/sql-pg",

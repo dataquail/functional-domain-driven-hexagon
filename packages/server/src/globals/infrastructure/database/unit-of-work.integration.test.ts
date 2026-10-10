@@ -8,7 +8,7 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
-import type * as Statement from "effect/unstable/sql/Statement";
+import type * as Statement from "effect/sql/Statement";
 import { beforeEach } from "vitest";
 
 import { TransactionDriverLive } from "@/globals/infrastructure/database/transaction-driver-live.js";
@@ -54,9 +54,7 @@ const flushed = (sql: Statement.Constructor) =>
     Database.rows(RowSchemas.UserRow),
   );
 
-const suite = describe.sequential;
-
-suite("UnitOfWork re-entrancy (integration)", () => {
+describe("UnitOfWork re-entrancy (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(truncate("user.users").pipe(Effect.provide(TestDatabaseLive)));
   });
@@ -138,7 +136,7 @@ suite("UnitOfWork re-entrancy (integration)", () => {
 // `EventBus` inside a unit of work are buffered, then drained AFTER
 // the transaction commits — each handler in its own transaction, its failure
 // isolated, and discarded entirely if the producer rolls back.
-suite("UnitOfWork post-commit flush (integration)", () => {
+describe("UnitOfWork post-commit flush (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(truncate("user.users").pipe(Effect.provide(TestDatabaseLive)));
   });

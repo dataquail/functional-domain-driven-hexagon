@@ -3,7 +3,7 @@ import { deepStrictEqual, ok } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
@@ -17,9 +17,7 @@ const ORG_TABLES = [
   "user.users",
 ] as const;
 
-const suite = describe.sequential;
-
-suite("GET /cli/orgs (integration)", () => {
+describe("GET /cli/orgs (integration)", () => {
   const { run } = useServerTestRuntime(ORG_TABLES, {
     server: TestServerLiveAsMember,
     seedSuperAdminCaller: true,

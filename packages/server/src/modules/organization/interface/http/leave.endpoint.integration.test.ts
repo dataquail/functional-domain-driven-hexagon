@@ -5,14 +5,12 @@ import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Option from "effect/Option";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { SUPER_ADMIN_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-
-const suite = describe.sequential;
 
 const ORG_ID = "11111111-1111-1111-1111-111111111111" as never;
 
@@ -32,7 +30,7 @@ const seedCallerMembership = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-suite("POST /orgs/:orgId/leave (integration)", () => {
+describe("POST /orgs/:orgId/leave (integration)", () => {
   const { run } = useServerTestRuntime(
     ["organization.memberships", "organization.organizations", "platform.roles", "user.users"],
     { seedSuperAdminCaller: true },

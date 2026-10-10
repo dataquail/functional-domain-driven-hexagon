@@ -7,9 +7,9 @@ import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
@@ -25,9 +25,7 @@ const TODO_TABLES = [
   "user.users",
 ] as const;
 
-const suite = describe.sequential;
-
-suite("DELETE /orgs/:orgId/todos/:id (integration)", () => {
+describe("DELETE /orgs/:orgId/todos/:id (integration)", () => {
   const { run } = useServerTestRuntime(TODO_TABLES, {
     server: TestServerLiveAsMember,
     seedSuperAdminCaller: true,
@@ -109,9 +107,7 @@ suite("DELETE /orgs/:orgId/todos/:id (integration)", () => {
   });
 });
 
-const nonMemberSuite = describe.sequential;
-
-nonMemberSuite("DELETE /orgs/:orgId/todos/:id (integration, non-member caller)", () => {
+describe("DELETE /orgs/:orgId/todos/:id (integration, non-member caller)", () => {
   const { run } = useServerTestRuntime(TODO_TABLES, {
     server: TestServerLiveAsMember,
     seedSuperAdminCaller: true,

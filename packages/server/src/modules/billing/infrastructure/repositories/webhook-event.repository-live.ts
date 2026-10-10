@@ -4,10 +4,7 @@ import * as Layer from "effect/Layer";
 
 import { type Specification } from "@/globals/application/ddd/specification.js";
 import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
-import {
-  translateDatabaseErrors,
-  translatePersistenceUnavailable,
-} from "@/globals/infrastructure/database/translate-database-errors.js";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
 import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors.js";
 import {
   type WebhookEventRecord,
@@ -21,23 +18,22 @@ export const WebhookEventRepositoryLive = Layer.effect(
   Effect.gen(function* () {
     const sql = yield* Database.Database;
 
-    // Race-free claim: Postgres' unique-key violation IS the
-    // idempotency signal. The endpoint catches
-    // `WebhookEventAlreadyRecorded` to short-circuit duplicate
-    // deliveries — same shape as wallet/subscription's
-    // `*AlreadyExists` errors.
+    // Race-free claim that leaves the transaction usable: a duplicate is caught
+    // and the delivery still commits, which a unique violation would abort.
     const insertOne = Effect.fn("WebhookEventRepository.insertOne")((stripeEventId: string) =>
       sql`
           INSERT INTO billing.webhook_events (stripe_event_id)
           VALUES (${stripeEventId})
+          ON CONFLICT (stripe_event_id) DO NOTHING
+          RETURNING *
         `.pipe(
-        Database.exec,
-        Effect.catchTag("DatabaseError", (e) =>
-          e.type === "unique_violation"
-            ? new WebhookEventAlreadyRecorded({ stripeEventId })
-            : Effect.die(e),
+        Database.maybeRow(RowSchemas.WebhookEventRow),
+        Effect.flatMap((claimed) =>
+          claimed === null
+            ? Effect.fail(new WebhookEventAlreadyRecorded({ stripeEventId }))
+            : Effect.void,
         ),
-        translatePersistenceUnavailable,
+        translateDatabaseErrors,
       ),
     );
 

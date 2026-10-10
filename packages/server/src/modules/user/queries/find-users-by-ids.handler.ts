@@ -24,7 +24,7 @@ export const findUsersByIdsHandler = Effect.fn("findUsersByIdsHandler")(function
   const sql = yield* Database.Database;
   const rows = yield* sql`
     SELECT * FROM "user".users
-    WHERE id = ANY(${query.ids}::uuid[])
+    WHERE id = ANY(${Database.uuidArray(query.ids)}::uuid[])
     ORDER BY created_at ASC
   `.pipe(Database.rows(RowSchemas.UserRow), translateDatabaseErrors);
   return rows.map(toUserView);

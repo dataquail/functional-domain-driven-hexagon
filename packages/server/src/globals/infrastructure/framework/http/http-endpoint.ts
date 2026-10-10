@@ -1,17 +1,17 @@
 import { type PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Effect from "effect/Effect";
-import type * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
-import type * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
+import type * as HttpApiEndpoint from "effect/http-api/HttpApiEndpoint";
+import type * as HttpApiGroup from "effect/http-api/HttpApiGroup";
 
 // Derives the typed request envelope ({ path, urlParams, payload, headers })
 // for a named endpoint within a contract group. Keeps endpoint signatures in
 // sync with the contract automatically — adding a new field to the endpoint
 // declaration flows through to the implementation file's parameter type.
 export type EndpointRequest<
-  G extends HttpApiGroup.Any,
+  G extends HttpApiGroup.Constraint,
   Name extends string,
-> = HttpApiEndpoint.Request<HttpApiEndpoint.WithName<HttpApiGroup.Endpoints<G>, Name>>;
+> = HttpApiEndpoint.Request<HttpApiEndpoint.WithIdentifier<HttpApiGroup.Endpoints<G>, Name>>;
 
 // Standard endpoint translation for the transient-store signal. Every
 // endpoint that calls a use case ends up with `PersistenceUnavailable`

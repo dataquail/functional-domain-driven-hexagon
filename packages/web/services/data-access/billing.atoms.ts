@@ -11,8 +11,8 @@ import type { OrganizationId } from "@org/contracts/EntityIds";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
-import * as AsyncResult from "effect/unstable/reactivity/AsyncResult";
-import * as Atom from "effect/unstable/reactivity/Atom";
+import * as AsyncResult from "effect/reactivity/AsyncResult";
+import * as Atom from "effect/reactivity/Atom";
 
 import { ApiClient } from "@/services/api-client.shared";
 import { ApiAtoms } from "@/services/atom/api-atoms.shared";

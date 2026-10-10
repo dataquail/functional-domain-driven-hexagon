@@ -1,6 +1,6 @@
+import * as HttpApiEndpoint from "effect/http-api/HttpApiEndpoint";
+import * as HttpApiGroup from "effect/http-api/HttpApiGroup";
 import * as Schema from "effect/Schema";
-import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
-import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
 import { UserId } from "../EntityIds.js";
@@ -10,9 +10,7 @@ import { UserAuthMiddleware } from "../Policy.js";
 // Errors
 // ==========================================
 
-export class UserAlreadyExistsError extends Schema.TaggedErrorClass<UserAlreadyExistsError>(
-  "UserAlreadyExistsError",
-)(
+export class UserAlreadyExistsError extends Schema.TaggedError<UserAlreadyExistsError>()(
   "UserAlreadyExistsError",
   {
     email: Schema.String,
@@ -21,9 +19,7 @@ export class UserAlreadyExistsError extends Schema.TaggedErrorClass<UserAlreadyE
   { httpApiStatus: 409 },
 ) {}
 
-export class UserNotFoundError extends Schema.TaggedErrorClass<UserNotFoundError>(
-  "UserNotFoundError",
-)(
+export class UserNotFoundError extends Schema.TaggedError<UserNotFoundError>()(
   "UserNotFoundError",
   {
     userId: UserId,

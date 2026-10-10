@@ -1,19 +1,28 @@
 import type * as TodosContract from "@org/contracts/api/TodosContract";
 import { TodoId } from "@org/contracts/EntityIds";
 import { screen, within } from "@testing-library/react";
-import * as AsyncResult from "effect/unstable/reactivity/AsyncResult";
+import * as AsyncResult from "effect/reactivity/AsyncResult";
 import { describe, expect, it } from "vitest";
 
+import { apiTransportAtom } from "@/services/atom/api-transport.shared";
 import { renderView } from "@/test/atom-harness";
 import { makeTodo, TEST_ORG_ID } from "@/test/fixtures/todo";
+import { todosHandlers } from "@/test/handlers/todos";
+import { server } from "@/test/msw-server";
+import { TEST_API_BASE } from "@/test/typed-handler";
 
 import { TodoList } from "./todo-list.view";
 import { todosResultAtom } from "./todo-list.view-model";
 
-const renderList = (todos: ReadonlyArray<TodosContract.Todo>) =>
-  renderView(<TodoList orgId={TEST_ORG_ID} />, {
-    initialValues: [[todosResultAtom(TEST_ORG_ID), AsyncResult.success(todos)]],
+const renderList = (todos: ReadonlyArray<TodosContract.Todo>) => {
+  server.use(todosHandlers.list(todos));
+  return renderView(<TodoList orgId={TEST_ORG_ID} />, {
+    initialValues: [
+      [apiTransportAtom, { baseUrl: TEST_API_BASE, headers: {} }],
+      [todosResultAtom(TEST_ORG_ID), AsyncResult.success(todos)],
+    ],
   });
+};
 
 describe("TodoList view", () => {
   it("renders one row per todo", () => {

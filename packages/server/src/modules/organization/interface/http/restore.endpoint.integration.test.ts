@@ -7,9 +7,9 @@ import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
@@ -17,9 +17,7 @@ import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 const DeletedAtRow = Schema.Struct({ deleted_at: Schema.NullOr(Schema.DateTimeUtcFromDate) });
 
-const suite = describe.sequential;
-
-suite("POST /orgs/:id/restore (integration)", () => {
+describe("POST /orgs/:id/restore (integration)", () => {
   // Restore is super-admin-or-org-admin; this suite runs as the super-admin
   // caller. Super-admins can't create orgs, so target orgs are seeded directly.
   const { run } = useServerTestRuntime(
@@ -92,9 +90,7 @@ suite("POST /orgs/:id/restore (integration)", () => {
   });
 });
 
-const memberSuite = describe.sequential;
-
-memberSuite("POST /orgs/:id/restore (integration, non-super-admin caller)", () => {
+describe("POST /orgs/:id/restore (integration, non-super-admin caller)", () => {
   const { run } = useServerTestRuntime(
     ["organization.memberships", "organization.organizations", "platform.roles", "user.users"],
     { server: TestServerLiveAsMember, seedSuperAdminCaller: true },

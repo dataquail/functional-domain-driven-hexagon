@@ -2,10 +2,10 @@ import * as PgMigrator from "@effect/sql-pg/PgMigrator";
 import * as Effect from "effect/Effect";
 import type { FileSystem } from "effect/FileSystem";
 import type { Path } from "effect/Path";
-import type { ChildProcessSpawner } from "effect/unstable/process/ChildProcessSpawner";
-import * as Migrator from "effect/unstable/sql/Migrator";
-import { SqlClient } from "effect/unstable/sql/SqlClient";
-import type { SqlError } from "effect/unstable/sql/SqlError";
+import type { ChildProcessSpawner } from "effect/process/ChildProcessSpawner";
+import * as Migrator from "effect/sql/Migrator";
+import { SqlClient } from "effect/sql/SqlClient";
+import type { SqlError } from "effect/sql/SqlError";
 
 import { migrations } from "./migrations/index.js";
 import { type Config, driverLayer } from "./pg-driver.js";

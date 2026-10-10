@@ -5,7 +5,7 @@
 
 The frontend is a Next.js (App Router) renderer that proxies `/api/*` to the Effect server. The Effect server stays the BFF — Next renders + proxies but does NOT terminate auth. See ADR-0018.
 
-**There is no TanStack.** State is Effect Atom (`effect/unstable/reactivity`, bundled in `effect`) with the React bindings from `@effect/atom-react`. Queries, mutations, invalidation and form state all live in that graph. A `@tanstack/*` import fails `pnpm lint`: no tier's allowlist in `packages/web/architecture.yaml` names the package, so there is nowhere it can be imported from.
+**There is no TanStack.** State is Effect Atom (`effect/reactivity`, bundled in `effect`) with the React bindings from `@effect/atom-react`. Queries, mutations, invalidation and form state all live in that graph. A `@tanstack/*` import fails `pnpm lint`: no tier's allowlist in `packages/web/architecture.yaml` names the package, so there is nowhere it can be imported from.
 
 ## MVVM: Model → ViewModel → View
 
@@ -61,7 +61,7 @@ export const submitAtom = ApiAtoms.runtime.fn<void>()((_, get) =>
 
 - **Invalidation is a reactivity key, not a query key.** Both sides declare against `services/atom/reactivity-keys.ts`; a typo there is a missing property, not a stale screen.
 - **Hydration**: a route composes `<AtomHydrationBoundary prefetch={[prefetchX(...)]} fallback={...}>`; the View reads with `useAtomSuspense`. Only a query declared with `serializationKey` is hydratable. The prefetch encodes through the endpoint's own schema, so `Schema.DateTimeUtc` is a real `DateTime.Utc` on the client.
-- **Never build an atom runtime on the server.** `Atom.defaultMemoMap` is module-global and never evicts, so a per-request layer would leak one entry per request. `prefetch.server.ts` runs the plain Effect and reads the atom's serialization metadata — it never mounts the atom. (ADR-0026.)
+- **Never build an atom runtime on the server.** `prefetch.server.ts` runs the plain Effect and reads the atom's serialization metadata — it never mounts the atom. (ADR-0026.)
 - **Notifications and navigation are state**, not injected services: write `notify(get, …)` / `navigateTo(get, href)` in a ViewModel, and one bridge at the edge of the app turns it into sonner or `router.push`. A test reads the atom back.
 - **Forms** are fields-as-atoms + a derived errors atom over the contract schema (`validateWithSchema`). Validation surfaces only after the first submit attempt (`submitAttemptedAtom`). Put the `notify` wrapper _inside_ the validation guard, or an invalid submit announces success.
 

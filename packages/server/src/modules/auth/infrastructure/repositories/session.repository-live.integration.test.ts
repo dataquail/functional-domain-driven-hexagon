@@ -40,9 +40,7 @@ const makeSession = (now: DateTime.Utc) =>
     absoluteTtlSeconds: 43200,
   });
 
-const suite = describe.sequential;
-
-suite("SessionRepositoryLive (integration)", () => {
+describe("SessionRepositoryLive (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(truncate("user.users").pipe(Effect.provide(TestDatabaseLive)));
   });

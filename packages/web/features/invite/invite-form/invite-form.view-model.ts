@@ -4,7 +4,7 @@
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import type { OrganizationId } from "@org/contracts/EntityIds";
 import * as Effect from "effect/Effect";
-import * as Atom from "effect/unstable/reactivity/Atom";
+import * as Atom from "effect/reactivity/Atom";
 
 import { ApiAtoms } from "@/services/atom/api-atoms.shared";
 import { type FieldErrors, validateWithSchema } from "@/services/atom/form-validation";

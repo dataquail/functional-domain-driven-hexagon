@@ -6,6 +6,7 @@ import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 // Returned by the repository when a (userId, organizationId) pair is
 // expected to exist but doesn't — e.g. the user removing a member that
 // isn't actually a member, or `IsMember` resolving a non-member.
-export class MembershipNotFound extends Schema.TaggedErrorClass<MembershipNotFound>(
+export class MembershipNotFound extends Schema.TaggedError<MembershipNotFound>()(
   "MembershipNotFound",
-)("MembershipNotFound", { userId: UserId, organizationId: OrganizationId }) {}
+  { userId: UserId, organizationId: OrganizationId },
+) {}

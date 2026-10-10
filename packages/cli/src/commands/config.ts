@@ -1,10 +1,10 @@
 import { saveDefaultOrg } from "@org/api-client";
+import * as Argument from "effect/cli/Argument";
+import * as Command from "effect/cli/Command";
 import * as Console from "effect/Console";
 import * as Effect from "effect/Effect";
-import * as Argument from "effect/unstable/cli/Argument";
-import * as Command from "effect/unstable/cli/Command";
 
-const orgIdArg = Argument.string("orgId");
+const orgIdArg = Argument.String("orgId");
 
 const setOrg = Command.make("set-org", { orgId: orgIdArg }, ({ orgId }) =>
   Effect.gen(function* () {

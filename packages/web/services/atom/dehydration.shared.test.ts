@@ -12,9 +12,9 @@
 // an acceptance run.
 
 import * as OrganizationContract from "@org/contracts/api/OrganizationContract";
-import * as AsyncResult from "effect/unstable/reactivity/AsyncResult";
-import * as Atom from "effect/unstable/reactivity/Atom";
-import * as Hydration from "effect/unstable/reactivity/Hydration";
+import * as AsyncResult from "effect/reactivity/AsyncResult";
+import * as Atom from "effect/reactivity/Atom";
+import * as Hydration from "effect/reactivity/Hydration";
 import { describe, expect, it } from "vitest";
 
 import { rawSubscriptionQueryAtom } from "@/services/data-access/billing.atoms";

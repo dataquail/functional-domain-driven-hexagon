@@ -1,8 +1,8 @@
 import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import { type UserAuthMiddleware } from "@org/contracts/Policy";
+import * as HttpRouter from "effect/http/HttpRouter";
+import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 import * as Layer from "effect/Layer";
-import * as HttpRouter from "effect/unstable/http/HttpRouter";
-import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 
 import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.js";
 import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";

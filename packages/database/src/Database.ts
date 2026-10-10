@@ -2,26 +2,24 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
-import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { type SqlError } from "effect/unstable/sql/SqlError";
+import { SqlClient } from "effect/sql/SqlClient";
+import { type SqlError } from "effect/sql/SqlError";
 
-import { type Config, driverLayer } from "./pg-driver.js";
+import { type Config, driverLayer, textArray, uuidArray } from "./pg-driver.js";
 
 export type { Config };
+export { textArray, uuidArray };
 
 // `DatabaseError` carries only *permanent* failures — constraint violations the
 // application is expected to either translate to a domain error (e.g.
 // `unique_violation` → `UserAlreadyExists`) or treat as a defect. Transient
 // failures are surfaced as `DatabaseUnavailable` so use cases can propagate them
 // through their typed error channel and the HTTP layer can map them to 503.
-export class DatabaseError extends Schema.TaggedErrorClass<DatabaseError>("DatabaseError")(
-  "DatabaseError",
-  {
-    type: Schema.Literals(["unique_violation", "foreign_key_violation"]),
-    cause: Schema.Defect(),
-    errorMessage: Schema.String,
-  },
-) {
+export class DatabaseError extends Schema.TaggedError<DatabaseError>()("DatabaseError", {
+  type: Schema.Literals(["unique_violation", "foreign_key_violation"]),
+  cause: Schema.Defect(),
+  errorMessage: Schema.String,
+}) {
   public override toString() {
     return `DatabaseError: ${this.errorMessage}`;
   }
@@ -31,12 +29,13 @@ export class DatabaseError extends Schema.TaggedErrorClass<DatabaseError>("Datab
   }
 }
 
-export class DatabaseUnavailable extends Schema.TaggedErrorClass<DatabaseUnavailable>(
+export class DatabaseUnavailable extends Schema.TaggedError<DatabaseUnavailable>()(
   "DatabaseUnavailable",
-)("DatabaseUnavailable", {
-  cause: Schema.Defect(),
-  errorMessage: Schema.String,
-}) {
+  {
+    cause: Schema.Defect(),
+    errorMessage: Schema.String,
+  },
+) {
   public override toString() {
     return `DatabaseUnavailable: ${this.errorMessage}`;
   }

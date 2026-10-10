@@ -65,9 +65,7 @@ const errorOf = (exit: Exit.Exit<unknown, unknown>) =>
     ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
     : null;
 
-const suite = describe.sequential;
-
-suite("findSessionHandler (integration)", () => {
+describe("findSessionHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("auth.sessions", "user.users").pipe(Effect.provide(TestDatabaseLive)),

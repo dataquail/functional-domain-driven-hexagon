@@ -32,9 +32,7 @@ const seedUsers = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-const suite = describe.sequential;
-
-suite("listMyApiTokensHandler (integration)", () => {
+describe("listMyApiTokensHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("auth.api_tokens", "user.users").pipe(Effect.provide(TestDatabaseLive)),

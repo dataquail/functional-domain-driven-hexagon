@@ -29,7 +29,7 @@ export const RolesRepositoryLive = Layer.effect(
             yield* sql`
               INSERT INTO platform.roles (user_id, role)
               SELECT ${roles.userId}, role
-              FROM unnest(${roles.roles}::text[]) AS role
+              FROM unnest(${Database.textArray(roles.roles)}::text[]) AS role
             `;
           }),
         )

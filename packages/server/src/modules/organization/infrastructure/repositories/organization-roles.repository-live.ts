@@ -41,8 +41,8 @@ export const OrganizationRolesRepositoryLive = Layer.effect(
                   granted.role,
                   granted.issued_by
                 FROM unnest(
-                  ${organizationRoles.roles.map((r) => r.role)}::text[],
-                  ${organizationRoles.roles.map((r) => r.issuedBy)}::uuid[]
+                  ${Database.textArray(organizationRoles.roles.map((r) => r.role))}::text[],
+                  ${Database.uuidArray(organizationRoles.roles.map((r) => r.issuedBy))}::uuid[]
                 ) AS granted(role, issued_by)
               `;
             }),

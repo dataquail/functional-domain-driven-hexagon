@@ -4,9 +4,9 @@ import { describe, it } from "@effect/vitest";
 import { BillingContract, OrganizationContract } from "@org/contracts/api/Contracts";
 import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
-import * as HttpClient from "effect/unstable/http/HttpClient";
-import * as HttpClientRequest from "effect/unstable/http/HttpClientRequest";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
+import * as HttpClient from "effect/http/HttpClient";
+import * as HttpClientRequest from "effect/http/HttpClientRequest";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 
 import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
@@ -43,8 +43,6 @@ const BILLING_TABLES = [
   "user.users",
 ] as const;
 
-const suite = describe.sequential;
-
 // The webhook endpoint reads raw bytes via `HttpServerRequest.text`
 // (Stripe's `constructEvent` requires the EXACT bytes the signature
 // was computed over), so we can't drive it through `HttpApiClient`
@@ -52,7 +50,7 @@ const suite = describe.sequential;
 // `HttpClient` directly with a POST body, mirroring how Stripe would
 // deliver the event.
 
-suite("POST /webhooks/stripe (integration)", () => {
+describe("POST /webhooks/stripe (integration)", () => {
   const { run } = useServerTestRuntime(BILLING_TABLES, {
     server: TestServerLiveAsMember,
     seedSuperAdminCaller: true,
