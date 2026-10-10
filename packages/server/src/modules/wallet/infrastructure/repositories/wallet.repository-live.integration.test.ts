@@ -46,9 +46,7 @@ const seedOrgRow = (id: OrganizationId) =>
 
 const TestLayer = WalletRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-const suite = describe.sequential;
-
-suite("WalletRepositoryLive (integration)", () => {
+describe("WalletRepositoryLive (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("wallet.wallets", "organization.organizations").pipe(

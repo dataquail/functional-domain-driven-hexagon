@@ -3,7 +3,7 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import { UserContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
@@ -15,9 +15,7 @@ const basePayload = new UserContract.CreateUserPayload({
   postalCode: "12345",
 });
 
-const suite = describe.sequential;
-
-suite("GET /users (integration)", () => {
+describe("GET /users (integration)", () => {
   const { run } = useServerTestRuntime(["user.users"]);
 
   it("returns a paginated list after creates", async () => {

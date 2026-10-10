@@ -88,9 +88,7 @@ const seedAdmin = (userId: UserId, organizationId: OrganizationId) =>
     yield* rolesRepo.upsertOne(granted.organizationRoles);
   });
 
-const suite = describe.sequential;
-
-suite("findOrganizationMembershipsHandler (integration)", () => {
+describe("findOrganizationMembershipsHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate(

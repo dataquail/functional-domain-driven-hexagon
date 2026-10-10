@@ -11,7 +11,7 @@ import { type WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webho
 // state worth modeling beyond "have we seen this id before?".
 //
 // `insertOne` is the claim; if Stripe redelivers the same event, the
-// unique-key violation surfaces as `WebhookEventAlreadyRecorded` and
+// conflicting insert surfaces as `WebhookEventAlreadyRecorded` and
 // the caller (the webhook endpoint) decides to short-circuit. The
 // race-free idempotency comes from the database, not the use case.
 //

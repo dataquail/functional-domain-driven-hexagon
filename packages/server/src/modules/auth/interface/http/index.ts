@@ -1,5 +1,5 @@
+import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 import * as Layer from "effect/Layer";
-import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 

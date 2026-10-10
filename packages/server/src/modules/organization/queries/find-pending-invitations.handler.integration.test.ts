@@ -54,9 +54,7 @@ const seedOrgs = Effect.gen(function* () {
   );
 });
 
-const suite = describe.sequential;
-
-suite("findPendingInvitationsHandler (integration)", () => {
+describe("findPendingInvitationsHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("organization.invitations", "organization.organizations").pipe(

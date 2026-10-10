@@ -37,9 +37,7 @@ const seed = (id: UserId, email: string, now: DateTime.Utc) =>
     yield* repo.insertOne(user);
   });
 
-const suite = describe.sequential;
-
-suite("findUsersHandler (integration)", () => {
+describe("findUsersHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(truncate("user.users").pipe(Effect.provide(TestDatabaseLive)));
   });

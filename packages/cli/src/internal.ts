@@ -10,7 +10,7 @@ import * as Schema from "effect/Schema";
 
 // The CLI's user-facing failure. Everything fatal is funnelled here so the
 // entrypoint can print one clean line and exit non-zero (no stack dump).
-export class CliError extends Schema.TaggedErrorClass<CliError>("CliError")("CliError", {
+export class CliError extends Schema.TaggedError<CliError>()("CliError", {
   message: Schema.String,
 }) {}
 
@@ -44,8 +44,8 @@ export const resolveOrg = (explicit: Option.Option<string>) =>
 // (`NO_BROWSER=1` or `CI` set) so automation doesn't spawn a browser.
 export const openBrowser = (url: string) =>
   Effect.gen(function* () {
-    const noBrowser = yield* Config.string("NO_BROWSER").pipe(Config.withDefault(""));
-    const ci = yield* Config.string("CI").pipe(Config.withDefault(""));
+    const noBrowser = yield* Config.String("NO_BROWSER").pipe(Config.withDefault(""));
+    const ci = yield* Config.String("CI").pipe(Config.withDefault(""));
     if (noBrowser === "1" || ci !== "") return;
     const opener =
       process.platform === "darwin" ? "open" : process.platform === "win32" ? "cmd" : "xdg-open";

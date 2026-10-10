@@ -3,16 +3,15 @@ import { ok } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import { AuthContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 
 // `TestServerLive` provides the super-admin fake CurrentUser; `seedSuperAdminCaller`
 // inserts that user row so the token's user_id FK resolves.
-const suite = describe.sequential;
 
-suite("POST /auth/tokens (integration)", () => {
+describe("POST /auth/tokens (integration)", () => {
   const { run } = useServerTestRuntime(["auth.api_tokens", "user.users", "platform.roles"], {
     seedSuperAdminCaller: true,
   });

@@ -12,9 +12,9 @@
 import "server-only";
 
 import type * as Effect from "effect/Effect";
-import type * as AsyncResult from "effect/unstable/reactivity/AsyncResult";
-import type * as Atom from "effect/unstable/reactivity/Atom";
-import type * as Hydration from "effect/unstable/reactivity/Hydration";
+import type * as AsyncResult from "effect/reactivity/AsyncResult";
+import type * as Atom from "effect/reactivity/Atom";
+import type * as Hydration from "effect/reactivity/Hydration";
 
 import type { ApiClient } from "@/services/api-client.shared";
 import { getServerRuntime } from "@/services/runtime.server";

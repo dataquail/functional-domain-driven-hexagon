@@ -7,15 +7,13 @@ import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
-
-const suite = describe.sequential;
 
 const ORG_ID = "11111111-1111-1111-1111-111111111111" as never;
 const UNKNOWN_INVITATION_ID = "22222222-2222-2222-2222-222222222222" as never;
@@ -28,7 +26,7 @@ const seedOrg = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-suite("DELETE /orgs/:orgId/invitations/:invitationId (integration, super-admin caller)", () => {
+describe("DELETE /orgs/:orgId/invitations/:invitationId (integration, super-admin caller)", () => {
   const { run } = useServerTestRuntime(
     ["organization.invitations", "organization.organizations", "platform.roles", "user.users"],
     { seedSuperAdminCaller: true },
@@ -100,44 +98,41 @@ suite("DELETE /orgs/:orgId/invitations/:invitationId (integration, super-admin c
   });
 });
 
-suite(
-  "DELETE /orgs/:orgId/invitations/:invitationId (integration, non-admin member caller)",
-  () => {
-    const { run } = useServerTestRuntime(
-      ["organization.invitations", "organization.organizations", "platform.roles", "user.users"],
-      { server: TestServerLiveAsMember, seedSuperAdminCaller: true },
-    );
+describe("DELETE /orgs/:orgId/invitations/:invitationId (integration, non-admin member caller)", () => {
+  const { run } = useServerTestRuntime(
+    ["organization.invitations", "organization.organizations", "platform.roles", "user.users"],
+    { server: TestServerLiveAsMember, seedSuperAdminCaller: true },
+  );
 
-    it("forbids a member who is not an org admin from revoking", async () => {
-      await run(
-        Effect.gen(function* () {
-          yield* seedOrg;
-          const sql = yield* Database.Database;
-          // Seed a pending invitation directly — a non-admin can't create one to
-          // then attempt revoking it, and the 403 must fire before any lookup.
-          yield* sql`
+  it("forbids a member who is not an org admin from revoking", async () => {
+    await run(
+      Effect.gen(function* () {
+        yield* seedOrg;
+        const sql = yield* Database.Database;
+        // Seed a pending invitation directly — a non-admin can't create one to
+        // then attempt revoking it, and the 403 must fire before any lookup.
+        yield* sql`
               INSERT INTO "organization".invitations
                 (id, organization_id, invitee_email, token, expires_at, created_at)
               VALUES (${UNKNOWN_INVITATION_ID}, ${ORG_ID}, 'alice@example.com',
                 'seed-token-revoke-forbidden', now() + interval '7 days', now())
             `.pipe(Effect.orDie);
 
-          const client = yield* HttpApiClient.make(Api);
-          const exit = yield* Effect.exit(
-            client.organization.revokeInvitation({
-              params: { orgId: ORG_ID, invitationId: UNKNOWN_INVITATION_ID },
-            }),
+        const client = yield* HttpApiClient.make(Api);
+        const exit = yield* Effect.exit(
+          client.organization.revokeInvitation({
+            params: { orgId: ORG_ID, invitationId: UNKNOWN_INVITATION_ID },
+          }),
+        );
+        ok(Exit.isFailure(exit));
+        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
+          ok(
+            Schema.is(CustomHttpApiError.Forbidden)(
+              Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
+            ),
           );
-          ok(Exit.isFailure(exit));
-          if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-            ok(
-              Schema.is(CustomHttpApiError.Forbidden)(
-                Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
-              ),
-            );
-          }
-        }),
-      );
-    });
-  },
-);
+        }
+      }),
+    );
+  });
+});

@@ -26,7 +26,6 @@ imports:
     - "@effect/sql-pg"
     - "@effect/platform-node"
     - "@effect/vitest"
-    - pg
     - dotenv
     - vitest
   allow: ["node:**", "~/database/**", "vitest.shared.ts"]

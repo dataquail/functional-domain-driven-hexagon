@@ -1,6 +1,6 @@
+import * as HttpApiEndpoint from "effect/http-api/HttpApiEndpoint";
+import * as HttpApiGroup from "effect/http-api/HttpApiGroup";
 import * as Schema from "effect/Schema";
-import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
-import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
 import { OrganizationId, SubscriptionId } from "../EntityIds.js";
@@ -10,17 +10,13 @@ import { UserAuthMiddleware } from "../Policy.js";
 // Errors
 // ==========================================
 
-export class SubscriptionNotFoundError extends Schema.TaggedErrorClass<SubscriptionNotFoundError>(
-  "SubscriptionNotFoundError",
-)(
+export class SubscriptionNotFoundError extends Schema.TaggedError<SubscriptionNotFoundError>()(
   "SubscriptionNotFoundError",
   { organizationId: OrganizationId, message: Schema.String },
   { httpApiStatus: 404 },
 ) {}
 
-export class SubscriptionAlreadyExistsError extends Schema.TaggedErrorClass<SubscriptionAlreadyExistsError>(
-  "SubscriptionAlreadyExistsError",
-)(
+export class SubscriptionAlreadyExistsError extends Schema.TaggedError<SubscriptionAlreadyExistsError>()(
   "SubscriptionAlreadyExistsError",
   { organizationId: OrganizationId, message: Schema.String },
   { httpApiStatus: 409 },

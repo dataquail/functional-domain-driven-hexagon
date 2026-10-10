@@ -8,14 +8,15 @@
 // the server keeps its plain `HttpApiClient` transport and no runtime is ever
 // built outside the browser.
 
+import * as AsyncResult from "effect/reactivity/AsyncResult";
+import * as Atom from "effect/reactivity/Atom";
+import type * as Hydration from "effect/reactivity/Hydration";
 import * as Schema from "effect/Schema";
-import * as AsyncResult from "effect/unstable/reactivity/AsyncResult";
-import * as Atom from "effect/unstable/reactivity/Atom";
-import type * as Hydration from "effect/unstable/reactivity/Hydration";
 
-export class NotSerializableError extends Schema.TaggedErrorClass<NotSerializableError>(
+export class NotSerializableError extends Schema.TaggedError<NotSerializableError>()(
   "NotSerializableError",
-)("NotSerializableError", { label: Schema.String }) {
+  { label: Schema.String },
+) {
   override get message(): string {
     return `Atom ${this.label} carries no serialization metadata. A query is only hydratable if it was declared with a \`serializationKey\`.`;
   }
@@ -46,7 +47,7 @@ export const dehydrateQuery = <A, E>(
     throw new NotSerializableError({ label: String(atom.label ?? "<unlabelled>") });
   }
   return {
-    "~effect/reactivity/DehydratedAtom": true,
+    "~effect/reactivity/Hydration/DehydratedAtom": true,
     key: serializable.key,
     value: serializable.encode(AsyncResult.success(value)),
     // The Hydration contract takes epoch millis, not a DateTime.

@@ -9,9 +9,9 @@
 // Next process boundary rather than per-request.
 import "server-only";
 
+import * as HttpClient from "effect/http/HttpClient";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
-import * as HttpClient from "effect/unstable/http/HttpClient";
 import { cookies } from "next/headers";
 import React from "react";
 

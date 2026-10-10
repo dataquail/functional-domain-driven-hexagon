@@ -1,17 +1,26 @@
 import { screen, within } from "@testing-library/react";
-import * as AsyncResult from "effect/unstable/reactivity/AsyncResult";
+import * as AsyncResult from "effect/reactivity/AsyncResult";
 import { describe, expect, it } from "vitest";
 
+import { apiTransportAtom } from "@/services/atom/api-transport.shared";
 import { renderView } from "@/test/atom-harness";
 import { makeMyOrganization, ORG_B_ID } from "@/test/fixtures/organization";
+import { orgsHandlers } from "@/test/handlers/orgs";
+import { server } from "@/test/msw-server";
+import { TEST_API_BASE } from "@/test/typed-handler";
 
 import { OrgPicker } from "./org-picker.view";
 import { myOrgsResultAtom } from "./org-picker.view-model";
 
-const renderPicker = (orgs: ReadonlyArray<ReturnType<typeof makeMyOrganization>>) =>
-  renderView(<OrgPicker />, {
-    initialValues: [[myOrgsResultAtom, AsyncResult.success(orgs)]],
+const renderPicker = (orgs: ReadonlyArray<ReturnType<typeof makeMyOrganization>>) => {
+  server.use(orgsHandlers.findMine(orgs));
+  return renderView(<OrgPicker />, {
+    initialValues: [
+      [apiTransportAtom, { baseUrl: TEST_API_BASE, headers: {} }],
+      [myOrgsResultAtom, AsyncResult.success(orgs)],
+    ],
   });
+};
 
 describe("OrgPicker view", () => {
   it("renders one card per organization, linking into it", () => {

@@ -3,7 +3,7 @@ import { deepStrictEqual, throws } from "node:assert";
 import { PgClient } from "@effect/sql-pg";
 import { describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
-import * as Statement from "effect/unstable/sql/Statement";
+import * as Statement from "effect/sql/Statement";
 
 import { Spec } from "@/globals/application/ddd/specification.js";
 

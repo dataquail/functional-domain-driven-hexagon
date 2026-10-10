@@ -16,9 +16,8 @@ import { WebhookEventRepositoryLive } from "@/modules/billing/infrastructure/rep
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const TestLayer = WebhookEventRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
-const suite = describe.sequential;
 
-suite("WebhookEventRepositoryLive (integration)", () => {
+describe("WebhookEventRepositoryLive (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("billing.webhook_events").pipe(Effect.provide(TestDatabaseLive)),

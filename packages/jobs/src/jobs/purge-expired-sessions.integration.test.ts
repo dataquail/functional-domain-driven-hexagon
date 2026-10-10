@@ -64,9 +64,7 @@ const findSessionIds = Effect.flatMap(Database.Database, (sql) =>
 
 const TestLayer = Layer.provideMerge(Layer.empty, TestDatabaseLive);
 
-const suite = describe.sequential;
-
-suite("purgeExpiredSessions (integration)", () => {
+describe("purgeExpiredSessions (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("auth.sessions", "user.users").pipe(Effect.provide(TestDatabaseLive)),

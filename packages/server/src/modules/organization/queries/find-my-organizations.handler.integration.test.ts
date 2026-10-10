@@ -38,9 +38,7 @@ const seedUsers = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-const suite = describe.sequential;
-
-suite("findMyOrganizationsHandler (integration)", () => {
+describe("findMyOrganizationsHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate(

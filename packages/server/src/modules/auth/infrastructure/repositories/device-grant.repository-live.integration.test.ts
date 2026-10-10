@@ -38,9 +38,7 @@ const start = (now: DateTime.Utc) =>
     ttlSeconds: 600,
   });
 
-const suite = describe.sequential;
-
-suite("DeviceGrantRepositoryLive (integration)", () => {
+describe("DeviceGrantRepositoryLive (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("auth.device_grants", "user.users").pipe(Effect.provide(TestDatabaseLive)),

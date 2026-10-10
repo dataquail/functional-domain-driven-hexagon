@@ -4,15 +4,13 @@ import { describe, it } from "@effect/vitest";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
-const suite = describe.sequential;
-
-suite("GET /orgs (integration — findMine)", () => {
+describe("GET /orgs (integration — findMine)", () => {
   // findMine returns the caller's own orgs, so the caller must be able to own
   // them: a regular member, not a super-admin.
   const { run } = useServerTestRuntime(

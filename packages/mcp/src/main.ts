@@ -5,9 +5,9 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { makeCliClient, readCredentials, resolveBaseUrl, resolveToken } from "@org/api-client";
 import { OrganizationId, TodoId } from "@org/contracts/EntityIds";
 import * as Effect from "effect/Effect";
+import * as FetchHttpClient from "effect/http/FetchHttpClient";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
-import * as FetchHttpClient from "effect/unstable/http/FetchHttpClient";
 import { z } from "zod";
 
 // MCP (stdio) server exposing the CLI surface as tools (ADR-0005). It reuses

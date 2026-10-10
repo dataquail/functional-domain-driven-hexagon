@@ -26,9 +26,7 @@ const now = DateTime.makeUnsafe("2025-01-01T00:00:00Z");
 
 const TestLayer = UserRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-const suite = describe.sequential;
-
-suite("findUsersByIdsHandler (integration)", () => {
+describe("findUsersByIdsHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(truncate("user.users").pipe(Effect.provide(TestDatabaseLive)));
   });

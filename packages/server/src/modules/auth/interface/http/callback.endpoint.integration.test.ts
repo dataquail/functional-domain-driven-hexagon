@@ -6,9 +6,9 @@ import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
@@ -21,9 +21,8 @@ import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 // arriving without our signed OIDC state cookie must be rejected with 401
 // before any code exchange is attempted. This is the CSRF/replay defense, and
 // it's reachable without an IdP because it fails before `OidcClient` is called.
-const suite = describe.sequential;
 
-suite("GET /auth/callback (integration)", () => {
+describe("GET /auth/callback (integration)", () => {
   const { run } = useServerTestRuntime(["auth.sessions", "user.users"]);
 
   it("rejects a callback with no OIDC state cookie as 401 Unauthorized", async () => {

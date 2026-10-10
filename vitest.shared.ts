@@ -34,8 +34,9 @@ const config: ViteUserConfig = {
     fakeTimers: {
       toFake: undefined,
     },
+    // Integration tests share one database and truncate between cases.
     sequence: {
-      concurrent: true,
+      concurrent: !runIntegration,
     },
     include: runIntegration
       ? ["test/**/*.integration.test.ts", "src/**/*.integration.test.ts"]

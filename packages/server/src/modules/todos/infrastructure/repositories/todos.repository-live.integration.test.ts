@@ -51,9 +51,7 @@ const seedOrgs = Effect.gen(function* () {
 
 const TestLayer = TodosRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-const suite = describe.sequential;
-
-suite("TodosRepositoryLive (integration)", () => {
+describe("TodosRepositoryLive (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("todos.todos", "organization.organizations").pipe(Effect.provide(TestDatabaseLive)),

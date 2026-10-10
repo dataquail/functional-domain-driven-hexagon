@@ -26,9 +26,7 @@ const seedUser = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-const suite = describe.sequential;
-
-suite("findUserRolesHandler (integration)", () => {
+describe("findUserRolesHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("platform.roles", "user.users").pipe(Effect.provide(TestDatabaseLive)),

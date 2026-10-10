@@ -2,8 +2,8 @@
 // derived pagination view. No React, no JSX, no atom-react -- everything here
 // runs under a bare `AtomRegistry` in a test.
 
-import * as AsyncResult from "effect/unstable/reactivity/AsyncResult";
-import * as Atom from "effect/unstable/reactivity/Atom";
+import * as AsyncResult from "effect/reactivity/AsyncResult";
+import * as Atom from "effect/reactivity/Atom";
 
 import { usersQueryAtom } from "@/services/data-access/users.atoms";
 

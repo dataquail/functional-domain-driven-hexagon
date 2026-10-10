@@ -6,7 +6,7 @@
 // actual Next router; everything upstream of it is plain values a test can set
 // and read.
 
-import * as Atom from "effect/unstable/reactivity/Atom";
+import * as Atom from "effect/reactivity/Atom";
 
 // Kept alive: the bridge subscribes for the app's whole lifetime, and a
 // navigation request that the registry released before the bridge read it would

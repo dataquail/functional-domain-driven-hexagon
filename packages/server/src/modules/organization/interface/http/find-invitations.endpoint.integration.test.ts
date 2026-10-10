@@ -4,12 +4,10 @@ import { describe, it } from "@effect/vitest";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-
-const suite = describe.sequential;
 
 const ORG_ID = "11111111-1111-1111-1111-111111111111" as never;
 
@@ -21,7 +19,7 @@ const seedOrg = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-suite("GET /orgs/:orgId/invitations (integration)", () => {
+describe("GET /orgs/:orgId/invitations (integration)", () => {
   const { run } = useServerTestRuntime(
     ["organization.invitations", "organization.organizations", "platform.roles", "user.users"],
     { seedSuperAdminCaller: true },

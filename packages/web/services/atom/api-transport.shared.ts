@@ -5,7 +5,7 @@
 // cookie jar attach the session, while a server registry talks to the Effect
 // server directly with the inbound request's Cookie forwarded explicitly.
 
-import * as Atom from "effect/unstable/reactivity/Atom";
+import * as Atom from "effect/reactivity/Atom";
 
 export type ApiTransport = {
   readonly baseUrl: string;

@@ -6,13 +6,13 @@ import {
   resolveToken,
   saveToken,
 } from "@org/api-client";
+import * as Command from "effect/cli/Command";
+import * as Flag from "effect/cli/Flag";
 import * as Console from "effect/Console";
 import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schedule from "effect/Schedule";
-import * as Command from "effect/unstable/cli/Command";
-import * as Flag from "effect/unstable/cli/Flag";
 
 import { CliError, maskToken, openBrowser, toCliError } from "../internal.js";
 
@@ -20,7 +20,7 @@ import { CliError, maskToken, openBrowser, toCliError } from "../internal.js";
 //   - with a token: store it (CI / paste path) and validate it.
 //   - without: run the app-native device flow (RFC 8628) — print + open the
 //     verification URL, then poll until the browser approves.
-const withTokenOption = Flag.string("with-token").pipe(
+const withTokenOption = Flag.String("with-token").pipe(
   Flag.optional,
   Flag.withDescription("Store a pre-minted personal access token instead of the device flow"),
 );

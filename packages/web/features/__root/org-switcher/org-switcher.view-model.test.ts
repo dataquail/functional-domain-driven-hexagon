@@ -1,7 +1,7 @@
 import { OrganizationId } from "@org/contracts/EntityIds";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as AtomRegistry from "effect/unstable/reactivity/AtomRegistry";
+import * as AtomRegistry from "effect/reactivity/AtomRegistry";
 import { describe, expect, it } from "vitest";
 
 import { apiTransportAtom } from "@/services/atom/api-transport.shared";

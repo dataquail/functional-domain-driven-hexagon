@@ -34,8 +34,8 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 **Installed, not vendored.** The CQRS, unit-of-work and authorization patterns this codebase
 teaches now ship as published libraries from a separate repository (`dataquail/effect-server-utils`)
 and are consumed here as ordinary dependencies, each pinned to an exact beta:
-`@effect-server-utils/cqrs` (`0.1.0-beta.6`), `@effect-server-utils/unit-of-work` (`0.1.0-beta.6`)
-and `@effect-server-utils/authz` (`0.1.0-beta.3`). ADR-0006, ADR-0007 and ADR-0021 still describe
+`@effect-server-utils/cqrs` (`0.1.0-beta.8`), `@effect-server-utils/unit-of-work` (`0.1.0-beta.8`)
+and `@effect-server-utils/authz` (`0.1.0-beta.5`). ADR-0006, ADR-0007 and ADR-0021 still describe
 their design and the constraints this application relies on; changing any of them means a release
 there, not an edit here.
 
@@ -57,9 +57,9 @@ there, not an edit here.
 | `pnpm test`                                            | vitest **unit** suite (excludes `*.integration.test.ts`), no DB                                                                        |
 | `DATABASE_URL_TEST=postgres://… pnpm test:integration` | **integration** suite only (`*.integration.test.ts`); hard-fails if no DB                                                              |
 | `DATABASE_URL_TEST=postgres://… pnpm coverage`         | unit + integration merged into ONE coverage number; thresholds in `vitest.config.ts` gate CI                                           |
-| `pnpm effect:source`                                   | clone/refresh the Effect v4 source at `reference/effect` (gitignored, pinned to our beta)                                              |
+| `pnpm effect:source`                                   | clone/refresh the Effect v4 source at `reference/effect` (gitignored, pinned to our version)                                           |
 
 ## Always in scope
 
-- **Effect v4 baseline.** Pinned to `effect@4.0.0-beta.94` (exact — `effect/unstable/*` may break on beta bumps). Domain result idiom is `effect/Result` (not `Either`); errors are `Schema.TaggedErrorClass`; services are `Context.Service<Self, Shape>()("Id")` with an explicit `Layer`. HTTP is `effect/unstable/httpapi` + `effect/unstable/http`. Persistence is `effect/unstable/sql` with the `@effect/sql-pg` driver, pinned to the same exact beta — bump them together. Server-side gotchas and event-bus/UoW/span rules are in `.claude/rules/server-effect-and-persistence.md`. The beta ships no API docs, so **read the v4 source instead of recalling its API** — `pnpm effect:source` puts a pinned, gitignored checkout at `reference/effect`; `.claude/rules/effect-v4-source.md` says what lives where.
+- **Effect v4 baseline.** Pinned to `effect@4.0.2` (exact — `effect/*` modules marked `@stability unstable` may still break on a bump). Domain result idiom is `effect/Result` (not `Either`); errors are `Schema.TaggedError`; services are `Context.Service<Self, Shape>()("Id")` with an explicit `Layer`. HTTP is `effect/http-api` + `effect/http`. Persistence is `effect/sql` with the `@effect/sql-pg` driver, pinned to the same exact version — bump them together. Server-side gotchas and event-bus/UoW/span rules are in `.claude/rules/server-effect-and-persistence.md`. Effect v4 ships no API docs, so **read the v4 source instead of recalling its API** — `pnpm effect:source` puts a pinned, gitignored checkout at `reference/effect`; `.claude/rules/effect-v4-source.md` says what lives where.
 - **Comments are a last resort** — code is self-documenting, behavior is documented through tests. Full policy: `.claude/rules/comments.md`.

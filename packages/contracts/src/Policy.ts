@@ -1,5 +1,5 @@
 import * as Context from "effect/Context";
-import * as HttpApiMiddleware from "effect/unstable/httpapi/HttpApiMiddleware";
+import * as HttpApiMiddleware from "effect/http-api/HttpApiMiddleware";
 
 import * as CustomHttpApiError from "./CustomHttpApiError.js";
 import { type UserId } from "./EntityIds.js";

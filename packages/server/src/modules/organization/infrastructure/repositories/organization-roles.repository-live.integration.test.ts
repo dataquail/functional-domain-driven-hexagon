@@ -47,9 +47,7 @@ const seedFixtures = Effect.gen(function* () {
 
 const TestLayer = OrganizationRolesRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-const suite = describe.sequential;
-
-suite("OrganizationRolesRepositoryLive (integration)", () => {
+describe("OrganizationRolesRepositoryLive (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("organization.organization_roles", "organization.organizations", "user.users").pipe(

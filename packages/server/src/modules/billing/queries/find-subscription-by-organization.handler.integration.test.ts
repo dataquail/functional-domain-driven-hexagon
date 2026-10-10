@@ -36,9 +36,7 @@ const seedOrg = (id: OrganizationId, name: string) =>
         `.pipe(Effect.orDie);
   });
 
-const suite = describe.sequential;
-
-suite("findSubscriptionByOrganizationHandler (integration)", () => {
+describe("findSubscriptionByOrganizationHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("billing.subscriptions", "organization.organizations").pipe(

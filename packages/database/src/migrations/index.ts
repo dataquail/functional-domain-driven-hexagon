@@ -1,5 +1,5 @@
 import type * as Effect from "effect/Effect";
-import type { SqlClient } from "effect/unstable/sql/SqlClient";
+import type { SqlClient } from "effect/sql/SqlClient";
 
 import m0001 from "./0001_create_schema_user.js";
 import m0002 from "./0002_create_schema_organization.js";

@@ -1,6 +1,6 @@
+import * as HttpApiEndpoint from "effect/http-api/HttpApiEndpoint";
+import * as HttpApiGroup from "effect/http-api/HttpApiGroup";
 import * as Schema from "effect/Schema";
-import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
-import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
 
@@ -34,17 +34,23 @@ export class DeviceTokenResponse extends Schema.Class<DeviceTokenResponse>("Devi
 
 // RFC 8628 token-endpoint errors. All 400; the tag is the discriminator the
 // CLI switches on (keep polling on pending; stop on the rest).
-export class DeviceAuthorizationPending extends Schema.TaggedErrorClass<DeviceAuthorizationPending>(
+export class DeviceAuthorizationPending extends Schema.TaggedError<DeviceAuthorizationPending>()(
   "DeviceAuthorizationPending",
-)("DeviceAuthorizationPending", { message: Schema.String }, { httpApiStatus: 400 }) {}
+  { message: Schema.String },
+  { httpApiStatus: 400 },
+) {}
 
-export class DeviceTokenExpired extends Schema.TaggedErrorClass<DeviceTokenExpired>(
+export class DeviceTokenExpired extends Schema.TaggedError<DeviceTokenExpired>()(
   "DeviceTokenExpired",
-)("DeviceTokenExpired", { message: Schema.String }, { httpApiStatus: 400 }) {}
+  { message: Schema.String },
+  { httpApiStatus: 400 },
+) {}
 
-export class DeviceCodeNotFound extends Schema.TaggedErrorClass<DeviceCodeNotFound>(
+export class DeviceCodeNotFound extends Schema.TaggedError<DeviceCodeNotFound>()(
   "DeviceCodeNotFound",
-)("DeviceCodeNotFound", { message: Schema.String }, { httpApiStatus: 400 }) {}
+  { message: Schema.String },
+  { httpApiStatus: 400 },
+) {}
 
 export class DeviceGroup extends HttpApiGroup.make("cliAuth")
   .add(

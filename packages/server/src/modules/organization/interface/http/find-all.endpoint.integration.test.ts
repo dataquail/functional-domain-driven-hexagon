@@ -7,17 +7,15 @@ import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
-const suite = describe.sequential;
-
-suite("GET /admin/orgs (integration)", () => {
+describe("GET /admin/orgs (integration)", () => {
   // Listing all orgs is super-admin-only (organizationPolicies.read =
   // SuperAdminOnly). Super-admins can't create orgs, so seed the orgs to list
   // directly: "Acme" active, "Beta" tombstoned.
@@ -68,9 +66,7 @@ suite("GET /admin/orgs (integration)", () => {
   });
 });
 
-const memberSuite = describe.sequential;
-
-memberSuite("GET /admin/orgs (integration, non-super-admin caller)", () => {
+describe("GET /admin/orgs (integration, non-super-admin caller)", () => {
   const { run } = useServerTestRuntime(["organization.organizations", "platform.roles"], {
     server: TestServerLiveAsMember,
   });

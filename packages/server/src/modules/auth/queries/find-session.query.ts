@@ -18,20 +18,17 @@ export type SessionView = typeof SessionView.Type;
 // its own equivalents (revoke path); these are query-owned so the read
 // path stays off the domain. The auth middleware collapses all three to
 // a 401 — the distinct tags exist for observability.
-export class SessionNotFound extends Schema.TaggedErrorClass<SessionNotFound>("SessionNotFound")(
-  "SessionNotFound",
-  { sessionId: SessionId },
-) {}
+export class SessionNotFound extends Schema.TaggedError<SessionNotFound>()("SessionNotFound", {
+  sessionId: SessionId,
+}) {}
 
-export class SessionExpired extends Schema.TaggedErrorClass<SessionExpired>("SessionExpired")(
-  "SessionExpired",
-  { sessionId: SessionId },
-) {}
+export class SessionExpired extends Schema.TaggedError<SessionExpired>()("SessionExpired", {
+  sessionId: SessionId,
+}) {}
 
-export class SessionRevoked extends Schema.TaggedErrorClass<SessionRevoked>("SessionRevoked")(
-  "SessionRevoked",
-  { sessionId: SessionId },
-) {}
+export class SessionRevoked extends Schema.TaggedError<SessionRevoked>()("SessionRevoked", {
+  sessionId: SessionId,
+}) {}
 
 export const FindSessionQuery = Query.make("FindSessionQuery", {
   payload: { sessionId: SessionId },

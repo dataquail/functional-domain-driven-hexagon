@@ -1,8 +1,8 @@
 import * as UserContract from "@org/contracts/api/UserContract";
 import * as Effect from "effect/Effect";
-import type * as AsyncResult from "effect/unstable/reactivity/AsyncResult";
-import type * as Atom from "effect/unstable/reactivity/Atom";
-import * as AtomRegistry from "effect/unstable/reactivity/AtomRegistry";
+import type * as AsyncResult from "effect/reactivity/AsyncResult";
+import type * as Atom from "effect/reactivity/Atom";
+import * as AtomRegistry from "effect/reactivity/AtomRegistry";
 import { describe, expect, it } from "vitest";
 
 import { apiTransportAtom } from "@/services/atom/api-transport.shared";

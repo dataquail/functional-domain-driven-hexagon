@@ -4,7 +4,7 @@ import * as Schema from "effect/Schema";
 // 4xx Client Errors
 // ==========================================
 
-export class BadRequest extends Schema.TaggedErrorClass<BadRequest>("BadRequest")(
+export class BadRequest extends Schema.TaggedError<BadRequest>()(
   "BadRequest",
   {
     message: Schema.optional(Schema.String),
@@ -15,7 +15,7 @@ export class BadRequest extends Schema.TaggedErrorClass<BadRequest>("BadRequest"
   },
 ) {}
 
-export class Unauthorized extends Schema.TaggedErrorClass<Unauthorized>("Unauthorized")(
+export class Unauthorized extends Schema.TaggedError<Unauthorized>()(
   "Unauthorized",
   {
     message: Schema.optional(Schema.String),
@@ -26,7 +26,7 @@ export class Unauthorized extends Schema.TaggedErrorClass<Unauthorized>("Unautho
   },
 ) {}
 
-export class PaymentRequired extends Schema.TaggedErrorClass<PaymentRequired>("PaymentRequired")(
+export class PaymentRequired extends Schema.TaggedError<PaymentRequired>()(
   "PaymentRequired",
   {
     message: Schema.optional(Schema.String),
@@ -37,7 +37,7 @@ export class PaymentRequired extends Schema.TaggedErrorClass<PaymentRequired>("P
   },
 ) {}
 
-export class Forbidden extends Schema.TaggedErrorClass<Forbidden>("Forbidden")(
+export class Forbidden extends Schema.TaggedError<Forbidden>()(
   "Forbidden",
   {
     message: Schema.optional(Schema.String),
@@ -48,7 +48,7 @@ export class Forbidden extends Schema.TaggedErrorClass<Forbidden>("Forbidden")(
   },
 ) {}
 
-export class NotFound extends Schema.TaggedErrorClass<NotFound>("NotFound")(
+export class NotFound extends Schema.TaggedError<NotFound>()(
   "NotFound",
   {
     message: Schema.optional(Schema.String),
@@ -59,7 +59,7 @@ export class NotFound extends Schema.TaggedErrorClass<NotFound>("NotFound")(
   },
 ) {}
 
-export class MethodNotAllowed extends Schema.TaggedErrorClass<MethodNotAllowed>("MethodNotAllowed")(
+export class MethodNotAllowed extends Schema.TaggedError<MethodNotAllowed>()(
   "MethodNotAllowed",
   {
     message: Schema.optional(Schema.String),
@@ -70,7 +70,7 @@ export class MethodNotAllowed extends Schema.TaggedErrorClass<MethodNotAllowed>(
   },
 ) {}
 
-export class NotAcceptable extends Schema.TaggedErrorClass<NotAcceptable>("NotAcceptable")(
+export class NotAcceptable extends Schema.TaggedError<NotAcceptable>()(
   "NotAcceptable",
   {
     message: Schema.optional(Schema.String),
@@ -82,9 +82,7 @@ export class NotAcceptable extends Schema.TaggedErrorClass<NotAcceptable>("NotAc
   },
 ) {}
 
-export class ProxyAuthenticationRequired extends Schema.TaggedErrorClass<ProxyAuthenticationRequired>(
-  "ProxyAuthenticationRequired",
-)(
+export class ProxyAuthenticationRequired extends Schema.TaggedError<ProxyAuthenticationRequired>()(
   "ProxyAuthenticationRequired",
   {
     message: Schema.optional(Schema.String),
@@ -95,7 +93,7 @@ export class ProxyAuthenticationRequired extends Schema.TaggedErrorClass<ProxyAu
   },
 ) {}
 
-export class RequestTimeout extends Schema.TaggedErrorClass<RequestTimeout>("RequestTimeout")(
+export class RequestTimeout extends Schema.TaggedError<RequestTimeout>()(
   "RequestTimeout",
   {
     message: Schema.optional(Schema.String),
@@ -106,7 +104,7 @@ export class RequestTimeout extends Schema.TaggedErrorClass<RequestTimeout>("Req
   },
 ) {}
 
-export class Conflict extends Schema.TaggedErrorClass<Conflict>("Conflict")(
+export class Conflict extends Schema.TaggedError<Conflict>()(
   "Conflict",
   {
     message: Schema.optional(Schema.String),
@@ -117,7 +115,7 @@ export class Conflict extends Schema.TaggedErrorClass<Conflict>("Conflict")(
   },
 ) {}
 
-export class Gone extends Schema.TaggedErrorClass<Gone>("Gone")(
+export class Gone extends Schema.TaggedError<Gone>()(
   "Gone",
   {
     message: Schema.optional(Schema.String),
@@ -128,7 +126,7 @@ export class Gone extends Schema.TaggedErrorClass<Gone>("Gone")(
   },
 ) {}
 
-export class LengthRequired extends Schema.TaggedErrorClass<LengthRequired>("LengthRequired")(
+export class LengthRequired extends Schema.TaggedError<LengthRequired>()(
   "LengthRequired",
   {
     message: Schema.optional(Schema.String),
@@ -140,9 +138,7 @@ export class LengthRequired extends Schema.TaggedErrorClass<LengthRequired>("Len
   },
 ) {}
 
-export class PreconditionFailed extends Schema.TaggedErrorClass<PreconditionFailed>(
-  "PreconditionFailed",
-)(
+export class PreconditionFailed extends Schema.TaggedError<PreconditionFailed>()(
   "PreconditionFailed",
   {
     message: Schema.optional(Schema.String),
@@ -154,7 +150,7 @@ export class PreconditionFailed extends Schema.TaggedErrorClass<PreconditionFail
   },
 ) {}
 
-export class PayloadTooLarge extends Schema.TaggedErrorClass<PayloadTooLarge>("PayloadTooLarge")(
+export class PayloadTooLarge extends Schema.TaggedError<PayloadTooLarge>()(
   "PayloadTooLarge",
   {
     message: Schema.optional(Schema.String),
@@ -165,7 +161,7 @@ export class PayloadTooLarge extends Schema.TaggedErrorClass<PayloadTooLarge>("P
   },
 ) {}
 
-export class URITooLong extends Schema.TaggedErrorClass<URITooLong>("URITooLong")(
+export class URITooLong extends Schema.TaggedError<URITooLong>()(
   "URITooLong",
   {
     message: Schema.optional(Schema.String),
@@ -176,9 +172,7 @@ export class URITooLong extends Schema.TaggedErrorClass<URITooLong>("URITooLong"
   },
 ) {}
 
-export class UnsupportedMediaType extends Schema.TaggedErrorClass<UnsupportedMediaType>(
-  "UnsupportedMediaType",
-)(
+export class UnsupportedMediaType extends Schema.TaggedError<UnsupportedMediaType>()(
   "UnsupportedMediaType",
   {
     message: Schema.optional(Schema.String),
@@ -190,9 +184,7 @@ export class UnsupportedMediaType extends Schema.TaggedErrorClass<UnsupportedMed
   },
 ) {}
 
-export class RangeNotSatisfiable extends Schema.TaggedErrorClass<RangeNotSatisfiable>(
-  "RangeNotSatisfiable",
-)(
+export class RangeNotSatisfiable extends Schema.TaggedError<RangeNotSatisfiable>()(
   "RangeNotSatisfiable",
   {
     message: Schema.optional(Schema.String),
@@ -204,9 +196,7 @@ export class RangeNotSatisfiable extends Schema.TaggedErrorClass<RangeNotSatisfi
   },
 ) {}
 
-export class ExpectationFailed extends Schema.TaggedErrorClass<ExpectationFailed>(
-  "ExpectationFailed",
-)(
+export class ExpectationFailed extends Schema.TaggedError<ExpectationFailed>()(
   "ExpectationFailed",
   {
     message: Schema.optional(Schema.String),
@@ -217,9 +207,7 @@ export class ExpectationFailed extends Schema.TaggedErrorClass<ExpectationFailed
   },
 ) {}
 
-export class UnprocessableEntity extends Schema.TaggedErrorClass<UnprocessableEntity>(
-  "UnprocessableEntity",
-)(
+export class UnprocessableEntity extends Schema.TaggedError<UnprocessableEntity>()(
   "UnprocessableEntity",
   {
     message: Schema.optional(Schema.String),
@@ -230,7 +218,7 @@ export class UnprocessableEntity extends Schema.TaggedErrorClass<UnprocessableEn
   },
 ) {}
 
-export class TooEarly extends Schema.TaggedErrorClass<TooEarly>("TooEarly")(
+export class TooEarly extends Schema.TaggedError<TooEarly>()(
   "TooEarly",
   {
     message: Schema.optional(Schema.String),
@@ -241,7 +229,7 @@ export class TooEarly extends Schema.TaggedErrorClass<TooEarly>("TooEarly")(
   },
 ) {}
 
-export class TooManyRequests extends Schema.TaggedErrorClass<TooManyRequests>("TooManyRequests")(
+export class TooManyRequests extends Schema.TaggedError<TooManyRequests>()(
   "TooManyRequests",
   {
     message: Schema.optional(Schema.String),
@@ -252,9 +240,7 @@ export class TooManyRequests extends Schema.TaggedErrorClass<TooManyRequests>("T
   },
 ) {}
 
-export class RequestHeaderFieldsTooLarge extends Schema.TaggedErrorClass<RequestHeaderFieldsTooLarge>(
-  "RequestHeaderFieldsTooLarge",
-)(
+export class RequestHeaderFieldsTooLarge extends Schema.TaggedError<RequestHeaderFieldsTooLarge>()(
   "RequestHeaderFieldsTooLarge",
   {
     message: Schema.optional(Schema.String),
@@ -266,9 +252,7 @@ export class RequestHeaderFieldsTooLarge extends Schema.TaggedErrorClass<Request
   },
 ) {}
 
-export class UnavailableForLegalReasons extends Schema.TaggedErrorClass<UnavailableForLegalReasons>(
-  "UnavailableForLegalReasons",
-)(
+export class UnavailableForLegalReasons extends Schema.TaggedError<UnavailableForLegalReasons>()(
   "UnavailableForLegalReasons",
   {
     message: Schema.optional(Schema.String),
@@ -283,9 +267,7 @@ export class UnavailableForLegalReasons extends Schema.TaggedErrorClass<Unavaila
 // 5xx Server Errors
 // ==========================================
 
-export class InternalServerError extends Schema.TaggedErrorClass<InternalServerError>(
-  "InternalServerError",
-)(
+export class InternalServerError extends Schema.TaggedError<InternalServerError>()(
   "InternalServerError",
   {
     message: Schema.optional(Schema.String),
@@ -296,7 +278,7 @@ export class InternalServerError extends Schema.TaggedErrorClass<InternalServerE
   },
 ) {}
 
-export class NotImplemented extends Schema.TaggedErrorClass<NotImplemented>("NotImplemented")(
+export class NotImplemented extends Schema.TaggedError<NotImplemented>()(
   "NotImplemented",
   {
     message: Schema.optional(Schema.String),
@@ -307,7 +289,7 @@ export class NotImplemented extends Schema.TaggedErrorClass<NotImplemented>("Not
   },
 ) {}
 
-export class BadGateway extends Schema.TaggedErrorClass<BadGateway>("BadGateway")(
+export class BadGateway extends Schema.TaggedError<BadGateway>()(
   "BadGateway",
   {
     message: Schema.optional(Schema.String),
@@ -319,9 +301,7 @@ export class BadGateway extends Schema.TaggedErrorClass<BadGateway>("BadGateway"
   },
 ) {}
 
-export class ServiceUnavailable extends Schema.TaggedErrorClass<ServiceUnavailable>(
-  "ServiceUnavailable",
-)(
+export class ServiceUnavailable extends Schema.TaggedError<ServiceUnavailable>()(
   "ServiceUnavailable",
   {
     message: Schema.optional(Schema.String),
@@ -332,7 +312,7 @@ export class ServiceUnavailable extends Schema.TaggedErrorClass<ServiceUnavailab
   },
 ) {}
 
-export class GatewayTimeout extends Schema.TaggedErrorClass<GatewayTimeout>("GatewayTimeout")(
+export class GatewayTimeout extends Schema.TaggedError<GatewayTimeout>()(
   "GatewayTimeout",
   {
     message: Schema.optional(Schema.String),
@@ -344,9 +324,7 @@ export class GatewayTimeout extends Schema.TaggedErrorClass<GatewayTimeout>("Gat
   },
 ) {}
 
-export class HTTPVersionNotSupported extends Schema.TaggedErrorClass<HTTPVersionNotSupported>(
-  "HTTPVersionNotSupported",
-)(
+export class HTTPVersionNotSupported extends Schema.TaggedError<HTTPVersionNotSupported>()(
   "HTTPVersionNotSupported",
   {
     message: Schema.optional(Schema.String),

@@ -58,9 +58,7 @@ const openForAlice = Spec.and(
 
 const TestLayer = InvitationRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-const suite = describe.sequential;
-
-suite("InvitationRepositoryLive (integration)", () => {
+describe("InvitationRepositoryLive (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("organization.invitations", "organization.organizations").pipe(

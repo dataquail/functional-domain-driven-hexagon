@@ -1,4 +1,4 @@
-import * as Statement from "effect/unstable/sql/Statement";
+import * as Statement from "effect/sql/Statement";
 
 import { type Criteria } from "@/globals/application/ddd/specification.js";
 

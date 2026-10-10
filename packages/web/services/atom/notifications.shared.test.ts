@@ -1,17 +1,17 @@
 import * as Effect from "effect/Effect";
+import * as Atom from "effect/reactivity/Atom";
+import * as AtomRegistry from "effect/reactivity/AtomRegistry";
 import * as Schema from "effect/Schema";
-import * as Atom from "effect/unstable/reactivity/Atom";
-import * as AtomRegistry from "effect/unstable/reactivity/AtomRegistry";
 import { describe, expect, it } from "vitest";
 
 import { notificationAtom, notify } from "./notifications.shared";
 
-class BoomError extends Schema.ErrorClass<BoomError>("BoomError")({
+class BoomError extends Schema.Error<BoomError>("BoomError")({
   _tag: Schema.tag("BoomError"),
   detail: Schema.String,
 }) {}
 
-class OtherError extends Schema.ErrorClass<OtherError>("OtherError")({
+class OtherError extends Schema.Error<OtherError>("OtherError")({
   _tag: Schema.tag("OtherError"),
 }) {}
 

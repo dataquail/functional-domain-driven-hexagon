@@ -3,16 +3,15 @@ import { deepStrictEqual, ok } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import { AuthContract, CliAuthContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 
 // Drives the full device flow through the real HTTP surface: the fake auth
 // middleware supplies the super-admin caller for the browser `approve` step.
-const suite = describe.sequential;
 
-suite("POST /cli/device/token (integration)", () => {
+describe("POST /cli/device/token (integration)", () => {
   const { run } = useServerTestRuntime(
     ["auth.device_grants", "auth.api_tokens", "user.users", "platform.roles"],
     { seedSuperAdminCaller: true },

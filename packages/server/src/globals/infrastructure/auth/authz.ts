@@ -15,7 +15,7 @@ import { type Action as AppAction } from "@/globals/application/ports/actions.js
 //
 // The four types are declared once here and reach every registration site
 // through the library's own aliases. The denial is a value rather than a type,
-// so it arrives as a constructor: a `Schema.TaggedErrorClass` instance is
+// so it arrives as a constructor: a `Schema.TaggedError` instance is
 // already a failed Effect, which is why the lambda needs no lifting.
 
 declare module "@effect-server-utils/authz/config" {

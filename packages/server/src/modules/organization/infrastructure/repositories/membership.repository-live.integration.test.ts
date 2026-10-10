@@ -47,9 +47,7 @@ const seedFks = Effect.gen(function* () {
 
 const TestLayer = MembershipRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-const suite = describe.sequential;
-
-suite("MembershipRepositoryLive (integration)", () => {
+describe("MembershipRepositoryLive (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("organization.memberships", "organization.organizations", "user.users").pipe(

@@ -13,8 +13,8 @@ import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Layer from "effect/Layer";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { beforeEach } from "vitest";
 
 import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
@@ -43,9 +43,7 @@ const WALLET_TABLES = [
   "user.users",
 ] as const;
 
-const suite = describe.sequential;
-
-suite("organization → wallet adapter (integration)", () => {
+describe("organization → wallet adapter (integration)", () => {
   // `seedSuperAdminCaller` is required: creating an org inserts a
   // membership row FK'd to `"user".users(id)` for the caller. Without a
   // seeded users row for the fake-auth CurrentUser, the membership insert
@@ -167,7 +165,7 @@ const withBusUnder = (
 
 const RollbackTestLayer = withBusUnder(FailingCommandBusLive);
 
-suite("organization → wallet adapter (rollback integration)", () => {
+describe("organization → wallet adapter (rollback integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("wallet.wallets", "organization.organizations").pipe(
@@ -207,7 +205,7 @@ suite("organization → wallet adapter (rollback integration)", () => {
 
 const JoinTestLayer = withBusUnder(WorkingCommandBusLive);
 
-suite("organization → wallet adapter (transaction-join integration)", () => {
+describe("organization → wallet adapter (transaction-join integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("wallet.wallets", "organization.organizations").pipe(

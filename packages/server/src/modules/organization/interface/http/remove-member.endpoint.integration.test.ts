@@ -6,16 +6,14 @@ import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { MEMBER_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
-
-const suite = describe.sequential;
 
 const ORG_ID = "11111111-1111-1111-1111-111111111111" as never;
 const UNKNOWN_ORG_ID = "99999999-9999-9999-9999-999999999999" as never;
@@ -39,7 +37,7 @@ const seedTargetMembership = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-suite("DELETE /orgs/:orgId/members/:userId (integration, super-admin caller)", () => {
+describe("DELETE /orgs/:orgId/members/:userId (integration, super-admin caller)", () => {
   const { run } = useServerTestRuntime(
     [
       "organization.organization_roles",
@@ -107,7 +105,7 @@ suite("DELETE /orgs/:orgId/members/:userId (integration, super-admin caller)", (
   });
 });
 
-suite("DELETE /orgs/:orgId/members/:userId (integration, non-admin member caller)", () => {
+describe("DELETE /orgs/:orgId/members/:userId (integration, non-admin member caller)", () => {
   const { run } = useServerTestRuntime(
     [
       "organization.organization_roles",

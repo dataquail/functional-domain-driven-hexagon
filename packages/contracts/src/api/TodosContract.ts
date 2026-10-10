@@ -1,14 +1,12 @@
+import * as HttpApiEndpoint from "effect/http-api/HttpApiEndpoint";
+import * as HttpApiGroup from "effect/http-api/HttpApiGroup";
 import * as Schema from "effect/Schema";
-import * as HttpApiEndpoint from "effect/unstable/httpapi/HttpApiEndpoint";
-import * as HttpApiGroup from "effect/unstable/httpapi/HttpApiGroup";
 
 import * as CustomHttpApiError from "../CustomHttpApiError.js";
 import { OrganizationId, TodoId } from "../EntityIds.js";
 import { UserAuthMiddleware } from "../Policy.js";
 
-export class TodoNotFoundError extends Schema.TaggedErrorClass<TodoNotFoundError>(
-  "TodoNotFoundError",
-)(
+export class TodoNotFoundError extends Schema.TaggedError<TodoNotFoundError>()(
   "TodoNotFoundError",
   {
     message: Schema.String,

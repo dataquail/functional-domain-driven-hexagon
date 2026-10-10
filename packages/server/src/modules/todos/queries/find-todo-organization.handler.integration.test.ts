@@ -29,9 +29,7 @@ const seed = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-const suite = describe.sequential;
-
-suite("findTodoOrganizationHandler (integration)", () => {
+describe("findTodoOrganizationHandler (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(
       truncate("todos.todos", "organization.organizations").pipe(Effect.provide(TestDatabaseLive)),

@@ -35,11 +35,7 @@ const alice = UserRootOps.create({ id: aliceId, email: "alice@example.com", addr
 
 const TestLayer = UserRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-// Integration tests share one DB and truncate between cases, so they must run
-// sequentially — vitest.shared.ts sets sequence.concurrent: true globally.
-const suite = describe.sequential;
-
-suite("UserRepositoryLive (integration)", () => {
+describe("UserRepositoryLive (integration)", () => {
   beforeEach(async () => {
     await Effect.runPromise(truncate("user.users").pipe(Effect.provide(TestDatabaseLive)));
   });

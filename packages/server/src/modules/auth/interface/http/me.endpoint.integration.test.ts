@@ -2,7 +2,7 @@ import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
-import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
+import * as HttpApiClient from "effect/http-api/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
@@ -11,9 +11,8 @@ import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 // that fake identity here — no cookie required, no Zitadel involved. The
 // real cookie path is exercised by `auth-identity-repository-live` and by
 // the Playwright auth-setup project / login.spec.ts.
-const suite = describe.sequential;
 
-suite("GET /auth/me (integration)", () => {
+describe("GET /auth/me (integration)", () => {
   const { run } = useServerTestRuntime(["user.users", "platform.roles"], {
     seedSuperAdminCaller: true,
   });
