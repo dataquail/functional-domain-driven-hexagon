@@ -25,6 +25,7 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 | `@org/contracts`    | Shared HTTP API contracts, schemas, errors — consumed by server and clients.       |
 | `@org/database`     | DB access kernel (effect/sql client, `RowSchemas`, row decoding) + migrations.     |
 | `@org/jobs`         | Background/cron jobs.                                                              |
+| `@org/infra`        | The Alchemy stack (Neon, Hyperdrive, Queues); the only package that names Alchemy. |
 | `@org/cli`          | Command-line client (device-flow auth, organizations, todos).                      |
 | `@org/mcp`          | MCP (stdio) server exposing the CLI surface as tools.                              |
 | `@org/api-client`   | Shared typed client + credential store for the CLI and MCP.                        |

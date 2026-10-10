@@ -7,6 +7,7 @@
     { "path": "packages/server" },
     { "path": "packages/database" },
     { "path": "packages/jobs" },
+    { "path": "packages/infra" },
     { "path": "packages/api-client" },
     { "path": "packages/cli" },
     { "path": "packages/mcp" }

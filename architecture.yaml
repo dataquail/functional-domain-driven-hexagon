@@ -103,6 +103,21 @@ deny:
       The RPC transport stays behind @effect-server-utils/cqrs. Messages are declared with
       Command.make / Query.make and dispatched through the bus; reaching for effect/rpc
       directly bypasses the routing table, the middleware and the span the bus provides.
+  - match: ["**/node_modules/alchemy/**", "**/node_modules/@alchemy.run/**"]
+    except: ["~/infra/**"]
+    message: >-
+      Alchemy is infrastructure-as-code and stays in @org/infra. Application code is deployed by
+      the stack, it does not describe it: a module that names Alchemy couples its use cases to one
+      host and one provisioning tool, and drags the IaC engine into every test that loads it.
+  # `cloudflare:workers` has no file on disk; tsconfig.resolve.json maps it to
+  # this declaration, so the rule fences the runtime module and the binding
+  # types together.
+  - match: "**/node_modules/@cloudflare/workers-types/**"
+    except: ["**/platform/worker/**"]
+    message: >-
+      Only a Worker entrypoint, in a platform/worker/ folder, may import cloudflare:workers or
+      name the Workers binding types. Everything below the entrypoint takes what a binding gives
+      it as an ordinary port or value, so the same code still runs on Node and in a unit test.
 
 # Which importers may name a given exported symbol. A path rule cannot say
 # this: every importer of a barrel resolves to the same file, so only the
@@ -225,6 +240,8 @@ graph:
         - "~/jobs/src/main.ts"
         - "~/mcp/src/main.ts"
         - "~/database/src/scripts/**"
+        # The Alchemy CLI loads the stack by convention.
+        - "~/infra/alchemy.run.ts"
         # Framework-loaded by convention.
         - "~/web/app/**"
         - "~/web/instrumentation.ts"
@@ -326,6 +343,7 @@ tree:
   "~/cli/": { include: packages/cli/architecture.yaml }
   "~/mcp/": { include: packages/mcp/architecture.yaml }
   "~/jobs/": { include: packages/jobs/architecture.yaml }
+  "~/infra/": { include: packages/infra/architecture.yaml }
   "~/components/": { include: packages/components/architecture.yaml }
   "~/web/": { include: packages/web/architecture.yaml }
   "~/server/src/": { include: packages/server/architecture.yaml }

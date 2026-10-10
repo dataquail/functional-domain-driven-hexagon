@@ -20,7 +20,7 @@ const repoRoot = process.cwd();
 // `enforceExistence` rule fires on such a file whether or not its sibling
 // exists — a parity probe named that way passes vacuously, which is the exact
 // failure mode this script exists to catch.
-/** @type {Array<{rule: string, file: string, source: string}>} */
+/** @type {Array<{rule: string, file: string, source: string, message?: string}>} */
 const PROBES = [
   {
     rule: "architecture/structure",
@@ -233,6 +233,25 @@ const PROBES = [
     source: 'import { probe } from "@org/definitely-not-a-real-package";\n\nexport { probe };\n',
   },
   {
+    // A repo-wide deny shares its rule id with every import allowlist, so these
+    // two are matched on their message: a server file also breaks the server's
+    // own allowlist, and that finding alone must not pass the probe. Alchemy is
+    // installed only under @org/infra, so the probe reaches it by path — the
+    // rule matches the resolved file, whatever the specifier.
+    rule: "architecture/imports",
+    message: "Alchemy is infrastructure-as-code and stays in @org/infra.",
+    file: "packages/server/src/zzprobe-alchemy.ts",
+    source:
+      'import * as Alchemy from "../../infra/node_modules/alchemy/lib/index.js";\n\nexport const probe = Alchemy;\n',
+  },
+  {
+    rule: "architecture/imports",
+    message:
+      "Only a Worker entrypoint, in a platform/worker/ folder, may import cloudflare:workers",
+    file: "packages/server/src/zzprobe-workers.ts",
+    source: 'import { env } from "cloudflare:workers";\n\nexport const probe = env;\n',
+  },
+  {
     // Circularity is the one dependency-cruiser rule with no per-file
     // equivalent; oxlint's own rule replaced it, so it needs the same proof.
     rule: "import/no-cycle",
@@ -300,11 +319,17 @@ try {
 const diagnostics = (JSON.parse(output || '{"diagnostics":[]}').diagnostics ?? []).map((d) => ({
   rule: (d.code ?? "").replace(/^(.+?)\((.+)\)$/, "$1/$2"),
   file: (d.filename ?? d.labels?.[0]?.filename ?? "").replace(/^\.\//, ""),
+  message: d.message ?? "",
 }));
 
 const results = PROBES.map((probe) => ({
   rule: probe.rule,
-  fired: diagnostics.some((d) => d.rule === probe.rule && d.file === probe.file),
+  fired: diagnostics.some(
+    (d) =>
+      d.rule === probe.rule &&
+      d.file === probe.file &&
+      (probe.message === undefined || d.message.includes(probe.message)),
+  ),
 }));
 
 const width = Math.max(...results.map((r) => r.rule.length));
