@@ -12,10 +12,6 @@ const config: UserConfigExport = {
     // a second integration test added later doesn't quietly race.
     fileParallelism: false,
     sequence: { concurrent: false },
-    poolOptions: {
-      forks: { singleFork: true },
-      threads: { singleThread: true },
-    },
     globalSetup: [path.join(__dirname, "src/test-utils/global-setup.ts")],
   },
 };

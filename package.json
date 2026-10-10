@@ -29,7 +29,7 @@
     "test:integration": "TEST_INTEGRATION=true vitest run --project=@org/server && TEST_INTEGRATION=true vitest run --project=@org/jobs",
     "test:acceptance": "pnpm -F @org/acceptance test",
     "test:coverage:unit": "vitest run --coverage --reporter=blob --outputFile.blob=.vitest-reports/unit.json",
-    "test:coverage:integration": "TEST_INTEGRATION=true vitest run --project=@org/server --coverage --reporter=blob --outputFile.blob=.vitest-reports/integration-server.json && TEST_INTEGRATION=true vitest run --project=@org/jobs --coverage --reporter=blob --outputFile.blob=.vitest-reports/integration-jobs.json",
+    "test:coverage:integration": "TEST_INTEGRATION=true vitest run packages/server/ --coverage --reporter=blob --outputFile.blob=.vitest-reports/integration-server.json && TEST_INTEGRATION=true vitest run packages/jobs/ --coverage --reporter=blob --outputFile.blob=.vitest-reports/integration-jobs.json",
     "coverage:merge": "vitest run --merge-reports=.vitest-reports --coverage",
     "coverage": "pnpm test:coverage:unit && pnpm test:coverage:integration && pnpm coverage:merge",
     "dev": "pnpm --parallel --filter @org/server --filter @org/web run dev",
