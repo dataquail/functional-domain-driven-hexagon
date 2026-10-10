@@ -27,8 +27,8 @@
   "dependencies": {
     "@aws-sdk/client-sesv2": "^3.1081.0",
     "@effect-server-utils/authz": "0.1.0-beta.5",
-    "@effect-server-utils/cqrs": "0.1.0-beta.8",
-    "@effect-server-utils/unit-of-work": "0.1.0-beta.8",
+    "@effect-server-utils/cqrs": "0.1.0-beta.9",
+    "@effect-server-utils/unit-of-work": "0.1.0-beta.9",
     "@effect/platform-node": "4.0.2",
     "@org/contracts": "workspace:^",
     "@org/database": "workspace:^",

@@ -169,6 +169,8 @@ Two things improved on the way. The sink resolves the bus at defer time and buff
 
 ## Deferred: transactional outbox and durable process managers
 
+> **Update — the outbox has landed; process managers have not.** The server composes `makeDurableUnitOfWork()` (`@effect-server-utils/unit-of-work` beta.9): each named `subscribeAfterCommit` reaction is a `platform.event_outbox` row written in the publisher's transaction, relayed after commit, and delivered by `deliverOnce` behind a `platform.event_deliveries` claim in the handler's own transaction. On Node the queue is in-process, so delivery still happens before the request returns; a failed relay leaves the row for the sweeper, which runs in the server runtime as argued below. Streams and sagas are still in-memory.
+
 After-commit delivery gives the full conceptual model — separate transaction per handler, eventual default, failure isolation — with no new table or relay, at the cost of being lossy on a commit-then-crash. Process managers sit on the same boundary. The durable upgrade closes both.
 
 **The outbox.** Persist after-commit events to a `platform.outbox` row in the _same_ transaction as the trigger — the insert replaces the in-memory buffer append — and have a relay loop (poll plus advisory lock) read it and run handlers at least once. Two constraints carry over: the relay must run in the **server runtime**, not the jobs deployable, because after-commit handlers are in-process functions registered on the bus; and handlers must be idempotent, because at-least-once means they will re-run.
