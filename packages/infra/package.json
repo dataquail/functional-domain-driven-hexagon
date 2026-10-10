@@ -6,7 +6,8 @@
   "license": "MIT",
   "description": "The Alchemy stack: every Cloudflare and Neon resource each stage provisions.",
   "scripts": {
-    "check": "tsc -b tsconfig.json"
+    "check": "tsc -b tsconfig.json",
+    "dev": "alchemy dev --env-file ../../.env"
   },
   "dependencies": {
     "@effect/platform-node": "4.0.2",

@@ -19,7 +19,7 @@ on creation — see [codespaces.md](codespaces.md).
 
 ## Prerequisites
 
-- **Node** 22.13.x (see [package.json](../package.json) → `engines.node`)
+- **Node** 22.15 or newer on the 22 line — [.nvmrc](../.nvmrc) pins 22.21.1 (Alchemy's CLI needs `module.registerHooks`, new in 22.15)
 - **pnpm** 10.3.x (`corepack enable` then `corepack prepare pnpm@10.3.0 --activate`)
 - **Docker** with `docker compose` v2 (Docker Desktop, OrbStack, or Linux engine)
 
@@ -27,7 +27,7 @@ You do **not** need anything Zitadel-related installed on the host. Everything r
 
 ## What `pnpm bootstrap` does
 
-The script lives at [scripts/dev-bootstrap.mjs](../scripts/dev-bootstrap.mjs). It walks through the ten phases below in order; each phase's effect on disk is described so you can run any step by hand if you need to. The bootstrap script is idempotent at every phase — values already present are left alone.
+The script lives at [scripts/dev-bootstrap.mjs](../scripts/dev-bootstrap.mjs). It walks through the eleven phases below in order; each phase's effect on disk is described so you can run any step by hand if you need to. The bootstrap script is idempotent at every phase — values already present are left alone.
 
 ### 1. Materialize `.env`
 
@@ -45,24 +45,31 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 This is the HMAC key the server uses to sign session cookies (see [ADR-0016](adr/0016-authentication-with-self-hosted-zitadel.md)). The bootstrap generates 32 random bytes and writes the hex string to `SESSION_COOKIE_SECRET` in `.env`. **If the field already has a value, the bootstrap leaves it alone** — rotating the secret on every setup run would silently invalidate every active session in the local DB.
 
-### 3. Bring up Zitadel
+### 3. Bring up Zitadel, Mailpit and Jaeger
 
 ```sh
-docker compose up -d zitadel
-# equivalent: pnpm auth:up
+docker compose up -d zitadel mailpit jaeger
 ```
 
-Two containers end up running, with `postgres` pulled in by `zitadel`'s `depends_on` clause:
+Four containers end up running, with `postgres` pulled in by `zitadel`'s `depends_on` clause. Mailpit (the local mail sink, UI on :8025) and Jaeger (traces, UI on :16686) are the other two; the first two are:
 
 - `postgres` — the single Postgres 16 instance. It hosts **both** the app DB (`effect-monorepo`) and Zitadel's data (`zitadel`), as peer databases. The init script at [infra/postgres/init/01-create-zitadel-db.sql](../infra/postgres/init/01-create-zitadel-db.sql) runs once on first boot and creates the `zitadel` database alongside the app DB. Database-level isolation is plenty for this app — no need to run a second Postgres just for Zitadel.
 - `zitadel` — the Zitadel server itself, mounting [`infra/zitadel/zitadel.yaml`](../infra/zitadel/zitadel.yaml) for configuration. Connects to the `zitadel` database on the same Postgres container.
 
 The compose command passes both `--config` (runtime) and `--steps` (FirstInstance) at the same yaml file. Without `--steps`, Zitadel silently ignores the `FirstInstance` block and the bootstrap PAT below is never generated.
 
-### 4. Migrate the databases
+### 4. Ensure the identity database
 
 ```sh
-pnpm --filter @org/database db:migrate
+docker compose exec -T postgres psql -U postgres -c 'CREATE DATABASE "effect-monorepo-identity"'
+```
+
+Creates the identity provider's database on the same Postgres when it is missing, and writes `IDENTITY_DATABASE_URL` into `.env` if it is not there yet. Nothing reads it except `pnpm dev:cf`, which points the identity Hyperdrive at it; the identity provider moves in later.
+
+### 5. Migrate the databases
+
+```sh
+pnpm db:migrate
 pnpm --filter @org/database db:migrate:test
 ```
 
@@ -71,10 +78,10 @@ not recorded yet, tracked in an `effect_sql_migrations` table (ADR-0011). Both
 databases are migrated because the integration suite reads
 `DATABASE_URL_TEST`. Idempotent — a second run reports no pending migrations.
 
-The seed in step 9 writes the admin row into `"user".users`, so the schema has to
+The seed in step 10 writes the admin row into `"user".users`, so the schema has to
 exist first.
 
-### 5. Wait for Zitadel to be ready
+### 6. Wait for Zitadel to be ready
 
 ```sh
 curl -f http://localhost:8080/debug/ready
@@ -82,7 +89,7 @@ curl -f http://localhost:8080/debug/ready
 
 The bootstrap polls this endpoint every 2s with a 180s deadline. On a cold start Zitadel sometimes loses the race to the DB and exits on its first attempt — `restart: unless-stopped` in compose means it'll come back up automatically, but the wait window has to be patient.
 
-### 6. Wait for the bootstrap PAT
+### 7. Wait for the bootstrap PAT
 
 ```
 infra/zitadel/.machinekey/zitadel-bootstrap.pat
@@ -92,11 +99,11 @@ infra/zitadel/.machinekey/zitadel-bootstrap.pat
 
 The directory is gitignored. Re-running setup against an existing Zitadel does nothing here — `FirstInstance` only fires on a brand-new Zitadel database.
 
-### 7. Persist `ZITADEL_BOOTSTRAP_PAT`
+### 8. Persist `ZITADEL_BOOTSTRAP_PAT`
 
-The bootstrap reads the file from step 6 and writes it into `.env`. The seed script in step 9 reads either the env var or the file (whichever is present), so this is somewhat redundant — but having the value in `.env` makes the running server able to call back into Zitadel as the bootstrap user if we need that later.
+The bootstrap reads the file from step 7 and writes it into `.env`. The seed script in step 10 reads either the env var or the file (whichever is present), so this is somewhat redundant — but having the value in `.env` makes the running server able to call back into Zitadel as the bootstrap user if we need that later.
 
-### 8. Wait for the gRPC management API
+### 9. Wait for the gRPC management API
 
 ```sh
 curl -fsS -X POST http://localhost:8080/management/v1/projects/_search \
@@ -107,7 +114,7 @@ curl -fsS -X POST http://localhost:8080/management/v1/projects/_search \
 
 `/debug/ready` only reflects HTTP server health; the gRPC backend that backs `/management/*` can lag a few seconds behind on cold boots. Without this extra wait the seed sometimes races in and gets a 503 with `transport: connection refused`. The bootstrap polls `/management/v1/projects/_search` with the bootstrap PAT until it returns 200.
 
-### 9. Run the seed
+### 10. Run the seed
 
 ```sh
 docker compose --profile seed-zitadel up --abort-on-container-exit seed-zitadel
@@ -128,7 +135,7 @@ __seed__ ZITADEL_CLIENT_ID=<id> ZITADEL_CLIENT_SECRET=<secret>
 
 The bootstrap captures this line. On subsequent runs the line is omitted; the script handles that gracefully and doesn't touch `.env`.
 
-### 10. Persist `ZITADEL_CLIENT_ID` + `ZITADEL_CLIENT_SECRET`
+### 11. Persist `ZITADEL_CLIENT_ID` + `ZITADEL_CLIENT_SECRET`
 
 Parsed from the `__seed__` line and written to `.env`. If the seed didn't emit one (re-running against an already-configured Zitadel), the existing values in `.env` are left alone.
 
@@ -142,6 +149,39 @@ pnpm --filter @org/web dev       # Next.js renderer on :3000; /api/* rewrites to
 ```
 
 Sign in at [http://localhost:3000/api/auth/login](http://localhost:3000/api/auth/login) using the credentials in `.env` (`ZITADEL_ADMIN_EMAIL` / `ZITADEL_ADMIN_PASSWORD`). The first successful login walks through Zitadel's hosted UI; subsequent logins ride the Zitadel SSO cookie and feel near-silent.
+
+## Run the Workers stack
+
+The Cloudflare side of the stack lives in [packages/infra](../packages/infra) and is run by Alchemy. Today it holds the databases' Hyperdrive configurations, the domain-event queues and a placeholder Worker; the app itself still runs on Node through `pnpm dev`.
+
+```sh
+pnpm dev:cf         # alchemy dev: everything in workerd and local emulators, nothing in the cloud
+pnpm dev:cf:check   # boots it, asks the placeholder Worker for SELECT 1, shuts it down
+```
+
+Under `alchemy dev` no Cloudflare or Neon resource is created and no credentials are read: Hyperdrive passes straight through to the docker Postgres named by `DATABASE_URL` (and `IDENTITY_DATABASE_URL`), the queues run in Alchemy's local broker, and state is kept in `packages/infra/.alchemy/`. `pnpm dev:cf:check` prints the database that answered, so a pass means workerd → Hyperdrive → docker Postgres is live.
+
+`pnpm dev` and `pnpm dev:cf` are separate on purpose: the server becomes a Worker in a later phase, and until then `pnpm dev` keeps starting the Node server and Next. When it does, `pnpm dev` becomes `alchemy dev` and `dev:cf` folds into it.
+
+### Deploying a stage
+
+Deploying creates real Cloudflare and Neon resources, so it needs credentials (`CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`, or `alchemy login`; `NEON_API_KEY`):
+
+```sh
+pnpm deploy:cf --stage staging         # once: owns the staging Neon projects every preview branches from
+pnpm deploy:cf --stage dev_$USER       # schema-only Neon branches of staging, their Hyperdrives, the queues
+pnpm destroy:cf --stage dev_$USER
+```
+
+`prod` and `staging` own their Neon projects and keep them if the stack is removed; every other stage gets a branch of staging's projects that expires a week after its last deploy. `pnpm deploy` is pnpm's own command, hence `deploy:cf`.
+
+To migrate a deployed database, point `pnpm db:migrate` at its **direct** (not pooled) URL; the driver reads `sslmode=require` from the URL:
+
+```sh
+DATABASE_URL='postgresql://…neon.tech/neondb?sslmode=require' pnpm db:migrate
+```
+
+`db:migrate` runs `db:migrate:app` today. The identity provider's migrations join it as `db:migrate:identity` when that provider exists.
 
 ## Start over
 

@@ -4,6 +4,7 @@ import * as Neon from "alchemy/Neon";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import PlaceholderWorker from "./src/platform/worker/placeholder.js";
 import { appDatabase, identityDatabase } from "./src/stack/databases.js";
 import { domainEventsDeadLetterQueue, domainEventsQueue } from "./src/stack/queues.js";
 
@@ -25,11 +26,13 @@ export default Alchemy.Stack(
     const identity = yield* identityDatabase;
     const domainEvents = yield* domainEventsQueue;
     const domainEventsDeadLetter = yield* domainEventsDeadLetterQueue;
+    const placeholder = yield* PlaceholderWorker;
     return {
       appHyperdriveId: app.hyperdriveId,
       identityHyperdriveId: identity.hyperdriveId,
       domainEventsQueue: domainEvents.queueName,
       domainEventsDeadLetterQueue: domainEventsDeadLetter.queueName,
+      placeholderUrl: placeholder.url,
     };
   }),
 );

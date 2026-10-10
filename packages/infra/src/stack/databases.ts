@@ -38,8 +38,7 @@ const dockerOrigin = Effect.fn(function* (variable: string) {
 });
 
 const database = Effect.fn(function* (spec: DatabaseSpec) {
-  const { dev } = yield* Alchemy.AlchemyContext;
-  if (dev) {
+  if (yield* Alchemy.ALCHEMY_DEV) {
     const origin = yield* dockerOrigin(spec.dockerUrlVariable);
     return yield* Cloudflare.Hyperdrive.Connection(spec.hyperdrive, {
       origin,
