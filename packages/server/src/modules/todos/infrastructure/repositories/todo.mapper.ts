@@ -1,10 +1,10 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.js";
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { TodoRoot } from "@/modules/todos/domain/todo/todo.root.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { type ColumnMap } from "@/platform/persistence/criteria-to-sql.js";
 
 type Row = RowSchemas.TodoRow;
 

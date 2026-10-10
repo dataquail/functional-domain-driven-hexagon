@@ -5,8 +5,8 @@ import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import { beforeEach } from "vitest";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { findOrganizationByIdHandler } from "@/modules/organization/queries/find-organization-by-id.handler.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const activeOrgId = OrganizationId.make("11111111-1111-1111-1111-111111111111");

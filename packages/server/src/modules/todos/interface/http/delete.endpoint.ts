@@ -3,11 +3,14 @@ import { TodosContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
+import { Actions } from "@/globals/application/ports/actions.js";
+import * as Authz from "@/globals/infrastructure/auth/authz.js";
+import {
+  type EndpointRequest,
+  recoverPersistenceUnavailable,
+} from "@/globals/infrastructure/framework/http/http-endpoint.js";
 import { DeleteTodoCommand } from "@/modules/todos/commands/delete-todo.command.js";
 import { TodoResource } from "@/modules/todos/policies/todos.policies.js";
-import { Actions } from "@/platform/auth/actions.js";
-import * as Authz from "@/platform/auth/authz.js";
-import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 export const deleteEndpoint = Effect.fn("TodosLive.delete")(
   function* (request: EndpointRequest<typeof TodosContract.Group, "delete">) {

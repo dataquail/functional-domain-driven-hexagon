@@ -6,10 +6,10 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { PlatformRolesLive } from "@/modules/auth/infrastructure/acl/platform-roles.acl-live.js";
 import { findCurrentUserHandler } from "@/modules/auth/queries/find-current-user.handler.js";
 import { RoleQueriesLive } from "@/modules/role/role.platform.js";
-import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const superAdminId = UserId.make("11111111-1111-1111-1111-111111111111");

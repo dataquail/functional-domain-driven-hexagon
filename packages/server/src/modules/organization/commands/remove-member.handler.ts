@@ -1,13 +1,13 @@
 import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as Effect from "effect/Effect";
 
+import { Spec } from "@/globals/application/ddd/specification.js";
+import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
 import { type RemoveMemberPayload } from "@/modules/organization/commands/remove-member.command.js";
 import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.js";
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
 import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops.js";
 import { MembershipSpecifications } from "@/modules/organization/domain/membership/membership.specification.js";
-import { Spec } from "@/platform/ddd/contracts/specification.js";
-import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 
 export const removeMemberHandler = Effect.fn("removeMemberHandler")(function* (
   cmd: RemoveMemberPayload,

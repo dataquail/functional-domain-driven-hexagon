@@ -56,7 +56,7 @@ export const createUserHandler = (cmd: CreateUserPayload) =>
   }).pipe(withUnitOfWork);
 ```
 
-The transaction is declared once, visibly, at the boundary. `withUnitOfWork` also demotes the constraint-violation `DatabaseError` to a defect in one place (replacing a per-handler `catchTag`) and surfaces only `PersistenceUnavailable`. It is named `withUnitOfWork`, deliberately **not** `transactional`: "transactional" leaks the SQL-transaction implementation the abstraction exists to hide. The unit of work stays an **application-layer** concern — it lives only in `commands/` and `platform/`, never in `domain/` aggregates.
+The transaction is declared once, visibly, at the boundary. `withUnitOfWork` also demotes the constraint-violation `DatabaseError` to a defect in one place (replacing a per-handler `catchTag`) and surfaces only `PersistenceUnavailable`. It is named `withUnitOfWork`, deliberately **not** `transactional`: "transactional" leaks the SQL-transaction implementation the abstraction exists to hide. The unit of work stays an **application-layer** concern — it lives only in `commands/` and `globals/`, never in `domain/` aggregates.
 
 `UnitOfWork.run` remains the escape hatch: integration tests drive it directly, and a handler with work that must stay _outside_ the transaction (external IO like a Stripe call, or a post-commit email) wraps only the transactional sub-block in `withUnitOfWork` and leaves the rest outside.
 
@@ -214,7 +214,7 @@ export const OrganizationEventAdapterLive = Layer.effectDiscard(
 
 **External IO is a tiered judgment call, not a new stereotype.** If a reaction touches the domain, it dispatches a command (above). A pure side effect that always follows its trigger — a telemetry emit, a notification tied to one command — is colocated in the originating command, not modeled as a reaction. A genuine third-party effect (send an email, ETL to an external system) is performed by a command handler through its client port. `interface/events/` itself stays strictly bus-only.
 
-The pattern is enforced by the `interface-events-isolation` dep-cruiser rule, a positive allowlist that lets an event adapter import only its own module's domain events/ids, its own command definitions, the DDD kernel ports, `platform/ids/`, and — for cross-module events — another module's barrel. This is Vernon's anti-corruption layer at module scope: one adapter per (consumer, publisher) pair.
+The pattern is enforced by the `interface-events-isolation` dep-cruiser rule, a positive allowlist that lets an event adapter import only its own module's domain events/ids, its own command definitions, the DDD kernel ports, the shared IDs under `globals/application/ddd/ids/`, and — for cross-module events — another module's barrel. This is Vernon's anti-corruption layer at module scope: one adapter per (consumer, publisher) pair.
 
 ## Alternatives considered
 

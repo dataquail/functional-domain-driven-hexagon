@@ -35,7 +35,7 @@ export const findEndpoint = Effect.fn("UserHttp.find")(function* (
 ) { ... });
 ```
 
-The request envelope is derived from the contract via a generic helper in `platform/`:
+The request envelope is derived from the contract via a generic helper in `globals/infrastructure/framework/http/`:
 
 ```ts
 export type EndpointRequest<G, Name> = HttpApiEndpoint.HttpApiEndpoint.Request<

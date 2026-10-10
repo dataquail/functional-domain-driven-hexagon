@@ -2,12 +2,12 @@ import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
 import {
   type FindUsersPayload,
   type FindUsersUserView,
 } from "@/modules/user/queries/find-users.query.js";
-import { UserId } from "@/platform/ids/user-id.js";
-import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 const CountRow = Schema.Struct({ value: Schema.Int });
 

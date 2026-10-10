@@ -2,12 +2,12 @@ import * as Context from "effect/Context";
 import type * as DateTime from "effect/DateTime";
 import type * as Effect from "effect/Effect";
 
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import {
   type BillingGatewayUnavailable,
   type InvalidWebhookSignature,
 } from "@/modules/billing/domain/subscription/subscription.errors.js";
 import { type StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 // Outbound port to the external billing provider (Stripe in prod, an
 // in-memory simulator in tests). The port stays narrow on purpose: the

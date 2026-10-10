@@ -8,7 +8,7 @@ import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 import Stripe from "stripe";
 
-import { EnvVars } from "@/common/env-vars.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
 import { BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client.js";
 import { InvalidWebhookSignature } from "@/modules/billing/domain/subscription/subscription.errors.js";
 import { BillingGatewayLive } from "@/modules/billing/infrastructure/clients/billing-gateway.client-live.js";

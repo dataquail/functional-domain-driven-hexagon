@@ -3,7 +3,7 @@ import { deepStrictEqual, ok } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 
-import { UserId } from "@/platform/ids/user-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 
 import { ApiTokenId } from "./api-token.id.js";
 import { API_TOKEN_PREFIX, ApiTokenRootOps } from "./api-token.root-ops.js";

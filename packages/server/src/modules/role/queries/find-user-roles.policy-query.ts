@@ -2,7 +2,7 @@ import { Query } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/platform/ids/user-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 
 // Read-side projection of a user's platform roles. Returns an empty
 // array if the user has none — absence isn't NotFound. Role names are

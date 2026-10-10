@@ -2,13 +2,13 @@ import { Database, orFail, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { type Specification } from "@/globals/application/ddd/specification.js";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
 import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.js";
 import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
 import { type OrganizationRoot } from "@/modules/organization/domain/organization/organization.root.js";
 import * as OrganizationMapper from "@/modules/organization/infrastructure/repositories/organization.mapper.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
-import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
-import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 export const OrganizationRepositoryLive = Layer.effect(
   OrganizationRepository,

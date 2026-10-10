@@ -1,9 +1,9 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
-import { type UserId } from "@/platform/ids/user-id.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
 
 // ADR-0022 outbound port. Every todos policy gates on "is this caller a member
 // of the todo's org?", which only the organization module can answer. One port

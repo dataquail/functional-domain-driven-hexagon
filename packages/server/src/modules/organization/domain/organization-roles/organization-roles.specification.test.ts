@@ -3,9 +3,9 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as Result from "effect/Result";
 
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { UserId } from "@/platform/ids/user-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type Specification } from "@/globals/application/ddd/specification.js";
 
 import { type OrganizationRolesRoot } from "./organization-roles.root.js";
 import { OrganizationRolesRootOps } from "./organization-roles.root-ops.js";

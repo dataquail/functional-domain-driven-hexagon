@@ -2,13 +2,13 @@ import { Database, orFail, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { type Specification } from "@/globals/application/ddd/specification.js";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
 import { DeviceGrantNotFound } from "@/modules/auth/domain/device-grant/device-grant.errors.js";
 import { type DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.js";
 import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
 import { type DeviceGrantRoot } from "@/modules/auth/domain/device-grant/device-grant.root.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
-import { criteriaToWhere } from "@/platform/persistence/criteria-to-sql.js";
-import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 import * as DeviceGrantMapper from "./device-grant.mapper.js";
 

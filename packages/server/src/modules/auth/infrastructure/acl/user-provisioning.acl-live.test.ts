@@ -10,13 +10,13 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { userAccessCommands, userAccessErrors } from "@/modules/auth/auth.imports.js";
 import {
   UserProvisioning,
   UserProvisioningConflict,
 } from "@/modules/auth/domain/ports/acl/user-provisioning.acl.js";
 import { UserProvisioningLive } from "@/modules/auth/infrastructure/acl/user-provisioning.acl-live.js";
-import { UserId } from "@/platform/ids/user-id.js";
 
 // `UserProvisioningLive` is a thin translation over the user module's own dispatch
 // surface: it turns "provision a user with this email" into that module's

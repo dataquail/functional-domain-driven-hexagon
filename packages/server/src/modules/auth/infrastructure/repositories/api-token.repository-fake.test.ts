@@ -5,11 +5,11 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
 import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.js";
 import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
-import { UserId } from "@/platform/ids/user-id.js";
 
 import { ApiTokenRepositoryFake } from "./api-token.repository-fake.js";
 

@@ -5,11 +5,11 @@ import * as Effect from "effect/Effect";
 import * as HttpServerRequest from "effect/unstable/http/HttpServerRequest";
 import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
 
-import { EnvVars } from "@/common/env-vars.js";
+import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
+import { recoverPersistenceUnavailable } from "@/globals/infrastructure/framework/http/http-endpoint.js";
 import { SignInCommand } from "@/modules/auth/commands/sign-in.command.js";
 import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client.js";
-import { CookieCodec } from "@/platform/auth/cookie-codec.js";
-import { recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 import { buildCallbackUrl } from "./callback-url.util.js";
 import { decodePkcePayload, PKCE_COOKIE_NAME } from "./oidc-pkce-cookie.util.js";

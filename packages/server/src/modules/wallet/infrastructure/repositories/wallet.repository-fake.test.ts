@@ -8,12 +8,12 @@ import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors.js";
 import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
 import { WalletRootOps } from "@/modules/wallet/domain/wallet/wallet.root-ops.js";
 import { WalletSpecifications } from "@/modules/wallet/domain/wallet/wallet.specification.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 import { WalletRepositoryFake } from "./wallet.repository-fake.js";
 

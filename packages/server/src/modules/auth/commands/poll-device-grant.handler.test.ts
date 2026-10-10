@@ -9,6 +9,7 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { approveDeviceGrantHandler } from "@/modules/auth/commands/approve-device-grant.handler.js";
 import { pollDeviceGrantHandler } from "@/modules/auth/commands/poll-device-grant.handler.js";
 import { startDeviceGrantHandler } from "@/modules/auth/commands/start-device-grant.handler.js";
@@ -24,7 +25,6 @@ import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/de
 import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service.js";
 import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake.js";
 import { DeviceGrantRepositoryFake } from "@/modules/auth/infrastructure/repositories/device-grant.repository-fake.js";
-import { UserId } from "@/platform/ids/user-id.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const TestLayer = Layer.mergeAll(

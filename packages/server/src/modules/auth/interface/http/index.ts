@@ -1,7 +1,7 @@
 import * as Layer from "effect/Layer";
 import * as HttpApiBuilder from "effect/unstable/httpapi/HttpApiBuilder";
 
-import { Api } from "@/platform/api.js";
+import { Api } from "@/globals/infrastructure/framework/http/api.js";
 
 import { CliAuthLive } from "../cli/index.js";
 import { callbackEndpoint } from "./callback.endpoint.js";

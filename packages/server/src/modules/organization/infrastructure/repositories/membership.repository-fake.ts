@@ -3,12 +3,12 @@ import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
 
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type Specification } from "@/globals/application/ddd/specification.js";
 import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.js";
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
 import { type MembershipRoot } from "@/modules/organization/domain/membership/membership.root.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
-import { type UserId } from "@/platform/ids/user-id.js";
 
 // Keyed by composite PK serialized as "<userId>|<organizationId>" — the
 // HashMap value carries the full MembershipRoot so reads round-trip.

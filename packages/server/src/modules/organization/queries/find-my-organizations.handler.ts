@@ -2,12 +2,12 @@ import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
 import {
   type FindMyOrganizationsPayload,
   type FindMyOrganizationsView,
 } from "@/modules/organization/queries/find-my-organizations.query.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 // Org columns plus a computed `is_admin` flag — the `EXISTS` subquery
 // below adds a column the standard `OrganizationRow` schema doesn't

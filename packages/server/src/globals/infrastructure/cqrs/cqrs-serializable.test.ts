@@ -33,7 +33,7 @@ const groupSources = {
   wallet: walletModule,
 } as const;
 
-const eventFiles = import.meta.glob("../../modules/*/domain/*/*.events.ts", { eager: true });
+const eventFiles = import.meta.glob("../../../modules/*/domain/*/*.events.ts", { eager: true });
 
 const moduleOf = (file: string) => /modules\/([a-z-]+)\//.exec(file)?.[1];
 

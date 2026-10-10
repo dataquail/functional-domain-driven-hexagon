@@ -37,8 +37,8 @@ Logout flow: the browser navigates to `GET /auth/logout` (idempotent, public —
 
 `Session` is an aggregate, not a leaf record. Sliding TTL with an absolute cap (`SESSION_TTL_SECONDS` / `SESSION_ABSOLUTE_TTL_SECONDS`). The aggregate, repository (live + fake), the `SignIn` and `TouchSession` commands, the `findSession` query, and the four endpoints (`login`, `callback`, `me`, `logout`) live under `modules/auth/` per the module conventions (ADR-0002, ADR-0013). A few things sit at platform level:
 
-- `platform/auth/cookie-codec.ts` — generic HMAC sign/verify, used by both the auth module and the auth middleware.
-- `platform/middlewares/auth-middleware-live.ts` — the implementation behind the auth middleware. It reads the cookie, dispatches `FindSessionQuery`, dispatches `TouchSessionCommand` (sliding refresh, fire-and-forget — see below), performs a one-line `users.role` lookup to populate the super-admin flag, and hydrates `CurrentUser`. Authorization checks themselves live in the per-route policy layer (ADR-0021).
+- `globals/infrastructure/auth/cookie-codec.ts` — generic HMAC sign/verify, used by both the auth module and the auth middleware.
+- `globals/infrastructure/framework/middlewares/auth-middleware-live.ts` — the implementation behind the auth middleware. It reads the cookie, dispatches `FindSessionQuery`, dispatches `TouchSessionCommand` (sliding refresh, fire-and-forget — see below), performs a one-line `users.role` lookup to populate the super-admin flag, and hydrates `CurrentUser`. Authorization checks themselves live in the per-route policy layer (ADR-0021).
 
 ### Sliding-TTL refresh via `TouchSessionCommand`
 
@@ -70,7 +70,7 @@ A statement returns untyped rows, so decoding is an explicit step: `Database.row
 
 ## Enforcement
 
-- **`pnpm lint:deps`** — `modules/auth/` follows the standard module rules (ADR-0008). The only auth-specific exception: `platform/middlewares/auth-middleware-live.ts` may import `findSession` and `SessionRepository` from `modules/auth/index.ts` — through the barrel like every other cross-module dependency.
+- **`pnpm lint:deps`** — `modules/auth/` follows the standard module rules (ADR-0008). The only auth-specific exception: `globals/infrastructure/framework/middlewares/auth-middleware-live.ts` may import `findSession` and `SessionRepository` from `modules/auth/index.ts` — through the barrel like every other cross-module dependency.
 - **`pnpm lint`** — the folder-structure rule requires sibling tests for the `Session` aggregate, both repositories (live + fake), and the endpoint files; `login`/`logout` are the named endpoint-parity exemptions (ADR-0013), covered end-to-end by Playwright + `SessionRepositoryLive` integration tests against a real Zitadel.
 
 ## Consequences

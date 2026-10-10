@@ -468,7 +468,7 @@
         "packages/server/src/modules/**/queries/*.query.ts",
         "packages/server/src/modules/**/policies/*.policies.ts",
         "packages/server/src/modules/**/policies/*.resource-resolver*.ts",
-        "packages/server/src/platform/auth/authz.ts"
+        "packages/server/src/globals/infrastructure/auth/authz.ts"
       ],
       "rules": {
         "typescript/consistent-type-definitions": "off"

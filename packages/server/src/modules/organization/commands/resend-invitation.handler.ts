@@ -4,12 +4,12 @@ import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
+import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
 import { type ResendInvitationPayload } from "@/modules/organization/commands/resend-invitation.command.js";
 import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors.js";
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
 import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
 import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
-import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 
 // Resend = re-issue: rotate the token and reset the expiry on an open
 // invitation. The previous link stops working. Reissue refuses

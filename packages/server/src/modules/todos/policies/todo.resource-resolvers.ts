@@ -6,9 +6,9 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Predicate from "effect/Predicate";
 
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { type TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { FindTodoOrganizationQuery } from "@/modules/todos/queries/find-todo-organization.query.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 // Todos expose two policy resources, split by what is actually being
 // acted on:

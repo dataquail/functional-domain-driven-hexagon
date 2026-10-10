@@ -14,12 +14,12 @@ import { CommandBus } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
 import { SendInvitationEmailCommand } from "@/modules/organization/commands/send-invitation-email.command.js";
 import {
   InvitationIssued,
   InvitationReissued,
 } from "@/modules/organization/domain/invitation/invitation.events.js";
-import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 
 export const InvitationEventAdapterLive = Layer.effectDiscard(
   Effect.gen(function* () {

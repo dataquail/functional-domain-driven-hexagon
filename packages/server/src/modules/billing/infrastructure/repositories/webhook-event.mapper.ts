@@ -1,7 +1,7 @@
 import { type RowSchemas } from "@org/database/index";
 
+import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.js";
 import { type WebhookEventRecord } from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
-import { type ColumnMap } from "@/platform/persistence/criteria-to-sql.js";
 
 type Row = RowSchemas.WebhookEventRow;
 

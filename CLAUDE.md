@@ -19,7 +19,7 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 
 | Package             | What it is                                                                         |
 | ------------------- | ---------------------------------------------------------------------------------- |
-| `@org/server`       | The Effect BFF backend (`src/modules/`, `src/platform/`, HTTP). Bulk of the rules. |
+| `@org/server`       | The Effect BFF backend (`src/modules/`, `src/globals/`, HTTP). Bulk of the rules.  |
 | `@org/web`          | Next.js App Router renderer + `/api/*` proxy; Effect Atom + MVVM (ADR-0026, 0018). |
 | `@org/components`   | Bespoke component library (primitives + patterns) + Storybook (ADR-0015).          |
 | `@org/contracts`    | Shared HTTP API contracts, schemas, errors — consumed by server and clients.       |

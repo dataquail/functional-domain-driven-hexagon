@@ -6,12 +6,12 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import { beforeEach } from "vitest";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
 import { UserRootOps } from "@/modules/user/domain/user/user.root-ops.js";
 import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.js";
 import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live.js";
 import { findUsersHandler } from "@/modules/user/queries/find-users.handler.js";
-import { UserId } from "@/platform/ids/user-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const address = AddressValueObject.make({

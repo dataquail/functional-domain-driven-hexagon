@@ -1,9 +1,9 @@
 import { type RowSchemas } from "@org/database/index";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.js";
 import { type RoleValueObject } from "@/modules/role/domain/roles/role.value-object.js";
 import { RolesRoot } from "@/modules/role/domain/roles/roles.root.js";
-import { UserId } from "@/platform/ids/user-id.js";
-import { type ColumnMap } from "@/platform/persistence/criteria-to-sql.js";
 
 type Row = RowSchemas.PlatformRoleRow;
 

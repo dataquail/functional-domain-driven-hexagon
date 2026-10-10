@@ -1,10 +1,10 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.js";
 import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
 import { SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { type ColumnMap } from "@/platform/persistence/criteria-to-sql.js";
 
 type Row = RowSchemas.SubscriptionRow;
 

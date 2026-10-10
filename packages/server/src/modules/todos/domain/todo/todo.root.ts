@@ -1,6 +1,6 @@
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/platform/ids/organization-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 
 import { TodoId } from "./todo.id.js";
 

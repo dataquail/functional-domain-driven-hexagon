@@ -4,6 +4,8 @@ import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
 import { type CreateOrganizationPayload } from "@/modules/organization/commands/create-organization.command.js";
 import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
 import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops.js";
@@ -13,8 +15,6 @@ import { OrganizationRootOps } from "@/modules/organization/domain/organization/
 import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
 import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.js";
 import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.js";
-import { DomainEventBus } from "@/platform/ddd/event-bus.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 // Creating an org also creates the creator's Membership AND grants the
 // creator the `admin` OrganizationRole in the same unit of work —

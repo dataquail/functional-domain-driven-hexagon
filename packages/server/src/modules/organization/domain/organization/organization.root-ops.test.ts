@@ -5,7 +5,7 @@ import * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/platform/ids/organization-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 
 import { OrganizationAlreadyDeleted, OrganizationNotDeleted } from "./organization.errors.js";
 import { type OrganizationEvent } from "./organization.events.js";

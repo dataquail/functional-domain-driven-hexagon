@@ -3,8 +3,11 @@ import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
+import {
+  type EndpointRequest,
+  recoverPersistenceUnavailable,
+} from "@/globals/infrastructure/framework/http/http-endpoint.js";
 import { CreateOrganizationCommand } from "@/modules/organization/commands/create-organization.command.js";
-import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // Authenticated, no `Authz.hasPermissions` gate. Anyone can create an
 // org; the caller becomes its first Membership and (Phase 4) receives

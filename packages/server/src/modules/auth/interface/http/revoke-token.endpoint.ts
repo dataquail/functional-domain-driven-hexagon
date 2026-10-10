@@ -4,8 +4,11 @@ import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
+import {
+  type EndpointRequest,
+  recoverPersistenceUnavailable,
+} from "@/globals/infrastructure/framework/http/http-endpoint.js";
 import { RevokeApiTokenCommand } from "@/modules/auth/commands/revoke-api-token.command.js";
-import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // Revokes one of the caller's own tokens. The command scopes the revoke to
 // the owner, so a token that isn't the caller's (or doesn't exist) surfaces

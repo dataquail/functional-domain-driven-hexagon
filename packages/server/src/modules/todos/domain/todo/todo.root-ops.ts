@@ -1,6 +1,6 @@
 import type * as DateTime from "effect/DateTime";
 
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 
 import { type TodoId } from "./todo.id.js";
 import { TodoRoot } from "./todo.root.js";

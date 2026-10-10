@@ -5,10 +5,10 @@ import { Query } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.js";
 import { PlatformRolesLive } from "@/modules/organization/infrastructure/acl/platform-roles.acl-live.js";
 import { roleAccessQueries } from "@/modules/role/role.exports.js";
-import { UserId } from "@/platform/ids/user-id.js";
 
 // Two consumers in this module: the policies' super-admin bypass, and the
 // use-case invariant that a super-admin neither owns nor joins an organization.

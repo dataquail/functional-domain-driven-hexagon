@@ -2,12 +2,12 @@ import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
+import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
 import { type RevokeInvitationPayload } from "@/modules/organization/commands/revoke-invitation.command.js";
 import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors.js";
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
 import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
 import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
-import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 
 export const revokeInvitationHandler = Effect.fn("revokeInvitationHandler")(function* (
   cmd: RevokeInvitationPayload,

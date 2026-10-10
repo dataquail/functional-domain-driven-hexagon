@@ -30,7 +30,7 @@ Amended 2026-08-21: this was `prefetchEffectQuery` → `<HydrationBoundary>` →
 
 ### 2. The Effect server remains the BFF
 
-It owns the OIDC dance with Zitadel, the session cookie, `CurrentUser`, and the role table. Next.js does **not** terminate auth, mint its own session, or hold OIDC tokens. Auth is _through_ Next, not _at_ Next. The auth-side files in `modules/auth/` and `platform/auth/` are unchanged; the trust boundary is the Effect server.
+It owns the OIDC dance with Zitadel, the session cookie, `CurrentUser`, and the role table. Next.js does **not** terminate auth, mint its own session, or hold OIDC tokens. Auth is _through_ Next, not _at_ Next. The auth-side files in `modules/auth/` and `globals/infrastructure/auth/` are unchanged; the trust boundary is the Effect server.
 
 ### 3. Next.js is a same-origin proxy in front of the Effect server
 

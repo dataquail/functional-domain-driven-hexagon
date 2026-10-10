@@ -17,27 +17,27 @@ import * as OtlpSerialization from "effect/unstable/observability/OtlpSerializat
 import * as OtlpTracer from "effect/unstable/observability/OtlpTracer";
 import { isSqlError } from "effect/unstable/sql/SqlError";
 
-import { Api } from "@/platform/api.js";
-import { CookieCodec } from "@/platform/auth/cookie-codec.js";
+import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.js";
 import {
   CommandBusLive,
   DomainEventBusLive,
   QueryBusLive,
   UnhandledFailuresLive,
   UnitOfWorkLive,
-} from "@/platform/cqrs/cqrs-runtime.js";
+} from "@/globals/infrastructure/cqrs/cqrs-runtime.js";
+import { Api } from "@/globals/infrastructure/framework/http/api.js";
 
-import { EnvVars } from "./common/env-vars.js";
+import { EnvVars } from "./globals/infrastructure/config/env-vars.js";
+import { DatabaseLive } from "./globals/infrastructure/database/database-live.js";
+import { UserAuthMiddlewareLive } from "./globals/infrastructure/framework/middlewares/auth-middleware-live.js";
+import { applicationModules } from "./globals/infrastructure/framework/modules/application-modules.js";
 import { BillingGatewayLive } from "./modules/billing/billing.platform.js";
-import { DatabaseLive } from "./platform/database-live.js";
-import { UserAuthMiddlewareLive } from "./platform/middlewares/auth-middleware-live.js";
-import { applicationModules } from "./platform/modules/application-modules.js";
 
 dotenv.config({
   path: "../../.env",
 });
 
-// The application, assembled once in platform/modules/ and identical in both
+// The application, assembled once in globals/infrastructure/framework/modules/ and identical in both
 // composition roots. What differs between them is the environment each provides
 // below — the database, the auth middleware, the HTTP transport, and billing's
 // gateway.

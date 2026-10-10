@@ -17,6 +17,10 @@ import * as Layer from "effect/Layer";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 import { beforeEach } from "vitest";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
+import { TransactionDriverLive } from "@/globals/infrastructure/database/transaction-driver-live.js";
+import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { organizationAccessDomainEvents } from "@/modules/organization/organization.exports.js";
 import { createWalletHandler } from "@/modules/wallet/commands/create-wallet.handler.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
@@ -26,10 +30,6 @@ import {
   WalletCommands,
   WalletCommandsLive,
 } from "@/modules/wallet/wallet.command-handlers.js";
-import { Api } from "@/platform/api.js";
-import { DomainEventBus } from "@/platform/ddd/event-bus.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { TransactionDriverLive } from "@/platform/transaction-driver-live.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";

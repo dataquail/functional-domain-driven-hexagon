@@ -177,7 +177,7 @@ and they are ignored by oxlint for the same reason the docs site is.
 no shared parent for inherited policy — the naming convention had to be written
 three times — and `test-utils/` governed by nothing at all (`explain` said "a
 folder no rule governs"). It is now one `~/server/src/` node with `server.ts`,
-`common/`, `platform/`, `modules/{module}/` and a new `test-utils/` as children:
+`common/`, `globals/` (then `platform/`), `modules/{module}/` and a new `test-utils/` as children:
 one taxonomy root, one naming declaration, and a stray `src/helpers/` is a
 violation rather than a gap.
 

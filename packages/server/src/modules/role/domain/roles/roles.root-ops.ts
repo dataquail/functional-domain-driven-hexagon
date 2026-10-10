@@ -1,6 +1,6 @@
 import * as Result from "effect/Result";
 
-import { type UserId } from "@/platform/ids/user-id.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
 
 import { AlreadyHasRole, DoesNotHaveRole } from "./role.errors.js";
 import { type RoleEvent, RoleGranted, RoleRevoked } from "./role.events.js";

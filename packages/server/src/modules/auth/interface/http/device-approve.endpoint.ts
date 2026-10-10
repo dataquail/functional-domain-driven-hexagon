@@ -4,8 +4,11 @@ import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
+import {
+  type EndpointRequest,
+  recoverPersistenceUnavailable,
+} from "@/globals/infrastructure/framework/http/http-endpoint.js";
 import { ApproveDeviceGrantCommand } from "@/modules/auth/commands/approve-device-grant.command.js";
-import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // GUI adapter: the signed-in user approves a CLI device grant by submitting
 // the code they were shown. Maps the device-grant domain errors to HTTP:

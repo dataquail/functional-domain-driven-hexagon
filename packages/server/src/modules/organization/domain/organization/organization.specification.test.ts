@@ -4,7 +4,7 @@ import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
 
-import { OrganizationId } from "@/platform/ids/organization-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 
 import { OrganizationRootOps } from "./organization.root-ops.js";
 import { OrganizationSpecifications } from "./organization.specification.js";

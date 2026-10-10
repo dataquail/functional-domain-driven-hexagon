@@ -4,10 +4,13 @@ import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
 import {
+  type EndpointRequest,
+  recoverPersistenceUnavailable,
+} from "@/globals/infrastructure/framework/http/http-endpoint.js";
+import {
   FindMyOrganizationsQuery,
   type FindMyOrganizationsView,
 } from "@/modules/organization/queries/find-my-organizations.query.js";
-import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 const toCli = (view: FindMyOrganizationsView): CliOrganizationContract.CliOrganization =>
   new CliOrganizationContract.CliOrganization({

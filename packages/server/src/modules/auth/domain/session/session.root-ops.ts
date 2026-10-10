@@ -1,6 +1,6 @@
 import * as DateTime from "effect/DateTime";
 
-import { type UserId } from "@/platform/ids/user-id.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
 
 import { type SessionId } from "./session.id.js";
 import { SessionRoot } from "./session.root.js";

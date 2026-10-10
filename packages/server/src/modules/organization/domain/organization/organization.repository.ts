@@ -1,10 +1,10 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
+import { type Specification } from "@/globals/application/ddd/specification.js";
 import { type OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.js";
 import { type OrganizationRoot } from "@/modules/organization/domain/organization/organization.root.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
 
 // Dumb persistence, collapsed to the minimal vocabulary: insert/update the
 // aggregate, and read it back by a Specification. Identity lookups and the

@@ -1,10 +1,10 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.js";
 import { DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.js";
 import { DeviceGrantRoot } from "@/modules/auth/domain/device-grant/device-grant.root.js";
-import { UserId } from "@/platform/ids/user-id.js";
-import { type ColumnMap } from "@/platform/persistence/criteria-to-sql.js";
 
 // Resolves the specification field names the live repository filters on to
 // physical columns of auth.device_grants. Only filterable scalar fields need an

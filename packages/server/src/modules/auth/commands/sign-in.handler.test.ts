@@ -9,6 +9,7 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { signInHandler } from "@/modules/auth/commands/sign-in.handler.js";
 import {
   IdentityEmailAlreadyRegistered,
@@ -24,7 +25,6 @@ import { SessionSpecifications } from "@/modules/auth/domain/session/session.spe
 import { makeUserProvisioningFake } from "@/modules/auth/infrastructure/acl/user-provisioning.acl-fake.js";
 import { makeAuthIdentityRepositoryFake } from "@/modules/auth/infrastructure/repositories/auth-identity.repository-fake.js";
 import { SessionRepositoryFake } from "@/modules/auth/infrastructure/repositories/session.repository-fake.js";
-import { UserId } from "@/platform/ids/user-id.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const provisionedUserId = UserId.make("22222222-2222-2222-2222-222222222222");

@@ -1,12 +1,12 @@
 import * as DateTime from "effect/DateTime";
 
+import { type InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import {
   type Predicate,
   Spec,
   type Specification,
-} from "@/platform/ddd/contracts/specification.js";
-import { type InvitationId } from "@/platform/ids/invitation-id.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
+} from "@/globals/application/ddd/specification.js";
 
 import { type InvitationRoot } from "./invitation.root.js";
 

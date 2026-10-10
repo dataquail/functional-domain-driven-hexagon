@@ -3,10 +3,10 @@ import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
 
+import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type Specification } from "@/globals/application/ddd/specification.js";
 import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
 import { type RolesRoot } from "@/modules/role/domain/roles/roles.root.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
-import { type UserId } from "@/platform/ids/user-id.js";
 
 // In-memory `RolesRepository` for use-case unit tests. Composes with
 // `PassThroughUnitOfWork` and `RecordingEventBus` the same way

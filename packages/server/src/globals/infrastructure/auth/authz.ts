@@ -5,7 +5,7 @@ import { CurrentUser } from "@org/contracts/Policy";
 
 // Aliased: an augmentation body resolves unqualified names in the target
 // module's scope, where `Action` is the library's own alias for this slot.
-import { type Action as AppAction } from "./actions.js";
+import { type Action as AppAction } from "@/globals/application/ports/actions.js";
 
 // This application's half of `@effect-server-utils/authz`. The library owns the mechanism —
 // the (resource, action) registry, per-request resource resolution, the check

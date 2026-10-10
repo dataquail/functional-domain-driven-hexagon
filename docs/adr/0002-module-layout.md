@@ -53,7 +53,7 @@ Not every module has all folders — `queries/` is present only when the module 
 
 `commands/` and `queries/` together correspond to what hexagonal architecture calls the "application layer." There is deliberately no `application/` umbrella over them. The split reflects one real distinction: write-side vs. read-side. A query must _not_ reach the write-side consistency boundary — it builds its own read model by reading SQL directly through `@org/database`, never by loading an aggregate through a repository. This closes the loop on data-consistency leaks: a read that hydrates a write aggregate couples the read path to the write model and can smuggle the aggregate (and its invariants) into a projection. From its own `domain/` a query may still import two things that are not the write model — branded IDs (identity vocabulary) and cross-context ACL ports (`domain/ports/acl/`, because ADR-0020 bans the cross-schema SQL that would otherwise fetch another context's data) — but nothing else. Read-side errors and derived statuses are query-owned (declared in the `.query.ts`), not borrowed from the domain. Each folder gets its own dependency-cruiser isolation rule (see ADR-0008), so the architectural distinction shows up at the file-system level rather than via convention. A cross-aggregate reaction to a domain event is not a third application folder: it is an inbound adapter at `interface/events/` that dispatches one of the module's own commands (see ADR-0007), reusing the command's handler rather than duplicating it.
 
-Cross-cutting platform services that don't belong to any feature live in a sibling `platform/` folder: the domain event bus, command/query buses, unit of work, request context, HTTP middlewares.
+What every module shares lives in a sibling `globals/` folder, split the way a module is: `globals/application/` is the vocabulary a module is written against (`ddd/` — the DDD contracts and the cross-module branded IDs, the only part a domain may name — and `ports/` — the domain event bus alias and the authorization action vocabulary), and `globals/infrastructure/` holds the shared adapters and framework glue a composition root wires (`auth/`, `cqrs/`, `database/`, `email/` with its own `ports/` and `adapters/`, and `framework/` — the HttpApi, the endpoint helper, the middlewares and the module registry).
 
 ### Cross-module access rules
 
@@ -67,7 +67,7 @@ Enforced by static analysis (see ADR-0008):
 
 ### Typed-ID shared kernel and its governance
 
-`platform/ids/` holds branded entity IDs that more than one module references — `UserId` is the load-bearing example: wallet stores it as `userId` on the `Wallet` aggregate; todos commands carry it through `currentUser.userId`; auth's identity row targets it. Without a shared declaration, each module would redeclare the same `Schema.brand("UserId")` and silently invite drift if one definition ever evolved (e.g. added length or format validation), and TypeScript would treat the two brands as distinct types, forcing coercion at every cross-FK boundary.
+`globals/application/ddd/ids/` holds branded entity IDs that more than one module references — `UserId` is the load-bearing example: wallet stores it as `userId` on the `Wallet` aggregate; todos commands carry it through `currentUser.userId`; auth's identity row targets it. Without a shared declaration, each module would redeclare the same `Schema.brand("UserId")` and silently invite drift if one definition ever evolved (e.g. added length or format validation), and TypeScript would treat the two brands as distinct types, forcing coercion at every cross-FK boundary.
 
 The kernel is allowlisted by the layer-isolation dep-cruiser rules (`domain-isolation`, `commands-isolation`, `queries-isolation`, and the `interface-events-isolation` adapter rule), so any layer can import an ID without weakening the layer's other constraints.
 
@@ -75,8 +75,8 @@ Shared kernels grow into dumping grounds without explicit rules (Newman's "minim
 
 - **Allowed:** branded UUID types whose corresponding aggregate lives in _another_ module, defined as `Schema.UUID.pipe(Schema.brand("<Name>Id"))`. Nothing else. A future ID with a meaningful schema (e.g. a checksum byte) still qualifies — it is still `Schema.X.pipe(Schema.brand(...))`, and the brand is the public surface.
 - **Not allowed:** value objects (`Address`, `Money`, `Email` — they carry invariants that belong with their owning aggregate), serialized shapes/DTOs/payloads (those are contracts), validation rules/predicates/parsing helpers, helper functions of any kind, and module-internal IDs.
-- **Module-private IDs** (e.g. `WalletId`, `TodoId`) stay in `<module>/domain/`. An ID graduates to `platform/ids/` only when a **second** module needs to reference it; the PR adding the file must name both consumers, and a reviewer rejects the addition if only one can be named.
-- **Audit:** a periodic sweep (at least once per major refactor) is mechanical — grep for `platform/ids/<file>` imports, count distinct module roots, and move any ID referenced by exactly one module back to that module's `domain/`.
+- **Module-private IDs** (e.g. `WalletId`, `TodoId`) stay in `<module>/domain/`. An ID graduates to `globals/application/ddd/ids/` only when a **second** module needs to reference it; the PR adding the file must name both consumers, and a reviewer rejects the addition if only one can be named.
+- **Audit:** a periodic sweep (at least once per major refactor) is mechanical — grep for `globals/application/ddd/ids/<file>` imports, count distinct module roots, and move any ID referenced by exactly one module back to that module's `domain/`.
 - **Mechanical enforcement:** a `platform-ids-effect-only` dependency-cruiser rule restricts the folder to effect-only third-party imports, blocking accidental drift toward third-party-coupled shapes (e.g. leaked Drizzle column types). Content discipline (branded IDs only) still rests on the PR review above.
 
 Moving IDs into `@org/contracts` is rejected: contracts are the HTTP wire shape consumed by both server and client, and a server-internal brand is meaningless (or duplicated) there.
@@ -96,7 +96,7 @@ Moving IDs into `@org/contracts` is rejected: contracts are the HTTP wire shape 
 - **Three layers (domain / application / infrastructure) without `interface/`.** Folds HTTP bindings into either application or infrastructure. Rejected because the boundary between "use case" and "transport adapter" is the most-changed boundary in practice; giving it its own folder pays off.
 - **Single `application/` umbrella over commands and queries.** Rejected because read-side queries don't share dependency constraints with write-side commands — queries can touch `@org/database`, commands can't — so an umbrella implies a kinship that doesn't exist, and once queries are carved out the umbrella wraps only `commands/`, adding nesting that distinguishes nothing.
 - **Flat module layout with file-name conventions** (e.g. `user.entity.ts`, `user.service.ts`). Workable for small modules; doesn't scale and conflates layer rules with naming conventions.
-- **Eliminate `platform/ids/`; each module redefines its own brand.** Rejected: two `UserId` brands are distinct types to TypeScript, forcing coercion at every cross-FK boundary.
+- **Eliminate the shared `ids/`; each module redefines its own brand.** Rejected: two `UserId` brands are distinct types to TypeScript, forcing coercion at every cross-FK boundary.
 
 ## Related
 

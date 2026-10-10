@@ -4,10 +4,10 @@ import { describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as Result from "effect/Result";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
 import { RolesRootOps } from "@/modules/role/domain/roles/roles.root-ops.js";
 import { RolesSpecifications } from "@/modules/role/domain/roles/roles.specification.js";
-import { UserId } from "@/platform/ids/user-id.js";
 
 import { RolesRepositoryFake } from "./roles.repository-fake.js";
 

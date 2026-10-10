@@ -2,10 +2,10 @@ import { SendEmailCommand, SESv2Client } from "@aws-sdk/client-sesv2";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { EnvVars } from "@/common/env-vars.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
 
-import { MailDeliveryError } from "./mail-errors.js";
-import { Mailer } from "./mailer.js";
+import { MailDeliveryError } from "../ports/mail-errors.js";
+import { Mailer } from "../ports/mailer.js";
 
 // AWS SES transport (`MAILER=ses`), for prod. Region + credentials come
 // from the standard AWS provider chain (AWS_REGION, instance/role creds,

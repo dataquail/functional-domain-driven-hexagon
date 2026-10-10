@@ -5,9 +5,9 @@ import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import { beforeEach } from "vitest";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { findTodoOrganizationHandler } from "@/modules/todos/queries/find-todo-organization.handler.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const orgId = OrganizationId.make("11111111-1111-1111-1111-111111111111");

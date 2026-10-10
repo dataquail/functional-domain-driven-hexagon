@@ -2,12 +2,12 @@ import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
 import { type CreateUserPayload } from "@/modules/user/commands/create-user.command.js";
 import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
 import { UserRootOps } from "@/modules/user/domain/user/user.root-ops.js";
 import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.js";
-import { DomainEventBus } from "@/platform/ddd/event-bus.js";
-import { UserId } from "@/platform/ids/user-id.js";
 
 export const createUserHandler = Effect.fn("createUserHandler")(function* (cmd: CreateUserPayload) {
   const repo = yield* UserRepository;

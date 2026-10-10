@@ -5,11 +5,11 @@ import { Query } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { OrganizationAccess } from "@/modules/billing/domain/ports/acl/organization-access.acl.js";
 import { OrganizationAccessLive } from "@/modules/billing/infrastructure/acl/organization-access.acl-live.js";
 import { organizationAccessQueries } from "@/modules/organization/organization.exports.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
-import { UserId } from "@/platform/ids/user-id.js";
 
 // Billing asks the organization module two questions — "is this caller a
 // member?" (read the subscription) and "is this caller an org admin?" (take on a

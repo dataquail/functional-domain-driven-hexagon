@@ -3,8 +3,8 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 import { WalletRootOps } from "./wallet.root-ops.js";
 import { WalletSpecifications } from "./wallet.specification.js";

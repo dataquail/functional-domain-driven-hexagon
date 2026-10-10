@@ -8,9 +8,9 @@ import * as HttpClient from "effect/unstable/http/HttpClient";
 import * as HttpClientRequest from "effect/unstable/http/HttpClientRequest";
 import * as HttpApiClient from "effect/unstable/httpapi/HttpApiClient";
 
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { FAKE_WEBHOOK_SIGNATURE } from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake.js";
-import { Api } from "@/platform/api.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 

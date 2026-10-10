@@ -1,11 +1,11 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
 import {
   type UserLookupView,
   UsersLookup,
 } from "@/modules/organization/domain/ports/acl/users-lookup.acl.js";
-import { type UserId } from "@/platform/ids/user-id.js";
 
 // In-memory `UsersLookup` for use-case unit tests that need to enrich
 // memberships with user emails without standing up the user-module

@@ -15,11 +15,11 @@ import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
 import { SyncSubscriptionCommand } from "@/modules/billing/commands/sync-subscription.command.js";
 import { StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events.js";
 import { type StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.js";
 import { StripeWebhookEventAdapterLive } from "@/modules/billing/interface/events/stripe-webhook.event-adapter.js";
-import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 import { RecordedCommands, RecordingCommandBus } from "@/test-utils/recording-command-bus.js";
 
 const stripeSubId = "sub_test";

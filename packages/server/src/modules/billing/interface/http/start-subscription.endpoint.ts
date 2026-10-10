@@ -3,11 +3,14 @@ import { BillingContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Effect from "effect/Effect";
 
+import { Actions } from "@/globals/application/ports/actions.js";
+import * as Authz from "@/globals/infrastructure/auth/authz.js";
+import {
+  type EndpointRequest,
+  recoverPersistenceUnavailable,
+} from "@/globals/infrastructure/framework/http/http-endpoint.js";
 import { StartSubscriptionCommand } from "@/modules/billing/commands/start-subscription.command.js";
 import { BillingResource } from "@/modules/billing/policies/billing.policies.js";
-import { Actions } from "@/platform/auth/actions.js";
-import * as Authz from "@/platform/auth/authz.js";
-import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // `Actions.Update` covers subscribe + cancel (CRUD vocabulary; the
 // verb-level difference is the HTTP method). Gated by

@@ -1,8 +1,8 @@
 import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
 import { type FindUserOrganizationRolesPayload } from "@/modules/organization/queries/find-user-organization-roles.policy-query.js";
-import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 export const findUserOrganizationRolesHandler = Effect.fn("findUserOrganizationRolesHandler")(
   function* (query: FindUserOrganizationRolesPayload) {

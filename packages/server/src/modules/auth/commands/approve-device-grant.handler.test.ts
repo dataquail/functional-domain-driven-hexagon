@@ -9,6 +9,7 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { approveDeviceGrantHandler } from "@/modules/auth/commands/approve-device-grant.handler.js";
 import { startDeviceGrantHandler } from "@/modules/auth/commands/start-device-grant.handler.js";
 import {
@@ -18,7 +19,6 @@ import {
 import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
 import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification.js";
 import { DeviceGrantRepositoryFake } from "@/modules/auth/infrastructure/repositories/device-grant.repository-fake.js";
-import { UserId } from "@/platform/ids/user-id.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const TestLayer = Layer.mergeAll(DeviceGrantRepositoryFake, PassThroughUnitOfWork);

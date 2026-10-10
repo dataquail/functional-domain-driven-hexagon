@@ -11,6 +11,7 @@ import { makeUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { TransactionDriverLive } from "@/globals/infrastructure/database/transaction-driver-live.js";
 import {
   authCommandGroup,
   AuthCommands,
@@ -54,7 +55,6 @@ import {
   WalletCommands,
   walletEventSpanAttributes,
 } from "@/modules/wallet/wallet.platform.js";
-import { TransactionDriverLive } from "@/platform/transaction-driver-live.js";
 
 // The parts of the composition root that production and the test runtime share
 // verbatim. Only the module *ordering* differs between them (the test runtime

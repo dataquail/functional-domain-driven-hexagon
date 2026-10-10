@@ -2,7 +2,7 @@ import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
 
-import { UserId } from "@/platform/ids/user-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 
 import { type AuthIdentity } from "./auth-identity.repository.js";
 import { AuthIdentitySpecifications } from "./auth-identity.specification.js";

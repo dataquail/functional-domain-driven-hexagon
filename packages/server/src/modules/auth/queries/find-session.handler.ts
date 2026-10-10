@@ -2,6 +2,8 @@ import { Database, RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
 import {
   type FindSessionPayload,
   SessionExpired,
@@ -9,8 +11,6 @@ import {
   SessionRevoked,
   type SessionView,
 } from "@/modules/auth/queries/find-session.query.js";
-import { UserId } from "@/platform/ids/user-id.js";
-import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 // Looks up a session by id and validates its lifecycle (revoked /
 // expired). Used by the auth middleware via `QueryBus.execute(...)` —

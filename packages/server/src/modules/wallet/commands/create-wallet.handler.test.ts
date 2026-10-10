@@ -6,11 +6,11 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { createWalletHandler } from "@/modules/wallet/commands/create-wallet.handler.js";
 import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
 import { WalletSpecifications } from "@/modules/wallet/domain/wallet/wallet.specification.js";
 import { WalletRepositoryFake } from "@/modules/wallet/infrastructure/repositories/wallet.repository-fake.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
 const organizationId = OrganizationId.make("11111111-1111-1111-1111-111111111111");

@@ -1,8 +1,8 @@
 import * as Schema from "effect/Schema";
 
-import * as Event from "@/platform/ddd/contracts/domain-event.js";
-import { type SpanAttributesExtractor } from "@/platform/ddd/contracts/domain-event.js";
-import { UserId } from "@/platform/ids/user-id.js";
+import * as Event from "@/globals/application/ddd/domain-event.js";
+import { type SpanAttributesExtractor } from "@/globals/application/ddd/domain-event.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 
 import { AddressValueObject } from "./value-objects/address.value-object.js";
 

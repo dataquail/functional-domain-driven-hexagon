@@ -4,8 +4,8 @@ import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
 import * as Stream from "effect/Stream";
 
-import { type DomainEvent } from "@/platform/ddd/contracts/domain-event.js";
-import { DomainEventBus } from "@/platform/ddd/event-bus.js";
+import { type DomainEvent } from "@/globals/application/ddd/domain-event.js";
+import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
 
 // Test double for `DomainEventBus`: records every dispatched event and ignores
 // every registration, whichever surface it came in on. A use-case unit test

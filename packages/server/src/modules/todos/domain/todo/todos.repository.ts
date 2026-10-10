@@ -1,12 +1,12 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
+import { type Specification } from "@/globals/application/ddd/specification.js";
 import { type TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.js";
 import { type TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { type TodoRoot } from "@/modules/todos/domain/todo/todo.root.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 // Dumb persistence, collapsed to the minimal vocabulary: insert/update/delete
 // the aggregate, and read it back by a Specification. Every read is org-scoped

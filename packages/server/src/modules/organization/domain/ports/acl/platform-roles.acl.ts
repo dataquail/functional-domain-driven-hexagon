@@ -1,8 +1,8 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { type UserId } from "@/platform/ids/user-id.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
 
 // ADR-0022 outbound port to the role module. Two consumers in this module: the
 // policies' super-admin bypass, and the use-case invariant that a super-admin

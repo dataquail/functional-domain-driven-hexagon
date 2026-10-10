@@ -1,6 +1,6 @@
 import type * as DateTime from "effect/DateTime";
 
-import { type UserId } from "@/platform/ids/user-id.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
 
 import { UserAddressUpdated, UserCreated, UserDeleted, type UserEvent } from "./user.events.js";
 import { UserRoot } from "./user.root.js";

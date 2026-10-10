@@ -3,8 +3,11 @@ import { AuthContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
+import {
+  type EndpointRequest,
+  recoverPersistenceUnavailable,
+} from "@/globals/infrastructure/framework/http/http-endpoint.js";
 import { ListMyApiTokensQuery } from "@/modules/auth/queries/list-my-api-tokens.query.js";
-import { type EndpointRequest, recoverPersistenceUnavailable } from "@/platform/http-endpoint.js";
 
 // Lists the caller's active (non-revoked) tokens. Secret-free: only the
 // display `prefix` and metadata are returned.

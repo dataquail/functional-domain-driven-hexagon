@@ -1,7 +1,7 @@
 import * as Schema from "effect/Schema";
 
-import { InvitationId } from "@/platform/ids/invitation-id.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 
 // Aggregate root data — a dumb value (ADR-0003). Operations live in
 // `invitation.root-ops.ts` (`InvitationRootOps`) and predicates in

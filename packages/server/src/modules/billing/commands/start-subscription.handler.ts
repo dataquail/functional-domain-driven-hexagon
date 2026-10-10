@@ -2,13 +2,13 @@ import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
+import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
 import { BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client.js";
 import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.js";
 import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
 import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
 import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
 import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.js";
-import { DomainEventBus } from "@/platform/ddd/event-bus.js";
 
 import { type StartSubscriptionPayload } from "./start-subscription.command.js";
 

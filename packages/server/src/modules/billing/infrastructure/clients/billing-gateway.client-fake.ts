@@ -6,6 +6,7 @@ import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 import * as Schema from "effect/Schema";
 
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import {
   BillingGateway,
   type CancelSubscriptionInput,
@@ -18,7 +19,6 @@ import {
 } from "@/modules/billing/domain/ports/clients/billing-gateway.client.js";
 import { InvalidWebhookSignature } from "@/modules/billing/domain/subscription/subscription.errors.js";
 import { StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
 
 const decodeWebhookEvent = Schema.decodeUnknownEffect(StripeWebhookEvent);
 

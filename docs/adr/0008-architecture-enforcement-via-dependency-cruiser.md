@@ -34,13 +34,13 @@ A repo-root `.dependency-cruiser.cjs` defines forbidden-edge rules, run over the
 
 - `root-ops-only-from-command-handlers`: a `*.root-ops.ts` (the aggregate's mutation surface) is importable only from its own module's `domain/`, its own `commands/*.handler.ts`, test files, and repository fakes.
 - `constituent-ops-domain-private`: `*.entity-ops.ts` / `*.aggregate-ops.ts` / `*.value-object-ops.ts` are domain-private — importable only within their own module's `domain/`.
-- `interface-events-isolation`: an event adapter (`interface/events/*.event-adapter.ts`) is bus-only — a positive allowlist admitting only its own module's domain events/ids, its own command definitions, the DDD kernel ports, `platform/ids/`, and (for cross-module events) another module's barrel. It may not reach a repository, domain ops, or `domain/ports/`; the dispatched command owns those. There is no `event-handlers/` folder and no `event-handlers-isolation` rule — a cross-aggregate reaction is this adapter dispatching a command (ADR-0007), not a use-case folder of its own.
+- `interface-events-isolation`: an event adapter (`interface/events/*.event-adapter.ts`) is bus-only — a positive allowlist admitting only its own module's domain events/ids, its own command definitions, the DDD kernel ports, the shared IDs under `globals/application/ddd/ids/`, and (for cross-module events) another module's barrel. It may not reach a repository, domain ops, or `domain/ports/`; the dispatched command owns those. There is no `event-handlers/` folder and no `event-handlers-isolation` rule — a cross-aggregate reaction is this adapter dispatching a command (ADR-0007), not a use-case folder of its own.
 
 The test-file exclusion (`pathNot: "\\.test\\.ts$"`) is encoded inline in each isolation rule so unit tests can pull fakes from `infrastructure/` and integration tests can use the database directly. The exemption is obvious in each rule body, not hidden in a separate ignore list.
 
 **Domain isolation.** Domain code is held to stricter standards:
 
-- `domain-isolation`: a module's domain may import from itself, the `effect` package, the DDD kernel's **contracts** tier (`platform/ddd/contracts/`), and `platform/ids/`. Nothing else.
+- `domain-isolation`: a module's domain may import from itself, the `effect` package, and the DDD kernel (`globals/application/ddd/`, which holds the shared IDs). Nothing else.
 - `domain-no-external-beyond-effect`: no external npm package other than `effect`.
 - `subdomain-isolation`: within a module's `domain/`, each subdomain folder (`domain/<subdomain>/`) is a boundary — a file there may import only its own subdomain (plus the `domain-isolation` allowances). It may not import another subdomain, `domain/domain-services/`, or `domain/ports/`. Cross-subdomain composition is the job of a domain service in `domain/domain-services/` (ADR-0023), the one domain location allowed to reach into more than one subdomain — it is excluded from this rule's `from`. Command handlers, queries, interface, and infrastructure sit outside `domain/` and may consume several subdomains; isolation is a domain-internal boundary.
 

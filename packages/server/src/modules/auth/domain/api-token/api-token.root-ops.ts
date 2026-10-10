@@ -1,6 +1,6 @@
 import type * as DateTime from "effect/DateTime";
 
-import { type UserId } from "@/platform/ids/user-id.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
 
 import { type ApiTokenId } from "./api-token.id.js";
 import { ApiTokenRoot } from "./api-token.root.js";

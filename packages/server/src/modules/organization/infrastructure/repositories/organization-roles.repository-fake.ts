@@ -3,11 +3,11 @@ import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
 
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type Specification } from "@/globals/application/ddd/specification.js";
 import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
 import { type OrganizationRolesRoot } from "@/modules/organization/domain/organization-roles/organization-roles.root.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
-import { type UserId } from "@/platform/ids/user-id.js";
 
 // Keyed by composite identity serialized as "<userId>|<organizationId>".
 // The HashMap value carries the full `OrganizationRolesRoot` aggregate so

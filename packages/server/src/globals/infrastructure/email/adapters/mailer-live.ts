@@ -1,10 +1,10 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { EnvVars } from "@/common/env-vars.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
 
+import { type Mailer } from "../ports/mailer.js";
 import { LogMailerLive } from "./log-mailer-live.js";
-import { type Mailer } from "./mailer.js";
 import { SesMailerLive } from "./ses-mailer-live.js";
 import { SmtpMailerLive } from "./smtp-mailer-live.js";
 

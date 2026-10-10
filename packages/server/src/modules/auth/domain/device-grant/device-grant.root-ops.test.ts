@@ -3,7 +3,7 @@ import { deepStrictEqual, ok, throws } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 
-import { UserId } from "@/platform/ids/user-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 
 import { DeviceGrantId } from "./device-grant.id.js";
 import { DeviceGrantRootOps, USER_CODE_ALPHABET } from "./device-grant.root-ops.js";

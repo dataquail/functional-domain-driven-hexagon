@@ -3,10 +3,10 @@ import { deepStrictEqual, ok } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
 import { type SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.js";
 import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
-import { OrganizationId } from "@/platform/ids/organization-id.js";
 
 const subscriptionId = SubscriptionId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const organizationId = OrganizationId.make("11111111-1111-1111-1111-111111111111");

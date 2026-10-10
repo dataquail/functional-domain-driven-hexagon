@@ -1,6 +1,6 @@
 import * as DateTime from "effect/DateTime";
 
-import { type UserId } from "@/platform/ids/user-id.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
 
 import { type DeviceGrantId } from "./device-grant.id.js";
 import { DeviceGrantRoot } from "./device-grant.root.js";

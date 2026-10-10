@@ -2,6 +2,8 @@ import { Database, RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
 import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 import {
   ApiTokenExpired,
@@ -10,8 +12,6 @@ import {
   ApiTokenRevoked,
   type FindApiTokenByHashPayload,
 } from "@/modules/auth/queries/find-api-token-by-hash.query.js";
-import { UserId } from "@/platform/ids/user-id.js";
-import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 // Looks up a token by hash and validates its lifecycle (revoked /
 // expired). Used by the auth middleware via `QueryBus.execute(...)`; the

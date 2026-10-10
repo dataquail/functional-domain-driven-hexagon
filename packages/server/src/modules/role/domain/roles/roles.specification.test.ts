@@ -3,8 +3,8 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as Result from "effect/Result";
 
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
-import { UserId } from "@/platform/ids/user-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type Specification } from "@/globals/application/ddd/specification.js";
 
 import { type RolesRoot } from "./roles.root.js";
 import { RolesRootOps } from "./roles.root-ops.js";

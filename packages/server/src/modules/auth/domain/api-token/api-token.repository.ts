@@ -1,11 +1,11 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
+import { type Specification } from "@/globals/application/ddd/specification.js";
 import { type ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.js";
 import { type ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
 import { type ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root.js";
-import { type PersistenceUnavailable } from "@/platform/ddd/contracts/persistence-unavailable.js";
-import { type Specification } from "@/platform/ddd/contracts/specification.js";
 
 // Dumb collection port (per `feedback_dumb_repositories`): insert/update the
 // aggregate, delete by id, and read it back by a Specification. Domain verbs

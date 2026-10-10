@@ -1,9 +1,9 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { OrganizationAccess } from "@/modules/billing/domain/ports/acl/organization-access.acl.js";
-import { type OrganizationId } from "@/platform/ids/organization-id.js";
-import { type UserId } from "@/platform/ids/user-id.js";
 
 // In-memory `OrganizationAccess` for policy and use-case unit tests. Seed each
 // relation as a `${userId}::${organizationId}` key. Admins are not implicitly

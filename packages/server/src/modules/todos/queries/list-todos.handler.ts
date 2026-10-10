@@ -1,12 +1,12 @@
 import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import {
   type ListTodosPayload,
   type ListTodosTodoView,
 } from "@/modules/todos/queries/list-todos.query.js";
-import { translateDatabaseErrors } from "@/platform/translate-database-errors.js";
 
 const toView = (row: RowSchemas.TodoRow): ListTodosTodoView => ({
   id: TodoId.make(row.id),
