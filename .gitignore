@@ -60,3 +60,6 @@ packages/*/src/**/*.map
 
 # Config fixtures written by the architecture-rules loader tests.
 .tmp-*/
+
+# Compiled by `pnpm -F @org/web-svelte css`
+packages/web-svelte/src/styles.generated.css
