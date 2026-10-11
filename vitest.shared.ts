@@ -17,14 +17,14 @@ const alias = (name: string) => {
   const target = process.env.TEST_DIST !== undefined ? "dist/dist/esm" : "src";
   const scopedName = `@org/${name}`;
   return {
-    [`${scopedName}/test`]: path.join(__dirname, "packages", name, "test"),
-    [`${scopedName}`]: path.join(__dirname, "packages", name, target),
+    [`${scopedName}/test`]: path.join(import.meta.dirname, "packages", name, "test"),
+    [`${scopedName}`]: path.join(import.meta.dirname, "packages", name, target),
   };
 };
 
 // This is a workaround, see https://github.com/vitest-dev/vitest/issues/4744
 const config: ViteUserConfig = {
-  esbuild: {
+  oxc: {
     target: "es2020",
   },
   optimizeDeps: {
@@ -34,7 +34,7 @@ const config: ViteUserConfig = {
     onConsoleLog: (log) => {
       console.log(log);
     },
-    setupFiles: [path.join(__dirname, "setupTests.ts")],
+    setupFiles: [path.join(import.meta.dirname, "setupTests.ts")],
     fakeTimers: {
       toFake: undefined,
     },

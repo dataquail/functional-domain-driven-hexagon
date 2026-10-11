@@ -7,7 +7,7 @@ const config: UserConfigExport = {
     // The integration tests share one identity database and truncate between cases.
     fileParallelism: false,
     sequence: { concurrent: false },
-    globalSetup: [path.join(__dirname, "src/test-utils/global-setup.ts")],
+    globalSetup: [path.join(import.meta.dirname, "src/test-utils/global-setup.ts")],
   },
 };
 
