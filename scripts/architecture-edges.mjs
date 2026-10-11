@@ -44,6 +44,16 @@ const NPM = (name) => `node_modules/.pnpm/x/node_modules/${name}/index.js`;
 // Edges the policy must REFUSE.
 const REFUSED = [
   [
+    "a host-runtime seam naming the database kernel",
+    "packages/server/src/globals/infrastructure/runtime/execution-context.ts",
+    "packages/database/src/index.ts",
+  ],
+  [
+    "the span exporter reaching into a module",
+    "packages/server/src/globals/infrastructure/observability/tracer-live.ts",
+    `${M}/alpha/alpha.platform.ts`,
+  ],
+  [
     "cross-module reach from a domain file",
     `${M}/alpha/domain/one/one.root.ts`,
     `${M}/beta/domain/two/two.root.ts`,
@@ -897,6 +907,16 @@ const ALLOWED = [
     "an imports gateway naming a foreign peer surface (LEGAL)",
     `${M}/alpha/alpha.imports.ts`,
     `${M}/beta/beta.exports.ts`,
+  ],
+  [
+    "the auth middleware naming the ExecutionContext seam (LEGAL)",
+    "packages/server/src/globals/infrastructure/framework/middlewares/auth-middleware-live.ts",
+    "packages/server/src/globals/infrastructure/runtime/execution-context.ts",
+  ],
+  [
+    "the span exporter reading the typed environment (LEGAL)",
+    "packages/server/src/globals/infrastructure/observability/tracer-live.ts",
+    "packages/server/src/globals/infrastructure/config/env-vars.ts",
   ],
   [
     "a module Layer providing another module's Layer (LEGAL)",
