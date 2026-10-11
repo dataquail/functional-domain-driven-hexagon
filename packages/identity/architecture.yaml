@@ -9,6 +9,13 @@
 # shares, so name it for what it is.
 
 defs:
+  # Stated per folder rather than on the package, so seed-client.ts alone can admit a peer.
+  identity-private:
+    message: >-
+      Nothing outside @org/identity imports this. The server reaches the issuer over OIDC, and the
+      seed tooling through seed-client.ts and the HTTP seed endpoint.
+    allow: ["~/identity/**"]
+
   identity-test-file:
     surface: [{ use: test-exports-nothing }]
     imports:
@@ -48,11 +55,6 @@ imports:
     at a URL, and nothing here may know the server any better.
   external: [effect]
   allow: ["~/identity/**"]
-importedBy:
-  message: >-
-    Nothing outside @org/identity imports it. The server reaches the issuer over OIDC, and the
-    seed scripts over its HTTP seed endpoint.
-  allow: ["~/identity/**"]
 children:
   "vitest.config.ts":
     surface:
@@ -70,6 +72,7 @@ children:
       reach.
     children:
       "auth/":
+        importedBy: { use: identity-private }
         message: >-
           auth/ configures Better Auth for this issuer and adapts it to IdentityAuthPort, the
           only face of it the router sees.
@@ -84,6 +87,7 @@ children:
           "*.integration.test.ts": { use: identity-integration-test-file }
           "id-token-claims.test.ts": { use: identity-test-file }
       "http/":
+        importedBy: { use: identity-private }
         message: >-
           http/ routes a request to Better Auth, a page, or a form handler, through
           IdentityAuthPort — so it runs, and is tested, without a database.
@@ -91,6 +95,7 @@ children:
           "identity-router.ts": {}
           "*.test.ts": { use: identity-test-file }
       "mail/":
+        importedBy: { use: identity-private }
         message: >-
           mail/ renders the verification and reset emails and sends them through a mailer:
           Mailpit's HTTP API locally, the Email binding once deployed. The binding arrives as a
@@ -100,6 +105,7 @@ children:
             {}
           "*.test.ts": { use: identity-test-file }
       "pages/":
+        importedBy: { use: identity-private }
         message: >-
           pages/ renders HTML: an escaping template tag and one function per page. Logic stays
           out of the markup, so a page is a pure function of its props.
@@ -111,10 +117,18 @@ children:
           seed/ provisions the app's OAuth client and verified users through Better Auth's own
           API, for the seed endpoint a stage with a seed token exposes.
         children:
-          "identity-seed.ts": {}
+          "identity-seed.ts": { importedBy: { use: identity-private } }
+          "seed-client.ts":
+            importedBy:
+              message: >-
+                seed-client.ts is the one file a peer may import: the HTTP client for the seed
+                endpoint, used by acceptance's global setup (and by scripts/seed-identity.mjs,
+                outside the walked tree). It names no Better Auth and no Worker binding.
+              allow: ["~/identity/**", "~/acceptance/test-utils/**", "~/acceptance/global-setup.ts"]
           "*.integration.test.ts": { use: identity-integration-test-file }
-          "identity-seed.test.ts": { use: identity-test-file }
+          "identity-seed.test.ts | seed-client.test.ts": { use: identity-test-file }
       "scripts/":
+        importedBy: { use: identity-private }
         message: >-
           scripts/ runs on Node against the identity database's direct URL: today, Better Auth's
           migrations.
@@ -126,6 +140,7 @@ children:
         children:
           "migrate.ts": {}
       "test-utils/":
+        importedBy: { use: identity-private }
         message: >-
           test-utils/ is the integration harness: the identity test database beside the app's,
           migrated once by the global setup and truncated between cases, and a Better Auth wired to
@@ -136,6 +151,7 @@ children:
         children:
           "global-setup.ts | identity-test-database.ts | identity-test-auth.ts": {}
       "platform/":
+        importedBy: { use: identity-private }
         message: >-
           platform/ holds what runs on the host platform rather than describing it: worker/ is
           the Worker entrypoint.

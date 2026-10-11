@@ -99,23 +99,32 @@ const ensureAppClient = Effect.fn("ensureAppClient")(function* (
   );
 });
 
+// A seed is authoritative: an existing user ends up verified and with the seeded password.
 const ensureVerifiedUser = Effect.fn("ensureVerifiedUser")(function* (
   auth: IdentityAuth,
   user: SeedUser,
 ) {
   const context = yield* Effect.promise(() => auth.$context);
   const found = yield* Effect.promise(() => context.internalAdapter.findUserByEmail(user.email));
-  const id =
-    found?.user.id ??
-    (yield* Effect.promise(() =>
+  if (found === null) {
+    const { user: created } = yield* Effect.promise(() =>
       auth.api.signUpEmail({
         body: { email: user.email, password: user.password, name: user.name },
       }),
-    )).user.id;
-  if (found?.user.emailVerified !== true) {
-    yield* Effect.promise(() => context.internalAdapter.updateUser(id, { emailVerified: true }));
+    );
+    yield* Effect.promise(() =>
+      context.internalAdapter.updateUser(created.id, { emailVerified: true }),
+    );
+    return { email: user.email, subject: created.id } satisfies SeededUser;
   }
-  return { email: user.email, subject: id } satisfies SeededUser;
+  const passwordHash = yield* Effect.promise(() => context.password.hash(user.password));
+  yield* Effect.promise(() => context.internalAdapter.updatePassword(found.user.id, passwordHash));
+  if (!found.user.emailVerified) {
+    yield* Effect.promise(() =>
+      context.internalAdapter.updateUser(found.user.id, { emailVerified: true }),
+    );
+  }
+  return { email: user.email, subject: found.user.id } satisfies SeededUser;
 });
 
 export const seedIdentity = Effect.fn("seedIdentity")(function* (

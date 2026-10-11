@@ -17,7 +17,8 @@
       "@org/contracts": ["../contracts/src/index.ts"],
       "@org/contracts/*": ["../contracts/src/*"],
       "@org/database": ["../database/src/index.ts"],
-      "@org/database/*": ["../database/src/*"]
+      "@org/database/*": ["../database/src/*"],
+      "@org/identity/*": ["../identity/src/*"]
     }
   }
 }
