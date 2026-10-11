@@ -2,8 +2,8 @@
 # devcontainer.json, making the repo root the Compose project directory — every
 # relative path below is therefore repo-root-relative, not .devcontainer-relative).
 #
-# The dev container joins `jaeger-network`, so `postgres`, `zitadel`, `mailpit`
-# and `jaeger` resolve by service name exactly as they do between containers.
+# The dev container joins `jaeger-network`, so `postgres`, `mailpit` and
+# `jaeger` resolve by service name exactly as they do between containers.
 services:
   workspace:
     image: mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm

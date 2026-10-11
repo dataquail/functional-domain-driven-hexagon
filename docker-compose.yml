@@ -10,145 +10,22 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # Init scripts run once when the data volume is first created. The
-      # script creates a peer `zitadel` database alongside the app DB so
-      # Zitadel doesn't need its own Postgres container — see
-      # docs/dev-setup.md.
+      # Init scripts run once, when the data volume is first created.
       - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
     networks:
       - jaeger-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d zitadel"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d effect-monorepo"]
       interval: 5s
       timeout: 3s
       retries: 20
 
-  zitadel:
-    container_name: effect-monorepo-zitadel
-    # Pinned for reproducibility; bump after checking https://github.com/zitadel/zitadel/releases
-    # v2.71.15 patches the login-UI user-enumeration bypasses (GHSA-pvm5-9frx-264r /
-    # CVE-2025-57770) that the `ignoreUnknownUsernames` login policy alone does not
-    # close (select-account page + password-reset flow). Pair with that flag, set in seed.mjs.
-    image: ghcr.io/zitadel/zitadel:v2.71.15
-    # `--steps` is required for the FirstInstance section of zitadel.yaml to
-    # be respected (it isn't part of the runtime `--config` schema). Without
-    # `--steps`, Zitadel silently ignores FirstInstance.Org.Machine and the
-    # bootstrap PAT is never written. Same file is passed to both flags so
-    # we keep one source of truth.
-    command: 'start-from-init --masterkey "${ZITADEL_MASTERKEY:-MasterkeyNeedsToHave32Characters}" --tlsMode disabled --config /etc/zitadel/zitadel.yaml --steps /etc/zitadel/zitadel.yaml'
-    environment:
-      # Zitadel and the app DB share a single Postgres container; isolation
-      # is at the database level (`effect-monorepo` vs `zitadel`). See
-      # infra/postgres/init/01-create-zitadel-db.sql.
-      ZITADEL_DATABASE_POSTGRES_HOST: postgres
-      ZITADEL_DATABASE_POSTGRES_PORT: 5432
-      ZITADEL_DATABASE_POSTGRES_DATABASE: zitadel
-      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: postgres
-      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: postgres
-      ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable
-      ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: postgres
-      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: postgres
-      ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
-      # Zitadel keys every instance by the host it is reached on, and stamps
-      # that host into the OIDC `issuer`. Behind a TLS-terminating proxy
-      # (Codespaces port forwarding) the browser-facing origin is https on
-      # :443 while the container still speaks plaintext, hence EXTERNALSECURE
-      # without TLS. Defaults reproduce the plain localhost setup.
-      ZITADEL_EXTERNALDOMAIN: ${ZITADEL_EXTERNAL_DOMAIN:-localhost}
-      ZITADEL_EXTERNALPORT: ${ZITADEL_EXTERNAL_PORT:-8080}
-      ZITADEL_EXTERNALSECURE: ${ZITADEL_EXTERNAL_SECURE:-false}
-      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_EMAIL_ADDRESS: ${ZITADEL_ADMIN_EMAIL:-admin@example.com}
-      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: ${ZITADEL_ADMIN_PASSWORD:-ChangeMe!1}
-    ports:
-      # A codespace moves this off 8080. Zitadel takes its user-agent cookie
-      # domain from the request's Host header, which GitHub's forwarder
-      # rewrites to `localhost`; the repair is a proxy in the dev container
-      # that puts the header back, and it can only own 8080 if Zitadel doesn't.
-      - "${ZITADEL_HOST_PORT:-8080}:8080"
-    volumes:
-      - ./infra/zitadel/zitadel.yaml:/etc/zitadel/zitadel.yaml:ro
-      # Zitadel writes the bootstrap-bot PAT here on first boot (see
-      # FirstInstance.PatPath in zitadel.yaml). Read by `pnpm auth:seed` and
-      # by CI to skip the manual "console → service user → PAT" step.
-      - ./infra/zitadel/.machinekey:/machinekey
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - jaeger-network
-    restart: unless-stopped
-
-  seed-zitadel:
-    image: node:22-alpine
-    working_dir: /seed
-    volumes:
-      - ./infra/zitadel:/seed
-      # Lets seed.mjs fall back to reading the bootstrap PAT from the file
-      # Zitadel writes during FirstInstance, so a fresh `pnpm auth:up &&
-      # pnpm auth:seed` works without any manual console step.
-      - ./infra/zitadel/.machinekey:/machinekey:ro
-    # Installs `pg` into a sibling node_modules on first run; subsequent runs are fast.
-    command: ["sh", "-c", "npm install --silent --no-audit --no-fund && node seed.mjs"]
-    # Share Zitadel's network namespace so `localhost:8080` inside this
-    # container reaches Zitadel. Required because Zitadel keys instances by
-    # the inbound Host header and the default instance is registered for
-    # `localhost`. We can still reach other services on jaeger-network
-    # (postgres, etc.) because zitadel itself is on that network.
-    network_mode: "service:zitadel"
-    environment:
-      ZITADEL_ISSUER: http://localhost:8080
-      # The address above is what we dial; this is the Host header Zitadel
-      # must see to resolve the instance. They differ whenever the instance
-      # is registered under an external domain.
-      ZITADEL_INSTANCE_HOST: ${ZITADEL_INSTANCE_HOST:-localhost:8080}
-      ZITADEL_BOOTSTRAP_PAT: ${ZITADEL_BOOTSTRAP_PAT:-}
-      ZITADEL_ADMIN_EMAIL: ${ZITADEL_ADMIN_EMAIL:-admin@example.com}
-      APP_REDIRECT_URI: ${APP_REDIRECT_URI:-${ZITADEL_REDIRECT_URI:-http://localhost:3001/auth/callback}}
-      # Default must match `ZITADEL_POST_LOGOUT_REDIRECT_URI` in
-      # packages/server/src/common/env-vars.ts. If they drift apart,
-      # /auth/logout 400s with "post_logout_redirect_uri invalid".
-      APP_POST_LOGOUT_REDIRECT_URI: ${APP_POST_LOGOUT_REDIRECT_URI:-${ZITADEL_POST_LOGOUT_REDIRECT_URI:-http://localhost:3000/}}
-      # CI overrides this so the seed targets `effect-monorepo-test`. Local
-      # dev sticks with the default. The host inside this container is
-      # `postgres` because seed-zitadel shares zitadel's network namespace
-      # (which is on the compose `jaeger-network`).
-      APP_DATABASE_URL: ${SEED_APP_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/effect-monorepo}
-      # SMTP — Zitadel notification provider (idempotently configured by
-      # seed.mjs via /admin/v1/smtp). Local defaults target the `mailpit`
-      # service above; prod overrides via .env or the deploy platform.
-      # SMTP_DESCRIPTION is the idempotency key — keep it stable across envs.
-      SMTP_HOST: ${SMTP_HOST:-mailpit}
-      SMTP_PORT: ${SMTP_PORT:-1025}
-      # Zitadel v2.71's notification subsystem rejects SMTP configs with a
-      # nil-encrypted password as `Errors.SMTPConfig.NotFound`, so user/password
-      # must be non-empty even against Mailpit (which ignores SMTP AUTH).
-      # In prod these come from real SES/SendGrid credentials in .env.
-      SMTP_USER: ${SMTP_USER:-dev}
-      SMTP_PASSWORD: ${SMTP_PASSWORD:-dev}
-      SMTP_TLS: ${SMTP_TLS:-false}
-      SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS:-noreply@localhost}
-      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Effect Monorepo}
-      SMTP_REPLY_TO: ${SMTP_REPLY_TO:-}
-      SMTP_DESCRIPTION: ${SMTP_DESCRIPTION:-default}
-    depends_on:
-      - zitadel
-      - postgres
-    profiles:
-      - seed-zitadel
-
   mailpit:
     container_name: effect-monorepo-mailpit
-    # Local-only SMTP sink for Zitadel notification emails (password reset,
-    # invitation, email verification, …). Web UI at http://localhost:8025.
-    # In prod, Zitadel's SMTP provider points at SES/SendGrid/etc instead.
+    # Local mail sink: the server sends over SMTP (:1025), the identity Worker
+    # through the HTTP send API (:8025), and the web UI is at :8025.
     image: axllent/mailpit:latest
-    environment:
-      # Zitadel v2.71 always issues SMTP AUTH. Accept any creds so the local
-      # placeholder user/password (see seed-zitadel.SMTP_USER) is honored, and
-      # allow it without TLS since the dev relay is plaintext on :1025.
-      MP_SMTP_AUTH_ACCEPT_ANY: "1"
-      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
     ports:
       - "8025:8025"
       - "1025:1025"
