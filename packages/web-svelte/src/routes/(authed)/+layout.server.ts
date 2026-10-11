@@ -11,8 +11,10 @@ import { prefetchMyOrgs } from "@/services/data-access/orgs.server";
 export const load = async () => {
   const user = await fetchCurrentUser();
   if (user === null) redirect(302, "/api/auth/login");
+  // A load's data crosses to the browser as plain values, so the user is
+  // reduced to what the routes below read rather than handed over as a class.
   return {
-    user,
+    user: { isSuperAdmin: user.isSuperAdmin },
     prefetched: await collectPrefetched(user.isSuperAdmin ? [] : [prefetchMyOrgs()]),
   };
 };
