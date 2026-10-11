@@ -13,11 +13,11 @@ import * as Schema from "effect/Schema";
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 
-// The callback happy path (PKCE cookie present → Zitadel code exchange →
-// session issued) needs a live Zitadel and is covered end-to-end by Playwright
+// The callback happy path (PKCE cookie present → code exchange with the issuer →
+// session issued) needs a live identity Worker and is covered end-to-end by Playwright
 // (`packages/acceptance/specs/login.spec.ts`) and at the persistence boundary
 // by the SessionRepositoryLive integration test. What this file locks down is
-// the pre-Zitadel guard the real HTTP layer runs on every callback: a request
+// the pre-exchange guard the real HTTP layer runs on every callback: a request
 // arriving without our signed OIDC state cookie must be rejected with 401
 // before any code exchange is attempted. This is the CSRF/replay defense, and
 // it's reachable without an IdP because it fails before `OidcClient` is called.
@@ -29,7 +29,7 @@ describe("GET /auth/callback (integration)", () => {
     await run(
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
-        // A Zitadel redirect carries code+state, but with no PKCE cookie on the
+        // An issuer redirect carries code+state, but with no PKCE cookie on the
         // request the endpoint must refuse before touching the IdP.
         const exit = yield* Effect.exit(
           client.auth.callback({

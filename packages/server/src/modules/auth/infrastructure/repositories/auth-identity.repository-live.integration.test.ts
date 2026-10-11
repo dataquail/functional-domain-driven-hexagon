@@ -13,7 +13,7 @@ import { AuthIdentityRepositoryLive } from "@/modules/auth/infrastructure/reposi
 import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
-const subject = "zitadel-sub-integration";
+const subject = "identity-sub-integration";
 
 const TestLayer = AuthIdentityRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
@@ -25,7 +25,7 @@ const seedUserAndIdentity = Effect.gen(function* () {
     `;
   yield* sql`
       INSERT INTO auth.auth_identities (subject, user_id, provider, created_at)
-      VALUES (${subject}, ${userId}, 'zitadel', now())
+      VALUES (${subject}, ${userId}, 'better-auth', now())
     `;
 }).pipe(Effect.orDie);
 
@@ -42,7 +42,7 @@ describe("AuthIdentityRepositoryLive (integration)", () => {
       if (found === null) throw new Error("expected an identity");
       deepStrictEqual(found.subject, subject);
       deepStrictEqual(found.userId, userId);
-      deepStrictEqual(found.provider, "zitadel");
+      deepStrictEqual(found.provider, "better-auth");
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -57,13 +57,13 @@ describe("AuthIdentityRepositoryLive (integration)", () => {
           `.pipe(Effect.orDie);
 
       const repo = yield* AuthIdentityRepository;
-      yield* repo.insertOne({ subject: "jit-sub", userId, provider: "zitadel" });
+      yield* repo.insertOne({ subject: "jit-sub", userId, provider: "better-auth" });
 
       const found = yield* repo.findOne(AuthIdentitySpecifications.bySubject("jit-sub"));
       if (found === null) throw new Error("expected an identity");
       deepStrictEqual(found.subject, "jit-sub");
       deepStrictEqual(found.userId, userId);
-      deepStrictEqual(found.provider, "zitadel");
+      deepStrictEqual(found.provider, "better-auth");
     }).pipe(Effect.provide(TestLayer)),
   );
 

@@ -12,6 +12,7 @@ import { SignInCommand } from "@/modules/auth/commands/sign-in.command.js";
 import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client.js";
 
 import { buildCallbackUrl } from "./callback-url.util.js";
+import { ID_TOKEN_HINT_COOKIE_NAME } from "./id-token-hint-cookie.util.js";
 import { decodePkcePayload, PKCE_COOKIE_NAME } from "./oidc-pkce-cookie.util.js";
 
 export const callbackEndpoint = Effect.fn("AuthLive.callback")(
@@ -36,13 +37,14 @@ export const callbackEndpoint = Effect.fn("AuthLive.callback")(
     }
     const { codeVerifier, state: expectedState } = payload;
 
-    const url = buildCallbackUrl(env.ZITADEL_REDIRECT_URI, httpReq.url);
+    const url = buildCallbackUrl(env.IDENTITY_REDIRECT_URI, httpReq.url);
     const exchange = yield* oidc.exchangeCode(url, expectedState, codeVerifier);
 
     const bus = yield* CommandBus;
     const { sessionId } = yield* bus.execute(SignInCommand, {
       subject: exchange.subject,
       email: exchange.email,
+      emailVerified: exchange.emailVerified,
       ttlSeconds: env.SESSION_TTL_SECONDS,
       absoluteTtlSeconds: env.SESSION_ABSOLUTE_TTL_SECONDS,
     });
@@ -59,6 +61,17 @@ export const callbackEndpoint = Effect.fn("AuthLive.callback")(
             secure: false, // dev; set true behind TLS
             sameSite: "strict",
             maxAge: env.SESSION_TTL_SECONDS * 1000,
+            path: "/",
+          },
+        ],
+        [
+          ID_TOKEN_HINT_COOKIE_NAME,
+          exchange.idToken ?? "",
+          {
+            httpOnly: true,
+            secure: false,
+            sameSite: "lax",
+            maxAge: env.SESSION_ABSOLUTE_TTL_SECONDS * 1000,
             path: "/",
           },
         ],

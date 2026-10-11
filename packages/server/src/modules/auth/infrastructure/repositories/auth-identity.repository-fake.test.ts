@@ -10,7 +10,7 @@ import { AuthIdentitySpecifications } from "@/modules/auth/domain/auth-identity/
 import { makeAuthIdentityRepositoryFake } from "./auth-identity.repository-fake.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
-const subject = "zitadel-sub-1";
+const subject = "identity-sub-1";
 
 describe("AuthIdentityRepositoryFake", () => {
   it.effect("returns the seeded identity for a known subject", () =>
@@ -20,9 +20,11 @@ describe("AuthIdentityRepositoryFake", () => {
       if (found === null) throw new Error("expected an identity");
       deepStrictEqual(found.subject, subject);
       deepStrictEqual(found.userId, userId);
-      deepStrictEqual(found.provider, "zitadel");
+      deepStrictEqual(found.provider, "better-auth");
     }).pipe(
-      Effect.provide(makeAuthIdentityRepositoryFake([{ subject, userId, provider: "zitadel" }])),
+      Effect.provide(
+        makeAuthIdentityRepositoryFake([{ subject, userId, provider: "better-auth" }]),
+      ),
     ),
   );
 

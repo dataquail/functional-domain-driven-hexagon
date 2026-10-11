@@ -48,7 +48,7 @@ const seedUser = Effect.gen(function* () {
 const baseFields = {
   id: sessionId,
   userId,
-  subject: "zitadel-sub",
+  subject: "identity-sub",
   revokedAt: null,
   createdAt: farPast,
   lastUsedAt: farPast,

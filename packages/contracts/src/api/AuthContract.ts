@@ -45,7 +45,7 @@ export class PublicGroup extends HttpApiGroup.make("auth")
     }),
   )
   // GET (idempotent, no body): server reads our session cookie inline, revokes
-  // the row if present, clears the cookie, and 302s to Zitadel's
+  // the row if present, clears the cookie, and 302s to the identity provider's
   // end_session_endpoint so the SSO cookie is also torn down. Public so it
   // works even when our session is already gone (e.g., expired) — logout
   // must always succeed.

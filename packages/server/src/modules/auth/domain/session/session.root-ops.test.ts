@@ -17,14 +17,14 @@ describe("SessionRootOps.create", () => {
     const session = SessionRootOps.create({
       id: sessionId,
       userId,
-      subject: "zitadel-sub-1",
+      subject: "identity-sub-1",
       now,
       ttlSeconds: 3600,
       absoluteTtlSeconds: 43200,
     });
     deepStrictEqual(session.id, sessionId);
     deepStrictEqual(session.userId, userId);
-    deepStrictEqual(session.subject, "zitadel-sub-1");
+    deepStrictEqual(session.subject, "identity-sub-1");
     deepStrictEqual(session.revokedAt, null);
     deepStrictEqual(session.createdAt, now);
     deepStrictEqual(session.lastUsedAt, now);

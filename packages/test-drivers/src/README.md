@@ -10,11 +10,11 @@ at every test tier.
 The driver is tier-agnostic. The **setup** context is not — that's
 the divergence point between integration and acceptance.
 
-| Tier        | Setup context              | What "seed" / "control" means                                                           |
-| ----------- | -------------------------- | --------------------------------------------------------------------------------------- |
-| Presenter   | Layer-substituted services | Pre-seed the `FakeApiClient`; recording fakes for assertions.                           |
-| Integration | MSW handlers + fixtures    | Register per-test handlers via `server.use(...handlers.users.list(...))`. See ADR-0019. |
-| Acceptance  | Real backend, real DB      | Seed via real HTTP endpoints (API arrangement), Stripe test cards, Zitadel test users.  |
+| Tier        | Setup context              | What "seed" / "control" means                                                             |
+| ----------- | -------------------------- | ----------------------------------------------------------------------------------------- |
+| Presenter   | Layer-substituted services | Pre-seed the `FakeApiClient`; recording fakes for assertions.                             |
+| Integration | MSW handlers + fixtures    | Register per-test handlers via `server.use(...handlers.users.list(...))`. See ADR-0019.   |
+| Acceptance  | Real backend, real DB      | Seed via real HTTP endpoints (API arrangement), Stripe test cards, seeded identity users. |
 
 ## Worked example: `createUser`
 

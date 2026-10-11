@@ -10,21 +10,27 @@ import {
 // In-memory `UserProvisioning` for use-case unit tests (auth JIT sign-in) that
 // don't want to stand up the user module's command bus + repository.
 // `provision` mints a deterministic UserId; emails listed in `conflicts` fail
-// the way the Live does when the user module reports an existing email.
+// the way the Live does when the user module reports an existing email, and
+// `findByEmail` answers from `existing`.
 export const makeUserProvisioningFake = (options?: {
   readonly conflicts?: ReadonlySet<string>;
   // Deterministic id assigned to the provisioned user. Defaults to a fixed
   // uuid so single-provision tests can assert against it.
   readonly userId?: UserId;
+  readonly existing?: ReadonlyMap<string, UserId>;
 }) => {
   const conflicts = options?.conflicts ?? new Set<string>();
+  const existing = options?.existing ?? new Map<string, UserId>();
   const assignedId = options?.userId ?? UserId.make("99999999-9999-9999-9999-999999999999");
 
   return Layer.succeed(
     UserProvisioning,
     UserProvisioning.of({
       provision: (email) =>
-        conflicts.has(email) ? new UserProvisioningConflict({ email }) : Effect.succeed(assignedId),
+        conflicts.has(email) || existing.has(email)
+          ? new UserProvisioningConflict({ email })
+          : Effect.succeed(assignedId),
+      findByEmail: (email) => Effect.succeed(existing.get(email) ?? null),
     }),
   );
 };
