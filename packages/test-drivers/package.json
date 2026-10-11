@@ -4,11 +4,12 @@
   "private": true,
   "type": "module",
   "license": "MIT",
-  "description": "Tier-agnostic page driver contracts + per-tier adapters (Playwright for acceptance, React Testing Library for integration). The contract is expressed in business intent (createUser, expectUserInList) so the same spec body runs at multiple tiers.",
+  "description": "Tier-agnostic page driver contracts + per-tier adapters (Playwright for acceptance, React and Svelte Testing Library for integration). The contract is expressed in business intent (createUser, expectUserInList) so the same spec body runs at multiple tiers.",
   "exports": {
     "./contracts/*": "./src/contracts/*.ts",
     "./adapters/playwright/*": "./src/adapters/playwright/*.ts",
-    "./adapters/rtl/*": "./src/adapters/rtl/*.ts"
+    "./adapters/rtl/*": "./src/adapters/rtl/*.ts",
+    "./adapters/svelte-tl/*": "./src/adapters/svelte-tl/*.ts"
   },
   "scripts": {
     "check": "tsc -b tsconfig.json",
@@ -18,7 +19,8 @@
   "peerDependencies": {
     "@playwright/test": "^1.59.1",
     "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.1"
+    "@testing-library/user-event": "^14.6.1",
+    "@testing-library/svelte": "^5.4.2"
   },
   "peerDependenciesMeta": {
     "@playwright/test": {
@@ -29,15 +31,20 @@
     },
     "@testing-library/user-event": {
       "optional": true
+    },
+    "@testing-library/svelte": {
+      "optional": true
     }
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
     "@testing-library/react": "^16.3.2",
+    "@testing-library/svelte": "^5.4.2",
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^25.9.4",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "svelte": "^5.57.2",
     "typescript": "^6.0.3"
   }
 }

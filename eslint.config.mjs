@@ -1,6 +1,6 @@
 // ESLint lints only the markup of Svelte components. oxlint lints their script
-// blocks and every other file; it cannot see a template, so the library's
-// template rules (ADR-0015) live here (ADR-0036).
+// blocks and every other file; it cannot see a template, so the library's and
+// the web app's template rules (ADR-0015) live here (ADR-0036, ADR-0037).
 import tsParser from "@typescript-eslint/parser";
 import svelte from "eslint-plugin-svelte";
 
@@ -51,7 +51,11 @@ export default [
   },
   {
     // A screen composes primitives; it never paints a raw element itself.
-    files: ["packages/components-svelte/patterns/**/*.svelte"],
+    files: [
+      "packages/components-svelte/patterns/**/*.svelte",
+      "packages/web-svelte/features/**/*.view.svelte",
+      "packages/web-svelte/src/routes/**/*.svelte",
+    ],
     ignores: ["**/*.stories.svelte"],
     rules: {
       "svelte/no-restricted-html-elements": ["error", ...FORBIDDEN_ELEMENTS],
