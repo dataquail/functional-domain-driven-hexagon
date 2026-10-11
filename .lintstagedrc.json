@@ -1,4 +1,4 @@
 {
   "*.{md,mdx,json,css,scss,yaml,yml,js,cjs,mjs}": ["prettier --write"],
-  "*.{ts,tsx}": ["oxlint --fix --no-error-on-unmatched-pattern", "prettier --write"]
+  "*.{ts,tsx,svelte}": ["oxlint --fix --no-error-on-unmatched-pattern", "prettier --write"]
 }

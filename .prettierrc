@@ -1,5 +1,5 @@
 {
-  "plugins": ["prettier-plugin-tailwindcss"],
+  "plugins": ["prettier-plugin-svelte", "prettier-plugin-tailwindcss"],
   "endOfLine": "auto",
   "semi": true,
   "singleQuote": false,

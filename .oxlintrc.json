@@ -583,6 +583,14 @@
       "rules": {
         "effecttsgo/node-builtin-import": "off"
       }
+    },
+    {
+      // codegen parses the whole file as JavaScript and refuses a Svelte
+      // component; oxlint itself lints only its script blocks.
+      "files": ["**/*.svelte"],
+      "rules": {
+        "codegen/codegen": "off"
+      }
     }
   ]
 }

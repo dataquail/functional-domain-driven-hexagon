@@ -242,9 +242,11 @@ graph:
         - "**/*.spec.ts"
         - "**/*.setup.ts"
         - "**/*.stories.tsx"
+        - "**/*.stories.svelte"
         - "**/vitest.config.ts"
         - "**/global-setup.ts"
         - "~/web/test/setup.ts"
+        - "~/components-svelte/test/setup.ts"
         - "~/acceptance/playwright.config.ts"
         # Process entrypoints and package bins; workerd loads the server Worker by path.
         - "@/platform/worker/main.ts"
@@ -260,6 +262,8 @@ graph:
         - "~/web/instrumentation.ts"
         - "~/web/next.config.ts"
         - "~/components/.storybook/**"
+        - "~/components-svelte/.storybook/**"
+        - "~/components-svelte/vite.config.ts"
   reach:
     - name: domain-reaches-no-adapter
       message: >-
@@ -358,6 +362,8 @@ tree:
   "~/jobs/": { include: packages/jobs/architecture.yaml }
   "~/infra/": { include: packages/infra/architecture.yaml }
   "~/identity/": { include: packages/identity/architecture.yaml }
+  # Before ~/components/: goodbones core beta.16 lets the first root claim any path sharing its prefix.
+  "~/components-svelte/": { include: packages/components-svelte/architecture.yaml }
   "~/components/": { include: packages/components/architecture.yaml }
   "~/web/": { include: packages/web/architecture.yaml }
   "~/server/src/": { include: packages/server/architecture.yaml }

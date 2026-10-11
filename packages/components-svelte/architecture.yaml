@@ -1,0 +1,102 @@
+# yaml-language-server: $schema=https://dataquail.github.io/goodbones/schema/architecture-node.schema.json
+#
+# @org/components-svelte — the component library in Svelte 5, growing beside
+# @org/components until the Phase 7 cutover. Same direction: features → patterns →
+# primitives → third-party (ADR-0015). Only primitives touch a UI library.
+#
+# One node of the architecture policy: the root architecture.yaml includes this
+# file at "~/components-svelte/". A `.svelte` file is read through its script
+# blocks, by oxlint and by the CLI alike.
+
+defs:
+  # A Storybook story in Svelte CSF: the component's living spec and visual test.
+  svelte-story-file:
+    imports:
+      message: >-
+        A story names the component it documents, the component library around it and the
+        Storybook runtime. Nothing from web, nothing from the server.
+      external: ["@storybook/addon-svelte-csf"]
+
+  svelte-component-test-file:
+    surface: [{ use: test-exports-nothing }]
+    imports:
+      message: >-
+        A component test renders the component through the testing library and asserts on the
+        DOM. It reaches the component library and nothing from web or the server.
+      external: [vitest, "@testing-library/svelte"]
+
+  # A configuration file is loaded by its tool through the default export.
+  config-file:
+    surface:
+      - message: >-
+          A configuration file exports its default and nothing else: the tool that loads it reads
+          nothing named.
+        kinds: [named]
+
+  # Every component owes its story; a story is not a component.
+  svelte-story-parity:
+    message: >-
+      Every primitive/pattern component needs a sibling *.stories.svelte — the story is the
+      component's living spec and visual test (ADR-0015).
+    requires: ["{base}.stories.svelte"]
+    requiresNot: ["*.stories.svelte"]
+
+name: kebab-case
+message: >-
+  @org/components-svelte holds two trees: primitives/ (atoms) and patterns/ (molecules and
+  organisms), plus the providers/, the test harness and the Storybook config. A new folder here
+  is a new tier — declare it deliberately.
+# Storybook loads a story's meta, its configuration and Vite's by default export.
+surface:
+  - use: no-default-exports
+    except:
+      - "**/vitest.config.ts"
+      - "~/components-svelte/vite.config.ts"
+      - "~/components-svelte/.storybook/**"
+imports:
+  message: >-
+    @org/components-svelte is a leaf workspace package: components are consumed by the web app,
+    never the reverse. It may not import a web package or anything under packages/web/.
+  allow: ["~/components-svelte/**"]
+children:
+  "vite.config.ts | vitest.config.ts":
+    use: config-file
+    imports:
+      message: >-
+        A build-configuration file names the tool it configures and nothing else — no web, no
+        server.
+      external: [vite, vitest, "@sveltejs/vite-plugin-svelte", "@testing-library/svelte"]
+
+  # The only tier allowed to name a third-party visual library, so the
+  # prop surface of those libraries stops here.
+  "primitives/":
+    layout: open
+    message: >-
+      primitives/ wraps the third-party visual libraries so their prop surface is encapsulated.
+      Every primitive is explicit props and closed unions mapped through literal class tables —
+      no class, no style, no rest-prop spread.
+    children:
+      "*.svelte": { use: svelte-story-parity }
+      "*.stories.svelte": { use: svelte-story-file }
+      "*.test.ts": { use: svelte-component-test-file }
+
+  "test/":
+    layout: open
+    message: test/ holds the harness every component test loads before it runs.
+    imports:
+      message: >-
+        The test harness installs the DOM matchers and names nothing else.
+      external: [vitest, "@testing-library/jest-dom"]
+    children:
+      "setup.ts": {}
+
+  ".storybook/":
+    layout: open
+    imports:
+      message: >-
+        The Storybook configuration names Storybook and the component tree it renders. Nothing
+        else.
+      external: ["@storybook/svelte-vite", "@storybook/addon-themes"]
+      allow: ["node:**"]
+    children:
+      "main.ts | preview.ts": { use: config-file }

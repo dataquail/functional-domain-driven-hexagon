@@ -189,6 +189,21 @@ const PROBES = [
     source: "export const Probe = () => null;\n",
   },
   {
+    // oxlint hands a Svelte component's script blocks to the plugin; these two
+    // prove both families reach a `.svelte` file: a component without its story,
+    // and one that imports the web app.
+    rule: "architecture/structure",
+    message: "needs a sibling *.stories.svelte",
+    file: "packages/components-svelte/primitives/zzprobe-parity.svelte",
+    source: '<script lang="ts">\n  const probe = 1;\n</script>\n\n<span>{probe}</span>\n',
+  },
+  {
+    rule: "architecture/imports",
+    file: "packages/components-svelte/primitives/zzprobe-web.svelte",
+    source:
+      '<script lang="ts">\n  import { probe } from "../../web/test/setup";\n</script>\n\n<span>{probe}</span>\n',
+  },
+  {
     // The parity half of the taxonomy (21 enforceExistence rules) was entirely
     // unprobed — only layout was. These three cover its distinct mechanisms:
     // the cross-folder port trio, a same-folder {node-name}.test.ts, and the
