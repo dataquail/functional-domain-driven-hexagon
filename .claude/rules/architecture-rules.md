@@ -11,21 +11,24 @@ plus the rules only a whole-repository walk can answer, which
 | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `architecture.yaml`                             | the repo-wide policy: resolve, aliases, `deny`/`exports`, `graph`, `limits`, `campaigns`, the shared `defs`, and the tree's index |
 | `packages/<package>/architecture.yaml`          | that package's node of the tree, beside its own code, with the `defs` only it uses                                                |
-| `@goodbones/{core,typescript,cli,oxlint}` (npm) | the engine: lowering, matching, the graph, the anti-vacuity guard; the TS pack; the two hosts                                     |
+| `@goodbones/{core,typescript,cli,oxlint}` (npm) | the engine: lowering, matching, the graph, the anti-vacuity guard; the TS pack (with `.svelte`); the two hosts                    |
 | `scripts/lint-rule-probes.mjs`                  | `pnpm lint:rules` — each rule id still fires on a planted violation                                                               |
 | `scripts/architecture-edges.mjs`                | `pnpm lint:edges` — the policy still refuses and allows the edges and shapes it should                                            |
 | `.architecture-campaigns/<id>.json`             | a campaign's ledger: every place its pattern still occurs, and every time the count was allowed to rise                           |
 | `scripts/lint-rules/`                           | the seven hand-rolled `local/*` AST rules that are not boundary rules                                                             |
 
 **The engine is an installed dependency, not source here.** It ships from
-`dataquail/goodbones` as four packages, each pinned to the same exact beta in the
-root `package.json`: `@goodbones/core` (the manifest schema, the evaluators, the
-`Manifest` type the config is annotated with, and the fakes under
+`dataquail/goodbones` as independently versioned packages, each pinned to an exact
+beta in the root `package.json`: `@goodbones/core` (the manifest schema, the
+evaluators, the `Manifest` type the config is annotated with, and the fakes under
 `@goodbones/core/testing`), `@goodbones/typescript` (the language pack:
-parser-backed facts and `unrs-resolver` resolution), `@goodbones/oxlint` (the
-plugin) and `@goodbones/cli` (the `architecture` bin); both hosts depend on
-`@goodbones/ast-grep`, the syntax matcher a campaign's `syntax` term and `report`
-anchors read through, which this repo never names. Its reference
+parser-backed facts and `unrs-resolver` resolution, and the script blocks of a
+`.svelte` component), `@goodbones/oxlint` (the plugin) and `@goodbones/cli` (the
+`architecture` bin). Each host pins the core and the pack exactly, so a pack
+release reaches a host only through that host's own release. Both hosts take
+`@goodbones/campaigns` (the campaigns family) and `@goodbones/ast-grep` (the
+syntax matcher a campaign's `syntax` term and `report` anchors read through) as
+optional peers, so the root installs both, which this repo otherwise never names. Its reference
 documentation lives with it at <https://dataquail.github.io/goodbones>. This
 repo owns the **policy** — the manifest, the probes, the edge table — and nothing
 below describes the library. Changing how a rule family behaves means a release
