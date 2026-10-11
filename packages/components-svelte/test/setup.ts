@@ -1,6 +1,6 @@
 import type { TestingLibraryMatchers } from "@testing-library/jest-dom/matchers";
 import * as matchers from "@testing-library/jest-dom/matchers";
-import { expect } from "vitest";
+import { expect, vi } from "vitest";
 
 // jest-dom's own vitest typings augment a one-parameter `Assertion`; vitest 5's takes two.
 declare module "vitest" {
@@ -13,3 +13,23 @@ declare module "vitest" {
 }
 
 expect.extend(matchers);
+
+// jsdom has no media queries; the toaster and the theme ask for one.
+Object.defineProperty(window, "matchMedia", {
+  writable: true,
+  value: vi.fn((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
+// Nor pointer capture or scrolling, which the select's pointer handling calls.
+Element.prototype.hasPointerCapture = () => false;
+Element.prototype.releasePointerCapture = () => {};
+Element.prototype.scrollIntoView = () => {};

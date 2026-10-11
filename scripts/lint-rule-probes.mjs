@@ -274,6 +274,14 @@ const PROBES = [
     source: 'import { env } from "cloudflare:workers";\n\nexport const probe = env;\n',
   },
   {
+    rule: "architecture/imports",
+    message:
+      "Only the Svelte component library's primitives/ may name a third-party visual library.",
+    file: "packages/components-svelte/providers/zzprobe-bits.svelte",
+    source:
+      '<script lang="ts">\n  import { Label } from "bits-ui";\n</script>\n\n<Label.Root>probe</Label.Root>\n',
+  },
+  {
     // Circularity is the one dependency-cruiser rule with no per-file
     // equivalent; oxlint's own rule replaced it, so it needs the same proof.
     rule: "import/no-cycle",

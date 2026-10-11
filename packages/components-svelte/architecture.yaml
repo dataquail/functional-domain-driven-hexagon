@@ -57,6 +57,7 @@ imports:
   message: >-
     @org/components-svelte is a leaf workspace package: components are consumed by the web app,
     never the reverse. It may not import a web package or anything under packages/web/.
+  external: [effect, svelte]
   allow: ["~/components-svelte/**"]
 children:
   "vite.config.ts | vitest.config.ts":
@@ -70,28 +71,53 @@ children:
   # The only tier allowed to name a third-party visual library, so the
   # prop surface of those libraries stops here.
   "primitives/":
-    layout: open
     message: >-
       primitives/ wraps the third-party visual libraries so their prop surface is encapsulated.
       Every primitive is explicit props and closed unions mapped through literal class tables —
-      no class, no style, no rest-prop spread.
+      no class, no style, no rest-prop spread. A compound primitive is a folder named for it.
+    imports:
+      external: [bits-ui, "@lucide/svelte", svelte-sonner]
     children:
       "*.svelte": { use: svelte-story-parity }
       "*.stories.svelte": { use: svelte-story-file }
+      # The interactive primitives are driven by a user, not by events fired at them.
+      "*.test.ts":
+        use: svelte-component-test-file
+        imports:
+          message: >-
+            A component test renders the component through the testing library, drives it as a
+            user would and asserts on the DOM. It reaches the component library and nothing from
+            web or the server.
+          external: [vitest, "@testing-library/svelte", "@testing-library/user-event"]
+      # A compound primitive: a folder holding the root component, its parts and
+      # the barrel that hangs the parts on the root (`Card.Header`). The root owes
+      # the story; a part is shown in it.
+      "*/":
+        children:
+          "*.svelte":
+            { use: svelte-story-parity, requiresNot: ["*.stories.svelte", "*.part.svelte"] }
+          "*.part.svelte": {}
+          "*.stories.svelte": { use: svelte-story-file }
+          "*.test.ts": { use: svelte-component-test-file }
+          "*.ts": {}
+
+  # The theme the toaster and the app read, over Svelte context.
+  "providers/":
+    message: providers/ holds the context the component tree reads — the theme.
+    children:
+      "*.svelte | *.svelte.ts": {}
       "*.test.ts": { use: svelte-component-test-file }
 
   "test/":
-    layout: open
     message: test/ holds the harness every component test loads before it runs.
     imports:
       message: >-
         The test harness installs the DOM matchers and names nothing else.
       external: [vitest, "@testing-library/jest-dom"]
     children:
-      "setup.ts": {}
+      "setup.ts | snippets.ts": {}
 
   ".storybook/":
-    layout: open
     imports:
       message: >-
         The Storybook configuration names Storybook and the component tree it renders. Nothing

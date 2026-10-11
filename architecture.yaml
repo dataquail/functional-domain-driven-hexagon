@@ -115,6 +115,15 @@ deny:
       Better Auth is the identity provider's implementation and stays in @org/identity. The server
       is an OIDC relying party: it knows the issuer by its discovery document and a client id, so
       swapping the provider changes a URL, not the code that signs users in.
+  - match:
+      - "**/node_modules/bits-ui/**"
+      - "**/node_modules/@lucide/svelte/**"
+      - "**/node_modules/svelte-sonner/**"
+    except: ["~/components-svelte/primitives/**"]
+    message: >-
+      Only the Svelte component library's primitives/ may name a third-party visual library. A
+      pattern or a screen composes primitives, so the library's prop surface stops at one tier and
+      can be swapped there (ADR-0015).
   # `cloudflare:workers` has no file on disk; tsconfig.resolve.json maps it to
   # this declaration, so the rule fences the runtime module and the binding
   # types together.

@@ -100,6 +100,12 @@ export default defineConfig({
               functions: 44,
               lines: 53,
             },
+            "packages/components-svelte/**": {
+              statements: 97,
+              branches: 91,
+              functions: 95,
+              lines: 97,
+            },
             "packages/contracts/src/**": { statements: 95, lines: 95 },
             "packages/jobs/src/**": { statements: 80, lines: 80 },
           }
