@@ -6,10 +6,18 @@ import { webSvelteAliases } from "./aliases.ts";
 
 // Kit's own plugin resolves the project from process.cwd(), which is the repo
 // root in a workspace run, so tests compile components with the plain Svelte
-// plugin and stub the few `$app/*` modules a view reaches.
+// plugin, and `$app/*` resolves to stubs under test/kit/ that a test mocks.
 export default defineConfig({
   plugins: [svelte({ configFile: false }), svelteTesting()],
-  resolve: { alias: webSvelteAliases },
+  resolve: {
+    alias: [
+      ...webSvelteAliases,
+      {
+        find: /^\$app\/(.*)$/,
+        replacement: `${decodeURIComponent(new URL("./test/kit/", import.meta.url).pathname)}$1.ts`,
+      },
+    ],
+  },
   test: {
     environment: "jsdom",
     setupFiles: ["./test/setup.ts"],

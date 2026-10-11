@@ -162,8 +162,8 @@ imports:
     packages/web-svelte consumes the Svelte component library and the shared contracts. It
     reaches a third-party visual library only through @org/components-svelte (ADR-0015), and its
     state is Effect Atom (ADR-0026).
-  external: [svelte]
-  allow: ["~/components-svelte/**"]
+  external: [svelte, "@sveltejs/kit"]
+  allow: ["~/web-svelte/**", "~/components-svelte/**", "~/contracts/**"]
 children:
   "features/":
     message: >-
@@ -227,7 +227,6 @@ children:
         - vitest
         - "@sveltejs/kit"
         - "@sveltejs/vite-plugin-svelte"
-        - "@tailwindcss/vite"
         - "@testing-library/svelte"
       allow: ["~/web-svelte/aliases.ts"]
   # The alias table Vite and Vitest share.
@@ -248,6 +247,7 @@ children:
       is framework surface: it composes the Model directly, so the View restrictions do not apply
       here.
     children:
+      "hooks.server.test.ts": { use: web-svelte-unit-test-file }
       "**/": { layout: open, children: {} }
 
   "services/":
@@ -260,10 +260,13 @@ children:
       message: >-
         The Model is the innermost tier (ADR-0026). A services/ file importing from features/
         inverts the arrow and couples the API surface to a screen.
-      external: [effect, svelte]
+      external: [effect, svelte, "@sveltejs/kit"]
       allow: ["~/web-svelte/services/**", "~/components-svelte/primitives/**", "~/contracts/**"]
     children:
       "api-client.shared.ts": {}
+      # The server tier: the per-request runtime and the client it carries, which
+      # run Effects on behalf of a load function.
+      "api-client.server.ts | runtime.server.ts": {}
       "atom/":
         message: >-
           atom/ is the framework-free kernel: the API atoms and their transport, the reactivity
@@ -271,13 +274,19 @@ children:
         children:
           "*.shared.ts | reactivity-keys.ts | form-validation.ts":
             members: [{ use: runs-no-effect }]
-          # The bridges turn seam state into a toast or a router call.
-          "*-bridge.svelte": {}
-          "*.test.ts": { use: web-svelte-unit-test-file }
+          "*-bridge.test.ts": { use: web-svelte-component-test-file }
+          # The provider owns the browser's registry; the bridges turn seam state
+          # into a toast or a router call.
+          "atom-provider.svelte | *-bridge.svelte": {}
+          "tracing.client.ts": {}
+          # A prefetch runs a query's Effect on the request's runtime.
+          "*.server.ts": {}
+          "*.shared.test.ts | form-validation.test.ts": { use: web-svelte-unit-test-file }
       "data-access/":
         message: data-access/ binds each feature's slice of the API to query and mutation atoms.
         children:
           "*.atoms.ts": { members: [{ use: runs-no-effect }] }
+          "*.server.ts": {}
       "format/":
         message: format/ holds the presentation helpers a ViewModel formats values with.
         children:
@@ -347,7 +356,14 @@ children:
       "handlers/":
         children:
           "*.ts": {}
-      "bridge/":
-        message: test/bridge/ holds the probe components the bridge's own tests render.
+      "bridge/ | navigation/":
+        message: >-
+          test/bridge/ and test/navigation/ hold the probe components the bridge's and the
+          navigation bridge's own tests render.
         children:
           "*-probe.svelte": {}
+      # `$app/*` outside a Kit render: Vitest resolves the specifier here, and a
+      # test mocks what it needs.
+      "kit/":
+        children:
+          "server.ts | navigation.ts | state.ts | env.ts": {}

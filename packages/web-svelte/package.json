@@ -19,7 +19,7 @@
     "@org/test-drivers": "workspace:^",
     "@sveltejs/kit": "3.0.1",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
-    "@tailwindcss/vite": "4.2.4",
+    "@tailwindcss/postcss": "4.2.4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/svelte": "^5.4.2",
     "@testing-library/user-event": "^14.6.1",

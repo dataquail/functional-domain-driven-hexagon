@@ -260,6 +260,8 @@ graph:
         - "~/web/test/setup.ts"
         - "~/components-svelte/test/setup.ts"
         - "~/web-svelte/test/setup.ts"
+        # Vitest resolves `$app/*` to these stubs by alias; the graph resolves it to Kit.
+        - "~/web-svelte/test/kit/**"
         - "~/acceptance/playwright.config.ts"
         # Process entrypoints and package bins; workerd loads the server Worker by path.
         - "@/platform/worker/main.ts"
@@ -280,6 +282,8 @@ graph:
         - "~/web-svelte/vite.config.ts"
         - "~/web-svelte/src/routes/**"
         - "~/web-svelte/src/app.d.ts"
+        - "~/web-svelte/src/hooks.server.ts"
+        - "~/web-svelte/src/hooks.client.ts"
   reach:
     - name: domain-reaches-no-adapter
       message: >-
