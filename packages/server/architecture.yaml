@@ -446,13 +446,14 @@ children:
           "runtime/":
             message: >-
               globals/infrastructure/runtime/ holds the seams a host runtime fills: where detached
-              work goes, and how the identity issuer is reached.
+              work goes, how the identity issuer is reached, and the email binding.
             imports:
               reset: true
               message: "A runtime seam names effect and nothing else."
               external: [effect]
               allow: []
             children:
+              "email-binding.ts": {}
               "execution-context.ts": {}
               "issuer-transport.ts": {}
               "*.test.ts": { use: server-unit-test-file }
@@ -480,11 +481,16 @@ children:
                   reset: true
                   message: >-
                     A mail transport names its port, its sibling transports, the environment and
-                    its own SDK. Adding a transport means adding its SDK to this list, in the open.
-                  external: [effect, "@aws-sdk/client-sesv2", nodemailer]
-                  allow: ["@/globals/infrastructure/email/**", "@/globals/infrastructure/config/**"]
+                    the runtime's email binding. Each speaks HTTP or a binding, so none needs an
+                    SDK; adding one means adding it to this list, in the open.
+                  external: [effect]
+                  allow:
+                    - "@/globals/infrastructure/email/**"
+                    - "@/globals/infrastructure/config/**"
+                    - "@/globals/infrastructure/runtime/email-binding.ts"
                 children:
                   "*-live.ts": {}
+                  "*.test.ts": { use: server-unit-test-file }
 
           "framework/":
             message: >-

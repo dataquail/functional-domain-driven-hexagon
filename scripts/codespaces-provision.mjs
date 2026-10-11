@@ -78,7 +78,7 @@ function pinEnvToCodespace(codespaceName) {
     DATABASE_URL_TEST: postgres("effect-monorepo-test"),
     IDENTITY_DATABASE_URL: postgres(IDENTITY_DATABASE),
     OTLP_URL: "http://jaeger:4318/v1/traces",
-    MAIL_SMTP_HOST: "mailpit",
+    MAILPIT_URL: "http://mailpit:8025",
 
     APP_URL: webOrigin,
     SERVER_INTERNAL_URL: "http://localhost:3001",

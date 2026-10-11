@@ -9,10 +9,10 @@ import { type MailDeliveryError } from "./mail-errors.js";
 // lives one layer out, in the module-owned adapters that build a
 // message and call `send`.
 //
-// Adapters (swapped by the `MAILER` env var at the composition root):
-//   - `LogMailerLive`  — dev/test default; structured log line, no send.
-//   - `SmtpMailerLive` — nodemailer → Mailpit (local) or any SMTP relay.
-//   - `SesMailerLive`  — AWS SES (prod).
+// Adapters (swapped by the `MAILER` env var):
+//   - `LogMailerLive`             — dev/test default; structured log line, no send.
+//   - `MailpitMailerLive`         — Mailpit's HTTP send API (local).
+//   - `CloudflareEmailMailerLive` — the Worker's `send_email` binding (deployed).
 export type MailMessage = {
   // RFC-5322 address or "Display Name <addr>". A single recipient is all
   // the current flows need; widen to an array when a fan-out appears.
@@ -22,8 +22,6 @@ export type MailMessage = {
   // Plaintext alternative. Always populated (React Email renders one) so
   // spam filters and text-only clients have a body.
   readonly text: string;
-  // Overrides the backend's default From (env `MAIL_FROM`) when set.
-  readonly from?: string;
 };
 
 export type MailerShape = {

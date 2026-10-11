@@ -1,7 +1,7 @@
 import * as Schema from "effect/Schema";
 
 // A transport-level failure to hand a message off to the mail backend
-// (SMTP connection refused, SES API error, etc.). Modeled as a tagged
+// (Mailpit unreachable, the email binding refusing, etc.). Modeled as a tagged
 // error (ADR-0004) so adapters surface a uniform failure regardless of
 // backend, and consumers decide policy: the invite flow, for instance,
 // logs-and-swallows because the invitation row is already committed and
