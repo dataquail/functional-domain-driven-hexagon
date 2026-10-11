@@ -96,7 +96,10 @@ export const BillingGatewayLive = Layer.effect(
     // flag, plumb `apiVersion` through env.
     const stripe = new Stripe(Redacted.value(env.STRIPE_SECRET_KEY), {
       typescript: true,
+      httpClient: Stripe.createFetchHttpClient(),
     });
+    // workerd has no synchronous HMAC, so verification goes through SubtleCrypto.
+    const cryptoProvider = Stripe.createSubtleCryptoProvider();
     const webhookSecret = Redacted.value(env.STRIPE_WEBHOOK_SECRET);
     const priceId = env.STRIPE_PRICE_ID_DEFAULT;
 
@@ -152,16 +155,16 @@ export const BillingGatewayLive = Layer.effect(
     const verifyAndParseWebhook = (
       input: VerifyWebhookInput,
     ): Effect.Effect<StripeWebhookEvent, InvalidWebhookSignature> =>
-      Effect.try({
-        try: () => {
-          // constructEvent requires the EXACT raw payload bytes the
-          // signature was computed over. The endpoint reads
-          // HttpServerRequest.text — no JSON re-serialization between
-          // the wire and here.
-          const event = stripe.webhooks.constructEvent(
+      Effect.tryPromise({
+        try: async () => {
+          // The signature covers the exact raw payload bytes, so the endpoint
+          // passes HttpServerRequest.text through untouched.
+          const event = await stripe.webhooks.constructEventAsync(
             input.payload,
             input.signature,
             webhookSecret,
+            undefined,
+            cryptoProvider,
           );
           return toDomainStripeEvent(event);
         },

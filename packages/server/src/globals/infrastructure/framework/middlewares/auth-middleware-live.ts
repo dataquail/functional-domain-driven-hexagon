@@ -8,6 +8,7 @@ import * as Layer from "effect/Layer";
 
 import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.js";
 import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
+import { waitUntil } from "@/globals/infrastructure/runtime/execution-context.js";
 import {
   CredentialHash,
   FindApiTokenByHashQuery,
@@ -73,16 +74,14 @@ export const UserAuthMiddlewareLive = Layer.effect(
               ApiTokenRevoked: rejectCredential,
             }),
           );
-        // Last-used stamp, forked off the request fiber (`forkDetach`) so its
-        // lookup + throttle never sit on the auth critical path. Detached from
-        // the request scope so it outlives the response; throttled +
-        // error-swallowing in the handler. Same rationale as the session touch.
-        yield* commandBus
-          .execute(TouchApiTokenCommand, {
+        // Off the auth critical path and outliving the response; the handler
+        // throttles and swallows its own failures.
+        yield* waitUntil(
+          commandBus.execute(TouchApiTokenCommand, {
             apiTokenId: apiToken.id,
             thresholdSeconds: env.API_TOKEN_TOUCH_THRESHOLD_SECONDS,
-          })
-          .pipe(Effect.forkDetach);
+          }),
+        );
         // No browser session for a bearer caller; the token id stands in as
         // the opaque principal id on `CurrentUser` (Policy.ts unchanged).
         return { sessionId: apiToken.id, userId: apiToken.userId };
@@ -102,18 +101,15 @@ export const UserAuthMiddlewareLive = Layer.effect(
           SessionRevoked: rejectCredential,
         }),
       );
-      // Sliding-TTL refresh, forked off the request fiber (`forkDetach`) so it
-      // stays off the auth critical path and outlives the response. The
-      // command's own throttle decides whether to write; failures are
-      // benign races (revoked / removed mid-flight) and are swallowed by
-      // the handler so they never bubble up as a 401.
-      yield* commandBus
-        .execute(TouchSessionCommand, {
+      // Sliding-TTL refresh, off the auth critical path; the command's own
+      // throttle decides whether to write and swallows benign races.
+      yield* waitUntil(
+        commandBus.execute(TouchSessionCommand, {
           sessionId,
           ttlSeconds: env.SESSION_TTL_SECONDS,
           thresholdSeconds: env.SESSION_TOUCH_THRESHOLD_SECONDS,
-        })
-        .pipe(Effect.forkDetach);
+        }),
+      );
       return {
         sessionId: session.id,
         userId: session.userId,

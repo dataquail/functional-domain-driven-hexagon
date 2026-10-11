@@ -18,9 +18,7 @@ const make = Effect.gen(function* () {
     DATABASE_URL: yield* Config.Redacted("DATABASE_URL"),
 
     // Observability
-    OTLP_URL: yield* Config.URL("OTLP_URL").pipe(
-      Config.withDefault("http://jaeger:4318/v1/traces"),
-    ),
+    OTLP_URL: yield* Config.option(Config.URL("OTLP_URL")),
 
     // Identity provider (the identity Worker, an OIDC issuer) / Auth
     IDENTITY_ISSUER: yield* Config.URL("IDENTITY_ISSUER").pipe(

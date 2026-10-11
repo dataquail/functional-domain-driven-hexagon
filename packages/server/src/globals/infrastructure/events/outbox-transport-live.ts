@@ -38,17 +38,19 @@ export const OutboxTransportLive: Layer.Layer<
         WHERE event_id = ${envelope.eventId} AND handler = ${envelope.handler}
       `.pipe(Database.exec, Effect.orDie);
 
-    const relay = (envelope: Event.Envelope) =>
-      queue.send(envelope).pipe(
-        Effect.matchEffect({
-          onSuccess: () => recordAttempt(envelope, true),
-          onFailure: () => recordAttempt(envelope, false),
-        }),
-      );
+    const relay = (envelopes: ReadonlyArray<Event.Envelope>) =>
+      Effect.gen(function* () {
+        const undelivered = new Set(yield* queue.send(envelopes));
+        yield* Effect.forEach(
+          envelopes,
+          (envelope) => recordAttempt(envelope, !undelivered.has(envelope)),
+          { discard: true },
+        );
+      });
 
     return AfterCommitTransport.of({
       enqueue,
-      flush: (envelopes) => Effect.forEach(envelopes, relay, { discard: true }),
+      flush: relay,
     });
   }),
 );

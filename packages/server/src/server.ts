@@ -7,13 +7,10 @@ import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
 import * as dotenv from "dotenv";
 import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
-import * as FetchHttpClient from "effect/http/FetchHttpClient";
 import * as HttpMiddleware from "effect/http/HttpMiddleware";
 import * as HttpRouter from "effect/http/HttpRouter";
 import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 import * as Layer from "effect/Layer";
-import * as OtlpSerialization from "effect/observability/OtlpSerialization";
-import * as OtlpTracer from "effect/observability/OtlpTracer";
 import * as Schedule from "effect/Schedule";
 import { isSqlError } from "effect/sql/SqlError";
 
@@ -34,6 +31,7 @@ import { DatabaseLive } from "./globals/infrastructure/database/database-live.js
 import { OutboxSweeperLive } from "./globals/infrastructure/events/outbox-sweeper-live.js";
 import { UserAuthMiddlewareLive } from "./globals/infrastructure/framework/middlewares/auth-middleware-live.js";
 import { applicationModules } from "./globals/infrastructure/framework/modules/application-modules.js";
+import { TracerLive } from "./globals/infrastructure/observability/tracer-live.js";
 import { BillingGatewayLive } from "./modules/billing/billing.platform.js";
 
 dotenv.config({
@@ -60,25 +58,6 @@ const ApiLive = HttpApiBuilder.layer(Api).pipe(
   // below (post-serve).
   Layer.provide(UserAuthMiddlewareLive),
 );
-
-// v4 modernization (Phase 6): the `@effect/opentelemetry/NodeSdk` layer is
-// replaced by the first-party OTLP tracer from `effect/observability`.
-// `OtlpTracer.layer` provides a `Tracer.Tracer` that batches ended spans and
-// POSTs them (JSON-serialized) to the OTLP `/v1/traces` endpoint — `OTLP_URL`
-// already points there. Its two requirements close locally: JSON serialization
-// (`OtlpSerialization.layerJson`) and an `HttpClient` (`FetchHttpClient.layer`,
-// the platform-agnostic fetch client). This drops the `@effect/opentelemetry`
-// and `@opentelemetry/*` dependency set from the server.
-const TracerLive = Layer.unwrap(
-  Effect.map(EnvVars, (env) =>
-    OtlpTracer.layer({
-      url: env.OTLP_URL.toString(),
-      resource: {
-        serviceName: "effect-monorepo-server",
-      },
-    }),
-  ),
-).pipe(Layer.provide([OtlpSerialization.layerJson, FetchHttpClient.layer]));
 
 // CORS is a no-op in normal traffic post-ADR-0018: the Next renderer
 // is the only browser-facing surface and Next's `/api/*` rewrite calls
