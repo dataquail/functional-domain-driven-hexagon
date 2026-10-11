@@ -34,8 +34,6 @@
     "coverage:merge": "vitest run --merge-reports=.vitest-reports --coverage",
     "coverage": "pnpm test:coverage:unit && pnpm test:coverage:integration && pnpm coverage:merge",
     "dev": "pnpm --parallel --filter @org/web --filter @org/infra run dev",
-    "dev:cf": "pnpm -F @org/infra run dev",
-    "dev:cf:check": "node scripts/check-cf-dev.mjs",
     "deploy:cf": "pnpm -F @org/infra exec alchemy deploy",
     "destroy:cf": "pnpm -F @org/infra exec alchemy destroy",
     "db:migrate": "pnpm db:migrate:app && pnpm db:migrate:identity",

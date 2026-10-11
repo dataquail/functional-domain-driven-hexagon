@@ -1,6 +1,7 @@
 # ADR-0007: Unit of work, nested savepoints, and two-bus domain events
 
 - Status: Accepted
+- Amended: 2026-10-11 by ADR-0035 — after-commit envelopes cross a Cloudflare Queue; the sweeper is a cron.
 - Date: 2026-04-24
 
 ## Context and Problem Statement

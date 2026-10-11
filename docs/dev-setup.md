@@ -7,7 +7,7 @@ Bringing this monorepo up from a fresh clone has a few moving parts: a Postgres 
 ```sh
 pnpm install
 pnpm bootstrap
-pnpm dev      # server :3001, web :3000, identity Worker :3002
+pnpm dev      # alchemy dev (server Worker :3001, identity Worker :3002) + Next :3000
 ```
 
 `pnpm bootstrap` is idempotent — re-running it never overwrites a value that's already populated in `.env`, so it's safe to use as a "did I miss anything?" command too.
@@ -47,7 +47,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 docker compose up -d --wait postgres mailpit jaeger
 ```
 
-Postgres 16 hosts the app DB (`effect-monorepo`) and, from [infra/postgres/init/](../infra/postgres/init), the test DB. Mailpit is the local mail sink (UI on :8025): the server sends over SMTP, the identity Worker through its HTTP send API. Jaeger collects traces (UI on :16686).
+Postgres 16 hosts the app DB (`effect-monorepo`) and, from [infra/postgres/init/](../infra/postgres/init), the test DB. Mailpit is the local mail sink (UI on :8025): the server and the identity Worker both send through its HTTP API. Jaeger collects traces (UI on :16686).
 
 ### 4. Ensure the identity database
 
@@ -55,7 +55,7 @@ Postgres 16 hosts the app DB (`effect-monorepo`) and, from [infra/postgres/init/
 docker compose exec -T postgres psql -U postgres -c 'CREATE DATABASE "effect-monorepo-identity"'
 ```
 
-Creates the identity Worker's database on the same Postgres when it is missing, and writes `IDENTITY_DATABASE_URL` into `.env` if it is not there yet. Under `pnpm dev:cf` the identity Hyperdrive passes straight through to it.
+Creates the identity Worker's database on the same Postgres when it is missing, and writes `IDENTITY_DATABASE_URL` into `.env` if it is not there yet. Under `alchemy dev` the identity Hyperdrive passes straight through to it.
 
 ### 5. Migrate the databases
 
@@ -69,11 +69,11 @@ pnpm --filter @org/database db:migrate:test
 ### 6. Seed the identity Worker
 
 ```sh
-pnpm dev:cf          # in another terminal, if it isn't running
+pnpm dev             # in another terminal, if it isn't running
 pnpm seed:identity
 ```
 
-The bootstrap boots `pnpm dev:cf` just long enough for the seed. [scripts/seed-identity.mjs](../scripts/seed-identity.mjs) calls the identity Worker's seed endpoint (open only when `IDENTITY_SEED_TOKEN` is set) to register the app as a trusted OIDC client with `IDENTITY_CLIENT_ID` / `IDENTITY_CLIENT_SECRET` and create the admin (`IDENTITY_ADMIN_EMAIL` / `IDENTITY_ADMIN_PASSWORD`) with a verified email, then records the admin in the app DB as a super-admin. Re-running resets the admin's password to the one in `.env`.
+The bootstrap boots the Workers stack just long enough for the seed. [scripts/seed-identity.mjs](../scripts/seed-identity.mjs) calls the identity Worker's seed endpoint (open only when `IDENTITY_SEED_TOKEN` is set) to register the app as a trusted OIDC client with `IDENTITY_CLIENT_ID` / `IDENTITY_CLIENT_SECRET` and create the admin (`IDENTITY_ADMIN_EMAIL` / `IDENTITY_ADMIN_PASSWORD`) with a verified email, then records the admin in the app DB as a super-admin. Re-running resets the admin's password to the one in `.env`.
 
 ## Run the app
 
@@ -81,18 +81,22 @@ The bootstrap boots `pnpm dev:cf` just long enough for the seed. [scripts/seed-i
 pnpm dev
 ```
 
-starts the BFF on :3001, the Next renderer on :3000 (`/api/*` rewrites to :3001, ADR-0018) and the Workers stack — with the identity Worker on :3002 — under `alchemy dev`. Sign in at [http://localhost:3000/api/auth/login](http://localhost:3000/api/auth/login) as the admin, or create an account there: sign-up is open behind email verification, and the link lands in Mailpit.
+starts the Workers stack under `alchemy dev` — the server Worker on :3001 and the identity Worker on :3002 — and the Next renderer on :3000, whose `/api/*` rewrite targets the server Worker (ADR-0018, ADR-0035). There is no Node server process. Sign in at [http://localhost:3000/api/auth/login](http://localhost:3000/api/auth/login) as the admin, or create an account there: sign-up is open behind email verification, and the link lands in Mailpit.
 
 ## Run the Workers stack
 
-The Cloudflare side of the stack lives in [packages/infra](../packages/infra) and is run by Alchemy: the databases' Hyperdrive configurations, the domain-event queues, a placeholder Worker, and the identity Worker whose code is [packages/identity](../packages/identity).
+The Cloudflare side of the stack lives in [packages/infra](../packages/infra) and is run by Alchemy: the databases' Hyperdrive configurations, the domain-event queue and its dead-letter queue, the server Worker whose code is [packages/server/src/platform/worker/main.ts](../packages/server/src/platform/worker/main.ts), and the identity Worker whose code is [packages/identity](../packages/identity). `pnpm dev` runs it under `alchemy dev` beside Next; `pnpm -F @org/infra run dev` runs the stack alone.
+
+Under `alchemy dev` no Cloudflare or Neon resource is created and no credentials are read: Hyperdrive passes straight through to the docker Postgres named by `DATABASE_URL` (and `IDENTITY_DATABASE_URL`), the queues run in Alchemy's local broker (in memory, so a restart drops what is in flight), and state is kept in `packages/infra/.alchemy/`. Alchemy keeps a dev sidecar running between invocations; stop the whole process group with SIGINT, or it keeps :3001 and :3002.
+
+Both crons fire on schedule, and any Worker's dev URL triggers one on demand:
 
 ```sh
-pnpm dev:cf         # alchemy dev: everything in workerd and local emulators, nothing in the cloud
-pnpm dev:cf:check   # boots it, asks the placeholder Worker for SELECT 1, shuts it down
+curl 'http://localhost:3001/cdn-cgi/handler/scheduled?cron=*+*+*+*+*'   # the outbox sweep
+curl 'http://localhost:3001/cdn-cgi/handler/scheduled?cron=0+*+*+*+*'   # the session purge
 ```
 
-Under `alchemy dev` no Cloudflare or Neon resource is created and no credentials are read: Hyperdrive passes straight through to the docker Postgres named by `DATABASE_URL` (and `IDENTITY_DATABASE_URL`), the queues run in Alchemy's local broker, and state is kept in `packages/infra/.alchemy/`. Alchemy keeps a dev sidecar running between invocations; stop it with the process group if a port stays taken.
+`pnpm test:workers` boots the same stack with Alchemy's test harness and drives the server Worker's `fetch`, `queue` and `scheduled` handlers over HTTP. It needs the docker Postgres and free dev ports, so stop `pnpm dev` first.
 
 ### Deploying a stage
 
@@ -100,7 +104,7 @@ Deploying creates real Cloudflare and Neon resources, so it needs credentials (`
 
 ```sh
 pnpm deploy:cf --stage staging         # once: owns the staging Neon projects every preview branches from
-pnpm deploy:cf --stage dev_$USER       # schema-only Neon branches of staging, their Hyperdrives, the queues
+pnpm deploy:cf --stage dev_$USER       # schema-only Neon branches of staging, their Hyperdrives, the queues, both Workers
 pnpm destroy:cf --stage dev_$USER
 ```
 
@@ -120,6 +124,8 @@ DATABASE_URL='postgresql://…app…?sslmode=require' IDENTITY_DATABASE_URL='pos
 
 A deployed identity Worker takes `BETTER_AUTH_SECRET`, `IDENTITY_BASE_URL` and `APP_URL` from the deploy environment, and sends mail through the Cloudflare Email binding (Email Sending is in beta and needs the Workers Paid plan). Leave `IDENTITY_SEED_TOKEN` unset there: without it the seed endpoint does not exist.
 
+A deployed server Worker takes `APP_URL`, `IDENTITY_ISSUER`, `IDENTITY_CLIENT_ID`, `IDENTITY_CLIENT_SECRET`, `SESSION_COOKIE_SECRET` and the `STRIPE_*` values from the deploy environment, reaches the identity Worker over a service binding, and sends mail through its own Email binding from `MAIL_FROM_ADDRESS`, whose domain must be onboarded to Email Sending. Non-production stages get a `workers.dev` URL so a local Next can point `SERVER_INTERNAL_URL` at it; production has no public route. Deployed stages export no traces until a collector is chosen.
+
 ## Start over
 
 The identity Worker's state is its own database. To start it clean, drop and recreate it, then migrate and seed again:
@@ -135,7 +141,7 @@ To wipe everything, `docker compose down -v` and run `pnpm bootstrap` again.
 
 ### "The identity Worker is not reachable"
 
-`pnpm seed:identity` and the acceptance suite need `pnpm dev:cf` running. If it is, check that :3002 is free — the identity Worker's dev port is fixed.
+`pnpm seed:identity` needs the Workers stack running (`pnpm dev`). The acceptance suite boots its own, so it needs :3001 and :3002 free — both dev ports are fixed.
 
 ### Sign-in says "Invalid email or password" for the admin
 

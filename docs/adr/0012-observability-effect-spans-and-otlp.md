@@ -1,6 +1,7 @@
 # ADR-0012: Observability — use-case `Effect.fn` spans + first-party OTLP export
 
 - Status: Accepted
+- Amended: 2026-10-11 by ADR-0035 — the tracer is built per Worker invocation and exports only where `OTLP_URL` is set.
 - Date: 2026-04-24
 
 ## Context and Problem Statement

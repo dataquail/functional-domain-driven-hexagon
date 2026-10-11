@@ -3,12 +3,12 @@
 A monorepo containing:
 
 - `packages/web`: Next.js (App Router) renderer; proxies `/api/*` to the BFF (see [ADR-0018](docs/adr/0018-frontend-nextjs-renderer-and-proxy.md))
-- `packages/server`: Effect-based BFF / API server (the auth authority — see ADR-0034)
+- `packages/server`: Effect-based BFF / API server, run as a Cloudflare Worker (the auth authority — see ADR-0034, ADR-0035)
 - `packages/identity`: the identity Worker — Better Auth as the OIDC issuer the server signs users in against
 - `packages/infra`: the Alchemy stack (Neon, Hyperdrive, Queues, Workers)
 - `packages/contracts`: Shared HTTP API contracts consumed by both web and server
 - `packages/database`: Database schema, migrations, and SQL access primitives
-- `packages/jobs`: Background-job runner (cron-style)
+- `packages/jobs`: Cron jobs as Effects, run by the server Worker's `scheduled` handler
 - `packages/acceptance`: Playwright acceptance suite
 
 ## Setup in a codespace
@@ -68,16 +68,16 @@ Effect v4 has no published API docs, so the upstream source is the reference —
 
 ## Authentication (the identity Worker)
 
-The identity provider is `packages/identity`: [Better Auth](https://www.better-auth.com) as an OIDC issuer, in its own Cloudflare Worker with its own database. Locally `pnpm dev:cf` (part of `pnpm dev`) serves it on `:3002` under `alchemy dev`. The browser never holds an access or id token; the server is the OIDC client and issues a `HttpOnly` session cookie scoped to the Next origin. See [ADR-0034](docs/adr/0034-identity-worker-with-better-auth.md) for the design, [ADR-0017](docs/adr/0017-frontend-auth-flow.md) for the SPA-side details it amends, and [ADR-0018](docs/adr/0018-frontend-nextjs-renderer-and-proxy.md) for the Next-fronted refit.
+The identity provider is `packages/identity`: [Better Auth](https://www.better-auth.com) as an OIDC issuer, in its own Cloudflare Worker with its own database. Locally `pnpm dev` serves it on `:3002` under `alchemy dev`, beside the server Worker on `:3001`. The browser never holds an access or id token; the server is the OIDC client and issues a `HttpOnly` session cookie scoped to the Next origin. See [ADR-0034](docs/adr/0034-identity-worker-with-better-auth.md) for the design, [ADR-0017](docs/adr/0017-frontend-auth-flow.md) for the SPA-side details it amends, and [ADR-0018](docs/adr/0018-frontend-nextjs-renderer-and-proxy.md) for the Next-fronted refit.
 
 ```bash
 pnpm bootstrap   # postgres + mailpit + jaeger, secrets, migrations, then seeds the identity Worker
-pnpm dev         # server :3001, web :3000, identity Worker :3002
+pnpm dev         # alchemy dev (server Worker :3001, identity Worker :3002) + Next :3000
 ```
 
-`pnpm bootstrap` registers the app as a trusted OIDC client (`IDENTITY_CLIENT_ID` / `IDENTITY_CLIENT_SECRET`) and creates the admin (`IDENTITY_ADMIN_EMAIL` / `IDENTITY_ADMIN_PASSWORD`) with a verified email. Re-run just that step with `pnpm seed:identity` while `pnpm dev:cf` is up. Sign in at `http://localhost:3000/api/auth/login`; anyone can also create an account there, behind email verification — the mail lands in Mailpit at `http://localhost:8025`.
+`pnpm bootstrap` registers the app as a trusted OIDC client (`IDENTITY_CLIENT_ID` / `IDENTITY_CLIENT_SECRET`) and creates the admin (`IDENTITY_ADMIN_EMAIL` / `IDENTITY_ADMIN_PASSWORD`) with a verified email. Re-run just that step with `pnpm seed:identity` while `pnpm dev` is up. Sign in at `http://localhost:3000/api/auth/login`; anyone can also create an account there, behind email verification — the mail lands in Mailpit at `http://localhost:8025`.
 
-**Acceptance tests** (Playwright) sign in through the identity Worker's real pages on every run: keep `pnpm dev:cf` running, stop dev servers on `:3000` / `:3001`, then run `pnpm test:acceptance`. CI E2E (`.github/workflows/e2e.yml`) starts the identity Worker the same way.
+**Acceptance tests** (Playwright) sign in through the identity Worker's real pages on every run. `pnpm test:acceptance` boots its own Workers stack under `alchemy dev`, with the app Hyperdrive pointed at the test database, and a production Next build in front of it — so stop `pnpm dev` first, since the dev ports `:3000`–`:3002` are fixed. CI E2E (`.github/workflows/e2e.yml`) runs the same command.
 
 ## Billing (Stripe)
 
@@ -87,7 +87,7 @@ For the real-Stripe smoke loop (subscribe / cancel / webhook delivery against te
 
 1. Set `STRIPE_SECRET_KEY` and `STRIPE_PRICE_ID_DEFAULT` from your Stripe dashboard (test mode).
 2. Run `stripe listen --forward-to localhost:3001/webhooks/stripe`; copy the printed `whsec_…` into `STRIPE_WEBHOOK_SECRET`.
-3. Restart the BFF so it picks up the env vars.
+3. Restart `pnpm dev` so the server Worker picks up the env vars.
 4. `POST /api/orgs/:orgId/billing/subscriptions` (as an org admin) → Stripe creates a customer + subscription → the CLI forwards `customer.subscription.created` back to your webhook.
 
 ## Development

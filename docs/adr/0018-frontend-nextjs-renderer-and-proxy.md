@@ -1,6 +1,7 @@
 # ADR-0018: Frontend renderer is Next.js; the Effect server stays the BFF
 
 - Status: Accepted
+- Amended: 2026-10-11 by ADR-0035 — the `/api/*` rewrite targets the server Worker.
 - Amended: 2026-08-21 — sub-decision 1 restated over Effect Atom (ADR-0026). The
   proxy/BFF decisions (2, 3, 4) are untouched.
 - Date: 2026-05-08

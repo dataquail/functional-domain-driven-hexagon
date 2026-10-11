@@ -8,7 +8,7 @@
 //      it points at Compose hostnames and the forwarded https origins
 //   2. ensure the identity database exists
 //   3. migrate the dev, test and identity databases
-//   4. boot the identity Worker (`pnpm dev:cf`) and seed it: the app's OIDC
+//   4. boot the Workers stack (`alchemy dev`) and seed the identity Worker: the app's OIDC
 //      client and the admin, recorded in the app database as a super-admin
 //   5. publish port 3002, without which the OIDC back channel can't reach it
 
@@ -21,7 +21,7 @@ import { fileURLToPath } from "node:url";
 
 import pg from "pg";
 
-import { startCfDev } from "./lib/cf-dev.mjs";
+import { startWorkersStack } from "./lib/workers-stack.mjs";
 import { readEnv, updateEnv } from "./lib/env-file.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
@@ -93,7 +93,7 @@ function pinEnvToCodespace(codespaceName) {
   return { webOrigin, identityOrigin };
 }
 
-// `pnpm dev:cf` points the identity Hyperdrive at this database. Created here
+// `alchemy dev` points the identity Hyperdrive at this database. Created here
 // rather than by a postgres init script, which only runs on a fresh volume.
 async function ensureIdentityDatabase() {
   const client = new pg.Client({ connectionString: readEnv(ENV_PATH).DATABASE_URL });
@@ -141,11 +141,11 @@ async function publishIdentityPort(codespaceName) {
 // The identity Worker only runs under `alchemy dev`, so it is up just long
 // enough to seed it and, while it listens, publish its port.
 async function seedIdentity(codespaceName) {
-  const dev = startCfDev(ROOT);
+  const dev = startWorkersStack(ROOT);
   try {
     const identityUrl = await dev.waitForOutput("identityUrl", CF_DEV_BOOT_TIMEOUT_MS);
     if (identityUrl === undefined) {
-      throw new Error(`pnpm dev:cf never reported the identity Worker.\n${dev.output()}`);
+      throw new Error(`alchemy dev never reported the identity Worker.\n${dev.output()}`);
     }
     // Seeded over loopback, so it does not wait on the port's visibility.
     const result = spawnSync("pnpm", ["seed:identity"], {

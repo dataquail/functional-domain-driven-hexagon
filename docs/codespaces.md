@@ -40,7 +40,7 @@ Provisioning tries `gh codespace ports visibility 3002:public` while the Worker 
 1. creates `.env` from `.env.example` if missing, generates `SESSION_COOKIE_SECRET` and `BETTER_AUTH_SECRET`, and — in a codespace — points it at the Compose hostnames and the forwarded origins: `APP_URL` and both redirect URIs from `:3000`, `IDENTITY_BASE_URL` and `IDENTITY_ISSUER` (`…/api/auth`) from `:3002`;
 2. creates the `effect-monorepo-identity` database;
 3. runs `pnpm db:migrate` (app + identity) and the test DB migration;
-4. boots the identity Worker with `pnpm dev:cf` just long enough to run `pnpm seed:identity` (over loopback) and publish port 3002, then stops it.
+4. boots the Workers stack under `alchemy dev` just long enough to run `pnpm seed:identity` (over loopback) and publish port 3002, then stops it.
 
 The redirect URIs are `https` on purpose: the seed registers the app as a Better Auth `web` client whenever a redirect URI is not loopback, and Better Auth refuses plain-`http` redirect URIs for web clients.
 
@@ -71,13 +71,13 @@ The `sshd` feature is enabled for this. Use the full name (`gh codespace list`),
 
 **The identity Worker rejects the redirect URI.** `IDENTITY_REDIRECT_URI` / `IDENTITY_POST_LOGOUT_REDIRECT_URI` must be the forwarded `https` `:3000` URL; fix `.env` and re-run provisioning, which re-registers the client.
 
-**`pnpm dev:cf` fails with port 3002 in use.** Another `alchemy dev` is still running (`pkill -f "alchemy dev"`); the port is fixed with `strictPort`.
+**`pnpm dev` fails with port 3001 or 3002 in use.** Another `alchemy dev` is still running (`pkill -f "alchemy dev"`); both Worker ports are fixed with `strictPort`.
 
 **Provisioning didn't finish.** It's idempotent — re-run `node scripts/codespaces-provision.mjs`.
 
 **The codespace starts into a recovery container**, with `error mounting "/workspaces/…"` in the creation log. Something ran `docker compose` from inside the workspace and left a service pointing at a path that only exists in the dev container. Recreating the codespace is the reliable fix; the guards above exist to stop it happening again.
 
-**Browser traces don't reach Jaeger.** `NEXT_PUBLIC_OTLP_URL` points at the forwarded `:4318`; make that port public too. Server-side tracing is unaffected — it goes to `jaeger:4318` over the Compose network.
+**Browser traces don't reach Jaeger.** `NEXT_PUBLIC_OTLP_URL` points at the forwarded `:4318`; make that port public too. The server Worker's spans go to `OTLP_URL` (`jaeger:4318` over the Compose network) and are unaffected.
 
 ## Prebuilds
 

@@ -52,7 +52,10 @@ Two further findings decided what B would cost beyond its CPU:
 - **The client is `@effect/sql-pg`'s own driver over `node:net`**, which runs unchanged in workerd under `nodejs_compat` (on by default since 2026-08-04). It connects to `env.APP_DB.connectionString`; Hyperdrive terminates TLS to the origin, so the Worker's leg is plaintext.
 - **`Database.layer({ …, behindTransactionPooler: true })`** turns off named prepared statements, which a transaction-mode pooler does not carry between transactions, and caps the client at two connections, since Hyperdrive owns reuse.
 - **No timers in the application layer.** The outbox sweeper moves from a forked loop to the `* * * * *` cron; jobs run from `scheduled`; detached work goes through `ExecutionContext.waitUntil`.
-- **One file sees the platform.** `packages/server/src/platform/worker/main.ts` is the only server file that reads `env`/`ctx` or imports `cloudflare:workers`, enforced by the manifest.
+- **One file sees the platform.** `packages/server/src/platform/worker/main.ts` is the only server file that reads `env`/`ctx` or names the Workers binding types, enforced by the manifest. It exports its three handlers as the default and nothing else by name, because workerd reads every named export as another entrypoint. What the code below it needs from the platform arrives through seams in `globals/infrastructure/runtime/` that default to plain-process behaviour — `ExecutionContext` (detached work), `IssuerTransport` (the identity service binding), `EmailBinding` — and through a `ConfigProvider` over the string bindings, with `DATABASE_URL` taken from `APP_DB.connectionString`.
+- **The three handlers.** `fetch` serves `HttpRouter.toWebHandler` over the HttpApi. `queue` decodes each message as an `Event.Envelope` and runs `deliverOnce` behind the `DeliveryLedger`: success acks, an envelope no subscription answers acks (retrying cannot help), anything else retries after `2^attempts` seconds capped at 15 minutes; the consumer allows 10 retries and dead-letters to `domain-events-dlq`, whose own consumer reports each message to `UnhandledFailures` and acks it. `scheduled` runs the outbox sweep on `* * * * *` and the session purge on `0 * * * *`.
+- **After-commit delivery crosses a Cloudflare Queue.** The outbox relay sends through a `DomainEventQueue` that awaits `sendBatch` in chunks of at most 100 messages and 256 KB, and leaves anything it could not send — including an envelope over the 128 KB message limit — for the sweeper. Tests keep the in-process queue.
+- **A module's event subscriptions are their own layer.** `<Feature>Module.events` carries its `interface/events/` adapters, and every composition provides it. They used to ride in `http`, so a queue invocation, which builds no HTTP surface, had no subscriptions and answered every envelope `unknown-subscription`.
 
 Decisions made alongside the spike:
 
@@ -60,14 +63,17 @@ Decisions made alongside the spike:
 - **Tracing** exports over fetch to Jaeger under `alchemy dev`, and is off on deployed stages until a collector is chosen. Each invocation flushes its spans through `waitUntil`.
 - **Non-production stages enable `workersDev`** so a locally run Next (and the acceptance suite) can reach a deployed server Worker until the web Worker arrives with its service binding. Production keeps no public route.
 - **Workerd smoke tests use Alchemy's `Test.make({ dev: true })`.** `@cloudflare/vitest-pool-workers` peers on vitest ^4.1 and cannot run under the repo's vitest 5.
-- **The session-purge job drops `pg_try_advisory_xact_lock`.** Hyperdrive lists advisory locks as unsupported, and the job's DELETE is idempotent, so a duplicate run costs nothing.
+- **The session-purge job drops `pg_try_advisory_xact_lock`.** Hyperdrive lists advisory locks as unsupported, and the job's DELETE is idempotent, so a duplicate run costs nothing. `@org/jobs` is a library of job Effects; its process entrypoint is gone.
+- **A failed invitation email is retried, not swallowed.** The invitation mailer used to log and absorb a transport failure so a mail outage could not fail an invite. Durable delivery already keeps it from failing the invite, so the failure now surfaces (`InvitationEmailUndelivered`) and the queue retries it.
 
 ## Consequences
 
 - Every invocation pays for a connection (several milliseconds, mostly SCRAM) and about a millisecond of layer construction. Neither is shared, so neither can leak between requests.
 - A cold layer per request means the bus, the policy registry and every module are rebuilt each time. Anything a module caches in a layer (a discovered OIDC configuration, a compiled schema) is per request now; the OIDC discovery document is the one that costs a round trip, and it travels over the identity service binding.
 - Sagas and event streams stay in-process. `Saga.runner` forks into the layer scope, which ends with the request, so the library documents them as unavailable on Workers; none exist today.
-- Unit and integration suites stay on Node vitest against docker Postgres; only the smoke tests run workerd.
+- Unit and integration suites stay on Node vitest against docker Postgres. `pnpm test:workers` boots the stack under workerd with `Test.make({ dev: true })` and drives `fetch`, `queue` and `scheduled` over HTTP; it needs the docker Postgres and free dev ports, so it is a named gate beside `check:all` rather than part of it. The acceptance suite runs against the server Worker: Playwright boots `alchemy dev` itself, pointing the app Hyperdrive at the test database.
+- `node:crypto` HMAC, `timingSafeEqual`, SHA-256, `randomBytes`, `randomUUID` and `Buffer` base64url all run in workerd unchanged. AES-GCM works too, but nothing in the server uses it; the one divergence found is that workerd's `cipher.update(string)` needs an explicit input encoding.
+- Stripe runs on its fetch HTTP client and verifies webhooks with `constructEventAsync` over SubtleCrypto: the worker build of the SDK has no synchronous HMAC.
 
 ## Alternatives considered
 
