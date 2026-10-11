@@ -6,59 +6,27 @@
 // Everything runs locally: under `alchemy dev` the stack touches neither
 // Cloudflare nor Neon, so this needs no credentials.
 
-import { spawn } from "node:child_process";
-import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
+
+import { startCfDev } from "./lib/cf-dev.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const BOOT_TIMEOUT_MS = 120_000;
 const QUERY_TIMEOUT_MS = 60_000;
-const POLL_INTERVAL_MS = 1_000;
 
-const PLACEHOLDER_URL = /placeholderUrl: '([^']+)'/;
-
-const dev = spawn("pnpm", ["dev:cf"], {
-  cwd: ROOT,
-  detached: true,
-  stdio: ["ignore", "pipe", "pipe"],
-});
-
-let output = "";
-dev.stdout.on("data", (chunk) => (output += chunk));
-dev.stderr.on("data", (chunk) => (output += chunk));
-
-// `alchemy dev` runs a supervisor, a child and workerd; signalling the process
-// group is what stops all three.
-const stop = () => {
-  try {
-    process.kill(-dev.pid, "SIGINT");
-  } catch {
-    /* already gone */
-  }
-};
-process.on("exit", stop);
+const dev = startCfDev(ROOT);
+process.on("exit", dev.stop);
 process.on("SIGINT", () => process.exit(130));
 
-const waitFor = async (timeoutMs, probe) => {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const value = await probe();
-    if (value !== undefined) return value;
-    if (dev.exitCode !== null) return undefined;
-    await sleep(POLL_INTERVAL_MS);
-  }
-  return undefined;
-};
-
 const fail = (message) => {
-  process.stderr.write(`${message}\n\n--- alchemy dev output ---\n${output}\n`);
+  process.stderr.write(`${message}\n\n--- alchemy dev output ---\n${dev.output()}\n`);
   process.exit(1);
 };
 
-const url = await waitFor(BOOT_TIMEOUT_MS, () => PLACEHOLDER_URL.exec(output)?.[1]);
+const url = await dev.waitForOutput("placeholderUrl", BOOT_TIMEOUT_MS);
 if (url === undefined) fail("alchemy dev never reported the placeholder Worker's URL.");
 
-const answer = await waitFor(QUERY_TIMEOUT_MS, async () => {
+const answer = await dev.waitFor(QUERY_TIMEOUT_MS, async () => {
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
     return response.ok ? await response.json() : undefined;

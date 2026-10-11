@@ -86,4 +86,22 @@ describe("seedIdentity (integration)", () => {
       expect(yield* query(`SELECT "emailVerified" FROM "user"`)).toEqual([{ emailVerified: true }]);
     }),
   );
+
+  it.effect("resets the password of a user who already existed, so the seeded one signs in", () =>
+    Effect.gen(function* () {
+      yield* seedIdentity(harness.makeSeedingAuth(undefined), {
+        users: [{ ...admin, password: "AnOldPassword123!" }],
+      });
+
+      yield* seedIdentity(harness.makeSeedingAuth(undefined), { users: [admin] });
+
+      const signedIn = yield* Effect.promise(() =>
+        harness.makeAuth().api.signInEmail({
+          body: { email: admin.email, password: admin.password },
+          asResponse: true,
+        }),
+      );
+      expect(signedIn.ok).toBe(true);
+    }),
+  );
 });

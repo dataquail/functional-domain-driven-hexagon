@@ -1,46 +1,26 @@
 import { test as setup } from "@playwright/test";
 
-import { ZitadelLoginPage } from "@/drivers/pages/zitadel-login-page";
+import { IdentityLoginPage } from "@/drivers/pages/identity-login-page";
+import { ADMIN_EMAIL, ADMIN_PASSWORD } from "@/test-utils/admin-credentials";
 
 // Auth setup project. Runs once per Playwright invocation (before the
 // `chromium` test project) and stamps the resulting session cookie into
 // `playwright/.auth/admin.json` so specs can reuse it via `storageState`.
 //
-// We deliberately drive the *real* Zitadel hosted UI rather than minting a
-// session via a back-door endpoint — the user's intent (see plan §5
-// revision) is for login to be a real E2E path. login.spec.ts also runs the
-// flow on every test run for regression coverage.
+// It drives the identity Worker's real sign-in page rather than minting a
+// session through a back door; login.spec.ts runs the same flow every run.
 export const ADMIN_STORAGE_STATE = "playwright/.auth/admin.json";
 
 setup("authenticate as admin", async ({ page }) => {
-  const adminEmail = process.env.ZITADEL_ADMIN_EMAIL;
-  const adminPassword = process.env.ZITADEL_ADMIN_PASSWORD;
-  if (
-    adminEmail === undefined ||
-    adminEmail === "" ||
-    adminPassword === undefined ||
-    adminPassword === ""
-  ) {
-    throw new Error(
-      "[auth.setup] ZITADEL_ADMIN_EMAIL and ZITADEL_ADMIN_PASSWORD must be set in .env. " +
-        "These must match the credentials accepted by your Zitadel instance — " +
-        "verify by signing in to http://localhost:8080/ui/console first.",
-    );
-  }
-
-  // Next-proxied path to the BFF's /auth/login (ADR-0018 § "How the
-  // /api/* proxy works"). The BFF redirects to Zitadel's hosted login.
+  // Next-proxied path to the BFF's /auth/login (ADR-0018 § "How the /api/*
+  // proxy works"). The BFF redirects to the identity Worker's sign-in page.
   await page.goto("/api/auth/login");
 
-  const zitadel = new ZitadelLoginPage(page);
-  await zitadel.signIn(adminEmail, adminPassword);
+  await new IdentityLoginPage(page).signIn(ADMIN_EMAIL, ADMIN_PASSWORD);
 
-  // Wait for the OIDC callback to land us back in the app with a session
-  // cookie set. The seeded admin is a super-admin, redirected off the
-  // regular-user root `/` to the platform org admin view — wait for that
-  // settled URL rather than the transient `/` (which the server redirect
-  // may never commit to). Surface a clearer error than a bare timeout if
-  // we get stuck on Zitadel (most often: bad password — see screenshot).
+  // The seeded admin is a super-admin, redirected off the regular-user root
+  // `/` to the platform org admin view — wait for that settled URL rather
+  // than the transient `/`.
   try {
     await page.waitForURL(({ pathname }) => pathname === "/admin/orgs", { timeout: 15_000 });
   } catch (cause) {
@@ -48,7 +28,7 @@ setup("authenticate as admin", async ({ page }) => {
       `[auth.setup] Sign-in did not land on the platform admin view.\n` +
         `  Stuck at: ${page.url()}\n` +
         `  Page title: ${await page.title()}\n` +
-        `  Most common cause: ZITADEL_ADMIN_PASSWORD doesn't match Zitadel.\n` +
+        `  Most common cause: the identity Worker was seeded with a different IDENTITY_ADMIN_PASSWORD.\n` +
         `  Original: ${String(cause)}`,
     );
   }
