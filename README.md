@@ -3,6 +3,8 @@
 A monorepo containing:
 
 - `packages/web`: Next.js (App Router) renderer; proxies `/api/*` to the BFF (see [ADR-0018](docs/adr/0018-frontend-nextjs-renderer-and-proxy.md))
+- `packages/components`: the React component library (primitives + patterns) and its Storybook ([ADR-0015](docs/adr/0015-frontend-component-library.md))
+- `packages/components-svelte`: the same library in Svelte 5, growing beside the React one until the SvelteKit cutover ([ADR-0036](docs/adr/0036-svelte-component-library-and-its-lint.md))
 - `packages/server`: Effect-based BFF / API server, run as a Cloudflare Worker (the auth authority — see ADR-0034, ADR-0035)
 - `packages/identity`: the identity Worker — Better Auth as the OIDC issuer the server signs users in against
 - `packages/infra`: the Alchemy stack (Neon, Hyperdrive, Queues, Workers)
@@ -149,6 +151,16 @@ pnpm add --filter @org/web next-themes
 
 # Add a development dependency
 pnpm add -D --filter @org/web @types/react
+```
+
+### Component libraries
+
+Each library has a Storybook with a story for every primitive and pattern; a static build of
+both is part of `pnpm check:all`.
+
+```sh
+pnpm -F @org/components storybook          # React, http://localhost:6006
+pnpm -F @org/components-svelte storybook   # Svelte, http://localhost:6007
 ```
 
 ### Checking and Testing

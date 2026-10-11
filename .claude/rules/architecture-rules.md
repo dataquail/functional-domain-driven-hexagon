@@ -263,8 +263,8 @@ load and fails `pnpm lint` — but never runs them. A violated graph rule fails
 limits:
   unrestricted: 1
   partial: 0
-  coverage: { imports: 0.96, structure: 0.73, members: 0.03, surface: 0.91, graph: 1 }
-  conformance: { residue: 0, vacant: 13, slack: 52, concentration: 0 }
+  coverage: { imports: 0.96, structure: 0.77, members: 0.12, surface: 0.92, graph: 1 }
+  conformance: { residue: 0, vacant: 11, slack: 45, concentration: 0 }
 ```
 
 The `unrestricted`/`partial` ceilings cap the tiers that say "not tightened yet"; both
@@ -395,9 +395,10 @@ Two gates back that up, and they answer different questions:
 - `pnpm lint:rules` — the **wiring**: the plugin is loaded, each rule id is
   enabled, its globs match, resolution is live. A repo-wide `deny` shares the
   `architecture/imports` id with every allowlist, so its probe also names the
-  message it must report.
-- `pnpm lint:edges` — the **semantics**: 184 edges with expected verdicts (135
-  refused, 49 allowed) and 12 graph shapes with expected reports. The allowed and
+  message it must report. 43 probes, three of them ESLint's (`linter: "eslint"`):
+  the Svelte markup rules oxlint cannot see (ADR-0036).
+- `pnpm lint:edges` — the **semantics**: 190 edges with expected verdicts (138
+  refused, 52 allowed) and 12 graph shapes with expected reports. The allowed and
   quiet rows matter as much: a policy that refuses everything is as broken as one
   that refuses nothing. A row that changes verdict is either a regression or a
   decision.
@@ -481,6 +482,14 @@ engine shows up. Every `architecture/*` rule id — `imports`, `exports`,
 left out runs in the CLI and not the editor, and the two adapters disagree.
 
 ## What the plugin still cannot do
+
+**A Svelte component's markup.** oxlint hands the plugin a `.svelte` file's script
+blocks, and the TypeScript pack reads the same blocks for the CLI, so every family
+reaches a component's imports, exports and declarations. Neither reads the markup:
+an element, an attribute or an expression in the template is ESLint's
+(`pnpm lint:svelte`, ADR-0036). And `~/components-svelte/` is listed before
+`~/components/` in the tree, because core beta.16 lets the first root claim a
+sibling folder that shares its prefix (goodbones #99).
 
 **Anything about the whole graph.** Cycles, orphans and transitive reach need
 every file resolved at once, which a per-file rule never has. They live in the
