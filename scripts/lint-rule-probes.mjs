@@ -312,6 +312,49 @@ const PROBES = [
     source: '<span style="color: red">probe</span>\n',
   },
   {
+    // The SvelteKit app's MVVM (ADR-0037), read out of script blocks: a View
+    // holding state, a View reaching past its ViewModel, a ViewModel running an
+    // Effect by hand, and a file in features/ with no view-tier stereotype.
+    rule: "architecture/members",
+    message: "puts state or behaviour in the View",
+    file: "packages/web-svelte/features/zzprobe/probe.view.svelte",
+    source: '<script lang="ts">\n  let count = $state(0);\n</script>\n\n{count}\n',
+  },
+  {
+    rule: "architecture/imports",
+    message: "A View depends on its ViewModel and the bridge that reads it",
+    file: "packages/web-svelte/features/zzprobe/reach.view.svelte",
+    source:
+      '<script lang="ts">\n  import { apiTransportAtom } from "@/services/atom/api-transport.shared";\n  const probe = apiTransportAtom;\n</script>\n\n{String(probe)}\n',
+  },
+  {
+    rule: "architecture/members",
+    message: "runs an Effect by hand, outside the atom runtime",
+    file: "packages/web-svelte/features/zzprobe/probe.view-model.ts",
+    source:
+      'import * as Effect from "effect/Effect";\n\nexport const probe = Effect.runPromise(Effect.void);\n',
+  },
+  {
+    rule: "architecture/structure",
+    file: "packages/web-svelte/features/zzprobe-untiered.ts",
+    source: "export const probe = 1;\n",
+  },
+  {
+    // The same markup rules as the library's patterns, on the app's Views and routes.
+    linter: "eslint",
+    rule: "svelte/no-restricted-html-elements",
+    file: "packages/web-svelte/features/zzprobe/element.view.svelte",
+    source: "<div>probe</div>\n",
+  },
+  {
+    linter: "eslint",
+    rule: "no-restricted-syntax",
+    message: "A class or a style handed to an element from a screen",
+    file: "packages/web-svelte/src/routes/zzprobe/+page.svelte",
+    source:
+      '<script lang="ts">\n  import Stack from "@org/components-svelte/primitives/stack.svelte";\n</script>\n\n<Stack class="p-4" />\n',
+  },
+  {
     // Circularity is the one dependency-cruiser rule with no per-file
     // equivalent; oxlint's own rule replaced it, so it needs the same proof.
     rule: "import/no-cycle",
