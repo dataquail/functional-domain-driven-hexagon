@@ -57,7 +57,6 @@ export default defineConfig({
         // the same layers, so these run only under `pnpm dev`, the deployed
         // process, or the Playwright acceptance tier.
         "packages/server/src/platform/worker/main.ts",
-        "packages/jobs/src/main.ts",
         "packages/database/src/scripts/**",
         // Resource declarations: only the Alchemy engine evaluates them, under
         // `alchemy dev` or a deploy.

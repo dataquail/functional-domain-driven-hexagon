@@ -7,6 +7,7 @@ import type {
   ScheduledController,
   SendEmail,
 } from "@cloudflare/workers-types";
+import { purgeExpiredSessions } from "@org/jobs/jobs/purge-expired-sessions";
 import * as ConfigProvider from "effect/ConfigProvider";
 import * as Effect from "effect/Effect";
 import * as HttpRouter from "effect/http/HttpRouter";
@@ -54,6 +55,7 @@ type ServerWorkerEnv = {
 } & Readonly<Record<string, unknown>>;
 
 const OUTBOX_SWEEP_CRON = "* * * * *";
+const SESSION_PURGE_CRON = "0 * * * *";
 
 const application = applicationModules;
 
@@ -194,7 +196,9 @@ export default {
     const job =
       controller.cron === OUTBOX_SWEEP_CRON
         ? runInvocation(invocation, sweeperLive(invocation), sweepOutbox())
-        : Promise.reject(new Error(`No job is scheduled on "${controller.cron}"`));
+        : controller.cron === SESSION_PURGE_CRON
+          ? runInvocation(invocation, platformLive(invocation), purgeExpiredSessions)
+          : Promise.reject(new Error(`No job is scheduled on "${controller.cron}"`));
     ctx.waitUntil(job);
     return job;
   },

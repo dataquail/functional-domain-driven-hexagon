@@ -9,7 +9,7 @@
 # shares, so name it for what it is.
 
 name: kebab-case
-message: "@org/jobs runs the background and cron jobs."
+message: "@org/jobs holds the cron jobs as Effects; the server Worker's scheduled handler runs them."
 layout: open
 # vitest loads a globalSetup by its default export.
 surface:
@@ -20,7 +20,7 @@ imports:
     A job reaches the database kernel directly and nothing else in the repo. It does not
     import the server: a job that needs a use case should dispatch it, not compose the HTTP
     application.
-  external: [effect, "@effect/platform-node", "@effect/vitest", dotenv, vitest]
+  external: [effect, "@effect/platform-node", "@effect/vitest", vitest]
   allow: ["node:**", "~/jobs/**", "~/database/**", "vitest.shared.ts"]
 children:
   "**/": { layout: open, children: {} }

@@ -44,7 +44,6 @@
     "seed:identity": "tsx scripts/seed-identity.mjs",
     "bootstrap": "node scripts/dev-bootstrap.mjs",
     "effect:source": "node scripts/sync-effect-source.mjs",
-    "jobs:dev": "pnpm -F @org/jobs dev",
     "format": "prettier --write \"**/*.{js,ts,mjs,jsx,tsx,json,md,css,html,yaml,yml,mdx}\"",
     "format:check": "prettier --check \"**/*.{js,ts,mjs,jsx,tsx,json,md,css,html,yaml,yml,mdx}\"",
     "prepare": "husky && effect-tsgo patch --oxlint",

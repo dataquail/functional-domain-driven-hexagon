@@ -8,7 +8,8 @@
   "references": [
     { "path": "tsconfig.src.json" },
     { "path": "../contracts" },
-    { "path": "../database" }
+    { "path": "../database" },
+    { "path": "../jobs" }
   ],
   "compilerOptions": {
     "types": ["node"],
@@ -20,7 +21,8 @@
       "@org/contracts": ["../contracts/src/index.js"],
       "@org/contracts/*": ["../contracts/src/*.js"],
       "@org/database": ["../database/src/index.js"],
-      "@org/database/*": ["../database/src/*.js"]
+      "@org/database/*": ["../database/src/*.js"],
+      "@org/jobs/*": ["../jobs/src/*.js"]
     }
   }
 }

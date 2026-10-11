@@ -18,7 +18,6 @@
       "@org/database/*": ["./packages/database/src/*"],
       "@org/api-client": ["./packages/api-client/src/index.ts"],
       "@org/api-client/*": ["./packages/api-client/src/*"],
-      "@org/jobs": ["./packages/jobs/src/main.ts"],
       "@org/jobs/*": ["./packages/jobs/src/*"],
       "@org/server/*": ["./packages/server/src/*"],
       "@org/test-drivers": ["./packages/test-drivers/src/index.ts"],

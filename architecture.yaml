@@ -249,7 +249,6 @@ graph:
         # Process entrypoints and package bins; workerd loads the server Worker by path.
         - "@/platform/worker/main.ts"
         - "~/cli/src/main.ts"
-        - "~/jobs/src/main.ts"
         - "~/mcp/src/main.ts"
         - "~/database/src/scripts/**"
         # The Alchemy CLI loads the stack by convention, and the identity Worker by path.
