@@ -14,20 +14,8 @@ import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
 import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.js";
 
-// Slice-scope SignInCommand:
-//   - looks up auth_identities by Zitadel subject
-//   - admins are pre-seeded by infra/zitadel/seed.mjs, so the row exists
-//   - an unknown subject is just-in-time provisioned as an ordinary
-//     (non-admin) user: `UserProvisioning.provision` fires the user module's
-//     CreateUserCommand and returns the new id, then we link the identity.
-//     Provisioning, identity link, and session insert all run in one
-//     unit of work, so a failure anywhere rolls the whole sign-in back (the
-//     provisioning command joins this transaction — `UnitOfWorkLive` is
-//     re-entrant). An ordinary user gets no `platform.roles` row.
-//   - creates and persists a Session, returns its id
-//
-// Bus-boundary span (ADR-0012) wraps this at dispatch time, so no inline
-// `withSpan` here.
+const IDENTITY_PROVIDER = "better-auth";
+
 export const signInHandler = Effect.fn("signInHandler")(function* (cmd: SignInPayload) {
   const identities = yield* AuthIdentityRepository;
   const sessions = yield* SessionRepository;
@@ -37,28 +25,29 @@ export const signInHandler = Effect.fn("signInHandler")(function* (cmd: SignInPa
   const userId =
     identity !== null
       ? identity.userId
-      : // First sign-in for this subject: JIT provision an ordinary user.
-        // Requires an email (the `users` row needs one); a verified
-        // identity with no email can't be provisioned. The provisioning
-        // command runs in this same transaction.
-        yield* Effect.gen(function* () {
+      : yield* Effect.gen(function* () {
           if (cmd.email === null) {
             return yield* new IdentityMissingEmail({ subject: cmd.subject });
           }
-          const newUserId = yield* provisioning
-            .provision(cmd.email)
-            .pipe(
-              Effect.catchTag(
-                "UserProvisioningConflict",
-                (e) => new IdentityEmailAlreadyRegistered({ email: e.email }),
-              ),
-            );
+          const email = cmd.email;
+          // Only a verified address proves the new identity owns the existing account.
+          const existingUserId = cmd.emailVerified ? yield* provisioning.findByEmail(email) : null;
+          const linkedUserId =
+            existingUserId ??
+            (yield* provisioning
+              .provision(email)
+              .pipe(
+                Effect.catchTag(
+                  "UserProvisioningConflict",
+                  (e) => new IdentityEmailAlreadyRegistered({ email: e.email }),
+                ),
+              ));
           yield* identities.insertOne({
             subject: cmd.subject,
-            userId: newUserId,
-            provider: "zitadel",
+            userId: linkedUserId,
+            provider: IDENTITY_PROVIDER,
           });
-          return newUserId;
+          return linkedUserId;
         });
 
   const id = SessionId.make(yield* Effect.sync(() => crypto.randomUUID()));

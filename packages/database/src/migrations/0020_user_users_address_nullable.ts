@@ -2,7 +2,7 @@ import * as Effect from "effect/Effect";
 import { SqlClient } from "effect/sql/SqlClient";
 
 // JIT user provisioning: a user provisioned on first OIDC sign-in has no
-// address yet (only email + Zitadel subject are known). Drop NOT NULL on the
+// address yet (only the email and the identity subject are known). Drop NOT NULL on the
 // three address columns so an address-less user row is valid. Existing rows
 // (e.g. the seeded admin's 'N/A' placeholders) are unaffected.
 export default Effect.gen(function* () {

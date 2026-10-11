@@ -38,7 +38,7 @@ const seedSession = (s: SessionShape) =>
       VALUES (
         ${s.id},
         ${userId},
-        'zitadel-sub',
+        'identity-sub',
         ${s.expiresAt}::timestamptz,
         ${s.absoluteExpiresAt}::timestamptz,
         ${s.revokedAt}::timestamptz,
@@ -116,7 +116,7 @@ describe("purgeExpiredSessions (integration)", () => {
               VALUES (
                 'dddddddd-dddd-dddd-dddd-dddddddddddd',
                 ${userId},
-                'zitadel-sub',
+                'identity-sub',
                 '2099-01-01T00:00:00Z'::timestamptz,
                 '2099-01-02T00:00:00Z'::timestamptz,
                 now() - interval '1 hour',

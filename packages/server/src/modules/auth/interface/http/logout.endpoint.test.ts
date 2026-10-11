@@ -8,10 +8,11 @@ import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.js";
 
 import { logoutEndpoint } from "./logout.endpoint.js";
 
-// The logout endpoint's full flow (revoke session, clear cookie, 302 to
-// Zitadel's end_session_endpoint) needs a live Zitadel and is covered by
-// Playwright. The cookie revocation + idempotent ignore-on-missing-session
-// pieces are covered by `SessionRepositoryFake` and the
+// The logout endpoint's full flow (revoke session, clear cookies, 302 to the
+// identity Worker's end-session endpoint) needs a live issuer and is covered by
+// the acceptance login spec. The id_token hint it forwards is pinned by
+// `id-token-hint-cookie.util.test.ts`; the cookie revocation + idempotent
+// ignore-on-missing-session pieces by `SessionRepositoryFake` and the
 // `SessionRepositoryLive` integration test.
 //
 // What this file pins: the CookieCodec contract logout (and every other

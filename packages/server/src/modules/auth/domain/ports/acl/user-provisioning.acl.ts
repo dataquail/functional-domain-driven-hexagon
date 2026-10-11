@@ -17,8 +17,10 @@ export class UserProvisioningConflict extends Schema.TaggedError<UserProvisionin
 ) {}
 
 // ADR-0022 outbound port. Auth needs to just-in-time provision a brand-new,
-// ordinary (non-admin) application user on first OIDC sign-in. The port states
-// that need in auth's own terms — an email in, a UserId out; the adapter in
+// ordinary (non-admin) application user on first OIDC sign-in, or find the user
+// already registered under a verified email so the new identity can be linked to
+// it. The port states those needs in auth's own terms — an email in, a UserId
+// out; the adapter in
 // `infrastructure/acl/` is the only place the user module's command vocabulary
 // appears. Because the adapter composes a command rather than opening its own
 // unit of work, provisioning joins sign-in's transaction (ADR-0007 +
@@ -27,6 +29,7 @@ export type UserProvisioningShape = {
   readonly provision: (
     email: string,
   ) => Effect.Effect<UserId, PersistenceUnavailable | UserProvisioningConflict>;
+  readonly findByEmail: (email: string) => Effect.Effect<UserId | null, PersistenceUnavailable>;
 };
 
 export class UserProvisioning extends Context.Service<UserProvisioning, UserProvisioningShape>()(

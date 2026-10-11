@@ -39,9 +39,9 @@ jobs:
       # depth measure: if any code path slips past the override and reads
       # the prod URL, it lands on the test DB instead of a real one.
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/effect-monorepo-test
-      ZITADEL_ISSUER: http://localhost:8080
-      ZITADEL_CLIENT_ID: ci-integration-tests-placeholder
-      ZITADEL_CLIENT_SECRET: ci-integration-tests-placeholder
+      IDENTITY_ISSUER: http://localhost:3002/api/auth
+      IDENTITY_CLIENT_ID: ci-integration-tests-placeholder
+      IDENTITY_CLIENT_SECRET: ci-integration-tests-placeholder
       SESSION_COOKIE_SECRET: 0000000000000000000000000000000000000000000000000000000000000000
       # `FakeBillingGatewayLive` is provided by `TestServerLive`, so the
       # Stripe SDK is never instantiated and these values never reach a

@@ -17,7 +17,7 @@ export const loginEndpoint = Effect.fn("AuthLive.login")(function* () {
   const { codeVerifier, state, url } = yield* oidc.buildAuthorize;
 
   // Pack state+verifier into a signed cookie. Must be SameSite=Lax so the
-  // browser sends it on Zitadel's cross-site redirect back to the callback.
+  // browser sends it on the issuer's cross-site redirect back to the callback.
   //
   // `path: "/"` (rather than `/auth`) so the cookie rides through Next's
   // `/api/*` rewrite (ADR-0018) — the browser sees the callback at

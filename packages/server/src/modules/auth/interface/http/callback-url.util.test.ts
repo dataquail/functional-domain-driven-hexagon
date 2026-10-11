@@ -4,7 +4,7 @@ import { buildCallbackUrl } from "./callback-url.util.js";
 
 // The deterministic substructure of the callback endpoint worth pinning: the
 // reconstruction of the absolute callback URL openid-client receives. Off-by-one
-// mistakes here mean Zitadel rejects every token exchange with "redirect_uri
+// mistakes here mean the issuer rejects every token exchange with "redirect_uri
 // does not correspond" (ADR-0018, "How the /api/* proxy works"). The full
 // callback flow is covered e2e by Playwright + the SessionRepositoryLive test.
 
@@ -32,7 +32,7 @@ describe("buildCallbackUrl", () => {
   it("ignores the inbound URL's path entirely (Next-rewrite trap)", () => {
     // The inbound `requestUrl` is `/auth/callback?...` (Next stripped `/api`),
     // but the helper must not produce `http://localhost:3001/auth/callback`
-    // because Zitadel registered `/api/auth/callback`. The env value wins.
+    // because the client registered `/api/auth/callback`. The env value wins.
     const url = buildCallbackUrl(env, "/totally/different/path?code=abc");
     expect(url.pathname).toBe("/api/auth/callback");
     expect(url.searchParams.get("code")).toBe("abc");

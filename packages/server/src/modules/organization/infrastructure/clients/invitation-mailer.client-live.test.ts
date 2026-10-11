@@ -25,9 +25,9 @@ const EnvVarsTest = EnvVars.layer.pipe(
         Object.fromEntries([
           ["APP_URL", APP_URL],
           ["DATABASE_URL", "postgres://test"],
-          ["ZITADEL_ISSUER", "https://zitadel.test"],
-          ["ZITADEL_CLIENT_ID", "client"],
-          ["ZITADEL_CLIENT_SECRET", "secret"],
+          ["IDENTITY_ISSUER", "https://identity.test"],
+          ["IDENTITY_CLIENT_ID", "client"],
+          ["IDENTITY_CLIENT_SECRET", "secret"],
           ["SESSION_COOKIE_SECRET", "session-secret"],
           ["STRIPE_SECRET_KEY", "sk_test"],
           ["STRIPE_WEBHOOK_SECRET", "whsec_test"],
