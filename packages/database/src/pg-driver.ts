@@ -12,6 +12,7 @@ import type { SqlError } from "effect/sql/SqlError";
 export type Config = {
   url: Redacted.Redacted;
   ssl: boolean;
+  behindTransactionPooler?: boolean;
 };
 
 const INT8_BYTES = 8;
@@ -51,9 +52,17 @@ export const uuidArray = typedArray(PgTypes.OID.uuid);
 
 export const jsonb = (value: unknown): PgTypes.Parameter => PgTypes.jsonb(value);
 
+// A transaction-mode pooler (Hyperdrive) reuses backends between transactions, so a
+// named statement prepared on one is gone on the next; the pooler also owns reuse, so
+// the client keeps only what one invocation needs.
+const TRANSACTION_POOLER_SETTINGS = { prepare: false, maxConnections: 2 } as const;
+
+export const driverSettings = (config: Config): PgClient.PgPoolConfig => ({
+  url: config.url,
+  ssl: config.ssl ? { rejectUnauthorized: true } : undefined,
+  types: makeTypes(),
+  ...(config.behindTransactionPooler === true ? TRANSACTION_POOLER_SETTINGS : {}),
+});
+
 export const driverLayer = (config: Config): Layer.Layer<PgClient.PgClient | SqlClient, SqlError> =>
-  PgClient.layer({
-    url: config.url,
-    ssl: config.ssl ? { rejectUnauthorized: true } : undefined,
-    types: makeTypes(),
-  });
+  PgClient.layer(driverSettings(config));

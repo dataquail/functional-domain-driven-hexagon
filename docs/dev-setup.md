@@ -152,4 +152,5 @@ The server's `IDENTITY_CLIENT_ID` / `IDENTITY_CLIENT_SECRET` no longer match the
 ## Related ADRs
 
 - [0034 — The identity Worker: Better Auth as the OIDC issuer](adr/0034-identity-worker-with-better-auth.md)
+- [0035 — The server on Cloudflare Workers](adr/0035-server-on-cloudflare-workers.md)
 - [0017 — Frontend auth flow](adr/0017-frontend-auth-flow.md)
