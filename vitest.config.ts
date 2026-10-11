@@ -28,6 +28,7 @@ export default defineConfig({
       "packages/jobs",
       "packages/server",
       "packages/web",
+      "packages/web-svelte",
     ],
     coverage: {
       provider: "v8",

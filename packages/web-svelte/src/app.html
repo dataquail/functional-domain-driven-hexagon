@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en" class="h-full antialiased">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@org/web-svelte</title>
+    <script>
+      // Resolves the theme class before the body paints. The storage key is the theme provider's.
+      (function () {
+        try {
+          var stored = localStorage.getItem("web-ui-theme");
+          var theme =
+            stored === "dark" || stored === "light" || stored === "system" ? stored : "system";
+          var actual =
+            theme === "system"
+              ? window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light"
+              : theme;
+          document.documentElement.classList.add(actual);
+        } catch (_) {}
+      })();
+    </script>
+    %sveltekit.head%
+  </head>
+  <body class="min-h-full bg-background text-foreground" data-sveltekit-preload-data="hover">
+    <div style="display: contents">%sveltekit.body%</div>
+  </body>
+</html>

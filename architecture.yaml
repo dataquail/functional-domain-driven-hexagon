@@ -47,6 +47,9 @@ resolve:
     - files: "^packages/(web|components)/"
       language: typescript
       options: { tsconfig: tsconfig.resolve-web.json }
+    - files: "^packages/web-svelte/"
+      language: typescript
+      options: { tsconfig: tsconfig.resolve-web-svelte.json }
     - files: "^packages/acceptance/"
       language: typescript
       options: { tsconfig: packages/acceptance/tsconfig.json }
@@ -256,6 +259,7 @@ graph:
         - "**/global-setup.ts"
         - "~/web/test/setup.ts"
         - "~/components-svelte/test/setup.ts"
+        - "~/web-svelte/test/setup.ts"
         - "~/acceptance/playwright.config.ts"
         # Process entrypoints and package bins; workerd loads the server Worker by path.
         - "@/platform/worker/main.ts"
@@ -273,6 +277,9 @@ graph:
         - "~/components/.storybook/**"
         - "~/components-svelte/.storybook/**"
         - "~/components-svelte/vite.config.ts"
+        - "~/web-svelte/vite.config.ts"
+        - "~/web-svelte/src/routes/**"
+        - "~/web-svelte/src/app.d.ts"
   reach:
     - name: domain-reaches-no-adapter
       message: >-
@@ -315,10 +322,10 @@ graph:
       via: "@/modules/*/*.platform.ts"
     - name: web-never-reaches-the-server
       message: >-
-        packages/web transitively reaches packages/server. The browser talks to the BFF over HTTP
+        A web renderer transitively reaches packages/server. The browser talks to the BFF over HTTP
         through the contracts package and nothing else; a route from web to the server means a
         package both depend on has grown a server dependency.
-      from: "~/web/**"
+      from: ["~/web/**", "~/web-svelte/**"]
       to: "~/server/**"
     - name: contracts-reach-nothing
       message: >-
@@ -374,4 +381,5 @@ tree:
   "~/components/": { include: packages/components/architecture.yaml }
   "~/components-svelte/": { include: packages/components-svelte/architecture.yaml }
   "~/web/": { include: packages/web/architecture.yaml }
+  "~/web-svelte/": { include: packages/web-svelte/architecture.yaml }
   "~/server/src/": { include: packages/server/architecture.yaml }

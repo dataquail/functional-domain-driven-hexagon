@@ -25,6 +25,9 @@ reference/
 .env.test.local
 .env.production.local
 
+# SvelteKit's generated route types and build output
+.svelte-kit/
+
 # Storybook (per-build static output)
 storybook-static/
 
@@ -48,6 +51,8 @@ packages/*/src/**/*.jsx
 packages/*/src/**/*.mjs
 packages/*/src/**/*.cjs
 packages/*/src/**/*.d.ts
+# SvelteKit's ambient app types are hand-written.
+!packages/web-svelte/src/app.d.ts
 packages/*/src/**/*.map
 
 # Scratch git worktrees created by tooling; never part of the repo.

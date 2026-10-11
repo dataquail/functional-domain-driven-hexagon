@@ -10,7 +10,8 @@
     "./primitives/*": "./primitives/*/index.ts",
     "./patterns/*.svelte": "./patterns/*.svelte",
     "./providers/*": "./providers/*",
-    "./styles/*": "./styles/*"
+    "./styles/*": "./styles/*",
+    "./test/setup": "./test/setup.ts"
   },
   "scripts": {
     "storybook": "storybook dev -p 6007",

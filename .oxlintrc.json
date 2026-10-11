@@ -39,6 +39,7 @@
     "**/.tmp-*/**",
     "**/routeTree.gen.ts",
     "**/.next/**",
+    "**/.svelte-kit/**",
     "**/postcss.config.mjs"
   ],
   "rules": {

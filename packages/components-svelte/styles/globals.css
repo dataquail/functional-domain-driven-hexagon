@@ -4,11 +4,12 @@
 
 /*
  * Tailwind v4 scans relative to where it runs, so each tree whose `.svelte`
- * files carry class names is named here. Phase 6 adds the web app's.
+ * files carry class names is named here, plus the web app's document template.
  */
 @source "../primitives/**/*.svelte";
 @source "../patterns/**/*.svelte";
 @source "../providers/**/*.svelte";
+@source "../../web-svelte/src/app.html";
 
 @custom-variant dark (&:is(.dark *));
 

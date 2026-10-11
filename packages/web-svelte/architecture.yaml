@@ -1,0 +1,80 @@
+# yaml-language-server: $schema=https://dataquail.github.io/goodbones/schema/architecture-node.schema.json
+#
+# @org/web-svelte — the SvelteKit renderer over the Effect BFF, beside @org/web
+# until the Phase 7 cutover. The same MVVM as web, and the arrow points the same
+# way: Model (services/) ← ViewModel (*.view-model.ts) ← View (*.view.svelte).
+# src/ is SvelteKit's: the routes, the hooks and the document template.
+#
+# One node of the architecture policy: the root architecture.yaml includes this
+# file at "~/web-svelte/". A `.svelte` file is read through its script blocks,
+# by oxlint and by the CLI alike; its markup is ESLint's (ADR-0036, ADR-0037).
+
+name: kebab-case
+message: >-
+  packages/web-svelte is the SvelteKit renderer: src/ holds the routes and hooks, features/ the
+  MVVM tiers, services/ the Model, test/ the harnesses. There is no fifth folder — a new one is a
+  new tier.
+surface:
+  # Vite and Kit load their configuration, and a route its component, by default export.
+  - use: no-default-exports
+    except: ["**/vitest.config.ts", "~/web-svelte/vite.config.ts"]
+imports:
+  message: >-
+    packages/web-svelte consumes the Svelte component library and the shared contracts. It
+    reaches a third-party visual library only through @org/components-svelte (ADR-0015), and its
+    state is Effect Atom (ADR-0026).
+  external: [svelte]
+  allow: ["~/components-svelte/**"]
+children:
+  "vite.config.ts | vitest.config.ts":
+    surface:
+      - message: >-
+          A configuration file exports its default and nothing else: the tool that loads it reads
+          nothing named.
+        kinds: [named]
+    imports:
+      reset: true
+      message: >-
+        A build-configuration file names the tool it configures and nothing else — no features,
+        no services, no components.
+      external:
+        - vite
+        - vitest
+        - "@sveltejs/kit"
+        - "@sveltejs/vite-plugin-svelte"
+        - "@tailwindcss/vite"
+        - "@testing-library/svelte"
+      allow: ["~/web-svelte/aliases.ts"]
+  # The alias table Vite and Vitest share.
+  "aliases.ts": {}
+
+  # Framework surface: the routes compose the Model directly (the prefetch and
+  # the hydration boundary), which is why the View restrictions stop here.
+  "src/":
+    layout: open
+    # Kit names its route files `+page`, `+layout`, `+error` and `+server`.
+    name:
+      regex: "^(?:\\+(?:page|layout|error|server)|[a-z0-9]+(?:-[a-z0-9]+)*)$"
+      message: >-
+        A file under src/ is kebab-case, or one of SvelteKit's route files: +page, +layout,
+        +error, +server.
+    message: >-
+      src/ is SvelteKit's: the file-based routes, the server hooks and the ambient app types. It
+      is framework surface: it composes the Model directly, so the View restrictions do not apply
+      here.
+    children:
+      "**/": { layout: open, children: {} }
+
+  "test/":
+    layout: open
+    message: >-
+      test/ holds the harnesses: the jsdom setup, the atom registry, the integration harness, MSW
+      handlers and fixtures.
+    imports:
+      reset: true
+      message: >-
+        A web harness reaches the tier it stages, the component library's own test setup and the
+        contracts it serves. It never reaches the server.
+      allow: ["~/components-svelte/test/setup.ts"]
+    children:
+      "**/": { layout: open, children: {} }
