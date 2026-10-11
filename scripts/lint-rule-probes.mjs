@@ -20,7 +20,7 @@ const repoRoot = process.cwd();
 // `enforceExistence` rule fires on such a file whether or not its sibling
 // exists — a parity probe named that way passes vacuously, which is the exact
 // failure mode this script exists to catch.
-/** @type {Array<{rule: string, file: string, source: string, message?: string}>} */
+/** @type {Array<{rule: string, file: string, source: string, message?: string, linter?: "eslint"}>} */
 const PROBES = [
   {
     rule: "architecture/structure",
@@ -290,6 +290,28 @@ const PROBES = [
       '<script module lang="ts">\n  export type ZzProbeProps = { readonly class?: string };\n</script>\n\n<span>probe</span>\n',
   },
   {
+    // oxlint cannot see a Svelte template, so these run through ESLint
+    // (ADR-0036): a pattern painting a raw element, a class, and a style.
+    linter: "eslint",
+    rule: "svelte/no-restricted-html-elements",
+    file: "packages/components-svelte/patterns/zzprobe-element.svelte",
+    source: "<div>probe</div>\n",
+  },
+  {
+    linter: "eslint",
+    rule: "no-restricted-syntax",
+    message: "A class or a style handed to an element from a screen",
+    file: "packages/components-svelte/patterns/zzprobe-class.svelte",
+    source:
+      '<script lang="ts">\n  import Stack from "../primitives/stack.svelte";\n</script>\n\n<Stack class="p-4" />\n',
+  },
+  {
+    linter: "eslint",
+    rule: "svelte/no-inline-styles",
+    file: "packages/components-svelte/patterns/zzprobe-style.svelte",
+    source: '<span style="color: red">probe</span>\n',
+  },
+  {
     // Circularity is the one dependency-cruiser rule with no per-file
     // equivalent; oxlint's own rule replaced it, so it needs the same proof.
     rule: "import/no-cycle",
@@ -342,9 +364,12 @@ for (const probe of PROBES) {
   written.push(probe.file);
 }
 
+const oxlintProbes = PROBES.filter((probe) => probe.linter !== "eslint");
+const eslintProbes = PROBES.filter((probe) => probe.linter === "eslint");
+
 let output = "";
 try {
-  output = execFileSync("npx", ["oxlint", "--format=json", ...PROBES.map((p) => p.file)], {
+  output = execFileSync("npx", ["oxlint", "--format=json", ...oxlintProbes.map((p) => p.file)], {
     cwd: repoRoot,
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,
@@ -359,6 +384,31 @@ const diagnostics = (JSON.parse(output || '{"diagnostics":[]}').diagnostics ?? [
   file: (d.filename ?? d.labels?.[0]?.filename ?? "").replace(/^\.\//, ""),
   message: d.message ?? "",
 }));
+
+let eslintOutput = "";
+try {
+  eslintOutput = execFileSync(
+    "npx",
+    ["eslint", "--format=json", ...eslintProbes.map((p) => p.file)],
+    {
+      cwd: repoRoot,
+      encoding: "utf8",
+      maxBuffer: 64 * 1024 * 1024,
+    },
+  );
+} catch (error) {
+  eslintOutput = typeof error.stdout === "string" ? error.stdout : "";
+}
+
+for (const result of JSON.parse(eslintOutput || "[]")) {
+  for (const message of result.messages) {
+    diagnostics.push({
+      rule: message.ruleId ?? "",
+      file: path.relative(repoRoot, result.filePath),
+      message: message.message,
+    });
+  }
+}
 
 const results = PROBES.map((probe) => ({
   rule: probe.rule,
