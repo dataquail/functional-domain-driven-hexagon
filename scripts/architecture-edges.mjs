@@ -289,6 +289,11 @@ const REFUSED = [
     "node_modules/.pnpm/x/node_modules/alchemy/lib/Cloudflare/index.js",
   ],
   [
+    "the server's OIDC client importing Better Auth",
+    "packages/server/src/modules/auth/infrastructure/clients/oidc.client.ts",
+    "node_modules/.pnpm/x/node_modules/better-auth/dist/index.mjs",
+  ],
+  [
     "the server's composition root importing cloudflare:workers outside platform/worker/",
     "packages/server/src/server.ts",
     "node_modules/.pnpm/x/node_modules/@cloudflare/workers-types/index.d.ts",
@@ -822,6 +827,11 @@ const ALLOWED = [
     "@org/infra declaring the stack with Alchemy (LEGAL)",
     "packages/infra/alchemy.run.ts",
     "node_modules/.pnpm/x/node_modules/alchemy/lib/index.js",
+  ],
+  [
+    "@org/identity configuring Better Auth (LEGAL)",
+    "packages/identity/src/auth/identity-auth.ts",
+    "node_modules/.pnpm/x/node_modules/better-auth/dist/index.mjs",
   ],
   [
     "the server's Worker entrypoint importing cloudflare:workers (LEGAL)",

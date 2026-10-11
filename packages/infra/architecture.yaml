@@ -84,7 +84,8 @@ children:
               "placeholder.ts": {}
       "stack/":
         message: >-
-          stack/ declares resources, one file per kind (databases, queues, …). Each exports the
-          Effects alchemy.run.ts yields; a Worker binds to the same Effect it was declared with.
+          stack/ declares resources, one file per kind (databases, queues, workers). Each exports
+          the Effects alchemy.run.ts yields; a Worker binds to the same Effect it was declared
+          with, and a Worker whose code lives in another package is named by its entry path.
         children:
-          "databases.ts | queues.ts": {}
+          "databases.ts | queues.ts | workers.ts": {}

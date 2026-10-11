@@ -393,8 +393,8 @@ Two gates back that up, and they answer different questions:
   enabled, its globs match, resolution is live. A repo-wide `deny` shares the
   `architecture/imports` id with every allowlist, so its probe also names the
   message it must report.
-- `pnpm lint:edges` — the **semantics**: 177 edges with expected verdicts (132
-  refused, 45 allowed) and 12 graph shapes with expected reports. The allowed and
+- `pnpm lint:edges` — the **semantics**: 179 edges with expected verdicts (133
+  refused, 46 allowed) and 12 graph shapes with expected reports. The allowed and
   quiet rows matter as much: a policy that refuses everything is as broken as one
   that refuses nothing. A row that changes verdict is either a regression or a
   decision.

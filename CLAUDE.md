@@ -26,6 +26,7 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 | `@org/database`     | DB access kernel (effect/sql client, `RowSchemas`, row decoding) + migrations.     |
 | `@org/jobs`         | Background/cron jobs.                                                              |
 | `@org/infra`        | The Alchemy stack (Neon, Hyperdrive, Queues); the only package that names Alchemy. |
+| `@org/identity`     | The identity Worker: Better Auth as the OIDC issuer; the only package naming it.   |
 | `@org/cli`          | Command-line client (device-flow auth, organizations, todos).                      |
 | `@org/mcp`          | MCP (stdio) server exposing the CLI surface as tools.                              |
 | `@org/api-client`   | Shared typed client + credential store for the CLI and MCP.                        |
@@ -61,7 +62,7 @@ there, not an edit here.
 | `pnpm dev:cf`                                                | `alchemy dev` over `packages/infra`: the Workers stack in workerd, Hyperdrive passed through to docker Postgres                        |
 | `pnpm dev:cf:check`                                          | boots `dev:cf`, asks the placeholder Worker for `SELECT 1` through Hyperdrive, shuts it down                                           |
 | `pnpm deploy:cf --stage <s>` / `pnpm destroy:cf --stage <s>` | `alchemy deploy` / `destroy` — creates or removes real Cloudflare + Neon resources; needs credentials                                  |
-| `pnpm db:migrate`                                            | the app's PgMigrator migrations against `DATABASE_URL` (a deployed one: its direct URL with `sslmode=require`)                         |
+| `pnpm db:migrate`                                            | the app's PgMigrator migrations, then Better Auth's against `IDENTITY_DATABASE_URL` (deployed: direct URLs)                            |
 | `pnpm effect:source`                                         | clone/refresh the Effect v4 source at `reference/effect` (gitignored, pinned to our version)                                           |
 
 ## Always in scope

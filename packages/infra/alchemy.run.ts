@@ -7,6 +7,7 @@ import * as Layer from "effect/Layer";
 import PlaceholderWorker from "./src/platform/worker/placeholder.js";
 import { appDatabase, identityDatabase } from "./src/stack/databases.js";
 import { domainEventsDeadLetterQueue, domainEventsQueue } from "./src/stack/queues.js";
+import { identityWorker } from "./src/stack/workers.js";
 
 const stateStore = Layer.unwrap(
   Effect.gen(function* () {
@@ -27,12 +28,14 @@ export default Alchemy.Stack(
     const domainEvents = yield* domainEventsQueue;
     const domainEventsDeadLetter = yield* domainEventsDeadLetterQueue;
     const placeholder = yield* PlaceholderWorker;
+    const identityAuth = yield* identityWorker;
     return {
       appHyperdriveId: app.hyperdriveId,
       identityHyperdriveId: identity.hyperdriveId,
       domainEventsQueue: domainEvents.queueName,
       domainEventsDeadLetterQueue: domainEventsDeadLetter.queueName,
       placeholderUrl: placeholder.url,
+      identityUrl: identityAuth.url,
     };
   }),
 );

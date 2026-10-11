@@ -246,6 +246,13 @@ const PROBES = [
   },
   {
     rule: "architecture/imports",
+    message: "Better Auth is the identity provider's implementation and stays in @org/identity.",
+    file: "packages/server/src/zzprobe-better-auth.ts",
+    source:
+      'import { betterAuth } from "../../identity/node_modules/better-auth/dist/index.mjs";\n\nexport const probe = betterAuth;\n',
+  },
+  {
+    rule: "architecture/imports",
     message:
       "Only a Worker entrypoint, in a platform/worker/ folder, may import cloudflare:workers",
     file: "packages/server/src/zzprobe-workers.ts",
