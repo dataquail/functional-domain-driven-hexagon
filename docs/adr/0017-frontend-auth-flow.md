@@ -1,6 +1,6 @@
 # ADR-0017: Frontend authentication — server-mediated, no tokens in the client
 
-- Status: Accepted
+- Status: Accepted; amended by [ADR-0034](0034-identity-worker-with-better-auth.md) — where this says Zitadel, read the identity Worker: its sign-in page is what Playwright drives, and logout passes an `id_token_hint` so the issuer ends its session without a confirmation step
 - Date: 2026-04-30
 
 ## Context and Problem Statement
