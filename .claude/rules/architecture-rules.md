@@ -487,9 +487,7 @@ left out runs in the CLI and not the editor, and the two adapters disagree.
 blocks, and the TypeScript pack reads the same blocks for the CLI, so every family
 reaches a component's imports, exports and declarations. Neither reads the markup:
 an element, an attribute or an expression in the template is ESLint's
-(`pnpm lint:svelte`, ADR-0036). And `~/components-svelte/` is listed before
-`~/components/` in the tree, because core beta.16 lets the first root claim a
-sibling folder that shares its prefix (goodbones #99).
+(`pnpm lint:svelte`, ADR-0036).
 
 **Anything about the whole graph.** Cycles, orphans and transitive reach need
 every file resolved at once, which a per-file rule never has. They live in the
