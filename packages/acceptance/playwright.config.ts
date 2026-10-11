@@ -8,9 +8,9 @@ dotenv.config({ path: "../../.env" });
 // Acceptance configuration follows the layered architecture from Synapse's
 // `acceptance-testing` doc: specs are business-language only, drivers/pages
 // hide selectors, infrastructure (this file + global-setup.ts) wires real
-// processes. The webServer entries spawn the Workers stack (against the test DB)
-// and the Next renderer before tests run; global-setup migrates the
-// test DB once and pre-seeds the admin row.
+// processes. The webServer entries spawn the Workers stack (against the test DB),
+// which serves the SvelteKit renderer, or Next beside it with WEB_RENDERER=next;
+// global-setup migrates the test DB once and pre-seeds the admin row.
 //
 // Auth: an `auth-setup` project signs the admin in through the identity
 // Worker's real sign-in page and stamps the cookie into storageState. The `chromium` project
@@ -19,7 +19,10 @@ dotenv.config({ path: "../../.env" });
 // the full UI flow on every run.
 
 const isCi = process.env.CI !== undefined && process.env.CI !== "";
-// Browser-facing origin (Next renderer; ADR-0018). Browser navigation
+// Which renderer serves :3000 until Phase 7 deletes Next: the SvelteKit app,
+// inside the Workers stack, or Next beside it.
+const WEB_RENDERER = process.env.WEB_RENDERER === "next" ? "next" : "svelte";
+// Browser-facing origin (the renderer; ADR-0018). Browser navigation
 // uses `localhost` so the session cookie set by the OIDC callback
 // (registered as `http://localhost:3000/api/auth/callback`) is visible
 // to the test origin — the cookie domain MUST match the registered
@@ -115,18 +118,20 @@ export default defineConfig({
     {
       // The Workers stack under `alchemy dev`: the server Worker on :3001, reached
       // through the app Hyperdrive's dev origin, which DATABASE_URL points at the
-      // TEST database; and the identity Worker on :3002 the global setup seeds.
-      // Without `--env-file`, alchemy lets this process's environment win over
-      // .env, which is what makes the override stick. SIGINT is what stops the
-      // whole stack, its detached sidecar included.
+      // TEST database; the identity Worker on :3002 the global setup seeds; and,
+      // for the SvelteKit renderer, the web Worker on :3000, whose /api proxy is
+      // the readiness probe. Without `--env-file`, alchemy lets this process's
+      // environment win over .env, which is what makes the override stick.
+      // SIGINT is what stops the whole stack, its detached sidecar included.
       name: "workers",
       command: "pnpm -F @org/infra exec alchemy dev",
-      url: `${BFF_PROBE_URL}/auth/me`,
+      url: WEB_RENDERER === "svelte" ? `${WEB_PROBE_URL}/api/auth/me` : `${BFF_PROBE_URL}/auth/me`,
       cwd: "../../",
       env: {
         ...process.env,
         DATABASE_URL: DATABASE_URL_TEST,
         APP_URL,
+        WEB_RENDERER,
       },
       gracefulShutdown: { signal: "SIGINT", timeout: 30_000 },
       // Acceptance always spawns its own stack — a running `pnpm dev` holds the
@@ -136,34 +141,28 @@ export default defineConfig({
       stdout: "pipe",
       stderr: "pipe",
     },
-    {
-      // Next renderer. We run a real production build + `next start`
-      // rather than `next dev` because:
-      //   1. dev compiles routes lazily, so the URL probe can time out
-      //      while Turbopack is still warming up — flaky in CI.
-      //   2. dev installs file watchers that compete with `tsx watch`'s
-      //      and the runner's own inotify slots.
-      // `next start` boots in ~1s once the build has run. The build is
-      // wired into a `pretest` script in @org/acceptance so a fresh
-      // `pnpm test:acceptance` always sees current source. `.next/cache`
-      // makes subsequent runs fast.
-      //
-      // SERVER_INTERNAL_URL points the /api/* rewrite at the test-DB-bound
-      // server Worker above. APP_URL stays :3000 so the BFF redirects post-sign-in
-      // to the same origin Playwright drives.
-      name: "web",
-      command: "pnpm -F @org/web start",
-      url: WEB_PROBE_URL,
-      cwd: "../../",
-      env: {
-        ...process.env,
-        SERVER_INTERNAL_URL,
-        OTLP_URL: process.env.OTLP_URL ?? "http://localhost:4318/v1/traces",
-      },
-      reuseExistingServer: false,
-      timeout: 30_000,
-      stdout: "pipe",
-      stderr: "pipe",
-    },
+    ...(WEB_RENDERER === "next"
+      ? [
+          {
+            // Next renderer: a production build + `next start`, which boots in
+            // ~1s once `test:next` has built it; `next dev` compiles routes
+            // lazily and the probe can time out. SERVER_INTERNAL_URL points the
+            // /api/* rewrite at the server Worker above.
+            name: "web",
+            command: "pnpm -F @org/web start",
+            url: WEB_PROBE_URL,
+            cwd: "../../",
+            env: {
+              ...process.env,
+              SERVER_INTERNAL_URL,
+              OTLP_URL: process.env.OTLP_URL ?? "http://localhost:4318/v1/traces",
+            },
+            reuseExistingServer: false,
+            timeout: 30_000,
+            stdout: "pipe" as const,
+            stderr: "pipe" as const,
+          },
+        ]
+      : []),
   ],
 });

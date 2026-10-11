@@ -169,7 +169,7 @@ export const serverWorker = Effect.fn(function* (identity: Cloudflare.Worker) {
 // `WEB_RENDERER=svelte` serves the SvelteKit app there instead.
 export const webWorker = Effect.fn(function* (server: Cloudflare.Worker) {
   const renderer = yield* Config.Literals(["svelte", "next"], "WEB_RENDERER").pipe(
-    Config.withDefault("next"),
+    Config.withDefault("svelte"),
   );
   if (renderer === "next") return Option.none<Cloudflare.Worker>();
   const domain = yield* Config.option(Config.String("WEB_DOMAIN"));

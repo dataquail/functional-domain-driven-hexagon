@@ -15,8 +15,13 @@ permissions:
 
 jobs:
   acceptance:
-    name: Playwright acceptance
+    name: Playwright acceptance (${{ matrix.renderer }})
     runs-on: ubuntu-latest
+    # Until Phase 7 deletes Next, the suite runs against both renderers on :3000.
+    strategy:
+      fail-fast: false
+      matrix:
+        renderer: [svelte, next]
     timeout-minutes: 25
 
     env:
@@ -74,7 +79,7 @@ jobs:
           pnpm db:migrate:identity
 
       - name: Run acceptance tests
-        run: pnpm test:acceptance
+        run: pnpm ${{ matrix.renderer == 'next' && 'test:acceptance:next' || 'test:acceptance' }}
         env:
           CI: "true"
 
@@ -82,7 +87,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.renderer }}
           path: packages/acceptance/playwright-report/
           retention-days: 14
 
