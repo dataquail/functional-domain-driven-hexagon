@@ -281,12 +281,14 @@ children:
           "tracing.client.ts": {}
           # A prefetch runs a query's Effect on the request's runtime.
           "*.server.ts": {}
-          "*.shared.test.ts | form-validation.test.ts": { use: web-svelte-unit-test-file }
+          "*.shared.test.ts | form-validation.test.ts | *.server.test.ts":
+            use: web-svelte-unit-test-file
       "data-access/":
         message: data-access/ binds each feature's slice of the API to query and mutation atoms.
         children:
           "*.atoms.ts": { members: [{ use: runs-no-effect }] }
           "*.server.ts": {}
+          "*.server.test.ts": { use: web-svelte-unit-test-file }
       "format/":
         message: format/ holds the presentation helpers a ViewModel formats values with.
         children:
@@ -330,7 +332,7 @@ children:
         - "~/contracts/**"
     children:
       "setup.ts | msw-server.ts | typed-handler.ts": {}
-      "atom-harness.ts | integration-harness.ts": {}
+      "atom-harness.ts | integration-harness.ts | server-runtime.ts": {}
       "view-harness.svelte | integration-providers.svelte": {}
       # The spike that proves typedHandler round-trips stands up its own MSW server.
       "typed-handler.test.ts":
