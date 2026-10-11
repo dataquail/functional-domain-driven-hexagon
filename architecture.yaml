@@ -72,7 +72,7 @@ resolve:
 limits:
   unrestricted: 1
   partial: 0
-  coverage: { imports: 0.96, structure: 0.73, members: 0.03, surface: 0.91, graph: 1 }
+  coverage: { imports: 0.96, structure: 0.77, members: 0.12, surface: 0.92, graph: 1 }
   conformance: { residue: 0, vacant: 11, slack: 45, concentration: 0 }
 
 aliases:

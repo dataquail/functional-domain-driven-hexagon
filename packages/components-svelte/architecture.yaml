@@ -46,6 +46,20 @@ message: >-
   @org/components-svelte holds two trees: primitives/ (atoms) and patterns/ (molecules and
   organisms), plus the providers/, the test harness and the Storybook config. A new folder here
   is a new tier — declare it deliberately.
+# The prop surface is the contract: a component is painted through its closed unions,
+# never by a class or a style handed in from outside.
+members:
+  - message: >-
+      `{name}` reopens the component's surface to arbitrary paint. A component takes closed
+      unions mapped through its own class tables; when it cannot express what a screen needs,
+      widen the union and prove the variant in its story (ADR-0015).
+    subject: members
+    declares: [type, interface]
+    in: "*Props"
+    match: [class, className, style]
+    probe:
+      source: "export type ZzProbeProps = { readonly class?: string };"
+      name: class
 # Storybook loads a story's meta, its configuration and Vite's by default export.
 surface:
   - use: no-default-exports
@@ -100,6 +114,29 @@ children:
           "*.stories.svelte": { use: svelte-story-file }
           "*.test.ts": { use: svelte-component-test-file }
           "*.ts": {}
+
+  "patterns/":
+    message: >-
+      patterns/ composes primitives into molecules and organisms. It consumes the third-party
+      libraries only through primitives/, and it never reaches into a feature.
+    imports:
+      reset: true
+      message: >-
+        A pattern composes primitives and other patterns. A visual library is a primitive's to
+        name, and a feature is the web app's.
+      external: [svelte]
+      allow: ["~/components-svelte/primitives/**", "~/components-svelte/patterns/**"]
+    children:
+      "*.svelte": { use: svelte-story-parity }
+      "*.stories.svelte": { use: svelte-story-file }
+      "*.test.ts":
+        use: svelte-component-test-file
+        imports:
+          message: >-
+            A pattern test renders the pattern with the shared test snippets, drives it as a user
+            would and asserts on the DOM.
+          external: [vitest, "@testing-library/svelte", "@testing-library/user-event"]
+          allow: ["~/components-svelte/test/**"]
 
   # The theme the toaster and the app read, over Svelte context.
   "providers/":

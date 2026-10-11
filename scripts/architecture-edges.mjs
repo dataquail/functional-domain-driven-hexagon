@@ -379,6 +379,11 @@ const REFUSED = [
     "node_modules/.pnpm/x/node_modules/bits-ui/dist/index.js",
   ],
   [
+    "a Svelte pattern reaching a UI library",
+    "packages/components-svelte/patterns/app-shell.svelte",
+    "node_modules/.pnpm/x/node_modules/bits-ui/dist/index.js",
+  ],
+  [
     "a Svelte component importing web",
     "packages/components-svelte/primitives/spinner.svelte",
     "packages/web/services/atom/api-atoms.shared.ts",
@@ -907,6 +912,11 @@ const ALLOWED = [
     "a Svelte primitive using bits-ui (LEGAL)",
     "packages/components-svelte/primitives/dialog.svelte",
     "node_modules/.pnpm/x/node_modules/bits-ui/dist/index.js",
+  ],
+  [
+    "a Svelte pattern using a primitive (LEGAL)",
+    "packages/components-svelte/patterns/app-shell.svelte",
+    "packages/components-svelte/primitives/stack.svelte",
   ],
   [
     "a Svelte story using its component (LEGAL)",

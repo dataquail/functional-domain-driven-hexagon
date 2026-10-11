@@ -282,6 +282,14 @@ const PROBES = [
       '<script lang="ts">\n  import { Label } from "bits-ui";\n</script>\n\n<Label.Root>probe</Label.Root>\n',
   },
   {
+    // The prop surface, read out of a Svelte component's module script.
+    rule: "architecture/members",
+    message: "reopens the component's surface to arbitrary paint",
+    file: "packages/components-svelte/patterns/zzprobe-members.svelte",
+    source:
+      '<script module lang="ts">\n  export type ZzProbeProps = { readonly class?: string };\n</script>\n\n<span>probe</span>\n',
+  },
+  {
     // Circularity is the one dependency-cruiser rule with no per-file
     // equivalent; oxlint's own rule replaced it, so it needs the same proof.
     rule: "import/no-cycle",
