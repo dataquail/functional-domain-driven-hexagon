@@ -8,6 +8,7 @@
     { "path": "packages/database" },
     { "path": "packages/jobs" },
     { "path": "packages/infra" },
+    { "path": "packages/identity" },
     { "path": "packages/api-client" },
     { "path": "packages/cli" },
     { "path": "packages/mcp" }

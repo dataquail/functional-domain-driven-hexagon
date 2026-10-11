@@ -109,6 +109,12 @@ deny:
       Alchemy is infrastructure-as-code and stays in @org/infra. Application code is deployed by
       the stack, it does not describe it: a module that names Alchemy couples its use cases to one
       host and one provisioning tool, and drags the IaC engine into every test that loads it.
+  - match: ["**/node_modules/better-auth/**", "**/node_modules/@better-auth/**"]
+    except: ["~/identity/**"]
+    message: >-
+      Better Auth is the identity provider's implementation and stays in @org/identity. The server
+      is an OIDC relying party: it knows the issuer by its discovery document and a client id, so
+      swapping the provider changes a URL, not the code that signs users in.
   # `cloudflare:workers` has no file on disk; tsconfig.resolve.json maps it to
   # this declaration, so the rule fences the runtime module and the binding
   # types together.
@@ -240,8 +246,10 @@ graph:
         - "~/jobs/src/main.ts"
         - "~/mcp/src/main.ts"
         - "~/database/src/scripts/**"
-        # The Alchemy CLI loads the stack by convention.
+        # The Alchemy CLI loads the stack by convention, and the identity Worker by path.
         - "~/infra/alchemy.run.ts"
+        - "~/identity/src/platform/worker/identity-worker.ts"
+        - "~/identity/src/scripts/**"
         # Framework-loaded by convention.
         - "~/web/app/**"
         - "~/web/instrumentation.ts"
@@ -344,6 +352,7 @@ tree:
   "~/mcp/": { include: packages/mcp/architecture.yaml }
   "~/jobs/": { include: packages/jobs/architecture.yaml }
   "~/infra/": { include: packages/infra/architecture.yaml }
+  "~/identity/": { include: packages/identity/architecture.yaml }
   "~/components/": { include: packages/components/architecture.yaml }
   "~/web/": { include: packages/web/architecture.yaml }
   "~/server/src/": { include: packages/server/architecture.yaml }

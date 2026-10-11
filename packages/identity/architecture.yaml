@@ -1,0 +1,161 @@
+# yaml-language-server: $schema=https://dataquail.github.io/goodbones/schema/architecture-node.schema.json
+#
+# @org/identity — the identity Worker: Better Auth as the OIDC issuer the server
+# signs users in against, with its own database and its own pages.
+#
+# One node of the architecture policy: the root architecture.yaml includes this
+# file at "~/identity/". Patterns are repo-relative and use the root's
+# aliases; a fragment defined under `defs` here joins the one namespace every file
+# shares, so name it for what it is.
+
+defs:
+  identity-test-file:
+    surface: [{ use: test-exports-nothing }]
+    imports:
+      message: >-
+        An identity test exercises the module beside it with fakes and the Web platform's own
+        Request and Response. It does not start Better Auth: that needs a database and is what
+        `pnpm dev:cf` is for.
+      external: ["@effect/vitest"]
+
+  identity-integration-test-file:
+    surface: [{ use: test-exports-nothing }]
+    imports:
+      message: >-
+        An identity integration test runs Better Auth against a real Postgres database, set up by
+        test-utils/. It reaches its harness and pg, and vitest for the per-test reset.
+      external: ["@effect/vitest", vitest, pg]
+
+name: kebab-case
+message: >-
+  @org/identity is the OIDC issuer the server signs users in against. src/auth/ configures Better
+  Auth and wraps it in the port the router speaks, src/http/ routes a request, src/pages/ and
+  src/mail/ render what a user sees and receives, src/seed/ provisions the app's client and its
+  first users, src/scripts/ runs on Node, and src/platform/worker/ is the Worker entrypoint.
+# Alchemy loads the Worker entrypoint by its default export.
+surface:
+  - use: no-default-exports
+    except:
+      [
+        "**/vitest.config.ts",
+        "~/identity/src/platform/worker/*.ts",
+        "~/identity/src/test-utils/global-setup.ts",
+      ]
+imports:
+  message: >-
+    @org/identity is a deployable of its own. It reaches effect and its own files, never the
+    server, the database kernel or the contracts: the server knows it only as an OIDC issuer
+    at a URL, and nothing here may know the server any better.
+  external: [effect]
+  allow: ["~/identity/**"]
+importedBy:
+  message: >-
+    Nothing outside @org/identity imports it. The server reaches the issuer over OIDC, and the
+    seed scripts over its HTTP seed endpoint.
+  allow: ["~/identity/**"]
+children:
+  "vitest.config.ts":
+    surface:
+      - message: "A vitest config exports its config as the default and nothing else."
+        kinds: [named, namespace]
+        count: { max: 0 }
+    imports:
+      reset: true
+      message: "A build-configuration file names the tool it configures and nothing else."
+      external: [vitest]
+      allow: ["vitest.shared.ts", "node:path"]
+  "src/":
+    message: >-
+      src/ holds one folder per concern. A file outside them has no tier to say what it may
+      reach.
+    children:
+      "auth/":
+        message: >-
+          auth/ configures Better Auth for this issuer and adapts it to IdentityAuthPort, the
+          only face of it the router sees.
+        imports:
+          message: >-
+            auth/ is the one folder that names Better Auth's plugins. The database arrives as a
+            pg Pool the entrypoint builds, typed here and never constructed.
+          external: [better-auth, "@better-auth/oauth-provider", pg]
+        children:
+          "identity-auth.ts | identity-auth-port.ts | identity-migrations.ts | id-token-claims.ts":
+            {}
+          "*.integration.test.ts": { use: identity-integration-test-file }
+          "id-token-claims.test.ts": { use: identity-test-file }
+      "http/":
+        message: >-
+          http/ routes a request to Better Auth, a page, or a form handler, through
+          IdentityAuthPort — so it runs, and is tested, without a database.
+        children:
+          "identity-router.ts": {}
+          "*.test.ts": { use: identity-test-file }
+      "mail/":
+        message: >-
+          mail/ renders the verification and reset emails and sends them through a mailer:
+          Mailpit's HTTP API locally, the Email binding once deployed. The binding arrives as a
+          structural type, so nothing here names the Workers runtime.
+        children:
+          "identity-mailer.ts | identity-emails.ts | mailpit-mailer.ts | email-binding-mailer.ts":
+            {}
+          "*.test.ts": { use: identity-test-file }
+      "pages/":
+        message: >-
+          pages/ renders HTML: an escaping template tag and one function per page. Logic stays
+          out of the markup, so a page is a pure function of its props.
+        children:
+          "html.ts | identity-pages.ts": {}
+          "*.test.ts": { use: identity-test-file }
+      "seed/":
+        message: >-
+          seed/ provisions the app's OAuth client and verified users through Better Auth's own
+          API, for the seed endpoint a stage with a seed token exposes.
+        children:
+          "identity-seed.ts": {}
+          "*.integration.test.ts": { use: identity-integration-test-file }
+          "identity-seed.test.ts": { use: identity-test-file }
+      "scripts/":
+        message: >-
+          scripts/ runs on Node against the identity database's direct URL: today, Better Auth's
+          migrations.
+        imports:
+          message: >-
+            A script reads the repo's .env and builds a pg Pool over the direct URL; what it runs
+            lives in auth/.
+          external: ["@effect/platform-node", dotenv, pg]
+        children:
+          "migrate.ts": {}
+      "test-utils/":
+        message: >-
+          test-utils/ is the integration harness: the identity test database beside the app's,
+          migrated once by the global setup and truncated between cases, and a Better Auth wired to
+          it with a mailer that records instead of sending.
+        imports:
+          message: "The harness builds pg Pools against the identity test database."
+          external: [pg]
+        children:
+          "global-setup.ts | identity-test-database.ts | identity-test-auth.ts": {}
+      "platform/":
+        message: >-
+          platform/ holds what runs on the host platform rather than describing it: worker/ is
+          the Worker entrypoint.
+        children:
+          "worker/":
+            message: >-
+              platform/worker/ holds the identity Worker's entrypoint, the only file here that
+              reads a binding. It builds a pg Pool over the Hyperdrive per request, picks the
+              mailer, and hands the request to the router.
+            imports:
+              message: >-
+                The entrypoint names the Workers binding types and pg; everything below it takes
+                plain values.
+              external: [pg, "@cloudflare/workers-types"]
+            surface:
+              - message: >-
+                  A Worker entrypoint exports its handler as the default and nothing else:
+                  workerd treats every other export as a top-level entrypoint and refuses to
+                  start.
+                kinds: [named, namespace]
+                count: { max: 0 }
+            children:
+              "identity-worker.ts": {}

@@ -4,7 +4,7 @@
 //
 // Phases:
 //   1. ensure .env exists (copy from .env.example)
-//   2. ensure SESSION_COOKIE_SECRET is generated
+//   2. ensure SESSION_COOKIE_SECRET and BETTER_AUTH_SECRET are generated
 //   3. bring up Zitadel, Mailpit and Jaeger (compose pulls postgres in via depends_on)
 //   4. ensure the identity database exists and IDENTITY_DATABASE_URL names it
 //   5. migrate the dev and test databases
@@ -57,7 +57,7 @@ if (process.env.CODESPACES !== undefined) {
 
 async function main() {
   step(1, "ensure .env exists", ensureEnvFile);
-  step(2, "ensure SESSION_COOKIE_SECRET is set", ensureSessionSecret);
+  step(2, "ensure SESSION_COOKIE_SECRET and BETTER_AUTH_SECRET are set", ensureSecrets);
   step(3, "bring up Zitadel, Mailpit and Jaeger", servicesUp);
   step(4, "ensure the identity database exists", ensureIdentityDatabase);
   step(5, "migrate the dev + test databases", migrate);
@@ -92,14 +92,17 @@ function ensureEnvFile() {
   return "copied .env.example → .env";
 }
 
-function ensureSessionSecret() {
+function ensureSecrets() {
   const env = readEnv(ENV_PATH);
-  if (env.SESSION_COOKIE_SECRET !== undefined && env.SESSION_COOKIE_SECRET.length > 0) {
-    return "already set";
-  }
-  const secret = randomBytes(32).toString("hex");
-  updateEnv(ENV_PATH, { SESSION_COOKIE_SECRET: secret });
-  return "generated 32-byte secret";
+  const missing = ["SESSION_COOKIE_SECRET", "BETTER_AUTH_SECRET"].filter(
+    (name) => env[name] === undefined || env[name].length === 0,
+  );
+  if (missing.length === 0) return "already set";
+  updateEnv(
+    ENV_PATH,
+    Object.fromEntries(missing.map((name) => [name, randomBytes(32).toString("hex")])),
+  );
+  return `generated ${missing.join(" and ")}`;
 }
 
 function servicesUp() {
