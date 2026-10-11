@@ -20,6 +20,6 @@
     "dotenv": "^16.6.1",
     "effect": "4.0.2",
     "pg": "^8.20.0",
-    "typescript": "~5.7.3"
+    "typescript": "^6.0.3"
   }
 }
