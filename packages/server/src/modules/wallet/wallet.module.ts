@@ -3,5 +3,5 @@ import { WalletCommandsLive } from "./wallet.command-handlers.js";
 
 export const WalletModule = {
   layer: WalletCommandsLive,
-  http: OrganizationEventAdapterLive,
+  events: OrganizationEventAdapterLive,
 };

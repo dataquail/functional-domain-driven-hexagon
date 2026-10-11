@@ -1,14 +1,16 @@
-import { ok, strictEqual } from "node:assert";
+import { deepStrictEqual, ok, strictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
 import * as ConfigProvider from "effect/ConfigProvider";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 
 import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
 import { MailDeliveryError } from "@/globals/infrastructure/email/ports/mail-errors.js";
 import { Mailer } from "@/globals/infrastructure/email/ports/mailer.js";
+import { InvitationEmailUndelivered } from "@/modules/organization/domain/invitation/invitation.errors.js";
 import { InvitationMailer } from "@/modules/organization/domain/ports/clients/invitation-mailer.client.js";
 import { InvitationMailerLive } from "@/modules/organization/infrastructure/clients/invitation-mailer.client-live.js";
 import { MailerFake, SentMails } from "@/test-utils/mailer-fake.js";
@@ -71,18 +73,16 @@ describe("InvitationMailerLive", () => {
     ),
   );
 
-  it.effect("swallows a transport failure so a flaky relay can't fail the invite", () =>
+  it.effect("surfaces a transport failure so the delivery is retried", () =>
     Effect.gen(function* () {
       const mailer = yield* InvitationMailer;
       const now = yield* DateTime.now;
 
-      // Port surface is `Effect<void>` — a MailDeliveryError from the
-      // transport is logged and absorbed, not propagated.
-      yield* mailer.send({
-        to: "bob@example.com",
-        token,
-        expiresAt: DateTime.add(now, { days: 7 }),
-      });
+      const exit = yield* mailer
+        .send({ to: "bob@example.com", token, expiresAt: DateTime.add(now, { days: 7 }) })
+        .pipe(Effect.exit);
+
+      deepStrictEqual(exit, Exit.fail(new InvitationEmailUndelivered({ message: "relay down" })));
     }).pipe(
       Effect.provide(
         InvitationMailerLive.pipe(

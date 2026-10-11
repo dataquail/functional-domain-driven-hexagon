@@ -133,8 +133,8 @@ exports:
     message: >-
       Constructing a bus takes the WHOLE routing table, so anything that builds one could answer
       a message with a different module's handler than the composed application would. Only a
-      composition root may (ADR-0006): server.ts, globals/infrastructure/cqrs/cqrs-runtime.ts, or
-      test-utils/.
+      composition root may (ADR-0006): platform/worker/main.ts,
+      globals/infrastructure/cqrs/cqrs-runtime.ts, or test-utils/.
       Depend on the CommandBus/QueryBus Tag instead, or — inside a module — publish that module's
       own surface with Command.dispatcher. The event bus, the unit of work and the
       unhandled-failure sink are fenced for a related reason: a second instance of any of them is
@@ -150,7 +150,13 @@ exports:
       - makeEventBus
       - makeUnitOfWork
       - makeUnhandledFailures
-    except: ["@/server.ts", "@/globals/infrastructure/cqrs/**", "@/test-utils/**", "**/*.test.ts"]
+    except:
+      [
+        "@/platform/worker/main.ts",
+        "@/globals/infrastructure/cqrs/**",
+        "@/test-utils/**",
+        "**/*.test.ts",
+      ]
     # Named bindings only, deliberately: neither library publishes a default
     # export, so `import makeCommandBus from` is a type error before it is a
     # policy question. The namespace form is the real way around a symbols
@@ -170,7 +176,7 @@ exports:
     # wholesale, on purpose and with its reasons written in the file; its
     # own allowlist keeps it from naming the module that holds a factory.
     except:
-      - "@/server.ts"
+      - "@/platform/worker/main.ts"
       - "@/globals/infrastructure/cqrs/**"
       - "@/test-utils/**"
       - "**/*.test.ts"
@@ -240,8 +246,8 @@ graph:
         - "**/global-setup.ts"
         - "~/web/test/setup.ts"
         - "~/acceptance/playwright.config.ts"
-        # Process entrypoints and package bins.
-        - "@/server.ts"
+        # Process entrypoints and package bins; workerd loads the server Worker by path.
+        - "@/platform/worker/main.ts"
         - "~/cli/src/main.ts"
         - "~/jobs/src/main.ts"
         - "~/mcp/src/main.ts"

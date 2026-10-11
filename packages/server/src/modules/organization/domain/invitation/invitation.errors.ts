@@ -44,3 +44,10 @@ export class InvitationRevoked extends Schema.TaggedError<InvitationRevoked>()(
   "InvitationRevoked",
   { invitationId: InvitationId },
 ) {}
+
+// The mail transport refused the invitation email. Delivery is retried, so the
+// reaction that sent it fails rather than losing the email.
+export class InvitationEmailUndelivered extends Schema.TaggedError<InvitationEmailUndelivered>()(
+  "InvitationEmailUndelivered",
+  { message: Schema.String },
+) {}

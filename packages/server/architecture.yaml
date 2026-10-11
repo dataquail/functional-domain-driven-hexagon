@@ -167,13 +167,13 @@ defs:
       - "@/modules/*/policies/**"
 
 message: >-
-  packages/server/src holds server.ts (the process entrypoint), globals/ (what every module
+  packages/server/src holds platform/ (the host entrypoints), globals/ (what every module
   shares), modules/ (the feature modules) and test-utils/ (the test harness). A new folder here is a new tier — declare it deliberately.
 name: kebab-case
 surface:
-  # vitest loads a globalSetup by its default export.
+  # vitest loads a globalSetup by its default export, and workerd a Worker by its.
   - use: no-default-exports
-    except: ["**/vitest.config.ts", "@/test-utils/global-setup.ts"]
+    except: ["**/vitest.config.ts", "@/test-utils/global-setup.ts", "@/platform/worker/main.ts"]
   - message: >-
       No `export *` in the server. A star re-export republishes every name of its target, which
       is how a symbol one restriction fences to composition roots gets laundered through a
@@ -182,19 +182,34 @@ surface:
     kinds: [namespace]
     except: ["@/globals/application/ddd/domain-event.ts"]
 children:
-  "server.ts":
-    imports:
-      # A composition root names everything by design; an allowlist here could
-      # only be "the whole repo", which is a rule that can never fire.
-      unrestricted: true
-    importedBy:
-      message: >-
-        server.ts is the process entrypoint: it composes and runs the server as a side effect
-        of being loaded, so importing it either duplicates the composition or drags the whole
-        dependency graph into a cycle. Nothing imports it. A test that needs the composed
-        application builds one from test-utils/test-server.ts, which shares the same runtime
-        slice through globals/infrastructure/cqrs/.
-      allow: []
+  "platform/":
+    message: >-
+      platform/ holds the host entrypoints. worker/ is the Cloudflare Worker: the one place in the
+      server that sees a Worker's env and ExecutionContext or names the Workers binding types.
+    children:
+      "worker/":
+        children:
+          "main.ts":
+            surface:
+              - message: >-
+                  workerd reads every named export of a Worker module as another entrypoint and
+                  refuses one that is not a handler, so main.ts exports its handlers as the
+                  default and nothing else by name.
+                kinds: [named]
+                declares: [function, class, variable]
+                probe: { source: "export const OUTBOX_SWEEP_CRON = '* * * * *';" }
+            imports:
+              # A composition root names everything by design; an allowlist here could
+              # only be "the whole repo", which is a rule that can never fire.
+              unrestricted: true
+            importedBy:
+              message: >-
+                platform/worker/main.ts is the Worker entrypoint: workerd loads it by path and
+                calls its fetch, queue and scheduled handlers, each of which composes the
+                application for one invocation. Nothing imports it. A test that needs the
+                composed application builds one from test-utils/test-server.ts, which shares the
+                same runtime slice through globals/infrastructure/cqrs/.
+              allow: []
 
   # ── globals/ ──────────────────────────────────────────────────────────
   # What every module shares, split the way a module is split: application/
@@ -344,6 +359,7 @@ children:
                 - "@/modules/*/*.platform.ts"
                 - "@/globals/infrastructure/database/transaction-driver-live.ts"
                 - "@/globals/infrastructure/events/*-live.ts"
+                - "@/globals/infrastructure/events/domain-event-queue.ts"
             children:
               "cqrs-runtime.ts": {}
               "*.test.ts": { use: server-use-case-test-file }
@@ -410,6 +426,7 @@ children:
             children:
               "domain-event-queue.ts": {}
               "domain-event-consumer.ts": {}
+              "outbox-sweeper.ts": {}
               "*-live.ts": {}
               "domain-event-consumer.test.ts | cloudflare-domain-event-queue-live.test.ts":
                 use: server-use-case-test-file
@@ -604,10 +621,13 @@ children:
             - "@/globals/infrastructure/framework/**/*-live.ts"
             - "@/globals/infrastructure/events/*-live.ts"
           except:
-            ["@/server.ts", "@/globals/infrastructure/cqrs/**", "@/test-utils/**", "**/*.test.ts"]
+            - "@/platform/worker/main.ts"
+            - "@/globals/infrastructure/cqrs/**"
+            - "@/test-utils/**"
+            - "**/*.test.ts"
           message: >-
             A Live is wired at a composition root, never named by a use case (ADR-0007). Depend
-            on the port's Tag; the Layer that satisfies it is assembled in server.ts,
+            on the port's Tag; the Layer that satisfies it is assembled in platform/worker/main.ts,
             globals/infrastructure/cqrs/cqrs-runtime.ts or test-utils/.
         # Module-wide, so it holds for tiers that carry no allowlist too.
         - match: "@/modules/*/**"
@@ -641,12 +661,12 @@ children:
           message: >-
             <feature>.platform.ts is the PLATFORM surface: what the platform names to assemble
             and drive this module — its dispatch-surface Tags, its groups, its Module value, its
-            policy contribution and resolver entries. Only the composition roots — server.ts,
+            policy contribution and resolver entries. Only the composition roots — platform/worker/main.ts,
             the test harness, and the CQRS and framework slices under globals/ — may reach it. A peer module wanting this module's vocabulary reaches
             <feature>.exports.ts instead, which is the surface published for that purpose;
             reaching in here couples a module to how the application is wired.
           allow:
-            - "@/server.ts"
+            - "@/platform/worker/main.ts"
             - "@/globals/infrastructure/cqrs/**"
             - "@/globals/infrastructure/framework/**"
             - "@/test-utils/**"
@@ -1419,7 +1439,7 @@ children:
 
   # ── test-utils/ ───────────────────────────────────────────────────────
   # The third composition root: it builds the whole application from the
-  # same layers server.ts does, with billing's gateway faked. It therefore
+  # same layers the Worker entrypoint does, with billing's gateway faked. It therefore
   # names modules by their barrels and the Lives that back them — the one
   # place outside a composition root allowed to, because it IS one.
   "test-utils/":

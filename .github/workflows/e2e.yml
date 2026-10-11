@@ -58,8 +58,8 @@ jobs:
           SQL
 
       - name: Write .env
-        # The identity Worker reads .env through `alchemy dev --env-file`, and
-        # Playwright loads it for global-setup and the server it spawns.
+        # Playwright loads .env for global-setup and hands it to the Workers stack
+        # it boots under `alchemy dev` (server and identity Workers, no credentials).
         run: |
           set -euo pipefail
           sed -e "s/^SESSION_COOKIE_SECRET=.*/SESSION_COOKIE_SECRET=$(openssl rand -hex 32)/" \
@@ -72,23 +72,6 @@ jobs:
           set -euo pipefail
           pnpm --filter @org/database db:migrate:test
           pnpm db:migrate:identity
-
-      - name: Start the identity Worker
-        # `alchemy dev` serves the identity Worker on :3002 in workerd, with
-        # Hyperdrive passed through to the compose Postgres. It touches neither
-        # Cloudflare nor Neon, so it needs no credentials.
-        run: |
-          set -euo pipefail
-          mkdir -p /tmp/cf-dev-logs
-          nohup pnpm dev:cf > /tmp/cf-dev-logs/cf-dev.log 2>&1 &
-          for i in $(seq 1 120); do
-            if curl -fsS http://localhost:3002/api/auth/.well-known/openid-configuration > /dev/null 2>&1; then
-              exit 0
-            fi
-            sleep 1
-          done
-          cat /tmp/cf-dev-logs/cf-dev.log
-          exit 1
 
       - name: Start background jobs runner
         # Spin up the `@org/jobs` cron runner against the test DB so Playwright
@@ -134,9 +117,9 @@ jobs:
         if: failure()
         run: cat /tmp/jobs-logs/jobs.log || true
 
-      - name: Dump the identity Worker's log on failure
+      - name: Dump the Workers' logs on failure
         if: failure()
-        run: cat /tmp/cf-dev-logs/cf-dev.log || true
+        run: tail -n 200 packages/infra/.alchemy/log/*/*/*.log || true
 
       - name: Dump container logs on failure
         if: failure()

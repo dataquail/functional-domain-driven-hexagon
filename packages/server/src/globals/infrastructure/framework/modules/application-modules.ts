@@ -91,7 +91,7 @@ export const applicationModules = {
     OrganizationModule.http,
     BillingModule.http,
     TodosModule.http,
-    WalletModule.http,
   ),
+  events: Layer.mergeAll(BillingModule.events, OrganizationModule.events, WalletModule.events),
   httpDeps: Layer.mergeAll(AuthModule.httpDeps, PolicyRegistryLive, ResourceResolverRegistryLive),
 };

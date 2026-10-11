@@ -8,6 +8,10 @@ import { configDefaults, type ViteUserConfig } from "vitest/config";
 // database — its global-setup hard-fails (never skips) when the DB is
 // unconfigured or unreachable.
 const runIntegration = process.env.TEST_INTEGRATION === "true";
+// A third mode, `TEST_WORKERS` (set by `test:workers`), runs only the
+// `*.smoke.test.ts` files, which boot the Workers stack under workerd and need
+// the docker Postgres; neither of the other suites includes them.
+const runWorkers = process.env.TEST_WORKERS === "true";
 
 const alias = (name: string) => {
   const target = process.env.TEST_DIST !== undefined ? "dist/dist/esm" : "src";
@@ -36,14 +40,17 @@ const config: ViteUserConfig = {
     },
     // Integration tests share one database and truncate between cases.
     sequence: {
-      concurrent: !runIntegration,
+      concurrent: !runIntegration && !runWorkers,
     },
-    include: runIntegration
-      ? ["test/**/*.integration.test.ts", "src/**/*.integration.test.ts"]
-      : ["test/**/*.test.ts", "src/**/*.test.ts"],
-    exclude: runIntegration
-      ? [...configDefaults.exclude]
-      : ["**/*.integration.test.ts", ...configDefaults.exclude],
+    include: runWorkers
+      ? ["smoke/**/*.smoke.test.ts"]
+      : runIntegration
+        ? ["test/**/*.integration.test.ts", "src/**/*.integration.test.ts"]
+        : ["test/**/*.test.ts", "src/**/*.test.ts"],
+    exclude:
+      runIntegration || runWorkers
+        ? [...configDefaults.exclude]
+        : ["**/*.integration.test.ts", ...configDefaults.exclude],
     // A package may legitimately have tests for only one suite (e.g. @org/jobs
     // has integration tests but no unit tests), so an isolated per-package run
     // of the other suite finds zero files. Don't treat that as a failure — the

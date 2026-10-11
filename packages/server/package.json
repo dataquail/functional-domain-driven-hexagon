@@ -16,10 +16,7 @@
     "clean": "rm -rf build .tsbuildinfo",
     "prebuild": "npm run clean",
     "build": "tsc -b tsconfig.build.json",
-    "predev": "lsof -ti:3001 | xargs kill -9 2>/dev/null; true",
-    "dev": "TSX_TSCONFIG_PATH=./tsconfig.src.json tsx watch src/server.ts",
-    "start": "node build/esm/server.js",
-    "circular": "madge --circular src/server.ts",
+    "circular": "madge --circular src/platform/worker/main.ts",
     "lint": "eslint . --quiet",
     "format": "prettier --write .",
     "typecheck": "tsc -b"
@@ -28,7 +25,6 @@
     "@effect-server-utils/authz": "0.1.0-beta.5",
     "@effect-server-utils/cqrs": "0.1.0-beta.9",
     "@effect-server-utils/unit-of-work": "0.1.0-beta.9",
-    "@effect/platform-node": "4.0.2",
     "@org/contracts": "workspace:^",
     "@org/database": "workspace:^",
     "@react-email/components": "^1.0.12",
@@ -54,12 +50,12 @@
     }
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "5.20260918.1",
+    "@effect/platform-node": "4.0.2",
     "@effect/sql-pg": "4.0.2",
     "@types/cookie": "^0.6.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "dotenv": "^16.6.1",
-    "madge": "^8.0.0",
-    "tsx": "^4.23.0"
+    "madge": "^8.0.0"
   }
 }

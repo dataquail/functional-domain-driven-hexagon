@@ -14,5 +14,7 @@ export const BillingModule = {
     Layer.provide(RoleModule.layer),
   ),
 
-  http: Layer.mergeAll(BillingLive, BillingWebhooksLive, StripeWebhookEventAdapterLive),
+  http: Layer.mergeAll(BillingLive, BillingWebhooksLive),
+
+  events: StripeWebhookEventAdapterLive,
 };

@@ -11,9 +11,9 @@
 name: kebab-case
 message: >-
   @org/infra declares the Alchemy stack: the Neon databases, the Hyperdrive configurations in
-  front of them and the queues each stage provisions. alchemy.run.ts is the stack, src/stack/
-  holds one file per kind of resource, src/platform/worker/ the Worker entrypoints they bind to,
-  and src/ beside them the pure helpers they share.
+  front of them, the queues and the Workers each stage provisions. alchemy.run.ts is the stack,
+  src/stack/ holds one file per kind of resource, src/platform/worker/ the Worker entrypoints
+  they bind to, src/ beside them the pure helpers they share, and smoke/ the workerd smoke tests.
 # Alchemy loads the stack, and each Worker entrypoint, by its default export.
 surface:
   - use: no-default-exports
@@ -88,4 +88,19 @@ children:
           the Effects alchemy.run.ts yields; a Worker binds to the same Effect it was declared
           with, and a Worker whose code lives in another package is named by its entry path.
         children:
-          "databases.ts | queues.ts | workers.ts": {}
+          "databases.ts | providers.ts | queues.ts | workers.ts": {}
+  "smoke/":
+    message: >-
+      smoke/ boots the whole stack under workerd with Alchemy's test harness and drives each
+      Worker handler over HTTP. `pnpm test:workers` runs it; it needs the docker Postgres the
+      databases' dev origins name.
+    children:
+      "*.smoke.test.ts":
+        surface: [{ use: test-exports-nothing }]
+        imports:
+          reset: true
+          message: >-
+            A smoke test deploys the stack locally through Alchemy's test harness, so it names
+            Alchemy, effect and the vitest runner, and reaches the stack it boots.
+          external: [alchemy, effect, "@effect/vitest"]
+          allow: ["~/infra/**"]

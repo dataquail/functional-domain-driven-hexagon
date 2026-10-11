@@ -8,7 +8,7 @@ dotenv.config({ path: "../../.env" });
 // Acceptance configuration follows the layered architecture from Synapse's
 // `acceptance-testing` doc: specs are business-language only, drivers/pages
 // hide selectors, infrastructure (this file + global-setup.ts) wires real
-// processes. The webServer entries spawn the BFF (against the test DB)
+// processes. The webServer entries spawn the Workers stack (against the test DB)
 // and the Next renderer before tests run; global-setup migrates the
 // test DB once and pre-seeds the admin row.
 //
@@ -113,37 +113,26 @@ export default defineConfig({
 
   webServer: [
     {
-      // BFF, against the TEST database. global-setup has already migrated
-      // it before this command runs. We run `tsx` (no watch) inside
-      // playwright — `tsx watch` would compete with Next's file watcher
-      // for inotify slots in CI and adds no value for a non-mutating
-      // test process.
-      name: "bff",
-      command: "pnpm -F @org/server exec tsx src/server.ts",
+      // The Workers stack under `alchemy dev`: the server Worker on :3001, reached
+      // through the app Hyperdrive's dev origin, which DATABASE_URL points at the
+      // TEST database; and the identity Worker on :3002 the global setup seeds.
+      // Without `--env-file`, alchemy lets this process's environment win over
+      // .env, which is what makes the override stick. SIGINT is what stops the
+      // whole stack, its detached sidecar included.
+      name: "workers",
+      command: "pnpm -F @org/infra exec alchemy dev",
       url: `${BFF_PROBE_URL}/auth/me`,
-      // The listening socket opens before the `request` handler is attached
-      // (effect builds `NodeHttpServer.layer` first, `HttpRouter.serve` last),
-      // and a request accepted in that window is never answered. Playwright's
-      // URL probe has no per-request timeout and retries serially, so one probe
-      // landing there stalls readiness until `timeout`. "Listening on" is logged
-      // after the handler is attached; `url` stays as the port-in-use guard.
-      wait: { stdout: /Listening on/ },
       cwd: "../../",
       env: {
         ...process.env,
         DATABASE_URL: DATABASE_URL_TEST,
-        ENV: "dev",
-        PORT: "3001",
         APP_URL,
-        OTLP_URL: process.env.OTLP_URL ?? "http://localhost:4318/v1/traces",
       },
-      // Acceptance always spawns its own server processes — reusing a running
-      // `pnpm -F @org/server dev` would mean the test runs against the *dev*
-      // DB instead of the test DB (the env override below only takes effect
-      // when Playwright actually starts the command). Kill dev servers
-      // before running acceptance.
+      gracefulShutdown: { signal: "SIGINT", timeout: 30_000 },
+      // Acceptance always spawns its own stack — a running `pnpm dev` holds the
+      // same ports against the dev database. Stop it before running acceptance.
       reuseExistingServer: false,
-      timeout: 60_000,
+      timeout: 180_000,
       stdout: "pipe",
       stderr: "pipe",
     },
@@ -160,7 +149,7 @@ export default defineConfig({
       // makes subsequent runs fast.
       //
       // SERVER_INTERNAL_URL points the /api/* rewrite at the test-DB-bound
-      // BFF above. APP_URL stays :3000 so the BFF redirects post-sign-in
+      // server Worker above. APP_URL stays :3000 so the BFF redirects post-sign-in
       // to the same origin Playwright drives.
       name: "web",
       command: "pnpm -F @org/web start",

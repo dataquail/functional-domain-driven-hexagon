@@ -6,8 +6,6 @@ import * as Layer from "effect/Layer";
 const make = Effect.gen(function* () {
   return {
     // Server
-    PORT: yield* Config.Int("PORT").pipe(Config.withDefault(3001)),
-    ENV: yield* Config.Literals(["dev", "prod", "staging"], "ENV").pipe(Config.withDefault("dev")),
     APP_URL: yield* Config.URL("APP_URL").pipe(
       Config.map((url) => url.origin),
       Config.withDefault("http://localhost:3000"),

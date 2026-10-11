@@ -295,7 +295,7 @@ const REFUSED = [
   ],
   [
     "the server's composition root importing Alchemy",
-    "packages/server/src/server.ts",
+    "packages/server/src/platform/worker/main.ts",
     "node_modules/.pnpm/x/node_modules/alchemy/lib/Cloudflare/index.js",
   ],
   [
@@ -304,8 +304,8 @@ const REFUSED = [
     "node_modules/.pnpm/x/node_modules/better-auth/dist/index.mjs",
   ],
   [
-    "the server's composition root importing cloudflare:workers outside platform/worker/",
-    "packages/server/src/server.ts",
+    "the server's CQRS runtime importing cloudflare:workers outside platform/worker/",
+    "packages/server/src/globals/infrastructure/cqrs/cqrs-runtime.ts",
     "node_modules/.pnpm/x/node_modules/@cloudflare/workers-types/index.d.ts",
   ],
   [
@@ -454,8 +454,8 @@ const REFUSED = [
     `${M}/alpha/interface/http/get.endpoint.ts`,
   ],
   [
-    "server.ts reaching past a barrel",
-    "packages/server/src/server.ts",
+    "the Worker entrypoint reaching past a barrel",
+    "packages/server/src/platform/worker/main.ts",
     `${M}/alpha/commands/do.handler.ts`,
   ],
   [
@@ -636,24 +636,24 @@ const REFUSED = [
     "packages/database/src/index.ts",
   ],
   [
-    "anything importing server.ts",
+    "anything importing the Worker entrypoint",
     `${M}/alpha/interface/http/get.endpoint.ts`,
-    "packages/server/src/server.ts",
+    "packages/server/src/platform/worker/main.ts",
   ],
   [
-    "a test importing server.ts",
+    "a test importing the Worker entrypoint",
     "packages/server/src/test-utils/test-server.ts",
-    "packages/server/src/server.ts",
+    "packages/server/src/platform/worker/main.ts",
   ],
   [
-    "a test importing server.ts",
+    "a test importing the Worker entrypoint",
     "packages/server/src/test-utils/test-server.ts",
-    "packages/server/src/server.ts",
+    "packages/server/src/platform/worker/main.ts",
   ],
   [
-    "anything importing server.ts",
+    "anything importing the Worker entrypoint",
     `${M}/alpha/interface/http/get.endpoint.ts`,
-    "packages/server/src/server.ts",
+    "packages/server/src/platform/worker/main.ts",
   ],
   [
     "api-client reaching the server",
@@ -934,8 +934,13 @@ const ALLOWED = [
     `${M}/alpha/domain/ports/clients/x.client.ts`,
   ],
   [
-    "server.ts using a barrel (LEGAL)",
-    "packages/server/src/server.ts",
+    "the server's Worker entrypoint naming the Workers binding types (LEGAL)",
+    "packages/server/src/platform/worker/main.ts",
+    "node_modules/.pnpm/x/node_modules/@cloudflare/workers-types/index.d.ts",
+  ],
+  [
+    "the Worker entrypoint using a barrel (LEGAL)",
+    "packages/server/src/platform/worker/main.ts",
     `${M}/alpha/alpha.platform.ts`,
   ],
   [

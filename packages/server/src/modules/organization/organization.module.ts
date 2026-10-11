@@ -24,7 +24,8 @@ export const OrganizationModule = {
     InvitationLive,
     // CLI-facing `listMine` (the `cliOrganization` group on CliApi).
     OrgCliLive,
-    // Subscribes the invitation mail-out; see the adapter for why it is after-commit.
-    InvitationEventAdapterLive,
   ).pipe(Layer.provide(OrganizationRepositoryLive)),
+
+  // Subscribes the invitation mail-out; see the adapter for why it is after-commit.
+  events: InvitationEventAdapterLive,
 };

@@ -75,7 +75,7 @@ export const reportDeadLetters = (
         onNone: () => "unknown",
         onSome: (value) => value.handler,
       });
-      yield* Effect.logError(`[domain-events] dead-lettered after ${message.attempts} attempts`, {
+      yield* Effect.logError("[domain-events] dead-lettered", {
         messageId: message.id,
         handler,
       });
