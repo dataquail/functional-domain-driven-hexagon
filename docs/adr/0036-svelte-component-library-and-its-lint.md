@@ -32,7 +32,7 @@ Today those rules are enforced by oxlint (`react/forbid-elements`, `local/no-inl
 
 Each rule has a probe in `pnpm lint:rules`. oxlint keeps every other file and the script blocks. ESLint 10 is the root's own; web's ESLint 9 is untouched.
 
-**The engine reads Svelte.** `@goodbones/typescript` 0.1.0-beta.17 walks `.svelte` files and parses their script blocks, with the markup blanked so offsets hold. The CLI and the plugin therefore agree on every family, and no floor or ceiling moved to make room for the new package. Two consequences:
+**The engine reads Svelte.** `@goodbones/typescript` (0.1.0-beta.17 on) walks `.svelte` files and parses their script blocks, with the markup blanked so offsets hold. The CLI and the plugin therefore agree on every family, and no floor or ceiling moved to make room for the new package. Two consequences:
 
 - A members rule now states the prop contract where the CLI can check it: no `*Props` type in the package may declare `class`, `className` or `style`.
 - That rule reaches every file in the package, so the coverage floors rose (structure 0.77, members 0.12, surface 0.92).
@@ -42,6 +42,6 @@ Each rule has a probe in `pnpm lint:rules`. oxlint keeps every other file and th
 ## Consequences
 
 - Two linters run in `pnpm lint`, each over a disjoint concern of a `.svelte` file. A rule about markup is an ESLint rule with a `linter: "eslint"` probe.
-- goodbones core 0.1.0-beta.16 lets the first tree root claim any path sharing its prefix. `~/components-svelte/` is listed before `~/components/` until the fix (goodbones #99) is released and pinned.
+- A package sitting beside one whose name it extends (`components` / `components-svelte`) exposed a taxonomy-root bug in goodbones core: the first root claimed every path sharing its prefix. Core 0.1.0-beta.17 keeps a root to its own folder, and the repo pins it.
 - A compound primitive is a folder: the root `*.svelte`, its `*.part.svelte` parts (exempt from story parity, shown in the root's story) and an `index.ts` that hangs the parts on the root. Svelte has no `Object.assign`-on-a-function-component idiom of its own, and the CLI cannot probe a child key that refers back to its folder's name.
 - Phase 6 extends `eslint.config.mjs` to `packages/web-svelte` and adds the ViewModel-boundary rule there. Its own frontend decisions take ADR-0037, and the later Phase 7 numbers shift by one.
