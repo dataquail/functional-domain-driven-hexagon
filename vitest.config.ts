@@ -47,6 +47,7 @@ export default defineConfig({
         "packages/server/src/**/*.{ts,tsx}",
         "packages/web/features/**/*.{ts,tsx}",
         "packages/web/services/**/*.{ts,tsx}",
+        "packages/web-svelte/{features,services,src}/**/*.{ts,svelte}",
       ],
       exclude: [
         ...coverageConfigDefaults.exclude,

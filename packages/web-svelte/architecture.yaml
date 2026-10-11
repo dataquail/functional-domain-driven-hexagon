@@ -9,6 +9,20 @@
 # file at "~/web-svelte/". A `.svelte` file is read through its script blocks,
 # by oxlint and by the CLI alike; its markup is ESLint's (ADR-0036, ADR-0037).
 
+defs:
+  # A unit test runs a tier under a bare registry or the testing library; it
+  # reaches the package, its harnesses and nothing past them.
+  web-svelte-unit-test-file:
+    surface: [{ use: test-exports-nothing }]
+    imports:
+      reset: true
+      message: >-
+        A web unit test reaches the tier it exercises, the harnesses under test/ and the renderer
+        testing library. It never reaches the server, and it never renders a route — that is the
+        integration test under __tests__/.
+      external: [effect, svelte, vitest, "@testing-library/svelte", "@testing-library/user-event"]
+      allow: ["~/web-svelte/**"]
+
 name: kebab-case
 message: >-
   packages/web-svelte is the SvelteKit renderer: src/ holds the routes and hooks, features/ the
@@ -65,8 +79,29 @@ children:
     children:
       "**/": { layout: open, children: {} }
 
+  "services/":
+    message: >-
+      services/ is the Model: the API atoms, the transport, the reactivity keys, the formatters,
+      and the bridge that hands atoms to Svelte. It is the innermost tier and knows nothing about
+      the features that read it.
+    imports:
+      reset: true
+      message: >-
+        The Model is the innermost tier (ADR-0026). A services/ file importing from features/
+        inverts the arrow and couples the API surface to a screen.
+      external: [effect, svelte]
+      allow: ["~/web-svelte/services/**"]
+    children:
+      "bridge/":
+        message: >-
+          bridge/ hands atoms to Svelte: the registry context, the reactive reads and writes, the
+          result component that stands in for a suspense read, and the hydration boundary. It is
+          what @effect/atom-react is to the React app.
+        children:
+          "*.ts | *.svelte.ts | *.svelte": {}
+          "*.test.ts": { use: web-svelte-unit-test-file }
+
   "test/":
-    layout: open
     message: >-
       test/ holds the harnesses: the jsdom setup, the atom registry, the integration harness, MSW
       handlers and fixtures.
@@ -75,6 +110,11 @@ children:
       message: >-
         A web harness reaches the tier it stages, the component library's own test setup and the
         contracts it serves. It never reaches the server.
-      allow: ["~/components-svelte/test/setup.ts"]
+      external: [effect, svelte]
+      allow: ["~/components-svelte/test/setup.ts", "~/web-svelte/services/**"]
     children:
-      "**/": { layout: open, children: {} }
+      "setup.ts": {}
+      "bridge/":
+        message: test/bridge/ holds the probe components the bridge's own tests render.
+        children:
+          "*-probe.svelte": {}
