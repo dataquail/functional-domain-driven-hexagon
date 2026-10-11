@@ -7,7 +7,7 @@ Bringing this monorepo up from a fresh clone has a few moving parts: a Postgres 
 ```sh
 pnpm install
 pnpm bootstrap
-pnpm dev      # alchemy dev (server Worker :3001, identity Worker :3002) + Next :3000
+pnpm dev      # alchemy dev: SvelteKit Worker :3000, server Worker :3001, identity Worker :3002
 ```
 
 `pnpm bootstrap` is idempotent — re-running it never overwrites a value that's already populated in `.env`, so it's safe to use as a "did I miss anything?" command too.
@@ -85,7 +85,7 @@ starts the Workers stack under `alchemy dev` — the server Worker on :3001 and 
 
 ## Run the Workers stack
 
-The Cloudflare side of the stack lives in [packages/infra](../packages/infra) and is run by Alchemy: the databases' Hyperdrive configurations, the domain-event queue and its dead-letter queue, the server Worker whose code is [packages/server/src/platform/worker/main.ts](../packages/server/src/platform/worker/main.ts), and the identity Worker whose code is [packages/identity](../packages/identity). `pnpm dev` runs it under `alchemy dev` beside Next; `pnpm -F @org/infra run dev` runs the stack alone.
+The Cloudflare side of the stack lives in [packages/infra](../packages/infra) and is run by Alchemy: the databases' Hyperdrive configurations, the domain-event queue and its dead-letter queue, the server Worker whose code is [packages/server/src/platform/worker/main.ts](../packages/server/src/platform/worker/main.ts), the identity Worker whose code is [packages/identity](../packages/identity), and the SvelteKit Worker built from [packages/web-svelte](../packages/web-svelte). `pnpm dev` runs it under `alchemy dev`; `pnpm dev:next` sets `WEB_RENDERER=next`, which leaves :3000 to Next beside the stack.
 
 Under `alchemy dev` no Cloudflare or Neon resource is created and no credentials are read: Hyperdrive passes straight through to the docker Postgres named by `DATABASE_URL` (and `IDENTITY_DATABASE_URL`), the queues run in Alchemy's local broker (in memory, so a restart drops what is in flight), and state is kept in `packages/infra/.alchemy/`. Alchemy keeps a dev sidecar running between invocations; stop the whole process group with SIGINT, or it keeps :3001 and :3002.
 
@@ -141,7 +141,7 @@ To wipe everything, `docker compose down -v` and run `pnpm bootstrap` again.
 
 ### "The identity Worker is not reachable"
 
-`pnpm seed:identity` needs the Workers stack running (`pnpm dev`). The acceptance suite boots its own, so it needs :3001 and :3002 free — both dev ports are fixed.
+`pnpm seed:identity` needs the Workers stack running (`pnpm dev`). The acceptance suite boots its own, so it needs :3000–:3002 free — the dev ports are fixed.
 
 ### Sign-in says "Invalid email or password" for the admin
 
