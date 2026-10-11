@@ -362,8 +362,7 @@ tree:
   "~/jobs/": { include: packages/jobs/architecture.yaml }
   "~/infra/": { include: packages/infra/architecture.yaml }
   "~/identity/": { include: packages/identity/architecture.yaml }
-  # Before ~/components/: goodbones core beta.16 lets the first root claim any path sharing its prefix.
-  "~/components-svelte/": { include: packages/components-svelte/architecture.yaml }
   "~/components/": { include: packages/components/architecture.yaml }
+  "~/components-svelte/": { include: packages/components-svelte/architecture.yaml }
   "~/web/": { include: packages/web/architecture.yaml }
   "~/server/src/": { include: packages/server/architecture.yaml }
