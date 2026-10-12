@@ -7,5 +7,5 @@
   "arrowParens": "always",
   "printWidth": 100,
   "tabWidth": 2,
-  "tailwindStylesheet": "./packages/components/styles/globals.css"
+  "tailwindStylesheet": "./packages/components-svelte/styles/globals.css"
 }

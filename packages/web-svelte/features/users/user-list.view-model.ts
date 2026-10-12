@@ -1,6 +1,6 @@
 // ViewModel for the user list: page state, the query it drives, and the
-// derived pagination view. No React, no JSX, no atom-react -- everything here
-// runs under a bare `AtomRegistry` in a test.
+// derived pagination view. No framework: everything here runs under a bare
+// `AtomRegistry` in a test.
 
 import * as AsyncResult from "effect/reactivity/AsyncResult";
 import * as Atom from "effect/reactivity/Atom";

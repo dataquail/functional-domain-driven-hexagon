@@ -270,13 +270,13 @@ const REFUSED = [
   ],
   [
     "a View importing a spec file",
-    "packages/web/features/orgs/x/x.view.tsx",
-    "packages/web/features/orgs/x/x.view-model.test.ts",
+    "packages/web-svelte/features/orgs/org-picker/org-picker.view.svelte",
+    "packages/web-svelte/features/orgs/org-picker/org-picker.view-model.test.ts",
   ],
   [
     "a component importing a spec file",
-    "packages/components/primitives/button.tsx",
-    "packages/components/primitives/button.test.tsx",
+    "packages/components-svelte/primitives/button.svelte",
+    "packages/components-svelte/primitives/button.test.ts",
   ],
   [
     "a globals file importing a spec file",
@@ -309,73 +309,38 @@ const REFUSED = [
     "node_modules/.pnpm/x/node_modules/@cloudflare/workers-types/index.d.ts",
   ],
   [
-    "a View reaching into services/",
-    "packages/web/features/orgs/org-picker/org-picker.view.tsx",
-    "packages/web/services/atom/api-atoms.shared.ts",
-  ],
-  [
     "a View importing effect/Effect",
-    "packages/web/features/orgs/org-picker/org-picker.view.tsx",
+    "packages/web-svelte/features/orgs/org-picker/org-picker.view.svelte",
     "node_modules/.pnpm/effect@4/node_modules/effect/dist/Effect.js",
   ],
   [
     "a ViewModel importing a View",
-    "packages/web/features/orgs/org-picker/org-picker.view-model.ts",
-    "packages/web/features/orgs/org-picker/org-picker.view.tsx",
+    "packages/web-svelte/features/orgs/org-picker/org-picker.view-model.ts",
+    "packages/web-svelte/features/orgs/org-picker/org-picker.view.svelte",
   ],
   [
-    "a ViewModel importing react",
-    "packages/web/features/orgs/org-picker/org-picker.view-model.ts",
-    "node_modules/.pnpm/react@19/node_modules/react/index.js",
-  ],
-  [
-    "a ViewModel importing atom-react",
-    "packages/web/features/orgs/org-picker/org-picker.view-model.ts",
-    "node_modules/.pnpm/x/node_modules/@effect/atom-react/dist/index.js",
-  ],
-  [
-    "the Model importing a feature",
-    "packages/web/services/atom/api-atoms.shared.ts",
-    "packages/web/features/orgs/org-picker/org-picker.view-model.ts",
-  ],
-  [
-    "a feature importing app/",
-    "packages/web/features/orgs/org-picker/org-picker.view.tsx",
-    "packages/web/app/layout.tsx",
+    "a feature importing a route",
+    "packages/web-svelte/features/orgs/org-picker/org-picker.view.svelte",
+    "packages/web-svelte/src/routes/(authed)/+layout.svelte",
   ],
   [
     "a cross-feature import",
-    "packages/web/features/orgs/org-picker/org-picker.view.tsx",
-    "packages/web/features/users/users-list/users-list.view-model.ts",
-  ],
-  [
-    "web reaching a UI library directly",
-    "packages/web/features/orgs/org-picker/org-picker.view.tsx",
-    "node_modules/.pnpm/x/node_modules/lucide-react/dist/index.js",
+    "packages/web-svelte/features/orgs/org-picker/org-picker.view.svelte",
+    "packages/web-svelte/features/users/user-list.view-model.ts",
   ],
   [
     "web importing TanStack (refused by the web allowlist)",
-    "packages/web/services/atom/api-atoms.shared.ts",
-    "node_modules/.pnpm/x/node_modules/@tanstack/react-query/index.js",
-  ],
-  [
-    "a pattern reaching a UI library",
-    "packages/components/patterns/app-shell.tsx",
-    "node_modules/.pnpm/x/node_modules/@radix-ui/react-dialog/dist/index.js",
+    "packages/web-svelte/services/atom/api-atoms.shared.ts",
+    NPM("@tanstack/svelte-query"),
   ],
   [
     "a pattern importing a feature",
-    "packages/components/patterns/app-shell.tsx",
-    "packages/web/features/orgs/org-picker/org-picker.view.tsx",
+    "packages/components-svelte/patterns/app-shell.svelte",
+    "packages/web-svelte/features/orgs/org-picker/org-picker.view.svelte",
   ],
   [
-    "components importing web",
-    "packages/components/primitives/button.tsx",
-    "packages/web/services/atom/api-atoms.shared.ts",
-  ],
-  [
-    "web reaching a Svelte UI library past the primitives",
-    "packages/web/services/atom/api-atoms.shared.ts",
+    "the Model reaching a Svelte UI library",
+    "packages/web-svelte/services/atom/api-atoms.shared.ts",
     "node_modules/.pnpm/x/node_modules/bits-ui/dist/index.js",
   ],
   [
@@ -386,7 +351,7 @@ const REFUSED = [
   [
     "a Svelte component importing web",
     "packages/components-svelte/primitives/spinner.svelte",
-    "packages/web/services/atom/api-atoms.shared.ts",
+    "packages/web-svelte/services/atom/api-atoms.shared.ts",
   ],
   [
     "a Svelte View reaching the Model past its ViewModel",
@@ -924,36 +889,6 @@ const ALLOWED = [
     "packages/database/src/index.ts",
   ],
   [
-    "a View using a primitive (LEGAL)",
-    "packages/web/features/orgs/org-picker/org-picker.view.tsx",
-    "packages/components/primitives/button.tsx",
-  ],
-  [
-    "a View using its own ViewModel (LEGAL)",
-    "packages/web/features/orgs/org-picker/org-picker.view.tsx",
-    "packages/web/features/orgs/org-picker/org-picker.view-model.ts",
-  ],
-  [
-    "a View using effect/Schema (LEGAL)",
-    "packages/web/features/orgs/org-picker/org-picker.view.tsx",
-    "node_modules/.pnpm/effect@4/node_modules/effect/dist/Schema.js",
-  ],
-  [
-    "a ViewModel using the Model (LEGAL)",
-    "packages/web/features/orgs/org-picker/org-picker.view-model.ts",
-    "packages/web/services/atom/api-atoms.shared.ts",
-  ],
-  [
-    "a primitive using radix (LEGAL)",
-    "packages/components/primitives/dialog.tsx",
-    "node_modules/.pnpm/x/node_modules/@radix-ui/react-dialog/dist/index.js",
-  ],
-  [
-    "a pattern using a primitive (LEGAL)",
-    "packages/components/patterns/app-shell.tsx",
-    "packages/components/primitives/button.tsx",
-  ],
-  [
     "a Svelte primitive using bits-ui (LEGAL)",
     "packages/components-svelte/primitives/dialog.svelte",
     "node_modules/.pnpm/x/node_modules/bits-ui/dist/index.js",
@@ -1116,7 +1051,7 @@ const GRAPH = [
     "web reaching the server through the contracts package",
     "web-never-reaches-the-server",
     [
-      ["packages/web/services/atom/api-atoms.shared.ts", "packages/contracts/src/Policy.ts"],
+      ["packages/web-svelte/services/atom/api-atoms.shared.ts", "packages/contracts/src/Policy.ts"],
       [
         "packages/contracts/src/Policy.ts",
         "packages/server/src/globals/infrastructure/config/env-vars.ts",
@@ -1126,7 +1061,7 @@ const GRAPH = [
   [
     "web reaching the contracts package (LEGAL)",
     null,
-    [["packages/web/services/atom/api-atoms.shared.ts", "packages/contracts/src/Policy.ts"]],
+    [["packages/web-svelte/services/atom/api-atoms.shared.ts", "packages/contracts/src/Policy.ts"]],
   ],
   [
     "the contracts package reaching the database kernel",

@@ -1,4 +1,3 @@
-import * as NodeHttpServer from "@effect/platform-node/NodeHttpServer";
 import { type UserAuthMiddleware } from "@org/contracts/Policy";
 import * as HttpRouter from "effect/http/HttpRouter";
 import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
@@ -24,6 +23,7 @@ import {
   UserAuthMiddlewareFakeAsMember,
 } from "@/test-utils/fake-auth-middleware.js";
 import { TestDatabaseLive } from "@/test-utils/test-database.js";
+import { InMemoryHttpServerLive } from "@/test-utils/test-http-server.js";
 
 // The same application production runs. What this root does differently is
 // provide a different environment below: a test database, a fake auth
@@ -43,7 +43,7 @@ const application = applicationModules;
 // auth-middleware fake. Default callers (every existing integration
 // test) get the super-admin fake.
 export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddleware>) => {
-  // Same v4 shape as server.ts: `HttpApiBuilder.layer` registers the group
+  // Same v4 shape as the Worker entrypoint: `HttpApiBuilder.layer` registers the group
   // handlers + the auth middleware (build-time — the groups declare
   // `.middleware(UserAuthMiddleware)`); the handlers' runtime deps are
   // request-scoped and close post-serve below.
@@ -52,10 +52,10 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
     Layer.provide(authMiddleware),
   );
 
-  // `HttpRouter.serve` binds the app to `NodeHttpServer.layerTest`'s in-memory
-  // transport (no port/network) and unwraps the endpoints' request-scoped
+  // `HttpRouter.serve` binds the app to an in-memory server (no port, no
+  // network) and unwraps the endpoints' request-scoped
   // requirements into plain ones, satisfied here in the same dependency order
-  // as server.ts. `CommandBus`/`QueryBus`/`Database`/`HttpClient` are kept in
+  // as the Worker's. `CommandBus`/`QueryBus`/`Database`/`HttpClient` are kept in
   // the runtime's SUCCESS channel via `provideMerge` so integration tests can
   // `yield* CommandBus`/`QueryBus`, `yield* HttpApiClient.make(Api)`, and drive
   // the DB directly.
@@ -70,7 +70,7 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
     Layer.provideMerge(application.layer),
     // Below the dispatchers and merged, not provided: every dispatcher needs these
     // too (`handlersOf` hoists its handlers' requirements), and one layer value in
-    // one place keeps it one instance. See server.ts.
+    // one place keeps it one instance.
     Layer.provideMerge(
       Layer.mergeAll(
         DomainEventBusLive,
@@ -82,7 +82,7 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
     Layer.provide([CookieCodec.layer, BillingGatewayFake]),
     Layer.provideMerge(TestDatabaseLive),
     Layer.provide(EnvVars.layer),
-    Layer.provideMerge(NodeHttpServer.layerTest),
+    Layer.provideMerge(InMemoryHttpServerLive),
   );
 };
 

@@ -1,21 +1,19 @@
-import { render } from "@react-email/render";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import { createElement } from "react";
 
 import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
 import { Mailer } from "@/globals/infrastructure/email/ports/mailer.js";
 import { InvitationEmailUndelivered } from "@/modules/organization/domain/invitation/invitation.errors.js";
 import { InvitationMailer } from "@/modules/organization/domain/ports/clients/invitation-mailer.client.js";
 
-import { InvitationEmail } from "./invitation.email.js";
+import { invitationEmail } from "./invitation.email.js";
 
 const SUBJECT = "You're invited to join an organization";
 
 // ADR-0022 outbound adapter for `InvitationMailer`. Owns everything the
 // use case shouldn't know: the accept-URL shape (`APP_URL` + token), the
-// React Email template. A transport failure surfaces as the domain's own error,
+// email template. A transport failure surfaces as the domain's own error,
 // so the after-commit delivery retries the email instead of losing it.
 export const InvitationMailerLive = Layer.effect(
   InvitationMailer,
@@ -34,9 +32,7 @@ export const InvitationMailerLive = Layer.effect(
             dateStyle: "medium",
             timeStyle: "short",
           });
-          const element = createElement(InvitationEmail, { acceptUrl, expiresLabel });
-          const html = yield* Effect.promise(() => render(element));
-          const text = yield* Effect.promise(() => render(element, { plainText: true }));
+          const { html, text } = invitationEmail({ acceptUrl, expiresLabel });
 
           yield* mailer
             .send({ to, subject: SUBJECT, html, text })

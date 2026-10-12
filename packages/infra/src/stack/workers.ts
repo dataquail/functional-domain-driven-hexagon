@@ -218,20 +218,12 @@ export const serverWorker = Effect.fn(function* (identity: Cloudflare.Worker) {
   return server;
 });
 
-// Until the Next renderer is deleted, `WEB_RENDERER=next` leaves :3000 to it;
-// `WEB_RENDERER=svelte` serves the SvelteKit app there instead.
 export const webWorker = Effect.fn(function* (server: Cloudflare.Worker) {
-  const renderer = yield* Config.Literals(["svelte", "next"], "WEB_RENDERER").pipe(
-    Config.withDefault("svelte"),
-  );
-  if (renderer === "next") return Option.none<Cloudflare.Worker>();
-  return Option.some(
-    yield* Cloudflare.Website.SvelteKit("web", {
-      rootDir: WEB_ROOT,
-      dev: { port: WEB_DEV_PORT, strictPort: true },
-      ...(yield* deployedPlatform("web")),
-      ...(yield* publicSurface("web")),
-      env: { SERVER: server },
-    }),
-  );
+  return yield* Cloudflare.Website.SvelteKit("web", {
+    rootDir: WEB_ROOT,
+    dev: { port: WEB_DEV_PORT, strictPort: true },
+    ...(yield* deployedPlatform("web")),
+    ...(yield* publicSurface("web")),
+    env: { SERVER: server },
+  });
 });

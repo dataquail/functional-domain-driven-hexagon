@@ -60,7 +60,7 @@ export default Alchemy.Stack(
       domainEventsDeadLetterQueue: domainEventsDeadLetter.queueName,
       identityUrl: identityAuth.url,
       serverUrl: server.url,
-      ...Option.match(web, { onNone: () => ({}), onSome: (worker) => ({ webUrl: worker.url }) }),
+      webUrl: web.url,
     };
   }),
 );

@@ -38,7 +38,6 @@
     "scratchpad/**",
     "**/.tmp-*/**",
     "**/routeTree.gen.ts",
-    "**/.next/**",
     "**/.svelte-kit/**",
     "**/postcss.config.mjs"
   ],
@@ -237,197 +236,12 @@
     // Effect.sync, which is the seam the rule asks for.
     "effecttsgo/crypto-random-uuid-in-effect": "off",
     "local/no-array-push-spread": "error",
-    "local/lucide-icon-suffix": "error",
     "no-use-before-define": "warn",
     "effecttsgo/prefer-schema-over-json": "off"
   },
   "overrides": [
     {
-      "files": ["packages/web/**/*.{ts,tsx,js,jsx}", "packages/components/**/*.{ts,tsx,js,jsx}"],
-      "rules": {
-        "react/function-component-definition": [
-          "warn",
-          {
-            "namedComponents": ["arrow-function"],
-            "unnamedComponents": "arrow-function"
-          }
-        ],
-        "react/display-name": "error",
-        "react/jsx-key": "error",
-        "react/jsx-no-comment-textnodes": "error",
-        "react/jsx-no-duplicate-props": "error",
-        "react/jsx-no-target-blank": "error",
-        "react/jsx-no-useless-fragment": "warn",
-        "react/no-children-prop": "off",
-        "react/no-danger-with-children": "error",
-        "react/no-direct-mutation-state": "error",
-        "react/no-find-dom-node": "error",
-        "react/no-is-mounted": "error",
-        "react/no-render-return-value": "error",
-        "react/no-string-refs": "error",
-        "react/no-unescaped-entities": "error",
-        "react/no-unknown-property": "error",
-        "react/no-unsafe": "error",
-        "react/require-render-return": "error",
-        "react/no-array-index-key": "warn",
-        "react/button-has-type": "error",
-        "react/hook-use-state": "error",
-        "react/jsx-fragments": ["error", "element"],
-        "react/react-in-jsx-scope": "off",
-        "react/jsx-curly-brace-presence": "error",
-        "react/jsx-boolean-value": "error",
-        "react/self-closing-comp": "error",
-        "react/no-unstable-nested-components": "error",
-        "local/enforce-react-namespace": "error",
-        "react/rules-of-hooks": "error",
-        "react/exhaustive-deps": "warn",
-        "react/only-export-components": [
-          "warn",
-          {
-            "allowConstantExport": true
-          }
-        ]
-      },
-      "plugins": ["react"]
-    },
-    {
-      "files": [
-        "packages/web/features/**/*.tsx",
-        "packages/web/app/**/*.tsx",
-        "packages/components/patterns/**/*.tsx"
-      ],
-      "rules": {
-        "local/no-inline-styling": "error",
-        "react/forbid-elements": [
-          "error",
-          {
-            "forbid": [
-              {
-                "element": "div",
-                "message": "Use Stack (layout) or Surface (a bordered/tinted region) from @org/components/primitives instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "span",
-                "message": "Use Text from @org/components/primitives/text (use `as='span'`) instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "p",
-                "message": "Use Text from @org/components/primitives/text instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "h1",
-                "message": "Use Heading from @org/components/primitives/heading instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "h2",
-                "message": "Use Heading from @org/components/primitives/heading instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "h3",
-                "message": "Use Heading from @org/components/primitives/heading instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "h4",
-                "message": "Use Heading from @org/components/primitives/heading instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "ul",
-                "message": "Use List from @org/components/primitives/list instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "ol",
-                "message": "Use List from @org/components/primitives/list (use `as='ol'`) instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "li",
-                "message": "Use List.Item from @org/components/primitives/list instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "nav",
-                "message": "Use Nav from @org/components/primitives/nav instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "a",
-                "message": "Use Link from @org/components/primitives/link (use `external` for a full page load) instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "button",
-                "message": "Use Button from @org/components/primitives/button instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "input",
-                "message": "Use Input from @org/components/primitives/input instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "label",
-                "message": "Use Label from @org/components/primitives/label instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "select",
-                "message": "Use Select from @org/components/primitives/select instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "form",
-                "message": "Use Form from @org/components/primitives/form instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "section",
-                "message": "Use Stack or Surface from @org/components/primitives (both take `as='section'`) instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "header",
-                "message": "Use Stack or Surface from @org/components/primitives (both take `as='header'`) instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "footer",
-                "message": "Use Stack or Surface from @org/components/primitives (both take `as='footer'`) instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "main",
-                "message": "Use Container from @org/components/primitives/container (`as='main'`) instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "table",
-                "message": "Use no primitive yet — add one to @org/components/primitives and prove it in a story instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              },
-              {
-                "element": "img",
-                "message": "Use no primitive yet — add one to @org/components/primitives and prove it in a story instead. A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015)."
-              }
-            ]
-          }
-        ]
-      },
-      "plugins": ["react"]
-    },
-    {
-      "files": [
-        "packages/web/features/**/*.test.tsx",
-        "packages/components/patterns/**/*.stories.tsx"
-      ],
-      "rules": {
-        "local/no-inline-styling": "off",
-        "react/forbid-elements": "off"
-      },
-      "plugins": ["react"]
-    },
-    {
-      "files": ["packages/components/primitives/button.tsx"],
-      "rules": {
-        "react/button-has-type": "off"
-      },
-      "plugins": ["react"]
-    },
-    {
-      "files": ["packages/web/app/layout.tsx"],
-      "rules": {
-        "local/no-inline-styling": "off",
-        "react/forbid-elements": "off"
-      },
-      "plugins": ["react"]
-    },
-    {
-      "files": ["packages/server/**/*.{ts,tsx,js,jsx}", "packages/web/**/*.{ts,tsx,js,jsx}"],
+      "files": ["packages/server/**/*.{ts,tsx,js,jsx}", "packages/web-svelte/**/*.{ts,js}"],
       "rules": {
         "local/no-deep-relative-imports": "error"
       }
@@ -437,24 +251,6 @@
       "rules": {
         "local/no-cross-schema-sql-access": "error"
       }
-    },
-    {
-      "files": ["**/*.stories.@(ts|tsx|js|jsx|mjs|cjs)", "**/*.story.@(ts|tsx|js|jsx|mjs|cjs)"],
-      "rules": {
-        "storybook/await-interactions": "error",
-        "storybook/context-in-play-function": "error",
-        "storybook/default-exports": "error",
-        "storybook/hierarchy-separator": "warn",
-        "storybook/no-redundant-story-name": "warn",
-        "storybook/no-renderer-packages": "error",
-        "storybook/prefer-pascal-case": "warn",
-        "storybook/story-exports": "error",
-        "storybook/use-storybook-expect": "error",
-        "storybook/use-storybook-testing-library": "error",
-        "import/no-anonymous-default-export": "off",
-        "react/rules-of-hooks": "off"
-      },
-      "plugins": ["react"]
     },
     {
       "files": [".storybook/main.@(js|cjs|mjs|ts)"],
@@ -480,25 +276,6 @@
       "rules": {}
     },
     {
-      "files": ["packages/components/primitives/**/*.{ts,tsx}"],
-      "rules": {}
-    },
-    {
-      "files": ["packages/components/patterns/**/*.{ts,tsx}"],
-      "rules": {}
-    },
-    {
-      "files": ["packages/web/features/**/*.{ts,tsx}"],
-      "rules": {}
-    },
-    {
-      "files": ["packages/components/primitives/**/*.tsx", "packages/components/patterns/**/*.tsx"],
-      "rules": {
-        "react/only-export-components": "off"
-      },
-      "plugins": ["react"]
-    },
-    {
       // A test, a fixture harness, a Playwright driver or a story is the async
       // edge where an Effect is run, not where one is written: vitest, Playwright
       // and Storybook hand each callback a promise contract. The same files read
@@ -507,7 +284,6 @@
         "**/*.test.{ts,tsx}",
         "**/test/**/*.{ts,tsx}",
         "**/test-utils/**/*.{ts,tsx}",
-        "**/*.stories.tsx",
         "packages/acceptance/**/*.ts",
         "packages/test-drivers/**/*.ts"
       ],
@@ -516,25 +292,6 @@
         "effecttsgo/process-env": "off",
         "effecttsgo/global-fetch": "off",
         "effecttsgo/node-builtin-import": "off"
-      }
-    },
-    {
-      // Next owns these signatures: an async server component, layout or route
-      // handler, `instrumentation.ts`, the config, and the server-only prefetch
-      // helpers they call are the boundary where the Effect runtime is run.
-      // `process.env` stays too — `NEXT_PUBLIC_*` is inlined by Next at build,
-      // and the server-side URLs are read once at module load, outside any runtime.
-      "files": [
-        "packages/web/app/**/*.{ts,tsx}",
-        "packages/web/next.config.ts",
-        "packages/web/instrumentation.ts",
-        "packages/web/services/**/*.server.{ts,tsx}",
-        "packages/web/services/atom/hydration-boundary.tsx",
-        "packages/web/services/atom/tracing.client.ts"
-      ],
-      "rules": {
-        "effecttsgo/async-function": "off",
-        "effecttsgo/process-env": "off"
       }
     },
     {
@@ -572,20 +329,6 @@
       "rules": {
         "effecttsgo/global-date": "off"
       }
-    },
-    {
-      // Fast refresh is not what these files are for: a Next layout exports its
-      // `metadata` beside the component by convention, a provider publishes its
-      // hook beside it, and a test harness is a bundle of components and helpers.
-      "files": [
-        "packages/web/app/**/*.tsx",
-        "packages/web/test/**/*.tsx",
-        "packages/components/providers/**/*.tsx"
-      ],
-      "rules": {
-        "react/only-export-components": "off"
-      },
-      "plugins": ["react"]
     },
     {
       // Storybook's config resolves its own paths with node's modules.

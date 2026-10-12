@@ -5,9 +5,6 @@
   "references": [{ "path": "../contracts" }, { "path": "../database" }, { "path": "../jobs" }],
   "compilerOptions": {
     "types": ["node"],
-    // React Email templates (`infrastructure/external/*.tsx`) are authored as
-    // JSX and compiled with the automatic runtime — `react` is a dependency.
-    "jsx": "react-jsx",
     "outDir": "build/src",
     "tsBuildInfoFile": ".tsbuildinfo/src.tsbuildinfo",
     "rootDir": "src",

@@ -296,8 +296,7 @@ children:
       "bridge/":
         message: >-
           bridge/ hands atoms to Svelte: the registry context, the reactive reads and writes, the
-          result component that stands in for a suspense read, and the hydration boundary. It is
-          what @effect/atom-react is to the React app.
+          result component that stands in for a suspense read, and the hydration boundary.
         children:
           "*.ts | *.svelte.ts | *.svelte": {}
           # The bridge's own tests flush Svelte's scheduler between a write and a read.

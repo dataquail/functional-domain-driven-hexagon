@@ -27,14 +27,13 @@ export default defineConfig({
       "packages/infra",
       "packages/jobs",
       "packages/server",
-      "packages/web",
       "packages/web-svelte",
     ],
     coverage: {
       provider: "v8",
       reporter: isMergedRun ? ["text-summary", "html", "lcov", "json-summary"] : ["text-summary"],
       // Only the packages that carry a Vitest suite. A package whose tests live
-      // at another tier (@org/acceptance, @org/components' Storybook) or that
+      // at another tier (@org/acceptance) or that
       // has none yet (@org/cli, @org/mcp, @org/api-client) would report 0% and
       // turn the gate into noise instead of signal.
       include: [
@@ -45,9 +44,7 @@ export default defineConfig({
         "packages/infra/src/**/*.ts",
         "packages/jobs/src/**/*.ts",
         "packages/server/src/**/*.{ts,tsx}",
-        "packages/web/features/**/*.{ts,tsx}",
-        "packages/web/services/**/*.{ts,tsx}",
-        // Routes are framework surface, covered by acceptance, as web's app/ is.
+        // Routes are framework surface, covered by acceptance.
         "packages/web-svelte/{features,services}/**/*.{ts,svelte}",
         "packages/web-svelte/src/{hooks.server.ts,lib/**/*.ts}",
       ],
@@ -72,9 +69,6 @@ export default defineConfig({
         "packages/infra/src/platform/worker/**",
         "packages/identity/src/platform/worker/**",
         "packages/identity/src/scripts/**",
-        // `import "server-only"` — unloadable in the jsdom Model tier, so no
-        // Vitest suite can reach them at all (ADR-0019, ADR-0026).
-        "packages/web/**/*.server.ts",
       ],
       // A ratchet, not an aspiration: each floor sits a couple of points under
       // what the merged suites actually reach today. Raise them when coverage
@@ -82,21 +76,15 @@ export default defineConfig({
       // floors exist so a gain in one package cannot mask a rot in another.
       thresholds: isMergedRun
         ? {
-            statements: 89,
+            statements: 91,
             branches: 81,
-            functions: 85,
-            lines: 89,
+            functions: 88,
+            lines: 91,
             "packages/server/src/**": {
               statements: 90,
               branches: 75,
               functions: 85,
               lines: 90,
-            },
-            "packages/web/{features,services}/**": {
-              statements: 81,
-              branches: 80,
-              functions: 73,
-              lines: 81,
             },
             "packages/database/src/**": {
               statements: 54,

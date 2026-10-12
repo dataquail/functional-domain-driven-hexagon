@@ -8,7 +8,7 @@ export default Effect.gen(function* () {
     CREATE TABLE "auth"."auth_identities" (
       "subject" varchar(128) PRIMARY KEY,
       "user_id" uuid NOT NULL REFERENCES "user"."users"("id") ON DELETE CASCADE,
-      "provider" varchar(32) NOT NULL DEFAULT 'zitadel',
+      "provider" varchar(32) NOT NULL DEFAULT 'better-auth',
       "created_at" timestamp with time zone NOT NULL DEFAULT now()
     )
   `;

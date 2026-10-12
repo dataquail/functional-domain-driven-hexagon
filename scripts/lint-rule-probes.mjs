@@ -28,11 +28,6 @@ const PROBES = [
     source: "export const probe = 1;\n",
   },
   {
-    rule: "architecture/structure",
-    file: "packages/web/features/zzprobe-untiered.tsx",
-    source: "export const Probe = () => null;\n",
-  },
-  {
     // Naming: the stereotype suffix is right, the concept name in front of it
     // is not. Without this the layout rule admits the file and nothing else
     // looks at the name.
@@ -76,27 +71,6 @@ const PROBES = [
     file: "packages/server/src/zzprobe-push.ts",
     source:
       "const items: Array<number> = [];\nconst target: Array<number> = [];\ntarget.push(...items);\n\nexport const probe = target;\n",
-  },
-  {
-    rule: "local/lucide-icon-suffix",
-    file: "packages/components/primitives/zzprobe-lucide.ts",
-    source: 'import { Clock } from "lucide-react";\n\nexport const probe = Clock;\n',
-  },
-  {
-    rule: "local/no-inline-styling",
-    file: "packages/web/features/zzprobe/probe-styling.view.tsx",
-    source: 'export const Probe = () => <Probe className="p-4" />;\n',
-  },
-  {
-    rule: "architecture/members",
-    file: "packages/web/features/zzprobe/probe-hooks.view.tsx",
-    source:
-      'import * as React from "react";\n\nexport const Probe = () => {\n  const [n] = React.useState(0);\n  return n;\n};\n',
-  },
-  {
-    rule: "react/forbid-elements",
-    file: "packages/web/features/zzprobe/probe-intrinsic.view.tsx",
-    source: "export const Probe = () => <div />;\n",
   },
   {
     rule: "architecture/exports",
@@ -146,7 +120,7 @@ const PROBES = [
       ");\n",
   },
   {
-    // The alias root differs per package (server: src/, web: package root), so
+    // The alias root differs per package (server: src/, web-svelte: package root), so
     // each aliased package is probed separately — a package missing from the
     // rule's map makes it silently vacuous there, which is how web went
     // unenforced while being configured for it.
@@ -157,9 +131,9 @@ const PROBES = [
   },
   {
     rule: "local/no-deep-relative-imports",
-    file: "packages/web/features/zzprobe/deep/probe.view.tsx",
+    file: "packages/web-svelte/features/zzprobe/deep/probe.view-model.ts",
     source:
-      'import { probe as p } from "../../../services/format/probe";\n\nexport const Probe = () => p;\n',
+      'import { probe as p } from "../../../services/format/probe";\n\nexport const probe = p;\n',
   },
   {
     rule: "local/no-relative-import-outside-package",
@@ -174,21 +148,6 @@ const PROBES = [
       "export type ProbeRepositoryShape = {\n  readonly findOneById: (id: string) => string;\n};\n",
   },
   {
-    rule: "local/enforce-react-namespace",
-    file: "packages/components/primitives/zzprobe-react-ns.tsx",
-    source: 'import { useState } from "react";\n\nexport const probe = useState;\n',
-  },
-  {
-    rule: "architecture/structure",
-    file: "packages/components/primitives/zzprobe/probe.tsx",
-    source: "export const Probe = () => null;\n",
-  },
-  {
-    rule: "architecture/structure",
-    file: "packages/components/patterns/zzprobe/probe.tsx",
-    source: "export const Probe = () => null;\n",
-  },
-  {
     // oxlint hands a Svelte component's script blocks to the plugin; these two
     // prove both families reach a `.svelte` file: a component without its story,
     // and one that imports the web app.
@@ -201,7 +160,7 @@ const PROBES = [
     rule: "architecture/imports",
     file: "packages/components-svelte/primitives/zzprobe-web.svelte",
     source:
-      '<script lang="ts">\n  import { probe } from "../../web/test/setup";\n</script>\n\n<span>{probe}</span>\n',
+      '<script lang="ts">\n  import { probe } from "../../web-svelte/test/setup";\n</script>\n\n<span>{probe}</span>\n',
   },
   {
     // The parity half of the taxonomy (21 enforceExistence rules) was entirely
@@ -225,7 +184,7 @@ const PROBES = [
   },
   {
     rule: "architecture/structure",
-    file: "packages/web/features/zzprobe/probe.view-model.ts",
+    file: "packages/web-svelte/features/zzprobe/parity.view-model.ts",
     source: "export const probeAtom = null;\n",
   },
   {

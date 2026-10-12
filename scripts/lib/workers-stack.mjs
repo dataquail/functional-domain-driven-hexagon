@@ -1,6 +1,6 @@
 // Boots the Workers stack under `alchemy dev` in its own process group, waits for
 // the stack to print a named output, and stops the whole group on demand. Shared
-// by dev-bootstrap.mjs and codespaces-provision.mjs.
+// by dev-bootstrap.mjs.
 
 import { spawn } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";

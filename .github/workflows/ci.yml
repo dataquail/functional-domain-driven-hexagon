@@ -81,7 +81,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup
-      - run: pnpm -F @org/components run build-storybook
       - run: pnpm -F @org/components-svelte run build-storybook
 
   integration:

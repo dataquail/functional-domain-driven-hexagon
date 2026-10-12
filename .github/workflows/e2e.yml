@@ -15,20 +15,14 @@ permissions:
 
 jobs:
   acceptance:
-    name: Playwright acceptance (${{ matrix.renderer }})
+    name: Playwright acceptance
     runs-on: ubuntu-latest
-    # Until Phase 7 deletes Next, the suite runs against both renderers on :3000.
-    strategy:
-      fail-fast: false
-      matrix:
-        renderer: [svelte, next]
     timeout-minutes: 25
 
     env:
       DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/effect-monorepo-test
-      # Used by `@org/jobs` (background runner) when started in this job.
-      # Same DB Playwright is exercising, so the purge runs against the test
-      # data and we get end-to-end signal that the cron deployable works.
+      # The Workers stack's app Hyperdrive points at the same database Playwright
+      # exercises, so the server Worker reads and writes the test data.
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/effect-monorepo-test
 
     steps:
@@ -79,7 +73,7 @@ jobs:
           pnpm db:migrate:identity
 
       - name: Run acceptance tests
-        run: pnpm ${{ matrix.renderer == 'next' && 'test:acceptance:next' || 'test:acceptance' }}
+        run: pnpm test:acceptance
         env:
           CI: "true"
 
@@ -87,7 +81,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: playwright-report-${{ matrix.renderer }}
+          name: playwright-report
           path: packages/acceptance/playwright-report/
           retention-days: 14
 

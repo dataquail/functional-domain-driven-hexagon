@@ -29,20 +29,6 @@ const IDENTITY_DATABASE_URL = `postgresql://postgres:postgres@localhost:5432/${I
 const TOTAL_STEPS = 6;
 const CF_DEV_BOOT_TIMEOUT_MS = 180_000;
 
-// This drives `docker compose` from the workspace, which in a codespace is
-// itself a container: Compose would resolve the relative bind paths to
-// container-side paths the VM's daemon cannot see, and the fixed
-// `container_name`s mean the resulting broken containers replace the working
-// ones. Provisioning there goes through scripts/codespaces-provision.mjs.
-if (process.env.CODESPACES !== undefined) {
-  console.error(
-    "This drives `docker compose` from the workspace and only works on a laptop.\n" +
-      "In a codespace the stack is already running — use `node scripts/codespaces-provision.mjs`.\n" +
-      "See docs/codespaces.md.",
-  );
-  process.exit(1);
-}
-
 async function main() {
   step(1, "ensure .env exists", ensureEnvFile);
   step(2, "ensure SESSION_COOKIE_SECRET and BETTER_AUTH_SECRET are set", ensureSecrets);
@@ -55,9 +41,7 @@ async function main() {
     seedIdentity,
   );
 
-  console.log(
-    "\nBootstrap complete. Next: `pnpm dev` (the server and identity Workers, and Next).",
-  );
+  console.log("\nBootstrap complete. Next: `pnpm dev` (the web, server and identity Workers).");
 }
 
 // Phases ---------------------------------------------------------------

@@ -1016,7 +1016,7 @@ children:
           clients/ and acl/, mirroring domain/ports/ (ADR-0022). No files live directly in
           infrastructure/. repositories/ holds *.repository-live.ts, *.repository-fake.ts and
           *.mapper.ts; clients/ holds third-party adapters (*.client-live.ts, *.client-fake.ts,
-          a self-contained *.client.ts, *.email.tsx templates); acl/ holds *.acl-live.ts and
+          a self-contained *.client.ts, *.email.ts templates); acl/ holds *.acl-live.ts and
           *.acl-fake.ts.
 
         imports:
@@ -1077,9 +1077,6 @@ children:
               external:
                 - stripe
                 - openid-client
-                - react
-                - "@react-email/components"
-                - "@react-email/render"
               allow:
                 - "@/modules/{module}/domain/**"
                 - "@/modules/{module}/infrastructure/clients/**"
@@ -1091,8 +1088,8 @@ children:
               "*.client-live.ts": {}
               "*.client-fake.ts": {}
               "*.client.ts": {}
-              "*.email.tsx": {}
-              "*.test.ts | *.test.tsx":
+              "*.email.ts": {}
+              "*.test.ts":
                 surface: [{ use: test-exports-nothing }]
                 imports:
                   reset: true

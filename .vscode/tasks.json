@@ -5,40 +5,27 @@
       "label": "Docker: Up",
       "detail": "Start postgres + jaeger + mailpit in the background",
       "type": "shell",
-      "command": "bash scripts/local-only.sh --skip docker-compose up -d --wait postgres jaeger mailpit",
+      "command": "docker compose up -d --wait postgres jaeger mailpit",
       "options": { "cwd": "${workspaceFolder}" },
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "clear": true,
-        "close": true
-      },
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true, "close": true },
       "problemMatcher": []
     },
     {
       "label": "Docker: Down",
-      "detail": "Stop all docker-compose services (keeps the postgres volume)",
+      "detail": "Stop all docker compose services (keeps the postgres volume)",
       "type": "shell",
-      "command": "bash scripts/local-only.sh --skip docker-compose down",
+      "command": "docker compose down",
       "options": { "cwd": "${workspaceFolder}" },
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "clear": true
-      },
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
       "problemMatcher": []
     },
     {
       "label": "Docker: Migrate (dev DB)",
-      "detail": "Apply migrations to effect-monorepo, then Better Auth's to effect-monorepo-identity",
+      "detail": "Apply migrations to effect-monorepo, then the identity database's",
       "type": "shell",
       "command": "pnpm db:migrate",
       "options": { "cwd": "${workspaceFolder}" },
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "clear": true
-      },
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
       "problemMatcher": []
     },
     {
@@ -47,144 +34,32 @@
       "type": "shell",
       "command": "pnpm --filter @org/database db:migrate:test",
       "options": { "cwd": "${workspaceFolder}" },
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "clear": true
-      },
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
       "problemMatcher": []
     },
     {
-      "label": "Identity: Dev",
-      "detail": "Run the identity Worker (Better Auth, the OIDC issuer) under alchemy dev on :3002",
+      "label": "Dev: Workers",
+      "detail": "The whole stack under alchemy dev: web on :3000, server on :3001, identity on :3002",
       "type": "shell",
-      "command": "pnpm dev:cf",
+      "command": "pnpm dev",
       "options": { "cwd": "${workspaceFolder}" },
       "isBackground": true,
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "group": "dev",
-        "clear": true
-      },
-      "problemMatcher": {
-        "owner": "identity",
-        "pattern": { "regexp": "^$" },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": "^.*$",
-          "endsPattern": "identityUrl"
-        }
-      }
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
+      "problemMatcher": []
     },
     {
       "label": "Identity: Seed",
-      "detail": "Idempotent seed: the app's OIDC client + the admin, through the running identity Worker",
+      "detail": "Register the app's OAuth client and the admin with the running identity Worker",
       "type": "shell",
       "command": "pnpm seed:identity",
       "options": { "cwd": "${workspaceFolder}" },
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "clear": true
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Server: Dev",
-      "detail": "Run the server in watch mode",
-      "type": "shell",
-      // The `predev` script in packages/server/package.json frees port
-      // 3001 before `tsx watch` tries to bind, so an orphan from a
-      // previously-closed terminal doesn't block the next start. Port
-      // 3000 belongs to the Next.js renderer (see ADR-0018); the Effect
-      // server runs on 3001 and is reached by the browser through Next's
-      // `/api/*` rewrite, never directly.
-      "command": "pnpm --filter server dev",
-      "options": { "cwd": "${workspaceFolder}" },
-      "isBackground": true,
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "group": "dev",
-        "clear": true
-      },
-      "problemMatcher": {
-        "owner": "server",
-        "pattern": { "regexp": "^$" },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": "^.*$",
-          "endsPattern": "(Listening on|Server listening|listening on port|HttpServer)"
-        }
-      }
-    },
-    {
-      "label": "Jobs: Dev",
-      "detail": "Run the cron-style background jobs runner in watch mode (purges stale sessions hourly + on boot)",
-      "type": "shell",
-      "command": "pnpm --filter @org/jobs dev",
-      "options": { "cwd": "${workspaceFolder}" },
-      "isBackground": true,
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "group": "dev",
-        "clear": true
-      },
-      "problemMatcher": {
-        "owner": "jobs",
-        "pattern": { "regexp": "^$" },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": "^.*$",
-          "endsPattern": "first run immediate, subsequent runs hourly"
-        }
-      }
-    },
-    {
-      "label": "Web: Dev",
-      "detail": "Run the Next.js renderer in watch mode (proxies /api/* to the Effect server)",
-      "type": "shell",
-      // The `predev` in packages/web/package.json frees port 3000 before
-      // `next dev` binds. Same kill-the-orphan motivation as Server: Dev /
-      // Client: Dev.
-      "command": "pnpm --filter @org/web dev",
-      "options": { "cwd": "${workspaceFolder}" },
-      "isBackground": true,
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "group": "dev",
-        "clear": true
-      },
-      "problemMatcher": {
-        "owner": "next",
-        "pattern": { "regexp": "^$" },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": "^.*$",
-          "endsPattern": "Ready in"
-        }
-      }
-    },
-    {
-      "label": "Dev: Servers",
-      "detail": "Run server + Next.js web + jobs side-by-side",
-      "dependsOn": ["Server: Dev", "Web: Dev", "Jobs: Dev"],
-      "dependsOrder": "parallel",
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
       "problemMatcher": []
     },
     {
       "label": "Dev: All",
-      "detail": "Docker (postgres + jaeger + mailpit) → migrate → identity Worker → seed → server + web + jobs",
-      "dependsOn": [
-        "Docker: Up",
-        "Docker: Migrate (dev DB)",
-        "Identity: Dev",
-        "Identity: Seed",
-        "Dev: Servers"
-      ],
+      "detail": "Docker → migrate → the Workers stack",
+      "dependsOn": ["Docker: Up", "Docker: Migrate (dev DB)", "Dev: Workers"],
       "dependsOrder": "sequence",
       "problemMatcher": []
     }
