@@ -61,5 +61,3 @@ packages/*/src/**/*.map
 # Config fixtures written by the architecture-rules loader tests.
 .tmp-*/
 
-# Compiled by `pnpm -F @org/web css`
-packages/web/src/styles.generated.css

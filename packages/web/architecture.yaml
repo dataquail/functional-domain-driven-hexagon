@@ -227,6 +227,7 @@ children:
         - vitest
         - "@sveltejs/kit"
         - "@sveltejs/vite-plugin-svelte"
+        - "@tailwindcss/vite"
         - "@testing-library/svelte"
       allow: ["~/web/aliases.ts"]
   # The alias table Vite and Vitest share.

@@ -6,8 +6,7 @@
   "license": "MIT",
   "description": "The SvelteKit renderer over the Effect BFF, growing beside @org/web until the Phase 7 cutover. Served as a Cloudflare Worker by the Alchemy stack.",
   "scripts": {
-    "prepare": "svelte-kit sync && pnpm run css",
-    "css": "tailwindcss --input ../components/styles/globals.css --output src/styles.generated.css",
+    "prepare": "svelte-kit sync",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings"
   },
   "dependencies": {
@@ -20,7 +19,7 @@
     "@org/test-drivers": "workspace:^",
     "@sveltejs/kit": "3.0.1",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
-    "@tailwindcss/cli": "4.2.4",
+    "@tailwindcss/vite": "4.2.4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/svelte": "^5.4.2",
     "@testing-library/user-event": "^14.6.1",

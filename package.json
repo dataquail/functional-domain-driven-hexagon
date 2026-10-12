@@ -3,7 +3,7 @@
   "type": "module",
   "packageManager": "pnpm@10.3.0",
   "engines": {
-    "node": ">=22.15.0 <23",
+    "node": ">=24.21.0 <25",
     "pnpm": "10.3.0"
   },
   "workspaces": [
@@ -34,7 +34,7 @@
     "test:coverage:integration": "TEST_INTEGRATION=true vitest run packages/server/ --coverage --reporter=blob --outputFile.blob=.vitest-reports/integration-server.json && TEST_INTEGRATION=true vitest run packages/jobs/ --coverage --reporter=blob --outputFile.blob=.vitest-reports/integration-jobs.json && TEST_INTEGRATION=true vitest run packages/identity/ --coverage --reporter=blob --outputFile.blob=.vitest-reports/integration-identity.json",
     "coverage:merge": "vitest run --merge-reports=.vitest-reports --coverage",
     "coverage": "pnpm test:coverage:unit && pnpm test:coverage:integration && pnpm coverage:merge",
-    "dev": "pnpm -F @org/contracts build && pnpm -F @org/web css && pnpm -F @org/infra run dev",
+    "dev": "pnpm -F @org/contracts build && pnpm -F @org/infra run dev",
     "deploy:cf": "pnpm -F @org/infra exec alchemy deploy",
     "destroy:cf": "pnpm -F @org/infra exec alchemy destroy",
     "db:migrate": "pnpm db:migrate:app && pnpm db:migrate:identity",
