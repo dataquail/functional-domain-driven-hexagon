@@ -2,13 +2,12 @@ import { playwrightUsersDriver } from "@org/test-drivers/adapters/playwright/use
 import { test } from "@playwright/test";
 
 import { truncate } from "@/test-utils/database";
+import { acceptanceTarget } from "@/test-utils/target";
 
-const DATABASE_URL_TEST =
-  process.env.DATABASE_URL_TEST ??
-  "postgresql://postgres:postgres@localhost:5432/effect-monorepo-test";
+const target = acceptanceTarget();
 
 test.beforeEach(async () => {
-  await truncate(DATABASE_URL_TEST, ["wallet.wallets", "user.users"]);
+  await truncate(target, ["wallet.wallets", "user.users"]);
 });
 
 // Negative-path acceptance coverage. The Synapse acceptance-testing guide is

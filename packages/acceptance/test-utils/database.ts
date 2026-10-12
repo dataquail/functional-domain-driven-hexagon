@@ -6,24 +6,10 @@ import pg from "pg";
 
 import { ADMIN_EMAIL } from "./admin-credentials";
 import { MEMBER_EMAIL } from "./member-credentials";
+import { type AcceptanceTarget } from "./target";
 
-// Test-database utilities for the acceptance workspace. Mirrors the server's
-// `test-utils/test-database.ts` approach: drop+replay migrations from the
-// shared `packages/database/migrations/` directory, and refuse to operate
-// on any DB whose name doesn't contain `test`.
-
-const assertTestDbName = (url: string): string => {
-  const name = new URL(url).pathname.replace(/^\//, "");
-  if (!name.toLowerCase().includes("test")) {
-    throw new Error(
-      `[acceptance/test-utils] refusing to operate on '${name}' — DATABASE_URL_TEST name must contain 'test'`,
-    );
-  }
-  return url;
-};
-
-export const runMigrations = async (databaseUrl: string): Promise<void> => {
-  const url = Redacted.make(assertTestDbName(databaseUrl));
+export const runMigrations = async (target: AcceptanceTarget): Promise<void> => {
+  const url = Redacted.make(target.databaseUrl);
   await Effect.runPromise(
     resetAndMigrate({ url, ssl: false }).pipe(
       Effect.asVoid,
@@ -52,14 +38,13 @@ const splitQualified = (qualified: string): readonly [string, string] => {
 // spec's member session survives a user-table reset by another spec
 // regardless of run order.
 export const truncate = async (
-  databaseUrl: string,
+  target: AcceptanceTarget,
   tables: ReadonlyArray<string>,
 ): Promise<void> => {
-  assertTestDbName(databaseUrl);
   if (tables.length === 0) return;
   const preservedEmails = [ADMIN_EMAIL, MEMBER_EMAIL];
   const qualified = tables.map(splitQualified);
-  const pool = new pg.Pool({ connectionString: databaseUrl });
+  const pool = new pg.Pool({ connectionString: target.databaseUrl });
   try {
     const usersEntry = qualified.find(([s, t]) => s === "user" && t === "users");
     if (usersEntry !== undefined) {

@@ -2,17 +2,16 @@ import { playwrightUsersDriver } from "@org/test-drivers/adapters/playwright/use
 import { test } from "@playwright/test";
 
 import { truncate } from "@/test-utils/database";
+import { acceptanceTarget } from "@/test-utils/target";
 
-const DATABASE_URL_TEST =
-  process.env.DATABASE_URL_TEST ??
-  "postgresql://postgres:postgres@localhost:5432/effect-monorepo-test";
+const target = acceptanceTarget();
 
 test.beforeEach(async () => {
   // Initialize state at the start of each spec (Synapse: "state
   // initialization, not cleanup"). users + wallets together because the
   // wallet event subscriber writes synchronously inside the create-user
   // transaction.
-  await truncate(DATABASE_URL_TEST, ["wallet.wallets", "user.users"]);
+  await truncate(target, ["wallet.wallets", "user.users"]);
 });
 
 test("a user can be created from the users page", async ({ page }) => {
