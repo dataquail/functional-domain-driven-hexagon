@@ -1,0 +1,127 @@
+name: Deploy
+
+# Every green CI run on main deploys staging, then prod once a reviewer of the
+# `production` environment approves it. A run for a newer commit waits for the
+# one before it rather than cancelling it part-way through a deploy.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  staging:
+    name: Deploy staging
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
+    environment:
+      name: staging
+      url: ${{ steps.deploy.outputs.app-url }}
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+      APP_DOMAIN: ${{ vars.APP_DOMAIN }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      SESSION_COOKIE_SECRET: ${{ secrets.SESSION_COOKIE_SECRET }}
+      IDENTITY_CLIENT_ID: ${{ vars.IDENTITY_CLIENT_ID }}
+      IDENTITY_CLIENT_SECRET: ${{ secrets.IDENTITY_CLIENT_SECRET }}
+      IDENTITY_SEED_TOKEN: ${{ secrets.IDENTITY_SEED_TOKEN }}
+      IDENTITY_ADMIN_EMAIL: ${{ vars.IDENTITY_ADMIN_EMAIL }}
+      IDENTITY_ADMIN_PASSWORD: ${{ secrets.IDENTITY_ADMIN_PASSWORD }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+      STRIPE_PRICE_ID_DEFAULT: ${{ vars.STRIPE_PRICE_ID_DEFAULT }}
+      MAIL_FROM_ADDRESS: ${{ vars.MAIL_FROM_ADDRESS }}
+      IDENTITY_MAIL_FROM_ADDRESS: ${{ vars.MAIL_FROM_ADDRESS }}
+      MAIL_DAILY_CAP: ${{ vars.MAIL_DAILY_CAP || '200' }}
+      # A repository variable: prod's kill-switch rule blocks staging's hosts too.
+      KILL_SWITCH: ${{ vars.KILL_SWITCH || 'false' }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: ./.github/actions/setup
+
+      - name: Deploy, export outputs, migrate
+        id: deploy
+        uses: ./.github/actions/deploy-stage
+        with:
+          stage: staging
+
+      # Idempotent: keeps the app's OAuth client and the admin in step with the secrets.
+      - name: Seed the app's OAuth client and the admin
+        if: env.KILL_SWITCH != 'true'
+        run: pnpm seed:identity
+
+      - name: Smoke-test the stage
+        if: env.KILL_SWITCH != 'true'
+        run: node scripts/smoke-stage.mjs
+
+  prod:
+    name: Deploy prod
+    needs: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: deploy-prod
+      cancel-in-progress: false
+    # Required reviewers on the `production` environment are the approval gate.
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.app-url }}
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+      APP_DOMAIN: ${{ vars.APP_DOMAIN }}
+      KILL_SWITCH: ${{ vars.KILL_SWITCH || 'false' }}
+      USAGE_ALERT_EMAIL: ${{ vars.USAGE_ALERT_EMAIL }}
+      USAGE_ALERT_PRODUCT: ${{ vars.USAGE_ALERT_PRODUCT }}
+      USAGE_ALERT_LIMIT: ${{ vars.USAGE_ALERT_LIMIT }}
+      USAGE_ALERT_WEBHOOK_URL: ${{ vars.USAGE_ALERT_WEBHOOK_URL }}
+      USAGE_ALERT_WEBHOOK_SECRET: ${{ secrets.USAGE_ALERT_WEBHOOK_SECRET }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      SESSION_COOKIE_SECRET: ${{ secrets.SESSION_COOKIE_SECRET }}
+      IDENTITY_CLIENT_ID: ${{ vars.IDENTITY_CLIENT_ID }}
+      IDENTITY_CLIENT_SECRET: ${{ secrets.IDENTITY_CLIENT_SECRET }}
+      # Set only for the first deploy, to register the app's client and admin; then delete it.
+      IDENTITY_SEED_TOKEN: ${{ secrets.IDENTITY_SEED_TOKEN }}
+      IDENTITY_ADMIN_EMAIL: ${{ vars.IDENTITY_ADMIN_EMAIL }}
+      IDENTITY_ADMIN_PASSWORD: ${{ secrets.IDENTITY_ADMIN_PASSWORD }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+      STRIPE_PRICE_ID_DEFAULT: ${{ vars.STRIPE_PRICE_ID_DEFAULT }}
+      MAIL_FROM_ADDRESS: ${{ vars.MAIL_FROM_ADDRESS }}
+      IDENTITY_MAIL_FROM_ADDRESS: ${{ vars.MAIL_FROM_ADDRESS }}
+      MAIL_DAILY_CAP: ${{ vars.MAIL_DAILY_CAP || '200' }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: ./.github/actions/setup
+
+      - name: Deploy, export outputs, migrate
+        id: deploy
+        uses: ./.github/actions/deploy-stage
+        with:
+          stage: prod
+
+      - name: Seed the app's OAuth client and the admin
+        if: env.IDENTITY_SEED_TOKEN != '' && env.KILL_SWITCH != 'true'
+        run: pnpm seed:identity
+
+      - name: Smoke-test the stage
+        if: env.KILL_SWITCH != 'true'
+        run: node scripts/smoke-stage.mjs
