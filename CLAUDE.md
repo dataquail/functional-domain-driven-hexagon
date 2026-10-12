@@ -10,30 +10,28 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 | New file kind, test, fake, stereotype (parity/layout) | `.claude/rules/server-file-taxonomy.md`          | 0008                                    |
 | Writing or running server/jobs tests                  | `.claude/rules/server-testing.md`                | 0009                                    |
 | Handlers, layers, event buses, SQL, auth (server)     | `.claude/rules/server-effect-and-persistence.md` | 0004, 0006, 0007, 0012, 0016–0017, 0020 |
-| Frontend (`packages/web*`, `packages/components*`)    | `.claude/rules/frontend.md`                      | 0015, 0018, 0019, 0026, 0036, 0037      |
+| Frontend (`packages/web`, `packages/components`)      | `.claude/rules/frontend.md`                      | 0015, 0019, 0026, 0036, 0037            |
 | Any Effect v4 API you are not certain of              | `.claude/rules/effect-v4-source.md`              | —                                       |
 | Writing comments (any package)                        | `.claude/rules/comments.md`                      | —                                       |
 | Any architectural boundary, file naming, rule probes  | `.claude/rules/architecture-rules.md`            | 0008, 0025, 0027, 0028                  |
 
 ## Monorepo map
 
-| Package             | What it is                                                                                |
-| ------------------- | ----------------------------------------------------------------------------------------- |
-| `@org/server`       | The Effect BFF, a Cloudflare Worker (`src/platform/worker/main.ts`). Bulk of rules.       |
-| `@org/web`          | Next.js App Router renderer + `/api/*` proxy; Effect Atom + MVVM (ADR-0026, 0018).        |
-| `@org/web`          | The SvelteKit renderer, a Worker in the stack; same MVVM, replaces web in Phase 7 (0037). |
-| `@org/components`   | Bespoke component library (primitives + patterns) + Storybook (ADR-0015).                 |
-| `@org/components`   | The same library in Svelte 5 + Storybook, beside the React one until Phase 7 (ADR-0036).  |
-| `@org/contracts`    | Shared HTTP API contracts, schemas, errors — consumed by server and clients.              |
-| `@org/database`     | DB access kernel (effect/sql client, `RowSchemas`, row decoding) + migrations.            |
-| `@org/jobs`         | Cron jobs as Effects, run by the server Worker's `scheduled` handler.                     |
-| `@org/infra`        | The Alchemy stack (Neon, Hyperdrive, Queues); the only package that names Alchemy.        |
-| `@org/identity`     | The identity Worker: Better Auth as the OIDC issuer; the only package naming it.          |
-| `@org/cli`          | Command-line client (device-flow auth, organizations, todos).                             |
-| `@org/mcp`          | MCP (stdio) server exposing the CLI surface as tools.                                     |
-| `@org/api-client`   | Shared typed client + credential store for the CLI and MCP.                               |
-| `@org/acceptance`   | Playwright acceptance tests (specs / drivers / pages / infrastructure).                   |
-| `@org/test-drivers` | Tier-agnostic page-driver contracts + per-tier adapters (Playwright / RTL).               |
+| Package             | What it is                                                                                 |
+| ------------------- | ------------------------------------------------------------------------------------------ |
+| `@org/server`       | The Effect BFF, a Cloudflare Worker (`src/platform/worker/main.ts`). Bulk of rules.        |
+| `@org/web`          | The SvelteKit app, a Worker in the stack; `/api/*` proxy; Effect Atom + MVVM (0026, 0037). |
+| `@org/components`   | Bespoke Svelte 5 component library (primitives + patterns) + Storybook (ADR-0015, 0036).   |
+| `@org/contracts`    | Shared HTTP API contracts, schemas, errors — consumed by server and clients.               |
+| `@org/database`     | DB access kernel (effect/sql client, `RowSchemas`, row decoding) + migrations.             |
+| `@org/jobs`         | Cron jobs as Effects, run by the server Worker's `scheduled` handler.                      |
+| `@org/infra`        | The Alchemy stack (Neon, Hyperdrive, Queues); the only package that names Alchemy.         |
+| `@org/identity`     | The identity Worker: Better Auth as the OIDC issuer; the only package naming it.           |
+| `@org/cli`          | Command-line client (device-flow auth, organizations, todos).                              |
+| `@org/mcp`          | MCP (stdio) server exposing the CLI surface as tools.                                      |
+| `@org/api-client`   | Shared typed client + credential store for the CLI and MCP.                                |
+| `@org/acceptance`   | Playwright acceptance tests (specs / drivers / pages / infrastructure).                    |
+| `@org/test-drivers` | Tier-agnostic page-driver contracts + per-tier adapters (Playwright / RTL).                |
 
 **Installed, not vendored.** The CQRS, unit-of-work and authorization patterns this codebase
 teaches now ship as published libraries from a separate repository (`dataquail/effect-server-utils`)
@@ -61,14 +59,15 @@ there, not an edit here.
 | `pnpm test`                                                  | vitest **unit** suite (excludes `*.integration.test.ts`), no DB                                                                                                     |
 | `DATABASE_URL_TEST=postgres://… pnpm test:integration`       | **integration** suite only (`*.integration.test.ts`); hard-fails if no DB                                                                                           |
 | `DATABASE_URL_TEST=postgres://… pnpm coverage`               | unit + integration merged into ONE coverage number; thresholds in `vitest.config.ts` gate CI                                                                        |
-| `pnpm deploy:cf --stage <s>` / `pnpm destroy:cf --stage <s>` | `alchemy deploy` / `destroy` — creates or removes real Cloudflare + Neon resources; needs credentials                                                               |
+| `pnpm deploy:cf --stage <s>` / `pnpm destroy:cf --stage <s>` | `alchemy deploy` / `destroy` — creates or removes real Cloudflare + Neon resources; stages deploy from CI (`preview.yml`, `deploy.yml`, ADR-0039)                   |
 | `pnpm db:migrate`                                            | the app's PgMigrator migrations, then Better Auth's against `IDENTITY_DATABASE_URL` (deployed: direct URLs)                                                         |
-| `pnpm dev`                                                   | `alchemy dev`: SvelteKit Worker :3000, server Worker :3001, identity Worker :3002, queues, crons (`pnpm dev:next` serves Next on :3000 instead)                     |
-| `pnpm test:acceptance`                                       | Playwright against the SvelteKit renderer under `alchemy dev` (`pnpm test:acceptance:next` for Next); stop `pnpm dev` first                                         |
+| `pnpm dev`                                                   | `alchemy dev`: SvelteKit Worker :3000, server Worker :3001, identity Worker :3002, queues, crons                                                                    |
+| `pnpm test:acceptance`                                       | Playwright against its own `alchemy dev` stack (stop `pnpm dev` first), or a deployed `pr-<n>` stage with `ACCEPTANCE_BASE_URL`                                     |
 | `pnpm test:workers`                                          | workerd smoke tests of the server Worker's `fetch` / `queue` / `scheduled`; needs the docker Postgres and free dev ports                                            |
 | `pnpm effect:source`                                         | clone/refresh the Effect v4 source at `reference/effect` (gitignored, pinned to our version)                                                                        |
 
 ## Always in scope
 
 - **Effect v4 baseline.** Pinned to `effect@4.0.2` (exact — `effect/*` modules marked `@stability unstable` may still break on a bump). Domain result idiom is `effect/Result` (not `Either`); errors are `Schema.TaggedError`; services are `Context.Service<Self, Shape>()("Id")` with an explicit `Layer`. HTTP is `effect/http-api` + `effect/http`. Persistence is `effect/sql` with the `@effect/sql-pg` driver, pinned to the same exact version — bump them together. Server-side gotchas and event-bus/UoW/span rules are in `.claude/rules/server-effect-and-persistence.md`. Effect v4 ships no API docs, so **read the v4 source instead of recalling its API** — `pnpm effect:source` puts a pinned, gitignored checkout at `reference/effect`; `.claude/rules/effect-v4-source.md` says what lives where.
+- **Node 24.21.0** (`.nvmrc`). Tailwind compiles through `@tailwindcss/vite`; on Node 22 Alchemy's dev server broke its loaders.
 - **Comments are a last resort** — code is self-documenting, behavior is documented through tests. Full policy: `.claude/rules/comments.md`.

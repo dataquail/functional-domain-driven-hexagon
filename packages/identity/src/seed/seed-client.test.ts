@@ -98,7 +98,7 @@ describe("seed client", () => {
         Effect.tryPromise(() => assertIdentityReachable(env, unreachable)),
       );
 
-      expect(String(error.cause)).toContain("Start it with `pnpm dev:cf`");
+      expect(String(error.cause)).toContain("Start it with `pnpm dev`");
     }),
   );
 

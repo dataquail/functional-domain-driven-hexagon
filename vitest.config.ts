@@ -65,7 +65,7 @@ export default defineConfig({
         // Resource declarations: only the Alchemy engine evaluates them, under
         // `alchemy dev` or a deploy.
         "packages/infra/src/stack/**",
-        // Worker entrypoints run in workerd; `pnpm dev:cf:check` is their test.
+        // Worker entrypoints run in workerd; `pnpm test:workers` is their test.
         "packages/infra/src/platform/worker/**",
         "packages/identity/src/platform/worker/**",
         "packages/identity/src/scripts/**",

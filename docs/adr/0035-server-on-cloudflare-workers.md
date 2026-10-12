@@ -1,6 +1,6 @@
 # ADR-0035: The server on Cloudflare Workers
 
-- Status: Accepted
+- Status: Accepted; amended by [ADR-0039](0039-deploy-pipeline-stages-and-limits.md) — `workersDev` now serves previews and the server Worker on staging; deployed stages turn on Workers Observability
 - Date: 2026-10-11
 - Amends: ADR-0007 (after-commit delivery crosses a Cloudflare Queue), ADR-0012 (spans export over fetch, per invocation), ADR-0018 (Next's rewrite targets the server Worker).
 

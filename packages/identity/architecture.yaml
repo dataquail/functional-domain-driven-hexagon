@@ -22,7 +22,7 @@ defs:
       message: >-
         An identity test exercises the module beside it with fakes and the Web platform's own
         Request and Response. It does not start Better Auth: that needs a database and is what
-        `pnpm dev:cf` is for.
+        the integration suite and `pnpm dev` are for.
       external: ["@effect/vitest"]
 
   identity-integration-test-file:

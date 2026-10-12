@@ -1,6 +1,6 @@
 # ADR-0037: The SvelteKit renderer on Workers, and how MVVM holds in Svelte
 
-- Status: Accepted
+- Status: Accepted; amended by [ADR-0039](0039-deploy-pipeline-stages-and-limits.md) (custom domains and limits) and by the Phase 7 cutover: the packages are now `@org/web` and `@org/components`, and on Node 24 Tailwind compiles in Vite again
 - Date: 2026-10-11
 - Amends: ADR-0018 (the renderer and its `/api` proxy move into a SvelteKit Worker; Next is deleted in Phase 7), ADR-0026 (the bindings and the View rule, restated for Svelte), ADR-0036 (ESLint's markup rules reach the web app).
 
