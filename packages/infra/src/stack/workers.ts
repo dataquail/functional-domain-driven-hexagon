@@ -4,7 +4,9 @@ import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
+import { kindOfStage, PRODUCTION_STAGE, workerName, type WorkerRole } from "../stage.js";
 import { appDatabase, identityDatabase } from "./databases.js";
+import { deployedHosts, stageUrls } from "./hosts.js";
 import { domainEventsDeadLetterQueue, domainEventsQueue } from "./queues.js";
 
 const IDENTITY_WORKER_ENTRY = decodeURIComponent(
@@ -24,6 +26,42 @@ const SERVER_DEV_PORT = 3001;
 // The server Worker's `scheduled` handler dispatches on these strings.
 const HOURLY = "0 * * * *";
 const EVERY_MINUTE = "* * * * *";
+
+// CPU per invocation, the ceiling on what one request can cost. The identity
+// Worker hashes passwords, which is the most expensive thing any of them does.
+const CPU_MS: Record<WorkerRole, number> = { web: 200, identity: 1_000, server: 100 };
+
+// Beside the Neon region (databases.ts): both Workers make several round trips per request.
+const NEAR_THE_DATABASE = { region: "aws:us-east-2" };
+
+const DEPLOYED_OBSERVABILITY = {
+  enabled: true,
+  logs: { enabled: true, invocationLogs: true },
+  traces: { enabled: true },
+};
+
+// What a Worker is called, where it runs and what it may spend, on a deployed stage.
+const deployedPlatform = Effect.fn(function* (role: WorkerRole) {
+  if (yield* Alchemy.ALCHEMY_DEV) return { limits: { cpuMs: CPU_MS[role] } };
+  const { stage } = yield* Alchemy.Stack;
+  return {
+    name: workerName(stage, role),
+    limits: { cpuMs: CPU_MS[role] },
+    observability: DEPLOYED_OBSERVABILITY,
+    ...(role === "web" ? {} : { placement: NEAR_THE_DATABASE }),
+  };
+});
+
+// A long-lived stage answers only on its custom domain, behind the zone's WAF rules;
+// a preview, having no domain, answers on workers.dev.
+const publicSurface = Effect.fn(function* (role: "web" | "identity") {
+  if (yield* Alchemy.ALCHEMY_DEV) return {};
+  const { stage } = yield* Alchemy.Stack;
+  if (kindOfStage(stage) === "preview") return { workersDev: true };
+  const hosts = yield* deployedHosts;
+  const name = role === "web" ? hosts.appHostname : hosts.identityHostname;
+  return { workersDev: false, ...(name === undefined ? {} : { domain: name }) };
+});
 
 const mailSender = Effect.gen(function* () {
   return {
@@ -64,14 +102,17 @@ const seedToken = Effect.gen(function* () {
 
 export const identityWorker = Effect.gen(function* () {
   const sender = yield* mailSender;
+  const urls = yield* stageUrls;
   return yield* Cloudflare.Worker("identity", {
     main: IDENTITY_WORKER_ENTRY,
     dev: { port: IDENTITY_DEV_PORT, strictPort: true },
+    ...(yield* deployedPlatform("identity")),
+    ...(yield* publicSurface("identity")),
     env: {
       IDENTITY_DB: yield* identityDatabase,
       BETTER_AUTH_SECRET: yield* Config.Redacted("BETTER_AUTH_SECRET"),
-      IDENTITY_BASE_URL: yield* Config.String("IDENTITY_BASE_URL"),
-      APP_URL: yield* Config.String("APP_URL"),
+      IDENTITY_BASE_URL: urls.IDENTITY_BASE_URL,
+      APP_URL: urls.APP_URL,
       ...sender,
       ...(yield* mailTransport(sender.IDENTITY_MAIL_FROM_ADDRESS)),
       ...(yield* seedToken),
@@ -106,7 +147,7 @@ const serverMailer = Effect.fn(function* () {
   };
 });
 
-// Spans export to the local Jaeger only; deployed stages export nothing until a collector is chosen.
+// Spans export to the local Jaeger only; a deployed stage has Workers Observability instead.
 const serverTracing = Effect.gen(function* () {
   if (!(yield* Alchemy.ALCHEMY_DEV)) return {};
   return {
@@ -116,37 +157,42 @@ const serverTracing = Effect.gen(function* () {
   };
 });
 
-const optionalString = Effect.fn(function* (name: string) {
-  const value = yield* Config.option(Config.String(name));
-  return Option.match(value, { onNone: () => ({}), onSome: (set) => ({ [name]: set }) });
+// No public route in production: the web Worker reaches it over a service binding.
+const serverSurface = Effect.gen(function* () {
+  if (yield* Alchemy.ALCHEMY_DEV) return {};
+  const { stage } = yield* Alchemy.Stack;
+  return { workersDev: stage !== PRODUCTION_STAGE };
 });
 
 export const serverWorker = Effect.fn(function* (identity: Cloudflare.Worker) {
-  const { stage } = yield* Alchemy.Stack;
   const deadLetters = yield* domainEventsDeadLetterQueue;
   const domainEvents = yield* domainEventsQueue;
+  const urls = yield* stageUrls;
   const server = yield* Cloudflare.Worker("server", {
     main: SERVER_WORKER_ENTRY,
     dev: { port: SERVER_DEV_PORT, strictPort: true },
     crons: [HOURLY, EVERY_MINUTE],
-    // No public route in production: the web Worker reaches it over a service binding.
-    workersDev: stage !== "prod",
-    limits: { cpuMs: 100 },
+    ...(yield* deployedPlatform("server")),
+    ...(yield* serverSurface),
     env: {
       APP_DB: yield* appDatabase,
       IDENTITY: identity,
       DOMAIN_EVENTS: domainEvents,
       DOMAIN_EVENTS_DEAD_LETTER_QUEUE: deadLetters.queueName,
-      APP_URL: yield* Config.String("APP_URL"),
-      IDENTITY_ISSUER: yield* Config.String("IDENTITY_ISSUER"),
+      APP_URL: urls.APP_URL,
+      IDENTITY_ISSUER: urls.IDENTITY_ISSUER,
+      ...("IDENTITY_REDIRECT_URI" in urls
+        ? { IDENTITY_REDIRECT_URI: urls.IDENTITY_REDIRECT_URI }
+        : {}),
+      ...("IDENTITY_POST_LOGOUT_REDIRECT_URI" in urls
+        ? { IDENTITY_POST_LOGOUT_REDIRECT_URI: urls.IDENTITY_POST_LOGOUT_REDIRECT_URI }
+        : {}),
       IDENTITY_CLIENT_ID: yield* Config.String("IDENTITY_CLIENT_ID"),
       IDENTITY_CLIENT_SECRET: yield* Config.Redacted("IDENTITY_CLIENT_SECRET"),
       SESSION_COOKIE_SECRET: yield* Config.Redacted("SESSION_COOKIE_SECRET"),
       STRIPE_SECRET_KEY: yield* Config.Redacted("STRIPE_SECRET_KEY"),
       STRIPE_WEBHOOK_SECRET: yield* Config.Redacted("STRIPE_WEBHOOK_SECRET"),
       STRIPE_PRICE_ID_DEFAULT: yield* Config.String("STRIPE_PRICE_ID_DEFAULT"),
-      ...(yield* optionalString("IDENTITY_REDIRECT_URI")),
-      ...(yield* optionalString("IDENTITY_POST_LOGOUT_REDIRECT_URI")),
       ...(yield* serverMailer()),
       ...(yield* serverTracing),
     },
@@ -172,12 +218,12 @@ export const webWorker = Effect.fn(function* (server: Cloudflare.Worker) {
     Config.withDefault("svelte"),
   );
   if (renderer === "next") return Option.none<Cloudflare.Worker>();
-  const domain = yield* Config.option(Config.String("WEB_DOMAIN"));
   return Option.some(
     yield* Cloudflare.Website.SvelteKit("web", {
       rootDir: WEB_ROOT,
       dev: { port: WEB_DEV_PORT, strictPort: true },
-      ...Option.match(domain, { onNone: () => ({}), onSome: (name) => ({ domain: name }) }),
+      ...(yield* deployedPlatform("web")),
+      ...(yield* publicSurface("web")),
       env: { SERVER: server },
     }),
   );

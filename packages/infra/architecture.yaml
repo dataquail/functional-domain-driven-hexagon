@@ -53,7 +53,7 @@ children:
       src/ holds the stack's resource declarations under stack/, and the pure helpers they share
       beside it. A helper here is tested; a declaration is exercised by `alchemy dev`.
     children:
-      "stage.ts": {}
+      "stage.ts | edge-rules.ts": {}
       "*.test.ts":
         surface: [{ use: test-exports-nothing }]
         imports:
@@ -69,7 +69,7 @@ children:
           the Effects alchemy.run.ts yields; a Worker binds to the same Effect it was declared
           with, and a Worker whose code lives in another package is named by its entry path.
         children:
-          "databases.ts | providers.ts | queues.ts | workers.ts": {}
+          "databases.ts | edge.ts | hosts.ts | providers.ts | queues.ts | workers.ts": {}
   "smoke/":
     message: >-
       smoke/ boots the whole stack under workerd with Alchemy's test harness and drives each
