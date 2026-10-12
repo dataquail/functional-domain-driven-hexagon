@@ -636,6 +636,11 @@ const REFUSED = [
     "packages/database/src/index.ts",
   ],
   [
+    "the daily mail cap → a mail transport",
+    "packages/server/src/globals/infrastructure/email/quota/daily-capped-mailer-live.ts",
+    "packages/server/src/globals/infrastructure/email/adapters/cloudflare-email-mailer-live.ts",
+  ],
+  [
     "a mail transport → an undeclared SDK",
     "packages/server/src/globals/infrastructure/email/adapters/ses-mailer-live.ts",
     NPM("mailgun"),
@@ -757,6 +762,11 @@ const REFUSED = [
 // Edges the policy must ALLOW. These matter as much: a rule that refuses
 // everything is as broken as one that refuses nothing.
 const ALLOWED = [
+  [
+    "the daily mail cap → @org/database",
+    "packages/server/src/globals/infrastructure/email/quota/daily-capped-mailer-live.ts",
+    "packages/database/src/index.ts",
+  ],
   [
     "a domain-service composing two subdomains (LEGAL)",
     `${M}/alpha/domain/domain-services/x.domain-service.ts`,

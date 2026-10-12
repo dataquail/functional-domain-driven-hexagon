@@ -5,6 +5,7 @@ import pg from "pg";
 import { type ClientCredentials, makeIdentityAuth } from "../../auth/identity-auth.js";
 import { betterAuthPort } from "../../auth/identity-auth-port.js";
 import { handleIdentityRequest } from "../../http/identity-router.js";
+import { dailyCappedMailer } from "../../mail/daily-capped-mailer.js";
 import { emailBindingMailer } from "../../mail/email-binding-mailer.js";
 import type { IdentityMailer, MailSender } from "../../mail/identity-mailer.js";
 import { mailpitMailer } from "../../mail/mailpit-mailer.js";
@@ -20,9 +21,12 @@ type IdentityWorkerEnv = {
   readonly MAILPIT_URL?: string;
   readonly EMAIL?: SendEmail;
   readonly IDENTITY_SEED_TOKEN?: string;
+  readonly MAIL_DAILY_CAP?: string;
 };
 
-const mailerFor = (env: IdentityWorkerEnv): IdentityMailer => {
+const DEFAULT_MAIL_DAILY_CAP = 200;
+
+const mailerFor = (env: IdentityWorkerEnv, database: pg.Pool): IdentityMailer => {
   const sender: MailSender = {
     address: env.IDENTITY_MAIL_FROM_ADDRESS,
     name: env.IDENTITY_MAIL_FROM_NAME,
@@ -30,7 +34,11 @@ const mailerFor = (env: IdentityWorkerEnv): IdentityMailer => {
   if (env.IDENTITY_MAILER === "cloudflare") {
     if (env.EMAIL === undefined)
       throw new Error("IDENTITY_MAILER=cloudflare needs the EMAIL binding");
-    return emailBindingMailer(env.EMAIL, sender);
+    return dailyCappedMailer(
+      emailBindingMailer(env.EMAIL, sender),
+      database,
+      env.MAIL_DAILY_CAP === undefined ? DEFAULT_MAIL_DAILY_CAP : Number(env.MAIL_DAILY_CAP),
+    );
   }
   if (env.MAILPIT_URL === undefined) throw new Error("IDENTITY_MAILER=mailpit needs MAILPIT_URL");
   return mailpitMailer({ url: env.MAILPIT_URL, sender });
@@ -46,7 +54,7 @@ export default {
       secret: env.BETTER_AUTH_SECRET,
       appUrl: env.APP_URL,
       database,
-      mailer: mailerFor(env),
+      mailer: mailerFor(env, database),
       runInBackground: (task: Promise<unknown>) => backgroundTasks.push(task),
       ...(registerClientAs === undefined ? {} : { registerClientAs }),
     });

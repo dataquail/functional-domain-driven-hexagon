@@ -479,7 +479,7 @@ children:
             message: >-
               globals/infrastructure/email/ is the shared email seam, split like a module:
               ports/ holds the Mailer port and its errors, adapters/ the transports that satisfy
-              it.
+              it, and quota/ the daily cap wrapped around the paid one.
             children:
               "ports/":
                 imports:
@@ -508,6 +508,20 @@ children:
                 children:
                   "*-live.ts": {}
                   "*.test.ts": { use: server-unit-test-file }
+              "quota/":
+                message: >-
+                  quota/ caps how many emails a day the paid transport may send, counting each
+                  send in the database. It wraps a transport rather than being one.
+                imports:
+                  reset: true
+                  message: >-
+                    The daily cap names the Mailer port it wraps and the database kernel it counts
+                    in. It names no transport: the one it caps is handed to it.
+                  external: [effect]
+                  allow: ["@/globals/infrastructure/email/ports/**", "~/database/**"]
+                children:
+                  "*-live.ts": {}
+                  "*.integration.test.ts": { use: server-integration-test-file }
 
           "framework/":
             message: >-

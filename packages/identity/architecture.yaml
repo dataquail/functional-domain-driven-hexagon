@@ -98,11 +98,13 @@ children:
         importedBy: { use: identity-private }
         message: >-
           mail/ renders the verification and reset emails and sends them through a mailer:
-          Mailpit's HTTP API locally, the Email binding once deployed. The binding arrives as a
-          structural type, so nothing here names the Workers runtime.
+          Mailpit's HTTP API locally, the Email binding once deployed, capped per day by a count
+          in the identity database. The binding and the database arrive as structural types, so
+          nothing here names the Workers runtime or pg.
         children:
-          "identity-mailer.ts | identity-emails.ts | mailpit-mailer.ts | email-binding-mailer.ts":
+          "identity-mailer.ts | identity-emails.ts | mailpit-mailer.ts | email-binding-mailer.ts | daily-capped-mailer.ts":
             {}
+          "*.integration.test.ts": { use: identity-integration-test-file }
           "*.test.ts": { use: identity-test-file }
       "pages/":
         importedBy: { use: identity-private }

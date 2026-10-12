@@ -2,6 +2,7 @@ import { getMigrations } from "better-auth/db/migration";
 import * as Effect from "effect/Effect";
 import type { Pool } from "pg";
 
+import { MAIL_DAILY_COUNTS_TABLE } from "../mail/daily-capped-mailer.js";
 import { MailDeliveryError } from "../mail/identity-mailer.js";
 import { makeIdentityAuth } from "./identity-auth.js";
 
@@ -22,5 +23,6 @@ export const migrateIdentityDatabase = Effect.fn("migrateIdentityDatabase")(func
     getMigrations(auth.options),
   );
   yield* Effect.promise(() => runMigrations());
+  yield* Effect.promise(() => database.query(MAIL_DAILY_COUNTS_TABLE));
   return [...toBeCreated, ...toBeAdded].map((table) => table.table);
 });

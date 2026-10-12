@@ -63,6 +63,8 @@ const publicSurface = Effect.fn(function* (role: "web" | "identity") {
   return { workersDev: false, ...(name === undefined ? {} : { domain: name }) };
 });
 
+const mailDailyCap = Config.Int("MAIL_DAILY_CAP").pipe(Config.withDefault(200), Config.map(String));
+
 const mailSender = Effect.gen(function* () {
   return {
     IDENTITY_MAIL_FROM_ADDRESS: yield* Config.String("IDENTITY_MAIL_FROM_ADDRESS").pipe(
@@ -86,6 +88,7 @@ const mailTransport = Effect.fn(function* (senderAddress: string) {
   }
   return {
     IDENTITY_MAILER: "cloudflare",
+    MAIL_DAILY_CAP: yield* mailDailyCap,
     EMAIL: yield* Cloudflare.Email.SendEmail("identity-email", {
       allowedSenderAddresses: [senderAddress],
     }),
@@ -141,6 +144,7 @@ const serverMailer = Effect.fn(function* () {
   return {
     ...sender,
     MAILER: "cloudflare",
+    MAIL_DAILY_CAP: yield* mailDailyCap,
     EMAIL: yield* Cloudflare.Email.SendEmail("server-email", {
       allowedSenderAddresses: [sender.MAIL_FROM_ADDRESS],
     }),
