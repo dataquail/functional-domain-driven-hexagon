@@ -24,7 +24,7 @@ const zoneHostnames = (appDomain: string): EdgeHostnames => {
 };
 
 const usageAlertWebhook = Effect.gen(function* () {
-  const url = yield* Config.option(Config.String("USAGE_ALERT_WEBHOOK_URL"));
+  const url = yield* Config.option(Config.NonEmptyString("USAGE_ALERT_WEBHOOK_URL"));
   if (Option.isNone(url)) return [];
   const webhook = yield* Cloudflare.Alerting.NotificationWebhook("usage-alert-webhook", {
     url: url.value,

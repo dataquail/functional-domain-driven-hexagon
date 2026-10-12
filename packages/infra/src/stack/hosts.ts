@@ -12,7 +12,7 @@ import {
 } from "../stage.js";
 
 const optional = (name: string) =>
-  Config.option(Config.String(name)).pipe(Effect.map(Option.getOrUndefined));
+  Config.option(Config.NonEmptyString(name)).pipe(Effect.map(Option.getOrUndefined));
 
 export const deployedHosts: Effect.Effect<StageHosts, Config.ConfigError, Alchemy.Stack> =
   Effect.gen(function* () {

@@ -40,14 +40,15 @@ export default Alchemy.Stack(
     const zoneRules = yield* edge;
     const dev = yield* Alchemy.ALCHEMY_DEV;
     const urls = yield* stageUrls;
+    // Outputs named like environment variables are what the deploy pipeline
+    // exports to its migrate, seed and acceptance steps (scripts/stage-env.mjs).
     return {
-      appUrl: urls.APP_URL,
-      identityIssuer: urls.IDENTITY_ISSUER,
+      ...urls,
       ...(dev
         ? {}
         : {
-            appDatabaseUrl: yield* appDatabaseDirectUrl,
-            identityDatabaseUrl: yield* identityDatabaseDirectUrl,
+            DATABASE_URL: yield* appDatabaseDirectUrl,
+            IDENTITY_DATABASE_URL: yield* identityDatabaseDirectUrl,
           }),
       ...Option.match(zoneRules, {
         onNone: () => ({}),

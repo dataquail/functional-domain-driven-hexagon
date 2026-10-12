@@ -1,0 +1,140 @@
+name: Preview
+
+# A pull request labelled `preview` gets a stage of its own, pr-<n>: the three
+# Workers on workers.dev, schema-only Neon branches of staging's databases,
+# and the acceptance suite run against it. Removing the label or closing the
+# pull request destroys the stage. Staging must have been deployed once, since
+# a preview branches from its databases.
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, labeled, unlabeled, closed]
+
+# The state store takes no lock, so one stage is only ever touched by one run,
+# and a deploy is never cancelled half-way through.
+concurrency:
+  group: preview-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  STAGE: pr-${{ github.event.pull_request.number }}
+
+jobs:
+  deploy:
+    name: Deploy and accept pr-${{ github.event.pull_request.number }}
+    # Secrets never reach a fork's code, and a label change other than
+    # `preview` itself is not a reason to redeploy.
+    if: >-
+      github.event.action != 'closed'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && contains(github.event.pull_request.labels.*.name, 'preview')
+      && (github.event.action != 'labeled' || github.event.label.name == 'preview')
+      && github.event.action != 'unlabeled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment:
+      name: preview
+      url: ${{ steps.deploy.outputs.app-url }}
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_WORKERS_SUBDOMAIN: ${{ vars.CLOUDFLARE_WORKERS_SUBDOMAIN }}
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      SESSION_COOKIE_SECRET: ${{ secrets.SESSION_COOKIE_SECRET }}
+      IDENTITY_CLIENT_ID: ${{ vars.IDENTITY_CLIENT_ID }}
+      IDENTITY_CLIENT_SECRET: ${{ secrets.IDENTITY_CLIENT_SECRET }}
+      IDENTITY_SEED_TOKEN: ${{ secrets.IDENTITY_SEED_TOKEN }}
+      IDENTITY_ADMIN_EMAIL: ${{ vars.IDENTITY_ADMIN_EMAIL }}
+      IDENTITY_ADMIN_PASSWORD: ${{ secrets.IDENTITY_ADMIN_PASSWORD }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+      STRIPE_PRICE_ID_DEFAULT: ${{ vars.STRIPE_PRICE_ID_DEFAULT }}
+      MAIL_FROM_ADDRESS: ${{ vars.MAIL_FROM_ADDRESS }}
+      IDENTITY_MAIL_FROM_ADDRESS: ${{ vars.MAIL_FROM_ADDRESS }}
+      MAIL_DAILY_CAP: ${{ vars.MAIL_DAILY_CAP || '200' }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v5
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm -F @org/acceptance exec playwright install --with-deps chromium
+
+      - name: Install Playwright system deps
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm -F @org/acceptance exec playwright install-deps chromium
+
+      - name: Deploy, export outputs, migrate
+        id: deploy
+        uses: ./.github/actions/deploy-stage
+        with:
+          stage: ${{ env.STAGE }}
+
+      - name: Seed the app's OAuth client and the admin
+        run: pnpm seed:identity
+
+      - name: Run the acceptance suite against the stage
+        run: pnpm test:acceptance
+        env:
+          CI: "true"
+          ACCEPTANCE_BASE_URL: ${{ steps.deploy.outputs.app-url }}
+          ACCEPTANCE_STAGE: ${{ env.STAGE }}
+
+      - name: Write the stage's URL to the summary
+        if: always() && steps.deploy.outputs.app-url != ''
+        run: echo "Preview at $APP_URL" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-${{ env.STAGE }}
+          path: packages/acceptance/playwright-report/
+          retention-days: 14
+
+  destroy:
+    name: Destroy pr-${{ github.event.pull_request.number }}
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository
+      && (
+        (github.event.action == 'closed' && contains(github.event.pull_request.labels.*.name, 'preview'))
+        || (github.event.action == 'unlabeled' && github.event.label.name == 'preview')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: preview
+    # Destroy evaluates the whole stack, so it reads the same values a deploy does.
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_WORKERS_SUBDOMAIN: ${{ vars.CLOUDFLARE_WORKERS_SUBDOMAIN }}
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      SESSION_COOKIE_SECRET: ${{ secrets.SESSION_COOKIE_SECRET }}
+      IDENTITY_CLIENT_ID: ${{ vars.IDENTITY_CLIENT_ID }}
+      IDENTITY_CLIENT_SECRET: ${{ secrets.IDENTITY_CLIENT_SECRET }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+      STRIPE_PRICE_ID_DEFAULT: ${{ vars.STRIPE_PRICE_ID_DEFAULT }}
+      MAIL_FROM_ADDRESS: ${{ vars.MAIL_FROM_ADDRESS }}
+      IDENTITY_MAIL_FROM_ADDRESS: ${{ vars.MAIL_FROM_ADDRESS }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup
+
+      - name: Destroy the stage
+        working-directory: packages/infra
+        run: pnpm exec alchemy destroy --stage "$STAGE" --yes

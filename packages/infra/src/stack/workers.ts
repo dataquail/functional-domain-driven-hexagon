@@ -3,6 +3,7 @@ import * as Cloudflare from "alchemy/Cloudflare";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
+import * as Redacted from "effect/Redacted";
 
 import { kindOfStage, PRODUCTION_STAGE, workerName, type WorkerRole } from "../stage.js";
 import { appDatabase, identityDatabase } from "./databases.js";
@@ -96,7 +97,9 @@ const mailTransport = Effect.fn(function* (senderAddress: string) {
 });
 
 const seedToken = Effect.gen(function* () {
-  const token = yield* Config.option(Config.Redacted("IDENTITY_SEED_TOKEN"));
+  const token = yield* Config.option(
+    Config.NonEmptyString("IDENTITY_SEED_TOKEN").pipe(Config.map(Redacted.make)),
+  );
   return Option.match(token, {
     onNone: () => ({}),
     onSome: (value) => ({ IDENTITY_SEED_TOKEN: value }),
