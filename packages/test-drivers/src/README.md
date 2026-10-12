@@ -18,12 +18,12 @@ the divergence point between integration and acceptance.
 ## Worked example: `createUser`
 
 Same scenario, two tiers, same driver methods (full code in
-[`packages/web-svelte/features/users/__tests__/create-user.integration.test.ts`](../../../web-svelte/features/users/__tests__/create-user.integration.test.ts)
+[`packages/web/features/users/__tests__/create-user.integration.test.ts`](../../../web/features/users/__tests__/create-user.integration.test.ts)
 and
 [`packages/acceptance/specs/add-user.spec.ts`](../../../acceptance/specs/add-user.spec.ts)).
 
 ```ts
-// Integration (packages/web-svelte/features/users/__tests__/create-user.integration.test.ts)
+// Integration (packages/web/features/users/__tests__/create-user.integration.test.ts)
 server.use(
   handlers.auth.signedInAs(),
   handlers.users.list([]),

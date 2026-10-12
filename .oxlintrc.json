@@ -241,7 +241,7 @@
   },
   "overrides": [
     {
-      "files": ["packages/server/**/*.{ts,tsx,js,jsx}", "packages/web-svelte/**/*.{ts,js}"],
+      "files": ["packages/server/**/*.{ts,tsx,js,jsx}", "packages/web/**/*.{ts,js}"],
       "rules": {
         "local/no-deep-relative-imports": "error"
       }
@@ -298,7 +298,7 @@
       // SvelteKit owns these signatures: a hook and a load function are async, and
       // the server-side helpers they call are where the request's Effect runtime
       // is run.
-      "files": ["packages/web-svelte/src/**/*.ts", "packages/web-svelte/services/**/*.server.ts"],
+      "files": ["packages/web/src/**/*.ts", "packages/web/services/**/*.server.ts"],
       "rules": {
         "effecttsgo/async-function": "off"
       }

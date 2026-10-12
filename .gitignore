@@ -52,7 +52,7 @@ packages/*/src/**/*.mjs
 packages/*/src/**/*.cjs
 packages/*/src/**/*.d.ts
 # SvelteKit's ambient app types are hand-written.
-!packages/web-svelte/src/app.d.ts
+!packages/web/src/app.d.ts
 packages/*/src/**/*.map
 
 # Scratch git worktrees created by tooling; never part of the repo.
@@ -61,5 +61,5 @@ packages/*/src/**/*.map
 # Config fixtures written by the architecture-rules loader tests.
 .tmp-*/
 
-# Compiled by `pnpm -F @org/web-svelte css`
-packages/web-svelte/src/styles.generated.css
+# Compiled by `pnpm -F @org/web css`
+packages/web/src/styles.generated.css

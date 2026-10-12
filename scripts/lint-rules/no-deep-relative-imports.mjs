@@ -20,7 +20,7 @@ import path from "path";
 // package. Keep in sync with each package's tsconfig `paths`.
 const ALIAS_ROOT_BY_PACKAGE = {
   "packages/server": "src",
-  "packages/web-svelte": ".",
+  "packages/web": ".",
 };
 
 export default {

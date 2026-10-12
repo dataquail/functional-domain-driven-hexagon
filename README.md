@@ -2,10 +2,10 @@
 
 A monorepo containing:
 
-- `packages/web-svelte`: the SvelteKit renderer, a Cloudflare Worker that proxies `/api/*` to the BFF over a service binding (see [ADR-0037](docs/adr/0037-sveltekit-renderer-on-workers.md))
+- `packages/web`: the SvelteKit renderer, a Cloudflare Worker that proxies `/api/*` to the BFF over a service binding (see [ADR-0037](docs/adr/0037-sveltekit-renderer-on-workers.md))
 - `packages/web`: the Next.js (App Router) renderer it replaces in Phase 7 (see [ADR-0018](docs/adr/0018-frontend-nextjs-renderer-and-proxy.md))
 - `packages/components`: the React component library (primitives + patterns) and its Storybook ([ADR-0015](docs/adr/0015-frontend-component-library.md))
-- `packages/components-svelte`: the same library in Svelte 5, growing beside the React one until the SvelteKit cutover ([ADR-0036](docs/adr/0036-svelte-component-library-and-its-lint.md))
+- `packages/components`: the same library in Svelte 5, growing beside the React one until the SvelteKit cutover ([ADR-0036](docs/adr/0036-svelte-component-library-and-its-lint.md))
 - `packages/server`: Effect-based BFF / API server, run as a Cloudflare Worker (the auth authority — see ADR-0034, ADR-0035)
 - `packages/identity`: the identity Worker — Better Auth as the OIDC issuer the server signs users in against
 - `packages/infra`: the Alchemy stack (Neon, Hyperdrive, Queues, Workers)
@@ -156,7 +156,7 @@ both is part of `pnpm check:all`.
 
 ```sh
 pnpm -F @org/components storybook          # React, http://localhost:6006
-pnpm -F @org/components-svelte storybook   # Svelte, http://localhost:6007
+pnpm -F @org/components storybook   # Svelte, http://localhost:6007
 ```
 
 ### Checking and Testing

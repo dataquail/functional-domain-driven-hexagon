@@ -15,8 +15,8 @@ const SUMMARY_FILE = join(ROOT, "coverage", "coverage-summary.json");
 // rows line up with what the gate actually checks.
 const BUCKETS = [
   ["@org/server", "packages/server/"],
-  ["@org/web-svelte", "packages/web-svelte/"],
-  ["@org/components-svelte", "packages/components-svelte/"],
+  ["@org/web", "packages/web/"],
+  ["@org/components", "packages/components/"],
   ["@org/database", "packages/database/"],
   ["@org/contracts", "packages/contracts/"],
   ["@org/jobs", "packages/jobs/"],

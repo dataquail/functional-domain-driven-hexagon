@@ -43,9 +43,9 @@ resolve:
   # The web app resolves `@/*` to its own root; everything else resolves
   # through the server-side mapping. The catch-all must come last.
   scopes:
-    - files: "^packages/web-svelte/"
+    - files: "^packages/web/"
       language: typescript
-      options: { tsconfig: tsconfig.resolve-web-svelte.json }
+      options: { tsconfig: tsconfig.resolve-web.json }
     - files: "^packages/acceptance/"
       language: typescript
       options: { tsconfig: packages/acceptance/tsconfig.json }
@@ -114,7 +114,7 @@ deny:
       - "**/node_modules/bits-ui/**"
       - "**/node_modules/@lucide/svelte/**"
       - "**/node_modules/svelte-sonner/**"
-    except: ["~/components-svelte/primitives/**"]
+    except: ["~/components/primitives/**"]
     message: >-
       Only the Svelte component library's primitives/ may name a third-party visual library. A
       pattern or a screen composes primitives, so the library's prop surface stops at one tier and
@@ -247,10 +247,10 @@ graph:
         - "**/*.stories.svelte"
         - "**/vitest.config.ts"
         - "**/global-setup.ts"
-        - "~/components-svelte/test/setup.ts"
-        - "~/web-svelte/test/setup.ts"
+        - "~/components/test/setup.ts"
+        - "~/web/test/setup.ts"
         # Vitest resolves `$app/*` to these stubs by alias; the graph resolves it to Kit.
-        - "~/web-svelte/test/kit/**"
+        - "~/web/test/kit/**"
         - "~/acceptance/playwright.config.ts"
         # Process entrypoints and package bins; workerd loads the server Worker by path.
         - "@/platform/worker/main.ts"
@@ -262,13 +262,13 @@ graph:
         - "~/identity/src/platform/worker/identity-worker.ts"
         - "~/identity/src/scripts/**"
         # Framework-loaded by convention.
-        - "~/components-svelte/.storybook/**"
-        - "~/components-svelte/vite.config.ts"
-        - "~/web-svelte/vite.config.ts"
-        - "~/web-svelte/src/routes/**"
-        - "~/web-svelte/src/app.d.ts"
-        - "~/web-svelte/src/hooks.server.ts"
-        - "~/web-svelte/src/hooks.client.ts"
+        - "~/components/.storybook/**"
+        - "~/components/vite.config.ts"
+        - "~/web/vite.config.ts"
+        - "~/web/src/routes/**"
+        - "~/web/src/app.d.ts"
+        - "~/web/src/hooks.server.ts"
+        - "~/web/src/hooks.client.ts"
   reach:
     - name: domain-reaches-no-adapter
       message: >-
@@ -314,7 +314,7 @@ graph:
         A web renderer transitively reaches packages/server. The browser talks to the BFF over HTTP
         through the contracts package and nothing else; a route from web to the server means a
         package both depend on has grown a server dependency.
-      from: "~/web-svelte/**"
+      from: "~/web/**"
       to: "~/server/**"
     - name: contracts-reach-nothing
       message: >-
@@ -322,7 +322,7 @@ graph:
         the dependency graph — every package depends on it — so anything it reaches becomes a
         dependency of the whole repo.
       from: "~/contracts/**"
-      to: ["~/server/**", "~/web-svelte/**", "~/database/**"]
+      to: ["~/server/**", "~/web/**", "~/database/**"]
 
 # Fragments the tree reuses. `{ use: <name> }` anywhere below is replaced by a
 # copy of the fragment before the manifest is decoded; a key written beside
@@ -364,6 +364,6 @@ tree:
   "~/jobs/": { include: packages/jobs/architecture.yaml }
   "~/infra/": { include: packages/infra/architecture.yaml }
   "~/identity/": { include: packages/identity/architecture.yaml }
-  "~/components-svelte/": { include: packages/components-svelte/architecture.yaml }
-  "~/web-svelte/": { include: packages/web-svelte/architecture.yaml }
+  "~/components/": { include: packages/components/architecture.yaml }
+  "~/web/": { include: packages/web/architecture.yaml }
   "~/server/src/": { include: packages/server/architecture.yaml }

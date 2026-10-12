@@ -120,7 +120,7 @@ const PROBES = [
       ");\n",
   },
   {
-    // The alias root differs per package (server: src/, web-svelte: package root), so
+    // The alias root differs per package (server: src/, web: package root), so
     // each aliased package is probed separately — a package missing from the
     // rule's map makes it silently vacuous there, which is how web went
     // unenforced while being configured for it.
@@ -131,7 +131,7 @@ const PROBES = [
   },
   {
     rule: "local/no-deep-relative-imports",
-    file: "packages/web-svelte/features/zzprobe/deep/probe.view-model.ts",
+    file: "packages/web/features/zzprobe/deep/probe.view-model.ts",
     source:
       'import { probe as p } from "../../../services/format/probe";\n\nexport const probe = p;\n',
   },
@@ -153,14 +153,14 @@ const PROBES = [
     // and one that imports the web app.
     rule: "architecture/structure",
     message: "needs a sibling *.stories.svelte",
-    file: "packages/components-svelte/primitives/zzprobe-parity.svelte",
+    file: "packages/components/primitives/zzprobe-parity.svelte",
     source: '<script lang="ts">\n  const probe = 1;\n</script>\n\n<span>{probe}</span>\n',
   },
   {
     rule: "architecture/imports",
-    file: "packages/components-svelte/primitives/zzprobe-web.svelte",
+    file: "packages/components/primitives/zzprobe-web.svelte",
     source:
-      '<script lang="ts">\n  import { probe } from "../../web-svelte/test/setup";\n</script>\n\n<span>{probe}</span>\n',
+      '<script lang="ts">\n  import { probe } from "../../web/test/setup";\n</script>\n\n<span>{probe}</span>\n',
   },
   {
     // The parity half of the taxonomy (21 enforceExistence rules) was entirely
@@ -184,7 +184,7 @@ const PROBES = [
   },
   {
     rule: "architecture/structure",
-    file: "packages/web-svelte/features/zzprobe/parity.view-model.ts",
+    file: "packages/web/features/zzprobe/parity.view-model.ts",
     source: "export const probeAtom = null;\n",
   },
   {
@@ -236,7 +236,7 @@ const PROBES = [
     rule: "architecture/imports",
     message:
       "Only the Svelte component library's primitives/ may name a third-party visual library.",
-    file: "packages/components-svelte/providers/zzprobe-bits.svelte",
+    file: "packages/components/providers/zzprobe-bits.svelte",
     source:
       '<script lang="ts">\n  import { Label } from "bits-ui";\n</script>\n\n<Label.Root>probe</Label.Root>\n',
   },
@@ -244,7 +244,7 @@ const PROBES = [
     // The prop surface, read out of a Svelte component's module script.
     rule: "architecture/members",
     message: "reopens the component's surface to arbitrary paint",
-    file: "packages/components-svelte/patterns/zzprobe-members.svelte",
+    file: "packages/components/patterns/zzprobe-members.svelte",
     source:
       '<script module lang="ts">\n  export type ZzProbeProps = { readonly class?: string };\n</script>\n\n<span>probe</span>\n',
   },
@@ -253,21 +253,21 @@ const PROBES = [
     // (ADR-0036): a pattern painting a raw element, a class, and a style.
     linter: "eslint",
     rule: "svelte/no-restricted-html-elements",
-    file: "packages/components-svelte/patterns/zzprobe-element.svelte",
+    file: "packages/components/patterns/zzprobe-element.svelte",
     source: "<div>probe</div>\n",
   },
   {
     linter: "eslint",
     rule: "no-restricted-syntax",
     message: "A class or a style handed to an element from a screen",
-    file: "packages/components-svelte/patterns/zzprobe-class.svelte",
+    file: "packages/components/patterns/zzprobe-class.svelte",
     source:
       '<script lang="ts">\n  import Stack from "../primitives/stack.svelte";\n</script>\n\n<Stack class="p-4" />\n',
   },
   {
     linter: "eslint",
     rule: "svelte/no-inline-styles",
-    file: "packages/components-svelte/patterns/zzprobe-style.svelte",
+    file: "packages/components/patterns/zzprobe-style.svelte",
     source: '<span style="color: red">probe</span>\n',
   },
   {
@@ -276,42 +276,42 @@ const PROBES = [
     // Effect by hand, and a file in features/ with no view-tier stereotype.
     rule: "architecture/members",
     message: "puts state or behaviour in the View",
-    file: "packages/web-svelte/features/zzprobe/probe.view.svelte",
+    file: "packages/web/features/zzprobe/probe.view.svelte",
     source: '<script lang="ts">\n  let count = $state(0);\n</script>\n\n{count}\n',
   },
   {
     rule: "architecture/imports",
     message: "A View depends on its ViewModel and the bridge that reads it",
-    file: "packages/web-svelte/features/zzprobe/reach.view.svelte",
+    file: "packages/web/features/zzprobe/reach.view.svelte",
     source:
       '<script lang="ts">\n  import { apiTransportAtom } from "@/services/atom/api-transport.shared";\n  const probe = apiTransportAtom;\n</script>\n\n{String(probe)}\n',
   },
   {
     rule: "architecture/members",
     message: "runs an Effect by hand, outside the atom runtime",
-    file: "packages/web-svelte/features/zzprobe/probe.view-model.ts",
+    file: "packages/web/features/zzprobe/probe.view-model.ts",
     source:
       'import * as Effect from "effect/Effect";\n\nexport const probe = Effect.runPromise(Effect.void);\n',
   },
   {
     rule: "architecture/structure",
-    file: "packages/web-svelte/features/zzprobe-untiered.ts",
+    file: "packages/web/features/zzprobe-untiered.ts",
     source: "export const probe = 1;\n",
   },
   {
     // The same markup rules as the library's patterns, on the app's Views and routes.
     linter: "eslint",
     rule: "svelte/no-restricted-html-elements",
-    file: "packages/web-svelte/features/zzprobe/element.view.svelte",
+    file: "packages/web/features/zzprobe/element.view.svelte",
     source: "<div>probe</div>\n",
   },
   {
     linter: "eslint",
     rule: "no-restricted-syntax",
     message: "A class or a style handed to an element from a screen",
-    file: "packages/web-svelte/src/routes/zzprobe/+page.svelte",
+    file: "packages/web/src/routes/zzprobe/+page.svelte",
     source:
-      '<script lang="ts">\n  import Stack from "@org/components-svelte/primitives/stack.svelte";\n</script>\n\n<Stack class="p-4" />\n',
+      '<script lang="ts">\n  import Stack from "@org/components/primitives/stack.svelte";\n</script>\n\n<Stack class="p-4" />\n',
   },
   {
     // Circularity is the one dependency-cruiser rule with no per-file

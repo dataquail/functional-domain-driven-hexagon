@@ -18,7 +18,7 @@ const SERVER_WORKER_ENTRY = decodeURIComponent(
   new URL("../../../server/src/platform/worker/main.ts", import.meta.url).pathname,
 );
 
-const WEB_ROOT = decodeURIComponent(new URL("../../../web-svelte/", import.meta.url).pathname);
+const WEB_ROOT = decodeURIComponent(new URL("../../../web/", import.meta.url).pathname);
 
 const WEB_DEV_PORT = 3000;
 const IDENTITY_DEV_PORT = 3002;

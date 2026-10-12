@@ -7,7 +7,7 @@ import svelte from "eslint-plugin-svelte";
 const WIDEN =
   " A screen must not reach for a raw DOM element — if the primitive cannot express what you need, widen it and prove the new variant in its story (ADR-0015).";
 
-const PRIMITIVES = "@org/components-svelte/primitives";
+const PRIMITIVES = "@org/components/primitives";
 
 const FORBIDDEN_ELEMENTS = [
   [["div"], `Use Stack (layout) or Surface (a bordered/tinted region) from ${PRIMITIVES} instead.`],
@@ -52,9 +52,9 @@ export default [
   {
     // A screen composes primitives; it never paints a raw element itself.
     files: [
-      "packages/components-svelte/patterns/**/*.svelte",
-      "packages/web-svelte/features/**/*.view.svelte",
-      "packages/web-svelte/src/routes/**/*.svelte",
+      "packages/components/patterns/**/*.svelte",
+      "packages/web/features/**/*.view.svelte",
+      "packages/web/src/routes/**/*.svelte",
     ],
     ignores: ["**/*.stories.svelte"],
     rules: {

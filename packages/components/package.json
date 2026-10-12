@@ -1,0 +1,52 @@
+{
+  "name": "@org/components",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "The bespoke component library in Svelte 5 (primitives + patterns), growing beside @org/components until the Phase 7 cutover. Stories for every component live alongside it.",
+  "exports": {
+    "./primitives/*.svelte": "./primitives/*.svelte",
+    "./primitives/*": "./primitives/*/index.ts",
+    "./patterns/*.svelte": "./patterns/*.svelte",
+    "./providers/*": "./providers/*",
+    "./styles/*": "./styles/*",
+    "./test/setup": "./test/setup.ts"
+  },
+  "scripts": {
+    "storybook": "storybook dev -p 6007",
+    "build-storybook": "storybook build",
+    "check": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings"
+  },
+  "dependencies": {
+    "@lucide/svelte": "^1.55.0",
+    "bits-ui": "^2.19.5",
+    "effect": "4.0.2",
+    "svelte-sonner": "^1.2.1"
+  },
+  "peerDependencies": {
+    "svelte": "^5.57.2"
+  },
+  "devDependencies": {
+    "@storybook/addon-a11y": "^10.4.6",
+    "@storybook/addon-docs": "^10.4.6",
+    "@storybook/addon-svelte-csf": "^5.1.5",
+    "@storybook/addon-themes": "^10.4.6",
+    "@storybook/svelte": "~10.4.6",
+    "@storybook/svelte-vite": "~10.4.6",
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@tailwindcss/postcss": "4.2.4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/svelte": "^5.4.2",
+    "@testing-library/user-event": "^14.6.1",
+    "jsdom": "^26.1.0",
+    "storybook": "^10.4.6",
+    "svelte": "^5.57.2",
+    "svelte-check": "^4.7.6",
+    "tailwindcss": "4.2.4",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.3"
+  }
+}

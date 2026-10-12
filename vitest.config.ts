@@ -20,14 +20,14 @@ export default defineConfig({
     // auto-discovered and its `*.spec.ts` files aren't loaded as Vitest tests.
     // Acceptance specs run via `pnpm test:acceptance`.
     projects: [
-      "packages/components-svelte",
+      "packages/components",
       "packages/contracts",
       "packages/database",
       "packages/identity",
       "packages/infra",
       "packages/jobs",
       "packages/server",
-      "packages/web-svelte",
+      "packages/web",
     ],
     coverage: {
       provider: "v8",
@@ -37,7 +37,7 @@ export default defineConfig({
       // has none yet (@org/cli, @org/mcp, @org/api-client) would report 0% and
       // turn the gate into noise instead of signal.
       include: [
-        "packages/components-svelte/{primitives,patterns,providers}/**/*.{ts,svelte}",
+        "packages/components/{primitives,patterns,providers}/**/*.{ts,svelte}",
         "packages/contracts/src/**/*.ts",
         "packages/database/src/**/*.ts",
         "packages/identity/src/**/*.ts",
@@ -45,8 +45,8 @@ export default defineConfig({
         "packages/jobs/src/**/*.ts",
         "packages/server/src/**/*.{ts,tsx}",
         // Routes are framework surface, covered by acceptance.
-        "packages/web-svelte/{features,services}/**/*.{ts,svelte}",
-        "packages/web-svelte/src/{hooks.server.ts,lib/**/*.ts}",
+        "packages/web/{features,services}/**/*.{ts,svelte}",
+        "packages/web/src/{hooks.server.ts,lib/**/*.ts}",
       ],
       exclude: [
         ...coverageConfigDefaults.exclude,
@@ -92,13 +92,13 @@ export default defineConfig({
               functions: 44,
               lines: 53,
             },
-            "packages/web-svelte/**": {
+            "packages/web/**": {
               statements: 90,
               branches: 86,
               functions: 87,
               lines: 90,
             },
-            "packages/components-svelte/**": {
+            "packages/components/**": {
               statements: 97,
               branches: 91,
               functions: 95,

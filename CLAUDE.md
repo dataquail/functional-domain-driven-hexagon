@@ -17,23 +17,23 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 
 ## Monorepo map
 
-| Package                  | What it is                                                                                |
-| ------------------------ | ----------------------------------------------------------------------------------------- |
-| `@org/server`            | The Effect BFF, a Cloudflare Worker (`src/platform/worker/main.ts`). Bulk of rules.       |
-| `@org/web`               | Next.js App Router renderer + `/api/*` proxy; Effect Atom + MVVM (ADR-0026, 0018).        |
-| `@org/web-svelte`        | The SvelteKit renderer, a Worker in the stack; same MVVM, replaces web in Phase 7 (0037). |
-| `@org/components`        | Bespoke component library (primitives + patterns) + Storybook (ADR-0015).                 |
-| `@org/components-svelte` | The same library in Svelte 5 + Storybook, beside the React one until Phase 7 (ADR-0036).  |
-| `@org/contracts`         | Shared HTTP API contracts, schemas, errors — consumed by server and clients.              |
-| `@org/database`          | DB access kernel (effect/sql client, `RowSchemas`, row decoding) + migrations.            |
-| `@org/jobs`              | Cron jobs as Effects, run by the server Worker's `scheduled` handler.                     |
-| `@org/infra`             | The Alchemy stack (Neon, Hyperdrive, Queues); the only package that names Alchemy.        |
-| `@org/identity`          | The identity Worker: Better Auth as the OIDC issuer; the only package naming it.          |
-| `@org/cli`               | Command-line client (device-flow auth, organizations, todos).                             |
-| `@org/mcp`               | MCP (stdio) server exposing the CLI surface as tools.                                     |
-| `@org/api-client`        | Shared typed client + credential store for the CLI and MCP.                               |
-| `@org/acceptance`        | Playwright acceptance tests (specs / drivers / pages / infrastructure).                   |
-| `@org/test-drivers`      | Tier-agnostic page-driver contracts + per-tier adapters (Playwright / RTL).               |
+| Package             | What it is                                                                                |
+| ------------------- | ----------------------------------------------------------------------------------------- |
+| `@org/server`       | The Effect BFF, a Cloudflare Worker (`src/platform/worker/main.ts`). Bulk of rules.       |
+| `@org/web`          | Next.js App Router renderer + `/api/*` proxy; Effect Atom + MVVM (ADR-0026, 0018).        |
+| `@org/web`          | The SvelteKit renderer, a Worker in the stack; same MVVM, replaces web in Phase 7 (0037). |
+| `@org/components`   | Bespoke component library (primitives + patterns) + Storybook (ADR-0015).                 |
+| `@org/components`   | The same library in Svelte 5 + Storybook, beside the React one until Phase 7 (ADR-0036).  |
+| `@org/contracts`    | Shared HTTP API contracts, schemas, errors — consumed by server and clients.              |
+| `@org/database`     | DB access kernel (effect/sql client, `RowSchemas`, row decoding) + migrations.            |
+| `@org/jobs`         | Cron jobs as Effects, run by the server Worker's `scheduled` handler.                     |
+| `@org/infra`        | The Alchemy stack (Neon, Hyperdrive, Queues); the only package that names Alchemy.        |
+| `@org/identity`     | The identity Worker: Better Auth as the OIDC issuer; the only package naming it.          |
+| `@org/cli`          | Command-line client (device-flow auth, organizations, todos).                             |
+| `@org/mcp`          | MCP (stdio) server exposing the CLI surface as tools.                                     |
+| `@org/api-client`   | Shared typed client + credential store for the CLI and MCP.                               |
+| `@org/acceptance`   | Playwright acceptance tests (specs / drivers / pages / infrastructure).                   |
+| `@org/test-drivers` | Tier-agnostic page-driver contracts + per-tier adapters (Playwright / RTL).               |
 
 **Installed, not vendored.** The CQRS, unit-of-work and authorization patterns this codebase
 teaches now ship as published libraries from a separate repository (`dataquail/effect-server-utils`)
