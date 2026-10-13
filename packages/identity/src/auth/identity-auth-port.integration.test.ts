@@ -102,6 +102,7 @@ describe("betterAuthPort (integration)", () => {
 
       const verified = yield* auth.handle(new Request(linkIn(harness.sent[0])));
       expect(verified.status).toBe(302);
+      expect(verified.headers.get("location")).toBe(APP_URL);
 
       const afterVerifying = yield* auth.signIn({
         request: formPost("/sign-in", member),
@@ -110,6 +111,25 @@ describe("betterAuthPort (integration)", () => {
         oauthQuery: "",
       });
       expect(afterVerifying.ok).toBe(true);
+    }),
+  );
+
+  it.effect("refuses a verification link that sends the user to an untrusted origin", () =>
+    Effect.gen(function* () {
+      const auth = port();
+      const member = { name: "Ada", email: "ada@example.com", password: "Password123!" };
+      yield* auth.signUp({
+        request: formPost("/sign-up", member),
+        ...member,
+        callbackUrl: APP_URL,
+      });
+
+      const link = linkIn(harness.sent[0]);
+      link.searchParams.set("callbackURL", "https://attacker.example");
+      const refused = yield* auth.handle(new Request(link));
+
+      expect(refused.status).toBe(403);
+      expect(yield* json(refused)).toMatchObject({ code: "INVALID_CALLBACK_URL" });
     }),
   );
 
