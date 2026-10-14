@@ -9,12 +9,14 @@
 // `HttpApiSchema` annotations (`@effect/platform`) so the wire encoding
 // matches what the real server does.
 
-import * as Cause from "effect/Cause";
+import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
+import type { HttpMethod } from "effect/http/HttpMethod";
 import type * as HttpApiEndpoint from "effect/http-api/HttpApiEndpoint";
 import type * as HttpApiGroup from "effect/http-api/HttpApiGroup";
 import * as Option from "effect/Option";
+import * as Predicate from "effect/Predicate";
+import * as Record from "effect/Record";
 import * as Schema from "effect/Schema";
 import * as SchemaAST from "effect/SchemaAST";
 import {
@@ -26,31 +28,21 @@ import {
   type StrictRequest,
 } from "msw";
 
-type JsonValue = JsonBodyType;
-
 // v4 dropped `HttpApiSchema.getStatus`; the status lives as the
 // `httpApiStatus` annotation on the schema AST (mirrors the internal
 // `getStatusSuccess`/`getStatusError` helpers).
 const resolveStatus = SchemaAST.resolveAt<number>("httpApiStatus");
-const getStatus = (ast: SchemaAST.AST, fallback: number): number => resolveStatus(ast) ?? fallback;
 
-const decodeUnknown = (schema: Schema.Top, input: unknown) =>
-  Effect.runPromise(
-    Schema.decodeUnknownEffect(schema)(input) as Effect.Effect<unknown, unknown, never>,
-  );
+const getStatus = (schema: Schema.Top, fallback: number): number =>
+  resolveStatus(schema.ast) ?? fallback;
 
-const encodeUnknown = (schema: Schema.Top, value: unknown) =>
-  Effect.runPromise(
-    Schema.encodeUnknownEffect(schema)(value) as Effect.Effect<unknown, unknown, never>,
-  );
+// SAFETY: an endpoint holds its schemas as `Schema.Top` at runtime; the endpoint's own type
+// parameters say what each one decodes to, and a contract schema needs no services.
+const contractSchema = <A>(schema: Schema.Top): Schema.Codec<A, JsonBodyType> =>
+  // oxlint-disable-next-line effect/noAs -- an HttpApiEndpoint does not expose its schemas' types at runtime
+  schema as Schema.Codec<A, JsonBodyType>;
 
-const queryToRecord = (params: URLSearchParams): Record<string, string> => {
-  const out: Record<string, string> = {};
-  params.forEach((value, key) => {
-    out[key] = value;
-  });
-  return out;
-};
+const NO_FIELDS = Schema.Struct({});
 
 /**
  * Absolute base URL handlers register under. Tests use a matching base
@@ -61,27 +53,32 @@ const queryToRecord = (params: URLSearchParams): Record<string, string> => {
  */
 export const TEST_API_BASE = "http://localhost/api";
 
+class UnknownEndpoint extends Schema.TaggedError<
+  UnknownEndpoint,
+  { readonly brand: "UnknownEndpoint" }
+>()("UnknownEndpoint", { group: Schema.String, endpoint: Schema.String }) {}
+
 /**
- * `Group.endpoints` is typed as `Record<string, EndpointUnion>` — looking up
- * by name yields the union of all endpoints in the group, which loses the
- * concrete payload/path/error types for `typedHandler`. This helper narrows
- * the union by `identifier` so each call site sees only its endpoint's slot
- * types.
+ * `Group.endpoints` is typed as a record of every endpoint in the group —
+ * looking up by name yields the union, which loses the concrete
+ * payload/path/error types for `typedHandler`. This helper narrows the union
+ * by `identifier` so each call site sees only its endpoint's slot types.
  */
 export const getEndpoint = <G extends HttpApiGroup.Constraint, Name extends string>(
   group: G,
   name: Name,
-): Extract<HttpApiGroup.Endpoints<G>, { readonly identifier: Name }> => {
-  const eps = (group as unknown as HttpApiGroup.Top).endpoints as Record<
-    string,
-    HttpApiEndpoint.Top | undefined
-  >;
-  const ep = eps[name];
-  if (ep === undefined) {
-    throw new Error(`No endpoint named "${name}" in group "${group.identifier}"`);
-  }
-  return ep as unknown as Extract<HttpApiGroup.Endpoints<G>, { readonly identifier: Name }>;
-};
+): HttpApiEndpoint.Constraint & Extract<HttpApiGroup.Endpoints<G>, { readonly identifier: Name }> =>
+  Option.getOrThrowWith(
+    Arr.findFirst(
+      Object.values(group.endpoints),
+      (
+        endpoint,
+      ): endpoint is HttpApiEndpoint.Constraint &
+        Extract<HttpApiGroup.Endpoints<G>, { readonly identifier: Name }> =>
+        endpoint.identifier === name,
+    ),
+    () => new UnknownEndpoint({ group: group.identifier, endpoint: name }),
+  );
 
 /** Convert Effect's `HttpMethod` to MSW's `http.verb` accessor. */
 const methodToHandler = {
@@ -92,10 +89,13 @@ const methodToHandler = {
   DELETE: http.delete,
   HEAD: http.head,
   OPTIONS: http.options,
-} as const;
+};
+
+const verbFor = (method: HttpMethod) =>
+  Option.getOrElse(Record.get<string, typeof http.all>(methodToHandler, method), () => http.all);
 
 /**
- * Extract the resolver argument shape from an endpoint. Each schema is
+ * Extract the resolver argument from an endpoint. Each schema is
  * conditionally present based on whether the endpoint declares it.
  * `ConstraintRequest` is the minimal interface the extractor types expect.
  */
@@ -116,96 +116,103 @@ type Resolver<E extends HttpApiEndpoint.ConstraintRequest> = (
   input: ResolverInput<E>,
 ) => ResolverEffect<E>;
 
+// The runtime half of an endpoint: what the handler reads to route and encode.
+type RoutedEndpoint = Pick<
+  HttpApiEndpoint.Top,
+  "method" | "path" | "params" | "query" | "payload" | "success" | "error"
+>;
+
+const decodeSlot = <A>(schema: Option.Option<Schema.Top>, wire: JsonBodyType) =>
+  Schema.decodeEffect(contractSchema<A>(Option.getOrElse(schema, () => NO_FIELDS)))(wire);
+
+const encodeAs = <A>(schema: Schema.Top, value: A) =>
+  Schema.encodeEffect(contractSchema<A>(schema))(value);
+
+const readJsonBody = (request: StrictRequest<DefaultBodyType>) =>
+  Effect.tryPromise(async (): Promise<JsonBodyType> => request.json()).pipe(
+    Effect.orElseSucceed((): JsonBodyType => ({})),
+  );
+
+const successResponse = <A>(schema: Schema.Top, value: A) =>
+  Effect.map(encodeAs(schema, value), (encoded) => {
+    const status = getStatus(schema, 200);
+
+    // oxlint-disable-next-line effect/noNullish -- the Fetch API spells an empty response body null
+    if (Predicate.isUndefined(encoded)) return new HttpResponse(null, { status });
+
+    return HttpResponse.json(encoded, { status });
+  });
+
+// A `Schema.TaggedError` class IS a `Schema`, and the failure's constructor is
+// the variant the resolver failed with -- so the status annotation matches
+// the variant, not the union.
+const errorResponse = <E>(declared: Schema.Top, error: E) => {
+  const variant = Option.some(error).pipe(
+    Option.filter(Predicate.isObject),
+    Option.map((failure) => failure.constructor),
+    Option.filter(Schema.isSchema),
+    Option.getOrElse(() => declared),
+  );
+
+  return Effect.map(encodeAs(variant, error), (encoded) =>
+    HttpResponse.json(encoded, { status: getStatus(variant, 500) }),
+  );
+};
+
 /**
  * Build an MSW handler for one endpoint. The URL is `TEST_API_BASE` +
  * the endpoint's path (e.g. `/users/:id`). Path/URL params/payload are
  * decoded against the endpoint's schemas; success and errors are
  * encoded with the corresponding schemas plus the status annotations
- * declared via `HttpApiSchema.annotations({ status })`.
- *
- * The function signature only requires the minimal `ConstraintRequest` interface
- * (concrete endpoints satisfy it trivially); we cast through `unknown`
- * to `Top` inside to access the runtime properties. The
- * `Top` interface declares some
- * invariant generic slots, so it does NOT accept concrete endpoints
- * directly at call sites — this two-step cast is the workaround.
+ * declared via `HttpApiSchema.annotations({ status })`. A defect is not a
+ * declared error: it rejects, so the test sees it as an unmocked exception
+ * rather than a 500.
  */
-export const typedHandler = <E extends HttpApiEndpoint.ConstraintRequest>(
+export const typedHandler = <E extends HttpApiEndpoint.ConstraintRequest & RoutedEndpoint>(
   endpoint: E,
   resolver: Resolver<E>,
 ): HttpHandler => {
-  const ep = endpoint as unknown as HttpApiEndpoint.Top;
-  const verb = methodToHandler[ep.method as keyof typeof methodToHandler];
-  // `ep.path` already includes the group's `.prefix(...)`, so we can
-  // concatenate directly with the base URL.
-  const fullPath = `${TEST_API_BASE}${ep.path}`;
+  // `endpoint.path` already includes the group's `.prefix(...)`.
+  const fullPath = `${TEST_API_BASE}${endpoint.path}`;
 
-  // v4 keeps the request schemas as nullable runtime properties: `params`
-  // (path params) and `query` (querystring) are `Schema.Top | undefined`,
-  // while `payload` is a content-type-keyed map whose first entry carries
-  // the body schema.
-  const paramsSchema = ep.params;
-  const querySchema = ep.query;
-  const payloadSchema = [...ep.payload.values()][0]?.schemas[0] as Schema.Top | undefined;
+  // The buffered JSON endpoints in this contract carry one body schema, one
+  // success schema and declare their errors in order.
+  const payloadSchema = Option.flatMap(Arr.head([...endpoint.payload.values()]), (entry) =>
+    Arr.head(entry.schemas),
+  );
 
-  return verb(fullPath, async ({ params, request }) => {
-    const url = new URL(request.url);
+  const successSchema = Option.getOrElse(Arr.head([...endpoint.success]), () => NO_FIELDS);
+  const errorSchema = Option.getOrElse(Arr.head([...endpoint.error]), () => NO_FIELDS);
 
-    const path =
-      paramsSchema !== undefined
-        ? ((await decodeUnknown(paramsSchema, params)) as ResolverInput<E>["path"])
-        : ({} as ResolverInput<E>["path"]);
+  const respond = (params: JsonBodyType, request: StrictRequest<DefaultBodyType>) =>
+    Effect.gen(function* () {
+      const url = new URL(request.url);
 
-    const urlParams =
-      querySchema !== undefined
-        ? ((await decodeUnknown(
-            querySchema,
-            queryToRecord(url.searchParams),
-          )) as ResolverInput<E>["urlParams"])
-        : ({} as ResolverInput<E>["urlParams"]);
+      const path = yield* decodeSlot<ResolverInput<E>["path"]>(
+        Option.fromUndefinedOr(endpoint.params),
+        params,
+      );
 
-    const payload =
-      payloadSchema !== undefined
-        ? ((await decodeUnknown(
-            payloadSchema,
-            await request.json().catch(() => ({})),
-          )) as ResolverInput<E>["payload"])
-        : ({} as ResolverInput<E>["payload"]);
+      const urlParams = yield* decodeSlot<ResolverInput<E>["urlParams"]>(
+        Option.fromUndefinedOr(endpoint.query),
+        Object.fromEntries(url.searchParams),
+      );
 
-    const exit = await Effect.runPromiseExit(resolver({ path, urlParams, payload, request }));
+      const payload = yield* decodeSlot<ResolverInput<E>["payload"]>(
+        payloadSchema,
+        yield* readJsonBody(request),
+      );
 
-    if (Exit.isSuccess(exit)) {
-      // `success`/`error` are now `ReadonlySet<Schema.Top>`; the buffered
-      // JSON endpoints in this contract carry exactly one success schema.
-      const successSchema = [...ep.success][0];
-      const status = getStatus(successSchema.ast, 200);
-      const encoded = await encodeUnknown(successSchema, exit.value);
-      return encoded === undefined
-        ? new HttpResponse(null, { status })
-        : HttpResponse.json(encoded as JsonValue, { status });
-    }
+      return yield* resolver({ path, urlParams, payload, request }).pipe(
+        Effect.matchEffect({
+          onSuccess: (value) => successResponse(successSchema, value),
+          onFailure: (error) => errorResponse(errorSchema, error),
+        }),
+      );
+    }).pipe(Effect.orDie);
 
-    // Failure path. Surface the failure as the tagged-error JSON the
-    // real server would emit. Defects (non-tagged) re-throw so the test
-    // sees them as an unmocked exception rather than a 500.
-    const failure = Cause.findErrorOption(exit.cause);
-    if (Option.isNone(failure)) throw Cause.squash(exit.cause);
-
-    const error = failure.value as { readonly _tag?: string; readonly constructor?: unknown };
-    // A `Schema.TaggedError` class IS a `Schema`. The instance's
-    // constructor is the variant the resolver failed with — use it
-    // directly so the status annotation matches the variant, not the
-    // union. Fall back to the first declared error schema if the failure
-    // wasn't a tagged class (shouldn't happen for well-typed
-    // resolvers; covered for safety).
-    const variantSchema =
-      typeof error.constructor === "function" && "ast" in (error.constructor as object)
-        ? (error.constructor as unknown as Schema.Top)
-        : [...ep.error][0];
-    const status = getStatus(variantSchema.ast, 500);
-    const encoded = await encodeUnknown(variantSchema, error);
-    return HttpResponse.json(encoded as JsonValue, { status });
-  });
+  return verbFor(endpoint.method)(fullPath, async ({ params, request }) =>
+    // oxlint-disable-next-line effect/noEffectRunInTests -- MSW invokes this resolver and awaits its Response; the handler is the Effect's host boundary
+    Effect.runPromise(respond(params, request)),
+  );
 };
-
-// ----- helpers -----

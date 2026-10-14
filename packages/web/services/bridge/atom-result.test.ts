@@ -73,6 +73,7 @@ describe("HydrationBoundary", () => {
       atom: greeting,
       state: [encoded("first")],
     });
+
     await tick();
     expect(screen.getByTestId("value")).toHaveTextContent("first");
 

@@ -11,11 +11,12 @@
 // an upstream change to how `AtomHttpApi` wraps one, fails here rather than in
 // an acceptance run.
 
+import { describe, expect, it } from "@effect/vitest";
 import * as OrganizationContract from "@org/contracts/api/OrganizationContract";
+import * as Effect from "effect/Effect";
 import * as AsyncResult from "effect/reactivity/AsyncResult";
 import * as Atom from "effect/reactivity/Atom";
 import * as Hydration from "effect/reactivity/Hydration";
-import { describe, expect, it } from "vitest";
 
 import { rawSubscriptionQueryAtom } from "@/services/data-access/billing.atoms";
 import {
@@ -38,62 +39,63 @@ import { makePaginatedUsers } from "@/test/fixtures/user";
 
 import { dehydrateQuery } from "./dehydration.shared";
 
-type Prefetchable = {
-  readonly name: string;
-  readonly atom: Atom.Atom<AsyncResult.AsyncResult<unknown, unknown>>;
-  readonly value: unknown;
-};
+const prefetchable = <A, E>(
+  name: string,
+  atom: Atom.Atom<AsyncResult.AsyncResult<A, E>>,
+  value: A,
+) => ({ name, dehydrate: () => dehydrateQuery(atom, value) });
 
-const PREFETCHABLE: ReadonlyArray<Prefetchable> = [
-  {
-    name: "users.find",
-    atom: usersQueryAtom({ page: 1, pageSize: 10 }),
-    value: makePaginatedUsers(),
-  },
-  { name: "todos.get", atom: todosQueryAtom(TEST_ORG_ID), value: [makeTodo()] },
-  { name: "organization.findMine", atom: myOrgsQueryAtom, value: [makeMyOrganization()] },
-  {
-    name: "organizationAdmin.findAll",
-    atom: adminOrgsQueryAtom({ page: 1, pageSize: 10, includeDeleted: "false" }),
-    value: makePaginatedOrganizations(),
-  },
-  {
-    name: "organization.findMembers",
-    atom: orgMembersQueryAtom(ORG_A_ID),
-    value: new OrganizationContract.OrganizationMembersResponse({
-      members: [makeOrganizationMember()],
-    }),
-  },
-  {
-    name: "organization.findInvitations",
-    atom: orgInvitationsQueryAtom(ORG_A_ID),
-    value: new OrganizationContract.PendingInvitationsResponse({
+const PREFETCHABLE = [
+  prefetchable("users.find", usersQueryAtom({ page: 1, pageSize: 10 }), makePaginatedUsers()),
+  prefetchable("todos.get", todosQueryAtom(TEST_ORG_ID), [makeTodo()]),
+  prefetchable("organization.findMine", myOrgsQueryAtom, [makeMyOrganization()]),
+  prefetchable(
+    "organizationAdmin.findAll",
+    adminOrgsQueryAtom({ page: 1, pageSize: 10, includeDeleted: "false" }),
+    makePaginatedOrganizations(),
+  ),
+  prefetchable(
+    "organization.findMembers",
+    orgMembersQueryAtom(ORG_A_ID),
+    new OrganizationContract.OrganizationMembersResponse({ members: [makeOrganizationMember()] }),
+  ),
+  prefetchable(
+    "organization.findInvitations",
+    orgInvitationsQueryAtom(ORG_A_ID),
+    new OrganizationContract.PendingInvitationsResponse({
       invitations: [makePendingInvitation()],
     }),
-  },
-  {
-    name: "billing.getCurrentSubscription",
-    atom: rawSubscriptionQueryAtom(BILLING_ORG_ID),
-    value: makeSubscription(),
-  },
+  ),
+  prefetchable(
+    "billing.getCurrentSubscription",
+    rawSubscriptionQueryAtom(BILLING_ORG_ID),
+    makeSubscription(),
+  ),
 ];
 
 describe("dehydrateQuery", () => {
-  it.each(PREFETCHABLE)("dehydrates $name", ({ atom, value }) => {
-    const [dehydrated] = Hydration.toValues([dehydrateQuery(atom, value)]) as [
-      Hydration.DehydratedAtomValue,
-    ];
+  it.effect.each(PREFETCHABLE)("dehydrates $name", ({ dehydrate }) =>
+    Effect.gen(function* () {
+      const entries = Hydration.toValues([yield* dehydrate()]);
 
-    expect(dehydrated.key).toBeTypeOf("string");
-    expect(dehydrated.value).toBeDefined();
-  });
+      expect(entries).toHaveLength(1);
+      expect(entries[0]?.key).toBeTypeOf("string");
+      expect(entries[0]).toHaveProperty("value");
+    }),
+  );
 
-  it("refuses an atom that was never declared serializable, rather than silently skipping it", () => {
-    // A query with no `serializationKey` is not hydratable, and the route that
-    // prefetched it deserves to hear so rather than render a fallback and refetch
-    // on the client for reasons nobody can see.
-    const undeclared = Atom.make(AsyncResult.initial<number, never>());
+  it.effect(
+    "refuses an atom that was never declared serializable, rather than silently skipping it",
+    () =>
+      Effect.gen(function* () {
+        // A query with no `serializationKey` is not hydratable, and the route that
+        // prefetched it deserves to hear so rather than render a fallback and refetch
+        // on the client for reasons nobody can see.
+        const undeclared = Atom.make(AsyncResult.initial<number, never>());
 
-    expect(() => dehydrateQuery(undeclared, 1)).toThrow(/carries no serialization metadata/);
-  });
+        const error = yield* Effect.flip(dehydrateQuery(undeclared, 1));
+
+        expect(error.message).toMatch(/carries no serialization metadata/);
+      }),
+  );
 });

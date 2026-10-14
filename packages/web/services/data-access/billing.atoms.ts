@@ -1,8 +1,8 @@
 // Billing, as the Model sees it: one read and two writes, all org-scoped.
 //
 // "No subscription yet" arrives from the server as a 404. That is a state the
-// panel renders, not a failure it reports, so the absence is folded into `null`
-// here -- once, in the Model -- rather than in each consumer. The raw atom stays
+// panel renders, not a failure it reports, so the absence is folded into
+// `Option.none()` here -- once, in the Model -- rather than in each consumer. The raw atom stays
 // exported because hydration keys on it: only the atom the endpoint built
 // carries the serialization metadata a prefetch can encode into.
 
@@ -11,6 +11,7 @@ import type { OrganizationId } from "@org/contracts/EntityIds";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
+import * as Predicate from "effect/Predicate";
 import * as AsyncResult from "effect/reactivity/AsyncResult";
 import * as Atom from "effect/reactivity/Atom";
 
@@ -18,7 +19,7 @@ import { ApiClient } from "@/services/api-client.shared";
 import { ApiAtoms } from "@/services/atom/api-atoms.shared";
 import { ReactivityKeys } from "@/services/atom/reactivity-keys";
 
-export type CurrentSubscription = BillingContract.SubscriptionResponse | null;
+export type CurrentSubscription = Option.Option<BillingContract.SubscriptionResponse>;
 
 const billingRequest = (orgId: OrganizationId) => ({ params: { orgId } });
 
@@ -34,23 +35,21 @@ export const fetchRawSubscription = (orgId: OrganizationId) =>
     client.billing.getCurrentSubscription(billingRequest(orgId)),
   );
 
-const isSubscriptionMissing = (cause: Cause.Cause<unknown>): boolean =>
-  Option.match(Cause.findErrorOption(cause), {
-    onNone: () => false,
-    onSome: (error) =>
-      typeof error === "object" &&
-      error !== null &&
-      "_tag" in error &&
-      error._tag === "SubscriptionNotFoundError",
-  });
+const isSubscriptionMissing = <E>(cause: Cause.Cause<E>): boolean =>
+  Option.exists(Cause.findErrorOption(cause), Predicate.isTagged("SubscriptionNotFoundError"));
 
 export const subscriptionQueryAtom = Atom.family((orgId: OrganizationId) =>
-  Atom.make((get): AsyncResult.AsyncResult<CurrentSubscription, unknown> => {
+  Atom.make((get) => {
     const result = get(rawSubscriptionQueryAtom(orgId));
+
     if (AsyncResult.isFailure(result) && isSubscriptionMissing(result.cause)) {
-      return AsyncResult.success<CurrentSubscription>(null);
+      return AsyncResult.success<CurrentSubscription>(Option.none());
     }
-    return result;
+
+    return AsyncResult.map(
+      result,
+      (subscription): CurrentSubscription => Option.some(subscription),
+    );
   }),
 );
 

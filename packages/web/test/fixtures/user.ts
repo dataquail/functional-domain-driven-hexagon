@@ -28,6 +28,7 @@ export const makePaginatedUsers = (
   overrides: Partial<UserContract.PaginatedUsers> = {},
 ): UserContract.PaginatedUsers => {
   const users = overrides.users ?? [makeUser()];
+
   return new UserContract.PaginatedUsers({
     users,
     page: 1,
@@ -48,3 +49,8 @@ export const makeCreateUserPayload = (
     postalCode: "10002",
     ...overrides,
   });
+
+/** A user who has not given an address. */
+export const makeUserWithoutAddress = (): UserContract.User =>
+  // oxlint-disable-next-line effect/noNullish -- the contract field is Schema.NullOr, so "no address" is spelled null on the wire
+  makeUser({ address: null });

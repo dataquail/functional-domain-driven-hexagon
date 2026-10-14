@@ -15,7 +15,12 @@ import * as AsyncResult from "effect/reactivity/AsyncResult";
 import * as Atom from "effect/reactivity/Atom";
 
 import { ApiAtoms } from "@/services/atom/api-atoms.shared";
-import { type FieldErrors, validateWithSchema } from "@/services/atom/form-validation";
+import {
+  type FieldErrors,
+  hasFieldErrors,
+  validateWithSchema,
+  visibleOnceAttempted,
+} from "@/services/atom/form-validation";
 import { notify } from "@/services/atom/notifications.shared";
 import { approveDeviceAtom } from "@/services/data-access/device.atoms";
 
@@ -32,14 +37,13 @@ export const fieldsAtom = Atom.family((initialCode: string) =>
 export const submitAttemptedAtom = Atom.family((_initialCode: string) => Atom.make(false));
 
 export const errorsAtom = Atom.family((initialCode: string) =>
-  Atom.make((get): FieldErrors<ApproveDeviceFields> | null =>
-    validate(get(fieldsAtom(initialCode))),
-  ),
+  Atom.make((get): FieldErrors => validate(get(fieldsAtom(initialCode)))),
 );
 
 export const visibleErrorsAtom = Atom.family((initialCode: string) =>
-  Atom.make((get): FieldErrors<ApproveDeviceFields> | null =>
-    get(submitAttemptedAtom(initialCode)) ? get(errorsAtom(initialCode)) : null,
+  Atom.make(
+    (get): FieldErrors =>
+      visibleOnceAttempted(get(submitAttemptedAtom(initialCode)), get(errorsAtom(initialCode))),
   ),
 );
 
@@ -53,7 +57,8 @@ export const submitAtom = Atom.family((initialCode: string) =>
   ApiAtoms.runtime.fn<void>()((_, get) =>
     Effect.gen(function* () {
       get.set(submitAttemptedAtom(initialCode), true);
-      if (get(errorsAtom(initialCode)) !== null) return;
+
+      if (hasFieldErrors(get(errorsAtom(initialCode)))) return;
 
       yield* get
         .setResult(approveDeviceAtom, {

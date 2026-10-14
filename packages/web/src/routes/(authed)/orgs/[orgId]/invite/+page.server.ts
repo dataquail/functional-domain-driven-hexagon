@@ -10,6 +10,8 @@ export const load = async ({
   readonly parent: () => Promise<Awaited<ReturnType<typeof orgLoad>>>;
 }) => {
   const { isAdmin } = await parent();
+
   if (!isAdmin) error(404, "Not Found");
+
   return {};
 };

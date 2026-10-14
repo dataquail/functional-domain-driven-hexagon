@@ -6,7 +6,7 @@ import * as AuthContract from "@org/contracts/api/AuthContract";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Effect from "effect/Effect";
 
-import { getEndpoint, typedHandler } from "../typed-handler";
+import { getEndpoint, typedHandler } from "@/test/typed-handler";
 
 const approveEndpoint = getEndpoint(AuthContract.DeviceApprovalGroup, "approve");
 
@@ -19,9 +19,11 @@ export const deviceHandlers = {
       if (outcome.result === "NotFound") {
         return Effect.fail(new CustomHttpApiError.NotFound({ message: "Unknown device code." }));
       }
+
       if (outcome.result === "Gone") {
         return Effect.fail(new CustomHttpApiError.Gone({ message: "That code has expired." }));
       }
+
       return Effect.void;
     }),
 };

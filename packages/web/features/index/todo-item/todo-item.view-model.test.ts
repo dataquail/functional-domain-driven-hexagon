@@ -1,9 +1,10 @@
+import { describe, expect, it } from "@effect/vitest";
 import * as TodosContract from "@org/contracts/api/TodosContract";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import type * as AsyncResult from "effect/reactivity/AsyncResult";
 import type * as Atom from "effect/reactivity/Atom";
 import * as AtomRegistry from "effect/reactivity/AtomRegistry";
-import { describe, expect, it } from "vitest";
 
 import { apiTransportAtom } from "@/services/atom/api-transport.shared";
 import { notificationAtom } from "@/services/atom/notifications.shared";
@@ -22,103 +23,118 @@ const makeRegistry = () =>
 const run = <A, E>(
   registry: AtomRegistry.AtomRegistry,
   atom: Atom.Atom<AsyncResult.AsyncResult<A, E>>,
-) => Effect.runPromise(AtomRegistry.getResult(registry, atom, { suspendOnWaiting: true }));
+) => AtomRegistry.getResult(registry, atom, { suspendOnWaiting: true });
 
 describe("todo item ViewModel", () => {
-  it("sends the todo back with completion inverted, keeping its title", async () => {
-    const sent: Array<TodosContract.UpdateTodoPayload> = [];
-    server.use(
-      typedHandler(getEndpoint(TodosContract.Group, "update"), ({ path, payload }) => {
-        sent.push(payload);
-        return Effect.succeed(
-          makeTodo({ id: path.id, title: payload.title, completed: payload.completed }),
-        );
-      }),
-    );
+  it.effect("sends the todo back with completion inverted, keeping its title", () =>
+    Effect.gen(function* () {
+      const sent: Array<TodosContract.UpdateTodoPayload> = [];
+      server.use(
+        typedHandler(getEndpoint(TodosContract.Group, "update"), ({ path, payload }) => {
+          sent.push(payload);
 
-    const registry = makeRegistry();
-    registry.set(toggleTodoAtom, {
-      orgId: TEST_ORG_ID,
-      todo: makeTodo({ title: "Buy milk", completed: false }),
-    });
-    await run(registry, toggleTodoAtom);
+          return Effect.succeed(
+            makeTodo({ id: path.id, title: payload.title, completed: payload.completed }),
+          );
+        }),
+      );
 
-    expect(sent).toEqual([{ title: "Buy milk", completed: true }]);
-  });
+      const registry = makeRegistry();
+      registry.set(toggleTodoAtom, {
+        orgId: TEST_ORG_ID,
+        todo: makeTodo({ title: "Buy milk", completed: false }),
+      });
+      yield* run(registry, toggleTodoAtom);
 
-  it("inverts back the other way, so a completed todo can be reopened", async () => {
-    const sent: Array<boolean> = [];
-    server.use(
-      typedHandler(getEndpoint(TodosContract.Group, "update"), ({ path, payload }) => {
-        sent.push(payload.completed);
-        return Effect.succeed(makeTodo({ id: path.id, completed: payload.completed }));
-      }),
-    );
+      expect(sent).toEqual([{ title: "Buy milk", completed: true }]);
+    }),
+  );
 
-    const registry = makeRegistry();
-    registry.set(toggleTodoAtom, { orgId: TEST_ORG_ID, todo: makeTodo({ completed: true }) });
-    await run(registry, toggleTodoAtom);
+  it.effect("inverts back the other way, so a completed todo can be reopened", () =>
+    Effect.gen(function* () {
+      const sent: Array<boolean> = [];
+      server.use(
+        typedHandler(getEndpoint(TodosContract.Group, "update"), ({ path, payload }) => {
+          sent.push(payload.completed);
 
-    expect(sent).toEqual([false]);
-  });
+          return Effect.succeed(makeTodo({ id: path.id, completed: payload.completed }));
+        }),
+      );
 
-  it("announces a successful toggle", async () => {
-    server.use(todosHandlers.update());
+      const registry = makeRegistry();
+      registry.set(toggleTodoAtom, { orgId: TEST_ORG_ID, todo: makeTodo({ completed: true }) });
+      yield* run(registry, toggleTodoAtom);
 
-    const registry = makeRegistry();
-    registry.set(toggleTodoAtom, { orgId: TEST_ORG_ID, todo: makeTodo() });
-    await run(registry, toggleTodoAtom);
+      expect(sent).toEqual([false]);
+    }),
+  );
 
-    expect(registry.get(notificationAtom)).toMatchObject({
-      kind: "success",
-      message: "Todo updated!",
-    });
-  });
+  it.effect("announces a successful toggle", () =>
+    Effect.gen(function* () {
+      server.use(todosHandlers.update());
 
-  it("surfaces the server's message when the todo is already gone", async () => {
-    server.use(todosHandlers.update({ result: "TodoNotFoundError" }));
+      const registry = makeRegistry();
+      registry.set(toggleTodoAtom, { orgId: TEST_ORG_ID, todo: makeTodo() });
+      yield* run(registry, toggleTodoAtom);
 
-    const registry = makeRegistry();
-    registry.set(toggleTodoAtom, { orgId: TEST_ORG_ID, todo: makeTodo() });
-    await run(registry, toggleTodoAtom).catch(() => undefined);
+      expect(Option.getOrThrow(registry.get(notificationAtom))).toMatchObject({
+        kind: "success",
+        message: "Todo updated!",
+      });
+    }),
+  );
 
-    expect(registry.get(notificationAtom)).toMatchObject({
-      kind: "error",
-      message: "Todo not found.",
-    });
-  });
+  it.effect("surfaces the server's message when the todo is already gone", () =>
+    Effect.gen(function* () {
+      server.use(todosHandlers.update({ result: "TodoNotFoundError" }));
 
-  it("deletes by id and announces it", async () => {
-    const deleted: Array<string> = [];
-    server.use(
-      typedHandler(getEndpoint(TodosContract.Group, "delete"), ({ path }) => {
-        deleted.push(path.id);
-        return Effect.void;
-      }),
-    );
+      const registry = makeRegistry();
+      registry.set(toggleTodoAtom, { orgId: TEST_ORG_ID, todo: makeTodo() });
+      yield* Effect.exit(run(registry, toggleTodoAtom));
 
-    const todo = makeTodo();
-    const registry = makeRegistry();
-    registry.set(deleteTodoActionAtom, { orgId: TEST_ORG_ID, id: todo.id });
-    await run(registry, deleteTodoActionAtom);
+      expect(Option.getOrThrow(registry.get(notificationAtom))).toMatchObject({
+        kind: "error",
+        message: "Todo not found.",
+      });
+    }),
+  );
 
-    expect(deleted).toEqual([todo.id]);
-    expect(registry.get(notificationAtom)).toMatchObject({
-      kind: "success",
-      message: "Todo deleted!",
-    });
-  });
+  it.effect("deletes by id and announces it", () =>
+    Effect.gen(function* () {
+      const deleted: Array<string> = [];
+      server.use(
+        typedHandler(getEndpoint(TodosContract.Group, "delete"), ({ path }) => {
+          deleted.push(path.id);
 
-  it("surfaces a failed delete rather than claiming success", async () => {
-    server.use(todosHandlers.delete({ result: "TodoNotFoundError" }));
+          return Effect.void;
+        }),
+      );
 
-    const registry = makeRegistry();
-    registry.set(deleteTodoActionAtom, { orgId: TEST_ORG_ID, id: makeTodo().id });
-    await run(registry, deleteTodoActionAtom).catch(() => undefined);
+      const todo = makeTodo();
+      const registry = makeRegistry();
+      registry.set(deleteTodoActionAtom, { orgId: TEST_ORG_ID, id: todo.id });
+      yield* run(registry, deleteTodoActionAtom);
 
-    expect(registry.get(notificationAtom)).toMatchObject({
-      kind: "error",
-      message: "Todo not found.",
-    });
-  });
+      expect(deleted).toEqual([todo.id]);
+      expect(Option.getOrThrow(registry.get(notificationAtom))).toMatchObject({
+        kind: "success",
+        message: "Todo deleted!",
+      });
+    }),
+  );
+
+  it.effect("surfaces a failed delete rather than claiming success", () =>
+    Effect.gen(function* () {
+      server.use(todosHandlers.delete({ result: "TodoNotFoundError" }));
+
+      const registry = makeRegistry();
+      registry.set(deleteTodoActionAtom, { orgId: TEST_ORG_ID, id: makeTodo().id });
+      yield* Effect.exit(run(registry, deleteTodoActionAtom));
+
+      expect(Option.getOrThrow(registry.get(notificationAtom))).toMatchObject({
+        kind: "error",
+        message: "Todo not found.",
+      });
+    }),
+  );
 });

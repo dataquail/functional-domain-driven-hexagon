@@ -35,7 +35,12 @@ export const orgInvitationsResultAtom = Atom.family((orgId: OrganizationId) =>
 export const orgInvitationsListAtom = Atom.family((orgId: OrganizationId) =>
   Atom.make((get): OrgInvitationsListView => {
     const result = get(orgInvitationsResultAtom(orgId));
-    const invitations = AsyncResult.isSuccess(result) ? result.value.invitations : [];
+
+    const invitations = AsyncResult.getOrElse(
+      AsyncResult.map(result, (page) => page.invitations),
+      () => [],
+    );
+
     return {
       rows: Array.map(invitations, (invitation) => ({
         invitationId: invitation.invitationId,

@@ -6,10 +6,13 @@
 // JSON -- the `Schema.Class` instances a load function cannot serialize never
 // reach it.
 //
-// A failed prefetch yields no entry rather than throwing. The page still
+// A failed fetch yields no entry rather than failing the load. The page still
 // renders; the client atom simply fetches for itself and any failure surfaces
 // at the nearest error boundary, which is where a request failure belongs.
-import type * as Effect from "effect/Effect";
+import * as Arr from "effect/Array";
+import * as Effect from "effect/Effect";
+import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
 import type * as AsyncResult from "effect/reactivity/AsyncResult";
 import type * as Atom from "effect/reactivity/Atom";
 import type * as Hydration from "effect/reactivity/Hydration";
@@ -19,18 +22,29 @@ import { getServerRuntime } from "@/services/runtime.server";
 
 import { dehydrateQuery } from "./dehydration.shared";
 
-export const prefetchQuery = async <A, E>(
+export type Prefetch = Effect.Effect<Option.Option<Hydration.DehydratedAtom>, never, ApiClient>;
+
+const PREFETCH_CONCURRENCY = 4;
+
+export const prefetchQuery = <A, E>(
   atom: Atom.Atom<AsyncResult.AsyncResult<A, E>>,
   effect: Effect.Effect<A, E, ApiClient>,
-): Promise<Hydration.DehydratedAtom | null> => {
-  const runtime = await getServerRuntime();
-  const exit = await runtime.runPromiseExit(effect);
-  return exit._tag === "Success" ? dehydrateQuery(atom, exit.value) : null;
-};
+): Prefetch =>
+  Effect.flatMap(Effect.exit(effect), (exit) =>
+    Option.match(Exit.getSuccess(exit), {
+      onNone: () => Effect.succeedNone,
+      onSome: (value) => Effect.asSome(Effect.orDie(dehydrateQuery(atom, value))),
+    }),
+  );
 
 export const collectPrefetched = async (
-  prefetches: ReadonlyArray<Promise<Hydration.DehydratedAtom | null>>,
+  prefetches: ReadonlyArray<Prefetch>,
 ): Promise<ReadonlyArray<Hydration.DehydratedAtom>> => {
-  const settled = await Promise.all(prefetches);
-  return settled.filter((entry): entry is Hydration.DehydratedAtom => entry !== null);
+  const runtime = await getServerRuntime();
+
+  const entries = await runtime.runPromise(
+    Effect.all(prefetches, { concurrency: PREFETCH_CONCURRENCY }),
+  );
+
+  return Arr.getSomes(entries);
 };

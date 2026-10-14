@@ -1,17 +1,20 @@
+import { describe, expect, it } from "@effect/vitest";
+import { assertSome, assertTrue } from "@effect/vitest/utils";
 import * as Effect from "effect/Effect";
+import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
 import * as Atom from "effect/reactivity/Atom";
 import * as AtomRegistry from "effect/reactivity/AtomRegistry";
 import * as Schema from "effect/Schema";
-import { describe, expect, it } from "vitest";
 
 import { notificationAtom, notify } from "./notifications.shared";
 
-class BoomError extends Schema.Error<BoomError>("BoomError")({
+class BoomError extends Schema.Error<BoomError, { readonly brand: "BoomError" }>("BoomError")({
   _tag: Schema.tag("BoomError"),
   detail: Schema.String,
 }) {}
 
-class OtherError extends Schema.Error<OtherError>("OtherError")({
+class OtherError extends Schema.Error<OtherError, { readonly brand: "OtherError" }>("OtherError")({
   _tag: Schema.tag("OtherError"),
 }) {}
 
@@ -24,64 +27,76 @@ const runNotified = <A, E extends { readonly _tag: string }>(
   config: Parameters<typeof notify<A, E>>[1],
 ) => {
   const action = Atom.fn<void>()((_, get) => effect.pipe(notify(get, config)));
-  registry.set(action, undefined);
-  return Effect.runPromiseExit(
-    AtomRegistry.getResult(registry, action, { suspendOnWaiting: true }),
-  );
+  registry.set(action, void 0);
+
+  return Effect.exit(AtomRegistry.getResult(registry, action, { suspendOnWaiting: true }));
 };
 
+const latestMessage = (registry: AtomRegistry.AtomRegistry) =>
+  Option.map(registry.get(notificationAtom), (notification) => notification.message);
+
 describe("notify", () => {
-  it("records a success notification", async () => {
-    const registry = AtomRegistry.make();
-    await runNotified(registry, Effect.succeed({ name: "Ada" }), {
-      success: (value) => `Saved ${value.name}`,
-    });
+  it.effect("records a success notification", () =>
+    Effect.gen(function* () {
+      const registry = AtomRegistry.make();
+      yield* runNotified(registry, Effect.succeed({ name: "Ada" }), {
+        success: (value) => `Saved ${value.name}`,
+      });
 
-    expect(registry.get(notificationAtom)).toEqual({
-      seq: 1,
-      kind: "success",
-      message: "Saved Ada",
-    });
-  });
+      assertSome(registry.get(notificationAtom), { seq: 1, kind: "success", message: "Saved Ada" });
+    }),
+  );
 
-  it("uses the per-tag handler for a matching failure", async () => {
-    const registry = AtomRegistry.make();
-    await runNotified(registry, Effect.fail(new BoomError({ detail: "disk full" })), {
-      errors: { BoomError: (error) => error.detail },
-    });
+  it.effect("uses the per-tag handler for a matching failure", () =>
+    Effect.gen(function* () {
+      const registry = AtomRegistry.make();
+      yield* runNotified(registry, Effect.fail(new BoomError({ detail: "disk full" })), {
+        errors: { BoomError: (error) => error.detail },
+      });
 
-    expect(registry.get(notificationAtom)?.message).toBe("disk full");
-    expect(registry.get(notificationAtom)?.kind).toBe("error");
-  });
+      assertSome(registry.get(notificationAtom), { seq: 1, kind: "error", message: "disk full" });
+    }),
+  );
 
-  it("falls back to `otherwise` for an unhandled tag, then to a default", async () => {
-    const withOtherwise = AtomRegistry.make();
-    await runNotified<never, BoomError | OtherError>(withOtherwise, Effect.fail(new OtherError()), {
-      errors: { BoomError: () => "never" },
-      otherwise: "Could not save",
-    });
-    expect(withOtherwise.get(notificationAtom)?.message).toBe("Could not save");
+  it.effect("falls back to `otherwise` for an unhandled tag, then to a default", () =>
+    Effect.gen(function* () {
+      const withOtherwise = AtomRegistry.make();
+      yield* runNotified<never, BoomError | OtherError>(
+        withOtherwise,
+        Effect.fail(new OtherError()),
+        { errors: { BoomError: () => "never" }, otherwise: "Could not save" },
+      );
+      assertSome(latestMessage(withOtherwise), "Could not save");
 
-    const bare = AtomRegistry.make();
-    await runNotified(bare, Effect.fail(new OtherError()), {});
-    expect(bare.get(notificationAtom)?.message).toBe("Something went wrong");
-  });
+      const bare = AtomRegistry.make();
+      yield* runNotified(bare, Effect.fail(new OtherError()), {});
+      assertSome(latestMessage(bare), "Something went wrong");
+    }),
+  );
 
-  it("advances the sequence so a repeated message is still a new notification", async () => {
-    const registry = AtomRegistry.make();
-    const config = { success: () => "Saved" };
-    await runNotified(registry, Effect.succeed(1), config);
-    expect(registry.get(notificationAtom)?.seq).toBe(1);
+  it.effect("advances the sequence so a repeated message is still a new notification", () =>
+    Effect.gen(function* () {
+      const registry = AtomRegistry.make();
+      const config = { success: () => "Saved" };
+      yield* runNotified(registry, Effect.succeed(1), config);
+      expect(
+        Option.map(registry.get(notificationAtom), (notification) => notification.seq),
+      ).toEqual(Option.some(1));
 
-    await runNotified(registry, Effect.succeed(1), config);
-    expect(registry.get(notificationAtom)).toEqual({ seq: 2, kind: "success", message: "Saved" });
-  });
+      yield* runNotified(registry, Effect.succeed(1), config);
+      assertSome(registry.get(notificationAtom), { seq: 2, kind: "success", message: "Saved" });
+    }),
+  );
 
-  it("leaves the success channel untouched", async () => {
-    const registry = AtomRegistry.make();
-    const exit = await runNotified(registry, Effect.succeed("payload"), {
-      success: () => "ok",
-    });
-    expect(exit._tag).toBe("Success");
-  });
+  it.effect("leaves the success channel untouched", () =>
+    Effect.gen(function* () {
+      const registry = AtomRegistry.make();
+
+      const exit = yield* runNotified(registry, Effect.succeed("payload"), {
+        success: () => "ok",
+      });
+
+      assertTrue(Exit.isSuccess(exit));
+    }),
+  );
 });

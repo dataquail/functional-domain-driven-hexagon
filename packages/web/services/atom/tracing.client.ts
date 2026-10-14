@@ -15,11 +15,13 @@ import * as FetchHttpClient from "effect/http/FetchHttpClient";
 import * as Layer from "effect/Layer";
 import * as OtlpSerialization from "effect/observability/OtlpSerialization";
 import * as OtlpTracer from "effect/observability/OtlpTracer";
+import * as Option from "effect/Option";
 import * as Atom from "effect/reactivity/Atom";
+import * as Schema from "effect/Schema";
 
-const configuredUrl: unknown = import.meta.env.VITE_OTLP_URL;
-const OTLP_URL =
-  typeof configuredUrl === "string" ? configuredUrl : "http://localhost:4318/v1/traces";
+const OTLP_URL = Schema.decodeUnknownOption(Schema.String)(import.meta.env.VITE_OTLP_URL).pipe(
+  Option.getOrElse(() => "http://localhost:4318/v1/traces"),
+);
 
 export const BrowserTracerLive = OtlpTracer.layer({
   url: OTLP_URL,

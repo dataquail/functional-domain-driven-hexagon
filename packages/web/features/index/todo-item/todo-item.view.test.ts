@@ -33,10 +33,12 @@ describe("TodoItem view", () => {
 
   it("dispatches a toggle when the checkbox is clicked", async () => {
     const user = userEvent.setup();
+
     const { registry } = renderView(TodoItem, {
       orgId: TEST_ORG_ID,
       todo: makeTodo({ title: "Buy milk" }),
     });
+
     expect(wasDispatched(registry.get(toggleTodoAtom))).toBe(false);
 
     await user.click(screen.getByRole("checkbox", { name: "Buy milk" }));

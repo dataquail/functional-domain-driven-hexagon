@@ -52,9 +52,7 @@
           {#each view.current.rows as row (row.id)}
             <List.Item>
               <ListRow data-testid="admin-orgs-row">
-                {#if row.href === null}
-                  <Text weight="medium" truncate>{row.name}</Text>
-                {:else}
+                {#if row.href}
                   <Link
                     href={row.href}
                     tone="default"
@@ -63,9 +61,11 @@
                   >
                     <Text weight="medium" truncate>{row.name}</Text>
                   </Link>
+                {:else}
+                  <Text weight="medium" truncate>{row.name}</Text>
                 {/if}
                 <Text size="xs" tone="muted">Created {row.createdAtLabel}</Text>
-                {#if row.deletedAtLabel !== null}
+                {#if row.deletedAtLabel}
                   <Text size="xs" tone="destructive">Deleted {row.deletedAtLabel}</Text>
                 {/if}
                 {#snippet trailing()}

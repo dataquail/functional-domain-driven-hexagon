@@ -6,8 +6,10 @@
 // obviously changes; so does every affected member's own switcher, and only the
 // second key reaches that.
 
+import type { OrganizationContract } from "@org/contracts/api/Contracts";
 import type { OrganizationId } from "@org/contracts/EntityIds";
 import * as Array from "effect/Array";
+import * as Option from "effect/Option";
 import * as AsyncResult from "effect/reactivity/AsyncResult";
 import * as Atom from "effect/reactivity/Atom";
 
@@ -19,7 +21,7 @@ import {
   restoreOrgAtom,
   softDeleteOrgAtom,
 } from "@/services/data-access/orgs.atoms";
-import { formatDay, formatDayOrNull } from "@/services/format/date.shared";
+import { formatDay, formatOptionalDay } from "@/services/format/date.shared";
 
 export const PAGE_SIZE = 10;
 
@@ -28,8 +30,10 @@ export type OrgRowView = {
   readonly name: string;
   readonly createdAtLabel: string;
   readonly isDeleted: boolean;
-  readonly deletedAtLabel: string | null;
-  readonly href: string | null;
+  // Present only on a deleted row.
+  readonly deletedAtLabel?: string;
+  // A deleted org has no detail page to visit, so its row carries no link.
+  readonly href?: string;
 };
 
 export type OrgsListView = {
@@ -46,34 +50,45 @@ export type OrgsListView = {
 export const pageAtom = Atom.make(1);
 export const includeDeletedAtom = Atom.make(false);
 
+const booleanParam = (value: boolean): "true" | "false" => {
+  if (value) return "true";
+
+  return "false";
+};
+
+const toRow = (org: OrganizationContract.Organization): OrgRowView => {
+  const row = { id: org.id, name: org.name, createdAtLabel: formatDay(org.createdAt) };
+
+  return Option.match(formatOptionalDay(Option.fromNullOr(org.deletedAt)), {
+    onNone: () => ({ ...row, isDeleted: false, href: `/admin/orgs/${org.id}` }),
+    onSome: (deletedAtLabel) => ({ ...row, isDeleted: true, deletedAtLabel }),
+  });
+};
+
 export const adminOrgsResultAtom = Atom.make((get) =>
   get(
     adminOrgsQueryAtom({
       page: get(pageAtom),
       pageSize: PAGE_SIZE,
-      includeDeleted: get(includeDeletedAtom) ? "true" : "false",
+      includeDeleted: booleanParam(get(includeDeletedAtom)),
     }),
   ),
 );
 
 export const orgsListAtom = Atom.make((get): OrgsListView => {
-  const result = get(adminOrgsResultAtom);
-  const page = AsyncResult.isSuccess(result) ? result.value : null;
-  const total = Math.max(0, page?.total ?? 0);
+  const page = AsyncResult.value(get(adminOrgsResultAtom));
+
+  const total = Math.max(
+    0,
+    Option.match(page, { onNone: () => 0, onSome: (loaded) => loaded.total }),
+  );
+
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const currentPage = Math.min(Math.max(1, get(pageAtom)), totalPages);
 
-  const rows = Array.map(page?.organizations ?? [], (org): OrgRowView => {
-    const isDeleted = org.deletedAt !== null;
-    return {
-      id: org.id,
-      name: org.name,
-      createdAtLabel: formatDay(org.createdAt),
-      isDeleted,
-      deletedAtLabel: formatDayOrNull(org.deletedAt),
-      // A deleted org has no detail page to visit, so the row is plain text.
-      href: isDeleted ? null : `/admin/orgs/${org.id}`,
-    };
+  const rows = Option.match(page, {
+    onNone: () => [],
+    onSome: (loaded) => Array.map(loaded.organizations, toRow),
   });
 
   return {
@@ -83,7 +98,7 @@ export const orgsListAtom = Atom.make((get): OrgsListView => {
     totalPages,
     hasPrevious: currentPage > 1,
     hasNext: currentPage < totalPages,
-    isEmpty: page !== null && Array.isReadonlyArrayEmpty(rows),
+    isEmpty: Option.isSome(page) && Array.isReadonlyArrayEmpty(rows),
     includeDeleted: get(includeDeletedAtom),
   };
 });
@@ -92,10 +107,14 @@ export type PageChange = "next" | "previous";
 
 export const changePageAtom = Atom.fnSync<PageChange>()((direction, get) => {
   const view = get(orgsListAtom);
-  get.set(
-    pageAtom,
-    direction === "next" ? Math.min(view.totalPages, view.page + 1) : Math.max(1, view.page - 1),
-  );
+
+  if (direction === "next") {
+    get.set(pageAtom, Math.min(view.totalPages, view.page + 1));
+
+    return;
+  }
+
+  get.set(pageAtom, Math.max(1, view.page - 1));
 });
 
 // Flipping the filter changes how many rows exist, so the current page number

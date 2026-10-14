@@ -1,8 +1,10 @@
+import { describe, expect, it } from "@effect/vitest";
+import { assertNone, assertSome } from "@effect/vitest/utils";
 import { OrganizationId } from "@org/contracts/EntityIds";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import * as AtomRegistry from "effect/reactivity/AtomRegistry";
-import { describe, expect, it } from "vitest";
 
 import { apiTransportAtom } from "@/services/atom/api-transport.shared";
 import { navigationRequestAtom, pathnameAtom } from "@/services/atom/navigation.shared";
@@ -27,7 +29,6 @@ const orgA = {
   name: "Org A",
   createdAt: now,
   updatedAt: now,
-  deletedAt: null,
 } as const;
 
 const orgB = {
@@ -35,24 +36,25 @@ const orgB = {
   name: "Org B",
   createdAt: now,
   updatedAt: now,
-  deletedAt: null,
 } as const;
 
 describe("extractActiveOrgId", () => {
   it("pulls the id segment from an /orgs/:id path", () => {
-    expect(extractActiveOrgId("/orgs/11111111-1111-1111-1111-111111111111")).toBe(
+    assertSome(
+      extractActiveOrgId("/orgs/11111111-1111-1111-1111-111111111111"),
       "11111111-1111-1111-1111-111111111111",
     );
   });
   it("pulls the id segment from a nested /orgs/:id/billing path", () => {
-    expect(extractActiveOrgId("/orgs/11111111-1111-1111-1111-111111111111/billing")).toBe(
+    assertSome(
+      extractActiveOrgId("/orgs/11111111-1111-1111-1111-111111111111/billing"),
       "11111111-1111-1111-1111-111111111111",
     );
   });
-  it("returns null on a non-org path", () => {
-    expect(extractActiveOrgId("/")).toBeNull();
-    expect(extractActiveOrgId("/admin/orgs")).toBeNull();
-    expect(extractActiveOrgId("/users")).toBeNull();
+  it("returns none on a non-org path", () => {
+    assertNone(extractActiveOrgId("/"));
+    assertNone(extractActiveOrgId("/admin/orgs"));
+    assertNone(extractActiveOrgId("/users"));
   });
 });
 
@@ -62,7 +64,8 @@ describe("computeOrgSwitcherView", () => {
       orgs: [orgA, orgB],
       pathname: "/orgs/11111111-1111-1111-1111-111111111111/billing",
     });
-    expect(view.activeOrgId).toBe(orgA.id);
+
+    assertSome(view.activeOrgId, orgA.id);
     expect(view.options.map((o) => o.href)).toEqual([
       "/orgs/11111111-1111-1111-1111-111111111111/billing",
       "/orgs/22222222-2222-2222-2222-222222222222/billing",
@@ -71,7 +74,7 @@ describe("computeOrgSwitcherView", () => {
 
   it("from non-org paths the switch lands at the org root", () => {
     const view = computeOrgSwitcherView({ orgs: [orgA, orgB], pathname: "/admin/orgs" });
-    expect(view.activeOrgId).toBeNull();
+    assertNone(view.activeOrgId);
     expect(view.options.map((o) => o.href)).toEqual([`/orgs/${orgA.id}`, `/orgs/${orgB.id}`]);
   });
 
@@ -80,12 +83,13 @@ describe("computeOrgSwitcherView", () => {
     expect(view.isEmpty).toBe(true);
   });
 
-  it("returns null active id when the URL id doesn't match any membership", () => {
+  it("returns no active id when the URL id doesn't match any membership", () => {
     const view = computeOrgSwitcherView({
       orgs: [orgA],
       pathname: "/orgs/99999999-9999-9999-9999-999999999999",
     });
-    expect(view.activeOrgId).toBeNull();
+
+    assertNone(view.activeOrgId);
   });
 });
 
@@ -98,69 +102,77 @@ const makeRegistry = (pathname: string) =>
   });
 
 const settle = (registry: AtomRegistry.AtomRegistry) =>
-  Effect.runPromise(
-    AtomRegistry.getResult(registry, orgSwitcherResultAtom, { suspendOnWaiting: true }),
-  );
+  AtomRegistry.getResult(registry, orgSwitcherResultAtom, { suspendOnWaiting: true });
 
 describe("org switcher ViewModel", () => {
-  it("re-derives its options when the pathname changes, without refetching", async () => {
-    let fetches = 0;
-    server.use(
-      orgsHandlers.findMine([
-        makeMyOrganization({ name: "Org A" }),
-        makeMyOrganization({ id: ORG_B_ID, name: "Org B" }),
-      ]),
-    );
-    server.events.on("request:start", () => {
-      fetches += 1;
-    });
+  it.effect("re-derives its options when the pathname changes, without refetching", () =>
+    Effect.gen(function* () {
+      let fetches = 0;
+      server.use(
+        orgsHandlers.findMine([
+          makeMyOrganization({ name: "Org A" }),
+          makeMyOrganization({ id: ORG_B_ID, name: "Org B" }),
+        ]),
+      );
+      server.events.on("request:start", () => {
+        fetches += 1;
+      });
 
-    const registry = makeRegistry("/");
-    await settle(registry);
-    expect(registry.get(orgSwitcherAtom).activeOrgId).toBeNull();
+      const registry = makeRegistry("/");
+      yield* settle(registry);
+      assertNone(registry.get(orgSwitcherAtom).activeOrgId);
 
-    registry.set(pathnameAtom, `/orgs/${ORG_B_ID}/billing`);
+      registry.set(pathnameAtom, `/orgs/${ORG_B_ID}/billing`);
 
-    const view = registry.get(orgSwitcherAtom);
-    expect(view.activeOrgId).toBe(ORG_B_ID);
-    expect(view.options.map((o) => o.href)).toEqual([
-      `/orgs/${makeMyOrganization().id}/billing`,
-      `/orgs/${ORG_B_ID}/billing`,
-    ]);
-    expect(fetches).toBe(1);
-    server.events.removeAllListeners();
-  });
+      const view = registry.get(orgSwitcherAtom);
+      assertSome(view.activeOrgId, ORG_B_ID);
+      expect(view.options.map((o) => o.href)).toEqual([
+        `/orgs/${makeMyOrganization().id}/billing`,
+        `/orgs/${ORG_B_ID}/billing`,
+      ]);
+      expect(fetches).toBe(1);
+      server.events.removeAllListeners();
+    }),
+  );
 
-  it("asks to navigate to the selected org's href", async () => {
-    server.use(orgsHandlers.findMine([makeMyOrganization({ id: ORG_B_ID, name: "Org B" })]));
+  it.effect("asks to navigate to the selected org's href", () =>
+    Effect.gen(function* () {
+      server.use(orgsHandlers.findMine([makeMyOrganization({ id: ORG_B_ID, name: "Org B" })]));
 
-    const registry = makeRegistry("/orgs/whatever/members");
-    await settle(registry);
+      const registry = makeRegistry("/orgs/whatever/members");
+      yield* settle(registry);
 
-    registry.set(selectOrgAtom, ORG_B_ID);
+      registry.set(selectOrgAtom, ORG_B_ID);
 
-    expect(registry.get(navigationRequestAtom)?.href).toBe(`/orgs/${ORG_B_ID}/members`);
-  });
+      expect(Option.getOrThrow(registry.get(navigationRequestAtom)).href).toBe(
+        `/orgs/${ORG_B_ID}/members`,
+      );
+    }),
+  );
 
-  it("ignores a selection that is not one of the caller's orgs", async () => {
-    server.use(orgsHandlers.findMine([makeMyOrganization()]));
+  it.effect("ignores a selection that is not one of the caller's orgs", () =>
+    Effect.gen(function* () {
+      server.use(orgsHandlers.findMine([makeMyOrganization()]));
 
-    const registry = makeRegistry("/");
-    await settle(registry);
+      const registry = makeRegistry("/");
+      yield* settle(registry);
 
-    registry.set(selectOrgAtom, ORG_B_ID);
+      registry.set(selectOrgAtom, ORG_B_ID);
 
-    expect(registry.get(navigationRequestAtom)).toBeNull();
-  });
+      assertNone(registry.get(navigationRequestAtom));
+    }),
+  );
 
-  it("sends the create-new affordance to the root picker", async () => {
-    server.use(orgsHandlers.findMine([makeMyOrganization()]));
+  it.effect("sends the create-new affordance to the root picker", () =>
+    Effect.gen(function* () {
+      server.use(orgsHandlers.findMine([makeMyOrganization()]));
 
-    const registry = makeRegistry("/orgs/anything");
-    await settle(registry);
+      const registry = makeRegistry("/orgs/anything");
+      yield* settle(registry);
 
-    registry.set(createNewOrgAtom, undefined);
+      registry.set(createNewOrgAtom, void 0);
 
-    expect(registry.get(navigationRequestAtom)?.href).toBe("/");
-  });
+      expect(Option.getOrThrow(registry.get(navigationRequestAtom)).href).toBe("/");
+    }),
+  );
 });

@@ -1,6 +1,7 @@
 <script module lang="ts">
-  // Named, because a `>` inside the generics attribute would end the script tag
-  // for the architecture CLI's Svelte reader.
+  // A generic constraint, named only because a `>` inside the generics attribute
+  // would end the script tag for the architecture CLI's Svelte reader.
+  // oxlint-disable-next-line effect/noUnsafeDictionaryType, anti-slop/no-unsafe-dictionary-type -- a generic constraint, which both rules allow when written in place
   export type ViewProps = Record<string, unknown>;
 </script>
 
@@ -24,6 +25,7 @@
   } = $props();
 
   provideRegistry({ registry: untrack(() => registry) });
+
   const View = untrack(() => view);
 </script>
 

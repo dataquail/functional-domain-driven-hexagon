@@ -40,7 +40,12 @@ export const orgMembersResultAtom = Atom.family((orgId: OrganizationId) =>
 export const orgMembersListAtom = Atom.family((orgId: OrganizationId) =>
   Atom.make((get): OrgMembersListView => {
     const result = get(orgMembersResultAtom(orgId));
-    const members = AsyncResult.isSuccess(result) ? result.value.members : [];
+
+    const members = AsyncResult.getOrElse(
+      AsyncResult.map(result, (page) => page.members),
+      () => [],
+    );
+
     return {
       rows: Array.map(members, (member) => ({
         userId: member.userId,

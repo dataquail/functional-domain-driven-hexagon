@@ -21,6 +21,7 @@ export const makeMyOrganization = (
     name: "Org A",
     createdAt: FIXED_DATE,
     updatedAt: FIXED_DATE,
+    // oxlint-disable-next-line effect/noNullish -- the contract field is Schema.NullOr, so a live org is spelled null on the wire
     deletedAt: null,
     isAdmin: true,
     ...overrides,
@@ -44,6 +45,7 @@ export const makeOrganization = (
     name: "Org A",
     createdAt: FIXED_DATE,
     updatedAt: FIXED_DATE,
+    // oxlint-disable-next-line effect/noNullish -- the contract field is Schema.NullOr, so a live org is spelled null on the wire
     deletedAt: null,
     ...overrides,
   });
@@ -53,6 +55,7 @@ export const makePaginatedOrganizations = (
   overrides: Partial<OrganizationContract.PaginatedOrganizations> = {},
 ): OrganizationContract.PaginatedOrganizations => {
   const organizations = overrides.organizations ?? [makeOrganization()];
+
   return new OrganizationContract.PaginatedOrganizations({
     organizations,
     page: 1,

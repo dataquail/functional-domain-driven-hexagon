@@ -18,7 +18,9 @@ import { apiTransportAtom } from "@/services/atom/api-transport.shared";
 import IntegrationProviders from "./integration-providers.svelte";
 import { TEST_API_BASE } from "./typed-handler";
 
-export type IntegrationHarness = RenderResult<typeof IntegrationProviders> & {
+export type IntegrationHarness<Props extends Record<string, unknown>> = RenderResult<
+  typeof IntegrationProviders<Props>
+> & {
   readonly registry: AtomRegistry.AtomRegistry;
 };
 
@@ -26,6 +28,7 @@ const liveRegistries: Array<AtomRegistry.AtomRegistry> = [];
 
 afterEach(() => {
   dismissToasts();
+
   while (liveRegistries.length > 0) {
     liveRegistries.pop()?.dispose();
   }
@@ -35,18 +38,21 @@ afterEach(() => {
 // app's relative `/api`.
 export const renderWithHarness = <Props extends Record<string, unknown>>(
   view: Component<Props>,
-  props?: Props,
-): IntegrationHarness => {
+  props: Props,
+): IntegrationHarness<Props> => {
   const registry = AtomRegistry.make({
     initialValues: [[apiTransportAtom, { baseUrl: TEST_API_BASE, headers: {} }]],
   });
+
   liveRegistries.push(registry);
-  const rendered = render(IntegrationProviders, {
+
+  const rendered = render(IntegrationProviders<Props>, {
     props: {
       registry,
-      view: view as Component<Record<string, unknown>>,
-      props: props ?? {},
+      view,
+      props,
     },
   });
+
   return { ...rendered, registry };
 };

@@ -14,7 +14,14 @@
   // enough that navigating away and back re-uses a fetched page, short enough
   // that a stale page is not served indefinitely.
   const IDLE_TTL_MS = 30_000;
-  provideRegistry(browser ? { defaultIdleTTL: IDLE_TTL_MS } : {});
+
+  const registryOptions = (inBrowser: boolean) => {
+    if (inBrowser) return { defaultIdleTTL: IDLE_TTL_MS };
+
+    return {};
+  };
+
+  provideRegistry(registryOptions(browser));
 </script>
 
 {@render children()}

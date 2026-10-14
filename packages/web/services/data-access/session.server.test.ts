@@ -1,40 +1,48 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { assertNone, assertSome } from "@effect/vitest/utils";
+import * as Option from "effect/Option";
+import { afterEach, describe, expect, it } from "vitest";
 
+import type { ServerRuntime } from "@/services/runtime.server";
 import { makeMyOrganization, ORG_A_ID, ORG_B_ID } from "@/test/fixtures/organization";
 import { handlers } from "@/test/handlers";
+import { endRequest, serveRequest } from "@/test/kit/server";
 import { server } from "@/test/msw-server";
 import { serverRuntimeOverMsw } from "@/test/server-runtime";
 
-const request = vi.hoisted(() => ({ locals: {} as Record<string, unknown> }));
-vi.mock("$app/server", () => ({ getRequestEvent: () => request }));
+import { fetchCurrentUser } from "./me.server";
+import { fetchMyOrgRole } from "./my-orgs.server";
 
-const { fetchCurrentUser } = await import("./me.server");
-const { fetchMyOrgRole } = await import("./my-orgs.server");
+const runtimes: Array<ServerRuntime> = [];
+
+const serve = (cookieHeader = "") => {
+  const runtime = serverRuntimeOverMsw(cookieHeader);
+  runtimes.push(runtime);
+  serveRequest({ locals: { runtime } });
+};
 
 afterEach(async () => {
-  const runtime = request.locals.runtime as { dispose: () => Promise<void> } | undefined;
-  await runtime?.dispose();
-  request.locals = {};
+  await Promise.all(runtimes.splice(0).map(async (runtime) => runtime.dispose()));
+  endRequest();
 });
 
 describe("fetchCurrentUser", () => {
   it("resolves the signed-in user", async () => {
-    request.locals = { runtime: serverRuntimeOverMsw("session=abc") };
+    serve("session=abc");
     server.use(handlers.auth.signedInAs({ isSuperAdmin: true }));
 
-    expect(await fetchCurrentUser()).toMatchObject({ isSuperAdmin: true });
+    expect(Option.getOrThrow(await fetchCurrentUser())).toMatchObject({ isSuperAdmin: true });
   });
 
-  it("resolves null when there is no session", async () => {
-    request.locals = { runtime: serverRuntimeOverMsw() };
+  it("resolves none when there is no session", async () => {
+    serve();
 
-    expect(await fetchCurrentUser()).toBeNull();
+    assertNone(await fetchCurrentUser());
   });
 });
 
 describe("fetchMyOrgRole", () => {
   it("reads the caller's role in an org from their memberships", async () => {
-    request.locals = { runtime: serverRuntimeOverMsw("session=abc") };
+    serve("session=abc");
     server.use(
       handlers.orgs.findMine([
         makeMyOrganization({ id: ORG_A_ID, isAdmin: true }),
@@ -42,14 +50,14 @@ describe("fetchMyOrgRole", () => {
       ]),
     );
 
-    expect(await fetchMyOrgRole(ORG_A_ID)).toBe("admin");
-    expect(await fetchMyOrgRole(ORG_B_ID)).toBe("member");
+    assertSome(await fetchMyOrgRole(ORG_A_ID), "admin");
+    assertSome(await fetchMyOrgRole(ORG_B_ID), "member");
   });
 
-  it("is undefined for an org the caller does not belong to", async () => {
-    request.locals = { runtime: serverRuntimeOverMsw("session=abc") };
+  it("is none for an org the caller does not belong to", async () => {
+    serve("session=abc");
     server.use(handlers.orgs.findMine([]));
 
-    expect(await fetchMyOrgRole(ORG_A_ID)).toBeUndefined();
+    assertNone(await fetchMyOrgRole(ORG_A_ID));
   });
 });

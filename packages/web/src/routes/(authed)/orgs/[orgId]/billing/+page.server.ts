@@ -13,6 +13,8 @@ export const load = async ({
   readonly parent: () => Promise<Awaited<ReturnType<typeof orgLoad>>>;
 }) => {
   const { isAdmin, orgId } = await parent();
+
   if (!isAdmin) error(404, "Not Found");
+
   return { prefetched: await collectPrefetched([prefetchSubscription(orgId)]) };
 };

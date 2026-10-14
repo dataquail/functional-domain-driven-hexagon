@@ -24,3 +24,8 @@ export const makeSubscription = (
     currentPeriodEnd: FIXED_DATE,
     ...overrides,
   });
+
+/** A subscription Stripe has not yet reported a period end for. */
+export const makeSubscriptionWithoutPeriodEnd = (): BillingContract.SubscriptionResponse =>
+  // oxlint-disable-next-line effect/noNullish -- the contract field is Schema.NullOr, so its "none" is spelled null on the wire
+  makeSubscription({ currentPeriodEnd: null });

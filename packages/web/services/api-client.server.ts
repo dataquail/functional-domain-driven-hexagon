@@ -17,6 +17,15 @@ import { ApiClient } from "./api-client.shared";
 // A service binding ignores the host; the URL only carries the path.
 const SERVER_ORIGIN = "http://server";
 
+const forwardCookie = (
+  request: HttpClientRequest.HttpClientRequest,
+  cookieHeader: string,
+): HttpClientRequest.HttpClientRequest => {
+  if (cookieHeader.length === 0) return request;
+
+  return HttpClientRequest.setHeader(request, "Cookie", cookieHeader);
+};
+
 export const ApiClientLive = (fetch: typeof globalThis.fetch, cookieHeader: string) =>
   Layer.effect(
     ApiClient,
@@ -25,15 +34,12 @@ export const ApiClientLive = (fetch: typeof globalThis.fetch, cookieHeader: stri
         baseUrl: SERVER_ORIGIN,
         transformClient: (c) =>
           c.pipe(
-            HttpClient.mapRequest((req) =>
-              cookieHeader.length > 0
-                ? HttpClientRequest.setHeader(req, "Cookie", cookieHeader)
-                : req,
-            ),
+            HttpClient.mapRequest((req) => forwardCookie(req, cookieHeader)),
             HttpClient.retryTransient({ times: 3 }),
           ),
       });
-      return { client };
+
+      return ApiClient.of({ client });
     }),
   ).pipe(
     Layer.provide(

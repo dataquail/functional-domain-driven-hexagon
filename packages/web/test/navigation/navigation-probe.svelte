@@ -1,7 +1,3 @@
-<script module lang="ts">
-  export type NavigationProbeProps = Record<string, unknown>;
-</script>
-
 <script lang="ts">
   import type * as AtomRegistry from "effect/reactivity/AtomRegistry";
   import { untrack } from "svelte";

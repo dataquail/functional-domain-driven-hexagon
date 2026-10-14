@@ -22,7 +22,8 @@ import { server } from "@/test/msw-server";
 import TestOrgTasksPage from "./test-org-tasks-page.svelte";
 
 const render = () => {
-  const rendered = renderWithHarness(TestOrgTasksPage);
+  const rendered = renderWithHarness(TestOrgTasksPage, {});
+
   return { ...rendered, user: userEvent.setup() };
 };
 

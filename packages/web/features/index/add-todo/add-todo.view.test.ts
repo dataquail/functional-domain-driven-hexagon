@@ -50,6 +50,7 @@ describe("AddTodo view", () => {
 
   it("dispatches submit to the ViewModel", async () => {
     const user = userEvent.setup();
+
     const { registry } = renderView(
       AddTodo,
       { orgId: TEST_ORG_ID },

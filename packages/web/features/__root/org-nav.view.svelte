@@ -11,19 +11,23 @@
   const { isAdmin, orgId }: { readonly orgId: OrganizationId; readonly isAdmin: boolean } =
     $props();
 
-  const linksFor = (
-    base: string,
-    admin: boolean,
-  ): ReadonlyArray<{ href: string; label: string; testid: string }> => [
+  type NavLink = { href: string; label: string; testid: string };
+
+  const memberLinks = (base: string): ReadonlyArray<NavLink> => [
     { href: `${base}`, label: "Tasks", testid: "org-nav-tasks" },
     { href: `${base}/members`, label: "Members", testid: "org-nav-members" },
-    ...(admin
-      ? [
-          { href: `${base}/billing`, label: "Billing", testid: "org-nav-billing" },
-          { href: `${base}/invite`, label: "Invite", testid: "org-nav-invite" },
-        ]
-      : []),
   ];
+
+  const adminLinks = (base: string): ReadonlyArray<NavLink> => [
+    { href: `${base}/billing`, label: "Billing", testid: "org-nav-billing" },
+    { href: `${base}/invite`, label: "Invite", testid: "org-nav-invite" },
+  ];
+
+  const linksFor = (base: string, admin: boolean): ReadonlyArray<NavLink> => {
+    if (admin) return [...memberLinks(base), ...adminLinks(base)];
+
+    return memberLinks(base);
+  };
 </script>
 
 <Surface tone="subtle" border="bottom">

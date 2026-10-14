@@ -19,6 +19,7 @@ const renderInvitations = (
   invitations: ReadonlyArray<ReturnType<typeof makePendingInvitation>>,
 ) => {
   server.use(orgsHandlers.findInvitations(invitations));
+
   return renderView(
     OrgInvitationsList,
     { orgId: ORG_A_ID },

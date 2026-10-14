@@ -21,7 +21,7 @@ describe("UserList — integration tier", () => {
   it("renders the empty state when the server returns zero users", async () => {
     server.use(handlers.auth.signedInAs(), handlers.users.list([]));
 
-    renderWithHarness(TestUsersPage);
+    renderWithHarness(TestUsersPage, {});
 
     expect(await screen.findByText("No users yet.")).toBeVisible();
     // The list element must NOT render when the empty state is shown —
@@ -59,7 +59,7 @@ describe("UserList — integration tier", () => {
       ),
     );
 
-    renderWithHarness(TestUsersPage);
+    renderWithHarness(TestUsersPage, {});
 
     // Wait for the suspense fallback to resolve, then assert.
     expect(await screen.findByText(/Page 1 of 3/)).toBeVisible();
@@ -73,6 +73,7 @@ describe("UserList — integration tier", () => {
     // returns a distinct set per page. The handler is stateless — it
     // observes the page query param the client sends.
     const page1 = [makeUser({ email: "alice@example.com" })];
+
     const page2 = [
       makeUser({
         email: "zoe@example.com",
@@ -89,7 +90,7 @@ describe("UserList — integration tier", () => {
       handlers.users.list(makePaginatedUsers({ users: page1, page: 1, pageSize: 10, total: 20 })),
     );
 
-    const rendered = renderWithHarness(TestUsersPage);
+    const rendered = renderWithHarness(TestUsersPage, {});
     await svelteUsersDriver(rendered).goto();
 
     expect(await screen.findByText("alice@example.com")).toBeVisible();
