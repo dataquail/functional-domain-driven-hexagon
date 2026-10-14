@@ -263,7 +263,7 @@ load and fails `pnpm lint` — but never runs them. A violated graph rule fails
 limits:
   unrestricted: 1
   partial: 0
-  coverage: { imports: 0.96, structure: 0.77, members: 0.12, surface: 0.92, graph: 1 }
+  coverage: { imports: 0.96, structure: 0.78, members: 0.14, surface: 0.93, graph: 1 }
   conformance: { residue: 0, vacant: 11, slack: 45, concentration: 0 }
 ```
 
@@ -395,10 +395,10 @@ Two gates back that up, and they answer different questions:
 - `pnpm lint:rules` — the **wiring**: the plugin is loaded, each rule id is
   enabled, its globs match, resolution is live. A repo-wide `deny` shares the
   `architecture/imports` id with every allowlist, so its probe also names the
-  message it must report. 43 probes, three of them ESLint's (`linter: "eslint"`):
-  the Svelte markup rules oxlint cannot see (ADR-0036).
-- `pnpm lint:edges` — the **semantics**: 190 edges with expected verdicts (138
-  refused, 52 allowed) and 12 graph shapes with expected reports. The allowed and
+  message it must report. 49 probes, five of them ESLint's (`linter: "eslint"`):
+  the Svelte markup rules oxlint cannot see (ADR-0036, ADR-0037).
+- `pnpm lint:edges` — the **semantics**: 202 edges with expected verdicts (145
+  refused, 57 allowed) and 12 graph shapes with expected reports. The allowed and
   quiet rows matter as much: a policy that refuses everything is as broken as one
   that refuses nothing. A row that changes verdict is either a regression or a
   decision.

@@ -29,7 +29,9 @@ export const playwrightUsersDriver = (page: Page): UsersPageDriver => {
 
   return {
     goto: async () => {
-      await page.goto("/users");
+      // Until the page is interactive: a dev-mode renderer hydrates only after
+      // loading its modules one by one, and a form driven before that submits natively.
+      await page.goto("/users", { waitUntil: "networkidle" });
       await expect(fieldLocator(page, "email")).toBeVisible();
     },
 

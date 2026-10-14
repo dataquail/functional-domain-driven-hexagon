@@ -5,8 +5,9 @@
   "type": "module",
   "description": "Playwright acceptance tests with layered architecture (specs / drivers / pages / infrastructure). See ADR / docs/scratch/template-evaluation-remediation-plan.md.",
   "scripts": {
-    "test": "pnpm -F @org/web build && playwright test",
-    "test:ui": "pnpm -F @org/web build && playwright test --ui",
+    "test": "pnpm -F @org/contracts build && pnpm -F @org/web-svelte css && playwright test",
+    "test:ui": "pnpm -F @org/contracts build && pnpm -F @org/web-svelte css && playwright test --ui",
+    "test:next": "pnpm -F @org/web build && WEB_RENDERER=next playwright test",
     "check": "tsc --noEmit"
   },
   "devDependencies": {
@@ -20,6 +21,6 @@
     "dotenv": "^16.6.1",
     "effect": "4.0.2",
     "pg": "^8.20.0",
-    "typescript": "~5.7.3"
+    "typescript": "^6.0.3"
   }
 }

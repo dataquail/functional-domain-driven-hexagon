@@ -15,6 +15,9 @@ const SERVER_WORKER_ENTRY = decodeURIComponent(
   new URL("../../../server/src/platform/worker/main.ts", import.meta.url).pathname,
 );
 
+const WEB_ROOT = decodeURIComponent(new URL("../../../web-svelte/", import.meta.url).pathname);
+
+const WEB_DEV_PORT = 3000;
 const IDENTITY_DEV_PORT = 3002;
 const SERVER_DEV_PORT = 3001;
 
@@ -160,4 +163,22 @@ export const serverWorker = Effect.fn(function* (identity: Cloudflare.Worker) {
     settings: { batchSize: 10, maxRetries: 3 },
   });
   return server;
+});
+
+// Until the Next renderer is deleted, `WEB_RENDERER=next` leaves :3000 to it;
+// `WEB_RENDERER=svelte` serves the SvelteKit app there instead.
+export const webWorker = Effect.fn(function* (server: Cloudflare.Worker) {
+  const renderer = yield* Config.Literals(["svelte", "next"], "WEB_RENDERER").pipe(
+    Config.withDefault("svelte"),
+  );
+  if (renderer === "next") return Option.none<Cloudflare.Worker>();
+  const domain = yield* Config.option(Config.String("WEB_DOMAIN"));
+  return Option.some(
+    yield* Cloudflare.Website.SvelteKit("web", {
+      rootDir: WEB_ROOT,
+      dev: { port: WEB_DEV_PORT, strictPort: true },
+      ...Option.match(domain, { onNone: () => ({}), onSome: (name) => ({ domain: name }) }),
+      env: { SERVER: server },
+    }),
+  );
 });

@@ -1,0 +1,37 @@
+{
+  "name": "@org/web-svelte",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "The SvelteKit renderer over the Effect BFF, growing beside @org/web until the Phase 7 cutover. Served as a Cloudflare Worker by the Alchemy stack.",
+  "scripts": {
+    "prepare": "svelte-kit sync && pnpm run css",
+    "css": "tailwindcss --input ../components-svelte/styles/globals.css --output src/styles.generated.css",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings"
+  },
+  "dependencies": {
+    "@org/components-svelte": "workspace:^",
+    "@org/contracts": "workspace:^",
+    "effect": "4.0.2"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20260918.1",
+    "@org/test-drivers": "workspace:^",
+    "@sveltejs/kit": "3.0.1",
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@tailwindcss/cli": "4.2.4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/svelte": "^5.4.2",
+    "@testing-library/user-event": "^14.6.1",
+    "jsdom": "^26.1.0",
+    "msw": "^2.14.7",
+    "svelte": "^5.57.2",
+    "svelte-check": "^4.7.6",
+    "tailwindcss": "4.2.4",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.3"
+  }
+}

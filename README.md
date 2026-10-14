@@ -2,7 +2,8 @@
 
 A monorepo containing:
 
-- `packages/web`: Next.js (App Router) renderer; proxies `/api/*` to the BFF (see [ADR-0018](docs/adr/0018-frontend-nextjs-renderer-and-proxy.md))
+- `packages/web-svelte`: the SvelteKit renderer, a Cloudflare Worker that proxies `/api/*` to the BFF over a service binding (see [ADR-0037](docs/adr/0037-sveltekit-renderer-on-workers.md))
+- `packages/web`: the Next.js (App Router) renderer it replaces in Phase 7 (see [ADR-0018](docs/adr/0018-frontend-nextjs-renderer-and-proxy.md))
 - `packages/components`: the React component library (primitives + patterns) and its Storybook ([ADR-0015](docs/adr/0015-frontend-component-library.md))
 - `packages/components-svelte`: the same library in Svelte 5, growing beside the React one until the SvelteKit cutover ([ADR-0036](docs/adr/0036-svelte-component-library-and-its-lint.md))
 - `packages/server`: Effect-based BFF / API server, run as a Cloudflare Worker (the auth authority — see ADR-0034, ADR-0035)
@@ -70,16 +71,16 @@ Effect v4 has no published API docs, so the upstream source is the reference —
 
 ## Authentication (the identity Worker)
 
-The identity provider is `packages/identity`: [Better Auth](https://www.better-auth.com) as an OIDC issuer, in its own Cloudflare Worker with its own database. Locally `pnpm dev` serves it on `:3002` under `alchemy dev`, beside the server Worker on `:3001`. The browser never holds an access or id token; the server is the OIDC client and issues a `HttpOnly` session cookie scoped to the Next origin. See [ADR-0034](docs/adr/0034-identity-worker-with-better-auth.md) for the design, [ADR-0017](docs/adr/0017-frontend-auth-flow.md) for the SPA-side details it amends, and [ADR-0018](docs/adr/0018-frontend-nextjs-renderer-and-proxy.md) for the Next-fronted refit.
+The identity provider is `packages/identity`: [Better Auth](https://www.better-auth.com) as an OIDC issuer, in its own Cloudflare Worker with its own database. Locally `pnpm dev` serves it on `:3002` under `alchemy dev`, beside the server Worker on `:3001`. The browser never holds an access or id token; the server is the OIDC client and issues a `HttpOnly` session cookie scoped to the renderer's origin. See [ADR-0034](docs/adr/0034-identity-worker-with-better-auth.md) for the design, [ADR-0017](docs/adr/0017-frontend-auth-flow.md) for the SPA-side details it amends, and [ADR-0018](docs/adr/0018-frontend-nextjs-renderer-and-proxy.md) for the Next-fronted refit.
 
 ```bash
 pnpm bootstrap   # postgres + mailpit + jaeger, secrets, migrations, then seeds the identity Worker
-pnpm dev         # alchemy dev (server Worker :3001, identity Worker :3002) + Next :3000
+pnpm dev         # alchemy dev: SvelteKit Worker :3000, server Worker :3001, identity Worker :3002
 ```
 
 `pnpm bootstrap` registers the app as a trusted OIDC client (`IDENTITY_CLIENT_ID` / `IDENTITY_CLIENT_SECRET`) and creates the admin (`IDENTITY_ADMIN_EMAIL` / `IDENTITY_ADMIN_PASSWORD`) with a verified email. Re-run just that step with `pnpm seed:identity` while `pnpm dev` is up. Sign in at `http://localhost:3000/api/auth/login`; anyone can also create an account there, behind email verification — the mail lands in Mailpit at `http://localhost:8025`.
 
-**Acceptance tests** (Playwright) sign in through the identity Worker's real pages on every run. `pnpm test:acceptance` boots its own Workers stack under `alchemy dev`, with the app Hyperdrive pointed at the test database, and a production Next build in front of it — so stop `pnpm dev` first, since the dev ports `:3000`–`:3002` are fixed. CI E2E (`.github/workflows/e2e.yml`) runs the same command.
+**Acceptance tests** (Playwright) sign in through the identity Worker's real pages on every run. `pnpm test:acceptance` boots its own Workers stack under `alchemy dev`, with the app Hyperdrive pointed at the test database and the SvelteKit Worker on `:3000`; `pnpm test:acceptance:next` puts a production Next build there instead. Stop `pnpm dev` first, since the dev ports `:3000`–`:3002` are fixed. CI E2E (`.github/workflows/e2e.yml`) runs both.
 
 ## Billing (Stripe)
 
@@ -95,16 +96,11 @@ For the real-Stripe smoke loop (subscribe / cancel / webhook delivery against te
 ## Development
 
 ```bash
-# Start the Effect server (watch mode, port 3001)
-pnpm --filter server dev
-
-# Start the Next.js renderer (port 3000; /api/* rewrites to :3001)
-pnpm --filter @org/web dev
+pnpm dev       # the SvelteKit renderer (:3000), server Worker (:3001) and identity Worker (:3002)
+pnpm dev:next  # the same stack with the Next renderer on :3000 instead (until Phase 7)
 ```
 
-The browser only ever sees the Next origin (`:3000`). Browser → Next.js → `/api/*` rewrite → Effect server (`:3001`); session cookie scopes to `:3000`. See [ADR-0018](docs/adr/0018-frontend-nextjs-renderer-and-proxy.md).
-
-Run them in separate terminals, or use the **Dev: All** VS Code task (see [`.vscode/tasks.json`](.vscode/tasks.json)).
+The browser only ever sees the renderer's origin (`:3000`). Browser → SvelteKit Worker → `/api/*` over the `SERVER` service binding → Effect server Worker; the session cookie scopes to `:3000`. See [ADR-0037](docs/adr/0037-sveltekit-renderer-on-workers.md) and [ADR-0018](docs/adr/0018-frontend-nextjs-renderer-and-proxy.md).
 
 ## Database Operations
 

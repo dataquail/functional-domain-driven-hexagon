@@ -28,6 +28,7 @@ const PROJECTS = [
   "packages/cli/tsconfig.src.json",
   "packages/mcp/tsconfig.src.json",
   "packages/web/tsconfig.json",
+  "packages/web-svelte/tsconfig.json",
   "packages/components/tsconfig.json",
 ].filter((project) => existsSync(join(ROOT, project)));
 

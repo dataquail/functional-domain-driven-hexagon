@@ -47,6 +47,9 @@ resolve:
     - files: "^packages/(web|components)/"
       language: typescript
       options: { tsconfig: tsconfig.resolve-web.json }
+    - files: "^packages/web-svelte/"
+      language: typescript
+      options: { tsconfig: tsconfig.resolve-web-svelte.json }
     - files: "^packages/acceptance/"
       language: typescript
       options: { tsconfig: packages/acceptance/tsconfig.json }
@@ -72,7 +75,7 @@ resolve:
 limits:
   unrestricted: 1
   partial: 0
-  coverage: { imports: 0.96, structure: 0.77, members: 0.12, surface: 0.92, graph: 1 }
+  coverage: { imports: 0.96, structure: 0.78, members: 0.14, surface: 0.93, graph: 1 }
   conformance: { residue: 0, vacant: 11, slack: 45, concentration: 0 }
 
 aliases:
@@ -256,6 +259,9 @@ graph:
         - "**/global-setup.ts"
         - "~/web/test/setup.ts"
         - "~/components-svelte/test/setup.ts"
+        - "~/web-svelte/test/setup.ts"
+        # Vitest resolves `$app/*` to these stubs by alias; the graph resolves it to Kit.
+        - "~/web-svelte/test/kit/**"
         - "~/acceptance/playwright.config.ts"
         # Process entrypoints and package bins; workerd loads the server Worker by path.
         - "@/platform/worker/main.ts"
@@ -273,6 +279,11 @@ graph:
         - "~/components/.storybook/**"
         - "~/components-svelte/.storybook/**"
         - "~/components-svelte/vite.config.ts"
+        - "~/web-svelte/vite.config.ts"
+        - "~/web-svelte/src/routes/**"
+        - "~/web-svelte/src/app.d.ts"
+        - "~/web-svelte/src/hooks.server.ts"
+        - "~/web-svelte/src/hooks.client.ts"
   reach:
     - name: domain-reaches-no-adapter
       message: >-
@@ -315,10 +326,10 @@ graph:
       via: "@/modules/*/*.platform.ts"
     - name: web-never-reaches-the-server
       message: >-
-        packages/web transitively reaches packages/server. The browser talks to the BFF over HTTP
+        A web renderer transitively reaches packages/server. The browser talks to the BFF over HTTP
         through the contracts package and nothing else; a route from web to the server means a
         package both depend on has grown a server dependency.
-      from: "~/web/**"
+      from: ["~/web/**", "~/web-svelte/**"]
       to: "~/server/**"
     - name: contracts-reach-nothing
       message: >-
@@ -374,4 +385,5 @@ tree:
   "~/components/": { include: packages/components/architecture.yaml }
   "~/components-svelte/": { include: packages/components-svelte/architecture.yaml }
   "~/web/": { include: packages/web/architecture.yaml }
+  "~/web-svelte/": { include: packages/web-svelte/architecture.yaml }
   "~/server/src/": { include: packages/server/architecture.yaml }

@@ -10,7 +10,8 @@
     "./primitives/*": "./primitives/*/index.ts",
     "./patterns/*.svelte": "./patterns/*.svelte",
     "./providers/*": "./providers/*",
-    "./styles/*": "./styles/*"
+    "./styles/*": "./styles/*",
+    "./test/setup": "./test/setup.ts"
   },
   "scripts": {
     "storybook": "storybook dev -p 6007",
@@ -44,7 +45,7 @@
     "svelte-check": "^4.7.6",
     "tailwindcss": "4.2.4",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "vite": "^8.3.4",
     "vitest": "^5.0.3"
   }

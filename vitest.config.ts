@@ -28,6 +28,7 @@ export default defineConfig({
       "packages/jobs",
       "packages/server",
       "packages/web",
+      "packages/web-svelte",
     ],
     coverage: {
       provider: "v8",
@@ -46,6 +47,9 @@ export default defineConfig({
         "packages/server/src/**/*.{ts,tsx}",
         "packages/web/features/**/*.{ts,tsx}",
         "packages/web/services/**/*.{ts,tsx}",
+        // Routes are framework surface, covered by acceptance, as web's app/ is.
+        "packages/web-svelte/{features,services}/**/*.{ts,svelte}",
+        "packages/web-svelte/src/{hooks.server.ts,lib/**/*.ts}",
       ],
       exclude: [
         ...coverageConfigDefaults.exclude,
@@ -78,10 +82,10 @@ export default defineConfig({
       // floors exist so a gain in one package cannot mask a rot in another.
       thresholds: isMergedRun
         ? {
-            statements: 86,
-            branches: 77,
-            functions: 80,
-            lines: 86,
+            statements: 89,
+            branches: 81,
+            functions: 85,
+            lines: 89,
             "packages/server/src/**": {
               statements: 90,
               branches: 75,
@@ -99,6 +103,12 @@ export default defineConfig({
               branches: 87,
               functions: 44,
               lines: 53,
+            },
+            "packages/web-svelte/**": {
+              statements: 90,
+              branches: 86,
+              functions: 87,
+              lines: 90,
             },
             "packages/components-svelte/**": {
               statements: 97,

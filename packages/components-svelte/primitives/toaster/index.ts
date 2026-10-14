@@ -1,2 +1,2 @@
-export { showToast, type ToastKind } from "./toast";
+export { dismissToasts, showToast, type ToastKind } from "./toast";
 export { default as Toaster } from "./toaster.svelte";

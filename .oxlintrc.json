@@ -39,6 +39,7 @@
     "**/.tmp-*/**",
     "**/routeTree.gen.ts",
     "**/.next/**",
+    "**/.svelte-kit/**",
     "**/postcss.config.mjs"
   ],
   "rules": {
@@ -534,6 +535,15 @@
       "rules": {
         "effecttsgo/async-function": "off",
         "effecttsgo/process-env": "off"
+      }
+    },
+    {
+      // SvelteKit owns these signatures: a hook and a load function are async, and
+      // the server-side helpers they call are where the request's Effect runtime
+      // is run.
+      "files": ["packages/web-svelte/src/**/*.ts", "packages/web-svelte/services/**/*.server.ts"],
+      "rules": {
+        "effecttsgo/async-function": "off"
       }
     },
     {

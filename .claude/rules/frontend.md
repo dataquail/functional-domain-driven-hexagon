@@ -1,9 +1,9 @@
 # Rule: frontend (web + component library)
 
-**Scope:** `packages/web/`, `packages/components/` and `packages/components-svelte/` — read before touching frontend code.
-**Backing ADRs:** 0026 (Atom + MVVM), 0015 (component library), 0018 (Next renderer + proxy), 0019 (integration seam), 0036 (the Svelte library and its lint).
+**Scope:** `packages/web/`, `packages/web-svelte/`, `packages/components/` and `packages/components-svelte/` — read before touching frontend code.
+**Backing ADRs:** 0026 (Atom + MVVM), 0015 (component library), 0018 (Next renderer + proxy), 0019 (integration seam), 0036 (the Svelte library and its lint), 0037 (the SvelteKit renderer).
 
-The frontend is a Next.js (App Router) renderer that proxies `/api/*` to the Effect server. The Effect server stays the BFF — Next renders + proxies but does NOT terminate auth. See ADR-0018.
+The frontend is a renderer that proxies `/api/*` to the Effect server: the SvelteKit app in `packages/web-svelte` (a Worker, the default) and the Next.js (App Router) app in `packages/web` it replaces in Phase 7. The Effect server stays the BFF — the renderer renders + proxies but does NOT terminate auth. See ADR-0018, ADR-0037.
 
 **There is no TanStack.** State is Effect Atom (`effect/reactivity`, bundled in `effect`) with the React bindings from `@effect/atom-react`. Queries, mutations, invalidation and form state all live in that graph. A `@tanstack/*` import fails `pnpm lint`: no tier's allowlist in `packages/web/architecture.yaml` names the package, so there is nowhere it can be imported from.
 
@@ -92,7 +92,7 @@ Every primitive and pattern needs a sibling `*.stories.tsx`. Storybook: `pnpm -F
 
 ## Component library in Svelte (`packages/components-svelte/`, ADR-0036)
 
-The same library in Svelte 5, beside the React one until the Phase 7 cutover; nothing consumes it yet (Phase 6 builds the SvelteKit app on it). Same two trees, same direction, same class tables and `styles/globals.css`. What differs is how each rule is held:
+The same library in Svelte 5, beside the React one until the Phase 7 cutover; `packages/web-svelte` is built on it. Same two trees, same direction, same class tables and `styles/globals.css`. What differs is how each rule is held:
 
 | Rule                                   | React                                  | Svelte                                                                                                                                                                                     |
 | -------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -109,6 +109,29 @@ The same library in Svelte 5, beside the React one until the Phase 7 cutover; no
 - **Tests**: `@testing-library/svelte` + `@testing-library/user-event`, jsdom, children through `createRawSnippet` (`test/snippets.ts`). `test/setup.ts` stubs `matchMedia` and pointer capture, which jsdom lacks and the toaster and Bits Select call. The package has its own coverage floor in `vitest.config.ts`.
 
 Storybook: `pnpm -F @org/components-svelte storybook` (:6007); a static build is part of `check:all`.
+
+## The SvelteKit app (`packages/web-svelte/`, ADR-0037)
+
+The renderer that replaces `packages/web` at the Phase 7 cutover: SvelteKit 3 in a Cloudflare Worker the Alchemy stack declares, on `@org/components-svelte`. The MVVM above holds unchanged; what differs is how each piece is wired.
+
+| Concern             | Next (`packages/web`)                             | SvelteKit (`packages/web-svelte`)                                                                     |
+| ------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `/api/*` proxy      | `next.config.ts` rewrite                          | `src/hooks.server.ts` → the `SERVER` service binding, prefix stripped, redirects not followed         |
+| Per-request runtime | `React.cache` + `next/headers`                    | built in the hook over the binding and the cookie, disposed after the response; `getRequestEvent()`   |
+| Guards              | server components, `redirect()`/`notFound()`      | `+layout.server.ts` / `+page.server.ts` loads, `redirect(302, …)`/`error(404)`                        |
+| Prefetch            | `<AtomHydrationBoundary prefetch>`                | a load returning `collectPrefetched([...])`, handed to `<HydrationBoundary state>` beside a `pending` |
+| Reads and writes    | `useAtomValue` / `useAtomSet` / `useAtomSuspense` | `atomValue(atom).current` / `atomSet(atom)` / `<AtomResult atom>` (`services/bridge/`)                |
+| Route params        | `params` / `searchParams` props                   | `page.params` / `page.url` from `$app/state`, or the load's `data`                                    |
+| The View rule       | `members` on `use*` + oxlint JSX rules            | `members` on `*.view.svelte` (every rune and lifecycle call except `$props`) + ESLint on markup       |
+
+- **The Model and ViewModels are the same files as web's**, byte for byte: `@/` is the package root in both. A change to one belongs in both until Phase 7.
+- **A View imports its ViewModel, `atom-bridge.svelte.ts`, `atom-result.svelte`, the component library and the contracts — nothing else.** A family atom keyed by a prop is read with a getter, `atomValue(() => fieldsAtom(initialCode))`, so a new prop re-subscribes.
+- **Load data is plain values.** Kit serialises it with devalue, which refuses a `Schema.Class`; return the fields a route reads.
+- **`*.server.ts` is Kit's server-only boundary**, so the server-side Model helpers carry no `import "server-only"`.
+- **Tailwind compiles outside Vite**: `pnpm -F @org/web-svelte css` (run at install, by `pnpm dev` and by acceptance) writes `src/styles.generated.css` from the library's `globals.css`. Tailwind's own loader cannot run under the module hooks of Alchemy's dev server on Node 22.
+- **Kit 3**: no `$lib` (use `@/`), `$app/env` instead of `$app/environment`, `Handle` from `@sveltejs/kit/hooks`. In Vitest, `$app/*` resolves to stubs under `test/kit/`; mock the one a test needs.
+- **Tests**: `renderView(View, props, { initialValues })` (`test/atom-harness.ts`) and `renderWithHarness(TestPage)` (`test/integration-harness.ts`), where a `__tests__/test-*-page.svelte` composes Views as their route does. The integration harness dismisses toasts between tests: svelte-sonner's store outlives a render. The package has its own coverage floor.
+- **goodbones' Svelte reader ends a `<script>` tag at the first `>`**: name a generics constraint in `<script module>` instead of writing `Record<string, unknown>` inside the attribute.
 
 ## Tests
 
@@ -129,5 +152,6 @@ Storybook: `pnpm -F @org/components-svelte storybook` (:6007); a static build is
 
 ```bash
 pnpm bootstrap                    # Docker (postgres, mailpit, jaeger) + migrate + seed the identity Worker
-pnpm dev                          # alchemy dev: server Worker :3001, identity Worker :3002; Next.js :3000 (/api/* → :3001)
+pnpm dev                          # alchemy dev: SvelteKit :3000, server Worker :3001, identity Worker :3002
+pnpm dev:next                     # the same stack with Next.js on :3000 (/api/* → :3001) instead
 ```

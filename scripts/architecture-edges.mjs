@@ -389,6 +389,41 @@ const REFUSED = [
     "packages/web/services/atom/api-atoms.shared.ts",
   ],
   [
+    "a Svelte View reaching the Model past its ViewModel",
+    "packages/web-svelte/features/users/user-list.view.svelte",
+    "packages/web-svelte/services/atom/api-atoms.shared.ts",
+  ],
+  [
+    "a Svelte View reaching the registry",
+    "packages/web-svelte/features/users/user-list.view.svelte",
+    "packages/web-svelte/services/bridge/registry-context.ts",
+  ],
+  [
+    "a Svelte ViewModel naming the bridge",
+    "packages/web-svelte/features/users/user-list.view-model.ts",
+    "packages/web-svelte/services/bridge/atom-bridge.svelte.ts",
+  ],
+  [
+    "a Svelte ViewModel naming Svelte",
+    "packages/web-svelte/features/users/user-list.view-model.ts",
+    NPM("svelte"),
+  ],
+  [
+    "the Svelte app's Model importing a feature",
+    "packages/web-svelte/services/atom/api-atoms.shared.ts",
+    "packages/web-svelte/features/users/user-list.view-model.ts",
+  ],
+  [
+    "a Svelte View reaching a UI library past the primitives",
+    "packages/web-svelte/features/users/user-list.view.svelte",
+    "node_modules/.pnpm/x/node_modules/bits-ui/dist/index.js",
+  ],
+  [
+    "the Svelte app reaching the server",
+    "packages/web-svelte/services/api-client.server.ts",
+    "packages/server/src/globals/application/ddd/domain-event.ts",
+  ],
+  [
     "framework/http/api.ts → a module",
     "packages/server/src/globals/infrastructure/framework/http/api.ts",
     `${M}/alpha/interface/http/index.ts`,
@@ -922,6 +957,31 @@ const ALLOWED = [
     "a Svelte story using its component (LEGAL)",
     "packages/components-svelte/primitives/spinner.stories.svelte",
     "packages/components-svelte/primitives/spinner.svelte",
+  ],
+  [
+    "a Svelte View reading its ViewModel (LEGAL)",
+    "packages/web-svelte/features/users/user-list.view.svelte",
+    "packages/web-svelte/features/users/user-list.view-model.ts",
+  ],
+  [
+    "a Svelte View reading through the bridge (LEGAL)",
+    "packages/web-svelte/features/users/user-list.view.svelte",
+    "packages/web-svelte/services/bridge/atom-bridge.svelte.ts",
+  ],
+  [
+    "a Svelte View composing a pattern (LEGAL)",
+    "packages/web-svelte/features/users/user-list.view.svelte",
+    "packages/components-svelte/patterns/pagination.svelte",
+  ],
+  [
+    "a Svelte ViewModel reading the Model (LEGAL)",
+    "packages/web-svelte/features/users/user-list.view-model.ts",
+    "packages/web-svelte/services/atom/api-atoms.shared.ts",
+  ],
+  [
+    "a route composing a View and the hydration boundary (LEGAL)",
+    "packages/web-svelte/src/routes/(authed)/users/+page.svelte",
+    "packages/web-svelte/services/bridge/hydration-boundary.svelte",
   ],
   [
     "a barrel re-exporting its domain (LEGAL)",

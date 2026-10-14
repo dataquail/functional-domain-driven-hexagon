@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-08-21
 - Supersedes: ADR-0014
+- Amended: 2026-10-11 by ADR-0037 — the Svelte bindings (`services/bridge/`) and the View rule restated for `.svelte`.
 
 ## Context and Problem Statement
 

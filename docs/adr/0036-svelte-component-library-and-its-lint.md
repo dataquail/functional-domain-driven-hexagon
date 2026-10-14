@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-11
+- Amended: 2026-10-11 by ADR-0037 — ESLint's markup rules reach the web app's Views and routes.
 - Amends: ADR-0015 (the component library grows a Svelte twin, `@org/components-svelte`), ADR-0025 (oxlint is no longer the only linter), ADR-0029 (the engine reads Svelte components).
 
 ## Context and Problem Statement

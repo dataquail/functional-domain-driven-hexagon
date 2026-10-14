@@ -2,11 +2,12 @@ import * as Alchemy from "alchemy";
 import * as Cloudflare from "alchemy/Cloudflare";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { appDatabase, identityDatabase } from "./src/stack/databases.js";
 import { stackProviders } from "./src/stack/providers.js";
 import { domainEventsDeadLetterQueue, domainEventsQueue } from "./src/stack/queues.js";
-import { identityWorker, serverWorker } from "./src/stack/workers.js";
+import { identityWorker, serverWorker, webWorker } from "./src/stack/workers.js";
 
 const stateStore = Layer.unwrap(
   Effect.gen(function* () {
@@ -28,6 +29,7 @@ export default Alchemy.Stack(
     const domainEventsDeadLetter = yield* domainEventsDeadLetterQueue;
     const identityAuth = yield* identityWorker;
     const server = yield* serverWorker(identityAuth);
+    const web = yield* webWorker(server);
     return {
       appHyperdriveId: app.hyperdriveId,
       identityHyperdriveId: identity.hyperdriveId,
@@ -35,6 +37,7 @@ export default Alchemy.Stack(
       domainEventsDeadLetterQueue: domainEventsDeadLetter.queueName,
       identityUrl: identityAuth.url,
       serverUrl: server.url,
+      ...Option.match(web, { onNone: () => ({}), onSome: (worker) => ({ webUrl: worker.url }) }),
     };
   }),
 );

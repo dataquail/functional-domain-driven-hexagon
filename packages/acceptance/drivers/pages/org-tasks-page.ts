@@ -11,7 +11,9 @@ export class OrgTasksPage {
   ) {}
 
   public async visit(): Promise<void> {
-    await this.page.goto(`/orgs/${this.orgId}`);
+    // Until the page is interactive: a dev-mode renderer hydrates only after
+    // loading its modules one by one, and a form driven before that submits natively.
+    await this.page.goto(`/orgs/${this.orgId}`, { waitUntil: "networkidle" });
     await expect(this.input).toBeVisible();
   }
 

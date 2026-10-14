@@ -8,7 +8,9 @@ export class RootPage {
   constructor(private readonly page: Page) {}
 
   public async visit(): Promise<void> {
-    await this.page.goto("/");
+    // Until the page is interactive: a dev-mode renderer hydrates only after
+    // loading its modules one by one, and a form driven before that submits natively.
+    await this.page.goto("/", { waitUntil: "networkidle" });
     await expect(this.createOrgName).toBeVisible();
   }
 
