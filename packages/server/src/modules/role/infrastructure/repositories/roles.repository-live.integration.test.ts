@@ -1,18 +1,19 @@
 import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
+import { describe } from "@effect/vitest";
+import { assertNone } from "@effect/vitest/utils";
 import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Result from "effect/Result";
-import { beforeEach } from "vitest";
 
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
 import { RolesRootOps } from "@/modules/role/domain/roles/roles.root-ops.js";
 import { RolesSpecifications } from "@/modules/role/domain/roles/roles.specification.js";
 import { RolesRepositoryLive } from "@/modules/role/infrastructure/repositories/roles.repository-live.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { describeIntegration } from "@/test-utils/server-test-runtime.js";
+import { TestDatabaseLive } from "@/test-utils/test-database.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 
@@ -31,54 +32,53 @@ const seedUser = Effect.gen(function* () {
 
 const TestLayer = RolesRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-describe("RolesRepositoryLive (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate("platform.roles", "user.users").pipe(Effect.provide(TestDatabaseLive)),
-    );
-  });
+describeIntegration(
+  "RolesRepositoryLive (integration)",
+  { layer: TestLayer, tables: ["platform.roles", "user.users"] },
+  (it) => {
+    describe("findOne", () => {
+      it.effect("returns none when no rows exist (the empty case is the caller's)", () =>
+        Effect.gen(function* () {
+          yield* seedUser;
+          const repo = yield* RolesRepository;
+          assertNone(yield* repo.findOne(forUser));
+        }),
+      );
+    });
 
-  describe("findOne", () => {
-    it.effect("returns null when no rows exist (the empty case is the caller's)", () =>
-      Effect.gen(function* () {
-        yield* seedUser;
-        const repo = yield* RolesRepository;
-        const roles = yield* repo.findOne(forUser);
-        deepStrictEqual(roles, null);
-      }).pipe(Effect.provide(TestLayer)),
-    );
-  });
+    describe("save", () => {
+      it.effect("persists granted roles and round-trips via findOne", () =>
+        Effect.gen(function* () {
+          yield* seedUser;
+          const repo = yield* RolesRepository;
 
-  describe("save", () => {
-    it.effect("persists granted roles and round-trips via findOne", () =>
-      Effect.gen(function* () {
-        yield* seedUser;
-        const repo = yield* RolesRepository;
-        const granted = Result.getOrThrow(
-          RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin"),
-        );
-        yield* repo.upsertOne(granted.roles);
-        const fetched = yield* repo.findOne(forUser);
-        if (fetched === null) throw new Error("expected aggregate");
-        deepStrictEqual([...fetched.roles], ["super_admin"]);
-      }).pipe(Effect.provide(TestLayer)),
-    );
+          const granted = Result.getOrThrow(
+            RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin"),
+          );
 
-    it.effect("replaces existing rows when an aggregate revokes a role", () =>
-      Effect.gen(function* () {
-        yield* seedUser;
-        const repo = yield* RolesRepository;
-        const granted = Result.getOrThrow(
-          RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin"),
-        );
-        yield* repo.upsertOne(granted.roles);
-        const revoked = Result.getOrThrow(RolesRootOps.revoke(granted.roles, "super_admin"));
-        yield* repo.upsertOne(revoked.roles);
-        // Revoking the last role deletes every row, so there is nothing to
-        // reconstitute — findOne reports null (no rows = no roles).
-        const fetched = yield* repo.findOne(forUser);
-        deepStrictEqual(fetched, null);
-      }).pipe(Effect.provide(TestLayer)),
-    );
-  });
-});
+          yield* repo.upsertOne(granted.roles);
+          const fetched = yield* Effect.fromOption(yield* repo.findOne(forUser));
+          deepStrictEqual([...fetched.roles], ["super_admin"]);
+        }),
+      );
+
+      it.effect("replaces existing rows when an aggregate revokes a role", () =>
+        Effect.gen(function* () {
+          yield* seedUser;
+          const repo = yield* RolesRepository;
+
+          const granted = Result.getOrThrow(
+            RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin"),
+          );
+
+          yield* repo.upsertOne(granted.roles);
+          const revoked = Result.getOrThrow(RolesRootOps.revoke(granted.roles, "super_admin"));
+          yield* repo.upsertOne(revoked.roles);
+          // Revoking the last role deletes every row, so there is nothing to
+          // reconstitute — findOne reports none (no rows = no roles).
+          assertNone(yield* repo.findOne(forUser));
+        }),
+      );
+    });
+  },
+);

@@ -8,10 +8,10 @@ import { type PersistenceUnavailable } from "@/globals/application/ddd/persisten
 // means asking the role module a question. Stated as the single boolean billing
 // cares about rather than a role list, so the platform role vocabulary stays
 // inside the adapter.
-export type PlatformRolesShape = {
+export type PlatformRolesService = {
   readonly isSuperAdmin: (userId: UserId) => Effect.Effect<boolean, PersistenceUnavailable>;
 };
 
-export class PlatformRoles extends Context.Service<PlatformRoles, PlatformRolesShape>()(
+export class PlatformRoles extends Context.Service<PlatformRoles, PlatformRolesService>()(
   "@org/server/billing/PlatformRoles",
 ) {}

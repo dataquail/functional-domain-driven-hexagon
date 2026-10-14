@@ -2,6 +2,7 @@ import { CommandBus } from "@effect-server-utils/cqrs";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Effect from "effect/Effect";
 import * as HttpServerRequest from "effect/http/HttpServerRequest";
+import * as Option from "effect/Option";
 
 import { recoverPersistenceUnavailable } from "@/globals/infrastructure/framework/http/http-endpoint.js";
 import { IngestStripeWebhookCommand } from "@/modules/billing/commands/ingest-stripe-webhook.command.js";
@@ -26,12 +27,13 @@ export const stripeWebhookEndpoint = Effect.fn("BillingLive.stripeWebhook")(func
   const httpReq = yield* HttpServerRequest.HttpServerRequest;
   const commandBus = yield* CommandBus;
 
-  const signature = httpReq.headers["stripe-signature"];
-  if (signature === undefined || signature === "") {
-    return yield* new CustomHttpApiError.Unauthorized({
-      message: "Missing stripe-signature header",
-    });
-  }
+  const signature = yield* Effect.fromOption(
+    Option.fromNullishOr(httpReq.headers["stripe-signature"]).pipe(
+      Option.filter((value) => value.length > 0),
+    ),
+    () => new CustomHttpApiError.Unauthorized({ message: "Missing stripe-signature header" }),
+  );
+
   const payload = yield* httpReq.text.pipe(
     Effect.mapError(
       (cause) =>
@@ -47,5 +49,4 @@ export const stripeWebhookEndpoint = Effect.fn("BillingLive.stripeWebhook")(func
         (err) => new CustomHttpApiError.Unauthorized({ message: err.message }),
       ),
     );
-  return undefined;
 }, recoverPersistenceUnavailable);

@@ -1,6 +1,7 @@
 import * as Context from "effect/Context";
 import type * as DateTime from "effect/DateTime";
 import type * as Effect from "effect/Effect";
+import type * as Option from "effect/Option";
 
 import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
 import { type Specification } from "@/globals/application/ddd/specification.js";
@@ -16,22 +17,22 @@ import { type WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webho
 // race-free idempotency comes from the database, not the use case.
 //
 // The read side is a plain `findOne` over a Specification (see
-// WebhookEventSpecifications); absence is a plain `null`.
+// WebhookEventSpecifications); absence is `None`.
 export type WebhookEventRecord = {
   readonly stripeEventId: string;
   readonly receivedAt: DateTime.Utc;
 };
 
-export type WebhookEventRepositoryShape = {
+export type WebhookEventRepositoryService = {
   readonly insertOne: (
     stripeEventId: string,
   ) => Effect.Effect<void, WebhookEventAlreadyRecorded | PersistenceUnavailable>;
   readonly findOne: (
     spec: Specification<WebhookEventRecord>,
-  ) => Effect.Effect<WebhookEventRecord | null, PersistenceUnavailable>;
+  ) => Effect.Effect<Option.Option<WebhookEventRecord>, PersistenceUnavailable>;
 };
 
 export class WebhookEventRepository extends Context.Service<
   WebhookEventRepository,
-  WebhookEventRepositoryShape
+  WebhookEventRepositoryService
 >()("WebhookEventRepository") {}

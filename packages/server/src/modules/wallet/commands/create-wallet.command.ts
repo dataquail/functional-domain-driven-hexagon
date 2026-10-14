@@ -16,4 +16,5 @@ export const CreateWalletCommand = Command.make("CreateWalletCommand", {
   success: Schema.Void,
   failure: PersistenceUnavailable,
 });
+
 export type CreateWalletPayload = Command.Payload<typeof CreateWalletCommand>;

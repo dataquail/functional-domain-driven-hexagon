@@ -4,6 +4,7 @@ import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 
 import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { Criteria } from "@/globals/application/ddd/specification.js";
 import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id.js";
 
 import { WalletRootOps } from "./wallet.root-ops.js";
@@ -23,10 +24,9 @@ describe("WalletSpecifications.forOrganization", () => {
   });
 
   it("carries an Eq criteria over the organizationId field", () => {
-    deepStrictEqual(WalletSpecifications.forOrganization(acmeId).criteria, {
-      _tag: "Eq",
-      field: "organizationId",
-      value: acmeId,
-    });
+    deepStrictEqual(
+      WalletSpecifications.forOrganization(acmeId).criteria,
+      Criteria.Eq({ field: "organizationId", value: acmeId }),
+    );
   });
 });

@@ -2,6 +2,7 @@ import { CommandBus } from "@effect-server-utils/cqrs";
 import { BillingContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
 import { Actions } from "@/globals/application/ports/actions.js";
 import * as Authz from "@/globals/infrastructure/auth/authz.js";
@@ -16,14 +17,16 @@ export const cancelSubscriptionEndpoint = Effect.fn("BillingLive.cancelSubscript
   function* (request: EndpointRequest<typeof BillingContract.PrivateGroup, "cancelSubscription">) {
     yield* Authz.hasPermissions(BillingResource, Actions.Update, request.params.orgId);
     const commandBus = yield* CommandBus;
+
     const subscription = yield* commandBus.execute(CancelSubscriptionCommand, {
       organizationId: request.params.orgId,
     });
+
     return new BillingContract.SubscriptionResponse({
       id: subscription.id,
       organizationId: subscription.organizationId,
       status: subscription.status,
-      currentPeriodEnd: subscription.currentPeriodEnd,
+      currentPeriodEnd: Option.getOrNull(subscription.currentPeriodEnd),
     });
   },
   Effect.catchTags({

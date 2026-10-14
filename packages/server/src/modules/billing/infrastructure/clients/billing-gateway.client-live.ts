@@ -1,7 +1,9 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
+import * as Schema from "effect/Schema";
 import Stripe from "stripe";
 
 import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
@@ -27,68 +29,87 @@ import { type StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/
 
 // Stripe SDK v22+ removed `current_period_end` from the top-level
 // Subscription type — it now lives on each `items.data[i]`. The wire
-// shape still carries it on the parent for older API versions, so we
-// read it via an opt-in cast; if absent, we fall back to the first
-// item's value, and finally to null.
-const readPeriodEnd = (sub: Stripe.Subscription): number | null => {
-  const top = (sub as unknown as { current_period_end?: number | null }).current_period_end;
-  if (typeof top === "number") return top;
-  const items = (
-    sub as unknown as { items?: { data?: ReadonlyArray<{ current_period_end?: number | null }> } }
-  ).items;
-  const first = items?.data?.[0]?.current_period_end;
-  return typeof first === "number" ? first : null;
-};
+// shape still carries it on the parent for older API versions, so the
+// period end is parsed from the parent first, then the first item.
+const OptionalEpoch = Schema.optional(Schema.NullOr(Schema.Finite));
 
-const toDomainSubscriptionState = (sub: Stripe.Subscription): SubscriptionState => {
-  const epoch = readPeriodEnd(sub);
-  return {
-    stripeSubscriptionId: sub.id,
-    status: sub.status,
-    currentPeriodEnd: epoch !== null ? DateTime.makeUnsafe(epoch * 1000) : null,
-  };
-};
+const SubscriptionPeriodWire = Schema.Struct({
+  current_period_end: OptionalEpoch,
+  items: Schema.optional(
+    Schema.Struct({
+      data: Schema.optional(Schema.Array(Schema.Struct({ current_period_end: OptionalEpoch }))),
+    }),
+  ),
+});
+
+const decodeSubscriptionPeriod = Schema.decodeUnknownOption(SubscriptionPeriodWire);
+
+const readPeriodEnd = (sub: Stripe.Subscription): Option.Option<DateTime.Utc> =>
+  Option.flatMap(decodeSubscriptionPeriod(sub), (wire) =>
+    Option.fromNullishOr(wire.current_period_end).pipe(
+      Option.orElse(() => Option.fromNullishOr(wire.items?.data?.[0]?.current_period_end)),
+    ),
+  ).pipe(Option.map((epoch) => DateTime.makeUnsafe(epoch * 1000)));
+
+// Stripe types `invoice.subscription` as string | Subscription | null
+// depending on expansion. We only ever need the id.
+const InvoiceSubscriptionWire = Schema.Struct({ subscription: Schema.String });
+
+const decodeInvoiceSubscription = Schema.decodeUnknownOption(InvoiceSubscriptionWire);
+
+const toDomainSubscriptionState = (sub: Stripe.Subscription): SubscriptionState => ({
+  stripeSubscriptionId: sub.id,
+  status: sub.status,
+  currentPeriodEnd: readPeriodEnd(sub),
+});
 
 const toDomainStripeEvent = (event: Stripe.Event): StripeWebhookEvent => {
   switch (event.type) {
     case "customer.subscription.created":
     case "customer.subscription.updated":
-    case "customer.subscription.deleted": {
-      const sub = event.data.object;
-      const epoch = readPeriodEnd(sub);
+    case "customer.subscription.deleted":
       return {
         eventId: event.id,
         type: event.type,
-        subscription: {
-          stripeSubscriptionId: sub.id,
-          status: sub.status,
-          currentPeriodEnd: epoch !== null ? DateTime.makeUnsafe(epoch * 1000) : null,
-        },
+        subscription: toDomainSubscriptionState(event.data.object),
       };
-    }
+
     case "invoice.paid":
-    case "invoice.payment_failed": {
-      const invoice = event.data.object;
-      // Stripe types `invoice.subscription` as string | Subscription | null
-      // depending on expansion. We only ever need the id.
-      const subRef = (invoice as unknown as { subscription?: string | null }).subscription;
+    case "invoice.payment_failed":
       return {
         eventId: event.id,
         type: event.type,
         invoice: {
-          stripeSubscriptionId: typeof subRef === "string" ? subRef : null,
+          stripeSubscriptionId: Option.map(
+            decodeInvoiceSubscription(event.data.object),
+            (invoice) => invoice.subscription,
+          ),
         },
       };
-    }
+
     default:
       return { eventId: event.id, type: "unknown" };
   }
+};
+
+// Stripe's own default, written out because the SDK takes it positionally
+// before the crypto provider.
+const DEFAULT_SIGNATURE_TOLERANCE_SECONDS = 300;
+
+const customerParams = (input: CreateCustomerInput): Stripe.CustomerCreateParams => {
+  const metadata = { organization_id: input.organizationId };
+
+  return Option.match(Option.fromUndefinedOr(input.email), {
+    onNone: () => ({ metadata }),
+    onSome: (email) => ({ metadata, email }),
+  });
 };
 
 export const BillingGatewayLive = Layer.effect(
   BillingGateway,
   Effect.gen(function* () {
     const env = yield* EnvVars;
+
     // We deliberately don't pin `apiVersion` — the SDK uses its
     // matching default. Pinning the SDK version (in package.json) is
     // the actual contract here; the Stripe API surface we touch is
@@ -98,6 +119,7 @@ export const BillingGatewayLive = Layer.effect(
       typescript: true,
       httpClient: Stripe.createFetchHttpClient(),
     });
+
     // workerd has no synchronous HMAC, so verification goes through SubtleCrypto.
     const cryptoProvider = Stripe.createSubtleCryptoProvider();
     const webhookSecret = Redacted.value(env.STRIPE_WEBHOOK_SECRET);
@@ -107,72 +129,74 @@ export const BillingGatewayLive = Layer.effect(
       input: CreateCustomerInput,
     ): Effect.Effect<CreateCustomerResult, BillingGatewayUnavailable> =>
       Effect.tryPromise({
-        try: async () => {
-          const customer = await stripe.customers.create({
-            metadata: { organization_id: input.organizationId },
-            ...(input.email !== undefined ? { email: input.email } : {}),
-          });
-          return { stripeCustomerId: customer.id };
-        },
+        try: () => stripe.customers.create(customerParams(input)),
         catch: (cause) =>
           new BillingGatewayUnavailable({
             message: `Stripe customer create failed: ${String(cause)}`,
           }),
-      }).pipe(Effect.withSpan("BillingGateway.createCustomer"));
+      }).pipe(
+        Effect.map((customer) => ({ stripeCustomerId: customer.id })),
+        Effect.withSpan("BillingGateway.createCustomer"),
+      );
 
     const createSubscription = (
       input: CreateSubscriptionInput,
     ): Effect.Effect<SubscriptionState, BillingGatewayUnavailable> =>
       Effect.tryPromise({
-        try: async () => {
-          const sub = await stripe.subscriptions.create({
+        try: () =>
+          stripe.subscriptions.create({
             customer: input.stripeCustomerId,
             items: [{ price: priceId }],
-          });
-          return toDomainSubscriptionState(sub);
-        },
+          }),
         catch: (cause) =>
           new BillingGatewayUnavailable({
             message: `Stripe subscription create failed: ${String(cause)}`,
           }),
-      }).pipe(Effect.withSpan("BillingGateway.createSubscription"));
+      }).pipe(
+        Effect.map(toDomainSubscriptionState),
+        Effect.withSpan("BillingGateway.createSubscription"),
+      );
 
     const cancelSubscription = (
       input: CancelSubscriptionInput,
     ): Effect.Effect<CancelSubscriptionResult, BillingGatewayUnavailable> =>
       Effect.tryPromise({
-        try: async () => {
-          const sub = await stripe.subscriptions.cancel(input.stripeSubscriptionId);
-          const state = toDomainSubscriptionState(sub);
-          return { status: state.status, currentPeriodEnd: state.currentPeriodEnd };
-        },
+        try: () => stripe.subscriptions.cancel(input.stripeSubscriptionId),
         catch: (cause) =>
           new BillingGatewayUnavailable({
             message: `Stripe subscription cancel failed: ${String(cause)}`,
           }),
-      }).pipe(Effect.withSpan("BillingGateway.cancelSubscription"));
+      }).pipe(
+        Effect.map((sub) => {
+          const state = toDomainSubscriptionState(sub);
+
+          return { status: state.status, currentPeriodEnd: state.currentPeriodEnd };
+        }),
+        Effect.withSpan("BillingGateway.cancelSubscription"),
+      );
 
     const verifyAndParseWebhook = (
       input: VerifyWebhookInput,
     ): Effect.Effect<StripeWebhookEvent, InvalidWebhookSignature> =>
+      // The signature covers the exact raw payload bytes, so the endpoint
+      // passes HttpServerRequest.text through untouched.
       Effect.tryPromise({
-        try: async () => {
-          // The signature covers the exact raw payload bytes, so the endpoint
-          // passes HttpServerRequest.text through untouched.
-          const event = await stripe.webhooks.constructEventAsync(
+        try: () =>
+          stripe.webhooks.constructEventAsync(
             input.payload,
             input.signature,
             webhookSecret,
-            undefined,
+            DEFAULT_SIGNATURE_TOLERANCE_SECONDS,
             cryptoProvider,
-          );
-          return toDomainStripeEvent(event);
-        },
+          ),
         catch: (cause) =>
           new InvalidWebhookSignature({
             message: `Stripe webhook signature verification failed: ${String(cause)}`,
           }),
-      }).pipe(Effect.withSpan("BillingGateway.verifyAndParseWebhook"));
+      }).pipe(
+        Effect.map(toDomainStripeEvent),
+        Effect.withSpan("BillingGateway.verifyAndParseWebhook"),
+      );
 
     return BillingGateway.of({
       createCustomer,

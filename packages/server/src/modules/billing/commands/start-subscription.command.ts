@@ -18,4 +18,5 @@ export const StartSubscriptionCommand = Command.make("StartSubscriptionCommand",
     PersistenceUnavailable,
   ]),
 });
+
 export type StartSubscriptionPayload = Command.Payload<typeof StartSubscriptionCommand>;

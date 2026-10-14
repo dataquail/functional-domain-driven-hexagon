@@ -1,6 +1,5 @@
-import * as crypto from "node:crypto";
-
 import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
+import * as Crypto from "effect/Crypto";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
@@ -21,13 +20,16 @@ export const createWalletHandler = Effect.fn("createWalletHandler")(function* (
 ) {
   const repo = yield* WalletRepository;
   const bus = yield* DomainEventBus;
-  const id = WalletId.make(crypto.randomUUID());
+  const crypto = yield* Crypto.Crypto;
+  const id = WalletId.make(yield* Effect.orDie(crypto.randomUUIDv4));
   const now = yield* DateTime.now;
   const { events, wallet } = WalletRootOps.create({ id, organizationId: cmd.organizationId, now });
+
   const inserted = yield* repo.insertOne(wallet).pipe(
     Effect.as(true),
     Effect.catchTag("WalletAlreadyExistsForOrganization", () => Effect.succeed(false)),
   );
+
   if (inserted) {
     yield* bus.dispatch(events);
   }

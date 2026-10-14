@@ -40,6 +40,7 @@ export const ingestStripeWebhookHandler = Effect.fn("ingestStripeWebhookHandler"
       Effect.as(true),
       Effect.catchTag("WebhookEventAlreadyRecorded", () => Effect.succeed(false)),
     );
+
     if (!claimed) return;
     yield* bus.dispatch([StripeWebhookIngested.make({ stripeEvent })]);
   }).pipe(withUnitOfWork);

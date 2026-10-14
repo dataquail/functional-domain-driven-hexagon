@@ -1,4 +1,5 @@
 import type * as DateTime from "effect/DateTime";
+import type * as Option from "effect/Option";
 
 import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 
@@ -22,7 +23,7 @@ export type CreateInput = {
   readonly stripeCustomerId: string;
   readonly stripeSubscriptionId: string;
   readonly status: string;
-  readonly currentPeriodEnd: DateTime.Utc | null;
+  readonly currentPeriodEnd: Option.Option<DateTime.Utc>;
   readonly now: DateTime.Utc;
 };
 
@@ -37,6 +38,7 @@ const create = (input: CreateInput): Result => {
     createdAt: input.now,
     updatedAt: input.now,
   });
+
   return {
     subscription,
     events: [
@@ -52,7 +54,7 @@ const create = (input: CreateInput): Result => {
 
 export type ApplyStatusInput = {
   readonly status: string;
-  readonly currentPeriodEnd: DateTime.Utc | null;
+  readonly currentPeriodEnd: Option.Option<DateTime.Utc>;
   readonly now: DateTime.Utc;
 };
 
@@ -73,6 +75,7 @@ const applyStatus = (sub: SubscriptionRoot, input: ApplyStatusInput): Result => 
     createdAt: sub.createdAt,
     updatedAt: input.now,
   });
+
   return {
     subscription: updated,
     events: [
@@ -104,6 +107,7 @@ const cancel = (sub: SubscriptionRoot, now: DateTime.Utc): Result => {
     createdAt: sub.createdAt,
     updatedAt: now,
   });
+
   return {
     subscription: updated,
     events: [

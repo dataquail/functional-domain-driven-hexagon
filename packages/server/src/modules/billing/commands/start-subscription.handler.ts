@@ -1,6 +1,8 @@
 import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
+import * as Crypto from "effect/Crypto";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
 import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
 import { BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client.js";
@@ -30,19 +32,23 @@ export const startSubscriptionHandler = Effect.fn("startSubscriptionHandler")(fu
   const existing = yield* repo.findOne(
     SubscriptionSpecifications.forOrganization(cmd.organizationId),
   );
-  if (existing !== null) {
+
+  if (Option.isSome(existing)) {
     return yield* new SubscriptionAlreadyExistsForOrganization({
       organizationId: cmd.organizationId,
     });
   }
 
   const customer = yield* gateway.createCustomer({ organizationId: cmd.organizationId });
+
   const stripeSub = yield* gateway.createSubscription({
     stripeCustomerId: customer.stripeCustomerId,
   });
 
-  const id = SubscriptionId.make(yield* Effect.sync(() => crypto.randomUUID()));
+  const crypto = yield* Crypto.Crypto;
+  const id = SubscriptionId.make(yield* Effect.orDie(crypto.randomUUIDv4));
   const now = yield* DateTime.now;
+
   const { events, subscription } = SubscriptionRootOps.create({
     id,
     organizationId: cmd.organizationId,

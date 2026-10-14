@@ -15,6 +15,7 @@ export const UserRolesView = Schema.Struct({
   userId: UserId,
   roles: Schema.Array(Schema.String),
 });
+
 export type FindUserRolesResult = typeof UserRolesView.Type;
 
 export const FindUserRolesQuery = Query.make("FindUserRolesQuery", {
@@ -22,4 +23,5 @@ export const FindUserRolesQuery = Query.make("FindUserRolesQuery", {
   success: UserRolesView,
   failure: PersistenceUnavailable,
 });
+
 export type FindUserRolesPayload = Query.Payload<typeof FindUserRolesQuery>;

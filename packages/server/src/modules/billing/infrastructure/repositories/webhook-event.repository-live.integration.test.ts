@@ -1,64 +1,57 @@
 import { deepStrictEqual, ok } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
-import * as Cause from "effect/Cause";
+import { assertNone } from "@effect/vitest/utils";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import { beforeEach } from "vitest";
 
 import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors.js";
 import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
 import { WebhookEventSpecifications } from "@/modules/billing/domain/webhook-event/webhook-event.specification.js";
 import { WebhookEventRepositoryLive } from "@/modules/billing/infrastructure/repositories/webhook-event.repository-live.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { describeIntegration } from "@/test-utils/server-test-runtime.js";
+import { TestDatabaseLive } from "@/test-utils/test-database.js";
 
 const TestLayer = WebhookEventRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-describe("WebhookEventRepositoryLive (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate("billing.webhook_events").pipe(Effect.provide(TestDatabaseLive)),
-    );
-  });
-
-  it.effect("inserts an event id and decodes it back via findOne", () =>
-    Effect.gen(function* () {
-      const repo = yield* WebhookEventRepository;
-      yield* repo.insertOne("evt_test_1");
-      const found = yield* repo.findOne(WebhookEventSpecifications.withStripeEventId("evt_test_1"));
-      ok(found !== null);
-      deepStrictEqual(found.stripeEventId, "evt_test_1");
-    }).pipe(Effect.provide(TestLayer)),
-  );
-
-  it.effect(
-    "fails WebhookEventAlreadyRecorded on a duplicate insert (unique violation → domain error)",
-    () =>
+describeIntegration(
+  "WebhookEventRepositoryLive (integration)",
+  { layer: TestLayer, tables: ["billing.webhook_events"] },
+  (it) => {
+    it.effect("inserts an event id and decodes it back via findOne", () =>
       Effect.gen(function* () {
         const repo = yield* WebhookEventRepository;
-        yield* repo.insertOne("evt_test_dup");
-        const exit = yield* Effect.exit(repo.insertOne("evt_test_dup"));
-        ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(
-            Schema.is(WebhookEventAlreadyRecorded)(
-              Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
-            ),
-          );
-        }
-      }).pipe(Effect.provide(TestLayer)),
-  );
+        yield* repo.insertOne("evt_test_1");
 
-  it.effect("returns null for an unrecorded event id", () =>
-    Effect.gen(function* () {
-      const repo = yield* WebhookEventRepository;
-      const found = yield* repo.findOne(
-        WebhookEventSpecifications.withStripeEventId("evt_does_not_exist"),
-      );
-      deepStrictEqual(found, null);
-    }).pipe(Effect.provide(TestLayer)),
-  );
-});
+        const found = yield* Effect.fromOption(
+          yield* repo.findOne(WebhookEventSpecifications.withStripeEventId("evt_test_1")),
+        );
+
+        deepStrictEqual(found.stripeEventId, "evt_test_1");
+      }),
+    );
+
+    it.effect(
+      "fails WebhookEventAlreadyRecorded on a duplicate insert (unique violation → domain error)",
+      () =>
+        Effect.gen(function* () {
+          const repo = yield* WebhookEventRepository;
+          yield* repo.insertOne("evt_test_dup");
+          const error = yield* Effect.flip(repo.insertOne("evt_test_dup"));
+          ok(Schema.is(WebhookEventAlreadyRecorded)(error));
+        }),
+    );
+
+    it.effect("returns null for an unrecorded event id", () =>
+      Effect.gen(function* () {
+        const repo = yield* WebhookEventRepository;
+
+        const found = yield* repo.findOne(
+          WebhookEventSpecifications.withStripeEventId("evt_does_not_exist"),
+        );
+
+        assertNone(found);
+      }),
+    );
+  },
+);

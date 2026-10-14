@@ -10,9 +10,10 @@ export const SyncSubscriptionCommand = Command.make("SyncSubscriptionCommand", {
   payload: {
     stripeSubscriptionId: Schema.String,
     status: Schema.String,
-    currentPeriodEnd: Schema.NullOr(Schema.DateTimeUtc),
+    currentPeriodEnd: Schema.OptionFromNullOr(Schema.DateTimeUtc),
   },
   success: Schema.Void,
   failure: PersistenceUnavailable,
 });
+
 export type SyncSubscriptionPayload = Command.Payload<typeof SyncSubscriptionCommand>;

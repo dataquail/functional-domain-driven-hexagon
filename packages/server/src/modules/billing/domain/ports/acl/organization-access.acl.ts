@@ -13,7 +13,7 @@ import { type PersistenceUnavailable } from "@/globals/application/ddd/persisten
 // `isAdmin` is a boolean, not a role list: which org role confers billing
 // authority is a decision the adapter makes, so a change to the org module's
 // role vocabulary never reaches billing's policies.
-export type OrganizationAccessShape = {
+export type OrganizationAccessService = {
   readonly isMember: (
     userId: UserId,
     organizationId: OrganizationId,
@@ -26,5 +26,5 @@ export type OrganizationAccessShape = {
 
 export class OrganizationAccess extends Context.Service<
   OrganizationAccess,
-  OrganizationAccessShape
+  OrganizationAccessService
 >()("@org/server/billing/OrganizationAccess") {}

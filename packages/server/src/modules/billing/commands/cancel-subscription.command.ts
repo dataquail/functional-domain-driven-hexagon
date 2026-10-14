@@ -14,4 +14,5 @@ export const CancelSubscriptionCommand = Command.make("CancelSubscriptionCommand
   success: SubscriptionRoot,
   failure: Schema.Union([SubscriptionNotFound, BillingGatewayUnavailable, PersistenceUnavailable]),
 });
+
 export type CancelSubscriptionPayload = Command.Payload<typeof CancelSubscriptionCommand>;

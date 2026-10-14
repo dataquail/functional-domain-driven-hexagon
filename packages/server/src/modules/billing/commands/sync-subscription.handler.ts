@@ -1,6 +1,7 @@
 import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
 import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
 import { type SyncSubscriptionPayload } from "@/modules/billing/commands/sync-subscription.command.js";
@@ -19,16 +20,21 @@ export const syncSubscriptionHandler = Effect.fn("syncSubscriptionHandler")(func
 ) {
   const repo = yield* SubscriptionRepository;
   const bus = yield* DomainEventBus;
+
   const found = yield* repo.findOne(
     SubscriptionSpecifications.withStripeSubscriptionId(cmd.stripeSubscriptionId),
   );
-  if (found === null) return;
+
+  if (Option.isNone(found)) return;
+
   const now = yield* DateTime.now;
-  const { events, subscription } = SubscriptionRootOps.applyStatus(found, {
+
+  const { events, subscription } = SubscriptionRootOps.applyStatus(found.value, {
     status: cmd.status,
     currentPeriodEnd: cmd.currentPeriodEnd,
     now,
   });
+
   yield* repo.updateOne(subscription);
   yield* bus.dispatch(events);
 }, withUnitOfWork);

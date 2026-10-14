@@ -37,15 +37,18 @@ export const RolesRepositoryLive = Layer.effect(
     );
 
     // The spec pins the user id, so every matched row belongs to one aggregate;
-    // the mapper groups them (or returns null for zero rows). The compiler
+    // the mapper groups them (or returns none for zero rows). The compiler
     // contributes only the WHERE — this repo owns the projection and, for a
     // multi-row aggregate, the reconstitution.
     const findOne = Effect.fn("RolesRepository.findOne")((spec: Specification<RolesRoot>) =>
-      sql`
+      criteriaToWhere(sql, spec.criteria, RoleMapper.columns).pipe(
+        Effect.flatMap(
+          (where) => sql`
           SELECT user_id, role, granted_at
           FROM platform.roles
-          WHERE ${criteriaToWhere(sql, spec.criteria, RoleMapper.columns)}
-        `.pipe(
+          WHERE ${where}
+        `,
+        ),
         Database.rows(RowSchemas.PlatformRoleRow),
 
         Effect.map((rows) => RoleMapper.toDomain(rows)),

@@ -2,10 +2,8 @@ import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
-import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
@@ -36,15 +34,17 @@ const TestLayer = Layer.mergeAll(
 const seed = (status = "active") =>
   Effect.gen(function* () {
     const repo = yield* SubscriptionRepository;
+
     const { subscription } = SubscriptionRootOps.create({
       id: subId,
       organizationId: acme,
       stripeCustomerId: "cus_seed",
       stripeSubscriptionId: "sub_seed",
       status,
-      currentPeriodEnd: null,
+      currentPeriodEnd: Option.none(),
       now,
     });
+
     yield* repo.insertOne(subscription);
   });
 
@@ -58,8 +58,10 @@ describe("cancelSubscriptionHandler", () => {
       const result = yield* cancelSubscriptionHandler({ organizationId: acme });
       deepStrictEqual(result.status, "canceled");
 
-      const found = yield* repo.findOne(SubscriptionSpecifications.forOrganization(acme));
-      ok(found !== null);
+      const found = yield* Effect.fromOption(
+        yield* repo.findOne(SubscriptionSpecifications.forOrganization(acme)),
+      );
+
       deepStrictEqual(found.status, "canceled");
 
       const events = yield* rec.byTag<SubscriptionCanceled>("SubscriptionCanceled");
@@ -69,15 +71,8 @@ describe("cancelSubscriptionHandler", () => {
 
   it.effect("fails SubscriptionNotFound when no subscription exists for the org", () =>
     Effect.gen(function* () {
-      const exit = yield* Effect.exit(cancelSubscriptionHandler({ organizationId: acme }));
-      ok(Exit.isFailure(exit));
-      if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-        ok(
-          Schema.is(SubscriptionNotFound)(
-            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
-          ),
-        );
-      }
+      const error = yield* Effect.flip(cancelSubscriptionHandler({ organizationId: acme }));
+      ok(Schema.is(SubscriptionNotFound)(error));
     }).pipe(Effect.provide(TestLayer)),
   );
 });

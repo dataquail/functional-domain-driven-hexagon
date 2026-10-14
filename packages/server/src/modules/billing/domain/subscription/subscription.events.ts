@@ -12,6 +12,7 @@ export const SubscriptionStarted = Event.make("SubscriptionStarted", {
   stripeSubscriptionId: Schema.String,
   status: Schema.String,
 });
+
 export type SubscriptionStarted = typeof SubscriptionStarted.Type;
 
 export const subscriptionStartedSpanAttributes: SpanAttributesExtractor<SubscriptionStarted> = (
@@ -29,6 +30,7 @@ export const SubscriptionStatusChanged = Event.make("SubscriptionStatusChanged",
   status: Schema.String,
   previousStatus: Schema.String,
 });
+
 export type SubscriptionStatusChanged = typeof SubscriptionStatusChanged.Type;
 
 export const subscriptionStatusChangedSpanAttributes: SpanAttributesExtractor<
@@ -44,6 +46,7 @@ export const SubscriptionCanceled = Event.make("SubscriptionCanceled", {
   subscriptionId: SubscriptionId,
   organizationId: OrganizationId,
 });
+
 export type SubscriptionCanceled = typeof SubscriptionCanceled.Type;
 
 export const subscriptionCanceledSpanAttributes: SpanAttributesExtractor<SubscriptionCanceled> = (

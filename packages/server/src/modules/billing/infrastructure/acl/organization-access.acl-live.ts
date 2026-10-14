@@ -18,6 +18,7 @@ export const OrganizationAccessLive = Layer.effect(
   OrganizationAccess,
   Effect.gen(function* () {
     const organizationQueries = yield* Query.dispatcher(organizationAccessQueries);
+
     return OrganizationAccess.of({
       isMember: (userId, organizationId) =>
         organizationQueries.FindMembershipQuery({ userId, organizationId }).pipe(

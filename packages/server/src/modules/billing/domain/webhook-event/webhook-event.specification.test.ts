@@ -3,6 +3,8 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 
+import { Criteria } from "@/globals/application/ddd/specification.js";
+
 import { type WebhookEventRecord } from "./webhook-event.repository.js";
 import { WebhookEventSpecifications } from "./webhook-event.specification.js";
 
@@ -18,10 +20,9 @@ describe("WebhookEventSpecifications.withStripeEventId", () => {
   });
 
   it("carries an Eq criteria over the stripe_event_id column", () => {
-    deepStrictEqual(WebhookEventSpecifications.withStripeEventId("evt_abc").criteria, {
-      _tag: "Eq",
-      field: "stripeEventId",
-      value: "evt_abc",
-    });
+    deepStrictEqual(
+      WebhookEventSpecifications.withStripeEventId("evt_abc").criteria,
+      Criteria.Eq({ field: "stripeEventId", value: "evt_abc" }),
+    );
   });
 });

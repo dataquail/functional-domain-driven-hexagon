@@ -23,4 +23,5 @@ export const IngestStripeWebhookCommand = Command.make("IngestStripeWebhookComma
   success: Schema.Void,
   failure: Schema.Union([InvalidWebhookSignature, PersistenceUnavailable]),
 });
+
 export type IngestStripeWebhookPayload = Command.Payload<typeof IngestStripeWebhookCommand>;

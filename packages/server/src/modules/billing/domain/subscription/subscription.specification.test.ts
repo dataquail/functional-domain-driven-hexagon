@@ -2,8 +2,10 @@ import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
+import * as Option from "effect/Option";
 
 import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { Criteria } from "@/globals/application/ddd/specification.js";
 
 import { SubscriptionId } from "./subscription.id.js";
 import { SubscriptionRootOps } from "./subscription.root-ops.js";
@@ -20,7 +22,7 @@ const acmeSub = SubscriptionRootOps.create({
   stripeCustomerId: "cus_x",
   stripeSubscriptionId: "sub_x",
   status: "active",
-  currentPeriodEnd: null,
+  currentPeriodEnd: Option.none(),
   now,
 }).subscription;
 
@@ -31,11 +33,10 @@ describe("SubscriptionSpecifications.forOrganization", () => {
   });
 
   it("carries an Eq criteria over the organization_id column", () => {
-    deepStrictEqual(SubscriptionSpecifications.forOrganization(acme).criteria, {
-      _tag: "Eq",
-      field: "organizationId",
-      value: acme,
-    });
+    deepStrictEqual(
+      SubscriptionSpecifications.forOrganization(acme).criteria,
+      Criteria.Eq({ field: "organizationId", value: acme }),
+    );
   });
 });
 
@@ -46,10 +47,9 @@ describe("SubscriptionSpecifications.withStripeSubscriptionId", () => {
   });
 
   it("carries an Eq criteria over the stripe_subscription_id column", () => {
-    deepStrictEqual(SubscriptionSpecifications.withStripeSubscriptionId("sub_x").criteria, {
-      _tag: "Eq",
-      field: "stripeSubscriptionId",
-      value: "sub_x",
-    });
+    deepStrictEqual(
+      SubscriptionSpecifications.withStripeSubscriptionId("sub_x").criteria,
+      Criteria.Eq({ field: "stripeSubscriptionId", value: "sub_x" }),
+    );
   });
 });

@@ -1,6 +1,7 @@
 import { QueryBus } from "@effect-server-utils/cqrs";
 import { BillingContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
 import { Actions } from "@/globals/application/ports/actions.js";
 import * as Authz from "@/globals/infrastructure/auth/authz.js";
@@ -20,21 +21,23 @@ export const getCurrentSubscriptionEndpoint = Effect.fn("BillingLive.getCurrentS
   ) {
     yield* Authz.hasPermissions(BillingResource, Actions.Read, request.params.orgId);
     const queryBus = yield* QueryBus;
-    const result = yield* queryBus.execute(FindSubscriptionByOrganizationQuery, {
-      organizationId: request.params.orgId,
-    });
-    if (result === null) {
-      return yield* new BillingContract.SubscriptionNotFoundError({
+
+    const sub = yield* Effect.fromOption(
+      yield* queryBus.execute(FindSubscriptionByOrganizationQuery, {
         organizationId: request.params.orgId,
-        message: `No subscription found for organization ${request.params.orgId}`,
-      });
-    }
-    const sub = result;
+      }),
+      () =>
+        new BillingContract.SubscriptionNotFoundError({
+          organizationId: request.params.orgId,
+          message: `No subscription found for organization ${request.params.orgId}`,
+        }),
+    );
+
     return new BillingContract.SubscriptionResponse({
       id: sub.id,
       organizationId: sub.organizationId,
       status: sub.status,
-      currentPeriodEnd: sub.currentPeriodEnd,
+      currentPeriodEnd: Option.getOrNull(sub.currentPeriodEnd),
     });
   },
   recoverPersistenceUnavailable,

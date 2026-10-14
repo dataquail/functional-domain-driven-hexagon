@@ -1,10 +1,9 @@
 import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertDefined, assertNone } from "@effect/vitest/utils";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
@@ -12,7 +11,7 @@ import * as Schema from "effect/Schema";
 import { ingestStripeWebhookHandler } from "@/modules/billing/commands/ingest-stripe-webhook.handler.js";
 import { InvalidWebhookSignature } from "@/modules/billing/domain/subscription/subscription.errors.js";
 import { type StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events.js";
-import { type StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.js";
+import { StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.js";
 import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
 import { WebhookEventSpecifications } from "@/modules/billing/domain/webhook-event/webhook-event.specification.js";
 import {
@@ -35,12 +34,14 @@ const subscriptionUpdated = (eventId: string): StripeWebhookEvent => ({
   subscription: {
     stripeSubscriptionId: "sub_test",
     status: "past_due",
-    currentPeriodEnd: null,
+    currentPeriodEnd: Option.none(),
   },
 });
 
+const encodeWebhookPayload = Schema.encodeSync(Schema.fromJsonString(StripeWebhookEvent));
+
 const cmd = (eventId: string, signature = FAKE_WEBHOOK_SIGNATURE) => ({
-  payload: JSON.stringify(subscriptionUpdated(eventId)),
+  payload: encodeWebhookPayload(subscriptionUpdated(eventId)),
   signature,
 });
 
@@ -54,13 +55,14 @@ describe("ingestStripeWebhookHandler", () => {
 
         yield* ingestStripeWebhookHandler(cmd("evt_new"));
 
-        const seen = yield* repo.findOne(WebhookEventSpecifications.withStripeEventId("evt_new"));
-        ok(seen !== null);
+        yield* Effect.fromOption(
+          yield* repo.findOne(WebhookEventSpecifications.withStripeEventId("evt_new")),
+        );
 
         const events = yield* rec.byTag<StripeWebhookIngested>("StripeWebhookIngested");
         deepStrictEqual(events.length, 1);
-        const event = events[0];
-        if (event === undefined) throw new Error("expected StripeWebhookIngested");
+        const [event] = events;
+        assertDefined(event);
         deepStrictEqual(event.stripeEvent.eventId, "evt_new");
       }).pipe(Effect.provide(TestLayer)),
   );
@@ -70,20 +72,14 @@ describe("ingestStripeWebhookHandler", () => {
       const repo = yield* WebhookEventRepository;
       const rec = yield* RecordedEvents;
 
-      const exit = yield* Effect.exit(
+      const error = yield* Effect.flip(
         ingestStripeWebhookHandler(cmd("evt_bad_sig", "wrong-signature")),
       );
-      ok(Exit.isFailure(exit));
-      if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-        ok(
-          Schema.is(InvalidWebhookSignature)(
-            Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
-          ),
-        );
-      }
+
+      ok(Schema.is(InvalidWebhookSignature)(error));
 
       const seen = yield* repo.findOne(WebhookEventSpecifications.withStripeEventId("evt_bad_sig"));
-      deepStrictEqual(seen, null);
+      assertNone(seen);
       const events = yield* rec.byTag<StripeWebhookIngested>("StripeWebhookIngested");
       deepStrictEqual(events.length, 0);
     }).pipe(Effect.provide(TestLayer)),

@@ -19,4 +19,5 @@ export const GrantRoleCommand = Command.make("GrantRoleCommand", {
   success: Schema.Void,
   failure: Schema.Union([AlreadyHasRole, CannotPromoteSelf, PersistenceUnavailable]),
 });
+
 export type GrantRolePayload = Command.Payload<typeof GrantRoleCommand>;

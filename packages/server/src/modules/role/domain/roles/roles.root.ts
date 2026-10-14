@@ -9,7 +9,9 @@ import { RoleValueObject } from "./role.value-object.js";
 // A dumb value (ADR-0003); operations live in `roles.root-ops.ts`
 // (`RolesRootOps`) and predicates in `roles.specification.ts`
 // (`RolesSpecifications`).
-export class RolesRoot extends Schema.Class<RolesRoot>("RolesRoot")({
+export class RolesRoot extends Schema.Class<RolesRoot, { readonly brand: "RolesRoot" }>(
+  "RolesRoot",
+)({
   userId: UserId,
   // Modeled as an array at the schema layer for stable
   // (de)serialization, but treated as a set semantically: the

@@ -28,6 +28,7 @@ const grant = (
   if (RolesSpecifications.hasRole(role)(aggregate)) {
     return Result.fail(new AlreadyHasRole({ userId: aggregate.userId, role }));
   }
+
   return Result.succeed({
     roles: RolesRoot.make({
       userId: aggregate.userId,
@@ -46,6 +47,7 @@ const revoke = (
   if (!RolesSpecifications.hasRole(role)(aggregate)) {
     return Result.fail(new DoesNotHaveRole({ userId: aggregate.userId, role }));
   }
+
   return Result.succeed({
     roles: RolesRoot.make({
       userId: aggregate.userId,

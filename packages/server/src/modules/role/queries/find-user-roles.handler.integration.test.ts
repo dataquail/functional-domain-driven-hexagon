@@ -1,18 +1,17 @@
 import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
 import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Result from "effect/Result";
-import { beforeEach } from "vitest";
 
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
 import { RolesRootOps } from "@/modules/role/domain/roles/roles.root-ops.js";
 import { RolesRepositoryLive } from "@/modules/role/infrastructure/repositories/roles.repository-live.js";
 import { findUserRolesHandler } from "@/modules/role/queries/find-user-roles.handler.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { describeIntegration } from "@/test-utils/server-test-runtime.js";
+import { TestDatabaseLive } from "@/test-utils/test-database.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 
@@ -26,32 +25,32 @@ const seedUser = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-describe("findUserRolesHandler (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate("platform.roles", "user.users").pipe(Effect.provide(TestDatabaseLive)),
+describeIntegration(
+  "findUserRolesHandler (integration)",
+  { layer: TestLayer, tables: ["platform.roles", "user.users"] },
+  (it) => {
+    it.effect("returns an empty role array for a user with none granted", () =>
+      Effect.gen(function* () {
+        yield* seedUser;
+        const result = yield* findUserRolesHandler({ userId });
+        deepStrictEqual(result.userId, userId);
+        deepStrictEqual([...result.roles], []);
+      }),
     );
-  });
 
-  it.effect("returns an empty role array for a user with none granted", () =>
-    Effect.gen(function* () {
-      yield* seedUser;
-      const result = yield* findUserRolesHandler({ userId });
-      deepStrictEqual(result.userId, userId);
-      deepStrictEqual([...result.roles], []);
-    }).pipe(Effect.provide(TestLayer)),
-  );
+    it.effect("returns the granted roles", () =>
+      Effect.gen(function* () {
+        yield* seedUser;
+        const repo = yield* RolesRepository;
 
-  it.effect("returns the granted roles", () =>
-    Effect.gen(function* () {
-      yield* seedUser;
-      const repo = yield* RolesRepository;
-      const granted = Result.getOrThrow(
-        RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin"),
-      );
-      yield* repo.upsertOne(granted.roles);
-      const result = yield* findUserRolesHandler({ userId });
-      deepStrictEqual([...result.roles], ["super_admin"]);
-    }).pipe(Effect.provide(TestLayer)),
-  );
-});
+        const granted = Result.getOrThrow(
+          RolesRootOps.grant(RolesRootOps.empty(userId), "super_admin"),
+        );
+
+        yield* repo.upsertOne(granted.roles);
+        const result = yield* findUserRolesHandler({ userId });
+        deepStrictEqual([...result.roles], ["super_admin"]);
+      }),
+    );
+  },
+);

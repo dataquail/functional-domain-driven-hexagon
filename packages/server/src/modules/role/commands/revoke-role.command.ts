@@ -11,4 +11,5 @@ export const RevokeRoleCommand = Command.make("RevokeRoleCommand", {
   success: Schema.Void,
   failure: Schema.Union([DoesNotHaveRole, PersistenceUnavailable]),
 });
+
 export type RevokeRolePayload = Command.Payload<typeof RevokeRoleCommand>;

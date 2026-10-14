@@ -14,6 +14,7 @@ import { UnitOfWork } from "@effect-server-utils/unit-of-work";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
 import { SyncSubscriptionCommand } from "@/modules/billing/commands/sync-subscription.command.js";
@@ -30,7 +31,7 @@ const subEvent = (
 ): StripeWebhookEvent => ({
   eventId: `evt_test_${type}`,
   type: `customer.subscription.${type}`,
-  subscription: { stripeSubscriptionId: stripeSubId, status, currentPeriodEnd: null },
+  subscription: { stripeSubscriptionId: stripeSubId, status, currentPeriodEnd: Option.none() },
 });
 
 const TestLayer = StripeWebhookEventAdapterLive.pipe(
@@ -46,6 +47,7 @@ const dispatchAndReadCommands = (stripeEvent: StripeWebhookEvent) =>
     const rec = yield* RecordedCommands;
     // Dispatched inside a unit of work, as the ingesting command would.
     yield* uow.run(bus.dispatch([StripeWebhookIngested.make({ stripeEvent })]));
+
     return yield* rec.payloadsFor(SyncSubscriptionCommand);
   }).pipe(Effect.provide(TestLayer));
 
@@ -56,7 +58,7 @@ describe("StripeWebhookEventAdapterLive", () => {
       Effect.gen(function* () {
         const payloads = yield* dispatchAndReadCommands(subEvent("updated", "active"));
         deepStrictEqual(payloads, [
-          { stripeSubscriptionId: stripeSubId, status: "active", currentPeriodEnd: null },
+          { stripeSubscriptionId: stripeSubId, status: "active", currentPeriodEnd: Option.none() },
         ]);
       }),
   );
@@ -74,8 +76,9 @@ describe("StripeWebhookEventAdapterLive", () => {
       const payloads = yield* dispatchAndReadCommands({
         eventId: "evt_test_invoice_paid",
         type: "invoice.paid",
-        invoice: { stripeSubscriptionId: null },
+        invoice: { stripeSubscriptionId: Option.none() },
       });
+
       deepStrictEqual(payloads.length, 0);
     }),
   );
@@ -86,6 +89,7 @@ describe("StripeWebhookEventAdapterLive", () => {
         eventId: "evt_test_unknown",
         type: "unknown",
       });
+
       deepStrictEqual(commands.length, 0);
     }),
   );

@@ -23,12 +23,10 @@ export const cancelSubscriptionHandler = Effect.fn("cancelSubscriptionHandler")(
   const gateway = yield* BillingGateway;
   const bus = yield* DomainEventBus;
 
-  const existing = yield* repo.findOne(
-    SubscriptionSpecifications.forOrganization(cmd.organizationId),
+  const existing = yield* Effect.fromOption(
+    yield* repo.findOne(SubscriptionSpecifications.forOrganization(cmd.organizationId)),
+    () => new SubscriptionNotFound({ organizationId: cmd.organizationId }),
   );
-  if (existing === null) {
-    return yield* new SubscriptionNotFound({ organizationId: cmd.organizationId });
-  }
 
   yield* gateway.cancelSubscription({
     stripeSubscriptionId: existing.stripeSubscriptionId,

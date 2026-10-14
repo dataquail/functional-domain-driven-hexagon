@@ -8,6 +8,7 @@ export const RoleGranted = Event.make("RoleGranted", {
   userId: UserId,
   role: RoleValueObject,
 });
+
 export type RoleGranted = typeof RoleGranted.Type;
 
 export const roleGrantedSpanAttributes: SpanAttributesExtractor<RoleGranted> = (event) => ({
@@ -19,6 +20,7 @@ export const RoleRevoked = Event.make("RoleRevoked", {
   userId: UserId,
   role: RoleValueObject,
 });
+
 export type RoleRevoked = typeof RoleRevoked.Type;
 
 export const roleRevokedSpanAttributes: SpanAttributesExtractor<RoleRevoked> = (event) => ({

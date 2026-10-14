@@ -1,7 +1,9 @@
 import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import * as Arr from "effect/Array";
 import * as DateTime from "effect/DateTime";
+import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
@@ -10,6 +12,12 @@ import {
   WalletInsufficientFunds,
   WalletInvalidAmount,
 } from "@/modules/wallet/domain/wallet/wallet.errors.js";
+import {
+  WalletCreated,
+  WalletCredited,
+  WalletDebited,
+  type WalletEvent,
+} from "@/modules/wallet/domain/wallet/wallet.events.js";
 import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id.js";
 import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.js";
 import { WalletRootOps } from "@/modules/wallet/domain/wallet/wallet.root-ops.js";
@@ -18,6 +26,13 @@ const walletId = WalletId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const organizationId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const now = DateTime.makeUnsafe("2025-01-01T00:00:00Z");
 const later = DateTime.makeUnsafe("2025-02-01T00:00:00Z");
+
+const expectFirstEvent = <S extends Schema.Constraint>(
+  events: ReadonlyArray<WalletEvent>,
+  schema: S,
+): WalletEvent & S["Type"] => Option.getOrThrow(Option.filter(Arr.head(events), Schema.is(schema)));
+
+const failureOf = <A, E>(result: Result.Result<A, E>): E => Result.getOrThrow(Result.flip(result));
 
 const fresh = () => WalletRootOps.create({ id: walletId, organizationId, now }).wallet;
 
@@ -34,12 +49,7 @@ describe("WalletRootOps.create", () => {
   it("emits exactly one WalletCreated event carrying the wallet and organization ids", () => {
     const { events } = WalletRootOps.create({ id: walletId, organizationId, now });
     deepStrictEqual(events.length, 1);
-    const event = events[0];
-    ok(event !== undefined);
-    // `events` is inferred narrowly as `[WalletCreated]` here because
-    // `WalletRootOps.create` only ever produces a WalletCreated; reading
-    // `walletId`/`organizationId` requires no further narrowing.
-    deepStrictEqual(event._tag, "WalletCreated");
+    const event = expectFirstEvent(events, WalletCreated.schema);
     deepStrictEqual(event.walletId, walletId);
     deepStrictEqual(event.organizationId, organizationId);
   });
@@ -47,16 +57,14 @@ describe("WalletRootOps.create", () => {
 
 describe("WalletRootOps.credit", () => {
   it("increases balance by amount and emits WalletCredited with the new balance", () => {
-    const result = WalletRootOps.credit(fresh(), { amount: 100, now: later });
-    ok(Result.isSuccess(result));
-    if (!Result.isSuccess(result)) throw new Error("unreachable");
-    const { events, wallet } = result.success;
+    const { events, wallet } = Result.getOrThrow(
+      WalletRootOps.credit(fresh(), { amount: 100, now: later }),
+    );
+
     deepStrictEqual(wallet.balance, 100);
     deepStrictEqual(wallet.updatedAt, later);
     deepStrictEqual(events.length, 1);
-    const event = events[0];
-    ok(event !== undefined);
-    if (event._tag !== "WalletCredited") throw new Error("expected WalletCredited");
+    const event = expectFirstEvent(events, WalletCredited.schema);
     deepStrictEqual(event.amount, 100);
     deepStrictEqual(event.newBalance, 100);
   });
@@ -64,10 +72,8 @@ describe("WalletRootOps.credit", () => {
   it("rejects zero or negative amounts (invariant: amount must be positive)", () => {
     const zero = WalletRootOps.credit(fresh(), { amount: 0, now: later });
     const negative = WalletRootOps.credit(fresh(), { amount: -10, now: later });
-    ok(Result.isFailure(zero));
-    ok(Result.isFailure(negative));
-    if (Result.isFailure(zero)) ok(Schema.is(WalletInvalidAmount)(zero.failure));
-    if (Result.isFailure(negative)) ok(Schema.is(WalletInvalidAmount)(negative.failure));
+    ok(Schema.is(WalletInvalidAmount)(failureOf(zero)));
+    ok(Schema.is(WalletInvalidAmount)(failureOf(negative)));
   });
 
   it("rejects non-finite amounts (NaN, Infinity)", () => {
@@ -79,57 +85,46 @@ describe("WalletRootOps.credit", () => {
 });
 
 describe("WalletRootOps.debit", () => {
-  const funded = (): WalletRoot => {
-    const credited = WalletRootOps.credit(fresh(), { amount: 100, now });
-    if (!Result.isSuccess(credited)) throw new Error("setup credit failed");
-    return credited.success.wallet;
-  };
+  const funded = (): WalletRoot =>
+    Result.getOrThrow(WalletRootOps.credit(fresh(), { amount: 100, now })).wallet;
 
   it("decreases balance by amount and emits WalletDebited with the new balance", () => {
-    const result = WalletRootOps.debit(funded(), { amount: 30, now: later });
-    ok(Result.isSuccess(result));
-    if (!Result.isSuccess(result)) throw new Error("unreachable");
-    const { events, wallet } = result.success;
+    const { events, wallet } = Result.getOrThrow(
+      WalletRootOps.debit(funded(), { amount: 30, now: later }),
+    );
+
     deepStrictEqual(wallet.balance, 70);
     deepStrictEqual(wallet.updatedAt, later);
-    const event = events[0];
-    ok(event !== undefined);
-    if (event._tag !== "WalletDebited") throw new Error("expected WalletDebited");
+    const event = expectFirstEvent(events, WalletDebited.schema);
     deepStrictEqual(event.amount, 30);
     deepStrictEqual(event.newBalance, 70);
   });
 
   it("rejects a debit that would overdraft (invariant: balance never goes negative)", () => {
-    const result = WalletRootOps.debit(funded(), { amount: 101, now: later });
-    ok(Result.isFailure(result));
-    if (!Result.isFailure(result)) throw new Error("unreachable");
-    ok(Schema.is(WalletInsufficientFunds)(result.failure));
-    if (Schema.is(WalletInsufficientFunds)(result.failure)) {
-      deepStrictEqual(result.failure.balance, 100);
-      deepStrictEqual(result.failure.attemptedDebit, 101);
-    }
+    const failure = failureOf(WalletRootOps.debit(funded(), { amount: 101, now: later }));
+    ok(Schema.is(WalletInsufficientFunds)(failure));
+    deepStrictEqual(failure.balance, 100);
+    deepStrictEqual(failure.attemptedDebit, 101);
   });
 
   it("allows debiting the exact balance (drains to zero)", () => {
-    const result = WalletRootOps.debit(funded(), { amount: 100, now: later });
-    ok(Result.isSuccess(result));
-    if (!Result.isSuccess(result)) throw new Error("unreachable");
-    deepStrictEqual(result.success.wallet.balance, 0);
+    const { wallet } = Result.getOrThrow(
+      WalletRootOps.debit(funded(), { amount: 100, now: later }),
+    );
+
+    deepStrictEqual(wallet.balance, 0);
   });
 
   it("rejects zero or negative amounts (invariant: amount must be positive)", () => {
     const zero = WalletRootOps.debit(funded(), { amount: 0, now: later });
     const negative = WalletRootOps.debit(funded(), { amount: -1, now: later });
-    ok(Result.isFailure(zero));
-    ok(Result.isFailure(negative));
-    if (Result.isFailure(zero)) ok(Schema.is(WalletInvalidAmount)(zero.failure));
-    if (Result.isFailure(negative)) ok(Schema.is(WalletInvalidAmount)(negative.failure));
+    ok(Schema.is(WalletInvalidAmount)(failureOf(zero)));
+    ok(Schema.is(WalletInvalidAmount)(failureOf(negative)));
   });
 
   it("rejects a debit from a freshly-created wallet (balance is 0)", () => {
     const result = WalletRootOps.debit(fresh(), { amount: 1, now: later });
-    ok(Result.isFailure(result));
-    if (Result.isFailure(result)) ok(Schema.is(WalletInsufficientFunds)(result.failure));
+    ok(Schema.is(WalletInsufficientFunds)(failureOf(result)));
   });
 });
 

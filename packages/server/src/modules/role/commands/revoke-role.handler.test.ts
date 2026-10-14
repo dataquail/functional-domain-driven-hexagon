@@ -1,12 +1,10 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertDefined, assertNone, assertTrue } from "@effect/vitest/utils";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
@@ -34,14 +32,13 @@ describe("revokeRoleHandler", () => {
       yield* revokeRoleHandler({ userId: targetId, role: "super_admin" });
 
       // Revoking the only role leaves no rows, so the aggregate no longer
-      // resolves — findOne reports null (no rows = no roles).
-      const roles = yield* repo.findOne(RolesSpecifications.forUser(targetId));
-      deepStrictEqual(roles, null);
+      // resolves — findOne reports none (no rows = no roles).
+      assertNone(yield* repo.findOne(RolesSpecifications.forUser(targetId)));
 
       const events = yield* rec.byTag<RoleRevoked>("RoleRevoked");
       deepStrictEqual(events.length, 1);
-      const event = events[0];
-      if (event === undefined) throw new Error("expected RoleRevoked event");
+      const [event] = events;
+      assertDefined(event);
       deepStrictEqual(event.userId, targetId);
       deepStrictEqual(event.role, "super_admin");
     }).pipe(Effect.provide(TestLayer)),
@@ -49,14 +46,11 @@ describe("revokeRoleHandler", () => {
 
   it.effect("fails DoesNotHaveRole when the role isn't held", () =>
     Effect.gen(function* () {
-      const exit = yield* Effect.exit(revokeRoleHandler({ userId: targetId, role: "super_admin" }));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(DoesNotHaveRole)(error), true);
-      }
+      const error = yield* Effect.flip(
+        revokeRoleHandler({ userId: targetId, role: "super_admin" }),
+      );
+
+      assertTrue(Schema.is(DoesNotHaveRole)(error));
     }).pipe(Effect.provide(TestLayer)),
   );
 });

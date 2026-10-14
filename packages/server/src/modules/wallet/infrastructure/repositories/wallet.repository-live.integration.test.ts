@@ -1,15 +1,12 @@
 import { deepStrictEqual, ok } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
+import { describe } from "@effect/vitest";
+import { assertNone } from "@effect/vitest/utils";
 import { Database } from "@org/database/index";
-import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import { beforeEach } from "vitest";
 
 import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors.js";
@@ -18,7 +15,8 @@ import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.reposito
 import { WalletRootOps } from "@/modules/wallet/domain/wallet/wallet.root-ops.js";
 import { WalletSpecifications } from "@/modules/wallet/domain/wallet/wallet.specification.js";
 import { WalletRepositoryLive } from "@/modules/wallet/infrastructure/repositories/wallet.repository-live.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { describeIntegration } from "@/test-utils/server-test-runtime.js";
+import { TestDatabaseLive } from "@/test-utils/test-database.js";
 
 const organizationId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const otherOrgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
@@ -46,60 +44,55 @@ const seedOrgRow = (id: OrganizationId) =>
 
 const TestLayer = WalletRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-describe("WalletRepositoryLive (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate("wallet.wallets", "organization.organizations").pipe(
-        Effect.provide(TestDatabaseLive),
-      ),
-    );
-  });
-
-  describe("insert", () => {
-    it.effect("persists the wallet and decodes it back via findOne", () =>
-      Effect.gen(function* () {
-        yield* seedOrgRow(organizationId);
-        const repo = yield* WalletRepository;
-        yield* repo.insertOne(acmeWallet);
-        const found = yield* repo.findOne(WalletSpecifications.forOrganization(organizationId));
-        ok(found !== null);
-        deepStrictEqual(found.id, acmeWallet.id);
-        deepStrictEqual(found.organizationId, organizationId);
-        deepStrictEqual(found.balance, 0);
-      }).pipe(Effect.provide(TestLayer)),
-    );
-
-    it.effect(
-      "fails WalletAlreadyExistsForOrganization on duplicate organization_id (unique violation → domain error)",
-      () =>
+describeIntegration(
+  "WalletRepositoryLive (integration)",
+  { layer: TestLayer, tables: ["wallet.wallets", "organization.organizations"] },
+  (it) => {
+    describe("insert", () => {
+      it.effect("persists the wallet and decodes it back via findOne", () =>
         Effect.gen(function* () {
           yield* seedOrgRow(organizationId);
           const repo = yield* WalletRepository;
           yield* repo.insertOne(acmeWallet);
-          const clashing = WalletRootOps.create({ id: otherWalletId, organizationId, now }).wallet;
-          const exit = yield* Effect.exit(repo.insertOne(clashing));
-          deepStrictEqual(Exit.isFailure(exit), true);
-          if (Exit.isFailure(exit)) {
-            const error = Cause.hasFails(exit.cause)
-              ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-              : null;
-            deepStrictEqual(Schema.is(WalletAlreadyExistsForOrganization)(error), true);
-            deepStrictEqual(
-              (error as WalletAlreadyExistsForOrganization).organizationId,
-              organizationId,
-            );
-          }
-        }).pipe(Effect.provide(TestLayer)),
-    );
-  });
 
-  describe("findOne", () => {
-    it.effect("returns null when no wallet exists for the org", () =>
-      Effect.gen(function* () {
-        const repo = yield* WalletRepository;
-        const result = yield* repo.findOne(WalletSpecifications.forOrganization(otherOrgId));
-        deepStrictEqual(result === null, true);
-      }).pipe(Effect.provide(TestLayer)),
-    );
-  });
-});
+          const found = yield* Effect.fromOption(
+            yield* repo.findOne(WalletSpecifications.forOrganization(organizationId)),
+          );
+
+          deepStrictEqual(found.id, acmeWallet.id);
+          deepStrictEqual(found.organizationId, organizationId);
+          deepStrictEqual(found.balance, 0);
+        }),
+      );
+
+      it.effect(
+        "fails WalletAlreadyExistsForOrganization on duplicate organization_id (unique violation → domain error)",
+        () =>
+          Effect.gen(function* () {
+            yield* seedOrgRow(organizationId);
+            const repo = yield* WalletRepository;
+            yield* repo.insertOne(acmeWallet);
+
+            const clashing = WalletRootOps.create({
+              id: otherWalletId,
+              organizationId,
+              now,
+            }).wallet;
+
+            const error = yield* Effect.flip(repo.insertOne(clashing));
+            ok(Schema.is(WalletAlreadyExistsForOrganization)(error));
+            deepStrictEqual(error.organizationId, organizationId);
+          }),
+      );
+    });
+
+    describe("findOne", () => {
+      it.effect("returns none when no wallet exists for the org", () =>
+        Effect.gen(function* () {
+          const repo = yield* WalletRepository;
+          assertNone(yield* repo.findOne(WalletSpecifications.forOrganization(otherOrgId)));
+        }),
+      );
+    });
+  },
+);

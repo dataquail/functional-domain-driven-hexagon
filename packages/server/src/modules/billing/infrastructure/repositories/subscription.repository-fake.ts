@@ -1,3 +1,4 @@
+import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
@@ -18,6 +19,7 @@ const findByOrgIn = (
   for (const sub of HashMap.values(store)) {
     if (sub.organizationId === organizationId) return Option.some(sub);
   }
+
   return Option.none();
 };
 
@@ -30,11 +32,13 @@ export const SubscriptionRepositoryFake = Layer.effect(
       sub: SubscriptionRoot,
     ): Effect.Effect<void, SubscriptionAlreadyExistsForOrganization> =>
       Effect.flatMap(Ref.get(store), (m) =>
-        Option.isSome(findByOrgIn(m, sub.organizationId))
-          ? new SubscriptionAlreadyExistsForOrganization({
-              organizationId: sub.organizationId,
-            })
-          : Ref.update(store, HashMap.set(sub.id, sub)),
+        Option.match(findByOrgIn(m, sub.organizationId), {
+          onNone: () => Ref.update(store, HashMap.set(sub.id, sub)),
+          onSome: () =>
+            Effect.fail(
+              new SubscriptionAlreadyExistsForOrganization({ organizationId: sub.organizationId }),
+            ),
+        }),
       );
 
     const updateOne = (sub: SubscriptionRoot): Effect.Effect<void> =>
@@ -44,8 +48,8 @@ export const SubscriptionRepositoryFake = Layer.effect(
     // compiles to SQL — so fake and live agree by construction.
     const findOne = (
       spec: Specification<SubscriptionRoot>,
-    ): Effect.Effect<SubscriptionRoot | null> =>
-      Effect.map(Ref.get(store), (m) => Array.from(HashMap.values(m)).find(spec) ?? null);
+    ): Effect.Effect<Option.Option<SubscriptionRoot>> =>
+      Effect.map(Ref.get(store), (m) => Arr.findFirst(HashMap.values(m), spec));
 
     return SubscriptionRepository.of({
       insertOne,

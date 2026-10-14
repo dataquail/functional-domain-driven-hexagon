@@ -15,6 +15,7 @@ export const PlatformRolesLive = Layer.effect(
   PlatformRoles,
   Effect.gen(function* () {
     const roleQueries = yield* Query.dispatcher(roleAccessQueries);
+
     return PlatformRoles.of({
       isSuperAdmin: (userId) =>
         roleQueries.FindUserRolesQuery({ userId }).pipe(

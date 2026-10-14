@@ -5,6 +5,7 @@ export { billingCommandGroup, BillingCommands } from "./billing.command-handlers
 export { billingEventSpanAttributes } from "./billing.event-span-attributes.js";
 export { BillingModule } from "./billing.module.js";
 export { BillingQueries, billingQueryGroup } from "./billing.query-handlers.js";
+
 // The one service here whose adapter differs between composition roots, so a
 // root can pick: Stripe in production, the fake in the test runtime — the same
 // way each root picks its database, auth middleware and HTTP transport.

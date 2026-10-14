@@ -1,12 +1,10 @@
 import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertDefined } from "@effect/vitest/utils";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
 import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
@@ -17,6 +15,7 @@ import { SubscriptionRepository } from "@/modules/billing/domain/subscription/su
 import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.js";
 import { BillingGatewayFake } from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake.js";
 import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake.js";
+import { CryptoFake } from "@/test-utils/crypto-fake.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
 const acme = OrganizationId.make("11111111-1111-1111-1111-111111111111");
@@ -26,6 +25,7 @@ const TestLayer = Layer.mergeAll(
   BillingGatewayFake,
   RecordingEventBus,
   PassThroughUnitOfWork,
+  CryptoFake,
 );
 
 describe("startSubscriptionHandler", () => {
@@ -42,13 +42,16 @@ describe("startSubscriptionHandler", () => {
         ok(sub.stripeSubscriptionId.startsWith("sub_test_"));
         deepStrictEqual(sub.status, "active");
 
-        const stored = yield* repo.findOne(SubscriptionSpecifications.forOrganization(acme));
-        ok(stored !== null);
+        const stored = yield* Effect.fromOption(
+          yield* repo.findOne(SubscriptionSpecifications.forOrganization(acme)),
+        );
+
+        deepStrictEqual(stored.id, sub.id);
 
         const events = yield* rec.byTag<SubscriptionStarted>("SubscriptionStarted");
         deepStrictEqual(events.length, 1);
-        const event = events[0];
-        if (event === undefined) throw new Error("expected SubscriptionStarted");
+        const [event] = events;
+        assertDefined(event);
         deepStrictEqual(event.organizationId, acme);
       }).pipe(Effect.provide(TestLayer)),
   );
@@ -58,15 +61,8 @@ describe("startSubscriptionHandler", () => {
     () =>
       Effect.gen(function* () {
         yield* startSubscriptionHandler({ organizationId: acme });
-        const exit = yield* Effect.exit(startSubscriptionHandler({ organizationId: acme }));
-        ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(
-            Schema.is(SubscriptionAlreadyExistsForOrganization)(
-              Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
-            ),
-          );
-        }
+        const error = yield* Effect.flip(startSubscriptionHandler({ organizationId: acme }));
+        ok(Schema.is(SubscriptionAlreadyExistsForOrganization)(error));
       }).pipe(Effect.provide(TestLayer)),
   );
 });

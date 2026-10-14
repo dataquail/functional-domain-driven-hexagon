@@ -1,6 +1,7 @@
 import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { type Specification } from "@/globals/application/ddd/specification.js";
 import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
@@ -28,10 +29,11 @@ export const WebhookEventRepositoryLive = Layer.effect(
           RETURNING *
         `.pipe(
         Database.maybeRow(RowSchemas.WebhookEventRow),
-        Effect.flatMap((claimed) =>
-          claimed === null
-            ? Effect.fail(new WebhookEventAlreadyRecorded({ stripeEventId }))
-            : Effect.void,
+        Effect.flatMap(
+          Option.match({
+            onNone: () => Effect.fail(new WebhookEventAlreadyRecorded({ stripeEventId })),
+            onSome: () => Effect.void,
+          }),
         ),
         translateDatabaseErrors,
       ),
@@ -42,14 +44,17 @@ export const WebhookEventRepositoryLive = Layer.effect(
     // selects at most one row (the unique stripe_event_id).
     const findOne = Effect.fn("WebhookEventRepository.findOne")(
       (spec: Specification<WebhookEventRecord>) =>
-        sql`
+        criteriaToWhere(sql, spec.criteria, WebhookEventMapper.columns).pipe(
+          Effect.flatMap(
+            (where) => sql`
           SELECT * FROM billing.webhook_events
-          WHERE ${criteriaToWhere(sql, spec.criteria, WebhookEventMapper.columns)}
+          WHERE ${where}
           LIMIT 1
-        `.pipe(
+        `,
+          ),
           Database.maybeRow(RowSchemas.WebhookEventRow),
 
-          Effect.map((row) => (row === null ? null : WebhookEventMapper.toDomain(row))),
+          Effect.map(Option.map(WebhookEventMapper.toDomain)),
           translateDatabaseErrors,
         ),
     );
