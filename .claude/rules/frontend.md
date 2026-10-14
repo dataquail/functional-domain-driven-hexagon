@@ -1,7 +1,7 @@
 # Rule: frontend (web + component library)
 
-**Scope:** `packages/web/` and `packages/components/` — read before touching frontend code.
-**Backing ADRs:** 0026 (Atom + MVVM), 0015 (component library), 0018 (Next renderer + proxy), 0019 (integration seam).
+**Scope:** `packages/web/`, `packages/components/` and `packages/components-svelte/` — read before touching frontend code.
+**Backing ADRs:** 0026 (Atom + MVVM), 0015 (component library), 0018 (Next renderer + proxy), 0019 (integration seam), 0036 (the Svelte library and its lint).
 
 The frontend is a Next.js (App Router) renderer that proxies `/api/*` to the Effect server. The Effect server stays the BFF — Next renders + proxies but does NOT terminate auth. See ADR-0018.
 
@@ -89,6 +89,26 @@ Two trees: `primitives/` (atoms) and `patterns/` (molecules + organisms). Direct
 `Input`, `Checkbox` and `Select` are **strictly controlled** — value and change handler are required, and `defaultValue`/`defaultChecked` do not exist. Uncontrolled state in a View is state outside the ViewModel.
 
 Every primitive and pattern needs a sibling `*.stories.tsx`. Storybook: `pnpm -F @org/components storybook`; a static build is part of `check:all`.
+
+## Component library in Svelte (`packages/components-svelte/`, ADR-0036)
+
+The same library in Svelte 5, beside the React one until the Phase 7 cutover; nothing consumes it yet (Phase 6 builds the SvelteKit app on it). Same two trees, same direction, same class tables and `styles/globals.css`. What differs is how each rule is held:
+
+| Rule                                   | React                                  | Svelte                                                                                                                                                                                     |
+| -------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| No `class`/`style` prop, closed unions | prop types + `local/no-inline-styling` | `*Props` in `<script module>`, checked by `svelte-check` (in `pnpm check`) + an `architecture/members` rule on `*Props` + ESLint on markup                                                 |
+| No raw intrinsics in patterns          | `react/forbid-elements`                | `svelte/no-restricted-html-elements`, same list (`lint:svelte`)                                                                                                                            |
+| Strictly controlled inputs             | required `value` + handler             | required value + handler; `Checkbox`, `Select`, `Dialog` bind through a function binding (`bind:checked={() => checked, onCheckedChange}`), `Input` undoes an edit its owner does not take |
+| Only `primitives/` names a UI library  | the package node                       | the package node + a repo-wide `deny` on Bits UI, `@lucide/svelte`, `svelte-sonner`                                                                                                        |
+
+- **Third parties**: Bits UI 2 (Checkbox, Dialog, Label, Select), `@lucide/svelte` behind the same `createIcon` wrapper, `svelte-sonner` (it renders the `[data-sonner-toast][data-type]` the drivers read — a test pins it). `Link` is a plain anchor: `external` sets `data-sveltekit-reload`, `prefetch` sets `data-sveltekit-preload-data`.
+- **Children are snippets** (`children?: Snippet`); `ReactNode` slots (`footer`, `action`, `nav`, `leading`, `trailing`) are named snippet props. `Input` reports a string (`onValueChange`), not an event.
+- **A compound primitive is a folder**: the root `card.svelte`, its `card-header.part.svelte` parts (no story of their own), and `index.ts` hanging the parts on the root, so `<Card.Header>` reads as in React. `Select` takes `items: { value, label, disabled?, data-testid? }[]` rather than `Select.Item` children — Bits renders the selected label while the list is closed, before any item mounts.
+- **A type a `.ts` file needs lives in `.ts`.** Type-aware oxlint sees a `.svelte` module only through Svelte's ambient declaration, so a named type imported from one is an error type there (the icon props and `showToast` are `.ts` for this reason).
+- **Stories** are Svelte CSF (`*.stories.svelte`, `defineMeta`); a story that composes several components is `asChild`, or its children are handed to the component. Interactive state lives in the story file's instance `<script>`.
+- **Tests**: `@testing-library/svelte` + `@testing-library/user-event`, jsdom, children through `createRawSnippet` (`test/snippets.ts`). `test/setup.ts` stubs `matchMedia` and pointer capture, which jsdom lacks and the toaster and Bits Select call. The package has its own coverage floor in `vitest.config.ts`.
+
+Storybook: `pnpm -F @org/components-svelte storybook` (:6007); a static build is part of `check:all`.
 
 ## Tests
 

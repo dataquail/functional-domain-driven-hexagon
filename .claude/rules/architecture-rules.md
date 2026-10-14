@@ -11,21 +11,24 @@ plus the rules only a whole-repository walk can answer, which
 | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `architecture.yaml`                             | the repo-wide policy: resolve, aliases, `deny`/`exports`, `graph`, `limits`, `campaigns`, the shared `defs`, and the tree's index |
 | `packages/<package>/architecture.yaml`          | that package's node of the tree, beside its own code, with the `defs` only it uses                                                |
-| `@goodbones/{core,typescript,cli,oxlint}` (npm) | the engine: lowering, matching, the graph, the anti-vacuity guard; the TS pack; the two hosts                                     |
+| `@goodbones/{core,typescript,cli,oxlint}` (npm) | the engine: lowering, matching, the graph, the anti-vacuity guard; the TS pack (with `.svelte`); the two hosts                    |
 | `scripts/lint-rule-probes.mjs`                  | `pnpm lint:rules` — each rule id still fires on a planted violation                                                               |
 | `scripts/architecture-edges.mjs`                | `pnpm lint:edges` — the policy still refuses and allows the edges and shapes it should                                            |
 | `.architecture-campaigns/<id>.json`             | a campaign's ledger: every place its pattern still occurs, and every time the count was allowed to rise                           |
 | `scripts/lint-rules/`                           | the seven hand-rolled `local/*` AST rules that are not boundary rules                                                             |
 
 **The engine is an installed dependency, not source here.** It ships from
-`dataquail/goodbones` as four packages, each pinned to the same exact beta in the
-root `package.json`: `@goodbones/core` (the manifest schema, the evaluators, the
-`Manifest` type the config is annotated with, and the fakes under
+`dataquail/goodbones` as independently versioned packages, each pinned to an exact
+beta in the root `package.json`: `@goodbones/core` (the manifest schema, the
+evaluators, the `Manifest` type the config is annotated with, and the fakes under
 `@goodbones/core/testing`), `@goodbones/typescript` (the language pack:
-parser-backed facts and `unrs-resolver` resolution), `@goodbones/oxlint` (the
-plugin) and `@goodbones/cli` (the `architecture` bin); both hosts depend on
-`@goodbones/ast-grep`, the syntax matcher a campaign's `syntax` term and `report`
-anchors read through, which this repo never names. Its reference
+parser-backed facts and `unrs-resolver` resolution, and the script blocks of a
+`.svelte` component), `@goodbones/oxlint` (the plugin) and `@goodbones/cli` (the
+`architecture` bin). Each host pins the core and the pack exactly, so a pack
+release reaches a host only through that host's own release. Both hosts take
+`@goodbones/campaigns` (the campaigns family) and `@goodbones/ast-grep` (the
+syntax matcher a campaign's `syntax` term and `report` anchors read through) as
+optional peers, so the root installs both, which this repo otherwise never names. Its reference
 documentation lives with it at <https://dataquail.github.io/goodbones>. This
 repo owns the **policy** — the manifest, the probes, the edge table — and nothing
 below describes the library. Changing how a rule family behaves means a release
@@ -260,8 +263,8 @@ load and fails `pnpm lint` — but never runs them. A violated graph rule fails
 limits:
   unrestricted: 1
   partial: 0
-  coverage: { imports: 0.96, structure: 0.73, members: 0.03, surface: 0.91, graph: 1 }
-  conformance: { residue: 0, vacant: 13, slack: 52, concentration: 0 }
+  coverage: { imports: 0.96, structure: 0.77, members: 0.12, surface: 0.92, graph: 1 }
+  conformance: { residue: 0, vacant: 11, slack: 45, concentration: 0 }
 ```
 
 The `unrestricted`/`partial` ceilings cap the tiers that say "not tightened yet"; both
@@ -392,9 +395,10 @@ Two gates back that up, and they answer different questions:
 - `pnpm lint:rules` — the **wiring**: the plugin is loaded, each rule id is
   enabled, its globs match, resolution is live. A repo-wide `deny` shares the
   `architecture/imports` id with every allowlist, so its probe also names the
-  message it must report.
-- `pnpm lint:edges` — the **semantics**: 184 edges with expected verdicts (135
-  refused, 49 allowed) and 12 graph shapes with expected reports. The allowed and
+  message it must report. 43 probes, three of them ESLint's (`linter: "eslint"`):
+  the Svelte markup rules oxlint cannot see (ADR-0036).
+- `pnpm lint:edges` — the **semantics**: 190 edges with expected verdicts (138
+  refused, 52 allowed) and 12 graph shapes with expected reports. The allowed and
   quiet rows matter as much: a policy that refuses everything is as broken as one
   that refuses nothing. A row that changes verdict is either a regression or a
   decision.
@@ -478,6 +482,12 @@ engine shows up. Every `architecture/*` rule id — `imports`, `exports`,
 left out runs in the CLI and not the editor, and the two adapters disagree.
 
 ## What the plugin still cannot do
+
+**A Svelte component's markup.** oxlint hands the plugin a `.svelte` file's script
+blocks, and the TypeScript pack reads the same blocks for the CLI, so every family
+reaches a component's imports, exports and declarations. Neither reads the markup:
+an element, an attribute or an expression in the template is ESLint's
+(`pnpm lint:svelte`, ADR-0036).
 
 **Anything about the whole graph.** Cycles, orphans and transitive reach need
 every file resolved at once, which a per-file rule never has. They live in the

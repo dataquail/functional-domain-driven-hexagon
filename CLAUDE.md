@@ -10,28 +10,29 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 | New file kind, test, fake, stereotype (parity/layout) | `.claude/rules/server-file-taxonomy.md`          | 0008                                    |
 | Writing or running server/jobs tests                  | `.claude/rules/server-testing.md`                | 0009                                    |
 | Handlers, layers, event buses, SQL, auth (server)     | `.claude/rules/server-effect-and-persistence.md` | 0004, 0006, 0007, 0012, 0016–0017, 0020 |
-| Frontend (`packages/web`, `packages/components`)      | `.claude/rules/frontend.md`                      | 0015, 0018, 0019, 0026                  |
+| Frontend (`packages/web`, `packages/components*`)     | `.claude/rules/frontend.md`                      | 0015, 0018, 0019, 0026, 0036            |
 | Any Effect v4 API you are not certain of              | `.claude/rules/effect-v4-source.md`              | —                                       |
 | Writing comments (any package)                        | `.claude/rules/comments.md`                      | —                                       |
 | Any architectural boundary, file naming, rule probes  | `.claude/rules/architecture-rules.md`            | 0008, 0025, 0027, 0028                  |
 
 ## Monorepo map
 
-| Package             | What it is                                                                          |
-| ------------------- | ----------------------------------------------------------------------------------- |
-| `@org/server`       | The Effect BFF, a Cloudflare Worker (`src/platform/worker/main.ts`). Bulk of rules. |
-| `@org/web`          | Next.js App Router renderer + `/api/*` proxy; Effect Atom + MVVM (ADR-0026, 0018).  |
-| `@org/components`   | Bespoke component library (primitives + patterns) + Storybook (ADR-0015).           |
-| `@org/contracts`    | Shared HTTP API contracts, schemas, errors — consumed by server and clients.        |
-| `@org/database`     | DB access kernel (effect/sql client, `RowSchemas`, row decoding) + migrations.      |
-| `@org/jobs`         | Cron jobs as Effects, run by the server Worker's `scheduled` handler.               |
-| `@org/infra`        | The Alchemy stack (Neon, Hyperdrive, Queues); the only package that names Alchemy.  |
-| `@org/identity`     | The identity Worker: Better Auth as the OIDC issuer; the only package naming it.    |
-| `@org/cli`          | Command-line client (device-flow auth, organizations, todos).                       |
-| `@org/mcp`          | MCP (stdio) server exposing the CLI surface as tools.                               |
-| `@org/api-client`   | Shared typed client + credential store for the CLI and MCP.                         |
-| `@org/acceptance`   | Playwright acceptance tests (specs / drivers / pages / infrastructure).             |
-| `@org/test-drivers` | Tier-agnostic page-driver contracts + per-tier adapters (Playwright / RTL).         |
+| Package                  | What it is                                                                               |
+| ------------------------ | ---------------------------------------------------------------------------------------- |
+| `@org/server`            | The Effect BFF, a Cloudflare Worker (`src/platform/worker/main.ts`). Bulk of rules.      |
+| `@org/web`               | Next.js App Router renderer + `/api/*` proxy; Effect Atom + MVVM (ADR-0026, 0018).       |
+| `@org/components`        | Bespoke component library (primitives + patterns) + Storybook (ADR-0015).                |
+| `@org/components-svelte` | The same library in Svelte 5 + Storybook, beside the React one until Phase 7 (ADR-0036). |
+| `@org/contracts`         | Shared HTTP API contracts, schemas, errors — consumed by server and clients.             |
+| `@org/database`          | DB access kernel (effect/sql client, `RowSchemas`, row decoding) + migrations.           |
+| `@org/jobs`              | Cron jobs as Effects, run by the server Worker's `scheduled` handler.                    |
+| `@org/infra`             | The Alchemy stack (Neon, Hyperdrive, Queues); the only package that names Alchemy.       |
+| `@org/identity`          | The identity Worker: Better Auth as the OIDC issuer; the only package naming it.         |
+| `@org/cli`               | Command-line client (device-flow auth, organizations, todos).                            |
+| `@org/mcp`               | MCP (stdio) server exposing the CLI surface as tools.                                    |
+| `@org/api-client`        | Shared typed client + credential store for the CLI and MCP.                              |
+| `@org/acceptance`        | Playwright acceptance tests (specs / drivers / pages / infrastructure).                  |
+| `@org/test-drivers`      | Tier-agnostic page-driver contracts + per-tier adapters (Playwright / RTL).              |
 
 **Installed, not vendored.** The CQRS, unit-of-work and authorization patterns this codebase
 teaches now ship as published libraries from a separate repository (`dataquail/effect-server-utils`)
@@ -43,27 +44,27 @@ there, not an edit here.
 
 ## Commands
 
-| Command                                                      | What it runs                                                                                                                           |
-| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm check:all`                                             | lint + lint:rules + lint:edges + lint:architecture + typecheck + check:effect + tests + storybook (the full gate)                      |
-| `pnpm lint`                                                  | oxlint (type-aware, a warning fails) — the whole architecture policy (`architecture/*`) plus the ordinary rules                        |
-| `pnpm check:effect`                                          | `@effect/language-service` diagnostics across all projects; fails on any finding at any severity                                       |
-| `pnpm lint:rules`                                            | asserts each architectural rule still fires on a planted violation (ADR-0025)                                                          |
-| `pnpm lint:edges`                                            | asserts the architecture policy still refuses — and allows — the edges it should (ADR-0028)                                            |
-| `pnpm lint:architecture`                                     | the same policy evaluated without a linter, plus the graph rules, the coverage floors, the conformance ceilings and the baseline       |
-| `pnpm architecture:conformance`                              | the full conformance report — residue, vacant nodes, slack (per fragment), concentration, each beside its `limits.conformance` ceiling |
-| `pnpm architecture:campaigns`                                | the campaign status table — none open today; `init` / `prune` / `allow` take the id, then the root                                     |
-| `pnpm architecture:coverage`                                 | how much of the tree each rule family reaches, and the tiers not yet tightened (ADR-0030)                                              |
-| `pnpm architecture:facts <file>`                             | what the parser reads from one file — edges, bindings, members, exports; write new rules against this                                  |
-| `pnpm architecture:browser`                                  | the Architecture Browser at http://127.0.0.1:4321 — the tree, every import as an arc, the manifest beside it; redraws as files change  |
-| `pnpm test`                                                  | vitest **unit** suite (excludes `*.integration.test.ts`), no DB                                                                        |
-| `DATABASE_URL_TEST=postgres://… pnpm test:integration`       | **integration** suite only (`*.integration.test.ts`); hard-fails if no DB                                                              |
-| `DATABASE_URL_TEST=postgres://… pnpm coverage`               | unit + integration merged into ONE coverage number; thresholds in `vitest.config.ts` gate CI                                           |
-| `pnpm deploy:cf --stage <s>` / `pnpm destroy:cf --stage <s>` | `alchemy deploy` / `destroy` — creates or removes real Cloudflare + Neon resources; needs credentials                                  |
-| `pnpm db:migrate`                                            | the app's PgMigrator migrations, then Better Auth's against `IDENTITY_DATABASE_URL` (deployed: direct URLs)                            |
-| `pnpm dev`                                                   | `alchemy dev` (server Worker :3001, identity Worker :3002, queues, crons) + Next on :3000                                              |
-| `pnpm test:workers`                                          | workerd smoke tests of the server Worker's `fetch` / `queue` / `scheduled`; needs the docker Postgres and free dev ports               |
-| `pnpm effect:source`                                         | clone/refresh the Effect v4 source at `reference/effect` (gitignored, pinned to our version)                                           |
+| Command                                                      | What it runs                                                                                                                                                        |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm check:all`                                             | lint + lint:rules + lint:edges + lint:architecture + typecheck + check:effect + tests + storybook (the full gate)                                                   |
+| `pnpm lint`                                                  | oxlint (type-aware, a warning fails) — the whole architecture policy (`architecture/*`) plus the ordinary rules — then ESLint over `.svelte` markup (`lint:svelte`) |
+| `pnpm check:effect`                                          | `@effect/language-service` diagnostics across all projects; fails on any finding at any severity                                                                    |
+| `pnpm lint:rules`                                            | asserts each architectural rule still fires on a planted violation (ADR-0025)                                                                                       |
+| `pnpm lint:edges`                                            | asserts the architecture policy still refuses — and allows — the edges it should (ADR-0028)                                                                         |
+| `pnpm lint:architecture`                                     | the same policy evaluated without a linter, plus the graph rules, the coverage floors, the conformance ceilings and the baseline                                    |
+| `pnpm architecture:conformance`                              | the full conformance report — residue, vacant nodes, slack (per fragment), concentration, each beside its `limits.conformance` ceiling                              |
+| `pnpm architecture:campaigns`                                | the campaign status table — none open today; `init` / `prune` / `allow` take the id, then the root                                                                  |
+| `pnpm architecture:coverage`                                 | how much of the tree each rule family reaches, and the tiers not yet tightened (ADR-0030)                                                                           |
+| `pnpm architecture:facts <file>`                             | what the parser reads from one file — edges, bindings, members, exports; write new rules against this                                                               |
+| `pnpm architecture:browser`                                  | the Architecture Browser at http://127.0.0.1:4321 — the tree, every import as an arc, the manifest beside it; redraws as files change                               |
+| `pnpm test`                                                  | vitest **unit** suite (excludes `*.integration.test.ts`), no DB                                                                                                     |
+| `DATABASE_URL_TEST=postgres://… pnpm test:integration`       | **integration** suite only (`*.integration.test.ts`); hard-fails if no DB                                                                                           |
+| `DATABASE_URL_TEST=postgres://… pnpm coverage`               | unit + integration merged into ONE coverage number; thresholds in `vitest.config.ts` gate CI                                                                        |
+| `pnpm deploy:cf --stage <s>` / `pnpm destroy:cf --stage <s>` | `alchemy deploy` / `destroy` — creates or removes real Cloudflare + Neon resources; needs credentials                                                               |
+| `pnpm db:migrate`                                            | the app's PgMigrator migrations, then Better Auth's against `IDENTITY_DATABASE_URL` (deployed: direct URLs)                                                         |
+| `pnpm dev`                                                   | `alchemy dev` (server Worker :3001, identity Worker :3002, queues, crons) + Next on :3000                                                                           |
+| `pnpm test:workers`                                          | workerd smoke tests of the server Worker's `fetch` / `queue` / `scheduled`; needs the docker Postgres and free dev ports                                            |
+| `pnpm effect:source`                                         | clone/refresh the Effect v4 source at `reference/effect` (gitignored, pinned to our version)                                                                        |
 
 ## Always in scope
 

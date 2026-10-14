@@ -72,7 +72,7 @@ resolve:
 limits:
   unrestricted: 1
   partial: 0
-  coverage: { imports: 0.96, structure: 0.73, members: 0.03, surface: 0.91, graph: 1 }
+  coverage: { imports: 0.96, structure: 0.77, members: 0.12, surface: 0.92, graph: 1 }
   conformance: { residue: 0, vacant: 11, slack: 45, concentration: 0 }
 
 aliases:
@@ -115,6 +115,15 @@ deny:
       Better Auth is the identity provider's implementation and stays in @org/identity. The server
       is an OIDC relying party: it knows the issuer by its discovery document and a client id, so
       swapping the provider changes a URL, not the code that signs users in.
+  - match:
+      - "**/node_modules/bits-ui/**"
+      - "**/node_modules/@lucide/svelte/**"
+      - "**/node_modules/svelte-sonner/**"
+    except: ["~/components-svelte/primitives/**"]
+    message: >-
+      Only the Svelte component library's primitives/ may name a third-party visual library. A
+      pattern or a screen composes primitives, so the library's prop surface stops at one tier and
+      can be swapped there (ADR-0015).
   # `cloudflare:workers` has no file on disk; tsconfig.resolve.json maps it to
   # this declaration, so the rule fences the runtime module and the binding
   # types together.
@@ -242,9 +251,11 @@ graph:
         - "**/*.spec.ts"
         - "**/*.setup.ts"
         - "**/*.stories.tsx"
+        - "**/*.stories.svelte"
         - "**/vitest.config.ts"
         - "**/global-setup.ts"
         - "~/web/test/setup.ts"
+        - "~/components-svelte/test/setup.ts"
         - "~/acceptance/playwright.config.ts"
         # Process entrypoints and package bins; workerd loads the server Worker by path.
         - "@/platform/worker/main.ts"
@@ -260,6 +271,8 @@ graph:
         - "~/web/instrumentation.ts"
         - "~/web/next.config.ts"
         - "~/components/.storybook/**"
+        - "~/components-svelte/.storybook/**"
+        - "~/components-svelte/vite.config.ts"
   reach:
     - name: domain-reaches-no-adapter
       message: >-
@@ -359,5 +372,6 @@ tree:
   "~/infra/": { include: packages/infra/architecture.yaml }
   "~/identity/": { include: packages/identity/architecture.yaml }
   "~/components/": { include: packages/components/architecture.yaml }
+  "~/components-svelte/": { include: packages/components-svelte/architecture.yaml }
   "~/web/": { include: packages/web/architecture.yaml }
   "~/server/src/": { include: packages/server/architecture.yaml }

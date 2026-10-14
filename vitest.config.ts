@@ -20,6 +20,7 @@ export default defineConfig({
     // auto-discovered and its `*.spec.ts` files aren't loaded as Vitest tests.
     // Acceptance specs run via `pnpm test:acceptance`.
     projects: [
+      "packages/components-svelte",
       "packages/contracts",
       "packages/database",
       "packages/identity",
@@ -36,6 +37,7 @@ export default defineConfig({
       // has none yet (@org/cli, @org/mcp, @org/api-client) would report 0% and
       // turn the gate into noise instead of signal.
       include: [
+        "packages/components-svelte/{primitives,patterns,providers}/**/*.{ts,svelte}",
         "packages/contracts/src/**/*.ts",
         "packages/database/src/**/*.ts",
         "packages/identity/src/**/*.ts",
@@ -48,6 +50,7 @@ export default defineConfig({
       exclude: [
         ...coverageConfigDefaults.exclude,
         "**/*.test.{ts,tsx}",
+        "**/*.stories.svelte",
         "**/test-utils/**",
         "**/test/**",
         // Test doubles: production-graph files that only a test constructs.
@@ -96,6 +99,12 @@ export default defineConfig({
               branches: 87,
               functions: 44,
               lines: 53,
+            },
+            "packages/components-svelte/**": {
+              statements: 97,
+              branches: 91,
+              functions: 95,
+              lines: 97,
             },
             "packages/contracts/src/**": { statements: 95, lines: 95 },
             "packages/jobs/src/**": { statements: 80, lines: 80 },
