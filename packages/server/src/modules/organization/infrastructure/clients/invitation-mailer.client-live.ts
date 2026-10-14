@@ -2,12 +2,12 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.ts";
-import { Mailer } from "@/globals/infrastructure/email/ports/mailer.ts";
-import { InvitationEmailUndelivered } from "@/modules/organization/domain/invitation/invitation.errors.ts";
-import { InvitationMailer } from "@/modules/organization/domain/ports/clients/invitation-mailer.client.ts";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars";
+import { Mailer } from "@/globals/infrastructure/email/ports/mailer";
+import { InvitationEmailUndelivered } from "@/modules/organization/domain/invitation/invitation.errors";
+import { InvitationMailer } from "@/modules/organization/domain/ports/clients/invitation-mailer.client";
 
-import { invitationEmail } from "./invitation.email.ts";
+import { invitationEmail } from "./invitation.email";
 
 const SUBJECT = "You're invited to join an organization";
 

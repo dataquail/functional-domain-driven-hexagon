@@ -1,17 +1,17 @@
 import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 import * as Layer from "effect/Layer";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.ts";
+import { Api } from "@/globals/infrastructure/framework/http/api";
 
-import { CliAuthLive } from "../cli/auth.endpoint-groups.ts";
-import { callbackEndpoint } from "./callback.endpoint.ts";
-import { createTokenEndpoint } from "./create-token.endpoint.ts";
-import { deviceApproveEndpoint } from "./device-approve.endpoint.ts";
-import { listTokensEndpoint } from "./list-tokens.endpoint.ts";
-import { loginEndpoint } from "./login.endpoint.ts";
-import { logoutEndpoint } from "./logout.endpoint.ts";
-import { meEndpoint } from "./me.endpoint.ts";
-import { revokeTokenEndpoint } from "./revoke-token.endpoint.ts";
+import { CliAuthLive } from "../cli/auth.endpoint-groups";
+import { callbackEndpoint } from "./callback.endpoint";
+import { createTokenEndpoint } from "./create-token.endpoint";
+import { deviceApproveEndpoint } from "./device-approve.endpoint";
+import { listTokensEndpoint } from "./list-tokens.endpoint";
+import { loginEndpoint } from "./login.endpoint";
+import { logoutEndpoint } from "./logout.endpoint";
+import { meEndpoint } from "./me.endpoint";
+import { revokeTokenEndpoint } from "./revoke-token.endpoint";
 
 const AuthPublicLive = HttpApiBuilder.group(Api, "auth", (handlers) =>
   handlers

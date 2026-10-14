@@ -5,15 +5,15 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { Spec } from "@/globals/application/ddd/specification.ts";
-import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.ts";
-import { TodoSpecifications } from "@/modules/todos/domain/todo/todos.specification.ts";
-import { TodosRepositoryFake } from "@/modules/todos/infrastructure/repositories/todos.repository-fake.ts";
-import { CryptoFake } from "@/test-utils/crypto-fake.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { Spec } from "@/globals/application/ddd/specification";
+import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository";
+import { TodoSpecifications } from "@/modules/todos/domain/todo/todos.specification";
+import { TodosRepositoryFake } from "@/modules/todos/infrastructure/repositories/todos.repository-fake";
+import { CryptoFake } from "@/test-utils/crypto-fake";
 
-import { createTodoHandler } from "./create-todo.handler.ts";
+import { createTodoHandler } from "./create-todo.handler";
 
 const TestLayer = Layer.mergeAll(TodosRepositoryFake, CryptoFake);
 

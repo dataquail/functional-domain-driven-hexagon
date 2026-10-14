@@ -7,9 +7,9 @@ import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Schema from "effect/Schema";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.ts";
-import { FindUsersQuery } from "@/modules/user/queries/find-users.query.ts";
-import { describeServer } from "@/test-utils/server-test-runtime.ts";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { FindUsersQuery } from "@/modules/user/queries/find-users.query";
+import { describeServer } from "@/test-utils/server-test-runtime";
 
 const basePayload = new UserContract.CreateUserPayload({
   email: "alice@example.com",

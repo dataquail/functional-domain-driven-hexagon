@@ -1,16 +1,16 @@
 import type * as DateTime from "effect/DateTime";
 import type * as Option from "effect/Option";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id";
 
 import {
   SubscriptionCanceled,
   type SubscriptionEvent,
   SubscriptionStarted,
   SubscriptionStatusChanged,
-} from "./subscription.events.ts";
-import { type SubscriptionId } from "./subscription.id.ts";
-import { SubscriptionRoot } from "./subscription.root.ts";
+} from "./subscription.events";
+import { type SubscriptionId } from "./subscription.id";
+import { SubscriptionRoot } from "./subscription.root";
 
 export type Result = {
   readonly subscription: SubscriptionRoot;

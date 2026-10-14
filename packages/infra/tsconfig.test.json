@@ -7,7 +7,6 @@
     }
   ],
   "compilerOptions": {
-    "rewriteRelativeImportExtensions": false,
     "types": ["node"],
     "tsBuildInfoFile": ".tsbuildinfo/test.tsbuildinfo",
     "rootDir": ".",

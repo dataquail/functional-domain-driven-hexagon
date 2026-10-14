@@ -1,7 +1,7 @@
 <script module lang="ts">
   import { defineMeta } from "@storybook/addon-svelte-csf";
 
-  import { Grid } from "./grid.ts";
+  import { Grid } from "./grid";
 
   const { Story } = defineMeta({
     title: "Primitives/Grid",

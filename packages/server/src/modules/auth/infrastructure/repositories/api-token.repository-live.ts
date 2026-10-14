@@ -3,15 +3,15 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.ts";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
-import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.ts";
-import { type ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.ts";
-import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.ts";
-import { type ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root.ts";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
+import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors";
+import { type ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository";
+import { type ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root";
 
-import * as ApiTokenMapper from "./api-token.mapper.ts";
+import * as ApiTokenMapper from "./api-token.mapper";
 
 export const ApiTokenRepositoryLive = Layer.effect(
   ApiTokenRepository,

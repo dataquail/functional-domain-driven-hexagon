@@ -5,11 +5,11 @@ import * as Layer from "effect/Layer";
 import type * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.ts";
-import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.ts";
-import { type OrganizationRoot } from "@/modules/organization/domain/organization/organization.root.ts";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors";
+import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository";
+import { type OrganizationRoot } from "@/modules/organization/domain/organization/organization.root";
 
 export const OrganizationRepositoryFake = Layer.effect(
   OrganizationRepository,

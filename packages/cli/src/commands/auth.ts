@@ -16,7 +16,7 @@ import * as Option from "effect/Option";
 import * as Predicate from "effect/Predicate";
 import * as Schedule from "effect/Schedule";
 
-import { CliError, maskToken, openBrowser, toCliError } from "../internal.ts";
+import { CliError, maskToken, openBrowser, toCliError } from "../internal";
 
 // `auth login [--with-token <pat>]`
 //   - with a token: store it (CI / paste path) and validate it.

@@ -2,8 +2,8 @@ import { Query } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { SessionId } from "@/modules/auth/domain/session/session.id.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { SessionId } from "@/modules/auth/domain/session/session.id";
 
 // The read model the auth middleware needs: the opaque principal ids,
 // nothing else. Lifecycle (revoked/expired) is enforced by the handler

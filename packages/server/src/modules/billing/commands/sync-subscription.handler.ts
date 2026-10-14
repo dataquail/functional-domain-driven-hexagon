@@ -3,11 +3,11 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { DomainEventBus } from "@/globals/application/ports/event-bus.ts";
-import { type SyncSubscriptionPayload } from "@/modules/billing/commands/sync-subscription.command.ts";
-import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.ts";
-import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.ts";
-import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.ts";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
+import { type SyncSubscriptionPayload } from "@/modules/billing/commands/sync-subscription.command";
+import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository";
+import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops";
+import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification";
 
 // Syncs the local Subscription projection to a Stripe-reported status.
 // Out-of-order deliveries — a status update for a subscription whose

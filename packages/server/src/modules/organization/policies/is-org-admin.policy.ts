@@ -1,8 +1,8 @@
 import { type ResourceCheck } from "@effect-server-utils/authz";
 
-import { type OrganizationAuthzView } from "@/modules/organization/queries/find-organization-by-id.query.ts";
+import { type OrganizationAuthzView } from "@/modules/organization/queries/find-organization-by-id.query";
 
-import { type UserOrganizationLookup } from "./is-member.policy.ts";
+import { type UserOrganizationLookup } from "./is-member.policy";
 
 // "Is this caller an admin of this organization?" — gates managing the roster
 // (invite, revoke, remove, promote, demote). Plain membership is not enough.

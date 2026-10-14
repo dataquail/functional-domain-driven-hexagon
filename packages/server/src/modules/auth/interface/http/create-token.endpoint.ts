@@ -4,12 +4,12 @@ import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.ts";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
-import { MintApiTokenCommand } from "@/modules/auth/commands/mint-api-token.command.ts";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { MintApiTokenCommand } from "@/modules/auth/commands/mint-api-token.command";
 
 // Mints a personal access token for the authenticated caller and returns the
 // plaintext exactly once (only its hash is stored). `expiresInDays` falls

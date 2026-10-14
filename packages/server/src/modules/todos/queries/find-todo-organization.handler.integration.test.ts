@@ -2,11 +2,11 @@ import { assertNone, assertSome } from "@effect/vitest/utils";
 import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { TodoId } from "@/modules/todos/domain/todo/todo.id.ts";
-import { findTodoOrganizationHandler } from "@/modules/todos/queries/find-todo-organization.handler.ts";
-import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
-import { TestDatabaseLive } from "@/test-utils/test-database.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { TodoId } from "@/modules/todos/domain/todo/todo.id";
+import { findTodoOrganizationHandler } from "@/modules/todos/queries/find-todo-organization.handler";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const orgId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const otherOrgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");

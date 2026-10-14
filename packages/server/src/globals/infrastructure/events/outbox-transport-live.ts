@@ -4,7 +4,7 @@ import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { DomainEventQueue } from "@/globals/infrastructure/events/domain-event-queue.ts";
+import { DomainEventQueue } from "@/globals/infrastructure/events/domain-event-queue";
 
 export const OutboxTransportLive: Layer.Layer<
   AfterCommitTransport,

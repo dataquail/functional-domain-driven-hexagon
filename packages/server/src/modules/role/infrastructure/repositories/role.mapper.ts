@@ -3,10 +3,10 @@ import * as Arr from "effect/Array";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.ts";
-import { RoleValueObject } from "@/modules/role/domain/roles/role.value-object.ts";
-import { RolesRoot } from "@/modules/role/domain/roles/roles.root.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql";
+import { RoleValueObject } from "@/modules/role/domain/roles/role.value-object";
+import { RolesRoot } from "@/modules/role/domain/roles/roles.root";
 
 type Row = RowSchemas.PlatformRoleRow;
 

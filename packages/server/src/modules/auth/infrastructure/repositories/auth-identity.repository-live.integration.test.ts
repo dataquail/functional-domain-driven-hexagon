@@ -5,12 +5,12 @@ import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { AuthIdentityRepository } from "@/modules/auth/domain/auth-identity/auth-identity.repository.ts";
-import { AuthIdentitySpecifications } from "@/modules/auth/domain/auth-identity/auth-identity.specification.ts";
-import { AuthIdentityRepositoryLive } from "@/modules/auth/infrastructure/repositories/auth-identity.repository-live.ts";
-import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
-import { TestDatabaseLive } from "@/test-utils/test-database.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { AuthIdentityRepository } from "@/modules/auth/domain/auth-identity/auth-identity.repository";
+import { AuthIdentitySpecifications } from "@/modules/auth/domain/auth-identity/auth-identity.specification";
+import { AuthIdentityRepositoryLive } from "@/modules/auth/infrastructure/repositories/auth-identity.repository-live";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const subject = "identity-sub-integration";

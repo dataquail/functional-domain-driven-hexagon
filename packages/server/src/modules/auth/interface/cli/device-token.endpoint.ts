@@ -3,12 +3,12 @@ import { CliAuthContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.ts";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
-import { PollDeviceGrantCommand } from "@/modules/auth/commands/poll-device-grant.command.ts";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { PollDeviceGrantCommand } from "@/modules/auth/commands/poll-device-grant.command";
 
 // CLI adapter (ADR-0005): the poll/exchange endpoint. Maps the device-grant
 // domain errors to the RFC-8628-shaped contract errors the CLI switches on

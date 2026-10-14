@@ -1,6 +1,6 @@
 import * as Schema from "effect/Schema";
 
-import { SessionId } from "./session.id.ts";
+import { SessionId } from "./session.id";
 
 export class SessionNotFound extends Schema.TaggedError<
   SessionNotFound,

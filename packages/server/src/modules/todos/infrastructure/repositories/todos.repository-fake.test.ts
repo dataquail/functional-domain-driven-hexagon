@@ -8,15 +8,15 @@ import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { Spec } from "@/globals/application/ddd/specification.ts";
-import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.ts";
-import { TodoId } from "@/modules/todos/domain/todo/todo.id.ts";
-import { TodoRootOps } from "@/modules/todos/domain/todo/todo.root-ops.ts";
-import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.ts";
-import { TodoSpecifications } from "@/modules/todos/domain/todo/todos.specification.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { Spec } from "@/globals/application/ddd/specification";
+import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors";
+import { TodoId } from "@/modules/todos/domain/todo/todo.id";
+import { TodoRootOps } from "@/modules/todos/domain/todo/todo.root-ops";
+import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository";
+import { TodoSpecifications } from "@/modules/todos/domain/todo/todos.specification";
 
-import { TodosRepositoryFake } from "./todos.repository-fake.ts";
+import { TodosRepositoryFake } from "./todos.repository-fake";
 
 const aliceId = TodoId.make("11111111-1111-1111-1111-111111111111");
 const bobId = TodoId.make("22222222-2222-2222-2222-222222222222");

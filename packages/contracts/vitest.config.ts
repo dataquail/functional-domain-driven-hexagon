@@ -1,5 +1,5 @@
 import { mergeConfig, type UserConfigExport } from "vitest/config";
-import shared from "../../vitest.shared.ts";
+import shared from "../../vitest.shared";
 
 const config: UserConfigExport = {};
 

@@ -8,20 +8,20 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { Spec } from "@/globals/application/ddd/specification.ts";
-import { type GrantOrganizationRolePayload } from "@/modules/organization/commands/grant-organization-role.command.ts";
-import { grantOrganizationRoleHandler } from "@/modules/organization/commands/grant-organization-role.handler.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { Spec } from "@/globals/application/ddd/specification";
+import { type GrantOrganizationRolePayload } from "@/modules/organization/commands/grant-organization-role.command";
+import { grantOrganizationRoleHandler } from "@/modules/organization/commands/grant-organization-role.handler";
 import {
   AlreadyHasOrganizationRole,
   CannotPromoteSelfInOrganization,
-} from "@/modules/organization/domain/organization-roles/organization-role.errors.ts";
-import { type OrganizationRoleGranted } from "@/modules/organization/domain/organization-roles/organization-role.events.ts";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.ts";
-import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification.ts";
-import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.ts";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.ts";
+} from "@/modules/organization/domain/organization-roles/organization-role.errors";
+import { type OrganizationRoleGranted } from "@/modules/organization/domain/organization-roles/organization-role.events";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository";
+import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification";
+import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus";
 
 const TestLayer = Layer.mergeAll(
   OrganizationRolesRepositoryFake,

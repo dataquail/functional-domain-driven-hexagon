@@ -12,7 +12,7 @@ import {
   recordSuperAdminWith,
   seedUsersThroughWorker,
   type SqlRunner,
-} from "./seed-client.ts";
+} from "./seed-client";
 
 const env = {
   IDENTITY_ISSUER: "http://localhost:3002/api/auth",

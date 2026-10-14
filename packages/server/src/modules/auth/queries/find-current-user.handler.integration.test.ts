@@ -4,12 +4,12 @@ import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { PlatformRolesLive } from "@/modules/auth/infrastructure/acl/platform-roles.acl-live.ts";
-import { findCurrentUserHandler } from "@/modules/auth/queries/find-current-user.handler.ts";
-import { RoleQueriesLive } from "@/modules/role/role.platform.ts";
-import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
-import { TestDatabaseLive } from "@/test-utils/test-database.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { PlatformRolesLive } from "@/modules/auth/infrastructure/acl/platform-roles.acl-live";
+import { findCurrentUserHandler } from "@/modules/auth/queries/find-current-user.handler";
+import { RoleQueriesLive } from "@/modules/role/role.platform";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const superAdminId = UserId.make("11111111-1111-1111-1111-111111111111");
 const memberId = UserId.make("22222222-2222-2222-2222-222222222222");

@@ -16,12 +16,12 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { DomainEventBus } from "@/globals/application/ports/event-bus.ts";
-import { SyncSubscriptionCommand } from "@/modules/billing/commands/sync-subscription.command.ts";
-import { StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events.ts";
-import { type StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.ts";
-import { StripeWebhookEventAdapterLive } from "@/modules/billing/interface/events/stripe-webhook.event-adapter.ts";
-import { RecordedCommands, RecordingCommandBus } from "@/test-utils/recording-command-bus.ts";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
+import { SyncSubscriptionCommand } from "@/modules/billing/commands/sync-subscription.command";
+import { StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events";
+import { type StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object";
+import { StripeWebhookEventAdapterLive } from "@/modules/billing/interface/events/stripe-webhook.event-adapter";
+import { RecordedCommands, RecordingCommandBus } from "@/test-utils/recording-command-bus";
 
 const stripeSubId = "sub_test";
 

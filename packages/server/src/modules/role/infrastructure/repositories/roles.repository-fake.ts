@@ -5,10 +5,10 @@ import * as Layer from "effect/Layer";
 import type * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.ts";
-import { type RolesRoot } from "@/modules/role/domain/roles/roles.root.ts";
+import { type UserId } from "@/globals/application/ddd/ids/user-id";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { RolesRepository } from "@/modules/role/domain/roles/roles.repository";
+import { type RolesRoot } from "@/modules/role/domain/roles/roles.root";
 
 // In-memory `RolesRepository` for use-case unit tests. Composes with
 // `PassThroughUnitOfWork` and `RecordingEventBus` the same way

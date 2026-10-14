@@ -5,16 +5,17 @@
   "license": "MIT",
   "description": "Command-line client for the effect-monorepo: device-flow auth, organizations, todos.",
   "bin": {
-    "org": "build/esm/main.js"
+    "org": "build/bin/main.js"
   },
   "scripts": {
     "check": "tsc -b tsconfig.json",
     "clean": "rm -rf build .tsbuildinfo",
-    "build": "tsc -b tsconfig.build.json",
+    "build": "tsc -b tsconfig.build.json && pnpm bundle",
     "dev": "tsx src/main.ts",
-    "start": "node build/esm/main.js",
+    "start": "node build/bin/main.js",
     "lint": "eslint . --quiet",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "bundle": "esbuild src/main.ts --bundle --platform=node --target=node24 --format=esm --sourcemap --outfile=build/bin/main.js \"--banner:js=import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\""
   },
   "dependencies": {
     "@effect/platform-node": "4.0.2",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.9.4",
+    "esbuild": "0.25.12",
     "tsx": "^4.23.0"
   }
 }

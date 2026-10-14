@@ -3,8 +3,8 @@ import { ok } from "node:assert";
 import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.ts";
-import { describeServer } from "@/test-utils/server-test-runtime.ts";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { describeServer } from "@/test-utils/server-test-runtime";
 // Public endpoint — no caller identity needed.
 
 describeServer("POST /cli/device/start (integration)", { tables: ["auth.device_grants"] }, (it) => {

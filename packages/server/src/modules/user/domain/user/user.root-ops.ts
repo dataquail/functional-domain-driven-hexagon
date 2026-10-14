@@ -1,11 +1,11 @@
 import type * as DateTime from "effect/DateTime";
 import * as Option from "effect/Option";
 
-import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { type UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { UserAddressUpdated, UserCreated, UserDeleted, type UserEvent } from "./user.events.ts";
-import { UserRoot } from "./user.root.ts";
-import { AddressValueObject } from "./value-objects/address.value-object.ts";
+import { UserAddressUpdated, UserCreated, UserDeleted, type UserEvent } from "./user.events";
+import { UserRoot } from "./user.root";
+import { AddressValueObject } from "./value-objects/address.value-object";
 
 export type Result = {
   readonly user: UserRoot;

@@ -2,9 +2,9 @@ import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 import type * as Option from "effect/Option";
 
-import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.ts";
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import { type OrganizationRolesRoot } from "@/modules/organization/domain/organization-roles/organization-roles.root.ts";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { type OrganizationRolesRoot } from "@/modules/organization/domain/organization-roles/organization-roles.root";
 
 // Dumb persistence, collapsed to upsert + spec-based read. The aggregate is
 // multi-row (one `organization_roles` row per assigned role) keyed on the

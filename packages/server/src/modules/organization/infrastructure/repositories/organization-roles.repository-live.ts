@@ -2,12 +2,12 @@ import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.ts";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.ts";
-import { type OrganizationRolesRoot } from "@/modules/organization/domain/organization-roles/organization-roles.root.ts";
-import * as OrganizationRolesMapper from "@/modules/organization/infrastructure/repositories/organization-roles.mapper.ts";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository";
+import { type OrganizationRolesRoot } from "@/modules/organization/domain/organization-roles/organization-roles.root";
+import * as OrganizationRolesMapper from "@/modules/organization/infrastructure/repositories/organization-roles.mapper";
 
 export const OrganizationRolesRepositoryLive = Layer.effect(
   OrganizationRolesRepository,

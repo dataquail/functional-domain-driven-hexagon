@@ -2,8 +2,8 @@ import { Query } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id";
 
 // The read model the auth middleware needs: the token's id (opaque
 // principal id for a bearer caller) and the owning user.

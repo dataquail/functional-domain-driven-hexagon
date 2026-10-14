@@ -1,7 +1,7 @@
-import { Spec, type Specification } from "@/globals/application/ddd/specification.ts";
+import { Spec, type Specification } from "@/globals/application/ddd/specification";
 
-import { type SessionId } from "./session.id.ts";
-import { type SessionRoot } from "./session.root.ts";
+import { type SessionId } from "./session.id";
+import { type SessionRoot } from "./session.root";
 
 // Translatable spec (carries a Criteria → usable as a repository filter and as
 // an in-memory guard). The field-name string lives here and in the mapper's

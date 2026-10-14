@@ -1,10 +1,10 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.ts";
-import { TodoId } from "@/modules/todos/domain/todo/todo.id.ts";
-import { TodoRoot } from "@/modules/todos/domain/todo/todo.root.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql";
+import { TodoId } from "@/modules/todos/domain/todo/todo.id";
+import { TodoRoot } from "@/modules/todos/domain/todo/todo.root";
 
 type Row = RowSchemas.TodoRow;
 

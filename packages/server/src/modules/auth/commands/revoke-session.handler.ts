@@ -1,7 +1,7 @@
 import * as Effect from "effect/Effect";
 
-import { type RevokeSessionPayload } from "@/modules/auth/commands/revoke-session.command.ts";
-import { SessionRepository } from "@/modules/auth/domain/session/session.repository.ts";
+import { type RevokeSessionPayload } from "@/modules/auth/commands/revoke-session.command";
+import { SessionRepository } from "@/modules/auth/domain/session/session.repository";
 
 // Logout must succeed even when the session row is missing, already
 // revoked, or the DB is temporarily unavailable — the user's cookie

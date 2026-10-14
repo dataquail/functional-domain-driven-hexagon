@@ -2,7 +2,7 @@ import * as HttpApiEndpoint from "effect/http-api/HttpApiEndpoint";
 import * as HttpApiGroup from "effect/http-api/HttpApiGroup";
 import * as Schema from "effect/Schema";
 
-import * as CustomHttpApiError from "../CustomHttpApiError.ts";
+import * as CustomHttpApiError from "../CustomHttpApiError";
 
 // ==========================================
 // Device authorization grant (RFC 8628), app-native — the CLI/MCP wire

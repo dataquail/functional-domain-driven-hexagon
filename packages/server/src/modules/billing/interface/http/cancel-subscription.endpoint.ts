@@ -4,14 +4,14 @@ import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { Actions } from "@/globals/application/ports/actions.ts";
-import * as Authz from "@/globals/infrastructure/auth/authz.ts";
+import { Actions } from "@/globals/application/ports/actions";
+import * as Authz from "@/globals/infrastructure/auth/authz";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
-import { CancelSubscriptionCommand } from "@/modules/billing/commands/cancel-subscription.command.ts";
-import { BillingResource } from "@/modules/billing/policies/billing.policies.ts";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { CancelSubscriptionCommand } from "@/modules/billing/commands/cancel-subscription.command";
+import { BillingResource } from "@/modules/billing/policies/billing.policies";
 
 export const cancelSubscriptionEndpoint = Effect.fn("BillingLive.cancelSubscription")(
   function* (request: EndpointRequest<typeof BillingContract.PrivateGroup, "cancelSubscription">) {

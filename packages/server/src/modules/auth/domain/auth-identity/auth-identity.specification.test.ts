@@ -2,11 +2,11 @@ import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { Criteria } from "@/globals/application/ddd/specification.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { Criteria } from "@/globals/application/ddd/specification";
 
-import { type AuthIdentity } from "./auth-identity.repository.ts";
-import { AuthIdentitySpecifications } from "./auth-identity.specification.ts";
+import { type AuthIdentity } from "./auth-identity.repository";
+import { AuthIdentitySpecifications } from "./auth-identity.specification";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const identity: AuthIdentity = { subject: "identity-sub-1", userId, provider: "better-auth" };

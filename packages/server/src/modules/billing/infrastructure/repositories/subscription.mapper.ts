@@ -2,10 +2,10 @@ import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Option from "effect/Option";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.ts";
-import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.ts";
-import { SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql";
+import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id";
+import { SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root";
 
 type Row = RowSchemas.SubscriptionRow;
 

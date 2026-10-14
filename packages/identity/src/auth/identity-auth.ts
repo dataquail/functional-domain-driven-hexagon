@@ -5,9 +5,9 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import type { Pool } from "pg";
 
-import { passwordResetEmail, verificationEmail } from "../mail/identity-emails.ts";
-import type { IdentityMailer } from "../mail/identity-mailer.ts";
-import { idTokenEmailClaims } from "./id-token-claims.ts";
+import { passwordResetEmail, verificationEmail } from "../mail/identity-emails";
+import type { IdentityMailer } from "../mail/identity-mailer";
+import { idTokenEmailClaims } from "./id-token-claims";
 
 export const IDENTITY_SCOPES = ["openid", "profile", "email", "offline_access"];
 

@@ -10,11 +10,11 @@ import {
   type MintApiTokenInput,
   type MintApiTokenPayload,
   type MintApiTokenResult,
-} from "@/modules/auth/commands/mint-api-token.command.ts";
-import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.ts";
-import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.ts";
-import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.ts";
-import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service.ts";
+} from "@/modules/auth/commands/mint-api-token.command";
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository";
+import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops";
+import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service";
 
 // Core mint, WITHOUT the unit-of-work boundary. Generates an opaque
 // `pat_<publicId>_<secret>`, persists only its sha256 hash, and returns the

@@ -4,8 +4,8 @@ import * as Effect from "effect/Effect";
 import * as HttpServerRequest from "effect/http/HttpServerRequest";
 import * as Option from "effect/Option";
 
-import { recoverPersistenceUnavailable } from "@/globals/infrastructure/framework/http/http-endpoint.ts";
-import { IngestStripeWebhookCommand } from "@/modules/billing/commands/ingest-stripe-webhook.command.ts";
+import { recoverPersistenceUnavailable } from "@/globals/infrastructure/framework/http/http-endpoint";
+import { IngestStripeWebhookCommand } from "@/modules/billing/commands/ingest-stripe-webhook.command";
 
 // Pure translation: read raw body (Stripe's `constructEvent` needs
 // the exact signed payload, so the endpoint opts out of `setPayload`),

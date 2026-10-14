@@ -5,17 +5,17 @@ import * as HttpServerRequest from "effect/http/HttpServerRequest";
 import * as HttpServerResponse from "effect/http/HttpServerResponse";
 import * as Option from "effect/Option";
 
-import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.ts";
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.ts";
-import { RevokeSessionCommand } from "@/modules/auth/commands/revoke-session.command.ts";
-import { SessionId } from "@/modules/auth/domain/session/session.id.ts";
-import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client.ts";
+import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars";
+import { RevokeSessionCommand } from "@/modules/auth/commands/revoke-session.command";
+import { SessionId } from "@/modules/auth/domain/session/session.id";
+import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client";
 
 import {
   ID_TOKEN_HINT_COOKIE_NAME,
   readCookie,
   readIdTokenHint,
-} from "./id-token-hint-cookie.util.ts";
+} from "./id-token-hint-cookie.util";
 
 // Reads the session cookie inline rather than through middleware: logout must work
 // even when the session is already gone.

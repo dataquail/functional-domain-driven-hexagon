@@ -5,11 +5,11 @@ import * as Layer from "effect/Layer";
 import type * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.ts";
-import { type OrganizationRolesRoot } from "@/modules/organization/domain/organization-roles/organization-roles.root.ts";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { type UserId } from "@/globals/application/ddd/ids/user-id";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository";
+import { type OrganizationRolesRoot } from "@/modules/organization/domain/organization-roles/organization-roles.root";
 
 // Keyed by composite identity serialized as "<userId>|<organizationId>".
 // The HashMap value carries the full `OrganizationRolesRoot` aggregate so

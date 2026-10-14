@@ -1,21 +1,21 @@
 import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.ts";
-import { acceptInvitationEndpoint } from "@/modules/organization/interface/http/accept-invitation.endpoint.ts";
-import { createEndpoint } from "@/modules/organization/interface/http/create.endpoint.ts";
-import { demoteMemberEndpoint } from "@/modules/organization/interface/http/demote-member.endpoint.ts";
-import { findAllEndpoint } from "@/modules/organization/interface/http/find-all.endpoint.ts";
-import { findInvitationsEndpoint } from "@/modules/organization/interface/http/find-invitations.endpoint.ts";
-import { findMembersEndpoint } from "@/modules/organization/interface/http/find-members.endpoint.ts";
-import { findMineEndpoint } from "@/modules/organization/interface/http/find-mine.endpoint.ts";
-import { inviteEndpoint } from "@/modules/organization/interface/http/invite.endpoint.ts";
-import { leaveEndpoint } from "@/modules/organization/interface/http/leave.endpoint.ts";
-import { promoteMemberEndpoint } from "@/modules/organization/interface/http/promote-member.endpoint.ts";
-import { removeMemberEndpoint } from "@/modules/organization/interface/http/remove-member.endpoint.ts";
-import { resendInvitationEndpoint } from "@/modules/organization/interface/http/resend-invitation.endpoint.ts";
-import { restoreEndpoint } from "@/modules/organization/interface/http/restore.endpoint.ts";
-import { revokeInvitationEndpoint } from "@/modules/organization/interface/http/revoke-invitation.endpoint.ts";
-import { softDeleteEndpoint } from "@/modules/organization/interface/http/soft-delete.endpoint.ts";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { acceptInvitationEndpoint } from "@/modules/organization/interface/http/accept-invitation.endpoint";
+import { createEndpoint } from "@/modules/organization/interface/http/create.endpoint";
+import { demoteMemberEndpoint } from "@/modules/organization/interface/http/demote-member.endpoint";
+import { findAllEndpoint } from "@/modules/organization/interface/http/find-all.endpoint";
+import { findInvitationsEndpoint } from "@/modules/organization/interface/http/find-invitations.endpoint";
+import { findMembersEndpoint } from "@/modules/organization/interface/http/find-members.endpoint";
+import { findMineEndpoint } from "@/modules/organization/interface/http/find-mine.endpoint";
+import { inviteEndpoint } from "@/modules/organization/interface/http/invite.endpoint";
+import { leaveEndpoint } from "@/modules/organization/interface/http/leave.endpoint";
+import { promoteMemberEndpoint } from "@/modules/organization/interface/http/promote-member.endpoint";
+import { removeMemberEndpoint } from "@/modules/organization/interface/http/remove-member.endpoint";
+import { resendInvitationEndpoint } from "@/modules/organization/interface/http/resend-invitation.endpoint";
+import { restoreEndpoint } from "@/modules/organization/interface/http/restore.endpoint";
+import { revokeInvitationEndpoint } from "@/modules/organization/interface/http/revoke-invitation.endpoint";
+import { softDeleteEndpoint } from "@/modules/organization/interface/http/soft-delete.endpoint";
 
 // User-facing org operations: create, soft-delete/restore (super-admin),
 // invite + revoke (org members), member listing + remove + promote +

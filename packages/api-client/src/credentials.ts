@@ -7,7 +7,7 @@ import * as Option from "effect/Option";
 import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
 
-import { tokenFromEnv } from "./config.ts";
+import { tokenFromEnv } from "./config";
 
 // On-disk credential file: `$XDG_CONFIG_HOME/org-cli/credentials.json`
 // (falls back to `~/.config`). Holds the device-flow / pasted token and an

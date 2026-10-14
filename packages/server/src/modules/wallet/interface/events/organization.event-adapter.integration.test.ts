@@ -16,23 +16,23 @@ import * as Exit from "effect/Exit";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Layer from "effect/Layer";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { DomainEventBus } from "@/globals/application/ports/event-bus.ts";
-import { TransactionDriverLive } from "@/globals/infrastructure/database/transaction-driver-live.ts";
-import { Api } from "@/globals/infrastructure/framework/http/api.ts";
-import { organizationAccessDomainEvents } from "@/modules/organization/organization.exports.ts";
-import { createWalletHandler } from "@/modules/wallet/commands/create-wallet.handler.ts";
-import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.ts";
-import { OrganizationEventAdapterLive } from "@/modules/wallet/interface/events/organization.event-adapter.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
+import { TransactionDriverLive } from "@/globals/infrastructure/database/transaction-driver-live";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { organizationAccessDomainEvents } from "@/modules/organization/organization.exports";
+import { createWalletHandler } from "@/modules/wallet/commands/create-wallet.handler";
+import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository";
+import { OrganizationEventAdapterLive } from "@/modules/wallet/interface/events/organization.event-adapter";
 import {
   walletCommandGroup,
   WalletCommands,
   WalletCommandsLive,
-} from "@/modules/wallet/wallet.command-handlers.ts";
-import { CryptoFake } from "@/test-utils/crypto-fake.ts";
-import { describeIntegration, describeServer } from "@/test-utils/server-test-runtime.ts";
-import { TestDatabaseLive } from "@/test-utils/test-database.ts";
-import { TestServerLiveAsMember } from "@/test-utils/test-server.ts";
+} from "@/modules/wallet/wallet.command-handlers";
+import { CryptoFake } from "@/test-utils/crypto-fake";
+import { describeIntegration, describeServer } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
+import { TestServerLiveAsMember } from "@/test-utils/test-server";
 
 const WALLET_TABLES = [
   "wallet.wallets",

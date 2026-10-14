@@ -2,7 +2,7 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { IDENTITY_SCOPES, type IdentityAuth } from "../auth/identity-auth.ts";
+import { IDENTITY_SCOPES, type IdentityAuth } from "../auth/identity-auth";
 
 export const SeedUser = Schema.Struct({
   email: Schema.String,

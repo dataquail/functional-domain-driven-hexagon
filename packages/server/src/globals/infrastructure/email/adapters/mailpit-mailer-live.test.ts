@@ -11,10 +11,10 @@ import * as Layer from "effect/Layer";
 import * as Predicate from "effect/Predicate";
 import * as Schema from "effect/Schema";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.ts";
-import { MailpitMailerLive } from "@/globals/infrastructure/email/adapters/mailpit-mailer-live.ts";
-import { MailDeliveryError } from "@/globals/infrastructure/email/ports/mail-errors.ts";
-import { Mailer } from "@/globals/infrastructure/email/ports/mailer.ts";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars";
+import { MailpitMailerLive } from "@/globals/infrastructure/email/adapters/mailpit-mailer-live";
+import { MailDeliveryError } from "@/globals/infrastructure/email/ports/mail-errors";
+import { Mailer } from "@/globals/infrastructure/email/ports/mailer";
 
 const env = {
   DATABASE_URL: "postgres://localhost/app",

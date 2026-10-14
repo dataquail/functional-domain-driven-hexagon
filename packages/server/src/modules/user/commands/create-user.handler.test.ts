@@ -8,15 +8,15 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { UserAlreadyExists } from "@/modules/user/domain/user/user.errors.ts";
-import { type UserCreated } from "@/modules/user/domain/user/user.events.ts";
-import { UserRepository } from "@/modules/user/domain/user/user.repository.ts";
-import { UserSpecifications } from "@/modules/user/domain/user/user.specification.ts";
-import { UserRepositoryFake } from "@/modules/user/infrastructure/repositories/user.repository-fake.ts";
-import { CryptoFake } from "@/test-utils/crypto-fake.ts";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.ts";
+import { UserAlreadyExists } from "@/modules/user/domain/user/user.errors";
+import { type UserCreated } from "@/modules/user/domain/user/user.events";
+import { UserRepository } from "@/modules/user/domain/user/user.repository";
+import { UserSpecifications } from "@/modules/user/domain/user/user.specification";
+import { UserRepositoryFake } from "@/modules/user/infrastructure/repositories/user.repository-fake";
+import { CryptoFake } from "@/test-utils/crypto-fake";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus";
 
-import { createUserHandler } from "./create-user.handler.ts";
+import { createUserHandler } from "./create-user.handler";
 
 const TestLayer = Layer.mergeAll(
   UserRepositoryFake,

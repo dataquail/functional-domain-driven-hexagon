@@ -3,14 +3,14 @@ import { TodosContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { Actions } from "@/globals/application/ports/actions.ts";
-import * as Authz from "@/globals/infrastructure/auth/authz.ts";
+import { Actions } from "@/globals/application/ports/actions";
+import * as Authz from "@/globals/infrastructure/auth/authz";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
-import { UpdateTodoCommand } from "@/modules/todos/commands/update-todo.command.ts";
-import { TodoResource } from "@/modules/todos/policies/todos.policies.ts";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { UpdateTodoCommand } from "@/modules/todos/commands/update-todo.command";
+import { TodoResource } from "@/modules/todos/policies/todos.policies";
 
 export const updateEndpoint = Effect.fn("TodosLive.update")(
   function* (request: EndpointRequest<typeof TodosContract.Group, "update">) {

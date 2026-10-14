@@ -2,9 +2,9 @@ import * as HttpApiEndpoint from "effect/http-api/HttpApiEndpoint";
 import * as HttpApiGroup from "effect/http-api/HttpApiGroup";
 import * as Schema from "effect/Schema";
 
-import * as CustomHttpApiError from "../CustomHttpApiError.ts";
-import { ApiTokenId, UserId } from "../EntityIds.ts";
-import { UserAuthMiddleware } from "../Policy.ts";
+import * as CustomHttpApiError from "../CustomHttpApiError";
+import { ApiTokenId, UserId } from "../EntityIds";
+import { UserAuthMiddleware } from "../Policy";
 
 // ==========================================
 // Shapes

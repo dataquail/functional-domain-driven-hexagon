@@ -6,8 +6,8 @@ import * as Effect from "effect/Effect";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
-import { LeaveOrganizationCommand } from "@/modules/organization/commands/leave-organization.command.ts";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { LeaveOrganizationCommand } from "@/modules/organization/commands/leave-organization.command";
 
 // No `Authz.hasPermissions` check — leaving is a self-action and the
 // membership-existence check (returns 404) is the gate. A caller who

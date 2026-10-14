@@ -4,13 +4,13 @@ import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { Criteria } from "@/globals/application/ddd/specification.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { Criteria } from "@/globals/application/ddd/specification";
 
-import { ApiTokenId } from "./api-token.id.ts";
-import { ApiTokenRoot } from "./api-token.root.ts";
-import { ApiTokenRootOps } from "./api-token.root-ops.ts";
-import { ApiTokenSpecifications } from "./api-token.specification.ts";
+import { ApiTokenId } from "./api-token.id";
+import { ApiTokenRoot } from "./api-token.root";
+import { ApiTokenRootOps } from "./api-token.root-ops";
+import { ApiTokenSpecifications } from "./api-token.specification";
 
 const apiTokenId = ApiTokenId.make("11111111-1111-1111-1111-111111111111");
 const otherId = ApiTokenId.make("99999999-9999-9999-9999-999999999999");

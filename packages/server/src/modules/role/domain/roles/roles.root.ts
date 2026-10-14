@@ -1,8 +1,8 @@
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { RoleValueObject } from "./role.value-object.ts";
+import { RoleValueObject } from "./role.value-object";
 
 // The set of platform-wide roles assigned to one user. Aggregate root,
 // identified by `userId` (every user has at most one Roles aggregate).

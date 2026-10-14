@@ -1,7 +1,7 @@
 import { Command } from "@effect-server-utils/cqrs";
 import * as Schema from "effect/Schema";
 
-import { SessionId } from "@/modules/auth/domain/session/session.id.ts";
+import { SessionId } from "@/modules/auth/domain/session/session.id";
 
 // Sliding-TTL refresh, dispatched by the auth middleware after a successful session lookup.
 // The handler does its own throttle + revocation guard, so the command is safe to fire on every

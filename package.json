@@ -19,7 +19,7 @@
     "check": "node node_modules/typescript/bin/tsc -b tsconfig.json && pnpm -F @org/components check && pnpm -F @org/web check",
     "check:recursive": "pnpm --recursive exec node ../../node_modules/typescript/bin/tsc -b tsconfig.json",
     "check:effect": "node scripts/check-effect-diagnostics.mjs",
-    "check:all": "pnpm lint && pnpm lint:rules && pnpm lint:edges && pnpm lint:architecture && pnpm check && pnpm check:effect && pnpm test && pnpm -F @org/components build-storybook",
+    "check:all": "pnpm lint && pnpm lint:rules && pnpm lint:edges && pnpm lint:architecture && pnpm check && pnpm check:effect && pnpm test && pnpm smoke:bins && pnpm -F @org/components build-storybook",
     "lint": "oxlint --type-aware --deny-warnings packages && pnpm lint:svelte",
     "lint:svelte": "eslint --max-warnings 0 \"packages/**/*.svelte\"",
     "lint:fix": "oxlint --type-aware packages --fix",
@@ -54,7 +54,8 @@
     "architecture:conformance": "architecture conformance packages",
     "architecture:campaigns": "architecture campaigns packages",
     "architecture:facts": "architecture facts",
-    "architecture:browser": "goodbones-browser"
+    "architecture:browser": "goodbones-browser",
+    "smoke:bins": "pnpm -F @org/cli bundle && pnpm -F @org/mcp bundle && node scripts/smoke-bins.mjs"
   },
   "devDependencies": {
     "@babel/cli": "^7.29.7",

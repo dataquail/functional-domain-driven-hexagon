@@ -3,9 +3,9 @@ import type * as DateTime from "effect/DateTime";
 import type * as Effect from "effect/Effect";
 import type * as Option from "effect/Option";
 
-import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.ts";
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import { type WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors.ts";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { type WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors";
 
 // Dumb idempotency log for Stripe webhook deliveries: write-once,
 // keyed by Stripe's event id. No aggregate — the row carries no

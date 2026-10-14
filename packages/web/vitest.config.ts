@@ -2,7 +2,7 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { svelteTesting } from "@testing-library/svelte/vite";
 import { defineConfig } from "vitest/config";
 
-import { webSvelteAliases } from "./aliases.ts";
+import { webSvelteAliases } from "./aliases";
 
 // Kit's own plugin resolves the project from process.cwd(), which is the repo
 // root in a workspace run, so tests compile components with the plain Svelte

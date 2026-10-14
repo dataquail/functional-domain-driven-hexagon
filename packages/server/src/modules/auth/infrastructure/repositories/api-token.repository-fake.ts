@@ -7,11 +7,11 @@ import * as Option from "effect/Option";
 import * as Order from "effect/Order";
 import * as Ref from "effect/Ref";
 
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.ts";
-import { type ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.ts";
-import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.ts";
-import { ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root.ts";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors";
+import { type ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository";
+import { ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root";
 
 export const ApiTokenRepositoryFake = Layer.effect(
   ApiTokenRepository,

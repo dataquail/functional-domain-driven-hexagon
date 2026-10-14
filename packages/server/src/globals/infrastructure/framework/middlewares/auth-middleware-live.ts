@@ -7,9 +7,9 @@ import * as HttpServerRequest from "effect/http/HttpServerRequest";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.ts";
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.ts";
-import { waitUntil } from "@/globals/infrastructure/runtime/execution-context.ts";
+import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars";
+import { waitUntil } from "@/globals/infrastructure/runtime/execution-context";
 import {
   CredentialHash,
   FindApiTokenByHashQuery,
@@ -17,7 +17,7 @@ import {
   SessionId,
   TouchApiTokenCommand,
   TouchSessionCommand,
-} from "@/modules/auth/auth.platform.ts";
+} from "@/modules/auth/auth.platform";
 
 // `Authorization: Bearer <token>` — case-insensitive scheme. The raw token,
 // or none when the header is absent or not a bearer credential.

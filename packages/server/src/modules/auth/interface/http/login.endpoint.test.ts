@@ -1,13 +1,13 @@
 import { describe, expect, it } from "@effect/vitest";
 import { assertNone, assertSome } from "@effect/vitest/utils";
 
-import { loginEndpoint } from "./login.endpoint.ts";
+import { loginEndpoint } from "./login.endpoint";
 import {
   decodePkcePayload,
   encodePkcePayload,
   PKCE_COOKIE_MAX_AGE_MS,
   PKCE_COOKIE_NAME,
-} from "./oidc-pkce-cookie.util.ts";
+} from "./oidc-pkce-cookie.util";
 
 // The login endpoint's overall flow — building the issuer's authorize URL,
 // signing the cookie, stamping the 302 — is exercised end-to-end by

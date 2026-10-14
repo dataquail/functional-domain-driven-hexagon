@@ -8,14 +8,14 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.ts";
-import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.ts";
-import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.ts";
-import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.ts";
-import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositories/api-token.repository-live.ts";
-import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
-import { TestDatabaseLive } from "@/test-utils/test-database.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository";
+import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops";
+import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification";
+import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositories/api-token.repository-live";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const idA = ApiTokenId.make("22222222-2222-2222-2222-222222222222");

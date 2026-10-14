@@ -5,11 +5,11 @@ import * as Layer from "effect/Layer";
 import type * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { type Specification } from "@/globals/application/ddd/specification.ts";
+import { type Specification } from "@/globals/application/ddd/specification";
 import {
   type AuthIdentity,
   AuthIdentityRepository,
-} from "@/modules/auth/domain/auth-identity/auth-identity.repository.ts";
+} from "@/modules/auth/domain/auth-identity/auth-identity.repository";
 
 // The fake exposes a constructor that accepts initial state so tests can
 // seed identities up front, and an in-memory `insert` mirroring the live

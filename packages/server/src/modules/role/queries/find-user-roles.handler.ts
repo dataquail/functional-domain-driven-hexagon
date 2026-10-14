@@ -1,8 +1,8 @@
 import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
-import { type FindUserRolesPayload } from "@/modules/role/queries/find-user-roles.policy-query.ts";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
+import { type FindUserRolesPayload } from "@/modules/role/queries/find-user-roles.policy-query";
 
 // `makeQuery` (not bare `execute`) so the read joins the ambient
 // transaction when one exists — this query is dispatched by consumers' ACL adapters

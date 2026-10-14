@@ -3,8 +3,8 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import * as String from "effect/String";
 
-import type { IdentityAuthPort } from "../auth/identity-auth-port.ts";
-import { htmlResponse } from "../pages/html.ts";
+import type { IdentityAuthPort } from "../auth/identity-auth-port";
+import { htmlResponse } from "../pages/html";
 import {
   checkEmailPage,
   consentPage,
@@ -15,8 +15,8 @@ import {
   resetPasswordPage,
   signInPage,
   signUpPage,
-} from "../pages/identity-pages.ts";
-import { SeedRequest } from "../seed/identity-seed.ts";
+} from "../pages/identity-pages";
+import { SeedRequest } from "../seed/identity-seed";
 
 export type IdentityRouterContext = {
   readonly auth: IdentityAuthPort;

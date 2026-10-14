@@ -1,12 +1,12 @@
 import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
-import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.ts";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id";
 import {
   type ApiTokenView,
   type ListMyApiTokensPayload,
-} from "@/modules/auth/queries/list-my-api-tokens.query.ts";
+} from "@/modules/auth/queries/list-my-api-tokens.query";
 
 const toView = (row: RowSchemas.ApiTokenRow): ApiTokenView => ({
   id: ApiTokenId.make(row.id),

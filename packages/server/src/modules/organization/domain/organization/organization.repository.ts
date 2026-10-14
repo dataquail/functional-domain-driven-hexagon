@@ -2,10 +2,10 @@ import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 import type * as Option from "effect/Option";
 
-import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.ts";
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import { type OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.ts";
-import { type OrganizationRoot } from "@/modules/organization/domain/organization/organization.root.ts";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { type OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors";
+import { type OrganizationRoot } from "@/modules/organization/domain/organization/organization.root";
 
 // Dumb persistence, collapsed to the minimal vocabulary: insert/update the
 // aggregate, and read it back by a Specification. Identity lookups and the

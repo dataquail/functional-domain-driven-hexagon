@@ -8,14 +8,14 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.ts";
-import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.ts";
-import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant/device-grant.root-ops.ts";
-import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification.ts";
-import { DeviceGrantRepositoryLive } from "@/modules/auth/infrastructure/repositories/device-grant.repository-live.ts";
-import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
-import { TestDatabaseLive } from "@/test-utils/test-database.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id";
+import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository";
+import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant/device-grant.root-ops";
+import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification";
+import { DeviceGrantRepositoryLive } from "@/modules/auth/infrastructure/repositories/device-grant.repository-live";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const id = DeviceGrantId.make("22222222-2222-2222-2222-222222222222");

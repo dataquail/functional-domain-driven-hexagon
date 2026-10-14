@@ -3,14 +3,14 @@ import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { Actions } from "@/globals/application/ports/actions.ts";
-import * as Authz from "@/globals/infrastructure/auth/authz.ts";
+import { Actions } from "@/globals/application/ports/actions";
+import * as Authz from "@/globals/infrastructure/auth/authz";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
-import { InviteUserCommand } from "@/modules/organization/commands/invite-user.command.ts";
-import { OrganizationResource } from "@/modules/organization/policies/organization.policies.ts";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { InviteUserCommand } from "@/modules/organization/commands/invite-user.command";
+import { OrganizationResource } from "@/modules/organization/policies/organization.policies";
 
 // Default invitation lifetime — 7 days. Lives at the endpoint
 // (rather than the command) because it's a UX/policy decision, not a

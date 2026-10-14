@@ -2,7 +2,7 @@ import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
 
-import { CredentialHash } from "./credential-hash.domain-service.ts";
+import { CredentialHash } from "./credential-hash.domain-service";
 
 describe("CredentialHash", () => {
   it("hashes deterministically and differs across inputs", () => {

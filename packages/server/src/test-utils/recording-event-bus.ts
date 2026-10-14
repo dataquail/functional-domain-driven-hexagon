@@ -5,8 +5,8 @@ import * as Predicate from "effect/Predicate";
 import * as Ref from "effect/Ref";
 import * as Stream from "effect/Stream";
 
-import { type DomainEvent } from "@/globals/application/ddd/domain-event.ts";
-import { DomainEventBus } from "@/globals/application/ports/event-bus.ts";
+import { type DomainEvent } from "@/globals/application/ddd/domain-event";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
 
 // Test double for `DomainEventBus`: records every dispatched event and ignores
 // every registration, whichever surface it came in on. A use-case unit test

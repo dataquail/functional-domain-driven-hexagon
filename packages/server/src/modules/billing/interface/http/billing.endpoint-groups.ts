@@ -1,10 +1,10 @@
 import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.ts";
-import { cancelSubscriptionEndpoint } from "@/modules/billing/interface/http/cancel-subscription.endpoint.ts";
-import { getCurrentSubscriptionEndpoint } from "@/modules/billing/interface/http/get-current-subscription.endpoint.ts";
-import { startSubscriptionEndpoint } from "@/modules/billing/interface/http/start-subscription.endpoint.ts";
-import { stripeWebhookEndpoint } from "@/modules/billing/interface/http/stripe-webhook.endpoint.ts";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { cancelSubscriptionEndpoint } from "@/modules/billing/interface/http/cancel-subscription.endpoint";
+import { getCurrentSubscriptionEndpoint } from "@/modules/billing/interface/http/get-current-subscription.endpoint";
+import { startSubscriptionEndpoint } from "@/modules/billing/interface/http/start-subscription.endpoint";
+import { stripeWebhookEndpoint } from "@/modules/billing/interface/http/stripe-webhook.endpoint";
 
 // Two contract groups, both wired here:
 //   - `billing` (authenticated, org-scoped): the three subscription

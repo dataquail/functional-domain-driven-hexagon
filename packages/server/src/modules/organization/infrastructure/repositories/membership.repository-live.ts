@@ -3,15 +3,15 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.ts";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
-import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.ts";
-import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.ts";
-import { type MembershipRoot } from "@/modules/organization/domain/membership/membership.root.ts";
-import * as MembershipMapper from "@/modules/organization/infrastructure/repositories/membership.mapper.ts";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { type UserId } from "@/globals/application/ddd/ids/user-id";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
+import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository";
+import { type MembershipRoot } from "@/modules/organization/domain/membership/membership.root";
+import * as MembershipMapper from "@/modules/organization/infrastructure/repositories/membership.mapper";
 
 export const MembershipRepositoryLive = Layer.effect(
   MembershipRepository,

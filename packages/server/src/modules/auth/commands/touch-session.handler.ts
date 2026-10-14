@@ -3,10 +3,10 @@ import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { type TouchSessionPayload } from "@/modules/auth/commands/touch-session.command.ts";
-import { SessionRepository } from "@/modules/auth/domain/session/session.repository.ts";
-import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.ts";
-import { SessionSpecifications } from "@/modules/auth/domain/session/session.specification.ts";
+import { type TouchSessionPayload } from "@/modules/auth/commands/touch-session.command";
+import { SessionRepository } from "@/modules/auth/domain/session/session.repository";
+import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops";
+import { SessionSpecifications } from "@/modules/auth/domain/session/session.specification";
 
 // Sliding-TTL refresh.
 //

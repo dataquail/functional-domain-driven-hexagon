@@ -6,12 +6,12 @@ import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { startDeviceGrantHandler } from "@/modules/auth/commands/start-device-grant.handler.ts";
-import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.ts";
-import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification.ts";
-import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service.ts";
-import { DeviceGrantRepositoryFake } from "@/modules/auth/infrastructure/repositories/device-grant.repository-fake.ts";
-import { CryptoFake } from "@/test-utils/crypto-fake.ts";
+import { startDeviceGrantHandler } from "@/modules/auth/commands/start-device-grant.handler";
+import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository";
+import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification";
+import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service";
+import { DeviceGrantRepositoryFake } from "@/modules/auth/infrastructure/repositories/device-grant.repository-fake";
+import { CryptoFake } from "@/test-utils/crypto-fake";
 
 const TestLayer = Layer.mergeAll(DeviceGrantRepositoryFake, PassThroughUnitOfWork, CryptoFake);
 

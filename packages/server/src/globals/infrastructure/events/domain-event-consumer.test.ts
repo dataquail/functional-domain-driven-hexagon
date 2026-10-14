@@ -25,7 +25,7 @@ import {
   type QueueMessage,
   reportDeadLetters,
   retryDelaySeconds,
-} from "@/globals/infrastructure/events/domain-event-consumer.ts";
+} from "@/globals/infrastructure/events/domain-event-consumer";
 
 const InvitationSent = Event.make("InvitationSent", { email: Schema.String });
 

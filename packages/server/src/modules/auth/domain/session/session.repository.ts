@@ -2,14 +2,14 @@ import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 import type * as Option from "effect/Option";
 
-import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.ts";
-import { type Specification } from "@/globals/application/ddd/specification.ts";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable";
+import { type Specification } from "@/globals/application/ddd/specification";
 import {
   type SessionNotFound,
   type SessionRevoked,
-} from "@/modules/auth/domain/session/session.errors.ts";
-import { type SessionId } from "@/modules/auth/domain/session/session.id.ts";
-import { type SessionRoot } from "@/modules/auth/domain/session/session.root.ts";
+} from "@/modules/auth/domain/session/session.errors";
+import { type SessionId } from "@/modules/auth/domain/session/session.id";
+import { type SessionRoot } from "@/modules/auth/domain/session/session.root";
 
 // Dumb persistence: insert/update the aggregate, soft-delete by id, and read
 // it back by a Specification. The identity lookup is expressed as a spec at the

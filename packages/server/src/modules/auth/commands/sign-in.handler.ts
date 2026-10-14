@@ -4,17 +4,17 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { type SignInPayload } from "@/modules/auth/commands/sign-in.command.ts";
+import { type SignInPayload } from "@/modules/auth/commands/sign-in.command";
 import {
   IdentityEmailAlreadyRegistered,
   IdentityMissingEmail,
-} from "@/modules/auth/domain/auth-identity/auth-identity.errors.ts";
-import { AuthIdentityRepository } from "@/modules/auth/domain/auth-identity/auth-identity.repository.ts";
-import { AuthIdentitySpecifications } from "@/modules/auth/domain/auth-identity/auth-identity.specification.ts";
-import { UserProvisioning } from "@/modules/auth/domain/ports/acl/user-provisioning.acl.ts";
-import { SessionId } from "@/modules/auth/domain/session/session.id.ts";
-import { SessionRepository } from "@/modules/auth/domain/session/session.repository.ts";
-import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.ts";
+} from "@/modules/auth/domain/auth-identity/auth-identity.errors";
+import { AuthIdentityRepository } from "@/modules/auth/domain/auth-identity/auth-identity.repository";
+import { AuthIdentitySpecifications } from "@/modules/auth/domain/auth-identity/auth-identity.specification";
+import { UserProvisioning } from "@/modules/auth/domain/ports/acl/user-provisioning.acl";
+import { SessionId } from "@/modules/auth/domain/session/session.id";
+import { SessionRepository } from "@/modules/auth/domain/session/session.repository";
+import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops";
 
 const IDENTITY_PROVIDER = "better-auth";
 

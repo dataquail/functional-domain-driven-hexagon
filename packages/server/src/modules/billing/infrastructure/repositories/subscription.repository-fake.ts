@@ -5,12 +5,12 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.ts";
-import { type SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.ts";
-import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.ts";
-import { type SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.ts";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors";
+import { type SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id";
+import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository";
+import { type SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root";
 
 const findByOrgIn = (
   store: HashMap.HashMap<SubscriptionId, SubscriptionRoot>,

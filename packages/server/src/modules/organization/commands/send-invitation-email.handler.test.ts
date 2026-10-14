@@ -6,16 +6,16 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.ts";
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { sendInvitationEmailHandler } from "@/modules/organization/commands/send-invitation-email.handler.ts";
-import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.ts";
-import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.ts";
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { sendInvitationEmailHandler } from "@/modules/organization/commands/send-invitation-email.handler";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository";
+import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops";
 import {
   InvitationMailerFake,
   SentInvitations,
-} from "@/modules/organization/infrastructure/clients/invitation-mailer.client-fake.ts";
-import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake.ts";
+} from "@/modules/organization/infrastructure/clients/invitation-mailer.client-fake";
+import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake";
 
 const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");
 const organizationId = OrganizationId.make("22222222-2222-2222-2222-222222222222");

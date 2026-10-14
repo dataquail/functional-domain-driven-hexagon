@@ -1,8 +1,8 @@
 import * as Context from "effect/Context";
 import * as HttpApiMiddleware from "effect/http-api/HttpApiMiddleware";
 
-import * as CustomHttpApiError from "./CustomHttpApiError.ts";
-import { type UserId } from "./EntityIds.ts";
+import * as CustomHttpApiError from "./CustomHttpApiError";
+import { type UserId } from "./EntityIds";
 
 // CurrentUser is the per-request identity carried via Effect's
 // environment — sessionId + userId, nothing else. Authorization-relevant

@@ -4,13 +4,9 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import {
-  type ClientCredentials,
-  type IdentityAuth,
-  identityAuthFor,
-} from "../auth/identity-auth.ts";
-import type { IdentityEmail } from "../mail/identity-mailer.ts";
-import { IdentityTestDatabase, truncateIdentityTables } from "./identity-test-database.ts";
+import { type ClientCredentials, type IdentityAuth, identityAuthFor } from "../auth/identity-auth";
+import type { IdentityEmail } from "../mail/identity-mailer";
+import { IdentityTestDatabase, truncateIdentityTables } from "./identity-test-database";
 
 export const IDENTITY_BASE_URL = "http://localhost:3002";
 export const APP_URL = "http://localhost:3000";

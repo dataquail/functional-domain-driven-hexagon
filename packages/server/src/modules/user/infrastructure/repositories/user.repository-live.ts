@@ -3,18 +3,18 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.ts";
+import { type UserId } from "@/globals/application/ddd/ids/user-id";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql";
 import {
   translateDatabaseErrors,
   translatePersistenceUnavailable,
-} from "@/globals/infrastructure/database/translate-database-errors.ts";
-import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user/user.errors.ts";
-import { UserRepository } from "@/modules/user/domain/user/user.repository.ts";
-import { type UserRoot } from "@/modules/user/domain/user/user.root.ts";
+} from "@/globals/infrastructure/database/translate-database-errors";
+import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user/user.errors";
+import { UserRepository } from "@/modules/user/domain/user/user.repository";
+import { type UserRoot } from "@/modules/user/domain/user/user.root";
 
-import * as UserMapper from "./user.mapper.ts";
+import * as UserMapper from "./user.mapper";
 
 export const UserRepositoryLive = Layer.effect(
   UserRepository,

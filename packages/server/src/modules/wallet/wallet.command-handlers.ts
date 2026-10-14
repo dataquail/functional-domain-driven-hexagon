@@ -3,9 +3,9 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { CreateWalletCommand } from "@/modules/wallet/commands/create-wallet.command.ts";
-import { createWalletHandler } from "@/modules/wallet/commands/create-wallet.handler.ts";
-import { WalletRepositoryLive } from "@/modules/wallet/infrastructure/repositories/wallet.repository-live.ts";
+import { CreateWalletCommand } from "@/modules/wallet/commands/create-wallet.command";
+import { createWalletHandler } from "@/modules/wallet/commands/create-wallet.handler";
+import { WalletRepositoryLive } from "@/modules/wallet/infrastructure/repositories/wallet.repository-live";
 
 // The group is the module's slice of the write-side surface; `handlersOf` moves the
 // handlers' requirements onto the layer, which is why the composition root — not a

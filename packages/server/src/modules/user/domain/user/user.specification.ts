@@ -1,7 +1,7 @@
-import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { Spec, type Specification } from "@/globals/application/ddd/specification.ts";
+import { type UserId } from "@/globals/application/ddd/ids/user-id";
+import { Spec, type Specification } from "@/globals/application/ddd/specification";
 
-import { type UserRoot } from "./user.root.ts";
+import { type UserRoot } from "./user.root";
 
 // Translatable specs (carry a Criteria → usable as repository filters and as
 // in-memory guards). The field-name strings live here and in the mapper's

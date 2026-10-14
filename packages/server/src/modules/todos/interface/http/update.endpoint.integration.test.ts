@@ -7,11 +7,11 @@ import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { Api } from "@/globals/infrastructure/framework/http/api.ts";
-import { TodoId } from "@/modules/todos/domain/todo/todo.id.ts";
-import { describeServer } from "@/test-utils/server-test-runtime.ts";
-import { TestServerLiveAsMember } from "@/test-utils/test-server.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { TodoId } from "@/modules/todos/domain/todo/todo.id";
+import { describeServer } from "@/test-utils/server-test-runtime";
+import { TestServerLiveAsMember } from "@/test-utils/test-server";
 
 const TODO_TABLES = [
   "todos.todos",

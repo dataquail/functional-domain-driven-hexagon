@@ -9,9 +9,9 @@ import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 import type * as Statement from "effect/sql/Statement";
 
-import { TransactionDriverLive } from "@/globals/infrastructure/database/transaction-driver-live.ts";
-import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
-import { TestDatabaseLive } from "@/test-utils/test-database.ts";
+import { TransactionDriverLive } from "@/globals/infrastructure/database/transaction-driver-live";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 // The unit of work reads `EventBus` from ambient context to flush it.
 // Bundling them in one layer guarantees the test body's `yield* EventBus`

@@ -1,10 +1,10 @@
 import * as Schema from "effect/Schema";
 
-import * as Event from "@/globals/application/ddd/domain-event.ts";
-import { type SpanAttributesExtractor } from "@/globals/application/ddd/domain-event.ts";
-import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.ts";
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import * as Event from "@/globals/application/ddd/domain-event";
+import { type SpanAttributesExtractor } from "@/globals/application/ddd/domain-event";
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
 export const InvitationIssued = Event.make("InvitationIssued", {
   invitationId: InvitationId,

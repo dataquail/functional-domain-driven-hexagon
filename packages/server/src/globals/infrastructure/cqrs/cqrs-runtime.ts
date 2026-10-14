@@ -11,57 +11,57 @@ import { makeDurableUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { TransactionDriverLive } from "@/globals/infrastructure/database/transaction-driver-live.ts";
-import { DeliveryLedgerLive } from "@/globals/infrastructure/events/delivery-ledger-live.ts";
-import { type DomainEventQueue } from "@/globals/infrastructure/events/domain-event-queue.ts";
+import { TransactionDriverLive } from "@/globals/infrastructure/database/transaction-driver-live";
+import { DeliveryLedgerLive } from "@/globals/infrastructure/events/delivery-ledger-live";
+import { type DomainEventQueue } from "@/globals/infrastructure/events/domain-event-queue";
 import {
   InProcessDomainEventDeliveryLive,
   InProcessDomainEventQueueLive,
-} from "@/globals/infrastructure/events/in-process-domain-event-queue-live.ts";
-import { OutboxTransportLive } from "@/globals/infrastructure/events/outbox-transport-live.ts";
+} from "@/globals/infrastructure/events/in-process-domain-event-queue-live";
+import { OutboxTransportLive } from "@/globals/infrastructure/events/outbox-transport-live";
 import {
   authCommandGroup,
   AuthCommands,
   AuthQueries,
   authQueryGroup,
-} from "@/modules/auth/auth.platform.ts";
+} from "@/modules/auth/auth.platform";
 import {
   billingCommandGroup,
   BillingCommands,
   billingEventSpanAttributes,
   BillingQueries,
   billingQueryGroup,
-} from "@/modules/billing/billing.platform.ts";
+} from "@/modules/billing/billing.platform";
 import {
   organizationCommandGroup,
   OrganizationCommands,
   organizationEventSpanAttributes,
   OrganizationQueries,
   organizationQueryGroup,
-} from "@/modules/organization/organization.platform.ts";
+} from "@/modules/organization/organization.platform";
 import {
   roleCommandGroup,
   RoleCommands,
   roleEventSpanAttributes,
-} from "@/modules/role/role.platform.ts";
+} from "@/modules/role/role.platform";
 import {
   todoCommandGroup,
   TodoCommands,
   TodoQueries,
   todoQueryGroup,
-} from "@/modules/todos/todos.platform.ts";
+} from "@/modules/todos/todos.platform";
 import {
   userCommandGroup,
   UserCommands,
   userEventSpanAttributes,
   UserQueries,
   userQueryGroup,
-} from "@/modules/user/user.platform.ts";
+} from "@/modules/user/user.platform";
 import {
   walletCommandGroup,
   WalletCommands,
   walletEventSpanAttributes,
-} from "@/modules/wallet/wallet.platform.ts";
+} from "@/modules/wallet/wallet.platform";
 
 // The parts of the composition root that production and the test runtime share
 // verbatim. Only the module *ordering* differs between them (the test runtime

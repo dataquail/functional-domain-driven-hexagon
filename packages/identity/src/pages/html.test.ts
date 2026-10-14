@@ -2,7 +2,7 @@ import { describe, expect, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { html, htmlResponse } from "./html.ts";
+import { html, htmlResponse } from "./html";
 
 describe("html", () => {
   it("escapes every interpolated string, so a form field cannot inject markup", () => {

@@ -9,11 +9,11 @@ import * as Predicate from "effect/Predicate";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
 
-import { OrganizationAlreadyDeleted, OrganizationNotDeleted } from "./organization.errors.ts";
-import { type OrganizationEvent } from "./organization.events.ts";
-import { OrganizationRootOps } from "./organization.root-ops.ts";
+import { OrganizationAlreadyDeleted, OrganizationNotDeleted } from "./organization.errors";
+import { type OrganizationEvent } from "./organization.events";
+import { OrganizationRootOps } from "./organization.root-ops";
 
 const id = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const now = DateTime.makeUnsafe("2026-01-01T00:00:00Z");

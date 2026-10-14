@@ -4,7 +4,7 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { orFail } from "../src/or-fail.ts";
+import { orFail } from "../src/or-fail";
 
 class NotFound extends Schema.TaggedError<NotFound, { readonly brand: "NotFound" }>()(
   "NotFound",

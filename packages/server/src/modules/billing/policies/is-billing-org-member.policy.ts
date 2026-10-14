@@ -1,8 +1,8 @@
 import { type ResourceCheck } from "@effect-server-utils/authz";
 
-import { type OrganizationAccess } from "@/modules/billing/domain/ports/acl/organization-access.acl.ts";
+import { type OrganizationAccess } from "@/modules/billing/domain/ports/acl/organization-access.acl";
 
-import { type BillingResourceContext } from "./billing.resource-resolver.ts";
+import { type BillingResourceContext } from "./billing.resource-resolver";
 
 // "Is this caller a member of the billing-resource's org?" — gates reading the
 // subscription. The port arrives as an argument rather than through the Effect

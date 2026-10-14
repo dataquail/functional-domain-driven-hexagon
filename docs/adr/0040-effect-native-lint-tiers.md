@@ -41,12 +41,15 @@ as `effect-oxc`, since `oxlint-plugin-effect` already owns `effect/*` (`tools/ox
 Three guard code this repo does not have yet: bigint literals, instance members on `Schema.Opaque` classes,
 and unused `@internal` exports. Two changed the tree:
 
-- **`no-js-extension-imports`**: imports name the file they mean, `./x.ts`, and `tsc` rewrites them to `.js`
-  on emit (`allowImportingTsExtensions` + `rewriteRelativeImportExtensions` in `tsconfig.base.json`). The rule
-  reaches relative imports only; the server's `@/` alias imports moved to `.ts` too, so the repo keeps one
-  convention. `tsc` will not emit JS for a non-relative `.ts` import, and nothing runs the server's emitted JS
-  (the Worker is bundled from source), so the server's tsconfigs emit declarations only. The projects that
-  never emit (`noEmit`) turn the rewrite off.
+- **`no-js-extension-imports`**: imports carry no extension at all — `./x`, `@/modules/x/y` — and every
+  package resolves with `moduleResolution: "Bundler"` (`module: "ESNext"`). `NodeNext`'s promise, that an
+  import tsc accepts resolves the same way under plain Node, only mattered where Node runs tsc's output, and
+  nothing here does: the Workers are bundled by esbuild, web and components by Vite, tests and scripts run
+  under vitest and tsx, and the server's `@/` aliases were never Node-resolvable anyway. The two binaries that
+  did run tsc output, `org` and `org-mcp`, were broken on Node — the built CLI could not resolve
+  `@org/api-client` — so they are now esbuild bundles (`build/bin/main.js`), and `pnpm smoke:bins` (in CI and
+  `check:all`) runs both the way a user does. With `allowImportingTsExtensions` off, tsc refuses a `.ts`
+  specifier (TS5097) and the rule refuses a `.js` one, so extensionless is the only form either accepts.
 - **`no-import-from-barrel-package`**: no import of `effect`'s barrels (scoped to `effect` itself, see
   `UPSTREAM.md`), and no relative import of an `index` file. Every `index.ts` that was more than a re-export
   got a name saying what it is: a module's endpoint registration is `interface/{http,cli}/<feature>.endpoint-groups.ts`,

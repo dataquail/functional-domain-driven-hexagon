@@ -8,14 +8,14 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { syncSubscriptionHandler } from "@/modules/billing/commands/sync-subscription.handler.ts";
-import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.ts";
-import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.ts";
-import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.ts";
-import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.ts";
-import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake.ts";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { syncSubscriptionHandler } from "@/modules/billing/commands/sync-subscription.handler";
+import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id";
+import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository";
+import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops";
+import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification";
+import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus";
 
 const acme = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const subId = SubscriptionId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");

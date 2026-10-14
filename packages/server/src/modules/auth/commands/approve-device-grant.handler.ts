@@ -3,14 +3,14 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { type ApproveDeviceGrantPayload } from "@/modules/auth/commands/approve-device-grant.command.ts";
+import { type ApproveDeviceGrantPayload } from "@/modules/auth/commands/approve-device-grant.command";
 import {
   DeviceGrantExpired,
   DeviceGrantNotFound,
-} from "@/modules/auth/domain/device-grant/device-grant.errors.ts";
-import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.ts";
-import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant/device-grant.root-ops.ts";
-import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification.ts";
+} from "@/modules/auth/domain/device-grant/device-grant.errors";
+import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository";
+import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant/device-grant.root-ops";
+import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification";
 
 // Looks up the grant by its user code, refuses a lapsed one, and binds it to
 // the approving user. Idempotent: re-approving an already-approved grant just

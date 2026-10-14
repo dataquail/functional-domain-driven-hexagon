@@ -2,8 +2,8 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 
 import { recordCalls } from "../../test/calls";
+import { Form } from "./form";
 import FormRoot from "./form.svelte";
-import { Form } from "./form.ts";
 import FieldError from "./form-error.part.svelte";
 
 describe("Form", () => {

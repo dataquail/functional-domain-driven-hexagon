@@ -2,9 +2,9 @@ import { Command } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors";
 
 // Self-removal — same persistence shape as RemoveMemberCommand but the actor
 // IS the target. Kept as a separate command so the policy layer can

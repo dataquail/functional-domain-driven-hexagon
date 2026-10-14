@@ -3,15 +3,15 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { DomainEventBus } from "@/globals/application/ports/event-bus.ts";
-import { type AcceptInvitationPayload } from "@/modules/organization/commands/accept-invitation.command.ts";
-import { InvitationAcceptance } from "@/modules/organization/domain/domain-services/invitation-acceptance.domain-service.ts";
-import { InvitationTokenNotFound } from "@/modules/organization/domain/invitation/invitation.errors.ts";
-import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.ts";
-import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.ts";
-import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.ts";
-import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors.ts";
-import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.ts";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
+import { type AcceptInvitationPayload } from "@/modules/organization/commands/accept-invitation.command";
+import { InvitationAcceptance } from "@/modules/organization/domain/domain-services/invitation-acceptance.domain-service";
+import { InvitationTokenNotFound } from "@/modules/organization/domain/invitation/invitation.errors";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository";
+import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository";
+import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors";
+import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl";
 
 export const acceptInvitationHandler = Effect.fn("acceptInvitationHandler")(
   function* (cmd: AcceptInvitationPayload) {

@@ -6,8 +6,8 @@ import * as Effect from "effect/Effect";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
-import { AcceptInvitationCommand } from "@/modules/organization/commands/accept-invitation.command.ts";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { AcceptInvitationCommand } from "@/modules/organization/commands/accept-invitation.command";
 
 // Sits in the standalone InvitationGroup (`/api/invitations/:token/accept`)
 // because the caller doesn't have a membership yet and the URL is

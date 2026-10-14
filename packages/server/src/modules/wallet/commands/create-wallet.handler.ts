@@ -3,11 +3,11 @@ import * as Crypto from "effect/Crypto";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { DomainEventBus } from "@/globals/application/ports/event-bus.ts";
-import { type CreateWalletPayload } from "@/modules/wallet/commands/create-wallet.command.ts";
-import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id.ts";
-import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.ts";
-import { WalletRootOps } from "@/modules/wallet/domain/wallet/wallet.root-ops.ts";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
+import { type CreateWalletPayload } from "@/modules/wallet/commands/create-wallet.command";
+import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id";
+import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository";
+import { WalletRootOps } from "@/modules/wallet/domain/wallet/wallet.root-ops";
 
 // Creates the org's wallet with a zero balance. Idempotent: a duplicate
 // trigger for an org that already has a wallet is a no-op — the insert's

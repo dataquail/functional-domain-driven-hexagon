@@ -2,12 +2,12 @@ import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.ts";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
-import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.ts";
-import { type RolesRoot } from "@/modules/role/domain/roles/roles.root.ts";
-import * as RoleMapper from "@/modules/role/infrastructure/repositories/role.mapper.ts";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
+import { RolesRepository } from "@/modules/role/domain/roles/roles.repository";
+import { type RolesRoot } from "@/modules/role/domain/roles/roles.root";
+import * as RoleMapper from "@/modules/role/infrastructure/repositories/role.mapper";
 
 export const RolesRepositoryLive = Layer.effect(
   RolesRepository,

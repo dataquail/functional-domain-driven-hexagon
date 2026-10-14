@@ -6,8 +6,8 @@ import * as FileSystem from "effect/FileSystem";
 import * as Option from "effect/Option";
 import * as Path from "effect/Path";
 
-import { migrations } from "../src/migrations/registry.ts";
-import { migrationsLoader, MODULE_SCHEMAS } from "../src/migrator.ts";
+import { migrations } from "../src/migrations/registry";
+import { migrationsLoader, MODULE_SCHEMAS } from "../src/migrator";
 
 const migrationsDirectory = Effect.gen(function* () {
   const path = yield* Path.Path;

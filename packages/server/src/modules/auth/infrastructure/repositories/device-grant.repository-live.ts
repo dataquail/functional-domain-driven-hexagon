@@ -3,15 +3,15 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.ts";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
-import { DeviceGrantNotFound } from "@/modules/auth/domain/device-grant/device-grant.errors.ts";
-import { type DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.ts";
-import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.ts";
-import { type DeviceGrantRoot } from "@/modules/auth/domain/device-grant/device-grant.root.ts";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
+import { DeviceGrantNotFound } from "@/modules/auth/domain/device-grant/device-grant.errors";
+import { type DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id";
+import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository";
+import { type DeviceGrantRoot } from "@/modules/auth/domain/device-grant/device-grant.root";
 
-import * as DeviceGrantMapper from "./device-grant.mapper.ts";
+import * as DeviceGrantMapper from "./device-grant.mapper";
 
 export const DeviceGrantRepositoryLive = Layer.effect(
   DeviceGrantRepository,

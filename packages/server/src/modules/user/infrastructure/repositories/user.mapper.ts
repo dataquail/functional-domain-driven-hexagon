@@ -2,10 +2,10 @@ import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.ts";
-import { UserRoot } from "@/modules/user/domain/user/user.root.ts";
-import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql";
+import { UserRoot } from "@/modules/user/domain/user/user.root";
+import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object";
 
 type Row = RowSchemas.UserRow;
 

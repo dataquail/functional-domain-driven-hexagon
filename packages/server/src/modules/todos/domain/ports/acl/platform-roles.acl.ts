@@ -1,8 +1,8 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
-import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.ts";
+import { type UserId } from "@/globals/application/ddd/ids/user-id";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable";
 
 // ADR-0022 outbound port. Todos' policies give super-admins a bypass, which
 // means asking the role module a question. The port states it as the single

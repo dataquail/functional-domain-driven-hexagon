@@ -1,6 +1,6 @@
 import * as Effect from "effect/Effect";
 
-import { migrateTestDatabase } from "./test-database.ts";
+import { migrateTestDatabase } from "./test-database";
 
 // Vitest expects globalSetup to default-export a function. Integration mode
 // migrates, and fails the whole run when the database is unset or unreachable.

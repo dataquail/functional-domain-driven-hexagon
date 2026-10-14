@@ -8,18 +8,18 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { ingestStripeWebhookHandler } from "@/modules/billing/commands/ingest-stripe-webhook.handler.ts";
-import { InvalidWebhookSignature } from "@/modules/billing/domain/subscription/subscription.errors.ts";
-import { type StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events.ts";
-import { StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.ts";
-import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository.ts";
-import { WebhookEventSpecifications } from "@/modules/billing/domain/webhook-event/webhook-event.specification.ts";
+import { ingestStripeWebhookHandler } from "@/modules/billing/commands/ingest-stripe-webhook.handler";
+import { InvalidWebhookSignature } from "@/modules/billing/domain/subscription/subscription.errors";
+import { type StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events";
+import { StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object";
+import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository";
+import { WebhookEventSpecifications } from "@/modules/billing/domain/webhook-event/webhook-event.specification";
 import {
   BillingGatewayFake,
   FAKE_WEBHOOK_SIGNATURE,
-} from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake.ts";
-import { WebhookEventRepositoryFake } from "@/modules/billing/infrastructure/repositories/webhook-event.repository-fake.ts";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.ts";
+} from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake";
+import { WebhookEventRepositoryFake } from "@/modules/billing/infrastructure/repositories/webhook-event.repository-fake";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus";
 
 const TestLayer = Layer.mergeAll(
   BillingGatewayFake,

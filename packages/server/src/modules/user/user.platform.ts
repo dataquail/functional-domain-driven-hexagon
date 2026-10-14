@@ -2,7 +2,7 @@
 // What a peer module may reach is user.exports.ts. `UserCommands` and
 // `UserQueries` appear in both: the buses route them, and auth and organization
 // resolve them through their own ACL ports.
-export { userCommandGroup, UserCommands } from "./user.command-handlers.ts";
-export { userEventSpanAttributes } from "./user.event-span-attributes.ts";
-export { UserModule } from "./user.module.ts";
-export { UserQueries, userQueryGroup } from "./user.query-handlers.ts";
+export { userCommandGroup, UserCommands } from "./user.command-handlers";
+export { userEventSpanAttributes } from "./user.event-span-attributes";
+export { UserModule } from "./user.module";
+export { UserQueries, userQueryGroup } from "./user.query-handlers";

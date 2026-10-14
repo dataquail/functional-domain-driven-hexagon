@@ -9,7 +9,7 @@ import {
   ExecutionContext,
   makeWorkerExecutionContext,
   waitUntil,
-} from "@/globals/infrastructure/runtime/execution-context.ts";
+} from "@/globals/infrastructure/runtime/execution-context";
 
 describe("waitUntil", () => {
   it.effect("runs the work on a detached fiber outside a Worker", () =>

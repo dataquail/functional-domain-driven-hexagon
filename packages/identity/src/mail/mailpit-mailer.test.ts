@@ -8,9 +8,9 @@ import * as Option from "effect/Option";
 import * as Predicate from "effect/Predicate";
 import * as Schema from "effect/Schema";
 
-import { verificationEmail } from "./identity-emails.ts";
-import { MailDeliveryError } from "./identity-mailer.ts";
-import { mailpitMailer, MailpitMessage } from "./mailpit-mailer.ts";
+import { verificationEmail } from "./identity-emails";
+import { MailDeliveryError } from "./identity-mailer";
+import { mailpitMailer, MailpitMessage } from "./mailpit-mailer";
 
 const sender = { address: "noreply@localhost", name: "Effect Monorepo" };
 

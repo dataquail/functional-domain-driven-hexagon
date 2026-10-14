@@ -4,14 +4,14 @@ import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { Actions } from "@/globals/application/ports/actions.ts";
-import * as Authz from "@/globals/infrastructure/auth/authz.ts";
+import { Actions } from "@/globals/application/ports/actions";
+import * as Authz from "@/globals/infrastructure/auth/authz";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
-import { GrantOrganizationRoleCommand } from "@/modules/organization/commands/grant-organization-role.command.ts";
-import { OrganizationResource } from "@/modules/organization/policies/organization.policies.ts";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { GrantOrganizationRoleCommand } from "@/modules/organization/commands/grant-organization-role.command";
+import { OrganizationResource } from "@/modules/organization/policies/organization.policies";
 
 // Promote a member to the `admin` OrganizationRole. Gated by the
 // `update` policy (`any(SuperAdminOnly, IsOrgAdmin)`) so org admins and

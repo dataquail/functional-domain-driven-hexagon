@@ -9,15 +9,15 @@ import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { Spec } from "@/globals/application/ddd/specification.ts";
-import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.ts";
-import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.ts";
-import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.ts";
-import { OrganizationSpecifications } from "@/modules/organization/domain/organization/organization.specification.ts";
-import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.ts";
-import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
-import { TestDatabaseLive } from "@/test-utils/test-database.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { Spec } from "@/globals/application/ddd/specification";
+import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors";
+import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository";
+import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops";
+import { OrganizationSpecifications } from "@/modules/organization/domain/organization/organization.specification";
+import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const activeById = (id: OrganizationId) =>
   Spec.and(OrganizationSpecifications.withId(id), OrganizationSpecifications.notDeleted);

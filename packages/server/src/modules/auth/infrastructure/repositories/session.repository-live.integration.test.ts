@@ -8,14 +8,14 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { SessionId } from "@/modules/auth/domain/session/session.id.ts";
-import { SessionRepository } from "@/modules/auth/domain/session/session.repository.ts";
-import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.ts";
-import { SessionSpecifications } from "@/modules/auth/domain/session/session.specification.ts";
-import { SessionRepositoryLive } from "@/modules/auth/infrastructure/repositories/session.repository-live.ts";
-import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
-import { TestDatabaseLive } from "@/test-utils/test-database.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { SessionId } from "@/modules/auth/domain/session/session.id";
+import { SessionRepository } from "@/modules/auth/domain/session/session.repository";
+import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops";
+import { SessionSpecifications } from "@/modules/auth/domain/session/session.specification";
+import { SessionRepositoryLive } from "@/modules/auth/infrastructure/repositories/session.repository-live";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const sessionId = SessionId.make("22222222-2222-2222-2222-222222222222");

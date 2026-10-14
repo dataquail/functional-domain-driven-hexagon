@@ -9,12 +9,12 @@ import * as Predicate from "effect/Predicate";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { type UserEvent } from "./user.events.ts";
-import { type UserRoot } from "./user.root.ts";
-import { UserRootOps } from "./user.root-ops.ts";
-import { AddressValueObject } from "./value-objects/address.value-object.ts";
+import { type UserEvent } from "./user.events";
+import { type UserRoot } from "./user.root";
+import { UserRootOps } from "./user.root-ops";
+import { AddressValueObject } from "./value-objects/address.value-object";
 
 const id = UserId.make("11111111-1111-1111-1111-111111111111");
 const now = DateTime.makeUnsafe("2025-01-01T00:00:00Z");

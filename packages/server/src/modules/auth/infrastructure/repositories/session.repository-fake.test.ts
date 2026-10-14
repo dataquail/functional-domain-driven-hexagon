@@ -6,14 +6,14 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { SessionNotFound } from "@/modules/auth/domain/session/session.errors.ts";
-import { SessionId } from "@/modules/auth/domain/session/session.id.ts";
-import { SessionRepository } from "@/modules/auth/domain/session/session.repository.ts";
-import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.ts";
-import { SessionSpecifications } from "@/modules/auth/domain/session/session.specification.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { SessionNotFound } from "@/modules/auth/domain/session/session.errors";
+import { SessionId } from "@/modules/auth/domain/session/session.id";
+import { SessionRepository } from "@/modules/auth/domain/session/session.repository";
+import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops";
+import { SessionSpecifications } from "@/modules/auth/domain/session/session.specification";
 
-import { SessionRepositoryFake } from "./session.repository-fake.ts";
+import { SessionRepositoryFake } from "./session.repository-fake";
 
 const idA = SessionId.make("11111111-1111-1111-1111-111111111111");
 const idMissing = SessionId.make("99999999-9999-9999-9999-999999999999");

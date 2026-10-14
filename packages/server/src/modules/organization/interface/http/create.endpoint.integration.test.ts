@@ -6,10 +6,10 @@ import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Schema from "effect/Schema";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.ts";
-import { MEMBER_CALLER_ID } from "@/test-utils/fake-auth-middleware.ts";
-import { describeServer } from "@/test-utils/server-test-runtime.ts";
-import { TestServerLiveAsMember } from "@/test-utils/test-server.ts";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { MEMBER_CALLER_ID } from "@/test-utils/fake-auth-middleware";
+import { describeServer } from "@/test-utils/server-test-runtime";
+import { TestServerLiveAsMember } from "@/test-utils/test-server";
 
 const NameRow = Schema.Struct({ name: Schema.String });
 const MembershipCountRow = Schema.Struct({ user_id: Schema.String.check(Schema.isGUID()) });

@@ -1,8 +1,8 @@
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { ApiTokenId } from "./api-token.id.ts";
+import { ApiTokenId } from "./api-token.id";
 
 // A long-lived bearer credential a user mints for the CLI / MCP / CI. Unlike
 // `SessionRoot` (sliding TTL), an `ApiTokenRoot` has a FIXED expiry: it lapses

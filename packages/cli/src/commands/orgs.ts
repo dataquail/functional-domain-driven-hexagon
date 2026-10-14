@@ -2,7 +2,7 @@ import * as Command from "effect/cli/Command";
 import * as Console from "effect/Console";
 import * as Effect from "effect/Effect";
 
-import { authedClient, toCliError } from "../internal.ts";
+import { authedClient, toCliError } from "../internal";
 
 const adminMarker = (isAdmin: boolean): string => {
   if (isAdmin) return "  (admin)";

@@ -2,15 +2,15 @@ import { Query } from "@effect-server-utils/cqrs";
 import * as Context from "effect/Context";
 import * as Layer from "effect/Layer";
 
-import { PlatformRolesLive } from "@/modules/auth/infrastructure/acl/platform-roles.acl-live.ts";
-import { findApiTokenByHashHandler } from "@/modules/auth/queries/find-api-token-by-hash.handler.ts";
-import { FindApiTokenByHashQuery } from "@/modules/auth/queries/find-api-token-by-hash.query.ts";
-import { findCurrentUserHandler } from "@/modules/auth/queries/find-current-user.handler.ts";
-import { FindCurrentUserQuery } from "@/modules/auth/queries/find-current-user.query.ts";
-import { findSessionHandler } from "@/modules/auth/queries/find-session.handler.ts";
-import { FindSessionQuery } from "@/modules/auth/queries/find-session.query.ts";
-import { listMyApiTokensHandler } from "@/modules/auth/queries/list-my-api-tokens.handler.ts";
-import { ListMyApiTokensQuery } from "@/modules/auth/queries/list-my-api-tokens.query.ts";
+import { PlatformRolesLive } from "@/modules/auth/infrastructure/acl/platform-roles.acl-live";
+import { findApiTokenByHashHandler } from "@/modules/auth/queries/find-api-token-by-hash.handler";
+import { FindApiTokenByHashQuery } from "@/modules/auth/queries/find-api-token-by-hash.query";
+import { findCurrentUserHandler } from "@/modules/auth/queries/find-current-user.handler";
+import { FindCurrentUserQuery } from "@/modules/auth/queries/find-current-user.query";
+import { findSessionHandler } from "@/modules/auth/queries/find-session.handler";
+import { FindSessionQuery } from "@/modules/auth/queries/find-session.query";
+import { listMyApiTokensHandler } from "@/modules/auth/queries/list-my-api-tokens.handler";
+import { ListMyApiTokensQuery } from "@/modules/auth/queries/list-my-api-tokens.query";
 
 // This module's slice of the read-side dispatch surface. `handlersOf` is what lets the
 // `PlatformRoles` adapter be provided here: the role-module requirement it drags in is

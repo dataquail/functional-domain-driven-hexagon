@@ -2,11 +2,11 @@ import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 import type * as Option from "effect/Option";
 
-import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.ts";
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import { type DeviceGrantNotFound } from "@/modules/auth/domain/device-grant/device-grant.errors.ts";
-import { type DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.ts";
-import { type DeviceGrantRoot } from "@/modules/auth/domain/device-grant/device-grant.root.ts";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { type DeviceGrantNotFound } from "@/modules/auth/domain/device-grant/device-grant.errors";
+import { type DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id";
+import { type DeviceGrantRoot } from "@/modules/auth/domain/device-grant/device-grant.root";
 
 // Dumb collection port (per `feedback_dumb_repositories`): insert/update the
 // aggregate, delete by id, and read it back by a Specification. The lookups the

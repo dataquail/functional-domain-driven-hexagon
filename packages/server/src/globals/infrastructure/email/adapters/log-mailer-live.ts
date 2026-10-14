@@ -1,7 +1,7 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { Mailer } from "../ports/mailer.ts";
+import { Mailer } from "../ports/mailer";
 
 // Dev/CI default backend (`MAILER=log`): structured logs only, no real
 // send — so `pnpm test` and a fresh checkout need no SMTP/SES. The

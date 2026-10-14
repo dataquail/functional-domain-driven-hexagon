@@ -3,13 +3,13 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.ts";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
-import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors.ts";
-import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.ts";
-import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.ts";
-import * as InvitationMapper from "@/modules/organization/infrastructure/repositories/invitation.mapper.ts";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
+import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository";
+import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root";
+import * as InvitationMapper from "@/modules/organization/infrastructure/repositories/invitation.mapper";
 
 export const InvitationRepositoryLive = Layer.effect(
   InvitationRepository,

@@ -2,13 +2,9 @@ import { expect, layer } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 
-import { IdentityTestDatabase } from "../test-utils/identity-test-database.ts";
-import {
-  dailyCappedMailer,
-  sendCountStoreIn,
-  SendCountUnavailable,
-} from "./daily-capped-mailer.ts";
-import { type IdentityEmail, MailDeliveryError } from "./identity-mailer.ts";
+import { IdentityTestDatabase } from "../test-utils/identity-test-database";
+import { dailyCappedMailer, sendCountStoreIn, SendCountUnavailable } from "./daily-capped-mailer";
+import { type IdentityEmail, MailDeliveryError } from "./identity-mailer";
 
 const email = (to: string): IdentityEmail => ({
   to,

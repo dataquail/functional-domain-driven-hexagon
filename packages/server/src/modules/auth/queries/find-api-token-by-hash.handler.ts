@@ -3,16 +3,16 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
-import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id";
 import {
   ApiTokenExpired,
   ApiTokenNotFound,
   type ApiTokenPrincipalView,
   ApiTokenRevoked,
   type FindApiTokenByHashPayload,
-} from "@/modules/auth/queries/find-api-token-by-hash.query.ts";
+} from "@/modules/auth/queries/find-api-token-by-hash.query";
 
 // Looks up a token by hash and validates its lifecycle (revoked /
 // expired). Used by the auth middleware via `QueryBus.execute(...)`; the

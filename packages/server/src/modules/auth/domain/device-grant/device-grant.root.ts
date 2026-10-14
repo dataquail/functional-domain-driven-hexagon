@@ -1,8 +1,8 @@
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { DeviceGrantId } from "./device-grant.id.ts";
+import { DeviceGrantId } from "./device-grant.id";
 
 // A short-lived OAuth 2.0 Device Authorization Grant (RFC 8628), app-native:
 // the CLI starts one, the user approves it in the browser (already signed in),

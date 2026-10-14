@@ -5,10 +5,10 @@ import { Query } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { roleAccessQueries } from "@/modules/role/role.exports.ts";
-import { PlatformRoles } from "@/modules/todos/domain/ports/acl/platform-roles.acl.ts";
-import { PlatformRolesLive } from "@/modules/todos/infrastructure/acl/platform-roles.acl-live.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { roleAccessQueries } from "@/modules/role/role.exports";
+import { PlatformRoles } from "@/modules/todos/domain/ports/acl/platform-roles.acl";
+import { PlatformRolesLive } from "@/modules/todos/infrastructure/acl/platform-roles.acl-live";
 
 // `PlatformRolesLive` translates the role module's role-name list into the one
 // question todos actually asks — "is this caller a super admin?". The narrowing

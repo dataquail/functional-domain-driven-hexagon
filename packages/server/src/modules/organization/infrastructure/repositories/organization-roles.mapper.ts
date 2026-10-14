@@ -2,14 +2,14 @@ import { type RowSchemas } from "@org/database/index";
 import * as Arr from "effect/Array";
 import * as Option from "effect/Option";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.ts";
-import { type OrganizationRoleValueObject } from "@/modules/organization/domain/organization-roles/organization-role.value-object.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql";
+import { type OrganizationRoleValueObject } from "@/modules/organization/domain/organization-roles/organization-role.value-object";
 import {
   IssuedRoleValueObject,
   OrganizationRolesRoot,
-} from "@/modules/organization/domain/organization-roles/organization-roles.root.ts";
+} from "@/modules/organization/domain/organization-roles/organization-roles.root";
 
 type Row = RowSchemas.OrganizationRoleRow;
 

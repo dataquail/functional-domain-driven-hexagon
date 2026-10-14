@@ -2,12 +2,12 @@ import { Command } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
 import {
   BillingGatewayUnavailable,
   SubscriptionAlreadyExistsForOrganization,
-} from "@/modules/billing/domain/subscription/subscription.errors.ts";
-import { SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.ts";
+} from "@/modules/billing/domain/subscription/subscription.errors";
+import { SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root";
 
 export const StartSubscriptionCommand = Command.make("StartSubscriptionCommand", {
   payload: { organizationId: OrganizationId },

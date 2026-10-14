@@ -2,10 +2,10 @@ import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Option from "effect/Option";
 
-import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.ts";
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.ts";
-import { InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.ts";
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql";
+import { InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root";
 
 type Row = RowSchemas.InvitationRow;
 

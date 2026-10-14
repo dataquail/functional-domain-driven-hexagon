@@ -2,14 +2,14 @@ import { QueryBus } from "@effect-server-utils/cqrs";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
-import { Actions } from "@/globals/application/ports/actions.ts";
-import * as Authz from "@/globals/infrastructure/auth/authz.ts";
+import { Actions } from "@/globals/application/ports/actions";
+import * as Authz from "@/globals/infrastructure/auth/authz";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
-import { OrganizationResource } from "@/modules/organization/policies/organization.policies.ts";
-import { FindOrganizationMembershipsQuery } from "@/modules/organization/queries/find-organization-memberships.query.ts";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { OrganizationResource } from "@/modules/organization/policies/organization.policies";
+import { FindOrganizationMembershipsQuery } from "@/modules/organization/queries/find-organization-memberships.query";
 
 // Any member of the org (plus super-admins) may read the roster — the
 // `read` policy's OR chain (`any(SuperAdminOnly, IsMember)`). Viewing

@@ -4,10 +4,10 @@ import { describe, it } from "@effect/vitest";
 import { assertNone } from "@effect/vitest/utils";
 import * as DateTime from "effect/DateTime";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { SessionId } from "./session.id.ts";
-import { SessionRootOps } from "./session.root-ops.ts";
+import { SessionId } from "./session.id";
+import { SessionRootOps } from "./session.root-ops";
 
 const sessionId = SessionId.make("11111111-1111-1111-1111-111111111111");
 const userId = UserId.make("22222222-2222-2222-2222-222222222222");

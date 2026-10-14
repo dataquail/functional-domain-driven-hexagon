@@ -2,10 +2,10 @@ import { assertNone, assertSome } from "@effect/vitest/utils";
 import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { findOrganizationByIdHandler } from "@/modules/organization/queries/find-organization-by-id.handler.ts";
-import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
-import { TestDatabaseLive } from "@/test-utils/test-database.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { findOrganizationByIdHandler } from "@/modules/organization/queries/find-organization-by-id.handler";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const activeOrgId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const deletedOrgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");

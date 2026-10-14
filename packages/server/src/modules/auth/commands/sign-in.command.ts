@@ -2,12 +2,12 @@ import { Command } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 import {
   IdentityEmailAlreadyRegistered,
   IdentityMissingEmail,
-} from "@/modules/auth/domain/auth-identity/auth-identity.errors.ts";
-import { SessionId } from "@/modules/auth/domain/session/session.id.ts";
+} from "@/modules/auth/domain/auth-identity/auth-identity.errors";
+import { SessionId } from "@/modules/auth/domain/session/session.id";
 
 export const SignInResultView = Schema.Struct({
   sessionId: SessionId,

@@ -9,16 +9,16 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { Spec } from "@/globals/application/ddd/specification.ts";
-import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.ts";
-import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.ts";
-import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops.ts";
-import { MembershipSpecifications } from "@/modules/organization/domain/membership/membership.specification.ts";
-import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/repositories/membership.repository-live.ts";
-import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
-import { TestDatabaseLive } from "@/test-utils/test-database.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { Spec } from "@/globals/application/ddd/specification";
+import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository";
+import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops";
+import { MembershipSpecifications } from "@/modules/organization/domain/membership/membership.specification";
+import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/repositories/membership.repository-live";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const otherUserId = UserId.make("22222222-2222-2222-2222-222222222222");

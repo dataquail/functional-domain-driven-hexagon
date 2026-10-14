@@ -1,9 +1,9 @@
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { OrganizationRoleValueObject } from "./organization-role.value-object.ts";
+import { OrganizationRoleValueObject } from "./organization-role.value-object";
 
 // One role assignment for a (user, org) pair, carrying the audit trail
 // of who issued it. The aggregate models this as a record (not just a

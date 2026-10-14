@@ -8,17 +8,17 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { cancelSubscriptionHandler } from "@/modules/billing/commands/cancel-subscription.handler.ts";
-import { SubscriptionNotFound } from "@/modules/billing/domain/subscription/subscription.errors.ts";
-import { type SubscriptionCanceled } from "@/modules/billing/domain/subscription/subscription.events.ts";
-import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.ts";
-import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.ts";
-import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.ts";
-import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.ts";
-import { BillingGatewayFake } from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake.ts";
-import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake.ts";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { cancelSubscriptionHandler } from "@/modules/billing/commands/cancel-subscription.handler";
+import { SubscriptionNotFound } from "@/modules/billing/domain/subscription/subscription.errors";
+import { type SubscriptionCanceled } from "@/modules/billing/domain/subscription/subscription.events";
+import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id";
+import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository";
+import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops";
+import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification";
+import { BillingGatewayFake } from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake";
+import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus";
 
 const acme = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const subId = SubscriptionId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");

@@ -3,17 +3,17 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.ts";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql";
 import {
   translateDatabaseErrors,
   translatePersistenceUnavailable,
-} from "@/globals/infrastructure/database/translate-database-errors.ts";
-import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.ts";
-import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.ts";
-import { type SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.ts";
+} from "@/globals/infrastructure/database/translate-database-errors";
+import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors";
+import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository";
+import { type SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root";
 
-import * as SubscriptionMapper from "./subscription.mapper.ts";
+import * as SubscriptionMapper from "./subscription.mapper";
 
 export const SubscriptionRepositoryLive = Layer.effect(
   SubscriptionRepository,

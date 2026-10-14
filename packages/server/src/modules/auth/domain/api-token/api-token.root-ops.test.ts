@@ -5,10 +5,10 @@ import { assertNone } from "@effect/vitest/utils";
 import * as DateTime from "effect/DateTime";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { ApiTokenId } from "./api-token.id.ts";
-import { API_TOKEN_PREFIX, ApiTokenRootOps } from "./api-token.root-ops.ts";
+import { ApiTokenId } from "./api-token.id";
+import { API_TOKEN_PREFIX, ApiTokenRootOps } from "./api-token.root-ops";
 
 const apiTokenId = ApiTokenId.make("11111111-1111-1111-1111-111111111111");
 const userId = UserId.make("22222222-2222-2222-2222-222222222222");

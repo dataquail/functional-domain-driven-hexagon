@@ -8,19 +8,19 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as TestClock from "effect/testing/TestClock";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.ts";
-import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.ts";
-import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.ts";
-import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositories/api-token.repository-live.ts";
-import { findApiTokenByHashHandler } from "@/modules/auth/queries/find-api-token-by-hash.handler.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository";
+import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops";
+import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositories/api-token.repository-live";
+import { findApiTokenByHashHandler } from "@/modules/auth/queries/find-api-token-by-hash.handler";
 import {
   ApiTokenExpired,
   ApiTokenNotFound,
   ApiTokenRevoked,
-} from "@/modules/auth/queries/find-api-token-by-hash.query.ts";
-import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
-import { TestDatabaseLive } from "@/test-utils/test-database.ts";
+} from "@/modules/auth/queries/find-api-token-by-hash.query";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const apiTokenId = ApiTokenId.make("11111111-1111-1111-1111-111111111111");
 const userId = UserId.make("22222222-2222-2222-2222-222222222222");

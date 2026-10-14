@@ -1,12 +1,12 @@
 import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as Effect from "effect/Effect";
 
-import { DomainEventBus } from "@/globals/application/ports/event-bus.ts";
-import { BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client.ts";
-import { StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events.ts";
-import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository.ts";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
+import { BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client";
+import { StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events";
+import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository";
 
-import { type IngestStripeWebhookPayload } from "./ingest-stripe-webhook.command.ts";
+import { type IngestStripeWebhookPayload } from "./ingest-stripe-webhook.command";
 
 // Signature verification + parsing + idempotency claim + domain event
 // dispatch in one transactional unit. Verifies OUTSIDE the unit of

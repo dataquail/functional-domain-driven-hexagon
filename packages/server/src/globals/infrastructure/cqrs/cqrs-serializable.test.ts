@@ -4,13 +4,13 @@ import { checkEventsSerializable, checkSerializable } from "@effect-server-utils
 import * as Effect from "effect/Effect";
 import type * as Schema from "effect/Schema";
 
-import * as authModule from "@/modules/auth/auth.platform.ts";
-import * as billingModule from "@/modules/billing/billing.platform.ts";
-import * as organizationModule from "@/modules/organization/organization.platform.ts";
-import * as roleModule from "@/modules/role/role.platform.ts";
-import * as todosModule from "@/modules/todos/todos.platform.ts";
-import * as userModule from "@/modules/user/user.platform.ts";
-import * as walletModule from "@/modules/wallet/wallet.platform.ts";
+import * as authModule from "@/modules/auth/auth.platform";
+import * as billingModule from "@/modules/billing/billing.platform";
+import * as organizationModule from "@/modules/organization/organization.platform";
+import * as roleModule from "@/modules/role/role.platform";
+import * as todosModule from "@/modules/todos/todos.platform";
+import * as userModule from "@/modules/user/user.platform";
+import * as walletModule from "@/modules/wallet/wallet.platform";
 
 // ADR-0006 declares a message's channels as schemas rather than bare types so a
 // module could be extracted and its messages could travel. In-process dispatch

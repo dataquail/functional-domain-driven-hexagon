@@ -1,6 +1,6 @@
 import * as Schema from "effect/Schema";
 
-import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.ts";
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id";
 
 // Returned by the repository when a lookup by id finds nothing.
 export class InvitationNotFound extends Schema.TaggedError<

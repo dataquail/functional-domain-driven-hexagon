@@ -3,15 +3,15 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.ts";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
 import {
   type AuthIdentity,
   AuthIdentityRepository,
-} from "@/modules/auth/domain/auth-identity/auth-identity.repository.ts";
+} from "@/modules/auth/domain/auth-identity/auth-identity.repository";
 
-import * as AuthIdentityMapper from "./auth-identity.mapper.ts";
+import * as AuthIdentityMapper from "./auth-identity.mapper";
 
 export const AuthIdentityRepositoryLive = Layer.effect(
   AuthIdentityRepository,

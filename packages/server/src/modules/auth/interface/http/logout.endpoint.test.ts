@@ -2,9 +2,9 @@ import { describe, expect, it } from "@effect/vitest";
 import { assertNone, assertSome } from "@effect/vitest/utils";
 import * as Effect from "effect/Effect";
 
-import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.ts";
+import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec";
 
-import { logoutEndpoint } from "./logout.endpoint.ts";
+import { logoutEndpoint } from "./logout.endpoint";
 
 // The logout endpoint's full flow (revoke session, clear cookies, 302 to the
 // identity Worker's end-session endpoint) needs a live issuer and is covered by

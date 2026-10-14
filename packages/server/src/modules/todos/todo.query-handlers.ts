@@ -2,10 +2,10 @@ import { Query } from "@effect-server-utils/cqrs";
 import * as Context from "effect/Context";
 import * as Layer from "effect/Layer";
 
-import { findTodoOrganizationHandler } from "@/modules/todos/queries/find-todo-organization.handler.ts";
-import { FindTodoOrganizationQuery } from "@/modules/todos/queries/find-todo-organization.query.ts";
-import { listTodosHandler } from "@/modules/todos/queries/list-todos.handler.ts";
-import { ListTodosQuery } from "@/modules/todos/queries/list-todos.query.ts";
+import { findTodoOrganizationHandler } from "@/modules/todos/queries/find-todo-organization.handler";
+import { FindTodoOrganizationQuery } from "@/modules/todos/queries/find-todo-organization.query";
+import { listTodosHandler } from "@/modules/todos/queries/list-todos.handler";
+import { ListTodosQuery } from "@/modules/todos/queries/list-todos.query";
 
 export const todoQueryGroup = Query.group(ListTodosQuery, FindTodoOrganizationQuery);
 

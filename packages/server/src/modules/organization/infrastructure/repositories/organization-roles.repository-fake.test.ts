@@ -6,14 +6,14 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { Spec } from "@/globals/application/ddd/specification.ts";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.ts";
-import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.ts";
-import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { Spec } from "@/globals/application/ddd/specification";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository";
+import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops";
+import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification";
 
-import { OrganizationRolesRepositoryFake } from "./organization-roles.repository-fake.ts";
+import { OrganizationRolesRepositoryFake } from "./organization-roles.repository-fake";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");

@@ -4,11 +4,11 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Base64Url from "effect/encoding/Base64Url";
 
-import { type StartDeviceGrantPayload } from "@/modules/auth/commands/start-device-grant.command.ts";
-import { DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.ts";
-import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.ts";
-import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant/device-grant.root-ops.ts";
-import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service.ts";
+import { type StartDeviceGrantPayload } from "@/modules/auth/commands/start-device-grant.command";
+import { DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id";
+import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository";
+import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant/device-grant.root-ops";
+import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service";
 
 // Mints a high-entropy device code (returned once, only its hash stored) and
 // a short human-typable user code, persists a pending grant, and returns the

@@ -4,11 +4,11 @@ import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { Criteria } from "@/globals/application/ddd/specification.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { Criteria } from "@/globals/application/ddd/specification";
 
-import { OrganizationRootOps } from "./organization.root-ops.ts";
-import { OrganizationSpecifications } from "./organization.specification.ts";
+import { OrganizationRootOps } from "./organization.root-ops";
+import { OrganizationSpecifications } from "./organization.specification";
 
 const id = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const now = DateTime.makeUnsafe("2026-01-01T00:00:00Z");

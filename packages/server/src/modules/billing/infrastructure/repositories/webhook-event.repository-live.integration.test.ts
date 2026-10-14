@@ -5,12 +5,12 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 
-import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors.ts";
-import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository.ts";
-import { WebhookEventSpecifications } from "@/modules/billing/domain/webhook-event/webhook-event.specification.ts";
-import { WebhookEventRepositoryLive } from "@/modules/billing/infrastructure/repositories/webhook-event.repository-live.ts";
-import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
-import { TestDatabaseLive } from "@/test-utils/test-database.ts";
+import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors";
+import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository";
+import { WebhookEventSpecifications } from "@/modules/billing/domain/webhook-event/webhook-event.specification";
+import { WebhookEventRepositoryLive } from "@/modules/billing/infrastructure/repositories/webhook-event.repository-live";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const TestLayer = WebhookEventRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 

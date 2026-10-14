@@ -5,15 +5,15 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.ts";
-import { touchSessionHandler } from "@/modules/auth/commands/touch-session.handler.ts";
-import { SessionNotFound } from "@/modules/auth/domain/session/session.errors.ts";
-import { SessionId } from "@/modules/auth/domain/session/session.id.ts";
-import { SessionRepository } from "@/modules/auth/domain/session/session.repository.ts";
-import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops.ts";
-import { SessionSpecifications } from "@/modules/auth/domain/session/session.specification.ts";
-import { SessionRepositoryFake } from "@/modules/auth/infrastructure/repositories/session.repository-fake.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable";
+import { touchSessionHandler } from "@/modules/auth/commands/touch-session.handler";
+import { SessionNotFound } from "@/modules/auth/domain/session/session.errors";
+import { SessionId } from "@/modules/auth/domain/session/session.id";
+import { SessionRepository } from "@/modules/auth/domain/session/session.repository";
+import { SessionRootOps } from "@/modules/auth/domain/session/session.root-ops";
+import { SessionSpecifications } from "@/modules/auth/domain/session/session.specification";
+import { SessionRepositoryFake } from "@/modules/auth/infrastructure/repositories/session.repository-fake";
 
 const sessionId = SessionId.make("33333333-3333-3333-3333-333333333333");
 const userId = UserId.make("44444444-4444-4444-4444-444444444444");

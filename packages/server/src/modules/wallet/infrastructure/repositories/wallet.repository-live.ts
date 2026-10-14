@@ -3,17 +3,17 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.ts";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql";
 import {
   translateDatabaseErrors,
   translatePersistenceUnavailable,
-} from "@/globals/infrastructure/database/translate-database-errors.ts";
-import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors.ts";
-import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.ts";
-import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.ts";
+} from "@/globals/infrastructure/database/translate-database-errors";
+import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors";
+import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository";
+import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root";
 
-import * as WalletMapper from "./wallet.mapper.ts";
+import * as WalletMapper from "./wallet.mapper";
 
 export const WalletRepositoryLive = Layer.effect(
   WalletRepository,

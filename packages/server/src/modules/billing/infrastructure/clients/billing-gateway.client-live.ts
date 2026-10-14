@@ -6,7 +6,7 @@ import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
 import Stripe from "stripe";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.ts";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars";
 import {
   BillingGateway,
   type CancelSubscriptionInput,
@@ -16,12 +16,12 @@ import {
   type CreateSubscriptionInput,
   type SubscriptionState,
   type VerifyWebhookInput,
-} from "@/modules/billing/domain/ports/clients/billing-gateway.client.ts";
+} from "@/modules/billing/domain/ports/clients/billing-gateway.client";
 import {
   BillingGatewayUnavailable,
   InvalidWebhookSignature,
-} from "@/modules/billing/domain/subscription/subscription.errors.ts";
-import { type StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.ts";
+} from "@/modules/billing/domain/subscription/subscription.errors";
+import { type StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object";
 
 // Wraps the Stripe SDK. The only file in the repo that imports `stripe`.
 // All other billing code consumes the `BillingGateway` Tag and never

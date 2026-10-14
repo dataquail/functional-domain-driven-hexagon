@@ -9,12 +9,12 @@ import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { Api } from "@/globals/infrastructure/framework/http/api.ts";
-import { StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.ts";
-import { FAKE_WEBHOOK_SIGNATURE } from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake.ts";
-import { describeServer } from "@/test-utils/server-test-runtime.ts";
-import { TestServerLiveAsMember } from "@/test-utils/test-server.ts";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object";
+import { FAKE_WEBHOOK_SIGNATURE } from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake";
+import { describeServer } from "@/test-utils/server-test-runtime";
+import { TestServerLiveAsMember } from "@/test-utils/test-server";
 
 // The fake billing gateway's `sub_test_N` counter persists across
 // tests inside one describe (the server layer is built once per block;

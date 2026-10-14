@@ -2,9 +2,9 @@ import * as HttpApiEndpoint from "effect/http-api/HttpApiEndpoint";
 import * as HttpApiGroup from "effect/http-api/HttpApiGroup";
 import * as Schema from "effect/Schema";
 
-import * as CustomHttpApiError from "../CustomHttpApiError.ts";
-import { OrganizationId, TodoId } from "../EntityIds.ts";
-import { UserAuthMiddleware } from "../Policy.ts";
+import * as CustomHttpApiError from "../CustomHttpApiError";
+import { OrganizationId, TodoId } from "../EntityIds";
+import { UserAuthMiddleware } from "../Policy";
 
 // CLI-specific error, distinct from the GUI's `TodosContract.TodoNotFoundError`
 // so the two contracts evolve independently (ADR-0005).

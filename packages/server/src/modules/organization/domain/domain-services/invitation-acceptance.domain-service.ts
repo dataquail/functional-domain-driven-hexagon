@@ -1,16 +1,16 @@
 import * as Result from "effect/Result";
 
-import { type DomainEvent } from "@/globals/application/ddd/domain-event.ts";
+import { type DomainEvent } from "@/globals/application/ddd/domain-event";
 
 import {
   type InvitationAlreadyAccepted,
   type InvitationExpired,
   type InvitationRevoked,
-} from "../invitation/invitation.errors.ts";
-import { type InvitationRoot } from "../invitation/invitation.root.ts";
-import { type AcceptInput, InvitationRootOps } from "../invitation/invitation.root-ops.ts";
-import { type MembershipRoot } from "../membership/membership.root.ts";
-import { MembershipRootOps } from "../membership/membership.root-ops.ts";
+} from "../invitation/invitation.errors";
+import { type InvitationRoot } from "../invitation/invitation.root";
+import { type AcceptInput, InvitationRootOps } from "../invitation/invitation.root-ops";
+import { type MembershipRoot } from "../membership/membership.root";
+import { MembershipRootOps } from "../membership/membership.root-ops";
 
 export type AcceptanceOutcome = {
   readonly invitation: InvitationRoot;

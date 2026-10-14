@@ -6,11 +6,11 @@ import * as DateTime from "effect/DateTime";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { UserCodeEntropyExhausted } from "./device-grant.errors.ts";
-import { DeviceGrantId } from "./device-grant.id.ts";
-import { DeviceGrantRootOps, USER_CODE_ALPHABET } from "./device-grant.root-ops.ts";
+import { UserCodeEntropyExhausted } from "./device-grant.errors";
+import { DeviceGrantId } from "./device-grant.id";
+import { DeviceGrantRootOps, USER_CODE_ALPHABET } from "./device-grant.root-ops";
 
 const id = DeviceGrantId.make("11111111-1111-1111-1111-111111111111");
 const userId = UserId.make("22222222-2222-2222-2222-222222222222");

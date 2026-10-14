@@ -14,12 +14,12 @@ import { CommandBus } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { DomainEventBus } from "@/globals/application/ports/event-bus.ts";
-import { SendInvitationEmailCommand } from "@/modules/organization/commands/send-invitation-email.command.ts";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
+import { SendInvitationEmailCommand } from "@/modules/organization/commands/send-invitation-email.command";
 import {
   InvitationIssued,
   InvitationReissued,
-} from "@/modules/organization/domain/invitation/invitation.events.ts";
+} from "@/modules/organization/domain/invitation/invitation.events";
 
 export const InvitationEventAdapterLive = Layer.effectDiscard(
   Effect.gen(function* () {

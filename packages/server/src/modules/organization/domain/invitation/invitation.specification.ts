@@ -1,14 +1,10 @@
 import * as DateTime from "effect/DateTime";
 
-import { type InvitationId } from "@/globals/application/ddd/ids/invitation-id.ts";
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import {
-  type Predicate,
-  Spec,
-  type Specification,
-} from "@/globals/application/ddd/specification.ts";
+import { type InvitationId } from "@/globals/application/ddd/ids/invitation-id";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { type Predicate, Spec, type Specification } from "@/globals/application/ddd/specification";
 
-import { type InvitationRoot } from "./invitation.root.ts";
+import { type InvitationRoot } from "./invitation.root";
 
 // Translatable specs (carry a Criteria → usable as repository filters and as
 // in-memory guards). The field-name strings live here and in the mapper's

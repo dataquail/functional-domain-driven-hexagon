@@ -4,12 +4,12 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.ts";
-import { type TodoId } from "@/modules/todos/domain/todo/todo.id.ts";
-import { type TodoRoot } from "@/modules/todos/domain/todo/todo.root.ts";
-import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.ts";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors";
+import { type TodoId } from "@/modules/todos/domain/todo/todo.id";
+import { type TodoRoot } from "@/modules/todos/domain/todo/todo.root";
+import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository";
 
 // Keyed by TodoId; org scoping is enforced by guarding on the stored
 // todo's organizationId — a read/mutate for the wrong org behaves like

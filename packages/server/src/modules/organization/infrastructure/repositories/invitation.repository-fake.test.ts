@@ -8,16 +8,16 @@ import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
-import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.ts";
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors.ts";
-import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.ts";
-import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.ts";
-import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.ts";
-import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.ts";
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository";
+import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root";
+import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops";
+import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification";
 
-import { InvitationRepositoryFake } from "./invitation.repository-fake.ts";
+import { InvitationRepositoryFake } from "./invitation.repository-fake";
 
 const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");

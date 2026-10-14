@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@effect/vitest";
 
-import { idTokenEmailClaims } from "./id-token-claims.ts";
+import { idTokenEmailClaims } from "./id-token-claims";
 
 const user = { email: "ada@example.com", emailVerified: true };
 

@@ -5,8 +5,8 @@ import * as Effect from "effect/Effect";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
-import { CreateUserCommand } from "@/modules/user/commands/create-user.command.ts";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { CreateUserCommand } from "@/modules/user/commands/create-user.command";
 
 export const createEndpoint = Effect.fn("UserLive.create")(
   function* (request: EndpointRequest<typeof UserContract.Group, "create">) {

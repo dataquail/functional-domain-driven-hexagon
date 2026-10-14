@@ -3,12 +3,12 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { Criteria } from "@/globals/application/ddd/specification.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { Criteria } from "@/globals/application/ddd/specification";
 
-import { TodoId } from "./todo.id.ts";
-import { TodoRootOps } from "./todo.root-ops.ts";
-import { TodoSpecifications } from "./todos.specification.ts";
+import { TodoId } from "./todo.id";
+import { TodoRootOps } from "./todo.root-ops";
+import { TodoSpecifications } from "./todos.specification";
 
 const aliceId = TodoId.make("11111111-1111-1111-1111-111111111111");
 const bobId = TodoId.make("22222222-2222-2222-2222-222222222222");

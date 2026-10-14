@@ -3,11 +3,11 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { userAccessCommands, userSignInAccessQueries } from "@/modules/auth/auth.imports.ts";
+import { userAccessCommands, userSignInAccessQueries } from "@/modules/auth/auth.imports";
 import {
   UserProvisioning,
   UserProvisioningConflict,
-} from "@/modules/auth/domain/ports/acl/user-provisioning.acl.ts";
+} from "@/modules/auth/domain/ports/acl/user-provisioning.acl";
 
 // ADR-0022 outbound adapter. The one place in the auth module that names the user
 // module's messages — sign-in depends on `UserProvisioning` instead.

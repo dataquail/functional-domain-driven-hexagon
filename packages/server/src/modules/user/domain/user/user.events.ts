@@ -1,10 +1,10 @@
 import * as Schema from "effect/Schema";
 
-import * as Event from "@/globals/application/ddd/domain-event.ts";
-import { type SpanAttributesExtractor } from "@/globals/application/ddd/domain-event.ts";
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import * as Event from "@/globals/application/ddd/domain-event";
+import { type SpanAttributesExtractor } from "@/globals/application/ddd/domain-event";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { AddressValueObject } from "./value-objects/address.value-object.ts";
+import { AddressValueObject } from "./value-objects/address.value-object";
 
 export const UserCreated = Event.make("UserCreated", {
   userId: UserId,

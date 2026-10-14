@@ -1,8 +1,8 @@
 import { type ResourceCheck } from "@effect-server-utils/authz";
 
-import { type OrganizationAccess } from "@/modules/billing/domain/ports/acl/organization-access.acl.ts";
+import { type OrganizationAccess } from "@/modules/billing/domain/ports/acl/organization-access.acl";
 
-import { type BillingResourceContext } from "./billing.resource-resolver.ts";
+import { type BillingResourceContext } from "./billing.resource-resolver";
 
 // "May this caller commit the org to a subscription?" — gates subscribe and
 // cancel. Which org role confers that authority is the adapter's decision; this

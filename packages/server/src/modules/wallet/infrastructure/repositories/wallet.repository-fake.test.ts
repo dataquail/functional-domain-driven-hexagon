@@ -7,14 +7,14 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors.ts";
-import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id.ts";
-import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.ts";
-import { WalletRootOps } from "@/modules/wallet/domain/wallet/wallet.root-ops.ts";
-import { WalletSpecifications } from "@/modules/wallet/domain/wallet/wallet.specification.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors";
+import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id";
+import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository";
+import { WalletRootOps } from "@/modules/wallet/domain/wallet/wallet.root-ops";
+import { WalletSpecifications } from "@/modules/wallet/domain/wallet/wallet.specification";
 
-import { WalletRepositoryFake } from "./wallet.repository-fake.ts";
+import { WalletRepositoryFake } from "./wallet.repository-fake";
 
 const acmeId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const betaId = OrganizationId.make("22222222-2222-2222-2222-222222222222");

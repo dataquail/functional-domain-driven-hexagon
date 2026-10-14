@@ -2,10 +2,10 @@ import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
-import { type FindUsersUserView } from "@/modules/user/queries/find-users.query.ts";
-import { type FindUsersByIdsPayload } from "@/modules/user/queries/find-users-by-ids.query.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
+import { type FindUsersUserView } from "@/modules/user/queries/find-users.query";
+import { type FindUsersByIdsPayload } from "@/modules/user/queries/find-users-by-ids.query";
 
 const toUserView = (row: RowSchemas.UserRow): FindUsersUserView => ({
   id: UserId.make(row.id),

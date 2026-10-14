@@ -6,10 +6,10 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors.ts";
-import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository.ts";
-import { WebhookEventSpecifications } from "@/modules/billing/domain/webhook-event/webhook-event.specification.ts";
-import { WebhookEventRepositoryFake } from "@/modules/billing/infrastructure/repositories/webhook-event.repository-fake.ts";
+import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors";
+import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository";
+import { WebhookEventSpecifications } from "@/modules/billing/domain/webhook-event/webhook-event.specification";
+import { WebhookEventRepositoryFake } from "@/modules/billing/infrastructure/repositories/webhook-event.repository-fake";
 
 const provide = Effect.provide(WebhookEventRepositoryFake);
 

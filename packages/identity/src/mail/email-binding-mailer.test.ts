@@ -1,13 +1,9 @@
 import { describe, expect, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 
-import {
-  emailBindingMailer,
-  type EmailDelivery,
-  type OutgoingEmail,
-} from "./email-binding-mailer.ts";
-import { passwordResetEmail } from "./identity-emails.ts";
-import { MailDeliveryError } from "./identity-mailer.ts";
+import { emailBindingMailer, type EmailDelivery, type OutgoingEmail } from "./email-binding-mailer";
+import { passwordResetEmail } from "./identity-emails";
+import { MailDeliveryError } from "./identity-mailer";
 
 const sender = { address: "auth@example.com", name: "Auth" };
 

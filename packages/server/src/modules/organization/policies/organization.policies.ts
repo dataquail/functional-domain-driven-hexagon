@@ -3,15 +3,15 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.ts";
-import { PlatformRolesLive } from "@/modules/organization/infrastructure/acl/platform-roles.acl-live.ts";
-import { OrganizationQueries } from "@/modules/organization/organization.query-handlers.ts";
-import { type OrganizationAuthzView } from "@/modules/organization/queries/find-organization-by-id.query.ts";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl";
+import { PlatformRolesLive } from "@/modules/organization/infrastructure/acl/platform-roles.acl-live";
+import { OrganizationQueries } from "@/modules/organization/organization.query-handlers";
+import { type OrganizationAuthzView } from "@/modules/organization/queries/find-organization-by-id.query";
 
-import { isMemberCheck, type UserOrganizationLookup } from "./is-member.policy.ts";
-import { isOrgAdminCheck } from "./is-org-admin.policy.ts";
-import { isOrgSuperAdminCheck } from "./is-org-super-admin.policy.ts";
+import { isMemberCheck, type UserOrganizationLookup } from "./is-member.policy";
+import { isOrgAdminCheck } from "./is-org-admin.policy";
+import { isOrgSuperAdminCheck } from "./is-org-super-admin.policy";
 
 // Two resources, split by whether the operation names an organization:
 //

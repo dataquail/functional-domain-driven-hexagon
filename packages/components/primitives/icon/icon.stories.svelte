@@ -10,7 +10,7 @@
     CloseIcon,
     PlusIcon,
     TrashIcon,
-  } from "./icon.ts";
+  } from "./icon";
 
   const { Story } = defineMeta({
     title: "Primitives/Icon",

@@ -11,21 +11,21 @@ import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 import * as TestClock from "effect/testing/TestClock";
 
-import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.ts";
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { resendInvitationHandler } from "@/modules/organization/commands/resend-invitation.handler.ts";
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { resendInvitationHandler } from "@/modules/organization/commands/resend-invitation.handler";
 import {
   InvitationAlreadyAccepted,
   InvitationAlreadyRevoked,
-} from "@/modules/organization/domain/invitation/invitation.errors.ts";
-import { type InvitationReissued } from "@/modules/organization/domain/invitation/invitation.events.ts";
-import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.ts";
-import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.ts";
-import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.ts";
-import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake.ts";
-import { CryptoFake } from "@/test-utils/crypto-fake.ts";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.ts";
+} from "@/modules/organization/domain/invitation/invitation.errors";
+import { type InvitationReissued } from "@/modules/organization/domain/invitation/invitation.events";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository";
+import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops";
+import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification";
+import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake";
+import { CryptoFake } from "@/test-utils/crypto-fake";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus";
 
 const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");
 const organizationId = OrganizationId.make("22222222-2222-2222-2222-222222222222");

@@ -5,10 +5,10 @@ import { Query } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { PlatformRoles } from "@/modules/auth/domain/ports/acl/platform-roles.acl.ts";
-import { PlatformRolesLive } from "@/modules/auth/infrastructure/acl/platform-roles.acl-live.ts";
-import { roleAccessQueries } from "@/modules/role/role.exports.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { PlatformRoles } from "@/modules/auth/domain/ports/acl/platform-roles.acl";
+import { PlatformRolesLive } from "@/modules/auth/infrastructure/acl/platform-roles.acl-live";
+import { roleAccessQueries } from "@/modules/role/role.exports";
 
 // `/auth/me` reports whether the caller is a platform super admin. That fact is
 // the role module's, so auth reaches it through this port and never learns the

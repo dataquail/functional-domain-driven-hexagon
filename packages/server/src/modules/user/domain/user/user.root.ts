@@ -1,8 +1,8 @@
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { AddressValueObject } from "./value-objects/address.value-object.ts";
+import { AddressValueObject } from "./value-objects/address.value-object";
 
 // Aggregate root data — a dumb value (ADR-0003). Operations live in
 // `user.root-ops.ts` (`UserRootOps`) and carry the test obligation.

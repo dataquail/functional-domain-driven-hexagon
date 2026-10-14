@@ -6,7 +6,7 @@ import * as Ref from "effect/Ref";
 import {
   InvitationMailer,
   type SendInvitationInput,
-} from "@/modules/organization/domain/ports/clients/invitation-mailer.client.ts";
+} from "@/modules/organization/domain/ports/clients/invitation-mailer.client";
 
 // Records every invitation-email request so invite-flow use-case unit
 // tests can assert the side effect (recipient + token) without rendering

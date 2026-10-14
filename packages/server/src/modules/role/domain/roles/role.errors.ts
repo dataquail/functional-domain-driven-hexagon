@@ -1,8 +1,8 @@
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { RoleValueObject } from "./role.value-object.ts";
+import { RoleValueObject } from "./role.value-object";
 
 // Aggregate invariant: a user cannot be granted a role they already
 // hold. Surfaces from `Roles.grant` and is translated to a 409-style

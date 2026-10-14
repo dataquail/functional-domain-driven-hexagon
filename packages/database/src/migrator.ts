@@ -7,8 +7,8 @@ import * as Migrator from "effect/sql/Migrator";
 import { SqlClient } from "effect/sql/SqlClient";
 import type { SqlError } from "effect/sql/SqlError";
 
-import { migrations } from "./migrations/registry.ts";
-import { type Config, driverLayer } from "./pg-driver.ts";
+import { migrations } from "./migrations/registry";
+import { type Config, driverLayer } from "./pg-driver";
 
 // ADR-0020: each module owns a Postgres schema named after its folder, plus the
 // shared `platform` schema. Adding a module means a migration and an entry here.

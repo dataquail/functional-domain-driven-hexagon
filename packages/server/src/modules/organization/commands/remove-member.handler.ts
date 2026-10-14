@@ -2,13 +2,13 @@ import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { Spec } from "@/globals/application/ddd/specification.ts";
-import { DomainEventBus } from "@/globals/application/ports/event-bus.ts";
-import { type RemoveMemberPayload } from "@/modules/organization/commands/remove-member.command.ts";
-import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.ts";
-import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.ts";
-import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops.ts";
-import { MembershipSpecifications } from "@/modules/organization/domain/membership/membership.specification.ts";
+import { Spec } from "@/globals/application/ddd/specification";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
+import { type RemoveMemberPayload } from "@/modules/organization/commands/remove-member.command";
+import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository";
+import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops";
+import { MembershipSpecifications } from "@/modules/organization/domain/membership/membership.specification";
 
 export const removeMemberHandler = Effect.fn("removeMemberHandler")(function* (
   cmd: RemoveMemberPayload,

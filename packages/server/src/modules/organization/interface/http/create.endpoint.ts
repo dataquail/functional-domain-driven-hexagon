@@ -6,8 +6,8 @@ import * as Effect from "effect/Effect";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
-import { CreateOrganizationCommand } from "@/modules/organization/commands/create-organization.command.ts";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { CreateOrganizationCommand } from "@/modules/organization/commands/create-organization.command";
 
 // Authenticated, no `Authz.hasPermissions` gate. Anyone can create an
 // org; the caller becomes its first Membership and (Phase 4) receives

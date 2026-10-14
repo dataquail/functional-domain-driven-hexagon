@@ -1,12 +1,12 @@
 import * as Result from "effect/Result";
 
-import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { type UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { AlreadyHasRole, DoesNotHaveRole } from "./role.errors.ts";
-import { type RoleEvent, RoleGranted, RoleRevoked } from "./role.events.ts";
-import { type RoleValueObject } from "./role.value-object.ts";
-import { RolesRoot } from "./roles.root.ts";
-import { RolesSpecifications } from "./roles.specification.ts";
+import { AlreadyHasRole, DoesNotHaveRole } from "./role.errors";
+import { type RoleEvent, RoleGranted, RoleRevoked } from "./role.events";
+import { type RoleValueObject } from "./role.value-object";
+import { RolesRoot } from "./roles.root";
+import { RolesSpecifications } from "./roles.specification";
 
 export type Outcome = {
   readonly roles: RolesRoot;

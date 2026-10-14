@@ -1,7 +1,7 @@
 <script module lang="ts">
   import type { Snippet } from "svelte";
 
-  import type { CardHeaderPadding } from "../primitives/card/card.ts";
+  import type { CardHeaderPadding } from "../primitives/card/card";
   import type { HeadingAlign, HeadingSize } from "../primitives/heading.svelte";
 
   export type CardSectionProps = {
@@ -17,7 +17,7 @@
 </script>
 
 <script lang="ts">
-  import { Card } from "../primitives/card/card.ts";
+  import { Card } from "../primitives/card/card";
   import Heading from "../primitives/heading.svelte";
   import Stack from "../primitives/stack.svelte";
 

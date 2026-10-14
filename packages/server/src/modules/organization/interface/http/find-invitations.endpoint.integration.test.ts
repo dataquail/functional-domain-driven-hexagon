@@ -7,8 +7,8 @@ import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.ts";
-import { describeServer } from "@/test-utils/server-test-runtime.ts";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { describeServer } from "@/test-utils/server-test-runtime";
 
 const ORG_ID = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 

@@ -8,7 +8,7 @@ import {
   type IdentityMailer,
   MailDeliveryError,
   type MailSender,
-} from "./identity-mailer.ts";
+} from "./identity-mailer";
 
 export type MailpitMailerSettings = {
   readonly url: string;

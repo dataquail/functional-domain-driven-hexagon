@@ -3,14 +3,14 @@ import { TodosContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { Actions } from "@/globals/application/ports/actions.ts";
-import * as Authz from "@/globals/infrastructure/auth/authz.ts";
+import { Actions } from "@/globals/application/ports/actions";
+import * as Authz from "@/globals/infrastructure/auth/authz";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
-import { CreateTodoCommand } from "@/modules/todos/commands/create-todo.command.ts";
-import { TodoCollectionResource } from "@/modules/todos/policies/todos.policies.ts";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { CreateTodoCommand } from "@/modules/todos/commands/create-todo.command";
+import { TodoCollectionResource } from "@/modules/todos/policies/todos.policies";
 
 export const createEndpoint = Effect.fn("TodosLive.create")(function* (
   request: EndpointRequest<typeof TodosContract.Group, "create">,

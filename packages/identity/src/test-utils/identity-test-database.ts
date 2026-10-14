@@ -4,7 +4,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import pg from "pg";
 
-import { migrateIdentityDatabase } from "../auth/identity-migrations.ts";
+import { migrateIdentityDatabase } from "../auth/identity-migrations";
 
 const IDENTITY_TABLES = [
   "oauthAccessToken",

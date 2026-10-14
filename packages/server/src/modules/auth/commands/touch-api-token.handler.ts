@@ -3,10 +3,10 @@ import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { type TouchApiTokenPayload } from "@/modules/auth/commands/touch-api-token.command.ts";
-import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.ts";
-import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.ts";
-import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.ts";
+import { type TouchApiTokenPayload } from "@/modules/auth/commands/touch-api-token.command";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository";
+import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops";
+import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification";
 
 // Last-used stamp, throttled + race-tolerant.
 //

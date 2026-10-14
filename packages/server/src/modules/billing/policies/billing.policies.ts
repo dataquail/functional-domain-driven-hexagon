@@ -3,14 +3,14 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { OrganizationAccess } from "@/modules/billing/domain/ports/acl/organization-access.acl.ts";
-import { PlatformRoles } from "@/modules/billing/domain/ports/acl/platform-roles.acl.ts";
-import { OrganizationAccessLive } from "@/modules/billing/infrastructure/acl/organization-access.acl-live.ts";
-import { PlatformRolesLive } from "@/modules/billing/infrastructure/acl/platform-roles.acl-live.ts";
+import { OrganizationAccess } from "@/modules/billing/domain/ports/acl/organization-access.acl";
+import { PlatformRoles } from "@/modules/billing/domain/ports/acl/platform-roles.acl";
+import { OrganizationAccessLive } from "@/modules/billing/infrastructure/acl/organization-access.acl-live";
+import { PlatformRolesLive } from "@/modules/billing/infrastructure/acl/platform-roles.acl-live";
 
-import { isBillingOrgAdminCheck } from "./is-billing-org-admin.policy.ts";
-import { isBillingOrgMemberCheck } from "./is-billing-org-member.policy.ts";
-import { isBillingSuperAdminCheck } from "./is-billing-super-admin.policy.ts";
+import { isBillingOrgAdminCheck } from "./is-billing-org-admin.policy";
+import { isBillingOrgMemberCheck } from "./is-billing-org-member.policy";
+import { isBillingSuperAdminCheck } from "./is-billing-super-admin.policy";
 
 // Billing's single policy resource gates two CRUD operations:
 //   - `read` (GET current subscription) — every member of the org may see the

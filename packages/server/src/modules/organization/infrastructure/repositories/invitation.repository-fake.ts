@@ -6,11 +6,11 @@ import * as Layer from "effect/Layer";
 import type * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { type InvitationId } from "@/globals/application/ddd/ids/invitation-id.ts";
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors.ts";
-import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.ts";
-import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.ts";
+import { type InvitationId } from "@/globals/application/ddd/ids/invitation-id";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository";
+import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root";
 
 export const InvitationRepositoryFake = Layer.effect(
   InvitationRepository,

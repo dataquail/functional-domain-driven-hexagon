@@ -2,9 +2,9 @@ import { Command } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { DoesNotHaveRole } from "@/modules/role/domain/roles/role.errors.ts";
-import { RoleValueObject } from "@/modules/role/domain/roles/role.value-object.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { DoesNotHaveRole } from "@/modules/role/domain/roles/role.errors";
+import { RoleValueObject } from "@/modules/role/domain/roles/role.value-object";
 
 export const RevokeRoleCommand = Command.make("RevokeRoleCommand", {
   payload: { userId: UserId, role: RoleValueObject },

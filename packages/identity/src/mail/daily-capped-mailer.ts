@@ -1,7 +1,7 @@
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import { type IdentityMailer, MailDeliveryError } from "./identity-mailer.ts";
+import { type IdentityMailer, MailDeliveryError } from "./identity-mailer";
 
 export class SendCountUnavailable extends Schema.TaggedError<
   SendCountUnavailable,

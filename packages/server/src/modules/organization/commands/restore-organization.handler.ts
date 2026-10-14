@@ -3,12 +3,12 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { DomainEventBus } from "@/globals/application/ports/event-bus.ts";
-import { type RestoreOrganizationPayload } from "@/modules/organization/commands/restore-organization.command.ts";
-import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.ts";
-import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.ts";
-import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.ts";
-import { OrganizationSpecifications } from "@/modules/organization/domain/organization/organization.specification.ts";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
+import { type RestoreOrganizationPayload } from "@/modules/organization/commands/restore-organization.command";
+import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors";
+import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository";
+import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops";
+import { OrganizationSpecifications } from "@/modules/organization/domain/organization/organization.specification";
 
 export const restoreOrganizationHandler = Effect.fn("restoreOrganizationHandler")(function* (
   cmd: RestoreOrganizationPayload,

@@ -6,13 +6,13 @@ import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
-import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.ts";
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { InvitationAlreadyAccepted, InvitationRevoked } from "../invitation/invitation.errors.ts";
-import { InvitationRootOps } from "../invitation/invitation.root-ops.ts";
-import { InvitationAcceptance } from "./invitation-acceptance.domain-service.ts";
+import { InvitationAlreadyAccepted, InvitationRevoked } from "../invitation/invitation.errors";
+import { InvitationRootOps } from "../invitation/invitation.root-ops";
+import { InvitationAcceptance } from "./invitation-acceptance.domain-service";
 
 const organizationId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const userId = UserId.make("33333333-3333-3333-3333-333333333333");

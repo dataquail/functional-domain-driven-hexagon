@@ -1,8 +1,8 @@
 import * as DateTime from "effect/DateTime";
 
-import { Spec, type Specification } from "@/globals/application/ddd/specification.ts";
+import { Spec, type Specification } from "@/globals/application/ddd/specification";
 
-import { type DeviceGrantRoot } from "./device-grant.root.ts";
+import { type DeviceGrantRoot } from "./device-grant.root";
 
 // Translatable specs (carry a Criteria → usable as repository filters and as
 // in-memory guards). The field-name strings live here and in the mapper's

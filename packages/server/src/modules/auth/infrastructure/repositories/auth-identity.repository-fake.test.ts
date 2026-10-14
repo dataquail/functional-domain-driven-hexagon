@@ -4,11 +4,11 @@ import { describe, it } from "@effect/vitest";
 import { assertNone } from "@effect/vitest/utils";
 import * as Effect from "effect/Effect";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { AuthIdentityRepository } from "@/modules/auth/domain/auth-identity/auth-identity.repository.ts";
-import { AuthIdentitySpecifications } from "@/modules/auth/domain/auth-identity/auth-identity.specification.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { AuthIdentityRepository } from "@/modules/auth/domain/auth-identity/auth-identity.repository";
+import { AuthIdentitySpecifications } from "@/modules/auth/domain/auth-identity/auth-identity.specification";
 
-import { makeAuthIdentityRepositoryFake } from "./auth-identity.repository-fake.ts";
+import { makeAuthIdentityRepositoryFake } from "./auth-identity.repository-fake";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const subject = "identity-sub-1";

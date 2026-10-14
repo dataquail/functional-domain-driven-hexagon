@@ -3,8 +3,8 @@ import { deepStrictEqual } from "node:assert";
 import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.ts";
-import { describeServer } from "@/test-utils/server-test-runtime.ts";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { describeServer } from "@/test-utils/server-test-runtime";
 // `TestServerLive` provides `UserAuthMiddlewareFake`, which always succeeds
 // with a deterministic admin CurrentUser. So `/auth/me` should always return
 // that fake identity here — no cookie required, no identity provider involved. The

@@ -3,14 +3,14 @@ import { BillingContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { Actions } from "@/globals/application/ports/actions.ts";
-import * as Authz from "@/globals/infrastructure/auth/authz.ts";
+import { Actions } from "@/globals/application/ports/actions";
+import * as Authz from "@/globals/infrastructure/auth/authz";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
-import { BillingResource } from "@/modules/billing/policies/billing.policies.ts";
-import { FindSubscriptionByOrganizationQuery } from "@/modules/billing/queries/find-subscription-by-organization.query.ts";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { BillingResource } from "@/modules/billing/policies/billing.policies";
+import { FindSubscriptionByOrganizationQuery } from "@/modules/billing/queries/find-subscription-by-organization.query";
 
 // `Actions.Read` is the member-or-super-admin gate. Subscription
 // state is something every member of the org may see — only

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@effect/vitest";
 
-import { buildCallbackUrl } from "./callback-url.util.ts";
+import { buildCallbackUrl } from "./callback-url.util";
 
 // The deterministic substructure of the callback endpoint worth pinning: the
 // reconstruction of the absolute callback URL openid-client receives. Off-by-one

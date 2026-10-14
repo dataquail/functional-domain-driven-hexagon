@@ -3,12 +3,12 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as Result from "effect/Result";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { type Specification } from "@/globals/application/ddd/specification.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { type Specification } from "@/globals/application/ddd/specification";
 
-import { type RolesRoot } from "./roles.root.ts";
-import { RolesRootOps } from "./roles.root-ops.ts";
-import { RolesSpecifications } from "./roles.specification.ts";
+import { type RolesRoot } from "./roles.root";
+import { RolesRootOps } from "./roles.root-ops";
+import { RolesSpecifications } from "./roles.specification";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 

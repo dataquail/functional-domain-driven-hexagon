@@ -2,9 +2,9 @@ import { expect, layer } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { APP_URL, IdentityTestHarness } from "../test-utils/identity-test-auth.ts";
-import { IdentityTestDatabase } from "../test-utils/identity-test-database.ts";
-import { seedIdentity } from "./identity-seed.ts";
+import { APP_URL, IdentityTestHarness } from "../test-utils/identity-test-auth";
+import { IdentityTestDatabase } from "../test-utils/identity-test-database";
+import { seedIdentity } from "./identity-seed";
 
 const client = {
   clientId: "effect-monorepo-app",

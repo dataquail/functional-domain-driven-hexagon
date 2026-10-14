@@ -4,8 +4,8 @@ import * as HttpRouter from "effect/http/HttpRouter";
 import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 import * as Layer from "effect/Layer";
 
-import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.ts";
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.ts";
+import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars";
 import {
   AfterCommitTransportLive,
   CommandBusLive,
@@ -14,17 +14,17 @@ import {
   QueryBusLive,
   UnhandledFailuresLive,
   UnitOfWorkLive,
-} from "@/globals/infrastructure/cqrs/cqrs-runtime.ts";
-import { DeliveryLedgerLive } from "@/globals/infrastructure/events/delivery-ledger-live.ts";
-import { Api } from "@/globals/infrastructure/framework/http/api.ts";
-import { applicationModules } from "@/globals/infrastructure/framework/modules/application-modules.ts";
-import { BillingGatewayFake } from "@/modules/billing/billing.platform.ts";
+} from "@/globals/infrastructure/cqrs/cqrs-runtime";
+import { DeliveryLedgerLive } from "@/globals/infrastructure/events/delivery-ledger-live";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { applicationModules } from "@/globals/infrastructure/framework/modules/application-modules";
+import { BillingGatewayFake } from "@/modules/billing/billing.platform";
 import {
   UserAuthMiddlewareFake,
   UserAuthMiddlewareFakeAsMember,
-} from "@/test-utils/fake-auth-middleware.ts";
-import { TestDatabaseLive } from "@/test-utils/test-database.ts";
-import { InMemoryHttpServerLive } from "@/test-utils/test-http-server.ts";
+} from "@/test-utils/fake-auth-middleware";
+import { TestDatabaseLive } from "@/test-utils/test-database";
+import { InMemoryHttpServerLive } from "@/test-utils/test-http-server";
 
 // The same application production runs. What this root does differently is
 // provide a different environment below: a test database, a fake auth

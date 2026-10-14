@@ -8,13 +8,13 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.ts";
-import { MailDeliveryError } from "@/globals/infrastructure/email/ports/mail-errors.ts";
-import { Mailer } from "@/globals/infrastructure/email/ports/mailer.ts";
-import { InvitationEmailUndelivered } from "@/modules/organization/domain/invitation/invitation.errors.ts";
-import { InvitationMailer } from "@/modules/organization/domain/ports/clients/invitation-mailer.client.ts";
-import { InvitationMailerLive } from "@/modules/organization/infrastructure/clients/invitation-mailer.client-live.ts";
-import { MailerFake, SentMails } from "@/test-utils/mailer-fake.ts";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars";
+import { MailDeliveryError } from "@/globals/infrastructure/email/ports/mail-errors";
+import { Mailer } from "@/globals/infrastructure/email/ports/mailer";
+import { InvitationEmailUndelivered } from "@/modules/organization/domain/invitation/invitation.errors";
+import { InvitationMailer } from "@/modules/organization/domain/ports/clients/invitation-mailer.client";
+import { InvitationMailerLive } from "@/modules/organization/infrastructure/clients/invitation-mailer.client-live";
+import { MailerFake, SentMails } from "@/test-utils/mailer-fake";
 
 const APP_URL = "https://app.example.com";
 

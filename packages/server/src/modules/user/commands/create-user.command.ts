@@ -2,8 +2,8 @@ import { Command } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { UserAlreadyExists } from "@/modules/user/domain/user/user.errors.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { UserAlreadyExists } from "@/modules/user/domain/user/user.errors";
 
 // Address fields are optional so the same command serves both the address-collecting
 // create-user endpoint and JIT provisioning (which only has an email). The three move

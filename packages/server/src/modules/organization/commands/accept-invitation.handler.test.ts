@@ -10,29 +10,29 @@ import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
-import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.ts";
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { Spec } from "@/globals/application/ddd/specification.ts";
-import { acceptInvitationHandler } from "@/modules/organization/commands/accept-invitation.handler.ts";
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { Spec } from "@/globals/application/ddd/specification";
+import { acceptInvitationHandler } from "@/modules/organization/commands/accept-invitation.handler";
 import {
   InvitationAlreadyAccepted,
   InvitationExpired,
   InvitationRevoked,
   InvitationTokenNotFound,
-} from "@/modules/organization/domain/invitation/invitation.errors.ts";
-import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.ts";
-import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.ts";
-import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.ts";
-import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.ts";
-import { type MembershipCreated } from "@/modules/organization/domain/membership/membership.events.ts";
-import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.ts";
-import { MembershipSpecifications } from "@/modules/organization/domain/membership/membership.specification.ts";
-import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors.ts";
-import { makePlatformRolesFake } from "@/modules/organization/infrastructure/acl/platform-roles.acl-fake.ts";
-import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake.ts";
-import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.ts";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.ts";
+} from "@/modules/organization/domain/invitation/invitation.errors";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository";
+import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root";
+import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops";
+import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification";
+import { type MembershipCreated } from "@/modules/organization/domain/membership/membership.events";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository";
+import { MembershipSpecifications } from "@/modules/organization/domain/membership/membership.specification";
+import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors";
+import { makePlatformRolesFake } from "@/modules/organization/infrastructure/acl/platform-roles.acl-fake";
+import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake";
+import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus";
 
 const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");
 const organizationId = OrganizationId.make("22222222-2222-2222-2222-222222222222");

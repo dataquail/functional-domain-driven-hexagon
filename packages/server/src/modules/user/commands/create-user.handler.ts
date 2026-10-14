@@ -4,12 +4,12 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { DomainEventBus } from "@/globals/application/ports/event-bus.ts";
-import { type CreateUserPayload } from "@/modules/user/commands/create-user.command.ts";
-import { UserRepository } from "@/modules/user/domain/user/user.repository.ts";
-import { UserRootOps } from "@/modules/user/domain/user/user.root-ops.ts";
-import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
+import { type CreateUserPayload } from "@/modules/user/commands/create-user.command";
+import { UserRepository } from "@/modules/user/domain/user/user.repository";
+import { UserRootOps } from "@/modules/user/domain/user/user.root-ops";
+import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object";
 
 export const createUserHandler = Effect.fn("createUserHandler")(function* (cmd: CreateUserPayload) {
   const repo = yield* UserRepository;

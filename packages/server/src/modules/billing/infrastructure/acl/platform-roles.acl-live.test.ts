@@ -5,10 +5,10 @@ import { Query } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { PlatformRoles } from "@/modules/billing/domain/ports/acl/platform-roles.acl.ts";
-import { PlatformRolesLive } from "@/modules/billing/infrastructure/acl/platform-roles.acl-live.ts";
-import { roleAccessQueries } from "@/modules/role/role.exports.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { PlatformRoles } from "@/modules/billing/domain/ports/acl/platform-roles.acl";
+import { PlatformRolesLive } from "@/modules/billing/infrastructure/acl/platform-roles.acl-live";
+import { roleAccessQueries } from "@/modules/role/role.exports";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 

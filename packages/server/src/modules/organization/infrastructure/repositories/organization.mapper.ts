@@ -2,9 +2,9 @@ import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Option from "effect/Option";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.ts";
-import { OrganizationRoot } from "@/modules/organization/domain/organization/organization.root.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql";
+import { OrganizationRoot } from "@/modules/organization/domain/organization/organization.root";
 
 type Row = RowSchemas.OrganizationRow;
 

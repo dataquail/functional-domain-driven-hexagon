@@ -2,12 +2,12 @@ import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { Spec } from "@/globals/application/ddd/specification.ts";
-import { DomainEventBus } from "@/globals/application/ports/event-bus.ts";
-import { type RevokeOrganizationRolePayload } from "@/modules/organization/commands/revoke-organization-role.command.ts";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.ts";
-import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.ts";
-import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification.ts";
+import { Spec } from "@/globals/application/ddd/specification";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
+import { type RevokeOrganizationRolePayload } from "@/modules/organization/commands/revoke-organization-role.command";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository";
+import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops";
+import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification";
 
 export const revokeOrganizationRoleHandler = Effect.fn("revokeOrganizationRoleHandler")(function* (
   cmd: RevokeOrganizationRolePayload,

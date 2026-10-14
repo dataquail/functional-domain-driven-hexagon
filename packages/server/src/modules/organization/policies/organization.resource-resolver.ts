@@ -6,7 +6,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { FindOrganizationByIdQuery } from "@/modules/organization/queries/find-organization-by-id.query.ts";
+import { FindOrganizationByIdQuery } from "@/modules/organization/queries/find-organization-by-id.query";
 
 // Resolves the `organization` authz resource off the read side: the checks only
 // need the org id, and the load exists to distinguish "no such organization"

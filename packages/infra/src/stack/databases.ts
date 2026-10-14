@@ -12,7 +12,7 @@ import * as HttpClientResponse from "effect/http/HttpClientResponse";
 import * as Redacted from "effect/Redacted";
 import * as Schema from "effect/Schema";
 
-import { kindOfStage, PREVIEW_PARENT_STAGE, previewBranchExpiresAt } from "../stage.ts";
+import { kindOfStage, PREVIEW_PARENT_STAGE, previewBranchExpiresAt } from "../stage";
 
 type DatabaseSpec = {
   readonly neonProject: string;

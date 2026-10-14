@@ -7,23 +7,23 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { approveDeviceGrantHandler } from "@/modules/auth/commands/approve-device-grant.handler.ts";
-import { pollDeviceGrantHandler } from "@/modules/auth/commands/poll-device-grant.handler.ts";
-import { startDeviceGrantHandler } from "@/modules/auth/commands/start-device-grant.handler.ts";
-import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.ts";
-import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { approveDeviceGrantHandler } from "@/modules/auth/commands/approve-device-grant.handler";
+import { pollDeviceGrantHandler } from "@/modules/auth/commands/poll-device-grant.handler";
+import { startDeviceGrantHandler } from "@/modules/auth/commands/start-device-grant.handler";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository";
+import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification";
 import {
   DeviceGrantExpired,
   DeviceGrantNotFound,
   DeviceGrantPending,
-} from "@/modules/auth/domain/device-grant/device-grant.errors.ts";
-import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.ts";
-import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification.ts";
-import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service.ts";
-import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake.ts";
-import { DeviceGrantRepositoryFake } from "@/modules/auth/infrastructure/repositories/device-grant.repository-fake.ts";
-import { CryptoFake } from "@/test-utils/crypto-fake.ts";
+} from "@/modules/auth/domain/device-grant/device-grant.errors";
+import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository";
+import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification";
+import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service";
+import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake";
+import { DeviceGrantRepositoryFake } from "@/modules/auth/infrastructure/repositories/device-grant.repository-fake";
+import { CryptoFake } from "@/test-utils/crypto-fake";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 

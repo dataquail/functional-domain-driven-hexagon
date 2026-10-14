@@ -2,12 +2,12 @@ import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
 import {
   type FindAllOrganizationsPayload,
   type FindAllOrganizationsView,
-} from "@/modules/organization/queries/find-all-organizations.query.ts";
+} from "@/modules/organization/queries/find-all-organizations.query";
 
 const CountRow = Schema.Struct({ value: Schema.Int });
 

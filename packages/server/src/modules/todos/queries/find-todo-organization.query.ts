@@ -2,8 +2,8 @@ import { Query } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { TodoId } from "@/modules/todos/domain/todo/todo.id.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { TodoId } from "@/modules/todos/domain/todo/todo.id";
 
 export const TodoOrganizationView = Schema.Struct({
   organizationId: OrganizationId,

@@ -8,24 +8,24 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { createOrganizationHandler } from "@/modules/organization/commands/create-organization.handler.ts";
-import { restoreOrganizationHandler } from "@/modules/organization/commands/restore-organization.handler.ts";
-import { softDeleteOrganizationHandler } from "@/modules/organization/commands/soft-delete-organization.handler.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { createOrganizationHandler } from "@/modules/organization/commands/create-organization.handler";
+import { restoreOrganizationHandler } from "@/modules/organization/commands/restore-organization.handler";
+import { softDeleteOrganizationHandler } from "@/modules/organization/commands/soft-delete-organization.handler";
 import {
   OrganizationNotDeleted,
   OrganizationNotFound,
-} from "@/modules/organization/domain/organization/organization.errors.ts";
-import { type OrganizationRestored } from "@/modules/organization/domain/organization/organization.events.ts";
-import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.ts";
-import { OrganizationSpecifications } from "@/modules/organization/domain/organization/organization.specification.ts";
-import { makePlatformRolesFake } from "@/modules/organization/infrastructure/acl/platform-roles.acl-fake.ts";
-import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.ts";
-import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization.repository-fake.ts";
-import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.ts";
-import { CryptoFake } from "@/test-utils/crypto-fake.ts";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.ts";
+} from "@/modules/organization/domain/organization/organization.errors";
+import { type OrganizationRestored } from "@/modules/organization/domain/organization/organization.events";
+import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository";
+import { OrganizationSpecifications } from "@/modules/organization/domain/organization/organization.specification";
+import { makePlatformRolesFake } from "@/modules/organization/infrastructure/acl/platform-roles.acl-fake";
+import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake";
+import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization.repository-fake";
+import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake";
+import { CryptoFake } from "@/test-utils/crypto-fake";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus";
 
 const actorUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 

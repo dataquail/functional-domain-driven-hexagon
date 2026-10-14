@@ -3,10 +3,10 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 
-import { Criteria } from "@/globals/application/ddd/specification.ts";
+import { Criteria } from "@/globals/application/ddd/specification";
 
-import { type WebhookEventRecord } from "./webhook-event.repository.ts";
-import { WebhookEventSpecifications } from "./webhook-event.specification.ts";
+import { type WebhookEventRecord } from "./webhook-event.repository";
+import { WebhookEventSpecifications } from "./webhook-event.specification";
 
 const record: WebhookEventRecord = {
   stripeEventId: "evt_abc",

@@ -7,13 +7,13 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.ts";
-import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.ts";
-import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.ts";
-import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.ts";
-import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.ts";
-import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors";
+import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id";
+import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository";
+import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops";
+import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification";
+import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake";
 
 const acme = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const beta = OrganizationId.make("22222222-2222-2222-2222-222222222222");

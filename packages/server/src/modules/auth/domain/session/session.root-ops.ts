@@ -1,10 +1,10 @@
 import * as DateTime from "effect/DateTime";
 import * as Option from "effect/Option";
 
-import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { type UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { type SessionId } from "./session.id.ts";
-import { SessionRoot } from "./session.root.ts";
+import { type SessionId } from "./session.id";
+import { SessionRoot } from "./session.root";
 
 export type CreateInput = {
   readonly id: SessionId;

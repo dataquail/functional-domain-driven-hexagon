@@ -6,15 +6,15 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.ts";
-import { touchApiTokenHandler } from "@/modules/auth/commands/touch-api-token.handler.ts";
-import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.ts";
-import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.ts";
-import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.ts";
-import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.ts";
-import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.ts";
-import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable";
+import { touchApiTokenHandler } from "@/modules/auth/commands/touch-api-token.handler";
+import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors";
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository";
+import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops";
+import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification";
+import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake";
 
 const apiTokenId = ApiTokenId.make("11111111-1111-1111-1111-111111111111");
 const userId = UserId.make("22222222-2222-2222-2222-222222222222");

@@ -11,9 +11,9 @@ import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.ts";
-import { describeServer } from "@/test-utils/server-test-runtime.ts";
-import { TestServerLiveAsMember } from "@/test-utils/test-server.ts";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { describeServer } from "@/test-utils/server-test-runtime";
+import { TestServerLiveAsMember } from "@/test-utils/test-server";
 
 const DeletedAtRow = Schema.Struct({
   deleted_at: Schema.OptionFromNullOr(Schema.DateTimeUtcFromDate),

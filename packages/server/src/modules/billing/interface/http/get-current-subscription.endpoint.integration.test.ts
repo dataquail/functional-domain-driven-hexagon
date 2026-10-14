@@ -7,10 +7,10 @@ import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { Api } from "@/globals/infrastructure/framework/http/api.ts";
-import { describeServer } from "@/test-utils/server-test-runtime.ts";
-import { TestServerLiveAsMember } from "@/test-utils/test-server.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { describeServer } from "@/test-utils/server-test-runtime";
+import { TestServerLiveAsMember } from "@/test-utils/test-server";
 
 const BILLING_TABLES = [
   "billing.subscriptions",

@@ -4,8 +4,8 @@ import { UserContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.ts";
-import { describeServer } from "@/test-utils/server-test-runtime.ts";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { describeServer } from "@/test-utils/server-test-runtime";
 
 const basePayload = new UserContract.CreateUserPayload({
   email: "alice@example.com",

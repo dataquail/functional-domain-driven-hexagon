@@ -6,11 +6,11 @@ import * as DateTime from "effect/DateTime";
 import * as Option from "effect/Option";
 import * as Predicate from "effect/Predicate";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { type MembershipEvent } from "./membership.events.ts";
-import { MembershipRootOps } from "./membership.root-ops.ts";
+import { type MembershipEvent } from "./membership.events";
+import { MembershipRootOps } from "./membership.root-ops";
 
 const userId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const organizationId = OrganizationId.make("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");

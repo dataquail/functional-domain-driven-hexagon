@@ -1,6 +1,6 @@
 import * as Option from "effect/Option";
 
-import { html, SafeHtml } from "./html.ts";
+import { html, SafeHtml } from "./html";
 
 const STYLES = `
   :root { color-scheme: light dark; font-family: system-ui, sans-serif; }

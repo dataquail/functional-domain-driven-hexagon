@@ -2,7 +2,7 @@
   import { defineMeta } from "@storybook/addon-svelte-csf";
 
   import Button from "../button.svelte";
-  import { Form } from "./form.ts";
+  import { Form } from "./form";
 
   const { Story } = defineMeta({
     title: "Primitives/Form",

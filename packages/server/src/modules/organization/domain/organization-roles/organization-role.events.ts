@@ -1,9 +1,9 @@
-import * as Event from "@/globals/application/ddd/domain-event.ts";
-import { type SpanAttributesExtractor } from "@/globals/application/ddd/domain-event.ts";
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import * as Event from "@/globals/application/ddd/domain-event";
+import { type SpanAttributesExtractor } from "@/globals/application/ddd/domain-event";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { OrganizationRoleValueObject } from "./organization-role.value-object.ts";
+import { OrganizationRoleValueObject } from "./organization-role.value-object";
 
 export const OrganizationRoleGranted = Event.make("OrganizationRoleGranted", {
   userId: UserId,

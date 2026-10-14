@@ -3,16 +3,16 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { mintApiTokenCore } from "@/modules/auth/commands/mint-api-token.handler.ts";
-import { type PollDeviceGrantPayload } from "@/modules/auth/commands/poll-device-grant.command.ts";
+import { mintApiTokenCore } from "@/modules/auth/commands/mint-api-token.handler";
+import { type PollDeviceGrantPayload } from "@/modules/auth/commands/poll-device-grant.command";
 import {
   DeviceGrantExpired,
   DeviceGrantNotFound,
   DeviceGrantPending,
-} from "@/modules/auth/domain/device-grant/device-grant.errors.ts";
-import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.ts";
-import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification.ts";
-import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service.ts";
+} from "@/modules/auth/domain/device-grant/device-grant.errors";
+import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository";
+import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification";
+import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service";
 
 // Single-use exchange. Hashes the presented device code, then:
 //   - lapsed grant  → consume it + fail `DeviceGrantExpired`

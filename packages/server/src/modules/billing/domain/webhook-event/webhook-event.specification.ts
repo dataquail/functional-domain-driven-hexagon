@@ -1,6 +1,6 @@
-import { Spec, type Specification } from "@/globals/application/ddd/specification.ts";
+import { Spec, type Specification } from "@/globals/application/ddd/specification";
 
-import { type WebhookEventRecord } from "./webhook-event.repository.ts";
+import { type WebhookEventRecord } from "./webhook-event.repository";
 
 // Translatable spec (carries a Criteria → usable as a repository filter and as
 // an in-memory guard). The field-name string lives here and in the mapper's

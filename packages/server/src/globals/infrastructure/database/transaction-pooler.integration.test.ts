@@ -6,9 +6,9 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 
-import { TransactionDriverLive } from "@/globals/infrastructure/database/transaction-driver-live.ts";
-import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
-import { TestPooledDatabaseLive } from "@/test-utils/test-database.ts";
+import { TransactionDriverLive } from "@/globals/infrastructure/database/transaction-driver-live";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestPooledDatabaseLive } from "@/test-utils/test-database";
 
 const PooledLive = makeUnitOfWork().pipe(
   Layer.provide(TransactionDriverLive),

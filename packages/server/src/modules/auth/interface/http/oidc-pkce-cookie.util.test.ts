@@ -1,7 +1,7 @@
 import { describe, it } from "@effect/vitest";
 import { assertNone, assertSome } from "@effect/vitest/utils";
 
-import { decodePkcePayload, encodePkcePayload } from "./oidc-pkce-cookie.util.ts";
+import { decodePkcePayload, encodePkcePayload } from "./oidc-pkce-cookie.util";
 
 // The PKCE cookie is the shared contract between the login endpoint (which
 // packs {state, codeVerifier} and stamps it) and the callback endpoint (which

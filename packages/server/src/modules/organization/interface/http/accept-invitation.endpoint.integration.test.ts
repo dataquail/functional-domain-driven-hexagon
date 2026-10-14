@@ -9,10 +9,10 @@ import * as Exit from "effect/Exit";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Option from "effect/Option";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.ts";
-import { MEMBER_CALLER_ID } from "@/test-utils/fake-auth-middleware.ts";
-import { describeServer } from "@/test-utils/server-test-runtime.ts";
-import { TestServerLiveAsMember } from "@/test-utils/test-server.ts";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { MEMBER_CALLER_ID } from "@/test-utils/fake-auth-middleware";
+import { describeServer } from "@/test-utils/server-test-runtime";
+import { TestServerLiveAsMember } from "@/test-utils/test-server";
 
 const ORG_ID = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 

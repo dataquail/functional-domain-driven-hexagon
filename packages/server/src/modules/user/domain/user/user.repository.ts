@@ -2,14 +2,11 @@ import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 import type * as Option from "effect/Option";
 
-import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.ts";
-import { type Specification } from "@/globals/application/ddd/specification.ts";
-import {
-  type UserAlreadyExists,
-  type UserNotFound,
-} from "@/modules/user/domain/user/user.errors.ts";
-import { type UserRoot } from "@/modules/user/domain/user/user.root.ts";
+import { type UserId } from "@/globals/application/ddd/ids/user-id";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { type UserAlreadyExists, type UserNotFound } from "@/modules/user/domain/user/user.errors";
+import { type UserRoot } from "@/modules/user/domain/user/user.root";
 
 // Dumb persistence, collapsed to the minimal vocabulary: insert/update/delete
 // the aggregate, and read it back by a Specification. Identity and natural-key

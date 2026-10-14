@@ -5,12 +5,12 @@ import { assertNone } from "@effect/vitest/utils";
 import * as Effect from "effect/Effect";
 import * as Result from "effect/Result";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.ts";
-import { RolesRootOps } from "@/modules/role/domain/roles/roles.root-ops.ts";
-import { RolesSpecifications } from "@/modules/role/domain/roles/roles.specification.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { RolesRepository } from "@/modules/role/domain/roles/roles.repository";
+import { RolesRootOps } from "@/modules/role/domain/roles/roles.root-ops";
+import { RolesSpecifications } from "@/modules/role/domain/roles/roles.specification";
 
-import { RolesRepositoryFake } from "./roles.repository-fake.ts";
+import { RolesRepositoryFake } from "./roles.repository-fake";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 

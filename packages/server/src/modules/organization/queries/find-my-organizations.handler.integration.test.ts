@@ -6,17 +6,17 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Result from "effect/Result";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
-import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
-import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.ts";
-import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops.ts";
-import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.ts";
-import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.ts";
-import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/repositories/membership.repository-live.ts";
-import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.ts";
-import { findMyOrganizationsHandler } from "@/modules/organization/queries/find-my-organizations.handler.ts";
-import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
-import { TestDatabaseLive } from "@/test-utils/test-database.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository";
+import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops";
+import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository";
+import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops";
+import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/repositories/membership.repository-live";
+import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live";
+import { findMyOrganizationsHandler } from "@/modules/organization/queries/find-my-organizations.handler";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const aliceId = UserId.make("11111111-1111-1111-1111-111111111111");
 const bobId = UserId.make("22222222-2222-2222-2222-222222222222");

@@ -3,14 +3,14 @@ import { CliTodosContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { Actions } from "@/globals/application/ports/actions.ts";
-import * as Authz from "@/globals/infrastructure/auth/authz.ts";
+import { Actions } from "@/globals/application/ports/actions";
+import * as Authz from "@/globals/infrastructure/auth/authz";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
-import { CompleteTodoCommand } from "@/modules/todos/commands/complete-todo.command.ts";
-import { TodoResource } from "@/modules/todos/policies/todos.policies.ts";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { CompleteTodoCommand } from "@/modules/todos/commands/complete-todo.command";
+import { TodoResource } from "@/modules/todos/policies/todos.policies";
 
 // CLI adapter (ADR-0005): completing is an update-gated action. The `todo`
 // resolver scopes by (orgId, id), so a missing or cross-tenant todo is

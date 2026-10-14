@@ -2,13 +2,13 @@ import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { Spec } from "@/globals/application/ddd/specification.ts";
-import { DomainEventBus } from "@/globals/application/ports/event-bus.ts";
-import { type GrantOrganizationRolePayload } from "@/modules/organization/commands/grant-organization-role.command.ts";
-import { CannotPromoteSelfInOrganization } from "@/modules/organization/domain/organization-roles/organization-role.errors.ts";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.ts";
-import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.ts";
-import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification.ts";
+import { Spec } from "@/globals/application/ddd/specification";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
+import { type GrantOrganizationRolePayload } from "@/modules/organization/commands/grant-organization-role.command";
+import { CannotPromoteSelfInOrganization } from "@/modules/organization/domain/organization-roles/organization-role.errors";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository";
+import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops";
+import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification";
 
 export const grantOrganizationRoleHandler = Effect.fn("grantOrganizationRoleHandler")(function* (
   cmd: GrantOrganizationRolePayload,

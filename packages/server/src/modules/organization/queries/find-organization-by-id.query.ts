@@ -2,7 +2,7 @@ import { Query } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
 
 export const OrganizationAuthzView = Schema.Struct({
   organizationId: OrganizationId,

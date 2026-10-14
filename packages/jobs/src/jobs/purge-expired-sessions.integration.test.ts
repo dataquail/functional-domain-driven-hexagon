@@ -6,8 +6,8 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { TestDatabaseLive, truncate } from "../test-utils/test-database.ts";
-import { purgeExpiredSessions } from "./purge-expired-sessions.ts";
+import { TestDatabaseLive, truncate } from "../test-utils/test-database";
+import { purgeExpiredSessions } from "./purge-expired-sessions";
 
 const userId = "11111111-1111-1111-1111-111111111111";
 

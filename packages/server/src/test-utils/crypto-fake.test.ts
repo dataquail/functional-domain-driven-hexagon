@@ -4,7 +4,7 @@ import { describe, layer } from "@effect/vitest";
 import * as Crypto from "effect/Crypto";
 import * as Effect from "effect/Effect";
 
-import { CryptoFake } from "./crypto-fake.ts";
+import { CryptoFake } from "./crypto-fake";
 
 describe("CryptoFake", () => {
   layer(CryptoFake)((it) => {
