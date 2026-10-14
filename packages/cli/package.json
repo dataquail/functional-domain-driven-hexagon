@@ -23,7 +23,7 @@
     "effect": "4.0.2"
   },
   "devDependencies": {
-    "@types/node": "^25.9.4",
+    "@types/node": "^26.6.5",
     "tsx": "^4.23.0"
   }
 }

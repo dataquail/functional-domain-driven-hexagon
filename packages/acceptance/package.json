@@ -15,7 +15,7 @@
     "@org/database": "workspace:^",
     "@org/test-drivers": "workspace:^",
     "@playwright/test": "^1.61.1",
-    "@types/node": "^25.9.4",
+    "@types/node": "^26.6.5",
     "@types/pg": "^8.20.0",
     "dotenv": "^16.6.1",
     "effect": "4.0.2",
