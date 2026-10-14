@@ -7,12 +7,15 @@ import * as Layer from "effect/Layer";
 import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.js";
 import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
 import {
+  AfterCommitTransportLive,
   CommandBusLive,
   DomainEventBusLive,
+  DomainEventDeliveryLive,
   QueryBusLive,
   UnhandledFailuresLive,
   UnitOfWorkLive,
 } from "@/globals/infrastructure/cqrs/cqrs-runtime.js";
+import { DeliveryLedgerLive } from "@/globals/infrastructure/events/delivery-ledger-live.js";
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { applicationModules } from "@/globals/infrastructure/framework/modules/application-modules.js";
 import { BillingGatewayFake } from "@/modules/billing/billing.platform.js";
@@ -62,11 +65,19 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
     // only point that can satisfy one. Their deps (EnvVars, etc.) close below.
     Layer.provide(application.httpDeps),
     Layer.provideMerge(Layer.mergeAll(CommandBusLive, QueryBusLive, UnhandledFailuresLive)),
+    Layer.provide(DomainEventDeliveryLive),
     Layer.provideMerge(application.layer),
     // Below the dispatchers and merged, not provided: every dispatcher needs these
     // too (`handlersOf` hoists its handlers' requirements), and one layer value in
     // one place keeps it one instance. See server.ts.
-    Layer.provideMerge(Layer.mergeAll(DomainEventBusLive, UnitOfWorkLive)),
+    Layer.provideMerge(
+      Layer.mergeAll(
+        DomainEventBusLive,
+        UnitOfWorkLive,
+        AfterCommitTransportLive,
+        DeliveryLedgerLive,
+      ),
+    ),
     Layer.provide([CookieCodec.layer, BillingGatewayFake]),
     Layer.provideMerge(TestDatabaseLive),
     Layer.provide(EnvVars.layer),

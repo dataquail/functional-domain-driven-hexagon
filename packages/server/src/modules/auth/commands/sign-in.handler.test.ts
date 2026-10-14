@@ -28,9 +28,11 @@ import { SessionRepositoryFake } from "@/modules/auth/infrastructure/repositorie
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const provisionedUserId = UserId.make("22222222-2222-2222-2222-222222222222");
-const subject = "zitadel-sub-1";
+const subject = "identity-sub-1";
 
-const seededIdentities: ReadonlyArray<AuthIdentity> = [{ subject, userId, provider: "zitadel" }];
+const seededIdentities: ReadonlyArray<AuthIdentity> = [
+  { subject, userId, provider: "better-auth" },
+];
 
 // Known subject is pre-seeded; provisioning would mint `provisionedUserId`
 // for an unknown subject.
@@ -44,6 +46,7 @@ const TestLayer = Layer.mergeAll(
 const command = {
   subject,
   email: "admin@example.com",
+  emailVerified: true,
   ttlSeconds: 3600,
   absoluteTtlSeconds: 43200,
 };
@@ -76,7 +79,7 @@ describe("signInHandler", () => {
       const linked = yield* identities.findOne(AuthIdentitySpecifications.bySubject("new-subject"));
       if (linked === null) throw new Error("expected an identity");
       deepStrictEqual(linked.userId, provisionedUserId);
-      deepStrictEqual(linked.provider, "zitadel");
+      deepStrictEqual(linked.provider, "better-auth");
       const sessions = yield* SessionRepository;
       const stored = yield* sessions.findOne(SessionSpecifications.withId(result.sessionId));
       if (stored === null) throw new Error("expected a session");
@@ -125,5 +128,71 @@ describe("signInHandler", () => {
           deepStrictEqual(Schema.is(IdentityEmailAlreadyRegistered)(error), true);
         }
       }),
+  );
+
+  it.effect("links a new identity to the user already registered under its verified email", () => {
+    const existingUserId = UserId.make("33333333-3333-3333-3333-333333333333");
+    return Effect.gen(function* () {
+      const result = yield* signInHandler({
+        ...command,
+        subject: "second-identity",
+        email: "member@example.com",
+        emailVerified: true,
+      });
+      deepStrictEqual(result.userId, existingUserId);
+      const identities = yield* AuthIdentityRepository;
+      const linked = yield* identities.findOne(
+        AuthIdentitySpecifications.bySubject("second-identity"),
+      );
+      if (linked === null) throw new Error("expected an identity");
+      deepStrictEqual(linked.userId, existingUserId);
+      deepStrictEqual(linked.provider, "better-auth");
+    }).pipe(
+      Effect.provide(
+        Layer.mergeAll(
+          SessionRepositoryFake,
+          makeAuthIdentityRepositoryFake(seededIdentities),
+          makeUserProvisioningFake({
+            existing: new Map([["member@example.com", existingUserId]]),
+          }),
+          PassThroughUnitOfWork,
+        ),
+      ),
+    );
+  });
+
+  it.effect(
+    "refuses to link on an unverified email, so whoever claims an address cannot take its account",
+    () =>
+      Effect.gen(function* () {
+        const exit = yield* Effect.exit(
+          signInHandler({
+            ...command,
+            subject: "unverified-identity",
+            email: "member@example.com",
+            emailVerified: false,
+          }),
+        );
+        deepStrictEqual(Exit.isFailure(exit), true);
+        if (Exit.isFailure(exit)) {
+          const error = Cause.hasFails(exit.cause)
+            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
+            : null;
+          deepStrictEqual(Schema.is(IdentityEmailAlreadyRegistered)(error), true);
+        }
+      }).pipe(
+        Effect.provide(
+          Layer.mergeAll(
+            SessionRepositoryFake,
+            makeAuthIdentityRepositoryFake(seededIdentities),
+            makeUserProvisioningFake({
+              existing: new Map([
+                ["member@example.com", UserId.make("33333333-3333-3333-3333-333333333333")],
+              ]),
+            }),
+            PassThroughUnitOfWork,
+          ),
+        ),
+      ),
   );
 });

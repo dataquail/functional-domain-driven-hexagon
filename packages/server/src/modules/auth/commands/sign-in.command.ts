@@ -15,14 +15,13 @@ export const SignInResultView = Schema.Struct({
 });
 export type SignInResult = typeof SignInResultView.Type;
 
-// Inputs come from the OIDC callback: a verified Zitadel `subject`, the
-// signed-in `email`, and the caller's chosen TTLs. `email` is required to
-// JIT-provision an unknown subject on first sign-in (admins are pre-seeded
-// by `infra/zitadel/seed.mjs`); a `null` email fails provisioning.
+// Inputs come from the OIDC callback: the issuer's `subject`, the signed-in `email`
+// and whether the issuer verified it, and the caller's chosen TTLs.
 export const SignInCommand = Command.make("SignInCommand", {
   payload: {
     subject: Schema.String,
     email: Schema.NullOr(Schema.String),
+    emailVerified: Schema.Boolean,
     ttlSeconds: Schema.Int,
     absoluteTtlSeconds: Schema.Int,
   },

@@ -8,11 +8,11 @@ import {
   PKCE_COOKIE_NAME,
 } from "./oidc-pkce-cookie.util.js";
 
-// The login endpoint's overall flow — building the Zitadel authorize URL,
+// The login endpoint's overall flow — building the issuer's authorize URL,
 // signing the cookie, stamping the 302 — is exercised end-to-end by
 // Playwright (`packages/acceptance/setup/auth.setup.ts` and
-// `packages/acceptance/specs/login.spec.ts`), which run against a real
-// Zitadel instance and a real browser. What we lock down here are the
+// `packages/acceptance/specs/login.spec.ts`), which run against the real
+// identity Worker and a real browser. What we lock down here are the
 // deterministic substructures the endpoint composes: the PKCE cookie name,
 // its short-lived TTL, and the encode/decode round-trip on the payload.
 //

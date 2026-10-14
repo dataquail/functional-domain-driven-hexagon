@@ -70,6 +70,6 @@ Two guards keep `*.util.ts` from drifting even within the interface layer:
 
 - ADR-0001 (functional core / imperative shell) — why credential generation (impure) stays in the command and only pure logic is domain.
 - ADR-0003 (aggregates) — `XRootOps` in `*.root-ops.ts`, the free-function-bag style domain services mirror; and `*.specification.ts`, the read-only single-aggregate predicate a domain service is contrasted against.
-- ADR-0016/0017 (Zitadel BFF) — why OIDC protocol state is interface-layer, not domain.
+- ADR-0017/0034 (server-side BFF) — why OIDC protocol state is interface-layer, not domain.
 - ADR-0008 (architecture enforcement) — the folder-structure layout/parity machinery these two stereotypes extend.
 - ADR-0022 (adapter taxonomy) — the clients/acl tiering alongside which these interface/domain stereotypes sit.

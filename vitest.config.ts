@@ -22,6 +22,8 @@ export default defineConfig({
     projects: [
       "packages/contracts",
       "packages/database",
+      "packages/identity",
+      "packages/infra",
       "packages/jobs",
       "packages/server",
       "packages/web",
@@ -36,6 +38,8 @@ export default defineConfig({
       include: [
         "packages/contracts/src/**/*.ts",
         "packages/database/src/**/*.ts",
+        "packages/identity/src/**/*.ts",
+        "packages/infra/src/**/*.ts",
         "packages/jobs/src/**/*.ts",
         "packages/server/src/**/*.{ts,tsx}",
         "packages/web/features/**/*.{ts,tsx}",
@@ -55,6 +59,13 @@ export default defineConfig({
         "packages/server/src/server.ts",
         "packages/jobs/src/main.ts",
         "packages/database/src/scripts/**",
+        // Resource declarations: only the Alchemy engine evaluates them, under
+        // `alchemy dev` or a deploy.
+        "packages/infra/src/stack/**",
+        // Worker entrypoints run in workerd; `pnpm dev:cf:check` is their test.
+        "packages/infra/src/platform/worker/**",
+        "packages/identity/src/platform/worker/**",
+        "packages/identity/src/scripts/**",
         // `import "server-only"` — unloadable in the jsdom Model tier, so no
         // Vitest suite can reach them at all (ADR-0019, ADR-0026).
         "packages/web/**/*.server.ts",

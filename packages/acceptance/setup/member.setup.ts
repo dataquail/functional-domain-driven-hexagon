@@ -1,6 +1,6 @@
 import { test as setup } from "@playwright/test";
 
-import { ZitadelLoginPage } from "@/drivers/pages/zitadel-login-page";
+import { IdentityLoginPage } from "@/drivers/pages/identity-login-page";
 import {
   MEMBER_EMAIL,
   MEMBER_PASSWORD,
@@ -17,8 +17,7 @@ import {
 setup("authenticate as member", async ({ page }) => {
   await page.goto("/api/auth/login");
 
-  const zitadel = new ZitadelLoginPage(page);
-  await zitadel.signIn(MEMBER_EMAIL, MEMBER_PASSWORD);
+  await new IdentityLoginPage(page).signIn(MEMBER_EMAIL, MEMBER_PASSWORD);
 
   // A regular user lands on the root `/` (the org picker) — unlike a
   // super-admin, who is redirected to /admin/orgs.
@@ -29,7 +28,7 @@ setup("authenticate as member", async ({ page }) => {
       `[member.setup] Member sign-in did not land on the SPA root.\n` +
         `  Stuck at: ${page.url()}\n` +
         `  Page title: ${await page.title()}\n` +
-        `  Most common cause: ACCEPTANCE_MEMBER_PASSWORD doesn't satisfy the Zitadel password policy.\n` +
+        `  Most common cause: the identity Worker was seeded with a different ACCEPTANCE_MEMBER_PASSWORD.\n` +
         `  Original: ${String(cause)}`,
     );
   }

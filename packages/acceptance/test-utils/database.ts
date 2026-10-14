@@ -4,6 +4,7 @@ import * as Effect from "effect/Effect";
 import * as Redacted from "effect/Redacted";
 import pg from "pg";
 
+import { ADMIN_EMAIL } from "./admin-credentials";
 import { MEMBER_EMAIL } from "./member-credentials";
 
 // Test-database utilities for the acceptance workspace. Mirrors the server's
@@ -46,7 +47,7 @@ const splitQualified = (qualified: string): readonly [string, string] => {
 // non-system rows instead of TRUNCATE'ing — a preserved user's session and
 // `auth_identities` row would otherwise CASCADE-delete and break the
 // storageState cookie for the next spec. We preserve BOTH the admin
-// (ZITADEL_ADMIN_EMAIL, seeded by admin-seed.ts) and the regular member
+// (ADMIN_EMAIL, seeded by admin-seed.ts) and the regular member
 // (MEMBER_EMAIL, JIT-provisioned at member-setup login) so an org-scoped
 // spec's member session survives a user-table reset by another spec
 // regardless of run order.
@@ -56,8 +57,7 @@ export const truncate = async (
 ): Promise<void> => {
   assertTestDbName(databaseUrl);
   if (tables.length === 0) return;
-  const adminEmail = process.env.ZITADEL_ADMIN_EMAIL ?? "admin@example.com";
-  const preservedEmails = [adminEmail, MEMBER_EMAIL];
+  const preservedEmails = [ADMIN_EMAIL, MEMBER_EMAIL];
   const qualified = tables.map(splitQualified);
   const pool = new pg.Pool({ connectionString: databaseUrl });
   try {

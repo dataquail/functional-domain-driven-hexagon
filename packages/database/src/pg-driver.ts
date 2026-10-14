@@ -49,6 +49,8 @@ const typedArray =
 export const textArray = typedArray(PgTypes.OID.text);
 export const uuidArray = typedArray(PgTypes.OID.uuid);
 
+export const jsonb = (value: unknown): PgTypes.Parameter => PgTypes.jsonb(value);
+
 export const driverLayer = (config: Config): Layer.Layer<PgClient.PgClient | SqlClient, SqlError> =>
   PgClient.layer({
     url: config.url,

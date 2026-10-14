@@ -22,18 +22,18 @@ const make = Effect.gen(function* () {
       Config.withDefault("http://jaeger:4318/v1/traces"),
     ),
 
-    // Zitadel / Auth
-    ZITADEL_ISSUER: yield* Config.URL("ZITADEL_ISSUER").pipe(
+    // Identity provider (the identity Worker, an OIDC issuer) / Auth
+    IDENTITY_ISSUER: yield* Config.URL("IDENTITY_ISSUER").pipe(
       Config.map((u) => u.toString().replace(/\/$/, "")),
     ),
-    ZITADEL_CLIENT_ID: yield* Config.String("ZITADEL_CLIENT_ID"),
-    ZITADEL_CLIENT_SECRET: yield* Config.Redacted("ZITADEL_CLIENT_SECRET"),
-    ZITADEL_REDIRECT_URI: yield* Config.String("ZITADEL_REDIRECT_URI").pipe(
+    IDENTITY_CLIENT_ID: yield* Config.String("IDENTITY_CLIENT_ID"),
+    IDENTITY_CLIENT_SECRET: yield* Config.Redacted("IDENTITY_CLIENT_SECRET"),
+    IDENTITY_REDIRECT_URI: yield* Config.String("IDENTITY_REDIRECT_URI").pipe(
       Config.withDefault("http://localhost:3000/api/auth/callback"),
     ),
-    ZITADEL_POST_LOGOUT_REDIRECT_URI: yield* Config.String("ZITADEL_POST_LOGOUT_REDIRECT_URI").pipe(
-      Config.withDefault("http://localhost:3000/"),
-    ),
+    IDENTITY_POST_LOGOUT_REDIRECT_URI: yield* Config.String(
+      "IDENTITY_POST_LOGOUT_REDIRECT_URI",
+    ).pipe(Config.withDefault("http://localhost:3000/")),
 
     SESSION_COOKIE_NAME: yield* Config.String("SESSION_COOKIE_NAME").pipe(
       Config.withDefault("session"),
@@ -72,13 +72,8 @@ const make = Effect.gen(function* () {
     // Email / Notifications
     // Transport selection for the application `Mailer` port. `log` (default)
     // writes a structured log line — no real send. `smtp` targets the local
-    // Mailpit sink (or any SMTP relay) for dev. `ses` uses AWS SES in prod.
-    //
-    // These MAIL_SMTP_* vars are deliberately namespaced apart from the bare
-    // SMTP_* block, which configures *Zitadel's* notification provider inside
-    // docker (where the host is the `mailpit` service name). The app server
-    // runs on the host, so its default points at `localhost`. SES reads
-    // region + credentials from the standard AWS chain (AWS_REGION, etc.).
+    // Mailpit sink (or any SMTP relay) for dev. `ses` uses AWS SES in prod and
+    // reads region + credentials from the standard AWS chain (AWS_REGION, etc.).
     MAILER: yield* Config.Literals(["log", "smtp", "ses"], "MAILER").pipe(
       Config.withDefault("log"),
     ),

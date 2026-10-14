@@ -374,5 +374,5 @@ and module barrels stay barrel-content-discipline compliant.
   cross-module seam.
 - ADR-0008: dep-cruiser enforcement of the boundary rules this ADR
   works inside of.
-- ADR-0016: authentication via self-hosted Zitadel — the identity
-  source `CurrentUser` is fed from.
+- ADR-0034 (superseding ADR-0016): authentication through the identity
+  Worker — the identity source `CurrentUser` is fed from.

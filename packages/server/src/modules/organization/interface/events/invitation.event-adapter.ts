@@ -3,9 +3,9 @@
 // actually exists: the accept link would otherwise be live for a row a rollback
 // took away.
 //
-// It is also why a mail-server outage can no longer fail an invite. Delivery is
-// isolated by the flush, where before it was a statement the handler ran after
-// its unit of work and whose failure surfaced to the caller.
+// It is also why a mail-server outage can no longer fail an invite: the reaction
+// is written to the outbox with the invitation and delivered after commit, so a
+// failed send leaves its row for the sweeper rather than failing the caller.
 //
 // Bus-only, like every adapter: the dispatched command owns the repository read
 // and the send.
@@ -35,11 +35,18 @@ export const InvitationEventAdapterLive = Layer.effectDiscard(
     const send = (invitationId: InvitationIssued["invitationId"]) =>
       commandBus.execute(SendInvitationEmailCommand, { invitationId }).pipe(Effect.orDie);
 
-    yield* domainEventBus.subscribeAfterCommit(InvitationIssued, (event) =>
-      send(event.invitationId),
+    // The name addresses this reaction's outbox rows and delivery-ledger entries,
+    // so renaming it strands any envelope still in flight.
+    const subscription = { name: "organization.sendInvitationEmail" };
+    yield* domainEventBus.subscribeAfterCommit(
+      InvitationIssued,
+      (event) => send(event.invitationId),
+      subscription,
     );
-    yield* domainEventBus.subscribeAfterCommit(InvitationReissued, (event) =>
-      send(event.invitationId),
+    yield* domainEventBus.subscribeAfterCommit(
+      InvitationReissued,
+      (event) => send(event.invitationId),
+      subscription,
     );
   }),
 );

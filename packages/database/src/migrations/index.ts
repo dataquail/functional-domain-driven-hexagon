@@ -23,6 +23,8 @@ import m0019 from "./0019_create_table_billing_webhook_events.js";
 import m0020 from "./0020_user_users_address_nullable.js";
 import m0021 from "./0021_create_table_auth_api_tokens.js";
 import m0022 from "./0022_create_table_auth_device_grants.js";
+import m0023 from "./0023_create_table_platform_event_outbox.js";
+import m0024 from "./0024_auth_identities_provider_better_auth.js";
 
 // Statically imported rather than discovered on disk: the library's
 // `fromFileSystem` loader marks its dynamic import `@vite-ignore`, so under
@@ -52,4 +54,6 @@ export const migrations: Record<string, Effect.Effect<void, unknown, SqlClient>>
   "0020_user_users_address_nullable": m0020,
   "0021_create_table_auth_api_tokens": m0021,
   "0022_create_table_auth_device_grants": m0022,
+  "0023_create_table_platform_event_outbox": m0023,
+  "0024_auth_identities_provider_better_auth": m0024,
 };

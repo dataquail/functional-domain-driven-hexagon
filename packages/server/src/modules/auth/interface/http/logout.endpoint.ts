@@ -10,14 +10,10 @@ import { RevokeSessionCommand } from "@/modules/auth/commands/revoke-session.com
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client.js";
 
-// Sign out — single round-trip:
-//   1. Reads our session cookie inline (no middleware; logout must work even
-//      when our session is already gone).
-//   2. Revokes the session row if present (idempotent).
-//   3. Clears our session cookie.
-//   4. Redirects to Zitadel's end_session_endpoint so the SSO cookie is also
-//      torn down. Without this, signing back in would silently re-auth.
-//   5. Zitadel redirects back to APP_URL (configured in seed).
+import { ID_TOKEN_HINT_COOKIE_NAME, readIdTokenHint } from "./id-token-hint-cookie.util.js";
+
+// Reads the session cookie inline rather than through middleware: logout must work
+// even when the session is already gone.
 export const logoutEndpoint = Effect.fn("AuthLive.logout")(function* () {
   const env = yield* EnvVars;
   const codec = yield* CookieCodec;
@@ -34,11 +30,9 @@ export const logoutEndpoint = Effect.fn("AuthLive.logout")(function* () {
     }
   }
 
-  const endSessionUrl = yield* oidc.buildEndSessionUrl.pipe(
+  const endSessionUrl = yield* oidc.buildEndSessionUrl(readIdTokenHint(cookies)).pipe(
     Effect.map((u) => u.toString()),
-    // If discovery fails (Zitadel down), fall back to landing on the app
-    // root — local logout still completes; the SSO cookie sticks around
-    // until next interaction.
+    // An unreachable issuer still gets a local logout; its own session outlives it.
     Effect.orElseSucceed(() => env.APP_URL),
   );
 
@@ -56,6 +50,7 @@ export const logoutEndpoint = Effect.fn("AuthLive.logout")(function* () {
           path: "/",
         },
       ],
+      [ID_TOKEN_HINT_COOKIE_NAME, "", { httpOnly: true, sameSite: "lax", maxAge: 0, path: "/" }],
     ]),
   );
 });

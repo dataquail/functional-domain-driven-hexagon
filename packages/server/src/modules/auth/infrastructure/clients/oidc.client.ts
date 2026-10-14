@@ -8,9 +8,8 @@ import * as openid from "openid-client";
 
 import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
 
-// Wraps openid-client. The only file in the repo that imports `openid-client`.
-// Used exclusively by the auth login + callback paths — once we have a
-// session row, we don't talk to Zitadel again until the next login.
+// The only file in the repo that imports `openid-client`. Used by login, callback and
+// logout alone: once a session row exists, the issuer is not consulted again.
 
 export type AuthorizeRequest = {
   readonly url: URL;
@@ -21,26 +20,35 @@ export type AuthorizeRequest = {
 export type CodeExchangeResult = {
   readonly subject: string;
   readonly email: string | null;
+  readonly emailVerified: boolean;
+  readonly idToken: string | null;
 };
 
-const make = Effect.gen(function* () {
+// A Worker routes the token calls through its service binding instead of the network.
+export type OidcTransport = {
+  readonly fetch?: openid.CustomFetch;
+};
+
+const make = Effect.fn("OidcClient.make")(function* (transport: OidcTransport) {
   const env = yield* EnvVars;
-  const issuerUrl = new URL(env.ZITADEL_ISSUER);
+  const issuerUrl = new URL(env.IDENTITY_ISSUER);
   const allowHttp = issuerUrl.protocol === "http:";
 
-  // Lazy discovery — fetched on first use, cached afterward. This lets the
-  // server boot when Zitadel is briefly unreachable (and lets tests build
-  // without a live Zitadel).
+  // Discovered on first use, so the server boots while the issuer is unreachable.
   let cached: openid.Configuration | null = null;
   const getConfig = async (): Promise<openid.Configuration> => {
     if (cached !== null) return cached;
     cached = await openid.discovery(
       issuerUrl,
-      env.ZITADEL_CLIENT_ID,
-      Redacted.value(env.ZITADEL_CLIENT_SECRET),
+      env.IDENTITY_CLIENT_ID,
+      Redacted.value(env.IDENTITY_CLIENT_SECRET),
       undefined,
-      allowHttp ? { execute: [openid.allowInsecureRequests] } : undefined,
+      {
+        ...(transport.fetch === undefined ? {} : { [openid.customFetch]: transport.fetch }),
+        ...(allowHttp ? { execute: [openid.allowInsecureRequests] } : {}),
+      },
     );
+    if (transport.fetch !== undefined) cached[openid.customFetch] = transport.fetch;
     return cached;
   };
 
@@ -52,17 +60,12 @@ const make = Effect.gen(function* () {
         const codeChallenge = await openid.calculatePKCECodeChallenge(codeVerifier);
         const state = openid.randomState();
         const url = openid.buildAuthorizationUrl(config, {
-          redirect_uri: env.ZITADEL_REDIRECT_URI,
+          redirect_uri: env.IDENTITY_REDIRECT_URI,
           scope: "openid email profile offline_access",
           code_challenge: codeChallenge,
           code_challenge_method: "S256",
           state,
-          // Skip Zitadel's account picker. Without `id_token_hint` on
-          // logout (we discard the id_token at callback time), Zitadel
-          // can still surface previously-signed-in accounts (e.g. the
-          // IAM-level `zitadel-admin@zitadel.localhost` from the PAT
-          // bootstrap step). `prompt=login` forces the login form, which
-          // is the expected post-logout UX.
+          // Always ask for credentials, even over a live identity session.
           prompt: "login",
         });
         return { url, state, codeVerifier };
@@ -89,35 +92,17 @@ const make = Effect.gen(function* () {
         if (claims === undefined || !Predicate.isString(claims.sub)) {
           throw new Error("id_token missing subject");
         }
-        const readEmail = (source: unknown): string | null =>
-          Predicate.hasProperty(source, "email") && Predicate.isString(source.email)
-            ? source.email
+        const email =
+          Predicate.hasProperty(claims, "email") && Predicate.isString(claims.email)
+            ? claims.email
             : null;
-        let email = readEmail(claims);
-        // Zitadel omits the `email` claim from the id_token by default —
-        // it's only guaranteed at the userinfo endpoint. Pre-seeded users
-        // (e.g. the admin) already have an `auth_identities` row so sign-in
-        // never needs their email; but a self-registered user's first
-        // sign-in must provision a `users` row, which requires the email.
-        // Fall back to userinfo when the id_token didn't carry it. Best
-        // effort: a userinfo failure must not break sign-in for users who
-        // are already provisioned, so we swallow it and leave email null.
-        if (email === null) {
-          try {
-            const userinfo = await openid.fetchUserInfo(config, tokens.access_token, claims.sub);
-            email = readEmail(userinfo);
-          } catch {
-            email = null;
-          }
-        }
-        return { subject: claims.sub, email };
+        const emailVerified =
+          Predicate.hasProperty(claims, "email_verified") && claims.email_verified === true;
+        return { subject: claims.sub, email, emailVerified, idToken: tokens.id_token ?? null };
       },
       catch: (cause) => {
-        // openid-client v6 surfaces Zitadel's response body on
-        // ResponseBodyError as `error` / `error_description` / `code`.
-        // Without unpacking, every failure looks like the same generic
-        // "ResponseBodyError" string and you can't tell a bad client
-        // secret from a stale code from a redirect URI mismatch.
+        // openid-client carries the issuer's `error` / `error_description` on the
+        // thrown value; without them every failure reads as one generic error.
         const field = (key: string): unknown =>
           Predicate.hasProperty(cause, key) ? cause[key] : undefined;
         const detail = [field("error"), field("error_description"), field("code")]
@@ -132,12 +117,16 @@ const make = Effect.gen(function* () {
       },
     });
 
-  const buildEndSessionUrl: Effect.Effect<URL, CustomHttpApiError.InternalServerError> =
+  const buildEndSessionUrl = (
+    idTokenHint: string | null,
+  ): Effect.Effect<URL, CustomHttpApiError.InternalServerError> =>
     Effect.tryPromise({
       try: async () => {
         const config = await getConfig();
         return openid.buildEndSessionUrl(config, {
-          post_logout_redirect_uri: env.ZITADEL_POST_LOGOUT_REDIRECT_URI,
+          post_logout_redirect_uri: env.IDENTITY_POST_LOGOUT_REDIRECT_URI,
+          client_id: env.IDENTITY_CLIENT_ID,
+          ...(idTokenHint === null ? {} : { id_token_hint: idTokenHint }),
         });
       },
       catch: (cause) =>
@@ -149,8 +138,12 @@ const make = Effect.gen(function* () {
   return { buildAuthorize, exchangeCode, buildEndSessionUrl } as const;
 });
 
-export class OidcClient extends Context.Service<OidcClient, Effect.Success<typeof make>>()(
-  "OidcClient",
-) {
-  public static readonly layer = Layer.effect(OidcClient, make).pipe(Layer.provide(EnvVars.layer));
+export class OidcClient extends Context.Service<
+  OidcClient,
+  Effect.Success<ReturnType<typeof make>>
+>()("OidcClient") {
+  public static readonly layerWith = (transport: OidcTransport) =>
+    Layer.effect(OidcClient, make(transport)).pipe(Layer.provide(EnvVars.layer));
+
+  public static readonly layer = OidcClient.layerWith({});
 }

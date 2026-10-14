@@ -16,6 +16,9 @@ scratchpad/*
 # Read-only third-party source checked out for reference (`pnpm effect:source`).
 # Never imported or built — already excluded from eslint and prettier.
 reference/
+
+# Alchemy's local state and dev runtime (`alchemy dev`); deployed stages keep theirs in Cloudflare.
+.alchemy/
 .env
 .env.local
 .env.development.local

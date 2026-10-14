@@ -5,10 +5,10 @@ import * as Schema from "effect/Schema";
 import { SqlClient } from "effect/sql/SqlClient";
 import { type SqlError } from "effect/sql/SqlError";
 
-import { type Config, driverLayer, textArray, uuidArray } from "./pg-driver.js";
+import { type Config, driverLayer, jsonb, textArray, uuidArray } from "./pg-driver.js";
 
 export type { Config };
-export { textArray, uuidArray };
+export { jsonb, textArray, uuidArray };
 
 // `DatabaseError` carries only *permanent* failures — constraint violations the
 // application is expected to either translate to a domain error (e.g.

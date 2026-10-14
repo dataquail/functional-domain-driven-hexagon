@@ -1,6 +1,6 @@
 # ADR-0016: Authentication via self-hosted Zitadel as a server-side BFF
 
-- Status: Accepted
+- Status: Superseded by [ADR-0034](0034-identity-worker-with-better-auth.md) — the identity provider is now the identity Worker (Better Auth); the BFF shape described here carries over
 - Date: 2026-04-30
 
 ## Context and Problem Statement

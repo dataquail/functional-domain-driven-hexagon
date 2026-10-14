@@ -46,41 +46,49 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm -F @org/acceptance exec playwright install-deps chromium
 
-      - name: Prepare Zitadel bind-mount
-        run: |
-          # The Zitadel container runs as a non-root UID and writes its
-          # bootstrap PAT to /machinekey on first boot. The bind-mount target
-          # has to be writable for that UID, otherwise FirstInstance fails
-          # with "permission denied" and the volume gets stuck in a
-          # half-initialized state.
-          mkdir -p ./infra/zitadel/.machinekey
-          chmod 0777 ./infra/zitadel/.machinekey
-
-      - name: Bring up Postgres + create test DB
+      - name: Bring up Postgres and Mailpit, create the test databases
         run: |
           set -euo pipefail
-          # Postgres comes up via compose so the init script in
-          # infra/postgres/init/ runs and creates the `zitadel` database
-          # alongside the app DB.
-          docker compose up -d --wait postgres
-          # infra/postgres/init/ already creates this database when the volume
-          # is first initialized, so the create has to tolerate finding it.
+          docker compose up -d --wait postgres mailpit
           docker compose exec -T postgres psql -U postgres -v ON_ERROR_STOP=1 <<'SQL'
           SELECT 'CREATE DATABASE "effect-monorepo-test"'
           WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'effect-monorepo-test')\gexec
+          SELECT 'CREATE DATABASE "effect-monorepo-identity"'
+          WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'effect-monorepo-identity')\gexec
           SQL
 
-      - name: Apply database migrations
-        env:
-          DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/effect-monorepo-test
-        run: pnpm --filter @org/database db:migrate:test
+      - name: Write .env
+        # The identity Worker reads .env through `alchemy dev --env-file`, and
+        # Playwright loads it for global-setup and the server it spawns.
+        run: |
+          set -euo pipefail
+          sed -e "s/^SESSION_COOKIE_SECRET=.*/SESSION_COOKIE_SECRET=$(openssl rand -hex 32)/" \
+            -e "s/^BETTER_AUTH_SECRET=.*/BETTER_AUTH_SECRET=$(openssl rand -hex 32)/" \
+            -e "s/^IDENTITY_SEED_TOKEN=.*/IDENTITY_SEED_TOKEN=$(openssl rand -hex 16)/" \
+            .env.example > .env
 
-      - name: Bootstrap Zitadel + .env
-        env:
-          # The seed inserts the admin row into the app DB. In CI that's the
-          # test DB created above; locally it's `effect-monorepo`.
-          SEED_APP_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/effect-monorepo-test
-        run: pnpm bootstrap
+      - name: Apply database migrations
+        run: |
+          set -euo pipefail
+          pnpm --filter @org/database db:migrate:test
+          pnpm db:migrate:identity
+
+      - name: Start the identity Worker
+        # `alchemy dev` serves the identity Worker on :3002 in workerd, with
+        # Hyperdrive passed through to the compose Postgres. It touches neither
+        # Cloudflare nor Neon, so it needs no credentials.
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/cf-dev-logs
+          nohup pnpm dev:cf > /tmp/cf-dev-logs/cf-dev.log 2>&1 &
+          for i in $(seq 1 120); do
+            if curl -fsS http://localhost:3002/api/auth/.well-known/openid-configuration > /dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/cf-dev-logs/cf-dev.log
+          exit 1
 
       - name: Start background jobs runner
         # Spin up the `@org/jobs` cron runner against the test DB so Playwright
@@ -126,6 +134,10 @@ jobs:
         if: failure()
         run: cat /tmp/jobs-logs/jobs.log || true
 
+      - name: Dump the identity Worker's log on failure
+        if: failure()
+        run: cat /tmp/cf-dev-logs/cf-dev.log || true
+
       - name: Dump container logs on failure
         if: failure()
-        run: docker compose logs postgres zitadel || true
+        run: docker compose logs postgres mailpit || true

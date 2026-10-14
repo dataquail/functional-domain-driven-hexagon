@@ -3,14 +3,9 @@
   "tasks": [
     {
       "label": "Docker: Up",
-      "detail": "Start postgres + jaeger + zitadel + mailpit in the background",
-      // `zitadel` depends on postgres being healthy (see docker-compose.yml),
-      // so compose orders the startup; we just list everything we need.
-      // `mailpit` is the local SMTP sink Zitadel's notification provider
-      // points at; it isn't profile-gated, but naming services means compose
-      // starts only the ones listed, so it has to be named here too.
+      "detail": "Start postgres + jaeger + mailpit in the background",
       "type": "shell",
-      "command": "bash scripts/local-only.sh --skip docker-compose up -d postgres jaeger zitadel mailpit",
+      "command": "bash scripts/local-only.sh --skip docker-compose up -d --wait postgres jaeger mailpit",
       "options": { "cwd": "${workspaceFolder}" },
       "presentation": {
         "reveal": "always",
@@ -35,9 +30,9 @@
     },
     {
       "label": "Docker: Migrate (dev DB)",
-      "detail": "Apply migrations to effect-monorepo",
+      "detail": "Apply migrations to effect-monorepo, then Better Auth's to effect-monorepo-identity",
       "type": "shell",
-      "command": "pnpm --filter @org/database db:migrate",
+      "command": "pnpm db:migrate",
       "options": { "cwd": "${workspaceFolder}" },
       "presentation": {
         "reveal": "always",
@@ -60,14 +55,33 @@
       "problemMatcher": []
     },
     {
-      "label": "Auth: Seed",
-      "detail": "Idempotent Zitadel seed (project + OIDC client + admin user → app DB)",
-      // Brings up the one-shot `seed-zitadel` compose profile, which waits
-      // for Zitadel to be reachable, creates the OIDC client if missing,
-      // and writes the admin row into the app DB. Safe to re-run; second
-      // run prints `[exists]` for everything and exits clean.
+      "label": "Identity: Dev",
+      "detail": "Run the identity Worker (Better Auth, the OIDC issuer) under alchemy dev on :3002",
       "type": "shell",
-      "command": "bash scripts/local-only.sh --skip pnpm auth:seed",
+      "command": "pnpm dev:cf",
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "dev",
+        "clear": true
+      },
+      "problemMatcher": {
+        "owner": "identity",
+        "pattern": { "regexp": "^$" },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*$",
+          "endsPattern": "identityUrl"
+        }
+      }
+    },
+    {
+      "label": "Identity: Seed",
+      "detail": "Idempotent seed: the app's OIDC client + the admin, through the running identity Worker",
+      "type": "shell",
+      "command": "pnpm seed:identity",
       "options": { "cwd": "${workspaceFolder}" },
       "presentation": {
         "reveal": "always",
@@ -163,8 +177,14 @@
     },
     {
       "label": "Dev: All",
-      "detail": "Docker (postgres + jaeger + zitadel) → migrate → seed Zitadel → server + web + jobs",
-      "dependsOn": ["Docker: Up", "Docker: Migrate (dev DB)", "Auth: Seed", "Dev: Servers"],
+      "detail": "Docker (postgres + jaeger + mailpit) → migrate → identity Worker → seed → server + web + jobs",
+      "dependsOn": [
+        "Docker: Up",
+        "Docker: Migrate (dev DB)",
+        "Identity: Dev",
+        "Identity: Seed",
+        "Dev: Servers"
+      ],
       "dependsOrder": "sequence",
       "problemMatcher": []
     }

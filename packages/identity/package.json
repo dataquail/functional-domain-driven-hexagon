@@ -1,0 +1,27 @@
+{
+  "name": "@org/identity",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "The identity Worker: Better Auth as the OIDC issuer the server signs users in against.",
+  "scripts": {
+    "check": "tsc -b tsconfig.json",
+    "test": "vitest",
+    "db:migrate": "tsx src/scripts/migrate.ts"
+  },
+  "dependencies": {
+    "@better-auth/oauth-provider": "1.7.7",
+    "@effect/platform-node": "4.0.2",
+    "better-auth": "1.7.7",
+    "effect": "4.0.2",
+    "pg": "8.23.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20260918.1",
+    "@types/node": "25.9.4",
+    "@types/pg": "8.23.1",
+    "dotenv": "^16.6.1",
+    "tsx": "^4.23.0"
+  }
+}

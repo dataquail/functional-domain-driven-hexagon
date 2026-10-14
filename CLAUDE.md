@@ -25,6 +25,8 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 | `@org/contracts`    | Shared HTTP API contracts, schemas, errors — consumed by server and clients.       |
 | `@org/database`     | DB access kernel (effect/sql client, `RowSchemas`, row decoding) + migrations.     |
 | `@org/jobs`         | Background/cron jobs.                                                              |
+| `@org/infra`        | The Alchemy stack (Neon, Hyperdrive, Queues); the only package that names Alchemy. |
+| `@org/identity`     | The identity Worker: Better Auth as the OIDC issuer; the only package naming it.   |
 | `@org/cli`          | Command-line client (device-flow auth, organizations, todos).                      |
 | `@org/mcp`          | MCP (stdio) server exposing the CLI surface as tools.                              |
 | `@org/api-client`   | Shared typed client + credential store for the CLI and MCP.                        |
@@ -34,30 +36,34 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 **Installed, not vendored.** The CQRS, unit-of-work and authorization patterns this codebase
 teaches now ship as published libraries from a separate repository (`dataquail/effect-server-utils`)
 and are consumed here as ordinary dependencies, each pinned to an exact beta:
-`@effect-server-utils/cqrs` (`0.1.0-beta.8`), `@effect-server-utils/unit-of-work` (`0.1.0-beta.8`)
+`@effect-server-utils/cqrs` (`0.1.0-beta.9`), `@effect-server-utils/unit-of-work` (`0.1.0-beta.9`)
 and `@effect-server-utils/authz` (`0.1.0-beta.5`). ADR-0006, ADR-0007 and ADR-0021 still describe
 their design and the constraints this application relies on; changing any of them means a release
 there, not an edit here.
 
 ## Commands
 
-| Command                                                | What it runs                                                                                                                           |
-| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm check:all`                                       | lint + lint:rules + lint:edges + lint:architecture + typecheck + check:effect + tests + storybook (the full gate)                      |
-| `pnpm lint`                                            | oxlint (type-aware, a warning fails) — the whole architecture policy (`architecture/*`) plus the ordinary rules                        |
-| `pnpm check:effect`                                    | `@effect/language-service` diagnostics across all projects; fails on any finding at any severity                                       |
-| `pnpm lint:rules`                                      | asserts each architectural rule still fires on a planted violation (ADR-0025)                                                          |
-| `pnpm lint:edges`                                      | asserts the architecture policy still refuses — and allows — the edges it should (ADR-0028)                                            |
-| `pnpm lint:architecture`                               | the same policy evaluated without a linter, plus the graph rules, the coverage floors, the conformance ceilings and the baseline       |
-| `pnpm architecture:conformance`                        | the full conformance report — residue, vacant nodes, slack (per fragment), concentration, each beside its `limits.conformance` ceiling |
-| `pnpm architecture:campaigns`                          | the campaign status table — none open today; `init` / `prune` / `allow` take the id, then the root                                     |
-| `pnpm architecture:coverage`                           | how much of the tree each rule family reaches, and the tiers not yet tightened (ADR-0030)                                              |
-| `pnpm architecture:facts <file>`                       | what the parser reads from one file — edges, bindings, members, exports; write new rules against this                                  |
-| `pnpm architecture:browser`                            | the Architecture Browser at http://127.0.0.1:4321 — the tree, every import as an arc, the manifest beside it; redraws as files change  |
-| `pnpm test`                                            | vitest **unit** suite (excludes `*.integration.test.ts`), no DB                                                                        |
-| `DATABASE_URL_TEST=postgres://… pnpm test:integration` | **integration** suite only (`*.integration.test.ts`); hard-fails if no DB                                                              |
-| `DATABASE_URL_TEST=postgres://… pnpm coverage`         | unit + integration merged into ONE coverage number; thresholds in `vitest.config.ts` gate CI                                           |
-| `pnpm effect:source`                                   | clone/refresh the Effect v4 source at `reference/effect` (gitignored, pinned to our version)                                           |
+| Command                                                      | What it runs                                                                                                                           |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm check:all`                                             | lint + lint:rules + lint:edges + lint:architecture + typecheck + check:effect + tests + storybook (the full gate)                      |
+| `pnpm lint`                                                  | oxlint (type-aware, a warning fails) — the whole architecture policy (`architecture/*`) plus the ordinary rules                        |
+| `pnpm check:effect`                                          | `@effect/language-service` diagnostics across all projects; fails on any finding at any severity                                       |
+| `pnpm lint:rules`                                            | asserts each architectural rule still fires on a planted violation (ADR-0025)                                                          |
+| `pnpm lint:edges`                                            | asserts the architecture policy still refuses — and allows — the edges it should (ADR-0028)                                            |
+| `pnpm lint:architecture`                                     | the same policy evaluated without a linter, plus the graph rules, the coverage floors, the conformance ceilings and the baseline       |
+| `pnpm architecture:conformance`                              | the full conformance report — residue, vacant nodes, slack (per fragment), concentration, each beside its `limits.conformance` ceiling |
+| `pnpm architecture:campaigns`                                | the campaign status table — none open today; `init` / `prune` / `allow` take the id, then the root                                     |
+| `pnpm architecture:coverage`                                 | how much of the tree each rule family reaches, and the tiers not yet tightened (ADR-0030)                                              |
+| `pnpm architecture:facts <file>`                             | what the parser reads from one file — edges, bindings, members, exports; write new rules against this                                  |
+| `pnpm architecture:browser`                                  | the Architecture Browser at http://127.0.0.1:4321 — the tree, every import as an arc, the manifest beside it; redraws as files change  |
+| `pnpm test`                                                  | vitest **unit** suite (excludes `*.integration.test.ts`), no DB                                                                        |
+| `DATABASE_URL_TEST=postgres://… pnpm test:integration`       | **integration** suite only (`*.integration.test.ts`); hard-fails if no DB                                                              |
+| `DATABASE_URL_TEST=postgres://… pnpm coverage`               | unit + integration merged into ONE coverage number; thresholds in `vitest.config.ts` gate CI                                           |
+| `pnpm dev:cf`                                                | `alchemy dev` over `packages/infra`: the Workers stack in workerd, Hyperdrive passed through to docker Postgres                        |
+| `pnpm dev:cf:check`                                          | boots `dev:cf`, asks the placeholder Worker for `SELECT 1` through Hyperdrive, shuts it down                                           |
+| `pnpm deploy:cf --stage <s>` / `pnpm destroy:cf --stage <s>` | `alchemy deploy` / `destroy` — creates or removes real Cloudflare + Neon resources; needs credentials                                  |
+| `pnpm db:migrate`                                            | the app's PgMigrator migrations, then Better Auth's against `IDENTITY_DATABASE_URL` (deployed: direct URLs)                            |
+| `pnpm effect:source`                                         | clone/refresh the Effect v4 source at `reference/effect` (gitignored, pinned to our version)                                           |
 
 ## Always in scope
 

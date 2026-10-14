@@ -22,7 +22,10 @@
       "@org/jobs/*": ["./packages/jobs/src/*"],
       "@org/server/*": ["./packages/server/src/*"],
       "@org/test-drivers": ["./packages/test-drivers/src/index.ts"],
-      "@org/test-drivers/*": ["./packages/test-drivers/src/*"]
+      "@org/test-drivers/*": ["./packages/test-drivers/src/*"],
+      // workerd's runtime module has no file on disk; its declaration is the only
+      // thing a resolver can land on, and the `cloudflare:workers` deny matches it.
+      "cloudflare:workers": ["./packages/infra/node_modules/@cloudflare/workers-types/index.d.ts"]
     },
     "moduleResolution": "NodeNext",
     "module": "NodeNext",

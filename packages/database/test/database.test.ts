@@ -111,6 +111,26 @@ describe("SqlError translation", () => {
     expect(failureOf(exit)._tag).toBe("DatabaseUnavailable");
   });
 
+  // Both are logged and surfaced through `String(...)`/`.message`, so they carry the
+  // driver's own text rather than the schema-generated tag dump.
+  it("reads a translated failure as the driver's message, named by its kind", async () => {
+    const unique = new SqlError({
+      reason: new UniqueViolation({ cause: causeWithCode("23505"), constraint: "todos_pkey" }),
+    });
+    const unavailable = new SqlError({
+      reason: new ConnectionError({ cause: causeWithCode("08006") }),
+    });
+    const permanent = failureOf(await Effect.runPromiseExit(failing(unique.reason).pipe(exec)));
+    const transient = failureOf(
+      await Effect.runPromiseExit(failing(unavailable.reason).pipe(exec)),
+    );
+
+    expect(permanent.message).toBe(unique.message);
+    expect(String(permanent)).toBe(`DatabaseError: ${unique.message}`);
+    expect(transient.message).toBe(unavailable.message);
+    expect(String(transient)).toBe(`DatabaseUnavailable: ${unavailable.message}`);
+  });
+
   it("dies on a syntax error", async () => {
     const exit = await Effect.runPromiseExit(
       failing(new SqlSyntaxError({ cause: causeWithCode("42601") })).pipe(exec),

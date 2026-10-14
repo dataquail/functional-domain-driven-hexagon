@@ -26,7 +26,7 @@ const seedSession = () =>
     const session = SessionRootOps.create({
       id: sessionId,
       userId,
-      subject: "zitadel-sub",
+      subject: "identity-sub",
       now,
       ttlSeconds: 3600,
       absoluteTtlSeconds: 43200,

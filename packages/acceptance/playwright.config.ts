@@ -1,8 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 import * as dotenv from "dotenv";
 
-// Load the repo's root .env so ZITADEL_* vars are available to global-setup
-// and propagate via webServer.env to the API server.
+// Load the repo's root .env so the IDENTITY_* vars reach global-setup and,
+// through webServer.env, the API server.
 dotenv.config({ path: "../../.env" });
 
 // Acceptance configuration follows the layered architecture from Synapse's
@@ -12,15 +12,15 @@ dotenv.config({ path: "../../.env" });
 // and the Next renderer before tests run; global-setup migrates the
 // test DB once and pre-seeds the admin row.
 //
-// Auth: an `auth-setup` project runs the real Zitadel hosted-UI login as
-// admin and stamps the cookie into storageState. The `chromium` project
+// Auth: an `auth-setup` project signs the admin in through the identity
+// Worker's real sign-in page and stamps the cookie into storageState. The `chromium` project
 // depends on it and inherits the storage state so each spec starts
 // authenticated. login.spec.ts opts out of the storage state to exercise
 // the full UI flow on every run.
 
 const isCi = process.env.CI !== undefined && process.env.CI !== "";
 // Browser-facing origin (Next renderer; ADR-0018). Browser navigation
-// uses `localhost` so the session cookie set by Zitadel's OIDC callback
+// uses `localhost` so the session cookie set by the OIDC callback
 // (registered as `http://localhost:3000/api/auth/callback`) is visible
 // to the test origin — the cookie domain MUST match the registered
 // redirect URI.
@@ -35,7 +35,7 @@ const API_URL = process.env.API_URL ?? "http://localhost:3001";
 // ECONNREFUSED and Playwright's probe times out. Pinning the probes
 // to `127.0.0.1` forces IPv4 and matches the BFF's listener. The
 // browser-side `baseURL` (above) stays `localhost` because that's
-// what Zitadel's redirect URI is registered as.
+// what the app's redirect URI is registered as.
 const toIpv4 = (url: string): string => url.replace(/\/\/localhost(:|\/|$)/, "//127.0.0.1$1");
 const WEB_PROBE_URL = toIpv4(APP_URL);
 const BFF_PROBE_URL = toIpv4(API_URL);

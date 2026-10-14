@@ -16,7 +16,7 @@ The canonical example: the `user` module exposes a `POST /users/:id/super-admin`
 
 A second pressure: outbound counterparts are not all the same kind. "Something outside my own datastore" quietly holds two profiles with different operational and coupling concerns:
 
-- **A true third-party system** — Stripe, an email provider, the Zitadel OIDC endpoint. Reached over the network; needs secrets, timeouts, retries, signature verification. The anti-corruption obligation is against a vendor's evolving API.
+- **A true third-party system** — Stripe, an email provider, the OIDC issuer. Reached over the network; needs secrets, timeouts, retries, signature verification. The anti-corruption obligation is against a vendor's evolving API.
 - **Another bounded context inside this monolith** — the `user` module answering a lookup for `organization`. Today an in-process call; tomorrow, if the module is extracted to its own service, a network hop. The anti-corruption obligation is against a sibling team's domain vocabulary.
 
 Co-locating them loses information: a reader can't tell which adapters would become network calls under a service split, nor which legitimately reach into another module's barrel versus which only touch a vendor SDK.

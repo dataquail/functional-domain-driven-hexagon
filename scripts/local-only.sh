@@ -47,7 +47,6 @@ cat >&2 <<EOF
   services. What you probably want:
 
     provision / re-run the seed   node scripts/codespaces-provision.mjs
-    logs                          docker logs -f effect-monorepo-zitadel
     a clean slate                 rebuild or recreate the codespace
 
   See docs/codespaces.md.

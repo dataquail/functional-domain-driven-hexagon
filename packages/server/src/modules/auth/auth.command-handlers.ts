@@ -70,7 +70,7 @@ const AuthCommandHandlersLive = Command.handlersOf(authCommandGroup, {
     ),
 }).pipe(Layer.provide(UserProvisioningLive));
 
-// Three payload fields are deliberately absent: Zitadel's `subject` is opaque but still
+// Three payload fields are deliberately absent: the issuer's `subject` is opaque but still
 // user-correlatable, and `userCode`/`deviceCode` are bearer credentials. Each handler
 // annotates the resolved ids itself, which is post-redaction and safe.
 const authCommandSpanAttributes: Command.SpanAttributes<typeof authCommandGroup> = {

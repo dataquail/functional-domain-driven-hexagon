@@ -8,7 +8,7 @@ import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 // `TestServerLive` provides `UserAuthMiddlewareFake`, which always succeeds
 // with a deterministic admin CurrentUser. So `/auth/me` should always return
-// that fake identity here — no cookie required, no Zitadel involved. The
+// that fake identity here — no cookie required, no identity provider involved. The
 // real cookie path is exercised by `auth-identity-repository-live` and by
 // the Playwright auth-setup project / login.spec.ts.
 

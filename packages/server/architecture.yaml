@@ -342,6 +342,7 @@ children:
               allow:
                 - "@/modules/*/*.platform.ts"
                 - "@/globals/infrastructure/database/transaction-driver-live.ts"
+                - "@/globals/infrastructure/events/*-live.ts"
             children:
               "cqrs-runtime.ts": {}
               "*.test.ts": { use: server-use-case-test-file }
@@ -386,6 +387,41 @@ children:
                   external: [effect, "@effect/vitest", "@effect/sql-pg"]
                   allow: ["node:**", "@/**"]
               "*.integration.test.ts": { use: server-unit-of-work-test-file }
+
+          "events/":
+            message: >-
+              globals/infrastructure/events/ is the durable half of after-commit delivery: the
+              outbox transport the unit of work writes through, the delivery ledger a consumer
+              claims against, the queue port the outbox relays to with its in-process adapter,
+              and the sweeper that re-relays what a crash left behind.
+            imports:
+              reset: true
+              message: >-
+                The outbox adapters name the two libraries whose ports they satisfy, the database
+                kernel, the persistence-error translation and their own siblings. No modules: the
+                envelopes they carry are already opaque.
+              external: [effect, "@effect-server-utils/cqrs", "@effect-server-utils/unit-of-work"]
+              allow:
+                - "@/globals/infrastructure/events/**"
+                - "@/globals/infrastructure/database/translate-database-errors.ts"
+                - "~/database/**"
+            children:
+              "domain-event-queue.ts": {}
+              "*-live.ts": {}
+              "*.integration.test.ts":
+                surface: [{ use: test-exports-nothing }]
+                imports:
+                  reset: true
+                  message: >-
+                    The outbox test drives the real test runtime through the command bus and its
+                    own units of work, and reads the outbox tables back through the database
+                    kernel.
+                  external:
+                    - effect
+                    - "@effect/vitest"
+                    - "@effect-server-utils/cqrs"
+                    - "@effect-server-utils/unit-of-work"
+                  allow: ["node:**", "@/**", "~/database/**"]
 
           "email/":
             message: >-
@@ -525,6 +561,7 @@ children:
         - match:
             - "@/globals/infrastructure/database/*-live.ts"
             - "@/globals/infrastructure/framework/**/*-live.ts"
+            - "@/globals/infrastructure/events/*-live.ts"
           except:
             ["@/server.ts", "@/globals/infrastructure/cqrs/**", "@/test-utils/**", "**/*.test.ts"]
           message: >-
