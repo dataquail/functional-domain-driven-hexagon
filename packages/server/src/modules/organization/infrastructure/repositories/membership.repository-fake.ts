@@ -5,12 +5,12 @@ import * as Layer from "effect/Layer";
 import type * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.js";
-import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
-import { type MembershipRoot } from "@/modules/organization/domain/membership/membership.root.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { type Specification } from "@/globals/application/ddd/specification.ts";
+import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.ts";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.ts";
+import { type MembershipRoot } from "@/modules/organization/domain/membership/membership.root.ts";
 
 // Keyed by composite PK serialized as "<userId>|<organizationId>" — the
 // HashMap value carries the full MembershipRoot so reads round-trip.

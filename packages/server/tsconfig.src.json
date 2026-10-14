@@ -4,6 +4,8 @@
   "exclude": ["vitest.config.ts", "src/**/*.test.ts"],
   "references": [{ "path": "../contracts" }, { "path": "../database" }, { "path": "../jobs" }],
   "compilerOptions": {
+    "emitDeclarationOnly": true,
+    "rewriteRelativeImportExtensions": false,
     "types": ["node"],
     "outDir": "build/src",
     "tsBuildInfoFile": ".tsbuildinfo/src.tsbuildinfo",

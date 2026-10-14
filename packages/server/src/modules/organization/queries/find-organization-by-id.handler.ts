@@ -3,12 +3,12 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
 import {
   type FindOrganizationByIdPayload,
   type OrganizationAuthzView,
-} from "@/modules/organization/queries/find-organization-by-id.query.js";
+} from "@/modules/organization/queries/find-organization-by-id.query.ts";
 
 const IdRow = Schema.Struct({ id: Schema.String });
 

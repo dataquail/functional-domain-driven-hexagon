@@ -1,8 +1,8 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.ts";
 
 // ADR-0022 outbound port. The org module needs to enrich its
 // membership rows with each user's email for the SA admin "list

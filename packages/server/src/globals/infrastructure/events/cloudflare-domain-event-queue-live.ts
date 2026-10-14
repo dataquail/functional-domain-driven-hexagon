@@ -4,7 +4,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 
-import { DomainEventQueue } from "@/globals/infrastructure/events/domain-event-queue.js";
+import { DomainEventQueue } from "@/globals/infrastructure/events/domain-event-queue.ts";
 
 export type QueueProducerBinding = {
   readonly sendBatch: (

@@ -1,8 +1,8 @@
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
 
-import { SubscriptionId } from "./subscription.id.js";
+import { SubscriptionId } from "./subscription.id.ts";
 
 // Aggregate root data — a dumb value (ADR-0003). Operations live in
 // `subscription.root-ops.ts` (`SubscriptionRootOps`) and carry the test

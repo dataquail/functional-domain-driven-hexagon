@@ -5,20 +5,20 @@ import {
   invitationIssuedSpanAttributes,
   invitationReissuedSpanAttributes,
   invitationRevokedSpanAttributes,
-} from "@/modules/organization/domain/invitation/invitation.events.js";
+} from "@/modules/organization/domain/invitation/invitation.events.ts";
 import {
   membershipCreatedSpanAttributes,
   membershipRevokedSpanAttributes,
-} from "@/modules/organization/domain/membership/membership.events.js";
+} from "@/modules/organization/domain/membership/membership.events.ts";
 import {
   organizationCreatedSpanAttributes,
   organizationRestoredSpanAttributes,
   organizationSoftDeletedSpanAttributes,
-} from "@/modules/organization/domain/organization/organization.events.js";
+} from "@/modules/organization/domain/organization/organization.events.ts";
 import {
   organizationRoleGrantedSpanAttributes,
   organizationRoleRevokedSpanAttributes,
-} from "@/modules/organization/domain/organization-roles/organization-role.events.js";
+} from "@/modules/organization/domain/organization-roles/organization-role.events.ts";
 
 export const organizationEventSpanAttributes = Event.spanAttributes({
   OrganizationCreated: organizationCreatedSpanAttributes,

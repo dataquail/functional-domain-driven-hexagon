@@ -9,7 +9,7 @@ import {
   identityIssuer,
   type StageHosts,
   stageHosts,
-} from "../stage.js";
+} from "../stage.ts";
 
 const optional = (name: string) => Config.option(Config.NonEmptyString(name));
 

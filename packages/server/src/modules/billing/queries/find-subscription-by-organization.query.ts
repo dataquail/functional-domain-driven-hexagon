@@ -3,8 +3,8 @@ import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import type * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.ts";
 
 export const SubscriptionView = Schema.Struct({
   id: SubscriptionId,

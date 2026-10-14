@@ -3,7 +3,7 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as Option from "effect/Option";
 
-import { Criteria, Spec } from "./specification.js";
+import { Criteria, Spec } from "./specification.ts";
 
 type Row = {
   id: string;

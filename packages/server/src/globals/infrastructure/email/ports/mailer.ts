@@ -1,7 +1,7 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
-import { type MailDeliveryError } from "./mail-errors.js";
+import { type MailDeliveryError } from "./mail-errors.ts";
 
 // Platform transport port for outbound email. It carries a *rendered*
 // message — `html` + a plaintext `text` fallback — and knows nothing

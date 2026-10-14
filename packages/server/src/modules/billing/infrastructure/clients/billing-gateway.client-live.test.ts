@@ -9,10 +9,10 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import Stripe from "stripe";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
-import { BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client.js";
-import { InvalidWebhookSignature } from "@/modules/billing/domain/subscription/subscription.errors.js";
-import { BillingGatewayLive } from "@/modules/billing/infrastructure/clients/billing-gateway.client-live.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.ts";
+import { BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client.ts";
+import { InvalidWebhookSignature } from "@/modules/billing/domain/subscription/subscription.errors.ts";
+import { BillingGatewayLive } from "@/modules/billing/infrastructure/clients/billing-gateway.client-live.ts";
 
 // Unit coverage for the Stripe adapter's webhook path — the half of the
 // port that is pure, local crypto + translation (no network): signature

@@ -1,13 +1,13 @@
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
 import {
   type Predicate,
   Spec,
   type Specification,
-} from "@/globals/application/ddd/specification.js";
+} from "@/globals/application/ddd/specification.ts";
 
-import { type OrganizationRoleValueObject } from "./organization-role.value-object.js";
-import { type OrganizationRolesRoot } from "./organization-roles.root.js";
+import { type OrganizationRoleValueObject } from "./organization-role.value-object.ts";
+import { type OrganizationRolesRoot } from "./organization-roles.root.ts";
 
 // Translatable identity specs — the composite key `(userId, organizationId)`
 // lives on every row of the aggregate, so these compile to a WHERE that the

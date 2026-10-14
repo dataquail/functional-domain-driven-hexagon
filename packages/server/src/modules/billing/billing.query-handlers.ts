@@ -2,8 +2,8 @@ import { Query } from "@effect-server-utils/cqrs";
 import * as Context from "effect/Context";
 import * as Layer from "effect/Layer";
 
-import { findSubscriptionByOrganizationHandler } from "@/modules/billing/queries/find-subscription-by-organization.handler.js";
-import { FindSubscriptionByOrganizationQuery } from "@/modules/billing/queries/find-subscription-by-organization.query.js";
+import { findSubscriptionByOrganizationHandler } from "@/modules/billing/queries/find-subscription-by-organization.handler.ts";
+import { FindSubscriptionByOrganizationQuery } from "@/modules/billing/queries/find-subscription-by-organization.query.ts";
 
 export const billingQueryGroup = Query.group(FindSubscriptionByOrganizationQuery);
 

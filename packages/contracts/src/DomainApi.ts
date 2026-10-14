@@ -1,10 +1,10 @@
 import * as HttpApi from "effect/http-api/HttpApi";
 
-import * as AuthContract from "./api/AuthContract.js";
-import * as BillingContract from "./api/BillingContract.js";
-import * as OrganizationContract from "./api/OrganizationContract.js";
-import * as TodosContract from "./api/TodosContract.js";
-import * as UserContract from "./api/UserContract.js";
+import * as AuthContract from "./api/AuthContract.ts";
+import * as BillingContract from "./api/BillingContract.ts";
+import * as OrganizationContract from "./api/OrganizationContract.ts";
+import * as TodosContract from "./api/TodosContract.ts";
+import * as UserContract from "./api/UserContract.ts";
 
 export class DomainApi extends HttpApi.make("domain")
   .add(TodosContract.Group)

@@ -5,8 +5,8 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 
-import * as Database from "../Database.js";
-import { MODULE_SCHEMAS } from "../migrator.js";
+import * as Database from "../Database.ts";
+import { MODULE_SCHEMAS } from "../migrator.ts";
 
 dotenv({
   path: "../../.env",

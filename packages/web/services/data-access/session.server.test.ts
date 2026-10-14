@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import type { ServerRuntime } from "@/services/runtime.server";
 import { makeMyOrganization, ORG_A_ID, ORG_B_ID } from "@/test/fixtures/organization";
-import { handlers } from "@/test/handlers";
+import { handlers } from "@/test/handlers/handler-set";
 import { endRequest, serveRequest } from "@/test/kit/server";
 import { server } from "@/test/msw-server";
 import { serverRuntimeOverMsw } from "@/test/server-runtime";

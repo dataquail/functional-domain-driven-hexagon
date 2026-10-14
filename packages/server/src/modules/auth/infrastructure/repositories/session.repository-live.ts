@@ -3,15 +3,15 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
-import { SessionNotFound } from "@/modules/auth/domain/session/session.errors.js";
-import { type SessionId } from "@/modules/auth/domain/session/session.id.js";
-import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
-import { type SessionRoot } from "@/modules/auth/domain/session/session.root.js";
+import { type Specification } from "@/globals/application/ddd/specification.ts";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.ts";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
+import { SessionNotFound } from "@/modules/auth/domain/session/session.errors.ts";
+import { type SessionId } from "@/modules/auth/domain/session/session.id.ts";
+import { SessionRepository } from "@/modules/auth/domain/session/session.repository.ts";
+import { type SessionRoot } from "@/modules/auth/domain/session/session.root.ts";
 
-import * as SessionMapper from "./session.mapper.js";
+import * as SessionMapper from "./session.mapper.ts";
 
 export const SessionRepositoryLive = Layer.effect(
   SessionRepository,

@@ -2,12 +2,12 @@ import { CommandBus } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
+import { DomainEventBus } from "@/globals/application/ports/event-bus.ts";
 import {
   SyncSubscriptionCommand,
   type SyncSubscriptionPayload,
-} from "@/modules/billing/commands/sync-subscription.command.js";
-import { StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events.js";
+} from "@/modules/billing/commands/sync-subscription.command.ts";
+import { StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events.ts";
 
 // Inbound event adapter (ADR-0007): subscribes to the same-module
 // `StripeWebhookIngested` domain event, translates Stripe's subscription

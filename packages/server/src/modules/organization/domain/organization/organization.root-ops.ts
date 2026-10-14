@@ -2,17 +2,17 @@ import type * as DateTime from "effect/DateTime";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
 
-import { OrganizationAlreadyDeleted, OrganizationNotDeleted } from "./organization.errors.js";
+import { OrganizationAlreadyDeleted, OrganizationNotDeleted } from "./organization.errors.ts";
 import {
   OrganizationCreated,
   type OrganizationEvent,
   OrganizationRestored,
   OrganizationSoftDeleted,
-} from "./organization.events.js";
-import { OrganizationRoot } from "./organization.root.js";
-import { OrganizationSpecifications } from "./organization.specification.js";
+} from "./organization.events.ts";
+import { OrganizationRoot } from "./organization.root.ts";
+import { OrganizationSpecifications } from "./organization.specification.ts";
 
 export type Outcome = {
   readonly organization: OrganizationRoot;

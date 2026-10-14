@@ -9,14 +9,14 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
-import { CloudflareEmailMailerLive } from "@/globals/infrastructure/email/adapters/cloudflare-email-mailer-live.js";
-import { MailDeliveryError } from "@/globals/infrastructure/email/ports/mail-errors.js";
-import { Mailer } from "@/globals/infrastructure/email/ports/mailer.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.ts";
+import { CloudflareEmailMailerLive } from "@/globals/infrastructure/email/adapters/cloudflare-email-mailer-live.ts";
+import { MailDeliveryError } from "@/globals/infrastructure/email/ports/mail-errors.ts";
+import { Mailer } from "@/globals/infrastructure/email/ports/mailer.ts";
 import {
   EmailBinding,
   type EmailBindingMessage,
-} from "@/globals/infrastructure/runtime/email-binding.js";
+} from "@/globals/infrastructure/runtime/email-binding.ts";
 
 const env = {
   DATABASE_URL: "postgres://localhost/app",

@@ -3,15 +3,15 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
 import {
   type FindSessionPayload,
   SessionExpired,
   SessionNotFound,
   SessionRevoked,
   type SessionView,
-} from "@/modules/auth/queries/find-session.query.js";
+} from "@/modules/auth/queries/find-session.query.ts";
 
 // Looks up a session by id and validates its lifecycle (revoked /
 // expired). Used by the auth middleware via `QueryBus.execute(...)` —

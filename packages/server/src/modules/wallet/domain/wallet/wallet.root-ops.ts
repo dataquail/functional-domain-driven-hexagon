@@ -1,12 +1,12 @@
 import type * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
 
-import { WalletInsufficientFunds, WalletInvalidAmount } from "./wallet.errors.js";
-import { WalletCreated, WalletCredited, WalletDebited, type WalletEvent } from "./wallet.events.js";
-import { type WalletId } from "./wallet.id.js";
-import { WalletRoot } from "./wallet.root.js";
+import { WalletInsufficientFunds, WalletInvalidAmount } from "./wallet.errors.ts";
+import { WalletCreated, WalletCredited, WalletDebited, type WalletEvent } from "./wallet.events.ts";
+import { type WalletId } from "./wallet.id.ts";
+import { WalletRoot } from "./wallet.root.ts";
 
 export type Outcome = {
   readonly wallet: WalletRoot;

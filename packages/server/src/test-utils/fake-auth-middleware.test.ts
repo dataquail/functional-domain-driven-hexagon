@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@effect/vitest";
 import * as Layer from "effect/Layer";
 
-import { UserAuthMiddlewareFake } from "@/test-utils/fake-auth-middleware.js";
+import { UserAuthMiddlewareFake } from "@/test-utils/fake-auth-middleware.ts";
 
 // The middleware itself can only be evaluated inside an HTTP request scope
 // (Provided context). End-to-end coverage of the fake's behavior comes from

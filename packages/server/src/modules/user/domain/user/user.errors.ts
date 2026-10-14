@@ -1,6 +1,6 @@
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
 
 export class UserAlreadyExists extends Schema.TaggedError<
   UserAlreadyExists,

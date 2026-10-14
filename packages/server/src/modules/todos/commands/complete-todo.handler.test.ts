@@ -7,17 +7,17 @@ import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { Spec } from "@/globals/application/ddd/specification.js";
-import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.js";
-import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
-import { TodoRootOps } from "@/modules/todos/domain/todo/todo.root-ops.js";
-import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js";
-import { TodoSpecifications } from "@/modules/todos/domain/todo/todos.specification.js";
-import { TodosRepositoryFake } from "@/modules/todos/infrastructure/repositories/todos.repository-fake.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { Spec } from "@/globals/application/ddd/specification.ts";
+import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.ts";
+import { TodoId } from "@/modules/todos/domain/todo/todo.id.ts";
+import { TodoRootOps } from "@/modules/todos/domain/todo/todo.root-ops.ts";
+import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.ts";
+import { TodoSpecifications } from "@/modules/todos/domain/todo/todos.specification.ts";
+import { TodosRepositoryFake } from "@/modules/todos/infrastructure/repositories/todos.repository-fake.ts";
 
-import { completeTodoHandler } from "./complete-todo.handler.js";
+import { completeTodoHandler } from "./complete-todo.handler.ts";
 
 const todoId = TodoId.make("11111111-1111-1111-1111-111111111111");
 const userId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");

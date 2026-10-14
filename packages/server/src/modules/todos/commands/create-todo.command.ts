@@ -2,9 +2,9 @@ import { Command } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { TodoRoot } from "@/modules/todos/domain/todo/todo.root.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { TodoRoot } from "@/modules/todos/domain/todo/todo.root.ts";
 
 export const CreateTodoCommand = Command.make("CreateTodoCommand", {
   payload: {

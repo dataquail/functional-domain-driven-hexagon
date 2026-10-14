@@ -2,11 +2,11 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
-import { EmailBinding } from "@/globals/infrastructure/runtime/email-binding.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.ts";
+import { EmailBinding } from "@/globals/infrastructure/runtime/email-binding.ts";
 
-import { MailDeliveryError } from "../ports/mail-errors.js";
-import { Mailer } from "../ports/mailer.js";
+import { MailDeliveryError } from "../ports/mail-errors.ts";
+import { Mailer } from "../ports/mailer.ts";
 
 // Cloudflare Email Service through the Worker's `send_email` binding.
 export const CloudflareEmailMailerLive: Layer.Layer<Mailer, never, EnvVars> = Layer.effect(

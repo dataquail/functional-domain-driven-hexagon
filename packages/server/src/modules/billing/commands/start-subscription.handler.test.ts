@@ -7,16 +7,16 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { startSubscriptionHandler } from "@/modules/billing/commands/start-subscription.handler.js";
-import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.js";
-import { type SubscriptionStarted } from "@/modules/billing/domain/subscription/subscription.events.js";
-import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
-import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.js";
-import { BillingGatewayFake } from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake.js";
-import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake.js";
-import { CryptoFake } from "@/test-utils/crypto-fake.js";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { startSubscriptionHandler } from "@/modules/billing/commands/start-subscription.handler.ts";
+import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.ts";
+import { type SubscriptionStarted } from "@/modules/billing/domain/subscription/subscription.events.ts";
+import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.ts";
+import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.ts";
+import { BillingGatewayFake } from "@/modules/billing/infrastructure/clients/billing-gateway.client-fake.ts";
+import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake.ts";
+import { CryptoFake } from "@/test-utils/crypto-fake.ts";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.ts";
 
 const acme = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 

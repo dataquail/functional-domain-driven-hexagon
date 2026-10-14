@@ -4,9 +4,9 @@ import * as Effect from "effect/Effect";
 import type * as Layer from "effect/Layer";
 import type * as Scope from "effect/Scope";
 
-import { MEMBER_CALLER_ID, SUPER_ADMIN_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
-import { truncate } from "@/test-utils/test-database.js";
-import { TestServerLive } from "@/test-utils/test-server.js";
+import { MEMBER_CALLER_ID, SUPER_ADMIN_CALLER_ID } from "@/test-utils/fake-auth-middleware.ts";
+import { truncate } from "@/test-utils/test-database.ts";
+import { TestServerLive } from "@/test-utils/test-server.ts";
 
 type ServerContext = Layer.Success<typeof TestServerLive>;
 

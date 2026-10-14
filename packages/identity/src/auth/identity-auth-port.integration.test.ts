@@ -10,8 +10,8 @@ import {
   IDENTITY_BASE_URL,
   IdentityTestHarness,
   linkIn,
-} from "../test-utils/identity-test-auth.js";
-import { betterAuthPort } from "./identity-auth-port.js";
+} from "../test-utils/identity-test-auth.ts";
+import { betterAuthPort } from "./identity-auth-port.ts";
 
 const port = (harness: IdentityTestHarness["Service"]) =>
   betterAuthPort(harness.makeAuth, harness.makeSeedingAuth);

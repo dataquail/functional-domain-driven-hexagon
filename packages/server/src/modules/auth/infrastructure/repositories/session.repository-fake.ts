@@ -6,11 +6,11 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { SessionNotFound } from "@/modules/auth/domain/session/session.errors.js";
-import { type SessionId } from "@/modules/auth/domain/session/session.id.js";
-import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
-import { SessionRoot } from "@/modules/auth/domain/session/session.root.js";
+import { type Specification } from "@/globals/application/ddd/specification.ts";
+import { SessionNotFound } from "@/modules/auth/domain/session/session.errors.ts";
+import { type SessionId } from "@/modules/auth/domain/session/session.id.ts";
+import { SessionRepository } from "@/modules/auth/domain/session/session.repository.ts";
+import { SessionRoot } from "@/modules/auth/domain/session/session.root.ts";
 
 export const SessionRepositoryFake = Layer.effect(
   SessionRepository,

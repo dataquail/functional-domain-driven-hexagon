@@ -1,7 +1,7 @@
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { Spec, type Specification } from "@/globals/application/ddd/specification.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { Spec, type Specification } from "@/globals/application/ddd/specification.ts";
 
-import { type WalletRoot } from "./wallet.root.js";
+import { type WalletRoot } from "./wallet.root.ts";
 
 // Translatable spec (carries a Criteria → usable as a repository filter and as
 // an in-memory guard). The field-name string lives here and in the mapper's

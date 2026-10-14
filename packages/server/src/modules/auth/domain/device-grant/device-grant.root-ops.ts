@@ -2,11 +2,11 @@ import * as DateTime from "effect/DateTime";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
 
-import { UserCodeEntropyExhausted } from "./device-grant.errors.js";
-import { type DeviceGrantId } from "./device-grant.id.js";
-import { DeviceGrantRoot } from "./device-grant.root.js";
+import { UserCodeEntropyExhausted } from "./device-grant.errors.ts";
+import { type DeviceGrantId } from "./device-grant.id.ts";
+import { DeviceGrantRoot } from "./device-grant.root.ts";
 
 export type StartInput = {
   readonly id: DeviceGrantId;

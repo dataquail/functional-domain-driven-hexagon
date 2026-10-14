@@ -9,8 +9,8 @@ import * as Ref from "effect/Ref";
 import * as Schema from "effect/Schema";
 import * as openid from "openid-client";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
-import { IssuerTransport } from "@/globals/infrastructure/runtime/issuer-transport.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.ts";
+import { IssuerTransport } from "@/globals/infrastructure/runtime/issuer-transport.ts";
 
 // The only file in the repo that imports `openid-client`. Used by login, callback and
 // logout alone: once a session row exists, the issuer is not consulted again.

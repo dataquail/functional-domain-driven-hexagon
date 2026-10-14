@@ -3,16 +3,16 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
-import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors.js";
+import { type Specification } from "@/globals/application/ddd/specification.ts";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.ts";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
+import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors.ts";
 import {
   type WebhookEventRecord,
   WebhookEventRepository,
-} from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
+} from "@/modules/billing/domain/webhook-event/webhook-event.repository.ts";
 
-import * as WebhookEventMapper from "./webhook-event.mapper.js";
+import * as WebhookEventMapper from "./webhook-event.mapper.ts";
 
 export const WebhookEventRepositoryLive = Layer.effect(
   WebhookEventRepository,

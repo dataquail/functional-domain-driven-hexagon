@@ -4,10 +4,10 @@ import * as HttpClient from "effect/http/HttpClient";
 import * as HttpClientRequest from "effect/http/HttpClientRequest";
 import * as Layer from "effect/Layer";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.ts";
 
-import { MailDeliveryError } from "../ports/mail-errors.js";
-import { Mailer } from "../ports/mailer.js";
+import { MailDeliveryError } from "../ports/mail-errors.ts";
+import { Mailer } from "../ports/mailer.ts";
 
 // Mailpit's HTTP send API; read delivered mail at MAILPIT_URL.
 export const MailpitMailerLive: Layer.Layer<Mailer, never, EnvVars | HttpClient.HttpClient> =

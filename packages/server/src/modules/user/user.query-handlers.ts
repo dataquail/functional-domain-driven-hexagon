@@ -2,12 +2,12 @@ import { Query } from "@effect-server-utils/cqrs";
 import * as Context from "effect/Context";
 import * as Layer from "effect/Layer";
 
-import { findUserIdByEmailHandler } from "@/modules/user/queries/find-user-id-by-email.handler.js";
-import { FindUserIdByEmailQuery } from "@/modules/user/queries/find-user-id-by-email.query.js";
-import { findUsersHandler } from "@/modules/user/queries/find-users.handler.js";
-import { FindUsersQuery } from "@/modules/user/queries/find-users.query.js";
-import { findUsersByIdsHandler } from "@/modules/user/queries/find-users-by-ids.handler.js";
-import { FindUsersByIdsQuery } from "@/modules/user/queries/find-users-by-ids.query.js";
+import { findUserIdByEmailHandler } from "@/modules/user/queries/find-user-id-by-email.handler.ts";
+import { FindUserIdByEmailQuery } from "@/modules/user/queries/find-user-id-by-email.query.ts";
+import { findUsersHandler } from "@/modules/user/queries/find-users.handler.ts";
+import { FindUsersQuery } from "@/modules/user/queries/find-users.query.ts";
+import { findUsersByIdsHandler } from "@/modules/user/queries/find-users-by-ids.handler.ts";
+import { FindUsersByIdsQuery } from "@/modules/user/queries/find-users-by-ids.query.ts";
 
 // `FindUsersQuery` is dispatched by an HTTP endpoint through the app-wide bus.
 // `FindUsersByIdsQuery` and `FindUserIdByEmailQuery` are each reached by one peer's

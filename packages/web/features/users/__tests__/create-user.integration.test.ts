@@ -19,7 +19,7 @@ import { svelteUsersDriver } from "@org/test-drivers/adapters/svelte-tl/users-pa
 import { describe, it } from "vitest";
 
 import { makeUser } from "@/test/fixtures";
-import { handlers } from "@/test/handlers";
+import { handlers } from "@/test/handlers/handler-set";
 import { renderWithHarness } from "@/test/integration-harness";
 import { server } from "@/test/msw-server";
 

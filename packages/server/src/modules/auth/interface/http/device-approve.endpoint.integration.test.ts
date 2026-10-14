@@ -4,8 +4,8 @@ import { AuthContract, CliAuthContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.js";
-import { describeServer } from "@/test-utils/server-test-runtime.js";
+import { Api } from "@/globals/infrastructure/framework/http/api.ts";
+import { describeServer } from "@/test-utils/server-test-runtime.ts";
 
 // The fake auth middleware supplies the approving super-admin caller.
 

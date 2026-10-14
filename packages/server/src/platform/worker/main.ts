@@ -18,8 +18,8 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.js";
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
+import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.ts";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.ts";
 import {
   CommandBusLive,
   DomainEventBusLive,
@@ -27,30 +27,30 @@ import {
   makeUnitOfWorkLive,
   QueryBusLive,
   UnhandledFailuresLive,
-} from "@/globals/infrastructure/cqrs/cqrs-runtime.js";
-import { DatabaseLive } from "@/globals/infrastructure/database/database-live.js";
-import { CloudflareDomainEventQueueLive } from "@/globals/infrastructure/events/cloudflare-domain-event-queue-live.js";
-import { DeliveryLedgerLive } from "@/globals/infrastructure/events/delivery-ledger-live.js";
+} from "@/globals/infrastructure/cqrs/cqrs-runtime.ts";
+import { DatabaseLive } from "@/globals/infrastructure/database/database-live.ts";
+import { CloudflareDomainEventQueueLive } from "@/globals/infrastructure/events/cloudflare-domain-event-queue-live.ts";
+import { DeliveryLedgerLive } from "@/globals/infrastructure/events/delivery-ledger-live.ts";
 import {
   consumeDomainEvents,
   type QueueMessage,
   reportDeadLetters,
-} from "@/globals/infrastructure/events/domain-event-consumer.js";
-import { sweepOutbox } from "@/globals/infrastructure/events/outbox-sweeper.js";
-import { Api } from "@/globals/infrastructure/framework/http/api.js";
-import { UserAuthMiddlewareLive } from "@/globals/infrastructure/framework/middlewares/auth-middleware-live.js";
-import { applicationModules } from "@/globals/infrastructure/framework/modules/application-modules.js";
-import { TracerLive } from "@/globals/infrastructure/observability/tracer-live.js";
+} from "@/globals/infrastructure/events/domain-event-consumer.ts";
+import { sweepOutbox } from "@/globals/infrastructure/events/outbox-sweeper.ts";
+import { Api } from "@/globals/infrastructure/framework/http/api.ts";
+import { UserAuthMiddlewareLive } from "@/globals/infrastructure/framework/middlewares/auth-middleware-live.ts";
+import { applicationModules } from "@/globals/infrastructure/framework/modules/application-modules.ts";
+import { TracerLive } from "@/globals/infrastructure/observability/tracer-live.ts";
 import {
   EmailBinding,
   type EmailBindingMessage,
-} from "@/globals/infrastructure/runtime/email-binding.js";
+} from "@/globals/infrastructure/runtime/email-binding.ts";
 import {
   ExecutionContext,
   makeWorkerExecutionContext,
-} from "@/globals/infrastructure/runtime/execution-context.js";
-import { IssuerTransport } from "@/globals/infrastructure/runtime/issuer-transport.js";
-import { BillingGatewayLive } from "@/modules/billing/billing.platform.js";
+} from "@/globals/infrastructure/runtime/execution-context.ts";
+import { IssuerTransport } from "@/globals/infrastructure/runtime/issuer-transport.ts";
+import { BillingGatewayLive } from "@/modules/billing/billing.platform.ts";
 
 type ServerWorkerEnv = {
   readonly APP_DB: Hyperdrive;

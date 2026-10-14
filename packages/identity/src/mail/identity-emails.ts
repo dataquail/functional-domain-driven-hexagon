@@ -1,5 +1,5 @@
-import { html } from "../pages/html.js";
-import type { IdentityEmail } from "./identity-mailer.js";
+import { html } from "../pages/html.ts";
+import type { IdentityEmail } from "./identity-mailer.ts";
 
 export type EmailLink = { readonly to: string; readonly url: string };
 

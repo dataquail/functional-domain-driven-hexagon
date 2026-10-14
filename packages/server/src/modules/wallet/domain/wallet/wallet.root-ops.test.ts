@@ -7,20 +7,20 @@ import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
 import {
   WalletInsufficientFunds,
   WalletInvalidAmount,
-} from "@/modules/wallet/domain/wallet/wallet.errors.js";
+} from "@/modules/wallet/domain/wallet/wallet.errors.ts";
 import {
   WalletCreated,
   WalletCredited,
   WalletDebited,
   type WalletEvent,
-} from "@/modules/wallet/domain/wallet/wallet.events.js";
-import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id.js";
-import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.js";
-import { WalletRootOps } from "@/modules/wallet/domain/wallet/wallet.root-ops.js";
+} from "@/modules/wallet/domain/wallet/wallet.events.ts";
+import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id.ts";
+import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.ts";
+import { WalletRootOps } from "@/modules/wallet/domain/wallet/wallet.root-ops.ts";
 
 const walletId = WalletId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const organizationId = OrganizationId.make("11111111-1111-1111-1111-111111111111");

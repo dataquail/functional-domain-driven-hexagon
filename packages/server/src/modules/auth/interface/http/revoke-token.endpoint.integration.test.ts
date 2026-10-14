@@ -5,8 +5,8 @@ import { ApiTokenId } from "@org/contracts/EntityIds";
 import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.js";
-import { describeServer } from "@/test-utils/server-test-runtime.js";
+import { Api } from "@/globals/infrastructure/framework/http/api.ts";
+import { describeServer } from "@/test-utils/server-test-runtime.ts";
 
 describeServer(
   "DELETE /auth/tokens/:id (integration)",

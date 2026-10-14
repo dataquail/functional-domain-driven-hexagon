@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 
 import { textSnippet } from "../../test/snippets";
-import { Card } from "./index";
+import { Card } from "./card.ts";
 
 describe("Card", () => {
   it("owns its chrome, from the closed tables", () => {

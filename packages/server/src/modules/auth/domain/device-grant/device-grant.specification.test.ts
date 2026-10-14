@@ -3,11 +3,11 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 
-import { Criteria } from "@/globals/application/ddd/specification.js";
+import { Criteria } from "@/globals/application/ddd/specification.ts";
 
-import { DeviceGrantId } from "./device-grant.id.js";
-import { DeviceGrantRootOps } from "./device-grant.root-ops.js";
-import { DeviceGrantSpecifications } from "./device-grant.specification.js";
+import { DeviceGrantId } from "./device-grant.id.ts";
+import { DeviceGrantRootOps } from "./device-grant.root-ops.ts";
+import { DeviceGrantSpecifications } from "./device-grant.specification.ts";
 
 const id = DeviceGrantId.make("11111111-1111-1111-1111-111111111111");
 const now = DateTime.makeUnsafe("2025-01-01T00:00:00Z");

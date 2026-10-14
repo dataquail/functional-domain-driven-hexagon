@@ -3,9 +3,9 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
-import { type FindUserIdByEmailPayload } from "@/modules/user/queries/find-user-id-by-email.query.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
+import { type FindUserIdByEmailPayload } from "@/modules/user/queries/find-user-id-by-email.query.ts";
 
 const UserIdRow = Schema.Struct({ id: Schema.String });
 

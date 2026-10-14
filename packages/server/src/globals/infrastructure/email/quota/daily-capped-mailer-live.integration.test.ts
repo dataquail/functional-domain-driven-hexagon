@@ -7,11 +7,11 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { MailDeliveryError } from "@/globals/infrastructure/email/ports/mail-errors.js";
-import { Mailer, type MailMessage } from "@/globals/infrastructure/email/ports/mailer.js";
-import { withDailyCap } from "@/globals/infrastructure/email/quota/daily-capped-mailer-live.js";
-import { describeIntegration } from "@/test-utils/server-test-runtime.js";
-import { TestDatabaseLive } from "@/test-utils/test-database.js";
+import { MailDeliveryError } from "@/globals/infrastructure/email/ports/mail-errors.ts";
+import { Mailer, type MailMessage } from "@/globals/infrastructure/email/ports/mailer.ts";
+import { withDailyCap } from "@/globals/infrastructure/email/quota/daily-capped-mailer-live.ts";
+import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
+import { TestDatabaseLive } from "@/test-utils/test-database.ts";
 
 const message = (to: string): MailMessage => ({
   to,

@@ -8,20 +8,20 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { createOrganizationHandler } from "@/modules/organization/commands/create-organization.handler.js";
-import { softDeleteOrganizationHandler } from "@/modules/organization/commands/soft-delete-organization.handler.js";
-import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.js";
-import { type OrganizationSoftDeleted } from "@/modules/organization/domain/organization/organization.events.js";
-import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
-import { OrganizationSpecifications } from "@/modules/organization/domain/organization/organization.specification.js";
-import { makePlatformRolesFake } from "@/modules/organization/infrastructure/acl/platform-roles.acl-fake.js";
-import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.js";
-import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization.repository-fake.js";
-import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.js";
-import { CryptoFake } from "@/test-utils/crypto-fake.js";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { createOrganizationHandler } from "@/modules/organization/commands/create-organization.handler.ts";
+import { softDeleteOrganizationHandler } from "@/modules/organization/commands/soft-delete-organization.handler.ts";
+import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.ts";
+import { type OrganizationSoftDeleted } from "@/modules/organization/domain/organization/organization.events.ts";
+import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.ts";
+import { OrganizationSpecifications } from "@/modules/organization/domain/organization/organization.specification.ts";
+import { makePlatformRolesFake } from "@/modules/organization/infrastructure/acl/platform-roles.acl-fake.ts";
+import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.ts";
+import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization.repository-fake.ts";
+import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.ts";
+import { CryptoFake } from "@/test-utils/crypto-fake.ts";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.ts";
 
 const actorUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 

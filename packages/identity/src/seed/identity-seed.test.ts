@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@effect/vitest";
 
-import { applicationTypeFor } from "./identity-seed.js";
+import { applicationTypeFor } from "./identity-seed.ts";
 
 describe("applicationTypeFor", () => {
   it("registers a client whose redirects are all plain-http loopback as native", () => {

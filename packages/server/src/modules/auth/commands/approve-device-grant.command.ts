@@ -2,11 +2,11 @@ import { Command } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
 import {
   DeviceGrantExpired,
   DeviceGrantNotFound,
-} from "@/modules/auth/domain/device-grant/device-grant.errors.js";
+} from "@/modules/auth/domain/device-grant/device-grant.errors.ts";
 
 // Browser-side approval: the signed-in user submits the `userCode` they were
 // shown by the CLI; we bind the grant to them.

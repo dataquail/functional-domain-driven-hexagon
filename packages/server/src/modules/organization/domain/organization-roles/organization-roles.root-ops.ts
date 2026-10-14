@@ -1,20 +1,20 @@
 import * as Result from "effect/Result";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
 
 import {
   AlreadyHasOrganizationRole,
   DoesNotHaveOrganizationRole,
-} from "./organization-role.errors.js";
+} from "./organization-role.errors.ts";
 import {
   type OrganizationRoleEvent,
   OrganizationRoleGranted,
   OrganizationRoleRevoked,
-} from "./organization-role.events.js";
-import { type OrganizationRoleValueObject } from "./organization-role.value-object.js";
-import { IssuedRoleValueObject, OrganizationRolesRoot } from "./organization-roles.root.js";
-import { OrganizationRolesSpecifications } from "./organization-roles.specification.js";
+} from "./organization-role.events.ts";
+import { type OrganizationRoleValueObject } from "./organization-role.value-object.ts";
+import { IssuedRoleValueObject, OrganizationRolesRoot } from "./organization-roles.root.ts";
+import { OrganizationRolesSpecifications } from "./organization-roles.specification.ts";
 
 export type Outcome = {
   readonly organizationRoles: OrganizationRolesRoot;

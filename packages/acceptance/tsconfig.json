@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "include": ["specs", "drivers", "test-utils", "setup", "playwright.config.ts", "global-setup.ts"],
   "compilerOptions": {
+    "rewriteRelativeImportExtensions": false,
     "noEmit": true,
     "composite": false,
     "declaration": false,

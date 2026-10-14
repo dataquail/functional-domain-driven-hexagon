@@ -5,8 +5,8 @@ import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { authRateLimitRule, type EdgeHostnames, killSwitchRule } from "../edge-rules.js";
-import { PRODUCTION_STAGE, stageHosts } from "../stage.js";
+import { authRateLimitRule, type EdgeHostnames, killSwitchRule } from "../edge-rules.ts";
+import { PRODUCTION_STAGE, stageHosts } from "../stage.ts";
 
 // Staging lives in the production zone, and a ruleset owns its whole phase, so
 // the prod stage declares the zone's rules for both.

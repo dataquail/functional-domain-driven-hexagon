@@ -2,8 +2,8 @@ import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { MailDeliveryError } from "../ports/mail-errors.js";
-import { Mailer, type MailerService } from "../ports/mailer.js";
+import { MailDeliveryError } from "../ports/mail-errors.ts";
+import { Mailer, type MailerService } from "../ports/mailer.ts";
 
 // Counts each send against today's row and refuses once the cap is reached;
 // a send the transport then refuses still counts, which errs toward sending less.

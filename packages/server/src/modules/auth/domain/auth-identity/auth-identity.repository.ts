@@ -2,9 +2,9 @@ import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 import type * as Option from "effect/Option";
 
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
-import { type Specification } from "@/globals/application/ddd/specification.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.ts";
+import { type Specification } from "@/globals/application/ddd/specification.ts";
 
 export type AuthIdentity = {
   readonly subject: string;

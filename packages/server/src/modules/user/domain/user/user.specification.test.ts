@@ -4,11 +4,11 @@ import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { Criteria } from "@/globals/application/ddd/specification.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { Criteria } from "@/globals/application/ddd/specification.ts";
 
-import { UserRootOps } from "./user.root-ops.js";
-import { UserSpecifications } from "./user.specification.js";
+import { UserRootOps } from "./user.root-ops.ts";
+import { UserSpecifications } from "./user.specification.ts";
 
 const aliceId = UserId.make("11111111-1111-1111-1111-111111111111");
 const bobId = UserId.make("22222222-2222-2222-2222-222222222222");

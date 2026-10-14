@@ -1,6 +1,6 @@
 import { Query } from "@effect-server-utils/cqrs";
 
-import { roleQueryGroup } from "./role.query-handlers.js";
+import { roleQueryGroup } from "./role.query-handlers.ts";
 
 // The peer surface: the individual messages another module may dispatch, and
 // nothing beside them. A dispatcher built over this group demands only these

@@ -7,18 +7,18 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { inviteUserHandler } from "@/modules/organization/commands/invite-user.handler.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { inviteUserHandler } from "@/modules/organization/commands/invite-user.handler.ts";
 import {
   type InvitationIssued,
   type InvitationReissued,
-} from "@/modules/organization/domain/invitation/invitation.events.js";
-import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
-import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
-import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake.js";
-import { CryptoFake } from "@/test-utils/crypto-fake.js";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
+} from "@/modules/organization/domain/invitation/invitation.events.ts";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.ts";
+import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.ts";
+import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake.ts";
+import { CryptoFake } from "@/test-utils/crypto-fake.ts";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.ts";
 
 const actorUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const organizationId = OrganizationId.make("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");

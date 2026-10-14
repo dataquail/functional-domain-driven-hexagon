@@ -45,12 +45,12 @@ export type EndpointRequest<G, Name> = HttpApiEndpoint.HttpApiEndpoint.Request<
 
 The endpoint's parameter type is computed from the contract group and the endpoint name; it stays in sync automatically. Adding a header or payload field to the contract flows through to every implementation file's parameter type without manual annotation.
 
-### Group registration is pure wiring, in `index.ts`
+### Group registration is pure wiring, in `<feature>.endpoint-groups.ts`
 
-The folder's `index.ts` barrel imports each endpoint and binds it to the contract by name (a group is assembled in one `HttpApiBuilder.group(...)` call):
+The folder's `<feature>.endpoint-groups.ts` imports each endpoint and binds it to the contract by name (a group is assembled in one `HttpApiBuilder.group(...)` call):
 
 ```ts
-// modules/user/interface/http/index.ts
+// modules/user/interface/http/user.endpoint-groups.ts
 export const UserHttpLive = HttpApiBuilder.group(Api, "user", (handlers) =>
   handlers
     .handle("find", findEndpoint)
@@ -80,8 +80,8 @@ Each per-endpoint test file uses `describeServer(name, { tables: ["user.users"] 
 ## Consequences
 
 - Endpoint files are short. Each does one thing. Reviewing a change to the user-create flow means reading one file.
-- The `index.ts` group registration stays small as a module's endpoint count grows — purely declarative wiring, one line per binding.
-- Adding an endpoint is a four-step change: add the contract endpoint, create `<name>.endpoint.ts`, create `<name>.endpoint.integration.test.ts`, register in `index.ts`. `pnpm lint` fails if the test file is omitted.
+- The `<feature>.endpoint-groups.ts` registration stays small as a module's endpoint count grows — purely declarative wiring, one line per binding.
+- Adding an endpoint is a four-step change: add the contract endpoint, create `<name>.endpoint.ts`, create `<name>.endpoint.integration.test.ts`, register in `<feature>.endpoint-groups.ts`. `pnpm lint` fails if the test file is omitted.
 - The contract drives the implementation's request type. A breaking contract change surfaces as a TypeScript error in the implementation file, not at runtime.
 - The naming `<name>.endpoint.ts` / `<name>.endpoint.integration.test.ts` is mechanical and is the parity detector; renames must keep the suffixes in lockstep.
 
@@ -90,7 +90,7 @@ Each per-endpoint test file uses `describeServer(name, { tables: ["user.users"] 
 - **Single group file with all endpoints inlined.** Rejected because file length grows monotonically with endpoint count and "what implements X?" becomes a search inside a wall of code.
 - **Endpoint takes deconstructed args** (e.g. `findEndpoint(urlParams)`). Rejected — pushes deconstruction into the registration file and creates a two-file change every time an endpoint's request envelope grows.
 - **"Handler" as the file/function name.** Rejected — the contract calls these endpoints; aligning vocabulary reduces translation cost.
-- **Per-endpoint Layer composition.** `HttpApiBuilder` requires a group be assembled in one call; the chosen shape achieves the same separation with normal function imports and one thin `index.ts`.
+- **Per-endpoint Layer composition.** `HttpApiBuilder` requires a group be assembled in one call; the chosen shape achieves the same separation with normal function imports and one thin `<feature>.endpoint-groups.ts` (named, not an `index.ts` barrel, since ADR-0040).
 - **Enforce parity via dependency-cruiser.** Rejected — "this file must exist" is not expressible as an edge rule; the integration tests go through `HttpApiClient`, so reachability isn't the right property. The folder-structure lint rule is the right tool.
 
 ## Related

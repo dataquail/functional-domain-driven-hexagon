@@ -1128,7 +1128,8 @@ children:
         message: >-
           interface/ is a container: it admits one subfolder per inbound protocol — http/, cli/
           and events/ (ADR-0013, ADR-0007). No files live directly in interface/. http/ and
-          cli/ hold one *.endpoint.ts per endpoint, plus an index.ts barrel and pure leaf
+          cli/ hold one *.endpoint.ts per endpoint, plus a <module>.endpoint-groups.ts that
+          registers them into groups and pure leaf
           *.util.ts helpers; events/ holds one *.event-adapter.ts per upstream module whose
           domain events this module consumes.
 
@@ -1157,12 +1158,12 @@ children:
                 - "@/modules/{module}/infrastructure/clients/**"
                 - "~/contracts/**"
             children:
-              "index.ts": {}
+              "*.endpoint-groups.ts": { name: { like: "{module}" } }
               "*.endpoint.ts":
                 message: >-
                   Every endpoint (*.endpoint.ts) needs a real *.endpoint.integration.test.ts
                   (ADR-0013) that exercises the HTTP layer against a live DB via
-                  useServerTestRuntime.
+                  describeServer.
                 requires: ["{base}.integration.test.ts"]
                 # The OIDC flow endpoints keep unit-token coverage: their happy
                 # path needs a live IdP and is covered by Playwright plus the

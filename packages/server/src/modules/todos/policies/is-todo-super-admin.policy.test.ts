@@ -3,8 +3,8 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { isTodoSuperAdmin } from "@/modules/todos/policies/is-todo-super-admin.policy.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { isTodoSuperAdmin } from "@/modules/todos/policies/is-todo-super-admin.policy.ts";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const caller = { sessionId: "s", userId };

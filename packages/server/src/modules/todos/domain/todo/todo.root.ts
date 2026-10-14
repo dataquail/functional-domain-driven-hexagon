@@ -1,8 +1,8 @@
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
 
-import { TodoId } from "./todo.id.js";
+import { TodoId } from "./todo.id.ts";
 
 // Aggregate root data — a dumb value (ADR-0003). Operations live in
 // `todo.root-ops.ts` (`TodoRootOps`) and carry the test obligation.

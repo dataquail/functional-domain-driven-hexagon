@@ -2,18 +2,18 @@ import { QueryBus } from "@effect-server-utils/cqrs";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
-import { Actions } from "@/globals/application/ports/actions.js";
-import * as Authz from "@/globals/infrastructure/auth/authz.js";
+import { Actions } from "@/globals/application/ports/actions.ts";
+import * as Authz from "@/globals/infrastructure/auth/authz.ts";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { OrganizationCollectionResource } from "@/modules/organization/policies/organization.policies.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
+import { OrganizationCollectionResource } from "@/modules/organization/policies/organization.policies.ts";
 import {
   FindAllOrganizationsQuery,
   type FindAllOrganizationsResult,
   type FindAllOrganizationsView,
-} from "@/modules/organization/queries/find-all-organizations.query.js";
+} from "@/modules/organization/queries/find-all-organizations.query.ts";
 
 const toOrganizationContract = (
   view: FindAllOrganizationsView,

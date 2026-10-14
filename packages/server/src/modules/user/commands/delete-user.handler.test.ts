@@ -7,18 +7,18 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { UserNotFound } from "@/modules/user/domain/user/user.errors.js";
-import { type UserDeleted } from "@/modules/user/domain/user/user.events.js";
-import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
-import { UserSpecifications } from "@/modules/user/domain/user/user.specification.js";
-import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.js";
-import { UserRepositoryFake } from "@/modules/user/infrastructure/repositories/user.repository-fake.js";
-import { CryptoFake } from "@/test-utils/crypto-fake.js";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { UserNotFound } from "@/modules/user/domain/user/user.errors.ts";
+import { type UserDeleted } from "@/modules/user/domain/user/user.events.ts";
+import { UserRepository } from "@/modules/user/domain/user/user.repository.ts";
+import { UserSpecifications } from "@/modules/user/domain/user/user.specification.ts";
+import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.ts";
+import { UserRepositoryFake } from "@/modules/user/infrastructure/repositories/user.repository-fake.ts";
+import { CryptoFake } from "@/test-utils/crypto-fake.ts";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.ts";
 
-import { createUserHandler } from "./create-user.handler.js";
-import { deleteUserHandler } from "./delete-user.handler.js";
+import { createUserHandler } from "./create-user.handler.ts";
+import { deleteUserHandler } from "./delete-user.handler.ts";
 
 const TestLayer = Layer.mergeAll(
   UserRepositoryFake,

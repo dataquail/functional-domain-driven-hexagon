@@ -1,5 +1,5 @@
-import { OrganizationEventAdapterLive } from "./interface/events/organization.event-adapter.js";
-import { WalletCommandsLive } from "./wallet.command-handlers.js";
+import { OrganizationEventAdapterLive } from "./interface/events/organization.event-adapter.ts";
+import { WalletCommandsLive } from "./wallet.command-handlers.ts";
 
 export const WalletModule = {
   layer: WalletCommandsLive,

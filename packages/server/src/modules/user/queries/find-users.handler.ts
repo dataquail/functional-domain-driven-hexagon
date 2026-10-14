@@ -3,12 +3,12 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
 import {
   type FindUsersPayload,
   type FindUsersUserView,
-} from "@/modules/user/queries/find-users.query.js";
+} from "@/modules/user/queries/find-users.query.ts";
 
 const CountRow = Schema.Struct({ value: Schema.Int });
 

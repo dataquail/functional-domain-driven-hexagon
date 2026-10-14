@@ -2,10 +2,10 @@ import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 import type * as Option from "effect/Option";
 
-import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { type WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors.js";
-import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.js";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.ts";
+import { type Specification } from "@/globals/application/ddd/specification.ts";
+import { type WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors.ts";
+import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.ts";
 
 // Dumb persistence, collapsed to the minimal vocabulary: insert the aggregate,
 // and read it back by a Specification. The org's wallet is looked up as a spec

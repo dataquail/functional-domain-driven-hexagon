@@ -3,16 +3,16 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
-import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.js";
-import { type TodoId } from "@/modules/todos/domain/todo/todo.id.js";
-import { type TodoRoot } from "@/modules/todos/domain/todo/todo.root.js";
-import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { type Specification } from "@/globals/application/ddd/specification.ts";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.ts";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
+import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.ts";
+import { type TodoId } from "@/modules/todos/domain/todo/todo.id.ts";
+import { type TodoRoot } from "@/modules/todos/domain/todo/todo.root.ts";
+import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.ts";
 
-import * as TodoMapper from "./todo.mapper.js";
+import * as TodoMapper from "./todo.mapper.ts";
 
 export const TodosRepositoryLive = Layer.effect(
   TodosRepository,

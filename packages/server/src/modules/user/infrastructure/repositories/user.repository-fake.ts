@@ -4,11 +4,11 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user/user.errors.js";
-import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
-import { type UserRoot } from "@/modules/user/domain/user/user.root.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { type Specification } from "@/globals/application/ddd/specification.ts";
+import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user/user.errors.ts";
+import { UserRepository } from "@/modules/user/domain/user/user.repository.ts";
+import { type UserRoot } from "@/modules/user/domain/user/user.root.ts";
 
 const findUserByEmail = (
   store: HashMap.HashMap<UserId, UserRoot>,

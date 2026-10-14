@@ -4,12 +4,12 @@ import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Option from "effect/Option";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { Criteria } from "@/globals/application/ddd/specification.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { Criteria } from "@/globals/application/ddd/specification.ts";
 
-import { SubscriptionId } from "./subscription.id.js";
-import { SubscriptionRootOps } from "./subscription.root-ops.js";
-import { SubscriptionSpecifications } from "./subscription.specification.js";
+import { SubscriptionId } from "./subscription.id.ts";
+import { SubscriptionRootOps } from "./subscription.root-ops.ts";
+import { SubscriptionSpecifications } from "./subscription.specification.ts";
 
 const acme = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const beta = OrganizationId.make("22222222-2222-2222-2222-222222222222");

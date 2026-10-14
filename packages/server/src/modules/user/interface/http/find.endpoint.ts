@@ -5,8 +5,8 @@ import * as Effect from "effect/Effect";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { FindUsersQuery, type FindUsersResult } from "@/modules/user/queries/find-users.query.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
+import { FindUsersQuery, type FindUsersResult } from "@/modules/user/queries/find-users.query.ts";
 
 const toPaginatedUsersContract = (result: FindUsersResult): UserContract.PaginatedUsers =>
   new UserContract.PaginatedUsers({

@@ -5,7 +5,7 @@ import type {
   CreateUserInput,
   ToastKind,
   UsersPageDriver,
-} from "../../contracts/users-page-driver.js";
+} from "../../contracts/users-page-driver.ts";
 
 // Field locators in one place so the contract methods stay
 // business-intent. Switch keeps each case exhaustive — adding a

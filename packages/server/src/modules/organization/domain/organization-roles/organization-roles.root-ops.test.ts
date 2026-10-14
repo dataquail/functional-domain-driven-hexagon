@@ -7,15 +7,15 @@ import * as Predicate from "effect/Predicate";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
 
 import {
   AlreadyHasOrganizationRole,
   DoesNotHaveOrganizationRole,
-} from "./organization-role.errors.js";
-import { type OrganizationRoleEvent } from "./organization-role.events.js";
-import { OrganizationRolesRootOps } from "./organization-roles.root-ops.js";
+} from "./organization-role.errors.ts";
+import { type OrganizationRoleEvent } from "./organization-role.events.ts";
+import { OrganizationRolesRootOps } from "./organization-roles.root-ops.ts";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");

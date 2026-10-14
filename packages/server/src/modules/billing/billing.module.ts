@@ -1,12 +1,15 @@
 import * as Layer from "effect/Layer";
 
-import { BillingCommandsLive } from "@/modules/billing/billing.command-handlers.js";
-import { BillingQueriesLive } from "@/modules/billing/billing.query-handlers.js";
-import { StripeWebhookEventAdapterLive } from "@/modules/billing/interface/events/stripe-webhook.event-adapter.js";
-import { BillingLive, BillingWebhooksLive } from "@/modules/billing/interface/http/index.js";
-import { BillingPoliciesLive } from "@/modules/billing/policies/billing.policies.js";
-import { OrganizationModule } from "@/modules/organization/organization.module.js";
-import { RoleModule } from "@/modules/role/role.module.js";
+import { BillingCommandsLive } from "@/modules/billing/billing.command-handlers.ts";
+import { BillingQueriesLive } from "@/modules/billing/billing.query-handlers.ts";
+import { StripeWebhookEventAdapterLive } from "@/modules/billing/interface/events/stripe-webhook.event-adapter.ts";
+import {
+  BillingLive,
+  BillingWebhooksLive,
+} from "@/modules/billing/interface/http/billing.endpoint-groups.ts";
+import { BillingPoliciesLive } from "@/modules/billing/policies/billing.policies.ts";
+import { OrganizationModule } from "@/modules/organization/organization.module.ts";
+import { RoleModule } from "@/modules/role/role.module.ts";
 
 export const BillingModule = {
   layer: Layer.mergeAll(BillingCommandsLive, BillingQueriesLive, BillingPoliciesLive).pipe(

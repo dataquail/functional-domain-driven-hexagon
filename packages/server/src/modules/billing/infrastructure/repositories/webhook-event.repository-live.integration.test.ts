@@ -5,12 +5,12 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 
-import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors.js";
-import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
-import { WebhookEventSpecifications } from "@/modules/billing/domain/webhook-event/webhook-event.specification.js";
-import { WebhookEventRepositoryLive } from "@/modules/billing/infrastructure/repositories/webhook-event.repository-live.js";
-import { describeIntegration } from "@/test-utils/server-test-runtime.js";
-import { TestDatabaseLive } from "@/test-utils/test-database.js";
+import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors.ts";
+import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository.ts";
+import { WebhookEventSpecifications } from "@/modules/billing/domain/webhook-event/webhook-event.specification.ts";
+import { WebhookEventRepositoryLive } from "@/modules/billing/infrastructure/repositories/webhook-event.repository-live.ts";
+import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
+import { TestDatabaseLive } from "@/test-utils/test-database.ts";
 
 const TestLayer = WebhookEventRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 

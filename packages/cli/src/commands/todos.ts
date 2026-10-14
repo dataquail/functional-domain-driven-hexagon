@@ -6,7 +6,7 @@ import * as Flag from "effect/cli/Flag";
 import * as Console from "effect/Console";
 import * as Effect from "effect/Effect";
 
-import { authedClient, resolveOrg, toCliError } from "../internal.js";
+import { authedClient, resolveOrg, toCliError } from "../internal.ts";
 
 const orgOption = Flag.String("org").pipe(
   Flag.optional,

@@ -5,11 +5,11 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { DeviceGrantNotFound } from "@/modules/auth/domain/device-grant/device-grant.errors.js";
-import { type DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.js";
-import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
-import { type DeviceGrantRoot } from "@/modules/auth/domain/device-grant/device-grant.root.js";
+import { type Specification } from "@/globals/application/ddd/specification.ts";
+import { DeviceGrantNotFound } from "@/modules/auth/domain/device-grant/device-grant.errors.ts";
+import { type DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.ts";
+import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.ts";
+import { type DeviceGrantRoot } from "@/modules/auth/domain/device-grant/device-grant.root.ts";
 
 export const DeviceGrantRepositoryFake = Layer.effect(
   DeviceGrantRepository,

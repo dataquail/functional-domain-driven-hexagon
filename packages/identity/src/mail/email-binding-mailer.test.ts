@@ -5,9 +5,9 @@ import {
   emailBindingMailer,
   type EmailDelivery,
   type OutgoingEmail,
-} from "./email-binding-mailer.js";
-import { passwordResetEmail } from "./identity-emails.js";
-import { MailDeliveryError } from "./identity-mailer.js";
+} from "./email-binding-mailer.ts";
+import { passwordResetEmail } from "./identity-emails.ts";
+import { MailDeliveryError } from "./identity-mailer.ts";
 
 const sender = { address: "auth@example.com", name: "Auth" };
 

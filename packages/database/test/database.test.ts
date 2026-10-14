@@ -13,7 +13,7 @@ import {
   UniqueViolation,
 } from "effect/sql/SqlError";
 
-import { DatabaseError, DatabaseUnavailable, exec, maybeRow, row, rows } from "../src/Database.js";
+import { DatabaseError, DatabaseUnavailable, exec, maybeRow, row, rows } from "../src/Database.ts";
 
 const Row = Schema.Struct({ id: Schema.String, at: Schema.DateTimeUtcFromDate });
 

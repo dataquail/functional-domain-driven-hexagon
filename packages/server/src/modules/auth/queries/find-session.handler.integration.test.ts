@@ -8,19 +8,19 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as TestClock from "effect/testing/TestClock";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { SessionId } from "@/modules/auth/domain/session/session.id.js";
-import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
-import { SessionRoot } from "@/modules/auth/domain/session/session.root.js";
-import { SessionRepositoryLive } from "@/modules/auth/infrastructure/repositories/session.repository-live.js";
-import { findSessionHandler } from "@/modules/auth/queries/find-session.handler.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { SessionId } from "@/modules/auth/domain/session/session.id.ts";
+import { SessionRepository } from "@/modules/auth/domain/session/session.repository.ts";
+import { SessionRoot } from "@/modules/auth/domain/session/session.root.ts";
+import { SessionRepositoryLive } from "@/modules/auth/infrastructure/repositories/session.repository-live.ts";
+import { findSessionHandler } from "@/modules/auth/queries/find-session.handler.ts";
 import {
   SessionExpired,
   SessionNotFound,
   SessionRevoked,
-} from "@/modules/auth/queries/find-session.query.js";
-import { describeIntegration } from "@/test-utils/server-test-runtime.js";
-import { TestDatabaseLive } from "@/test-utils/test-database.js";
+} from "@/modules/auth/queries/find-session.query.ts";
+import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
+import { TestDatabaseLive } from "@/test-utils/test-database.ts";
 
 const sessionId = SessionId.make("22222222-2222-2222-2222-222222222222");
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");

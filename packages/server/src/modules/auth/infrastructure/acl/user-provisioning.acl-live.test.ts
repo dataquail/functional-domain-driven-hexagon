@@ -8,17 +8,17 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
 import {
   userAccessCommands,
   userAccessErrors,
   userSignInAccessQueries,
-} from "@/modules/auth/auth.imports.js";
+} from "@/modules/auth/auth.imports.ts";
 import {
   UserProvisioning,
   UserProvisioningConflict,
-} from "@/modules/auth/domain/ports/acl/user-provisioning.acl.js";
-import { UserProvisioningLive } from "@/modules/auth/infrastructure/acl/user-provisioning.acl-live.js";
+} from "@/modules/auth/domain/ports/acl/user-provisioning.acl.ts";
+import { UserProvisioningLive } from "@/modules/auth/infrastructure/acl/user-provisioning.acl-live.ts";
 
 // `UserProvisioningLive` is a thin translation over the user module's own dispatch
 // surface: it turns "provision a user with this email" into that module's

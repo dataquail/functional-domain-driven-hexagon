@@ -1,10 +1,10 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.js";
-import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id.js";
-import { WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.ts";
+import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id.ts";
+import { WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.ts";
 
 type Row = RowSchemas.WalletRow;
 

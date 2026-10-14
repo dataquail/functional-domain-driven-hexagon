@@ -6,8 +6,8 @@ import * as Effect from "effect/Effect";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { ListMyApiTokensQuery } from "@/modules/auth/queries/list-my-api-tokens.query.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
+import { ListMyApiTokensQuery } from "@/modules/auth/queries/list-my-api-tokens.query.ts";
 
 // Lists the caller's active (non-revoked) tokens. Secret-free: only the
 // display `prefix` and metadata are returned.

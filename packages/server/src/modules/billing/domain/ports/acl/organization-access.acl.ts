@@ -1,9 +1,9 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.ts";
 
 // ADR-0022 outbound port. Billing distinguishes two levels of access to an org's
 // subscription: any member may read it, only an admin may take on or cancel a

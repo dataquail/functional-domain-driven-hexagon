@@ -7,13 +7,13 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.js";
-import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
-import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant/device-grant.root-ops.js";
-import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.ts";
+import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.ts";
+import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant/device-grant.root-ops.ts";
+import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification.ts";
 
-import { DeviceGrantRepositoryFake } from "./device-grant.repository-fake.js";
+import { DeviceGrantRepositoryFake } from "./device-grant.repository-fake.ts";
 
 const id = DeviceGrantId.make("11111111-1111-1111-1111-111111111111");
 const userId = UserId.make("22222222-2222-2222-2222-222222222222");

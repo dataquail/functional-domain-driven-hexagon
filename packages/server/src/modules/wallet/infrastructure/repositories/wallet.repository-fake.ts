@@ -5,12 +5,12 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors.js";
-import { type WalletId } from "@/modules/wallet/domain/wallet/wallet.id.js";
-import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
-import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { type Specification } from "@/globals/application/ddd/specification.ts";
+import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors.ts";
+import { type WalletId } from "@/modules/wallet/domain/wallet/wallet.id.ts";
+import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.ts";
+import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.ts";
 
 const findByOrganizationIdIn = (
   store: HashMap.HashMap<WalletId, WalletRoot>,

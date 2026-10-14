@@ -7,16 +7,16 @@ import * as DateTime from "effect/DateTime";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
 import {
   SubscriptionCanceled,
   type SubscriptionEvent,
   SubscriptionStarted,
   SubscriptionStatusChanged,
-} from "@/modules/billing/domain/subscription/subscription.events.js";
-import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
-import { type SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.js";
-import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
+} from "@/modules/billing/domain/subscription/subscription.events.ts";
+import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.ts";
+import { type SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.ts";
+import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.ts";
 
 const subscriptionId = SubscriptionId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const organizationId = OrganizationId.make("11111111-1111-1111-1111-111111111111");

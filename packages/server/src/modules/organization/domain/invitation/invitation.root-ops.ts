@@ -2,25 +2,25 @@ import type * as DateTime from "effect/DateTime";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 
-import { type InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type InvitationId } from "@/globals/application/ddd/ids/invitation-id.ts";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
 
 import {
   InvitationAlreadyAccepted,
   InvitationAlreadyRevoked,
   InvitationExpired,
   InvitationRevoked as InvitationRevokedError,
-} from "./invitation.errors.js";
+} from "./invitation.errors.ts";
 import {
   InvitationAccepted,
   type InvitationEvent,
   InvitationIssued,
   InvitationReissued,
   InvitationRevoked,
-} from "./invitation.events.js";
-import { InvitationRoot } from "./invitation.root.js";
-import { InvitationSpecifications } from "./invitation.specification.js";
+} from "./invitation.events.ts";
+import { InvitationRoot } from "./invitation.root.ts";
+import { InvitationSpecifications } from "./invitation.specification.ts";
 
 export type IssueResult = {
   readonly invitation: InvitationRoot;

@@ -6,8 +6,8 @@ import * as FetchHttpClient from "effect/http/FetchHttpClient";
 import * as HttpClient from "effect/http/HttpClient";
 import * as HttpClientRequest from "effect/http/HttpClientRequest";
 
-import Stack from "../alchemy.run.js";
-import { stackProviders } from "../src/stack/providers.js";
+import Stack from "../alchemy.run.ts";
+import { stackProviders } from "../src/stack/providers.ts";
 
 // The server Worker under workerd, as `alchemy dev` runs it: Hyperdrive passes
 // through to the docker Postgres in DATABASE_URL, and the identity Worker is

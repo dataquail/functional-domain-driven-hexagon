@@ -5,13 +5,13 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Result from "effect/Result";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
-import { RolesRootOps } from "@/modules/role/domain/roles/roles.root-ops.js";
-import { RolesRepositoryLive } from "@/modules/role/infrastructure/repositories/roles.repository-live.js";
-import { findUserRolesHandler } from "@/modules/role/queries/find-user-roles.handler.js";
-import { describeIntegration } from "@/test-utils/server-test-runtime.js";
-import { TestDatabaseLive } from "@/test-utils/test-database.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.ts";
+import { RolesRootOps } from "@/modules/role/domain/roles/roles.root-ops.ts";
+import { RolesRepositoryLive } from "@/modules/role/infrastructure/repositories/roles.repository-live.ts";
+import { findUserRolesHandler } from "@/modules/role/queries/find-user-roles.handler.ts";
+import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
+import { TestDatabaseLive } from "@/test-utils/test-database.ts";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 

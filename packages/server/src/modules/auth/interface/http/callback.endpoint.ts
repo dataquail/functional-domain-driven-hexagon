@@ -6,15 +6,15 @@ import * as HttpServerRequest from "effect/http/HttpServerRequest";
 import * as HttpServerResponse from "effect/http/HttpServerResponse";
 import * as Option from "effect/Option";
 
-import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.js";
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
-import { recoverPersistenceUnavailable } from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { SignInCommand } from "@/modules/auth/commands/sign-in.command.js";
-import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client.js";
+import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.ts";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.ts";
+import { recoverPersistenceUnavailable } from "@/globals/infrastructure/framework/http/http-endpoint.ts";
+import { SignInCommand } from "@/modules/auth/commands/sign-in.command.ts";
+import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client.ts";
 
-import { buildCallbackUrl } from "./callback-url.util.js";
-import { ID_TOKEN_HINT_COOKIE_NAME, readCookie } from "./id-token-hint-cookie.util.js";
-import { decodePkcePayload, PKCE_COOKIE_NAME } from "./oidc-pkce-cookie.util.js";
+import { buildCallbackUrl } from "./callback-url.util.ts";
+import { ID_TOKEN_HINT_COOKIE_NAME, readCookie } from "./id-token-hint-cookie.util.ts";
+import { decodePkcePayload, PKCE_COOKIE_NAME } from "./oidc-pkce-cookie.util.ts";
 
 export const callbackEndpoint = Effect.fn("AuthLive.callback")(
   function* () {

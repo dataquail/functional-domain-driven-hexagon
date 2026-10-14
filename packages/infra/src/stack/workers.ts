@@ -13,10 +13,10 @@ import {
   type StageHosts,
   workerName,
   type WorkerRole,
-} from "../stage.js";
-import { appDatabase, identityDatabase } from "./databases.js";
-import { deployedHosts, stageUrls } from "./hosts.js";
-import { domainEventsDeadLetterQueue, domainEventsQueue } from "./queues.js";
+} from "../stage.ts";
+import { appDatabase, identityDatabase } from "./databases.ts";
+import { deployedHosts, stageUrls } from "./hosts.ts";
+import { domainEventsDeadLetterQueue, domainEventsQueue } from "./queues.ts";
 
 const besideThisFile = Effect.fn("besideThisFile")(function* (relative: string) {
   const path = yield* Path.Path;

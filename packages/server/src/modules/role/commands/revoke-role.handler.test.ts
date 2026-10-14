@@ -7,15 +7,15 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { grantRoleHandler } from "@/modules/role/commands/grant-role.handler.js";
-import { revokeRoleHandler } from "@/modules/role/commands/revoke-role.handler.js";
-import { DoesNotHaveRole } from "@/modules/role/domain/roles/role.errors.js";
-import { type RoleRevoked } from "@/modules/role/domain/roles/role.events.js";
-import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
-import { RolesSpecifications } from "@/modules/role/domain/roles/roles.specification.js";
-import { RolesRepositoryFake } from "@/modules/role/infrastructure/repositories/roles.repository-fake.js";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { grantRoleHandler } from "@/modules/role/commands/grant-role.handler.ts";
+import { revokeRoleHandler } from "@/modules/role/commands/revoke-role.handler.ts";
+import { DoesNotHaveRole } from "@/modules/role/domain/roles/role.errors.ts";
+import { type RoleRevoked } from "@/modules/role/domain/roles/role.events.ts";
+import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.ts";
+import { RolesSpecifications } from "@/modules/role/domain/roles/roles.specification.ts";
+import { RolesRepositoryFake } from "@/modules/role/infrastructure/repositories/roles.repository-fake.ts";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.ts";
 
 const TestLayer = Layer.mergeAll(RolesRepositoryFake, RecordingEventBus, PassThroughUnitOfWork);
 

@@ -5,13 +5,13 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Result from "effect/Result";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
-import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.js";
-import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
-import { findAllOrganizationsHandler } from "@/modules/organization/queries/find-all-organizations.handler.js";
-import { describeIntegration } from "@/test-utils/server-test-runtime.js";
-import { TestDatabaseLive } from "@/test-utils/test-database.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.ts";
+import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.ts";
+import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.ts";
+import { findAllOrganizationsHandler } from "@/modules/organization/queries/find-all-organizations.handler.ts";
+import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
+import { TestDatabaseLive } from "@/test-utils/test-database.ts";
 
 const acmeId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const beta = OrganizationId.make("22222222-2222-2222-2222-222222222222");

@@ -7,11 +7,11 @@ import * as Option from "effect/Option";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
 import {
   FindMyOrganizationsQuery,
   type FindMyOrganizationsView,
-} from "@/modules/organization/queries/find-my-organizations.query.js";
+} from "@/modules/organization/queries/find-my-organizations.query.ts";
 
 const toContract = (view: FindMyOrganizationsView): OrganizationContract.MyOrganization =>
   new OrganizationContract.MyOrganization({

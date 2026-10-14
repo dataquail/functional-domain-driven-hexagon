@@ -5,8 +5,8 @@ import * as ConfigProvider from "effect/ConfigProvider";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { IssuerTransport } from "@/globals/infrastructure/runtime/issuer-transport.js";
-import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client.js";
+import { IssuerTransport } from "@/globals/infrastructure/runtime/issuer-transport.ts";
+import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client.ts";
 
 const ISSUER = "http://identity.internal/api/auth";
 

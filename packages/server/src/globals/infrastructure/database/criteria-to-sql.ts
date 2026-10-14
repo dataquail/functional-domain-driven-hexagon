@@ -3,7 +3,7 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import * as Statement from "effect/sql/Statement";
 
-import { Criteria } from "@/globals/application/ddd/specification.js";
+import { Criteria } from "@/globals/application/ddd/specification.ts";
 
 // Maps a spec's logical field names to physical columns. Values may be
 // qualified (e.g. "m.role") so the fragment slots into a repository query that

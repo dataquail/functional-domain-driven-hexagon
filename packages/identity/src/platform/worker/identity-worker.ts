@@ -6,13 +6,13 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import pg from "pg";
 
-import { type ClientCredentials, identityAuthFor } from "../../auth/identity-auth.js";
-import { betterAuthPort } from "../../auth/identity-auth-port.js";
-import { handleIdentityRequest } from "../../http/identity-router.js";
-import { dailyCappedMailer, sendCountStoreIn } from "../../mail/daily-capped-mailer.js";
-import { deliveryThroughBinding, emailBindingMailer } from "../../mail/email-binding-mailer.js";
-import type { MailSender } from "../../mail/identity-mailer.js";
-import { mailpitMailer } from "../../mail/mailpit-mailer.js";
+import { type ClientCredentials, identityAuthFor } from "../../auth/identity-auth.ts";
+import { betterAuthPort } from "../../auth/identity-auth-port.ts";
+import { handleIdentityRequest } from "../../http/identity-router.ts";
+import { dailyCappedMailer, sendCountStoreIn } from "../../mail/daily-capped-mailer.ts";
+import { deliveryThroughBinding, emailBindingMailer } from "../../mail/email-binding-mailer.ts";
+import type { MailSender } from "../../mail/identity-mailer.ts";
+import { mailpitMailer } from "../../mail/mailpit-mailer.ts";
 
 type IdentityWorkerEnv = {
   readonly IDENTITY_DB: Hyperdrive;

@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 
 import { recordCalls } from "../../test/calls";
 import FormRoot from "./form.svelte";
+import { Form } from "./form.ts";
 import FieldError from "./form-error.part.svelte";
-import { Form } from "./index";
 
 describe("Form", () => {
   it("reports a submit with the browser's default already prevented", async () => {

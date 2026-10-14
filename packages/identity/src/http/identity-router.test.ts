@@ -3,9 +3,9 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import type { IdentityAuthPort, SignInInput } from "../auth/identity-auth-port.js";
-import type { SeedRequest, SeedUser } from "../seed/identity-seed.js";
-import { handleIdentityRequest, type IdentityRouterContext } from "./identity-router.js";
+import type { IdentityAuthPort, SignInInput } from "../auth/identity-auth-port.ts";
+import type { SeedRequest, SeedUser } from "../seed/identity-seed.ts";
+import { handleIdentityRequest, type IdentityRouterContext } from "./identity-router.ts";
 
 const BASE = "http://localhost:3002";
 const APP_URL = "http://localhost:3000";

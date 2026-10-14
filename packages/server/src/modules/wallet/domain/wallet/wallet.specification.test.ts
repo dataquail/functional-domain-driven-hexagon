@@ -3,12 +3,12 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { Criteria } from "@/globals/application/ddd/specification.js";
-import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { Criteria } from "@/globals/application/ddd/specification.ts";
+import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id.ts";
 
-import { WalletRootOps } from "./wallet.root-ops.js";
-import { WalletSpecifications } from "./wallet.specification.js";
+import { WalletRootOps } from "./wallet.root-ops.ts";
+import { WalletSpecifications } from "./wallet.specification.ts";
 
 const acmeId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const betaId = OrganizationId.make("22222222-2222-2222-2222-222222222222");

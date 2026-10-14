@@ -6,8 +6,8 @@ export {
   TodoCollectionResolverEntryLive,
   TodoResolverEntry,
   TodoResolverEntryLive,
-} from "./policies/todo.resource-resolvers.js";
-export { TodoPoliciesLive, TodoPolicyContribution } from "./policies/todos.policies.js";
-export { todoCommandGroup, TodoCommands } from "./todo.command-handlers.js";
-export { TodoQueries, todoQueryGroup } from "./todo.query-handlers.js";
-export { TodosModule } from "./todos.module.js";
+} from "./policies/todo.resource-resolvers.ts";
+export { TodoPoliciesLive, TodoPolicyContribution } from "./policies/todos.policies.ts";
+export { todoCommandGroup, TodoCommands } from "./todo.command-handlers.ts";
+export { TodoQueries, todoQueryGroup } from "./todo.query-handlers.ts";
+export { TodosModule } from "./todos.module.ts";

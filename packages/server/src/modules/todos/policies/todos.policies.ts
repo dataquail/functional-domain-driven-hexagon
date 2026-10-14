@@ -3,13 +3,13 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { OrganizationAccess } from "@/modules/todos/domain/ports/acl/organization-access.acl.js";
-import { PlatformRoles } from "@/modules/todos/domain/ports/acl/platform-roles.acl.js";
-import { OrganizationAccessLive } from "@/modules/todos/infrastructure/acl/organization-access.acl-live.js";
-import { PlatformRolesLive } from "@/modules/todos/infrastructure/acl/platform-roles.acl-live.js";
+import { OrganizationAccess } from "@/modules/todos/domain/ports/acl/organization-access.acl.ts";
+import { PlatformRoles } from "@/modules/todos/domain/ports/acl/platform-roles.acl.ts";
+import { OrganizationAccessLive } from "@/modules/todos/infrastructure/acl/organization-access.acl-live.ts";
+import { PlatformRolesLive } from "@/modules/todos/infrastructure/acl/platform-roles.acl-live.ts";
 
-import { isTodoOrgMember } from "./is-todo-org-member.policy.js";
-import { isTodoSuperAdmin } from "./is-todo-super-admin.policy.js";
+import { isTodoOrgMember } from "./is-todo-org-member.policy.ts";
+import { isTodoSuperAdmin } from "./is-todo-super-admin.policy.ts";
 
 // Two todo policy resources (see todo.resource-resolvers.ts), both scoped:
 //   - `todoCollection` (by OrganizationId) — `create` a todo in an org and

@@ -10,8 +10,8 @@ import {
   QUEUE_LIMITS,
   type QueueProducerBinding,
   toQueueBatches,
-} from "@/globals/infrastructure/events/cloudflare-domain-event-queue-live.js";
-import { DomainEventQueue } from "@/globals/infrastructure/events/domain-event-queue.js";
+} from "@/globals/infrastructure/events/cloudflare-domain-event-queue-live.ts";
+import { DomainEventQueue } from "@/globals/infrastructure/events/domain-event-queue.ts";
 
 const envelope = (index: number, payloadBytes = 10): Event.Envelope => ({
   eventId: `00000000-0000-0000-0000-${String(index).padStart(12, "0")}`,

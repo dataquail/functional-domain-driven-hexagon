@@ -3,9 +3,9 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import type { Pool } from "pg";
 
-import { MAIL_DAILY_COUNTS_TABLE } from "../mail/daily-capped-mailer.js";
-import { MailDeliveryError } from "../mail/identity-mailer.js";
-import { identityAuthFor } from "./identity-auth.js";
+import { MAIL_DAILY_COUNTS_TABLE } from "../mail/daily-capped-mailer.ts";
+import { MailDeliveryError } from "../mail/identity-mailer.ts";
+import { identityAuthFor } from "./identity-auth.ts";
 
 // Migrations read the schema Better Auth derives from its options; nothing here signs or sends.
 const schemaOnlySettings = (database: Pool) => ({

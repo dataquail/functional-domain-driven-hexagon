@@ -9,8 +9,8 @@ import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.js";
-import { describeServer } from "@/test-utils/server-test-runtime.js";
+import { Api } from "@/globals/infrastructure/framework/http/api.ts";
+import { describeServer } from "@/test-utils/server-test-runtime.ts";
 
 // The callback happy path (PKCE cookie present → code exchange with the issuer →
 // session issued) needs a live identity Worker and is covered end-to-end by Playwright

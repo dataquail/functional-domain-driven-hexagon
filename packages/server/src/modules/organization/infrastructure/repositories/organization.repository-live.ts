@@ -3,13 +3,13 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
-import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.js";
-import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
-import { type OrganizationRoot } from "@/modules/organization/domain/organization/organization.root.js";
-import * as OrganizationMapper from "@/modules/organization/infrastructure/repositories/organization.mapper.js";
+import { type Specification } from "@/globals/application/ddd/specification.ts";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.ts";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
+import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.ts";
+import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.ts";
+import { type OrganizationRoot } from "@/modules/organization/domain/organization/organization.root.ts";
+import * as OrganizationMapper from "@/modules/organization/infrastructure/repositories/organization.mapper.ts";
 
 export const OrganizationRepositoryLive = Layer.effect(
   OrganizationRepository,

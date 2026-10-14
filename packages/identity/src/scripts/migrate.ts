@@ -5,7 +5,7 @@ import * as Effect from "effect/Effect";
 import * as Redacted from "effect/Redacted";
 import pg from "pg";
 
-import { migrateIdentityDatabase } from "../auth/identity-migrations.js";
+import { migrateIdentityDatabase } from "../auth/identity-migrations.ts";
 
 dotenv({ path: "../../.env" });
 

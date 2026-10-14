@@ -2,7 +2,7 @@
   import { defineMeta } from "@storybook/addon-svelte-csf";
 
   import Button from "../button.svelte";
-  import { showToast, Toaster } from "./index";
+  import { showToast, Toaster } from "./toaster.ts";
 
   const { Story } = defineMeta({
     title: "Primitives/Toaster",

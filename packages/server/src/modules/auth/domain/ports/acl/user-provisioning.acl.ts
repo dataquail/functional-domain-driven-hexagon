@@ -3,8 +3,8 @@ import type * as Effect from "effect/Effect";
 import type * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.ts";
 
 // Raised when a user with the same email already exists at provisioning time.
 // This module's own error, not the user module's `UserAlreadyExists` — the

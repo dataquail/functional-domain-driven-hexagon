@@ -6,11 +6,11 @@ import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
 
-import { AlreadyHasRole, DoesNotHaveRole } from "./role.errors.js";
-import { type RoleEvent, RoleGranted, RoleRevoked } from "./role.events.js";
-import { RolesRootOps } from "./roles.root-ops.js";
+import { AlreadyHasRole, DoesNotHaveRole } from "./role.errors.ts";
+import { type RoleEvent, RoleGranted, RoleRevoked } from "./role.events.ts";
+import { RolesRootOps } from "./roles.root-ops.ts";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 

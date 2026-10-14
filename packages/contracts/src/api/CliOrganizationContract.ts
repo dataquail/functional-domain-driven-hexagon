@@ -2,9 +2,9 @@ import * as HttpApiEndpoint from "effect/http-api/HttpApiEndpoint";
 import * as HttpApiGroup from "effect/http-api/HttpApiGroup";
 import * as Schema from "effect/Schema";
 
-import * as CustomHttpApiError from "../CustomHttpApiError.js";
-import { OrganizationId } from "../EntityIds.js";
-import { UserAuthMiddleware } from "../Policy.js";
+import * as CustomHttpApiError from "../CustomHttpApiError.ts";
+import { OrganizationId } from "../EntityIds.ts";
+import { UserAuthMiddleware } from "../Policy.ts";
 
 // CLI-facing organization surface (ADR-0005). Deliberately leaner than the
 // GUI's `MyOrganization` — the CLI only needs to name an org and know

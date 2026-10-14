@@ -5,14 +5,14 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
-import { TodoRootOps } from "@/modules/todos/domain/todo/todo.root-ops.js";
-import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js";
-import { TodosRepositoryLive } from "@/modules/todos/infrastructure/repositories/todos.repository-live.js";
-import { listTodosHandler } from "@/modules/todos/queries/list-todos.handler.js";
-import { describeIntegration } from "@/test-utils/server-test-runtime.js";
-import { TestDatabaseLive } from "@/test-utils/test-database.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { TodoId } from "@/modules/todos/domain/todo/todo.id.ts";
+import { TodoRootOps } from "@/modules/todos/domain/todo/todo.root-ops.ts";
+import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.ts";
+import { TodosRepositoryLive } from "@/modules/todos/infrastructure/repositories/todos.repository-live.ts";
+import { listTodosHandler } from "@/modules/todos/queries/list-todos.handler.ts";
+import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
+import { TestDatabaseLive } from "@/test-utils/test-database.ts";
 
 const aliceId = TodoId.make("11111111-1111-1111-1111-111111111111");
 const bobId = TodoId.make("22222222-2222-2222-2222-222222222222");

@@ -3,14 +3,14 @@ import { TodosContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { Actions } from "@/globals/application/ports/actions.js";
-import * as Authz from "@/globals/infrastructure/auth/authz.js";
+import { Actions } from "@/globals/application/ports/actions.ts";
+import * as Authz from "@/globals/infrastructure/auth/authz.ts";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { DeleteTodoCommand } from "@/modules/todos/commands/delete-todo.command.js";
-import { TodoResource } from "@/modules/todos/policies/todos.policies.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
+import { DeleteTodoCommand } from "@/modules/todos/commands/delete-todo.command.ts";
+import { TodoResource } from "@/modules/todos/policies/todos.policies.ts";
 
 export const deleteEndpoint = Effect.fn("TodosLive.delete")(
   function* (request: EndpointRequest<typeof TodosContract.Group, "delete">) {

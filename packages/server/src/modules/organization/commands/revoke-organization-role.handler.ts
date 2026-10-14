@@ -2,12 +2,12 @@ import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { Spec } from "@/globals/application/ddd/specification.js";
-import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
-import { type RevokeOrganizationRolePayload } from "@/modules/organization/commands/revoke-organization-role.command.js";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
-import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.js";
-import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification.js";
+import { Spec } from "@/globals/application/ddd/specification.ts";
+import { DomainEventBus } from "@/globals/application/ports/event-bus.ts";
+import { type RevokeOrganizationRolePayload } from "@/modules/organization/commands/revoke-organization-role.command.ts";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.ts";
+import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.ts";
+import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification.ts";
 
 export const revokeOrganizationRoleHandler = Effect.fn("revokeOrganizationRoleHandler")(function* (
   cmd: RevokeOrganizationRolePayload,

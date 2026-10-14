@@ -15,12 +15,12 @@ import * as Ref from "effect/Ref";
 import * as Schema from "effect/Schema";
 import * as Tracer from "effect/Tracer";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { sweepOutbox, toEnvelope } from "@/globals/infrastructure/events/outbox-sweeper.js";
-import { CreateOrganizationCommand } from "@/modules/organization/commands/create-organization.command.js";
-import { InviteUserCommand } from "@/modules/organization/commands/invite-user.command.js";
-import { MEMBER_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
-import { describeServer } from "@/test-utils/server-test-runtime.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { sweepOutbox, toEnvelope } from "@/globals/infrastructure/events/outbox-sweeper.ts";
+import { CreateOrganizationCommand } from "@/modules/organization/commands/create-organization.command.ts";
+import { InviteUserCommand } from "@/modules/organization/commands/invite-user.command.ts";
+import { MEMBER_CALLER_ID } from "@/test-utils/fake-auth-middleware.ts";
+import { describeServer } from "@/test-utils/server-test-runtime.ts";
 
 const ORG_ID = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 

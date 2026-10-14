@@ -3,6 +3,7 @@
   "include": ["src/**/*.test.ts"],
   "references": [{ "path": "tsconfig.src.json" }],
   "compilerOptions": {
+    "rewriteRelativeImportExtensions": false,
     // Better Auth's plugin types do not satisfy exactOptionalPropertyTypes.
     "exactOptionalPropertyTypes": false,
     "types": ["node"],

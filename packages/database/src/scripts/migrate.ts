@@ -6,8 +6,8 @@ import * as Flag from "effect/cli/Flag";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 
-import { requiresTls } from "../connection-url.js";
-import { runMigrations } from "../migrator.js";
+import { requiresTls } from "../connection-url.ts";
+import { runMigrations } from "../migrator.ts";
 
 dotenv({
   path: "../../.env",

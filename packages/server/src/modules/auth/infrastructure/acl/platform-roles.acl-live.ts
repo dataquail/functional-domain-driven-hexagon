@@ -2,8 +2,8 @@ import { Query } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { roleAccessQueries } from "@/modules/auth/auth.imports.js";
-import { PlatformRoles } from "@/modules/auth/domain/ports/acl/platform-roles.acl.js";
+import { roleAccessQueries } from "@/modules/auth/auth.imports.ts";
+import { PlatformRoles } from "@/modules/auth/domain/ports/acl/platform-roles.acl.ts";
 
 const SUPER_ADMIN = "super_admin";
 

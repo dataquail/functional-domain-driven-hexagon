@@ -3,7 +3,7 @@
 
   import Button from "../primitives/button.svelte";
   import Checkbox from "../primitives/checkbox.svelte";
-  import { TrashIcon } from "../primitives/icon";
+  import { TrashIcon } from "../primitives/icon/icons";
   import Text from "../primitives/text.svelte";
   import ListRow from "./list-row.svelte";
 

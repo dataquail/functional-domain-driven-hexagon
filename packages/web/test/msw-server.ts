@@ -7,7 +7,7 @@
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, beforeEach } from "vitest";
 
-import { defaultHandlers } from "./handlers";
+import { defaultHandlers } from "./handlers/handler-set";
 
 export const server = setupServer();
 

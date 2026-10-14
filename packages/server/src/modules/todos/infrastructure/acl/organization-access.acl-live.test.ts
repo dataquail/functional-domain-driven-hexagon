@@ -5,11 +5,11 @@ import { Query } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { organizationAccessQueries } from "@/modules/organization/organization.exports.js";
-import { OrganizationAccess } from "@/modules/todos/domain/ports/acl/organization-access.acl.js";
-import { OrganizationAccessLive } from "@/modules/todos/infrastructure/acl/organization-access.acl-live.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { organizationAccessQueries } from "@/modules/organization/organization.exports.ts";
+import { OrganizationAccess } from "@/modules/todos/domain/ports/acl/organization-access.acl.ts";
+import { OrganizationAccessLive } from "@/modules/todos/infrastructure/acl/organization-access.acl-live.ts";
 
 // `OrganizationAccessLive` asks the organization module its own membership question
 // through that module's dispatch surface. Todos never reaches the org module's memberships

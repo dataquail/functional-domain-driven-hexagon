@@ -3,17 +3,17 @@ import * as Crypto from "effect/Crypto";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
-import { type CreateOrganizationPayload } from "@/modules/organization/commands/create-organization.command.js";
-import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
-import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops.js";
-import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors.js";
-import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
-import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.js";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
-import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.js";
-import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { DomainEventBus } from "@/globals/application/ports/event-bus.ts";
+import { type CreateOrganizationPayload } from "@/modules/organization/commands/create-organization.command.ts";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.ts";
+import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops.ts";
+import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors.ts";
+import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.ts";
+import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.ts";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.ts";
+import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.ts";
+import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.ts";
 
 // Creating an org also creates the creator's Membership AND grants the
 // creator the `admin` OrganizationRole in the same unit of work —

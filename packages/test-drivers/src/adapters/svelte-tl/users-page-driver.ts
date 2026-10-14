@@ -6,7 +6,7 @@ import type {
   CreateUserInput,
   ToastKind,
   UsersPageDriver,
-} from "../../contracts/users-page-driver.js";
+} from "../../contracts/users-page-driver.ts";
 
 const testIdByField: Record<CreateUserField, string> = {
   email: "create-user-email",

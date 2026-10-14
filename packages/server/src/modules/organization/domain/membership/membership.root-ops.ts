@@ -1,10 +1,10 @@
 import type * as DateTime from "effect/DateTime";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
 
-import { MembershipCreated, type MembershipEvent, MembershipRevoked } from "./membership.events.js";
-import { MembershipRoot } from "./membership.root.js";
+import { MembershipCreated, type MembershipEvent, MembershipRevoked } from "./membership.events.ts";
+import { MembershipRoot } from "./membership.root.ts";
 
 export type Result = {
   readonly membership: MembershipRoot;

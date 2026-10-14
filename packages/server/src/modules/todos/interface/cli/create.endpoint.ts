@@ -3,14 +3,14 @@ import { CliTodosContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { Actions } from "@/globals/application/ports/actions.js";
-import * as Authz from "@/globals/infrastructure/auth/authz.js";
+import { Actions } from "@/globals/application/ports/actions.ts";
+import * as Authz from "@/globals/infrastructure/auth/authz.ts";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { CreateTodoCommand } from "@/modules/todos/commands/create-todo.command.js";
-import { TodoCollectionResource } from "@/modules/todos/policies/todos.policies.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
+import { CreateTodoCommand } from "@/modules/todos/commands/create-todo.command.ts";
+import { TodoCollectionResource } from "@/modules/todos/policies/todos.policies.ts";
 
 // CLI adapter (ADR-0005): same membership gate + CreateTodoCommand as the
 // GUI's create endpoint.

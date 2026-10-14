@@ -1,8 +1,8 @@
 import { type ResourceCheck } from "@effect-server-utils/authz";
 
-import { type OrganizationAccess } from "@/modules/todos/domain/ports/acl/organization-access.acl.js";
+import { type OrganizationAccess } from "@/modules/todos/domain/ports/acl/organization-access.acl.ts";
 
-import { type TodoOrgContext } from "./todo.resource-resolvers.js";
+import { type TodoOrgContext } from "./todo.resource-resolvers.ts";
 
 // "Is this caller a member of the todo's org?" — shared by both todo policy
 // resources (`todoCollection` and `todo`), which both resolve to a

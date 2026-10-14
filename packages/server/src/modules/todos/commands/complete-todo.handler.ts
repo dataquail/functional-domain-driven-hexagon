@@ -2,12 +2,12 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { Spec } from "@/globals/application/ddd/specification.js";
-import { type CompleteTodoPayload } from "@/modules/todos/commands/complete-todo.command.js";
-import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.js";
-import { TodoRootOps } from "@/modules/todos/domain/todo/todo.root-ops.js";
-import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js";
-import { TodoSpecifications } from "@/modules/todos/domain/todo/todos.specification.js";
+import { Spec } from "@/globals/application/ddd/specification.ts";
+import { type CompleteTodoPayload } from "@/modules/todos/commands/complete-todo.command.ts";
+import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.ts";
+import { TodoRootOps } from "@/modules/todos/domain/todo/todo.root-ops.ts";
+import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.ts";
+import { TodoSpecifications } from "@/modules/todos/domain/todo/todos.specification.ts";
 
 export const completeTodoHandler = Effect.fn("completeTodoHandler")(function* (
   cmd: CompleteTodoPayload,

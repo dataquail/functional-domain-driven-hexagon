@@ -8,9 +8,9 @@ import {
   type ClientCredentials,
   type IdentityAuth,
   identityAuthFor,
-} from "../auth/identity-auth.js";
-import type { IdentityEmail } from "../mail/identity-mailer.js";
-import { IdentityTestDatabase, truncateIdentityTables } from "./identity-test-database.js";
+} from "../auth/identity-auth.ts";
+import type { IdentityEmail } from "../mail/identity-mailer.ts";
+import { IdentityTestDatabase, truncateIdentityTables } from "./identity-test-database.ts";
 
 export const IDENTITY_BASE_URL = "http://localhost:3002";
 export const APP_URL = "http://localhost:3000";

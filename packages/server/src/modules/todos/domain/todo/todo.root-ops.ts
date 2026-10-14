@@ -1,9 +1,9 @@
 import type * as DateTime from "effect/DateTime";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
 
-import { type TodoId } from "./todo.id.js";
-import { TodoRoot } from "./todo.root.js";
+import { type TodoId } from "./todo.id.ts";
+import { TodoRoot } from "./todo.root.ts";
 
 export type CreateInput = {
   readonly id: TodoId;

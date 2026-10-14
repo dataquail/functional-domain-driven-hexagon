@@ -7,8 +7,8 @@ import * as Layer from "effect/Layer";
 import * as OtlpExporter from "effect/observability/OtlpExporter";
 import * as Option from "effect/Option";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
-import { TracerLive } from "@/globals/infrastructure/observability/tracer-live.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.ts";
+import { TracerLive } from "@/globals/infrastructure/observability/tracer-live.ts";
 
 const requiredEnv = {
   DATABASE_URL: "postgres://localhost/app",

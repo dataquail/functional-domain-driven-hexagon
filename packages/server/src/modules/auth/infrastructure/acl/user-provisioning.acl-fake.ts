@@ -2,11 +2,11 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
 import {
   UserProvisioning,
   UserProvisioningConflict,
-} from "@/modules/auth/domain/ports/acl/user-provisioning.acl.js";
+} from "@/modules/auth/domain/ports/acl/user-provisioning.acl.ts";
 
 // In-memory `UserProvisioning` for use-case unit tests (auth JIT sign-in) that
 // don't want to stand up the user module's command bus + repository.

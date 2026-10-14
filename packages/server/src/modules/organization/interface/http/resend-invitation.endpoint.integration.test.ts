@@ -9,8 +9,8 @@ import * as Exit from "effect/Exit";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Option from "effect/Option";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.js";
-import { describeServer } from "@/test-utils/server-test-runtime.js";
+import { Api } from "@/globals/infrastructure/framework/http/api.ts";
+import { describeServer } from "@/test-utils/server-test-runtime.ts";
 
 const ORG_ID = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const UNKNOWN_INVITATION_ID = InvitationId.make("22222222-2222-2222-2222-222222222222");

@@ -3,12 +3,12 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { Criteria } from "@/globals/application/ddd/specification.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { Criteria } from "@/globals/application/ddd/specification.ts";
 
-import { SessionId } from "./session.id.js";
-import { SessionRootOps } from "./session.root-ops.js";
-import { SessionSpecifications } from "./session.specification.js";
+import { SessionId } from "./session.id.ts";
+import { SessionRootOps } from "./session.root-ops.ts";
+import { SessionSpecifications } from "./session.specification.ts";
 
 const sessionId = SessionId.make("11111111-1111-1111-1111-111111111111");
 const otherId = SessionId.make("22222222-2222-2222-2222-222222222222");

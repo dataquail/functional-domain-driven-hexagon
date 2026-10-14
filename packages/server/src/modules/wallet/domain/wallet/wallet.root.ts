@@ -1,8 +1,8 @@
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
 
-import { WalletId } from "./wallet.id.js";
+import { WalletId } from "./wallet.id.ts";
 
 // Aggregate root data — a dumb value (ADR-0003). Operations live in
 // `wallet.root-ops.ts` (`WalletRootOps`) and carry the test obligation.

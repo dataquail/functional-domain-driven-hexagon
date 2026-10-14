@@ -3,6 +3,7 @@
   "include": ["src/**/*.test.ts"],
   "references": [{ "path": "tsconfig.src.json" }, { "path": "../database" }],
   "compilerOptions": {
+    "rewriteRelativeImportExtensions": false,
     "types": ["node"],
     "tsBuildInfoFile": ".tsbuildinfo/test.tsbuildinfo",
     "rootDir": ".",

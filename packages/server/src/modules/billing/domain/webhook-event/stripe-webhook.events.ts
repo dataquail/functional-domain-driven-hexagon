@@ -1,11 +1,11 @@
 import * as Schema from "effect/Schema";
 
-import * as Event from "@/globals/application/ddd/domain-event.js";
-import { type SpanAttributesExtractor } from "@/globals/application/ddd/domain-event.js";
+import * as Event from "@/globals/application/ddd/domain-event.ts";
+import { type SpanAttributesExtractor } from "@/globals/application/ddd/domain-event.ts";
 import {
   StripeSubscriptionWebhookEvent,
   StripeWebhookEvent,
-} from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.js";
+} from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.ts";
 
 // Emitted by `IngestStripeWebhookCommand` after a fresh webhook
 // delivery has been verified and the idempotency claim is held.

@@ -8,13 +8,13 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
-import { MailDeliveryError } from "@/globals/infrastructure/email/ports/mail-errors.js";
-import { Mailer } from "@/globals/infrastructure/email/ports/mailer.js";
-import { InvitationEmailUndelivered } from "@/modules/organization/domain/invitation/invitation.errors.js";
-import { InvitationMailer } from "@/modules/organization/domain/ports/clients/invitation-mailer.client.js";
-import { InvitationMailerLive } from "@/modules/organization/infrastructure/clients/invitation-mailer.client-live.js";
-import { MailerFake, SentMails } from "@/test-utils/mailer-fake.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.ts";
+import { MailDeliveryError } from "@/globals/infrastructure/email/ports/mail-errors.ts";
+import { Mailer } from "@/globals/infrastructure/email/ports/mailer.ts";
+import { InvitationEmailUndelivered } from "@/modules/organization/domain/invitation/invitation.errors.ts";
+import { InvitationMailer } from "@/modules/organization/domain/ports/clients/invitation-mailer.client.ts";
+import { InvitationMailerLive } from "@/modules/organization/infrastructure/clients/invitation-mailer.client-live.ts";
+import { MailerFake, SentMails } from "@/test-utils/mailer-fake.ts";
 
 const APP_URL = "https://app.example.com";
 

@@ -13,7 +13,7 @@ import {
   stageHosts,
   StageSettingMissing,
   workerName,
-} from "./stage.js";
+} from "./stage.ts";
 
 describe("kindOfStage", () => {
   it("keeps prod and staging on databases of their own", () => {

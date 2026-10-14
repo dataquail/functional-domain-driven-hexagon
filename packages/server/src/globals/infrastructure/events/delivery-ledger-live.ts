@@ -3,7 +3,7 @@ import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
 
 export const DeliveryLedgerLive: Layer.Layer<DeliveryLedger, never, Database.Database> =
   Layer.effect(

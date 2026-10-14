@@ -1,9 +1,9 @@
 import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.js";
+import { Api } from "@/globals/infrastructure/framework/http/api.ts";
 
-import { deviceStartEndpoint } from "./device-start.endpoint.js";
-import { deviceTokenEndpoint } from "./device-token.endpoint.js";
+import { deviceStartEndpoint } from "./device-start.endpoint.ts";
+import { deviceTokenEndpoint } from "./device-token.endpoint.ts";
 
 // Registers the CLI-facing device-auth endpoints (the `cliAuth` group on
 // `CliApi`). Thin group registration, mirroring `auth-live.ts` for HTTP.

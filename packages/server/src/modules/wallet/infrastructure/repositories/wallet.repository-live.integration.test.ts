@@ -8,15 +8,15 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors.js";
-import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id.js";
-import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
-import { WalletRootOps } from "@/modules/wallet/domain/wallet/wallet.root-ops.js";
-import { WalletSpecifications } from "@/modules/wallet/domain/wallet/wallet.specification.js";
-import { WalletRepositoryLive } from "@/modules/wallet/infrastructure/repositories/wallet.repository-live.js";
-import { describeIntegration } from "@/test-utils/server-test-runtime.js";
-import { TestDatabaseLive } from "@/test-utils/test-database.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors.ts";
+import { WalletId } from "@/modules/wallet/domain/wallet/wallet.id.ts";
+import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.ts";
+import { WalletRootOps } from "@/modules/wallet/domain/wallet/wallet.root-ops.ts";
+import { WalletSpecifications } from "@/modules/wallet/domain/wallet/wallet.specification.ts";
+import { WalletRepositoryLive } from "@/modules/wallet/infrastructure/repositories/wallet.repository-live.ts";
+import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
+import { TestDatabaseLive } from "@/test-utils/test-database.ts";
 
 const organizationId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const otherOrgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");

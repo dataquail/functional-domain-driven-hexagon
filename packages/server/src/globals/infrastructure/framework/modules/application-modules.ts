@@ -2,20 +2,20 @@ import { makePolicyRegistry, makeResourceResolverRegistry } from "@effect-server
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { AuthModule } from "@/modules/auth/auth.platform.js";
+import { AuthModule } from "@/modules/auth/auth.platform.ts";
 import {
   BillingModule,
   BillingPolicyContribution,
   BillingResolverEntry,
   BillingResolverEntryLive,
-} from "@/modules/billing/billing.platform.js";
+} from "@/modules/billing/billing.platform.ts";
 import {
   OrganizationModule,
   OrganizationPolicyContribution,
   OrganizationResolverEntry,
   OrganizationResolverEntryLive,
-} from "@/modules/organization/organization.platform.js";
-import { RoleModule } from "@/modules/role/role.platform.js";
+} from "@/modules/organization/organization.platform.ts";
+import { RoleModule } from "@/modules/role/role.platform.ts";
 import {
   TodoCollectionResolverEntry,
   TodoCollectionResolverEntryLive,
@@ -23,9 +23,9 @@ import {
   TodoResolverEntry,
   TodoResolverEntryLive,
   TodosModule,
-} from "@/modules/todos/todos.platform.js";
-import { UserModule } from "@/modules/user/user.platform.js";
-import { WalletModule } from "@/modules/wallet/wallet.platform.js";
+} from "@/modules/todos/todos.platform.ts";
+import { UserModule } from "@/modules/user/user.platform.ts";
+import { WalletModule } from "@/modules/wallet/wallet.platform.ts";
 
 // The two cross-module registries. Neither is a module — no bounded context
 // owns a registry — but each is folded from one contribution per module, the

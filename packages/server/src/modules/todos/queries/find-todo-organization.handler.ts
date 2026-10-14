@@ -3,12 +3,12 @@ import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
 import {
   type FindTodoOrganizationPayload,
   type TodoOrganizationView,
-} from "@/modules/todos/queries/find-todo-organization.query.js";
+} from "@/modules/todos/queries/find-todo-organization.query.ts";
 
 const OrgIdRow = Schema.Struct({ organization_id: Schema.String });
 

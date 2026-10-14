@@ -2,7 +2,7 @@ import { type CallerCheck } from "@effect-server-utils/authz";
 import { type PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import { type CurrentUser } from "@org/contracts/Policy";
 
-import { type PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.js";
+import { type PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.ts";
 
 // Super-admin bypass, owned by this module rather than shared from platform:
 // each module asks the role module through its own port, so extracting the

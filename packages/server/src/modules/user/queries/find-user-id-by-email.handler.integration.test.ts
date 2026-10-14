@@ -5,13 +5,13 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
-import { UserRootOps } from "@/modules/user/domain/user/user.root-ops.js";
-import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live.js";
-import { findUserIdByEmailHandler } from "@/modules/user/queries/find-user-id-by-email.handler.js";
-import { describeIntegration } from "@/test-utils/server-test-runtime.js";
-import { TestDatabaseLive } from "@/test-utils/test-database.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { UserRepository } from "@/modules/user/domain/user/user.repository.ts";
+import { UserRootOps } from "@/modules/user/domain/user/user.root-ops.ts";
+import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live.ts";
+import { findUserIdByEmailHandler } from "@/modules/user/queries/find-user-id-by-email.handler.ts";
+import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
+import { TestDatabaseLive } from "@/test-utils/test-database.ts";
 
 const adaId = UserId.make("11111111-1111-1111-1111-111111111111");
 const now = DateTime.makeUnsafe("2025-01-01T00:00:00Z");

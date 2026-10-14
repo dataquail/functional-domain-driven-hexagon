@@ -7,14 +7,14 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
-import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
-import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
-import { SubscriptionRepositoryLive } from "@/modules/billing/infrastructure/repositories/subscription.repository-live.js";
-import { findSubscriptionByOrganizationHandler } from "@/modules/billing/queries/find-subscription-by-organization.handler.js";
-import { describeIntegration } from "@/test-utils/server-test-runtime.js";
-import { TestDatabaseLive } from "@/test-utils/test-database.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.ts";
+import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.ts";
+import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.ts";
+import { SubscriptionRepositoryLive } from "@/modules/billing/infrastructure/repositories/subscription.repository-live.ts";
+import { findSubscriptionByOrganizationHandler } from "@/modules/billing/queries/find-subscription-by-organization.handler.ts";
+import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
+import { TestDatabaseLive } from "@/test-utils/test-database.ts";
 
 const acme = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const beta = OrganizationId.make("22222222-2222-2222-2222-222222222222");

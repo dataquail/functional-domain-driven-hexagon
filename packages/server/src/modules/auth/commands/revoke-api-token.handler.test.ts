@@ -5,15 +5,15 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { mintApiTokenHandler } from "@/modules/auth/commands/mint-api-token.handler.js";
-import { revokeApiTokenHandler } from "@/modules/auth/commands/revoke-api-token.handler.js";
-import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.js";
-import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
-import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
-import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
-import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake.js";
-import { CryptoFake } from "@/test-utils/crypto-fake.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { mintApiTokenHandler } from "@/modules/auth/commands/mint-api-token.handler.ts";
+import { revokeApiTokenHandler } from "@/modules/auth/commands/revoke-api-token.handler.ts";
+import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.ts";
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.ts";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.ts";
+import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.ts";
+import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake.ts";
+import { CryptoFake } from "@/test-utils/crypto-fake.ts";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const otherUserId = UserId.make("22222222-2222-2222-2222-222222222222");

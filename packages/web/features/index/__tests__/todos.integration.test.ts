@@ -15,7 +15,7 @@ import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import { makeTodo } from "@/test/fixtures";
-import { handlers } from "@/test/handlers";
+import { handlers } from "@/test/handlers/handler-set";
 import { renderWithHarness } from "@/test/integration-harness";
 import { server } from "@/test/msw-server";
 

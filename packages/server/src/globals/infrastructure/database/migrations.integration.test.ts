@@ -4,8 +4,8 @@ import { Database, MODULE_SCHEMAS } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import { describeIntegration } from "@/test-utils/server-test-runtime.js";
-import { migrateTestDatabase, TestDatabaseLive } from "@/test-utils/test-database.js";
+import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
+import { migrateTestDatabase, TestDatabaseLive } from "@/test-utils/test-database.ts";
 
 const SchemaRow = Schema.Struct({ schema_name: Schema.String });
 

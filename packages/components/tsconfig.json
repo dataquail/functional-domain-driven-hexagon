@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "rewriteRelativeImportExtensions": false,
     "target": "ES2022",
     "lib": ["dom", "dom.iterable", "esnext"],
     "types": ["svelte", "vite/client"],

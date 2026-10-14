@@ -6,7 +6,7 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Redacted from "effect/Redacted";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.ts";
 
 const codecForSecret = (secret: string) => {
   const sign = (id: string): string => {

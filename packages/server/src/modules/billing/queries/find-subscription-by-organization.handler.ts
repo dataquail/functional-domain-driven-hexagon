@@ -2,14 +2,14 @@ import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
-import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.ts";
+import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.ts";
 
 import {
   type FindSubscriptionByOrganizationPayload,
   type SubscriptionView,
-} from "./find-subscription-by-organization.query.js";
+} from "./find-subscription-by-organization.query.ts";
 
 // Projects the `billing.subscriptions` row down to the cross-boundary
 // `SubscriptionView` shape — clients don't need the Stripe id columns,

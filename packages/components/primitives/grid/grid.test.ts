@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 
-import { Grid } from "./index";
+import { Grid } from "./grid.ts";
 
 describe("Grid", () => {
   it("is one column on small screens and N above", () => {

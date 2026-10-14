@@ -6,8 +6,8 @@ import * as Effect from "effect/Effect";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { FindCurrentUserQuery } from "@/modules/auth/queries/find-current-user.query.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
+import { FindCurrentUserQuery } from "@/modules/auth/queries/find-current-user.query.ts";
 
 export const meEndpoint = Effect.fn("AuthLive.me")(function* (
   _request: EndpointRequest<typeof AuthContract.PrivateGroup, "me">,

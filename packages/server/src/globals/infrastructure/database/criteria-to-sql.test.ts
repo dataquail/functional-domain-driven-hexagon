@@ -8,9 +8,9 @@ import * as Exit from "effect/Exit";
 import type * as Option from "effect/Option";
 import * as Statement from "effect/sql/Statement";
 
-import { type Criteria, Spec } from "@/globals/application/ddd/specification.js";
+import { type Criteria, Spec } from "@/globals/application/ddd/specification.ts";
 
-import { type ColumnMap, criteriaToWhere } from "./criteria-to-sql.js";
+import { type ColumnMap, criteriaToWhere } from "./criteria-to-sql.ts";
 
 type Row = {
   id: string;

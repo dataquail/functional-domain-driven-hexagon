@@ -5,13 +5,13 @@ import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { createWalletHandler } from "@/modules/wallet/commands/create-wallet.handler.js";
-import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
-import { WalletSpecifications } from "@/modules/wallet/domain/wallet/wallet.specification.js";
-import { WalletRepositoryFake } from "@/modules/wallet/infrastructure/repositories/wallet.repository-fake.js";
-import { CryptoFake } from "@/test-utils/crypto-fake.js";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { createWalletHandler } from "@/modules/wallet/commands/create-wallet.handler.ts";
+import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.ts";
+import { WalletSpecifications } from "@/modules/wallet/domain/wallet/wallet.specification.ts";
+import { WalletRepositoryFake } from "@/modules/wallet/infrastructure/repositories/wallet.repository-fake.ts";
+import { CryptoFake } from "@/test-utils/crypto-fake.ts";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.ts";
 
 const organizationId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 

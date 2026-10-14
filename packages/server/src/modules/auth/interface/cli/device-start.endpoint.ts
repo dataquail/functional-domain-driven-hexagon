@@ -2,12 +2,12 @@ import { CommandBus } from "@effect-server-utils/cqrs";
 import { CliAuthContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars.ts";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { StartDeviceGrantCommand } from "@/modules/auth/commands/start-device-grant.command.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
+import { StartDeviceGrantCommand } from "@/modules/auth/commands/start-device-grant.command.ts";
 
 // CLI adapter (ADR-0005): starts a device grant and returns the codes plus
 // the verification URL the user should open. Dispatches the same

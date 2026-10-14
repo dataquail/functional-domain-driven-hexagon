@@ -5,14 +5,14 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
-import { UserRootOps } from "@/modules/user/domain/user/user.root-ops.js";
-import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.js";
-import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live.js";
-import { findUsersHandler } from "@/modules/user/queries/find-users.handler.js";
-import { describeIntegration } from "@/test-utils/server-test-runtime.js";
-import { TestDatabaseLive } from "@/test-utils/test-database.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { UserRepository } from "@/modules/user/domain/user/user.repository.ts";
+import { UserRootOps } from "@/modules/user/domain/user/user.root-ops.ts";
+import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.ts";
+import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live.ts";
+import { findUsersHandler } from "@/modules/user/queries/find-users.handler.ts";
+import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
+import { TestDatabaseLive } from "@/test-utils/test-database.ts";
 
 const address = AddressValueObject.make({
   country: "USA",

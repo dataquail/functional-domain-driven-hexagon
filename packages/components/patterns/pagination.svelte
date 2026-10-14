@@ -15,7 +15,7 @@
 
 <script lang="ts">
   import Button from "../primitives/button.svelte";
-  import { ChevronLeftIcon, ChevronRightIcon } from "../primitives/icon";
+  import { ChevronLeftIcon, ChevronRightIcon } from "../primitives/icon/icons";
   import Stack from "../primitives/stack.svelte";
   import Text from "../primitives/text.svelte";
 

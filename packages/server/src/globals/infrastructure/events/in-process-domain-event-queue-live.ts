@@ -11,7 +11,7 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { DomainEventQueue } from "@/globals/infrastructure/events/domain-event-queue.js";
+import { DomainEventQueue } from "@/globals/infrastructure/events/domain-event-queue.ts";
 
 type Deliver = (envelope: Event.Envelope) => Effect.Effect<Exit.Exit<unknown, unknown>>;
 

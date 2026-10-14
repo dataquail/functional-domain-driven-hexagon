@@ -11,11 +11,11 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
-import { type TodoOrganizationView } from "@/modules/todos/queries/find-todo-organization.query.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { TodoId } from "@/modules/todos/domain/todo/todo.id.ts";
+import { type TodoOrganizationView } from "@/modules/todos/queries/find-todo-organization.query.ts";
 
-import { TodoResolverEntry, TodoResolverEntryLive } from "./todo.resource-resolvers.js";
+import { TodoResolverEntry, TodoResolverEntryLive } from "./todo.resource-resolvers.ts";
 
 const organizationId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const todoId = TodoId.make("33333333-3333-3333-3333-333333333333");

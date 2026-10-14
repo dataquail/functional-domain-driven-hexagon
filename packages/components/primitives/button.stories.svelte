@@ -2,7 +2,7 @@
   import { defineMeta } from "@storybook/addon-svelte-csf";
 
   import Button from "./button.svelte";
-  import { PlusIcon, TrashIcon } from "./icon";
+  import { PlusIcon, TrashIcon } from "./icon/icons";
 
   const { Story } = defineMeta({
     title: "Primitives/Button",

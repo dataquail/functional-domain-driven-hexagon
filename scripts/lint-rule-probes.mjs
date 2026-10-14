@@ -105,6 +105,11 @@ const PROBES = [
     source: "export const probe = (flag: boolean): number => (flag ? 1 : 2);\n",
   },
   {
+    rule: "effect-oxc/no-js-extension-imports",
+    file: "packages/server/src/zzprobe-js-extension.ts",
+    source: 'export { probe } from "./zzprobe-target.js";\n',
+  },
+  {
     rule: "anti-slop/no-reflect-get",
     file: "packages/server/src/zzprobe-reflect-get.ts",
     source:

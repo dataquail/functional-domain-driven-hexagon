@@ -4,12 +4,12 @@ import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
 
-import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
 
-import { InvitationRootOps } from "./invitation.root-ops.js";
-import { InvitationSpecifications } from "./invitation.specification.js";
+import { InvitationRootOps } from "./invitation.root-ops.ts";
+import { InvitationSpecifications } from "./invitation.specification.ts";
 
 const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");
 const organizationId = OrganizationId.make("22222222-2222-2222-2222-222222222222");

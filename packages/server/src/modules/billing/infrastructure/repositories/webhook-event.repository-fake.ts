@@ -6,12 +6,12 @@ import * as Layer from "effect/Layer";
 import type * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors.js";
+import { type Specification } from "@/globals/application/ddd/specification.ts";
+import { WebhookEventAlreadyRecorded } from "@/modules/billing/domain/webhook-event/webhook-event.errors.ts";
 import {
   type WebhookEventRecord,
   WebhookEventRepository,
-} from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
+} from "@/modules/billing/domain/webhook-event/webhook-event.repository.ts";
 
 export const WebhookEventRepositoryFake = Layer.effect(
   WebhookEventRepository,

@@ -2,21 +2,21 @@ import { Query } from "@effect-server-utils/cqrs";
 import * as Context from "effect/Context";
 import * as Layer from "effect/Layer";
 
-import { UsersLookupLive } from "@/modules/organization/infrastructure/acl/users-lookup.acl-live.js";
-import { findAllOrganizationsHandler } from "@/modules/organization/queries/find-all-organizations.handler.js";
-import { FindAllOrganizationsQuery } from "@/modules/organization/queries/find-all-organizations.query.js";
-import { findMembershipHandler } from "@/modules/organization/queries/find-membership.handler.js";
-import { FindMembershipQuery } from "@/modules/organization/queries/find-membership.policy-query.js";
-import { findMyOrganizationsHandler } from "@/modules/organization/queries/find-my-organizations.handler.js";
-import { FindMyOrganizationsQuery } from "@/modules/organization/queries/find-my-organizations.query.js";
-import { findOrganizationByIdHandler } from "@/modules/organization/queries/find-organization-by-id.handler.js";
-import { FindOrganizationByIdQuery } from "@/modules/organization/queries/find-organization-by-id.query.js";
-import { findOrganizationMembershipsHandler } from "@/modules/organization/queries/find-organization-memberships.handler.js";
-import { FindOrganizationMembershipsQuery } from "@/modules/organization/queries/find-organization-memberships.query.js";
-import { findPendingInvitationsHandler } from "@/modules/organization/queries/find-pending-invitations.handler.js";
-import { FindPendingInvitationsQuery } from "@/modules/organization/queries/find-pending-invitations.query.js";
-import { findUserOrganizationRolesHandler } from "@/modules/organization/queries/find-user-organization-roles.handler.js";
-import { FindUserOrganizationRolesQuery } from "@/modules/organization/queries/find-user-organization-roles.policy-query.js";
+import { UsersLookupLive } from "@/modules/organization/infrastructure/acl/users-lookup.acl-live.ts";
+import { findAllOrganizationsHandler } from "@/modules/organization/queries/find-all-organizations.handler.ts";
+import { FindAllOrganizationsQuery } from "@/modules/organization/queries/find-all-organizations.query.ts";
+import { findMembershipHandler } from "@/modules/organization/queries/find-membership.handler.ts";
+import { FindMembershipQuery } from "@/modules/organization/queries/find-membership.policy-query.ts";
+import { findMyOrganizationsHandler } from "@/modules/organization/queries/find-my-organizations.handler.ts";
+import { FindMyOrganizationsQuery } from "@/modules/organization/queries/find-my-organizations.query.ts";
+import { findOrganizationByIdHandler } from "@/modules/organization/queries/find-organization-by-id.handler.ts";
+import { FindOrganizationByIdQuery } from "@/modules/organization/queries/find-organization-by-id.query.ts";
+import { findOrganizationMembershipsHandler } from "@/modules/organization/queries/find-organization-memberships.handler.ts";
+import { FindOrganizationMembershipsQuery } from "@/modules/organization/queries/find-organization-memberships.query.ts";
+import { findPendingInvitationsHandler } from "@/modules/organization/queries/find-pending-invitations.handler.ts";
+import { FindPendingInvitationsQuery } from "@/modules/organization/queries/find-pending-invitations.query.ts";
+import { findUserOrganizationRolesHandler } from "@/modules/organization/queries/find-user-organization-roles.handler.ts";
+import { FindUserOrganizationRolesQuery } from "@/modules/organization/queries/find-user-organization-roles.policy-query.ts";
 
 // Every handler here reads SQL directly, so none needs a wrap.
 // `UsersLookupLive` is provided here rather than at the composition root: only a dispatch

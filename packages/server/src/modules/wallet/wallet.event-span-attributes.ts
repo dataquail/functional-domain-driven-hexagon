@@ -4,7 +4,7 @@ import {
   walletCreatedSpanAttributes,
   walletCreditedSpanAttributes,
   walletDebitedSpanAttributes,
-} from "@/modules/wallet/domain/wallet/wallet.events.js";
+} from "@/modules/wallet/domain/wallet/wallet.events.ts";
 
 export const walletEventSpanAttributes = Event.spanAttributes({
   WalletCreated: walletCreatedSpanAttributes,

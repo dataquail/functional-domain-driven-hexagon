@@ -1,4 +1,4 @@
-# ADR-0040: Effect-native lint — tsgo, oxlint-plugin-effect and anti-slop
+# ADR-0040: Effect-native lint — tsgo, oxlint-plugin-effect, anti-slop and Effect's own rules
 
 - Status: Accepted
 - Date: 2026-10-14
@@ -15,13 +15,14 @@ unknown-typed contracts, widening then asserting, `Reflect.*`, `shape` names, un
 
 ## Decision
 
-All three run with their recommended rules on, at error, inside `pnpm lint`:
+All four run with their recommended rules on, at error, inside `pnpm lint`:
 
-| Rule set                    | How it is installed                                                    | Rule ids                                                          |
-| --------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `@effect/tsgo` 0.53         | npm, patched into the oxlint binary by `prepare`; `extends` its preset | `effecttsgo/*`                                                    |
-| `oxlint-plugin-effect` 0.28 | npm; `extends` its `presets/recommended.json`                          | `effect/*`, native `complexity`                                   |
-| anti-slop                   | vendored at `tools/oxlint/anti-slop/` (its distribution model)         | `anti-slop/*`, `anti-slop-effect/*`, `oxc/no-accumulating-spread` |
+| Rule set                     | How it is installed                                                           | Rule ids                                                          |
+| ---------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `@effect/tsgo` 0.53          | npm, patched into the oxlint binary by `prepare`; `extends` its preset        | `effecttsgo/*`                                                    |
+| `oxlint-plugin-effect` 0.28  | npm; `extends` its `presets/recommended.json`                                 | `effect/*`, native `complexity`                                   |
+| anti-slop                    | vendored at `tools/oxlint/anti-slop/` (its distribution model)                | `anti-slop/*`, `anti-slop-effect/*`, `oxc/no-accumulating-spread` |
+| Effect's `@effect/oxc` rules | vendored at `tools/oxlint/effect-oxc/` (a private workspace package upstream) | `effect-oxc/*`                                                    |
 
 - tsgo 0.53 patches only oxlint 1.83 and later, so oxlint moved to 1.88 and `@oxlint/plugins` is pinned to the
   same exact version, since the vendored anti-slop imports it.
@@ -32,6 +33,25 @@ All three run with their recommended rules on, at error, inside `pnpm lint`:
 - `pnpm lint:rules` probes one rule per plugin, so a plugin that fails to load cannot leave its rules silently
   vacuous. The tsgo probe moved from `global-date`, which left tsgo's recommended preset in 0.53, to
   `floating-effect`.
+
+### Effect's own rules, and the import convention they bring
+
+The five rules the Effect repository lints itself with are vendored from the `effect@4.0.2` tag and registered
+as `effect-oxc`, since `oxlint-plugin-effect` already owns `effect/*` (`tools/oxlint/effect-oxc/UPSTREAM.md`).
+Three guard code this repo does not have yet: bigint literals, instance members on `Schema.Opaque` classes,
+and unused `@internal` exports. Two changed the tree:
+
+- **`no-js-extension-imports`**: imports name the file they mean, `./x.ts`, and `tsc` rewrites them to `.js`
+  on emit (`allowImportingTsExtensions` + `rewriteRelativeImportExtensions` in `tsconfig.base.json`). The rule
+  reaches relative imports only; the server's `@/` alias imports moved to `.ts` too, so the repo keeps one
+  convention. `tsc` will not emit JS for a non-relative `.ts` import, and nothing runs the server's emitted JS
+  (the Worker is bundled from source), so the server's tsconfigs emit declarations only. The projects that
+  never emit (`noEmit`) turn the rewrite off.
+- **`no-import-from-barrel-package`**: no import of `effect`'s barrels (scoped to `effect` itself, see
+  `UPSTREAM.md`), and no relative import of an `index` file. Every `index.ts` that was more than a re-export
+  got a name saying what it is: a module's endpoint registration is `interface/{http,cli}/<feature>.endpoint-groups.ts`,
+  a compound primitive is `primitives/<name>/<name>.ts` (the package's `./primitives/*` export follows),
+  the migration record is `migrations/registry.ts`, and the web test handler set is `handlers/handler-set.ts`.
 
 ### What is off, and why
 

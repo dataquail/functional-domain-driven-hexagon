@@ -393,7 +393,7 @@ const REFUSED = [
   [
     "framework/http/api.ts → a module",
     "packages/server/src/globals/infrastructure/framework/http/api.ts",
-    `${M}/alpha/interface/http/index.ts`,
+    `${M}/alpha/interface/http/alpha.endpoint-groups.ts`,
   ],
   [
     "cqrs runtime → a module's internals",

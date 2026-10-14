@@ -2,10 +2,10 @@ import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 import type * as Option from "effect/Option";
 
-import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { type InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors.js";
-import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.js";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.ts";
+import { type Specification } from "@/globals/application/ddd/specification.ts";
+import { type InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors.ts";
+import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.ts";
 
 // Dumb persistence, collapsed to the minimal vocabulary: insert/update the
 // aggregate, and read it back by a Specification. Every variant and identity

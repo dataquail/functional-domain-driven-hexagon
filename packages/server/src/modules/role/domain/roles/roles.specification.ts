@@ -1,12 +1,12 @@
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
 import {
   type Predicate,
   Spec,
   type Specification,
-} from "@/globals/application/ddd/specification.js";
+} from "@/globals/application/ddd/specification.ts";
 
-import { type RoleValueObject } from "./role.value-object.js";
-import { type RolesRoot } from "./roles.root.js";
+import { type RoleValueObject } from "./role.value-object.ts";
+import { type RolesRoot } from "./roles.root.ts";
 
 // Translatable identity spec — `userId` lives on every row of the aggregate, so
 // this compiles to a WHERE that the repository uses to fetch the row set it

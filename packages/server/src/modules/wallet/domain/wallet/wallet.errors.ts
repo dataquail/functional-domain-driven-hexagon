@@ -1,8 +1,8 @@
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
 
-import { WalletId } from "./wallet.id.js";
+import { WalletId } from "./wallet.id.ts";
 
 export class WalletAlreadyExistsForOrganization extends Schema.TaggedError<
   WalletAlreadyExistsForOrganization,

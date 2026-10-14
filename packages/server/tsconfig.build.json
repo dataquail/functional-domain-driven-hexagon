@@ -10,6 +10,8 @@
     { "path": "../module/tsconfig.build.json" }
   ],
   "compilerOptions": {
+    "emitDeclarationOnly": true,
+    "rewriteRelativeImportExtensions": false,
     "types": ["node"],
     "tsBuildInfoFile": ".tsbuildinfo/build.tsbuildinfo",
     "outDir": "build/esm",

@@ -7,17 +7,17 @@ import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
-import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.ts";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.ts";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
 
 import {
   InvitationAlreadyAccepted,
   InvitationAlreadyRevoked,
   InvitationExpired,
   InvitationRevoked,
-} from "./invitation.errors.js";
-import { InvitationRootOps } from "./invitation.root-ops.js";
+} from "./invitation.errors.ts";
+import { InvitationRootOps } from "./invitation.root-ops.ts";
 
 const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");
 const organizationId = OrganizationId.make("22222222-2222-2222-2222-222222222222");

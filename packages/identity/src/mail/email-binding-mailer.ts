@@ -1,6 +1,6 @@
 import * as Effect from "effect/Effect";
 
-import { type IdentityMailer, MailDeliveryError, type MailSender } from "./identity-mailer.js";
+import { type IdentityMailer, MailDeliveryError, type MailSender } from "./identity-mailer.ts";
 
 export type OutgoingEmail = {
   readonly from: { readonly email: string; readonly name: string };

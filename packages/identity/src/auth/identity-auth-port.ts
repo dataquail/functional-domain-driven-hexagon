@@ -1,9 +1,9 @@
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import type { SeededUser, SeedRequest } from "../seed/identity-seed.js";
-import { seedIdentity } from "../seed/identity-seed.js";
-import type { ClientCredentials, IdentityAuth } from "./identity-auth.js";
+import type { SeededUser, SeedRequest } from "../seed/identity-seed.ts";
+import { seedIdentity } from "../seed/identity-seed.ts";
+import type { ClientCredentials, IdentityAuth } from "./identity-auth.ts";
 
 export type SignInInput = {
   readonly request: Request;

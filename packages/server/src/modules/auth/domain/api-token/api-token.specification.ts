@@ -1,11 +1,11 @@
 import * as DateTime from "effect/DateTime";
 import * as Option from "effect/Option";
 
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { Spec, type Specification } from "@/globals/application/ddd/specification.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { Spec, type Specification } from "@/globals/application/ddd/specification.ts";
 
-import { type ApiTokenId } from "./api-token.id.js";
-import { type ApiTokenRoot } from "./api-token.root.js";
+import { type ApiTokenId } from "./api-token.id.ts";
+import { type ApiTokenRoot } from "./api-token.root.ts";
 
 // Translatable specs (carry a Criteria → usable as repository filters and as
 // in-memory guards). The field-name strings live here and in the mapper's

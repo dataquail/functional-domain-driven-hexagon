@@ -2,10 +2,10 @@ import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.js";
-import { DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.js";
-import { DeviceGrantRoot } from "@/modules/auth/domain/device-grant/device-grant.root.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.ts";
+import { DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.ts";
+import { DeviceGrantRoot } from "@/modules/auth/domain/device-grant/device-grant.root.ts";
 
 // Resolves the specification field names the live repository filters on to
 // physical columns of auth.device_grants. Only filterable scalar fields need an

@@ -7,23 +7,23 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { signInHandler } from "@/modules/auth/commands/sign-in.handler.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { signInHandler } from "@/modules/auth/commands/sign-in.handler.ts";
 import {
   IdentityEmailAlreadyRegistered,
   IdentityMissingEmail,
-} from "@/modules/auth/domain/auth-identity/auth-identity.errors.js";
+} from "@/modules/auth/domain/auth-identity/auth-identity.errors.ts";
 import {
   type AuthIdentity,
   AuthIdentityRepository,
-} from "@/modules/auth/domain/auth-identity/auth-identity.repository.js";
-import { AuthIdentitySpecifications } from "@/modules/auth/domain/auth-identity/auth-identity.specification.js";
-import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
-import { SessionSpecifications } from "@/modules/auth/domain/session/session.specification.js";
-import { makeUserProvisioningFake } from "@/modules/auth/infrastructure/acl/user-provisioning.acl-fake.js";
-import { makeAuthIdentityRepositoryFake } from "@/modules/auth/infrastructure/repositories/auth-identity.repository-fake.js";
-import { SessionRepositoryFake } from "@/modules/auth/infrastructure/repositories/session.repository-fake.js";
-import { CryptoFake } from "@/test-utils/crypto-fake.js";
+} from "@/modules/auth/domain/auth-identity/auth-identity.repository.ts";
+import { AuthIdentitySpecifications } from "@/modules/auth/domain/auth-identity/auth-identity.specification.ts";
+import { SessionRepository } from "@/modules/auth/domain/session/session.repository.ts";
+import { SessionSpecifications } from "@/modules/auth/domain/session/session.specification.ts";
+import { makeUserProvisioningFake } from "@/modules/auth/infrastructure/acl/user-provisioning.acl-fake.ts";
+import { makeAuthIdentityRepositoryFake } from "@/modules/auth/infrastructure/repositories/auth-identity.repository-fake.ts";
+import { SessionRepositoryFake } from "@/modules/auth/infrastructure/repositories/session.repository-fake.ts";
+import { CryptoFake } from "@/test-utils/crypto-fake.ts";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const provisionedUserId = UserId.make("22222222-2222-2222-2222-222222222222");

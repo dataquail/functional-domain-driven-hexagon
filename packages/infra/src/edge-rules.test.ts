@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@effect/vitest";
 
-import { authRateLimitRule, killSwitchRule } from "./edge-rules.js";
+import { authRateLimitRule, killSwitchRule } from "./edge-rules.ts";
 
 const hosts = {
   app: ["app.example.com", "app.staging.example.com"],

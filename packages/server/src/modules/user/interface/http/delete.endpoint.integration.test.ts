@@ -5,9 +5,9 @@ import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { Api } from "@/globals/infrastructure/framework/http/api.js";
-import { describeServer } from "@/test-utils/server-test-runtime.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { Api } from "@/globals/infrastructure/framework/http/api.ts";
+import { describeServer } from "@/test-utils/server-test-runtime.ts";
 
 const basePayload = new UserContract.CreateUserPayload({
   email: "alice@example.com",

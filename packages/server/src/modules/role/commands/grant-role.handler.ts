@@ -2,12 +2,12 @@ import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
-import { type GrantRolePayload } from "@/modules/role/commands/grant-role.command.js";
-import { CannotPromoteSelf } from "@/modules/role/domain/roles/role.errors.js";
-import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
-import { RolesRootOps } from "@/modules/role/domain/roles/roles.root-ops.js";
-import { RolesSpecifications } from "@/modules/role/domain/roles/roles.specification.js";
+import { DomainEventBus } from "@/globals/application/ports/event-bus.ts";
+import { type GrantRolePayload } from "@/modules/role/commands/grant-role.command.ts";
+import { CannotPromoteSelf } from "@/modules/role/domain/roles/role.errors.ts";
+import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.ts";
+import { RolesRootOps } from "@/modules/role/domain/roles/roles.root-ops.ts";
+import { RolesSpecifications } from "@/modules/role/domain/roles/roles.specification.ts";
 
 export const grantRoleHandler = Effect.fn("grantRoleHandler")(function* (cmd: GrantRolePayload) {
   // Command-level invariant: a user can't grant themselves a role.

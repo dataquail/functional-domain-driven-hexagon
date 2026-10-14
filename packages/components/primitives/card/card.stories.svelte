@@ -1,7 +1,7 @@
 <script module lang="ts">
   import { defineMeta } from "@storybook/addon-svelte-csf";
 
-  import { Card } from "./index";
+  import { Card } from "./card.ts";
 
   const { Story } = defineMeta({
     title: "Primitives/Card",

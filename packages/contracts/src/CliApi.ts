@@ -1,8 +1,8 @@
 import * as HttpApi from "effect/http-api/HttpApi";
 
-import * as CliAuthContract from "./api/CliAuthContract.js";
-import * as CliOrganizationContract from "./api/CliOrganizationContract.js";
-import * as CliTodosContract from "./api/CliTodosContract.js";
+import * as CliAuthContract from "./api/CliAuthContract.ts";
+import * as CliOrganizationContract from "./api/CliOrganizationContract.ts";
+import * as CliTodosContract from "./api/CliTodosContract.ts";
 
 // The CLI/MCP wire surface, decoupled from the GUI's `DomainApi` (ADR-0005).
 // Served by the same server under a `/cli` prefix; its endpoint adapters live

@@ -8,7 +8,7 @@ import * as Schema from "effect/Schema";
 import { SqlClient } from "effect/sql/SqlClient";
 import { isSqlError, type SqlError } from "effect/sql/SqlError";
 
-import { type Config, driverLayer, jsonb, textArray, uuidArray } from "./pg-driver.js";
+import { type Config, driverLayer, jsonb, textArray, uuidArray } from "./pg-driver.ts";
 
 export type { Config };
 

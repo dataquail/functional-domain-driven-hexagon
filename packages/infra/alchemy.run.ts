@@ -9,13 +9,13 @@ import {
   appDatabaseDirectUrl,
   identityDatabase,
   identityDatabaseDirectUrl,
-} from "./src/stack/databases.js";
-import { edge } from "./src/stack/edge.js";
-import { stageUrls } from "./src/stack/hosts.js";
-import { stackProviders } from "./src/stack/providers.js";
-import { domainEventsDeadLetterQueue, domainEventsQueue } from "./src/stack/queues.js";
-import { identityWorker, serverWorker, webWorker } from "./src/stack/workers.js";
-import { presentEntry } from "./src/stage.js";
+} from "./src/stack/databases.ts";
+import { edge } from "./src/stack/edge.ts";
+import { stageUrls } from "./src/stack/hosts.ts";
+import { stackProviders } from "./src/stack/providers.ts";
+import { domainEventsDeadLetterQueue, domainEventsQueue } from "./src/stack/queues.ts";
+import { identityWorker, serverWorker, webWorker } from "./src/stack/workers.ts";
+import { presentEntry } from "./src/stage.ts";
 
 // The direct (unpooled) URLs the deploy pipeline migrates and seeds through; a dev stack has none.
 const directDatabaseUrls = Effect.gen(function* () {

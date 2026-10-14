@@ -36,7 +36,7 @@
 <script lang="ts">
   import { Select as SelectPrimitive } from "bits-ui";
 
-  import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "./icon";
+  import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "./icon/icons";
 
   const {
     "aria-label": ariaLabel,

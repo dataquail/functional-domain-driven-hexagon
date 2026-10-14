@@ -19,6 +19,10 @@
       "specifier": "./tools/oxlint/anti-slop/effect/index.ts"
     },
     {
+      "name": "effect-oxc",
+      "specifier": "./tools/oxlint/effect-oxc/index.ts"
+    },
+    {
       "name": "architecture",
       "specifier": "@goodbones/oxlint/plugin"
     },
@@ -51,7 +55,8 @@
     "**/routeTree.gen.ts",
     "**/.svelte-kit/**",
     "**/postcss.config.mjs",
-    "tools/oxlint/anti-slop/**"
+    "tools/oxlint/anti-slop/**",
+    "tools/oxlint/effect-oxc/**"
   ],
   "rules": {
     "oxc/no-accumulating-spread": "error",
@@ -78,6 +83,19 @@
     "anti-slop-effect/no-manual-tagged-construction": "error",
     "anti-slop-effect/no-service-constructor-imports": "error",
     "anti-slop-effect/prefer-effect-match": "error",
+    "effect-oxc/no-bigint-literals": "error",
+    "effect-oxc/no-import-from-barrel-package": [
+      "error",
+      {
+        // Effect's own config also checks @effect/*, whose packages there publish one
+        // module per export; @effect/vitest and the platform packages here do not.
+        "checkPatterns": ["^effect$", "^effect/(.+/)?[a-z][a-z0-9]*$"],
+        "checkRelativeIndexImports": true
+      }
+    ],
+    "effect-oxc/no-js-extension-imports": "error",
+    "effect-oxc/no-opaque-instance-fields": "error",
+    "effect-oxc/no-unused-internal": "error",
     "architecture/imports": "error",
     "architecture/exports": "error",
     "architecture/members": "error",

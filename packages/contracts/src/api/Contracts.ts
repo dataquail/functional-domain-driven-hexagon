@@ -1,8 +1,8 @@
-export * as AuthContract from "./AuthContract.js";
-export * as BillingContract from "./BillingContract.js";
-export * as CliAuthContract from "./CliAuthContract.js";
-export * as CliOrganizationContract from "./CliOrganizationContract.js";
-export * as CliTodosContract from "./CliTodosContract.js";
-export * as OrganizationContract from "./OrganizationContract.js";
-export * as TodosContract from "./TodosContract.js";
-export * as UserContract from "./UserContract.js";
+export * as AuthContract from "./AuthContract.ts";
+export * as BillingContract from "./BillingContract.ts";
+export * as CliAuthContract from "./CliAuthContract.ts";
+export * as CliOrganizationContract from "./CliOrganizationContract.ts";
+export * as CliTodosContract from "./CliTodosContract.ts";
+export * as OrganizationContract from "./OrganizationContract.ts";
+export * as TodosContract from "./TodosContract.ts";
+export * as UserContract from "./UserContract.ts";

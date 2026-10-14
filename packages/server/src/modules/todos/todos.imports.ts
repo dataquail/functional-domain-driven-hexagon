@@ -5,5 +5,5 @@
 // what it depends on. This is the only file here permitted to name another
 // module's vocabulary, so the whole coupling surface is one file to review.
 
-export { organizationAccessQueries } from "@/modules/organization/organization.exports.js";
-export { roleAccessQueries } from "@/modules/role/role.exports.js";
+export { organizationAccessQueries } from "@/modules/organization/organization.exports.ts";
+export { roleAccessQueries } from "@/modules/role/role.exports.ts";

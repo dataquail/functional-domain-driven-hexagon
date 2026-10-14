@@ -1,10 +1,10 @@
 import type * as DateTime from "effect/DateTime";
 import * as Option from "effect/Option";
 
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id.ts";
 
-import { type ApiTokenId } from "./api-token.id.js";
-import { ApiTokenRoot } from "./api-token.root.js";
+import { type ApiTokenId } from "./api-token.id.ts";
+import { ApiTokenRoot } from "./api-token.root.ts";
 
 export type MintInput = {
   readonly id: ApiTokenId;

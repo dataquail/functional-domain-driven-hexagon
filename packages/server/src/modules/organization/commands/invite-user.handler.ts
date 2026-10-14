@@ -6,13 +6,13 @@ import * as Base64Url from "effect/encoding/Base64Url";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 
-import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
-import { Spec } from "@/globals/application/ddd/specification.js";
-import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
-import { type InviteUserPayload } from "@/modules/organization/commands/invite-user.command.js";
-import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
-import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
-import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.ts";
+import { Spec } from "@/globals/application/ddd/specification.ts";
+import { DomainEventBus } from "@/globals/application/ports/event-bus.ts";
+import { type InviteUserPayload } from "@/modules/organization/commands/invite-user.command.ts";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.ts";
+import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.ts";
+import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.ts";
 
 export const inviteUserHandler = Effect.fn("inviteUserHandler")(function* (cmd: InviteUserPayload) {
   const repo = yield* InvitationRepository;

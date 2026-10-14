@@ -3,15 +3,15 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
-import { type AcceptInvitationPayload } from "@/modules/organization/commands/accept-invitation.command.js";
-import { InvitationAcceptance } from "@/modules/organization/domain/domain-services/invitation-acceptance.domain-service.js";
-import { InvitationTokenNotFound } from "@/modules/organization/domain/invitation/invitation.errors.js";
-import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
-import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
-import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
-import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors.js";
-import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.js";
+import { DomainEventBus } from "@/globals/application/ports/event-bus.ts";
+import { type AcceptInvitationPayload } from "@/modules/organization/commands/accept-invitation.command.ts";
+import { InvitationAcceptance } from "@/modules/organization/domain/domain-services/invitation-acceptance.domain-service.ts";
+import { InvitationTokenNotFound } from "@/modules/organization/domain/invitation/invitation.errors.ts";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.ts";
+import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.ts";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.ts";
+import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors.ts";
+import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.ts";
 
 export const acceptInvitationHandler = Effect.fn("acceptInvitationHandler")(
   function* (cmd: AcceptInvitationPayload) {

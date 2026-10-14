@@ -2,14 +2,14 @@ import { CommandBus } from "@effect-server-utils/cqrs";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
-import { Actions } from "@/globals/application/ports/actions.js";
-import * as Authz from "@/globals/infrastructure/auth/authz.js";
+import { Actions } from "@/globals/application/ports/actions.ts";
+import * as Authz from "@/globals/infrastructure/auth/authz.ts";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { RevokeOrganizationRoleCommand } from "@/modules/organization/commands/revoke-organization-role.command.js";
-import { OrganizationResource } from "@/modules/organization/policies/organization.policies.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint.ts";
+import { RevokeOrganizationRoleCommand } from "@/modules/organization/commands/revoke-organization-role.command.ts";
+import { OrganizationResource } from "@/modules/organization/policies/organization.policies.ts";
 
 // Demote a member from the `admin` OrganizationRole. Gated by the
 // `update` policy (`any(SuperAdminOnly, IsOrgAdmin)`). Demoting the

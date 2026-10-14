@@ -1,10 +1,10 @@
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 
-import { type SendInvitationEmailPayload } from "@/modules/organization/commands/send-invitation-email.command.js";
-import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
-import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
-import { InvitationMailer } from "@/modules/organization/domain/ports/clients/invitation-mailer.client.js";
+import { type SendInvitationEmailPayload } from "@/modules/organization/commands/send-invitation-email.command.ts";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.ts";
+import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.ts";
+import { InvitationMailer } from "@/modules/organization/domain/ports/clients/invitation-mailer.client.ts";
 
 // Reads the invitation back rather than being handed its token, because this runs
 // after the issuing transaction committed and the token must not travel on an

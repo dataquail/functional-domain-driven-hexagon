@@ -9,15 +9,15 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user/user.errors.js";
-import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
-import { UserRootOps } from "@/modules/user/domain/user/user.root-ops.js";
-import { UserSpecifications } from "@/modules/user/domain/user/user.specification.js";
-import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.js";
-import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live.js";
-import { describeIntegration } from "@/test-utils/server-test-runtime.js";
-import { TestDatabaseLive } from "@/test-utils/test-database.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id.ts";
+import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user/user.errors.ts";
+import { UserRepository } from "@/modules/user/domain/user/user.repository.ts";
+import { UserRootOps } from "@/modules/user/domain/user/user.root-ops.ts";
+import { UserSpecifications } from "@/modules/user/domain/user/user.specification.ts";
+import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.ts";
+import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live.ts";
+import { describeIntegration } from "@/test-utils/server-test-runtime.ts";
+import { TestDatabaseLive } from "@/test-utils/test-database.ts";
 
 const aliceId = UserId.make("11111111-1111-1111-1111-111111111111");
 const bobId = UserId.make("22222222-2222-2222-2222-222222222222");
