@@ -64,6 +64,7 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
     // plain requirements — attached at the assembled api layer because that is the
     // only point that can satisfy one. Their deps (EnvVars, etc.) close below.
     Layer.provide(application.httpDeps),
+    Layer.provideMerge(application.events),
     Layer.provideMerge(Layer.mergeAll(CommandBusLive, QueryBusLive, UnhandledFailuresLive)),
     Layer.provide(DomainEventDeliveryLive),
     Layer.provideMerge(application.layer),

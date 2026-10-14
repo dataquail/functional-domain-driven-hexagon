@@ -44,6 +44,16 @@ const NPM = (name) => `node_modules/.pnpm/x/node_modules/${name}/index.js`;
 // Edges the policy must REFUSE.
 const REFUSED = [
   [
+    "a host-runtime seam naming the database kernel",
+    "packages/server/src/globals/infrastructure/runtime/execution-context.ts",
+    "packages/database/src/index.ts",
+  ],
+  [
+    "the span exporter reaching into a module",
+    "packages/server/src/globals/infrastructure/observability/tracer-live.ts",
+    `${M}/alpha/alpha.platform.ts`,
+  ],
+  [
     "cross-module reach from a domain file",
     `${M}/alpha/domain/one/one.root.ts`,
     `${M}/beta/domain/two/two.root.ts`,
@@ -285,7 +295,7 @@ const REFUSED = [
   ],
   [
     "the server's composition root importing Alchemy",
-    "packages/server/src/server.ts",
+    "packages/server/src/platform/worker/main.ts",
     "node_modules/.pnpm/x/node_modules/alchemy/lib/Cloudflare/index.js",
   ],
   [
@@ -294,8 +304,8 @@ const REFUSED = [
     "node_modules/.pnpm/x/node_modules/better-auth/dist/index.mjs",
   ],
   [
-    "the server's composition root importing cloudflare:workers outside platform/worker/",
-    "packages/server/src/server.ts",
+    "the server's CQRS runtime importing cloudflare:workers outside platform/worker/",
+    "packages/server/src/globals/infrastructure/cqrs/cqrs-runtime.ts",
     "node_modules/.pnpm/x/node_modules/@cloudflare/workers-types/index.d.ts",
   ],
   [
@@ -444,8 +454,8 @@ const REFUSED = [
     `${M}/alpha/interface/http/get.endpoint.ts`,
   ],
   [
-    "server.ts reaching past a barrel",
-    "packages/server/src/server.ts",
+    "the Worker entrypoint reaching past a barrel",
+    "packages/server/src/platform/worker/main.ts",
     `${M}/alpha/commands/do.handler.ts`,
   ],
   [
@@ -626,24 +636,24 @@ const REFUSED = [
     "packages/database/src/index.ts",
   ],
   [
-    "anything importing server.ts",
+    "anything importing the Worker entrypoint",
     `${M}/alpha/interface/http/get.endpoint.ts`,
-    "packages/server/src/server.ts",
+    "packages/server/src/platform/worker/main.ts",
   ],
   [
-    "a test importing server.ts",
+    "a test importing the Worker entrypoint",
     "packages/server/src/test-utils/test-server.ts",
-    "packages/server/src/server.ts",
+    "packages/server/src/platform/worker/main.ts",
   ],
   [
-    "a test importing server.ts",
+    "a test importing the Worker entrypoint",
     "packages/server/src/test-utils/test-server.ts",
-    "packages/server/src/server.ts",
+    "packages/server/src/platform/worker/main.ts",
   ],
   [
-    "anything importing server.ts",
+    "anything importing the Worker entrypoint",
     `${M}/alpha/interface/http/get.endpoint.ts`,
-    "packages/server/src/server.ts",
+    "packages/server/src/platform/worker/main.ts",
   ],
   [
     "api-client reaching the server",
@@ -899,6 +909,16 @@ const ALLOWED = [
     `${M}/beta/beta.exports.ts`,
   ],
   [
+    "the auth middleware naming the ExecutionContext seam (LEGAL)",
+    "packages/server/src/globals/infrastructure/framework/middlewares/auth-middleware-live.ts",
+    "packages/server/src/globals/infrastructure/runtime/execution-context.ts",
+  ],
+  [
+    "the span exporter reading the typed environment (LEGAL)",
+    "packages/server/src/globals/infrastructure/observability/tracer-live.ts",
+    "packages/server/src/globals/infrastructure/config/env-vars.ts",
+  ],
+  [
     "a module Layer providing another module's Layer (LEGAL)",
     `${M}/alpha/alpha.module.ts`,
     `${M}/beta/beta.module.ts`,
@@ -914,8 +934,13 @@ const ALLOWED = [
     `${M}/alpha/domain/ports/clients/x.client.ts`,
   ],
   [
-    "server.ts using a barrel (LEGAL)",
-    "packages/server/src/server.ts",
+    "the server's Worker entrypoint naming the Workers binding types (LEGAL)",
+    "packages/server/src/platform/worker/main.ts",
+    "node_modules/.pnpm/x/node_modules/@cloudflare/workers-types/index.d.ts",
+  ],
+  [
+    "the Worker entrypoint using a barrel (LEGAL)",
+    "packages/server/src/platform/worker/main.ts",
     `${M}/alpha/alpha.platform.ts`,
   ],
   [

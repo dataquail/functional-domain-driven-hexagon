@@ -1,14 +1,18 @@
-// Boots `pnpm dev:cf` (the Workers stack under `alchemy dev`) in its own process
-// group, waits for the stack to print a named output, and stops the whole group
-// on demand. Shared by check-cf-dev.mjs and dev-bootstrap.mjs.
+// Boots the Workers stack under `alchemy dev` in its own process group, waits for
+// the stack to print a named output, and stops the whole group on demand. Shared
+// by dev-bootstrap.mjs and codespaces-provision.mjs.
 
 import { spawn } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 
 const POLL_INTERVAL_MS = 1_000;
 
-export function startCfDev(cwd) {
-  const dev = spawn("pnpm", ["dev:cf"], { cwd, detached: true, stdio: ["ignore", "pipe", "pipe"] });
+export function startWorkersStack(cwd) {
+  const dev = spawn("pnpm", ["-F", "@org/infra", "run", "dev"], {
+    cwd,
+    detached: true,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
   let output = "";
   dev.stdout.on("data", (chunk) => (output += chunk));
   dev.stderr.on("data", (chunk) => (output += chunk));

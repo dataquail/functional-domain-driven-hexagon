@@ -88,7 +88,6 @@ describe("purgeExpiredSessions (integration)", () => {
       });
 
       const result = yield* purgeExpiredSessions;
-      deepStrictEqual(result.skipped, false);
       deepStrictEqual(result.rowsPurged, 1);
 
       const remaining = yield* findSessionIds;
@@ -134,7 +133,6 @@ describe("purgeExpiredSessions (integration)", () => {
         });
 
         const result = yield* purgeExpiredSessions;
-        deepStrictEqual(result.skipped, false);
         deepStrictEqual(result.rowsPurged, 1);
 
         const remaining = yield* findSessionIds;
@@ -145,10 +143,26 @@ describe("purgeExpiredSessions (integration)", () => {
       }).pipe(Effect.provide(TestLayer)),
   );
 
+  it.effect("purges nothing more when the job runs twice", () =>
+    Effect.gen(function* () {
+      yield* seedUser;
+      yield* seedSession({
+        id: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+        expiresAt: "1999-01-01T00:00:00Z",
+        absoluteExpiresAt: "1999-01-02T00:00:00Z",
+        revokedAt: null,
+      });
+
+      const first = yield* purgeExpiredSessions;
+      const second = yield* purgeExpiredSessions;
+
+      deepStrictEqual([first.rowsPurged, second.rowsPurged], [1, 0]);
+    }).pipe(Effect.provide(TestLayer)),
+  );
+
   it.effect("is a no-op when there are no sessions to purge", () =>
     Effect.gen(function* () {
       const result = yield* purgeExpiredSessions;
-      deepStrictEqual(result.skipped, false);
       deepStrictEqual(result.rowsPurged, 0);
       const total = yield* countSessions;
       deepStrictEqual(total, 0);

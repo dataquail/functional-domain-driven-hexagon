@@ -6,6 +6,7 @@
   "references": [
     { "path": "../contracts/tsconfig.build.json" },
     { "path": "../database/tsconfig.build.json" },
+    { "path": "../jobs/tsconfig.build.json" },
     { "path": "../module/tsconfig.build.json" }
   ],
   "compilerOptions": {

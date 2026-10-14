@@ -4,23 +4,19 @@ import * as Layer from "effect/Layer";
 import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
 
 import { type Mailer } from "../ports/mailer.js";
+import { CloudflareEmailMailerLive } from "./cloudflare-email-mailer-live.js";
 import { LogMailerLive } from "./log-mailer-live.js";
-import { SesMailerLive } from "./ses-mailer-live.js";
-import { SmtpMailerLive } from "./smtp-mailer-live.js";
+import { MailpitMailerFetchLive } from "./mailpit-mailer-live.js";
 
-// Env-selected transport for the `Mailer` port. The composition root
-// provides this single layer; the `MAILER` env var picks the backend at
-// boot (`log` default, `smtp` for Mailpit/relay, `ses` for prod). This
-// is the one place that names all three adapters — every consumer
-// depends only on the `Mailer` Tag.
+// The one place that names every transport; `MAILER` picks one per environment.
 export const MailerLive: Layer.Layer<Mailer, never, EnvVars> = Layer.unwrap(
   Effect.gen(function* () {
     const env = yield* EnvVars;
     switch (env.MAILER) {
-      case "smtp":
-        return SmtpMailerLive;
-      case "ses":
-        return SesMailerLive;
+      case "mailpit":
+        return MailpitMailerFetchLive;
+      case "cloudflare":
+        return CloudflareEmailMailerLive;
       case "log":
         return LogMailerLive;
     }

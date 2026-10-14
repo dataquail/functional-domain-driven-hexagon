@@ -3,7 +3,7 @@
 // of the identity Worker, creates the admin there with a verified email, and
 // records them in the app database as a super-admin. Idempotent.
 //
-// Needs the identity Worker running (`pnpm dev:cf`) and the app database
+// Needs the identity Worker running (`pnpm dev`) and the app database
 // migrated (`pnpm db:migrate`). Reads the repo's .env. Run through tsx, which
 // loads the identity package's TypeScript seed client.
 

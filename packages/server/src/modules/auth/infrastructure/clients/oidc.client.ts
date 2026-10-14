@@ -7,6 +7,7 @@ import * as Redacted from "effect/Redacted";
 import * as openid from "openid-client";
 
 import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
+import { IssuerTransport } from "@/globals/infrastructure/runtime/issuer-transport.js";
 
 // The only file in the repo that imports `openid-client`. Used by login, callback and
 // logout alone: once a session row exists, the issuer is not consulted again.
@@ -24,13 +25,17 @@ export type CodeExchangeResult = {
   readonly idToken: string | null;
 };
 
-// A Worker routes the token calls through its service binding instead of the network.
-export type OidcTransport = {
-  readonly fetch?: openid.CustomFetch;
-};
+// openid-client hands fetch a plain RequestInit whose body union TypeScript's lib
+// does not accept as BodyInit.
+const toCustomFetch =
+  (fetch: (url: string, init: RequestInit) => Promise<Response>): openid.CustomFetch =>
+  (url, options) =>
+    fetch(url, options as RequestInit);
 
-const make = Effect.fn("OidcClient.make")(function* (transport: OidcTransport) {
+const make = Effect.fn("OidcClient.make")(function* () {
   const env = yield* EnvVars;
+  const issuerFetch = (yield* Effect.service(IssuerTransport)).fetch;
+  const transport = { fetch: issuerFetch === undefined ? undefined : toCustomFetch(issuerFetch) };
   const issuerUrl = new URL(env.IDENTITY_ISSUER);
   const allowHttp = issuerUrl.protocol === "http:";
 
@@ -142,8 +147,7 @@ export class OidcClient extends Context.Service<
   OidcClient,
   Effect.Success<ReturnType<typeof make>>
 >()("OidcClient") {
-  public static readonly layerWith = (transport: OidcTransport) =>
-    Layer.effect(OidcClient, make(transport)).pipe(Layer.provide(EnvVars.layer));
-
-  public static readonly layer = OidcClient.layerWith({});
+  public static readonly layer = Layer.effect(OidcClient, make()).pipe(
+    Layer.provide(EnvVars.layer),
+  );
 }

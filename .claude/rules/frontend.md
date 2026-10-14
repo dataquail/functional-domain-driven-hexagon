@@ -109,5 +109,5 @@ Every primitive and pattern needs a sibling `*.stories.tsx`. Storybook: `pnpm -F
 
 ```bash
 pnpm bootstrap                    # Docker (postgres, mailpit, jaeger) + migrate + seed the identity Worker
-pnpm dev                          # BFF on :3001, Next.js on :3000 (/api/* rewrites to :3001), identity Worker on :3002
+pnpm dev                          # alchemy dev: server Worker :3001, identity Worker :3002; Next.js :3000 (/api/* → :3001)
 ```

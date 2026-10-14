@@ -4,7 +4,6 @@ import { Database, RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
-import * as Layer from "effect/Layer";
 
 // Past this, a row is left for an operator rather than retried forever.
 const MAX_ATTEMPTS = 10;
@@ -46,17 +45,3 @@ export const sweepOutbox = (
     yield* transport.flush(claimed.map(toEnvelope));
     return claimed.length;
   }).pipe(Effect.withSpan("outbox.sweep"));
-
-export const OutboxSweeperLive: Layer.Layer<
-  never,
-  never,
-  Database.Database | AfterCommitTransport
-> = Layer.effectDiscard(
-  Effect.forkScoped(
-    sweepOutbox().pipe(
-      Effect.catchCause((cause) => Effect.logError("[outbox.sweep] iteration failed", cause)),
-      Effect.delay(Duration.minutes(1)),
-      Effect.forever,
-    ),
-  ),
-);

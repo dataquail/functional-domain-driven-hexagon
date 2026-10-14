@@ -8,7 +8,7 @@
 //   3. bring up Postgres, Mailpit and Jaeger
 //   4. ensure the identity database exists and IDENTITY_DATABASE_URL names it
 //   5. migrate the dev and test databases, and the identity database
-//   6. boot the identity Worker (`pnpm dev:cf`) and seed it: the app's OIDC
+//   6. boot the Workers stack (`alchemy dev`) and seed the identity Worker: the app's OIDC
 //      client and the admin, recorded in the app database as a super-admin
 
 import { spawnSync } from "node:child_process";
@@ -17,7 +17,7 @@ import { copyFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { startCfDev } from "./lib/cf-dev.mjs";
+import { startWorkersStack } from "./lib/workers-stack.mjs";
 import { readEnv, updateEnv } from "./lib/env-file.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
@@ -49,9 +49,15 @@ async function main() {
   step(3, "bring up Postgres, Mailpit and Jaeger", servicesUp);
   step(4, "ensure the identity database exists", ensureIdentityDatabase);
   step(5, "migrate the dev, test and identity databases", migrate);
-  await stepAsync(6, "seed the identity Worker (boots pnpm dev:cf for the duration)", seedIdentity);
+  await stepAsync(
+    6,
+    "seed the identity Worker (boots the Workers stack for the duration)",
+    seedIdentity,
+  );
 
-  console.log("\nBootstrap complete. Next: `pnpm dev` (server, web and the identity Worker).");
+  console.log(
+    "\nBootstrap complete. Next: `pnpm dev` (the server and identity Workers, and Next).",
+  );
 }
 
 // Phases ---------------------------------------------------------------
@@ -88,7 +94,7 @@ function servicesUp() {
   return "postgres + mailpit + jaeger up";
 }
 
-// `pnpm dev:cf` points the identity Hyperdrive at this database. Created here
+// `alchemy dev` points the identity Hyperdrive at this database. Created here
 // rather than by a postgres init script, which only runs on a fresh volume.
 function ensureIdentityDatabase() {
   const psql = (sql) =>
@@ -123,11 +129,11 @@ function migrate() {
 // The identity Worker only runs under `alchemy dev`, so it is up just long
 // enough for the seed.
 async function seedIdentity() {
-  const dev = startCfDev(ROOT);
+  const dev = startWorkersStack(ROOT);
   try {
     const identityUrl = await dev.waitForOutput("identityUrl", CF_DEV_BOOT_TIMEOUT_MS);
     if (identityUrl === undefined) {
-      throw new Error(`pnpm dev:cf never reported the identity Worker.\n${dev.output()}`);
+      throw new Error(`alchemy dev never reported the identity Worker.\n${dev.output()}`);
     }
     const result = spawnSync("pnpm", ["seed:identity"], { cwd: ROOT, stdio: "inherit" });
     if (result.status !== 0) throw new Error("pnpm seed:identity failed");

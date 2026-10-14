@@ -1,13 +1,12 @@
 import * as Alchemy from "alchemy";
 import * as Cloudflare from "alchemy/Cloudflare";
-import * as Neon from "alchemy/Neon";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import PlaceholderWorker from "./src/platform/worker/placeholder.js";
 import { appDatabase, identityDatabase } from "./src/stack/databases.js";
+import { stackProviders } from "./src/stack/providers.js";
 import { domainEventsDeadLetterQueue, domainEventsQueue } from "./src/stack/queues.js";
-import { identityWorker } from "./src/stack/workers.js";
+import { identityWorker, serverWorker } from "./src/stack/workers.js";
 
 const stateStore = Layer.unwrap(
   Effect.gen(function* () {
@@ -19,7 +18,7 @@ const stateStore = Layer.unwrap(
 export default Alchemy.Stack(
   "hexagon",
   {
-    providers: Cloudflare.providers().pipe(Layer.provideMerge(Neon.providers())),
+    providers: stackProviders,
     state: stateStore,
   },
   Effect.gen(function* () {
@@ -27,15 +26,15 @@ export default Alchemy.Stack(
     const identity = yield* identityDatabase;
     const domainEvents = yield* domainEventsQueue;
     const domainEventsDeadLetter = yield* domainEventsDeadLetterQueue;
-    const placeholder = yield* PlaceholderWorker;
     const identityAuth = yield* identityWorker;
+    const server = yield* serverWorker(identityAuth);
     return {
       appHyperdriveId: app.hyperdriveId,
       identityHyperdriveId: identity.hyperdriveId,
       domainEventsQueue: domainEvents.queueName,
       domainEventsDeadLetterQueue: domainEventsDeadLetter.queueName,
-      placeholderUrl: placeholder.url,
       identityUrl: identityAuth.url,
+      serverUrl: server.url,
     };
   }),
 );

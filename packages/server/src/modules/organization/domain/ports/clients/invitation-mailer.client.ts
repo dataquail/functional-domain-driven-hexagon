@@ -2,6 +2,8 @@ import * as Context from "effect/Context";
 import type * as DateTime from "effect/DateTime";
 import type * as Effect from "effect/Effect";
 
+import { type InvitationEmailUndelivered } from "@/modules/organization/domain/invitation/invitation.errors.js";
+
 // ADR-0022 outbound port. The invite use case asks "send the invitation
 // email" without knowing how the link is shaped, what the message looks
 // like, or which transport carries it — the adapter in
@@ -24,7 +26,7 @@ export type SendInvitationInput = {
 };
 
 export type InvitationMailerShape = {
-  readonly send: (input: SendInvitationInput) => Effect.Effect<void>;
+  readonly send: (input: SendInvitationInput) => Effect.Effect<void, InvitationEmailUndelivered>;
 };
 
 export class InvitationMailer extends Context.Service<InvitationMailer, InvitationMailerShape>()(

@@ -6,6 +6,7 @@ import { createElement } from "react";
 
 import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
 import { Mailer } from "@/globals/infrastructure/email/ports/mailer.js";
+import { InvitationEmailUndelivered } from "@/modules/organization/domain/invitation/invitation.errors.js";
 import { InvitationMailer } from "@/modules/organization/domain/ports/clients/invitation-mailer.client.js";
 
 import { InvitationEmail } from "./invitation.email.js";
@@ -14,9 +15,8 @@ const SUBJECT = "You're invited to join an organization";
 
 // ADR-0022 outbound adapter for `InvitationMailer`. Owns everything the
 // use case shouldn't know: the accept-URL shape (`APP_URL` + token), the
-// React Email template, and the decision to treat delivery as
-// best-effort. A transport `MailDeliveryError` is logged and swallowed
-// so a flaky relay can't fail an invite whose row is already committed.
+// React Email template. A transport failure surfaces as the domain's own error,
+// so the after-commit delivery retries the email instead of losing it.
 export const InvitationMailerLive = Layer.effect(
   InvitationMailer,
   Effect.gen(function* () {
@@ -41,8 +41,8 @@ export const InvitationMailerLive = Layer.effect(
           yield* mailer
             .send({ to, subject: SUBJECT, html, text })
             .pipe(
-              Effect.catchTag("MailDeliveryError", (error) =>
-                Effect.logError("Invitation email delivery failed", { to, reason: error.message }),
+              Effect.mapError(
+                (error) => new InvitationEmailUndelivered({ message: error.message }),
               ),
             );
         }),

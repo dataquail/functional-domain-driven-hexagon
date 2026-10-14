@@ -17,21 +17,21 @@ Effect v4 monorepo, hexagonal architecture, DDD. Full rationale lives in `docs/a
 
 ## Monorepo map
 
-| Package             | What it is                                                                         |
-| ------------------- | ---------------------------------------------------------------------------------- |
-| `@org/server`       | The Effect BFF backend (`src/modules/`, `src/globals/`, HTTP). Bulk of the rules.  |
-| `@org/web`          | Next.js App Router renderer + `/api/*` proxy; Effect Atom + MVVM (ADR-0026, 0018). |
-| `@org/components`   | Bespoke component library (primitives + patterns) + Storybook (ADR-0015).          |
-| `@org/contracts`    | Shared HTTP API contracts, schemas, errors — consumed by server and clients.       |
-| `@org/database`     | DB access kernel (effect/sql client, `RowSchemas`, row decoding) + migrations.     |
-| `@org/jobs`         | Background/cron jobs.                                                              |
-| `@org/infra`        | The Alchemy stack (Neon, Hyperdrive, Queues); the only package that names Alchemy. |
-| `@org/identity`     | The identity Worker: Better Auth as the OIDC issuer; the only package naming it.   |
-| `@org/cli`          | Command-line client (device-flow auth, organizations, todos).                      |
-| `@org/mcp`          | MCP (stdio) server exposing the CLI surface as tools.                              |
-| `@org/api-client`   | Shared typed client + credential store for the CLI and MCP.                        |
-| `@org/acceptance`   | Playwright acceptance tests (specs / drivers / pages / infrastructure).            |
-| `@org/test-drivers` | Tier-agnostic page-driver contracts + per-tier adapters (Playwright / RTL).        |
+| Package             | What it is                                                                          |
+| ------------------- | ----------------------------------------------------------------------------------- |
+| `@org/server`       | The Effect BFF, a Cloudflare Worker (`src/platform/worker/main.ts`). Bulk of rules. |
+| `@org/web`          | Next.js App Router renderer + `/api/*` proxy; Effect Atom + MVVM (ADR-0026, 0018).  |
+| `@org/components`   | Bespoke component library (primitives + patterns) + Storybook (ADR-0015).           |
+| `@org/contracts`    | Shared HTTP API contracts, schemas, errors — consumed by server and clients.        |
+| `@org/database`     | DB access kernel (effect/sql client, `RowSchemas`, row decoding) + migrations.      |
+| `@org/jobs`         | Cron jobs as Effects, run by the server Worker's `scheduled` handler.               |
+| `@org/infra`        | The Alchemy stack (Neon, Hyperdrive, Queues); the only package that names Alchemy.  |
+| `@org/identity`     | The identity Worker: Better Auth as the OIDC issuer; the only package naming it.    |
+| `@org/cli`          | Command-line client (device-flow auth, organizations, todos).                       |
+| `@org/mcp`          | MCP (stdio) server exposing the CLI surface as tools.                               |
+| `@org/api-client`   | Shared typed client + credential store for the CLI and MCP.                         |
+| `@org/acceptance`   | Playwright acceptance tests (specs / drivers / pages / infrastructure).             |
+| `@org/test-drivers` | Tier-agnostic page-driver contracts + per-tier adapters (Playwright / RTL).         |
 
 **Installed, not vendored.** The CQRS, unit-of-work and authorization patterns this codebase
 teaches now ship as published libraries from a separate repository (`dataquail/effect-server-utils`)
@@ -59,10 +59,10 @@ there, not an edit here.
 | `pnpm test`                                                  | vitest **unit** suite (excludes `*.integration.test.ts`), no DB                                                                        |
 | `DATABASE_URL_TEST=postgres://… pnpm test:integration`       | **integration** suite only (`*.integration.test.ts`); hard-fails if no DB                                                              |
 | `DATABASE_URL_TEST=postgres://… pnpm coverage`               | unit + integration merged into ONE coverage number; thresholds in `vitest.config.ts` gate CI                                           |
-| `pnpm dev:cf`                                                | `alchemy dev` over `packages/infra`: the Workers stack in workerd, Hyperdrive passed through to docker Postgres                        |
-| `pnpm dev:cf:check`                                          | boots `dev:cf`, asks the placeholder Worker for `SELECT 1` through Hyperdrive, shuts it down                                           |
 | `pnpm deploy:cf --stage <s>` / `pnpm destroy:cf --stage <s>` | `alchemy deploy` / `destroy` — creates or removes real Cloudflare + Neon resources; needs credentials                                  |
 | `pnpm db:migrate`                                            | the app's PgMigrator migrations, then Better Auth's against `IDENTITY_DATABASE_URL` (deployed: direct URLs)                            |
+| `pnpm dev`                                                   | `alchemy dev` (server Worker :3001, identity Worker :3002, queues, crons) + Next on :3000                                              |
+| `pnpm test:workers`                                          | workerd smoke tests of the server Worker's `fetch` / `queue` / `scheduled`; needs the docker Postgres and free dev ports               |
 | `pnpm effect:source`                                         | clone/refresh the Effect v4 source at `reference/effect` (gitignored, pinned to our version)                                           |
 
 ## Always in scope

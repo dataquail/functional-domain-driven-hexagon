@@ -2,13 +2,10 @@ import * as Config from "effect/Config";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Redacted from "effect/Redacted";
 
 const make = Effect.gen(function* () {
   return {
     // Server
-    PORT: yield* Config.Int("PORT").pipe(Config.withDefault(3001)),
-    ENV: yield* Config.Literals(["dev", "prod", "staging"], "ENV").pipe(Config.withDefault("dev")),
     APP_URL: yield* Config.URL("APP_URL").pipe(
       Config.map((url) => url.origin),
       Config.withDefault("http://localhost:3000"),
@@ -18,9 +15,7 @@ const make = Effect.gen(function* () {
     DATABASE_URL: yield* Config.Redacted("DATABASE_URL"),
 
     // Observability
-    OTLP_URL: yield* Config.URL("OTLP_URL").pipe(
-      Config.withDefault("http://jaeger:4318/v1/traces"),
-    ),
+    OTLP_URL: yield* Config.option(Config.URL("OTLP_URL")),
 
     // Identity provider (the identity Worker, an OIDC issuer) / Auth
     IDENTITY_ISSUER: yield* Config.URL("IDENTITY_ISSUER").pipe(
@@ -70,25 +65,21 @@ const make = Effect.gen(function* () {
     ),
 
     // Email / Notifications
-    // Transport selection for the application `Mailer` port. `log` (default)
-    // writes a structured log line — no real send. `smtp` targets the local
-    // Mailpit sink (or any SMTP relay) for dev. `ses` uses AWS SES in prod and
-    // reads region + credentials from the standard AWS chain (AWS_REGION, etc.).
-    MAILER: yield* Config.Literals(["log", "smtp", "ses"], "MAILER").pipe(
+    // `log` (default) writes a structured log line and sends nothing; `mailpit`
+    // posts to Mailpit's HTTP API; `cloudflare` sends through the Worker's
+    // `send_email` binding.
+    MAILER: yield* Config.Literals(["log", "mailpit", "cloudflare"], "MAILER").pipe(
       Config.withDefault("log"),
     ),
-    MAIL_FROM: yield* Config.String("MAIL_FROM").pipe(
-      Config.withDefault("Effect Monorepo <noreply@localhost>"),
+    MAIL_FROM_ADDRESS: yield* Config.String("MAIL_FROM_ADDRESS").pipe(
+      Config.withDefault("noreply@localhost"),
     ),
-    MAIL_SMTP_HOST: yield* Config.String("MAIL_SMTP_HOST").pipe(Config.withDefault("localhost")),
-    MAIL_SMTP_PORT: yield* Config.Int("MAIL_SMTP_PORT").pipe(Config.withDefault(1025)),
-    MAIL_SMTP_SECURE: yield* Config.Boolean("MAIL_SMTP_SECURE").pipe(Config.withDefault(false)),
-    // Optional auth — Mailpit ignores credentials, so they default empty.
-    MAIL_SMTP_USER: yield* Config.String("MAIL_SMTP_USER").pipe(Config.withDefault("")),
-    MAIL_SMTP_PASSWORD: yield* Config.Redacted("MAIL_SMTP_PASSWORD").pipe(
-      Config.withDefault(Redacted.make("")),
+    MAIL_FROM_NAME: yield* Config.String("MAIL_FROM_NAME").pipe(
+      Config.withDefault("Effect Monorepo"),
     ),
-
+    MAILPIT_URL: yield* Config.String("MAILPIT_URL").pipe(
+      Config.withDefault("http://localhost:8025"),
+    ),
     // Stripe / Billing
     STRIPE_SECRET_KEY: yield* Config.Redacted("STRIPE_SECRET_KEY"),
     STRIPE_WEBHOOK_SECRET: yield* Config.Redacted("STRIPE_WEBHOOK_SECRET"),

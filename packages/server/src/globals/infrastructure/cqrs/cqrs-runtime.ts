@@ -13,6 +13,7 @@ import * as Layer from "effect/Layer";
 
 import { TransactionDriverLive } from "@/globals/infrastructure/database/transaction-driver-live.js";
 import { DeliveryLedgerLive } from "@/globals/infrastructure/events/delivery-ledger-live.js";
+import { type DomainEventQueue } from "@/globals/infrastructure/events/domain-event-queue.js";
 import {
   InProcessDomainEventDeliveryLive,
   InProcessDomainEventQueueLive,
@@ -153,15 +154,17 @@ export const UnhandledFailuresLive = makeUnhandledFailures();
 // The boundary's semantics live in `@effect-server-utils/unit-of-work`;
 // `TransactionDriverLive` is the only piece that knows they are implemented as a
 // SQL transaction. Durable: each after-commit reaction is an outbox row written in
-// the publisher's transaction and relayed once it commits.
-export const AfterCommitTransportLive = OutboxTransportLive.pipe(
-  Layer.provide(InProcessDomainEventQueueLive),
-);
+// the publisher's transaction and relayed to `queue` once it commits.
+export const makeAfterCommitTransportLive = (queue: Layer.Layer<DomainEventQueue>) =>
+  OutboxTransportLive.pipe(Layer.provide(queue));
 
-export const UnitOfWorkLive = makeDurableUnitOfWork().pipe(
-  Layer.provide(Layer.mergeAll(TransactionDriverLive, AfterCommitTransportLive)),
-);
+export const makeUnitOfWorkLive = (queue: Layer.Layer<DomainEventQueue>) =>
+  makeDurableUnitOfWork().pipe(
+    Layer.provide(Layer.mergeAll(TransactionDriverLive, makeAfterCommitTransportLive(queue))),
+  );
 
+export const AfterCommitTransportLive = makeAfterCommitTransportLive(InProcessDomainEventQueueLive);
+export const UnitOfWorkLive = makeUnitOfWorkLive(InProcessDomainEventQueueLive);
 export const DomainEventDeliveryLive = InProcessDomainEventDeliveryLive.pipe(
   Layer.provide(Layer.mergeAll(InProcessDomainEventQueueLive, DeliveryLedgerLive)),
 );

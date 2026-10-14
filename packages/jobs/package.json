@@ -3,25 +3,20 @@
   "version": "0.0.0",
   "type": "module",
   "license": "MIT",
-  "description": "Background jobs (cron-style) for the effect-monorepo deployment.",
+  "description": "Background jobs as Effects, run by the server Worker's scheduled handler.",
   "scripts": {
     "check": "tsc -b tsconfig.json",
     "test": "vitest",
     "clean": "rm -rf build .tsbuildinfo",
     "build": "tsc -b tsconfig.build.json",
-    "dev": "tsx watch src/main.ts",
-    "start:dev": "tsx src/main.ts",
-    "start": "node build/esm/main.js",
     "lint": "eslint . --quiet",
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@effect/platform-node": "4.0.2",
     "@org/database": "workspace:^",
     "effect": "4.0.2"
   },
   "devDependencies": {
-    "dotenv": "^16.6.1",
-    "tsx": "^4.23.0"
+    "@effect/platform-node": "4.0.2"
   }
 }
