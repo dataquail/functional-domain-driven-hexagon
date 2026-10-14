@@ -2,10 +2,15 @@
   import type { Snippet } from "svelte";
 
   export type SurfaceTone = "none" | "card" | "muted" | "subtle";
+
   export type SurfaceRadius = "none" | "md" | "lg" | "full";
+
   export type SurfaceBorder = "none" | "all" | "top" | "bottom";
+
   export type SurfacePadding = "none" | "sm" | "md" | "lg";
+
   export type SurfaceInteractive = "none" | "raise" | "highlight";
+
   export type SurfaceElement = "div" | "li" | "section" | "article" | "header" | "footer";
 
   const TONE: Record<SurfaceTone, string> = {

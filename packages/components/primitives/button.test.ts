@@ -1,28 +1,29 @@
 import { render, screen } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
+import { recordCalls } from "../test/calls";
 import { textSnippet } from "../test/snippets";
 import Button from "./button.svelte";
 
 describe("Button", () => {
   it("is a plain button that reports a click", async () => {
-    const onClick = vi.fn();
-    render(Button, { onClick, children: textSnippet("Save") });
+    const onClick = recordCalls();
+    render(Button, { onClick: onClick.callback, children: textSnippet("Save") });
 
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
-    expect(onClick).toHaveBeenCalledOnce();
+    expect(onClick.calls).toHaveLength(1);
     expect(screen.getByRole("button")).toHaveAttribute("type", "button");
   });
 
   it("does not report a click while disabled", async () => {
-    const onClick = vi.fn();
-    render(Button, { onClick, disabled: true, children: textSnippet("Save") });
+    const onClick = recordCalls();
+    render(Button, { onClick: onClick.callback, disabled: true, children: textSnippet("Save") });
 
     await userEvent.click(screen.getByRole("button"));
 
-    expect(onClick).not.toHaveBeenCalled();
+    expect(onClick.calls).toHaveLength(0);
   });
 
   it("shows a spinner while loading, and paints from the closed tables", () => {

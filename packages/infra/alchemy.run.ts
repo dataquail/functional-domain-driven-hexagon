@@ -15,11 +15,25 @@ import { stageUrls } from "./src/stack/hosts.js";
 import { stackProviders } from "./src/stack/providers.js";
 import { domainEventsDeadLetterQueue, domainEventsQueue } from "./src/stack/queues.js";
 import { identityWorker, serverWorker, webWorker } from "./src/stack/workers.js";
+import { presentEntry } from "./src/stage.js";
+
+// The direct (unpooled) URLs the deploy pipeline migrates and seeds through; a dev stack has none.
+const directDatabaseUrls = Effect.gen(function* () {
+  if (yield* Alchemy.ALCHEMY_DEV) return {};
+
+  return {
+    DATABASE_URL: yield* appDatabaseDirectUrl,
+    IDENTITY_DATABASE_URL: yield* identityDatabaseDirectUrl,
+  };
+});
 
 const stateStore = Layer.unwrap(
   Effect.gen(function* () {
     const { dev } = yield* Alchemy.AlchemyContext;
-    return dev ? Alchemy.localState() : Cloudflare.state();
+
+    if (dev) return Alchemy.localState();
+
+    return Cloudflare.state();
   }),
 );
 
@@ -38,18 +52,17 @@ export default Alchemy.Stack(
     const server = yield* serverWorker(identityAuth);
     const web = yield* webWorker(server);
     const zoneRules = yield* edge;
-    const dev = yield* Alchemy.ALCHEMY_DEV;
-    const urls = yield* stageUrls;
+    const { IDENTITY_POST_LOGOUT_REDIRECT_URI, IDENTITY_REDIRECT_URI, ...urls } = yield* stageUrls;
+
     // Outputs named like environment variables are what the deploy pipeline
     // exports to its migrate, seed and acceptance steps (scripts/stage-env.mjs).
     return {
       ...urls,
-      ...(dev
-        ? {}
-        : {
-            DATABASE_URL: yield* appDatabaseDirectUrl,
-            IDENTITY_DATABASE_URL: yield* identityDatabaseDirectUrl,
-          }),
+      ...presentEntry(IDENTITY_POST_LOGOUT_REDIRECT_URI, (url) => ({
+        IDENTITY_POST_LOGOUT_REDIRECT_URI: url,
+      })),
+      ...presentEntry(IDENTITY_REDIRECT_URI, (url) => ({ IDENTITY_REDIRECT_URI: url })),
+      ...(yield* directDatabaseUrls),
       ...Option.match(zoneRules, {
         onNone: () => ({}),
         onSome: ({ killSwitchEngaged }) => ({ killSwitchEngaged }),

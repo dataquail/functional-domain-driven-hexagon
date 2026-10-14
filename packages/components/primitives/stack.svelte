@@ -2,12 +2,19 @@
   import type { Snippet } from "svelte";
 
   export type StackDirection = "row" | "column";
+
   export type StackGap = "none" | "xs" | "sm" | "md" | "lg" | "xl";
+
   export type StackAlign = "start" | "center" | "end" | "stretch" | "baseline";
+
   export type StackJustify = "start" | "center" | "end" | "between" | "around";
+
   export type StackWidth = "auto" | "full";
+
   export type StackElement = "div" | "section" | "header" | "footer" | "main" | "aside";
+
   export type StackPaddingY = "none" | "md" | "lg";
+
   export type StackMinHeight = "none" | "screen";
 
   const DIRECTION: Record<StackDirection, string> = {

@@ -35,8 +35,9 @@ const NeonEndpoints = Schema.Struct({
   endpoints: Schema.Array(Schema.Struct({ id: Schema.String, type: Schema.String })),
 });
 
-const neonApi = Effect.fn(function* (path: string) {
+const neonApi = Effect.fn("neonApi")(function* (path: string) {
   const key = yield* Config.Redacted("NEON_API_KEY");
+
   return HttpClientRequest.make("GET")(`https://console.neon.tech/api/v2${path}`).pipe(
     HttpClientRequest.bearerToken(Redacted.value(key)),
     HttpClientRequest.acceptJson,
@@ -47,14 +48,21 @@ const neonApi = Effect.fn(function* (path: string) {
 // so the ceiling is applied to that endpoint once the project exists.
 const CapDefaultEndpoint = Alchemy.Action(
   "NeonDefaultEndpointCap",
-  Effect.fn(function* (input: { projectId: string; branchId: string; maxCu: number }) {
+  Effect.fn("capDefaultEndpoint")(function* (input: {
+    projectId: string;
+    branchId: string;
+    maxCu: number;
+  }) {
     const client = (yield* HttpClient.HttpClient).pipe(HttpClient.filterStatusOk);
+
     const list = yield* neonApi(
       `/projects/${input.projectId}/branches/${input.branchId}/endpoints`,
     );
+
     const { endpoints } = yield* client
       .execute(list)
       .pipe(Effect.flatMap(HttpClientResponse.schemaBodyJson(NeonEndpoints)));
+
     for (const endpoint of endpoints.filter(({ type }) => type === "read_write")) {
       const update = yield* neonApi(`/projects/${input.projectId}/endpoints/${endpoint.id}`);
       yield* client.execute(
@@ -66,24 +74,30 @@ const CapDefaultEndpoint = Alchemy.Action(
         ),
       );
     }
+
     return { maxCu: input.maxCu };
   }, Effect.provide(FetchHttpClient.layer)),
 );
 
-const neonDatabase = Effect.fn(function* (neonProject: string) {
+const neonDatabase = Effect.fn("neonDatabase")(function* (neonProject: string) {
   const { stage } = yield* Alchemy.Stack;
+
   if (kindOfStage(stage) === "long-lived") {
     const project = yield* Neon.Project(neonProject, { region: NEON_REGION }).pipe(
       Alchemy.RemovalPolicy.retain(),
     );
+
     yield* CapDefaultEndpoint(`${neonProject}-compute-cap`, {
       projectId: project.projectId,
       branchId: project.defaultBranchId,
       maxCu: LONG_LIVED_MAX_CU,
     });
+
     return project;
   }
+
   const parent = yield* Neon.Project.ref(neonProject, { stage: PREVIEW_PARENT_STAGE });
+
   return yield* Neon.Branch(`${neonProject}-preview`, {
     project: parent,
     initSource: "schema-only",
@@ -94,20 +108,23 @@ const neonDatabase = Effect.fn(function* (neonProject: string) {
   });
 });
 
-const dockerOrigin = Effect.fn(function* (variable: string) {
+const dockerOrigin = Effect.fn("dockerOrigin")(function* (variable: string) {
   const url = yield* Config.Redacted(variable);
+
   return Neon.parsePostgresOrigin(Redacted.value(url));
 });
 
-const database = Effect.fn(function* (spec: DatabaseSpec) {
+const database = Effect.fn("database")(function* (spec: DatabaseSpec) {
   if (yield* Alchemy.ALCHEMY_DEV) {
     const origin = yield* dockerOrigin(spec.dockerUrlVariable);
+
     return yield* Cloudflare.Hyperdrive.Connection(spec.hyperdrive, {
       origin,
       caching: NO_CACHING,
       dev: { ...origin, sslmode: "disable" },
     });
   }
+
   return yield* Cloudflare.Hyperdrive.Connection(spec.hyperdrive, {
     origin: (yield* neonDatabase(spec.neonProject)).origin,
     caching: NO_CACHING,
@@ -115,8 +132,9 @@ const database = Effect.fn(function* (spec: DatabaseSpec) {
 });
 
 // The direct (unpooled) URL the deploy pipeline migrates and seeds through.
-const directUrl = Effect.fn(function* (neonProject: string) {
+const directUrl = Effect.fn("directUrl")(function* (neonProject: string) {
   const neon = yield* neonDatabase(neonProject);
+
   return neon.connectionUri.pipe(Output.map(Redacted.make));
 });
 

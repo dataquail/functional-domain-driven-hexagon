@@ -11,29 +11,30 @@
 </script>
 
 <script lang="ts">
-  let email = $state("");
-  let role = $state<string | undefined>(undefined);
-  let submitted = $state(false);
+  const form = $state({ email: "", role: "", submitted: false });
+  const emailMissing = $derived(form.submitted && form.email === "");
 </script>
 
 <Story name="Fields" asChild>
-  <Form onSubmit={() => (submitted = true)}>
+  <Form onSubmit={() => (form.submitted = true)}>
     <Form.Control>
       <Form.Label htmlFor="story-email" required>Email</Form.Label>
       <Form.Input
         id="story-email"
         type="email"
-        value={email}
-        onValueChange={(next) => (email = next)}
-        invalid={submitted && email === ""}
+        value={form.email}
+        onValueChange={(next) => (form.email = next)}
+        invalid={emailMissing}
       />
-      <Form.Error error={submitted && email === "" ? "Email is required" : null} />
+      {#if emailMissing}
+        <Form.Error error="Email is required" />
+      {/if}
     </Form.Control>
     <Form.Control>
       <Form.Label>Role</Form.Label>
       <Form.Select
-        value={role}
-        onValueChange={(next) => (role = next)}
+        value={form.role}
+        onValueChange={(next) => (form.role = next)}
         placeholder="Choose a role"
         items={[
           { value: "admin", label: "Admin" },

@@ -1,3 +1,5 @@
+import * as Schema from "effect/Schema";
+
 export type EdgeHostnames = {
   readonly app: ReadonlyArray<string>;
   readonly identity: ReadonlyArray<string>;
@@ -23,8 +25,11 @@ export type RateLimitRule = BlockRule & {
 const AUTH_ATTEMPTS_PER_MINUTE = 20;
 const AUTH_BLOCK_SECONDS = 600;
 
+// A ruleset expression quotes each hostname as a JSON string literal.
+const quoted = Schema.encodeSync(Schema.fromJsonString(Schema.String));
+
 const hostSet = (hostnames: ReadonlyArray<string>): string =>
-  `{${hostnames.map((hostname) => JSON.stringify(hostname)).join(" ")}}`;
+  `{${hostnames.map((hostname) => quoted(hostname)).join(" ")}}`;
 
 const allHostnames = (hosts: EdgeHostnames): ReadonlyArray<string> => [
   ...hosts.app,

@@ -1,4 +1,7 @@
 import * as Effect from "effect/Effect";
+import type * as HttpClient from "effect/http/HttpClient";
+import * as HttpClientRequest from "effect/http/HttpClientRequest";
+import * as Schema from "effect/Schema";
 
 import {
   type IdentityEmail,
@@ -10,10 +13,23 @@ import {
 export type MailpitMailerSettings = {
   readonly url: string;
   readonly sender: MailSender;
-  readonly fetch?: typeof globalThis.fetch;
+  readonly client: HttpClient.HttpClient;
 };
 
-const toMailpitMessage = (sender: MailSender, email: IdentityEmail) => ({
+export const MailpitMessage = Schema.Struct({
+  From: Schema.Struct({ Email: Schema.String, Name: Schema.String }),
+  To: Schema.Array(Schema.Struct({ Email: Schema.String })),
+  Subject: Schema.String,
+  Text: Schema.String,
+  HTML: Schema.String,
+});
+
+const encodeMailpitMessage = Schema.encodeSync(Schema.fromJsonString(MailpitMessage));
+
+const toMailpitMessage = (
+  sender: MailSender,
+  email: IdentityEmail,
+): typeof MailpitMessage.Type => ({
   From: { Email: sender.address, Name: sender.name },
   To: [{ Email: email.to }],
   Subject: email.subject,
@@ -21,23 +37,26 @@ const toMailpitMessage = (sender: MailSender, email: IdentityEmail) => ({
   HTML: email.html,
 });
 
-export const mailpitMailer = ({
-  fetch = globalThis.fetch,
-  sender,
-  url,
-}: MailpitMailerSettings): IdentityMailer => ({
+export const mailpitMailer = ({ client, sender, url }: MailpitMailerSettings): IdentityMailer => ({
   send: Effect.fn("mailpitMailer.send")(function* (email) {
-    const response = yield* Effect.tryPromise({
-      try: () =>
-        fetch(new URL("/api/v1/send", url), {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify(toMailpitMessage(sender, email)),
-        }),
-      catch: (cause) => new MailDeliveryError({ message: `Mailpit unreachable: ${String(cause)}` }),
-    });
-    if (!response.ok) {
-      const body = yield* Effect.promise(() => response.text());
+    const response = yield* client
+      .execute(
+        HttpClientRequest.post(new URL("/api/v1/send", url)).pipe(
+          HttpClientRequest.bodyText(
+            encodeMailpitMessage(toMailpitMessage(sender, email)),
+            "application/json",
+          ),
+        ),
+      )
+      .pipe(
+        Effect.mapError(
+          (cause) => new MailDeliveryError({ message: `Mailpit unreachable: ${cause.message}` }),
+        ),
+      );
+
+    if (response.status >= 300) {
+      const body = yield* Effect.orDie(response.text);
+
       return yield* new MailDeliveryError({
         message: `Mailpit refused the message: ${response.status} ${body}`,
       });

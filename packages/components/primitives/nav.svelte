@@ -2,6 +2,7 @@
   import type { Snippet } from "svelte";
 
   export type NavOrientation = "horizontal" | "vertical" | "block";
+
   export type NavTone = "none" | "bar";
 
   const ORIENTATION: Record<NavOrientation, string> = {

@@ -9,5 +9,8 @@ export type IdTokenEmailClaims = {
 };
 
 // Better Auth serves email only at UserInfo; the server's relying party reads it off the id_token.
-export const idTokenEmailClaims = ({ scopes, user }: IdTokenClaimSource): IdTokenEmailClaims =>
-  scopes.includes("email") ? { email: user.email, email_verified: user.emailVerified } : {};
+export const idTokenEmailClaims = ({ scopes, user }: IdTokenClaimSource): IdTokenEmailClaims => {
+  if (!scopes.includes("email")) return {};
+
+  return { email: user.email, email_verified: user.emailVerified };
+};

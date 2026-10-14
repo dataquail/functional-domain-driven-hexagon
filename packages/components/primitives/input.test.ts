@@ -1,17 +1,18 @@
 import { render, screen } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
+import { recordCalls } from "../test/calls";
 import Input from "./input.svelte";
 
 describe("Input", () => {
   it("reports each edit as the next value", async () => {
-    const onValueChange = vi.fn();
-    render(Input, { value: "", onValueChange, "aria-label": "Title" });
+    const onValueChange = recordCalls<[string]>();
+    render(Input, { value: "", onValueChange: onValueChange.callback, "aria-label": "Title" });
 
     await userEvent.type(screen.getByRole("textbox", { name: "Title" }), "a");
 
-    expect(onValueChange).toHaveBeenCalledWith("a");
+    expect(onValueChange.calls).toEqual([["a"]]);
   });
 
   it("undoes an edit its owner does not take", async () => {

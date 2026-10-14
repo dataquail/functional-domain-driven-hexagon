@@ -1,12 +1,17 @@
 import { describe, expect, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
+import * as HttpClient from "effect/http/HttpClient";
+import { HttpClientError, TransportError } from "effect/http/HttpClientError";
+import type * as HttpClientRequest from "effect/http/HttpClientRequest";
+import * as HttpClientResponse from "effect/http/HttpClientResponse";
+import * as Layer from "effect/Layer";
 
 import {
   appClientFromEnv,
-  assertIdentityReachable,
-  type Queryable,
-  recordSuperAdmin,
-  seedIdentityUsers,
+  checkIdentityReachable,
+  recordSuperAdminWith,
+  seedUsersThroughWorker,
+  type SqlRunner,
 } from "./seed-client.js";
 
 const env = {
@@ -15,28 +20,46 @@ const env = {
   IDENTITY_CLIENT_ID: "effect-monorepo-app",
   IDENTITY_CLIENT_SECRET: "client-secret",
 };
+
 const admin = { email: "admin@example.com", password: "pw", name: "Admin" };
 
 const answering = (response: Response) => {
-  const requests: Array<Request> = [];
-  const fetch: typeof globalThis.fetch = (input, init) => {
-    requests.push(new Request(input, init));
-    return Promise.resolve(response.clone());
-  };
-  return { fetch, requests };
+  const requests: Array<HttpClientRequest.HttpClientRequest> = [];
+
+  const client = HttpClient.make((request) =>
+    Effect.sync(() => {
+      requests.push(request);
+
+      return HttpClientResponse.fromWeb(request, response.clone());
+    }),
+  );
+
+  return { layer: Layer.succeed(HttpClient.HttpClient, client), requests };
 };
 
-const recordingDatabase = (userId: string | null) => {
+const unreachable = Layer.succeed(
+  HttpClient.HttpClient,
+  HttpClient.make(
+    (request) =>
+      new HttpClientError({
+        reason: new TransportError({ request, description: "ECONNREFUSED" }),
+      }),
+  ),
+);
+
+const recordingDatabase = (userRows: ReadonlyArray<{ readonly id: string }>) => {
   const statements: Array<string> = [];
-  const database: Queryable = {
-    query: (text) => {
+
+  const run: SqlRunner = (text) =>
+    Effect.sync(() => {
       statements.push(text.trim().split(/\s+/).slice(0, 3).join(" "));
-      return Promise.resolve({
-        rows: text.includes("SELECT id") && userId !== null ? [{ id: userId }] : [],
-      });
-    },
-  };
-  return { database, statements };
+
+      if (text.includes("SELECT id")) return { rows: userRows };
+
+      return { rows: [] };
+    });
+
+  return { run, statements };
 };
 
 describe("seed client", () => {
@@ -62,65 +85,54 @@ describe("seed client", () => {
 
   it.effect(
     "posts the users to the seed endpoint with the seed token and returns their subjects",
-    () =>
-      Effect.gen(function* () {
-        const { fetch, requests } = answering(
-          Response.json({ users: [{ email: admin.email, subject: "sub-1" }] }),
-        );
+    () => {
+      const { layer, requests } = answering(
+        Response.json({ users: [{ email: admin.email, subject: "sub-1" }] }),
+      );
 
-        const seeded = yield* Effect.promise(() =>
-          seedIdentityUsers({ env, users: [admin], fetch }),
-        );
+      return Effect.gen(function* () {
+        const seeded = yield* seedUsersThroughWorker({ env, users: [admin] });
 
         expect(seeded).toEqual([{ email: admin.email, subject: "sub-1" }]);
         expect(requests[0]?.url).toBe("http://localhost:3002/internal/seed");
-        expect(requests[0]?.headers.get("authorization")).toBe("Bearer seed-token");
-      }),
+        expect(requests[0]?.headers.authorization).toBe("Bearer seed-token");
+      }).pipe(Effect.provide(layer));
+    },
   );
 
   it.effect("fails with the Worker's answer when it refuses the seed", () =>
     Effect.gen(function* () {
-      const { fetch } = answering(new Response("nope", { status: 401 }));
+      const error = yield* Effect.flip(seedUsersThroughWorker({ env, users: [admin] }));
 
-      const error = yield* Effect.flip(
-        Effect.tryPromise(() => seedIdentityUsers({ env, users: [admin], fetch })),
-      );
-
-      expect(String(error.cause)).toContain("refused the seed: 401 nope");
-    }),
+      expect(error.message).toContain("refused the seed: 401 nope");
+    }).pipe(Effect.provide(answering(new Response("nope", { status: 401 })).layer)),
   );
 
   it.effect("tells the developer to start the stack when the issuer cannot be reached", () =>
     Effect.gen(function* () {
-      const unreachable: typeof globalThis.fetch = () => Promise.reject(new Error("ECONNREFUSED"));
+      const error = yield* Effect.flip(checkIdentityReachable(env));
 
-      const error = yield* Effect.flip(
-        Effect.tryPromise(() => assertIdentityReachable(env, unreachable)),
-      );
-
-      expect(String(error.cause)).toContain("Start it with `pnpm dev`");
-    }),
+      expect(error.message).toContain("Start it with `pnpm dev`");
+    }).pipe(Effect.provide(unreachable)),
   );
 
-  it.effect("accepts an issuer that serves its discovery document", () =>
-    Effect.gen(function* () {
-      const { fetch, requests } = answering(Response.json({ issuer: env.IDENTITY_ISSUER }));
+  it.effect("accepts an issuer that serves its discovery document", () => {
+    const { layer, requests } = answering(Response.json({ issuer: env.IDENTITY_ISSUER }));
 
-      yield* Effect.promise(() => assertIdentityReachable(env, fetch));
+    return Effect.gen(function* () {
+      yield* checkIdentityReachable(env);
 
       expect(requests[0]?.url).toBe(
         "http://localhost:3002/api/auth/.well-known/openid-configuration",
       );
-    }),
-  );
+    }).pipe(Effect.provide(layer));
+  });
 
   it.effect("records the seeded identity as a super-admin inside one transaction", () =>
     Effect.gen(function* () {
-      const { database, statements } = recordingDatabase("user-1");
+      const { run, statements } = recordingDatabase([{ id: "user-1" }]);
 
-      const userId = yield* Effect.promise(() =>
-        recordSuperAdmin(database, { email: admin.email, subject: "sub-1" }),
-      );
+      const userId = yield* recordSuperAdminWith(run, { email: admin.email, subject: "sub-1" });
 
       expect(userId).toBe("user-1");
       expect(statements).toEqual([
@@ -136,11 +148,9 @@ describe("seed client", () => {
 
   it.effect("rolls back when the user row cannot be read back", () =>
     Effect.gen(function* () {
-      const { database, statements } = recordingDatabase(null);
+      const { run, statements } = recordingDatabase([]);
 
-      yield* Effect.exit(
-        Effect.tryPromise(() => recordSuperAdmin(database, { email: admin.email, subject: "s" })),
-      );
+      yield* Effect.exit(recordSuperAdminWith(run, { email: admin.email, subject: "s" }));
 
       expect(statements.at(-1)).toBe("ROLLBACK");
     }),

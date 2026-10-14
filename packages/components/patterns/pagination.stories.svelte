@@ -10,19 +10,19 @@
 </script>
 
 <script lang="ts">
-  let page = $state(1);
+  const pager = $state({ page: 1 });
   const totalPages = 4;
 </script>
 
 <Story name="Controlled" asChild>
   <Pagination
-    {page}
+    page={pager.page}
     {totalPages}
     total={37}
     itemLabel="users"
-    hasPrevious={page > 1}
-    hasNext={page < totalPages}
-    onPrevious={() => (page -= 1)}
-    onNext={() => (page += 1)}
+    hasPrevious={pager.page > 1}
+    hasNext={pager.page < totalPages}
+    onPrevious={() => (pager.page -= 1)}
+    onNext={() => (pager.page += 1)}
   />
 </Story>

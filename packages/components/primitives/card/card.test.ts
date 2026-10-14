@@ -16,6 +16,7 @@ describe("Card", () => {
       padding: "tight",
       children: textSnippet("Header"),
     });
+
     render(Card.Content, { gap: "lg", children: textSnippet("Content") });
     render(Card.Footer, { children: textSnippet("Footer") });
 

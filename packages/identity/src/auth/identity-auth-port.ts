@@ -1,4 +1,5 @@
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
 import type { SeededUser, SeedRequest } from "../seed/identity-seed.js";
 import { seedIdentity } from "../seed/identity-seed.js";
@@ -47,20 +48,31 @@ export type IdentityAuthPort = {
   readonly seed: (request: SeedRequest) => Effect.Effect<ReadonlyArray<SeededUser>>;
 };
 
-const withOAuthQuery = (oauthQuery: string) =>
-  oauthQuery === "" ? {} : { oauth_query: oauthQuery };
+const withOAuthQuery = (oauthQuery: string) => {
+  if (oauthQuery === "") return {};
+
+  return { oauth_query: oauthQuery };
+};
 
 const once = <A>(make: () => A): (() => A) => {
-  let made: { readonly value: A } | undefined;
-  return () => (made ??= { value: make() }).value;
+  let made = Option.none<A>();
+
+  return () =>
+    Option.getOrElse(made, () => {
+      const value = make();
+      made = Option.some(value);
+
+      return value;
+    });
 };
 
 // Built on first use: a page that renders a form never needs the database.
 export const betterAuthPort = (
   makeAuth: () => IdentityAuth,
-  makeSeedingAuth: (client: ClientCredentials | undefined) => IdentityAuth,
+  makeSeedingAuth: (client: Option.Option<ClientCredentials>) => IdentityAuth,
 ): IdentityAuthPort => {
   const auth = once(makeAuth);
+
   return {
     handle: (request) => Effect.promise(() => auth().handler(request)),
     // The authorize continuation reads the request itself, so it must ride along with the headers.
@@ -106,6 +118,7 @@ export const betterAuthPort = (
           asResponse: true,
         }),
       ),
-    seed: (request) => seedIdentity(makeSeedingAuth(request.client), request),
+    seed: (request) =>
+      seedIdentity(makeSeedingAuth(Option.fromUndefinedOr(request.client)), request),
   };
 };

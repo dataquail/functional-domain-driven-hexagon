@@ -10,13 +10,13 @@
 </script>
 
 <script lang="ts">
-  let value = $state("");
+  const field = $state({ value: "" });
 </script>
 
 <Story name="Controlled" asChild>
   <Input
-    {value}
-    onValueChange={(next) => (value = next)}
+    value={field.value}
+    onValueChange={(next) => (field.value = next)}
     placeholder="What needs doing?"
     aria-label="Todo title"
   />

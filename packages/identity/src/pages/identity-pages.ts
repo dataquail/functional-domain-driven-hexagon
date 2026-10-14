@@ -1,3 +1,5 @@
+import * as Option from "effect/Option";
+
 import { html, SafeHtml } from "./html.js";
 
 const STYLES = `
@@ -34,11 +36,17 @@ const page = (title: string, body: SafeHtml): SafeHtml =>
       </body>
     </html>`;
 
-const errorLine = (error: string | undefined): SafeHtml | null =>
-  error === undefined ? null : html`<p class="error" role="alert">${error}</p>`;
+const errorLine = (error?: string): Option.Option<SafeHtml> =>
+  Option.map(
+    Option.fromUndefinedOr(error),
+    (message) => html`<p class="error" role="alert">${message}</p>`,
+  );
 
-const withQuery = (path: string, query: string): string =>
-  query === "" ? path : `${path}?${query}`;
+const withQuery = (path: string, query: string): string => {
+  if (query === "") return path;
+
+  return `${path}?${query}`;
+};
 
 export type SignInPageProps = {
   readonly oauthQuery: string;

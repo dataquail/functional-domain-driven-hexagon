@@ -3,22 +3,34 @@ import * as Cloudflare from "alchemy/Cloudflare";
 import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
+import * as Path from "effect/Path";
 import * as Redacted from "effect/Redacted";
 
-import { kindOfStage, PRODUCTION_STAGE, workerName, type WorkerRole } from "../stage.js";
+import {
+  kindOfStage,
+  presentEntry,
+  PRODUCTION_STAGE,
+  type StageHosts,
+  workerName,
+  type WorkerRole,
+} from "../stage.js";
 import { appDatabase, identityDatabase } from "./databases.js";
 import { deployedHosts, stageUrls } from "./hosts.js";
 import { domainEventsDeadLetterQueue, domainEventsQueue } from "./queues.js";
 
-const IDENTITY_WORKER_ENTRY = decodeURIComponent(
-  new URL("../../../identity/src/platform/worker/identity-worker.ts", import.meta.url).pathname,
+const besideThisFile = Effect.fn("besideThisFile")(function* (relative: string) {
+  const path = yield* Path.Path;
+
+  return yield* Effect.orDie(path.fromFileUrl(new URL(relative, import.meta.url)));
+});
+
+const IDENTITY_WORKER_ENTRY = besideThisFile(
+  "../../../identity/src/platform/worker/identity-worker.ts",
 );
 
-const SERVER_WORKER_ENTRY = decodeURIComponent(
-  new URL("../../../server/src/platform/worker/main.ts", import.meta.url).pathname,
-);
+const SERVER_WORKER_ENTRY = besideThisFile("../../../server/src/platform/worker/main.ts");
 
-const WEB_ROOT = decodeURIComponent(new URL("../../../web/", import.meta.url).pathname);
+const WEB_ROOT = besideThisFile("../../../web/");
 
 const WEB_DEV_PORT = 3000;
 const IDENTITY_DEV_PORT = 3002;
@@ -41,27 +53,42 @@ const DEPLOYED_OBSERVABILITY = {
   traces: { enabled: true },
 };
 
+// The web Worker serves the edge; the others sit beside the database.
+const placement = (role: WorkerRole) => {
+  if (role === "web") return {};
+
+  return { placement: NEAR_THE_DATABASE };
+};
+
 // What a Worker is called, where it runs and what it may spend, on a deployed stage.
-const deployedPlatform = Effect.fn(function* (role: WorkerRole) {
+const deployedPlatform = Effect.fn("deployedPlatform")(function* (role: WorkerRole) {
   if (yield* Alchemy.ALCHEMY_DEV) return { limits: { cpuMs: CPU_MS[role] } };
   const { stage } = yield* Alchemy.Stack;
+
   return {
     name: workerName(stage, role),
     limits: { cpuMs: CPU_MS[role] },
     observability: DEPLOYED_OBSERVABILITY,
-    ...(role === "web" ? {} : { placement: NEAR_THE_DATABASE }),
+    ...placement(role),
   };
 });
 
 // A long-lived stage answers only on its custom domain, behind the zone's WAF rules;
 // a preview, having no domain, answers on workers.dev.
-const publicSurface = Effect.fn(function* (role: "web" | "identity") {
+const hostnameOf = (hosts: StageHosts, role: "web" | "identity") => {
+  if (role === "web") return hosts.appHostname;
+
+  return hosts.identityHostname;
+};
+
+const publicSurface = Effect.fn("publicSurface")(function* (role: "web" | "identity") {
   if (yield* Alchemy.ALCHEMY_DEV) return {};
   const { stage } = yield* Alchemy.Stack;
+
   if (kindOfStage(stage) === "preview") return { workersDev: true };
   const hosts = yield* deployedHosts;
-  const name = role === "web" ? hosts.appHostname : hosts.identityHostname;
-  return { workersDev: false, ...(name === undefined ? {} : { domain: name }) };
+
+  return { workersDev: false, ...presentEntry(hostnameOf(hosts, role), (domain) => ({ domain })) };
 });
 
 const mailDailyCap = Config.Int("MAIL_DAILY_CAP").pipe(Config.withDefault(200), Config.map(String));
@@ -78,7 +105,7 @@ const mailSender = Effect.gen(function* () {
 });
 
 // Locally the Email binding only writes .eml files; Mailpit is where a developer reads mail.
-const mailTransport = Effect.fn(function* (senderAddress: string) {
+const mailTransport = Effect.fn("mailTransport")(function* (senderAddress: string) {
   if (yield* Alchemy.ALCHEMY_DEV) {
     return {
       IDENTITY_MAILER: "mailpit",
@@ -87,6 +114,7 @@ const mailTransport = Effect.fn(function* (senderAddress: string) {
       ),
     };
   }
+
   return {
     IDENTITY_MAILER: "cloudflare",
     MAIL_DAILY_CAP: yield* mailDailyCap,
@@ -100,6 +128,7 @@ const seedToken = Effect.gen(function* () {
   const token = yield* Config.option(
     Config.NonEmptyString("IDENTITY_SEED_TOKEN").pipe(Config.map(Redacted.make)),
   );
+
   return Option.match(token, {
     onNone: () => ({}),
     onSome: (value) => ({ IDENTITY_SEED_TOKEN: value }),
@@ -109,8 +138,9 @@ const seedToken = Effect.gen(function* () {
 export const identityWorker = Effect.gen(function* () {
   const sender = yield* mailSender;
   const urls = yield* stageUrls;
+
   return yield* Cloudflare.Worker("identity", {
-    main: IDENTITY_WORKER_ENTRY,
+    main: yield* IDENTITY_WORKER_ENTRY,
     dev: { port: IDENTITY_DEV_PORT, strictPort: true },
     ...(yield* deployedPlatform("identity")),
     ...(yield* publicSurface("identity")),
@@ -126,7 +156,7 @@ export const identityWorker = Effect.gen(function* () {
   });
 });
 
-const serverMailer = Effect.fn(function* () {
+const serverMailer = Effect.fn("serverMailer")(function* () {
   const sender = {
     MAIL_FROM_ADDRESS: yield* Config.String("MAIL_FROM_ADDRESS").pipe(
       Config.withDefault("noreply@localhost"),
@@ -135,6 +165,7 @@ const serverMailer = Effect.fn(function* () {
       Config.withDefault("Effect Monorepo"),
     ),
   };
+
   if (yield* Alchemy.ALCHEMY_DEV) {
     return {
       ...sender,
@@ -144,6 +175,7 @@ const serverMailer = Effect.fn(function* () {
       ),
     };
   }
+
   return {
     ...sender,
     MAILER: "cloudflare",
@@ -157,6 +189,7 @@ const serverMailer = Effect.fn(function* () {
 // Spans export to the local Jaeger only; a deployed stage has Workers Observability instead.
 const serverTracing = Effect.gen(function* () {
   if (!(yield* Alchemy.ALCHEMY_DEV)) return {};
+
   return {
     OTLP_URL: yield* Config.String("OTLP_URL").pipe(
       Config.withDefault("http://localhost:4318/v1/traces"),
@@ -168,15 +201,17 @@ const serverTracing = Effect.gen(function* () {
 const serverSurface = Effect.gen(function* () {
   if (yield* Alchemy.ALCHEMY_DEV) return {};
   const { stage } = yield* Alchemy.Stack;
+
   return { workersDev: stage !== PRODUCTION_STAGE };
 });
 
-export const serverWorker = Effect.fn(function* (identity: Cloudflare.Worker) {
+export const serverWorker = Effect.fn("serverWorker")(function* (identity: Cloudflare.Worker) {
   const deadLetters = yield* domainEventsDeadLetterQueue;
   const domainEvents = yield* domainEventsQueue;
   const urls = yield* stageUrls;
+
   const server = yield* Cloudflare.Worker("server", {
-    main: SERVER_WORKER_ENTRY,
+    main: yield* SERVER_WORKER_ENTRY,
     dev: { port: SERVER_DEV_PORT, strictPort: true },
     crons: [HOURLY, EVERY_MINUTE],
     ...(yield* deployedPlatform("server")),
@@ -188,12 +223,10 @@ export const serverWorker = Effect.fn(function* (identity: Cloudflare.Worker) {
       DOMAIN_EVENTS_DEAD_LETTER_QUEUE: deadLetters.queueName,
       APP_URL: urls.APP_URL,
       IDENTITY_ISSUER: urls.IDENTITY_ISSUER,
-      ...("IDENTITY_REDIRECT_URI" in urls
-        ? { IDENTITY_REDIRECT_URI: urls.IDENTITY_REDIRECT_URI }
-        : {}),
-      ...("IDENTITY_POST_LOGOUT_REDIRECT_URI" in urls
-        ? { IDENTITY_POST_LOGOUT_REDIRECT_URI: urls.IDENTITY_POST_LOGOUT_REDIRECT_URI }
-        : {}),
+      ...presentEntry(urls.IDENTITY_POST_LOGOUT_REDIRECT_URI, (url) => ({
+        IDENTITY_POST_LOGOUT_REDIRECT_URI: url,
+      })),
+      ...presentEntry(urls.IDENTITY_REDIRECT_URI, (url) => ({ IDENTITY_REDIRECT_URI: url })),
       IDENTITY_CLIENT_ID: yield* Config.String("IDENTITY_CLIENT_ID"),
       IDENTITY_CLIENT_SECRET: yield* Config.Redacted("IDENTITY_CLIENT_SECRET"),
       SESSION_COOKIE_SECRET: yield* Config.Redacted("SESSION_COOKIE_SECRET"),
@@ -204,6 +237,7 @@ export const serverWorker = Effect.fn(function* (identity: Cloudflare.Worker) {
       ...(yield* serverTracing),
     },
   });
+
   yield* Cloudflare.Queues.Consumer("domain-events-consumer", {
     queueId: domainEvents.queueId,
     scriptName: server.workerName,
@@ -215,12 +249,13 @@ export const serverWorker = Effect.fn(function* (identity: Cloudflare.Worker) {
     scriptName: server.workerName,
     settings: { batchSize: 10, maxRetries: 3 },
   });
+
   return server;
 });
 
-export const webWorker = Effect.fn(function* (server: Cloudflare.Worker) {
+export const webWorker = Effect.fn("webWorker")(function* (server: Cloudflare.Worker) {
   return yield* Cloudflare.Website.SvelteKit("web", {
-    rootDir: WEB_ROOT,
+    rootDir: yield* WEB_ROOT,
     dev: { port: WEB_DEV_PORT, strictPort: true },
     ...(yield* deployedPlatform("web")),
     ...(yield* publicSurface("web")),

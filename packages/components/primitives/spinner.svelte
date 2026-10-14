@@ -1,5 +1,6 @@
 <script module lang="ts">
   export type SpinnerSize = "sm" | "md" | "lg";
+
   export type SpinnerTone = "default" | "muted" | "inherit";
 
   const SIZE: Record<SpinnerSize, string> = {

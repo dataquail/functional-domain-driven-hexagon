@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
+import { recordCalls } from "../test/calls";
 import { textSnippet } from "../test/snippets";
 import Dialog from "./dialog.svelte";
 
@@ -30,11 +31,15 @@ describe("Dialog", () => {
   });
 
   it("asks its owner to close from the close button", async () => {
-    const onOpenChange = vi.fn();
-    render(Dialog, { open: true, onOpenChange, title: "Delete organization?" });
+    const onOpenChange = recordCalls<[boolean]>();
+    render(Dialog, {
+      open: true,
+      onOpenChange: onOpenChange.callback,
+      title: "Delete organization?",
+    });
 
     await userEvent.click(screen.getByRole("button", { name: "Close" }));
 
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenChange.calls).toEqual([[false]]);
   });
 });

@@ -8,8 +8,11 @@
     | "secondary"
     | "ghost"
     | "link";
+
   export type ButtonSize = "default" | "sm" | "lg" | "icon";
+
   export type ButtonWidth = "auto" | "full";
+
   export type ButtonType = "button" | "submit" | "reset";
 
   const BASE =
