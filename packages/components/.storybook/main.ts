@@ -1,32 +1,21 @@
-import type { StorybookConfig } from "@storybook/react-vite";
+import type { StorybookConfig } from "@storybook/svelte-vite";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 
-// Resolves the absolute path of a workspace package — required for pnpm
-// in a monorepo so addons resolve out of node_modules/.pnpm rather than
-// hoisted-but-missing top-level paths.
+// pnpm keeps addons under node_modules/.pnpm, so each is named by its absolute path.
 function getAbsolutePath(value: string): string {
   return dirname(fileURLToPath(import.meta.resolve(`${value}/package.json`)));
 }
 
 const config: StorybookConfig = {
-  stories: ["../primitives/**/*.stories.@(ts|tsx)", "../patterns/**/*.stories.@(ts|tsx)"],
+  stories: ["../primitives/**/*.stories.svelte", "../patterns/**/*.stories.svelte"],
   addons: [
+    getAbsolutePath("@storybook/addon-svelte-csf"),
     getAbsolutePath("@storybook/addon-a11y"),
     getAbsolutePath("@storybook/addon-docs"),
     getAbsolutePath("@storybook/addon-themes"),
   ],
-  framework: getAbsolutePath("@storybook/react-vite"),
-  viteFinal: (viteConfig) => ({
-    ...viteConfig,
-    resolve: {
-      ...viteConfig.resolve,
-      alias: {
-        ...viteConfig.resolve?.alias,
-        "next/link": fileURLToPath(new URL("./next-link-stub.tsx", import.meta.url)),
-      },
-    },
-  }),
+  framework: getAbsolutePath("@storybook/svelte-vite"),
 };
 
 export default config;

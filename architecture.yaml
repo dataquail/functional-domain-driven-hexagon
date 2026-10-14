@@ -40,16 +40,12 @@
 baseline: .architecture-baseline.json
 
 resolve:
-  # Web and components resolve `@/*` and `@org/components/*` to their own
-  # roots; everything else resolves through the server-side mapping. The
-  # catch-all must come last.
+  # The web app resolves `@/*` to its own root; everything else resolves
+  # through the server-side mapping. The catch-all must come last.
   scopes:
-    - files: "^packages/(web|components)/"
+    - files: "^packages/web/"
       language: typescript
       options: { tsconfig: tsconfig.resolve-web.json }
-    - files: "^packages/web-svelte/"
-      language: typescript
-      options: { tsconfig: tsconfig.resolve-web-svelte.json }
     - files: "^packages/acceptance/"
       language: typescript
       options: { tsconfig: packages/acceptance/tsconfig.json }
@@ -75,20 +71,16 @@ resolve:
 limits:
   unrestricted: 1
   partial: 0
-  coverage: { imports: 0.96, structure: 0.78, members: 0.14, surface: 0.93, graph: 1 }
-  conformance: { residue: 0, vacant: 11, slack: 45, concentration: 0 }
+  coverage: { imports: 0.96, structure: 0.87, members: 0.15, surface: 0.94, graph: 1 }
+  conformance: { residue: 0, vacant: 7, slack: 23, concentration: 0 }
 
 aliases:
   "@": packages/server/src
   "~": packages
 
-# Prohibitions that hold for every file in the repo. Three of these used to
-# live on the module root, which meant web, components and the shared
-# globals were quietly outside them.
+# Prohibitions that hold for every file in the repo.
 deny:
-  # A list, not a `|` string: the alternation shorthand is a tree-key
-  # feature, and in a pattern the pipe is a literal.
-  - match: ["**/*.test.ts", "**/*.test.tsx"]
+  - match: "**/*.test.ts"
     message: >-
       This file depends on a spec (test) file. The sole responsibility of a spec file is to test
       code — if two tests need the same fixture, the fixture belongs beside them in a harness,
@@ -122,7 +114,7 @@ deny:
       - "**/node_modules/bits-ui/**"
       - "**/node_modules/@lucide/svelte/**"
       - "**/node_modules/svelte-sonner/**"
-    except: ["~/components-svelte/primitives/**"]
+    except: ["~/components/primitives/**"]
     message: >-
       Only the Svelte component library's primitives/ may name a third-party visual library. A
       pattern or a screen composes primitives, so the library's prop surface stops at one tier and
@@ -250,18 +242,15 @@ graph:
       entry:
         # Test runners load these by glob.
         - "**/*.test.ts"
-        - "**/*.test.tsx"
         - "**/*.spec.ts"
         - "**/*.setup.ts"
-        - "**/*.stories.tsx"
         - "**/*.stories.svelte"
         - "**/vitest.config.ts"
         - "**/global-setup.ts"
+        - "~/components/test/setup.ts"
         - "~/web/test/setup.ts"
-        - "~/components-svelte/test/setup.ts"
-        - "~/web-svelte/test/setup.ts"
         # Vitest resolves `$app/*` to these stubs by alias; the graph resolves it to Kit.
-        - "~/web-svelte/test/kit/**"
+        - "~/web/test/kit/**"
         - "~/acceptance/playwright.config.ts"
         # Process entrypoints and package bins; workerd loads the server Worker by path.
         - "@/platform/worker/main.ts"
@@ -273,17 +262,13 @@ graph:
         - "~/identity/src/platform/worker/identity-worker.ts"
         - "~/identity/src/scripts/**"
         # Framework-loaded by convention.
-        - "~/web/app/**"
-        - "~/web/instrumentation.ts"
-        - "~/web/next.config.ts"
         - "~/components/.storybook/**"
-        - "~/components-svelte/.storybook/**"
-        - "~/components-svelte/vite.config.ts"
-        - "~/web-svelte/vite.config.ts"
-        - "~/web-svelte/src/routes/**"
-        - "~/web-svelte/src/app.d.ts"
-        - "~/web-svelte/src/hooks.server.ts"
-        - "~/web-svelte/src/hooks.client.ts"
+        - "~/components/vite.config.ts"
+        - "~/web/vite.config.ts"
+        - "~/web/src/routes/**"
+        - "~/web/src/app.d.ts"
+        - "~/web/src/hooks.server.ts"
+        - "~/web/src/hooks.client.ts"
   reach:
     - name: domain-reaches-no-adapter
       message: >-
@@ -329,7 +314,7 @@ graph:
         A web renderer transitively reaches packages/server. The browser talks to the BFF over HTTP
         through the contracts package and nothing else; a route from web to the server means a
         package both depend on has grown a server dependency.
-      from: ["~/web/**", "~/web-svelte/**"]
+      from: "~/web/**"
       to: "~/server/**"
     - name: contracts-reach-nothing
       message: >-
@@ -353,7 +338,7 @@ defs:
     message: >-
       No default exports: a default has no canonical name, so every importer invents one and the
       symbol becomes ungreppable. Export it by name. Only a file a framework requires a default
-      from — a Next route, a migration, a story, a vitest globalSetup — is exempt, and the
+      from — a SvelteKit route, a migration, a story, a vitest globalSetup — is exempt, and the
       exemption is listed beside this rule in the manifest.
     kinds: [default]
     except: ["**/vitest.config.ts"]
@@ -366,9 +351,6 @@ defs:
       fixture two tests share belongs in a harness beside them, not inside one of them.
     count: { max: 0 }
 
-  # ── frontend (web + components) ───────────────────────────────────────
-  # The frontend test node: a test there reaches its harness, the component
-  # library and the contracts — never the server.
 # The tree, one file per package beside the package it governs. An `include` is
 # replaced whole by the node that file holds; the policy is still evaluated as
 # one, so an inbound rule and a repo-wide prohibition reach every file in the
@@ -383,7 +365,5 @@ tree:
   "~/infra/": { include: packages/infra/architecture.yaml }
   "~/identity/": { include: packages/identity/architecture.yaml }
   "~/components/": { include: packages/components/architecture.yaml }
-  "~/components-svelte/": { include: packages/components-svelte/architecture.yaml }
   "~/web/": { include: packages/web/architecture.yaml }
-  "~/web-svelte/": { include: packages/web-svelte/architecture.yaml }
   "~/server/src/": { include: packages/server/architecture.yaml }

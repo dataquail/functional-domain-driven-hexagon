@@ -1,13 +1,5 @@
-// Shared ApiClient tag. Both runtimes (server prefetch, browser
-// useSuspenseQuery) provide a layer that satisfies this tag, so a
-// data-access Effect like `UsersQueries.usersQuery({...})` runs in
-// either context unchanged. The runtime decides the transport —
-// server-side hits SERVER_INTERNAL_URL with the inbound cookie
-// injected; client-side hits the relative `/api` proxy path.
-//
-// Layers live in `api-client.{server,client}.ts`. This file is
-// intentionally environment-agnostic — no `import "server-only"`, no
-// `next/headers`, no browser globals.
+// The server's per-request runtime and the browser's each provide this tag, so a
+// Model Effect runs in either unchanged.
 
 import { type DomainApi } from "@org/contracts/DomainApi";
 import * as Context from "effect/Context";

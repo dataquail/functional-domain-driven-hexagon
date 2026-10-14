@@ -1,0 +1,44 @@
+name: Deploy a stage
+description: >-
+  Deploy one stage of the Alchemy stack, export its outputs to the job's
+  environment, and migrate both of its databases. The job supplies the
+  credentials and every value the stack reads.
+
+inputs:
+  stage:
+    description: The stage to deploy (pr-<n>, staging, prod).
+    required: true
+
+outputs:
+  app-url:
+    description: The stage's public app URL.
+    value: ${{ steps.outputs.outputs.app-url }}
+
+runs:
+  using: composite
+  steps:
+    # Fails fast, naming the variable, rather than half-way through a deploy.
+    - name: Check the provider credentials
+      shell: bash
+      working-directory: packages/infra
+      run: pnpm exec alchemy provider check-env
+
+    - name: Deploy
+      shell: bash
+      working-directory: packages/infra
+      run: pnpm exec alchemy deploy --stage "${{ inputs.stage }}" --yes
+
+    - name: Export the stage's outputs
+      id: outputs
+      shell: bash
+      run: |
+        set -euo pipefail
+        (cd packages/infra && pnpm exec alchemy state read "hexagon/${{ inputs.stage }}/output" --backend cloudflare) \
+          | node scripts/stage-env.mjs
+        echo "app-url=$(grep '^APP_URL=' "$GITHUB_ENV" | tail -1 | cut -d= -f2-)" >> "$GITHUB_OUTPUT"
+
+    # Before any request reaches the new code: the Workers are live, but a
+    # stage's schema changes are additive, and a fresh preview has no traffic.
+    - name: Migrate the app and identity databases
+      shell: bash
+      run: pnpm db:migrate

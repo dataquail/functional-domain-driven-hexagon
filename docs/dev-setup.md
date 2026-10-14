@@ -7,17 +7,14 @@ Bringing this monorepo up from a fresh clone has a few moving parts: a Postgres 
 ```sh
 pnpm install
 pnpm bootstrap
-pnpm dev      # alchemy dev: SvelteKit Worker :3000, server Worker :3001, identity Worker :3002
+pnpm dev      # alchemy dev: web Worker :3000, server Worker :3001, identity Worker :3002
 ```
 
 `pnpm bootstrap` is idempotent — re-running it never overwrites a value that's already populated in `.env`, so it's safe to use as a "did I miss anything?" command too.
 
-Prefer not to run any of it on your laptop? A codespace does all of the below
-on creation — see [codespaces.md](codespaces.md).
-
 ## Prerequisites
 
-- **Node** 22.15 or newer on the 22 line — [.nvmrc](../.nvmrc) pins 22.21.1 (Alchemy's CLI needs `module.registerHooks`, new in 22.15)
+- **Node** 24 — [.nvmrc](../.nvmrc) pins 24.21.0
 - **pnpm** 10.3.x (`corepack enable` then `corepack prepare pnpm@10.3.0 --activate`)
 - **Docker** with `docker compose` v2 (Docker Desktop, OrbStack, or Linux engine)
 
@@ -81,11 +78,11 @@ The bootstrap boots the Workers stack just long enough for the seed. [scripts/se
 pnpm dev
 ```
 
-starts the Workers stack under `alchemy dev` — the server Worker on :3001 and the identity Worker on :3002 — and the Next renderer on :3000, whose `/api/*` rewrite targets the server Worker (ADR-0018, ADR-0035). There is no Node server process. Sign in at [http://localhost:3000/api/auth/login](http://localhost:3000/api/auth/login) as the admin, or create an account there: sign-up is open behind email verification, and the link lands in Mailpit.
+starts the Workers stack under `alchemy dev`: the SvelteKit web Worker on :3000, whose `/api/*` proxy reaches the server Worker on :3001 over a service binding, and the identity Worker on :3002 (ADR-0035, ADR-0037). There is no Node server process. Sign in at [http://localhost:3000/api/auth/login](http://localhost:3000/api/auth/login) as the admin, or create an account there: sign-up is open behind email verification, and the link lands in Mailpit.
 
 ## Run the Workers stack
 
-The Cloudflare side of the stack lives in [packages/infra](../packages/infra) and is run by Alchemy: the databases' Hyperdrive configurations, the domain-event queue and its dead-letter queue, the server Worker whose code is [packages/server/src/platform/worker/main.ts](../packages/server/src/platform/worker/main.ts), the identity Worker whose code is [packages/identity](../packages/identity), and the SvelteKit Worker built from [packages/web-svelte](../packages/web-svelte). `pnpm dev` runs it under `alchemy dev`; `pnpm dev:next` sets `WEB_RENDERER=next`, which leaves :3000 to Next beside the stack.
+The Cloudflare side of the stack lives in [packages/infra](../packages/infra) and is run by Alchemy: the databases' Hyperdrive configurations, the domain-event queue and its dead-letter queue, the server Worker whose code is [packages/server/src/platform/worker/main.ts](../packages/server/src/platform/worker/main.ts), the identity Worker whose code is [packages/identity](../packages/identity), and the SvelteKit Worker built from [packages/web](../packages/web).
 
 Under `alchemy dev` no Cloudflare or Neon resource is created and no credentials are read: Hyperdrive passes straight through to the docker Postgres named by `DATABASE_URL` (and `IDENTITY_DATABASE_URL`), the queues run in Alchemy's local broker (in memory, so a restart drops what is in flight), and state is kept in `packages/infra/.alchemy/`. Alchemy keeps a dev sidecar running between invocations; stop the whole process group with SIGINT, or it keeps :3001 and :3002.
 
@@ -98,33 +95,55 @@ curl 'http://localhost:3001/cdn-cgi/handler/scheduled?cron=0+*+*+*+*'   # the se
 
 `pnpm test:workers` boots the same stack with Alchemy's test harness and drives the server Worker's `fetch`, `queue` and `scheduled` handlers over HTTP. It needs the docker Postgres and free dev ports, so stop `pnpm dev` first.
 
-### Deploying a stage
+## Deploying
 
-Deploying creates real Cloudflare and Neon resources, so it needs credentials (`CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`, or `alchemy login`; `NEON_API_KEY`):
+Stages deploy from GitHub Actions (ADR-0039): `preview.yml` deploys `pr-<n>` for a pull request labelled `preview` and destroys it when the label goes or the pull request closes; `deploy.yml` deploys `staging` and then `prod` after every green CI run on `main`; `kill-switch.yml` applies `KILL_SWITCH` to the zone at once. Each deploy runs the [deploy-stage](../.github/actions/deploy-stage/action.yml) action: `alchemy deploy --stage <s> --yes`, then the stack's outputs into the job's environment (`scripts/stage-env.mjs`), then `pnpm db:migrate` against the stage's direct database URLs.
+
+### One-time setup
+
+1. **The zone.** `APP_DOMAIN` must be a zone fully on Cloudflare, on a paid plan (Pro or above) for the hostname-matching rate limit and the usage alert. Prod serves `app.<domain>` / `auth.<domain>`, staging `app.staging.<domain>` / `auth.staging.<domain>`; Alchemy creates the DNS records and certificates.
+2. **Email Sending.** Onboard the domain of `MAIL_FROM_ADDRESS` to Cloudflare Email Service (Workers Paid plan).
+3. **The state store.** Once, with credentials for the account: `pnpm -F @org/infra exec alchemy provider cloudflare bootstrap`.
+4. **GitHub environments** `preview`, `staging` and `production`; give `production` its required reviewers.
+5. **Variables and secrets.** Set these per environment (variables in plain type, secrets in italics):
+
+   | Name                                                                                                | preview | staging | production        |
+   | --------------------------------------------------------------------------------------------------- | ------- | ------- | ----------------- |
+   | `CLOUDFLARE_ACCOUNT_ID`, _`CLOUDFLARE_API_TOKEN`_, _`NEON_API_KEY`_                                 | ✓       | ✓       | ✓                 |
+   | `CLOUDFLARE_WORKERS_SUBDOMAIN` (the account's `workers.dev` subdomain)                              | ✓       |         |                   |
+   | `APP_DOMAIN`                                                                                        |         | ✓       | ✓                 |
+   | _`BETTER_AUTH_SECRET`_, _`SESSION_COOKIE_SECRET`_, `IDENTITY_CLIENT_ID`, _`IDENTITY_CLIENT_SECRET`_ | ✓       | ✓       | ✓                 |
+   | `IDENTITY_ADMIN_EMAIL`, _`IDENTITY_ADMIN_PASSWORD`_                                                 | ✓       | ✓       | ✓                 |
+   | _`IDENTITY_SEED_TOKEN`_                                                                             | ✓       | ✓       | first deploy only |
+   | _`STRIPE_SECRET_KEY`_, _`STRIPE_WEBHOOK_SECRET`_, `STRIPE_PRICE_ID_DEFAULT`                         | ✓       | ✓       | ✓                 |
+   | `MAIL_FROM_ADDRESS`, `MAIL_DAILY_CAP` (optional, default 200)                                       | ✓       | ✓       | ✓                 |
+   | `USAGE_ALERT_EMAIL`, `USAGE_ALERT_PRODUCT`, `USAGE_ALERT_LIMIT`                                     |         |         | ✓                 |
+   | `USAGE_ALERT_WEBHOOK_URL`, _`USAGE_ALERT_WEBHOOK_SECRET`_ (optional)                                |         |         | ✓                 |
+
+   `KILL_SWITCH` is a **repository** variable, read by staging's smoke test and by every prod deploy. `USAGE_ALERT_PRODUCT` and `USAGE_ALERT_LIMIT` take the values the account's `GET /accounts/{id}/alerting/v3/available_alerts` lists for `billing_usage_alert`.
+
+6. **First deploys, in order.** Run `deploy.yml` by hand (`workflow_dispatch`): staging first, since every preview branches staging's databases, then approve prod. Once prod's seed step has registered the app's client and admin, delete prod's `IDENTITY_SEED_TOKEN`; the next deploy closes the seed endpoint.
+
+### The kill switch
+
+Set the repository variable `KILL_SWITCH=true` and run `kill-switch.yml`: it deploys only the zone's kill-switch rule, which blocks every app and identity host, prod's and staging's. Set it back to `false` and run it again to lift the block. Because every prod deploy applies the same variable, an ordinary deploy never lifts the switch by accident.
+
+### By hand
+
+A deploy from a laptop needs the same environment as CI (`CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`, or `alchemy login`; `NEON_API_KEY`; every value above):
 
 ```sh
-pnpm deploy:cf --stage staging         # once: owns the staging Neon projects every preview branches from
-pnpm deploy:cf --stage dev_$USER       # schema-only Neon branches of staging, their Hyperdrives, the queues, both Workers
+pnpm deploy:cf --stage dev_$USER    # schema-only Neon branches of staging, their Hyperdrives, the queues, the Workers
 pnpm destroy:cf --stage dev_$USER
 ```
 
-`prod` and `staging` own their Neon projects and keep them if the stack is removed; every other stage gets a branch of staging's projects that expires a week after its last deploy. `pnpm deploy` is pnpm's own command, hence `deploy:cf`.
-
-To migrate a deployed database, point `pnpm db:migrate` at its **direct** (not pooled) URL; the driver reads `sslmode=require` from the URL:
-
-```sh
-DATABASE_URL='postgresql://…neon.tech/neondb?sslmode=require' pnpm db:migrate
-```
-
-`db:migrate` runs `db:migrate:app` and then `db:migrate:identity` (Better Auth's migrations against `IDENTITY_DATABASE_URL`), so a deployed stage needs both direct URLs:
+`pnpm deploy` is pnpm's own command, hence `deploy:cf`. To migrate a deployed database by hand, point `pnpm db:migrate` at its **direct** (not pooled) URLs; the migrators connect over TLS when the URL says `sslmode=require`:
 
 ```sh
 DATABASE_URL='postgresql://…app…?sslmode=require' IDENTITY_DATABASE_URL='postgresql://…identity…?sslmode=require' pnpm db:migrate
 ```
 
-A deployed identity Worker takes `BETTER_AUTH_SECRET`, `IDENTITY_BASE_URL` and `APP_URL` from the deploy environment, and sends mail through the Cloudflare Email binding (Email Sending is in beta and needs the Workers Paid plan). Leave `IDENTITY_SEED_TOKEN` unset there: without it the seed endpoint does not exist.
-
-A deployed server Worker takes `APP_URL`, `IDENTITY_ISSUER`, `IDENTITY_CLIENT_ID`, `IDENTITY_CLIENT_SECRET`, `SESSION_COOKIE_SECRET` and the `STRIPE_*` values from the deploy environment, reaches the identity Worker over a service binding, and sends mail through its own Email binding from `MAIL_FROM_ADDRESS`, whose domain must be onboarded to Email Sending. Non-production stages get a `workers.dev` URL so a local Next can point `SERVER_INTERNAL_URL` at it; production has no public route. Deployed stages export no traces until a collector is chosen.
+Deployed stages export no Effect spans; Workers Observability carries their logs and traces (ADR-0039).
 
 ## Start over
 
@@ -151,12 +170,11 @@ The admin's password is whatever the last seed set. Run `pnpm seed:identity` aga
 
 The server's `IDENTITY_CLIENT_ID` / `IDENTITY_CLIENT_SECRET` no longer match the client the identity Worker holds. The seed keeps an existing client's secret, so after changing the secret drop the identity database (see [Start over](#start-over)) and re-seed.
 
-## Related
-
-- [GitHub Codespaces](codespaces.md) — the same environment, provisioned on creation
-
 ## Related ADRs
 
 - [0034 — The identity Worker: Better Auth as the OIDC issuer](adr/0034-identity-worker-with-better-auth.md)
 - [0035 — The server on Cloudflare Workers](adr/0035-server-on-cloudflare-workers.md)
 - [0017 — Frontend auth flow](adr/0017-frontend-auth-flow.md)
+- [0037 — The SvelteKit renderer on Workers](adr/0037-sveltekit-renderer-on-workers.md)
+- [0038 — Postgres on Neon, reached through Hyperdrive](adr/0038-neon-behind-hyperdrive.md)
+- [0039 — The deploy pipeline, its stages, and its limits](adr/0039-deploy-pipeline-stages-and-limits.md)

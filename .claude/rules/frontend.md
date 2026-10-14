@@ -1,40 +1,42 @@
 # Rule: frontend (web + component library)
 
-**Scope:** `packages/web/`, `packages/web-svelte/`, `packages/components/` and `packages/components-svelte/` — read before touching frontend code.
-**Backing ADRs:** 0026 (Atom + MVVM), 0015 (component library), 0018 (Next renderer + proxy), 0019 (integration seam), 0036 (the Svelte library and its lint), 0037 (the SvelteKit renderer).
+**Scope:** `packages/web/` and `packages/components/` — read before touching frontend code.
+**Backing ADRs:** 0026 (Atom + MVVM), 0015 (component library), 0019 (integration seam), 0036 (the Svelte library and its lint), 0037 (the SvelteKit renderer), 0039 (stages and limits).
 
-The frontend is a renderer that proxies `/api/*` to the Effect server: the SvelteKit app in `packages/web-svelte` (a Worker, the default) and the Next.js (App Router) app in `packages/web` it replaces in Phase 7. The Effect server stays the BFF — the renderer renders + proxies but does NOT terminate auth. See ADR-0018, ADR-0037.
+The frontend is a SvelteKit 3 app (`@org/web`) running as a Cloudflare Worker the Alchemy stack declares, on a Svelte 5 component library (`@org/components`). It renders and proxies `/api/*` to the server Worker over a service binding; the Effect server stays the BFF — the renderer does NOT terminate auth. See ADR-0037.
 
-**There is no TanStack.** State is Effect Atom (`effect/reactivity`, bundled in `effect`) with the React bindings from `@effect/atom-react`. Queries, mutations, invalidation and form state all live in that graph. A `@tanstack/*` import fails `pnpm lint`: no tier's allowlist in `packages/web/architecture.yaml` names the package, so there is nowhere it can be imported from.
+**There is no TanStack.** State is Effect Atom (`effect/reactivity`, bundled in `effect`), read in Svelte through the app's own bridge (`services/bridge/`). Queries, mutations, invalidation and form state all live in that graph. A `@tanstack/*` import fails `pnpm lint`: no tier's allowlist in `packages/web/architecture.yaml` names the package.
 
 ## MVVM: Model → ViewModel → View
 
 The arrow points one way and is enforced. Nothing else in this file matters as much.
 
-| Tier          | Lives in                         | May depend on                        | Tested by                                           |
-| ------------- | -------------------------------- | ------------------------------------ | --------------------------------------------------- |
-| **Model**     | `services/`                      | `@org/contracts`, `effect`           | `AtomRegistry` + MSW; no React                      |
-| **ViewModel** | `features/**/*.view-model.ts`    | the Model                            | `AtomRegistry.make()`, `registry.get/set`; no React |
-| **View**      | `features/**/*.view.tsx`         | its own ViewModel, `@org/components` | RTL with the ViewModel's output injected            |
-| framework     | `app/`, `services/**/*.client.*` | anything                             | integration tier                                    |
+| Tier          | Lives in                      | May depend on                                                  | Tested by                                            |
+| ------------- | ----------------------------- | -------------------------------------------------------------- | ---------------------------------------------------- |
+| **Model**     | `services/`                   | `@org/contracts`, `effect`                                     | `AtomRegistry` + MSW; no Svelte                      |
+| **ViewModel** | `features/**/*.view-model.ts` | the Model                                                      | `AtomRegistry.make()`, `registry.get/set`; no Svelte |
+| **View**      | `features/**/*.view.svelte`   | its ViewModel, the bridge, `@org/components`, `@org/contracts` | `renderView` with the ViewModel's atoms seeded       |
+| framework     | `src/` (routes, hooks)        | anything                                                       | integration + acceptance tiers                       |
 
-- A **View may not import `services/`.** Everything it renders or dispatches arrives as an atom its ViewModel exposes.
-- A **ViewModel may not import React**, `@effect/atom-react`, or any View.
+- A **View imports its ViewModel, `atom-bridge.svelte.ts`, `atom-result.svelte`, the component library and the contracts — nothing else.** Everything it renders or dispatches arrives as an atom its ViewModel exposes.
+- A **View holds no state or behaviour.** An `architecture/members` rule on `*.view.svelte` refuses every rune and lifecycle call except `$props` and the bridge's functions. A prop you would have copied into state becomes an `Atom.family` key, read with a getter — `atomValue(() => fieldsAtom(initialCode))` — so a new prop re-subscribes.
+- A **ViewModel may not import Svelte**, the bridge, or any View, and never runs an Effect by hand.
 - The **Model may not import `features/`.**
-- A **View may only call the atom-React hooks** (`useAtomValue`, `useAtomSet`, `useAtomSuspense`, …) plus `useId`/`useCallback`. No `useState`, no `useEffect`, no `useReducer` — that state belongs in the ViewModel. A prop you would have copied into state becomes an `Atom.family` key instead (see `approve-device.view-model.ts`).
 
-**File taxonomy** (`packages/web/architecture.yaml`, the `children` of the `features/` node, deny-by-default): a file in `features/**` is a `*.view.tsx`, a `*.view-model.ts`, or a `*.test.{ts,tsx}`. Nothing else. Every `*.view-model.ts` owes a sibling `*.view-model.test.ts`; views carry no parity obligation. **There is no presenter tier** — it existed to hold TanStack, which is gone.
+**File taxonomy** (`packages/web/architecture.yaml`, deny-by-default): a file in `features/**` is a `*.view.svelte`, a `*.view-model.ts`, a test, or a `__tests__/test-*-page.svelte` that composes Views as their route does. Every `*.view-model.ts` owes a sibling `*.view-model.test.ts`.
 
-## Layout (`packages/web/`, no `src/` wrapper)
+## Layout (`packages/web/`)
 
-- `app/` — Next file-based routes. `(authed)/` is the protected route group (server-side guard in `(authed)/layout.tsx` calls `/auth/me`, `redirect()`s on 401). `app/providers.tsx` is `ThemeProvider → AtomProvider`. `app/**` is framework surface: it keeps its intrinsics and composes the Model directly.
-- `features/` — one folder per feature, `*.view.tsx` + `*.view-model.ts` + tests.
+- `src/routes/` — Kit's file routes. `(authed)/` is the protected group: `+layout.server.ts` calls `/auth/me` and `redirect(302, …)`s on 401. Routes are framework surface: they compose the Model directly (prefetch, the hydration boundary).
+- `src/hooks.server.ts` — the `/api/*` proxy onto the `SERVER` service binding (prefix stripped, redirects not followed) and the per-request runtime, built over the binding and the cookie and disposed after the response; `getRequestEvent()` reaches it.
+- `features/` — one folder per feature: Views, ViewModels, tests.
 - `services/` — the Model.
-  - `services/atom/` — the kernel: `api-atoms.shared.ts` (the whole HTTP surface as atoms), `api-transport.shared.ts`, `reactivity-keys.ts`, `form-validation.ts`, `notifications.shared.ts`, `navigation.shared.ts`, `prefetch.server.ts`, `dehydration.shared.ts`, `hydration-boundary.tsx`, `registry.client.tsx`, the two bridges, `tracing.client.ts`.
-  - `services/data-access/<feature>.atoms.ts` — that feature's query/mutation atoms; `<feature>.server.ts` — its `prefetch*` helpers (`import "server-only"`).
+  - `services/atom/` — the kernel: `api-atoms.shared.ts` (the whole HTTP surface as atoms), `api-transport.shared.ts`, `reactivity-keys.ts`, `form-validation.ts`, `notifications.shared.ts`, `navigation.shared.ts`, `prefetch.server.ts`, `dehydration.shared.ts`, the two bridges, `tracing.client.ts`.
+  - `services/bridge/` — atoms to Svelte: the registry context, `atomValue`/`atomSet`, `<AtomResult>`, `<HydrationBoundary>`.
+  - `services/data-access/<feature>.atoms.ts` — that feature's query/mutation atoms; `<feature>.server.ts` — its `prefetch*` helpers.
   - `services/format/` — presentation helpers a ViewModel uses.
-  - Environment suffixes still apply: `*.shared.ts` (agnostic), `*.server.ts` (`import "server-only"`), `*.client.tsx` (`"use client"`).
-- `instrumentation.ts` — Node OTEL via `@vercel/otel`. Browser OTEL is `services/atom/tracing.client.ts`, registered with `Atom.runtime.addGlobalLayer`.
+  - Suffixes: `*.shared.ts` (agnostic), `*.server.ts` (Kit refuses it in the browser bundle), `*.client.ts` (browser only).
+- Browser OTEL is `services/atom/tracing.client.ts` (`VITE_OTLP_URL`), registered with `Atom.runtime.addGlobalLayer`.
 
 ## Reading and writing data
 
@@ -59,99 +61,79 @@ export const submitAtom = ApiAtoms.runtime.fn<void>()((_, get) =>
 );
 ```
 
+```svelte
+<!-- View -->
+<script lang="ts">
+  import { atomSet, atomValue } from "@/services/bridge/atom-bridge.svelte";
+  import { fieldsAtom, submitAtom } from "./create-user.view-model";
+
+  const fields = atomValue(fieldsAtom);
+  const submit = atomSet(submitAtom);
+</script>
+```
+
 - **Invalidation is a reactivity key, not a query key.** Both sides declare against `services/atom/reactivity-keys.ts`; a typo there is a missing property, not a stale screen.
-- **Hydration**: a route composes `<AtomHydrationBoundary prefetch={[prefetchX(...)]} fallback={...}>`; the View reads with `useAtomSuspense`. Only a query declared with `serializationKey` is hydratable. The prefetch encodes through the endpoint's own schema, so `Schema.DateTimeUtc` is a real `DateTime.Utc` on the client.
-- **Never build an atom runtime on the server.** `prefetch.server.ts` runs the plain Effect and reads the atom's serialization metadata — it never mounts the atom. (ADR-0026.)
-- **Notifications and navigation are state**, not injected services: write `notify(get, …)` / `navigateTo(get, href)` in a ViewModel, and one bridge at the edge of the app turns it into sonner or `router.push`. A test reads the atom back.
+- **Hydration**: a route's load returns `collectPrefetched([prefetchX(...)])`; the page hands it to `<HydrationBoundary state>` beside a `pending` snippet, and the View reads through `<AtomResult atom>`. Only a query declared with `serializationKey` is hydratable. The prefetch encodes through the endpoint's own schema, so `Schema.DateTimeUtc` is a real `DateTime.Utc` on the client.
+- **Load data is plain values.** Kit serialises it with devalue, which refuses a `Schema.Class`; return the fields a route reads.
+- **Never build an atom runtime on the server.** `prefetch.server.ts` runs the plain Effect and reads the atom's serialization metadata — it never mounts the atom (ADR-0026).
+- **Notifications and navigation are state**, not injected services: write `notify(get, …)` / `navigateTo(get, href)` in a ViewModel, and one bridge at the edge of the app turns it into svelte-sonner or `goto`. A test reads the atom back.
 - **Forms** are fields-as-atoms + a derived errors atom over the contract schema (`validateWithSchema`). Validation surfaces only after the first submit attempt (`submitAttemptedAtom`). Put the `notify` wrapper _inside_ the validation guard, or an invalid submit announces success.
 
-## Component library (`packages/components/`, ADR-0015)
+## Component library (`packages/components/`, ADR-0015, ADR-0036)
 
-Two trees: `primitives/` (atoms) and `patterns/` (molecules + organisms). Direction: `features (web) → patterns → primitives → third-party`. Only `primitives/` may import `@radix-ui/*`, `lucide-react`, `recharts`, or `sonner`. New icons: a one-line `createIcon` wrapper in `primitives/icon/icons.ts`.
+Two trees: `primitives/` (atoms) and `patterns/` (molecules + organisms). Direction: `features (web) → patterns → primitives → third-party`. Only `primitives/` may name Bits UI, `@lucide/svelte` or `svelte-sonner` — the package node and a repo-wide `deny` both hold it. New icons: a one-line `createIcon` wrapper in `primitives/icon/icons.ts`.
 
-**The prop API is the contract.** In `features/**`, `patterns/**` and `app/**`:
+**The prop API is the contract.** In `features/**`, `patterns/**` and `src/routes/**`:
 
-- **No raw intrinsics.** `react/forbid-elements` bans the whole set a screen would reach for — `div`, `span`, `p`, `h1`–`h4`, `ul`/`ol`/`li`, `nav`, `a`, `button`, `input`, `label`, `select`, `form`, `section`, `header`, `footer`, `main`, `table`, `img`. Use `Stack`, `Grid`, `Container`, `Surface`, `Text`, `Heading`, `List`, `Nav`, `Link`, `Button`, `Input`, `Label`, `Select`, `Form`, …
-- **No `className`, no `style`** (`local/no-inline-styling`). And it is not merely lint-banned: **no primitive accepts `className`**, so passing one is a type error. The lint rule is the backstop for a primitive regressing to a DOM spread.
-- **When a primitive can't express what you need, widen the primitive and prove the variant in its story.** Never reopen `className`, never add a DOM spread. Every primitive is the `Icon` shape: explicit props, closed unions mapped through literal class tables.
-- **Only `app/layout.tsx` is exempt** — `<html>`/`<body>` are the document root and no primitive can own them. A route's `page.tsx` is a screen like any other.
+- **No raw intrinsics.** `svelte/no-restricted-html-elements` (`pnpm lint:svelte`) bans the set a screen would reach for — `div`, `span`, `p`, `h1`–`h4`, `ul`/`ol`/`li`, `nav`, `a`, `button`, `input`, `label`, `select`, `form`, `section`, `header`, `footer`, `main`, `table`, `img`. Use `Stack`, `Grid`, `Container`, `Surface`, `Text`, `Heading`, `List`, `Nav`, `Link`, `Button`, `Input`, `Label`, `Select`, `Form`, …
+- **No `class`, no `style`.** No primitive's `*Props` (declared in `<script module>`) accepts one: `svelte-check` (in `pnpm check`) makes passing one a type error, an `architecture/members` rule refuses a `*Props` that reopens it, and ESLint refuses one in markup.
+- **When a primitive can't express what you need, widen the primitive and prove the variant in its story.** Explicit props, closed unions mapped through literal class tables.
+- **Strictly controlled inputs.** Value and change handler are required. `Checkbox`, `Select` and `Dialog` bind through a function binding (`bind:checked={() => checked, onCheckedChange}`); `Input` reports a string (`onValueChange`) and undoes an edit its owner does not take.
 
-**Composing a page**: `PageShell` (centred, width-capped column) wraps `CardSection`s (a titled card); the authed layout is an `AppShell`. A page states what its sections are called, not how a card title is sized:
+**Composing a page**: `PageShell` (centred, width-capped column) wraps `CardSection`s (a titled card); the authed layout is an `AppShell`:
 
-```tsx
+```svelte
 <PageShell width="sm">
   <CardSection title="Invite a teammate">
-    <InviteForm orgId={orgId} />
+    <InviteForm {orgId} />
   </CardSection>
 </PageShell>
 ```
 
-`Input`, `Checkbox` and `Select` are **strictly controlled** — value and change handler are required, and `defaultValue`/`defaultChecked` do not exist. Uncontrolled state in a View is state outside the ViewModel.
-
-Every primitive and pattern needs a sibling `*.stories.tsx`. Storybook: `pnpm -F @org/components storybook`; a static build is part of `check:all`.
-
-## Component library in Svelte (`packages/components-svelte/`, ADR-0036)
-
-The same library in Svelte 5, beside the React one until the Phase 7 cutover; `packages/web-svelte` is built on it. Same two trees, same direction, same class tables and `styles/globals.css`. What differs is how each rule is held:
-
-| Rule                                   | React                                  | Svelte                                                                                                                                                                                     |
-| -------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| No `class`/`style` prop, closed unions | prop types + `local/no-inline-styling` | `*Props` in `<script module>`, checked by `svelte-check` (in `pnpm check`) + an `architecture/members` rule on `*Props` + ESLint on markup                                                 |
-| No raw intrinsics in patterns          | `react/forbid-elements`                | `svelte/no-restricted-html-elements`, same list (`lint:svelte`)                                                                                                                            |
-| Strictly controlled inputs             | required `value` + handler             | required value + handler; `Checkbox`, `Select`, `Dialog` bind through a function binding (`bind:checked={() => checked, onCheckedChange}`), `Input` undoes an edit its owner does not take |
-| Only `primitives/` names a UI library  | the package node                       | the package node + a repo-wide `deny` on Bits UI, `@lucide/svelte`, `svelte-sonner`                                                                                                        |
-
-- **Third parties**: Bits UI 2 (Checkbox, Dialog, Label, Select), `@lucide/svelte` behind the same `createIcon` wrapper, `svelte-sonner` (it renders the `[data-sonner-toast][data-type]` the drivers read — a test pins it). `Link` is a plain anchor: `external` sets `data-sveltekit-reload`, `prefetch` sets `data-sveltekit-preload-data`.
-- **Children are snippets** (`children?: Snippet`); `ReactNode` slots (`footer`, `action`, `nav`, `leading`, `trailing`) are named snippet props. `Input` reports a string (`onValueChange`), not an event.
-- **A compound primitive is a folder**: the root `card.svelte`, its `card-header.part.svelte` parts (no story of their own), and `index.ts` hanging the parts on the root, so `<Card.Header>` reads as in React. `Select` takes `items: { value, label, disabled?, data-testid? }[]` rather than `Select.Item` children — Bits renders the selected label while the list is closed, before any item mounts.
-- **A type a `.ts` file needs lives in `.ts`.** Type-aware oxlint sees a `.svelte` module only through Svelte's ambient declaration, so a named type imported from one is an error type there (the icon props and `showToast` are `.ts` for this reason).
-- **Stories** are Svelte CSF (`*.stories.svelte`, `defineMeta`); a story that composes several components is `asChild`, or its children are handed to the component. Interactive state lives in the story file's instance `<script>`.
-- **Tests**: `@testing-library/svelte` + `@testing-library/user-event`, jsdom, children through `createRawSnippet` (`test/snippets.ts`). `test/setup.ts` stubs `matchMedia` and pointer capture, which jsdom lacks and the toaster and Bits Select call. The package has its own coverage floor in `vitest.config.ts`.
-
-Storybook: `pnpm -F @org/components-svelte storybook` (:6007); a static build is part of `check:all`.
-
-## The SvelteKit app (`packages/web-svelte/`, ADR-0037)
-
-The renderer that replaces `packages/web` at the Phase 7 cutover: SvelteKit 3 in a Cloudflare Worker the Alchemy stack declares, on `@org/components-svelte`. The MVVM above holds unchanged; what differs is how each piece is wired.
-
-| Concern             | Next (`packages/web`)                             | SvelteKit (`packages/web-svelte`)                                                                     |
-| ------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `/api/*` proxy      | `next.config.ts` rewrite                          | `src/hooks.server.ts` → the `SERVER` service binding, prefix stripped, redirects not followed         |
-| Per-request runtime | `React.cache` + `next/headers`                    | built in the hook over the binding and the cookie, disposed after the response; `getRequestEvent()`   |
-| Guards              | server components, `redirect()`/`notFound()`      | `+layout.server.ts` / `+page.server.ts` loads, `redirect(302, …)`/`error(404)`                        |
-| Prefetch            | `<AtomHydrationBoundary prefetch>`                | a load returning `collectPrefetched([...])`, handed to `<HydrationBoundary state>` beside a `pending` |
-| Reads and writes    | `useAtomValue` / `useAtomSet` / `useAtomSuspense` | `atomValue(atom).current` / `atomSet(atom)` / `<AtomResult atom>` (`services/bridge/`)                |
-| Route params        | `params` / `searchParams` props                   | `page.params` / `page.url` from `$app/state`, or the load's `data`                                    |
-| The View rule       | `members` on `use*` + oxlint JSX rules            | `members` on `*.view.svelte` (every rune and lifecycle call except `$props`) + ESLint on markup       |
-
-- **The Model and ViewModels are the same files as web's**, byte for byte: `@/` is the package root in both. A change to one belongs in both until Phase 7.
-- **A View imports its ViewModel, `atom-bridge.svelte.ts`, `atom-result.svelte`, the component library and the contracts — nothing else.** A family atom keyed by a prop is read with a getter, `atomValue(() => fieldsAtom(initialCode))`, so a new prop re-subscribes.
-- **Load data is plain values.** Kit serialises it with devalue, which refuses a `Schema.Class`; return the fields a route reads.
-- **`*.server.ts` is Kit's server-only boundary**, so the server-side Model helpers carry no `import "server-only"`.
-- **Tailwind compiles outside Vite**: `pnpm -F @org/web-svelte css` (run at install, by `pnpm dev` and by acceptance) writes `src/styles.generated.css` from the library's `globals.css`. Tailwind's own loader cannot run under the module hooks of Alchemy's dev server on Node 22.
-- **Kit 3**: no `$lib` (use `@/`), `$app/env` instead of `$app/environment`, `Handle` from `@sveltejs/kit/hooks`. In Vitest, `$app/*` resolves to stubs under `test/kit/`; mock the one a test needs.
-- **Tests**: `renderView(View, props, { initialValues })` (`test/atom-harness.ts`) and `renderWithHarness(TestPage)` (`test/integration-harness.ts`), where a `__tests__/test-*-page.svelte` composes Views as their route does. The integration harness dismisses toasts between tests: svelte-sonner's store outlives a render. The package has its own coverage floor.
-- **goodbones' Svelte reader ends a `<script>` tag at the first `>`**: name a generics constraint in `<script module>` instead of writing `Record<string, unknown>` inside the attribute.
+- **Third parties**: Bits UI 2 (Checkbox, Dialog, Label, Select), `@lucide/svelte`, `svelte-sonner` (it renders the `[data-sonner-toast][data-type]` the drivers read — a test pins it). `Link` is a plain anchor: `external` sets `data-sveltekit-reload`, `prefetch` sets `data-sveltekit-preload-data`.
+- **Children are snippets** (`children?: Snippet`); named slots (`footer`, `action`, `nav`, `leading`, `trailing`) are snippet props.
+- **A compound primitive is a folder**: the root `card.svelte`, its `card-header.part.svelte` parts (no story of their own), and `index.ts` hanging the parts on the root, so `<Card.Header>` reads naturally. `Select` takes `items: { value, label, disabled?, data-testid? }[]` rather than item children — Bits renders the selected label while the list is closed, before any item mounts.
+- **A type a `.ts` file needs lives in `.ts`.** Type-aware oxlint sees a `.svelte` module only through Svelte's ambient declaration, so a named type imported from one is an error type there.
+- **Stories** are Svelte CSF (`*.stories.svelte`, `defineMeta`); every primitive and pattern owes one. A story that composes several components is `asChild`. Storybook: `pnpm -F @org/components storybook` (:6007); a static build is part of `check:all`.
+- **Styling**: Tailwind v4 from `styles/globals.css`, which the web app's root layout imports and `@tailwindcss/vite` compiles. Its `@source` lines name each tree that carries class names.
 
 ## Tests
 
-| Tier            | Harness                                                                           |
-| --------------- | --------------------------------------------------------------------------------- |
-| **Model**       | `AtomRegistry.make({initialValues: [[apiTransportAtom, …]]})` + MSW               |
-| **ViewModel**   | same, plus `AtomRegistry.getResult(registry, atom, {suspendOnWaiting})`           |
-| **View**        | `renderView(<X />, { initialValues: [[atom, value]] })` (`test/atom-harness.tsx`) |
-| **Integration** | `renderWithHarness` (`test/integration-harness.tsx`) — registry + bridges + MSW   |
-| **Acceptance**  | `packages/acceptance` (Playwright), unchanged                                     |
+| Tier            | Harness                                                                                              |
+| --------------- | ---------------------------------------------------------------------------------------------------- |
+| **Model**       | `AtomRegistry.make({initialValues: [[apiTransportAtom, …]]})` + MSW                                  |
+| **ViewModel**   | same, plus `AtomRegistry.getResult(registry, atom, {suspendOnWaiting})`                              |
+| **View**        | `renderView(View, props, { initialValues })` (`test/atom-harness.ts`)                                |
+| **Integration** | `renderWithHarness(TestPage)` (`test/integration-harness.ts`) — registry + bridges + MSW, real Views |
+| **Component**   | `@testing-library/svelte` + `user-event`, jsdom, children through `createRawSnippet`                 |
+| **Acceptance**  | `packages/acceptance` (Playwright) against `alchemy dev`, or a deployed preview (ADR-0039)           |
 
-- **MSW is installed globally** (`test/setup.ts`), not per file, and `renderView` disposes its registry after each test. Both exist because mounting a View mounts the query atoms it reads, and a reactivity-wrapped atom fetches on mount _however its atoms were seeded_ — so "this test does not need a server" is not something a test file can decide for itself. A View test that renders a list still registers a handler serving the same data it seeds; otherwise the in-flight request fails with no consumer.
+- **MSW is installed globally** (`test/setup.ts`), not per file, and `renderView` disposes its registry after each test. Mounting a View mounts the query atoms it reads, and a reactivity-wrapped atom fetches on mount _however its atoms were seeded_ — so a View test that renders a list still registers a handler serving the same data it seeds.
 - MSW resolves the **most recently registered handler first**, and `server.use(a, b)` keeps `a` ahead of `b`. To make a refetch see different data than the first load, register the second handler in its own later `server.use(...)` call.
-- An action atom starts `AsyncResult.initial` and not waiting. A View test asserts the write happened by checking it is no longer pristine, not by checking `waiting` (which may already have settled).
-- The integration harness deliberately does **not** mount `NavigationBridge`: it holds the Next router. Assert on `navigationRequestAtom` instead.
+- An action atom starts `AsyncResult.initial` and not waiting. A View test asserts the write happened by checking it is no longer pristine, not by checking `waiting`.
+- The integration harness does **not** mount the navigation bridge (it holds Kit's router), and dismisses toasts between tests, since svelte-sonner's store outlives a render. Assert on `navigationRequestAtom`.
+- **Kit 3 in Vitest**: `$app/*` resolves to stubs under `test/kit/`; mock the one a test needs. jsdom lacks `matchMedia` and pointer capture, which the toaster and Bits Select call; `test/setup.ts` stubs them.
+- Each package has its own coverage floor in the root `vitest.config.ts`.
+
+## Gotchas
+
+- **Kit 3**: no `$lib` (use `@/`), `$app/env` instead of `$app/environment`, `Handle` from `@sveltejs/kit/hooks`, no `svelte.config.js` — the Alchemy SvelteKit resource injects its own adapter, and Kit's options live in `vite.config.ts`.
+- **goodbones' Svelte reader ends a `<script>` tag at the first `>`**: name a generics constraint in `<script module>` instead of writing `Record<string, unknown>` inside the attribute.
+- **Under Vite dev the app hydrates late** (hundreds of module requests), so Playwright page objects navigate with `waitUntil: "networkidle"`.
 
 ## Run locally
 
 ```bash
-pnpm bootstrap                    # Docker (postgres, mailpit, jaeger) + migrate + seed the identity Worker
-pnpm dev                          # alchemy dev: SvelteKit :3000, server Worker :3001, identity Worker :3002
-pnpm dev:next                     # the same stack with Next.js on :3000 (/api/* → :3001) instead
+pnpm bootstrap   # Docker (postgres, mailpit, jaeger) + migrate + seed the identity Worker
+pnpm dev         # alchemy dev: web Worker :3000, server Worker :3001, identity Worker :3002
 ```

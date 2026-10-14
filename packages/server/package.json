@@ -28,13 +28,9 @@
     "@org/contracts": "workspace:^",
     "@org/database": "workspace:^",
     "@org/jobs": "workspace:^",
-    "@react-email/components": "^1.0.12",
-    "@react-email/render": "^2.0.10",
     "cookie": "^1.1.1",
     "effect": "4.0.2",
     "openid-client": "^6.8.4",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
     "stripe": "^22.3.0",
     "svix": "^1.96.1"
   },
@@ -55,8 +51,6 @@
     "@effect/platform-node": "4.0.2",
     "@effect/sql-pg": "4.0.2",
     "@types/cookie": "^0.6.0",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
     "madge": "^8.0.0"
   }
 }

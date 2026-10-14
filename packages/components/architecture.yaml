@@ -1,141 +1,165 @@
 # yaml-language-server: $schema=https://dataquail.github.io/goodbones/schema/architecture-node.schema.json
 #
-# @org/components — the bespoke component library. Direction: features → patterns →
+# @org/components — the component library in Svelte 5, growing beside
+# @org/components until the Phase 7 cutover. Same direction: features → patterns →
 # primitives → third-party (ADR-0015). Only primitives touch a UI library.
 #
 # One node of the architecture policy: the root architecture.yaml includes this
-# file at "~/components/". Patterns are repo-relative and use the root's
-# aliases; a fragment defined under `defs` here joins the one namespace every file
-# shares, so name it for what it is.
+# file at "~/components/". A `.svelte` file is read through its script
+# blocks, by oxlint and by the CLI alike.
 
 defs:
-  # A Storybook story: the component's living spec and visual test (ADR-0015).
-  # It names the component it documents and the Storybook runtime.
-  story-file:
+  # A Storybook story in Svelte CSF: the component's living spec and visual test.
+  svelte-story-file:
     imports:
-      reset: true
       message: >-
         A story names the component it documents, the component library around it and the
         Storybook runtime. Nothing from web, nothing from the server.
-      external: [storybook, "@storybook/react-vite"]
-      allow: ["~/components/**"]
+      external: ["@storybook/addon-svelte-csf"]
 
-  # No component test exists yet; this is what one may name when it does.
-  component-test-file:
+  svelte-component-test-file:
     surface: [{ use: test-exports-nothing }]
     imports:
-      reset: true
       message: >-
         A component test renders the component through the testing library and asserts on the
         DOM. It reaches the component library and nothing from web or the server.
-      external:
-        - effect
-        - react
-        - vitest
-        - "@testing-library/react"
-        - "@testing-library/jest-dom"
-        - "@testing-library/user-event"
-      allow: ["~/components/**"]
+      external: [vitest, "@testing-library/svelte"]
 
-  # Every primitive/pattern component owes its story.
-  component-story-parity:
-    requires: ["{base}.stories.tsx"]
-    requiresNot: ["index.tsx", "*.stories.tsx", "*.test.tsx"]
+  # A configuration file is loaded by its tool through the default export.
+  config-file:
+    surface:
+      - message: >-
+          A configuration file exports its default and nothing else: the tool that loads it reads
+          nothing named.
+        kinds: [named]
+
+  # Every component owes its story; a story is not a component.
+  svelte-story-parity:
+    message: >-
+      Every primitive/pattern component needs a sibling *.stories.svelte — the story is the
+      component's living spec and visual test (ADR-0015).
+    requires: ["{base}.stories.svelte"]
+    requiresNot: ["*.stories.svelte"]
 
 name: kebab-case
 message: >-
   @org/components holds two trees: primitives/ (atoms) and patterns/ (molecules and
-  organisms), plus the class-name helpers in lib/, the providers/ and the Storybook config. A
-  new folder here is a new tier — declare it deliberately.
-# Storybook loads a story's meta and its own configuration by default export.
+  organisms), plus the providers/, the test harness and the Storybook config. A new folder here
+  is a new tier — declare it deliberately.
+# The prop surface is the contract: a component is painted through its closed unions,
+# never by a class or a style handed in from outside.
+members:
+  - message: >-
+      `{name}` reopens the component's surface to arbitrary paint. A component takes closed
+      unions mapped through its own class tables; when it cannot express what a screen needs,
+      widen the union and prove the variant in its story (ADR-0015).
+    subject: members
+    declares: [type, interface]
+    in: "*Props"
+    match: [class, className, style]
+    probe:
+      source: "export type ZzProbeProps = { readonly class?: string };"
+      name: class
+# Storybook loads a story's meta, its configuration and Vite's by default export.
 surface:
   - use: no-default-exports
-    except: ["**/vitest.config.ts", "**/*.stories.tsx", "~/components/.storybook/**"]
+    except:
+      - "**/vitest.config.ts"
+      - "~/components/vite.config.ts"
+      - "~/components/.storybook/**"
 imports:
   message: >-
-    @org/components is a leaf workspace package: components are consumed by web, never the
-    reverse. It may not import @org/web or anything under packages/web/.
-  external: [effect, react, react-dom, next, clsx, tailwind-merge]
-  allow: ["node:**", "~/components/**"]
+    @org/components is a leaf workspace package: components are consumed by the web app,
+    never the reverse. It may not import a web package or anything under packages/web/.
+  external: [effect, svelte]
+  allow: ["~/components/**"]
 children:
+  "vite.config.ts | vitest.config.ts":
+    use: config-file
+    imports:
+      message: >-
+        A build-configuration file names the tool it configures and nothing else — no web, no
+        server.
+      external: [vite, vitest, "@sveltejs/vite-plugin-svelte", "@testing-library/svelte"]
+
   # The only tier allowed to name a third-party visual library, so the
   # prop surface of those libraries stops here.
   "primitives/":
-    layout: open
     message: >-
-      primitives/ wraps the third-party visual libraries so their prop surface is
-      encapsulated. Every primitive is explicit props and closed unions mapped through literal
-      class tables — no className, no DOM spread.
+      primitives/ wraps the third-party visual libraries so their prop surface is encapsulated.
+      Every primitive is explicit props and closed unions mapped through literal class tables —
+      no class, no style, no rest-prop spread. A compound primitive is a folder named for it.
     imports:
-      external:
-        - "@radix-ui/react-checkbox"
-        - "@radix-ui/react-dialog"
-        - "@radix-ui/react-label"
-        - "@radix-ui/react-select"
-        - lucide-react
-        - recharts
-        - sonner
+      external: [bits-ui, "@lucide/svelte", svelte-sonner]
     children:
-      "*.tsx":
-        use: component-story-parity
-        message: >-
-          Every primitive/pattern component needs a sibling *.stories.tsx — the story is the
-          component's living spec and visual test (ADR-0015).
-      "*.stories.tsx":
+      "*.svelte": { use: svelte-story-parity }
+      "*.stories.svelte": { use: svelte-story-file }
+      # The interactive primitives are driven by a user, not by events fired at them.
+      "*.test.ts":
+        use: svelte-component-test-file
         imports:
-          reset: true
           message: >-
-            A primitive's story is the one that renders live state and toasts, so it names
-            react and sonner beside what a story may.
-          external: [storybook, "@storybook/react-vite", react, sonner]
-          allow: ["~/components/**"]
-      "*.ts": {}
-      "*.test.ts | *.test.tsx": { use: component-test-file }
-      "**/":
-        layout: open
+            A component test renders the component through the testing library, drives it as a
+            user would and asserts on the DOM. It reaches the component library and nothing from
+            web or the server.
+          external: [vitest, "@testing-library/svelte", "@testing-library/user-event"]
+      # A compound primitive: a folder holding the root component, its parts and
+      # the barrel that hangs the parts on the root (`Card.Header`). The root owes
+      # the story; a part is shown in it.
+      "*/":
         children:
-          "*.tsx": { use: component-story-parity }
-          "*.stories.tsx": { use: story-file }
+          "*.svelte":
+            { use: svelte-story-parity, requiresNot: ["*.stories.svelte", "*.part.svelte"] }
+          "*.part.svelte": {}
+          "*.stories.svelte": { use: svelte-story-file }
+          "*.test.ts": { use: svelte-component-test-file }
           "*.ts": {}
-          "*.test.ts | *.test.tsx": { use: component-test-file }
 
   "patterns/":
-    layout: open
     message: >-
       patterns/ composes primitives into molecules and organisms. It consumes the third-party
       libraries only through primitives/, and it never reaches into a feature.
     imports:
       reset: true
-      external: [effect, react]
-      allow:
-        - "node:**"
-        - "~/components/primitives/**"
-        - "~/components/patterns/**"
-        - "~/components/lib/**"
+      message: >-
+        A pattern composes primitives and other patterns. A visual library is a primitive's to
+        name, and a feature is the web app's.
+      external: [svelte]
+      allow: ["~/components/primitives/**", "~/components/patterns/**"]
     children:
-      "*.tsx":
-        use: component-story-parity
-        message: >-
-          Every primitive/pattern component needs a sibling *.stories.tsx — the story is the
-          component's living spec and visual test (ADR-0015).
-      "*.stories.tsx": { use: story-file }
-      "*.ts": {}
-      "*.test.ts | *.test.tsx": { use: component-test-file }
+      "*.svelte": { use: svelte-story-parity }
+      "*.stories.svelte": { use: svelte-story-file }
+      "*.test.ts":
+        use: svelte-component-test-file
+        imports:
+          message: >-
+            A pattern test renders the pattern with the shared test snippets, drives it as a user
+            would and asserts on the DOM.
+          external: [vitest, "@testing-library/svelte", "@testing-library/user-event"]
+          allow: ["~/components/test/**"]
 
+  # The theme the toaster and the app read, over Svelte context.
   "providers/":
-    layout: open
-    children: { "*.tsx": {}, "*.ts": {} }
-  "lib/":
-    layout: open
+    message: providers/ holds the context the component tree reads — the theme.
     children:
-      "**/": { layout: open, children: {} }
-  ".storybook/":
-    layout: open
+      "*.svelte | *.svelte.ts": {}
+      "*.test.ts": { use: svelte-component-test-file }
+
+  "test/":
+    message: test/ holds the harness every component test loads before it runs.
     imports:
-      reset: true
+      message: >-
+        The test harness installs the DOM matchers and names nothing else.
+      external: [vitest, "@testing-library/jest-dom"]
+    children:
+      "setup.ts | snippets.ts": {}
+
+  ".storybook/":
+    imports:
       message: >-
         The Storybook configuration names Storybook and the component tree it renders. Nothing
         else.
-      external: [storybook, "@storybook/react-vite", "@storybook/addon-themes", react]
-      allow: ["node:**", "~/components/**"]
-    children: {}
+      external: ["@storybook/svelte-vite", "@storybook/addon-themes"]
+      allow: ["node:**"]
+    children:
+      "main.ts | preview.ts": { use: config-file }

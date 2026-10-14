@@ -3,10 +3,12 @@
 // of the identity Worker, creates the admin there with a verified email, and
 // records them in the app database as a super-admin. Idempotent.
 //
-// Needs the identity Worker running (`pnpm dev`) and the app database
-// migrated (`pnpm db:migrate`). Reads the repo's .env. Run through tsx, which
-// loads the identity package's TypeScript seed client.
+// Needs the identity Worker running (`pnpm dev`, or a deployed stage) and the
+// app database migrated (`pnpm db:migrate`). Reads the repo's .env when there
+// is one. Run through tsx, which loads the identity package's TypeScript seed
+// client.
 
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -21,7 +23,9 @@ import {
 } from "../packages/identity/src/seed/seed-client.ts";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
-const env = { ...readEnv(join(ROOT, ".env")), ...process.env };
+// A deploy pipeline has no .env; its environment carries every value.
+const ENV_FILE = join(ROOT, ".env");
+const env = { ...(existsSync(ENV_FILE) ? readEnv(ENV_FILE) : {}), ...process.env };
 
 const admin = {
   email: env.IDENTITY_ADMIN_EMAIL || "admin@example.com",

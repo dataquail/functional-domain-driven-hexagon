@@ -1,16 +1,8 @@
-// Server-side ApiClient layer. Provides the shared `ApiClient` tag
-// (services/api-client.shared.ts) by talking to the Effect server
-// directly via the internal URL — NOT through Next's `/api/*` rewrite,
-// which is for browser traffic. The inbound `Cookie` header from the
-// browser request is read via `next/headers` and forwarded on every
-// outbound call so the Effect server's session middleware sees the
-// same session the browser would.
-//
-// `import "server-only"` makes Next throw at build time if this module
-// is pulled into a client component — the cookie-reading side effect
-// must never ship to the browser.
-
-import "server-only";
+// Server-side ApiClient layer. Provides the shared `ApiClient` tag by calling
+// the Effect server Worker directly over its service binding -- not through
+// the `/api` proxy, which is for browser traffic -- with the inbound `Cookie`
+// header forwarded so the server's session middleware sees the browser's
+// session.
 
 import { DomainApi } from "@org/contracts/DomainApi";
 import * as Effect from "effect/Effect";
@@ -22,17 +14,15 @@ import * as Layer from "effect/Layer";
 
 import { ApiClient } from "./api-client.shared";
 
-const SERVER_INTERNAL_URL = process.env.SERVER_INTERNAL_URL ?? "http://localhost:3001";
+// A service binding ignores the host; the URL only carries the path.
+const SERVER_ORIGIN = "http://server";
 
-// Build a request-scoped ApiClient layer. The cookie string is captured
-// at construction; one ManagedRuntime per request keeps cookies from
-// leaking across requests.
-export const ApiClientLive = (cookieHeader: string) =>
+export const ApiClientLive = (fetch: typeof globalThis.fetch, cookieHeader: string) =>
   Layer.effect(
     ApiClient,
     Effect.gen(function* () {
       const client = yield* HttpApiClient.make(DomainApi, {
-        baseUrl: SERVER_INTERNAL_URL,
+        baseUrl: SERVER_ORIGIN,
         transformClient: (c) =>
           c.pipe(
             HttpClient.mapRequest((req) =>
@@ -45,4 +35,8 @@ export const ApiClientLive = (cookieHeader: string) =>
       });
       return { client };
     }),
-  ).pipe(Layer.provide(FetchHttpClient.layer));
+  ).pipe(
+    Layer.provide(
+      FetchHttpClient.layer.pipe(Layer.provide(Layer.succeed(FetchHttpClient.Fetch, fetch))),
+    ),
+  );

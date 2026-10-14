@@ -48,7 +48,9 @@ const identityAuthOptions = (settings: IdentityAuthSettings): IdentityAuthOption
   baseURL: settings.baseUrl,
   secret: settings.secret,
   database: settings.database,
-  trustedOrigins: [settings.baseUrl],
+  trustedOrigins: [settings.baseUrl, settings.appUrl],
+  // Better Auth skips its origin check under a test runner unless told otherwise.
+  advanced: { disableOriginCheck: false },
   disabledPaths: ["/token"],
   emailAndPassword: {
     enabled: true,

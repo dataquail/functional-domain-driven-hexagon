@@ -20,7 +20,7 @@ export default defineConfig({
     // auto-discovered and its `*.spec.ts` files aren't loaded as Vitest tests.
     // Acceptance specs run via `pnpm test:acceptance`.
     projects: [
-      "packages/components-svelte",
+      "packages/components",
       "packages/contracts",
       "packages/database",
       "packages/identity",
@@ -28,28 +28,25 @@ export default defineConfig({
       "packages/jobs",
       "packages/server",
       "packages/web",
-      "packages/web-svelte",
     ],
     coverage: {
       provider: "v8",
       reporter: isMergedRun ? ["text-summary", "html", "lcov", "json-summary"] : ["text-summary"],
       // Only the packages that carry a Vitest suite. A package whose tests live
-      // at another tier (@org/acceptance, @org/components' Storybook) or that
+      // at another tier (@org/acceptance) or that
       // has none yet (@org/cli, @org/mcp, @org/api-client) would report 0% and
       // turn the gate into noise instead of signal.
       include: [
-        "packages/components-svelte/{primitives,patterns,providers}/**/*.{ts,svelte}",
+        "packages/components/{primitives,patterns,providers}/**/*.{ts,svelte}",
         "packages/contracts/src/**/*.ts",
         "packages/database/src/**/*.ts",
         "packages/identity/src/**/*.ts",
         "packages/infra/src/**/*.ts",
         "packages/jobs/src/**/*.ts",
         "packages/server/src/**/*.{ts,tsx}",
-        "packages/web/features/**/*.{ts,tsx}",
-        "packages/web/services/**/*.{ts,tsx}",
-        // Routes are framework surface, covered by acceptance, as web's app/ is.
-        "packages/web-svelte/{features,services}/**/*.{ts,svelte}",
-        "packages/web-svelte/src/{hooks.server.ts,lib/**/*.ts}",
+        // Routes are framework surface, covered by acceptance.
+        "packages/web/{features,services}/**/*.{ts,svelte}",
+        "packages/web/src/{hooks.server.ts,lib/**/*.ts}",
       ],
       exclude: [
         ...coverageConfigDefaults.exclude,
@@ -68,13 +65,10 @@ export default defineConfig({
         // Resource declarations: only the Alchemy engine evaluates them, under
         // `alchemy dev` or a deploy.
         "packages/infra/src/stack/**",
-        // Worker entrypoints run in workerd; `pnpm dev:cf:check` is their test.
+        // Worker entrypoints run in workerd; `pnpm test:workers` is their test.
         "packages/infra/src/platform/worker/**",
         "packages/identity/src/platform/worker/**",
         "packages/identity/src/scripts/**",
-        // `import "server-only"` — unloadable in the jsdom Model tier, so no
-        // Vitest suite can reach them at all (ADR-0019, ADR-0026).
-        "packages/web/**/*.server.ts",
       ],
       // A ratchet, not an aspiration: each floor sits a couple of points under
       // what the merged suites actually reach today. Raise them when coverage
@@ -82,21 +76,15 @@ export default defineConfig({
       // floors exist so a gain in one package cannot mask a rot in another.
       thresholds: isMergedRun
         ? {
-            statements: 89,
+            statements: 91,
             branches: 81,
-            functions: 85,
-            lines: 89,
+            functions: 88,
+            lines: 91,
             "packages/server/src/**": {
               statements: 90,
               branches: 75,
               functions: 85,
               lines: 90,
-            },
-            "packages/web/{features,services}/**": {
-              statements: 81,
-              branches: 80,
-              functions: 73,
-              lines: 81,
             },
             "packages/database/src/**": {
               statements: 54,
@@ -104,13 +92,13 @@ export default defineConfig({
               functions: 44,
               lines: 53,
             },
-            "packages/web-svelte/**": {
+            "packages/web/**": {
               statements: 90,
               branches: 86,
               functions: 87,
               lines: 90,
             },
-            "packages/components-svelte/**": {
+            "packages/components/**": {
               statements: 97,
               branches: 91,
               functions: 95,

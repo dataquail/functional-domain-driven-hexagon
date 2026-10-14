@@ -2,15 +2,13 @@
 // encodes the result into the entry a browser registry preloads.
 //
 // Note what is absent: no JSON round-trip. `dehydrateQuery` encodes through the
-// endpoint's own schema, so what crosses the RSC boundary is already plain
-// JSON -- the `Schema.Class` instances that Next refuses to serialize never
+// endpoint's own schema, so what crosses to the browser is already plain
+// JSON -- the `Schema.Class` instances a load function cannot serialize never
 // reach it.
 //
 // A failed prefetch yields no entry rather than throwing. The page still
 // renders; the client atom simply fetches for itself and any failure surfaces
 // at the nearest error boundary, which is where a request failure belongs.
-import "server-only";
-
 import type * as Effect from "effect/Effect";
 import type * as AsyncResult from "effect/reactivity/AsyncResult";
 import type * as Atom from "effect/reactivity/Atom";

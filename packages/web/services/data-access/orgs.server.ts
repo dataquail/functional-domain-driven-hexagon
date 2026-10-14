@@ -1,5 +1,3 @@
-import "server-only";
-
 import { prefetchQuery } from "@/services/atom/prefetch.server";
 
 import {

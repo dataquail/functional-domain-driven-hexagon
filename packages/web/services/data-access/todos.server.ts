@@ -1,5 +1,3 @@
-import "server-only";
-
 import type { OrganizationId } from "@org/contracts/EntityIds";
 
 import { prefetchQuery } from "@/services/atom/prefetch.server";

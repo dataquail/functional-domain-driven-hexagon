@@ -1,51 +1,100 @@
 # yaml-language-server: $schema=https://dataquail.github.io/goodbones/schema/architecture-node.schema.json
 #
-# @org/web — the Next renderer over the Effect BFF. MVVM, and the arrow points one
-# way: Model (services/) ← ViewModel (*.view-model.ts) ← View (*.view.tsx).
+# @org/web — the SvelteKit renderer over the Effect BFF, beside @org/web
+# until the Phase 7 cutover. The same MVVM as web, and the arrow points the same
+# way: Model (services/) ← ViewModel (*.view-model.ts) ← View (*.view.svelte).
+# src/ is SvelteKit's: the routes, the hooks and the document template.
 #
 # One node of the architecture policy: the root architecture.yaml includes this
-# file at "~/web/". Patterns are repo-relative and use the root's
-# aliases; a fragment defined under `defs` here joins the one namespace every file
-# shares, so name it for what it is.
+# file at "~/web/". A `.svelte` file is read through its script blocks,
+# by oxlint and by the CLI alike; its markup is ESLint's (ADR-0036, ADR-0037).
 
 defs:
-  # The two MVVM tiers. Named because a feature folder nests — the real shape
-  # is features/<area>/<feature>/ — and the rules hold at every depth.
-  view-file:
+  # A ViewModel or Model test runs its tier under a bare registry and MSW; it
+  # reaches the package, its harnesses and the contracts, and renders nothing.
+  web-unit-test-file:
+    surface: [{ use: test-exports-nothing }]
+    imports:
+      reset: true
+      message: >-
+        A ViewModel or Model test runs its tier under a bare AtomRegistry, with MSW standing in
+        for the server. It renders nothing — a test that needs the testing library is a component
+        test — and it never reaches the server.
+      external: [effect, vitest]
+      allow: ["~/web/**", "~/contracts/**"]
+
+  # A component test renders through the testing library and drives it as a user.
+  web-component-test-file:
+    surface: [{ use: test-exports-nothing }]
+    imports:
+      reset: true
+      message: >-
+        A component test renders a component through the testing library, drives it as a user
+        would and asserts on the DOM. It reaches the package and its harnesses, never the server,
+        and it never renders a route — that is the integration test under __tests__/.
+      external: [effect, vitest, "@testing-library/svelte", "@testing-library/user-event"]
+      allow: ["~/web/**", "~/contracts/**"]
+
+  # The atom runtime runs a ViewModel's or a Model's Effects, inside the
+  # registry's lifetime; running one by hand escapes it.
+  runs-no-effect:
+    message: >-
+      `{name}` runs an Effect by hand, outside the atom runtime: nothing interrupts it when the
+      registry disposes, and its failure reaches no AsyncResult a View can render. Hand the
+      Effect to an atom — ApiAtoms.runtime.fn or an Atom.make over it — and let the registry run
+      it (ADR-0026).
+    subject: calls
+    match: [runPromise, runPromiseExit, runSync, runSyncExit, runFork, runCallback]
+    probe:
+      source: 'import * as Effect from "effect/Effect"; Effect.runPromise(Effect.void);'
+      name: runPromise
+
+  # A View renders atom values and writes atoms back; every piece of state or
+  # behaviour lives in its ViewModel (ADR-0026, ADR-0037).
+  web-view-file:
     members:
       - message: >-
           `{name}` puts state or behaviour in the View, where it can only be tested through a
           renderer. A View's whole contract is "given these atom values, render this; on this
           interaction, write that" — move it to the sibling *.view-model.ts as an atom and read it
-          here with useAtomValue/useAtomSet (ADR-0026).
+          here with atomValue/atomSet (ADR-0026, ADR-0037).
         subject: calls
-        # Anything in `use*` position. The allowlist is the atom-React bindings
-        # plus the two hooks that carry no state of their own: an SSR-safe unique
-        # id, and a memo over a handler that already delegates.
-        match: "use[A-Z]*"
-        allow:
-          - useAtom
-          - useAtomValue
-          - useAtomSet
-          - useAtomSuspense
-          - useAtomRefresh
-          - useAtomSubscribe
-          - useAtomMount
-          - useAtomInitialValues
-          - useId
-          - useCallback
+        # Every rune and every lifecycle or context function Svelte exports. The
+        # allowlist is $props, the one rune that only receives what the route passes.
+        match:
+          - "[$]*"
+          - onMount
+          - onDestroy
+          - beforeUpdate
+          - afterUpdate
+          - tick
+          - untrack
+          - flushSync
+          - setContext
+          - getContext
+          - hasContext
+          - getAllContexts
+          - createContext
+          - mount
+          - hydrate
+        allow: ["$props"]
+        probe:
+          source: '<script lang="ts">let count = $state(0);</script>'
+          name: $state
     imports:
       reset: true
       message: >-
-        A View depends on its ViewModel, and on nothing else (ADR-0026). It may not reach past it
-        into services/ — not the API atoms, not the notification or navigation seams, not the
-        runtime. Everything it renders or dispatches arrives as an atom its own ViewModel exposes;
-        that is what lets the ViewModel be tested with no renderer and the View with no server.
-      external: [effect, "@effect/atom-react", react]
-      allow: ["~/web/features/{feature}/**", "~/components/**", "~/contracts/**"]
+        A View depends on its ViewModel and the bridge that reads it, and on nothing else
+        (ADR-0026). It may not reach past them into services/ — not the API atoms, not the
+        notification or navigation seams, not the registry. Everything it renders or dispatches
+        arrives as an atom its own ViewModel exposes.
+      allow:
+        - "~/web/features/{feature}/**"
+        - "~/web/services/bridge/atom-bridge.svelte.ts"
+        - "~/web/services/bridge/atom-result.svelte"
+        - "~/components/**"
+        - "~/contracts/**"
       deny:
-        # Reaching for these means the logic belongs in the ViewModel. Schema,
-        # Option, Result and friends are fine.
         - match:
             - "**/effect/**/Effect.js"
             - "**/effect/**/Stream.js"
@@ -65,31 +114,21 @@ defs:
             the sibling *.view-model.ts. A View may still use Schema, Option, Result, Predicate,
             Duration, Array and the reactivity types it renders.
 
-  # A feature's unit tests run under a bare AtomRegistry or renderView; its
-  # integration tests under __tests__/ render a route through the harness.
-  web-unit-test-file:
-    surface: [{ use: test-exports-nothing }]
-    imports:
-      reset: true
-      message: >-
-        A web unit test reaches the tier it exercises, the harnesses under test/, the renderer
-        testing library and the contracts it asserts against. It never reaches the server, and
-        it never renders a route — that is the integration test under __tests__/.
-      external: [effect, vitest, "@testing-library/react", "@testing-library/user-event"]
-      allow: ["~/web/**", "~/contracts/**"]
-
+  # A feature integration test renders Views through the integration harness
+  # and drives them through the tier-agnostic page drivers.
   web-integration-test-file:
     surface: [{ use: test-exports-nothing }]
     imports:
       reset: true
       message: >-
-        A feature integration test renders a route through the integration harness and drives
-        it through the tier-agnostic page drivers, so it names react and @org/test-drivers
-        beside what a unit test may.
-      external: [vitest, react, "@testing-library/react", "@testing-library/user-event"]
+        A feature integration test renders a feature's Views through the integration harness and
+        drives them through the tier-agnostic page drivers, so it names @org/test-drivers beside
+        what a unit test may.
+      external: [vitest, "@testing-library/svelte", "@testing-library/user-event"]
       allow: ["~/web/**", "~/contracts/**", "~/test-drivers/**"]
 
-  view-model-file:
+  web-view-model-file:
+    members: [{ use: runs-no-effect }]
     message: >-
       Every *.view-model.ts needs a sibling *.view-model.test.ts (ADR-0026 — the ViewModel holds
       all of a feature's behaviour and runs under a bare AtomRegistry, so it is the tier that must
@@ -99,140 +138,234 @@ defs:
       reset: true
       message: >-
         A ViewModel is framework-agnostic: it runs under a bare AtomRegistry in a test with no
-        renderer anywhere (ADR-0026). It may not import react, react-dom, the atom React bindings,
-        or a View — the arrow points View → ViewModel → Model and never back. A ViewModel that
-        needs a hook is a View that has been misfiled.
+        renderer anywhere (ADR-0026). It may not import svelte, SvelteKit, the bridge or a View —
+        the arrow points View → ViewModel → Model and never back. A ViewModel that needs a rune is
+        a View that has been misfiled.
       external: [effect]
-      allow: ["~/web/services/**", "~/web/features/{feature}/*.view-model.ts", "~/contracts/**"]
+      allow:
+        - "~/web/services/atom/**"
+        - "~/web/services/data-access/**"
+        - "~/web/services/format/**"
+        - "~/contracts/**"
 
 name: kebab-case
 message: >-
-  packages/web is the Next App Router renderer: app/ holds the routes, features/ the MVVM
-  tiers, services/ the Model, lib/ and test/ the supporting code. There is no fifth folder — a
-  new one is a new tier.
+  packages/web is the SvelteKit renderer: src/ holds the routes and hooks, features/ the
+  MVVM tiers, services/ the Model, test/ the harnesses. There is no fifth folder — a new one is a
+  new tier.
 surface:
-  # Next loads a route file and the config by their default exports.
+  # Vite and Kit load their configuration, and a route its component, by default export.
   - use: no-default-exports
-    except: ["**/vitest.config.ts", "~/web/app/**", "~/web/next.config.ts"]
-  - message: >-
-      No `export *` in web. A star re-export republishes every name of its target, so a barrel
-      stops saying what it publishes. Re-export by name. The one exemption is the test fixtures
-      barrel, a harness that exists to gather them.
-    kinds: [namespace]
-    except: ["~/web/test/fixtures/index.ts"]
+    except: ["**/vitest.config.ts", "~/web/vite.config.ts"]
 imports:
   message: >-
-    packages/web consumes the component library and the shared contracts. It reaches a
-    third-party visual library only through @org/components (ADR-0015), and there is no
-    TanStack: state is Effect Atom (ADR-0026).
-  external:
-    - effect
-    - "@effect/atom-react"
-    - react
-    - react-dom
-    - next
-    - "@vercel/otel"
-    - server-only
-  allow: ["node:**", "~/web/**", "~/components/**", "~/contracts/**"]
+    packages/web consumes the Svelte component library and the shared contracts. It
+    reaches a third-party visual library only through @org/components (ADR-0015), and its
+    state is Effect Atom (ADR-0026).
+  external: [svelte, "@sveltejs/kit"]
+  allow: ["~/web/**", "~/components/**", "~/contracts/**"]
 children:
-  # Build configuration. Declared rather than left to fall through to the
-  # taxonomy root, and narrow: a config file names the tool it configures.
-  "instrumentation.ts | next.config.ts | vitest.config.ts | next-env.d.ts":
+  "features/":
+    message: >-
+      Files in packages/web/features/** carry a view-tier stereotype (ADR-0026): a View is
+      *.view.svelte, all behaviour is *.view-model.ts, and tests are *.test.ts. There is no
+      presenter tier.
+    children:
+      "{feature}/":
+        # __root holds the chrome every route shares — a slot in the layout
+        # rather than a feature, and the one folder here not named after one.
+        name:
+          regex: "^(?:__root|[a-z0-9]+(?:-[a-z0-9]+)*)$"
+          message: >-
+            A feature folder is kebab-case, named after the feature. The one exception is __root,
+            the chrome every route shares.
+        message: >-
+          Files in packages/web/features/** carry a view-tier stereotype (ADR-0026):
+          *.view.svelte, *.view-model.ts, or *.test.ts. There is no presenter tier.
+        children:
+          "*.view.svelte": { use: web-view-file }
+          "*.view-model.ts": { use: web-view-model-file }
+          "*.view-model.test.ts": { use: web-unit-test-file }
+          "*.view.test.ts": { use: web-component-test-file }
+          "__tests__/":
+            message: >-
+              __tests__/ holds a feature's integration tests, *.integration.test.ts, and the
+              test-*-page.svelte each one renders: the feature's Views composed as their route
+              composes them, with MSW standing in for the prefetch.
+            children:
+              "*.integration.test.ts": { use: web-integration-test-file }
+              "test-*-page.svelte":
+                imports:
+                  reset: true
+                  message: >-
+                    A test page composes the feature's Views as their route does, around the
+                    hydration boundary, with the fixtures it passes them.
+                  allow:
+                    - "~/web/features/**/*.view.svelte"
+                    - "~/web/services/bridge/hydration-boundary.svelte"
+                    - "~/web/test/fixtures/**"
+          "**/":
+            children:
+              "*.view.svelte": { use: web-view-file }
+              "*.view-model.ts": { use: web-view-model-file }
+              "*.view-model.test.ts": { use: web-unit-test-file }
+              "*.view.test.ts": { use: web-component-test-file }
+
+  "vite.config.ts | vitest.config.ts":
+    surface:
+      - message: >-
+          A configuration file exports its default and nothing else: the tool that loads it reads
+          nothing named.
+        kinds: [named]
     imports:
       reset: true
       message: >-
         A build-configuration file names the tool it configures and nothing else — no features,
         no services, no components.
-      external: [next, vitest, "@vercel/otel"]
-      allow: ["node:**"]
+      external:
+        - vite
+        - vitest
+        - "@sveltejs/kit"
+        - "@sveltejs/vite-plugin-svelte"
+        - "@tailwindcss/vite"
+        - "@testing-library/svelte"
+      allow: ["~/web/aliases.ts"]
+  # The alias table Vite and Vitest share.
+  "aliases.ts": {}
 
-  # Framework surface: routes compose the Model directly (prefetch and the
-  # hydration boundary), which is why the View restrictions stop here.
-  "app/":
+  # Framework surface: the routes compose the Model directly (the prefetch and
+  # the hydration boundary), which is why the View restrictions stop here.
+  "src/":
     layout: open
+    # Kit names its route files `+page`, `+layout`, `+error` and `+server`.
+    name:
+      regex: "^(?:\\+(?:page|layout|error|server)|[a-z0-9]+(?:-[a-z0-9]+)*)$"
+      message: >-
+        A file under src/ is kebab-case, or one of SvelteKit's route files: +page, +layout,
+        +error, +server.
     message: >-
-      app/ holds the Next file-based routes. It is framework surface: it composes the Model
-      directly and keeps its intrinsics, so the View restrictions do not apply here.
+      src/ is SvelteKit's: the file-based routes, the server hooks and the ambient app types. It
+      is framework surface: it composes the Model directly, so the View restrictions do not apply
+      here.
     children:
+      "hooks.server.test.ts": { use: web-unit-test-file }
       "**/": { layout: open, children: {} }
 
-  "features/":
-    message: >-
-      Files in packages/web/features/** must carry a view-tier stereotype (ADR-0026): a naked
-      component is *.view.tsx, all behaviour is *.view-model.ts, and tests are *.test.{ts,tsx}.
-      A bare component file has no stereotype — rename it *.view.tsx. There is no presenter
-      tier.
-    children:
-      "{feature}/":
-        # __root holds the chrome every route shares — a slot in the
-        # layout rather than a feature, and the one folder here that is
-        # not named after one.
-        name:
-          regex: "^(?:__root|[a-z0-9]+(?:-[a-z0-9]+)*)$"
-          message: >-
-            A feature folder is kebab-case, named after the feature. The one exception is
-            __root, the chrome every route shares.
-        message: >-
-          Files in packages/web/features/** must carry a view-tier stereotype (ADR-0026):
-          *.view.tsx, *.view-model.ts, or *.test.{ts,tsx}. There is no presenter tier.
-        children:
-          "*.view.tsx": { use: view-file }
-          "*.view-model.ts": { use: view-model-file }
-          "*.test.ts | *.test.tsx": { use: web-unit-test-file }
-          "__tests__/":
-            message: >-
-              __tests__/ holds a feature's integration tests, *.integration.test.tsx: a route
-              rendered through the integration harness and driven through the page drivers.
-            children:
-              "*.integration.test.ts | *.integration.test.tsx": { use: web-integration-test-file }
-          "**/":
-            children:
-              "*.view.tsx": { use: view-file }
-              "*.view-model.ts": { use: view-model-file }
-              "*.test.ts | *.test.tsx": { use: web-unit-test-file }
-
   "services/":
-    layout: open
     message: >-
-      services/ is the Model: the API atoms, the transport, the reactivity keys, the bridges
-      and the formatters. It is the innermost tier and knows nothing about the features that
-      read it.
+      services/ is the Model: the API atoms, the transport, the reactivity keys, the formatters,
+      and the bridge that hands atoms to Svelte. It is the innermost tier and knows nothing about
+      the features that read it.
     imports:
       reset: true
       message: >-
         The Model is the innermost tier (ADR-0026). A services/ file importing from features/
         inverts the arrow and couples the API surface to a screen.
-      external: [effect, "@effect/atom-react", react, react-dom, next, server-only]
-      allow: ["node:**", "~/web/services/**", "~/components/**", "~/contracts/**"]
+      external: [effect, svelte, "@sveltejs/kit"]
+      allow: ["~/web/services/**", "~/components/primitives/**", "~/contracts/**"]
     children:
-      "*.test.ts | *.test.tsx": { use: web-unit-test-file }
-      "**/":
-        layout: open
+      "api-client.shared.ts": {}
+      # The server tier: the per-request runtime and the client it carries, which
+      # run Effects on behalf of a load function.
+      "api-client.server.ts | runtime.server.ts": {}
+      "atom/":
+        message: >-
+          atom/ is the framework-free kernel: the API atoms and their transport, the reactivity
+          keys, form validation, the notification and navigation seams, and dehydration.
         children:
-          "*.test.ts | *.test.tsx": { use: web-unit-test-file }
-
-  "lib/": { layout: open, children: {} }
+          "*.shared.ts | reactivity-keys.ts | form-validation.ts":
+            members: [{ use: runs-no-effect }]
+          "*-bridge.test.ts": { use: web-component-test-file }
+          # The provider owns the browser's registry; the bridges turn seam state
+          # into a toast or a router call.
+          "atom-provider.svelte | *-bridge.svelte": {}
+          "tracing.client.ts": {}
+          # A prefetch runs a query's Effect on the request's runtime.
+          "*.server.ts": {}
+          "*.shared.test.ts | form-validation.test.ts | *.server.test.ts":
+            use: web-unit-test-file
+      "data-access/":
+        message: data-access/ binds each feature's slice of the API to query and mutation atoms.
+        children:
+          "*.atoms.ts": { members: [{ use: runs-no-effect }] }
+          "*.server.ts": {}
+          "*.server.test.ts": { use: web-unit-test-file }
+      "format/":
+        message: format/ holds the presentation helpers a ViewModel formats values with.
+        children:
+          "*.shared.ts": { members: [{ use: runs-no-effect }] }
+      "bridge/":
+        message: >-
+          bridge/ hands atoms to Svelte: the registry context, the reactive reads and writes, the
+          result component that stands in for a suspense read, and the hydration boundary.
+        children:
+          "*.ts | *.svelte.ts | *.svelte": {}
+          # The bridge's own tests flush Svelte's scheduler between a write and a read.
+          "*.test.ts":
+            use: web-component-test-file
+            imports:
+              reset: true
+              message: >-
+                A bridge test renders a probe component through the testing library and flushes
+                Svelte's scheduler between a write and a read. It reaches the bridge through its
+                probes.
+              external:
+                [effect, svelte, vitest, "@testing-library/svelte", "@testing-library/user-event"]
+              allow: ["~/web/test/bridge/**"]
 
   "test/":
-    layout: open
     message: >-
-      test/ holds the harnesses: the atom registry, the integration harness, MSW handlers and
-      fixtures.
+      test/ holds the harnesses: the jsdom setup, the atom registry, the integration harness, MSW
+      handlers and fixtures.
     imports:
       reset: true
       message: >-
-        A web harness reaches the tier it stages, the component library and the contracts it
-        serves. It never reaches the server.
-      external:
-        - effect
-        - "@effect/atom-react"
-        - react
-        - react-dom
-        - msw
-        - vitest
-        - "@testing-library/react"
-        - "@testing-library/jest-dom"
-        - "@testing-library/user-event"
-      allow: ["node:**", "~/web/**", "~/components/**", "~/contracts/**", "~/test-drivers/**"]
+        A web harness reaches the tier it stages, the component library's own test setup and the
+        contracts it serves. It never reaches the server.
+      external: [effect, svelte, msw, vitest, "@testing-library/svelte"]
+      allow:
+        - "~/components/test/setup.ts"
+        - "~/components/primitives/**"
+        - "~/components/providers/**"
+        - "~/web/services/**"
+        - "~/web/test/**"
+        - "~/contracts/**"
     children:
-      "**/": { layout: open, children: {} }
+      "setup.ts | msw-server.ts | typed-handler.ts": {}
+      "atom-harness.ts | integration-harness.ts | server-runtime.ts": {}
+      "view-harness.svelte | integration-providers.svelte": {}
+      # The spike that proves typedHandler round-trips stands up its own MSW server.
+      "typed-handler.test.ts":
+        use: web-unit-test-file
+        imports:
+          reset: true
+          message: >-
+            The typed-handler spike stands up its own MSW server against the real contracts, and
+            reaches nothing else.
+          external: [effect, vitest, msw]
+          allow: ["~/web/test/typed-handler.ts", "~/contracts/**"]
+      "fixtures/":
+        # The barrel gathers the fixtures for the tests that take several at once.
+        surface:
+          - message: >-
+              No `export *` outside the fixtures barrel: a star re-export stops saying what a
+              barrel publishes.
+            kinds: [namespace]
+            except: ["~/web/test/fixtures/index.ts"]
+        children:
+          "*.ts": {}
+          "*.test.ts": { use: web-unit-test-file }
+      "handlers/":
+        children:
+          "*.ts": {}
+      "bridge/ | navigation/":
+        message: >-
+          test/bridge/ and test/navigation/ hold the probe components the bridge's and the
+          navigation bridge's own tests render.
+        children:
+          "*-probe.svelte": {}
+      # `$app/*` outside a Kit render: Vitest resolves the specifier here, and a
+      # test mocks what it needs.
+      "kit/":
+        children:
+          "server.ts | navigation.ts | state.ts | env.ts": {}

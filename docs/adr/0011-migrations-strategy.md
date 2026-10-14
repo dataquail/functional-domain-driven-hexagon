@@ -1,6 +1,6 @@
 # ADR-0011: Migrations — forward-only TypeScript modules
 
-- Status: Accepted
+- Status: Accepted; amended by [ADR-0038](0038-neon-behind-hyperdrive.md) — a deployed stage is migrated from Node against its Neon direct URL, over TLS when the URL asks for it
 - Date: 2026-04-24
 
 ## Context and Problem Statement

@@ -16,6 +16,7 @@ const SUMMARY_FILE = join(ROOT, "coverage", "coverage-summary.json");
 const BUCKETS = [
   ["@org/server", "packages/server/"],
   ["@org/web", "packages/web/"],
+  ["@org/components", "packages/components/"],
   ["@org/database", "packages/database/"],
   ["@org/contracts", "packages/contracts/"],
   ["@org/jobs", "packages/jobs/"],

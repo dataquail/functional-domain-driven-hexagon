@@ -7,9 +7,9 @@ import {
   PlusIcon as LucidePlusIcon,
   Trash2Icon as LucideTrash2Icon,
   XIcon as LucideXIcon,
-} from "lucide-react";
+} from "@lucide/svelte";
 
-import { createIcon } from "./icon";
+import { createIcon } from "./create-icon";
 
 export const PlusIcon = createIcon(LucidePlusIcon);
 export const TrashIcon = createIcon(LucideTrash2Icon);

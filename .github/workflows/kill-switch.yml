@@ -1,0 +1,55 @@
+name: Kill switch
+
+# Applies the repository's KILL_SWITCH variable to the zone now:
+# `true` blocks every request to the app and identity hosts, `false` lifts the
+# block. Set the variable first; every prod deploy reads the same value, so a
+# later deploy never lifts the switch on its own. Only the zone's kill-switch
+# rule is deployed — no Worker changes.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    name: Apply KILL_SWITCH=${{ vars.KILL_SWITCH || 'false' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    # The whole declaration evaluates even for one resource, so it reads what a deploy does.
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+      APP_DOMAIN: ${{ vars.APP_DOMAIN }}
+      KILL_SWITCH: ${{ vars.KILL_SWITCH || 'false' }}
+      USAGE_ALERT_EMAIL: ${{ vars.USAGE_ALERT_EMAIL }}
+      USAGE_ALERT_PRODUCT: ${{ vars.USAGE_ALERT_PRODUCT }}
+      USAGE_ALERT_LIMIT: ${{ vars.USAGE_ALERT_LIMIT }}
+      USAGE_ALERT_WEBHOOK_URL: ${{ vars.USAGE_ALERT_WEBHOOK_URL }}
+      USAGE_ALERT_WEBHOOK_SECRET: ${{ secrets.USAGE_ALERT_WEBHOOK_SECRET }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      SESSION_COOKIE_SECRET: ${{ secrets.SESSION_COOKIE_SECRET }}
+      IDENTITY_CLIENT_ID: ${{ vars.IDENTITY_CLIENT_ID }}
+      IDENTITY_CLIENT_SECRET: ${{ secrets.IDENTITY_CLIENT_SECRET }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+      STRIPE_PRICE_ID_DEFAULT: ${{ vars.STRIPE_PRICE_ID_DEFAULT }}
+      MAIL_FROM_ADDRESS: ${{ vars.MAIL_FROM_ADDRESS }}
+      IDENTITY_MAIL_FROM_ADDRESS: ${{ vars.MAIL_FROM_ADDRESS }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - uses: ./.github/actions/setup
+
+      - name: Deploy the kill-switch rule
+        working-directory: packages/infra
+        run: pnpm exec alchemy deploy --stage prod --include kill-switch --yes

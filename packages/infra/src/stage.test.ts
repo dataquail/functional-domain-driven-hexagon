@@ -1,7 +1,15 @@
 import { describe, expect, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 
-import { kindOfStage, previewBranchExpiresAt } from "./stage.js";
+import {
+  appCallbackUrl,
+  appSignedOutUrl,
+  identityIssuer,
+  kindOfStage,
+  previewBranchExpiresAt,
+  stageHosts,
+  workerName,
+} from "./stage.js";
 
 describe("kindOfStage", () => {
   it("keeps prod and staging on databases of their own", () => {
@@ -20,5 +28,59 @@ describe("previewBranchExpiresAt", () => {
     const deployedAt = DateTime.makeUnsafe("2026-10-10T12:00:00Z");
 
     expect(previewBranchExpiresAt(deployedAt)).toBe("2026-10-17T12:00:00.000Z");
+  });
+});
+
+describe("workerName", () => {
+  it("names each Worker after its stage so a preview's workers.dev URL is predictable", () => {
+    expect(workerName("pr-42", "web")).toBe("hexagon-pr-42-web");
+    expect(workerName("dev_Alice", "identity")).toBe("hexagon-dev-alice-identity");
+  });
+});
+
+describe("stageHosts", () => {
+  const settings = { appDomain: "example.com", workersSubdomain: "acme" };
+
+  it("serves prod on the bare app and auth hosts", () => {
+    expect(stageHosts("prod", settings)).toEqual({
+      appUrl: "https://app.example.com",
+      identityUrl: "https://auth.example.com",
+      appHostname: "app.example.com",
+      identityHostname: "auth.example.com",
+    });
+  });
+
+  it("serves staging one level down", () => {
+    const hosts = stageHosts("staging", settings);
+
+    expect(hosts.appUrl).toBe("https://app.staging.example.com");
+    expect(identityIssuer(hosts)).toBe("https://auth.staging.example.com/api/auth");
+  });
+
+  it("serves a preview on workers.dev, outside the zone", () => {
+    const hosts = stageHosts("pr-7", settings);
+
+    expect(hosts).toEqual({
+      appUrl: "https://hexagon-pr-7-web.acme.workers.dev",
+      identityUrl: "https://hexagon-pr-7-identity.acme.workers.dev",
+      appHostname: undefined,
+      identityHostname: undefined,
+    });
+    expect(appCallbackUrl(hosts)).toBe(
+      "https://hexagon-pr-7-web.acme.workers.dev/api/auth/callback",
+    );
+    expect(appSignedOutUrl(hosts)).toBe("https://hexagon-pr-7-web.acme.workers.dev/");
+  });
+
+  it("refuses a long-lived stage without a domain", () => {
+    expect(() => stageHosts("prod", { appDomain: undefined, workersSubdomain: "acme" })).toThrow(
+      "APP_DOMAIN is required to deploy stage 'prod'",
+    );
+  });
+
+  it("refuses a preview without the account's workers.dev subdomain", () => {
+    expect(() =>
+      stageHosts("pr-7", { appDomain: "example.com", workersSubdomain: undefined }),
+    ).toThrow("CLOUDFLARE_WORKERS_SUBDOMAIN is required to deploy stage 'pr-7'");
   });
 });

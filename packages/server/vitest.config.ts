@@ -3,12 +3,6 @@ import { mergeConfig, type UserConfigExport } from "vitest/config";
 import shared from "../../vitest.shared.js";
 
 const config: UserConfigExport = {
-  // React Email templates (`infrastructure/external/*.tsx`) are transformed
-  // with the automatic JSX runtime so tests can import the adapters that
-  // render them without a classic `import React` in every template.
-  oxc: {
-    jsx: { runtime: "automatic" },
-  },
   test: {
     alias: {
       "@/": path.join(import.meta.dirname, "src") + "/",

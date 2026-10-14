@@ -28,11 +28,6 @@ const PROBES = [
     source: "export const probe = 1;\n",
   },
   {
-    rule: "architecture/structure",
-    file: "packages/web/features/zzprobe-untiered.tsx",
-    source: "export const Probe = () => null;\n",
-  },
-  {
     // Naming: the stereotype suffix is right, the concept name in front of it
     // is not. Without this the layout rule admits the file and nothing else
     // looks at the name.
@@ -76,27 +71,6 @@ const PROBES = [
     file: "packages/server/src/zzprobe-push.ts",
     source:
       "const items: Array<number> = [];\nconst target: Array<number> = [];\ntarget.push(...items);\n\nexport const probe = target;\n",
-  },
-  {
-    rule: "local/lucide-icon-suffix",
-    file: "packages/components/primitives/zzprobe-lucide.ts",
-    source: 'import { Clock } from "lucide-react";\n\nexport const probe = Clock;\n',
-  },
-  {
-    rule: "local/no-inline-styling",
-    file: "packages/web/features/zzprobe/probe-styling.view.tsx",
-    source: 'export const Probe = () => <Probe className="p-4" />;\n',
-  },
-  {
-    rule: "architecture/members",
-    file: "packages/web/features/zzprobe/probe-hooks.view.tsx",
-    source:
-      'import * as React from "react";\n\nexport const Probe = () => {\n  const [n] = React.useState(0);\n  return n;\n};\n',
-  },
-  {
-    rule: "react/forbid-elements",
-    file: "packages/web/features/zzprobe/probe-intrinsic.view.tsx",
-    source: "export const Probe = () => <div />;\n",
   },
   {
     rule: "architecture/exports",
@@ -157,9 +131,9 @@ const PROBES = [
   },
   {
     rule: "local/no-deep-relative-imports",
-    file: "packages/web/features/zzprobe/deep/probe.view.tsx",
+    file: "packages/web/features/zzprobe/deep/probe.view-model.ts",
     source:
-      'import { probe as p } from "../../../services/format/probe";\n\nexport const Probe = () => p;\n',
+      'import { probe as p } from "../../../services/format/probe";\n\nexport const probe = p;\n',
   },
   {
     rule: "local/no-relative-import-outside-package",
@@ -174,32 +148,17 @@ const PROBES = [
       "export type ProbeRepositoryShape = {\n  readonly findOneById: (id: string) => string;\n};\n",
   },
   {
-    rule: "local/enforce-react-namespace",
-    file: "packages/components/primitives/zzprobe-react-ns.tsx",
-    source: 'import { useState } from "react";\n\nexport const probe = useState;\n',
-  },
-  {
-    rule: "architecture/structure",
-    file: "packages/components/primitives/zzprobe/probe.tsx",
-    source: "export const Probe = () => null;\n",
-  },
-  {
-    rule: "architecture/structure",
-    file: "packages/components/patterns/zzprobe/probe.tsx",
-    source: "export const Probe = () => null;\n",
-  },
-  {
     // oxlint hands a Svelte component's script blocks to the plugin; these two
     // prove both families reach a `.svelte` file: a component without its story,
     // and one that imports the web app.
     rule: "architecture/structure",
     message: "needs a sibling *.stories.svelte",
-    file: "packages/components-svelte/primitives/zzprobe-parity.svelte",
+    file: "packages/components/primitives/zzprobe-parity.svelte",
     source: '<script lang="ts">\n  const probe = 1;\n</script>\n\n<span>{probe}</span>\n',
   },
   {
     rule: "architecture/imports",
-    file: "packages/components-svelte/primitives/zzprobe-web.svelte",
+    file: "packages/components/primitives/zzprobe-web.svelte",
     source:
       '<script lang="ts">\n  import { probe } from "../../web/test/setup";\n</script>\n\n<span>{probe}</span>\n',
   },
@@ -225,7 +184,7 @@ const PROBES = [
   },
   {
     rule: "architecture/structure",
-    file: "packages/web/features/zzprobe/probe.view-model.ts",
+    file: "packages/web/features/zzprobe/parity.view-model.ts",
     source: "export const probeAtom = null;\n",
   },
   {
@@ -277,7 +236,7 @@ const PROBES = [
     rule: "architecture/imports",
     message:
       "Only the Svelte component library's primitives/ may name a third-party visual library.",
-    file: "packages/components-svelte/providers/zzprobe-bits.svelte",
+    file: "packages/components/providers/zzprobe-bits.svelte",
     source:
       '<script lang="ts">\n  import { Label } from "bits-ui";\n</script>\n\n<Label.Root>probe</Label.Root>\n',
   },
@@ -285,7 +244,7 @@ const PROBES = [
     // The prop surface, read out of a Svelte component's module script.
     rule: "architecture/members",
     message: "reopens the component's surface to arbitrary paint",
-    file: "packages/components-svelte/patterns/zzprobe-members.svelte",
+    file: "packages/components/patterns/zzprobe-members.svelte",
     source:
       '<script module lang="ts">\n  export type ZzProbeProps = { readonly class?: string };\n</script>\n\n<span>probe</span>\n',
   },
@@ -294,21 +253,21 @@ const PROBES = [
     // (ADR-0036): a pattern painting a raw element, a class, and a style.
     linter: "eslint",
     rule: "svelte/no-restricted-html-elements",
-    file: "packages/components-svelte/patterns/zzprobe-element.svelte",
+    file: "packages/components/patterns/zzprobe-element.svelte",
     source: "<div>probe</div>\n",
   },
   {
     linter: "eslint",
     rule: "no-restricted-syntax",
     message: "A class or a style handed to an element from a screen",
-    file: "packages/components-svelte/patterns/zzprobe-class.svelte",
+    file: "packages/components/patterns/zzprobe-class.svelte",
     source:
       '<script lang="ts">\n  import Stack from "../primitives/stack.svelte";\n</script>\n\n<Stack class="p-4" />\n',
   },
   {
     linter: "eslint",
     rule: "svelte/no-inline-styles",
-    file: "packages/components-svelte/patterns/zzprobe-style.svelte",
+    file: "packages/components/patterns/zzprobe-style.svelte",
     source: '<span style="color: red">probe</span>\n',
   },
   {
@@ -317,42 +276,42 @@ const PROBES = [
     // Effect by hand, and a file in features/ with no view-tier stereotype.
     rule: "architecture/members",
     message: "puts state or behaviour in the View",
-    file: "packages/web-svelte/features/zzprobe/probe.view.svelte",
+    file: "packages/web/features/zzprobe/probe.view.svelte",
     source: '<script lang="ts">\n  let count = $state(0);\n</script>\n\n{count}\n',
   },
   {
     rule: "architecture/imports",
     message: "A View depends on its ViewModel and the bridge that reads it",
-    file: "packages/web-svelte/features/zzprobe/reach.view.svelte",
+    file: "packages/web/features/zzprobe/reach.view.svelte",
     source:
       '<script lang="ts">\n  import { apiTransportAtom } from "@/services/atom/api-transport.shared";\n  const probe = apiTransportAtom;\n</script>\n\n{String(probe)}\n',
   },
   {
     rule: "architecture/members",
     message: "runs an Effect by hand, outside the atom runtime",
-    file: "packages/web-svelte/features/zzprobe/probe.view-model.ts",
+    file: "packages/web/features/zzprobe/probe.view-model.ts",
     source:
       'import * as Effect from "effect/Effect";\n\nexport const probe = Effect.runPromise(Effect.void);\n',
   },
   {
     rule: "architecture/structure",
-    file: "packages/web-svelte/features/zzprobe-untiered.ts",
+    file: "packages/web/features/zzprobe-untiered.ts",
     source: "export const probe = 1;\n",
   },
   {
     // The same markup rules as the library's patterns, on the app's Views and routes.
     linter: "eslint",
     rule: "svelte/no-restricted-html-elements",
-    file: "packages/web-svelte/features/zzprobe/element.view.svelte",
+    file: "packages/web/features/zzprobe/element.view.svelte",
     source: "<div>probe</div>\n",
   },
   {
     linter: "eslint",
     rule: "no-restricted-syntax",
     message: "A class or a style handed to an element from a screen",
-    file: "packages/web-svelte/src/routes/zzprobe/+page.svelte",
+    file: "packages/web/src/routes/zzprobe/+page.svelte",
     source:
-      '<script lang="ts">\n  import Stack from "@org/components-svelte/primitives/stack.svelte";\n</script>\n\n<Stack class="p-4" />\n',
+      '<script lang="ts">\n  import Stack from "@org/components/primitives/stack.svelte";\n</script>\n\n<Stack class="p-4" />\n',
   },
   {
     // Circularity is the one dependency-cruiser rule with no per-file

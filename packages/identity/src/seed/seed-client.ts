@@ -54,7 +54,7 @@ export const assertIdentityReachable = (
     },
     (cause: unknown) => {
       throw new Error(
-        `The identity Worker is not reachable at ${discovery}. Start it with \`pnpm dev:cf\`. (${String(cause)})`,
+        `The identity Worker is not reachable at ${discovery}. Start it with \`pnpm dev\`. (${String(cause)})`,
       );
     },
   );

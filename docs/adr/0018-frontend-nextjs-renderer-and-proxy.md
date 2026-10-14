@@ -1,6 +1,6 @@
 # ADR-0018: Frontend renderer is Next.js; the Effect server stays the BFF
 
-- Status: Accepted
+- Status: Superseded by [ADR-0037](0037-sveltekit-renderer-on-workers.md) — the renderer is the SvelteKit Worker, and Next is deleted; the BFF and proxy decisions carry over
 - Amended: 2026-10-11 by ADR-0037 — the renderer and its `/api` proxy move into a SvelteKit Worker; Next goes in Phase 7.
 - Amended: 2026-10-11 by ADR-0035 — the `/api/*` rewrite targets the server Worker.
 - Amended: 2026-08-21 — sub-decision 1 restated over Effect Atom (ADR-0026). The

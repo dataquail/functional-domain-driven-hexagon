@@ -1,36 +1,23 @@
 # functional-domain-driven-hexagon Overview
 
-A monorepo containing:
+A monorepo of three Cloudflare Workers and the packages they share, declared and deployed by one Alchemy stack:
 
-- `packages/web-svelte`: the SvelteKit renderer, a Cloudflare Worker that proxies `/api/*` to the BFF over a service binding (see [ADR-0037](docs/adr/0037-sveltekit-renderer-on-workers.md))
-- `packages/web`: the Next.js (App Router) renderer it replaces in Phase 7 (see [ADR-0018](docs/adr/0018-frontend-nextjs-renderer-and-proxy.md))
-- `packages/components`: the React component library (primitives + patterns) and its Storybook ([ADR-0015](docs/adr/0015-frontend-component-library.md))
-- `packages/components-svelte`: the same library in Svelte 5, growing beside the React one until the SvelteKit cutover ([ADR-0036](docs/adr/0036-svelte-component-library-and-its-lint.md))
-- `packages/server`: Effect-based BFF / API server, run as a Cloudflare Worker (the auth authority — see ADR-0034, ADR-0035)
+- `packages/web`: the SvelteKit app, a Cloudflare Worker that proxies `/api/*` to the server over a service binding (see [ADR-0037](docs/adr/0037-sveltekit-renderer-on-workers.md))
+- `packages/components`: the Svelte 5 component library (primitives + patterns) and its Storybook ([ADR-0015](docs/adr/0015-frontend-component-library.md), [ADR-0036](docs/adr/0036-svelte-component-library-and-its-lint.md))
+- `packages/server`: the Effect-based BFF / API server, run as a Cloudflare Worker (the auth authority — see ADR-0034, ADR-0035)
 - `packages/identity`: the identity Worker — Better Auth as the OIDC issuer the server signs users in against
-- `packages/infra`: the Alchemy stack (Neon, Hyperdrive, Queues, Workers)
-- `packages/contracts`: Shared HTTP API contracts consumed by both web and server
-- `packages/database`: Database schema, migrations, and SQL access primitives
-- `packages/jobs`: Cron jobs as Effects, run by the server Worker's `scheduled` handler
-- `packages/acceptance`: Playwright acceptance suite
-
-## Setup in a codespace
-
-The whole stack — Postgres, migrations, the identity Worker with a seeded OIDC
-client and admin user, Mailpit, Jaeger — comes up provisioned when you create a
-codespace on a branch, which is the quickest way to work several features in
-parallel. See [docs/codespaces.md](docs/codespaces.md).
+- `packages/infra`: the Alchemy stack (Neon, Hyperdrive, Queues, the three Workers, the zone's rules)
+- `packages/contracts`: shared HTTP API contracts consumed by both web and server
+- `packages/database`: database access primitives and migrations
+- `packages/jobs`: cron jobs as Effects, run by the server Worker's `scheduled` handler
+- `packages/cli`, `packages/mcp`, `packages/api-client`: the command-line client, its MCP server, and the typed client they share
+- `packages/acceptance`: the Playwright acceptance suite
 
 ## Prerequisites
 
-To run locally instead, install these on your machine:
-
-- **Node 22** — `.nvmrc` pins the exact version CI runs (22.13.1); `engines.node` accepts any 22.x at or above it. Use whatever version manager you like (`mise`, `fnm`, `nvm`, `asdf`).
+- **Node 24** — `.nvmrc` pins the exact version CI runs (24.21.0). Use whatever version manager you like (`mise`, `fnm`, `nvm`, `asdf`).
 - **pnpm 10.3.0** — auto-activated by [corepack](https://nodejs.org/api/corepack.html), which ships with Node. Run `corepack enable` once after installing Node.
-- **Docker Desktop** (or any Docker + docker-compose) — runs Postgres, Mailpit and Jaeger.
-  - [Install Docker](https://docs.docker.com/get-docker/)
-
-That's it. The server uses [tsx](https://github.com/privatenumber/tsx) (already a dev dependency) to run TypeScript directly, so no extra runtime is needed.
+- **Docker** (Docker Desktop, or any Docker + compose) — runs Postgres, Mailpit and Jaeger.
 
 ## Setup
 
@@ -45,7 +32,7 @@ pnpm install
 cp .env.example .env
 
 # 3. Start Postgres, Mailpit and Jaeger (Jaeger UI: http://localhost:16686/search)
-docker-compose up -d postgres mailpit jaeger
+docker compose up -d postgres mailpit jaeger
 
 # 4. Create the identity database, then migrate it and the dev DB
 docker compose exec postgres psql -U postgres -c 'CREATE DATABASE "effect-monorepo-identity"'
@@ -59,28 +46,32 @@ pnpm --filter @org/database db:migrate:test
 pnpm effect:source
 ```
 
-Migrations are applied by the `@effect/sql` migrator, which tracks what it has run
-in an `effect_sql_migrations` table. A database last migrated by Flyway has no such
-table, so it has to be replayed once — `pnpm --filter @org/database db:reset` drops
-every module schema (and the leftover `flyway_schema_history`), then `db:migrate`
-rebuilds it.
+Migrations are applied by the `@effect/sql` migrator, which tracks what it has run in an `effect_sql_migrations` table. `pnpm --filter @org/database db:reset` drops every module schema so `db:migrate` can rebuild it.
 
 ### Effect v4 source reference
 
-Effect v4 has no published API docs, so the upstream source is the reference — for you and for any coding agent. `pnpm effect:source` shallow-clones [Effect-TS/effect](https://github.com/Effect-TS/effect) (v4 is its `main`; the `effect-smol` incubator repo is archived and its history merged here) into `reference/effect` (~38 MB, gitignored) at the tag matching the `effect` version pinned in the root `package.json`, so what you read is what you compile against. Re-run it after bumping that pin. `--ref main` looks at unreleased upstream, `--force` re-clones. The checkout is read-only reference: it is outside every package root and excluded from eslint/prettier, so no build or gate sees it. Start at its `LLMS.md` and `ai-docs/`; agent-facing guidance lives in `.claude/rules/effect-v4-source.md`.
+Effect v4 has no published API docs, so the upstream source is the reference — for you and for any coding agent. `pnpm effect:source` shallow-clones [Effect-TS/effect](https://github.com/Effect-TS/effect) into `reference/effect` (gitignored) at the tag matching the `effect` version pinned in the root `package.json`, so what you read is what you compile against. Re-run it after bumping that pin. `--ref main` looks at unreleased upstream, `--force` re-clones. Start at its `LLMS.md` and `ai-docs/`; agent-facing guidance lives in `.claude/rules/effect-v4-source.md`.
+
+## Development
+
+```bash
+pnpm dev   # alchemy dev: the web Worker (:3000), server Worker (:3001) and identity Worker (:3002)
+```
+
+The browser only ever sees the web Worker's origin (`:3000`). Browser → SvelteKit Worker → `/api/*` over the `SERVER` service binding → Effect server Worker; the session cookie scopes to `:3000`. `alchemy dev` also runs the domain-event queue locally and exposes the crons at `/cdn-cgi/handler/scheduled`. See [ADR-0035](docs/adr/0035-server-on-cloudflare-workers.md) and [ADR-0037](docs/adr/0037-sveltekit-renderer-on-workers.md).
 
 ## Authentication (the identity Worker)
 
-The identity provider is `packages/identity`: [Better Auth](https://www.better-auth.com) as an OIDC issuer, in its own Cloudflare Worker with its own database. Locally `pnpm dev` serves it on `:3002` under `alchemy dev`, beside the server Worker on `:3001`. The browser never holds an access or id token; the server is the OIDC client and issues a `HttpOnly` session cookie scoped to the renderer's origin. See [ADR-0034](docs/adr/0034-identity-worker-with-better-auth.md) for the design, [ADR-0017](docs/adr/0017-frontend-auth-flow.md) for the SPA-side details it amends, and [ADR-0018](docs/adr/0018-frontend-nextjs-renderer-and-proxy.md) for the Next-fronted refit.
+The identity provider is `packages/identity`: [Better Auth](https://www.better-auth.com) as an OIDC issuer, in its own Cloudflare Worker with its own database. The browser never holds an access or id token; the server is the OIDC client and issues a `HttpOnly` session cookie scoped to the app's origin. See [ADR-0034](docs/adr/0034-identity-worker-with-better-auth.md) for the design and [ADR-0017](docs/adr/0017-frontend-auth-flow.md) for the browser-side details it amends.
 
 ```bash
 pnpm bootstrap   # postgres + mailpit + jaeger, secrets, migrations, then seeds the identity Worker
-pnpm dev         # alchemy dev: SvelteKit Worker :3000, server Worker :3001, identity Worker :3002
+pnpm dev
 ```
 
 `pnpm bootstrap` registers the app as a trusted OIDC client (`IDENTITY_CLIENT_ID` / `IDENTITY_CLIENT_SECRET`) and creates the admin (`IDENTITY_ADMIN_EMAIL` / `IDENTITY_ADMIN_PASSWORD`) with a verified email. Re-run just that step with `pnpm seed:identity` while `pnpm dev` is up. Sign in at `http://localhost:3000/api/auth/login`; anyone can also create an account there, behind email verification — the mail lands in Mailpit at `http://localhost:8025`.
 
-**Acceptance tests** (Playwright) sign in through the identity Worker's real pages on every run. `pnpm test:acceptance` boots its own Workers stack under `alchemy dev`, with the app Hyperdrive pointed at the test database and the SvelteKit Worker on `:3000`; `pnpm test:acceptance:next` puts a production Next build there instead. Stop `pnpm dev` first, since the dev ports `:3000`–`:3002` are fixed. CI E2E (`.github/workflows/e2e.yml`) runs both.
+**Acceptance tests** (Playwright) sign in through the identity Worker's real pages on every run. `pnpm test:acceptance` boots its own Workers stack under `alchemy dev`, with the app Hyperdrive pointed at the test database; stop `pnpm dev` first, since the dev ports `:3000`–`:3002` are fixed. With `ACCEPTANCE_BASE_URL`, `ACCEPTANCE_STAGE` and `ACCEPTANCE_DATABASE_URL` set it runs against a deployed `pr-<n>` stage instead.
 
 ## Billing (Stripe)
 
@@ -93,81 +84,32 @@ For the real-Stripe smoke loop (subscribe / cancel / webhook delivery against te
 3. Restart `pnpm dev` so the server Worker picks up the env vars.
 4. `POST /api/orgs/:orgId/billing/subscriptions` (as an org admin) → Stripe creates a customer + subscription → the CLI forwards `customer.subscription.created` back to your webhook.
 
-## Development
+## Deploying
 
-```bash
-pnpm dev       # the SvelteKit renderer (:3000), server Worker (:3001) and identity Worker (:3002)
-pnpm dev:next  # the same stack with the Next renderer on :3000 instead (until Phase 7)
-```
+Stages deploy from CI, never from a laptop: a pull request labelled `preview` gets its own `pr-<n>` stage with the acceptance suite run against it, and `main` deploys `staging`, then `prod` behind an approval. Each stage carries CPU limits, rate limits, a compute ceiling, a daily email cap and a kill switch. See [ADR-0039](docs/adr/0039-deploy-pipeline-stages-and-limits.md), [ADR-0038](docs/adr/0038-neon-behind-hyperdrive.md) for the databases, and [docs/dev-setup.md](docs/dev-setup.md#deploying) for the one-time setup.
 
-The browser only ever sees the renderer's origin (`:3000`). Browser → SvelteKit Worker → `/api/*` over the `SERVER` service binding → Effect server Worker; the session cookie scopes to `:3000`. See [ADR-0037](docs/adr/0037-sveltekit-renderer-on-workers.md) and [ADR-0018](docs/adr/0018-frontend-nextjs-renderer-and-proxy.md).
+## Component library
 
-## Database Operations
-
-To work with the database, use the following commands:
-
-```bash
-# Push schema changes to the local database
-pnpm --filter database db:push
-
-# Open Drizzle Studio to view and edit data
-pnpm --filter database db:studio
-```
-
-## Operations
-
-### Building Packages
-
-**Building All Packages**
-
-To build all packages in the monorepo:
+Every primitive and pattern has a story; a static build is part of `pnpm check:all`.
 
 ```sh
-pnpm build
+pnpm -F @org/components storybook   # http://localhost:6007
 ```
 
-**Building a Specific Package**
-
-To build a specific package:
+## Checking and testing
 
 ```sh
-pnpm --filter @org/web build
-pnpm --filter server build
-pnpm --filter @org/contracts build
-pnpm --filter database build
-```
-
-### Installing Dependencies
-
-To add dependencies to a specific package:
-
-```sh
-# Add a production dependency
-pnpm add --filter @org/web next-themes
-
-# Add a development dependency
-pnpm add -D --filter @org/web @types/react
-```
-
-### Component libraries
-
-Each library has a Storybook with a story for every primitive and pattern; a static build of
-both is part of `pnpm check:all`.
-
-```sh
-pnpm -F @org/components storybook          # React, http://localhost:6006
-pnpm -F @org/components-svelte storybook   # Svelte, http://localhost:6007
-```
-
-### Checking and Testing
-
-```sh
-# Run all checks
-pnpm check:all
-
-# Run tests
-pnpm test
-
-# Run tests in watch mode
+pnpm check:all     # lint, rule probes, edges, architecture, typecheck, Effect diagnostics, unit tests, Storybook
+pnpm test          # the unit suite
 pnpm test:watch
+DATABASE_URL_TEST=postgres://… pnpm test:integration
+pnpm test:acceptance
+pnpm test:workers  # workerd smoke tests of the server Worker's handlers
+```
+
+## Installing dependencies
+
+```sh
+pnpm add --filter @org/web <package>
+pnpm add -D --filter @org/components <package>
 ```

@@ -11,12 +11,16 @@ updates:
         patterns:
           - "effect"
           - "@effect/*"
-      tanstack:
+      svelte:
         patterns:
-          - "@tanstack/*"
-      radix:
+          - "svelte"
+          - "svelte-*"
+          - "@sveltejs/*"
+          - "bits-ui"
+      alchemy:
         patterns:
-          - "@radix-ui/*"
+          - "alchemy"
+          - "@alchemy.run/*"
       eslint:
         patterns:
           - "eslint"
@@ -42,11 +46,6 @@ updates:
       types:
         patterns:
           - "@types/*"
-    ignore:
-      - dependency-name: "react"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "react-dom"
-        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /

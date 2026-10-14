@@ -77,6 +77,7 @@ const make = Effect.gen(function* () {
     MAIL_FROM_NAME: yield* Config.String("MAIL_FROM_NAME").pipe(
       Config.withDefault("Effect Monorepo"),
     ),
+    MAIL_DAILY_CAP: yield* Config.Int("MAIL_DAILY_CAP").pipe(Config.withDefault(200)),
     MAILPIT_URL: yield* Config.String("MAILPIT_URL").pipe(
       Config.withDefault("http://localhost:8025"),
     ),

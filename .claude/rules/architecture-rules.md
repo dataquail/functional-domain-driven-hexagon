@@ -159,7 +159,7 @@ rule that grants it rather than in a linter override somewhere else.
 What this repo states with it, all under `architecture/surface`:
 
 - **No default exports**, at every root, except where a framework demands one —
-  Next routes and config, migrations, stories and the Storybook config, vitest
+  SvelteKit and Vite config, migrations, stories and the Storybook config, vitest
   configs and `globalSetup`. The `no-default-exports` fragment under `defs` is
   the one entry, `use`d per root with that root's own `except` list. It replaced
   `local/prefer-named-exports` and its five overrides.
@@ -263,8 +263,8 @@ load and fails `pnpm lint` — but never runs them. A violated graph rule fails
 limits:
   unrestricted: 1
   partial: 0
-  coverage: { imports: 0.96, structure: 0.78, members: 0.14, surface: 0.93, graph: 1 }
-  conformance: { residue: 0, vacant: 11, slack: 45, concentration: 0 }
+  coverage: { imports: 0.96, structure: 0.87, members: 0.15, surface: 0.94, graph: 1 }
+  conformance: { residue: 0, vacant: 7, slack: 23, concentration: 0 }
 ```
 
 The `unrestricted`/`partial` ceilings cap the tiers that say "not tightened yet"; both
@@ -397,8 +397,8 @@ Two gates back that up, and they answer different questions:
   `architecture/imports` id with every allowlist, so its probe also names the
   message it must report. 49 probes, five of them ESLint's (`linter: "eslint"`):
   the Svelte markup rules oxlint cannot see (ADR-0036, ADR-0037).
-- `pnpm lint:edges` — the **semantics**: 202 edges with expected verdicts (145
-  refused, 57 allowed) and 12 graph shapes with expected reports. The allowed and
+- `pnpm lint:edges` — the **semantics**: 191 edges with expected verdicts (139
+  refused, 52 allowed) and 12 graph shapes with expected reports. The allowed and
   quiet rows matter as much: a policy that refuses everything is as broken as one
   that refuses nothing. A row that changes verdict is either a regression or a
   decision.
@@ -443,7 +443,7 @@ evaluate has a single point of failure. The CLI is a **superset** of the plugin:
 it reads TypeScript's syntax tree where the plugin reads oxlint's, the two meet at
 the same vocabulary — a specifier, a binding, a member site, an export site — so
 both answer to the same core rather than to each other, and it adds the graph.
-Parsing is what lets it see the `import "server-only"` forms a regex cannot.
+Parsing is what lets it see the side-effect `import "…"` forms a regex cannot.
 
 `explain` answers "what governs this file?", which a tree answers well and a flat
 config badly. `facts` answers the other half — what those rules are evaluated

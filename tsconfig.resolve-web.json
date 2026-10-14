@@ -1,17 +1,16 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    // Extensionless targets, for the reason spelled out in tsconfig.resolve.json:
-    // a mapped `.js` target does not resolve here, and an unresolved import
-    // voids every path-based rule about that package.
+    // Extensionless targets, for the reason spelled out in tsconfig.resolve.json.
+    // `$app/*` is SvelteKit's runtime, which Kit's plugin serves from these files.
     "paths": {
       "@/*": ["./packages/web/*"],
-      "@org/components/*": ["./packages/components/*"],
-      "@org/contracts/*": ["./packages/contracts/src/*"]
+      "@org/contracts/*": ["./packages/contracts/src/*"],
+      "@org/test-drivers/*": ["./packages/test-drivers/src/*"],
+      "$app/*": ["./packages/web/node_modules/@sveltejs/kit/src/runtime/app/*"]
     },
     "moduleResolution": "Bundler",
     "module": "ESNext",
-    "target": "ES2022",
-    "jsx": "react-jsx"
+    "target": "ES2022"
   }
 }

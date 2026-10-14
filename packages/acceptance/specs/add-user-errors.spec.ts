@@ -2,13 +2,12 @@ import { playwrightUsersDriver } from "@org/test-drivers/adapters/playwright/use
 import { test } from "@playwright/test";
 
 import { truncate } from "@/test-utils/database";
+import { acceptanceTarget } from "@/test-utils/target";
 
-const DATABASE_URL_TEST =
-  process.env.DATABASE_URL_TEST ??
-  "postgresql://postgres:postgres@localhost:5432/effect-monorepo-test";
+const target = acceptanceTarget();
 
 test.beforeEach(async () => {
-  await truncate(DATABASE_URL_TEST, ["wallet.wallets", "user.users"]);
+  await truncate(target, ["wallet.wallets", "user.users"]);
 });
 
 // Negative-path acceptance coverage. The Synapse acceptance-testing guide is
@@ -18,10 +17,10 @@ test.beforeEach(async () => {
 // Two scenarios chosen for breadth:
 //   1. Client-side validation (empty field) — exercises form-level rejection
 //      before any request leaves the browser. Catches regressions in the
-//      Zod/Effect schema → react-form glue.
+//      contract schema → form-validation glue.
 //   2. Server-side 409 (duplicate email) — exercises the full
 //      contract error path: server emits UserAlreadyExistsError, the
-//      ApiClient decodes it as a tagged error, the presenter maps to a
+//      ApiClient decodes it as a tagged error, the ViewModel maps it to a
 //      toast. Catches regressions anywhere in that chain.
 
 test("submitting an empty email shows a field validation error", async ({ page }) => {

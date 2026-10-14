@@ -1,22 +1,15 @@
-"use client";
-
 // Browser-side tracing for everything the atom graph runs.
 //
 // `addGlobalLayer` reaches every runtime the default factory builds, so a query
 // atom, a mutation and a ViewModel action all emit against the same tracer
-// without any of them naming it. The registration happens at module load and
-// the global layer is read when a runtime is first built, so importing this
-// from the provider is early enough.
+// without any of them naming it. The client hook imports this before the app
+// hydrates, which is before any runtime is built.
 //
-// The browser propagates `traceparent` on outbound `/api/*` fetches — Effect's
-// `HttpClient` propagation, left ENABLED on the client (unlike the Next server
-// runtime, where `@vercel/otel` owns propagation and Effect's is disabled).
-// Next's `/api/*` rewrite forwards the header and `@vercel/otel` continues the
-// trace to the BFF, so Jaeger stitches browser → Next → BFF into one trace.
+// The browser propagates `traceparent` on outbound `/api/*` fetches; the proxy
+// forwards the header and the server Worker continues the trace.
 //
 // Endpoint defaults to the dev Jaeger collector; override at build time via
-// `NEXT_PUBLIC_OTLP_URL` (Next inlines `NEXT_PUBLIC_*` into the client bundle).
-// CORS for `http://localhost:*` is allowed in `infra/jaeger/config.yaml`.
+// `VITE_OTLP_URL`.
 
 import * as FetchHttpClient from "effect/http/FetchHttpClient";
 import * as Layer from "effect/Layer";
@@ -24,7 +17,9 @@ import * as OtlpSerialization from "effect/observability/OtlpSerialization";
 import * as OtlpTracer from "effect/observability/OtlpTracer";
 import * as Atom from "effect/reactivity/Atom";
 
-const OTLP_URL = process.env.NEXT_PUBLIC_OTLP_URL ?? "http://localhost:4318/v1/traces";
+const configuredUrl: unknown = import.meta.env.VITE_OTLP_URL;
+const OTLP_URL =
+  typeof configuredUrl === "string" ? configuredUrl : "http://localhost:4318/v1/traces";
 
 export const BrowserTracerLive = OtlpTracer.layer({
   url: OTLP_URL,

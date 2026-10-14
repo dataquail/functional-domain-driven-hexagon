@@ -3,8 +3,6 @@
 // uses this for its membership guard; the root org picker reads it
 // to render cards; the redirect-after-create flow consumes it.
 
-import "server-only";
-
 import type { OrganizationContract } from "@org/contracts/api/Contracts";
 import type { OrganizationId } from "@org/contracts/EntityIds";
 import * as Effect from "effect/Effect";

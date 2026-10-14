@@ -1,51 +1,32 @@
-// Vitest config for @org/web. ViewModel and View tests run against jsdom with
-// React's JSX transform (Oxc's "automatic" runtime — no Vite plugin
-// dependency, no Babel pipeline). The setup file mounts
-// @testing-library/jest-dom matchers and registers cleanup() between
-// tests. Listed in the root config's `test.projects` so `pnpm test` from the
-// repo root picks these up alongside the server suite.
-
-import * as path from "node:path";
+import { svelte } from "@sveltejs/vite-plugin-svelte";
+import { svelteTesting } from "@testing-library/svelte/vite";
 import { defineConfig } from "vitest/config";
 
+import { webSvelteAliases } from "./aliases.ts";
+
+// Kit's own plugin resolves the project from process.cwd(), which is the repo
+// root in a workspace run, so tests compile components with the plain Svelte
+// plugin, and `$app/*` resolves to stubs under test/kit/ that a test mocks.
 export default defineConfig({
-  oxc: {
-    jsx: { runtime: "automatic" },
-    target: "es2020",
-  },
-  // Aliases use array form so the `@org/contracts/<subpath>` regex maps
-  // each subpath import to its built `.js` file. The bare-package alias
-  // (`@org/contracts` → index.js) and the `@/` prefix follow the same
-  // resolution as Next/Turbopack uses at runtime, so tests see the same
-  // module shape the app does.
+  plugins: [svelte({ configFile: false }), svelteTesting()],
   resolve: {
     alias: [
-      { find: /^@\/(.*)$/, replacement: path.join(import.meta.dirname, "./$1") },
+      ...webSvelteAliases,
       {
-        find: /^@org\/components\/(.*)$/,
-        replacement: path.join(import.meta.dirname, "../components/$1"),
-      },
-      // Match the tsconfig paths and the runtime export shape: contracts
-      // resolves via the built ESM. Keep the build step in the setup
-      // composite action so CI doesn't have to remember per-job.
-      {
-        find: /^@org\/contracts$/,
-        replacement: path.join(import.meta.dirname, "../contracts/build/esm/index.js"),
-      },
-      {
-        find: /^@org\/contracts\/(.*)$/,
-        replacement: path.join(import.meta.dirname, "../contracts/build/esm/$1.js"),
+        find: /^\$app\/(.*)$/,
+        replacement: `${decodeURIComponent(new URL("./test/kit/", import.meta.url).pathname)}$1.ts`,
       },
     ],
   },
   test: {
     environment: "jsdom",
     setupFiles: ["./test/setup.ts"],
-    globals: true,
     include: [
-      "features/**/*.test.{ts,tsx}",
-      "services/**/*.test.{ts,tsx}",
-      "test/**/*.test.{ts,tsx}",
+      "features/**/*.test.ts",
+      "services/**/*.test.ts",
+      "src/**/*.test.ts",
+      "test/**/*.test.ts",
     ],
+    passWithNoTests: true,
   },
 });
