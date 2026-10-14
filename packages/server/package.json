@@ -29,7 +29,7 @@
     "@org/database": "workspace:^",
     "@org/jobs": "workspace:^",
     "cookie": "^1.1.1",
-    "effect": "4.0.2",
+    "effect": "4.0.3",
     "openid-client": "^6.8.4",
     "stripe": "^22.3.0",
     "svix": "^1.96.1"
@@ -48,8 +48,8 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20260918.1",
-    "@effect/platform-node": "4.0.2",
-    "@effect/sql-pg": "4.0.2",
+    "@effect/platform-node": "4.0.3",
+    "@effect/sql-pg": "4.0.3",
     "@types/cookie": "^0.6.0",
     "madge": "^8.0.0"
   }
