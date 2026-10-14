@@ -20,12 +20,17 @@ export const TransactionDriverLive: Layer.Layer<TransactionDriver, never, Databa
 
       const translateDatabaseFailure = <E>(
         error: E | Database.DatabaseError | Database.DatabaseUnavailable,
-      ): E | TransactionFailed | PersistenceUnavailable =>
-        Schema.is(Database.DatabaseError)(error)
-          ? new TransactionFailed({ message: error.message })
-          : Schema.is(Database.DatabaseUnavailable)(error)
-            ? new PersistenceUnavailable({ message: error.message })
-            : error;
+      ): E | TransactionFailed | PersistenceUnavailable => {
+        if (Schema.is(Database.DatabaseError)(error)) {
+          return new TransactionFailed({ message: error.message });
+        }
+
+        if (Schema.is(Database.DatabaseUnavailable)(error)) {
+          return new PersistenceUnavailable({ message: error.message });
+        }
+
+        return error;
+      };
 
       // The client is depth-aware: the outermost call emits BEGIN and every
       // nested one a SAVEPOINT, against the connection already in context. Both

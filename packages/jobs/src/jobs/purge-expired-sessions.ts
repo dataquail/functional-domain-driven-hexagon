@@ -11,14 +11,17 @@ export type PurgeResult = {
 export const purgeExpiredSessions: Effect.Effect<PurgeResult, never, Database.Database> =
   Effect.gen(function* () {
     const sql = yield* Database.Database;
+
     const deleted = yield* sql`
       DELETE FROM auth.sessions
       WHERE expires_at < now()
          OR (revoked_at IS NOT NULL AND revoked_at < now() - interval '7 days')
       RETURNING id
     `.pipe(Effect.orDie);
+
     yield* Effect.logInfo(
       `[jobs.purge-expired-sessions] purged ${deleted.length} expired/aged-out session row(s)`,
     );
+
     return { rowsPurged: deleted.length };
   }).pipe(Effect.withSpan("jobs.purge-expired-sessions"));

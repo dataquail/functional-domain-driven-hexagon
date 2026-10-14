@@ -1,5 +1,6 @@
 import { describe, expect, it } from "@effect/vitest";
-import { Command, Query } from "@effect-server-utils/cqrs";
+import { Command, type Event, Query } from "@effect-server-utils/cqrs";
+import type * as Schema from "effect/Schema";
 
 import * as authModule from "@/modules/auth/auth.platform.js";
 import * as billingModule from "@/modules/billing/billing.platform.js";
@@ -10,15 +11,17 @@ import * as userModule from "@/modules/user/user.platform.js";
 import * as walletModule from "@/modules/wallet/wallet.platform.js";
 
 declare global {
-  // Merging into the global ImportMeta needs an interface.
-  // oxlint-disable-next-line typescript/consistent-type-definitions
+  // oxlint-disable-next-line typescript/consistent-type-definitions -- merging into the global ImportMeta needs an interface
   interface ImportMeta {
-    readonly glob: (
+    readonly glob: <Exports>(
       pattern: string,
       options: { readonly eager: true },
-    ) => Record<string, Record<string, unknown>>;
+    ) => Readonly<Record<string, Exports>>;
   }
 }
+
+// What a message-declaring file exports at runtime; each use filters it through a guard.
+type DeclaredExports = Readonly<Record<string, Command.Any | Query.Any | Event.Any | Schema.Top>>;
 
 // The completeness question no bus can answer. A definition that was never added
 // to its module's group has no handler and no dispatcher, yet every
@@ -34,8 +37,10 @@ declare global {
 // `cqrs-runtime.ts` covers the other direction: a group that exists but was
 // never merged at the composition root.
 const declaringFiles = {
-  ...import.meta.glob("../../../modules/*/commands/*.command.ts", { eager: true }),
-  ...import.meta.glob("../../../modules/*/queries/*.query.ts", { eager: true }),
+  ...import.meta.glob<DeclaredExports>("../../../modules/*/commands/*.command.ts", {
+    eager: true,
+  }),
+  ...import.meta.glob<DeclaredExports>("../../../modules/*/queries/*.query.ts", { eager: true }),
 };
 
 const groupSources = {
@@ -57,6 +62,7 @@ const declaredIn = (name: string) =>
 
 const orphanTags = (tags: ReadonlyArray<string>, grouped: ReadonlyArray<ReadonlyArray<string>>) => {
   const reachable = new Set(grouped.flat());
+
   return tags.filter((tag) => !reachable.has(tag));
 };
 
@@ -86,6 +92,7 @@ describe("every declared message belongs to a group", () => {
   it("finds messages to check in the first place", () => {
     const found = Object.values(declaringFiles).flatMap((declared) => {
       const values = Object.values(declared);
+
       return [...values.filter(Command.is), ...values.filter(Query.is)];
     });
 

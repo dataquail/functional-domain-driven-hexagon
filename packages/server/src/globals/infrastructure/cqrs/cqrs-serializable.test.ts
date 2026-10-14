@@ -2,6 +2,7 @@ import { describe, expect, it } from "@effect/vitest";
 import { Command, Event, Query } from "@effect-server-utils/cqrs";
 import { checkEventsSerializable, checkSerializable } from "@effect-server-utils/cqrs/testing";
 import * as Effect from "effect/Effect";
+import type * as Schema from "effect/Schema";
 
 import * as authModule from "@/modules/auth/auth.platform.js";
 import * as billingModule from "@/modules/billing/billing.platform.js";
@@ -33,7 +34,10 @@ const groupSources = {
   wallet: walletModule,
 } as const;
 
-const eventFiles = import.meta.glob("../../../modules/*/domain/*/*.events.ts", { eager: true });
+const eventFiles = import.meta.glob<Readonly<Record<string, Event.Any | Schema.Top>>>(
+  "../../../modules/*/domain/*/*.events.ts",
+  { eager: true },
+);
 
 const moduleOf = (file: string) => /modules\/([a-z-]+)\//.exec(file)?.[1];
 
@@ -51,6 +55,7 @@ describe("every declared message can travel as JSON", () => {
     const exported: ReadonlyArray<unknown> = Object.values(groupSources).flatMap(
       (published): ReadonlyArray<unknown> => Object.values(published),
     );
+
     const events = Object.values(eventFiles).flatMap((declared) =>
       Object.values(declared).filter(Event.is),
     );
@@ -63,32 +68,31 @@ describe("every declared message can travel as JSON", () => {
   for (const [name, published] of Object.entries(groupSources)) {
     const exported = Object.values(published);
 
-    it(`${name} commands`, () =>
-      Effect.runPromise(
-        Effect.gen(function* () {
-          const found = yield* Effect.forEach(exported.filter(Command.isGroup), (group) =>
-            checkSerializable(group),
-          );
-          expect(found.flat()).toEqual([]);
-        }),
-      ));
+    it.effect(`${name} commands`, () =>
+      Effect.gen(function* () {
+        const found = yield* Effect.forEach(exported.filter(Command.isGroup), (group) =>
+          checkSerializable(group),
+        );
 
-    it(`${name} queries`, () =>
-      Effect.runPromise(
-        Effect.gen(function* () {
-          const found = yield* Effect.forEach(exported.filter(Query.isGroup), (group) =>
-            checkSerializable(group),
-          );
-          expect(found.flat()).toEqual([]);
-        }),
-      ));
+        expect(found.flat()).toEqual([]);
+      }),
+    );
 
-    it(`${name} events`, () =>
-      Effect.runPromise(
-        Effect.gen(function* () {
-          const found = yield* checkEventsSerializable(eventsIn(name));
-          expect(found).toEqual([]);
-        }),
-      ));
+    it.effect(`${name} queries`, () =>
+      Effect.gen(function* () {
+        const found = yield* Effect.forEach(exported.filter(Query.isGroup), (group) =>
+          checkSerializable(group),
+        );
+
+        expect(found.flat()).toEqual([]);
+      }),
+    );
+
+    it.effect(`${name} events`, () =>
+      Effect.gen(function* () {
+        const found = yield* checkEventsSerializable(eventsIn(name));
+        expect(found).toEqual([]);
+      }),
+    );
   }
 });

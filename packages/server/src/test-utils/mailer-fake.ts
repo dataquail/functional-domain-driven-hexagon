@@ -21,6 +21,7 @@ export class SentMails extends Context.Service<
 export const MailerFake: Layer.Layer<Mailer | SentMails> = Layer.effectContext(
   Effect.gen(function* () {
     const sent = yield* Ref.make<ReadonlyArray<MailMessage>>([]);
+
     return Context.empty().pipe(
       Context.add(
         Mailer,

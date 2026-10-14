@@ -33,7 +33,9 @@ describe("waitUntil", () => {
           makeWorkerExecutionContext((promise) => registered.push(promise)),
         ),
       );
-      yield* Effect.promise(() => Promise.all(registered));
+      yield* Effect.forEach(registered, (promise) => Effect.promise(() => promise), {
+        discard: true,
+      });
 
       deepStrictEqual(registered.length, 1);
       deepStrictEqual(yield* Ref.get(touched), true);

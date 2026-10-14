@@ -1,8 +1,9 @@
-import { type PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
+import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Effect from "effect/Effect";
 import type * as HttpApiEndpoint from "effect/http-api/HttpApiEndpoint";
 import type * as HttpApiGroup from "effect/http-api/HttpApiGroup";
+import * as Schema from "effect/Schema";
 
 // Derives the typed request envelope ({ path, urlParams, payload, headers })
 // for a named endpoint within a contract group. Keeps endpoint signatures in
@@ -22,25 +23,21 @@ export type EndpointRequest<
 // `Effect.gen`. The endpoint's typed error channel becomes
 // `... | CustomHttpApiError.ServiceUnavailable`, which the contract
 // group must declare via `addError(ServiceUnavailable)`.
-//
-// `catchTag` on a generic union channel resists inference cleanly, so
-// the implementation does the catch on the widened type then re-asserts
-// the narrowed result. The single cast is contained here so callers
-// stay clean.
-export const recoverPersistenceUnavailable: <A, E, R>(
+export const recoverPersistenceUnavailable = <A, E, R>(
   effect: Effect.Effect<A, E | PersistenceUnavailable, R>,
-) => Effect.Effect<
+): Effect.Effect<
   A,
   Exclude<E, PersistenceUnavailable> | CustomHttpApiError.ServiceUnavailable,
   R
-> = <A, E, R>(effect: Effect.Effect<A, E | PersistenceUnavailable, R>) =>
-  Effect.catchTag(
-    effect as Effect.Effect<A, PersistenceUnavailable, R>,
-    "PersistenceUnavailable",
-    (e: PersistenceUnavailable) =>
-      new CustomHttpApiError.ServiceUnavailable({ message: e.message }),
-  ) as Effect.Effect<
+> =>
+  Effect.catchIf<
     A,
-    Exclude<E, PersistenceUnavailable> | CustomHttpApiError.ServiceUnavailable,
-    R
-  >;
+    E | PersistenceUnavailable,
+    R,
+    PersistenceUnavailable,
+    never,
+    CustomHttpApiError.ServiceUnavailable,
+    never
+  >(effect, Schema.is(PersistenceUnavailable), (error) =>
+    Effect.fail(new CustomHttpApiError.ServiceUnavailable({ message: error.message })),
+  );

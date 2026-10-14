@@ -7,6 +7,7 @@ import type {
   ScheduledController,
   SendEmail,
 } from "@cloudflare/workers-types";
+import * as NodeCrypto from "@effect/platform-node/NodeCrypto";
 import { purgeExpiredSessions } from "@org/jobs/jobs/purge-expired-sessions";
 import * as ConfigProvider from "effect/ConfigProvider";
 import * as Effect from "effect/Effect";
@@ -14,6 +15,8 @@ import * as HttpRouter from "effect/http/HttpRouter";
 import * as HttpServer from "effect/http/HttpServer";
 import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.js";
 import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
@@ -38,7 +41,10 @@ import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { UserAuthMiddlewareLive } from "@/globals/infrastructure/framework/middlewares/auth-middleware-live.js";
 import { applicationModules } from "@/globals/infrastructure/framework/modules/application-modules.js";
 import { TracerLive } from "@/globals/infrastructure/observability/tracer-live.js";
-import { EmailBinding } from "@/globals/infrastructure/runtime/email-binding.js";
+import {
+  EmailBinding,
+  type EmailBindingMessage,
+} from "@/globals/infrastructure/runtime/email-binding.js";
 import {
   ExecutionContext,
   makeWorkerExecutionContext,
@@ -52,16 +58,18 @@ type ServerWorkerEnv = {
   readonly DOMAIN_EVENTS: Queue;
   readonly DOMAIN_EVENTS_DEAD_LETTER_QUEUE: string;
   readonly EMAIL?: SendEmail;
-} & Readonly<Record<string, unknown>>;
+} & Readonly<Record<string, string | Hyperdrive | Fetcher | Queue | SendEmail>>;
 
 const OUTBOX_SWEEP_CRON = "* * * * *";
 const SESSION_PURGE_CRON = "0 * * * *";
 
 const application = applicationModules;
 
-const configFrom = (env: ServerWorkerEnv): Record<string, string> => ({
+const isVariable = Schema.is(Schema.String);
+
+const configFrom = (env: ServerWorkerEnv) => ({
   ...Object.fromEntries(
-    Object.entries(env).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
+    Object.entries(env).filter((entry): entry is [string, string] => isVariable(entry[1])),
   ),
   DATABASE_URL: env.APP_DB.connectionString,
 });
@@ -76,18 +84,21 @@ type Invocation = {
 const settle = (background: Array<Promise<unknown>>): Effect.Effect<void> =>
   Effect.gen(function* () {
     let settled = 0;
+
     while (settled < background.length) {
       const pending = background.slice(settled);
       settled = background.length;
-      yield* Effect.promise(() => Promise.allSettled(pending));
+      yield* Effect.forEach(pending, (promise) => Effect.ignore(Effect.tryPromise(() => promise)), {
+        discard: true,
+      });
     }
   });
 
-// workers-types and TypeScript's DOM lib describe the same Request and Response
-// classes with incompatible declarations, so the binding is bridged once, here.
+// SAFETY: workerd's Fetcher.fetch is the platform fetch; only the two libraries' types disagree.
 const throughServiceBinding =
   (binding: Fetcher) =>
   (url: string, init: RequestInit): Promise<Response> =>
+    // oxlint-disable-next-line effect/noAs, effect/noChainedTypeAssertions, anti-slop/no-chained-type-assertions -- workers-types and the DOM lib declare one Request/Response twice
     binding.fetch(url, init as never) as unknown as Promise<Response>;
 
 const runtimeLive = ({ background, env }: Invocation) =>
@@ -97,10 +108,19 @@ const runtimeLive = ({ background, env }: Invocation) =>
       ExecutionContext,
       makeWorkerExecutionContext((promise) => background.push(promise)),
     ),
-    Layer.succeed(IssuerTransport, { fetch: throughServiceBinding(env.IDENTITY) }),
+    Layer.succeed(
+      IssuerTransport,
+      IssuerTransport.of({ fetch: throughServiceBinding(env.IDENTITY) }),
+    ),
     Layer.succeed(
       EmailBinding,
-      env.EMAIL === undefined ? {} : { send: (message) => (env.EMAIL as SendEmail).send(message) },
+      EmailBinding.of({
+        send: Option.map(
+          Option.fromUndefinedOr(env.EMAIL),
+          (binding) => (message: EmailBindingMessage) =>
+            Effect.asVoid(Effect.tryPromise(() => binding.send(message))),
+        ),
+      }),
     ),
   );
 
@@ -110,7 +130,11 @@ const platformLive = (invocation: Invocation) =>
     Layer.provideMerge(runtimeLive(invocation)),
   );
 
-const domainEventQueue = ({ env }: Invocation) => CloudflareDomainEventQueueLive(env.DOMAIN_EVENTS);
+const domainEventQueue = ({ env }: Invocation) =>
+  CloudflareDomainEventQueueLive({
+    sendBatch: (messages) =>
+      Effect.asVoid(Effect.tryPromise(() => env.DOMAIN_EVENTS.sendBatch(messages))),
+  });
 
 const applicationLive = (invocation: Invocation) =>
   application.events.pipe(
@@ -119,7 +143,7 @@ const applicationLive = (invocation: Invocation) =>
     Layer.provideMerge(
       Layer.mergeAll(DomainEventBusLive, makeUnitOfWorkLive(domainEventQueue(invocation))),
     ),
-    Layer.provideMerge(Layer.mergeAll(CookieCodec.layer, BillingGatewayLive)),
+    Layer.provideMerge(Layer.mergeAll(CookieCodec.layer, BillingGatewayLive, NodeCrypto.layer)),
     Layer.provideMerge(platformLive(invocation)),
   );
 
@@ -163,14 +187,29 @@ const toQueueMessages = (batch: MessageBatch): ReadonlyArray<QueueMessage> =>
     },
   }));
 
+const scheduledJob = (invocation: Invocation, cron: string): Promise<void> => {
+  if (cron === OUTBOX_SWEEP_CRON) {
+    return runInvocation(invocation, sweeperLive(invocation), sweepOutbox());
+  }
+
+  if (cron === SESSION_PURGE_CRON) {
+    return runInvocation(invocation, platformLive(invocation), purgeExpiredSessions);
+  }
+
+  return Effect.runPromise(Effect.die(new Error(`No job is scheduled on "${cron}"`)));
+};
+
 export default {
   fetch(request: Request, env: ServerWorkerEnv, ctx: WorkerExecutionContext): Promise<Response> {
     const invocation: Invocation = { env, background: [] };
+
     const { dispose, handler } = HttpRouter.toWebHandler(httpLive(invocation), {
       memoMap: Layer.makeMemoMapUnsafe(),
     });
+
     return handler(request).then((response) => {
       ctx.waitUntil(Effect.runPromise(settle(invocation.background)).then(dispose));
+
       return response;
     });
   },
@@ -178,13 +217,12 @@ export default {
   queue(batch: MessageBatch, env: ServerWorkerEnv): Promise<void> {
     const invocation: Invocation = { env, background: [] };
     const messages = toQueueMessages(batch);
-    return runInvocation(
-      invocation,
-      consumerLive(invocation),
-      batch.queue === env.DOMAIN_EVENTS_DEAD_LETTER_QUEUE
-        ? reportDeadLetters(messages)
-        : consumeDomainEvents(messages),
-    );
+
+    if (batch.queue === env.DOMAIN_EVENTS_DEAD_LETTER_QUEUE) {
+      return runInvocation(invocation, consumerLive(invocation), reportDeadLetters(messages));
+    }
+
+    return runInvocation(invocation, consumerLive(invocation), consumeDomainEvents(messages));
   },
 
   scheduled(
@@ -193,13 +231,11 @@ export default {
     ctx: WorkerExecutionContext,
   ): Promise<void> {
     const invocation: Invocation = { env, background: [] };
-    const job =
-      controller.cron === OUTBOX_SWEEP_CRON
-        ? runInvocation(invocation, sweeperLive(invocation), sweepOutbox())
-        : controller.cron === SESSION_PURGE_CRON
-          ? runInvocation(invocation, platformLive(invocation), purgeExpiredSessions)
-          : Promise.reject(new Error(`No job is scheduled on "${controller.cron}"`));
+
+    const job = scheduledJob(invocation, controller.cron);
+
     ctx.waitUntil(job);
+
     return job;
   },
 };

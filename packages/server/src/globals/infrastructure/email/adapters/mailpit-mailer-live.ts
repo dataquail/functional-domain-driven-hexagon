@@ -17,6 +17,7 @@ export const MailpitMailerLive: Layer.Layer<Mailer, never, EnvVars | HttpClient.
       const env = yield* EnvVars;
       const client = (yield* HttpClient.HttpClient).pipe(HttpClient.filterStatusOk);
       const sendUrl = new URL("/api/v1/send", env.MAILPIT_URL).toString();
+
       return Mailer.of({
         send: Effect.fn("MailpitMailer.send")(function* (message) {
           yield* HttpClientRequest.post(sendUrl).pipe(

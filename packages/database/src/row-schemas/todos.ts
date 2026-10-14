@@ -8,4 +8,5 @@ export const TodoRow = Schema.Struct({
   created_at: Schema.DateTimeUtcFromDate,
   updated_at: Schema.DateTimeUtcFromDate,
 });
+
 export type TodoRow = typeof TodoRow.Type;

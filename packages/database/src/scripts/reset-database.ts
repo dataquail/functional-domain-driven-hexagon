@@ -50,6 +50,7 @@ const resetDatabase = Effect.gen(function* () {
     Layer.unwrap(
       Effect.gen(function* () {
         const url = yield* Config.Redacted("DATABASE_URL");
+
         return Database.layer({ url, ssl: false });
       }),
     ),

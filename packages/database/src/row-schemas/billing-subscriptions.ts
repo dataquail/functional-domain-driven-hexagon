@@ -10,4 +10,5 @@ export const SubscriptionRow = Schema.Struct({
   created_at: Schema.DateTimeUtcFromDate,
   updated_at: Schema.DateTimeUtcFromDate,
 });
+
 export type SubscriptionRow = typeof SubscriptionRow.Type;

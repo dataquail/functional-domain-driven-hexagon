@@ -24,11 +24,11 @@ export type MailMessage = {
   readonly text: string;
 };
 
-export type MailerShape = {
+export type MailerService = {
   // Real backends can fail at the transport boundary, so `send` carries a
   // modeled error. `LogMailerLive` returns `Effect<void, never>`, which is
   // assignable here.
   readonly send: (message: MailMessage) => Effect.Effect<void, MailDeliveryError>;
 };
 
-export class Mailer extends Context.Service<Mailer, MailerShape>()("Mailer") {}
+export class Mailer extends Context.Service<Mailer, MailerService>()("Mailer") {}

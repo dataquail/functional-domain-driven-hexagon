@@ -1,13 +1,17 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertInstanceOf, assertTrue } from "@effect/vitest/utils";
+import * as Cause from "effect/Cause";
 import * as ConfigProvider from "effect/ConfigProvider";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
 import { CloudflareEmailMailerLive } from "@/globals/infrastructure/email/adapters/cloudflare-email-mailer-live.js";
+import { MailDeliveryError } from "@/globals/infrastructure/email/ports/mail-errors.js";
 import { Mailer } from "@/globals/infrastructure/email/ports/mailer.js";
 import {
   EmailBinding,
@@ -47,12 +51,16 @@ describe("CloudflareEmailMailerLive", () => {
     Effect.gen(function* () {
       const sent: Array<EmailBindingMessage> = [];
       yield* sendThrough(
-        Layer.succeed(EmailBinding, {
-          send: async (bindingMessage) => {
-            sent.push(bindingMessage);
-            return { messageId: "1" };
-          },
-        }),
+        Layer.succeed(
+          EmailBinding,
+          EmailBinding.of({
+            send: Option.some((bindingMessage) =>
+              Effect.sync(() => {
+                sent.push(bindingMessage);
+              }),
+            ),
+          }),
+        ),
       );
 
       deepStrictEqual(sent, [
@@ -64,17 +72,16 @@ describe("CloudflareEmailMailerLive", () => {
   it.effect("fails with MailDeliveryError when the binding refuses", () =>
     Effect.gen(function* () {
       const exit = yield* sendThrough(
-        Layer.succeed(EmailBinding, {
-          send: () => Promise.reject(new Error("E_SENDER_NOT_VERIFIED")),
-        }),
+        Layer.succeed(
+          EmailBinding,
+          EmailBinding.of({
+            send: Option.some(() => Effect.fail(new Cause.UnknownError("E_SENDER_NOT_VERIFIED"))),
+          }),
+        ),
       );
 
-      deepStrictEqual(
-        Exit.isFailure(exit) && exit.cause.reasons[0]?._tag === "Fail"
-          ? exit.cause.reasons[0].error._tag
-          : "succeeded",
-        "MailDeliveryError",
-      );
+      assertTrue(Exit.isFailure(exit));
+      assertInstanceOf(Cause.squash(exit.cause), MailDeliveryError);
     }),
   );
 

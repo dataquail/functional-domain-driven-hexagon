@@ -5,6 +5,7 @@ export const PlatformRoleRow = Schema.Struct({
   role: Schema.String,
   granted_at: Schema.DateTimeUtcFromDate,
 });
+
 export type PlatformRoleRow = typeof PlatformRoleRow.Type;
 
 export const EventOutboxRow = Schema.Struct({
@@ -17,4 +18,5 @@ export const EventOutboxRow = Schema.Struct({
   attempts: Schema.Int,
   last_attempted_at: Schema.NullOr(Schema.DateTimeUtcFromDate),
 });
+
 export type EventOutboxRow = typeof EventOutboxRow.Type;

@@ -1,80 +1,93 @@
+import { layer } from "@effect/vitest";
 import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import type * as Layer from "effect/Layer";
-import * as ManagedRuntime from "effect/ManagedRuntime";
-import { afterAll, beforeAll, beforeEach } from "vitest";
+import type * as Scope from "effect/Scope";
 
 import { MEMBER_CALLER_ID, SUPER_ADMIN_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
 import { truncate } from "@/test-utils/test-database.js";
 import { TestServerLive } from "@/test-utils/test-server.js";
 
 type ServerContext = Layer.Success<typeof TestServerLive>;
+
 type ServerError = Layer.Error<typeof TestServerLive>;
 
-export type ServerTestRuntime = {
-  readonly run: <A, E>(effect: Effect.Effect<A, E, ServerContext>) => Promise<A>;
+export type IntegrationIt<R> = {
+  readonly effect: <A, E>(
+    name: string,
+    self: () => Effect.Effect<A, E, R | Scope.Scope>,
+    timeout?: number,
+  ) => void;
 };
 
-type Opts = {
-  // Optional override for the composed server Layer — e.g. the
-  // `TestServerLiveAsMember` variant for testing 403-Forbidden paths on
-  // super-admin-only endpoints. Defaults to the standard `TestServerLive`
-  // (super-admin caller) so existing callers don't change.
+type IntegrationSuite<R, LayerError> = {
+  readonly layer: Layer.Layer<R | Database.Database, LayerError>;
+  // Truncated before every test; each must be schema-qualified ("schema.table").
+  readonly tables: ReadonlyArray<string>;
+  readonly seed?: Effect.Effect<void, never, R | Database.Database>;
+};
+
+// One layer per describe block, built once and shared by its tests, with the
+// tables truncated (and the seed applied) before each test. The clock is live:
+// rows carry database timestamps.
+export const describeIntegration = <R, LayerError>(
+  name: string,
+  suite: IntegrationSuite<R, LayerError>,
+  body: (it: IntegrationIt<R | Database.Database>) => void,
+): void => {
+  const reset = truncate(...suite.tables).pipe(Effect.andThen(suite.seed ?? Effect.void));
+
+  layer(suite.layer, { excludeTestServices: true })(name, (it) => {
+    body({
+      effect: (testName, self, timeout) => {
+        it.effect(testName, () => Effect.andThen(reset, Effect.suspend(self)), timeout);
+      },
+    });
+  });
+};
+
+// Both deterministic caller rows into "user".users, plus `super_admin` for the
+// super-admin caller, so a test may create an org (memberships FK user.users)
+// under either middleware variant.
+const seedCallers = Effect.gen(function* () {
+  const sql = yield* Database.Database;
+  yield* sql`
+    INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
+    VALUES
+      (${SUPER_ADMIN_CALLER_ID}, 'super-admin@test.local', 'USA', '1 St', '00000', now(), now()),
+      (${MEMBER_CALLER_ID}, 'member@test.local', 'USA', '2 St', '00000', now(), now())
+    ON CONFLICT (id) DO NOTHING
+  `;
+  yield* sql`
+    INSERT INTO platform.roles (user_id, role)
+    VALUES (${SUPER_ADMIN_CALLER_ID}, 'super_admin')
+    ON CONFLICT (user_id, role) DO NOTHING
+  `;
+}).pipe(Effect.orDie);
+
+type ServerSuite = {
+  readonly tables: ReadonlyArray<string>;
+  // Defaults to `TestServerLive` (super-admin caller); `TestServerLiveAsMember`
+  // exercises the 403 paths of super-admin-only endpoints.
   readonly server?: Layer.Layer<ServerContext, ServerError>;
-  // After truncating, INSERT both deterministic caller rows
-  // (`SUPER_ADMIN_CALLER_ID` + `MEMBER_CALLER_ID`) into "user".users
-  // plus a `platform.roles` entry granting `super_admin` to the
-  // super-admin caller. Both user rows are seeded so any test that
-  // creates an org (which inserts a membership row FK'd to user.users)
-  // works regardless of which middleware variant the test uses. Set
-  // true for endpoint tests that exercise `Authz.hasPermissions`,
-  // `/auth/me`'s `isSuperAdmin`, or any flow that touches
-  // `organization.memberships`.
+  // Set for endpoint tests that exercise `Authz.hasPermissions`, `/auth/me`'s
+  // `isSuperAdmin`, or any flow that touches `organization.memberships`.
   readonly seedSuperAdminCaller?: boolean;
 };
 
-// Wires the server runtime + per-test truncation into the surrounding describe
-// block. Call inside a describe; receive `run` for executing test effects
-// against a fully-composed in-memory server.
-export const useServerTestRuntime = (
-  truncateTables: ReadonlyArray<string>,
-  opts: Opts = {},
-): ServerTestRuntime => {
-  let runtime: ManagedRuntime.ManagedRuntime<ServerContext, ServerError>;
+export const describeServer = (
+  name: string,
+  suite: ServerSuite,
+  body: (it: IntegrationIt<ServerContext>) => void,
+): void => {
+  const seed = seedCallers.pipe(
+    Effect.when(Effect.succeed(suite.seedSuperAdminCaller === true)),
+    Effect.asVoid,
+  );
 
-  beforeAll(async () => {
-    runtime = ManagedRuntime.make(opts.server ?? TestServerLive);
-    await runtime.runPromise(Effect.void);
-  });
-
-  afterAll(async () => {
-    await runtime.dispose();
-  });
-
-  beforeEach(async () => {
-    await runtime.runPromise(truncate(...truncateTables));
-    if (opts.seedSuperAdminCaller === true) {
-      await runtime.runPromise(
-        Effect.gen(function* () {
-          const sql = yield* Database.Database;
-          yield* sql`
-            INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
-            VALUES
-              (${SUPER_ADMIN_CALLER_ID}, 'super-admin@test.local', 'USA', '1 St', '00000', now(), now()),
-              (${MEMBER_CALLER_ID}, 'member@test.local', 'USA', '2 St', '00000', now(), now())
-            ON CONFLICT (id) DO NOTHING
-          `;
-          yield* sql`
-            INSERT INTO platform.roles (user_id, role)
-            VALUES (${SUPER_ADMIN_CALLER_ID}, 'super_admin')
-            ON CONFLICT (user_id, role) DO NOTHING
-          `;
-        }).pipe(Effect.orDie),
-      );
-    }
-  });
-
-  return {
-    run: <A, E>(effect: Effect.Effect<A, E, ServerContext>) => runtime.runPromise(effect),
-  };
+  describeIntegration(
+    name,
+    { layer: suite.server ?? TestServerLive, tables: suite.tables, seed },
+    body,
+  );
 };

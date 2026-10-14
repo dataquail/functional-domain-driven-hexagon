@@ -10,6 +10,7 @@ export const DeliveryLedgerLive: Layer.Layer<DeliveryLedger, never, Database.Dat
     DeliveryLedger,
     Effect.gen(function* () {
       const sql = yield* Database.Database;
+
       return DeliveryLedger.of({
         claim: (eventId, handler) =>
           sql`

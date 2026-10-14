@@ -2,11 +2,13 @@ import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
 import { type Event } from "@effect-server-utils/cqrs";
+import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 
 import {
   CloudflareDomainEventQueueLive,
   QUEUE_LIMITS,
+  type QueueProducerBinding,
   toQueueBatches,
 } from "@/globals/infrastructure/events/cloudflare-domain-event-queue-live.js";
 import { DomainEventQueue } from "@/globals/infrastructure/events/domain-event-queue.js";
@@ -51,8 +53,7 @@ describe("toQueueBatches", () => {
 });
 
 const send =
-  (sendBatch: (messages: Iterable<{ readonly body: unknown }>) => Promise<unknown>) =>
-  (all: ReadonlyArray<Event.Envelope>) =>
+  (sendBatch: QueueProducerBinding["sendBatch"]) => (all: ReadonlyArray<Event.Envelope>) =>
     Effect.flatMap(Effect.service(DomainEventQueue), (queue) => queue.send(all)).pipe(
       Effect.provide(CloudflareDomainEventQueueLive({ sendBatch })),
     );
@@ -60,10 +61,13 @@ const send =
 describe("CloudflareDomainEventQueueLive", () => {
   it.effect("sends every envelope as a JSON message and reports none undelivered", () =>
     Effect.gen(function* () {
-      const sent: Array<unknown> = [];
-      const undelivered = yield* send(async (messages) => {
-        for (const message of messages) sent.push(message.body);
-      })(envelopes(3));
+      const sent: Array<Event.Envelope> = [];
+
+      const undelivered = yield* send((messages) =>
+        Effect.sync(() => {
+          for (const message of messages) sent.push(message.body);
+        }),
+      )(envelopes(3));
 
       deepStrictEqual(undelivered, []);
       deepStrictEqual(sent, envelopes(3));
@@ -73,10 +77,16 @@ describe("CloudflareDomainEventQueueLive", () => {
   it.effect("reports the envelopes of a refused batch as undelivered", () =>
     Effect.gen(function* () {
       let calls = 0;
-      const undelivered = yield* send(async () => {
-        calls += 1;
-        if (calls === 2) throw new Error("Too Many Requests");
-      })(envelopes(150));
+
+      const undelivered = yield* send(() =>
+        Effect.suspend(() => {
+          calls += 1;
+
+          if (calls === 2) return Effect.fail(new Cause.UnknownError("Too Many Requests"));
+
+          return Effect.void;
+        }),
+      )(envelopes(150));
 
       deepStrictEqual(undelivered, envelopes(150).slice(100));
     }),
@@ -85,7 +95,7 @@ describe("CloudflareDomainEventQueueLive", () => {
   it.effect("reports an oversized envelope as undelivered without sending it", () =>
     Effect.gen(function* () {
       const tooLarge = envelope(1, QUEUE_LIMITS.bytesPerMessage);
-      const undelivered = yield* send(async () => undefined)([tooLarge]);
+      const undelivered = yield* send(() => Effect.void)([tooLarge]);
 
       deepStrictEqual(undelivered, [tooLarge]);
     }),

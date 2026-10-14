@@ -1,47 +1,48 @@
 import { describe, expect, it } from "@effect/vitest";
+import { assertInstanceOf } from "@effect/vitest/utils";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
 import { orFail } from "../src/or-fail.js";
 
-class NotFound {
-  public readonly _tag = "NotFound";
-}
+class NotFound extends Schema.TaggedError<NotFound, { readonly brand: "NotFound" }>()(
+  "NotFound",
+  {},
+) {}
+
+class StoreDown extends Schema.TaggedError<StoreDown, { readonly brand: "StoreDown" }>()(
+  "StoreDown",
+  {},
+) {}
 
 describe("orFail", () => {
-  it("passes the value through unchanged when the upstream effect succeeds with non-null", async () => {
-    const result = await Effect.runPromise(
-      Effect.succeed("hello").pipe(orFail(() => new NotFound())),
-    );
-    expect(result).toBe("hello");
-  });
+  it.effect("unwraps the value when the upstream effect succeeds with some", () =>
+    Effect.gen(function* () {
+      const result = yield* Effect.succeedSome("hello").pipe(orFail(() => new NotFound()));
 
-  it("fails with the provided error when the upstream effect succeeds with null", async () => {
-    const exit = await Effect.runPromiseExit(
-      Effect.succeed(null as string | null).pipe(orFail(() => new NotFound())),
-    );
-    expect(Exit.isFailure(exit)).toBe(true);
-    const reason = Exit.isFailure(exit) ? exit.cause.reasons[0] : undefined;
-    if (reason?._tag === "Fail") {
-      expect(reason.error).toBeInstanceOf(NotFound);
-    } else {
-      throw new Error("expected typed Fail");
-    }
-  });
+      expect(result).toBe("hello");
+    }),
+  );
 
-  it("propagates upstream failures unchanged", async () => {
-    class DatabaseError {
-      public readonly _tag = "DatabaseError";
-    }
-    const exit = await Effect.runPromiseExit(
-      Effect.fail(new DatabaseError()).pipe(orFail(() => new NotFound())),
-    );
-    expect(Exit.isFailure(exit)).toBe(true);
-    const reason = Exit.isFailure(exit) ? exit.cause.reasons[0] : undefined;
-    if (reason?._tag === "Fail") {
-      expect(reason.error._tag).toBe("DatabaseError");
-    } else {
-      throw new Error("expected typed Fail");
-    }
-  });
+  it.effect("fails with the provided error when the upstream effect succeeds with none", () =>
+    Effect.gen(function* () {
+      const error = yield* Effect.flip(Effect.succeedNone.pipe(orFail(() => new NotFound())));
+
+      assertInstanceOf(error, NotFound);
+    }),
+  );
+
+  it.effect("propagates upstream failures unchanged", () =>
+    Effect.gen(function* () {
+      const error = yield* Effect.flip(
+        Effect.fail(new StoreDown()).pipe(
+          Effect.as(Option.none<string>()),
+          orFail(() => new NotFound()),
+        ),
+      );
+
+      assertInstanceOf(error, StoreDown);
+    }),
+  );
 });

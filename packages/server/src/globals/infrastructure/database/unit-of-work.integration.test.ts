@@ -1,6 +1,5 @@
 import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
 import { Event, EventBus, makeEventBus } from "@effect-server-utils/cqrs";
 import { makeUnitOfWork, UnitOfWork } from "@effect-server-utils/unit-of-work";
 import { Database, RowSchemas } from "@org/database/index";
@@ -9,10 +8,10 @@ import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 import type * as Statement from "effect/sql/Statement";
-import { beforeEach } from "vitest";
 
 import { TransactionDriverLive } from "@/globals/infrastructure/database/transaction-driver-live.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { describeIntegration } from "@/test-utils/server-test-runtime.js";
+import { TestDatabaseLive } from "@/test-utils/test-database.js";
 
 // The unit of work reads `EventBus` from ambient context to flush it.
 // Bundling them in one layer guarantees the test body's `yield* EventBus`
@@ -54,198 +53,205 @@ const flushed = (sql: Statement.Constructor) =>
     Database.rows(RowSchemas.UserRow),
   );
 
-describe("UnitOfWork re-entrancy (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(truncate("user.users").pipe(Effect.provide(TestDatabaseLive)));
-  });
+describeIntegration(
+  "UnitOfWork re-entrancy (integration)",
+  { layer: TestDatabaseLive, tables: ["user.users"] },
+  (it) => {
+    it.effect("a nested run commits together with the outer transaction", () =>
+      Effect.gen(function* () {
+        const uow = yield* UnitOfWork;
+        const sql = yield* Database.Database;
 
-  it.effect("a nested run commits together with the outer transaction", () =>
-    Effect.gen(function* () {
-      const uow = yield* UnitOfWork;
-      const sql = yield* Database.Database;
-
-      yield* uow.run(
-        Effect.gen(function* () {
-          yield* insert(sql, outerId, "outer@example.com");
-          // Nested run: must join the outer tx (no second connection).
-          yield* uow.run(insert(sql, innerId, "inner@example.com"));
-        }),
-      );
-      const rows = yield* seeded(sql);
-      deepStrictEqual(rows.length, 2);
-    }).pipe(Effect.provide(UoWTestLive.pipe(Layer.provideMerge(TestDatabaseLive)))),
-  );
-
-  it.effect("a failure after a nested run rolls back the nested write too", () =>
-    Effect.gen(function* () {
-      const uow = yield* UnitOfWork;
-      const sql = yield* Database.Database;
-
-      const exit = yield* Effect.exit(
-        uow.run(
+        yield* uow.run(
           Effect.gen(function* () {
             yield* insert(sql, outerId, "outer@example.com");
+            // Nested run: must join the outer tx (no second connection).
             yield* uow.run(insert(sql, innerId, "inner@example.com"));
-            // Fail the outer unit of work after the nested write. If the
-            // nested run had opened its own transaction, `innerId` would
-            // survive this rollback.
-            return yield* Effect.die("boom");
           }),
-        ),
-      );
-      deepStrictEqual(Exit.isFailure(exit), true);
-      const rows = yield* seeded(sql);
-      deepStrictEqual(rows.length, 0);
-    }).pipe(Effect.provide(UoWTestLive.pipe(Layer.provideMerge(TestDatabaseLive)))),
-  );
+        );
+        const rows = yield* seeded(sql);
+        deepStrictEqual(rows.length, 2);
+      }).pipe(Effect.provide(UoWTestLive)),
+    );
 
-  // Proves the savepoint contract: a nested `run` opens a real SAVEPOINT, so a
-  // failure inside it that the caller CATCHES rolls back only the nested write
-  // while the outer transaction goes on to commit.
-  it.effect("a caught nested failure rolls back only the savepoint while the outer commits", () =>
-    Effect.gen(function* () {
-      const uow = yield* UnitOfWork;
-      const sql = yield* Database.Database;
+    it.effect("a failure after a nested run rolls back the nested write too", () =>
+      Effect.gen(function* () {
+        const uow = yield* UnitOfWork;
+        const sql = yield* Database.Database;
 
-      yield* uow.run(
-        Effect.gen(function* () {
-          yield* insert(sql, outerId, "outer@example.com");
-          // Nested run writes then fails; we catch the failure so the outer
-          // unit of work continues. The nested write must roll back to its
-          // savepoint without aborting the outer transaction.
-          const innerExit = yield* Effect.exit(
-            uow.run(
-              Effect.gen(function* () {
-                yield* insert(sql, innerId, "inner@example.com");
-                return yield* Effect.fail("nested boom" as const);
-              }),
-            ),
-          );
-          deepStrictEqual(Exit.isFailure(innerExit), true);
-        }),
-      );
+        const exit = yield* Effect.exit(
+          uow.run(
+            Effect.gen(function* () {
+              yield* insert(sql, outerId, "outer@example.com");
+              yield* uow.run(insert(sql, innerId, "inner@example.com"));
 
-      const rows = yield* seeded(sql);
-      deepStrictEqual(rows.length, 1);
-      deepStrictEqual(rows[0]?.id, outerId);
-    }).pipe(Effect.provide(UoWTestLive.pipe(Layer.provideMerge(TestDatabaseLive)))),
-  );
-});
+              // Fail the outer unit of work after the nested write. If the
+              // nested run had opened its own transaction, `innerId` would
+              // survive this rollback.
+              return yield* Effect.die("boom");
+            }),
+          ),
+        );
+
+        deepStrictEqual(Exit.isFailure(exit), true);
+        const rows = yield* seeded(sql);
+        deepStrictEqual(rows.length, 0);
+      }).pipe(Effect.provide(UoWTestLive)),
+    );
+
+    // Proves the savepoint contract: a nested `run` opens a real SAVEPOINT, so a
+    // failure inside it that the caller CATCHES rolls back only the nested write
+    // while the outer transaction goes on to commit.
+    it.effect("a caught nested failure rolls back only the savepoint while the outer commits", () =>
+      Effect.gen(function* () {
+        const uow = yield* UnitOfWork;
+        const sql = yield* Database.Database;
+
+        yield* uow.run(
+          Effect.gen(function* () {
+            yield* insert(sql, outerId, "outer@example.com");
+
+            // Nested run writes then fails; we catch the failure so the outer
+            // unit of work continues. The nested write must roll back to its
+            // savepoint without aborting the outer transaction.
+            const innerExit = yield* Effect.exit(
+              uow.run(
+                Effect.gen(function* () {
+                  yield* insert(sql, innerId, "inner@example.com");
+
+                  return yield* Effect.fail("nested boom" as const);
+                }),
+              ),
+            );
+
+            deepStrictEqual(Exit.isFailure(innerExit), true);
+          }),
+        );
+
+        const rows = yield* seeded(sql);
+        deepStrictEqual(rows.length, 1);
+        deepStrictEqual(rows[0]?.id, outerId);
+      }).pipe(Effect.provide(UoWTestLive)),
+    );
+  },
+);
 
 // Proves the post-commit (integration) bus contract: events dispatched to
 // `EventBus` inside a unit of work are buffered, then drained AFTER
 // the transaction commits — each handler in its own transaction, its failure
 // isolated, and discarded entirely if the producer rolls back.
-describe("UnitOfWork post-commit flush (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(truncate("user.users").pipe(Effect.provide(TestDatabaseLive)));
-  });
+describeIntegration(
+  "UnitOfWork post-commit flush (integration)",
+  { layer: TestDatabaseLive, tables: ["user.users"] },
+  (it) => {
+    it.effect("drains a buffered handler after the producer commits", () =>
+      Effect.gen(function* () {
+        const uow = yield* UnitOfWork;
+        const sql = yield* Database.Database;
+        const bus = yield* EventBus;
+        yield* bus.subscribeAfterCommit(PostCommitTestEvent, () =>
+          insert(sql, markerId, "marker@example.com").pipe(Effect.orDie),
+        );
 
-  it.effect("drains a buffered handler after the producer commits", () =>
-    Effect.gen(function* () {
-      const uow = yield* UnitOfWork;
-      const sql = yield* Database.Database;
-      const bus = yield* EventBus;
-      yield* bus.subscribeAfterCommit(PostCommitTestEvent, () =>
-        insert(sql, markerId, "marker@example.com").pipe(Effect.orDie),
-      );
-
-      yield* uow.run(
-        Effect.gen(function* () {
-          yield* insert(sql, outerId, "outer@example.com");
-          yield* bus.dispatch([PostCommitTestEvent.make({ marker: "x" })]);
-        }),
-      );
-
-      // Both the producer row and the post-commit handler's marker row exist.
-      const rows = yield* flushed(sql);
-      deepStrictEqual(rows.length, 2);
-    }).pipe(Effect.provide(UoWTestLive.pipe(Layer.provideMerge(TestDatabaseLive)))),
-  );
-
-  it.effect("a failing handler does not roll back the producer (failure isolated)", () =>
-    Effect.gen(function* () {
-      const uow = yield* UnitOfWork;
-      const sql = yield* Database.Database;
-      const bus = yield* EventBus;
-      yield* bus.subscribeAfterCommit(PostCommitTestEvent, () =>
-        Effect.die("integration handler boom"),
-      );
-
-      const exit = yield* Effect.exit(
-        uow.run(
+        yield* uow.run(
           Effect.gen(function* () {
             yield* insert(sql, outerId, "outer@example.com");
             yield* bus.dispatch([PostCommitTestEvent.make({ marker: "x" })]);
           }),
-        ),
-      );
+        );
 
-      // The producer's unit of work succeeded despite the handler dying...
-      deepStrictEqual(Exit.isSuccess(exit), true);
-      // ...and its write is committed.
-      const rows = yield* flushed(sql);
-      deepStrictEqual(rows.length, 1);
-      deepStrictEqual(rows[0]?.id, outerId);
-    }).pipe(Effect.provide(UoWTestLive.pipe(Layer.provideMerge(TestDatabaseLive)))),
-  );
+        // Both the producer row and the post-commit handler's marker row exist.
+        const rows = yield* flushed(sql);
+        deepStrictEqual(rows.length, 2);
+      }).pipe(Effect.provide(UoWTestLive)),
+    );
 
-  it.effect("a producer rollback discards the buffered events (no flush)", () =>
-    Effect.gen(function* () {
-      const uow = yield* UnitOfWork;
-      const sql = yield* Database.Database;
-      const bus = yield* EventBus;
-      yield* bus.subscribeAfterCommit(PostCommitTestEvent, () =>
-        insert(sql, markerId, "marker@example.com").pipe(Effect.orDie),
-      );
+    it.effect("a failing handler does not roll back the producer (failure isolated)", () =>
+      Effect.gen(function* () {
+        const uow = yield* UnitOfWork;
+        const sql = yield* Database.Database;
+        const bus = yield* EventBus;
+        yield* bus.subscribeAfterCommit(PostCommitTestEvent, () =>
+          Effect.die("integration handler boom"),
+        );
 
-      const exit = yield* Effect.exit(
-        uow.run(
+        const exit = yield* Effect.exit(
+          uow.run(
+            Effect.gen(function* () {
+              yield* insert(sql, outerId, "outer@example.com");
+              yield* bus.dispatch([PostCommitTestEvent.make({ marker: "x" })]);
+            }),
+          ),
+        );
+
+        // The producer's unit of work succeeded despite the handler dying...
+        deepStrictEqual(Exit.isSuccess(exit), true);
+        // ...and its write is committed.
+        const rows = yield* flushed(sql);
+        deepStrictEqual(rows.length, 1);
+        deepStrictEqual(rows[0]?.id, outerId);
+      }).pipe(Effect.provide(UoWTestLive)),
+    );
+
+    it.effect("a producer rollback discards the buffered events (no flush)", () =>
+      Effect.gen(function* () {
+        const uow = yield* UnitOfWork;
+        const sql = yield* Database.Database;
+        const bus = yield* EventBus;
+        yield* bus.subscribeAfterCommit(PostCommitTestEvent, () =>
+          insert(sql, markerId, "marker@example.com").pipe(Effect.orDie),
+        );
+
+        const exit = yield* Effect.exit(
+          uow.run(
+            Effect.gen(function* () {
+              yield* insert(sql, outerId, "outer@example.com");
+              yield* bus.dispatch([PostCommitTestEvent.make({ marker: "x" })]);
+
+              return yield* Effect.die("producer boom");
+            }),
+          ),
+        );
+
+        deepStrictEqual(Exit.isFailure(exit), true);
+        // Producer rolled back AND the handler never ran (buffer discarded).
+        const rows = yield* flushed(sql);
+        deepStrictEqual(rows.length, 0);
+      }).pipe(Effect.provide(UoWTestLive)),
+    );
+
+    it.effect("a rolled-back savepoint discards integration events emitted inside it", () =>
+      Effect.gen(function* () {
+        const uow = yield* UnitOfWork;
+        const sql = yield* Database.Database;
+        const bus = yield* EventBus;
+        yield* bus.subscribeAfterCommit(PostCommitTestEvent, () =>
+          insert(sql, markerId, "marker@example.com").pipe(Effect.orDie),
+        );
+
+        yield* uow.run(
           Effect.gen(function* () {
             yield* insert(sql, outerId, "outer@example.com");
-            yield* bus.dispatch([PostCommitTestEvent.make({ marker: "x" })]);
-            return yield* Effect.die("producer boom");
+            // Nested savepoint dispatches an integration event then fails; the
+            // caught failure rolls the savepoint back and truncates the buffer.
+            yield* Effect.exit(
+              uow.run(
+                Effect.gen(function* () {
+                  yield* bus.dispatch([PostCommitTestEvent.make({ marker: "x" })]);
+
+                  return yield* Effect.fail("savepoint boom" as const);
+                }),
+              ),
+            );
           }),
-        ),
-      );
+        );
 
-      deepStrictEqual(Exit.isFailure(exit), true);
-      // Producer rolled back AND the handler never ran (buffer discarded).
-      const rows = yield* flushed(sql);
-      deepStrictEqual(rows.length, 0);
-    }).pipe(Effect.provide(UoWTestLive.pipe(Layer.provideMerge(TestDatabaseLive)))),
-  );
-
-  it.effect("a rolled-back savepoint discards integration events emitted inside it", () =>
-    Effect.gen(function* () {
-      const uow = yield* UnitOfWork;
-      const sql = yield* Database.Database;
-      const bus = yield* EventBus;
-      yield* bus.subscribeAfterCommit(PostCommitTestEvent, () =>
-        insert(sql, markerId, "marker@example.com").pipe(Effect.orDie),
-      );
-
-      yield* uow.run(
-        Effect.gen(function* () {
-          yield* insert(sql, outerId, "outer@example.com");
-          // Nested savepoint dispatches an integration event then fails; the
-          // caught failure rolls the savepoint back and truncates the buffer.
-          yield* Effect.exit(
-            uow.run(
-              Effect.gen(function* () {
-                yield* bus.dispatch([PostCommitTestEvent.make({ marker: "x" })]);
-                return yield* Effect.fail("savepoint boom" as const);
-              }),
-            ),
-          );
-        }),
-      );
-
-      // Outer committed, but the integration event from the rolled-back
-      // savepoint was truncated, so the handler never ran.
-      const rows = yield* flushed(sql);
-      deepStrictEqual(rows.length, 1);
-      deepStrictEqual(rows[0]?.id, outerId);
-    }).pipe(Effect.provide(UoWTestLive.pipe(Layer.provideMerge(TestDatabaseLive)))),
-  );
-});
+        // Outer committed, but the integration event from the rolled-back
+        // savepoint was truncated, so the handler never ran.
+        const rows = yield* flushed(sql);
+        deepStrictEqual(rows.length, 1);
+        deepStrictEqual(rows[0]?.id, outerId);
+      }).pipe(Effect.provide(UoWTestLive)),
+    );
+  },
+);

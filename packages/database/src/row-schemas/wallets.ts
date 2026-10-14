@@ -7,4 +7,5 @@ export const WalletRow = Schema.Struct({
   created_at: Schema.DateTimeUtcFromDate,
   updated_at: Schema.DateTimeUtcFromDate,
 });
+
 export type WalletRow = typeof WalletRow.Type;

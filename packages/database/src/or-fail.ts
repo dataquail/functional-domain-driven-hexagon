@@ -1,16 +1,12 @@
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
-/**
- * Pipeable helper for the "decode-or-fail" pattern that arises after
- * `client.maybeOne(...)` (which yields `Row | null`). Narrows null and
- * raises a typed error in one step.
- *
- * Why: a ternary inside `Effect.flatMap` infers as a union of two distinct
- * `Effect<...>` instantiations and collapses the pipeline to
- * `Effect<unknown, unknown, unknown>`. `filterOrFail` has a single declared
- * signature, so the union is merged at the combinator boundary.
- */
+// Pipeable "decode-or-fail" after `Database.maybeRow`: unwraps the row, or
+// raises the caller's typed error when the statement matched none.
 export const orFail =
-  <E>(onNull: () => E) =>
-  <A, E0, R>(self: Effect.Effect<A | null, E0, R>): Effect.Effect<NonNullable<A>, E0 | E, R> =>
-    Effect.filterOrFail(self, (a): a is NonNullable<A> => a !== null, onNull);
+  <E>(onNone: () => E) =>
+  <A, E0, R>(self: Effect.Effect<Option.Option<A>, E0, R>): Effect.Effect<A, E0 | E, R> =>
+    Effect.flatMap(
+      self,
+      Option.match({ onNone: () => Effect.fail(onNone()), onSome: Effect.succeed }),
+    );

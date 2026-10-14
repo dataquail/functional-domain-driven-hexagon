@@ -1,92 +1,87 @@
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import { Database, resetAndMigrate } from "@org/database/index";
+import * as Clock from "effect/Clock";
+import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Redacted from "effect/Redacted";
+import * as Schema from "effect/Schema";
 
 // Mirrors packages/server/src/test-utils/test-database.ts. Duplicated rather
 // than imported because @org/jobs must not depend on @org/server (different
-// deployable, different runtime graph). When/if a third consumer needs this,
-// promote it to a shared @org/test-utils package.
+// deployable, different runtime graph).
 
-const rawUrl = process.env.DATABASE_URL_TEST;
-export const TEST_DATABASE_URL: string | undefined =
-  rawUrl !== undefined && rawUrl.length > 0 ? rawUrl : undefined;
+class TestDatabaseRefused extends Schema.TaggedError<
+  TestDatabaseRefused,
+  { readonly brand: "TestDatabaseRefused" }
+>()("TestDatabaseRefused", {
+  reason: Schema.String,
+}) {}
 
-// The integration suite must fail — never skip — when it has no database to
-// talk to. Called from the integration global-setup; throws a clear error if
-// `DATABASE_URL_TEST` is unset so the whole run aborts before any test loads.
-export const assertTestDatabaseConfigured = (): void => {
-  if (TEST_DATABASE_URL === undefined) {
-    throw new Error(
-      "[test-database] integration tests require DATABASE_URL_TEST to be set. " +
-        "Start the test database and export DATABASE_URL_TEST (its name must contain 'test').",
-    );
-  }
-};
+const databaseName = (url: Redacted.Redacted<string>) =>
+  new URL(Redacted.value(url)).pathname.replace(/^\//, "");
 
 // Never point a truncate/migrate at a DB that isn't explicitly a test DB.
-const assertTestDbName = (url: string): string => {
-  const name = new URL(url).pathname.replace(/^\//, "");
-  if (!name.toLowerCase().includes("test")) {
-    throw new Error(
-      `[test-database] refusing to operate on '${name}' — DATABASE_URL_TEST name must contain 'test'`,
-    );
-  }
-  return url;
-};
+const refuseNonTestDatabase = (url: Redacted.Redacted<string>) =>
+  Effect.succeed(url).pipe(
+    Effect.filterOrFail(
+      () => databaseName(url).toLowerCase().includes("test"),
+      () =>
+        new TestDatabaseRefused({
+          reason: `refusing to operate on '${databaseName(url)}' — DATABASE_URL_TEST name must contain 'test'`,
+        }),
+    ),
+    Effect.orDie,
+  );
 
-export const TestDatabaseLive =
-  TEST_DATABASE_URL !== undefined
-    ? Database.layer({
-        url: Redacted.make(assertTestDbName(TEST_DATABASE_URL)),
-        ssl: false,
-      })
-    : (Layer.effect(
-        Database.Database,
-        Effect.die(new Error("DATABASE_URL_TEST is not set")),
-      ) as ReturnType<typeof Database.layer>);
+// Read when a suite builds its layer, so a missing DATABASE_URL_TEST fails the run.
+const testDatabaseUrl = Config.Redacted("DATABASE_URL_TEST").pipe(
+  Effect.orDie,
+  Effect.flatMap(refuseNonTestDatabase),
+);
+
+// The pool keeps the clock it was built with; a test that pins `TestClock`
+// would otherwise freeze the driver's connect and idle timers.
+const liveClock = Layer.succeed(Clock.Clock, Clock.Clock.defaultValue());
+
+export const TestDatabaseLive = Layer.unwrap(
+  Effect.map(testDatabaseUrl, (url) => Database.layer({ url, ssl: false })),
+).pipe(Layer.provide(liveClock));
 
 // Tests always migrate from scratch: every module schema is dropped and the
-// migrations replayed. Memoized so concurrent test files that each call
-// runMigrations in beforeAll don't race the destructive reset.
-let migrationsPromise: Promise<void> | undefined;
+// migrations replayed, once, from the integration global-setup.
+export const migrateTestDatabase = testDatabaseUrl.pipe(
+  Effect.flatMap((url) => resetAndMigrate({ url, ssl: false })),
+  Effect.asVoid,
+  Effect.provide(NodeServices.layer),
+  Effect.orDie,
+);
 
-const doRunMigrations = async (): Promise<void> => {
-  if (TEST_DATABASE_URL === undefined) return;
-  const url = Redacted.make(assertTestDbName(TEST_DATABASE_URL));
-  await Effect.runPromise(
-    resetAndMigrate({ url, ssl: false }).pipe(
-      Effect.asVoid,
-      Effect.provide(NodeServices.layer),
-      Effect.orDie,
-    ),
-  );
-};
-
-export const runMigrations = (): Promise<void> => {
-  migrationsPromise ??= doRunMigrations();
-  return migrationsPromise;
-};
+class UnqualifiedTable extends Schema.TaggedError<
+  UnqualifiedTable,
+  { readonly brand: "UnqualifiedTable" }
+>()("UnqualifiedTable", {
+  table: Schema.String,
+}) {}
 
 // Each table reference must be schema-qualified ("schema.table"). Cross-schema
 // TRUNCATE CASCADE remains the test seam — application code never crosses
 // schemas (enforced by the cross-schema lint rule).
-const splitQualified = (qualified: string): readonly [string, string] => {
-  const [schema, table, ...rest] = qualified.split(".");
-  if (schema === undefined || table === undefined || rest.length > 0) {
-    throw new Error(
-      `[truncate] expected "schema.table", got "${qualified}". Tests must qualify table names with their owning module schema.`,
-    );
-  }
-  return [schema, table];
-};
+const requireQualified = (qualified: string) =>
+  Effect.succeed(qualified).pipe(
+    Effect.filterOrFail(
+      () => qualified.split(".").length === 2,
+      () => new UnqualifiedTable({ table: qualified }),
+    ),
+    Effect.orDie,
+  );
 
 export const truncate = (...tables: ReadonlyArray<string>) =>
   Effect.gen(function* () {
     const sql = yield* Database.Database;
+
     for (const qualified of tables) {
-      const [schema, table] = splitQualified(qualified);
-      yield* sql`TRUNCATE TABLE ${sql(`${schema}.${table}`)} CASCADE`;
+      const table = yield* requireQualified(qualified);
+      yield* sql`TRUNCATE TABLE ${sql(table)} CASCADE`;
     }
   }).pipe(Effect.orDie);

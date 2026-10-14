@@ -32,7 +32,7 @@ import m0025 from "./0025_create_table_platform_mail_daily_counts.js";
 // vitest it bypasses the transform and Node cannot load a `.ts` migration. A
 // record keeps one mechanism working for the CLI, the test suites and
 // acceptance alike. `migrator.test.ts` asserts this list matches the directory.
-export const migrations: Record<string, Effect.Effect<void, unknown, SqlClient>> = {
+export const migrations = {
   "0001_create_schema_user": m0001,
   "0002_create_schema_organization": m0002,
   "0003_create_schema_todos": m0003,
@@ -58,4 +58,4 @@ export const migrations: Record<string, Effect.Effect<void, unknown, SqlClient>>
   "0023_create_table_platform_event_outbox": m0023,
   "0024_auth_identities_provider_better_auth": m0024,
   "0025_create_table_platform_mail_daily_counts": m0025,
-};
+} satisfies Record<string, Effect.Effect<void, unknown, SqlClient>>;

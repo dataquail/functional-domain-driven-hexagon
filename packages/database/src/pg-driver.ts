@@ -3,6 +3,7 @@ import * as PgTypes from "@effect/sql-pg/PgTypes";
 import type * as Layer from "effect/Layer";
 import type * as Redacted from "effect/Redacted";
 import * as Result from "effect/Result";
+import type * as Schema from "effect/Schema";
 import type { SqlClient } from "effect/sql/SqlClient";
 import type { SqlError } from "effect/sql/SqlError";
 
@@ -24,19 +25,26 @@ const int8AsNumber: PgTypes.Codec<number | bigint> = {
   encode: (value) => {
     const bytes = new Uint8Array(INT8_BYTES);
     new DataView(bytes.buffer).setBigInt64(0, BigInt(value));
+
     return Result.succeed(bytes);
   },
-  decode: (bytes) =>
-    bytes.length === INT8_BYTES
-      ? Result.succeed(
-          Number(new DataView(bytes.buffer, bytes.byteOffset, INT8_BYTES).getBigInt64(0)),
-        )
-      : Result.fail(new PgTypes.CodecError({ message: `int8 needs 8 bytes, got ${bytes.length}` })),
+  decode: (bytes) => {
+    if (bytes.length !== INT8_BYTES) {
+      return Result.fail(
+        new PgTypes.CodecError({ message: `int8 needs 8 bytes, got ${bytes.length}` }),
+      );
+    }
+
+    return Result.succeed(
+      Number(new DataView(bytes.buffer, bytes.byteOffset, INT8_BYTES).getBigInt64(0)),
+    );
+  },
 };
 
 const makeTypes = (): PgTypes.Registry => {
   const registry = PgTypes.makeRegistry();
   registry.register(PgTypes.OID.int8, int8AsNumber, { arrayOid: PgTypes.OID.int8Array });
+
   return registry;
 };
 
@@ -50,19 +58,33 @@ const typedArray =
 export const textArray = typedArray(PgTypes.OID.text);
 export const uuidArray = typedArray(PgTypes.OID.uuid);
 
-export const jsonb = (value: unknown): PgTypes.Parameter => PgTypes.jsonb(value);
+export const jsonb = (value: Schema.Json): PgTypes.Parameter => PgTypes.jsonb(value);
 
 // A transaction-mode pooler (Hyperdrive) reuses backends between transactions, so a
 // named statement prepared on one is gone on the next; the pooler also owns reuse, so
 // the client keeps only what one invocation needs.
 const TRANSACTION_POOLER_SETTINGS = { prepare: false, maxConnections: 2 } as const;
 
-export const driverSettings = (config: Config): PgClient.PgPoolConfig => ({
-  url: config.url,
-  ssl: config.ssl ? { rejectUnauthorized: true } : undefined,
-  types: makeTypes(),
-  ...(config.behindTransactionPooler === true ? TRANSACTION_POOLER_SETTINGS : {}),
-});
+const withTls = (settings: PgClient.PgPoolConfig, ssl: boolean): PgClient.PgPoolConfig => {
+  if (!ssl) return settings;
+
+  return { ...settings, ssl: { rejectUnauthorized: true } };
+};
+
+const withPooler = (
+  settings: PgClient.PgPoolConfig,
+  behindTransactionPooler: boolean,
+): PgClient.PgPoolConfig => {
+  if (!behindTransactionPooler) return settings;
+
+  return { ...settings, ...TRANSACTION_POOLER_SETTINGS };
+};
+
+export const driverSettings = (config: Config): PgClient.PgPoolConfig =>
+  withPooler(
+    withTls({ url: config.url, types: makeTypes() }, config.ssl),
+    config.behindTransactionPooler === true,
+  );
 
 export const driverLayer = (config: Config): Layer.Layer<PgClient.PgClient | SqlClient, SqlError> =>
   PgClient.layer(driverSettings(config));

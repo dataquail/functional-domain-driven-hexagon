@@ -31,13 +31,17 @@ export const InProcessDomainEventQueueLive: Layer.Layer<
       envelope: Event.Envelope,
     ) {
       const deliver = yield* Ref.get(consumer);
+
       if (Option.isNone(deliver)) {
         return yield* Effect.die(new Error("InProcessDomainEventQueue: no consumer attached"));
       }
+
       return Exit.isSuccess(yield* deliver.value(envelope));
     });
+
     const send = (envelopes: ReadonlyArray<Event.Envelope>) =>
       Effect.filter(envelopes, (envelope) => Effect.map(deliverOne(envelope), (ok) => !ok));
+
     return Context.make(DomainEventQueue, DomainEventQueue.of({ send })).pipe(
       Context.add(InProcessDomainEventConsumer, {
         attach: (deliver) => Ref.set(consumer, Option.some(deliver)),

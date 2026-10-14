@@ -6,7 +6,4 @@
 // else, so a domain port structurally cannot name a bus in its requirement
 // channel (ADR-0006). The event *type* lives in `ddd/domain-event.ts`, which
 // the domain may reach.
-export {
-  EventBus as DomainEventBus,
-  type EventBusShape as DomainEventBusShape,
-} from "@effect-server-utils/cqrs";
+export { EventBus as DomainEventBus } from "@effect-server-utils/cqrs";

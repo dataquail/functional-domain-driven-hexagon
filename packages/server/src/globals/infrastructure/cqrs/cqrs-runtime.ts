@@ -91,6 +91,7 @@ export const CommandBusLive = Layer.effect(
     const todos = yield* TodoCommands;
     const role = yield* RoleCommands;
     const billing = yield* BillingCommands;
+
     return makeCommandBus(
       mergeDispatchTables(wallet, user, organization, auth, todos, role, billing),
       {
@@ -116,6 +117,7 @@ export const QueryBusLive = Layer.effect(
     const user = yield* UserQueries;
     const todos = yield* TodoQueries;
     const billing = yield* BillingQueries;
+
     // `roleQueryGroup` is deliberately absent from both lists. Its one member is a
     // policy-query (ADR-0022): a cross-module contract reached only through a
     // consumer's own ACL adapter against `RoleQueries`, never routed by tag. So
@@ -165,6 +167,7 @@ export const makeUnitOfWorkLive = (queue: Layer.Layer<DomainEventQueue>) =>
 
 export const AfterCommitTransportLive = makeAfterCommitTransportLive(InProcessDomainEventQueueLive);
 export const UnitOfWorkLive = makeUnitOfWorkLive(InProcessDomainEventQueueLive);
+
 export const DomainEventDeliveryLive = InProcessDomainEventDeliveryLive.pipe(
   Layer.provide(Layer.mergeAll(InProcessDomainEventQueueLive, DeliveryLedgerLive)),
 );

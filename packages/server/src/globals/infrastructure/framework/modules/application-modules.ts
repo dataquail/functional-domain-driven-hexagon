@@ -37,6 +37,7 @@ export const PolicyRegistryLive = Layer.unwrap(
     const todoPolicies = yield* TodoPolicyContribution;
     const billingPolicies = yield* BillingPolicyContribution;
     const organizationPolicies = yield* OrganizationPolicyContribution;
+
     return makePolicyRegistry([todoPolicies, billingPolicies, organizationPolicies]);
   }),
 );
@@ -47,6 +48,7 @@ export const ResourceResolverRegistryLive = Layer.unwrap(
     const todoCollectionResolver = yield* TodoCollectionResolverEntry;
     const todoResolver = yield* TodoResolverEntry;
     const billingResolver = yield* BillingResolverEntry;
+
     return makeResourceResolverRegistry({
       organization: organizationResolver,
       todoCollection: todoCollectionResolver,

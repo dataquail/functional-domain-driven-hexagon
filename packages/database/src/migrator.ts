@@ -38,8 +38,10 @@ export const runMigrations = (
 export const resetAndMigrate = (config: Config) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
+
     for (const schema of MODULE_SCHEMAS) {
       yield* sql`DROP SCHEMA IF EXISTS ${sql(schema)} CASCADE`;
     }
+
     yield* sql`DROP TABLE IF EXISTS effect_sql_migrations`;
   }).pipe(Effect.provide(driverLayer(config)), Effect.andThen(runMigrations(config)));

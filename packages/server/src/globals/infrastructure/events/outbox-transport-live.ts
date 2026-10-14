@@ -29,12 +29,18 @@ export const OutboxTransportLive: Layer.Layer<
         )}
       `.pipe(Database.exec, Effect.orDie);
 
+    const relayedAt = (relayed: boolean) => {
+      if (relayed) return sql`now()`;
+
+      return sql`NULL`;
+    };
+
     const recordAttempt = (envelope: Event.Envelope, relayed: boolean) =>
       sql`
         UPDATE platform.event_outbox
         SET attempts = attempts + 1,
             last_attempted_at = now(),
-            relayed_at = ${relayed ? sql`now()` : sql`NULL`}
+            relayed_at = ${relayedAt(relayed)}
         WHERE event_id = ${envelope.eventId} AND handler = ${envelope.handler}
       `.pipe(Database.exec, Effect.orDie);
 

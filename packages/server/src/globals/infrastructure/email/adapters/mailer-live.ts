@@ -13,6 +13,7 @@ import { MailpitMailerFetchLive } from "./mailpit-mailer-live.js";
 export const MailerLive = Layer.unwrap(
   Effect.gen(function* () {
     const env = yield* EnvVars;
+
     switch (env.MAILER) {
       case "mailpit":
         return MailpitMailerFetchLive;

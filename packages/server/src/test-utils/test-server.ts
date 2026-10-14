@@ -1,3 +1,4 @@
+import * as NodeCrypto from "@effect/platform-node/NodeCrypto";
 import { type UserAuthMiddleware } from "@org/contracts/Policy";
 import * as HttpRouter from "effect/http/HttpRouter";
 import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
@@ -79,7 +80,7 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
         DeliveryLedgerLive,
       ),
     ),
-    Layer.provide([CookieCodec.layer, BillingGatewayFake]),
+    Layer.provide([CookieCodec.layer, BillingGatewayFake, NodeCrypto.layer]),
     Layer.provideMerge(TestDatabaseLive),
     Layer.provide(EnvVars.layer),
     Layer.provideMerge(InMemoryHttpServerLive),

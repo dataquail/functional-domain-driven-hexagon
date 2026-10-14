@@ -3,15 +3,16 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
 import { MailDeliveryError } from "../ports/mail-errors.js";
-import { Mailer, type MailerShape } from "../ports/mailer.js";
+import { Mailer, type MailerService } from "../ports/mailer.js";
 
 // Counts each send against today's row and refuses once the cap is reached;
 // a send the transport then refuses still counts, which errs toward sending less.
 const dailyCappedMailer = Effect.fn("dailyCappedMailer")(function* (
-  transport: MailerShape,
+  transport: MailerService,
   dailyCap: number,
 ) {
   const sql = yield* Database.Database;
+
   const claimTodaysSend = sql`
     INSERT INTO platform.mail_daily_counts (day, sent)
     SELECT current_date, 1 WHERE ${dailyCap}::integer > 0
@@ -25,18 +26,16 @@ const dailyCappedMailer = Effect.fn("dailyCappedMailer")(function* (
       (error) => new MailDeliveryError({ message: `Could not count today's sends: ${error._tag}` }),
     ),
   );
+
   return Mailer.of({
     send: (message) =>
       claimTodaysSend.pipe(
-        Effect.flatMap((claimed) =>
-          claimed
-            ? transport.send(message)
-            : Effect.fail(
-                new MailDeliveryError({
-                  message: `The daily cap of ${dailyCap} emails is reached`,
-                }),
-              ),
+        Effect.filterOrFail(
+          (claimed) => claimed,
+          () =>
+            new MailDeliveryError({ message: `The daily cap of ${dailyCap} emails is reached` }),
         ),
+        Effect.andThen(transport.send(message)),
       ),
   });
 });
