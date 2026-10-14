@@ -21,17 +21,17 @@ setup("authenticate as member", async ({ page }) => {
 
   // A regular user lands on the root `/` (the org picker) — unlike a
   // super-admin, who is redirected to /admin/orgs.
-  try {
-    await page.waitForURL(({ pathname }) => pathname === "/", { timeout: 15_000 });
-  } catch (cause) {
-    throw new Error(
-      `[member.setup] Member sign-in did not land on the SPA root.\n` +
-        `  Stuck at: ${page.url()}\n` +
-        `  Page title: ${await page.title()}\n` +
-        `  Most common cause: the identity Worker was seeded with a different ACCEPTANCE_MEMBER_PASSWORD.\n` +
-        `  Original: ${String(cause)}`,
-    );
-  }
+  await page
+    .waitForURL(({ pathname }) => pathname === "/", { timeout: 15_000 })
+    .catch(async (cause: unknown) => {
+      throw new Error(
+        `[member.setup] Member sign-in did not land on the SPA root.\n` +
+          `  Stuck at: ${page.url()}\n` +
+          `  Page title: ${await page.title()}\n` +
+          `  Most common cause: the identity Worker was seeded with a different ACCEPTANCE_MEMBER_PASSWORD.\n` +
+          `  Original: ${String(cause)}`,
+      );
+    });
 
   await page.context().storageState({ path: MEMBER_STORAGE_STATE });
 });

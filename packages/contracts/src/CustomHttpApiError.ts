@@ -4,7 +4,7 @@ import * as Schema from "effect/Schema";
 // 4xx Client Errors
 // ==========================================
 
-export class BadRequest extends Schema.TaggedError<BadRequest>()(
+export class BadRequest extends Schema.TaggedError<BadRequest, { readonly brand: "BadRequest" }>()(
   "BadRequest",
   {
     message: Schema.optional(Schema.String),
@@ -15,7 +15,10 @@ export class BadRequest extends Schema.TaggedError<BadRequest>()(
   },
 ) {}
 
-export class Unauthorized extends Schema.TaggedError<Unauthorized>()(
+export class Unauthorized extends Schema.TaggedError<
+  Unauthorized,
+  { readonly brand: "Unauthorized" }
+>()(
   "Unauthorized",
   {
     message: Schema.optional(Schema.String),
@@ -26,7 +29,10 @@ export class Unauthorized extends Schema.TaggedError<Unauthorized>()(
   },
 ) {}
 
-export class PaymentRequired extends Schema.TaggedError<PaymentRequired>()(
+export class PaymentRequired extends Schema.TaggedError<
+  PaymentRequired,
+  { readonly brand: "PaymentRequired" }
+>()(
   "PaymentRequired",
   {
     message: Schema.optional(Schema.String),
@@ -37,7 +43,7 @@ export class PaymentRequired extends Schema.TaggedError<PaymentRequired>()(
   },
 ) {}
 
-export class Forbidden extends Schema.TaggedError<Forbidden>()(
+export class Forbidden extends Schema.TaggedError<Forbidden, { readonly brand: "Forbidden" }>()(
   "Forbidden",
   {
     message: Schema.optional(Schema.String),
@@ -48,7 +54,7 @@ export class Forbidden extends Schema.TaggedError<Forbidden>()(
   },
 ) {}
 
-export class NotFound extends Schema.TaggedError<NotFound>()(
+export class NotFound extends Schema.TaggedError<NotFound, { readonly brand: "NotFound" }>()(
   "NotFound",
   {
     message: Schema.optional(Schema.String),
@@ -59,7 +65,10 @@ export class NotFound extends Schema.TaggedError<NotFound>()(
   },
 ) {}
 
-export class MethodNotAllowed extends Schema.TaggedError<MethodNotAllowed>()(
+export class MethodNotAllowed extends Schema.TaggedError<
+  MethodNotAllowed,
+  { readonly brand: "MethodNotAllowed" }
+>()(
   "MethodNotAllowed",
   {
     message: Schema.optional(Schema.String),
@@ -70,7 +79,10 @@ export class MethodNotAllowed extends Schema.TaggedError<MethodNotAllowed>()(
   },
 ) {}
 
-export class NotAcceptable extends Schema.TaggedError<NotAcceptable>()(
+export class NotAcceptable extends Schema.TaggedError<
+  NotAcceptable,
+  { readonly brand: "NotAcceptable" }
+>()(
   "NotAcceptable",
   {
     message: Schema.optional(Schema.String),
@@ -82,7 +94,10 @@ export class NotAcceptable extends Schema.TaggedError<NotAcceptable>()(
   },
 ) {}
 
-export class ProxyAuthenticationRequired extends Schema.TaggedError<ProxyAuthenticationRequired>()(
+export class ProxyAuthenticationRequired extends Schema.TaggedError<
+  ProxyAuthenticationRequired,
+  { readonly brand: "ProxyAuthenticationRequired" }
+>()(
   "ProxyAuthenticationRequired",
   {
     message: Schema.optional(Schema.String),
@@ -93,7 +108,10 @@ export class ProxyAuthenticationRequired extends Schema.TaggedError<ProxyAuthent
   },
 ) {}
 
-export class RequestTimeout extends Schema.TaggedError<RequestTimeout>()(
+export class RequestTimeout extends Schema.TaggedError<
+  RequestTimeout,
+  { readonly brand: "RequestTimeout" }
+>()(
   "RequestTimeout",
   {
     message: Schema.optional(Schema.String),
@@ -104,7 +122,7 @@ export class RequestTimeout extends Schema.TaggedError<RequestTimeout>()(
   },
 ) {}
 
-export class Conflict extends Schema.TaggedError<Conflict>()(
+export class Conflict extends Schema.TaggedError<Conflict, { readonly brand: "Conflict" }>()(
   "Conflict",
   {
     message: Schema.optional(Schema.String),
@@ -115,7 +133,7 @@ export class Conflict extends Schema.TaggedError<Conflict>()(
   },
 ) {}
 
-export class Gone extends Schema.TaggedError<Gone>()(
+export class Gone extends Schema.TaggedError<Gone, { readonly brand: "Gone" }>()(
   "Gone",
   {
     message: Schema.optional(Schema.String),
@@ -126,7 +144,10 @@ export class Gone extends Schema.TaggedError<Gone>()(
   },
 ) {}
 
-export class LengthRequired extends Schema.TaggedError<LengthRequired>()(
+export class LengthRequired extends Schema.TaggedError<
+  LengthRequired,
+  { readonly brand: "LengthRequired" }
+>()(
   "LengthRequired",
   {
     message: Schema.optional(Schema.String),
@@ -138,7 +159,10 @@ export class LengthRequired extends Schema.TaggedError<LengthRequired>()(
   },
 ) {}
 
-export class PreconditionFailed extends Schema.TaggedError<PreconditionFailed>()(
+export class PreconditionFailed extends Schema.TaggedError<
+  PreconditionFailed,
+  { readonly brand: "PreconditionFailed" }
+>()(
   "PreconditionFailed",
   {
     message: Schema.optional(Schema.String),
@@ -150,7 +174,10 @@ export class PreconditionFailed extends Schema.TaggedError<PreconditionFailed>()
   },
 ) {}
 
-export class PayloadTooLarge extends Schema.TaggedError<PayloadTooLarge>()(
+export class PayloadTooLarge extends Schema.TaggedError<
+  PayloadTooLarge,
+  { readonly brand: "PayloadTooLarge" }
+>()(
   "PayloadTooLarge",
   {
     message: Schema.optional(Schema.String),
@@ -161,7 +188,7 @@ export class PayloadTooLarge extends Schema.TaggedError<PayloadTooLarge>()(
   },
 ) {}
 
-export class URITooLong extends Schema.TaggedError<URITooLong>()(
+export class URITooLong extends Schema.TaggedError<URITooLong, { readonly brand: "URITooLong" }>()(
   "URITooLong",
   {
     message: Schema.optional(Schema.String),
@@ -172,7 +199,10 @@ export class URITooLong extends Schema.TaggedError<URITooLong>()(
   },
 ) {}
 
-export class UnsupportedMediaType extends Schema.TaggedError<UnsupportedMediaType>()(
+export class UnsupportedMediaType extends Schema.TaggedError<
+  UnsupportedMediaType,
+  { readonly brand: "UnsupportedMediaType" }
+>()(
   "UnsupportedMediaType",
   {
     message: Schema.optional(Schema.String),
@@ -184,7 +214,10 @@ export class UnsupportedMediaType extends Schema.TaggedError<UnsupportedMediaTyp
   },
 ) {}
 
-export class RangeNotSatisfiable extends Schema.TaggedError<RangeNotSatisfiable>()(
+export class RangeNotSatisfiable extends Schema.TaggedError<
+  RangeNotSatisfiable,
+  { readonly brand: "RangeNotSatisfiable" }
+>()(
   "RangeNotSatisfiable",
   {
     message: Schema.optional(Schema.String),
@@ -196,7 +229,10 @@ export class RangeNotSatisfiable extends Schema.TaggedError<RangeNotSatisfiable>
   },
 ) {}
 
-export class ExpectationFailed extends Schema.TaggedError<ExpectationFailed>()(
+export class ExpectationFailed extends Schema.TaggedError<
+  ExpectationFailed,
+  { readonly brand: "ExpectationFailed" }
+>()(
   "ExpectationFailed",
   {
     message: Schema.optional(Schema.String),
@@ -207,7 +243,10 @@ export class ExpectationFailed extends Schema.TaggedError<ExpectationFailed>()(
   },
 ) {}
 
-export class UnprocessableEntity extends Schema.TaggedError<UnprocessableEntity>()(
+export class UnprocessableEntity extends Schema.TaggedError<
+  UnprocessableEntity,
+  { readonly brand: "UnprocessableEntity" }
+>()(
   "UnprocessableEntity",
   {
     message: Schema.optional(Schema.String),
@@ -218,7 +257,7 @@ export class UnprocessableEntity extends Schema.TaggedError<UnprocessableEntity>
   },
 ) {}
 
-export class TooEarly extends Schema.TaggedError<TooEarly>()(
+export class TooEarly extends Schema.TaggedError<TooEarly, { readonly brand: "TooEarly" }>()(
   "TooEarly",
   {
     message: Schema.optional(Schema.String),
@@ -229,7 +268,10 @@ export class TooEarly extends Schema.TaggedError<TooEarly>()(
   },
 ) {}
 
-export class TooManyRequests extends Schema.TaggedError<TooManyRequests>()(
+export class TooManyRequests extends Schema.TaggedError<
+  TooManyRequests,
+  { readonly brand: "TooManyRequests" }
+>()(
   "TooManyRequests",
   {
     message: Schema.optional(Schema.String),
@@ -240,7 +282,10 @@ export class TooManyRequests extends Schema.TaggedError<TooManyRequests>()(
   },
 ) {}
 
-export class RequestHeaderFieldsTooLarge extends Schema.TaggedError<RequestHeaderFieldsTooLarge>()(
+export class RequestHeaderFieldsTooLarge extends Schema.TaggedError<
+  RequestHeaderFieldsTooLarge,
+  { readonly brand: "RequestHeaderFieldsTooLarge" }
+>()(
   "RequestHeaderFieldsTooLarge",
   {
     message: Schema.optional(Schema.String),
@@ -252,7 +297,10 @@ export class RequestHeaderFieldsTooLarge extends Schema.TaggedError<RequestHeade
   },
 ) {}
 
-export class UnavailableForLegalReasons extends Schema.TaggedError<UnavailableForLegalReasons>()(
+export class UnavailableForLegalReasons extends Schema.TaggedError<
+  UnavailableForLegalReasons,
+  { readonly brand: "UnavailableForLegalReasons" }
+>()(
   "UnavailableForLegalReasons",
   {
     message: Schema.optional(Schema.String),
@@ -267,7 +315,10 @@ export class UnavailableForLegalReasons extends Schema.TaggedError<UnavailableFo
 // 5xx Server Errors
 // ==========================================
 
-export class InternalServerError extends Schema.TaggedError<InternalServerError>()(
+export class InternalServerError extends Schema.TaggedError<
+  InternalServerError,
+  { readonly brand: "InternalServerError" }
+>()(
   "InternalServerError",
   {
     message: Schema.optional(Schema.String),
@@ -278,7 +329,10 @@ export class InternalServerError extends Schema.TaggedError<InternalServerError>
   },
 ) {}
 
-export class NotImplemented extends Schema.TaggedError<NotImplemented>()(
+export class NotImplemented extends Schema.TaggedError<
+  NotImplemented,
+  { readonly brand: "NotImplemented" }
+>()(
   "NotImplemented",
   {
     message: Schema.optional(Schema.String),
@@ -289,7 +343,7 @@ export class NotImplemented extends Schema.TaggedError<NotImplemented>()(
   },
 ) {}
 
-export class BadGateway extends Schema.TaggedError<BadGateway>()(
+export class BadGateway extends Schema.TaggedError<BadGateway, { readonly brand: "BadGateway" }>()(
   "BadGateway",
   {
     message: Schema.optional(Schema.String),
@@ -301,7 +355,10 @@ export class BadGateway extends Schema.TaggedError<BadGateway>()(
   },
 ) {}
 
-export class ServiceUnavailable extends Schema.TaggedError<ServiceUnavailable>()(
+export class ServiceUnavailable extends Schema.TaggedError<
+  ServiceUnavailable,
+  { readonly brand: "ServiceUnavailable" }
+>()(
   "ServiceUnavailable",
   {
     message: Schema.optional(Schema.String),
@@ -312,7 +369,10 @@ export class ServiceUnavailable extends Schema.TaggedError<ServiceUnavailable>()
   },
 ) {}
 
-export class GatewayTimeout extends Schema.TaggedError<GatewayTimeout>()(
+export class GatewayTimeout extends Schema.TaggedError<
+  GatewayTimeout,
+  { readonly brand: "GatewayTimeout" }
+>()(
   "GatewayTimeout",
   {
     message: Schema.optional(Schema.String),
@@ -324,7 +384,10 @@ export class GatewayTimeout extends Schema.TaggedError<GatewayTimeout>()(
   },
 ) {}
 
-export class HTTPVersionNotSupported extends Schema.TaggedError<HTTPVersionNotSupported>()(
+export class HTTPVersionNotSupported extends Schema.TaggedError<
+  HTTPVersionNotSupported,
+  { readonly brand: "HTTPVersionNotSupported" }
+>()(
   "HTTPVersionNotSupported",
   {
     message: Schema.optional(Schema.String),

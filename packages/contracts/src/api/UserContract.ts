@@ -10,7 +10,10 @@ import { UserAuthMiddleware } from "../Policy.js";
 // Errors
 // ==========================================
 
-export class UserAlreadyExistsError extends Schema.TaggedError<UserAlreadyExistsError>()(
+export class UserAlreadyExistsError extends Schema.TaggedError<
+  UserAlreadyExistsError,
+  { readonly brand: "UserAlreadyExistsError" }
+>()(
   "UserAlreadyExistsError",
   {
     email: Schema.String,
@@ -19,7 +22,10 @@ export class UserAlreadyExistsError extends Schema.TaggedError<UserAlreadyExists
   { httpApiStatus: 409 },
 ) {}
 
-export class UserNotFoundError extends Schema.TaggedError<UserNotFoundError>()(
+export class UserNotFoundError extends Schema.TaggedError<
+  UserNotFoundError,
+  { readonly brand: "UserNotFoundError" }
+>()(
   "UserNotFoundError",
   {
     userId: UserId,
@@ -37,9 +43,10 @@ export const Address = Schema.Struct({
   street: Schema.String,
   postalCode: Schema.String,
 });
+
 export type Address = typeof Address.Type;
 
-export class User extends Schema.Class<User>("User")({
+export class User extends Schema.Class<User, { readonly brand: "User" }>("User")({
   id: UserId,
   email: Schema.String,
   // Nullable: a user provisioned just-in-time on first OIDC sign-in has no
@@ -53,18 +60,27 @@ export class User extends Schema.Class<User>("User")({
 // Payloads / Responses
 // ==========================================
 
-export class CreateUserPayload extends Schema.Class<CreateUserPayload>("CreateUserPayload")({
+export class CreateUserPayload extends Schema.Class<
+  CreateUserPayload,
+  { readonly brand: "CreateUserPayload" }
+>("CreateUserPayload")({
   email: Schema.String.check(Schema.isMinLength(3), Schema.isMaxLength(255)),
   country: Schema.String.check(Schema.isMinLength(2), Schema.isMaxLength(50)),
   street: Schema.String.check(Schema.isMinLength(2), Schema.isMaxLength(50)),
   postalCode: Schema.String.check(Schema.isMinLength(2), Schema.isMaxLength(10)),
 }) {}
 
-export class CreateUserResponse extends Schema.Class<CreateUserResponse>("CreateUserResponse")({
+export class CreateUserResponse extends Schema.Class<
+  CreateUserResponse,
+  { readonly brand: "CreateUserResponse" }
+>("CreateUserResponse")({
   id: UserId,
 }) {}
 
-export class FindUsersParams extends Schema.Class<FindUsersParams>("FindUsersParams")({
+export class FindUsersParams extends Schema.Class<
+  FindUsersParams,
+  { readonly brand: "FindUsersParams" }
+>("FindUsersParams")({
   page: Schema.NumberFromString.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(1)),
   pageSize: Schema.NumberFromString.check(
     Schema.isInt(),
@@ -72,7 +88,10 @@ export class FindUsersParams extends Schema.Class<FindUsersParams>("FindUsersPar
   ),
 }) {}
 
-export class PaginatedUsers extends Schema.Class<PaginatedUsers>("PaginatedUsers")({
+export class PaginatedUsers extends Schema.Class<
+  PaginatedUsers,
+  { readonly brand: "PaginatedUsers" }
+>("PaginatedUsers")({
   users: Schema.Array(User),
   page: Schema.Int,
   pageSize: Schema.Int,

@@ -1,13 +1,20 @@
 #!/usr/bin/env node
+import * as NodeRuntime from "@effect/platform-node/NodeRuntime";
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { makeCliClient, readCredentials, resolveBaseUrl, resolveToken } from "@org/api-client";
+import { CliOrganizationContract, CliTodosContract } from "@org/contracts/api/Contracts";
 import { OrganizationId, TodoId } from "@org/contracts/EntityIds";
+import * as Cause from "effect/Cause";
+import * as Console from "effect/Console";
 import * as Effect from "effect/Effect";
 import * as FetchHttpClient from "effect/http/FetchHttpClient";
 import * as Layer from "effect/Layer";
 import * as ManagedRuntime from "effect/ManagedRuntime";
+import * as Match from "effect/Match";
+import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 import { z } from "zod";
 
 // MCP (stdio) server exposing the CLI surface as tools (ADR-0005). It reuses
@@ -18,84 +25,75 @@ import { z } from "zod";
 
 type CliClient = Effect.Success<ReturnType<typeof makeCliClient>>;
 
-type ToolOutcome<A> =
-  | { readonly ok: true; readonly value: A }
-  | { readonly ok: false; readonly message: string };
+// Every failure a CLI client call can raise is a tagged error with a message.
+type ToolFailure = { readonly _tag: string; readonly message: string };
 
-const friendlyError = (error: unknown): string => {
-  const tag =
-    typeof error === "object" && error !== null && "_tag" in error
-      ? String((error as { readonly _tag: unknown })._tag)
-      : "";
-  const message =
-    typeof error === "object" && error !== null && "message" in error
-      ? String((error as { readonly message: unknown }).message)
-      : "";
-  switch (tag) {
-    case "Unauthorized":
-      return "Not authorized — the token is invalid or expired.";
-    case "Forbidden":
-      return "No access to that organization or resource.";
-    case "ServiceUnavailable":
-      return "The server is temporarily unavailable.";
-    case "CliTodoNotFoundError":
-      return message.length > 0 ? message : "Todo not found.";
-    case "RequestError":
-    case "ResponseError":
-      return `Could not reach the server at ${resolveBaseUrl()}.`;
-    default:
-      return tag.length > 0
-        ? `Request failed (${tag}).`
-        : message.length > 0
-          ? message
-          : String(error);
-  }
-};
+const textResult = (text: string) => ({ content: [{ type: "text" as const, text }] });
+
+type ToolResult = ReturnType<typeof textResult> & { readonly isError?: boolean };
+
+const errorResult = (message: string): ToolResult => ({
+  content: [{ type: "text" as const, text: message }],
+  isError: true,
+});
+
+const jsonResult =
+  <S extends Schema.Top>(schema: S) =>
+  (value: S["Type"]) =>
+    Schema.encodeEffect(Schema.fromJsonString(schema, { space: 2 }))(value).pipe(
+      Effect.map(textResult),
+    );
+
+const messageOr = (message: string, fallback: string): string =>
+  Option.liftPredicate(message, (text) => text.length > 0).pipe(Option.getOrElse(() => fallback));
+
+const friendlyError = (error: ToolFailure, baseUrl: string): string =>
+  Match.value(error._tag).pipe(
+    Match.when("Unauthorized", () => "Not authorized — the token is invalid or expired."),
+    Match.when("Forbidden", () => "No access to that organization or resource."),
+    Match.when("ServiceUnavailable", () => "The server is temporarily unavailable."),
+    Match.when("CliTodoNotFoundError", () => messageOr(error.message, "Todo not found.")),
+    Match.when("HttpClientError", () => `Could not reach the server at ${baseUrl}.`),
+    Match.orElse((tag) => `Request failed (${tag}).`),
+  );
 
 // Resolves the token, builds the client, runs `body`, and folds every failure
-// into a friendly outcome so the tool handler never rejects on expected errors.
-const callTool = <A>(body: (client: CliClient) => Effect.Effect<A, unknown, never>) =>
+// into an MCP result so the tool handler never rejects. Defects (unexpected)
+// become an error result rather than a crash.
+const callTool = <A, E extends ToolFailure, R>(
+  body: (client: CliClient) => Effect.Effect<A, E, never>,
+  format: (value: A) => Effect.Effect<ToolResult, E | Schema.SchemaError, R>,
+) =>
   Effect.gen(function* () {
     const creds = yield* readCredentials;
-    const token = resolveToken(creds);
-    if (token === null) {
-      return {
-        ok: false as const,
-        message: "Not authenticated. Set APP_API_TOKEN, or run `org auth login` with the CLI.",
-      };
+    const token = yield* resolveToken(creds);
+
+    if (Option.isNone(token)) {
+      return errorResult(
+        "Not authenticated. Set APP_API_TOKEN, or run `org auth login` with the CLI.",
+      );
     }
-    const client = yield* makeCliClient({ baseUrl: resolveBaseUrl(), token });
+
+    const baseUrl = yield* resolveBaseUrl;
+    const client = yield* makeCliClient({ baseUrl, token });
     const value = yield* body(client);
-    return { ok: true as const, value };
+
+    return yield* format(value);
   }).pipe(
-    Effect.catch((error) => Effect.succeed({ ok: false as const, message: friendlyError(error) })),
+    Effect.catch((error) =>
+      Effect.map(resolveBaseUrl, (baseUrl) => errorResult(friendlyError(error, baseUrl))),
+    ),
+    Effect.catchDefect((defect) =>
+      Effect.succeed(errorResult(`Unexpected failure: ${String(defect)}`)),
+    ),
   );
 
 const runtime = ManagedRuntime.make(Layer.mergeAll(NodeServices.layer, FetchHttpClient.layer));
 
-const textResult = (text: string) => ({ content: [{ type: "text" as const, text }] });
-const errorResult = (message: string) => ({
-  content: [{ type: "text" as const, text: message }],
-  isError: true,
-});
-const jsonResult = (data: unknown) => textResult(JSON.stringify(data, null, 2));
-
-// Runs a tool effect through the shared runtime, mapping the outcome to an
-// MCP result. Defects (unexpected) become an error result rather than a crash.
-const dispatch = <A>(
-  effect: Effect.Effect<
-    ToolOutcome<A>,
-    never,
-    ManagedRuntime.ManagedRuntime.Services<typeof runtime>
-  >,
-  format: (value: A) => ReturnType<typeof textResult>,
-) =>
-  runtime.runPromise(
-    effect.pipe(
-      Effect.map((outcome) => (outcome.ok ? format(outcome.value) : errorResult(outcome.message))),
-      Effect.catchDefect((defect) => Effect.succeed(errorResult(friendlyError(defect)))),
-    ),
-  );
+// The MCP SDK hands each tool handler a promise contract.
+const dispatch = (
+  effect: Effect.Effect<ToolResult, never, ManagedRuntime.ManagedRuntime.Services<typeof runtime>>,
+) => runtime.runPromise(effect);
 
 const server = new McpServer({ name: "org-mcp", version: "0.0.0" });
 
@@ -107,8 +105,10 @@ server.registerTool(
   },
   () =>
     dispatch(
-      callTool((client) => client.cliOrganization.listMine()),
-      jsonResult,
+      callTool(
+        (client) => client.cliOrganization.listMine(),
+        jsonResult(Schema.Array(CliOrganizationContract.CliOrganization)),
+      ),
     ),
 );
 
@@ -121,8 +121,10 @@ server.registerTool(
   },
   ({ orgId }) =>
     dispatch(
-      callTool((client) => client.cliTodos.list({ params: { orgId: OrganizationId.make(orgId) } })),
-      jsonResult,
+      callTool(
+        (client) => client.cliTodos.list({ params: { orgId: OrganizationId.make(orgId) } }),
+        jsonResult(Schema.Array(CliTodosContract.CliTodo)),
+      ),
     ),
 );
 
@@ -138,13 +140,14 @@ server.registerTool(
   },
   ({ orgId, title }) =>
     dispatch(
-      callTool((client) =>
-        client.cliTodos.create({
-          params: { orgId: OrganizationId.make(orgId) },
-          payload: { title },
-        }),
+      callTool(
+        (client) =>
+          client.cliTodos.create({
+            params: { orgId: OrganizationId.make(orgId) },
+            payload: new CliTodosContract.CliCreateTodoPayload({ title }),
+          }),
+        jsonResult(CliTodosContract.CliTodo),
       ),
-      jsonResult,
     ),
 );
 
@@ -160,12 +163,13 @@ server.registerTool(
   },
   ({ orgId, todoId }) =>
     dispatch(
-      callTool((client) =>
-        client.cliTodos.complete({
-          params: { orgId: OrganizationId.make(orgId), id: TodoId.make(todoId) },
-        }),
+      callTool(
+        (client) =>
+          client.cliTodos.complete({
+            params: { orgId: OrganizationId.make(orgId), id: TodoId.make(todoId) },
+          }),
+        jsonResult(CliTodosContract.CliTodo),
       ),
-      jsonResult,
     ),
 );
 
@@ -181,21 +185,20 @@ server.registerTool(
   },
   ({ orgId, todoId }) =>
     dispatch(
-      callTool((client) =>
-        client.cliTodos.remove({
-          params: { orgId: OrganizationId.make(orgId), id: TodoId.make(todoId) },
-        }),
+      callTool(
+        (client) =>
+          client.cliTodos.remove({
+            params: { orgId: OrganizationId.make(orgId), id: TodoId.make(todoId) },
+          }),
+        () => Effect.succeed(textResult(`Removed todo ${todoId}.`)),
       ),
-      () => textResult(`Removed todo ${todoId}.`),
     ),
 );
 
 // stderr only — stdout is the JSON-RPC protocol channel.
 const main = Effect.tryPromise(() => server.connect(new StdioServerTransport())).pipe(
-  Effect.andThen(Effect.sync(() => process.stderr.write("org-mcp: ready on stdio\n"))),
+  Effect.andThen(Console.error("org-mcp: ready on stdio")),
+  Effect.tapCause((cause) => Console.error(`org-mcp: fatal ${Cause.pretty(cause)}`)),
 );
 
-Effect.runPromise(main).catch((error: unknown) => {
-  process.stderr.write(`org-mcp: fatal ${String(error)}\n`);
-  process.exit(1);
-});
+NodeRuntime.runMain(main, { disableErrorReporting: true });

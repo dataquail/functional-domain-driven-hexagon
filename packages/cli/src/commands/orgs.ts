@@ -4,18 +4,27 @@ import * as Effect from "effect/Effect";
 
 import { authedClient, toCliError } from "../internal.js";
 
+const adminMarker = (isAdmin: boolean): string => {
+  if (isAdmin) return "  (admin)";
+
+  return "";
+};
+
 const list = Command.make("list", {}, () =>
   Effect.gen(function* () {
     const client = yield* authedClient;
     const orgs = yield* client.cliOrganization.listMine();
+
     if (orgs.length === 0) {
       yield* Console.log("(no organizations)");
+
       return;
     }
+
     for (const org of orgs) {
-      yield* Console.log(`${org.id}  ${org.name}${org.isAdmin ? "  (admin)" : ""}`);
+      yield* Console.log(`${org.id}  ${org.name}${adminMarker(org.isAdmin)}`);
     }
-  }).pipe(Effect.mapError(toCliError)),
+  }).pipe(Effect.catch(toCliError)),
 );
 
 export const orgsCommand = Command.make("orgs", {}, () => Console.log("Usage: org orgs list")).pipe(

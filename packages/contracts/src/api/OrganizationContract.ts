@@ -10,7 +10,10 @@ import { UserAuthMiddleware } from "../Policy.js";
 // Errors
 // ==========================================
 
-export class OrganizationNotFoundError extends Schema.TaggedError<OrganizationNotFoundError>()(
+export class OrganizationNotFoundError extends Schema.TaggedError<
+  OrganizationNotFoundError,
+  { readonly brand: "OrganizationNotFoundError" }
+>()(
   "OrganizationNotFoundError",
   { organizationId: OrganizationId, message: Schema.String },
   { httpApiStatus: 404 },
@@ -20,22 +23,27 @@ export class OrganizationNotFoundError extends Schema.TaggedError<OrganizationNo
 // resource's current state contradicts it (restore on a non-deleted
 // org). Distinct status from `OrganizationNotFoundError` so clients
 // don't have to disambiguate "missing" vs. "wrong state."
-export class OrganizationNotDeletedError extends Schema.TaggedError<OrganizationNotDeletedError>()(
+export class OrganizationNotDeletedError extends Schema.TaggedError<
+  OrganizationNotDeletedError,
+  { readonly brand: "OrganizationNotDeletedError" }
+>()(
   "OrganizationNotDeletedError",
   { organizationId: OrganizationId, message: Schema.String },
   { httpApiStatus: 409 },
 ) {}
 
-export class InvitationNotFoundError extends Schema.TaggedError<InvitationNotFoundError>()(
-  "InvitationNotFoundError",
-  { message: Schema.String },
-  { httpApiStatus: 404 },
-) {}
+export class InvitationNotFoundError extends Schema.TaggedError<
+  InvitationNotFoundError,
+  { readonly brand: "InvitationNotFoundError" }
+>()("InvitationNotFoundError", { message: Schema.String }, { httpApiStatus: 404 }) {}
 
 // 410 Gone covers the three terminal/expired states (accepted, revoked,
 // expired). Clients see one error variant; the `reason` discriminates
 // so a UI can render the right message.
-export class InvitationGoneError extends Schema.TaggedError<InvitationGoneError>()(
+export class InvitationGoneError extends Schema.TaggedError<
+  InvitationGoneError,
+  { readonly brand: "InvitationGoneError" }
+>()(
   "InvitationGoneError",
   {
     reason: Schema.Literals(["accepted", "revoked", "expired"]),
@@ -44,11 +52,10 @@ export class InvitationGoneError extends Schema.TaggedError<InvitationGoneError>
   { httpApiStatus: 410 },
 ) {}
 
-export class MembershipNotFoundError extends Schema.TaggedError<MembershipNotFoundError>()(
-  "MembershipNotFoundError",
-  { message: Schema.String },
-  { httpApiStatus: 404 },
-) {}
+export class MembershipNotFoundError extends Schema.TaggedError<
+  MembershipNotFoundError,
+  { readonly brand: "MembershipNotFoundError" }
+>()("MembershipNotFoundError", { message: Schema.String }, { httpApiStatus: 404 }) {}
 
 // 409 Conflict: model invariant — super-admins are a separate user
 // type from regular users; they don't own or join organizations.
@@ -59,7 +66,10 @@ export class MembershipNotFoundError extends Schema.TaggedError<MembershipNotFou
 // already an admin; `not_admin` from demote when they aren't one. One
 // error variant, a `reason` discriminator — same shape as
 // `InvitationGoneError`.
-export class OrganizationRoleConflictError extends Schema.TaggedError<OrganizationRoleConflictError>()(
+export class OrganizationRoleConflictError extends Schema.TaggedError<
+  OrganizationRoleConflictError,
+  { readonly brand: "OrganizationRoleConflictError" }
+>()(
   "OrganizationRoleConflictError",
   {
     reason: Schema.Literals(["already_admin", "not_admin"]),
@@ -68,17 +78,18 @@ export class OrganizationRoleConflictError extends Schema.TaggedError<Organizati
   { httpApiStatus: 409 },
 ) {}
 
-export class SuperAdminCannotOwnOrganizationError extends Schema.TaggedError<SuperAdminCannotOwnOrganizationError>()(
-  "SuperAdminCannotOwnOrganizationError",
-  { message: Schema.String },
-  { httpApiStatus: 409 },
-) {}
+export class SuperAdminCannotOwnOrganizationError extends Schema.TaggedError<
+  SuperAdminCannotOwnOrganizationError,
+  { readonly brand: "SuperAdminCannotOwnOrganizationError" }
+>()("SuperAdminCannotOwnOrganizationError", { message: Schema.String }, { httpApiStatus: 409 }) {}
 
 // ==========================================
 // Shapes
 // ==========================================
 
-export class Organization extends Schema.Class<Organization>("Organization")({
+export class Organization extends Schema.Class<Organization, { readonly brand: "Organization" }>(
+  "Organization",
+)({
   id: OrganizationId,
   name: Schema.String,
   createdAt: Schema.DateTimeUtc,
@@ -92,7 +103,10 @@ export class Organization extends Schema.Class<Organization>("Organization")({
 // management) without a separate role probe. Distinct from the shared
 // `Organization` shape, which is also returned by the super-admin
 // `findAll` listing where "isAdmin relative to whom?" has no answer.
-export class MyOrganization extends Schema.Class<MyOrganization>("MyOrganization")({
+export class MyOrganization extends Schema.Class<
+  MyOrganization,
+  { readonly brand: "MyOrganization" }
+>("MyOrganization")({
   id: OrganizationId,
   name: Schema.String,
   createdAt: Schema.DateTimeUtc,
@@ -105,21 +119,24 @@ export class MyOrganization extends Schema.Class<MyOrganization>("MyOrganization
 // Payloads / Responses
 // ==========================================
 
-export class CreateOrganizationPayload extends Schema.Class<CreateOrganizationPayload>(
-  "CreateOrganizationPayload",
-)({
+export class CreateOrganizationPayload extends Schema.Class<
+  CreateOrganizationPayload,
+  { readonly brand: "CreateOrganizationPayload" }
+>("CreateOrganizationPayload")({
   name: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(255)),
 }) {}
 
-export class CreateOrganizationResponse extends Schema.Class<CreateOrganizationResponse>(
-  "CreateOrganizationResponse",
-)({
+export class CreateOrganizationResponse extends Schema.Class<
+  CreateOrganizationResponse,
+  { readonly brand: "CreateOrganizationResponse" }
+>("CreateOrganizationResponse")({
   id: OrganizationId,
 }) {}
 
-export class FindAllOrganizationsParams extends Schema.Class<FindAllOrganizationsParams>(
-  "FindAllOrganizationsParams",
-)({
+export class FindAllOrganizationsParams extends Schema.Class<
+  FindAllOrganizationsParams,
+  { readonly brand: "FindAllOrganizationsParams" }
+>("FindAllOrganizationsParams")({
   page: Schema.NumberFromString.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(1)),
   pageSize: Schema.NumberFromString.check(
     Schema.isInt(),
@@ -128,26 +145,34 @@ export class FindAllOrganizationsParams extends Schema.Class<FindAllOrganization
   includeDeleted: Schema.optional(Schema.Literals(["true", "false"])),
 }) {}
 
-export class PaginatedOrganizations extends Schema.Class<PaginatedOrganizations>(
-  "PaginatedOrganizations",
-)({
+export class PaginatedOrganizations extends Schema.Class<
+  PaginatedOrganizations,
+  { readonly brand: "PaginatedOrganizations" }
+>("PaginatedOrganizations")({
   organizations: Schema.Array(Organization),
   page: Schema.Int,
   pageSize: Schema.Int,
   total: Schema.Int,
 }) {}
 
-export class InviteUserPayload extends Schema.Class<InviteUserPayload>("InviteUserPayload")({
+export class InviteUserPayload extends Schema.Class<
+  InviteUserPayload,
+  { readonly brand: "InviteUserPayload" }
+>("InviteUserPayload")({
   email: Schema.String.check(Schema.isMinLength(3), Schema.isMaxLength(320)),
 }) {}
 
-export class InviteUserResponse extends Schema.Class<InviteUserResponse>("InviteUserResponse")({
+export class InviteUserResponse extends Schema.Class<
+  InviteUserResponse,
+  { readonly brand: "InviteUserResponse" }
+>("InviteUserResponse")({
   invitationId: InvitationId,
 }) {}
 
-export class AcceptInvitationResponse extends Schema.Class<AcceptInvitationResponse>(
-  "AcceptInvitationResponse",
-)({
+export class AcceptInvitationResponse extends Schema.Class<
+  AcceptInvitationResponse,
+  { readonly brand: "AcceptInvitationResponse" }
+>("AcceptInvitationResponse")({
   organizationId: OrganizationId,
 }) {}
 
@@ -155,7 +180,10 @@ export class AcceptInvitationResponse extends Schema.Class<AcceptInvitationRespo
 // The handler composes the org-module's membership query with the
 // user-module's `FindUsersByIdsQuery` (ADR-0020 forbids cross-schema
 // SQL) — both are reads, so no transactional concern.
-export class OrganizationMember extends Schema.Class<OrganizationMember>("OrganizationMember")({
+export class OrganizationMember extends Schema.Class<
+  OrganizationMember,
+  { readonly brand: "OrganizationMember" }
+>("OrganizationMember")({
   userId: UserId,
   email: Schema.String,
   joinedAt: Schema.DateTimeUtc,
@@ -164,9 +192,10 @@ export class OrganizationMember extends Schema.Class<OrganizationMember>("Organi
   isAdmin: Schema.Boolean,
 }) {}
 
-export class OrganizationMembersResponse extends Schema.Class<OrganizationMembersResponse>(
-  "OrganizationMembersResponse",
-)({
+export class OrganizationMembersResponse extends Schema.Class<
+  OrganizationMembersResponse,
+  { readonly brand: "OrganizationMembersResponse" }
+>("OrganizationMembersResponse")({
   members: Schema.Array(OrganizationMember),
 }) {}
 
@@ -175,7 +204,10 @@ export class OrganizationMembersResponse extends Schema.Class<OrganizationMember
 // `status` distinguishes a live invite from a lapsed (expired) one so
 // the UI can flag the latter for resend. Accepted invitees appear in
 // the members list instead; revoked invitations aren't returned.
-export class PendingInvitation extends Schema.Class<PendingInvitation>("PendingInvitation")({
+export class PendingInvitation extends Schema.Class<
+  PendingInvitation,
+  { readonly brand: "PendingInvitation" }
+>("PendingInvitation")({
   invitationId: InvitationId,
   inviteeEmail: Schema.String,
   status: Schema.Literals(["pending", "expired"]),
@@ -183,9 +215,10 @@ export class PendingInvitation extends Schema.Class<PendingInvitation>("PendingI
   createdAt: Schema.DateTimeUtc,
 }) {}
 
-export class PendingInvitationsResponse extends Schema.Class<PendingInvitationsResponse>(
-  "PendingInvitationsResponse",
-)({
+export class PendingInvitationsResponse extends Schema.Class<
+  PendingInvitationsResponse,
+  { readonly brand: "PendingInvitationsResponse" }
+>("PendingInvitationsResponse")({
   invitations: Schema.Array(PendingInvitation),
 }) {}
 

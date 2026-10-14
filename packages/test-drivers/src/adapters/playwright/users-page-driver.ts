@@ -68,6 +68,7 @@ export const playwrightUsersDriver = (page: Page): UsersPageDriver => {
       const toast = page
         .locator(`[data-sonner-toast][data-type="${kind}"]`)
         .filter({ hasText: message });
+
       await expect(toast).toBeVisible();
     },
   };

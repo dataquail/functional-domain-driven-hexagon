@@ -1,11 +1,11 @@
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig, devices, type PlaywrightTestConfig } from "@playwright/test";
 import * as dotenv from "dotenv";
 
 import { acceptanceTarget } from "./test-utils/target";
 
 // A local run reads the repo's .env for the stack it boots; a deployed run takes
 // every IDENTITY_* value from the pipeline, never from a developer's .env.
-if (process.env.ACCEPTANCE_BASE_URL === undefined) dotenv.config({ path: "../../.env" });
+if (!("ACCEPTANCE_BASE_URL" in process.env)) dotenv.config({ path: "../../.env" });
 
 const target = acceptanceTarget();
 
@@ -22,19 +22,56 @@ const target = acceptanceTarget();
 // authenticated. login.spec.ts opts out of the storage state to exercise
 // the full UI flow on every run.
 
-const isCi = process.env.CI !== undefined && process.env.CI !== "";
+const isCi = (process.env.CI ?? "") !== "";
+
 // Browser-facing origin (the SvelteKit Worker; ADR-0037). Browser navigation
 // uses `localhost` so the session cookie set by the OIDC callback
 // (registered as `http://localhost:3000/api/auth/callback`) is visible
 // to the test origin — the cookie domain MUST match the registered
 // redirect URI.
 const APP_URL = target.appUrl;
+
 // The readiness probe goes to 127.0.0.1 rather than localhost: on a dual-stack
 // runner Node may resolve localhost to ::1, where nothing listens. The browser
 // keeps localhost, which is what the app's redirect URI is registered as.
 const toIpv4 = (url: string): string => url.replace(/\/\/localhost(:|\/|$)/, "//127.0.0.1$1");
 const WEB_PROBE_URL = toIpv4(APP_URL);
 const ADMIN_STORAGE_STATE = "playwright/.auth/admin.json";
+
+const reporter = (): NonNullable<PlaywrightTestConfig["reporter"]> => {
+  if (isCi) return [["line"], ["html", { open: "never" }]];
+
+  return "list";
+};
+
+// A deployed stage is already serving; there is nothing to boot.
+const webServers = (): NonNullable<PlaywrightTestConfig["webServer"]> => {
+  if (target.kind === "deployed") return [];
+
+  return [
+    {
+      // The Workers stack under `alchemy dev`: the web Worker on :3000, whose /api
+      // proxy is the readiness probe; the server Worker on :3001, reached through
+      // the app Hyperdrive's dev origin, which DATABASE_URL points at the TEST
+      // database; and the identity Worker on :3002 the global setup seeds. Without
+      // `--env-file`, alchemy lets this process's environment win over .env, which
+      // is what makes the override stick. SIGINT stops the whole stack, its
+      // detached sidecar included.
+      name: "workers",
+      command: "pnpm -F @org/infra exec alchemy dev",
+      url: `${WEB_PROBE_URL}/api/auth/me`,
+      cwd: "../../",
+      env: { ...process.env, DATABASE_URL: target.databaseUrl, APP_URL },
+      gracefulShutdown: { signal: "SIGINT", timeout: 30_000 },
+      // Acceptance always spawns its own stack — a running `pnpm dev` holds the
+      // same ports against the dev database. Stop it before running acceptance.
+      reuseExistingServer: false,
+      timeout: 180_000,
+      stdout: "pipe",
+      stderr: "pipe",
+    },
+  ];
+};
 
 export default defineConfig({
   testDir: "./",
@@ -46,7 +83,7 @@ export default defineConfig({
   retries: 0,
   // A terminal-only reporter writes no `playwright-report/`, which the CI
   // artifact upload expects — pair `line` with `html` so the run leaves one.
-  reporter: isCi ? [["line"], ["html", { open: "never" }]] : "list",
+  reporter: reporter(),
 
   globalSetup: "./global-setup.ts",
 
@@ -92,31 +129,5 @@ export default defineConfig({
     },
   ],
 
-  // A deployed stage is already serving; there is nothing to boot.
-  webServer:
-    target.kind === "deployed"
-      ? []
-      : [
-          {
-            // The Workers stack under `alchemy dev`: the web Worker on :3000, whose /api
-            // proxy is the readiness probe; the server Worker on :3001, reached through
-            // the app Hyperdrive's dev origin, which DATABASE_URL points at the TEST
-            // database; and the identity Worker on :3002 the global setup seeds. Without
-            // `--env-file`, alchemy lets this process's environment win over .env, which
-            // is what makes the override stick. SIGINT stops the whole stack, its
-            // detached sidecar included.
-            name: "workers",
-            command: "pnpm -F @org/infra exec alchemy dev",
-            url: `${WEB_PROBE_URL}/api/auth/me`,
-            cwd: "../../",
-            env: { ...process.env, DATABASE_URL: target.databaseUrl, APP_URL },
-            gracefulShutdown: { signal: "SIGINT", timeout: 30_000 },
-            // Acceptance always spawns its own stack — a running `pnpm dev` holds the
-            // same ports against the dev database. Stop it before running acceptance.
-            reuseExistingServer: false,
-            timeout: 180_000,
-            stdout: "pipe",
-            stderr: "pipe",
-          },
-        ],
+  webServer: webServers(),
 });

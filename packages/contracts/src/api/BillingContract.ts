@@ -10,13 +10,19 @@ import { UserAuthMiddleware } from "../Policy.js";
 // Errors
 // ==========================================
 
-export class SubscriptionNotFoundError extends Schema.TaggedError<SubscriptionNotFoundError>()(
+export class SubscriptionNotFoundError extends Schema.TaggedError<
+  SubscriptionNotFoundError,
+  { readonly brand: "SubscriptionNotFoundError" }
+>()(
   "SubscriptionNotFoundError",
   { organizationId: OrganizationId, message: Schema.String },
   { httpApiStatus: 404 },
 ) {}
 
-export class SubscriptionAlreadyExistsError extends Schema.TaggedError<SubscriptionAlreadyExistsError>()(
+export class SubscriptionAlreadyExistsError extends Schema.TaggedError<
+  SubscriptionAlreadyExistsError,
+  { readonly brand: "SubscriptionAlreadyExistsError" }
+>()(
   "SubscriptionAlreadyExistsError",
   { organizationId: OrganizationId, message: Schema.String },
   { httpApiStatus: 409 },
@@ -29,9 +35,10 @@ export class SubscriptionAlreadyExistsError extends Schema.TaggedError<Subscript
 // `status` is the literal Stripe subscription status, carried verbatim
 // (`active`, `past_due`, `canceled`, `trialing`, `incomplete`, ...). We
 // don't collapse the vocabulary — clients render whichever they need.
-export class SubscriptionResponse extends Schema.Class<SubscriptionResponse>(
-  "SubscriptionResponse",
-)({
+export class SubscriptionResponse extends Schema.Class<
+  SubscriptionResponse,
+  { readonly brand: "SubscriptionResponse" }
+>("SubscriptionResponse")({
   id: SubscriptionId,
   organizationId: OrganizationId,
   status: Schema.String,
@@ -40,9 +47,10 @@ export class SubscriptionResponse extends Schema.Class<SubscriptionResponse>(
 
 // MVP: a single default price comes from server config (STRIPE_PRICE_ID_DEFAULT).
 // No body fields yet — keep the type around so clients send something parseable.
-export class StartSubscriptionPayload extends Schema.Class<StartSubscriptionPayload>(
-  "StartSubscriptionPayload",
-)({}) {}
+export class StartSubscriptionPayload extends Schema.Class<
+  StartSubscriptionPayload,
+  { readonly brand: "StartSubscriptionPayload" }
+>("StartSubscriptionPayload")({}) {}
 
 // ==========================================
 // Endpoints

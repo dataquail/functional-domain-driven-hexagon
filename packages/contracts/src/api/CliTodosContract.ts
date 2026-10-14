@@ -8,21 +8,21 @@ import { UserAuthMiddleware } from "../Policy.js";
 
 // CLI-specific error, distinct from the GUI's `TodosContract.TodoNotFoundError`
 // so the two contracts evolve independently (ADR-0005).
-export class CliTodoNotFoundError extends Schema.TaggedError<CliTodoNotFoundError>()(
-  "CliTodoNotFoundError",
-  { message: Schema.String },
-  { httpApiStatus: 404 },
-) {}
+export class CliTodoNotFoundError extends Schema.TaggedError<
+  CliTodoNotFoundError,
+  { readonly brand: "CliTodoNotFoundError" }
+>()("CliTodoNotFoundError", { message: Schema.String }, { httpApiStatus: 404 }) {}
 
-export class CliTodo extends Schema.Class<CliTodo>("CliTodo")({
+export class CliTodo extends Schema.Class<CliTodo, { readonly brand: "CliTodo" }>("CliTodo")({
   id: TodoId,
   title: Schema.String,
   completed: Schema.Boolean,
 }) {}
 
-export class CliCreateTodoPayload extends Schema.Class<CliCreateTodoPayload>(
-  "CliCreateTodoPayload",
-)({
+export class CliCreateTodoPayload extends Schema.Class<
+  CliCreateTodoPayload,
+  { readonly brand: "CliCreateTodoPayload" }
+>("CliCreateTodoPayload")({
   title: Schema.Trim.check(Schema.isNonEmpty()),
 }) {}
 
