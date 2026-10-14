@@ -1,12 +1,12 @@
-import { deepStrictEqual, ok } from "node:assert";
+import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
+import { assertDefined } from "@effect/vitest/utils";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
-import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
+import { describeServer } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 const ORG_TABLES = [
@@ -17,30 +17,29 @@ const ORG_TABLES = [
   "user.users",
 ] as const;
 
-describe("GET /cli/orgs (integration)", () => {
-  const { run } = useServerTestRuntime(ORG_TABLES, {
-    server: TestServerLiveAsMember,
-    seedSuperAdminCaller: true,
-  });
-
-  it("lists the caller's organizations via the CLI surface", async () => {
-    await run(
+describeServer(
+  "GET /cli/orgs (integration)",
+  { tables: ORG_TABLES, server: TestServerLiveAsMember, seedSuperAdminCaller: true },
+  (it) => {
+    it.effect("lists the caller's organizations via the CLI surface", () =>
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
+
         const { id: orgId } = yield* client.organization.create({
           payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
         });
+
         const orgs = yield* client.cliOrganization.listMine();
         deepStrictEqual(
           orgs.map((o) => o.id),
           [orgId],
         );
         const [first] = orgs;
-        ok(first !== undefined);
+        assertDefined(first);
         deepStrictEqual(first.name, "Acme");
         // Creator becomes the org admin (Phase 4 grant bundle).
-        ok(typeof first.isAdmin === "boolean");
+        deepStrictEqual(first.isAdmin, true);
       }),
     );
-  });
-});
+  },
+);

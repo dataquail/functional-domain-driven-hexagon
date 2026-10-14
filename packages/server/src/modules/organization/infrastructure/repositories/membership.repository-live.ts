@@ -1,6 +1,7 @@
-import { Database, RowSchemas } from "@org/database/index";
+import { Database, orFail, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
@@ -22,6 +23,7 @@ export const MembershipRepositoryLive = Layer.effect(
     // treat membership creation as safe to retry.
     const insertOne = Effect.fn("MembershipRepository.insertOne")((membership: MembershipRoot) => {
       const row = MembershipMapper.toPersistence(membership);
+
       return sql`
           INSERT INTO "organization".memberships (user_id, organization_id, created_at)
           VALUES (
@@ -44,9 +46,8 @@ export const MembershipRepositoryLive = Layer.effect(
           Database.maybeRow(RowSchemas.MembershipRow),
           // No returned row means it didn't exist — surface as
           // MembershipNotFound so the command layer can produce a 404.
-          Effect.flatMap((row) =>
-            row === null ? new MembershipNotFound({ userId, organizationId }) : Effect.void,
-          ),
+          orFail(() => new MembershipNotFound({ userId, organizationId })),
+          Effect.asVoid,
           translateDatabaseErrors,
         ),
     );
@@ -56,13 +57,16 @@ export const MembershipRepositoryLive = Layer.effect(
     // composite key selects at most one row.
     const findOne = Effect.fn("MembershipRepository.findOne")(
       (spec: Specification<MembershipRoot>) =>
-        sql`
+        criteriaToWhere(sql, spec.criteria, MembershipMapper.columns).pipe(
+          Effect.flatMap(
+            (where) => sql`
           SELECT * FROM "organization".memberships
-          WHERE ${criteriaToWhere(sql, spec.criteria, MembershipMapper.columns)}
+          WHERE ${where}
           LIMIT 1
-        `.pipe(
+        `,
+          ),
           Database.maybeRow(RowSchemas.MembershipRow),
-          Effect.map((row) => (row === null ? null : MembershipMapper.toDomain(row))),
+          Effect.map(Option.map(MembershipMapper.toDomain)),
           translateDatabaseErrors,
         ),
     );

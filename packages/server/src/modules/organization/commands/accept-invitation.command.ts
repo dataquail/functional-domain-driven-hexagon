@@ -24,4 +24,5 @@ export const AcceptInvitationCommand = Command.make("AcceptInvitationCommand", {
     PersistenceUnavailable,
   ]),
 });
+
 export type AcceptInvitationPayload = Command.Payload<typeof AcceptInvitationCommand>;

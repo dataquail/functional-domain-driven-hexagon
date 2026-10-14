@@ -13,4 +13,5 @@ export const SoftDeleteOrganizationCommand = Command.make("SoftDeleteOrganizatio
   success: Schema.Void,
   failure: Schema.Union([OrganizationNotFound, OrganizationAlreadyDeleted, PersistenceUnavailable]),
 });
+
 export type SoftDeleteOrganizationPayload = Command.Payload<typeof SoftDeleteOrganizationCommand>;

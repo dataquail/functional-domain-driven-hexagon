@@ -1,4 +1,5 @@
 import type * as DateTime from "effect/DateTime";
+import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 
 import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
@@ -30,8 +31,9 @@ const create = (input: CreateInput): Outcome => {
     name: input.name,
     createdAt: input.now,
     updatedAt: input.now,
-    deletedAt: null,
+    deletedAt: Option.none(),
   });
+
   return {
     organization,
     events: [
@@ -50,13 +52,14 @@ const softDelete = (
   if (OrganizationSpecifications.isDeleted(organization)) {
     return Result.fail(new OrganizationAlreadyDeleted({ organizationId: organization.id }));
   }
+
   return Result.succeed({
     organization: OrganizationRoot.make({
       id: organization.id,
       name: organization.name,
       createdAt: organization.createdAt,
       updatedAt: input.now,
-      deletedAt: input.now,
+      deletedAt: Option.some(input.now),
     }),
     events: [OrganizationSoftDeleted.make({ organizationId: organization.id })],
   });
@@ -72,13 +75,14 @@ const restore = (
   if (!OrganizationSpecifications.isDeleted(organization)) {
     return Result.fail(new OrganizationNotDeleted({ organizationId: organization.id }));
   }
+
   return Result.succeed({
     organization: OrganizationRoot.make({
       id: organization.id,
       name: organization.name,
       createdAt: organization.createdAt,
       updatedAt: input.now,
-      deletedAt: null,
+      deletedAt: Option.none(),
     }),
     events: [OrganizationRestored.make({ organizationId: organization.id })],
   });

@@ -7,6 +7,7 @@ export const MembershipCreated = Event.make("MembershipCreated", {
   userId: UserId,
   organizationId: OrganizationId,
 });
+
 export type MembershipCreated = typeof MembershipCreated.Type;
 
 export const membershipCreatedSpanAttributes: SpanAttributesExtractor<MembershipCreated> = (
@@ -20,6 +21,7 @@ export const MembershipRevoked = Event.make("MembershipRevoked", {
   userId: UserId,
   organizationId: OrganizationId,
 });
+
 export type MembershipRevoked = typeof MembershipRevoked.Type;
 
 export const membershipRevokedSpanAttributes: SpanAttributesExtractor<MembershipRevoked> = (

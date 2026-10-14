@@ -1,16 +1,14 @@
-import { deepStrictEqual, notStrictEqual } from "node:assert";
+import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
+import { describe } from "@effect/vitest";
+import { assertNone, assertTrue } from "@effect/vitest/utils";
 import { Database } from "@org/database/index";
-import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
-import { beforeEach } from "vitest";
 
 import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
 import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
@@ -22,7 +20,8 @@ import { type InvitationRoot } from "@/modules/organization/domain/invitation/in
 import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
 import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
 import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/repositories/invitation.repository-live.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { describeIntegration } from "@/test-utils/server-test-runtime.js";
+import { TestDatabaseLive } from "@/test-utils/test-database.js";
 
 const invitationId = InvitationId.make("44444444-4444-4444-4444-444444444444");
 const orgId = OrganizationId.make("55555555-5555-5555-5555-555555555555");
@@ -58,149 +57,154 @@ const openForAlice = Spec.and(
 
 const TestLayer = InvitationRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-describe("InvitationRepositoryLive (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate("organization.invitations", "organization.organizations").pipe(
-        Effect.provide(TestDatabaseLive),
-      ),
-    );
-  });
+describeIntegration(
+  "InvitationRepositoryLive (integration)",
+  { layer: TestLayer, tables: ["organization.invitations", "organization.organizations"] },
+  (it) => {
+    describe("insert + findOne (by id, by token)", () => {
+      it.effect("round-trips an inserted invitation by id and by token", () =>
+        Effect.gen(function* () {
+          yield* seedOrg;
+          const repo = yield* InvitationRepository;
+          yield* repo.insertOne(seed());
+          const byId = yield* repo.findOne(InvitationSpecifications.withId(invitationId));
+          deepStrictEqual(
+            Option.map(byId, (found) => found.id),
+            Option.some(invitationId),
+          );
+          const byToken = yield* repo.findOne(InvitationSpecifications.withToken("tok-abc"));
+          deepStrictEqual(
+            Option.map(byToken, (found) => found.id),
+            Option.some(invitationId),
+          );
+        }),
+      );
 
-  describe("insert + findOne (by id, by token)", () => {
-    it.effect("round-trips an inserted invitation by id and by token", () =>
-      Effect.gen(function* () {
-        yield* seedOrg;
-        const repo = yield* InvitationRepository;
-        yield* repo.insertOne(seed());
-        const byId = yield* repo.findOne(InvitationSpecifications.withId(invitationId));
-        deepStrictEqual(byId?.id, invitationId);
-        const byToken = yield* repo.findOne(InvitationSpecifications.withToken("tok-abc"));
-        deepStrictEqual(byToken?.id, invitationId);
-      }).pipe(Effect.provide(TestLayer)),
-    );
+      it.effect("findOne returns null for an unknown id or token (absence is not an error)", () =>
+        Effect.gen(function* () {
+          yield* seedOrg;
+          const repo = yield* InvitationRepository;
+          const byId = yield* repo.findOne(InvitationSpecifications.withId(invitationId));
+          const byToken = yield* repo.findOne(InvitationSpecifications.withToken("missing"));
+          assertNone(byId);
+          assertNone(byToken);
+        }),
+      );
+    });
 
-    it.effect("findOne returns null for an unknown id or token (absence is not an error)", () =>
-      Effect.gen(function* () {
-        yield* seedOrg;
-        const repo = yield* InvitationRepository;
-        const byId = yield* repo.findOne(InvitationSpecifications.withId(invitationId));
-        const byToken = yield* repo.findOne(InvitationSpecifications.withToken("missing"));
-        deepStrictEqual(byId, null);
-        deepStrictEqual(byToken, null);
-      }).pipe(Effect.provide(TestLayer)),
-    );
-  });
+    describe("update", () => {
+      it.effect("persists state transitions (accept sets acceptedAt)", () =>
+        Effect.gen(function* () {
+          yield* seedOrg;
+          const repo = yield* InvitationRepository;
+          yield* repo.insertOne(seed());
+          const accepted = Result.getOrThrow(InvitationRootOps.accept(seed(), { userId, now }));
+          yield* repo.updateOne(accepted.invitation);
+          const maybeFound = yield* repo.findOne(InvitationSpecifications.withId(invitationId));
 
-  describe("update", () => {
-    it.effect("persists state transitions (accept sets acceptedAt)", () =>
-      Effect.gen(function* () {
-        yield* seedOrg;
-        const repo = yield* InvitationRepository;
-        yield* repo.insertOne(seed());
-        const accepted = Result.getOrThrow(InvitationRootOps.accept(seed(), { userId, now }));
-        yield* repo.updateOne(accepted.invitation);
-        const found = yield* repo.findOne(InvitationSpecifications.withId(invitationId));
-        if (found === null) throw new Error("expected invitation");
-        notStrictEqual(found.acceptedAt, null);
-      }).pipe(Effect.provide(TestLayer)),
-    );
+          const found = Option.getOrThrow(maybeFound);
+          assertTrue(Option.isSome(found.acceptedAt));
+        }),
+      );
 
-    it.effect("persists a reissue (rotated token + reset expiry)", () =>
-      Effect.gen(function* () {
-        yield* seedOrg;
-        const repo = yield* InvitationRepository;
-        yield* repo.insertOne(seed());
-        const newExpiresAt = DateTime.makeUnsafe("2026-02-01T00:00:00Z");
-        const reissued = Result.getOrThrow(
-          InvitationRootOps.reissue(seed(), {
-            token: "tok-rotated",
-            expiresAt: newExpiresAt,
-            now,
-          }),
-        );
-        yield* repo.updateOne(reissued.invitation);
+      it.effect("persists a reissue (rotated token + reset expiry)", () =>
+        Effect.gen(function* () {
+          yield* seedOrg;
+          const repo = yield* InvitationRepository;
+          yield* repo.insertOne(seed());
+          const newExpiresAt = DateTime.makeUnsafe("2026-02-01T00:00:00Z");
 
-        // The new token must resolve...
-        const byNew = yield* repo.findOne(InvitationSpecifications.withToken("tok-rotated"));
-        if (byNew === null) throw new Error("expected invitation");
-        deepStrictEqual(byNew.id, invitationId);
-        deepStrictEqual(
-          DateTime.toEpochMillis(byNew.expiresAt),
-          DateTime.toEpochMillis(newExpiresAt),
-        );
+          const reissued = Result.getOrThrow(
+            InvitationRootOps.reissue(seed(), {
+              token: "tok-rotated",
+              expiresAt: newExpiresAt,
+              now,
+            }),
+          );
 
-        // ...and the old token must no longer resolve.
-        const byOld = yield* repo.findOne(InvitationSpecifications.withToken("tok-abc"));
-        deepStrictEqual(byOld, null);
-      }).pipe(Effect.provide(TestLayer)),
-    );
+          yield* repo.updateOne(reissued.invitation);
 
-    it.effect("update fails InvitationNotFound when the row is missing", () =>
-      Effect.gen(function* () {
-        yield* seedOrg;
-        const repo = yield* InvitationRepository;
-        const exit = yield* Effect.exit(repo.updateOne(seed()));
-        deepStrictEqual(Exit.isFailure(exit), true);
-        if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause)
-            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-            : null;
+          // The new token must resolve...
+          const maybeByNew = yield* repo.findOne(InvitationSpecifications.withToken("tok-rotated"));
+
+          const byNew = Option.getOrThrow(maybeByNew);
+          deepStrictEqual(byNew.id, invitationId);
+          deepStrictEqual(
+            DateTime.toEpochMillis(byNew.expiresAt),
+            DateTime.toEpochMillis(newExpiresAt),
+          );
+
+          // ...and the old token must no longer resolve.
+          const byOld = yield* repo.findOne(InvitationSpecifications.withToken("tok-abc"));
+          assertNone(byOld);
+        }),
+      );
+
+      it.effect("update fails InvitationNotFound when the row is missing", () =>
+        Effect.gen(function* () {
+          yield* seedOrg;
+          const repo = yield* InvitationRepository;
+          const error = yield* Effect.flip(repo.updateOne(seed()));
           deepStrictEqual(Schema.is(InvitationNotFound)(error), true);
-        }
-      }).pipe(Effect.provide(TestLayer)),
-    );
-  });
+        }),
+      );
+    });
 
-  describe("findOne / findMany by specification", () => {
-    const secondId = InvitationId.make("44444444-4444-4444-4444-444444444445");
+    describe("findOne / findMany by specification", () => {
+      const secondId = InvitationId.make("44444444-4444-4444-4444-444444444445");
 
-    it.effect("findOne compiles a composed spec (org + email + open) to SQL", () =>
-      Effect.gen(function* () {
-        yield* seedOrg;
-        const repo = yield* InvitationRepository;
-        yield* repo.insertOne(seed());
-        const found = yield* repo.findOne(openForAlice);
-        deepStrictEqual(found?.id, invitationId);
-      }).pipe(Effect.provide(TestLayer)),
-    );
+      it.effect("findOne compiles a composed spec (org + email + open) to SQL", () =>
+        Effect.gen(function* () {
+          yield* seedOrg;
+          const repo = yield* InvitationRepository;
+          yield* repo.insertOne(seed());
+          const found = yield* repo.findOne(openForAlice);
+          deepStrictEqual(
+            Option.map(found, (invitation) => invitation.id),
+            Option.some(invitationId),
+          );
+        }),
+      );
 
-    it.effect("the open variant is applied in SQL — a revoked invite is excluded", () =>
-      Effect.gen(function* () {
-        yield* seedOrg;
-        const repo = yield* InvitationRepository;
-        yield* repo.insertOne(seed());
-        const revoked = Result.getOrThrow(InvitationRootOps.revoke(seed(), { now }));
-        yield* repo.updateOne(revoked.invitation);
+      it.effect("the open variant is applied in SQL — a revoked invite is excluded", () =>
+        Effect.gen(function* () {
+          yield* seedOrg;
+          const repo = yield* InvitationRepository;
+          yield* repo.insertOne(seed());
+          const revoked = Result.getOrThrow(InvitationRootOps.revoke(seed(), { now }));
+          yield* repo.updateOne(revoked.invitation);
 
-        // open spec filters it out...
-        deepStrictEqual(yield* repo.findOne(openForAlice), null);
-        // ...but the row is still there when the spec doesn't demand open.
-        const all = yield* repo.findMany(InvitationSpecifications.forOrganization(orgId));
-        deepStrictEqual(all.length, 1);
-        notStrictEqual(all[0]?.revokedAt, null);
-      }).pipe(Effect.provide(TestLayer)),
-    );
+          // open spec filters it out...
+          assertNone(yield* repo.findOne(openForAlice));
+          // ...but the row is still there when the spec doesn't demand open.
+          const all = yield* repo.findMany(InvitationSpecifications.forOrganization(orgId));
+          deepStrictEqual(all.length, 1);
+          assertTrue(all.every((invitation) => Option.isSome(invitation.revokedAt)));
+        }),
+      );
 
-    it.effect("findMany(forOrganization) returns every invitation, newest first", () =>
-      Effect.gen(function* () {
-        yield* seedOrg;
-        const repo = yield* InvitationRepository;
-        yield* repo.insertOne(seed());
-        const later = InvitationRootOps.issue({
-          id: secondId,
-          organizationId: orgId,
-          inviteeEmail: "bob@example.com",
-          token: "tok-bob",
-          expiresAt,
-          now: DateTime.makeUnsafe("2026-01-02T00:00:00Z"),
-        }).invitation;
-        yield* repo.insertOne(later);
-        const all = yield* repo.findMany(InvitationSpecifications.forOrganization(orgId));
-        deepStrictEqual(all.length, 2);
-        deepStrictEqual(all[0]?.id, secondId);
-        deepStrictEqual(all[1]?.id, invitationId);
-      }).pipe(Effect.provide(TestLayer)),
-    );
-  });
-});
+      it.effect("findMany(forOrganization) returns every invitation, newest first", () =>
+        Effect.gen(function* () {
+          yield* seedOrg;
+          const repo = yield* InvitationRepository;
+          yield* repo.insertOne(seed());
+
+          const later = InvitationRootOps.issue({
+            id: secondId,
+            organizationId: orgId,
+            inviteeEmail: "bob@example.com",
+            token: "tok-bob",
+            expiresAt,
+            now: DateTime.makeUnsafe("2026-01-02T00:00:00Z"),
+          }).invitation;
+
+          yield* repo.insertOne(later);
+          const all = yield* repo.findMany(InvitationSpecifications.forOrganization(orgId));
+          deepStrictEqual(all.length, 2);
+          deepStrictEqual(all[0]?.id, secondId);
+          deepStrictEqual(all[1]?.id, invitationId);
+        }),
+      );
+    });
+  },
+);

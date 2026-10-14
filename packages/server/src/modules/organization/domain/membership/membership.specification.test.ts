@@ -5,6 +5,7 @@ import * as DateTime from "effect/DateTime";
 
 import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { Criteria } from "@/globals/application/ddd/specification.js";
 
 import { MembershipRootOps } from "./membership.root-ops.js";
 import { MembershipSpecifications } from "./membership.specification.js";
@@ -22,11 +23,10 @@ describe("MembershipSpecifications.forUser", () => {
     const membership = seed();
     deepStrictEqual(MembershipSpecifications.forUser(userId)(membership), true);
     deepStrictEqual(MembershipSpecifications.forUser(otherUserId)(membership), false);
-    deepStrictEqual(MembershipSpecifications.forUser(userId).criteria, {
-      _tag: "Eq",
-      field: "userId",
-      value: userId,
-    });
+    deepStrictEqual(
+      MembershipSpecifications.forUser(userId).criteria,
+      Criteria.Eq({ field: "userId", value: userId }),
+    );
   });
 });
 
@@ -38,10 +38,9 @@ describe("MembershipSpecifications.forOrganization", () => {
       MembershipSpecifications.forOrganization(otherOrganizationId)(membership),
       false,
     );
-    deepStrictEqual(MembershipSpecifications.forOrganization(organizationId).criteria, {
-      _tag: "Eq",
-      field: "organizationId",
-      value: organizationId,
-    });
+    deepStrictEqual(
+      MembershipSpecifications.forOrganization(organizationId).criteria,
+      Criteria.Eq({ field: "organizationId", value: organizationId }),
+    );
   });
 });

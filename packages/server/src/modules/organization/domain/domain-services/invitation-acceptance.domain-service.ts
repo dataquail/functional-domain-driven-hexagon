@@ -33,14 +33,17 @@ const accept = (
   InvitationAlreadyAccepted | InvitationRevoked | InvitationExpired
 > => {
   const accepted = InvitationRootOps.accept(invitation, input);
+
   if (Result.isFailure(accepted)) {
     return Result.fail(accepted.failure);
   }
+
   const { events: membershipEvents, membership } = MembershipRootOps.create({
     userId: input.userId,
     organizationId: invitation.organizationId,
     now: input.now,
   });
+
   return Result.succeed({
     invitation: accepted.success.invitation,
     membership,

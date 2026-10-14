@@ -10,16 +10,19 @@ export const FindMyOrganizationsView = Schema.Struct({
   name: Schema.String,
   createdAt: Schema.DateTimeUtc,
   updatedAt: Schema.DateTimeUtc,
+  deletedAt: Schema.OptionFromNullOr(Schema.DateTimeUtc),
   // Whether the caller holds the `admin` OrganizationRole in this org.
   // Drives the frontend's admin-only surfaces (Billing / Invite tabs,
   // member management) without a separate role probe.
   isAdmin: Schema.Boolean,
 });
+
 export type FindMyOrganizationsView = typeof FindMyOrganizationsView.Type;
 
 export const FindMyOrganizationsResultView = Schema.Struct({
   organizations: Schema.Array(FindMyOrganizationsView),
 });
+
 export type FindMyOrganizationsResult = typeof FindMyOrganizationsResultView.Type;
 
 // Lists the organizations the caller is a member of. Used by the
@@ -33,4 +36,5 @@ export const FindMyOrganizationsQuery = Query.make("FindMyOrganizationsQuery", {
   success: FindMyOrganizationsResultView,
   failure: PersistenceUnavailable,
 });
+
 export type FindMyOrganizationsPayload = Query.Payload<typeof FindMyOrganizationsQuery>;

@@ -14,6 +14,7 @@ import { type OrganizationRolesRoot } from "./organization-roles.root.js";
 // repository uses to fetch the row set it reconstitutes into one aggregate.
 const forUser = (userId: UserId): Specification<OrganizationRolesRoot> =>
   Spec.eq<OrganizationRolesRoot, "userId">("userId", userId);
+
 const forOrganization = (organizationId: OrganizationId): Specification<OrganizationRolesRoot> =>
   Spec.eq<OrganizationRolesRoot, "organizationId">("organizationId", organizationId);
 

@@ -41,6 +41,7 @@ const grantRole = (
       }),
     );
   }
+
   return Result.succeed({
     organizationRoles: OrganizationRolesRoot.make({
       userId: aggregate.userId,
@@ -73,6 +74,7 @@ const revokeRole = (
       }),
     );
   }
+
   return Result.succeed({
     organizationRoles: OrganizationRolesRoot.make({
       userId: aggregate.userId,

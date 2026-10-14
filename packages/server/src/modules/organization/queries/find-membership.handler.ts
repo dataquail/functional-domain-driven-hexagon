@@ -15,10 +15,13 @@ export const findMembershipHandler = Effect.fn("findMembershipHandler")(function
   query: FindMembershipPayload,
 ) {
   const sql = yield* Database.Database;
+
   const statement = sql`
           SELECT COUNT(*)::int AS value FROM "organization".memberships
           WHERE user_id = ${query.userId} AND organization_id = ${query.organizationId}
         `.pipe(Database.row(CountRow));
+
   const row = yield* statement.pipe(translateDatabaseErrors);
+
   return { isMember: row.value > 0 };
 });

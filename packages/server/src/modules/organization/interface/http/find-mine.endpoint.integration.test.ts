@@ -1,31 +1,32 @@
 import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
-import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
+import { describeServer } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
-describe("GET /orgs (integration — findMine)", () => {
-  // findMine returns the caller's own orgs, so the caller must be able to own
-  // them: a regular member, not a super-admin.
-  const { run } = useServerTestRuntime(
-    [
+describeServer(
+  "GET /orgs (integration — findMine)",
+  {
+    tables: [
       "organization.organization_roles",
       "organization.memberships",
       "organization.organizations",
       "platform.roles",
       "user.users",
     ],
-    { server: TestServerLiveAsMember, seedSuperAdminCaller: true },
-  );
+    server: TestServerLiveAsMember,
+    seedSuperAdminCaller: true,
+  },
+  (it) => {
+    // findMine returns the caller's own orgs, so the caller must be able to own
+    // them: a regular member, not a super-admin.
 
-  it("returns the caller's organizations, most-recently-created first", async () => {
-    await run(
+    it.effect("returns the caller's organizations, most-recently-created first", () =>
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         yield* client.organization.create({
@@ -48,28 +49,26 @@ describe("GET /orgs (integration — findMine)", () => {
         );
       }),
     );
-  });
 
-  it("returns empty when the caller has no memberships", async () => {
-    await run(
+    it.effect("returns empty when the caller has no memberships", () =>
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         const orgs = yield* client.organization.findMine();
         deepStrictEqual([...orgs], []);
       }),
     );
-  });
 
-  it("hides soft-deleted orgs", async () => {
-    await run(
+    it.effect("hides soft-deleted orgs", () =>
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         yield* client.organization.create({
           payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
         });
+
         const { id: betaId } = yield* client.organization.create({
           payload: new OrganizationContract.CreateOrganizationPayload({ name: "Beta" }),
         });
+
         // Soft-delete is super-admin-only, so the member can't tombstone via
         // the endpoint; set the tombstone directly to exercise findMine's filter.
         const sql = yield* Database.Database;
@@ -84,5 +83,5 @@ describe("GET /orgs (integration — findMine)", () => {
         );
       }),
     );
-  });
-});
+  },
+);

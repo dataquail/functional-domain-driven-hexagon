@@ -1,10 +1,9 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertDefined } from "@effect/vitest/utils";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
@@ -47,13 +46,14 @@ describe("grantOrganizationRoleHandler", () => {
         actorUserId: actorId,
       });
 
-      const roles = yield* repo.findOne(
+      const maybeRoles = yield* repo.findOne(
         Spec.and(
           OrganizationRolesSpecifications.forUser(targetId),
           OrganizationRolesSpecifications.forOrganization(orgId),
         ),
       );
-      if (roles === null) throw new Error("expected aggregate");
+
+      const roles = Option.getOrThrow(maybeRoles);
       deepStrictEqual(
         roles.roles.map((r) => ({ role: r.role, issuedBy: r.issuedBy })),
         [{ role: "admin", issuedBy: actorId }],
@@ -62,7 +62,7 @@ describe("grantOrganizationRoleHandler", () => {
       const events = yield* rec.byTag<OrganizationRoleGranted>("OrganizationRoleGranted");
       deepStrictEqual(events.length, 1);
       const event = events[0];
-      if (event === undefined) throw new Error("expected OrganizationRoleGranted event");
+      assertDefined(event);
       deepStrictEqual(event.userId, targetId);
       deepStrictEqual(event.organizationId, orgId);
       deepStrictEqual(event.role, "admin");
@@ -72,7 +72,7 @@ describe("grantOrganizationRoleHandler", () => {
 
   it.effect("fails CannotPromoteSelfInOrganization when actor equals target", () =>
     Effect.gen(function* () {
-      const exit = yield* Effect.exit(
+      const error = yield* Effect.flip(
         grantOrganizationRoleHandler({
           userId: targetId,
           organizationId: orgId,
@@ -80,13 +80,8 @@ describe("grantOrganizationRoleHandler", () => {
           actorUserId: targetId,
         }),
       );
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(CannotPromoteSelfInOrganization)(error), true);
-      }
+
+      deepStrictEqual(Schema.is(CannotPromoteSelfInOrganization)(error), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -98,15 +93,10 @@ describe("grantOrganizationRoleHandler", () => {
         role: "admin",
         actorUserId: actorId,
       };
+
       yield* grantOrganizationRoleHandler(cmd);
-      const exit = yield* Effect.exit(grantOrganizationRoleHandler(cmd));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(AlreadyHasOrganizationRole)(error), true);
-      }
+      const error = yield* Effect.flip(grantOrganizationRoleHandler(cmd));
+      deepStrictEqual(Schema.is(AlreadyHasOrganizationRole)(error), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 });

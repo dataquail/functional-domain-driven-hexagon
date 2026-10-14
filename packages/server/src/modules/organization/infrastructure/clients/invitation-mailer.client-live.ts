@@ -28,10 +28,12 @@ export const InvitationMailerLive = Layer.effect(
           // at this URL; the (authed) guard bounces an unauthenticated
           // invitee through sign-in and back.
           const acceptUrl = `${env.APP_URL}/invitations/${token}`;
+
           const expiresLabel = DateTime.format(expiresAt, {
             dateStyle: "medium",
             timeStyle: "short",
           });
+
           const { html, text } = invitationEmail({ acceptUrl, expiresLabel });
 
           yield* mailer

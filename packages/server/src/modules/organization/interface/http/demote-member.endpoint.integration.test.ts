@@ -1,8 +1,9 @@
 import { deepStrictEqual, ok } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
+import { assertDefined } from "@effect/vitest/utils";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
+import { OrganizationId, UserId } from "@org/contracts/EntityIds";
 import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
@@ -13,11 +14,11 @@ import * as Schema from "effect/Schema";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { SUPER_ADMIN_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
-import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
+import { describeServer } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
-const ORG_ID = "11111111-1111-1111-1111-111111111111" as never;
-const TARGET_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa" as never;
+const ORG_ID = OrganizationId.make("11111111-1111-1111-1111-111111111111");
+const TARGET_ID = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
 // Seeds an org with `TARGET_ID` as a member. `asAdmin` additionally
 // grants the `admin` role so demote has something to revoke.
@@ -37,6 +38,7 @@ const seedTargetMember = (asAdmin: boolean) =>
           INSERT INTO "organization".memberships (user_id, organization_id, created_at)
           VALUES (${TARGET_ID}, ${ORG_ID}, now())
         `.pipe(Effect.orDie);
+
     if (asAdmin) {
       yield* sql`
             INSERT INTO "organization".organization_roles (organization_id, user_id, role, issued_by, created_at)
@@ -45,20 +47,20 @@ const seedTargetMember = (asAdmin: boolean) =>
     }
   });
 
-describe("DELETE /orgs/:orgId/members/:userId/admin (integration, super-admin caller)", () => {
-  const { run } = useServerTestRuntime(
-    [
+describeServer(
+  "DELETE /orgs/:orgId/members/:userId/admin (integration, super-admin caller)",
+  {
+    tables: [
       "organization.organization_roles",
       "organization.memberships",
       "organization.organizations",
       "platform.roles",
       "user.users",
     ],
-    { seedSuperAdminCaller: true },
-  );
-
-  it("demotes an admin, reflected as isAdmin=false in the members list", async () => {
-    await run(
+    seedSuperAdminCaller: true,
+  },
+  (it) => {
+    it.effect("demotes an admin, reflected as isAdmin=false in the members list", () =>
       Effect.gen(function* () {
         yield* seedTargetMember(true);
         const client = yield* HttpApiClient.make(Api);
@@ -67,14 +69,12 @@ describe("DELETE /orgs/:orgId/members/:userId/admin (integration, super-admin ca
 
         const after = yield* client.organization.findMembers({ params: { orgId: ORG_ID } });
         const target = after.members.find((m) => m.userId === TARGET_ID);
-        ok(target !== undefined);
+        assertDefined(target);
         deepStrictEqual(target.isAdmin, false);
       }),
     );
-  });
 
-  it("returns 409 OrganizationRoleConflictError when the member is not an admin", async () => {
-    await run(
+    it.effect("returns 409 OrganizationRoleConflictError when the member is not an admin", () =>
       Effect.gen(function* () {
         yield* seedTargetMember(false);
         const client = yield* HttpApiClient.make(Api);
@@ -82,7 +82,9 @@ describe("DELETE /orgs/:orgId/members/:userId/admin (integration, super-admin ca
         const exit = yield* Effect.exit(
           client.organization.demoteMember({ params: { orgId: ORG_ID, userId: TARGET_ID } }),
         );
+
         ok(Exit.isFailure(exit));
+
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           const error = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
           ok(Schema.is(OrganizationContract.OrganizationRoleConflictError)(error));
@@ -90,30 +92,34 @@ describe("DELETE /orgs/:orgId/members/:userId/admin (integration, super-admin ca
         }
       }),
     );
-  });
-});
+  },
+);
 
-describe("DELETE /orgs/:orgId/members/:userId/admin (integration, plain-member caller)", () => {
-  const { run } = useServerTestRuntime(
-    [
+describeServer(
+  "DELETE /orgs/:orgId/members/:userId/admin (integration, plain-member caller)",
+  {
+    tables: [
       "organization.organization_roles",
       "organization.memberships",
       "organization.organizations",
       "platform.roles",
       "user.users",
     ],
-    { server: TestServerLiveAsMember, seedSuperAdminCaller: true },
-  );
-
-  it("returns 403 Forbidden when the caller is not an admin of the org", async () => {
-    await run(
+    server: TestServerLiveAsMember,
+    seedSuperAdminCaller: true,
+  },
+  (it) => {
+    it.effect("returns 403 Forbidden when the caller is not an admin of the org", () =>
       Effect.gen(function* () {
         yield* seedTargetMember(true);
         const client = yield* HttpApiClient.make(Api);
+
         const exit = yield* Effect.exit(
           client.organization.demoteMember({ params: { orgId: ORG_ID, userId: TARGET_ID } }),
         );
+
         ok(Exit.isFailure(exit));
+
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(
             Schema.is(CustomHttpApiError.Forbidden)(
@@ -123,5 +129,5 @@ describe("DELETE /orgs/:orgId/members/:userId/admin (integration, plain-member c
         }
       }),
     );
-  });
-});
+  },
+);

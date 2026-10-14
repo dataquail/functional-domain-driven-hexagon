@@ -16,10 +16,13 @@ import { type InvitationRoot } from "./invitation.root.js";
 // a compile error.
 const withId = (id: InvitationId): Specification<InvitationRoot> =>
   Spec.eq<InvitationRoot, "id">("id", id);
+
 const withToken = (token: string): Specification<InvitationRoot> =>
   Spec.eq<InvitationRoot, "token">("token", token);
+
 const forOrganization = (organizationId: OrganizationId): Specification<InvitationRoot> =>
   Spec.eq<InvitationRoot, "organizationId">("organizationId", organizationId);
+
 const withInviteeEmail = (inviteeEmail: string): Specification<InvitationRoot> =>
   Spec.eq<InvitationRoot, "inviteeEmail">("inviteeEmail", inviteeEmail);
 
@@ -43,8 +46,11 @@ export type InvitationStatus = "pending" | "expired";
 
 // Display status for an *open* invitation. Accepted/revoked invitations are
 // filtered out before this is called, so only live-vs-lapsed remains.
-const statusAt = (invitation: InvitationRoot, now: DateTime.Utc): InvitationStatus =>
-  isExpiredAt(now)(invitation) ? "expired" : "pending";
+const statusAt = (invitation: InvitationRoot, now: DateTime.Utc): InvitationStatus => {
+  if (isExpiredAt(now)(invitation)) return "expired";
+
+  return "pending";
+};
 
 export const InvitationSpecifications = {
   withId,

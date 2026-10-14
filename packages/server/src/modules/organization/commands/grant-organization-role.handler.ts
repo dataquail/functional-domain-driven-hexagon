@@ -1,5 +1,6 @@
 import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
 import { Spec } from "@/globals/application/ddd/specification.js";
 import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
@@ -25,13 +26,17 @@ export const grantOrganizationRoleHandler = Effect.fn("grantOrganizationRoleHand
   const repo = yield* OrganizationRolesRepository;
   const bus = yield* DomainEventBus;
 
-  const aggregate =
-    (yield* repo.findOne(
-      Spec.and(
-        OrganizationRolesSpecifications.forUser(cmd.userId),
-        OrganizationRolesSpecifications.forOrganization(cmd.organizationId),
-      ),
-    )) ?? OrganizationRolesRootOps.empty(cmd.userId, cmd.organizationId);
+  const existing = yield* repo.findOne(
+    Spec.and(
+      OrganizationRolesSpecifications.forUser(cmd.userId),
+      OrganizationRolesSpecifications.forOrganization(cmd.organizationId),
+    ),
+  );
+
+  const aggregate = Option.getOrElse(existing, () =>
+    OrganizationRolesRootOps.empty(cmd.userId, cmd.organizationId),
+  );
+
   const result = yield* Effect.fromResult(
     OrganizationRolesRootOps.grantRole(aggregate, cmd.role, cmd.actorUserId),
   );

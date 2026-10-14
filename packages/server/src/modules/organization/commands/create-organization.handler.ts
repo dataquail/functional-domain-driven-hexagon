@@ -1,6 +1,5 @@
-import * as crypto from "node:crypto";
-
 import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
+import * as Crypto from "effect/Crypto";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
@@ -38,6 +37,7 @@ export const createOrganizationHandler = Effect.fn("createOrganizationHandler")(
   // level (not at HTTP authz) because the rule is a fact about the
   // role model, not a per-resource permission decision.
   const roles = yield* PlatformRoles;
+
   if (yield* roles.isSuperAdmin(cmd.actorUserId)) {
     return yield* new SuperAdminCannotOwnOrganization({ userId: cmd.actorUserId });
   }
@@ -47,22 +47,27 @@ export const createOrganizationHandler = Effect.fn("createOrganizationHandler")(
   const orgRolesRepo = yield* OrganizationRolesRepository;
   const bus = yield* DomainEventBus;
   const now = yield* DateTime.now;
-  const id = OrganizationId.make(crypto.randomUUID());
+  const crypto = yield* Crypto.Crypto;
+  const id = OrganizationId.make(yield* Effect.orDie(crypto.randomUUIDv4));
+
   const { events: orgEvents, organization } = OrganizationRootOps.create({
     id,
     name: cmd.name,
     now,
   });
+
   const { events: memberEvents, membership } = MembershipRootOps.create({
     userId: cmd.actorUserId,
     organizationId: id,
     now,
   });
+
   // `grantRole` returns `Result<GrantResult, AlreadyHasOrganizationRole>`. We
   // just constructed `empty(...)`, so the only way this could fail is a
   // domain-model defect — die explicitly so the typed error channel stays
   // clean for the bus signature.
   const seedRoles = OrganizationRolesRootOps.empty(cmd.actorUserId, id);
+
   const grantResult = yield* Effect.orDie(
     Effect.fromResult(OrganizationRolesRootOps.grantRole(seedRoles, "admin", cmd.actorUserId)),
   );
@@ -71,5 +76,6 @@ export const createOrganizationHandler = Effect.fn("createOrganizationHandler")(
   yield* memberRepo.insertOne(membership);
   yield* orgRolesRepo.upsertOne(grantResult.organizationRoles);
   yield* bus.dispatch([...orgEvents, ...memberEvents, ...grantResult.events]);
+
   return id;
 }, withUnitOfWork);

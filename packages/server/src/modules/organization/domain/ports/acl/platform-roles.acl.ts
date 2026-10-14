@@ -8,10 +8,10 @@ import { type PersistenceUnavailable } from "@/globals/application/ddd/persisten
 // policies' super-admin bypass, and the use-case invariant that a super-admin
 // neither owns nor joins an organization. Both need only the boolean, so the
 // role vocabulary never enters this module.
-export type PlatformRolesShape = {
+export type PlatformRolesService = {
   readonly isSuperAdmin: (userId: UserId) => Effect.Effect<boolean, PersistenceUnavailable>;
 };
 
-export class PlatformRoles extends Context.Service<PlatformRoles, PlatformRolesShape>()(
+export class PlatformRoles extends Context.Service<PlatformRoles, PlatformRolesService>()(
   "@org/server/organization/PlatformRoles",
 ) {}

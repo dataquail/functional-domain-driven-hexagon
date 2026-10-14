@@ -30,6 +30,7 @@ export const findInvitationsEndpoint = Effect.fn("OrganizationLive.findInvitatio
   );
 
   const queryBus = yield* QueryBus;
+
   const invitations = yield* queryBus.execute(FindPendingInvitationsQuery, {
     organizationId: request.params.orgId,
   });

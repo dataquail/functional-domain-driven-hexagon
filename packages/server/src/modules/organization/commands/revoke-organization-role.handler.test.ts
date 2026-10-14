@@ -1,12 +1,10 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertDefined, assertNone } from "@effect/vitest/utils";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
 import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
@@ -58,12 +56,14 @@ describe("revokeOrganizationRoleHandler", () => {
           OrganizationRolesSpecifications.forOrganization(orgId),
         ),
       );
-      deepStrictEqual(roles, null);
+
+      assertNone(roles);
 
       const events = yield* rec.byTag<OrganizationRoleRevoked>("OrganizationRoleRevoked");
       deepStrictEqual(events.length, 1);
       const event = events[0];
-      if (event === undefined) throw new Error("expected OrganizationRoleRevoked event");
+
+      assertDefined(event);
       deepStrictEqual(event.userId, targetId);
       deepStrictEqual(event.organizationId, orgId);
       deepStrictEqual(event.role, "admin");
@@ -72,20 +72,15 @@ describe("revokeOrganizationRoleHandler", () => {
 
   it.effect("fails DoesNotHaveOrganizationRole when the role isn't held", () =>
     Effect.gen(function* () {
-      const exit = yield* Effect.exit(
+      const error = yield* Effect.flip(
         revokeOrganizationRoleHandler({
           userId: targetId,
           organizationId: orgId,
           role: "admin",
         }),
       );
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(DoesNotHaveOrganizationRole)(error), true);
-      }
+
+      deepStrictEqual(Schema.is(DoesNotHaveOrganizationRole)(error), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 });

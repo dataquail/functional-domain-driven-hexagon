@@ -28,5 +28,6 @@ export const findMineEndpoint = Effect.fn("CliOrganizationLive.listMine")(functi
   const currentUser = yield* CurrentUser;
   const queryBus = yield* QueryBus;
   const result = yield* queryBus.execute(FindMyOrganizationsQuery, { userId: currentUser.userId });
+
   return result.organizations.map(toCli);
 }, recoverPersistenceUnavailable);

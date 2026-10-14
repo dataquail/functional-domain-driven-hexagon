@@ -15,4 +15,5 @@ export const LeaveOrganizationCommand = Command.make("LeaveOrganizationCommand",
   success: Schema.Void,
   failure: Schema.Union([MembershipNotFound, PersistenceUnavailable]),
 });
+
 export type LeaveOrganizationPayload = Command.Payload<typeof LeaveOrganizationCommand>;

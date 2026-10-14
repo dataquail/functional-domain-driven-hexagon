@@ -1,4 +1,5 @@
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
 import { type SendInvitationEmailPayload } from "@/modules/organization/commands/send-invitation-email.command.js";
 import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
@@ -18,8 +19,11 @@ export const sendInvitationEmailHandler = Effect.fn("sendInvitationEmailHandler"
   const repo = yield* InvitationRepository;
   const mailer = yield* InvitationMailer;
 
-  const invitation = yield* repo.findOne(InvitationSpecifications.withId(cmd.invitationId));
-  if (invitation === null) return;
+  const maybeInvitation = yield* repo.findOne(InvitationSpecifications.withId(cmd.invitationId));
+
+  if (Option.isNone(maybeInvitation)) return;
+
+  const invitation = maybeInvitation.value;
 
   yield* mailer.send({
     to: invitation.inviteeEmail,

@@ -1,5 +1,6 @@
 import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
 import { Spec } from "@/globals/application/ddd/specification.js";
 import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
@@ -14,18 +15,23 @@ export const removeMemberHandler = Effect.fn("removeMemberHandler")(function* (
 ) {
   const repo = yield* MembershipRepository;
   const bus = yield* DomainEventBus;
-  const membership = yield* repo.findOne(
+
+  const maybeMembership = yield* repo.findOne(
     Spec.and(
       MembershipSpecifications.forUser(cmd.targetUserId),
       MembershipSpecifications.forOrganization(cmd.organizationId),
     ),
   );
-  if (membership === null) {
+
+  if (Option.isNone(maybeMembership)) {
     return yield* new MembershipNotFound({
       userId: cmd.targetUserId,
       organizationId: cmd.organizationId,
     });
   }
+
+  const membership = maybeMembership.value;
+
   const { events } = MembershipRootOps.revoke(membership);
   yield* repo.deleteOne(cmd.targetUserId, cmd.organizationId);
   yield* bus.dispatch(events);

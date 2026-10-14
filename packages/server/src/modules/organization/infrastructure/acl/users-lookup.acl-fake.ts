@@ -1,5 +1,6 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
 import {
@@ -15,11 +16,6 @@ export const makeUsersLookupFake = (byId: ReadonlyMap<UserId, UserLookupView>) =
     UsersLookup,
     UsersLookup.of({
       findByIds: (ids) =>
-        Effect.succeed(
-          ids.flatMap((id) => {
-            const view = byId.get(id);
-            return view === undefined ? [] : [view];
-          }),
-        ),
+        Effect.succeed(ids.flatMap((id) => Option.toArray(Option.fromUndefinedOr(byId.get(id))))),
     }),
   );

@@ -28,30 +28,41 @@ export const findAllOrganizationsHandler = Effect.fn("findAllOrganizationsHandle
   const sql = yield* Database.Database;
   const offset = (query.page - 1) * query.pageSize;
 
+  const pageOfOrganizations = () => {
+    if (query.includeDeleted) {
+      return sql`
+          SELECT * FROM "organization".organizations
+          ORDER BY created_at DESC
+          LIMIT ${query.pageSize} OFFSET ${offset}
+        `.pipe(Database.rows(RowSchemas.OrganizationRow));
+    }
+
+    return sql`
+          SELECT * FROM "organization".organizations
+          WHERE deleted_at IS NULL
+          ORDER BY created_at DESC
+          LIMIT ${query.pageSize} OFFSET ${offset}
+        `.pipe(Database.rows(RowSchemas.OrganizationRow));
+  };
+
+  const countOfOrganizations = () => {
+    if (query.includeDeleted) {
+      return sql`
+          SELECT COUNT(*)::int AS value FROM "organization".organizations
+        `.pipe(Database.row(CountRow));
+    }
+
+    return sql`
+          SELECT COUNT(*)::int AS value FROM "organization".organizations
+          WHERE deleted_at IS NULL
+        `.pipe(Database.row(CountRow));
+  };
+
   // Sequential, not concurrent: inside a unit of work both statements share the
   // ambient transaction connection, which cannot serve two queries at once.
-  const [rows, countRow] = yield* Effect.all([
-    query.includeDeleted
-      ? sql`
-          SELECT * FROM "organization".organizations
-          ORDER BY created_at DESC
-          LIMIT ${query.pageSize} OFFSET ${offset}
-        `.pipe(Database.rows(RowSchemas.OrganizationRow))
-      : sql`
-          SELECT * FROM "organization".organizations
-          WHERE deleted_at IS NULL
-          ORDER BY created_at DESC
-          LIMIT ${query.pageSize} OFFSET ${offset}
-        `.pipe(Database.rows(RowSchemas.OrganizationRow)),
-    query.includeDeleted
-      ? sql`
-          SELECT COUNT(*)::int AS value FROM "organization".organizations
-        `.pipe(Database.row(CountRow))
-      : sql`
-          SELECT COUNT(*)::int AS value FROM "organization".organizations
-          WHERE deleted_at IS NULL
-        `.pipe(Database.row(CountRow)),
-  ]).pipe(translateDatabaseErrors);
+  const [rows, countRow] = yield* Effect.all([pageOfOrganizations(), countOfOrganizations()]).pipe(
+    translateDatabaseErrors,
+  );
 
   return {
     organizations: rows.map(toView),

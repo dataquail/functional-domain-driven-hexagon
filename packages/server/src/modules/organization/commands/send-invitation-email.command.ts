@@ -14,4 +14,5 @@ export const SendInvitationEmailCommand = Command.make("SendInvitationEmailComma
   success: Schema.Void,
   failure: Schema.Union([InvitationEmailUndelivered, PersistenceUnavailable]),
 });
+
 export type SendInvitationEmailPayload = Command.Payload<typeof SendInvitationEmailCommand>;

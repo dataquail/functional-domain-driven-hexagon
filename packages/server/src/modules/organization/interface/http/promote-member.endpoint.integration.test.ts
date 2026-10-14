@@ -1,8 +1,9 @@
 import { deepStrictEqual, ok } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
+import { assertDefined } from "@effect/vitest/utils";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
+import { OrganizationId, UserId } from "@org/contracts/EntityIds";
 import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
@@ -13,11 +14,11 @@ import * as Schema from "effect/Schema";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { SUPER_ADMIN_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
-import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
+import { describeServer } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
-const ORG_ID = "11111111-1111-1111-1111-111111111111" as never;
-const TARGET_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa" as never;
+const ORG_ID = OrganizationId.make("11111111-1111-1111-1111-111111111111");
+const TARGET_ID = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
 const seedOrgWithTarget = Effect.gen(function* () {
   const sql = yield* Database.Database;
@@ -36,20 +37,20 @@ const seedOrgWithTarget = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-describe("POST /orgs/:orgId/members/:userId/admin (integration, super-admin caller)", () => {
-  const { run } = useServerTestRuntime(
-    [
+describeServer(
+  "POST /orgs/:orgId/members/:userId/admin (integration, super-admin caller)",
+  {
+    tables: [
       "organization.organization_roles",
       "organization.memberships",
       "organization.organizations",
       "platform.roles",
       "user.users",
     ],
-    { seedSuperAdminCaller: true },
-  );
-
-  it("promotes a plain member, reflected as isAdmin in the members list", async () => {
-    await run(
+    seedSuperAdminCaller: true,
+  },
+  (it) => {
+    it.effect("promotes a plain member, reflected as isAdmin in the members list", () =>
       Effect.gen(function* () {
         yield* seedOrgWithTarget;
         const client = yield* HttpApiClient.make(Api);
@@ -58,14 +59,12 @@ describe("POST /orgs/:orgId/members/:userId/admin (integration, super-admin call
 
         const after = yield* client.organization.findMembers({ params: { orgId: ORG_ID } });
         const target = after.members.find((m) => m.userId === TARGET_ID);
-        ok(target !== undefined);
+        assertDefined(target);
         deepStrictEqual(target.isAdmin, true);
       }),
     );
-  });
 
-  it("returns 409 OrganizationRoleConflictError when already an admin", async () => {
-    await run(
+    it.effect("returns 409 OrganizationRoleConflictError when already an admin", () =>
       Effect.gen(function* () {
         yield* seedOrgWithTarget;
         const client = yield* HttpApiClient.make(Api);
@@ -74,7 +73,9 @@ describe("POST /orgs/:orgId/members/:userId/admin (integration, super-admin call
         const exit = yield* Effect.exit(
           client.organization.promoteMember({ params: { orgId: ORG_ID, userId: TARGET_ID } }),
         );
+
         ok(Exit.isFailure(exit));
+
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           const error = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
           ok(Schema.is(OrganizationContract.OrganizationRoleConflictError)(error));
@@ -82,10 +83,8 @@ describe("POST /orgs/:orgId/members/:userId/admin (integration, super-admin call
         }
       }),
     );
-  });
 
-  it("returns 403 Forbidden when the actor targets themselves", async () => {
-    await run(
+    it.effect("returns 403 Forbidden when the actor targets themselves", () =>
       Effect.gen(function* () {
         // Seed the org so the resource resolves; the self-promotion guard
         // (CannotPromoteSelfInOrganization) then fires in the command.
@@ -95,12 +94,15 @@ describe("POST /orgs/:orgId/members/:userId/admin (integration, super-admin call
               VALUES (${ORG_ID}, 'Acme', now(), now(), null)
             `.pipe(Effect.orDie);
         const client = yield* HttpApiClient.make(Api);
+
         const exit = yield* Effect.exit(
           client.organization.promoteMember({
             params: { orgId: ORG_ID, userId: SUPER_ADMIN_CALLER_ID },
           }),
         );
+
         ok(Exit.isFailure(exit));
+
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(
             Schema.is(CustomHttpApiError.Forbidden)(
@@ -110,29 +112,32 @@ describe("POST /orgs/:orgId/members/:userId/admin (integration, super-admin call
         }
       }),
     );
-  });
-});
+  },
+);
 
-describe("POST /orgs/:orgId/members/:userId/admin (integration, org-admin caller)", () => {
-  const { run } = useServerTestRuntime(
-    [
+describeServer(
+  "POST /orgs/:orgId/members/:userId/admin (integration, org-admin caller)",
+  {
+    tables: [
       "organization.organization_roles",
       "organization.memberships",
       "organization.organizations",
       "platform.roles",
       "user.users",
     ],
-    { server: TestServerLiveAsMember, seedSuperAdminCaller: true },
-  );
-
-  it("lets an org admin (the creator) promote another member", async () => {
-    await run(
+    server: TestServerLiveAsMember,
+    seedSuperAdminCaller: true,
+  },
+  (it) => {
+    it.effect("lets an org admin (the creator) promote another member", () =>
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
+
         // The member caller creates the org and is auto-granted `admin`.
         const { id: orgId } = yield* client.organization.create({
           payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
         });
+
         // Seed a second member to promote (no single-caller HTTP path adds one).
         const sql = yield* Database.Database;
         yield* sql`
@@ -149,14 +154,12 @@ describe("POST /orgs/:orgId/members/:userId/admin (integration, org-admin caller
 
         const after = yield* client.organization.findMembers({ params: { orgId } });
         const target = after.members.find((m) => m.userId === TARGET_ID);
-        ok(target !== undefined);
+        assertDefined(target);
         deepStrictEqual(target.isAdmin, true);
       }),
     );
-  });
 
-  it("returns 403 Forbidden when the caller is not an admin of the org", async () => {
-    await run(
+    it.effect("returns 403 Forbidden when the caller is not an admin of the org", () =>
       Effect.gen(function* () {
         // Org seeded with the member caller holding no admin role.
         const sql = yield* Database.Database;
@@ -170,10 +173,13 @@ describe("POST /orgs/:orgId/members/:userId/admin (integration, org-admin caller
               VALUES (${ORG_ID}, 'Acme', now(), now(), null)
             `.pipe(Effect.orDie);
         const client = yield* HttpApiClient.make(Api);
+
         const exit = yield* Effect.exit(
           client.organization.promoteMember({ params: { orgId: ORG_ID, userId: TARGET_ID } }),
         );
+
         ok(Exit.isFailure(exit));
+
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(
             Schema.is(CustomHttpApiError.Forbidden)(
@@ -183,5 +189,5 @@ describe("POST /orgs/:orgId/members/:userId/admin (integration, org-admin caller
         }
       }),
     );
-  });
-});
+  },
+);

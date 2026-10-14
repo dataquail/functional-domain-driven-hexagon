@@ -1,8 +1,8 @@
 import { deepStrictEqual, ok } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
+import { InvitationId, OrganizationId } from "@org/contracts/EntityIds";
 import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
@@ -12,11 +12,11 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
-import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
+import { describeServer } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
-const ORG_ID = "11111111-1111-1111-1111-111111111111" as never;
-const UNKNOWN_INVITATION_ID = "22222222-2222-2222-2222-222222222222" as never;
+const ORG_ID = OrganizationId.make("11111111-1111-1111-1111-111111111111");
+const UNKNOWN_INVITATION_ID = InvitationId.make("22222222-2222-2222-2222-222222222222");
 
 const seedOrg = Effect.gen(function* () {
   const sql = yield* Database.Database;
@@ -26,17 +26,23 @@ const seedOrg = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-describe("DELETE /orgs/:orgId/invitations/:invitationId (integration, super-admin caller)", () => {
-  const { run } = useServerTestRuntime(
-    ["organization.invitations", "organization.organizations", "platform.roles", "user.users"],
-    { seedSuperAdminCaller: true },
-  );
-
-  it("revokes a pending invitation so it drops off the pending list", async () => {
-    await run(
+describeServer(
+  "DELETE /orgs/:orgId/invitations/:invitationId (integration, super-admin caller)",
+  {
+    tables: [
+      "organization.invitations",
+      "organization.organizations",
+      "platform.roles",
+      "user.users",
+    ],
+    seedSuperAdminCaller: true,
+  },
+  (it) => {
+    it.effect("revokes a pending invitation so it drops off the pending list", () =>
       Effect.gen(function* () {
         yield* seedOrg;
         const client = yield* HttpApiClient.make(Api);
+
         const { invitationId } = yield* client.organization.inviteUser({
           params: { orgId: ORG_ID },
           payload: new OrganizationContract.InviteUserPayload({ email: "alice@example.com" }),
@@ -50,23 +56,25 @@ describe("DELETE /orgs/:orgId/invitations/:invitationId (integration, super-admi
         deepStrictEqual(res.invitations.length, 0);
       }),
     );
-  });
 
-  it("returns 410 Gone when the invitation is already revoked", async () => {
-    await run(
+    it.effect("returns 410 Gone when the invitation is already revoked", () =>
       Effect.gen(function* () {
         yield* seedOrg;
         const client = yield* HttpApiClient.make(Api);
+
         const { invitationId } = yield* client.organization.inviteUser({
           params: { orgId: ORG_ID },
           payload: new OrganizationContract.InviteUserPayload({ email: "alice@example.com" }),
         });
+
         yield* client.organization.revokeInvitation({ params: { orgId: ORG_ID, invitationId } });
 
         const exit = yield* Effect.exit(
           client.organization.revokeInvitation({ params: { orgId: ORG_ID, invitationId } }),
         );
+
         ok(Exit.isFailure(exit));
+
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           const error = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
           deepStrictEqual(error._tag, "InvitationGoneError");
@@ -74,19 +82,20 @@ describe("DELETE /orgs/:orgId/invitations/:invitationId (integration, super-admi
         }
       }),
     );
-  });
 
-  it("returns 404 for an unknown invitation", async () => {
-    await run(
+    it.effect("returns 404 for an unknown invitation", () =>
       Effect.gen(function* () {
         yield* seedOrg;
         const client = yield* HttpApiClient.make(Api);
+
         const exit = yield* Effect.exit(
           client.organization.revokeInvitation({
             params: { orgId: ORG_ID, invitationId: UNKNOWN_INVITATION_ID },
           }),
         );
+
         ok(Exit.isFailure(exit));
+
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           deepStrictEqual(
             Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag,
@@ -95,17 +104,23 @@ describe("DELETE /orgs/:orgId/invitations/:invitationId (integration, super-admi
         }
       }),
     );
-  });
-});
+  },
+);
 
-describe("DELETE /orgs/:orgId/invitations/:invitationId (integration, non-admin member caller)", () => {
-  const { run } = useServerTestRuntime(
-    ["organization.invitations", "organization.organizations", "platform.roles", "user.users"],
-    { server: TestServerLiveAsMember, seedSuperAdminCaller: true },
-  );
-
-  it("forbids a member who is not an org admin from revoking", async () => {
-    await run(
+describeServer(
+  "DELETE /orgs/:orgId/invitations/:invitationId (integration, non-admin member caller)",
+  {
+    tables: [
+      "organization.invitations",
+      "organization.organizations",
+      "platform.roles",
+      "user.users",
+    ],
+    server: TestServerLiveAsMember,
+    seedSuperAdminCaller: true,
+  },
+  (it) => {
+    it.effect("forbids a member who is not an org admin from revoking", () =>
       Effect.gen(function* () {
         yield* seedOrg;
         const sql = yield* Database.Database;
@@ -119,12 +134,15 @@ describe("DELETE /orgs/:orgId/invitations/:invitationId (integration, non-admin 
             `.pipe(Effect.orDie);
 
         const client = yield* HttpApiClient.make(Api);
+
         const exit = yield* Effect.exit(
           client.organization.revokeInvitation({
             params: { orgId: ORG_ID, invitationId: UNKNOWN_INVITATION_ID },
           }),
         );
+
         ok(Exit.isFailure(exit));
+
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(
             Schema.is(CustomHttpApiError.Forbidden)(
@@ -134,5 +152,5 @@ describe("DELETE /orgs/:orgId/invitations/:invitationId (integration, non-admin 
         }
       }),
     );
-  });
-});
+  },
+);

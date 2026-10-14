@@ -8,6 +8,7 @@ export const OrganizationCreated = Event.make("OrganizationCreated", {
   organizationId: OrganizationId,
   name: Schema.String,
 });
+
 export type OrganizationCreated = typeof OrganizationCreated.Type;
 
 export const organizationCreatedSpanAttributes: SpanAttributesExtractor<OrganizationCreated> = (
@@ -17,6 +18,7 @@ export const organizationCreatedSpanAttributes: SpanAttributesExtractor<Organiza
 export const OrganizationSoftDeleted = Event.make("OrganizationSoftDeleted", {
   organizationId: OrganizationId,
 });
+
 export type OrganizationSoftDeleted = typeof OrganizationSoftDeleted.Type;
 
 export const organizationSoftDeletedSpanAttributes: SpanAttributesExtractor<
@@ -26,6 +28,7 @@ export const organizationSoftDeletedSpanAttributes: SpanAttributesExtractor<
 export const OrganizationRestored = Event.make("OrganizationRestored", {
   organizationId: OrganizationId,
 });
+
 export type OrganizationRestored = typeof OrganizationRestored.Type;
 
 export const organizationRestoredSpanAttributes: SpanAttributesExtractor<OrganizationRestored> = (

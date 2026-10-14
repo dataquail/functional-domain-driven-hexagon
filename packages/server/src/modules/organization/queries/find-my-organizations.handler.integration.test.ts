@@ -1,12 +1,10 @@
 import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
 import { Database } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Result from "effect/Result";
-import { beforeEach } from "vitest";
 
 import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
@@ -17,7 +15,8 @@ import { OrganizationRootOps } from "@/modules/organization/domain/organization/
 import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/repositories/membership.repository-live.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
 import { findMyOrganizationsHandler } from "@/modules/organization/queries/find-my-organizations.handler.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { describeIntegration } from "@/test-utils/server-test-runtime.js";
+import { TestDatabaseLive } from "@/test-utils/test-database.js";
 
 const aliceId = UserId.make("11111111-1111-1111-1111-111111111111");
 const bobId = UserId.make("22222222-2222-2222-2222-222222222222");
@@ -38,100 +37,107 @@ const seedUsers = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-describe("findMyOrganizationsHandler (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate(
-        "organization.organization_roles",
-        "organization.memberships",
-        "organization.organizations",
-        "user.users",
-      ).pipe(Effect.provide(TestDatabaseLive)),
+describeIntegration(
+  "findMyOrganizationsHandler (integration)",
+  {
+    layer: TestLayer,
+    tables: [
+      "organization.organization_roles",
+      "organization.memberships",
+      "organization.organizations",
+      "user.users",
+    ],
+  },
+  (it) => {
+    it.effect("returns only orgs the caller is a member of", () =>
+      Effect.gen(function* () {
+        yield* seedUsers;
+        const orgs = yield* OrganizationRepository;
+        const memberships = yield* MembershipRepository;
+        yield* orgs.insertOne(
+          OrganizationRootOps.create({ id: acmeId, name: "Acme", now }).organization,
+        );
+        yield* orgs.insertOne(
+          OrganizationRootOps.create({ id: betaId, name: "Beta", now }).organization,
+        );
+        yield* memberships.insertOne(
+          MembershipRootOps.create({ userId: aliceId, organizationId: acmeId, now }).membership,
+        );
+        // Bob is a member of Beta, not Acme — must not leak into Alice's view.
+        yield* memberships.insertOne(
+          MembershipRootOps.create({ userId: bobId, organizationId: betaId, now }).membership,
+        );
+
+        const result = yield* findMyOrganizationsHandler({ userId: aliceId });
+        deepStrictEqual(
+          result.organizations.map((o) => o.name),
+          ["Acme"],
+        );
+      }),
     );
-  });
 
-  it.effect("returns only orgs the caller is a member of", () =>
-    Effect.gen(function* () {
-      yield* seedUsers;
-      const orgs = yield* OrganizationRepository;
-      const memberships = yield* MembershipRepository;
-      yield* orgs.insertOne(
-        OrganizationRootOps.create({ id: acmeId, name: "Acme", now }).organization,
-      );
-      yield* orgs.insertOne(
-        OrganizationRootOps.create({ id: betaId, name: "Beta", now }).organization,
-      );
-      yield* memberships.insertOne(
-        MembershipRootOps.create({ userId: aliceId, organizationId: acmeId, now }).membership,
-      );
-      // Bob is a member of Beta, not Acme — must not leak into Alice's view.
-      yield* memberships.insertOne(
-        MembershipRootOps.create({ userId: bobId, organizationId: betaId, now }).membership,
-      );
-
-      const result = yield* findMyOrganizationsHandler({ userId: aliceId });
-      deepStrictEqual(
-        result.organizations.map((o) => o.name),
-        ["Acme"],
-      );
-    }).pipe(Effect.provide(TestLayer)),
-  );
-
-  it.effect("flags orgs where the caller holds the admin role", () =>
-    Effect.gen(function* () {
-      yield* seedUsers;
-      const orgs = yield* OrganizationRepository;
-      const memberships = yield* MembershipRepository;
-      yield* orgs.insertOne(
-        OrganizationRootOps.create({ id: acmeId, name: "Acme", now }).organization,
-      );
-      yield* orgs.insertOne(
-        OrganizationRootOps.create({ id: betaId, name: "Beta", now }).organization,
-      );
-      yield* memberships.insertOne(
-        MembershipRootOps.create({ userId: aliceId, organizationId: acmeId, now }).membership,
-      );
-      yield* memberships.insertOne(
-        MembershipRootOps.create({ userId: aliceId, organizationId: betaId, now }).membership,
-      );
-      // Alice holds the `admin` role in Acme only.
-      const sql = yield* Database.Database;
-      yield* sql`
+    it.effect("flags orgs where the caller holds the admin role", () =>
+      Effect.gen(function* () {
+        yield* seedUsers;
+        const orgs = yield* OrganizationRepository;
+        const memberships = yield* MembershipRepository;
+        yield* orgs.insertOne(
+          OrganizationRootOps.create({ id: acmeId, name: "Acme", now }).organization,
+        );
+        yield* orgs.insertOne(
+          OrganizationRootOps.create({ id: betaId, name: "Beta", now }).organization,
+        );
+        yield* memberships.insertOne(
+          MembershipRootOps.create({ userId: aliceId, organizationId: acmeId, now }).membership,
+        );
+        yield* memberships.insertOne(
+          MembershipRootOps.create({ userId: aliceId, organizationId: betaId, now }).membership,
+        );
+        // Alice holds the `admin` role in Acme only.
+        const sql = yield* Database.Database;
+        yield* sql`
             INSERT INTO "organization".organization_roles
               (organization_id, user_id, role, issued_by, created_at)
             VALUES (${acmeId}, ${aliceId}, 'admin', ${aliceId}, now())
           `.pipe(Effect.orDie);
 
-      const result = yield* findMyOrganizationsHandler({ userId: aliceId });
-      const isAdminByName = new Map(result.organizations.map((o) => [o.name, o.isAdmin]));
-      deepStrictEqual(isAdminByName.get("Acme"), true);
-      deepStrictEqual(isAdminByName.get("Beta"), false);
-    }).pipe(Effect.provide(TestLayer)),
-  );
+        const result = yield* findMyOrganizationsHandler({ userId: aliceId });
+        const isAdminByName = new Map(result.organizations.map((o) => [o.name, o.isAdmin]));
+        deepStrictEqual(isAdminByName.get("Acme"), true);
+        deepStrictEqual(isAdminByName.get("Beta"), false);
+      }),
+    );
 
-  it.effect("returns an empty list when the caller has no memberships", () =>
-    Effect.gen(function* () {
-      yield* seedUsers;
-      const result = yield* findMyOrganizationsHandler({ userId: aliceId });
-      deepStrictEqual([...result.organizations], []);
-    }).pipe(Effect.provide(TestLayer)),
-  );
+    it.effect("returns an empty list when the caller has no memberships", () =>
+      Effect.gen(function* () {
+        yield* seedUsers;
+        const result = yield* findMyOrganizationsHandler({ userId: aliceId });
+        deepStrictEqual([...result.organizations], []);
+      }),
+    );
 
-  it.effect("hides soft-deleted orgs", () =>
-    Effect.gen(function* () {
-      yield* seedUsers;
-      const orgs = yield* OrganizationRepository;
-      const memberships = yield* MembershipRepository;
-      const { organization: acme } = OrganizationRootOps.create({ id: acmeId, name: "Acme", now });
-      yield* orgs.insertOne(acme);
-      yield* memberships.insertOne(
-        MembershipRootOps.create({ userId: aliceId, organizationId: acmeId, now }).membership,
-      );
-      const deleted = Result.getOrThrow(OrganizationRootOps.softDelete(acme, { now }));
-      yield* orgs.updateOne(deleted.organization);
+    it.effect("hides soft-deleted orgs", () =>
+      Effect.gen(function* () {
+        yield* seedUsers;
+        const orgs = yield* OrganizationRepository;
+        const memberships = yield* MembershipRepository;
 
-      const result = yield* findMyOrganizationsHandler({ userId: aliceId });
-      deepStrictEqual([...result.organizations], []);
-    }).pipe(Effect.provide(TestLayer)),
-  );
-});
+        const { organization: acme } = OrganizationRootOps.create({
+          id: acmeId,
+          name: "Acme",
+          now,
+        });
+
+        yield* orgs.insertOne(acme);
+        yield* memberships.insertOne(
+          MembershipRootOps.create({ userId: aliceId, organizationId: acmeId, now }).membership,
+        );
+        const deleted = Result.getOrThrow(OrganizationRootOps.softDelete(acme, { now }));
+        yield* orgs.updateOne(deleted.organization);
+
+        const result = yield* findMyOrganizationsHandler({ userId: aliceId });
+        deepStrictEqual([...result.organizations], []);
+      }),
+    );
+  },
+);

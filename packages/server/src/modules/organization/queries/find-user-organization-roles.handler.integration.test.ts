@@ -1,12 +1,10 @@
 import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
 import { Database } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Result from "effect/Result";
-import { beforeEach } from "vitest";
 
 import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
@@ -17,7 +15,8 @@ import { OrganizationRolesRootOps } from "@/modules/organization/domain/organiza
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
 import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-live.js";
 import { findUserOrganizationRolesHandler } from "@/modules/organization/queries/find-user-organization-roles.handler.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { describeIntegration } from "@/test-utils/server-test-runtime.js";
+import { TestDatabaseLive } from "@/test-utils/test-database.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
@@ -42,41 +41,42 @@ const seedOrg = Effect.gen(function* () {
   yield* orgs.insertOne(OrganizationRootOps.create({ id: orgId, name: "Acme", now }).organization);
 });
 
-describe("findUserOrganizationRolesHandler (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate("organization.organization_roles", "organization.organizations", "user.users").pipe(
-        Effect.provide(TestDatabaseLive),
-      ),
+describeIntegration(
+  "findUserOrganizationRolesHandler (integration)",
+  {
+    layer: TestLayer,
+    tables: ["organization.organization_roles", "organization.organizations", "user.users"],
+  },
+  (it) => {
+    it.effect("returns an empty roles array for a (user, org) with none granted", () =>
+      Effect.gen(function* () {
+        yield* seedUsers;
+        yield* seedOrg;
+        const result = yield* findUserOrganizationRolesHandler({ userId, organizationId: orgId });
+        deepStrictEqual(result.userId, userId);
+        deepStrictEqual(result.organizationId, orgId);
+        deepStrictEqual([...result.roles], []);
+      }),
     );
-  });
 
-  it.effect("returns an empty roles array for a (user, org) with none granted", () =>
-    Effect.gen(function* () {
-      yield* seedUsers;
-      yield* seedOrg;
-      const result = yield* findUserOrganizationRolesHandler({ userId, organizationId: orgId });
-      deepStrictEqual(result.userId, userId);
-      deepStrictEqual(result.organizationId, orgId);
-      deepStrictEqual([...result.roles], []);
-    }).pipe(Effect.provide(TestLayer)),
-  );
+    it.effect("returns the granted roles, projected to bare role names", () =>
+      Effect.gen(function* () {
+        yield* seedUsers;
+        yield* seedOrg;
+        const repo = yield* OrganizationRolesRepository;
 
-  it.effect("returns the granted roles, projected to bare role names", () =>
-    Effect.gen(function* () {
-      yield* seedUsers;
-      yield* seedOrg;
-      const repo = yield* OrganizationRolesRepository;
-      const granted = Result.getOrThrow(
-        OrganizationRolesRootOps.grantRole(
-          OrganizationRolesRootOps.empty(userId, orgId),
-          "admin",
-          issuedBy,
-        ),
-      );
-      yield* repo.upsertOne(granted.organizationRoles);
-      const result = yield* findUserOrganizationRolesHandler({ userId, organizationId: orgId });
-      deepStrictEqual([...result.roles], ["admin"]);
-    }).pipe(Effect.provide(TestLayer)),
-  );
-});
+        const granted = Result.getOrThrow(
+          OrganizationRolesRootOps.grantRole(
+            OrganizationRolesRootOps.empty(userId, orgId),
+            "admin",
+            issuedBy,
+          ),
+        );
+
+        yield* repo.upsertOne(granted.organizationRoles);
+        const result = yield* findUserOrganizationRolesHandler({ userId, organizationId: orgId });
+        deepStrictEqual([...result.roles], ["admin"]);
+      }),
+    );
+  },
+);

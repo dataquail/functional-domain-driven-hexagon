@@ -3,51 +3,51 @@ import * as Schema from "effect/Schema";
 import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
 
 // Returned by the repository when a lookup by id finds nothing.
-export class InvitationNotFound extends Schema.TaggedError<InvitationNotFound>()(
-  "InvitationNotFound",
-  { invitationId: InvitationId },
-) {}
+export class InvitationNotFound extends Schema.TaggedError<
+  InvitationNotFound,
+  { readonly brand: "InvitationNotFound" }
+>()("InvitationNotFound", { invitationId: InvitationId }) {}
 
 // Returned by the repository when a lookup by token finds nothing.
 // Distinct from `InvitationNotFound` so the public accept endpoint's
 // error doesn't have to fabricate an id; the token itself isn't
 // included to avoid leaking it to span attributes / logs.
-export class InvitationTokenNotFound extends Schema.TaggedError<InvitationTokenNotFound>()(
-  "InvitationTokenNotFound",
-  {},
-) {}
+export class InvitationTokenNotFound extends Schema.TaggedError<
+  InvitationTokenNotFound,
+  { readonly brand: "InvitationTokenNotFound" }
+>()("InvitationTokenNotFound", {}) {}
 
 // Aggregate invariant: accept fails if `expiresAt < now`.
-export class InvitationExpired extends Schema.TaggedError<InvitationExpired>()(
-  "InvitationExpired",
-  { invitationId: InvitationId },
-) {}
+export class InvitationExpired extends Schema.TaggedError<
+  InvitationExpired,
+  { readonly brand: "InvitationExpired" }
+>()("InvitationExpired", { invitationId: InvitationId }) {}
 
 // Aggregate invariant: accept + revoke both fail if `acceptedAt` is set.
-export class InvitationAlreadyAccepted extends Schema.TaggedError<InvitationAlreadyAccepted>()(
-  "InvitationAlreadyAccepted",
-  { invitationId: InvitationId },
-) {}
+export class InvitationAlreadyAccepted extends Schema.TaggedError<
+  InvitationAlreadyAccepted,
+  { readonly brand: "InvitationAlreadyAccepted" }
+>()("InvitationAlreadyAccepted", { invitationId: InvitationId }) {}
 
 // Aggregate invariant: accept fails if `revokedAt` is set; revoke is
 // also stricter and fails AlreadyRevoked on a second call rather than
 // being silently idempotent (matches the org softDelete pattern).
-export class InvitationAlreadyRevoked extends Schema.TaggedError<InvitationAlreadyRevoked>()(
-  "InvitationAlreadyRevoked",
-  { invitationId: InvitationId },
-) {}
+export class InvitationAlreadyRevoked extends Schema.TaggedError<
+  InvitationAlreadyRevoked,
+  { readonly brand: "InvitationAlreadyRevoked" }
+>()("InvitationAlreadyRevoked", { invitationId: InvitationId }) {}
 
 // Re-exposed by `accept` since the invitation can't be consumed if the
 // invitee already had their accept rejected for this state — same tag
 // so callers can pattern-match consistently.
-export class InvitationRevoked extends Schema.TaggedError<InvitationRevoked>()(
-  "InvitationRevoked",
-  { invitationId: InvitationId },
-) {}
+export class InvitationRevoked extends Schema.TaggedError<
+  InvitationRevoked,
+  { readonly brand: "InvitationRevoked" }
+>()("InvitationRevoked", { invitationId: InvitationId }) {}
 
 // The mail transport refused the invitation email. Delivery is retried, so the
 // reaction that sent it fails rather than losing the email.
-export class InvitationEmailUndelivered extends Schema.TaggedError<InvitationEmailUndelivered>()(
-  "InvitationEmailUndelivered",
-  { message: Schema.String },
-) {}
+export class InvitationEmailUndelivered extends Schema.TaggedError<
+  InvitationEmailUndelivered,
+  { readonly brand: "InvitationEmailUndelivered" }
+>()("InvitationEmailUndelivered", { message: Schema.String }) {}

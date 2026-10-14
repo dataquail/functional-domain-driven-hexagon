@@ -20,9 +20,10 @@ const issuedBy = UserId.make("99999999-9999-9999-9999-999999999999");
 // must never be usable as a repository filter. This assignment must NOT
 // compile — if `hasRole` ever gains a `.criteria`, the directive goes unused
 // and the build fails, catching the regression.
-// @ts-expect-error hasRole("admin") is a Predicate; it has no `.criteria`.
+// @ts-expect-error -- hasRole("admin") is a Predicate; it has no `.criteria`.
 const _hasRoleIsNotASpecification: Specification<OrganizationRolesRoot> =
   OrganizationRolesSpecifications.hasRole("admin");
+
 void _hasRoleIsNotASpecification;
 
 describe("OrganizationRolesSpecifications.hasRole", () => {
@@ -43,6 +44,7 @@ describe("OrganizationRolesSpecifications.hasRole", () => {
         issuedBy,
       ),
     );
+
     deepStrictEqual(
       OrganizationRolesSpecifications.hasRole("admin")(result.organizationRoles),
       true,

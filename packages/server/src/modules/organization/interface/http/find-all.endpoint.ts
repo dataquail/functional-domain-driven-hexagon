@@ -41,10 +41,12 @@ export const findAllEndpoint = Effect.fn("OrganizationAdminLive.findAll")(functi
 ) {
   yield* Authz.hasPermissions(OrganizationCollectionResource, Actions.Read);
   const queryBus = yield* QueryBus;
+
   const result = yield* queryBus.execute(FindAllOrganizationsQuery, {
     page: request.query.page,
     pageSize: request.query.pageSize,
     includeDeleted: request.query.includeDeleted === "true",
   });
+
   return toPaginatedContract(result);
 }, recoverPersistenceUnavailable);

@@ -1,6 +1,7 @@
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertDefined } from "@effect/vitest/utils";
 import * as ConfigProvider from "effect/ConfigProvider";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
@@ -59,7 +60,8 @@ describe("InvitationMailerLive", () => {
       const mails = yield* sent.all;
       strictEqual(mails.length, 1);
       const mail = mails[0];
-      if (mail === undefined) throw new Error("expected one rendered mail");
+
+      assertDefined(mail);
       strictEqual(mail.to, "alice@example.com");
       ok(mail.subject.length > 0);
       // The link must survive into BOTH the HTML and the plaintext body —

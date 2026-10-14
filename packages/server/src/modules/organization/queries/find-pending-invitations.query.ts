@@ -8,6 +8,7 @@ import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js
 // Display status of an open invitation, derived on the read path from
 // `expiresAt` vs now: still live (`pending`) or lapsed (`expired`).
 export const PendingInvitationStatus = Schema.Literals(["pending", "expired"]);
+
 export type PendingInvitationStatus = typeof PendingInvitationStatus.Type;
 
 export const PendingInvitationView = Schema.Struct({
@@ -17,6 +18,7 @@ export const PendingInvitationView = Schema.Struct({
   expiresAt: Schema.DateTimeUtc,
   createdAt: Schema.DateTimeUtc,
 });
+
 export type PendingInvitationView = typeof PendingInvitationView.Type;
 
 // Pending-invitations roster for the member-management surface: every
@@ -29,4 +31,5 @@ export const FindPendingInvitationsQuery = Query.make("FindPendingInvitationsQue
   success: Schema.Array(PendingInvitationView),
   failure: PersistenceUnavailable,
 });
+
 export type FindPendingInvitationsPayload = Query.Payload<typeof FindPendingInvitationsQuery>;

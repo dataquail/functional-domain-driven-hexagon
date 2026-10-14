@@ -1,6 +1,8 @@
+import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
+import type * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
 import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
@@ -26,25 +28,22 @@ export const OrganizationRolesRepositoryFake = Layer.effect(
     // Mirror the live repo's row model: it persists as DELETE-then-INSERT, so
     // an aggregate with no roles leaves zero rows — indistinguishable from an
     // absent one. Storing an empty aggregate here would make findOne return it
-    // where the live repo returns null, so an empty upsert deletes the entry.
-    const upsertOne = (organizationRoles: OrganizationRolesRoot): Effect.Effect<void> =>
-      Ref.update(
-        store,
-        organizationRoles.roles.length === 0
-          ? HashMap.remove(key(organizationRoles.userId, organizationRoles.organizationId))
-          : HashMap.set(
-              key(organizationRoles.userId, organizationRoles.organizationId),
-              organizationRoles,
-            ),
-      );
+    // where the live repo returns None, so an empty upsert deletes the entry.
+    const upsertOne = (organizationRoles: OrganizationRolesRoot): Effect.Effect<void> => {
+      const k = key(organizationRoles.userId, organizationRoles.organizationId);
+
+      if (organizationRoles.roles.length === 0) return Ref.update(store, HashMap.remove(k));
+
+      return Ref.update(store, HashMap.set(k, organizationRoles));
+    };
 
     // The spec is the in-memory predicate over the whole aggregate — the same
-    // object the live repo compiles to SQL. Absence is `null`; the caller maps
+    // object the live repo compiles to SQL. Absence is `None`; the caller maps
     // it to an empty aggregate.
     const findOne = (
       spec: Specification<OrganizationRolesRoot>,
-    ): Effect.Effect<OrganizationRolesRoot | null> =>
-      Effect.map(Ref.get(store), (m) => Array.from(HashMap.values(m)).find(spec) ?? null);
+    ): Effect.Effect<Option.Option<OrganizationRolesRoot>> =>
+      Effect.map(Ref.get(store), (m) => Arr.findFirst(HashMap.values(m), spec));
 
     return OrganizationRolesRepository.of({ upsertOne, findOne });
   }),

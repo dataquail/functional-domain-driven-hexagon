@@ -24,6 +24,7 @@ export const InvitationMailerFake: Layer.Layer<InvitationMailer | SentInvitation
   Layer.effectContext(
     Effect.gen(function* () {
       const sent = yield* Ref.make<ReadonlyArray<SendInvitationInput>>([]);
+
       return Context.empty().pipe(
         Context.add(
           InvitationMailer,

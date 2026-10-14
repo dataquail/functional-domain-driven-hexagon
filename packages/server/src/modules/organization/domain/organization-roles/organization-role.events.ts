@@ -11,6 +11,7 @@ export const OrganizationRoleGranted = Event.make("OrganizationRoleGranted", {
   role: OrganizationRoleValueObject,
   issuedBy: UserId,
 });
+
 export type OrganizationRoleGranted = typeof OrganizationRoleGranted.Type;
 
 export const organizationRoleGrantedSpanAttributes: SpanAttributesExtractor<
@@ -27,6 +28,7 @@ export const OrganizationRoleRevoked = Event.make("OrganizationRoleRevoked", {
   organizationId: OrganizationId,
   role: OrganizationRoleValueObject,
 });
+
 export type OrganizationRoleRevoked = typeof OrganizationRoleRevoked.Type;
 
 export const organizationRoleRevokedSpanAttributes: SpanAttributesExtractor<

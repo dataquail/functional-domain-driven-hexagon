@@ -1,15 +1,13 @@
 import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
+import { describe } from "@effect/vitest";
+import { assertNone } from "@effect/vitest/utils";
 import { Database } from "@org/database/index";
-import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import { beforeEach } from "vitest";
 
 import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
@@ -19,7 +17,8 @@ import { MembershipRepository } from "@/modules/organization/domain/membership/m
 import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops.js";
 import { MembershipSpecifications } from "@/modules/organization/domain/membership/membership.specification.js";
 import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/repositories/membership.repository-live.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { describeIntegration } from "@/test-utils/server-test-runtime.js";
+import { TestDatabaseLive } from "@/test-utils/test-database.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const otherUserId = UserId.make("22222222-2222-2222-2222-222222222222");
@@ -47,78 +46,73 @@ const seedFks = Effect.gen(function* () {
 
 const TestLayer = MembershipRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-describe("MembershipRepositoryLive (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate("organization.memberships", "organization.organizations", "user.users").pipe(
-        Effect.provide(TestDatabaseLive),
-      ),
-    );
-  });
+describeIntegration(
+  "MembershipRepositoryLive (integration)",
+  {
+    layer: TestLayer,
+    tables: ["organization.memberships", "organization.organizations", "user.users"],
+  },
+  (it) => {
+    describe("insert + findOne", () => {
+      it.effect("round-trips an inserted membership", () =>
+        Effect.gen(function* () {
+          yield* seedFks;
+          const repo = yield* MembershipRepository;
+          const { membership } = MembershipRootOps.create({ userId, organizationId, now });
+          yield* repo.insertOne(membership);
+          const maybeFound = yield* repo.findOne(byPair(userId, organizationId));
 
-  describe("insert + findOne", () => {
-    it.effect("round-trips an inserted membership", () =>
-      Effect.gen(function* () {
-        yield* seedFks;
-        const repo = yield* MembershipRepository;
-        const { membership } = MembershipRootOps.create({ userId, organizationId, now });
-        yield* repo.insertOne(membership);
-        const found = yield* repo.findOne(byPair(userId, organizationId));
-        if (found === null) throw new Error("expected membership");
-        deepStrictEqual(found.userId, userId);
-        deepStrictEqual(found.organizationId, organizationId);
-      }).pipe(Effect.provide(TestLayer)),
-    );
+          const found = Option.getOrThrow(maybeFound);
+          deepStrictEqual(found.userId, userId);
+          deepStrictEqual(found.organizationId, organizationId);
+        }),
+      );
 
-    it.effect("insert is idempotent — second call with same PK doesn't fail", () =>
-      Effect.gen(function* () {
-        yield* seedFks;
-        const repo = yield* MembershipRepository;
-        const { membership } = MembershipRootOps.create({ userId, organizationId, now });
-        yield* repo.insertOne(membership);
-        yield* repo.insertOne(membership);
-        const found = yield* repo.findOne(byPair(userId, organizationId));
-        if (found === null) throw new Error("expected membership");
-        deepStrictEqual(found.userId, userId);
-      }).pipe(Effect.provide(TestLayer)),
-    );
+      it.effect("insert is idempotent — second call with same PK doesn't fail", () =>
+        Effect.gen(function* () {
+          yield* seedFks;
+          const repo = yield* MembershipRepository;
+          const { membership } = MembershipRootOps.create({ userId, organizationId, now });
+          yield* repo.insertOne(membership);
+          yield* repo.insertOne(membership);
+          const maybeFound = yield* repo.findOne(byPair(userId, organizationId));
 
-    it.effect("findOne returns null for an unknown pair", () =>
-      Effect.gen(function* () {
-        yield* seedFks;
-        const repo = yield* MembershipRepository;
-        const found = yield* repo.findOne(byPair(otherUserId, organizationId));
-        deepStrictEqual(found, null);
-      }).pipe(Effect.provide(TestLayer)),
-    );
-  });
+          const found = Option.getOrThrow(maybeFound);
+          deepStrictEqual(found.userId, userId);
+        }),
+      );
 
-  describe("delete", () => {
-    it.effect("removes the row; subsequent find returns null", () =>
-      Effect.gen(function* () {
-        yield* seedFks;
-        const repo = yield* MembershipRepository;
-        const { membership } = MembershipRootOps.create({ userId, organizationId, now });
-        yield* repo.insertOne(membership);
-        yield* repo.deleteOne(userId, organizationId);
-        const found = yield* repo.findOne(byPair(userId, organizationId));
-        deepStrictEqual(found, null);
-      }).pipe(Effect.provide(TestLayer)),
-    );
+      it.effect("findOne returns null for an unknown pair", () =>
+        Effect.gen(function* () {
+          yield* seedFks;
+          const repo = yield* MembershipRepository;
+          const found = yield* repo.findOne(byPair(otherUserId, organizationId));
+          assertNone(found);
+        }),
+      );
+    });
 
-    it.effect("fails MembershipNotFound when no row exists", () =>
-      Effect.gen(function* () {
-        yield* seedFks;
-        const repo = yield* MembershipRepository;
-        const exit = yield* Effect.exit(repo.deleteOne(userId, organizationId));
-        deepStrictEqual(Exit.isFailure(exit), true);
-        if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause)
-            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-            : null;
+    describe("delete", () => {
+      it.effect("removes the row; subsequent find returns null", () =>
+        Effect.gen(function* () {
+          yield* seedFks;
+          const repo = yield* MembershipRepository;
+          const { membership } = MembershipRootOps.create({ userId, organizationId, now });
+          yield* repo.insertOne(membership);
+          yield* repo.deleteOne(userId, organizationId);
+          const found = yield* repo.findOne(byPair(userId, organizationId));
+          assertNone(found);
+        }),
+      );
+
+      it.effect("fails MembershipNotFound when no row exists", () =>
+        Effect.gen(function* () {
+          yield* seedFks;
+          const repo = yield* MembershipRepository;
+          const error = yield* Effect.flip(repo.deleteOne(userId, organizationId));
           deepStrictEqual(Schema.is(MembershipNotFound)(error), true);
-        }
-      }).pipe(Effect.provide(TestLayer)),
-    );
-  });
-});
+        }),
+      );
+    });
+  },
+);

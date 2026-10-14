@@ -18,12 +18,12 @@ export type UserLookupView = {
   readonly email: string;
 };
 
-export type UsersLookupShape = {
+export type UsersLookupService = {
   readonly findByIds: (
     ids: ReadonlyArray<UserId>,
   ) => Effect.Effect<ReadonlyArray<UserLookupView>, PersistenceUnavailable>;
 };
 
-export class UsersLookup extends Context.Service<UsersLookup, UsersLookupShape>()(
+export class UsersLookup extends Context.Service<UsersLookup, UsersLookupService>()(
   "@org/server/organization/UsersLookup",
 ) {}

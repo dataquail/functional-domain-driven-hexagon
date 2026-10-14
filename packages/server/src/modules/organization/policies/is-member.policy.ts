@@ -22,7 +22,7 @@ export type UserOrganizationLookup = (
 // function rather than a port: a port pointing at your own module would be a
 // middle man. The contribution layer supplies it by dispatching this module's
 // own membership policy-query, and the returned check is `R = never`.
-export const makeIsMember =
+export const isMemberCheck =
   (isMember: UserOrganizationLookup): ResourceCheck<OrganizationAuthzView> =>
   (caller, organization) =>
     isMember(caller.userId, organization.organizationId);

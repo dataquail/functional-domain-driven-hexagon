@@ -1,8 +1,9 @@
-import * as crypto from "node:crypto";
-
 import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
+import * as Crypto from "effect/Crypto";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+import * as Base64Url from "effect/encoding/Base64Url";
+import * as Option from "effect/Option";
 
 import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
 import { type ResendInvitationPayload } from "@/modules/organization/commands/resend-invitation.command.js";
@@ -22,19 +23,25 @@ export const resendInvitationHandler = Effect.fn("resendInvitationHandler")(func
 ) {
   const repo = yield* InvitationRepository;
   const bus = yield* DomainEventBus;
+  const crypto = yield* Crypto.Crypto;
   const now = yield* DateTime.now;
   // Fresh opaque bearer credential (256 bits, base64url). Randomness is
   // impure, so it stays in the command (the shell), never the domain.
-  const token = yield* Effect.sync(() => crypto.randomBytes(32).toString("base64url"));
+  const token = Base64Url.encode(yield* Effect.orDie(crypto.randomBytes(32)));
   const expiresAt = DateTime.add(now, { seconds: cmd.ttlSeconds });
 
-  const invitation = yield* repo.findOne(InvitationSpecifications.withId(cmd.invitationId));
-  if (invitation === null) {
+  const maybeInvitation = yield* repo.findOne(InvitationSpecifications.withId(cmd.invitationId));
+
+  if (Option.isNone(maybeInvitation)) {
     return yield* new InvitationNotFound({ invitationId: cmd.invitationId });
   }
+
+  const invitation = maybeInvitation.value;
+
   const result = yield* Effect.fromResult(
     InvitationRootOps.reissue(invitation, { token, expiresAt, now }),
   );
+
   yield* repo.updateOne(result.invitation);
   yield* bus.dispatch(result.events);
   yield* Effect.annotateCurrentSpan("invitation.id", cmd.invitationId);

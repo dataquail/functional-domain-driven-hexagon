@@ -9,6 +9,7 @@ import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 // published cross-module contract (two other modules' ACL adapters read it), so the
 // shape it promises deserves to be a contract and not just a shape.
 export const MembershipView = Schema.Struct({ isMember: Schema.Boolean });
+
 export type FindMembershipResult = typeof MembershipView.Type;
 
 // Read-side "is this user a member of this org?" projection, published so other
@@ -20,4 +21,5 @@ export const FindMembershipQuery = Query.make("FindMembershipQuery", {
   success: MembershipView,
   failure: PersistenceUnavailable,
 });
+
 export type FindMembershipPayload = Query.Payload<typeof FindMembershipQuery>;

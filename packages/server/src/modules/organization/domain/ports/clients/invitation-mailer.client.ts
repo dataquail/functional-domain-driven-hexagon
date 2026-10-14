@@ -25,10 +25,10 @@ export type SendInvitationInput = {
   readonly expiresAt: DateTime.Utc;
 };
 
-export type InvitationMailerShape = {
+export type InvitationMailerService = {
   readonly send: (input: SendInvitationInput) => Effect.Effect<void, InvitationEmailUndelivered>;
 };
 
-export class InvitationMailer extends Context.Service<InvitationMailer, InvitationMailerShape>()(
+export class InvitationMailer extends Context.Service<InvitationMailer, InvitationMailerService>()(
   "@org/server/organization/InvitationMailer",
 ) {}

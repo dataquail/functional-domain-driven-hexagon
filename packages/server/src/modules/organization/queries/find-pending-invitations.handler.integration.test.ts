@@ -1,12 +1,10 @@
 import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Result from "effect/Result";
 import * as TestClock from "effect/testing/TestClock";
-import { beforeEach } from "vitest";
 
 import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
 import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
@@ -18,12 +16,14 @@ import { OrganizationRootOps } from "@/modules/organization/domain/organization/
 import { InvitationRepositoryLive } from "@/modules/organization/infrastructure/repositories/invitation.repository-live.js";
 import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
 import { findPendingInvitationsHandler } from "@/modules/organization/queries/find-pending-invitations.handler.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { describeIntegration } from "@/test-utils/server-test-runtime.js";
+import { TestDatabaseLive } from "@/test-utils/test-database.js";
 
 const orgId = OrganizationId.make("55555555-5555-5555-5555-555555555555");
 const otherOrgId = OrganizationId.make("99999999-9999-9999-9999-999999999999");
 const userId = UserId.make("66666666-6666-6666-6666-666666666666");
 const issuedAt = DateTime.makeUnsafe("2026-01-01T00:00:00Z");
+
 // The handler reads `DateTime.now`; pin the TestClock so the pending-vs-expired
 // split is deterministic, with expiries placed on either side of "now".
 const clockNow = DateTime.makeUnsafe("2026-06-01T00:00:00Z");
@@ -54,65 +54,78 @@ const seedOrgs = Effect.gen(function* () {
   );
 });
 
-describe("findPendingInvitationsHandler (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate("organization.invitations", "organization.organizations").pipe(
-        Effect.provide(TestDatabaseLive),
-      ),
+describeIntegration(
+  "findPendingInvitationsHandler (integration)",
+  { layer: TestLayer, tables: ["organization.invitations", "organization.organizations"] },
+  (it) => {
+    it.effect("returns only open invitations, tagged pending vs expired", () =>
+      Effect.gen(function* () {
+        yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
+        yield* seedOrgs;
+        const repo = yield* InvitationRepository;
+
+        const pending = issue(
+          "11111111-1111-1111-1111-111111111111",
+          "live@example.com",
+          farFuture,
+        );
+
+        const expired = issue(
+          "22222222-2222-2222-2222-222222222222",
+          "lapsed@example.com",
+          farPast,
+        );
+
+        const toRevoke = issue(
+          "33333333-3333-3333-3333-333333333333",
+          "gone@example.com",
+          farFuture,
+        );
+
+        const toAccept = issue("44444444-4444-4444-4444-444444444444", "in@example.com", farFuture);
+
+        const otherOrg = issue(
+          "55555555-5555-5555-5555-555555555556",
+          "other@example.com",
+          farFuture,
+          otherOrgId,
+        );
+
+        yield* repo.insertOne(pending);
+        yield* repo.insertOne(expired);
+        yield* repo.insertOne(toRevoke);
+        yield* repo.insertOne(toAccept);
+        yield* repo.insertOne(otherOrg);
+
+        const revoked = Result.getOrThrow(InvitationRootOps.revoke(toRevoke, { now: issuedAt }));
+        yield* repo.updateOne(revoked.invitation);
+
+        const accepted = Result.getOrThrow(
+          InvitationRootOps.accept(toAccept, { userId, now: issuedAt }),
+        );
+
+        yield* repo.updateOne(accepted.invitation);
+
+        const result = yield* findPendingInvitationsHandler({ organizationId: orgId });
+
+        const byEmail = new Map(result.map((r) => [r.inviteeEmail, r]));
+        deepStrictEqual(result.length, 2);
+        deepStrictEqual(byEmail.get("live@example.com")?.status, "pending");
+        deepStrictEqual(byEmail.get("lapsed@example.com")?.status, "expired");
+        // revoked, accepted, and other-org invitations are excluded
+        deepStrictEqual(byEmail.has("gone@example.com"), false);
+        deepStrictEqual(byEmail.has("in@example.com"), false);
+        deepStrictEqual(byEmail.has("other@example.com"), false);
+      }).pipe(Effect.provide(TestClock.layer())),
     );
-  });
 
-  it.effect("returns only open invitations, tagged pending vs expired", () =>
-    Effect.gen(function* () {
-      yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
-      yield* seedOrgs;
-      const repo = yield* InvitationRepository;
-
-      const pending = issue("11111111-1111-1111-1111-111111111111", "live@example.com", farFuture);
-      const expired = issue("22222222-2222-2222-2222-222222222222", "lapsed@example.com", farPast);
-      const toRevoke = issue("33333333-3333-3333-3333-333333333333", "gone@example.com", farFuture);
-      const toAccept = issue("44444444-4444-4444-4444-444444444444", "in@example.com", farFuture);
-      const otherOrg = issue(
-        "55555555-5555-5555-5555-555555555556",
-        "other@example.com",
-        farFuture,
-        otherOrgId,
-      );
-
-      yield* repo.insertOne(pending);
-      yield* repo.insertOne(expired);
-      yield* repo.insertOne(toRevoke);
-      yield* repo.insertOne(toAccept);
-      yield* repo.insertOne(otherOrg);
-
-      const revoked = Result.getOrThrow(InvitationRootOps.revoke(toRevoke, { now: issuedAt }));
-      yield* repo.updateOne(revoked.invitation);
-
-      const accepted = Result.getOrThrow(
-        InvitationRootOps.accept(toAccept, { userId, now: issuedAt }),
-      );
-      yield* repo.updateOne(accepted.invitation);
-
-      const result = yield* findPendingInvitationsHandler({ organizationId: orgId });
-
-      const byEmail = new Map(result.map((r) => [r.inviteeEmail, r]));
-      deepStrictEqual(result.length, 2);
-      deepStrictEqual(byEmail.get("live@example.com")?.status, "pending");
-      deepStrictEqual(byEmail.get("lapsed@example.com")?.status, "expired");
-      // revoked, accepted, and other-org invitations are excluded
-      deepStrictEqual(byEmail.has("gone@example.com"), false);
-      deepStrictEqual(byEmail.has("in@example.com"), false);
-      deepStrictEqual(byEmail.has("other@example.com"), false);
-    }).pipe(Effect.provide(TestLayer)),
-  );
-
-  it.effect("returns an empty list for an org with no open invitations", () =>
-    Effect.gen(function* () {
-      yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
-      yield* seedOrgs;
-      const result = yield* findPendingInvitationsHandler({ organizationId: orgId });
-      deepStrictEqual(result.length, 0);
-    }).pipe(Effect.provide(TestLayer)),
-  );
-});
+    it.effect("returns an empty list for an org with no open invitations", () =>
+      Effect.gen(function* () {
+        yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
+        yield* seedOrgs;
+        const result = yield* findPendingInvitationsHandler({ organizationId: orgId });
+        deepStrictEqual(result.length, 0);
+      }).pipe(Effect.provide(TestClock.layer())),
+    );
+  },
+);

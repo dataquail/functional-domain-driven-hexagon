@@ -1,6 +1,5 @@
 import { deepStrictEqual, ok } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { Database } from "@org/database/index";
@@ -12,47 +11,54 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
-import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
+import { describeServer } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
-describe("GET /admin/orgs (integration)", () => {
-  // Listing all orgs is super-admin-only (organizationPolicies.read =
-  // SuperAdminOnly). Super-admins can't create orgs, so seed the orgs to list
-  // directly: "Acme" active, "Beta" tombstoned.
-  const { run } = useServerTestRuntime(
-    ["organization.memberships", "organization.organizations", "platform.roles", "user.users"],
-    { seedSuperAdminCaller: true },
-  );
+describeServer(
+  "GET /admin/orgs (integration)",
+  {
+    tables: [
+      "organization.memberships",
+      "organization.organizations",
+      "platform.roles",
+      "user.users",
+    ],
+    seedSuperAdminCaller: true,
+  },
+  (it) => {
+    // Listing all orgs is super-admin-only (organizationPolicies.read =
+    // SuperAdminOnly). Super-admins can't create orgs, so seed the orgs to list
+    // directly: "Acme" active, "Beta" tombstoned.
 
-  const seedOrgs = Effect.gen(function* () {
-    const sql = yield* Database.Database;
-    yield* sql`
+    const seedOrgs = Effect.gen(function* () {
+      const sql = yield* Database.Database;
+      yield* sql`
           INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
           VALUES
             ('11111111-1111-1111-1111-111111111111', 'Acme', now(), now(), null),
             ('22222222-2222-2222-2222-222222222222', 'Beta', now(), now(), now())
         `.pipe(Effect.orDie);
-  });
+    });
 
-  it("returns created orgs (active-only by default)", async () => {
-    await run(
+    it.effect("returns created orgs (active-only by default)", () =>
       Effect.gen(function* () {
         yield* seedOrgs;
         const client = yield* HttpApiClient.make(Api);
+
         const res = yield* client.organizationAdmin.findAll({
           query: new OrganizationContract.FindAllOrganizationsParams({ page: 1, pageSize: 10 }),
         });
+
         deepStrictEqual(res.total, 1);
         deepStrictEqual(res.organizations[0]?.name, "Acme");
       }),
     );
-  });
 
-  it("returns tombstoned orgs when includeDeleted=true", async () => {
-    await run(
+    it.effect("returns tombstoned orgs when includeDeleted=true", () =>
       Effect.gen(function* () {
         yield* seedOrgs;
         const client = yield* HttpApiClient.make(Api);
+
         const res = yield* client.organizationAdmin.findAll({
           query: new OrganizationContract.FindAllOrganizationsParams({
             page: 1,
@@ -60,27 +66,29 @@ describe("GET /admin/orgs (integration)", () => {
             includeDeleted: "true",
           }),
         });
+
         deepStrictEqual(res.total, 2);
       }),
     );
-  });
-});
+  },
+);
 
-describe("GET /admin/orgs (integration, non-super-admin caller)", () => {
-  const { run } = useServerTestRuntime(["organization.organizations", "platform.roles"], {
-    server: TestServerLiveAsMember,
-  });
-
-  it("returns 403 Forbidden", async () => {
-    await run(
+describeServer(
+  "GET /admin/orgs (integration, non-super-admin caller)",
+  { tables: ["organization.organizations", "platform.roles"], server: TestServerLiveAsMember },
+  (it) => {
+    it.effect("returns 403 Forbidden", () =>
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
+
         const exit = yield* Effect.exit(
           client.organizationAdmin.findAll({
             query: new OrganizationContract.FindAllOrganizationsParams({ page: 1, pageSize: 10 }),
           }),
         );
+
         ok(Exit.isFailure(exit));
+
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(
             Schema.is(CustomHttpApiError.Forbidden)(
@@ -90,5 +98,5 @@ describe("GET /admin/orgs (integration, non-super-admin caller)", () => {
         }
       }),
     );
-  });
-});
+  },
+);

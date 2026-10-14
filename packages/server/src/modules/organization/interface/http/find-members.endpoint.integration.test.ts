@@ -1,7 +1,8 @@
 import { deepStrictEqual, ok } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
+import { assertDefined } from "@effect/vitest/utils";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
+import { OrganizationId, UserId } from "@org/contracts/EntityIds";
 import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
@@ -12,12 +13,13 @@ import * as Schema from "effect/Schema";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { MEMBER_CALLER_ID, SUPER_ADMIN_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
-import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
+import { describeServer } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
-const ORG_ID = "11111111-1111-1111-1111-111111111111" as never;
+const ORG_ID = OrganizationId.make("11111111-1111-1111-1111-111111111111");
+
 // A second, plain (non-admin) member, distinct from the seeded callers.
-const ADMIN_MEMBER_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa" as never;
+const ADMIN_MEMBER_ID = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
 // Seeds an org with two members: the deterministic `MEMBER_CALLER_ID`
 // (plain member, no role) and `ADMIN_MEMBER_ID` (holds the `admin`
@@ -45,20 +47,20 @@ const seedOrgWithMembers = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-describe("GET /orgs/:orgId/members (integration, super-admin caller)", () => {
-  const { run } = useServerTestRuntime(
-    [
+describeServer(
+  "GET /orgs/:orgId/members (integration, super-admin caller)",
+  {
+    tables: [
       "organization.organization_roles",
       "organization.memberships",
       "organization.organizations",
       "platform.roles",
       "user.users",
     ],
-    { seedSuperAdminCaller: true },
-  );
-
-  it("lists members enriched with email and the isAdmin flag", async () => {
-    await run(
+    seedSuperAdminCaller: true,
+  },
+  (it) => {
+    it.effect("lists members enriched with email and the isAdmin flag", () =>
       Effect.gen(function* () {
         yield* seedOrgWithMembers;
         const client = yield* HttpApiClient.make(Api);
@@ -68,38 +70,40 @@ describe("GET /orgs/:orgId/members (integration, super-admin caller)", () => {
         const byId = new Map(res.members.map((m) => [m.userId, m]));
         const plain = byId.get(MEMBER_CALLER_ID);
         const admin = byId.get(ADMIN_MEMBER_ID);
-        ok(plain !== undefined && admin !== undefined);
+        assertDefined(plain);
+        assertDefined(admin);
         deepStrictEqual(plain.email, "member@test.local");
         deepStrictEqual(plain.isAdmin, false);
         deepStrictEqual(admin.email, "admin-member@test.local");
         deepStrictEqual(admin.isAdmin, true);
       }),
     );
-  });
-});
+  },
+);
 
-describe("GET /orgs/:orgId/members (integration, plain-member caller)", () => {
-  const { run } = useServerTestRuntime(
-    [
+describeServer(
+  "GET /orgs/:orgId/members (integration, plain-member caller)",
+  {
+    tables: [
       "organization.organization_roles",
       "organization.memberships",
       "organization.organizations",
       "platform.roles",
       "user.users",
     ],
-    { server: TestServerLiveAsMember, seedSuperAdminCaller: true },
-  );
-
-  const seedOrg = Effect.gen(function* () {
-    const sql = yield* Database.Database;
-    yield* sql`
+    server: TestServerLiveAsMember,
+    seedSuperAdminCaller: true,
+  },
+  (it) => {
+    const seedOrg = Effect.gen(function* () {
+      const sql = yield* Database.Database;
+      yield* sql`
           INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
           VALUES (${ORG_ID}, 'Acme', now(), now(), null)
         `.pipe(Effect.orDie);
-  });
+    });
 
-  it("lets a plain member (no admin role) read the roster", async () => {
-    await run(
+    it.effect("lets a plain member (no admin role) read the roster", () =>
       Effect.gen(function* () {
         yield* seedOrg;
         const sql = yield* Database.Database;
@@ -114,23 +118,24 @@ describe("GET /orgs/:orgId/members (integration, plain-member caller)", () => {
 
         deepStrictEqual(res.members.length, 1);
         const self = res.members[0];
-        ok(self !== undefined);
+        assertDefined(self);
         deepStrictEqual(self.userId, MEMBER_CALLER_ID);
         // Viewing is allowed; the member is not an admin.
         deepStrictEqual(self.isAdmin, false);
       }),
     );
-  });
 
-  it("returns 403 Forbidden for a caller who is not a member of the org", async () => {
-    await run(
+    it.effect("returns 403 Forbidden for a caller who is not a member of the org", () =>
       Effect.gen(function* () {
         yield* seedOrg;
         const client = yield* HttpApiClient.make(Api);
+
         const exit = yield* Effect.exit(
           client.organization.findMembers({ params: { orgId: ORG_ID } }),
         );
+
         ok(Exit.isFailure(exit));
+
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(
             Schema.is(CustomHttpApiError.Forbidden)(
@@ -140,5 +145,5 @@ describe("GET /orgs/:orgId/members (integration, plain-member caller)", () => {
         }
       }),
     );
-  });
-});
+  },
+);

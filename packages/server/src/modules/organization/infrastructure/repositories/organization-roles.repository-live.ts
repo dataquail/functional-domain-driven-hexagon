@@ -51,16 +51,19 @@ export const OrganizationRolesRepositoryLive = Layer.effect(
     );
 
     // The spec pins the composite key, so every matched row belongs to one
-    // aggregate; the mapper groups them (or returns null for zero rows). The
+    // aggregate; the mapper groups them (or returns None for zero rows). The
     // compiler contributes only the WHERE — this repo owns the projection and,
     // for a multi-row aggregate, the reconstitution.
     const findOne = Effect.fn("OrganizationRolesRepository.findOne")(
       (spec: Specification<OrganizationRolesRoot>) =>
-        sql`
+        criteriaToWhere(sql, spec.criteria, OrganizationRolesMapper.columns).pipe(
+          Effect.flatMap(
+            (where) => sql`
           SELECT organization_id, user_id, role, issued_by, created_at
           FROM "organization".organization_roles
-          WHERE ${criteriaToWhere(sql, spec.criteria, OrganizationRolesMapper.columns)}
-        `.pipe(
+          WHERE ${where}
+        `,
+          ),
           Database.rows(RowSchemas.OrganizationRoleRow),
           Effect.map((rows) => OrganizationRolesMapper.toDomain(rows)),
           translateDatabaseErrors,

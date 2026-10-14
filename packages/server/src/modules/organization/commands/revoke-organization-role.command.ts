@@ -16,4 +16,5 @@ export const RevokeOrganizationRoleCommand = Command.make("RevokeOrganizationRol
   success: Schema.Void,
   failure: Schema.Union([DoesNotHaveOrganizationRole, PersistenceUnavailable]),
 });
+
 export type RevokeOrganizationRolePayload = Command.Payload<typeof RevokeOrganizationRoleCommand>;

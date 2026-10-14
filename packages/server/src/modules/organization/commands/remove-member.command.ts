@@ -20,4 +20,5 @@ export const RemoveMemberCommand = Command.make("RemoveMemberCommand", {
   success: Schema.Void,
   failure: Schema.Union([MembershipNotFound, PersistenceUnavailable]),
 });
+
 export type RemoveMemberPayload = Command.Payload<typeof RemoveMemberCommand>;

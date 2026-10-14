@@ -1,6 +1,8 @@
+import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
+import type * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
 import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
@@ -18,18 +20,20 @@ export const OrganizationRepositoryFake = Layer.effect(
       Ref.update(store, HashMap.set(organization.id, organization));
 
     const updateOne = (organization: OrganizationRoot): Effect.Effect<void, OrganizationNotFound> =>
-      Effect.flatMap(Ref.get(store), (m) =>
-        HashMap.has(m, organization.id)
-          ? Ref.update(store, HashMap.set(organization.id, organization))
-          : new OrganizationNotFound({ organizationId: organization.id }),
-      );
+      Effect.flatMap(Ref.get(store), (m) => {
+        if (!HashMap.has(m, organization.id)) {
+          return new OrganizationNotFound({ organizationId: organization.id });
+        }
+
+        return Ref.update(store, HashMap.set(organization.id, organization));
+      });
 
     // The spec IS the in-memory predicate — the same object the live repo
     // compiles to SQL — so fake and live agree by construction.
     const findOne = (
       spec: Specification<OrganizationRoot>,
-    ): Effect.Effect<OrganizationRoot | null> =>
-      Effect.map(Ref.get(store), (m) => Array.from(HashMap.values(m)).find(spec) ?? null);
+    ): Effect.Effect<Option.Option<OrganizationRoot>> =>
+      Effect.map(Ref.get(store), (m) => Arr.findFirst(HashMap.values(m), spec));
 
     return OrganizationRepository.of({
       insertOne,

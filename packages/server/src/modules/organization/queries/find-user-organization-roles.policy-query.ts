@@ -10,6 +10,7 @@ export const UserOrganizationRolesView = Schema.Struct({
   organizationId: OrganizationId,
   roles: Schema.Array(Schema.String),
 });
+
 export type FindUserOrganizationRolesResult = typeof UserOrganizationRolesView.Type;
 
 // Read-side projection of a user's roles within one organization.
@@ -22,4 +23,5 @@ export const FindUserOrganizationRolesQuery = Query.make("FindUserOrganizationRo
   success: UserOrganizationRolesView,
   failure: PersistenceUnavailable,
 });
+
 export type FindUserOrganizationRolesPayload = Query.Payload<typeof FindUserOrganizationRolesQuery>;

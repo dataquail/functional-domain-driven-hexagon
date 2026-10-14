@@ -1,10 +1,9 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertNone } from "@effect/vitest/utils";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
@@ -25,11 +24,13 @@ import { makePlatformRolesFake } from "@/modules/organization/infrastructure/acl
 import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.js";
 import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization.repository-fake.js";
 import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.js";
+import { CryptoFake } from "@/test-utils/crypto-fake.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
 const actorUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
 const TestLayer = Layer.mergeAll(
+  CryptoFake,
   OrganizationRepositoryFake,
   MembershipRepositoryFake,
   OrganizationRolesRepositoryFake,
@@ -46,9 +47,10 @@ describe("restoreOrganizationHandler", () => {
       const id = yield* createOrganizationHandler({ name: "Acme", actorUserId });
       yield* softDeleteOrganizationHandler({ organizationId: id });
       yield* restoreOrganizationHandler({ organizationId: id });
-      const stored = yield* repo.findOne(OrganizationSpecifications.withId(id));
-      if (stored === null) throw new Error("expected organization");
-      deepStrictEqual(stored.deletedAt, null);
+      const maybeStored = yield* repo.findOne(OrganizationSpecifications.withId(id));
+
+      const stored = Option.getOrThrow(maybeStored);
+      assertNone(stored.deletedAt);
       const events = yield* rec.byTag<OrganizationRestored>("OrganizationRestored");
       deepStrictEqual(events.length, 1);
     }).pipe(Effect.provide(TestLayer)),
@@ -57,28 +59,16 @@ describe("restoreOrganizationHandler", () => {
   it.effect("fails OrganizationNotFound when the org doesn't exist", () =>
     Effect.gen(function* () {
       const unknown = OrganizationId.make("00000000-0000-0000-0000-000000000000");
-      const exit = yield* Effect.exit(restoreOrganizationHandler({ organizationId: unknown }));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(OrganizationNotFound)(error), true);
-      }
+      const error = yield* Effect.flip(restoreOrganizationHandler({ organizationId: unknown }));
+      deepStrictEqual(Schema.is(OrganizationNotFound)(error), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 
   it.effect("fails OrganizationNotDeleted when the org is still active", () =>
     Effect.gen(function* () {
       const id = yield* createOrganizationHandler({ name: "Acme", actorUserId });
-      const exit = yield* Effect.exit(restoreOrganizationHandler({ organizationId: id }));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(OrganizationNotDeleted)(error), true);
-      }
+      const error = yield* Effect.flip(restoreOrganizationHandler({ organizationId: id }));
+      deepStrictEqual(Schema.is(OrganizationNotDeleted)(error), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 });

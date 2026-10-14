@@ -1,6 +1,7 @@
 import { Database, orFail, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { type Specification } from "@/globals/application/ddd/specification.js";
 import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
@@ -19,6 +20,7 @@ export const OrganizationRepositoryLive = Layer.effect(
       organization: OrganizationRoot,
     ) => {
       const row = OrganizationMapper.toPersistence(organization);
+
       return sql`
           INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
           VALUES (
@@ -35,6 +37,7 @@ export const OrganizationRepositoryLive = Layer.effect(
       organization: OrganizationRoot,
     ) => {
       const row = OrganizationMapper.toPersistence(organization);
+
       return sql`
           UPDATE "organization".organizations SET
             name = ${row.name},
@@ -44,7 +47,6 @@ export const OrganizationRepositoryLive = Layer.effect(
           RETURNING *
         `.pipe(
         Database.maybeRow(RowSchemas.OrganizationRow),
-
         orFail(() => new OrganizationNotFound({ organizationId: organization.id })),
         Effect.asVoid,
         translateDatabaseErrors,
@@ -57,14 +59,16 @@ export const OrganizationRepositoryLive = Layer.effect(
     // one row (identity keys).
     const findOne = Effect.fn("OrganizationRepository.findOne")(
       (spec: Specification<OrganizationRoot>) =>
-        sql`
+        criteriaToWhere(sql, spec.criteria, OrganizationMapper.columns).pipe(
+          Effect.flatMap(
+            (where) => sql`
           SELECT * FROM "organization".organizations
-          WHERE ${criteriaToWhere(sql, spec.criteria, OrganizationMapper.columns)}
+          WHERE ${where}
           LIMIT 1
-        `.pipe(
+        `,
+          ),
           Database.maybeRow(RowSchemas.OrganizationRow),
-
-          Effect.map((row) => (row === null ? null : OrganizationMapper.toDomain(row))),
+          Effect.map(Option.map(OrganizationMapper.toDomain)),
           translateDatabaseErrors,
         ),
     );

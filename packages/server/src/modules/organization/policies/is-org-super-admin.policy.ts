@@ -11,7 +11,7 @@ import { type PlatformRoles } from "@/modules/organization/domain/ports/acl/plat
 //
 // Declared as a `CallerCheck` (caller only) so one instance composes into both
 // the scoped `organization` resource and the unscoped `organizationCollection`.
-export const makeIsOrgSuperAdmin =
+export const isOrgSuperAdminCheck =
   (roles: PlatformRoles["Service"]): CallerCheck<CurrentUser["Service"], PersistenceUnavailable> =>
   (caller) =>
     roles.isSuperAdmin(caller.userId);

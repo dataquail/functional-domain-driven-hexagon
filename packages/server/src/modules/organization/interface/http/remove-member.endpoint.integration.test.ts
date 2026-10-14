@@ -1,7 +1,7 @@
 import { deepStrictEqual, ok } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
+import { OrganizationId } from "@org/contracts/EntityIds";
 import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
@@ -12,14 +12,15 @@ import * as Schema from "effect/Schema";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { MEMBER_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
-import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
+import { describeServer } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
-const ORG_ID = "11111111-1111-1111-1111-111111111111" as never;
-const UNKNOWN_ORG_ID = "99999999-9999-9999-9999-999999999999" as never;
+const ORG_ID = OrganizationId.make("11111111-1111-1111-1111-111111111111");
+const UNKNOWN_ORG_ID = OrganizationId.make("99999999-9999-9999-9999-999999999999");
+
 // The seeded member caller doubles as the removal target — its user row is
 // inserted by `seedSuperAdminCaller`, so no extra user fixture is needed.
-const TARGET_ID = MEMBER_CALLER_ID as never;
+const TARGET_ID = MEMBER_CALLER_ID;
 
 const seedOrg = Effect.gen(function* () {
   const sql = yield* Database.Database;
@@ -37,20 +38,20 @@ const seedTargetMembership = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-describe("DELETE /orgs/:orgId/members/:userId (integration, super-admin caller)", () => {
-  const { run } = useServerTestRuntime(
-    [
+describeServer(
+  "DELETE /orgs/:orgId/members/:userId (integration, super-admin caller)",
+  {
+    tables: [
       "organization.organization_roles",
       "organization.memberships",
       "organization.organizations",
       "platform.roles",
       "user.users",
     ],
-    { seedSuperAdminCaller: true },
-  );
-
-  it("removes the target member from the org", async () => {
-    await run(
+    seedSuperAdminCaller: true,
+  },
+  (it) => {
+    it.effect("removes the target member from the org", () =>
       Effect.gen(function* () {
         yield* seedOrg;
         yield* seedTargetMembership;
@@ -63,17 +64,18 @@ describe("DELETE /orgs/:orgId/members/:userId (integration, super-admin caller)"
         deepStrictEqual(stillMember, false);
       }),
     );
-  });
 
-  it("returns 404 when the target is not a member of the org", async () => {
-    await run(
+    it.effect("returns 404 when the target is not a member of the org", () =>
       Effect.gen(function* () {
         yield* seedOrg;
         const client = yield* HttpApiClient.make(Api);
+
         const exit = yield* Effect.exit(
           client.organization.removeMember({ params: { orgId: ORG_ID, userId: TARGET_ID } }),
         );
+
         ok(Exit.isFailure(exit));
+
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           deepStrictEqual(
             Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag,
@@ -82,18 +84,19 @@ describe("DELETE /orgs/:orgId/members/:userId (integration, super-admin caller)"
         }
       }),
     );
-  });
 
-  it("returns 404 when the organization does not exist", async () => {
-    await run(
+    it.effect("returns 404 when the organization does not exist", () =>
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
+
         const exit = yield* Effect.exit(
           client.organization.removeMember({
             params: { orgId: UNKNOWN_ORG_ID, userId: TARGET_ID },
           }),
         );
+
         ok(Exit.isFailure(exit));
+
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           deepStrictEqual(
             Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag,
@@ -102,31 +105,35 @@ describe("DELETE /orgs/:orgId/members/:userId (integration, super-admin caller)"
         }
       }),
     );
-  });
-});
+  },
+);
 
-describe("DELETE /orgs/:orgId/members/:userId (integration, non-admin member caller)", () => {
-  const { run } = useServerTestRuntime(
-    [
+describeServer(
+  "DELETE /orgs/:orgId/members/:userId (integration, non-admin member caller)",
+  {
+    tables: [
       "organization.organization_roles",
       "organization.memberships",
       "organization.organizations",
       "platform.roles",
       "user.users",
     ],
-    { server: TestServerLiveAsMember, seedSuperAdminCaller: true },
-  );
-
-  it("forbids a member who is not an org admin from removing members", async () => {
-    await run(
+    server: TestServerLiveAsMember,
+    seedSuperAdminCaller: true,
+  },
+  (it) => {
+    it.effect("forbids a member who is not an org admin from removing members", () =>
       Effect.gen(function* () {
         yield* seedOrg;
         yield* seedTargetMembership;
         const client = yield* HttpApiClient.make(Api);
+
         const exit = yield* Effect.exit(
           client.organization.removeMember({ params: { orgId: ORG_ID, userId: TARGET_ID } }),
         );
+
         ok(Exit.isFailure(exit));
+
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(
             Schema.is(CustomHttpApiError.Forbidden)(
@@ -136,5 +143,5 @@ describe("DELETE /orgs/:orgId/members/:userId (integration, non-admin member cal
         }
       }),
     );
-  });
-});
+  },
+);

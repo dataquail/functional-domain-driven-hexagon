@@ -13,4 +13,5 @@ export const RestoreOrganizationCommand = Command.make("RestoreOrganizationComma
   success: Schema.Void,
   failure: Schema.Union([OrganizationNotFound, OrganizationNotDeleted, PersistenceUnavailable]),
 });
+
 export type RestoreOrganizationPayload = Command.Payload<typeof RestoreOrganizationCommand>;

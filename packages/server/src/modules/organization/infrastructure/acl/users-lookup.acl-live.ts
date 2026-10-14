@@ -14,6 +14,7 @@ export const UsersLookupLive = Layer.effect(
   UsersLookup,
   Effect.gen(function* () {
     const userQueries = yield* Query.dispatcher(userAccessQueries);
+
     return UsersLookup.of({
       findByIds: (ids) =>
         userQueries

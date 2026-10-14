@@ -1,7 +1,9 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertNone } from "@effect/vitest/utils";
 import * as DateTime from "effect/DateTime";
+import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
@@ -23,6 +25,7 @@ const userId = UserId.make("33333333-3333-3333-3333-333333333333");
 const now = DateTime.makeUnsafe("2026-01-01T00:00:00Z");
 const inOneDay = DateTime.makeUnsafe("2026-01-02T00:00:00Z");
 const inOneWeek = DateTime.makeUnsafe("2026-01-08T00:00:00Z");
+
 const inputs = {
   id: invitationId,
   organizationId,
@@ -39,8 +42,8 @@ describe("InvitationRootOps.issue", () => {
     deepStrictEqual(invitation.organizationId, organizationId);
     deepStrictEqual(invitation.inviteeEmail, "alice@example.com");
     deepStrictEqual(invitation.token, "tok-abc");
-    deepStrictEqual(invitation.acceptedAt, null);
-    deepStrictEqual(invitation.revokedAt, null);
+    assertNone(invitation.acceptedAt);
+    assertNone(invitation.revokedAt);
     deepStrictEqual(events.length, 1);
     deepStrictEqual(events[0]?._tag, "InvitationIssued");
   });
@@ -51,7 +54,7 @@ describe("InvitationRootOps.accept", () => {
 
   it("sets acceptedAt and emits InvitationAccepted (membership is the domain service's job)", () => {
     const result = Result.getOrThrow(InvitationRootOps.accept(seed(), { userId, now: inOneDay }));
-    deepStrictEqual(result.invitation.acceptedAt, inOneDay);
+    deepStrictEqual(result.invitation.acceptedAt, Option.some(inOneDay));
     const tags = result.events.map((e) => e._tag);
     deepStrictEqual(tags, ["InvitationAccepted"]);
   });
@@ -60,6 +63,7 @@ describe("InvitationRootOps.accept", () => {
     const first = Result.getOrThrow(InvitationRootOps.accept(seed(), { userId, now: inOneDay }));
     const second = InvitationRootOps.accept(first.invitation, { userId, now: inOneDay });
     deepStrictEqual(Result.isFailure(second), true);
+
     if (Result.isFailure(second)) {
       deepStrictEqual(Schema.is(InvitationAlreadyAccepted)(second.failure), true);
     }
@@ -69,6 +73,7 @@ describe("InvitationRootOps.accept", () => {
     const revoked = Result.getOrThrow(InvitationRootOps.revoke(seed(), { now: inOneDay }));
     const result = InvitationRootOps.accept(revoked.invitation, { userId, now: inOneDay });
     deepStrictEqual(Result.isFailure(result), true);
+
     if (Result.isFailure(result)) {
       deepStrictEqual(Schema.is(InvitationRevoked)(result.failure), true);
     }
@@ -78,6 +83,7 @@ describe("InvitationRootOps.accept", () => {
     const past = DateTime.makeUnsafe("2026-01-09T00:00:00Z");
     const result = InvitationRootOps.accept(seed(), { userId, now: past });
     deepStrictEqual(Result.isFailure(result), true);
+
     if (Result.isFailure(result)) {
       deepStrictEqual(Schema.is(InvitationExpired)(result.failure), true);
     }
@@ -89,7 +95,7 @@ describe("InvitationRootOps.revoke", () => {
 
   it("sets revokedAt and emits InvitationRevoked", () => {
     const result = Result.getOrThrow(InvitationRootOps.revoke(seed(), { now: inOneDay }));
-    deepStrictEqual(result.invitation.revokedAt, inOneDay);
+    deepStrictEqual(result.invitation.revokedAt, Option.some(inOneDay));
     deepStrictEqual(result.events[0]?._tag, "InvitationRevoked");
   });
 
@@ -97,6 +103,7 @@ describe("InvitationRootOps.revoke", () => {
     const accepted = Result.getOrThrow(InvitationRootOps.accept(seed(), { userId, now: inOneDay }));
     const result = InvitationRootOps.revoke(accepted.invitation, { now: inOneDay });
     deepStrictEqual(Result.isFailure(result), true);
+
     if (Result.isFailure(result)) {
       deepStrictEqual(Schema.is(InvitationAlreadyAccepted)(result.failure), true);
     }
@@ -106,6 +113,7 @@ describe("InvitationRootOps.revoke", () => {
     const first = Result.getOrThrow(InvitationRootOps.revoke(seed(), { now: inOneDay }));
     const second = InvitationRootOps.revoke(first.invitation, { now: inOneDay });
     deepStrictEqual(Result.isFailure(second), true);
+
     if (Result.isFailure(second)) {
       deepStrictEqual(Schema.is(InvitationAlreadyRevoked)(second.failure), true);
     }
@@ -124,31 +132,37 @@ describe("InvitationRootOps.reissue", () => {
         now: inOneDay,
       }),
     );
+
     deepStrictEqual(result.invitation.token, "tok-fresh");
     deepStrictEqual(result.invitation.expiresAt, newExpiry);
-    deepStrictEqual(result.invitation.acceptedAt, null);
-    deepStrictEqual(result.invitation.revokedAt, null);
+    assertNone(result.invitation.acceptedAt);
+    assertNone(result.invitation.revokedAt);
     deepStrictEqual(result.events[0]?._tag, "InvitationReissued");
   });
 
   it("re-issues an expired (but open) invitation", () => {
     const past = DateTime.makeUnsafe("2026-02-01T00:00:00Z");
+
     const result = InvitationRootOps.reissue(seed(), {
       token: "tok-fresh",
       expiresAt: newExpiry,
       now: past,
     });
+
     deepStrictEqual(Result.isSuccess(result), true);
   });
 
   it("fails InvitationAlreadyAccepted when the invitation was accepted", () => {
     const accepted = Result.getOrThrow(InvitationRootOps.accept(seed(), { userId, now: inOneDay }));
+
     const result = InvitationRootOps.reissue(accepted.invitation, {
       token: "tok-fresh",
       expiresAt: newExpiry,
       now: inOneDay,
     });
+
     deepStrictEqual(Result.isFailure(result), true);
+
     if (Result.isFailure(result)) {
       deepStrictEqual(Schema.is(InvitationAlreadyAccepted)(result.failure), true);
     }
@@ -156,12 +170,15 @@ describe("InvitationRootOps.reissue", () => {
 
   it("fails InvitationAlreadyRevoked when the invitation was revoked", () => {
     const revoked = Result.getOrThrow(InvitationRootOps.revoke(seed(), { now: inOneDay }));
+
     const result = InvitationRootOps.reissue(revoked.invitation, {
       token: "tok-fresh",
       expiresAt: newExpiry,
       now: inOneDay,
     });
+
     deepStrictEqual(Result.isFailure(result), true);
+
     if (Result.isFailure(result)) {
       deepStrictEqual(Schema.is(InvitationAlreadyRevoked)(result.failure), true);
     }

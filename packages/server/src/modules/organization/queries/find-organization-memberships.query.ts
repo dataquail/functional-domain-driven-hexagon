@@ -11,6 +11,7 @@ export const OrganizationMemberView = Schema.Struct({
   joinedAt: Schema.DateTimeUtc,
   isAdmin: Schema.Boolean,
 });
+
 export type OrganizationMemberView = typeof OrganizationMemberView.Type;
 
 // Detailed membership view returned to the member-management surface
@@ -24,6 +25,7 @@ export const FindOrganizationMembershipsQuery = Query.make("FindOrganizationMemb
   success: Schema.Array(OrganizationMemberView),
   failure: PersistenceUnavailable,
 });
+
 export type FindOrganizationMembershipsPayload = Query.Payload<
   typeof FindOrganizationMembershipsQuery
 >;

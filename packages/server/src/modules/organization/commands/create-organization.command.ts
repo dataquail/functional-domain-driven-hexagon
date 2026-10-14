@@ -17,4 +17,5 @@ export const CreateOrganizationCommand = Command.make("CreateOrganizationCommand
   success: OrganizationId,
   failure: Schema.Union([SuperAdminCannotOwnOrganization, PersistenceUnavailable]),
 });
+
 export type CreateOrganizationPayload = Command.Payload<typeof CreateOrganizationCommand>;

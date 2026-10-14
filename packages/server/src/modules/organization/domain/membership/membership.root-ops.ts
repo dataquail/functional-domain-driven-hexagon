@@ -23,6 +23,7 @@ const create = (input: CreateInput): Result => {
     organizationId: input.organizationId,
     createdAt: input.now,
   });
+
   return {
     membership,
     events: [

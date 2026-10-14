@@ -1,5 +1,6 @@
 import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
@@ -25,6 +26,7 @@ export const findOrganizationMembershipsHandler = Effect.fn("findOrganizationMem
           FROM "organization".organization_roles
           WHERE organization_id = ${query.organizationId} AND role = 'admin'
         `.pipe(Database.rows(RowSchemas.OrganizationRoleRow), translateDatabaseErrors);
+
     const adminUserIds = new Set(adminRows.map((row) => row.user_id));
 
     // ADR-0020 forbids cross-schema SQL, so each member's email comes from
@@ -36,17 +38,20 @@ export const findOrganizationMembershipsHandler = Effect.fn("findOrganizationMem
     // the lookup couldn't resolve — a hard inconsistency we don't expect,
     // but better to omit than to crash.
     const toViews = (row: RowSchemas.MembershipRow): ReadonlyArray<OrganizationMemberView> => {
-      const user = byUserId.get(UserId.make(row.user_id));
-      if (user === undefined) return [];
+      const user = Option.fromUndefinedOr(byUserId.get(UserId.make(row.user_id)));
+
+      if (Option.isNone(user)) return [];
+
       return [
         {
           userId: UserId.make(row.user_id),
-          email: user.email,
+          email: user.value.email,
           joinedAt: row.created_at,
           isAdmin: adminUserIds.has(row.user_id),
         },
       ];
     };
+
     return membershipRows.flatMap(toViews);
   },
 );

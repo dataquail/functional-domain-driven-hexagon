@@ -1,6 +1,7 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertDefined } from "@effect/vitest/utils";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -47,7 +48,8 @@ describe("sendInvitationEmailHandler", () => {
       const invites = yield* sent.all;
       deepStrictEqual(invites.length, 1);
       const invite = invites[0];
-      if (invite === undefined) throw new Error("expected one sent invitation");
+
+      assertDefined(invite);
       deepStrictEqual(invite.to, "alice@example.com");
       deepStrictEqual(invite.token, "tok-stored");
       deepStrictEqual(DateTime.toEpochMillis(invite.expiresAt), DateTime.toEpochMillis(expiresAt));

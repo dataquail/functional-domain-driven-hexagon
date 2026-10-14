@@ -1,12 +1,10 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertDefined, assertNone } from "@effect/vitest/utils";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
 import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
@@ -22,11 +20,13 @@ import { makePlatformRolesFake } from "@/modules/organization/infrastructure/acl
 import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.js";
 import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization.repository-fake.js";
 import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.js";
+import { CryptoFake } from "@/test-utils/crypto-fake.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
 const userId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
 const TestLayer = Layer.mergeAll(
+  CryptoFake,
   OrganizationRepositoryFake,
   MembershipRepositoryFake,
   OrganizationRolesRepositoryFake,
@@ -52,12 +52,14 @@ describe("leaveOrganizationHandler", () => {
           MembershipSpecifications.forOrganization(orgId),
         ),
       );
-      deepStrictEqual(found, null);
+
+      assertNone(found);
 
       const events = yield* rec.byTag<MembershipRevoked>("MembershipRevoked");
       deepStrictEqual(events.length, 1);
       const event = events[0];
-      if (event === undefined) throw new Error("expected MembershipRevoked event");
+
+      assertDefined(event);
       deepStrictEqual(event.userId, userId);
       deepStrictEqual(event.organizationId, orgId);
     }).pipe(Effect.provide(TestLayer)),
@@ -66,14 +68,8 @@ describe("leaveOrganizationHandler", () => {
   it.effect("fails MembershipNotFound when the caller isn't a member", () =>
     Effect.gen(function* () {
       const orgId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
-      const exit = yield* Effect.exit(leaveOrganizationHandler({ userId, organizationId: orgId }));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(MembershipNotFound)(error), true);
-      }
+      const error = yield* Effect.flip(leaveOrganizationHandler({ userId, organizationId: orgId }));
+      deepStrictEqual(Schema.is(MembershipNotFound)(error), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 });

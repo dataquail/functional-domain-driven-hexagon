@@ -1,10 +1,9 @@
-import { deepStrictEqual, notStrictEqual } from "node:assert";
+import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import * as Cause from "effect/Cause";
+import { assertNone, assertTrue } from "@effect/vitest/utils";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
@@ -32,8 +31,8 @@ describe("OrganizationRepositoryFake", () => {
       const repo = yield* OrganizationRepository;
       const { organization } = OrganizationRootOps.create({ id, name: "Acme", now });
       yield* repo.insertOne(organization);
-      const found = yield* repo.findOne(activeById(id));
-      if (found === null) throw new Error("expected organization");
+      const maybeFound = yield* repo.findOne(activeById(id));
+      const found = Option.getOrThrow(maybeFound);
       deepStrictEqual(found.id, id);
       deepStrictEqual(found.name, "Acme");
     }).pipe(provide),
@@ -44,12 +43,14 @@ describe("OrganizationRepositoryFake", () => {
       const repo = yield* OrganizationRepository;
       const { organization } = OrganizationRootOps.create({ id, name: "Acme", now });
       yield* repo.insertOne(organization);
+
       const deleted = Result.getOrThrow(
         OrganizationRootOps.softDelete(organization, { now: later }),
       );
+
       yield* repo.updateOne(deleted.organization);
       const found = yield* repo.findOne(activeById(id));
-      deepStrictEqual(found, null);
+      assertNone(found);
     }).pipe(provide),
   );
 
@@ -58,13 +59,15 @@ describe("OrganizationRepositoryFake", () => {
       const repo = yield* OrganizationRepository;
       const { organization } = OrganizationRootOps.create({ id, name: "Acme", now });
       yield* repo.insertOne(organization);
+
       const deleted = Result.getOrThrow(
         OrganizationRootOps.softDelete(organization, { now: later }),
       );
+
       yield* repo.updateOne(deleted.organization);
-      const found = yield* repo.findOne(OrganizationSpecifications.withId(id));
-      if (found === null) throw new Error("expected organization");
-      notStrictEqual(found.deletedAt, null);
+      const maybeFound = yield* repo.findOne(OrganizationSpecifications.withId(id));
+      const found = Option.getOrThrow(maybeFound);
+      assertTrue(Option.isSome(found.deletedAt));
     }).pipe(provide),
   );
 
@@ -72,14 +75,8 @@ describe("OrganizationRepositoryFake", () => {
     Effect.gen(function* () {
       const repo = yield* OrganizationRepository;
       const { organization } = OrganizationRootOps.create({ id, name: "Acme", now });
-      const exit = yield* Effect.exit(repo.updateOne(organization));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(OrganizationNotFound)(error), true);
-      }
+      const error = yield* Effect.flip(repo.updateOne(organization));
+      deepStrictEqual(Schema.is(OrganizationNotFound)(error), true);
     }).pipe(provide),
   );
 });

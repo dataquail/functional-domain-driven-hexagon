@@ -17,10 +17,12 @@ export const createEndpoint = Effect.fn("OrganizationLive.create")(
   function* (request: EndpointRequest<typeof OrganizationContract.Group, "create">) {
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
+
     const id = yield* commandBus.execute(CreateOrganizationCommand, {
       name: request.payload.name,
       actorUserId: currentUser.userId,
     });
+
     return new OrganizationContract.CreateOrganizationResponse({ id });
   },
   Effect.catchTag(

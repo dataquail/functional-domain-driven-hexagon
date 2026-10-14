@@ -1,4 +1,5 @@
 import type * as DateTime from "effect/DateTime";
+import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 
 import { type InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
@@ -42,10 +43,11 @@ const issue = (input: IssueInput): IssueResult => {
     inviteeEmail: input.inviteeEmail,
     token: input.token,
     expiresAt: input.expiresAt,
-    acceptedAt: null,
-    revokedAt: null,
+    acceptedAt: Option.none(),
+    revokedAt: Option.none(),
     createdAt: input.now,
   });
+
   return {
     invitation,
     events: [
@@ -83,22 +85,26 @@ const accept = (
   if (InvitationSpecifications.isAccepted(invitation)) {
     return Result.fail(new InvitationAlreadyAccepted({ invitationId: invitation.id }));
   }
+
   if (InvitationSpecifications.isRevoked(invitation)) {
     return Result.fail(new InvitationRevokedError({ invitationId: invitation.id }));
   }
+
   if (InvitationSpecifications.isExpiredAt(input.now)(invitation)) {
     return Result.fail(new InvitationExpired({ invitationId: invitation.id }));
   }
+
   const updated = InvitationRoot.make({
     id: invitation.id,
     organizationId: invitation.organizationId,
     inviteeEmail: invitation.inviteeEmail,
     token: invitation.token,
     expiresAt: invitation.expiresAt,
-    acceptedAt: input.now,
-    revokedAt: null,
+    acceptedAt: Option.some(input.now),
+    revokedAt: Option.none(),
     createdAt: invitation.createdAt,
   });
+
   return Result.succeed({
     invitation: updated,
     events: [
@@ -129,19 +135,22 @@ const revoke = (
   if (InvitationSpecifications.isAccepted(invitation)) {
     return Result.fail(new InvitationAlreadyAccepted({ invitationId: invitation.id }));
   }
+
   if (InvitationSpecifications.isRevoked(invitation)) {
     return Result.fail(new InvitationAlreadyRevoked({ invitationId: invitation.id }));
   }
+
   const updated = InvitationRoot.make({
     id: invitation.id,
     organizationId: invitation.organizationId,
     inviteeEmail: invitation.inviteeEmail,
     token: invitation.token,
     expiresAt: invitation.expiresAt,
-    acceptedAt: null,
-    revokedAt: input.now,
+    acceptedAt: Option.none(),
+    revokedAt: Option.some(input.now),
     createdAt: invitation.createdAt,
   });
+
   return Result.succeed({
     invitation: updated,
     events: [
@@ -177,19 +186,22 @@ const reissue = (
   if (InvitationSpecifications.isAccepted(invitation)) {
     return Result.fail(new InvitationAlreadyAccepted({ invitationId: invitation.id }));
   }
+
   if (InvitationSpecifications.isRevoked(invitation)) {
     return Result.fail(new InvitationAlreadyRevoked({ invitationId: invitation.id }));
   }
+
   const updated = InvitationRoot.make({
     id: invitation.id,
     organizationId: invitation.organizationId,
     inviteeEmail: invitation.inviteeEmail,
     token: input.token,
     expiresAt: input.expiresAt,
-    acceptedAt: null,
-    revokedAt: null,
+    acceptedAt: Option.none(),
+    revokedAt: Option.none(),
     createdAt: invitation.createdAt,
   });
+
   return Result.succeed({
     invitation: updated,
     events: [

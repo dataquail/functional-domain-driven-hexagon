@@ -20,4 +20,5 @@ export const RevokeInvitationCommand = Command.make("RevokeInvitationCommand", {
     PersistenceUnavailable,
   ]),
 });
+
 export type RevokeInvitationPayload = Command.Payload<typeof RevokeInvitationCommand>;

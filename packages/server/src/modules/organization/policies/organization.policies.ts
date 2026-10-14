@@ -9,9 +9,9 @@ import { PlatformRolesLive } from "@/modules/organization/infrastructure/acl/pla
 import { OrganizationQueries } from "@/modules/organization/organization.query-handlers.js";
 import { type OrganizationAuthzView } from "@/modules/organization/queries/find-organization-by-id.query.js";
 
-import { makeIsMember, type UserOrganizationLookup } from "./is-member.policy.js";
-import { makeIsOrgAdmin } from "./is-org-admin.policy.js";
-import { makeIsOrgSuperAdmin } from "./is-org-super-admin.policy.js";
+import { isMemberCheck, type UserOrganizationLookup } from "./is-member.policy.js";
+import { isOrgAdminCheck } from "./is-org-admin.policy.js";
+import { isOrgSuperAdminCheck } from "./is-org-super-admin.policy.js";
 
 // Two resources, split by whether the operation names an organization:
 //
@@ -79,17 +79,17 @@ export const OrganizationPoliciesLive = Layer.effect(
         .FindUserOrganizationRolesQuery({ userId, organizationId })
         .pipe(Effect.map((result) => result.roles.includes(ORG_ADMIN_ROLE)));
 
-    const superAdmin = makeIsOrgSuperAdmin(roles);
+    const superAdmin = isOrgSuperAdminCheck(roles);
 
-    return {
+    return OrganizationPolicyContribution.of({
       organization: {
-        read: Check.any(superAdmin, makeIsMember(isMember)),
-        update: Check.any(superAdmin, makeIsOrgAdmin(isOrgAdmin)),
+        read: Check.any(superAdmin, isMemberCheck(isMember)),
+        update: Check.any(superAdmin, isOrgAdminCheck(isOrgAdmin)),
         delete: superAdmin,
       },
       organizationCollection: {
         read: superAdmin,
       },
-    };
+    });
   }),
 ).pipe(Layer.provide(PlatformRolesLive));

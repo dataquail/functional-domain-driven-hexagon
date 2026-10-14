@@ -1,5 +1,6 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
+import type * as Option from "effect/Option";
 
 import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
@@ -18,9 +19,9 @@ import { type MembershipRoot } from "@/modules/organization/domain/membership/me
 // callers asking to remove a non-existent member.
 //
 // The composite (userId, organizationId) lookup is a spec at the call
-// site (see MembershipSpecifications). Absence is a plain `null`; mapping
+// site (see MembershipSpecifications). Absence is `Option.none()`; mapping
 // it to `MembershipNotFound` is the caller's job.
-export type MembershipRepositoryShape = {
+export type MembershipRepositoryService = {
   readonly insertOne: (membership: MembershipRoot) => Effect.Effect<void, PersistenceUnavailable>;
   readonly deleteOne: (
     userId: UserId,
@@ -28,10 +29,10 @@ export type MembershipRepositoryShape = {
   ) => Effect.Effect<void, MembershipNotFound | PersistenceUnavailable>;
   readonly findOne: (
     spec: Specification<MembershipRoot>,
-  ) => Effect.Effect<MembershipRoot | null, PersistenceUnavailable>;
+  ) => Effect.Effect<Option.Option<MembershipRoot>, PersistenceUnavailable>;
 };
 
 export class MembershipRepository extends Context.Service<
   MembershipRepository,
-  MembershipRepositoryShape
+  MembershipRepositoryService
 >()("MembershipRepository") {}

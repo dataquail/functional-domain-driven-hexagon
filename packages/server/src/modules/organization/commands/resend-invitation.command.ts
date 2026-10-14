@@ -24,4 +24,5 @@ export const ResendInvitationCommand = Command.make("ResendInvitationCommand", {
     PersistenceUnavailable,
   ]),
 });
+
 export type ResendInvitationPayload = Command.Payload<typeof ResendInvitationCommand>;

@@ -9,6 +9,7 @@ import { type MembershipRoot } from "./membership.root.js";
 // two halves at the call site: `Spec.and(forUser(u), forOrganization(o))`.
 const forUser = (userId: UserId): Specification<MembershipRoot> =>
   Spec.eq<MembershipRoot, "userId">("userId", userId);
+
 const forOrganization = (organizationId: OrganizationId): Specification<MembershipRoot> =>
   Spec.eq<MembershipRoot, "organizationId">("organizationId", organizationId);
 

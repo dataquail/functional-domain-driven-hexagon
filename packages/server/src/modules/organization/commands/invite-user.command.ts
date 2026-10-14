@@ -16,4 +16,5 @@ export const InviteUserCommand = Command.make("InviteUserCommand", {
   success: InvitationId,
   failure: PersistenceUnavailable,
 });
+
 export type InviteUserPayload = Command.Payload<typeof InviteUserCommand>;

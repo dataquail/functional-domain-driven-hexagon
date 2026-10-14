@@ -1,11 +1,10 @@
-import { deepStrictEqual, notStrictEqual } from "node:assert";
+import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertDefined, assertTrue } from "@effect/vitest/utils";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
-import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
@@ -60,28 +59,24 @@ describe("revokeInvitationHandler", () => {
 
       yield* revokeInvitationHandler({ invitationId, actorUserId });
 
-      const updated = yield* repo.findOne(InvitationSpecifications.withId(invitationId));
-      if (updated === null) throw new Error("expected invitation");
-      notStrictEqual(updated.revokedAt, null);
+      const maybeUpdated = yield* repo.findOne(InvitationSpecifications.withId(invitationId));
+
+      const updated = Option.getOrThrow(maybeUpdated);
+      assertTrue(Option.isSome(updated.revokedAt));
 
       const events = yield* rec.byTag<InvitationRevoked>("InvitationRevoked");
       deepStrictEqual(events.length, 1);
       const event = events[0];
-      if (event === undefined) throw new Error("expected InvitationRevoked event");
+
+      assertDefined(event);
       deepStrictEqual(event.invitationId, invitationId);
     }).pipe(Effect.provide(TestLayer)),
   );
 
   it.effect("fails InvitationNotFound when the id is unknown", () =>
     Effect.gen(function* () {
-      const exit = yield* Effect.exit(revokeInvitationHandler({ invitationId, actorUserId }));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(InvitationNotFound)(error), true);
-      }
+      const error = yield* Effect.flip(revokeInvitationHandler({ invitationId, actorUserId }));
+      deepStrictEqual(Schema.is(InvitationNotFound)(error), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -91,14 +86,8 @@ describe("revokeInvitationHandler", () => {
       const accepted = Result.getOrThrow(InvitationRootOps.accept(seed(), { userId, now }));
       yield* repo.insertOne(accepted.invitation);
 
-      const exit = yield* Effect.exit(revokeInvitationHandler({ invitationId, actorUserId }));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(InvitationAlreadyAccepted)(error), true);
-      }
+      const error = yield* Effect.flip(revokeInvitationHandler({ invitationId, actorUserId }));
+      deepStrictEqual(Schema.is(InvitationAlreadyAccepted)(error), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -108,14 +97,8 @@ describe("revokeInvitationHandler", () => {
       const revoked = Result.getOrThrow(InvitationRootOps.revoke(seed(), { now }));
       yield* repo.insertOne(revoked.invitation);
 
-      const exit = yield* Effect.exit(revokeInvitationHandler({ invitationId, actorUserId }));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(InvitationAlreadyRevoked)(error), true);
-      }
+      const error = yield* Effect.flip(revokeInvitationHandler({ invitationId, actorUserId }));
+      deepStrictEqual(Schema.is(InvitationAlreadyRevoked)(error), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 });

@@ -34,6 +34,7 @@ export const findMembersEndpoint = Effect.fn("OrganizationLive.findMembers")(fun
   );
 
   const queryBus = yield* QueryBus;
+
   const members = yield* queryBus.execute(FindOrganizationMembershipsQuery, {
     organizationId: request.params.orgId,
   });

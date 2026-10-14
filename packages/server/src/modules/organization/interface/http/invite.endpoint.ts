@@ -24,12 +24,14 @@ export const inviteEndpoint = Effect.fn("OrganizationLive.inviteUser")(
     yield* Authz.hasPermissions(OrganizationResource, Actions.Update, request.params.orgId);
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
+
     const invitationId = yield* commandBus.execute(InviteUserCommand, {
       organizationId: request.params.orgId,
       inviteeEmail: request.payload.email,
       ttlSeconds: DEFAULT_INVITATION_TTL_SECONDS,
       actorUserId: currentUser.userId,
     });
+
     return new OrganizationContract.InviteUserResponse({ invitationId });
   },
   (effect, request) =>

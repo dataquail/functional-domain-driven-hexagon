@@ -28,4 +28,5 @@ export const GrantOrganizationRoleCommand = Command.make("GrantOrganizationRoleC
     PersistenceUnavailable,
   ]),
 });
+
 export type GrantOrganizationRolePayload = Command.Payload<typeof GrantOrganizationRoleCommand>;
