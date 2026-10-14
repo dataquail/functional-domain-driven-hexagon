@@ -43,6 +43,8 @@ const NPM = (name) => `node_modules/.pnpm/x/node_modules/${name}/index.js`;
 
 // Edges the policy must REFUSE.
 const REFUSED = [
+  // A command takes randomness and digests from Effect's Crypto service (ADR-0040).
+  ["a command using node:crypto", `${M}/alpha/commands/do.handler.ts`, "node:crypto"],
   [
     "a host-runtime seam naming the database kernel",
     "packages/server/src/globals/infrastructure/runtime/execution-context.ts",
@@ -772,7 +774,6 @@ const ALLOWED = [
     `${M}/alpha/commands/do.handler.ts`,
     "packages/server/src/globals/infrastructure/email/ports/mailer.ts",
   ],
-  ["a command using node:crypto (LEGAL)", `${M}/alpha/commands/do.handler.ts`, "node:crypto"],
   [
     "a query using a branded id (LEGAL)",
     `${M}/alpha/queries/find.handler.ts`,

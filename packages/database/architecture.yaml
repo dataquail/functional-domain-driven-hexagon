@@ -28,7 +28,7 @@ imports:
     - "@effect/vitest"
     - dotenv
     - vitest
-  allow: ["node:**", "~/database/**", "vitest.shared.ts"]
+  allow: ["~/database/**", "vitest.shared.ts"]
 children:
   "src/":
     # Database.ts is an Effect-style module named for the service it

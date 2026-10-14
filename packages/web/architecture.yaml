@@ -20,7 +20,7 @@ defs:
         A ViewModel or Model test runs its tier under a bare AtomRegistry, with MSW standing in
         for the server. It renders nothing — a test that needs the testing library is a component
         test — and it never reaches the server.
-      external: [effect, vitest]
+      external: [effect, vitest, "@effect/vitest"]
       allow: ["~/web/**", "~/contracts/**"]
 
   # A component test renders through the testing library and drives it as a user.
@@ -247,6 +247,11 @@ children:
       src/ is SvelteKit's: the file-based routes, the server hooks and the ambient app types. It
       is framework surface: it composes the Model directly, so the View restrictions do not apply
       here.
+    imports:
+      message: >-
+        src/ is SvelteKit's framework surface. It composes the Model and reads the Effect values
+        the Model hands it (an Option for "no session", an Exit), so it names effect beside Kit.
+      external: [effect]
     children:
       "hooks.server.test.ts": { use: web-unit-test-file }
       "**/": { layout: open, children: {} }
@@ -310,7 +315,11 @@ children:
                 Svelte's scheduler between a write and a read. It reaches the bridge through its
                 probes.
               external:
-                [effect, svelte, vitest, "@testing-library/svelte", "@testing-library/user-event"]
+                - effect
+                - svelte
+                - vitest
+                - "@testing-library/svelte"
+                - "@testing-library/user-event"
               allow: ["~/web/test/bridge/**"]
 
   "test/":
@@ -342,7 +351,7 @@ children:
           message: >-
             The typed-handler spike stands up its own MSW server against the real contracts, and
             reaches nothing else.
-          external: [effect, vitest, msw]
+          external: [effect, "@effect/vitest", msw]
           allow: ["~/web/test/typed-handler.ts", "~/contracts/**"]
       "fixtures/":
         # The barrel gathers the fixtures for the tests that take several at once.

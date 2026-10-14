@@ -167,7 +167,7 @@ which is what the editor loads.
   JS plugins. oxlint 1.77.0's language server panicked on any JS-plugin
   diagnostic (oxc #25278, fixed in 1.78.0), which is what forced the first bump.
 - `oxlint` and `@effect/tsgo` move together: the patch targets one exact oxlint
-  version, so a bump is the pair (`1.81.0` with `@effect/tsgo` 0.40.0).
+  version, so a bump is the pair (`1.88.0` with `@effect/tsgo` 0.53.0; ADR-0040).
 - `no-redeclare` is off. From 1.79.0 oxlint's rule matches ESLint core and
   reports TypeScript declaration merging — `export const X` beside
   `export type X`, the Effect idiom on 74 sites here — and upstream declined to

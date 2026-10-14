@@ -66,7 +66,7 @@ No deconstruction, no logic. Adding an endpoint is a two-line change here plus a
 
 Each `<endpoint>.endpoint.ts` must have a sibling `<endpoint>.endpoint.integration.test.ts`. This is one required-sibling obligation in the `project-structure/folder-structure` lint rule (`project-structure.config.mjs`, run under `pnpm lint` — ADR-0008), which resolves the sibling against the real filesystem. dependency-cruiser cannot express "for every file matching X there must exist a sibling matching Y" — it checks edges, not file existence — so the file taxonomy is the ESLint rule's job and the import graph is dependency-cruiser's.
 
-Because the rule's `enforceExistence` is AND-only (no "either sibling"), endpoints carry **one canonical requirement**: `*.endpoint.integration.test.ts`, which exercises the real HTTP layer against a live database via `useServerTestRuntime(...)`. Two exceptions, encoded as explicitly named rules:
+Because the rule's `enforceExistence` is AND-only (no "either sibling"), endpoints carry **one canonical requirement**: `*.endpoint.integration.test.ts`, which exercises the real HTTP layer against a live database via `describeServer(...)`. Two exceptions, encoded as explicitly named rules:
 
 - The OIDC `login` and `logout` endpoints are **exempted** — their happy path needs a live identity provider and is covered by Playwright + the session-repository integration tests.
 - `callback` has a real `callback.endpoint.integration.test.ts` for its reachable no-IdP guard.
@@ -75,7 +75,7 @@ A file ending `*.endpoint.test.ts` (no `integration`) is a deliberate unit token
 
 ### Tests own their HTTP setup via a shared helper
 
-Each per-endpoint test file uses `useServerTestRuntime(["users"])` from `test-utils/`, which wires `ManagedRuntime.make(TestServerLive)`, `beforeAll`/`afterAll`, and per-test truncate into the surrounding describe block. Integration tests do _not_ import endpoint files directly; they exercise the contract via `HttpApiClient.make(Api)`, which is what the parity rule guarantees a test exists for.
+Each per-endpoint test file uses `describeServer(name, { tables: ["user.users"] }, (it) => …)` from `test-utils/`, which builds `TestServerLive` once for the block with `@effect/vitest`'s `layer` and truncates before every `it.effect`. Integration tests do _not_ import endpoint files directly; they exercise the contract via `HttpApiClient.make(Api)`, which is what the parity rule guarantees a test exists for.
 
 ## Consequences
 
