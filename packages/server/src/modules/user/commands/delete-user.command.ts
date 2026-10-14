@@ -10,4 +10,5 @@ export const DeleteUserCommand = Command.make("DeleteUserCommand", {
   success: Schema.Void,
   failure: Schema.Union([UserNotFound, PersistenceUnavailable]),
 });
+
 export type DeleteUserPayload = Command.Payload<typeof DeleteUserCommand>;

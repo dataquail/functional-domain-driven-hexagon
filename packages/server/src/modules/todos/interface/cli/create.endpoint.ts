@@ -20,11 +20,13 @@ export const createEndpoint = Effect.fn("CliTodosLive.create")(function* (
   const currentUser = yield* CurrentUser;
   yield* Authz.hasPermissions(TodoCollectionResource, Actions.Create, request.params.orgId);
   const commandBus = yield* CommandBus;
+
   const todo = yield* commandBus.execute(CreateTodoCommand, {
     title: request.payload.title,
     organizationId: request.params.orgId,
     userId: currentUser.userId,
   });
+
   return new CliTodosContract.CliTodo({
     id: todo.id,
     title: todo.title,

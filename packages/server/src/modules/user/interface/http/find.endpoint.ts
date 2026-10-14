@@ -29,9 +29,11 @@ export const findEndpoint = Effect.fn("UserLive.find")(function* (
   request: EndpointRequest<typeof UserContract.Group, "find">,
 ) {
   const queryBus = yield* QueryBus;
+
   const result = yield* queryBus.execute(FindUsersQuery, {
     page: request.query.page,
     pageSize: request.query.pageSize,
   });
+
   return toPaginatedUsersContract(result);
 }, recoverPersistenceUnavailable);

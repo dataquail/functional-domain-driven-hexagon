@@ -33,6 +33,7 @@ describe("TodoRootOps.update", () => {
       completed: true,
       now: later,
     });
+
     deepStrictEqual(updated.id, todoId);
     deepStrictEqual(updated.organizationId, organizationId);
     deepStrictEqual(updated.title, "Buy oat milk");

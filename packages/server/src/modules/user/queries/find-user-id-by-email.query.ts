@@ -9,4 +9,5 @@ export const FindUserIdByEmailQuery = Query.make("FindUserIdByEmailQuery", {
   success: Schema.NullOr(UserId),
   failure: PersistenceUnavailable,
 });
+
 export type FindUserIdByEmailPayload = Query.Payload<typeof FindUserIdByEmailQuery>;

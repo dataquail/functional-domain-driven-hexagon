@@ -1,7 +1,11 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertNone } from "@effect/vitest/utils";
+import * as Arr from "effect/Array";
 import * as DateTime from "effect/DateTime";
+import * as Option from "effect/Option";
+import * as Predicate from "effect/Predicate";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
@@ -16,31 +20,28 @@ const id = UserId.make("11111111-1111-1111-1111-111111111111");
 const now = DateTime.makeUnsafe("2025-01-01T00:00:00Z");
 const later = DateTime.makeUnsafe("2025-02-01T00:00:00Z");
 
-const address = AddressValueObject.make({
-  country: "USA",
-  street: "123 Main St",
-  postalCode: "12345",
-});
+const address = Option.some(
+  AddressValueObject.make({
+    country: "USA",
+    street: "123 Main St",
+    postalCode: "12345",
+  }),
+);
 
 const seedUser = () => UserRootOps.create({ id, email: "alice@example.com", address, now }).user;
 
-// Narrows the nullable aggregate address for assertions on a user we know
-// was created with one.
-const requireAddress = (user: UserRoot): AddressValueObject => {
-  if (user.address === null) throw new Error("expected an address");
-  return user.address;
-};
+const requireAddress = (user: UserRoot): AddressValueObject => Option.getOrThrow(user.address);
 
 const expectEvent = <T extends UserEvent["_tag"]>(
   events: ReadonlyArray<UserEvent>,
   tag: T,
-): Extract<UserEvent, { _tag: T }> => {
-  const event = events[0];
-  if (event?._tag !== tag) {
-    throw new Error(`expected ${tag}, got ${String(event?._tag)}`);
-  }
-  return event as Extract<UserEvent, { _tag: T }>;
-};
+): Extract<UserEvent, { _tag: T }> =>
+  Arr.head(events).pipe(
+    Option.filter((event): event is Extract<UserEvent, { _tag: T }> =>
+      Predicate.isTagged(event, tag),
+    ),
+    Option.getOrThrow,
+  );
 
 describe("AddressValueObject", () => {
   it("accepts valid lengths", () => {
@@ -49,6 +50,7 @@ describe("AddressValueObject", () => {
       street: "123 Main St",
       postalCode: "12345",
     });
+
     deepStrictEqual(Result.isSuccess(result), true);
   });
 
@@ -58,6 +60,7 @@ describe("AddressValueObject", () => {
       street: "123 Main St",
       postalCode: "12345",
     });
+
     deepStrictEqual(Result.isFailure(result), true);
   });
 
@@ -67,6 +70,7 @@ describe("AddressValueObject", () => {
       street: "123 Main St",
       postalCode: "12345",
     });
+
     deepStrictEqual(Result.isFailure(result), true);
   });
 
@@ -76,6 +80,7 @@ describe("AddressValueObject", () => {
       street: "X",
       postalCode: "12345",
     });
+
     deepStrictEqual(Result.isFailure(result), true);
   });
 
@@ -85,6 +90,7 @@ describe("AddressValueObject", () => {
       street: "123 Main St",
       postalCode: "12345678901",
     });
+
     deepStrictEqual(Result.isFailure(result), true);
   });
 });
@@ -104,12 +110,13 @@ describe("UserRootOps.create", () => {
     const { events, user } = UserRootOps.create({
       id,
       email: "jit@example.com",
-      address: null,
+      address: Option.none(),
       now,
     });
-    deepStrictEqual(user.address, null);
+
+    assertNone(user.address);
     const event = expectEvent(events, "UserCreated");
-    deepStrictEqual(event.address, null);
+    assertNone(event.address);
   });
 
   it("sets createdAt and updatedAt to the provided time", () => {
@@ -124,7 +131,10 @@ describe("UserRootOps.create", () => {
     const event = expectEvent(events, "UserCreated");
     deepStrictEqual(event.userId, id);
     deepStrictEqual(event.email, "alice@example.com");
-    deepStrictEqual(event.address?.country, "USA");
+    deepStrictEqual(
+      Option.map(event.address, (eventAddress) => eventAddress.country),
+      Option.some("USA"),
+    );
   });
 });
 
@@ -152,6 +162,7 @@ describe("UserRootOps.updateAddress", () => {
       postalCode: "K1A0B1",
       now: later,
     });
+
     const addr = requireAddress(user);
     deepStrictEqual(addr.country, "Canada");
     deepStrictEqual(addr.street, "456 Maple Ave");
@@ -163,6 +174,7 @@ describe("UserRootOps.updateAddress", () => {
       country: "Canada",
       now: later,
     });
+
     const addr = requireAddress(user);
     deepStrictEqual(addr.country, "Canada");
     deepStrictEqual(addr.street, "123 Main St");

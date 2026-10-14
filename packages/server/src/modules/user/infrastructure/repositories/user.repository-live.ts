@@ -1,6 +1,7 @@
 import { Database, orFail, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { type Specification } from "@/globals/application/ddd/specification.js";
@@ -22,6 +23,7 @@ export const UserRepositoryLive = Layer.effect(
 
     const insertOne = Effect.fn("UserRepository.insertOne")((user: UserRoot) => {
       const row = UserMapper.toPersistence(user);
+
       return sql`
           INSERT INTO "user".users (id, email, country, street, postal_code, created_at, updated_at)
           VALUES (
@@ -35,17 +37,20 @@ export const UserRepositoryLive = Layer.effect(
           )
         `.pipe(
         Database.exec,
-        Effect.catchTag("DatabaseError", (e) =>
-          e.type === "unique_violation"
-            ? new UserAlreadyExists({ email: user.email })
-            : Effect.die(e),
-        ),
+        Effect.catchTag("DatabaseError", (e) => {
+          if (e.type === "unique_violation") {
+            return Effect.fail(new UserAlreadyExists({ email: user.email }));
+          }
+
+          return Effect.die(e);
+        }),
         translatePersistenceUnavailable,
       );
     });
 
     const updateOne = Effect.fn("UserRepository.updateOne")((user: UserRoot) => {
       const row = UserMapper.toPersistence(user);
+
       return sql`
           UPDATE "user".users SET
             email = ${row.email},
@@ -80,14 +85,17 @@ export const UserRepositoryLive = Layer.effect(
     // projection. `LIMIT 1` is safe because every spec used with findOne
     // selects at most one row (the id primary key, the unique email).
     const findOne = Effect.fn("UserRepository.findOne")((spec: Specification<UserRoot>) =>
-      sql`
+      criteriaToWhere(sql, spec.criteria, UserMapper.columns).pipe(
+        Effect.flatMap(
+          (where) => sql`
           SELECT * FROM "user".users
-          WHERE ${criteriaToWhere(sql, spec.criteria, UserMapper.columns)}
+          WHERE ${where}
           LIMIT 1
-        `.pipe(
+        `,
+        ),
         Database.maybeRow(RowSchemas.UserRow),
 
-        Effect.map((row) => (row === null ? null : UserMapper.toDomain(row))),
+        Effect.map(Option.map(UserMapper.toDomain)),
         translateDatabaseErrors,
       ),
     );

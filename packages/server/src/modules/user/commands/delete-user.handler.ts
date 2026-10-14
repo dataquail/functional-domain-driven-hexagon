@@ -1,5 +1,6 @@
 import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
 import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
 import { type DeleteUserPayload } from "@/modules/user/commands/delete-user.command.js";
@@ -11,10 +12,14 @@ import { UserSpecifications } from "@/modules/user/domain/user/user.specificatio
 export const deleteUserHandler = Effect.fn("deleteUserHandler")(function* (cmd: DeleteUserPayload) {
   const repo = yield* UserRepository;
   const bus = yield* DomainEventBus;
-  const user = yield* repo.findOne(UserSpecifications.withId(cmd.userId));
-  if (user === null) {
+  const found = yield* repo.findOne(UserSpecifications.withId(cmd.userId));
+
+  if (Option.isNone(found)) {
     return yield* new UserNotFound({ userId: cmd.userId });
   }
+
+  const user = found.value;
+
   const { events } = UserRootOps.markDeleted(user);
   yield* repo.deleteOne(user.id);
   yield* bus.dispatch(events);

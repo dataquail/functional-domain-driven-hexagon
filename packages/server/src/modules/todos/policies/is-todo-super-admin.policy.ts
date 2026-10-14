@@ -10,7 +10,7 @@ import { type PlatformRoles } from "@/modules/todos/domain/ports/acl/platform-ro
 //
 // Declared as a `CallerCheck` (caller only) so one instance composes into both
 // the scoped todo resources and any unscoped resource this module might add.
-export const makeIsTodoSuperAdmin =
+export const isTodoSuperAdmin =
   (roles: PlatformRoles["Service"]): CallerCheck<CurrentUser["Service"], PersistenceUnavailable> =>
   (caller) =>
     roles.isSuperAdmin(caller.userId);

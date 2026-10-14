@@ -1,12 +1,10 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertNone } from "@effect/vitest/utils";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
@@ -16,12 +14,18 @@ import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
 import { UserSpecifications } from "@/modules/user/domain/user/user.specification.js";
 import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.js";
 import { UserRepositoryFake } from "@/modules/user/infrastructure/repositories/user.repository-fake.js";
+import { CryptoFake } from "@/test-utils/crypto-fake.js";
 import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
 
 import { createUserHandler } from "./create-user.handler.js";
 import { deleteUserHandler } from "./delete-user.handler.js";
 
-const TestLayer = Layer.mergeAll(UserRepositoryFake, RecordingEventBus, PassThroughUnitOfWork);
+const TestLayer = Layer.mergeAll(
+  UserRepositoryFake,
+  RecordingEventBus,
+  PassThroughUnitOfWork,
+  CryptoFake,
+);
 
 const address = AddressValueObject.make({
   country: "USA",
@@ -34,6 +38,7 @@ describe("deleteUserHandler", () => {
     Effect.gen(function* () {
       const repo = yield* UserRepository;
       const rec = yield* RecordedEvents;
+
       const id = yield* createUserHandler({
         email: "alice@example.com",
         country: address.country,
@@ -44,7 +49,7 @@ describe("deleteUserHandler", () => {
       yield* deleteUserHandler({ userId: id });
 
       const found = yield* repo.findOne(UserSpecifications.withId(id));
-      deepStrictEqual(found, null);
+      assertNone(found);
 
       const events = yield* rec.byTag<UserDeleted>("UserDeleted");
       deepStrictEqual(events.length, 1);
@@ -55,14 +60,9 @@ describe("deleteUserHandler", () => {
   it.effect("fails UserNotFound when the user doesn't exist", () =>
     Effect.gen(function* () {
       const unknownId = UserId.make("00000000-0000-0000-0000-000000000000");
-      const exit = yield* Effect.exit(deleteUserHandler({ userId: unknownId }));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(UserNotFound)(error), true);
-      }
+      const error = yield* Effect.flip(deleteUserHandler({ userId: unknownId }));
+
+      deepStrictEqual(Schema.is(UserNotFound)(error), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 

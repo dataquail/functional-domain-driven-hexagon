@@ -8,8 +8,8 @@ import { PlatformRoles } from "@/modules/todos/domain/ports/acl/platform-roles.a
 import { OrganizationAccessLive } from "@/modules/todos/infrastructure/acl/organization-access.acl-live.js";
 import { PlatformRolesLive } from "@/modules/todos/infrastructure/acl/platform-roles.acl-live.js";
 
-import { makeIsTodoOrgMember } from "./is-todo-org-member.policy.js";
-import { makeIsTodoSuperAdmin } from "./is-todo-super-admin.policy.js";
+import { isTodoOrgMember } from "./is-todo-org-member.policy.js";
+import { isTodoSuperAdmin } from "./is-todo-super-admin.policy.js";
 
 // Two todo policy resources (see todo.resource-resolvers.ts), both scoped:
 //   - `todoCollection` (by OrganizationId) — `create` a todo in an org and
@@ -51,12 +51,9 @@ export const TodoPoliciesLive = Layer.effect(
 
     // One composed gate reused across every todo operation, so the membership
     // rule is defined once.
-    const todoMemberCheck = Check.any(
-      makeIsTodoSuperAdmin(roles),
-      makeIsTodoOrgMember(organizations),
-    );
+    const todoMemberCheck = Check.any(isTodoSuperAdmin(roles), isTodoOrgMember(organizations));
 
-    return {
+    return TodoPolicyContribution.of({
       todoCollection: {
         create: todoMemberCheck,
         read: todoMemberCheck,
@@ -65,6 +62,6 @@ export const TodoPoliciesLive = Layer.effect(
         update: todoMemberCheck,
         delete: todoMemberCheck,
       },
-    };
+    });
   }),
 ).pipe(Layer.provide([PlatformRolesLive, OrganizationAccessLive]));

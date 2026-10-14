@@ -9,7 +9,7 @@ import { type PersistenceUnavailable } from "@/globals/application/ddd/persisten
 // of the todo's org?", which only the organization module can answer. One port
 // per upstream module, narrowed to what todos asks — a second question for the
 // same module would join this port rather than start a new one.
-export type OrganizationAccessShape = {
+export type OrganizationAccessService = {
   readonly isMember: (
     userId: UserId,
     organizationId: OrganizationId,
@@ -18,5 +18,5 @@ export type OrganizationAccessShape = {
 
 export class OrganizationAccess extends Context.Service<
   OrganizationAccess,
-  OrganizationAccessShape
+  OrganizationAccessService
 >()("@org/server/todos/OrganizationAccess") {}

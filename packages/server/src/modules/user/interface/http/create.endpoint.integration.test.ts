@@ -1,18 +1,15 @@
 import { deepStrictEqual, ok } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
+import { assertDefined } from "@effect/vitest/utils";
 import { QueryBus } from "@effect-server-utils/cqrs";
 import { UserContract } from "@org/contracts/api/Contracts";
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
-import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
 import { FindUsersQuery } from "@/modules/user/queries/find-users.query.js";
-import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
+import { describeServer } from "@/test-utils/server-test-runtime.js";
 
 const basePayload = new UserContract.CreateUserPayload({
   email: "alice@example.com",
@@ -21,44 +18,32 @@ const basePayload = new UserContract.CreateUserPayload({
   postalCode: "12345",
 });
 
-describe("POST /users (integration)", () => {
-  const { run } = useServerTestRuntime(["user.users"]);
+describeServer("POST /users (integration)", { tables: ["user.users"] }, (it) => {
+  it.effect("creates a user and persists it", () =>
+    Effect.gen(function* () {
+      const client = yield* HttpApiClient.make(Api);
+      const res = yield* client.user.create({ payload: basePayload });
+      ok(res.id.length > 0);
 
-  it("creates a user and persists it", async () => {
-    await run(
-      Effect.gen(function* () {
-        const client = yield* HttpApiClient.make(Api);
-        const res = yield* client.user.create({ payload: basePayload });
-        ok(typeof res.id === "string" && res.id.length > 0);
+      // Verify persistence via the production read seam — the typed query
+      // bus (ADR-0006). `QueryBus` is exposed at the test runtime via
+      // `Layer.provideMerge` in TestServerLive because it's a public
+      // cross-module dispatch surface, not a module-internal port.
+      const queryBus = yield* QueryBus;
+      const result = yield* queryBus.execute(FindUsersQuery, { page: 1, pageSize: 10 });
+      const stored = result.users.find((u) => u.email === basePayload.email);
+      assertDefined(stored);
+      deepStrictEqual(stored.id, res.id);
+    }),
+  );
 
-        // Verify persistence via the production read seam — the typed query
-        // bus (ADR-0006). `QueryBus` is exposed at the test runtime via
-        // `Layer.provideMerge` in TestServerLive because it's a public
-        // cross-module dispatch surface, not a module-internal port.
-        const queryBus = yield* QueryBus;
-        const result = yield* queryBus.execute(FindUsersQuery, { page: 1, pageSize: 10 });
-        const stored = result.users.find((u) => u.email === basePayload.email);
-        ok(stored !== undefined);
-        deepStrictEqual(stored.id, res.id);
-      }),
-    );
-  });
-
-  it("returns 409 UserAlreadyExistsError on duplicate email", async () => {
-    await run(
-      Effect.gen(function* () {
-        const client = yield* HttpApiClient.make(Api);
-        yield* client.user.create({ payload: basePayload });
-        const exit = yield* Effect.exit(client.user.create({ payload: basePayload }));
-        ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          const err = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
-          ok(Schema.is(UserContract.UserAlreadyExistsError)(err));
-          deepStrictEqual(err.email, basePayload.email);
-        } else {
-          throw new Error("expected a typed Fail, got " + JSON.stringify(exit));
-        }
-      }),
-    );
-  });
+  it.effect("returns 409 UserAlreadyExistsError on duplicate email", () =>
+    Effect.gen(function* () {
+      const client = yield* HttpApiClient.make(Api);
+      yield* client.user.create({ payload: basePayload });
+      const err = yield* Effect.flip(client.user.create({ payload: basePayload }));
+      ok(Schema.is(UserContract.UserAlreadyExistsError)(err));
+      deepStrictEqual(err.email, basePayload.email);
+    }),
+  );
 });

@@ -1,12 +1,11 @@
 import { deepStrictEqual, ok } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
 import { CliTodosContract, OrganizationContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
-import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
+import { describeServer } from "@/test-utils/server-test-runtime.js";
 import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
 
 const TODO_TABLES = [
@@ -18,27 +17,27 @@ const TODO_TABLES = [
   "user.users",
 ] as const;
 
-describe("POST /cli/orgs/:orgId/todos (integration)", () => {
-  const { run } = useServerTestRuntime(TODO_TABLES, {
-    server: TestServerLiveAsMember,
-    seedSuperAdminCaller: true,
-  });
-
-  it("creates a todo via the CLI surface and returns the CliTodo shape", async () => {
-    await run(
+describeServer(
+  "POST /cli/orgs/:orgId/todos (integration)",
+  { tables: TODO_TABLES, server: TestServerLiveAsMember, seedSuperAdminCaller: true },
+  (it) => {
+    it.effect("creates a todo via the CLI surface and returns the CliTodo shape", () =>
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
+
         const { id: orgId } = yield* client.organization.create({
           payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
         });
+
         const todo = yield* client.cliTodos.create({
           params: { orgId },
           payload: new CliTodosContract.CliCreateTodoPayload({ title: "Buy milk" }),
         });
+
         deepStrictEqual(todo.title, "Buy milk");
         deepStrictEqual(todo.completed, false);
-        ok(typeof todo.id === "string" && todo.id.length > 0);
+        ok(todo.id.length > 0);
       }),
     );
-  });
-});
+  },
+);

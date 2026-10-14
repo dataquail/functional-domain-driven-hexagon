@@ -25,5 +25,6 @@ export const listEndpoint = Effect.fn("CliTodosLive.list")(function* (
   yield* Authz.hasPermissions(TodoCollectionResource, Actions.Read, request.params.orgId);
   const queryBus = yield* QueryBus;
   const result = yield* queryBus.execute(ListTodosQuery, { organizationId: request.params.orgId });
+
   return result.todos.map(toCli);
 }, recoverPersistenceUnavailable);

@@ -14,4 +14,5 @@ export const FindUsersByIdsQuery = Query.make("FindUsersByIdsQuery", {
   success: Schema.Array(FindUsersUserView),
   failure: PersistenceUnavailable,
 });
+
 export type FindUsersByIdsPayload = Query.Payload<typeof FindUsersByIdsQuery>;

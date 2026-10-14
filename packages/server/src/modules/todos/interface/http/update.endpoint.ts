@@ -32,6 +32,7 @@ export const updateEndpoint = Effect.fn("TodosLive.update")(
     );
     const commandBus = yield* CommandBus;
     const currentUser = yield* CurrentUser;
+
     const todo = yield* commandBus.execute(UpdateTodoCommand, {
       todoId: request.params.id,
       organizationId: request.params.orgId,
@@ -39,6 +40,7 @@ export const updateEndpoint = Effect.fn("TodosLive.update")(
       completed: request.payload.completed,
       userId: currentUser.userId,
     });
+
     return new TodosContract.Todo({
       id: todo.id,
       title: todo.title,

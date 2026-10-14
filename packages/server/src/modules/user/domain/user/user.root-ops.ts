@@ -1,4 +1,5 @@
 import type * as DateTime from "effect/DateTime";
+import * as Option from "effect/Option";
 
 import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
 
@@ -14,7 +15,7 @@ export type Result = {
 export type CreateInput = {
   readonly id: UserId;
   readonly email: string;
-  readonly address: AddressValueObject | null;
+  readonly address: Option.Option<AddressValueObject>;
   readonly now: DateTime.Utc;
 };
 
@@ -26,6 +27,7 @@ const create = (input: CreateInput): Result => {
     createdAt: input.now,
     updatedAt: input.now,
   });
+
   return {
     user,
     events: [
@@ -50,17 +52,21 @@ export type UpdateAddressInput = {
   readonly now: DateTime.Utc;
 };
 
+const currentAddressField = (user: UserRoot, field: keyof AddressValueObject): string =>
+  Option.match(user.address, { onNone: () => "", onSome: (address) => address[field] });
+
 const updateAddress = (user: UserRoot, input: UpdateAddressInput): Result => {
   const newAddress = AddressValueObject.make({
-    country: input.country ?? user.address?.country ?? "",
-    postalCode: input.postalCode ?? user.address?.postalCode ?? "",
-    street: input.street ?? user.address?.street ?? "",
+    country: input.country ?? currentAddressField(user, "country"),
+    postalCode: input.postalCode ?? currentAddressField(user, "postalCode"),
+    street: input.street ?? currentAddressField(user, "street"),
   });
+
   return {
     user: UserRoot.make({
       id: user.id,
       email: user.email,
-      address: newAddress,
+      address: Option.some(newAddress),
       createdAt: user.createdAt,
       updatedAt: input.now,
     }),

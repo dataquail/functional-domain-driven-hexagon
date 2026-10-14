@@ -4,6 +4,7 @@ import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 
 import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { Criteria } from "@/globals/application/ddd/specification.js";
 
 import { TodoId } from "./todo.id.js";
 import { TodoRootOps } from "./todo.root-ops.js";
@@ -24,11 +25,10 @@ describe("TodoSpecifications.withId", () => {
   });
 
   it("carries an Eq criteria over the id column", () => {
-    deepStrictEqual(TodoSpecifications.withId(aliceId).criteria, {
-      _tag: "Eq",
-      field: "id",
-      value: aliceId,
-    });
+    deepStrictEqual(
+      TodoSpecifications.withId(aliceId).criteria,
+      Criteria.Eq({ field: "id", value: aliceId }),
+    );
   });
 });
 
@@ -39,10 +39,9 @@ describe("TodoSpecifications.forOrganization", () => {
   });
 
   it("carries an Eq criteria over the organization_id column", () => {
-    deepStrictEqual(TodoSpecifications.forOrganization(orgId).criteria, {
-      _tag: "Eq",
-      field: "organizationId",
-      value: orgId,
-    });
+    deepStrictEqual(
+      TodoSpecifications.forOrganization(orgId).criteria,
+      Criteria.Eq({ field: "organizationId", value: orgId }),
+    );
   });
 });

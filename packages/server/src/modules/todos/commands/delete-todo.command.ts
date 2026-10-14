@@ -16,4 +16,5 @@ export const DeleteTodoCommand = Command.make("DeleteTodoCommand", {
   success: Schema.Void,
   failure: Schema.Union([TodoNotFound, PersistenceUnavailable]),
 });
+
 export type DeleteTodoPayload = Command.Payload<typeof DeleteTodoCommand>;

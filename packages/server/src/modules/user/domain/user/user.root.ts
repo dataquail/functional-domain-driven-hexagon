@@ -6,13 +6,13 @@ import { AddressValueObject } from "./value-objects/address.value-object.js";
 
 // Aggregate root data — a dumb value (ADR-0003). Operations live in
 // `user.root-ops.ts` (`UserRootOps`) and carry the test obligation.
-export class UserRoot extends Schema.Class<UserRoot>("UserRoot")({
+export class UserRoot extends Schema.Class<UserRoot, { readonly brand: "UserRoot" }>("UserRoot")({
   id: UserId,
   email: Schema.String,
-  // Nullable: a user provisioned just-in-time on first OIDC sign-in has no
+  // Optional: a user provisioned just-in-time on first OIDC sign-in has no
   // address yet (only the email and the identity subject are known). It's filled in
   // later via `updateAddress`.
-  address: Schema.NullOr(AddressValueObject),
+  address: Schema.Option(AddressValueObject),
   createdAt: Schema.DateTimeUtc,
   updatedAt: Schema.DateTimeUtc,
 }) {}

@@ -15,4 +15,5 @@ export const CreateTodoCommand = Command.make("CreateTodoCommand", {
   success: TodoRoot,
   failure: PersistenceUnavailable,
 });
+
 export type CreateTodoPayload = Command.Payload<typeof CreateTodoCommand>;

@@ -1,7 +1,7 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import { QueryBus, type QueryBusShape } from "@effect-server-utils/cqrs";
+import { QueryBus } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Cause from "effect/Cause";
@@ -20,17 +20,19 @@ import { TodoResolverEntry, TodoResolverEntryLive } from "./todo.resource-resolv
 const organizationId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const todoId = TodoId.make("33333333-3333-3333-3333-333333333333");
 
-// The resolver's only dependency is the query it dispatches, so the bus is faked
-// down to that one answer. `as never` erases the per-message generic the real
-// `execute` resolves from its definition argument.
-const busAnswering = (
-  answer: Effect.Effect<TodoOrganizationView | null, PersistenceUnavailable>,
-): QueryBusShape => ({
-  execute: () => answer as never,
-  tags: new Set(["FindTodoOrganizationQuery"]),
-});
+type Answer = Effect.Effect<Option.Option<TodoOrganizationView>, PersistenceUnavailable>;
 
-const resolverOver = (answer: Effect.Effect<TodoOrganizationView | null, PersistenceUnavailable>) =>
+// The resolver's only dependency is the query it dispatches, so the bus is faked
+// down to that one answer.
+const busAnswering = (answer: Answer) =>
+  QueryBus.of({
+    // SAFETY: the resolver dispatches only FindTodoOrganizationQuery, whose success is this answer.
+    // oxlint-disable-next-line effect/noAs -- a fixed answer cannot inhabit execute's per-message generic
+    execute: () => answer as never,
+    tags: new Set(["FindTodoOrganizationQuery"]),
+  });
+
+const resolverOver = (answer: Answer) =>
   TodoResolverEntryLive.pipe(Layer.provide(Layer.succeed(QueryBus, busAnswering(answer))));
 
 describe("TodoResolverEntry", () => {
@@ -38,7 +40,7 @@ describe("TodoResolverEntry", () => {
     Effect.gen(function* () {
       const resolve = yield* TodoResolverEntry;
       deepStrictEqual(yield* resolve({ organizationId, todoId }), { organizationId });
-    }).pipe(Effect.provide(resolverOver(Effect.succeed({ organizationId })))),
+    }).pipe(Effect.provide(resolverOver(Effect.succeedSome({ organizationId })))),
   );
 
   it.effect("reports absence as NotFound", () =>
@@ -47,11 +49,12 @@ describe("TodoResolverEntry", () => {
       const exit = yield* Effect.exit(resolve({ organizationId, todoId }));
 
       deepStrictEqual(Exit.isFailure(exit), true);
+
       if (Exit.isFailure(exit)) {
         const error = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
         deepStrictEqual(Schema.is(CustomHttpApiError.NotFound)(error), true);
       }
-    }).pipe(Effect.provide(resolverOver(Effect.succeed(null)))),
+    }).pipe(Effect.provide(resolverOver(Effect.succeedNone))),
   );
 
   // A transient store outage during resolution is the same outage as one during
@@ -63,6 +66,7 @@ describe("TodoResolverEntry", () => {
       const exit = yield* Effect.exit(resolve({ organizationId, todoId }));
 
       deepStrictEqual(Exit.isFailure(exit), true);
+
       if (Exit.isFailure(exit)) {
         deepStrictEqual(Cause.hasDies(exit.cause), false);
         const error = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);

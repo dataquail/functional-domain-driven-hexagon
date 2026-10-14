@@ -1,6 +1,7 @@
 import * as Effect from "effect/Effect";
 import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
 import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
@@ -22,31 +23,42 @@ export const TodosRepositoryFake = Layer.effect(
     const insertOne = (todo: TodoRoot): Effect.Effect<void> =>
       Ref.update(store, HashMap.set(todo.id, todo));
 
+    const findInOrganization = (organizationId: OrganizationId, id: TodoId) =>
+      Effect.map(Ref.get(store), (m) =>
+        HashMap.get(m, id).pipe(Option.filter((found) => found.organizationId === organizationId)),
+      );
+
     const updateOne = (todo: TodoRoot): Effect.Effect<void, TodoNotFound> =>
-      Effect.flatMap(Ref.get(store), (m) => {
-        const found = HashMap.get(m, todo.id);
-        return found._tag === "Some" && found.value.organizationId === todo.organizationId
-          ? Ref.update(store, HashMap.set(todo.id, todo))
-          : new TodoNotFound({ todoId: todo.id });
-      });
+      findInOrganization(todo.organizationId, todo.id).pipe(
+        Effect.flatMap(
+          Option.match({
+            onNone: () => Effect.fail(new TodoNotFound({ todoId: todo.id })),
+            onSome: () => Ref.update(store, HashMap.set(todo.id, todo)),
+          }),
+        ),
+      );
 
     const deleteOne = (
       organizationId: OrganizationId,
       id: TodoId,
     ): Effect.Effect<void, TodoNotFound> =>
-      Effect.flatMap(Ref.get(store), (m) => {
-        const found = HashMap.get(m, id);
-        return found._tag === "Some" && found.value.organizationId === organizationId
-          ? Ref.update(store, HashMap.remove(id))
-          : new TodoNotFound({ todoId: id });
-      });
+      findInOrganization(organizationId, id).pipe(
+        Effect.flatMap(
+          Option.match({
+            onNone: () => Effect.fail(new TodoNotFound({ todoId: id })),
+            onSome: () => Ref.update(store, HashMap.remove(id)),
+          }),
+        ),
+      );
 
     // The spec IS the in-memory predicate — the same object the live repo
     // compiles to SQL — so fake and live agree by construction. Org scoping is
     // just another term in the spec (`forOrganization`), so a wrong-org read
-    // finds nothing and returns null, mirroring the live `WHERE`.
-    const findOne = (spec: Specification<TodoRoot>): Effect.Effect<TodoRoot | null> =>
-      Effect.map(Ref.get(store), (m) => Array.from(HashMap.values(m)).find(spec) ?? null);
+    // finds nothing and returns None, mirroring the live `WHERE`.
+    const findOne = (spec: Specification<TodoRoot>): Effect.Effect<Option.Option<TodoRoot>> =>
+      Effect.map(Ref.get(store), (m) =>
+        Option.fromUndefinedOr(Array.from(HashMap.values(m)).find(spec)),
+      );
 
     return TodosRepository.of({ insertOne, updateOne, deleteOne, findOne });
   }),

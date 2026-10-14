@@ -10,11 +10,13 @@ export const ListTodosTodoView = Schema.Struct({
   title: Schema.String,
   completed: Schema.Boolean,
 });
+
 export type ListTodosTodoView = typeof ListTodosTodoView.Type;
 
 export const ListTodosResultView = Schema.Struct({
   todos: Schema.Array(ListTodosTodoView),
 });
+
 export type ListTodosResult = typeof ListTodosResultView.Type;
 
 export const ListTodosQuery = Query.make("ListTodosQuery", {
@@ -22,4 +24,5 @@ export const ListTodosQuery = Query.make("ListTodosQuery", {
   success: ListTodosResultView,
   failure: PersistenceUnavailable,
 });
+
 export type ListTodosPayload = Query.Payload<typeof ListTodosQuery>;

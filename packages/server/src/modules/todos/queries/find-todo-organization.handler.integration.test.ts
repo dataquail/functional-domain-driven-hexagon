@@ -1,14 +1,12 @@
-import { deepStrictEqual } from "node:assert";
-
-import { describe, it } from "@effect/vitest";
+import { assertNone, assertSome } from "@effect/vitest/utils";
 import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
-import { beforeEach } from "vitest";
 
 import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
 import { findTodoOrganizationHandler } from "@/modules/todos/queries/find-todo-organization.handler.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { describeIntegration } from "@/test-utils/server-test-runtime.js";
+import { TestDatabaseLive } from "@/test-utils/test-database.js";
 
 const orgId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const otherOrgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
@@ -29,45 +27,39 @@ const seed = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-describe("findTodoOrganizationHandler (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate("todos.todos", "organization.organizations").pipe(Effect.provide(TestDatabaseLive)),
-    );
-  });
-
-  it("returns the todo's organization when the ids match", async () => {
-    await Effect.runPromise(
+describeIntegration(
+  "findTodoOrganizationHandler (integration)",
+  { layer: TestDatabaseLive, tables: ["todos.todos", "organization.organizations"] },
+  (it) => {
+    it.effect("returns the todo's organization when the ids match", () =>
       Effect.gen(function* () {
         yield* seed;
         const view = yield* findTodoOrganizationHandler({ organizationId: orgId, todoId });
-        deepStrictEqual(view, { organizationId: orgId });
-      }).pipe(Effect.provide(TestDatabaseLive)),
+        assertSome(view, { organizationId: orgId });
+      }),
     );
-  });
 
-  // Tenant isolation: the query pins both ids, so a real todo reached through
-  // another org's path reads as absent rather than resolving.
-  it("returns null for a todo that lives in a different organization", async () => {
-    await Effect.runPromise(
+    // Tenant isolation: the query pins both ids, so a real todo reached through
+    // another org's path reads as absent rather than resolving.
+    it.effect("returns null for a todo that lives in a different organization", () =>
       Effect.gen(function* () {
         yield* seed;
         const view = yield* findTodoOrganizationHandler({ organizationId: otherOrgId, todoId });
-        deepStrictEqual(view, null);
-      }).pipe(Effect.provide(TestDatabaseLive)),
+        assertNone(view);
+      }),
     );
-  });
 
-  it("returns null for an unknown todo", async () => {
-    await Effect.runPromise(
+    it.effect("returns null for an unknown todo", () =>
       Effect.gen(function* () {
         yield* seed;
+
         const view = yield* findTodoOrganizationHandler({
           organizationId: orgId,
           todoId: unknownTodoId,
         });
-        deepStrictEqual(view, null);
-      }).pipe(Effect.provide(TestDatabaseLive)),
+
+        assertNone(view);
+      }),
     );
-  });
-});
+  },
+);

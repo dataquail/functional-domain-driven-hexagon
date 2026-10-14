@@ -19,4 +19,5 @@ export const CompleteTodoCommand = Command.make("CompleteTodoCommand", {
   success: TodoRoot,
   failure: Schema.Union([TodoNotFound, PersistenceUnavailable]),
 });
+
 export type CompleteTodoPayload = Command.Payload<typeof CompleteTodoCommand>;

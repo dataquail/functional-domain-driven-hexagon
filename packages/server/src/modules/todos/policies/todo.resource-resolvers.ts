@@ -4,7 +4,7 @@ import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import * as Predicate from "effect/Predicate";
+import * as Option from "effect/Option";
 
 import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { type TodoId } from "@/modules/todos/domain/todo/todo.id.js";
@@ -28,6 +28,7 @@ import { FindTodoOrganizationQuery } from "@/modules/todos/queries/find-todo-org
 // Both resources resolve to the same org-membership context, so a
 // single `IsTodoOrgMember` check serves both (see is-todo-org-member.ts).
 export type TodoOrgContext = { readonly organizationId: OrganizationId };
+
 export type TodoResourceId = {
   readonly organizationId: OrganizationId;
   readonly todoId: TodoId;
@@ -69,9 +70,15 @@ export const TodoResolverEntryLive = Layer.effect(
   TodoResolverEntry,
   Effect.gen(function* () {
     const queryBus = yield* QueryBus;
+
     return ({ organizationId, todoId }) =>
-      queryBus
-        .execute(FindTodoOrganizationQuery, { organizationId, todoId })
-        .pipe(Effect.filterOrElse(Predicate.isNotNull, () => new CustomHttpApiError.NotFound()));
+      queryBus.execute(FindTodoOrganizationQuery, { organizationId, todoId }).pipe(
+        Effect.flatMap(
+          Option.match({
+            onNone: () => Effect.fail(new CustomHttpApiError.NotFound()),
+            onSome: Effect.succeed,
+          }),
+        ),
+      );
   }),
 );

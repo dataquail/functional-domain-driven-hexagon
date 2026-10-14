@@ -17,6 +17,7 @@ const findUserByEmail = (
   for (const user of HashMap.values(store)) {
     if (user.email === email) return Option.some(user);
   }
+
   return Option.none();
 };
 
@@ -27,29 +28,34 @@ export const UserRepositoryFake = Layer.effect(
 
     const insertOne = (user: UserRoot): Effect.Effect<void, UserAlreadyExists> =>
       Effect.flatMap(Ref.get(store), (m) =>
-        Option.isSome(findUserByEmail(m, user.email))
-          ? new UserAlreadyExists({ email: user.email })
-          : Ref.update(store, HashMap.set(user.id, user)),
+        Option.match(findUserByEmail(m, user.email), {
+          onNone: () => Ref.update(store, HashMap.set(user.id, user)),
+          onSome: () => Effect.fail(new UserAlreadyExists({ email: user.email })),
+        }),
       );
 
     const updateOne = (user: UserRoot): Effect.Effect<void, UserNotFound> =>
       Effect.flatMap(Ref.get(store), (m) =>
-        HashMap.has(m, user.id)
-          ? Ref.update(store, HashMap.set(user.id, user))
-          : new UserNotFound({ userId: user.id }),
+        Option.match(HashMap.get(m, user.id), {
+          onNone: () => Effect.fail(new UserNotFound({ userId: user.id })),
+          onSome: () => Ref.update(store, HashMap.set(user.id, user)),
+        }),
       );
 
     const deleteOne = (id: UserId): Effect.Effect<void, UserNotFound> =>
       Effect.flatMap(Ref.get(store), (m) =>
-        HashMap.has(m, id)
-          ? Ref.update(store, HashMap.remove(id))
-          : new UserNotFound({ userId: id }),
+        Option.match(HashMap.get(m, id), {
+          onNone: () => Effect.fail(new UserNotFound({ userId: id })),
+          onSome: () => Ref.update(store, HashMap.remove(id)),
+        }),
       );
 
     // The spec IS the in-memory predicate — the same object the live repo
     // compiles to SQL — so fake and live agree by construction.
-    const findOne = (spec: Specification<UserRoot>): Effect.Effect<UserRoot | null> =>
-      Effect.map(Ref.get(store), (m) => Array.from(HashMap.values(m)).find(spec) ?? null);
+    const findOne = (spec: Specification<UserRoot>): Effect.Effect<Option.Option<UserRoot>> =>
+      Effect.map(Ref.get(store), (m) =>
+        Option.fromUndefinedOr(Array.from(HashMap.values(m)).find(spec)),
+      );
 
     return UserRepository.of({ insertOne, updateOne, deleteOne, findOne });
   }),

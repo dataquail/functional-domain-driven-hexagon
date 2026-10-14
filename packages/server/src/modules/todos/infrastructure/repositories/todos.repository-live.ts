@@ -1,6 +1,7 @@
 import { Database, orFail, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { type Specification } from "@/globals/application/ddd/specification.js";
@@ -20,6 +21,7 @@ export const TodosRepositoryLive = Layer.effect(
 
     const insertOne = Effect.fn("TodosRepository.insertOne")((todo: TodoRoot) => {
       const row = TodoMapper.toPersistence(todo);
+
       return sql`
         INSERT INTO todos.todos (id, organization_id, title, completed, created_at, updated_at)
         VALUES (
@@ -37,6 +39,7 @@ export const TodosRepositoryLive = Layer.effect(
     // in another org matches no row and surfaces as TodoNotFound.
     const updateOne = Effect.fn("TodosRepository.updateOne")((todo: TodoRoot) => {
       const row = TodoMapper.toPersistence(todo);
+
       return sql`
         UPDATE todos.todos SET
           title = ${row.title},
@@ -70,13 +73,16 @@ export const TodosRepositoryLive = Layer.effect(
     // projection. `LIMIT 1` is safe because every spec used with findOne pins
     // the (id, organization_id) primary key, selecting at most one row.
     const findOne = Effect.fn("TodosRepository.findOne")((spec: Specification<TodoRoot>) =>
-      sql`
+      criteriaToWhere(sql, spec.criteria, TodoMapper.columns).pipe(
+        Effect.flatMap(
+          (where) => sql`
         SELECT * FROM todos.todos
-        WHERE ${criteriaToWhere(sql, spec.criteria, TodoMapper.columns)}
+        WHERE ${where}
         LIMIT 1
-      `.pipe(
+      `,
+        ),
         Database.maybeRow(RowSchemas.TodoRow),
-        Effect.map((row) => (row === null ? null : TodoMapper.toDomain(row))),
+        Effect.map(Option.map(TodoMapper.toDomain)),
         translateDatabaseErrors,
       ),
     );

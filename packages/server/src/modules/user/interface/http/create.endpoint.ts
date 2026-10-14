@@ -11,12 +11,14 @@ import { CreateUserCommand } from "@/modules/user/commands/create-user.command.j
 export const createEndpoint = Effect.fn("UserLive.create")(
   function* (request: EndpointRequest<typeof UserContract.Group, "create">) {
     const commandBus = yield* CommandBus;
+
     const id = yield* commandBus.execute(CreateUserCommand, {
       email: request.payload.email,
       country: request.payload.country,
       street: request.payload.street,
       postalCode: request.payload.postalCode,
     });
+
     return new UserContract.CreateUserResponse({ id });
   },
   Effect.catchTag(

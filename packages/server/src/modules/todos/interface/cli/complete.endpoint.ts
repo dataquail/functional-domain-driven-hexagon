@@ -31,11 +31,13 @@ export const completeEndpoint = Effect.fn("CliTodosLive.complete")(
     );
     const commandBus = yield* CommandBus;
     const currentUser = yield* CurrentUser;
+
     const todo = yield* commandBus.execute(CompleteTodoCommand, {
       todoId: request.params.id,
       organizationId: request.params.orgId,
       userId: currentUser.userId,
     });
+
     return new CliTodosContract.CliTodo({
       id: todo.id,
       title: todo.title,

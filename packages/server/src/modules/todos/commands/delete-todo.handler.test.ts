@@ -1,10 +1,9 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import * as Cause from "effect/Cause";
+import { assertNone } from "@effect/vitest/utils";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
@@ -34,25 +33,22 @@ describe("deleteTodoHandler", () => {
         TodoRootOps.create({ id: aliceId, organizationId: orgId, title: "Buy milk", now }),
       );
       yield* deleteTodoHandler({ todoId: aliceId, organizationId: orgId, userId: aliceUserId });
+
       const found = yield* repo.findOne(
         Spec.and(TodoSpecifications.withId(aliceId), TodoSpecifications.forOrganization(orgId)),
       );
-      deepStrictEqual(found, null);
+
+      assertNone(found);
     }).pipe(Effect.provide(TodosRepositoryFake)),
   );
 
   it.effect("fails TodoNotFound when the todo doesn't exist", () =>
     Effect.gen(function* () {
-      const exit = yield* Effect.exit(
+      const error = yield* Effect.flip(
         deleteTodoHandler({ todoId: aliceId, organizationId: orgId, userId: aliceUserId }),
       );
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(TodoNotFound)(error), true);
-      }
+
+      deepStrictEqual(Schema.is(TodoNotFound)(error), true);
     }).pipe(Effect.provide(TodosRepositoryFake)),
   );
 
@@ -62,25 +58,25 @@ describe("deleteTodoHandler", () => {
       yield* repo.insertOne(
         TodoRootOps.create({ id: aliceId, organizationId: orgId, title: "Buy milk", now }),
       );
-      const exit = yield* Effect.exit(
+
+      const error = yield* Effect.flip(
         deleteTodoHandler({
           todoId: aliceId,
           organizationId: otherOrgId,
           userId: aliceUserId,
         }),
       );
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(TodoNotFound)(error), true);
-      }
+
+      deepStrictEqual(Schema.is(TodoNotFound)(error), true);
+
       // The original (correct-org) row is untouched.
-      const stillThere = yield* repo.findOne(
-        Spec.and(TodoSpecifications.withId(aliceId), TodoSpecifications.forOrganization(orgId)),
+      const stillThere = yield* Effect.map(
+        repo.findOne(
+          Spec.and(TodoSpecifications.withId(aliceId), TodoSpecifications.forOrganization(orgId)),
+        ),
+        Option.getOrThrow,
       );
-      if (stillThere === null) throw new Error("expected stored todo");
+
       deepStrictEqual(stillThere.id, aliceId);
     }).pipe(Effect.provide(TodosRepositoryFake)),
   );

@@ -1,5 +1,6 @@
 import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
 import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
@@ -15,13 +16,16 @@ export const findTodoOrganizationHandler = Effect.fn("findTodoOrganizationHandle
   query: FindTodoOrganizationPayload,
 ) {
   const sql = yield* Database.Database;
+
   const row = yield* sql`
     SELECT organization_id FROM todos.todos
     WHERE id = ${query.todoId} AND organization_id = ${query.organizationId}
   `.pipe(Database.maybeRow(OrgIdRow), translateDatabaseErrors);
-  return row === null
-    ? null
-    : ({
-        organizationId: OrganizationId.make(row.organization_id),
-      } satisfies TodoOrganizationView);
+
+  return Option.map(
+    row,
+    (found): TodoOrganizationView => ({
+      organizationId: OrganizationId.make(found.organization_id),
+    }),
+  );
 });

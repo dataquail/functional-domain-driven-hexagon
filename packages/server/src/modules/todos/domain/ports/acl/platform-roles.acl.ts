@@ -9,10 +9,10 @@ import { type PersistenceUnavailable } from "@/globals/application/ddd/persisten
 // boolean todos cares about rather than exposing a role list: the platform role
 // vocabulary stays entirely inside the adapter, so the role module can add,
 // rename, or restructure roles without touching this module.
-export type PlatformRolesShape = {
+export type PlatformRolesService = {
   readonly isSuperAdmin: (userId: UserId) => Effect.Effect<boolean, PersistenceUnavailable>;
 };
 
-export class PlatformRoles extends Context.Service<PlatformRoles, PlatformRolesShape>()(
+export class PlatformRoles extends Context.Service<PlatformRoles, PlatformRolesService>()(
   "@org/server/todos/PlatformRoles",
 ) {}

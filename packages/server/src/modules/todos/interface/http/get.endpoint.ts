@@ -31,5 +31,6 @@ export const getEndpoint = Effect.fn("TodosLive.get")(function* (
   yield* Authz.hasPermissions(TodoCollectionResource, Actions.Read, request.params.orgId);
   const queryBus = yield* QueryBus;
   const result = yield* queryBus.execute(ListTodosQuery, { organizationId: request.params.orgId });
+
   return toResponse(result);
 }, recoverPersistenceUnavailable);

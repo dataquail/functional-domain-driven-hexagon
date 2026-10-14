@@ -1,15 +1,14 @@
 import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
+import { describe } from "@effect/vitest";
+import { assertNone } from "@effect/vitest/utils";
 import { Database } from "@org/database/index";
-import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import { beforeEach } from "vitest";
 
 import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
 import { Spec } from "@/globals/application/ddd/specification.js";
@@ -19,7 +18,8 @@ import { TodoRootOps } from "@/modules/todos/domain/todo/todo.root-ops.js";
 import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js";
 import { TodoSpecifications } from "@/modules/todos/domain/todo/todos.specification.js";
 import { TodosRepositoryLive } from "@/modules/todos/infrastructure/repositories/todos.repository-live.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { describeIntegration } from "@/test-utils/server-test-runtime.js";
+import { TestDatabaseLive } from "@/test-utils/test-database.js";
 
 const aliceId = TodoId.make("11111111-1111-1111-1111-111111111111");
 const bobId = TodoId.make("22222222-2222-2222-2222-222222222222");
@@ -38,6 +38,7 @@ const byOrgAndId = (organizationId: OrganizationId, id: TodoId) =>
 // reach the org module's internals.
 const seedOrgs = Effect.gen(function* () {
   const sql = yield* Database.Database;
+
   for (const [id, name] of [
     [orgA, "Acme"],
     [orgB, "Beta"],
@@ -51,154 +52,154 @@ const seedOrgs = Effect.gen(function* () {
 
 const TestLayer = TodosRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-describe("TodosRepositoryLive (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate("todos.todos", "organization.organizations").pipe(Effect.provide(TestDatabaseLive)),
-    );
-  });
+describeIntegration(
+  "TodosRepositoryLive (integration)",
+  { layer: TestLayer, tables: ["todos.todos", "organization.organizations"] },
+  (it) => {
+    describe("insert", () => {
+      it.effect("persists the todo with its org and decodes it back via findOne", () =>
+        Effect.gen(function* () {
+          yield* seedOrgs;
+          const repo = yield* TodosRepository;
+          yield* repo.insertOne(buyMilk);
 
-  describe("insert", () => {
-    it.effect("persists the todo with its org and decodes it back via findOne", () =>
-      Effect.gen(function* () {
-        yield* seedOrgs;
-        const repo = yield* TodosRepository;
-        yield* repo.insertOne(buyMilk);
-        const found = yield* repo.findOne(byOrgAndId(orgA, buyMilk.id));
-        if (found === null) throw new Error("expected stored todo");
-        deepStrictEqual(found.id, buyMilk.id);
-        deepStrictEqual(found.organizationId, orgA);
-        deepStrictEqual(found.title, buyMilk.title);
-        deepStrictEqual(found.completed, false);
-      }).pipe(Effect.provide(TestLayer)),
-    );
-  });
+          const found = yield* Effect.map(
+            repo.findOne(byOrgAndId(orgA, buyMilk.id)),
+            Option.getOrThrow,
+          );
 
-  describe("findOne", () => {
-    it.effect("returns null for an unknown id", () =>
-      Effect.gen(function* () {
-        yield* seedOrgs;
-        const repo = yield* TodosRepository;
-        const found = yield* repo.findOne(byOrgAndId(orgA, bobId));
-        deepStrictEqual(found, null);
-      }).pipe(Effect.provide(TestLayer)),
-    );
+          deepStrictEqual(found.id, buyMilk.id);
+          deepStrictEqual(found.organizationId, orgA);
+          deepStrictEqual(found.title, buyMilk.title);
+          deepStrictEqual(found.completed, false);
+        }),
+      );
+    });
 
-    it.effect("returns null when the todo belongs to another org (tenant isolation)", () =>
-      Effect.gen(function* () {
-        yield* seedOrgs;
-        const repo = yield* TodosRepository;
-        yield* repo.insertOne(buyMilk);
-        const found = yield* repo.findOne(byOrgAndId(orgB, buyMilk.id));
-        deepStrictEqual(found, null);
-      }).pipe(Effect.provide(TestLayer)),
-    );
-  });
+    describe("findOne", () => {
+      it.effect("returns null for an unknown id", () =>
+        Effect.gen(function* () {
+          yield* seedOrgs;
+          const repo = yield* TodosRepository;
+          const found = yield* repo.findOne(byOrgAndId(orgA, bobId));
+          assertNone(found);
+        }),
+      );
 
-  describe("update", () => {
-    it.effect("overwrites title/completed and updatedAt", () =>
-      Effect.gen(function* () {
-        yield* seedOrgs;
-        const repo = yield* TodosRepository;
-        yield* repo.insertOne(buyMilk);
-        const completed = TodoRootOps.update(buyMilk, {
-          title: "Buy oat milk",
-          completed: true,
-          now: later,
-        });
-        yield* repo.updateOne(completed);
-        const found = yield* repo.findOne(byOrgAndId(orgA, buyMilk.id));
-        if (found === null) throw new Error("expected stored todo");
-        deepStrictEqual(found.title, "Buy oat milk");
-        deepStrictEqual(found.completed, true);
-        deepStrictEqual(
-          DateTime.toDate(found.updatedAt).toISOString(),
-          DateTime.toDate(later).toISOString(),
-        );
-      }).pipe(Effect.provide(TestLayer)),
-    );
+      it.effect("returns null when the todo belongs to another org (tenant isolation)", () =>
+        Effect.gen(function* () {
+          yield* seedOrgs;
+          const repo = yield* TodosRepository;
+          yield* repo.insertOne(buyMilk);
+          const found = yield* repo.findOne(byOrgAndId(orgB, buyMilk.id));
+          assertNone(found);
+        }),
+      );
+    });
 
-    it.effect("fails TodoNotFound when the todo isn't stored", () =>
-      Effect.gen(function* () {
-        yield* seedOrgs;
-        const repo = yield* TodosRepository;
-        const exit = yield* Effect.exit(repo.updateOne(buyMilk));
-        deepStrictEqual(Exit.isFailure(exit), true);
-        if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause)
-            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-            : null;
+    describe("update", () => {
+      it.effect("overwrites title/completed and updatedAt", () =>
+        Effect.gen(function* () {
+          yield* seedOrgs;
+          const repo = yield* TodosRepository;
+          yield* repo.insertOne(buyMilk);
+
+          const completed = TodoRootOps.update(buyMilk, {
+            title: "Buy oat milk",
+            completed: true,
+            now: later,
+          });
+
+          yield* repo.updateOne(completed);
+
+          const found = yield* Effect.map(
+            repo.findOne(byOrgAndId(orgA, buyMilk.id)),
+            Option.getOrThrow,
+          );
+
+          deepStrictEqual(found.title, "Buy oat milk");
+          deepStrictEqual(found.completed, true);
+          deepStrictEqual(
+            DateTime.toDate(found.updatedAt).toISOString(),
+            DateTime.toDate(later).toISOString(),
+          );
+        }),
+      );
+
+      it.effect("fails TodoNotFound when the todo isn't stored", () =>
+        Effect.gen(function* () {
+          yield* seedOrgs;
+          const repo = yield* TodosRepository;
+          const error = yield* Effect.flip(repo.updateOne(buyMilk));
+
           deepStrictEqual(Schema.is(TodoNotFound)(error), true);
-        }
-      }).pipe(Effect.provide(TestLayer)),
-    );
-  });
+        }),
+      );
+    });
 
-  describe("remove", () => {
-    it.effect("deletes the row", () =>
-      Effect.gen(function* () {
-        yield* seedOrgs;
-        const repo = yield* TodosRepository;
-        yield* repo.insertOne(buyMilk);
-        yield* repo.deleteOne(orgA, buyMilk.id);
-        const found = yield* repo.findOne(byOrgAndId(orgA, buyMilk.id));
-        deepStrictEqual(found, null);
-      }).pipe(Effect.provide(TestLayer)),
-    );
+    describe("remove", () => {
+      it.effect("deletes the row", () =>
+        Effect.gen(function* () {
+          yield* seedOrgs;
+          const repo = yield* TodosRepository;
+          yield* repo.insertOne(buyMilk);
+          yield* repo.deleteOne(orgA, buyMilk.id);
+          const found = yield* repo.findOne(byOrgAndId(orgA, buyMilk.id));
+          assertNone(found);
+        }),
+      );
 
-    it.effect("fails TodoNotFound (and leaves the row) when removing from the wrong org", () =>
-      Effect.gen(function* () {
-        yield* seedOrgs;
-        const repo = yield* TodosRepository;
-        yield* repo.insertOne(buyMilk);
-        const exit = yield* Effect.exit(repo.deleteOne(orgB, buyMilk.id));
-        deepStrictEqual(Exit.isFailure(exit), true);
-        if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause)
-            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-            : null;
+      it.effect("fails TodoNotFound (and leaves the row) when removing from the wrong org", () =>
+        Effect.gen(function* () {
+          yield* seedOrgs;
+          const repo = yield* TodosRepository;
+          yield* repo.insertOne(buyMilk);
+          const error = yield* Effect.flip(repo.deleteOne(orgB, buyMilk.id));
+
           deepStrictEqual(Schema.is(TodoNotFound)(error), true);
-        }
-        const found = yield* repo.findOne(byOrgAndId(orgA, buyMilk.id));
-        if (found === null) throw new Error("expected stored todo");
-        deepStrictEqual(found.id, buyMilk.id);
-      }).pipe(Effect.provide(TestLayer)),
-    );
 
-    it.effect("fails TodoNotFound when the todo isn't stored", () =>
-      Effect.gen(function* () {
-        yield* seedOrgs;
-        const repo = yield* TodosRepository;
-        const exit = yield* Effect.exit(repo.deleteOne(orgA, bobId));
-        deepStrictEqual(Exit.isFailure(exit), true);
-        if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause)
-            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-            : null;
+          const found = yield* Effect.map(
+            repo.findOne(byOrgAndId(orgA, buyMilk.id)),
+            Option.getOrThrow,
+          );
+
+          deepStrictEqual(found.id, buyMilk.id);
+        }),
+      );
+
+      it.effect("fails TodoNotFound when the todo isn't stored", () =>
+        Effect.gen(function* () {
+          yield* seedOrgs;
+          const repo = yield* TodosRepository;
+          const error = yield* Effect.flip(repo.deleteOne(orgA, bobId));
+
           deepStrictEqual(Schema.is(TodoNotFound)(error), true);
-        }
-      }).pipe(Effect.provide(TestLayer)),
-    );
-  });
+        }),
+      );
+    });
 
-  describe("transaction", () => {
-    it.effect("rolls back inserts when the body fails (surfaces typed error)", () =>
-      Effect.gen(function* () {
-        yield* seedOrgs;
-        const repo = yield* TodosRepository;
-        const sql = yield* Database.Database;
-        const exit = yield* Effect.exit(
-          sql.withTransaction(
-            Effect.gen(function* () {
-              yield* repo.insertOne(buyMilk);
-              return yield* new TodoNotFound({ todoId: bobId });
-            }),
-          ),
-        );
-        deepStrictEqual(Exit.isFailure(exit), true);
-        const after = yield* repo.findOne(byOrgAndId(orgA, buyMilk.id));
-        deepStrictEqual(after, null);
-      }).pipe(Effect.provide(TestLayer)),
-    );
-  });
-});
+    describe("transaction", () => {
+      it.effect("rolls back inserts when the body fails (surfaces typed error)", () =>
+        Effect.gen(function* () {
+          yield* seedOrgs;
+          const repo = yield* TodosRepository;
+          const sql = yield* Database.Database;
+
+          const exit = yield* Effect.exit(
+            sql.withTransaction(
+              Effect.gen(function* () {
+                yield* repo.insertOne(buyMilk);
+
+                return yield* new TodoNotFound({ todoId: bobId });
+              }),
+            ),
+          );
+
+          deepStrictEqual(Exit.isFailure(exit), true);
+          const after = yield* repo.findOne(byOrgAndId(orgA, buyMilk.id));
+          assertNone(after);
+        }),
+      );
+    });
+  },
+);

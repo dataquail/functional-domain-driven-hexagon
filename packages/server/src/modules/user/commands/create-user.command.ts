@@ -21,4 +21,5 @@ export const CreateUserCommand = Command.make("CreateUserCommand", {
   success: UserId,
   failure: Schema.Union([UserAlreadyExists, PersistenceUnavailable]),
 });
+
 export type CreateUserPayload = Command.Payload<typeof CreateUserCommand>;
