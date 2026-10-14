@@ -18,10 +18,11 @@ runs:
   using: composite
   steps:
     # Fails fast, naming the variable, rather than half-way through a deploy.
+    # Unscoped, check-env demands credentials for every provider Alchemy ships.
     - name: Check the provider credentials
       shell: bash
       working-directory: packages/infra
-      run: pnpm exec alchemy provider check-env
+      run: pnpm exec alchemy provider check-env --provider cloudflare --provider neon
 
     - name: Deploy
       shell: bash
