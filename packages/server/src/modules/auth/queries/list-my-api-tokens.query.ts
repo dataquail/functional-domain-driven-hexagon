@@ -15,6 +15,7 @@ export const ApiTokenView = Schema.Struct({
   createdAt: Schema.DateTimeUtc,
   lastUsedAt: Schema.DateTimeUtc,
 });
+
 export type ApiTokenView = typeof ApiTokenView.Type;
 
 // Lists the caller's active (non-revoked) tokens for the management UI.
@@ -23,4 +24,5 @@ export const ListMyApiTokensQuery = Query.make("ListMyApiTokensQuery", {
   success: Schema.Array(ApiTokenView),
   failure: PersistenceUnavailable,
 });
+
 export type ListMyApiTokensPayload = Query.Payload<typeof ListMyApiTokensQuery>;

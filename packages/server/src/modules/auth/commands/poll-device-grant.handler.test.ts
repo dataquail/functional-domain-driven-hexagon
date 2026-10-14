@@ -1,13 +1,11 @@
 import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertInstanceOf, assertNone, assertTrue } from "@effect/vitest/utils";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
-import * as Schema from "effect/Schema";
 
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { approveDeviceGrantHandler } from "@/modules/auth/commands/approve-device-grant.handler.js";
@@ -25,27 +23,24 @@ import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/de
 import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service.js";
 import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake.js";
 import { DeviceGrantRepositoryFake } from "@/modules/auth/infrastructure/repositories/device-grant.repository-fake.js";
+import { CryptoFake } from "@/test-utils/crypto-fake.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
+
 const TestLayer = Layer.mergeAll(
   DeviceGrantRepositoryFake,
   ApiTokenRepositoryFake,
   PassThroughUnitOfWork,
+  CryptoFake,
 );
+
 const poll = (deviceCode: string) => pollDeviceGrantHandler({ deviceCode, tokenExpiresInDays: 90 });
-const errorOf = (exit: Exit.Exit<unknown, unknown>) =>
-  Exit.isFailure(exit) && Cause.hasFails(exit.cause)
-    ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-    : null;
 
 describe("pollDeviceGrantHandler", () => {
   it.effect("fails DeviceGrantPending before approval", () =>
     Effect.gen(function* () {
       const { deviceCode } = yield* startDeviceGrantHandler({ ttlSeconds: 600 });
-      deepStrictEqual(
-        Schema.is(DeviceGrantPending)(errorOf(yield* Effect.exit(poll(deviceCode)))),
-        true,
-      );
+      assertInstanceOf(yield* Effect.flip(poll(deviceCode)), DeviceGrantPending);
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -59,40 +54,35 @@ describe("pollDeviceGrantHandler", () => {
       deepStrictEqual(apiToken.userId, userId);
       // Minted token is resolvable by its hash…
       const apiTokens = yield* ApiTokenRepository;
+
       const foundToken = yield* apiTokens.findOne(
         ApiTokenSpecifications.withHash(CredentialHash.of(token)),
       );
-      if (foundToken === null) throw new Error("expected an api token");
-      deepStrictEqual(foundToken.id, apiToken.id);
+
+      assertTrue(Option.isSome(foundToken));
+      deepStrictEqual(foundToken.value.id, apiToken.id);
       // …and the grant is consumed: a second poll finds nothing.
       const grants = yield* DeviceGrantRepository;
+
       const consumed = yield* grants.findOne(
         DeviceGrantSpecifications.withCodeHash(CredentialHash.of(deviceCode)),
       );
-      deepStrictEqual(consumed, null);
-      deepStrictEqual(
-        Schema.is(DeviceGrantNotFound)(errorOf(yield* Effect.exit(poll(deviceCode)))),
-        true,
-      );
+
+      assertNone(consumed);
+      assertInstanceOf(yield* Effect.flip(poll(deviceCode)), DeviceGrantNotFound);
     }).pipe(Effect.provide(TestLayer)),
   );
 
   it.effect("fails DeviceGrantExpired for a lapsed grant", () =>
     Effect.gen(function* () {
       const { deviceCode } = yield* startDeviceGrantHandler({ ttlSeconds: -10 });
-      deepStrictEqual(
-        Schema.is(DeviceGrantExpired)(errorOf(yield* Effect.exit(poll(deviceCode)))),
-        true,
-      );
+      assertInstanceOf(yield* Effect.flip(poll(deviceCode)), DeviceGrantExpired);
     }).pipe(Effect.provide(TestLayer)),
   );
 
   it.effect("fails DeviceGrantNotFound for an unknown device code", () =>
     Effect.gen(function* () {
-      deepStrictEqual(
-        Schema.is(DeviceGrantNotFound)(errorOf(yield* Effect.exit(poll("bogus")))),
-        true,
-      );
+      assertInstanceOf(yield* Effect.flip(poll("bogus")), DeviceGrantNotFound);
     }).pipe(Effect.provide(TestLayer)),
   );
 });

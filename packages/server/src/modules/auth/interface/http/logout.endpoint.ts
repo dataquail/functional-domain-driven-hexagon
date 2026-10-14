@@ -3,6 +3,7 @@ import * as cookie from "cookie";
 import * as Effect from "effect/Effect";
 import * as HttpServerRequest from "effect/http/HttpServerRequest";
 import * as HttpServerResponse from "effect/http/HttpServerResponse";
+import * as Option from "effect/Option";
 
 import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.js";
 import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
@@ -10,7 +11,11 @@ import { RevokeSessionCommand } from "@/modules/auth/commands/revoke-session.com
 import { SessionId } from "@/modules/auth/domain/session/session.id.js";
 import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client.js";
 
-import { ID_TOKEN_HINT_COOKIE_NAME, readIdTokenHint } from "./id-token-hint-cookie.util.js";
+import {
+  ID_TOKEN_HINT_COOKIE_NAME,
+  readCookie,
+  readIdTokenHint,
+} from "./id-token-hint-cookie.util.js";
 
 // Reads the session cookie inline rather than through middleware: logout must work
 // even when the session is already gone.
@@ -22,12 +27,13 @@ export const logoutEndpoint = Effect.fn("AuthLive.logout")(function* () {
   const commandBus = yield* CommandBus;
 
   const cookies = cookie.parse(httpReq.headers.cookie ?? "");
-  const raw = cookies[env.SESSION_COOKIE_NAME];
-  if (raw !== undefined && raw !== "") {
-    const verified = codec.verify(raw);
-    if (verified !== null) {
-      yield* commandBus.execute(RevokeSessionCommand, { sessionId: SessionId.make(verified) });
-    }
+
+  const sessionId = Option.flatMap(readCookie(cookies, env.SESSION_COOKIE_NAME), (raw) =>
+    codec.verify(raw),
+  );
+
+  if (Option.isSome(sessionId)) {
+    yield* commandBus.execute(RevokeSessionCommand, { sessionId: SessionId.make(sessionId.value) });
   }
 
   const endSessionUrl = yield* oidc.buildEndSessionUrl(readIdTokenHint(cookies)).pipe(

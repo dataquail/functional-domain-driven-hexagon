@@ -15,6 +15,7 @@ export const meEndpoint = Effect.fn("AuthLive.me")(function* (
   const user = yield* CurrentUser;
   const queryBus = yield* QueryBus;
   const view = yield* queryBus.execute(FindCurrentUserQuery, { userId: user.userId });
+
   return new AuthContract.CurrentUserResponse({
     userId: view.userId,
     isSuperAdmin: view.isSuperAdmin,

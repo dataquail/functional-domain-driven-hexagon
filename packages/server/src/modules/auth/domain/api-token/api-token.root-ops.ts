@@ -1,4 +1,5 @@
 import type * as DateTime from "effect/DateTime";
+import * as Option from "effect/Option";
 
 import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
 
@@ -12,7 +13,7 @@ export type MintInput = {
   readonly prefix: string;
   readonly label: string;
   readonly now: DateTime.Utc;
-  readonly expiresAt: DateTime.Utc | null;
+  readonly expiresAt: Option.Option<DateTime.Utc>;
 };
 
 const mint = (input: MintInput): ApiTokenRoot =>
@@ -23,7 +24,7 @@ const mint = (input: MintInput): ApiTokenRoot =>
     prefix: input.prefix,
     label: input.label,
     expiresAt: input.expiresAt,
-    revokedAt: null,
+    revokedAt: Option.none(),
     createdAt: input.now,
     lastUsedAt: input.now,
   });

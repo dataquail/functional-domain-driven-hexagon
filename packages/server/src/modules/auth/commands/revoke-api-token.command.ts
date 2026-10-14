@@ -14,4 +14,5 @@ export const RevokeApiTokenCommand = Command.make("RevokeApiTokenCommand", {
   success: Schema.Void,
   failure: Schema.Union([ApiTokenNotFound, PersistenceUnavailable]),
 });
+
 export type RevokeApiTokenPayload = Command.Payload<typeof RevokeApiTokenCommand>;

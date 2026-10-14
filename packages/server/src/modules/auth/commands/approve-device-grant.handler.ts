@@ -1,6 +1,7 @@
 import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
 import { type ApproveDeviceGrantPayload } from "@/modules/auth/commands/approve-device-grant.command.js";
 import {
@@ -20,13 +21,19 @@ export const approveDeviceGrantHandler = Effect.fn("approveDeviceGrantHandler")(
   cmd: ApproveDeviceGrantPayload,
 ) {
   const repo = yield* DeviceGrantRepository;
-  const grant = yield* repo.findOne(DeviceGrantSpecifications.withUserCode(cmd.userCode));
-  if (grant === null) {
+  const found = yield* repo.findOne(DeviceGrantSpecifications.withUserCode(cmd.userCode));
+
+  if (Option.isNone(found)) {
     return yield* new DeviceGrantNotFound();
   }
+
+  const grant = found.value;
+
   const now = yield* DateTime.now;
+
   if (DeviceGrantSpecifications.isExpired(grant, now)) {
     return yield* new DeviceGrantExpired();
   }
+
   yield* repo.updateOne(DeviceGrantRootOps.approve({ grant, userId: cmd.userId, now }));
 }, withUnitOfWork);

@@ -17,10 +17,13 @@ export const deviceStartEndpoint = Effect.fn("CliAuthLive.deviceStart")(function
 ) {
   const env = yield* EnvVars;
   const commandBus = yield* CommandBus;
+
   const { deviceCode, userCode } = yield* commandBus.execute(StartDeviceGrantCommand, {
     ttlSeconds: env.DEVICE_CODE_TTL_SECONDS,
   });
+
   const verificationUri = `${env.APP_URL}/device`;
+
   return new CliAuthContract.DeviceStartResponse({
     device_code: deviceCode,
     user_code: userCode,

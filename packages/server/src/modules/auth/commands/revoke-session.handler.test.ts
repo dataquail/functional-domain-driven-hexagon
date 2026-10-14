@@ -1,6 +1,7 @@
-import { deepStrictEqual, ok } from "node:assert";
+import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertSome } from "@effect/vitest/utils";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -23,6 +24,7 @@ const now = DateTime.makeUnsafe("2025-01-01T00:00:00Z");
 const seedSession = () =>
   Effect.gen(function* () {
     const repo = yield* SessionRepository;
+
     const session = SessionRootOps.create({
       id: sessionId,
       userId,
@@ -31,6 +33,7 @@ const seedSession = () =>
       ttlSeconds: 3600,
       absoluteTtlSeconds: 43200,
     });
+
     yield* repo.insertOne(session);
   });
 
@@ -41,6 +44,7 @@ const deleteOneFailingWith = (failure: SessionRevoked | PersistenceUnavailable) 
     SessionRepository,
     Effect.gen(function* () {
       const repo = yield* SessionRepository;
+
       return SessionRepository.of({ ...repo, deleteOne: () => failure });
     }),
   ).pipe(Layer.provide(SessionRepositoryFake));
@@ -52,8 +56,10 @@ describe("revokeSessionHandler", () => {
       yield* revokeSessionHandler({ sessionId });
       const repo = yield* SessionRepository;
       const found = yield* repo.findOne(SessionSpecifications.withId(sessionId));
-      ok(found !== null);
-      ok(Option.isSome(Option.fromNullishOr(found.revokedAt)));
+      assertSome(
+        Option.map(found, (session) => Option.isSome(session.revokedAt)),
+        true,
+      );
     }).pipe(provide),
   );
 

@@ -10,6 +10,7 @@ import { type DeviceGrantRoot } from "./device-grant.root.js";
 // compile error.
 const withCodeHash = (deviceCodeHash: string): Specification<DeviceGrantRoot> =>
   Spec.eq<DeviceGrantRoot, "deviceCodeHash">("deviceCodeHash", deviceCodeHash);
+
 const withUserCode = (userCode: string): Specification<DeviceGrantRoot> =>
   Spec.eq<DeviceGrantRoot, "userCode">("userCode", userCode);
 

@@ -1,9 +1,11 @@
 import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertNone, assertTrue } from "@effect/vitest/utils";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { mintApiTokenHandler } from "@/modules/auth/commands/mint-api-token.handler.js";
@@ -12,9 +14,10 @@ import { API_TOKEN_PREFIX } from "@/modules/auth/domain/api-token/api-token.root
 import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
 import { CredentialHash } from "@/modules/auth/domain/domain-services/credential-hash.domain-service.js";
 import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake.js";
+import { CryptoFake } from "@/test-utils/crypto-fake.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
-const TestLayer = Layer.mergeAll(ApiTokenRepositoryFake, PassThroughUnitOfWork);
+const TestLayer = Layer.mergeAll(ApiTokenRepositoryFake, PassThroughUnitOfWork, CryptoFake);
 
 describe("mintApiTokenHandler", () => {
   it.effect("returns a plaintext token once and persists only its hash", () =>
@@ -24,6 +27,7 @@ describe("mintApiTokenHandler", () => {
         label: "ci",
         expiresInDays: 90,
       });
+
       // Plaintext is the prefixed opaque token; the stored hash matches it.
       ok(token.startsWith(`${API_TOKEN_PREFIX}_`));
       deepStrictEqual(apiToken.tokenHash, CredentialHash.of(token));
@@ -32,14 +36,15 @@ describe("mintApiTokenHandler", () => {
       ok(token.startsWith(apiToken.prefix));
       deepStrictEqual(apiToken.userId, userId);
       deepStrictEqual(apiToken.label, "ci");
-      deepStrictEqual(apiToken.revokedAt, null);
-      ok(apiToken.expiresAt !== null);
+      assertNone(apiToken.revokedAt);
+      assertTrue(Option.isSome(apiToken.expiresAt));
 
       // Round-trips: the minted token resolves by its hash.
       const repo = yield* ApiTokenRepository;
       const found = yield* repo.findOne(ApiTokenSpecifications.withHash(CredentialHash.of(token)));
-      if (found === null) throw new Error("expected an api token");
-      deepStrictEqual(found.id, apiToken.id);
+
+      assertTrue(Option.isSome(found));
+      deepStrictEqual(found.value.id, apiToken.id);
     }).pipe(Effect.provide(TestLayer)),
   );
 

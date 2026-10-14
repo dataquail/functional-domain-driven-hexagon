@@ -16,4 +16,5 @@ export const RevokeSessionCommand = Command.make("RevokeSessionCommand", {
   payload: { sessionId: SessionId },
   success: Schema.Void,
 });
+
 export type RevokeSessionPayload = Command.Payload<typeof RevokeSessionCommand>;

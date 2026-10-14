@@ -4,6 +4,7 @@ import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { Criteria } from "@/globals/application/ddd/specification.js";
 
 import { SessionId } from "./session.id.js";
 import { SessionRootOps } from "./session.root-ops.js";
@@ -30,10 +31,9 @@ describe("SessionSpecifications.withId", () => {
   });
 
   it("carries an Eq criteria over the id column", () => {
-    deepStrictEqual(SessionSpecifications.withId(sessionId).criteria, {
-      _tag: "Eq",
-      field: "id",
-      value: sessionId,
-    });
+    deepStrictEqual(
+      SessionSpecifications.withId(sessionId).criteria,
+      Criteria.Eq({ field: "id", value: sessionId }),
+    );
   });
 });

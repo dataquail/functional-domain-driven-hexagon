@@ -1,6 +1,7 @@
 import { Command, Query } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { userAccessCommands, userSignInAccessQueries } from "@/modules/auth/auth.imports.js";
 import {
@@ -20,6 +21,7 @@ export const UserProvisioningLive = Layer.effect(
   Effect.gen(function* () {
     const userCommands = yield* Command.dispatcher(userAccessCommands);
     const userQueries = yield* Query.dispatcher(userSignInAccessQueries);
+
     return UserProvisioning.of({
       provision: (email) =>
         userCommands.CreateUserCommand({ email }).pipe(
@@ -29,7 +31,7 @@ export const UserProvisioningLive = Layer.effect(
       findByEmail: (email) =>
         userQueries
           .FindUserIdByEmailQuery({ email })
-          .pipe(Effect.withSpan("UserProvisioning.findByEmail")),
+          .pipe(Effect.map(Option.fromNullOr), Effect.withSpan("UserProvisioning.findByEmail")),
     });
   }),
 );

@@ -1,5 +1,6 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
+import * as Option from "effect/Option";
 
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.js";
@@ -23,8 +24,8 @@ export const toDomain = (row: RowSchemas.ApiTokenRow): ApiTokenRoot =>
     tokenHash: row.token_hash,
     prefix: row.prefix,
     label: row.label,
-    expiresAt: row.expires_at,
-    revokedAt: row.revoked_at,
+    expiresAt: Option.fromNullOr(row.expires_at),
+    revokedAt: Option.fromNullOr(row.revoked_at),
     createdAt: row.created_at,
     lastUsedAt: row.last_used_at,
   });
@@ -35,8 +36,8 @@ export const toPersistence = (token: ApiTokenRoot) => ({
   token_hash: token.tokenHash,
   prefix: token.prefix,
   label: token.label,
-  expires_at: token.expiresAt === null ? null : DateTime.toDate(token.expiresAt),
-  revoked_at: token.revokedAt === null ? null : DateTime.toDate(token.revokedAt),
+  expires_at: Option.getOrNull(Option.map(token.expiresAt, DateTime.toDate)),
+  revoked_at: Option.getOrNull(Option.map(token.revokedAt, DateTime.toDate)),
   created_at: DateTime.toDate(token.createdAt),
   last_used_at: DateTime.toDate(token.lastUsedAt),
 });

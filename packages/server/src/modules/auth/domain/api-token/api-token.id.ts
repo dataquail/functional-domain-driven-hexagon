@@ -6,4 +6,5 @@ import * as Schema from "effect/Schema";
 // `string & Brand<"ApiTokenId">`, so a domain id flows into a contract
 // field without a cast.
 export const ApiTokenId = Schema.String.check(Schema.isGUID()).pipe(Schema.brand("ApiTokenId"));
+
 export type ApiTokenId = typeof ApiTokenId.Type;

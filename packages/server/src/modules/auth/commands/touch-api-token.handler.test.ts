@@ -4,6 +4,7 @@ import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
@@ -21,6 +22,7 @@ const userId = UserId.make("22222222-2222-2222-2222-222222222222");
 const seed = (lastUsedAt: DateTime.Utc) =>
   Effect.gen(function* () {
     const repo = yield* ApiTokenRepository;
+
     const token = ApiTokenRootOps.mint({
       id: apiTokenId,
       userId,
@@ -28,9 +30,11 @@ const seed = (lastUsedAt: DateTime.Utc) =>
       prefix: "pat_abcd1234",
       label: "ci",
       now: lastUsedAt,
-      expiresAt: DateTime.add(lastUsedAt, { days: 90 }),
+      expiresAt: Option.some(DateTime.add(lastUsedAt, { days: 90 })),
     });
+
     yield* repo.insertOne(token);
+
     return token;
   });
 
@@ -42,6 +46,7 @@ const updateOneFailingWith = (failure: ApiTokenNotFound | PersistenceUnavailable
     ApiTokenRepository,
     Effect.gen(function* () {
       const repo = yield* ApiTokenRepository;
+
       return ApiTokenRepository.of({ ...repo, updateOne: () => failure });
     }),
   ).pipe(Layer.provide(ApiTokenRepositoryFake));
@@ -56,8 +61,11 @@ describe("touchApiTokenHandler", () => {
       const before = yield* seed(farPast);
       yield* touchApiTokenHandler(cmd);
       const repo = yield* ApiTokenRepository;
-      const after = yield* repo.findOne(ApiTokenSpecifications.withId(apiTokenId));
-      if (after === null) throw new Error("expected an api token");
+
+      const after = yield* repo
+        .findOne(ApiTokenSpecifications.withId(apiTokenId))
+        .pipe(Effect.flatMap(Effect.fromOption));
+
       deepStrictEqual(DateTime.isGreaterThan(after.lastUsedAt, before.lastUsedAt), true);
       // Fixed expiry: touch must NOT extend it.
       deepStrictEqual(after.expiresAt, before.expiresAt);
@@ -70,8 +78,11 @@ describe("touchApiTokenHandler", () => {
       const before = yield* seed(justNow);
       yield* touchApiTokenHandler({ apiTokenId, thresholdSeconds: 3600 });
       const repo = yield* ApiTokenRepository;
-      const after = yield* repo.findOne(ApiTokenSpecifications.withId(apiTokenId));
-      if (after === null) throw new Error("expected an api token");
+
+      const after = yield* repo
+        .findOne(ApiTokenSpecifications.withId(apiTokenId))
+        .pipe(Effect.flatMap(Effect.fromOption));
+
       deepStrictEqual(after.lastUsedAt, before.lastUsedAt);
     }).pipe(provide),
   );

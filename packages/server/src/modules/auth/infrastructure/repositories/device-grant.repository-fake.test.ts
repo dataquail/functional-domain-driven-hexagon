@@ -1,9 +1,11 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertNone } from "@effect/vitest/utils";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
 
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.js";
@@ -20,6 +22,7 @@ const now = DateTime.makeUnsafe("2025-01-01T00:00:00Z");
 const seed = () =>
   Effect.gen(function* () {
     const repo = yield* DeviceGrantRepository;
+
     const grant = DeviceGrantRootOps.start({
       id,
       deviceCodeHash: "dc-hash",
@@ -27,7 +30,9 @@ const seed = () =>
       now,
       ttlSeconds: 600,
     });
+
     yield* repo.insertOne(grant);
+
     return grant;
   });
 
@@ -38,9 +43,15 @@ describe("DeviceGrantRepositoryFake", () => {
     Effect.gen(function* () {
       yield* seed();
       const repo = yield* DeviceGrantRepository;
-      const byHash = yield* repo.findOne(DeviceGrantSpecifications.withCodeHash("dc-hash"));
-      const byUser = yield* repo.findOne(DeviceGrantSpecifications.withUserCode("ABCD-2345"));
-      if (byHash === null || byUser === null) throw new Error("expected a grant");
+
+      const byHash = yield* repo
+        .findOne(DeviceGrantSpecifications.withCodeHash("dc-hash"))
+        .pipe(Effect.flatMap(Effect.fromOption));
+
+      const byUser = yield* repo
+        .findOne(DeviceGrantSpecifications.withUserCode("ABCD-2345"))
+        .pipe(Effect.flatMap(Effect.fromOption));
+
       deepStrictEqual(byHash.id, id);
       deepStrictEqual(byUser.id, id);
     }).pipe(provide),
@@ -50,7 +61,7 @@ describe("DeviceGrantRepositoryFake", () => {
     Effect.gen(function* () {
       const repo = yield* DeviceGrantRepository;
       const found = yield* repo.findOne(DeviceGrantSpecifications.withUserCode("ZZZZ-9999"));
-      deepStrictEqual(found, null);
+      assertNone(found);
     }).pipe(provide),
   );
 
@@ -59,10 +70,13 @@ describe("DeviceGrantRepositoryFake", () => {
       const grant = yield* seed();
       const repo = yield* DeviceGrantRepository;
       yield* repo.updateOne(DeviceGrantRootOps.approve({ grant, userId, now }));
-      const after = yield* repo.findOne(DeviceGrantSpecifications.withCodeHash("dc-hash"));
-      if (after === null) throw new Error("expected a grant");
+
+      const after = yield* repo
+        .findOne(DeviceGrantSpecifications.withCodeHash("dc-hash"))
+        .pipe(Effect.flatMap(Effect.fromOption));
+
       deepStrictEqual(after.status, "approved");
-      deepStrictEqual(after.userId, userId);
+      deepStrictEqual(after.userId, Option.some(userId));
     }).pipe(provide),
   );
 
@@ -72,7 +86,7 @@ describe("DeviceGrantRepositoryFake", () => {
       const repo = yield* DeviceGrantRepository;
       yield* repo.deleteOne(id);
       const lookup = yield* repo.findOne(DeviceGrantSpecifications.withCodeHash("dc-hash"));
-      deepStrictEqual(lookup, null);
+      assertNone(lookup);
       const second = yield* Effect.exit(repo.deleteOne(id));
       deepStrictEqual(Exit.isFailure(second), true);
     }).pipe(provide),

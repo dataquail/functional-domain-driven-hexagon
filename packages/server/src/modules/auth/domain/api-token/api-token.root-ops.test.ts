@@ -1,7 +1,9 @@
 import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertNone } from "@effect/vitest/utils";
 import * as DateTime from "effect/DateTime";
+import * as Option from "effect/Option";
 
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 
@@ -12,7 +14,7 @@ const apiTokenId = ApiTokenId.make("11111111-1111-1111-1111-111111111111");
 const userId = UserId.make("22222222-2222-2222-2222-222222222222");
 const now = DateTime.makeUnsafe("2025-01-01T00:00:00Z");
 
-const mint = (expiresAt: DateTime.Utc | null) =>
+const mint = (expiresAt: Option.Option<DateTime.Utc>) =>
   ApiTokenRootOps.mint({
     id: apiTokenId,
     userId,
@@ -26,13 +28,13 @@ const mint = (expiresAt: DateTime.Utc | null) =>
 describe("ApiTokenRootOps.mint", () => {
   it("populates required fields and starts unrevoked", () => {
     const expiresAt = DateTime.add(now, { days: 90 });
-    const token = mint(expiresAt);
+    const token = mint(Option.some(expiresAt));
     deepStrictEqual(token.id, apiTokenId);
     deepStrictEqual(token.userId, userId);
     deepStrictEqual(token.label, "ci");
     deepStrictEqual(token.prefix, "pat_abcd1234");
-    deepStrictEqual(token.expiresAt, expiresAt);
-    deepStrictEqual(token.revokedAt, null);
+    deepStrictEqual(token.expiresAt, Option.some(expiresAt));
+    assertNone(token.revokedAt);
     deepStrictEqual(token.createdAt, now);
     deepStrictEqual(token.lastUsedAt, now);
   });
@@ -41,11 +43,11 @@ describe("ApiTokenRootOps.mint", () => {
 describe("ApiTokenRootOps.touch", () => {
   it("advances lastUsedAt but never extends expiresAt (fixed expiry)", () => {
     const expiresAt = DateTime.add(now, { days: 90 });
-    const seed = mint(expiresAt);
+    const seed = mint(Option.some(expiresAt));
     const later = DateTime.add(now, { days: 1 });
     const touched = ApiTokenRootOps.touch({ token: seed, now: later });
     deepStrictEqual(touched.lastUsedAt, later);
-    deepStrictEqual(touched.expiresAt, expiresAt);
+    deepStrictEqual(touched.expiresAt, Option.some(expiresAt));
     deepStrictEqual(touched.id, seed.id);
     deepStrictEqual(touched.createdAt, seed.createdAt);
     deepStrictEqual(touched.tokenHash, seed.tokenHash);

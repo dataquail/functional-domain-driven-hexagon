@@ -1,6 +1,5 @@
 import { ok } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
 import { AuthContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Cause from "effect/Cause";
@@ -11,7 +10,7 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
 import { Api } from "@/globals/infrastructure/framework/http/api.js";
-import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
+import { describeServer } from "@/test-utils/server-test-runtime.js";
 
 // The callback happy path (PKCE cookie present → code exchange with the issuer →
 // session issued) needs a live identity Worker and is covered end-to-end by Playwright
@@ -22,13 +21,14 @@ import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
 // before any code exchange is attempted. This is the CSRF/replay defense, and
 // it's reachable without an IdP because it fails before `OidcClient` is called.
 
-describe("GET /auth/callback (integration)", () => {
-  const { run } = useServerTestRuntime(["auth.sessions", "user.users"]);
-
-  it("rejects a callback with no OIDC state cookie as 401 Unauthorized", async () => {
-    await run(
+describeServer(
+  "GET /auth/callback (integration)",
+  { tables: ["auth.sessions", "user.users"] },
+  (it) => {
+    it.effect("rejects a callback with no OIDC state cookie as 401 Unauthorized", () =>
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
+
         // An issuer redirect carries code+state, but with no PKCE cookie on the
         // request the endpoint must refuse before touching the IdP.
         const exit = yield* Effect.exit(
@@ -39,7 +39,9 @@ describe("GET /auth/callback (integration)", () => {
             }),
           }),
         );
+
         ok(Exit.isFailure(exit));
+
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           ok(
             Schema.is(CustomHttpApiError.Unauthorized)(
@@ -49,5 +51,5 @@ describe("GET /auth/callback (integration)", () => {
         }
       }),
     );
-  });
-});
+  },
+);

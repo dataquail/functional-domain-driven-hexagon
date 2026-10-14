@@ -35,4 +35,5 @@ export const MintApiTokenCommand = Command.make("MintApiTokenCommand", {
   success: MintApiTokenResultView,
   failure: PersistenceUnavailable,
 });
+
 export type MintApiTokenPayload = Command.Payload<typeof MintApiTokenCommand>;

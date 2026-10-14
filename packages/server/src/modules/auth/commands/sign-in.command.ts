@@ -13,6 +13,7 @@ export const SignInResultView = Schema.Struct({
   sessionId: SessionId,
   userId: UserId,
 });
+
 export type SignInResult = typeof SignInResultView.Type;
 
 // Inputs come from the OIDC callback: the issuer's `subject`, the signed-in `email`
@@ -20,7 +21,7 @@ export type SignInResult = typeof SignInResultView.Type;
 export const SignInCommand = Command.make("SignInCommand", {
   payload: {
     subject: Schema.String,
-    email: Schema.NullOr(Schema.String),
+    email: Schema.Option(Schema.String),
     emailVerified: Schema.Boolean,
     ttlSeconds: Schema.Int,
     absoluteTtlSeconds: Schema.Int,
@@ -32,4 +33,5 @@ export const SignInCommand = Command.make("SignInCommand", {
     PersistenceUnavailable,
   ]),
 });
+
 export type SignInPayload = Command.Payload<typeof SignInCommand>;

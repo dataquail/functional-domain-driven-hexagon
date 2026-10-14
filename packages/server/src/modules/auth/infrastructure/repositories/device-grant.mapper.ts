@@ -1,5 +1,6 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
+import * as Option from "effect/Option";
 
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.js";
@@ -14,18 +15,24 @@ export const columns = {
   userCode: "user_code",
 } as const satisfies Partial<Record<keyof DeviceGrantRoot, string>> & ColumnMap;
 
+// The column is a free-text varchar at the DB level; collapse anything other
+// than the approved sentinel to pending.
+const toStatus = (status: string): DeviceGrantRoot["status"] => {
+  if (status === "approved") return "approved";
+
+  return "pending";
+};
+
 export const toDomain = (row: RowSchemas.DeviceGrantRow): DeviceGrantRoot =>
   DeviceGrantRoot.make({
     id: DeviceGrantId.make(row.id),
     deviceCodeHash: row.device_code_hash,
     userCode: row.user_code,
-    // The column is a free-text varchar at the DB level; collapse anything
-    // other than the approved sentinel to pending.
-    status: row.status === "approved" ? "approved" : "pending",
-    userId: row.user_id === null ? null : UserId.make(row.user_id),
+    status: toStatus(row.status),
+    userId: Option.map(Option.fromNullOr(row.user_id), UserId.make),
     createdAt: row.created_at,
     expiresAt: row.expires_at,
-    approvedAt: row.approved_at,
+    approvedAt: Option.fromNullOr(row.approved_at),
   });
 
 export const toPersistence = (grant: DeviceGrantRoot) => ({
@@ -33,8 +40,8 @@ export const toPersistence = (grant: DeviceGrantRoot) => ({
   device_code_hash: grant.deviceCodeHash,
   user_code: grant.userCode,
   status: grant.status,
-  user_id: grant.userId,
+  user_id: Option.getOrNull(grant.userId),
   created_at: DateTime.toDate(grant.createdAt),
   expires_at: DateTime.toDate(grant.expiresAt),
-  approved_at: grant.approvedAt === null ? null : DateTime.toDate(grant.approvedAt),
+  approved_at: Option.getOrNull(Option.map(grant.approvedAt, DateTime.toDate)),
 });

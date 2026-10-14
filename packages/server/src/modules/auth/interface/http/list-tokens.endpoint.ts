@@ -17,6 +17,7 @@ export const listTokensEndpoint = Effect.fn("AuthLive.tokens.list")(function* (
   const currentUser = yield* CurrentUser;
   const queryBus = yield* QueryBus;
   const tokens = yield* queryBus.execute(ListMyApiTokensQuery, { userId: currentUser.userId });
+
   return tokens.map(
     (t) =>
       new AuthContract.ApiTokenSummary({

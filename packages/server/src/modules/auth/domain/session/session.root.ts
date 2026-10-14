@@ -4,13 +4,15 @@ import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 
 import { SessionId } from "./session.id.js";
 
-export class SessionRoot extends Schema.Class<SessionRoot>("SessionRoot")({
+export class SessionRoot extends Schema.Class<SessionRoot, { readonly brand: "SessionRoot" }>(
+  "SessionRoot",
+)({
   id: SessionId,
   userId: UserId,
   subject: Schema.String,
   expiresAt: Schema.DateTimeUtc,
   absoluteExpiresAt: Schema.DateTimeUtc,
-  revokedAt: Schema.NullOr(Schema.DateTimeUtc),
+  revokedAt: Schema.Option(Schema.DateTimeUtc),
   createdAt: Schema.DateTimeUtc,
   lastUsedAt: Schema.DateTimeUtc,
 }) {}

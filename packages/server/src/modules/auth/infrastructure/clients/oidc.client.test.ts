@@ -30,12 +30,17 @@ const discoveryDocument = {
 };
 
 const recordingTransport = (requested: Array<string>) =>
-  Layer.succeed(IssuerTransport, {
-    fetch: async (url) => {
-      requested.push(url);
-      return Response.json(discoveryDocument);
-    },
-  });
+  Layer.succeed(
+    IssuerTransport,
+    IssuerTransport.of({
+      fetch: (url) => {
+        requested.push(url);
+
+        // oxlint-disable-next-line effect/noNewPromise -- the transport fakes openid-client's Promise-returning fetch contract
+        return Promise.resolve(Response.json(discoveryDocument));
+      },
+    }),
+  );
 
 const clientWith = (transport: Layer.Layer<never>) =>
   OidcClient.layer.pipe(
@@ -44,16 +49,15 @@ const clientWith = (transport: Layer.Layer<never>) =>
   );
 
 describe("OidcClient", () => {
-  it.effect("discovers the issuer through the transport it is given", () =>
-    Effect.gen(function* () {
-      const requested: Array<string> = [];
-      const authorize = yield* Effect.flatMap(
-        Effect.service(OidcClient),
-        (client) => client.buildAuthorize,
-      ).pipe(Effect.provide(clientWith(recordingTransport(requested))));
+  it.effect("discovers the issuer through the transport it is given", () => {
+    const requested: Array<string> = [];
+
+    return Effect.gen(function* () {
+      const client = yield* OidcClient;
+      const authorize = yield* client.buildAuthorize;
 
       deepStrictEqual(requested, [`${ISSUER}/.well-known/openid-configuration`]);
       deepStrictEqual(authorize.url.origin + authorize.url.pathname, `${ISSUER}/oauth2/authorize`);
-    }),
-  );
+    }).pipe(Effect.provide(clientWith(recordingTransport(requested))));
+  });
 });

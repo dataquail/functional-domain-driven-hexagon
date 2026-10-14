@@ -8,10 +8,10 @@ import { type PersistenceUnavailable } from "@/globals/application/ddd/persisten
 // caller is a platform super admin so the client can route on it; that fact
 // belongs to the role module, and this port is how auth asks for it without
 // learning the role vocabulary.
-export type PlatformRolesShape = {
+export type PlatformRolesService = {
   readonly isSuperAdmin: (userId: UserId) => Effect.Effect<boolean, PersistenceUnavailable>;
 };
 
-export class PlatformRoles extends Context.Service<PlatformRoles, PlatformRolesShape>()(
+export class PlatformRoles extends Context.Service<PlatformRoles, PlatformRolesService>()(
   "@org/server/auth/PlatformRoles",
 ) {}

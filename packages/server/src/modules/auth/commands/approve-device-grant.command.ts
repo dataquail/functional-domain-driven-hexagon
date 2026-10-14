@@ -15,4 +15,5 @@ export const ApproveDeviceGrantCommand = Command.make("ApproveDeviceGrantCommand
   success: Schema.Void,
   failure: Schema.Union([DeviceGrantNotFound, DeviceGrantExpired, PersistenceUnavailable]),
 });
+
 export type ApproveDeviceGrantPayload = Command.Payload<typeof ApproveDeviceGrantCommand>;

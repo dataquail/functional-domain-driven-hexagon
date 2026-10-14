@@ -8,6 +8,7 @@ export const CurrentUserView = Schema.Struct({
   userId: UserId,
   isSuperAdmin: Schema.Boolean,
 });
+
 export type CurrentUserView = typeof CurrentUserView.Type;
 
 // Backs `/auth/me`: the caller's identity plus the one authorization fact the
@@ -19,4 +20,5 @@ export const FindCurrentUserQuery = Query.make("FindCurrentUserQuery", {
   success: CurrentUserView,
   failure: PersistenceUnavailable,
 });
+
 export type FindCurrentUserPayload = Query.Payload<typeof FindCurrentUserQuery>;

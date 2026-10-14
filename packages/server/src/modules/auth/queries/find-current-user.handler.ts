@@ -10,5 +10,6 @@ export const findCurrentUserHandler = Effect.fn("findCurrentUserHandler")(functi
 ) {
   const roles = yield* PlatformRoles;
   const isSuperAdmin = yield* roles.isSuperAdmin(query.userId);
+
   return { userId: query.userId, isSuperAdmin };
 });

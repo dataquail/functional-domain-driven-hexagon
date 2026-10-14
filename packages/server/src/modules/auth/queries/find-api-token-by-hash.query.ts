@@ -11,19 +11,26 @@ export const ApiTokenPrincipalView = Schema.Struct({
   id: ApiTokenId,
   userId: UserId,
 });
+
 export type ApiTokenPrincipalView = typeof ApiTokenPrincipalView.Type;
 
 // Read-side lifecycle outcomes — query-owned so the read path stays off
 // the domain. Fieldless (a hash miss has no id to report); the auth
 // middleware collapses all three to a 401.
-export class ApiTokenNotFound extends Schema.TaggedError<ApiTokenNotFound>()(
-  "ApiTokenNotFound",
-  {},
-) {}
+export class ApiTokenNotFound extends Schema.TaggedError<
+  ApiTokenNotFound,
+  { readonly brand: "ApiTokenNotFound" }
+>()("ApiTokenNotFound", {}) {}
 
-export class ApiTokenExpired extends Schema.TaggedError<ApiTokenExpired>()("ApiTokenExpired", {}) {}
+export class ApiTokenExpired extends Schema.TaggedError<
+  ApiTokenExpired,
+  { readonly brand: "ApiTokenExpired" }
+>()("ApiTokenExpired", {}) {}
 
-export class ApiTokenRevoked extends Schema.TaggedError<ApiTokenRevoked>()("ApiTokenRevoked", {}) {}
+export class ApiTokenRevoked extends Schema.TaggedError<
+  ApiTokenRevoked,
+  { readonly brand: "ApiTokenRevoked" }
+>()("ApiTokenRevoked", {}) {}
 
 // Per-request bearer lookup, dispatched by the auth middleware. The caller
 // hashes the presented token before dispatch, so the raw secret never
@@ -39,4 +46,5 @@ export const FindApiTokenByHashQuery = Query.make("FindApiTokenByHashQuery", {
     PersistenceUnavailable,
   ]),
 });
+
 export type FindApiTokenByHashPayload = Query.Payload<typeof FindApiTokenByHashQuery>;

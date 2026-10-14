@@ -3,6 +3,7 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { Criteria } from "@/globals/application/ddd/specification.js";
 
 import { type AuthIdentity } from "./auth-identity.repository.js";
 import { AuthIdentitySpecifications } from "./auth-identity.specification.js";
@@ -17,10 +18,9 @@ describe("AuthIdentitySpecifications.bySubject", () => {
   });
 
   it("carries an Eq criteria over the subject column", () => {
-    deepStrictEqual(AuthIdentitySpecifications.bySubject("identity-sub-1").criteria, {
-      _tag: "Eq",
-      field: "subject",
-      value: "identity-sub-1",
-    });
+    deepStrictEqual(
+      AuthIdentitySpecifications.bySubject("identity-sub-1").criteria,
+      Criteria.Eq({ field: "subject", value: "identity-sub-1" }),
+    );
   });
 });

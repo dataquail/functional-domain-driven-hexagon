@@ -1,6 +1,7 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertNone } from "@effect/vitest/utils";
 import * as Effect from "effect/Effect";
 
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
@@ -16,8 +17,11 @@ describe("AuthIdentityRepositoryFake", () => {
   it.effect("returns the seeded identity for a known subject", () =>
     Effect.gen(function* () {
       const repo = yield* AuthIdentityRepository;
-      const found = yield* repo.findOne(AuthIdentitySpecifications.bySubject(subject));
-      if (found === null) throw new Error("expected an identity");
+
+      const found = yield* repo
+        .findOne(AuthIdentitySpecifications.bySubject(subject))
+        .pipe(Effect.flatMap(Effect.fromOption));
+
       deepStrictEqual(found.subject, subject);
       deepStrictEqual(found.userId, userId);
       deepStrictEqual(found.provider, "better-auth");
@@ -32,7 +36,7 @@ describe("AuthIdentityRepositoryFake", () => {
     Effect.gen(function* () {
       const repo = yield* AuthIdentityRepository;
       const found = yield* repo.findOne(AuthIdentitySpecifications.bySubject("missing-sub"));
-      deepStrictEqual(found, null);
+      assertNone(found);
     }).pipe(Effect.provide(makeAuthIdentityRepositoryFake())),
   );
 });

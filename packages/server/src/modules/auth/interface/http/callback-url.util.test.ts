@@ -48,6 +48,7 @@ describe("buildCallbackUrl", () => {
       "https://app.example.com/api/auth/callback",
       "/auth/callback?code=abc",
     );
+
     expect(url.origin).toBe("https://app.example.com");
     expect(url.pathname).toBe("/api/auth/callback");
     expect(url.searchParams.get("code")).toBe("abc");

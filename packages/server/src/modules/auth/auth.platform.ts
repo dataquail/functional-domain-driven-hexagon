@@ -4,9 +4,11 @@
 export { authCommandGroup, AuthCommands } from "./auth.command-handlers.js";
 export { AuthModule } from "./auth.module.js";
 export { AuthQueries, authQueryGroup } from "./auth.query-handlers.js";
+
 // Dispatched by the auth middleware on the bearer path (ADR-0005).
 export { TouchApiTokenCommand } from "./commands/touch-api-token.command.js";
 export { TouchSessionCommand } from "./commands/touch-session.command.js";
+
 // CredentialHash is shared with the auth middleware so the mint-time hash
 // and the per-request bearer lookup agree.
 export { CredentialHash } from "./domain/domain-services/credential-hash.domain-service.js";

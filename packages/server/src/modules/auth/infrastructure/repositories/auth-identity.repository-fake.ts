@@ -1,6 +1,8 @@
+import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
+import type * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
 import { type Specification } from "@/globals/application/ddd/specification.js";
@@ -23,8 +25,10 @@ export const makeAuthIdentityRepositoryFake = (
 
       // The spec IS the in-memory predicate — the same object the live repo
       // compiles to SQL — so fake and live agree by construction.
-      const findOne = (spec: Specification<AuthIdentity>): Effect.Effect<AuthIdentity | null> =>
-        Effect.map(Ref.get(store), (m) => Array.from(HashMap.values(m)).find(spec) ?? null);
+      const findOne = (
+        spec: Specification<AuthIdentity>,
+      ): Effect.Effect<Option.Option<AuthIdentity>> =>
+        Effect.map(Ref.get(store), (m) => Arr.findFirst(HashMap.values(m), spec));
 
       const insertOne = (identity: AuthIdentity): Effect.Effect<void> =>
         Ref.update(store, (m) => HashMap.set(m, identity.subject, identity));

@@ -2,6 +2,7 @@ import { CommandBus } from "@effect-server-utils/cqrs";
 import { AuthContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
 import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
 import {
@@ -19,15 +20,17 @@ export const createTokenEndpoint = Effect.fn("AuthLive.tokens.create")(function*
   const currentUser = yield* CurrentUser;
   const env = yield* EnvVars;
   const commandBus = yield* CommandBus;
+
   const { apiToken, token } = yield* commandBus.execute(MintApiTokenCommand, {
     userId: currentUser.userId,
     label: request.payload.label,
     expiresInDays: request.payload.expiresInDays ?? env.API_TOKEN_DEFAULT_TTL_DAYS,
   });
+
   return new AuthContract.CreateApiTokenResponse({
     id: apiToken.id,
     token,
     prefix: apiToken.prefix,
-    expiresAt: apiToken.expiresAt,
+    expiresAt: Option.getOrNull(apiToken.expiresAt),
   });
 }, recoverPersistenceUnavailable);

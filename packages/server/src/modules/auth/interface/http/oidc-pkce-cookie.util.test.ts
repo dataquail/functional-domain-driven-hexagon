@@ -1,4 +1,5 @@
-import { describe, expect, it } from "@effect/vitest";
+import { describe, it } from "@effect/vitest";
+import { assertNone, assertSome } from "@effect/vitest/utils";
 
 import { decodePkcePayload, encodePkcePayload } from "./oidc-pkce-cookie.util.js";
 
@@ -11,28 +12,26 @@ import { decodePkcePayload, encodePkcePayload } from "./oidc-pkce-cookie.util.js
 describe("oidc-pkce-cookie codec", () => {
   it("round-trips a payload", () => {
     const payload = { state: "st-123", codeVerifier: "cv-abc-XYZ_0" };
-    const decoded = decodePkcePayload(encodePkcePayload(payload));
-    expect(decoded).toEqual(payload);
+    assertSome(decodePkcePayload(encodePkcePayload(payload)), payload);
   });
 
-  it("returns null for non-base64url / non-JSON input", () => {
-    expect(decodePkcePayload("not valid base64url !!!")).toBeNull();
+  it("returns none for non-base64url / non-JSON input", () => {
+    assertNone(decodePkcePayload("not valid base64url !!!"));
   });
 
-  it("returns null when a required field is missing", () => {
-    const encoded = Buffer.from(JSON.stringify({ state: "only-state" })).toString("base64url");
-    expect(decodePkcePayload(encoded)).toBeNull();
+  it("returns none when a required field is missing", () => {
+    const encoded = Buffer.from('{"state":"only-state"}').toString("base64url");
+    assertNone(decodePkcePayload(encoded));
   });
 
-  it("returns null when a field is the wrong type", () => {
-    const encoded = Buffer.from(JSON.stringify({ state: "s", codeVerifier: 42 })).toString(
-      "base64url",
-    );
-    expect(decodePkcePayload(encoded)).toBeNull();
+  it("returns none when a field is the wrong type", () => {
+    const encoded = Buffer.from('{"state":"s","codeVerifier":42}').toString("base64url");
+
+    assertNone(decodePkcePayload(encoded));
   });
 
-  it("returns null for a JSON primitive rather than an object", () => {
-    const encoded = Buffer.from(JSON.stringify("just a string")).toString("base64url");
-    expect(decodePkcePayload(encoded)).toBeNull();
+  it("returns none for a JSON primitive rather than an object", () => {
+    const encoded = Buffer.from('"just a string"').toString("base64url");
+    assertNone(decodePkcePayload(encoded));
   });
 });

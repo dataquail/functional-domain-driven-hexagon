@@ -21,10 +21,12 @@ export const listMyApiTokensHandler = Effect.fn("listMyApiTokensHandler")(functi
   query: ListMyApiTokensPayload,
 ) {
   const sql = yield* Database.Database;
+
   const rows = yield* sql`
           SELECT * FROM auth.api_tokens
           WHERE user_id = ${query.userId} AND revoked_at IS NULL
           ORDER BY created_at DESC
         `.pipe(Database.rows(RowSchemas.ApiTokenRow), translateDatabaseErrors);
+
   return rows.map(toView);
 });

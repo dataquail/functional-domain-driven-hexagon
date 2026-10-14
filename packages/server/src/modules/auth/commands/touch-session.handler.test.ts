@@ -21,6 +21,7 @@ const userId = UserId.make("44444444-4444-4444-4444-444444444444");
 const seedSession = (lastUsedAt: DateTime.Utc) =>
   Effect.gen(function* () {
     const repo = yield* SessionRepository;
+
     // Build via SessionRootOps.create then re-stamp lastUsedAt to the case's value
     // so the throttle check is the variable under test.
     const base = SessionRootOps.create({
@@ -31,7 +32,9 @@ const seedSession = (lastUsedAt: DateTime.Utc) =>
       ttlSeconds: 3600,
       absoluteTtlSeconds: 43200,
     });
+
     yield* repo.insertOne(base);
+
     return base;
   });
 
@@ -46,6 +49,7 @@ const updateOneFailingWith = (failure: SessionNotFound | PersistenceUnavailable)
     SessionRepository,
     Effect.gen(function* () {
       const repo = yield* SessionRepository;
+
       return SessionRepository.of({ ...repo, updateOne: () => failure });
     }),
   ).pipe(Layer.provide(SessionRepositoryFake));
@@ -58,8 +62,11 @@ describe("touchSessionHandler", () => {
       const seed = yield* seedSession(farPast);
       yield* touchSessionHandler(cmd);
       const repo = yield* SessionRepository;
-      const after = yield* repo.findOne(SessionSpecifications.withId(sessionId));
-      if (after === null) throw new Error("expected a session");
+
+      const after = yield* repo
+        .findOne(SessionSpecifications.withId(sessionId))
+        .pipe(Effect.flatMap(Effect.fromOption));
+
       deepStrictEqual(DateTime.isGreaterThan(after.lastUsedAt, seed.lastUsedAt), true);
       deepStrictEqual(DateTime.isGreaterThan(after.expiresAt, seed.expiresAt), true);
     }).pipe(Effect.provide(SessionRepositoryFake)),
@@ -71,8 +78,11 @@ describe("touchSessionHandler", () => {
       const seed = yield* seedSession(justNow);
       yield* touchSessionHandler(cmd);
       const repo = yield* SessionRepository;
-      const after = yield* repo.findOne(SessionSpecifications.withId(sessionId));
-      if (after === null) throw new Error("expected a session");
+
+      const after = yield* repo
+        .findOne(SessionSpecifications.withId(sessionId))
+        .pipe(Effect.flatMap(Effect.fromOption));
+
       deepStrictEqual(after.lastUsedAt, seed.lastUsedAt);
       deepStrictEqual(after.expiresAt, seed.expiresAt);
     }).pipe(Effect.provide(SessionRepositoryFake)),
@@ -88,8 +98,11 @@ describe("touchSessionHandler", () => {
       const repo = yield* SessionRepository;
       yield* repo.deleteOne(sessionId);
       yield* touchSessionHandler(cmd);
-      const after = yield* repo.findOne(SessionSpecifications.withId(sessionId));
-      if (after === null) throw new Error("expected a session");
+
+      const after = yield* repo
+        .findOne(SessionSpecifications.withId(sessionId))
+        .pipe(Effect.flatMap(Effect.fromOption));
+
       deepStrictEqual(after.expiresAt, seed.expiresAt);
       deepStrictEqual(after.lastUsedAt, seed.lastUsedAt);
     }).pipe(Effect.provide(SessionRepositoryFake)),

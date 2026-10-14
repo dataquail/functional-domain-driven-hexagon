@@ -22,4 +22,5 @@ export const PollDeviceGrantCommand = Command.make("PollDeviceGrantCommand", {
     PersistenceUnavailable,
   ]),
 });
+
 export type PollDeviceGrantPayload = Command.Payload<typeof PollDeviceGrantCommand>;

@@ -1,13 +1,11 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertInstanceOf, assertNone } from "@effect/vitest/utils";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
-import * as Schema from "effect/Schema";
 
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { signInHandler } from "@/modules/auth/commands/sign-in.handler.js";
@@ -25,6 +23,7 @@ import { SessionSpecifications } from "@/modules/auth/domain/session/session.spe
 import { makeUserProvisioningFake } from "@/modules/auth/infrastructure/acl/user-provisioning.acl-fake.js";
 import { makeAuthIdentityRepositoryFake } from "@/modules/auth/infrastructure/repositories/auth-identity.repository-fake.js";
 import { SessionRepositoryFake } from "@/modules/auth/infrastructure/repositories/session.repository-fake.js";
+import { CryptoFake } from "@/test-utils/crypto-fake.js";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const provisionedUserId = UserId.make("22222222-2222-2222-2222-222222222222");
@@ -41,11 +40,12 @@ const TestLayer = Layer.mergeAll(
   makeAuthIdentityRepositoryFake(seededIdentities),
   makeUserProvisioningFake({ userId: provisionedUserId }),
   PassThroughUnitOfWork,
+  CryptoFake,
 );
 
 const command = {
   subject,
-  email: "admin@example.com",
+  email: Option.some("admin@example.com"),
   emailVerified: true,
   ttlSeconds: 3600,
   absoluteTtlSeconds: 43200,
@@ -57,11 +57,14 @@ describe("signInHandler", () => {
       const result = yield* signInHandler(command);
       deepStrictEqual(result.userId, userId);
       const sessions = yield* SessionRepository;
-      const stored = yield* sessions.findOne(SessionSpecifications.withId(result.sessionId));
-      if (stored === null) throw new Error("expected a session");
+
+      const stored = yield* sessions
+        .findOne(SessionSpecifications.withId(result.sessionId))
+        .pipe(Effect.flatMap(Effect.fromOption));
+
       deepStrictEqual(stored.userId, userId);
       deepStrictEqual(stored.subject, subject);
-      deepStrictEqual(stored.revokedAt, null);
+      assertNone(stored.revokedAt);
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -70,19 +73,26 @@ describe("signInHandler", () => {
       const result = yield* signInHandler({
         ...command,
         subject: "new-subject",
-        email: "new@example.com",
+        email: Option.some("new@example.com"),
       });
+
       // The session is created for the freshly-provisioned user…
       deepStrictEqual(result.userId, provisionedUserId);
       // …and the identity is now linked, so a subsequent lookup finds it.
       const identities = yield* AuthIdentityRepository;
-      const linked = yield* identities.findOne(AuthIdentitySpecifications.bySubject("new-subject"));
-      if (linked === null) throw new Error("expected an identity");
+
+      const linked = yield* identities
+        .findOne(AuthIdentitySpecifications.bySubject("new-subject"))
+        .pipe(Effect.flatMap(Effect.fromOption));
+
       deepStrictEqual(linked.userId, provisionedUserId);
       deepStrictEqual(linked.provider, "better-auth");
       const sessions = yield* SessionRepository;
-      const stored = yield* sessions.findOne(SessionSpecifications.withId(result.sessionId));
-      if (stored === null) throw new Error("expected a session");
+
+      const stored = yield* sessions
+        .findOne(SessionSpecifications.withId(result.sessionId))
+        .pipe(Effect.flatMap(Effect.fromOption));
+
       deepStrictEqual(stored.userId, provisionedUserId);
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -91,16 +101,11 @@ describe("signInHandler", () => {
     "fails IdentityMissingEmail when an unknown subject has no email to provision with",
     () =>
       Effect.gen(function* () {
-        const exit = yield* Effect.exit(
-          signInHandler({ ...command, subject: "no-email-subject", email: null }),
+        const error = yield* Effect.flip(
+          signInHandler({ ...command, subject: "no-email-subject", email: Option.none() }),
         );
-        deepStrictEqual(Exit.isFailure(exit), true);
-        if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause)
-            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-            : null;
-          deepStrictEqual(Schema.is(IdentityMissingEmail)(error), true);
-        }
+
+        assertInstanceOf(error, IdentityMissingEmail);
       }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -108,43 +113,46 @@ describe("signInHandler", () => {
     "fails IdentityEmailAlreadyRegistered when provisioning conflicts on a registered email",
     () =>
       Effect.gen(function* () {
-        const exit = yield* Effect.exit(
-          signInHandler({ ...command, subject: "dup-subject", email: "taken@example.com" }).pipe(
-            Effect.provide(
-              Layer.mergeAll(
-                SessionRepositoryFake,
-                makeAuthIdentityRepositoryFake(seededIdentities),
-                makeUserProvisioningFake({ conflicts: new Set(["taken@example.com"]) }),
-                PassThroughUnitOfWork,
-              ),
-            ),
-          ),
+        const error = yield* Effect.flip(
+          signInHandler({
+            ...command,
+            subject: "dup-subject",
+            email: Option.some("taken@example.com"),
+          }),
         );
-        deepStrictEqual(Exit.isFailure(exit), true);
-        if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause)
-            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-            : null;
-          deepStrictEqual(Schema.is(IdentityEmailAlreadyRegistered)(error), true);
-        }
-      }),
+
+        assertInstanceOf(error, IdentityEmailAlreadyRegistered);
+      }).pipe(
+        Effect.provide(
+          Layer.mergeAll(
+            SessionRepositoryFake,
+            makeAuthIdentityRepositoryFake(seededIdentities),
+            makeUserProvisioningFake({ conflicts: new Set(["taken@example.com"]) }),
+            PassThroughUnitOfWork,
+            CryptoFake,
+          ),
+        ),
+      ),
   );
 
   it.effect("links a new identity to the user already registered under its verified email", () => {
     const existingUserId = UserId.make("33333333-3333-3333-3333-333333333333");
+
     return Effect.gen(function* () {
       const result = yield* signInHandler({
         ...command,
         subject: "second-identity",
-        email: "member@example.com",
+        email: Option.some("member@example.com"),
         emailVerified: true,
       });
+
       deepStrictEqual(result.userId, existingUserId);
       const identities = yield* AuthIdentityRepository;
-      const linked = yield* identities.findOne(
-        AuthIdentitySpecifications.bySubject("second-identity"),
-      );
-      if (linked === null) throw new Error("expected an identity");
+
+      const linked = yield* identities
+        .findOne(AuthIdentitySpecifications.bySubject("second-identity"))
+        .pipe(Effect.flatMap(Effect.fromOption));
+
       deepStrictEqual(linked.userId, existingUserId);
       deepStrictEqual(linked.provider, "better-auth");
     }).pipe(
@@ -156,6 +164,7 @@ describe("signInHandler", () => {
             existing: new Map([["member@example.com", existingUserId]]),
           }),
           PassThroughUnitOfWork,
+          CryptoFake,
         ),
       ),
     );
@@ -165,21 +174,16 @@ describe("signInHandler", () => {
     "refuses to link on an unverified email, so whoever claims an address cannot take its account",
     () =>
       Effect.gen(function* () {
-        const exit = yield* Effect.exit(
+        const error = yield* Effect.flip(
           signInHandler({
             ...command,
             subject: "unverified-identity",
-            email: "member@example.com",
+            email: Option.some("member@example.com"),
             emailVerified: false,
           }),
         );
-        deepStrictEqual(Exit.isFailure(exit), true);
-        if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause)
-            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-            : null;
-          deepStrictEqual(Schema.is(IdentityEmailAlreadyRegistered)(error), true);
-        }
+
+        assertInstanceOf(error, IdentityEmailAlreadyRegistered);
       }).pipe(
         Effect.provide(
           Layer.mergeAll(
@@ -191,6 +195,7 @@ describe("signInHandler", () => {
               ]),
             }),
             PassThroughUnitOfWork,
+            CryptoFake,
           ),
         ),
       ),

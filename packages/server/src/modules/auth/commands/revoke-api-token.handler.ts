@@ -1,5 +1,6 @@
 import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
 import { type RevokeApiTokenPayload } from "@/modules/auth/commands/revoke-api-token.command.js";
 import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.js";
@@ -16,8 +17,10 @@ export const revokeApiTokenHandler = Effect.fn("revokeApiTokenHandler")(function
 ) {
   const repo = yield* ApiTokenRepository;
   const token = yield* repo.findOne(ApiTokenSpecifications.withId(cmd.apiTokenId));
-  if (token?.userId !== cmd.userId) {
+
+  if (!Option.exists(token, (owned) => owned.userId === cmd.userId)) {
     return yield* new ApiTokenNotFound();
   }
+
   yield* repo.deleteOne(cmd.apiTokenId);
 }, withUnitOfWork);

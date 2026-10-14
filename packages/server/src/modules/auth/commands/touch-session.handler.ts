@@ -1,6 +1,7 @@
 import * as DateTime from "effect/DateTime";
 import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
 import { type TouchSessionPayload } from "@/modules/auth/commands/touch-session.command.js";
 import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
@@ -26,13 +27,19 @@ export const touchSessionHandler = Effect.fn("touchSessionHandler")(function* (
   cmd: TouchSessionPayload,
 ) {
   const repo = yield* SessionRepository;
-  const session = yield* repo
-    .findOne(SessionSpecifications.withId(cmd.sessionId))
-    .pipe(Effect.catchTag("PersistenceUnavailable", () => Effect.succeed(null)));
-  if (session?.revokedAt !== null) return;
+
+  const found = yield* repo.findOne(SessionSpecifications.withId(cmd.sessionId)).pipe(
+    Effect.map(Option.filter((candidate) => Option.isNone(candidate.revokedAt))),
+    Effect.catchTag("PersistenceUnavailable", () => Effect.succeedNone),
+  );
+
+  if (Option.isNone(found)) return;
+
+  const session = found.value;
 
   const now = yield* DateTime.now;
   const elapsed = DateTime.distance(session.lastUsedAt, now);
+
   if (Duration.isLessThan(elapsed, Duration.seconds(cmd.thresholdSeconds))) return;
 
   const touched = SessionRootOps.touch({ session, now, ttlSeconds: cmd.ttlSeconds });

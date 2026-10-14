@@ -1,4 +1,4 @@
-import * as Option from "effect/Option";
+import type * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
 // Pure pack/unpack of the PKCE cookie payload — `{state, codeVerifier}` is
@@ -32,5 +32,5 @@ export const PKCE_COOKIE_MAX_AGE_MS = 300_000;
 export const encodePkcePayload = (payload: PkcePayload): string =>
   Buffer.from(encodeAsJson(payload)).toString("base64url");
 
-export const decodePkcePayload = (encoded: string): PkcePayload | null =>
-  Option.getOrNull(decodeFromJson(Buffer.from(encoded, "base64url").toString("utf8")));
+export const decodePkcePayload = (encoded: string): Option.Option<PkcePayload> =>
+  decodeFromJson(Buffer.from(encoded, "base64url").toString("utf8"));

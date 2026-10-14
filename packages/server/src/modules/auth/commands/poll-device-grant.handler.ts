@@ -1,6 +1,7 @@
 import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
 import { mintApiTokenCore } from "@/modules/auth/commands/mint-api-token.handler.js";
 import { type PollDeviceGrantPayload } from "@/modules/auth/commands/poll-device-grant.command.js";
@@ -26,29 +27,38 @@ export const pollDeviceGrantHandler = Effect.fn("pollDeviceGrantHandler")(functi
   cmd: PollDeviceGrantPayload,
 ) {
   const grants = yield* DeviceGrantRepository;
-  const grant = yield* grants.findOne(
+
+  const found = yield* grants.findOne(
     DeviceGrantSpecifications.withCodeHash(CredentialHash.of(cmd.deviceCode)),
   );
-  if (grant === null) {
+
+  if (Option.isNone(found)) {
     return yield* new DeviceGrantNotFound();
   }
+
+  const grant = found.value;
+
   const now = yield* DateTime.now;
 
   if (DeviceGrantSpecifications.isExpired(grant, now)) {
     yield* grants
       .deleteOne(grant.id)
       .pipe(Effect.catchTag("DeviceGrantNotFound", () => Effect.void));
+
     return yield* new DeviceGrantExpired();
   }
-  if (grant.status === "pending" || grant.userId === null) {
+
+  if (grant.status === "pending" || Option.isNone(grant.userId)) {
     return yield* new DeviceGrantPending();
   }
 
   const minted = yield* mintApiTokenCore({
-    userId: grant.userId,
+    userId: grant.userId.value,
     label: "cli",
     expiresInDays: cmd.tokenExpiresInDays,
   });
+
   yield* grants.deleteOne(grant.id);
+
   return minted;
 }, withUnitOfWork);

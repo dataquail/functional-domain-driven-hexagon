@@ -1,6 +1,7 @@
 import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { type Specification } from "@/globals/application/ddd/specification.js";
 import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
@@ -22,14 +23,17 @@ export const AuthIdentityRepositoryLive = Layer.effect(
     // selects at most one row (the unique subject).
     const findOne = Effect.fn("AuthIdentityRepository.findOne")(
       (spec: Specification<AuthIdentity>) =>
-        sql`
+        criteriaToWhere(sql, spec.criteria, AuthIdentityMapper.columns).pipe(
+          Effect.flatMap(
+            (where) => sql`
           SELECT * FROM auth.auth_identities
-          WHERE ${criteriaToWhere(sql, spec.criteria, AuthIdentityMapper.columns)}
+          WHERE ${where}
           LIMIT 1
-        `.pipe(
+        `,
+          ),
           Database.maybeRow(RowSchemas.AuthIdentityRow),
 
-          Effect.map((row) => (row === null ? null : AuthIdentityMapper.toDomain(row))),
+          Effect.map(Option.map(AuthIdentityMapper.toDomain)),
           translateDatabaseErrors,
         ),
     );

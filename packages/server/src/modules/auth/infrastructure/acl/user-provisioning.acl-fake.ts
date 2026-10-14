@@ -1,5 +1,6 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import {
@@ -27,10 +28,13 @@ export const makeUserProvisioningFake = (options?: {
     UserProvisioning,
     UserProvisioning.of({
       provision: (email) =>
-        conflicts.has(email) || existing.has(email)
-          ? new UserProvisioningConflict({ email })
-          : Effect.succeed(assignedId),
-      findByEmail: (email) => Effect.succeed(existing.get(email) ?? null),
+        Effect.succeed(assignedId).pipe(
+          Effect.filterOrFail(
+            () => !conflicts.has(email) && !existing.has(email),
+            () => new UserProvisioningConflict({ email }),
+          ),
+        ),
+      findByEmail: (email) => Effect.succeed(Option.fromUndefinedOr(existing.get(email))),
     }),
   );
 };

@@ -1,16 +1,15 @@
 import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
 import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import { beforeEach } from "vitest";
 
 import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 import { PlatformRolesLive } from "@/modules/auth/infrastructure/acl/platform-roles.acl-live.js";
 import { findCurrentUserHandler } from "@/modules/auth/queries/find-current-user.handler.js";
 import { RoleQueriesLive } from "@/modules/role/role.platform.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { describeIntegration } from "@/test-utils/server-test-runtime.js";
+import { TestDatabaseLive } from "@/test-utils/test-database.js";
 
 const superAdminId = UserId.make("11111111-1111-1111-1111-111111111111");
 const memberId = UserId.make("22222222-2222-2222-2222-222222222222");
@@ -43,32 +42,26 @@ const grantSuperAdmin = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-describe("findCurrentUserHandler (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate("platform.roles", "user.users").pipe(Effect.provide(TestDatabaseLive)),
-    );
-  });
-
-  it("reports isSuperAdmin for a user holding the platform role", async () => {
-    await Effect.runPromise(
+describeIntegration(
+  "findCurrentUserHandler (integration)",
+  { layer: TestLayer, tables: ["platform.roles", "user.users"] },
+  (it) => {
+    it.effect("reports isSuperAdmin for a user holding the platform role", () =>
       Effect.gen(function* () {
         yield* seedUsers;
         yield* grantSuperAdmin;
         const view = yield* findCurrentUserHandler({ userId: superAdminId });
         deepStrictEqual(view, { userId: superAdminId, isSuperAdmin: true });
-      }).pipe(Effect.provide(TestLayer)),
+      }),
     );
-  });
 
-  it("reports isSuperAdmin false for an ordinary user", async () => {
-    await Effect.runPromise(
+    it.effect("reports isSuperAdmin false for an ordinary user", () =>
       Effect.gen(function* () {
         yield* seedUsers;
         yield* grantSuperAdmin;
         const view = yield* findCurrentUserHandler({ userId: memberId });
         deepStrictEqual(view, { userId: memberId, isSuperAdmin: false });
-      }).pipe(Effect.provide(TestLayer)),
+      }),
     );
-  });
-});
+  },
+);

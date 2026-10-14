@@ -1,6 +1,7 @@
 import { Database, orFail, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
 import { type Specification } from "@/globals/application/ddd/specification.js";
 import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
@@ -19,6 +20,7 @@ export const SessionRepositoryLive = Layer.effect(
 
     const insertOne = Effect.fn("SessionRepository.insertOne")((session: SessionRoot) => {
       const row = SessionMapper.toPersistence(session);
+
       return sql`
           INSERT INTO auth.sessions
             (id, user_id, subject, expires_at, absolute_expires_at, revoked_at, created_at, last_used_at)
@@ -39,14 +41,17 @@ export const SessionRepositoryLive = Layer.effect(
     // projection. `LIMIT 1` is safe because every spec used with findOne
     // selects at most one row (the id primary key).
     const findOne = Effect.fn("SessionRepository.findOne")((spec: Specification<SessionRoot>) =>
-      sql`
+      criteriaToWhere(sql, spec.criteria, SessionMapper.columns).pipe(
+        Effect.flatMap(
+          (where) => sql`
           SELECT * FROM auth.sessions
-          WHERE ${criteriaToWhere(sql, spec.criteria, SessionMapper.columns)}
+          WHERE ${where}
           LIMIT 1
-        `.pipe(
+        `,
+        ),
         Database.maybeRow(RowSchemas.SessionRow),
 
-        Effect.map((row) => (row === null ? null : SessionMapper.toDomain(row))),
+        Effect.map(Option.map(SessionMapper.toDomain)),
         translateDatabaseErrors,
       ),
     );
@@ -67,6 +72,7 @@ export const SessionRepositoryLive = Layer.effect(
 
     const updateOne = Effect.fn("SessionRepository.updateOne")((session: SessionRoot) => {
       const row = SessionMapper.toPersistence(session);
+
       return sql`
           UPDATE auth.sessions
           SET expires_at = ${row.expires_at},

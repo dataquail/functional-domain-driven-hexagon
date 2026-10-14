@@ -3,6 +3,8 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 
+import { Criteria } from "@/globals/application/ddd/specification.js";
+
 import { DeviceGrantId } from "./device-grant.id.js";
 import { DeviceGrantRootOps } from "./device-grant.root-ops.js";
 import { DeviceGrantSpecifications } from "./device-grant.specification.js";
@@ -27,11 +29,10 @@ describe("DeviceGrantSpecifications.withCodeHash", () => {
   });
 
   it("carries an Eq criteria over the device_code_hash column", () => {
-    deepStrictEqual(DeviceGrantSpecifications.withCodeHash("hash").criteria, {
-      _tag: "Eq",
-      field: "deviceCodeHash",
-      value: "hash",
-    });
+    deepStrictEqual(
+      DeviceGrantSpecifications.withCodeHash("hash").criteria,
+      Criteria.Eq({ field: "deviceCodeHash", value: "hash" }),
+    );
   });
 });
 
@@ -43,11 +44,10 @@ describe("DeviceGrantSpecifications.withUserCode", () => {
   });
 
   it("carries an Eq criteria over the user_code column", () => {
-    deepStrictEqual(DeviceGrantSpecifications.withUserCode("ABCD-2345").criteria, {
-      _tag: "Eq",
-      field: "userCode",
-      value: "ABCD-2345",
-    });
+    deepStrictEqual(
+      DeviceGrantSpecifications.withUserCode("ABCD-2345").criteria,
+      Criteria.Eq({ field: "userCode", value: "ABCD-2345" }),
+    );
   });
 });
 

@@ -8,6 +8,8 @@
 
 export const buildCallbackUrl = (envRedirectUri: string, requestUrl: string): URL => {
   const queryIndex = requestUrl.indexOf("?");
-  const query = queryIndex >= 0 ? requestUrl.slice(queryIndex) : "";
-  return new URL(envRedirectUri + query);
+
+  if (queryIndex < 0) return new URL(envRedirectUri);
+
+  return new URL(envRedirectUri + requestUrl.slice(queryIndex));
 };

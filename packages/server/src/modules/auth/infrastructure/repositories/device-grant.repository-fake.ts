@@ -1,3 +1,4 @@
+import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
@@ -20,24 +21,30 @@ export const DeviceGrantRepositoryFake = Layer.effect(
 
     // The spec IS the in-memory predicate — the same object the live repo
     // compiles to SQL — so fake and live agree by construction.
-    const findOne = (spec: Specification<DeviceGrantRoot>): Effect.Effect<DeviceGrantRoot | null> =>
-      Effect.map(Ref.get(store), (m) => Array.from(HashMap.values(m)).find(spec) ?? null);
+    const findOne = (
+      spec: Specification<DeviceGrantRoot>,
+    ): Effect.Effect<Option.Option<DeviceGrantRoot>> =>
+      Effect.map(Ref.get(store), (m) => Arr.findFirst(HashMap.values(m), spec));
 
     const updateOne = (grant: DeviceGrantRoot): Effect.Effect<void, DeviceGrantNotFound> =>
       Effect.gen(function* () {
         const m = yield* Ref.get(store);
+
         if (Option.isNone(HashMap.get(m, grant.id))) {
           return yield* new DeviceGrantNotFound();
         }
+
         yield* Ref.update(store, HashMap.set(grant.id, grant));
       });
 
     const deleteGrant = (id: DeviceGrantId): Effect.Effect<void, DeviceGrantNotFound> =>
       Effect.gen(function* () {
         const m = yield* Ref.get(store);
+
         if (Option.isNone(HashMap.get(m, id))) {
           return yield* new DeviceGrantNotFound();
         }
+
         yield* Ref.update(store, HashMap.remove(id));
       });
 

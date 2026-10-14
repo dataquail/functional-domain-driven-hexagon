@@ -11,4 +11,5 @@ export const TouchApiTokenCommand = Command.make("TouchApiTokenCommand", {
   payload: { apiTokenId: ApiTokenId, thresholdSeconds: Schema.Int },
   success: Schema.Void,
 });
+
 export type TouchApiTokenPayload = Command.Payload<typeof TouchApiTokenCommand>;

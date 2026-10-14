@@ -1,5 +1,6 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
+import type * as Option from "effect/Option";
 
 import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
 import { type Specification } from "@/globals/application/ddd/specification.js";
@@ -13,11 +14,11 @@ import { type DeviceGrantRoot } from "@/modules/auth/domain/device-grant/device-
 // are expressed as specs at the call site (DeviceGrantSpecifications) and
 // compiled to a WHERE fragment by the live repository. Absence is a plain
 // `null`, mapped to DeviceGrantNotFound by the caller.
-export type DeviceGrantRepositoryShape = {
+export type DeviceGrantRepositoryService = {
   readonly insertOne: (grant: DeviceGrantRoot) => Effect.Effect<void, PersistenceUnavailable>;
   readonly findOne: (
     spec: Specification<DeviceGrantRoot>,
-  ) => Effect.Effect<DeviceGrantRoot | null, PersistenceUnavailable>;
+  ) => Effect.Effect<Option.Option<DeviceGrantRoot>, PersistenceUnavailable>;
   readonly updateOne: (
     grant: DeviceGrantRoot,
   ) => Effect.Effect<void, DeviceGrantNotFound | PersistenceUnavailable>;
@@ -29,5 +30,5 @@ export type DeviceGrantRepositoryShape = {
 
 export class DeviceGrantRepository extends Context.Service<
   DeviceGrantRepository,
-  DeviceGrantRepositoryShape
+  DeviceGrantRepositoryService
 >()("DeviceGrantRepository") {}

@@ -1,7 +1,10 @@
 import * as DateTime from "effect/DateTime";
+import * as Option from "effect/Option";
+import * as Result from "effect/Result";
 
 import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
 
+import { UserCodeEntropyExhausted } from "./device-grant.errors.js";
 import { type DeviceGrantId } from "./device-grant.id.js";
 import { DeviceGrantRoot } from "./device-grant.root.js";
 
@@ -19,10 +22,10 @@ const start = (input: StartInput): DeviceGrantRoot =>
     deviceCodeHash: input.deviceCodeHash,
     userCode: input.userCode,
     status: "pending",
-    userId: null,
+    userId: Option.none(),
     createdAt: input.now,
     expiresAt: DateTime.add(input.now, { seconds: input.ttlSeconds }),
-    approvedAt: null,
+    approvedAt: Option.none(),
   });
 
 export type ApproveInput = {
@@ -40,10 +43,10 @@ const approve = (input: ApproveInput): DeviceGrantRoot =>
     deviceCodeHash: input.grant.deviceCodeHash,
     userCode: input.grant.userCode,
     status: "approved",
-    userId: input.userId,
+    userId: Option.some(input.userId),
     createdAt: input.grant.createdAt,
     expiresAt: input.grant.expiresAt,
-    approvedAt: input.now,
+    approvedAt: Option.some(input.now),
   });
 
 // The human-typable user code. Entropy generation (impure) stays in the start
@@ -58,19 +61,23 @@ export const USER_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 // multiple, so nothing is ever rejected — but the guard keeps the mapping
 // uniform if the alphabet ever changes. Caller must supply enough bytes; the
 // start command overdraws so exhaustion can't happen in practice.
-const toUserCode = (bytes: Uint8Array): string => {
+const toUserCode = (bytes: Uint8Array): Result.Result<string, UserCodeEntropyExhausted> => {
   const n = USER_CODE_ALPHABET.length;
   const limit = 256 - (256 % n);
   let chars = "";
-  for (let i = 0; i < bytes.length && chars.length < 8; i++) {
-    const byte = bytes[i] ?? 0;
+
+  for (const byte of bytes) {
+    if (chars.length >= 8) break;
+
     if (byte >= limit) continue;
-    chars += USER_CODE_ALPHABET[byte % n];
+    chars += USER_CODE_ALPHABET.charAt(byte % n);
   }
+
   if (chars.length < 8) {
-    throw new Error("toUserCode: not enough random bytes to build a user code");
+    return Result.fail(new UserCodeEntropyExhausted());
   }
-  return `${chars.slice(0, 4)}-${chars.slice(4, 8)}`;
+
+  return Result.succeed(`${chars.slice(0, 4)}-${chars.slice(4, 8)}`);
 };
 
 export const DeviceGrantRootOps = { start, approve, toUserCode } as const;

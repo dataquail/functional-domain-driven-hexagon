@@ -15,4 +15,5 @@ export const TouchSessionCommand = Command.make("TouchSessionCommand", {
   },
   success: Schema.Void,
 });
+
 export type TouchSessionPayload = Command.Payload<typeof TouchSessionCommand>;
