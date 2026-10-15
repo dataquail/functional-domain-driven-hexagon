@@ -86,7 +86,7 @@ For the real-Stripe smoke loop (subscribe / cancel / webhook delivery against te
 
 ## Deploying
 
-Stages deploy from CI, never from a laptop: a pull request labelled `preview` gets its own `pr-<n>` stage with the acceptance suite run against it, and `main` deploys `staging`, then `prod` behind an approval. Each stage carries CPU limits, rate limits, a compute ceiling, a daily email cap and a kill switch. See [ADR-0039](docs/adr/0039-deploy-pipeline-stages-and-limits.md), [ADR-0038](docs/adr/0038-neon-behind-hyperdrive.md) for the databases, and [docs/dev-setup.md](docs/dev-setup.md#deploying) for the one-time setup.
+Stages deploy from CI, never from a laptop: a pull request labelled `preview` gets its own `pr-<n>` stage with the acceptance suite run against it, and `main` deploys `staging`, then `prod` behind an approval. Each stage carries CPU limits, rate limits, a compute ceiling, a daily email cap and a kill switch. See [ADR-0039](docs/adr/0039-deploy-pipeline-stages-and-limits.md), [ADR-0038](docs/adr/0038-neon-behind-hyperdrive.md) for the databases, and [docs/dev-setup.md](docs/dev-setup.md#deploying) for the one-time setup. The same application also deploys to AWS (Lambda, SQS, SES, CloudFront) from a second stack, with no change to a module: see [ADR-0041](docs/adr/0041-aws-as-a-second-host.md) and [docs/dev-setup.md](docs/dev-setup.md#deploying-to-aws).
 
 ## Component library
 

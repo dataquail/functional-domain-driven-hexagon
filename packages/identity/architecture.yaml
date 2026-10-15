@@ -38,7 +38,8 @@ message: >-
   @org/identity is the OIDC issuer the server signs users in against. src/auth/ configures Better
   Auth and wraps it in the port the router speaks, src/http/ routes a request, src/pages/ and
   src/mail/ render what a user sees and receives, src/seed/ provisions the app's client and its
-  first users, src/scripts/ runs on Node, and src/platform/worker/ is the Worker entrypoint.
+  first users, src/scripts/ runs on Node, and src/platform/ holds the host entrypoints: the
+  Worker under worker/, the Lambda under lambda/.
 # Alchemy loads the Worker entrypoint by its default export.
 surface:
   - use: no-default-exports
@@ -98,11 +99,16 @@ children:
         importedBy: { use: identity-private }
         message: >-
           mail/ renders the verification and reset emails and sends them through a mailer:
-          Mailpit's HTTP API locally, the Email binding once deployed, capped per day by a count
-          in the identity database. The binding and the database arrive as structural types, so
-          nothing here names the Workers runtime or pg.
+          Mailpit's HTTP API locally, the Email binding on Cloudflare or SES on AWS, capped per
+          day by a count in the identity database. The binding and the database arrive as
+          structural types, so nothing here names the Workers runtime or pg.
+        imports:
+          message: >-
+            mail/ signs its SES calls with the SigV4 signer; every other transport speaks plain
+            HTTP or a structural binding.
+          external: [aws4fetch]
         children:
-          "identity-mailer.ts | identity-emails.ts | mailpit-mailer.ts | email-binding-mailer.ts | daily-capped-mailer.ts":
+          "identity-mailer.ts | identity-emails.ts | mailpit-mailer.ts | email-binding-mailer.ts | daily-capped-mailer.ts | ses-delivery.ts":
             {}
           "*.integration.test.ts": { use: identity-integration-test-file }
           "*.test.ts": { use: identity-test-file }
@@ -156,8 +162,28 @@ children:
         importedBy: { use: identity-private }
         message: >-
           platform/ holds what runs on the host platform rather than describing it: worker/ is
-          the Worker entrypoint.
+          the Worker entrypoint, lambda/ the Lambda one.
         children:
+          "lambda/":
+            message: >-
+              platform/lambda/ holds the identity Lambda's entrypoint, the only file here that
+              reads a Lambda's process environment, and the translation between a Function URL
+              payload and a web Request. It builds a pg Pool over Neon's pooler per invocation,
+              picks the mailer, and hands the request to the router.
+            imports:
+              message: "The entrypoint builds the pg Pool; everything below it takes plain values."
+              external: [pg]
+            children:
+              "identity-lambda.ts":
+                surface:
+                  - message: >-
+                      The Lambda runtime calls the entrypoint's `handler` export, so
+                      identity-lambda.ts exports exactly that.
+                    kinds: [named]
+                    declares: [function, class, variable]
+                    count: { max: 1 }
+              "function-url.ts": {}
+              "*.test.ts": { use: identity-test-file }
           "worker/":
             message: >-
               platform/worker/ holds the identity Worker's entrypoint, the only file here that

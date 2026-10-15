@@ -170,6 +170,34 @@ The admin's password is whatever the last seed set. Run `pnpm seed:identity` aga
 
 The server's `IDENTITY_CLIENT_ID` / `IDENTITY_CLIENT_SECRET` no longer match the client the identity Worker holds. The seed keeps an existing client's secret, so after changing the secret drop the identity database (see [Start over](#start-over)) and re-seed.
 
+## Deploying to AWS
+
+`packages/infra/aws.run.ts` deploys the same application to AWS (ADR-0041). It is deploy-only — `pnpm dev`
+stays on the Cloudflare stack — and nothing in CI runs it. Its state lives in an S3 bucket Alchemy creates in
+the account.
+
+```sh
+AWS_REGION=us-east-2 pnpm deploy:aws --stage staging   # beside Neon's aws-us-east-2
+pnpm destroy:aws --stage staging
+```
+
+It reads the AWS credentials from the usual environment or profile, and beside them:
+
+| Variable                                                                                           | What it is                                                                      |
+| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `APP_DOMAIN`                                                                                       | every stage answers on `app.<stage>.` / `auth.<stage>.` of it (bare for `prod`) |
+| `AWS_HOSTED_ZONE_ID`                                                                               | the Route 53 zone of `APP_DOMAIN`: certificates, aliases and SES's DKIM records |
+| `NEON_API_KEY`                                                                                     | as for the Cloudflare stack                                                     |
+| `BETTER_AUTH_SECRET`, `IDENTITY_CLIENT_ID`, `IDENTITY_CLIENT_SECRET`, `SESSION_COOKIE_SECRET`      | as for the Cloudflare stack                                                     |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID_DEFAULT`                            | as for the Cloudflare stack                                                     |
+| `MAIL_FROM_ADDRESS`, `IDENTITY_MAIL_FROM_ADDRESS` (and optionally the `*_NAME`s, `MAIL_DAILY_CAP`) | senders under `APP_DOMAIN`, which SES verifies                                  |
+| `IDENTITY_SEED_TOKEN` (optional)                                                                   | opens the issuer's seed endpoint, as on Cloudflare                              |
+
+The stack's outputs carry the direct database URLs, so the migrate step is the Cloudflare one:
+`pnpm -F @org/infra exec alchemy state read hexagon-aws/<stage>/output --backend aws | node scripts/stage-env.mjs`,
+then `pnpm db:migrate`. SES starts in its sandbox, so until the account has production access only verified
+recipients get mail.
+
 ## Related ADRs
 
 - [0034 — The identity Worker: Better Auth as the OIDC issuer](adr/0034-identity-worker-with-better-auth.md)
@@ -178,3 +206,4 @@ The server's `IDENTITY_CLIENT_ID` / `IDENTITY_CLIENT_SECRET` no longer match the
 - [0037 — The SvelteKit renderer on Workers](adr/0037-sveltekit-renderer-on-workers.md)
 - [0038 — Postgres on Neon, reached through Hyperdrive](adr/0038-neon-behind-hyperdrive.md)
 - [0039 — The deploy pipeline, its stages, and its limits](adr/0039-deploy-pipeline-stages-and-limits.md)
+- [0041 — AWS as a second host](adr/0041-aws-as-a-second-host.md)

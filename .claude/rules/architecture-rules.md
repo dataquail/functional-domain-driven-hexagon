@@ -397,8 +397,8 @@ Two gates back that up, and they answer different questions:
   `architecture/imports` id with every allowlist, so its probe also names the
   message it must report. 45 probes, five of them ESLint's (`linter: "eslint"`):
   the Svelte markup rules oxlint cannot see (ADR-0036, ADR-0037).
-- `pnpm lint:edges` — the **semantics**: 191 edges with expected verdicts (140
-  refused, 51 allowed) and 12 graph shapes with expected reports. The allowed and
+- `pnpm lint:edges` — the **semantics**: 197 edges with expected verdicts (144
+  refused, 53 allowed) and 12 graph shapes with expected reports. The allowed and
   quiet rows matter as much: a policy that refuses everything is as broken as one
   that refuses nothing. A row that changes verdict is either a regression or a
   decision.

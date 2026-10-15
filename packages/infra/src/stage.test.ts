@@ -6,6 +6,7 @@ import * as Result from "effect/Result";
 import {
   appCallbackUrl,
   appSignedOutUrl,
+  domainHostnames,
   identityIssuer,
   kindOfStage,
   presentEntry,
@@ -104,5 +105,18 @@ describe("presentEntry", () => {
       ...presentEntry(Option.some("https://app/cb"), (url) => ({ REDIRECT: url })),
       ...presentEntry(Option.none(), (url) => ({ LOGOUT: url })),
     }).toEqual({ REDIRECT: "https://app/cb" });
+  });
+});
+
+describe("domainHostnames", () => {
+  it("puts production on the bare subdomains and every other stage beneath its name", () => {
+    expect(domainHostnames("prod", "example.com")).toEqual({
+      app: "app.example.com",
+      identity: "auth.example.com",
+    });
+    expect(domainHostnames("pr-12", "example.com")).toEqual({
+      app: "app.pr-12.example.com",
+      identity: "auth.pr-12.example.com",
+    });
   });
 });

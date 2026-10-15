@@ -380,6 +380,18 @@
       }
     },
     {
+      // Lambda hands a function its configuration only as process.env, and the web
+      // function reaches the server Lambda over the platform fetch.
+      "files": [
+        "packages/server/src/platform/lambda/main.ts",
+        "packages/identity/src/platform/lambda/identity-lambda.ts",
+        "packages/web/src/lib/server/platform.ts"
+      ],
+      "rules": {
+        "effect/noGlobals": "off"
+      }
+    },
+    {
       // SvelteKit's hooks and load functions are async, and Kit signals a redirect
       // or an HTTP error by throwing its own value.
       "files": ["packages/web/src/**/*.ts", "packages/web/services/**/*.server.ts"],

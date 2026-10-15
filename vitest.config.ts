@@ -61,13 +61,16 @@ export default defineConfig({
         // the same layers, so these run only under `pnpm dev`, the deployed
         // process, or the Playwright acceptance tier.
         "packages/server/src/platform/worker/main.ts",
+        "packages/server/src/platform/lambda/main.ts",
         "packages/database/src/scripts/**",
         // Resource declarations: only the Alchemy engine evaluates them, under
         // `alchemy dev` or a deploy.
         "packages/infra/src/stack/**",
-        // Worker entrypoints run in workerd; `pnpm test:workers` is their test.
+        // Worker entrypoints run in workerd; `pnpm test:workers` is their test. The
+        // Lambda entrypoints run only in a deployed function.
         "packages/infra/src/platform/worker/**",
         "packages/identity/src/platform/worker/**",
+        "packages/identity/src/platform/lambda/identity-lambda.ts",
         "packages/identity/src/scripts/**",
       ],
       // A ratchet, not an aspiration: each floor sits a couple of points under

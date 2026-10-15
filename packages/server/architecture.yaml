@@ -183,8 +183,10 @@ surface:
 children:
   "platform/":
     message: >-
-      platform/ holds the host entrypoints. worker/ is the Cloudflare Worker: the one place in the
-      server that sees a Worker's env and ExecutionContext or names the Workers binding types.
+      platform/ holds the host entrypoints, one folder per host. worker/ is the Cloudflare Worker:
+      the one place in the server that sees a Worker's env and ExecutionContext or names the
+      Workers binding types. lambda/ is the AWS Lambda function: the one place that reads a
+      Lambda's process environment and translates its Function URL, SQS and schedule events.
     children:
       "worker/":
         children:
@@ -209,6 +211,41 @@ children:
                 composed application builds one from test-utils/test-server.ts, which shares the
                 same runtime slice through globals/infrastructure/cqrs/.
               allow: []
+      "lambda/":
+        children:
+          "main.ts":
+            imports:
+              reset: true
+              message: >-
+                The Lambda entrypoint composes the application from the platform surfaces of the
+                modules, the shared globals, the jobs it schedules and its own payload
+                translation. It reaches no module internals.
+              external: [effect, "@effect/platform-node"]
+              allow:
+                - "@/globals/**"
+                - "@/modules/*/*.platform.ts"
+                - "@/platform/lambda/**"
+                - "~/jobs/**"
+            importedBy:
+              message: >-
+                platform/lambda/main.ts is the Lambda entrypoint: the runtime loads it by its
+                bundled path and calls its `handler` export for each Function URL request, SQS
+                batch and schedule rule, each of which composes the application for one
+                invocation. Nothing imports it.
+              allow: []
+          "lambda-events.ts":
+            imports:
+              reset: true
+              message: >-
+                lambda-events.ts translates the Lambda payloads into what the application
+                speaks: a web Request, the queue consumer's messages. It names effect and the
+                consumer's message type, nothing else.
+              external: [effect]
+              allow: ["@/globals/infrastructure/events/domain-event-consumer.ts"]
+            importedBy:
+              message: "Only the Lambda entrypoint and its test read the Lambda payload translation."
+              allow: ["@/platform/lambda/**"]
+          "*.test.ts": { use: server-unit-test-file }
 
   # ── globals/ ──────────────────────────────────────────────────────────
   # What every module shares, split the way a module is split: application/
@@ -413,8 +450,8 @@ children:
             message: >-
               globals/infrastructure/events/ is the durable half of after-commit delivery: the
               outbox transport the unit of work writes through, the delivery ledger a consumer
-              claims against, the queue port the outbox relays to with its in-process and
-              Cloudflare adapters, the queue consumer, and the sweeper that re-relays what a
+              claims against, the queue port the outbox relays to with its in-process,
+              Cloudflare and SQS adapters, the queue consumer, and the sweeper that re-relays what a
               crash left behind.
             imports:
               reset: true
@@ -429,10 +466,11 @@ children:
                 - "~/database/**"
             children:
               "domain-event-queue.ts": {}
+              "queue-batches.ts": {}
               "domain-event-consumer.ts": {}
               "outbox-sweeper.ts": {}
               "*-live.ts": {}
-              "domain-event-consumer.test.ts | cloudflare-domain-event-queue-live.test.ts":
+              "domain-event-consumer.test.ts | cloudflare-domain-event-queue-live.test.ts | sqs-domain-event-queue-live.test.ts":
                 use: server-use-case-test-file
               "*.integration.test.ts":
                 surface: [{ use: test-exports-nothing }]
@@ -460,6 +498,32 @@ children:
               allow: ["@/globals/infrastructure/config/**"]
             children:
               "tracer-live.ts": {}
+              "*.test.ts": { use: server-unit-test-file }
+
+          # AWS's wire protocols, signed with the execution role's credentials.
+          # No SDK: each call is one signed POST over the HTTP client.
+          "aws/":
+            message: >-
+              globals/infrastructure/aws/ speaks the AWS APIs the Lambda host needs — SQS for the
+              domain-event queue, SES for mail — as SigV4-signed HTTP calls. The adapters that
+              satisfy a port with them live with that port; this tier only knows the wire.
+            imports:
+              reset: true
+              message: >-
+                An AWS call names effect, the SigV4 signer and its own siblings. It knows nothing
+                of the ports its callers satisfy.
+              external: [effect, aws4fetch]
+              allow: ["@/globals/infrastructure/aws/**"]
+            importedBy:
+              message: >-
+                The AWS wire calls are reached by the adapters that put them behind a port and by
+                the Lambda entrypoint that wires them.
+              allow:
+                - "@/globals/infrastructure/aws/**"
+                - "@/globals/infrastructure/email/adapters/**"
+                - "@/platform/lambda/main.ts"
+            children:
+              "aws-api.ts | sqs-api.ts | ses-api.ts": {}
               "*.test.ts": { use: server-unit-test-file }
 
           # Seams a host runtime fills. Each defaults to what a plain process does,
@@ -509,6 +573,7 @@ children:
                     - "@/globals/infrastructure/email/**"
                     - "@/globals/infrastructure/config/**"
                     - "@/globals/infrastructure/runtime/email-binding.ts"
+                    - "@/globals/infrastructure/aws/ses-api.ts"
                 children:
                   "*-live.ts": {}
                   "*.test.ts": { use: server-unit-test-file }
@@ -685,6 +750,7 @@ children:
             reaching in here couples a module to how the application is wired.
           allow:
             - "@/platform/worker/main.ts"
+            - "@/platform/lambda/main.ts"
             - "@/globals/infrastructure/cqrs/**"
             - "@/globals/infrastructure/framework/**"
             - "@/test-utils/**"

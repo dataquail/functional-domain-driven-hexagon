@@ -45,7 +45,7 @@ const stagePrefix = (stage: string): string => {
   return `${stage}.`;
 };
 
-const domainHostnames = (stage: string, appDomain: string) => {
+export const domainHostnames = (stage: string, appDomain: string) => {
   const prefix = stagePrefix(stage);
 
   return { app: `app.${prefix}${appDomain}`, identity: `auth.${prefix}${appDomain}` };
@@ -62,7 +62,7 @@ export class StageSettingMissing extends Schema.TaggedError<
 const required = (setting: string, stage: string, value: Option.Option<string>) =>
   Result.fromOption(value, () => new StageSettingMissing({ setting, stage }));
 
-const domainHosts = (stage: string, appDomain: string): StageHosts => {
+export const domainHosts = (stage: string, appDomain: string): StageHosts => {
   const { app, identity } = domainHostnames(stage, appDomain);
 
   return {
