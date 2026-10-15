@@ -1,6 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["alchemy.run.ts", "src"],
+  "include": ["alchemy.run.ts", "aws.run.ts", "src"],
   "exclude": ["src/**/*.test.ts"],
   "compilerOptions": {
     "types": ["node"],

@@ -13,6 +13,7 @@ import { type MailDeliveryError } from "./mail-errors";
 //   - `LogMailerLive`             — dev/test default; structured log line, no send.
 //   - `MailpitMailerLive`         — Mailpit's HTTP send API (local).
 //   - `CloudflareEmailMailerLive` — the Worker's `send_email` binding (deployed).
+//   - `SesMailerLive`             — Amazon SES, from the AWS Lambda host.
 export type MailMessage = {
   // RFC-5322 address or "Display Name <addr>". A single recipient is all
   // the current flows need; widen to an array when a fan-out appears.

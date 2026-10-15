@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://dataquail.github.io/goodbones/schema/architecture-node.schema.json
 #
-# @org/infra — the Alchemy stack: every Cloudflare and Neon resource a stage
-# provisions. The only package that names Alchemy; nothing in the repo imports it.
+# @org/infra — the Alchemy stacks: every Cloudflare, AWS and Neon resource a
+# stage provisions. The only package that names Alchemy; nothing in the repo imports it.
 #
 # One node of the architecture policy: the root architecture.yaml includes this
 # file at "~/infra/". Patterns are repo-relative and use the root's
@@ -10,14 +10,15 @@
 
 name: kebab-case
 message: >-
-  @org/infra declares the Alchemy stack: the Neon databases, the Hyperdrive configurations in
-  front of them, the queues and the Workers each stage provisions. alchemy.run.ts is the stack,
-  src/stack/ holds one file per kind of resource, src/ beside it the pure helpers they share, and
-  smoke/ the workerd smoke tests. Each Worker's code lives in its own package, named by entry path.
-# Alchemy loads the stack by its default export.
+  @org/infra declares the Alchemy stacks: the Neon databases and every Cloudflare or AWS resource
+  each stage provisions. alchemy.run.ts is the Cloudflare stack and aws.run.ts the AWS one, src/stack/
+  holds one file per kind of resource (src/stack/aws/ the AWS stack's), src/ beside it the pure
+  helpers they share, and smoke/ the workerd smoke tests. Each Worker's or Lambda's code lives in
+  its own package, named by entry path.
+# Alchemy loads a stack by its default export.
 surface:
   - use: no-default-exports
-    except: ["**/vitest.config.ts", "~/infra/alchemy.run.ts"]
+    except: ["**/vitest.config.ts", "~/infra/alchemy.run.ts", "~/infra/aws.run.ts"]
 imports:
   message: >-
     @org/infra describes infrastructure and runs none of the application. It names Alchemy and
@@ -31,10 +32,10 @@ importedBy:
     through the binding its Worker is given, never by importing the declaration that created it.
   allow: ["~/infra/**"]
 children:
-  "alchemy.run.ts":
+  "alchemy.run.ts | aws.run.ts":
     surface:
       - message: >-
-          alchemy.run.ts exports the stack as its default and nothing else. A resource another
+          A stack file exports the stack as its default and nothing else. A resource another
           file needs is declared in src/stack/ and imported from there, not off the stack.
         kinds: [named, namespace]
         count: { max: 0 }
@@ -53,7 +54,7 @@ children:
       src/ holds the stack's resource declarations under stack/, and the pure helpers they share
       beside it. A helper here is tested; a declaration is exercised by `alchemy dev`.
     children:
-      "stage.ts | edge-rules.ts": {}
+      "stage.ts | edge-rules.ts | aws-stage.ts": {}
       "*.test.ts":
         surface: [{ use: test-exports-nothing }]
         imports:
@@ -69,7 +70,15 @@ children:
           the Effects alchemy.run.ts yields; a Worker binds to the same Effect it was declared
           with, and a Worker whose code lives in another package is named by its entry path.
         children:
-          "databases.ts | edge.ts | hosts.ts | providers.ts | queues.ts | workers.ts": {}
+          "databases.ts | edge.ts | hosts.ts | neon.ts | providers.ts | queues.ts | workers.ts": {}
+          "aws/":
+            message: >-
+              stack/aws/ declares the AWS stack's resources, one file per kind: the Neon URLs its
+              Lambdas connect through, the SQS queues, the SES domain, the hosts, and the
+              functions and sites. The server and the issuer are Lambdas named by entry path; the
+              web app is a SvelteKit site whose server is one.
+            children:
+              "databases.ts | email.ts | functions.ts | hosts.ts | queues.ts": {}
   "smoke/":
     message: >-
       smoke/ boots the whole stack under workerd with Alchemy's test harness and drives each

@@ -28,6 +28,7 @@
     "@org/contracts": "workspace:^",
     "@org/database": "workspace:^",
     "@org/jobs": "workspace:^",
+    "aws4fetch": "1.0.20",
     "cookie": "^1.1.1",
     "effect": "4.0.2",
     "openid-client": "^6.8.4",

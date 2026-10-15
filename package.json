@@ -37,6 +37,8 @@
     "dev": "pnpm -F @org/contracts build && pnpm -F @org/infra run dev",
     "deploy:cf": "pnpm -F @org/infra exec alchemy deploy",
     "destroy:cf": "pnpm -F @org/infra exec alchemy destroy",
+    "deploy:aws": "pnpm -F @org/infra exec alchemy deploy aws.run.ts",
+    "destroy:aws": "pnpm -F @org/infra exec alchemy destroy aws.run.ts",
     "db:migrate": "pnpm db:migrate:app && pnpm db:migrate:identity",
     "db:migrate:app": "pnpm -F @org/database db:migrate",
     "db:migrate:identity": "pnpm -F @org/identity db:migrate",

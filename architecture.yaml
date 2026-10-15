@@ -71,7 +71,7 @@ resolve:
 limits:
   unrestricted: 1
   partial: 0
-  coverage: { imports: 0.96, structure: 0.87, members: 0.15, surface: 0.94, graph: 1 }
+  coverage: { imports: 0.96, structure: 0.87, members: 0.15, surface: 0.95, graph: 1 }
   conformance: { residue: 0, vacant: 7, slack: 23, concentration: 0 }
 
 aliases:
@@ -252,13 +252,17 @@ graph:
         # Vitest resolves `$app/*` to these stubs by alias; the graph resolves it to Kit.
         - "~/web/test/kit/**"
         - "~/acceptance/playwright.config.ts"
-        # Process entrypoints and package bins; workerd loads the server Worker by path.
+        # Process entrypoints and package bins; workerd loads the server Worker by path,
+        # and the Lambda runtime the bundled server and identity functions.
         - "@/platform/worker/main.ts"
+        - "@/platform/lambda/main.ts"
+        - "~/identity/src/platform/lambda/identity-lambda.ts"
         - "~/cli/src/main.ts"
         - "~/mcp/src/main.ts"
         - "~/database/src/scripts/**"
-        # The Alchemy CLI loads the stack by convention, and the identity Worker by path.
+        # The Alchemy CLI loads the stacks, and the identity Worker, by path.
         - "~/infra/alchemy.run.ts"
+        - "~/infra/aws.run.ts"
         - "~/identity/src/platform/worker/identity-worker.ts"
         - "~/identity/src/scripts/**"
         # Framework-loaded by convention.

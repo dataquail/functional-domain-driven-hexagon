@@ -7,9 +7,10 @@ import { withDailyCap } from "../quota/daily-capped-mailer-live";
 import { CloudflareEmailMailerLive } from "./cloudflare-email-mailer-live";
 import { LogMailerLive } from "./log-mailer-live";
 import { MailpitMailerFetchLive } from "./mailpit-mailer-live";
+import { SesMailerFetchLive } from "./ses-mailer-live";
 
 // The one place that names every transport; `MAILER` picks one per environment.
-// Only the transport that costs money is capped.
+// Only the transports that cost money are capped.
 export const MailerLive = Layer.unwrap(
   Effect.gen(function* () {
     const env = yield* EnvVars;
@@ -19,6 +20,8 @@ export const MailerLive = Layer.unwrap(
         return MailpitMailerFetchLive;
       case "cloudflare":
         return withDailyCap(CloudflareEmailMailerLive, env.MAIL_DAILY_CAP);
+      case "ses":
+        return withDailyCap(SesMailerFetchLive, env.MAIL_DAILY_CAP);
       case "log":
         return LogMailerLive;
     }

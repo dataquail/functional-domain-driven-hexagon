@@ -613,6 +613,26 @@ const REFUSED = [
     NPM("mailgun"),
   ],
   [
+    "the AWS wire tier → a module",
+    "packages/server/src/globals/infrastructure/aws/sqs-api.ts",
+    "packages/server/src/modules/alpha/alpha.platform.ts",
+  ],
+  [
+    "the AWS wire tier → the AWS SDK",
+    "packages/server/src/globals/infrastructure/aws/ses-api.ts",
+    "node_modules/.pnpm/x/node_modules/@aws-sdk/client-sesv2/dist-es/index.js",
+  ],
+  [
+    "a use case → the AWS wire tier",
+    "packages/server/src/modules/alpha/commands/do.handler.ts",
+    "packages/server/src/globals/infrastructure/aws/sqs-api.ts",
+  ],
+  [
+    "the Lambda entrypoint → a module's internals",
+    "packages/server/src/platform/lambda/main.ts",
+    "packages/server/src/modules/alpha/infrastructure/repositories/alpha.repository-live.ts",
+  ],
+  [
     "criteria-to-sql → @org/database",
     "packages/server/src/globals/infrastructure/database/criteria-to-sql.ts",
     "packages/database/src/index.ts",
@@ -873,6 +893,16 @@ const ALLOWED = [
     "the server's Worker entrypoint importing cloudflare:workers (LEGAL)",
     "packages/server/src/platform/worker/main.ts",
     "node_modules/.pnpm/x/node_modules/@cloudflare/workers-types/index.d.ts",
+  ],
+  [
+    "the Lambda entrypoint composing a module's platform surface (LEGAL)",
+    "packages/server/src/platform/lambda/main.ts",
+    "packages/server/src/modules/alpha/alpha.platform.ts",
+  ],
+  [
+    "the SES mail transport → the AWS wire tier (LEGAL)",
+    "packages/server/src/globals/infrastructure/email/adapters/ses-mailer-live.ts",
+    "packages/server/src/globals/infrastructure/aws/ses-api.ts",
   ],
   [
     "api-client using the contracts (LEGAL)",

@@ -13,6 +13,8 @@ const make = Effect.gen(function* () {
 
     // Database
     DATABASE_URL: yield* Config.Redacted("DATABASE_URL"),
+    // Off behind Hyperdrive, which terminates TLS itself; on when a host reaches Postgres directly.
+    DATABASE_SSL: yield* Config.Boolean("DATABASE_SSL").pipe(Config.withDefault(false)),
 
     // Observability
     OTLP_URL: yield* Config.option(Config.URL("OTLP_URL")),
@@ -67,8 +69,8 @@ const make = Effect.gen(function* () {
     // Email / Notifications
     // `log` (default) writes a structured log line and sends nothing; `mailpit`
     // posts to Mailpit's HTTP API; `cloudflare` sends through the Worker's
-    // `send_email` binding.
-    MAILER: yield* Config.Literals(["log", "mailpit", "cloudflare"], "MAILER").pipe(
+    // `send_email` binding; `ses` through Amazon SES with the host's AWS credentials.
+    MAILER: yield* Config.Literals(["log", "mailpit", "cloudflare", "ses"], "MAILER").pipe(
       Config.withDefault("log"),
     ),
     MAIL_FROM_ADDRESS: yield* Config.String("MAIL_FROM_ADDRESS").pipe(
@@ -80,6 +82,15 @@ const make = Effect.gen(function* () {
     MAIL_DAILY_CAP: yield* Config.Int("MAIL_DAILY_CAP").pipe(Config.withDefault(200)),
     MAILPIT_URL: yield* Config.String("MAILPIT_URL").pipe(
       Config.withDefault("http://localhost:8025"),
+    ),
+    // The credentials the Lambda runtime sets for its execution role; absent on any other host.
+    AWS: yield* Config.option(
+      Config.all({
+        accessKeyId: Config.String("AWS_ACCESS_KEY_ID"),
+        secretAccessKey: Config.Redacted("AWS_SECRET_ACCESS_KEY"),
+        sessionToken: Config.option(Config.Redacted("AWS_SESSION_TOKEN")),
+        region: Config.String("AWS_REGION"),
+      }),
     ),
     // Stripe / Billing
     STRIPE_SECRET_KEY: yield* Config.Redacted("STRIPE_SECRET_KEY"),
