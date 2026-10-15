@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@effect/platform-node": "4.0.2",
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.31.0",
     "@org/api-client": "workspace:^",
     "@org/contracts": "workspace:^",
     "effect": "4.0.2",
