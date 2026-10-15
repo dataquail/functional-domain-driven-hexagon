@@ -1,13 +1,14 @@
 import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
-import { Spec } from "@/globals/application/ddd/specification.js";
-import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
-import { type GrantOrganizationRolePayload } from "@/modules/organization/commands/grant-organization-role.command.js";
-import { CannotPromoteSelfInOrganization } from "@/modules/organization/domain/organization-roles/organization-role.errors.js";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
-import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.js";
-import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification.js";
+import { Spec } from "@/globals/application/ddd/specification";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
+import { type GrantOrganizationRolePayload } from "@/modules/organization/commands/grant-organization-role.command";
+import { CannotPromoteSelfInOrganization } from "@/modules/organization/domain/organization-roles/organization-role.errors";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository";
+import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops";
+import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification";
 
 export const grantOrganizationRoleHandler = Effect.fn("grantOrganizationRoleHandler")(function* (
   cmd: GrantOrganizationRolePayload,
@@ -25,13 +26,17 @@ export const grantOrganizationRoleHandler = Effect.fn("grantOrganizationRoleHand
   const repo = yield* OrganizationRolesRepository;
   const bus = yield* DomainEventBus;
 
-  const aggregate =
-    (yield* repo.findOne(
-      Spec.and(
-        OrganizationRolesSpecifications.forUser(cmd.userId),
-        OrganizationRolesSpecifications.forOrganization(cmd.organizationId),
-      ),
-    )) ?? OrganizationRolesRootOps.empty(cmd.userId, cmd.organizationId);
+  const existing = yield* repo.findOne(
+    Spec.and(
+      OrganizationRolesSpecifications.forUser(cmd.userId),
+      OrganizationRolesSpecifications.forOrganization(cmd.organizationId),
+    ),
+  );
+
+  const aggregate = Option.getOrElse(existing, () =>
+    OrganizationRolesRootOps.empty(cmd.userId, cmd.organizationId),
+  );
+
   const result = yield* Effect.fromResult(
     OrganizationRolesRootOps.grantRole(aggregate, cmd.role, cmd.actorUserId),
   );

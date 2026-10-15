@@ -27,7 +27,7 @@
     {#if !switcher.current.isEmpty}
       <Stack direction="row" gap="xs" align="center">
         <Select
-          value={switcher.current.activeOrgId ?? undefined}
+          value={switcher.current.selectedOrgId}
           onValueChange={(value) => {
             selectOrg(OrganizationId.make(value));
           }}

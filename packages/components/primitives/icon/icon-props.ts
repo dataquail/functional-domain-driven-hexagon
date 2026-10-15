@@ -1,4 +1,5 @@
 export type IconSize = "sm" | "md" | "lg";
+
 export type IconTone = "default" | "muted" | "destructive" | "inherit";
 
 export type IconProps = {

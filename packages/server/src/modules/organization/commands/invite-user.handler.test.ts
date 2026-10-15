@@ -1,26 +1,30 @@
 import { deepStrictEqual, ok } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertDefined } from "@effect/vitest/utils";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { inviteUserHandler } from "@/modules/organization/commands/invite-user.handler.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { inviteUserHandler } from "@/modules/organization/commands/invite-user.handler";
 import {
   type InvitationIssued,
   type InvitationReissued,
-} from "@/modules/organization/domain/invitation/invitation.events.js";
-import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
-import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
-import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake.js";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
+} from "@/modules/organization/domain/invitation/invitation.events";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository";
+import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification";
+import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake";
+import { CryptoFake } from "@/test-utils/crypto-fake";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus";
 
 const actorUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const organizationId = OrganizationId.make("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
 
 const TestLayer = Layer.mergeAll(
+  CryptoFake,
   InvitationRepositoryFake,
   RecordingEventBus,
   PassThroughUnitOfWork,
@@ -31,14 +35,17 @@ describe("inviteUserHandler", () => {
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
       const rec = yield* RecordedEvents;
+
       const id = yield* inviteUserHandler({
         organizationId,
         inviteeEmail: "alice@example.com",
         ttlSeconds: 60 * 60 * 24 * 7,
         actorUserId,
       });
-      const stored = yield* repo.findOne(InvitationSpecifications.withId(id));
-      if (stored === null) throw new Error("expected invitation");
+
+      const maybeStored = yield* repo.findOne(InvitationSpecifications.withId(id));
+
+      const stored = Option.getOrThrow(maybeStored);
       deepStrictEqual(stored.organizationId, organizationId);
       deepStrictEqual(stored.inviteeEmail, "alice@example.com");
       ok(stored.token.length > 0);
@@ -46,7 +53,8 @@ describe("inviteUserHandler", () => {
       const events = yield* rec.byTag<InvitationIssued>("InvitationIssued");
       deepStrictEqual(events.length, 1);
       const event = events[0];
-      if (event === undefined) throw new Error("expected InvitationIssued event");
+
+      assertDefined(event);
       deepStrictEqual(event.invitationId, id);
       deepStrictEqual(event.organizationId, organizationId);
       deepStrictEqual(event.inviteeEmail, "alice@example.com");
@@ -57,6 +65,7 @@ describe("inviteUserHandler", () => {
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
       const rec = yield* RecordedEvents;
+
       const make = () => ({
         organizationId,
         inviteeEmail: "alice@example.com",
@@ -65,8 +74,9 @@ describe("inviteUserHandler", () => {
       });
 
       const firstId = yield* inviteUserHandler(make());
-      const first = yield* repo.findOne(InvitationSpecifications.withId(firstId));
-      if (first === null) throw new Error("expected invitation");
+      const maybeFirst = yield* repo.findOne(InvitationSpecifications.withId(firstId));
+
+      const first = Option.getOrThrow(maybeFirst);
       const firstToken = first.token;
 
       const secondId = yield* inviteUserHandler(make());

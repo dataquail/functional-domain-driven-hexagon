@@ -1,16 +1,16 @@
 import { type ResourceCheck } from "@effect-server-utils/authz";
 
-import { type OrganizationAuthzView } from "@/modules/organization/queries/find-organization-by-id.query.js";
+import { type OrganizationAuthzView } from "@/modules/organization/queries/find-organization-by-id.query";
 
-import { type UserOrganizationLookup } from "./is-member.policy.js";
+import { type UserOrganizationLookup } from "./is-member.policy";
 
 // "Is this caller an admin of this organization?" — gates managing the roster
 // (invite, revoke, remove, promote, demote). Plain membership is not enough.
 //
-// Same shape as `makeIsMember`: org roles are this module's own data, so the
+// Same shape as `isMemberCheck`: org roles are this module's own data, so the
 // lookup is a plain function the contribution layer supplies from this module's
 // own policy-query.
-export const makeIsOrgAdmin =
+export const isOrgAdminCheck =
   (isAdmin: UserOrganizationLookup): ResourceCheck<OrganizationAuthzView> =>
   (caller, organization) =>
     isAdmin(caller.userId, organization.organizationId);

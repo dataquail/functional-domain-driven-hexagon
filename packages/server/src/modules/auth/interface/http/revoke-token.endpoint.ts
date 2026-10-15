@@ -7,8 +7,8 @@ import * as Effect from "effect/Effect";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { RevokeApiTokenCommand } from "@/modules/auth/commands/revoke-api-token.command.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { RevokeApiTokenCommand } from "@/modules/auth/commands/revoke-api-token.command";
 
 // Revokes one of the caller's own tokens. The command scopes the revoke to
 // the owner, so a token that isn't the caller's (or doesn't exist) surfaces

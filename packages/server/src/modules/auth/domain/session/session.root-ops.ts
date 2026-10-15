@@ -1,9 +1,10 @@
 import * as DateTime from "effect/DateTime";
+import * as Option from "effect/Option";
 
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { type SessionId } from "./session.id.js";
-import { SessionRoot } from "./session.root.js";
+import { type SessionId } from "./session.id";
+import { SessionRoot } from "./session.root";
 
 export type CreateInput = {
   readonly id: SessionId;
@@ -21,7 +22,7 @@ const create = (input: CreateInput): SessionRoot =>
     subject: input.subject,
     expiresAt: DateTime.add(input.now, { seconds: input.ttlSeconds }),
     absoluteExpiresAt: DateTime.add(input.now, { seconds: input.absoluteTtlSeconds }),
-    revokedAt: null,
+    revokedAt: Option.none(),
     createdAt: input.now,
     lastUsedAt: input.now,
   });
@@ -38,9 +39,9 @@ export type TouchInput = {
 // the use case, and revocation is enforced by the repository's WHERE clause.
 const touch = (input: TouchInput): SessionRoot => {
   const candidate = DateTime.add(input.now, { seconds: input.ttlSeconds });
-  const expiresAt = DateTime.isLessThan(candidate, input.session.absoluteExpiresAt)
-    ? candidate
-    : input.session.absoluteExpiresAt;
+
+  const expiresAt = DateTime.min(candidate, input.session.absoluteExpiresAt);
+
   return SessionRoot.make({
     id: input.session.id,
     userId: input.session.userId,

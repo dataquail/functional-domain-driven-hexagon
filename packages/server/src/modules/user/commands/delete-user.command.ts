@@ -2,12 +2,13 @@ import { Command } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { UserNotFound } from "@/modules/user/domain/user/user.errors.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { UserNotFound } from "@/modules/user/domain/user/user.errors";
 
 export const DeleteUserCommand = Command.make("DeleteUserCommand", {
   payload: { userId: UserId },
   success: Schema.Void,
   failure: Schema.Union([UserNotFound, PersistenceUnavailable]),
 });
+
 export type DeleteUserPayload = Command.Payload<typeof DeleteUserCommand>;

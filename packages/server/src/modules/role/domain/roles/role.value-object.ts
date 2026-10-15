@@ -5,4 +5,5 @@ import * as Schema from "effect/Schema";
 // `role-mapper.ts`) reject any string the rest of the codebase
 // doesn't recognize. Adding a new role: extend the literal here.
 export const RoleValueObject = Schema.Literal("super_admin");
+
 export type RoleValueObject = typeof RoleValueObject.Type;

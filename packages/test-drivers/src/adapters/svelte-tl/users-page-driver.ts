@@ -6,13 +6,17 @@ import type {
   CreateUserInput,
   ToastKind,
   UsersPageDriver,
-} from "../../contracts/users-page-driver.js";
+} from "../../contracts/users-page-driver";
 
 const testIdByField: Record<CreateUserField, string> = {
   email: "create-user-email",
   country: "create-user-country",
   street: "create-user-street",
   postalCode: "create-user-postal-code",
+};
+
+const missing = (message: string): never => {
+  throw new Error(message);
 };
 
 // `rendered` is what `@testing-library/svelte`'s `render(...)` returns; only
@@ -62,10 +66,10 @@ export const svelteUsersDriver = (rendered: {
       // colour class it happens to be painted with.
       await waitFor(() => {
         const input = fieldInput(field);
-        const control = input.closest("div");
-        if (control === null) throw new Error(`no enclosing control for ${field}`);
-        const alert = within(control).queryByRole("alert");
-        if (alert === null || alert.textContent.length === 0) {
+        const control = input.closest("div") ?? missing(`no enclosing control for ${field}`);
+        const alert = within(control).getByRole("alert");
+
+        if (alert.textContent.length === 0) {
           throw new Error(`no error announced for ${field}`);
         }
       });
@@ -77,6 +81,7 @@ export const svelteUsersDriver = (rendered: {
         const toasts = document.querySelectorAll(`[data-sonner-toast][data-type="${kind}"]`);
         const lowered = message.toLowerCase();
         const match = Array.from(toasts).some((t) => t.textContent.toLowerCase().includes(lowered));
+
         if (!match) {
           throw new Error(`expected ${kind} toast "${message}" in DOM, none found`);
         }

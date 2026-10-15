@@ -26,4 +26,5 @@ export const StartDeviceGrantCommand = Command.make("StartDeviceGrantCommand", {
   success: StartDeviceGrantResultView,
   failure: PersistenceUnavailable,
 });
+
 export type StartDeviceGrantPayload = Command.Payload<typeof StartDeviceGrantCommand>;

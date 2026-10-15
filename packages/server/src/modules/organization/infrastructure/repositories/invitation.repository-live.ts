@@ -1,14 +1,15 @@
 import { Database, orFail, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
-import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors.js";
-import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
-import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.js";
-import * as InvitationMapper from "@/modules/organization/infrastructure/repositories/invitation.mapper.js";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
+import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository";
+import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root";
+import * as InvitationMapper from "@/modules/organization/infrastructure/repositories/invitation.mapper";
 
 export const InvitationRepositoryLive = Layer.effect(
   InvitationRepository,
@@ -17,6 +18,7 @@ export const InvitationRepositoryLive = Layer.effect(
 
     const insertOne = Effect.fn("InvitationRepository.insertOne")((invitation: InvitationRoot) => {
       const row = InvitationMapper.toPersistence(invitation);
+
       return sql`
           INSERT INTO "organization".invitations (
             id, organization_id, invitee_email, token,
@@ -37,6 +39,7 @@ export const InvitationRepositoryLive = Layer.effect(
 
     const updateOne = Effect.fn("InvitationRepository.updateOne")((invitation: InvitationRoot) => {
       const row = InvitationMapper.toPersistence(invitation);
+
       // Persist the whole mutable aggregate, not a hand-picked subset.
       // accept/revoke only flip terminal timestamps, but reissue also
       // rotates `token` and resets `expires_at` — dropping those here
@@ -64,25 +67,31 @@ export const InvitationRepositoryLive = Layer.effect(
     // the at-most-one open invite per org+email).
     const findOne = Effect.fn("InvitationRepository.findOne")(
       (spec: Specification<InvitationRoot>) =>
-        sql`
+        criteriaToWhere(sql, spec.criteria, InvitationMapper.columns).pipe(
+          Effect.flatMap(
+            (where) => sql`
           SELECT * FROM "organization".invitations
-          WHERE ${criteriaToWhere(sql, spec.criteria, InvitationMapper.columns)}
+          WHERE ${where}
           ORDER BY created_at DESC
           LIMIT 1
-        `.pipe(
+        `,
+          ),
           Database.maybeRow(RowSchemas.InvitationRow),
-          Effect.map((row) => (row === null ? null : InvitationMapper.toDomain(row))),
+          Effect.map(Option.map(InvitationMapper.toDomain)),
           translateDatabaseErrors,
         ),
     );
 
     const findMany = Effect.fn("InvitationRepository.findMany")(
       (spec: Specification<InvitationRoot>) =>
-        sql`
+        criteriaToWhere(sql, spec.criteria, InvitationMapper.columns).pipe(
+          Effect.flatMap(
+            (where) => sql`
           SELECT * FROM "organization".invitations
-          WHERE ${criteriaToWhere(sql, spec.criteria, InvitationMapper.columns)}
+          WHERE ${where}
           ORDER BY created_at DESC
-        `.pipe(
+        `,
+          ),
           Database.rows(RowSchemas.InvitationRow),
           Effect.map((rows) => rows.map(InvitationMapper.toDomain)),
           translateDatabaseErrors,

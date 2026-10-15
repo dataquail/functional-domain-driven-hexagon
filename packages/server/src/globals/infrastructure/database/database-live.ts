@@ -2,7 +2,7 @@ import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars";
 
 // The Worker reaches Postgres through Hyperdrive, which terminates TLS to the
 // origin and pools in transaction mode.

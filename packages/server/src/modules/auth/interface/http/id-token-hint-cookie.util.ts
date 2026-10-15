@@ -1,8 +1,13 @@
+import * as Option from "effect/Option";
+
 export const ID_TOKEN_HINT_COOKIE_NAME = "oidc_id_token_hint";
 
+export const readCookie = (
+  cookies: Readonly<Partial<Record<string, string>>>,
+  name: string,
+): Option.Option<string> =>
+  Option.filter(Option.fromUndefinedOr(cookies[name]), (value) => value !== "");
+
 export const readIdTokenHint = (
-  cookies: Readonly<Record<string, string | undefined>>,
-): string | null => {
-  const hint = cookies[ID_TOKEN_HINT_COOKIE_NAME];
-  return hint === undefined || hint === "" ? null : hint;
-};
+  cookies: Readonly<Partial<Record<string, string>>>,
+): Option.Option<string> => readCookie(cookies, ID_TOKEN_HINT_COOKIE_NAME);

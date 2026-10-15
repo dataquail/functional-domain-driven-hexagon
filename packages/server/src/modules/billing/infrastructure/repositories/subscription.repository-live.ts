@@ -1,18 +1,19 @@
 import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql";
 import {
   translateDatabaseErrors,
   translatePersistenceUnavailable,
-} from "@/globals/infrastructure/database/translate-database-errors.js";
-import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors.js";
-import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
-import { type SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.js";
+} from "@/globals/infrastructure/database/translate-database-errors";
+import { SubscriptionAlreadyExistsForOrganization } from "@/modules/billing/domain/subscription/subscription.errors";
+import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository";
+import { type SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root";
 
-import * as SubscriptionMapper from "./subscription.mapper.js";
+import * as SubscriptionMapper from "./subscription.mapper";
 
 export const SubscriptionRepositoryLive = Layer.effect(
   SubscriptionRepository,
@@ -21,6 +22,7 @@ export const SubscriptionRepositoryLive = Layer.effect(
 
     const insertOne = Effect.fn("SubscriptionRepository.insertOne")((sub: SubscriptionRoot) => {
       const row = SubscriptionMapper.toPersistence(sub);
+
       return sql`
           INSERT INTO billing.subscriptions (
             id,
@@ -38,30 +40,33 @@ export const SubscriptionRepositoryLive = Layer.effect(
             ${row.stripe_customer_id},
             ${row.stripe_subscription_id},
             ${row.status},
-            ${row.current_period_end},
+            ${Option.getOrNull(row.current_period_end)},
             ${row.created_at},
             ${row.updated_at}
           )
         `.pipe(
         Database.exec,
-        Effect.catchTag("DatabaseError", (e) =>
-          e.type === "unique_violation"
-            ? new SubscriptionAlreadyExistsForOrganization({
-                organizationId: sub.organizationId,
-              })
-            : Effect.die(e),
-        ),
+        Effect.catchTag("DatabaseError", (e) => {
+          if (e.type === "unique_violation") {
+            return Effect.fail(
+              new SubscriptionAlreadyExistsForOrganization({ organizationId: sub.organizationId }),
+            );
+          }
+
+          return Effect.die(e);
+        }),
         translatePersistenceUnavailable,
       );
     });
 
     const updateOne = Effect.fn("SubscriptionRepository.updateOne")((sub: SubscriptionRoot) => {
       const row = SubscriptionMapper.toPersistence(sub);
+
       return sql`
           UPDATE billing.subscriptions
           SET
             status = ${row.status},
-            current_period_end = ${row.current_period_end},
+            current_period_end = ${Option.getOrNull(row.current_period_end)},
             updated_at = ${row.updated_at}
           WHERE id = ${row.id}
         `.pipe(Database.exec, translateDatabaseErrors);
@@ -73,14 +78,17 @@ export const SubscriptionRepositoryLive = Layer.effect(
     // stripe_subscription_id).
     const findOne = Effect.fn("SubscriptionRepository.findOne")(
       (spec: Specification<SubscriptionRoot>) =>
-        sql`
+        criteriaToWhere(sql, spec.criteria, SubscriptionMapper.columns).pipe(
+          Effect.flatMap(
+            (where) => sql`
           SELECT * FROM billing.subscriptions
-          WHERE ${criteriaToWhere(sql, spec.criteria, SubscriptionMapper.columns)}
+          WHERE ${where}
           LIMIT 1
-        `.pipe(
+        `,
+          ),
           Database.maybeRow(RowSchemas.SubscriptionRow),
 
-          Effect.map((row) => (row === null ? null : SubscriptionMapper.toDomain(row))),
+          Effect.map(Option.map(SubscriptionMapper.toDomain)),
           translateDatabaseErrors,
         ),
     );

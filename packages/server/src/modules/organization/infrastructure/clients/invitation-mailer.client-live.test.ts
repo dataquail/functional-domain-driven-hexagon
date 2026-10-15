@@ -1,19 +1,20 @@
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertDefined } from "@effect/vitest/utils";
 import * as ConfigProvider from "effect/ConfigProvider";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
-import { MailDeliveryError } from "@/globals/infrastructure/email/ports/mail-errors.js";
-import { Mailer } from "@/globals/infrastructure/email/ports/mailer.js";
-import { InvitationEmailUndelivered } from "@/modules/organization/domain/invitation/invitation.errors.js";
-import { InvitationMailer } from "@/modules/organization/domain/ports/clients/invitation-mailer.client.js";
-import { InvitationMailerLive } from "@/modules/organization/infrastructure/clients/invitation-mailer.client-live.js";
-import { MailerFake, SentMails } from "@/test-utils/mailer-fake.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars";
+import { MailDeliveryError } from "@/globals/infrastructure/email/ports/mail-errors";
+import { Mailer } from "@/globals/infrastructure/email/ports/mailer";
+import { InvitationEmailUndelivered } from "@/modules/organization/domain/invitation/invitation.errors";
+import { InvitationMailer } from "@/modules/organization/domain/ports/clients/invitation-mailer.client";
+import { InvitationMailerLive } from "@/modules/organization/infrastructure/clients/invitation-mailer.client-live";
+import { MailerFake, SentMails } from "@/test-utils/mailer-fake";
 
 const APP_URL = "https://app.example.com";
 
@@ -59,7 +60,8 @@ describe("InvitationMailerLive", () => {
       const mails = yield* sent.all;
       strictEqual(mails.length, 1);
       const mail = mails[0];
-      if (mail === undefined) throw new Error("expected one rendered mail");
+
+      assertDefined(mail);
       strictEqual(mail.to, "alice@example.com");
       ok(mail.subject.length > 0);
       // The link must survive into BOTH the HTML and the plaintext body —

@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Ref from "effect/Ref";
 
-import { Mailer, type MailMessage } from "@/globals/infrastructure/email/ports/mailer.js";
+import { Mailer, type MailMessage } from "@/globals/infrastructure/email/ports/mailer";
 
 // Records every rendered message handed to the platform transport so
 // tests can assert against it (the `InvitationMailerLive` adapter test
@@ -21,6 +21,7 @@ export class SentMails extends Context.Service<
 export const MailerFake: Layer.Layer<Mailer | SentMails> = Layer.effectContext(
   Effect.gen(function* () {
     const sent = yield* Ref.make<ReadonlyArray<MailMessage>>([]);
+
     return Context.empty().pipe(
       Context.add(
         Mailer,

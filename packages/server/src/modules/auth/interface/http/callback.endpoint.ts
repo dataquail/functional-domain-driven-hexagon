@@ -4,16 +4,17 @@ import * as cookie from "cookie";
 import * as Effect from "effect/Effect";
 import * as HttpServerRequest from "effect/http/HttpServerRequest";
 import * as HttpServerResponse from "effect/http/HttpServerResponse";
+import * as Option from "effect/Option";
 
-import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.js";
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
-import { recoverPersistenceUnavailable } from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { SignInCommand } from "@/modules/auth/commands/sign-in.command.js";
-import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client.js";
+import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars";
+import { recoverPersistenceUnavailable } from "@/globals/infrastructure/framework/http/http-endpoint";
+import { SignInCommand } from "@/modules/auth/commands/sign-in.command";
+import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client";
 
-import { buildCallbackUrl } from "./callback-url.util.js";
-import { ID_TOKEN_HINT_COOKIE_NAME } from "./id-token-hint-cookie.util.js";
-import { decodePkcePayload, PKCE_COOKIE_NAME } from "./oidc-pkce-cookie.util.js";
+import { buildCallbackUrl } from "./callback-url.util";
+import { ID_TOKEN_HINT_COOKIE_NAME, readCookie } from "./id-token-hint-cookie.util";
+import { decodePkcePayload, PKCE_COOKIE_NAME } from "./oidc-pkce-cookie.util";
 
 export const callbackEndpoint = Effect.fn("AuthLive.callback")(
   function* () {
@@ -23,24 +24,31 @@ export const callbackEndpoint = Effect.fn("AuthLive.callback")(
     const httpReq = yield* HttpServerRequest.HttpServerRequest;
 
     const cookies = cookie.parse(httpReq.headers.cookie ?? "");
-    const signedPkce = cookies[PKCE_COOKIE_NAME];
-    if (signedPkce === undefined || signedPkce === "") {
+    const signedPkce = readCookie(cookies, PKCE_COOKIE_NAME);
+
+    if (Option.isNone(signedPkce)) {
       return yield* new CustomHttpApiError.Unauthorized({ message: "Missing OIDC state cookie" });
     }
-    const verified = codec.verify(signedPkce);
-    if (verified === null) {
+
+    const verified = codec.verify(signedPkce.value);
+
+    if (Option.isNone(verified)) {
       return yield* new CustomHttpApiError.Unauthorized({ message: "Invalid OIDC state cookie" });
     }
-    const payload = decodePkcePayload(verified);
-    if (payload === null) {
+
+    const payload = decodePkcePayload(verified.value);
+
+    if (Option.isNone(payload)) {
       return yield* new CustomHttpApiError.Unauthorized({ message: "Malformed OIDC state cookie" });
     }
-    const { codeVerifier, state: expectedState } = payload;
+
+    const { codeVerifier, state: expectedState } = payload.value;
 
     const url = buildCallbackUrl(env.IDENTITY_REDIRECT_URI, httpReq.url);
     const exchange = yield* oidc.exchangeCode(url, expectedState, codeVerifier);
 
     const bus = yield* CommandBus;
+
     const { sessionId } = yield* bus.execute(SignInCommand, {
       subject: exchange.subject,
       email: exchange.email,
@@ -48,6 +56,7 @@ export const callbackEndpoint = Effect.fn("AuthLive.callback")(
       ttlSeconds: env.SESSION_TTL_SECONDS,
       absoluteTtlSeconds: env.SESSION_ABSOLUTE_TTL_SECONDS,
     });
+
     const sessionCookie = codec.sign(sessionId);
 
     return HttpServerResponse.empty({ status: 302 }).pipe(
@@ -66,7 +75,7 @@ export const callbackEndpoint = Effect.fn("AuthLive.callback")(
         ],
         [
           ID_TOKEN_HINT_COOKIE_NAME,
-          exchange.idToken ?? "",
+          Option.getOrElse(exchange.idToken, () => ""),
           {
             httpOnly: true,
             secure: false,

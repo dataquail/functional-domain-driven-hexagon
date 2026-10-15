@@ -1,7 +1,7 @@
 import { Command } from "@effect-server-utils/cqrs";
 import * as Schema from "effect/Schema";
 
-import { SessionId } from "@/modules/auth/domain/session/session.id.js";
+import { SessionId } from "@/modules/auth/domain/session/session.id";
 
 // Dispatched by the logout endpoint to revoke an active session. The endpoint reads the
 // session id from the cookie and dispatches; this command does the domain write so the
@@ -16,4 +16,5 @@ export const RevokeSessionCommand = Command.make("RevokeSessionCommand", {
   payload: { sessionId: SessionId },
   success: Schema.Void,
 });
+
 export type RevokeSessionPayload = Command.Payload<typeof RevokeSessionCommand>;

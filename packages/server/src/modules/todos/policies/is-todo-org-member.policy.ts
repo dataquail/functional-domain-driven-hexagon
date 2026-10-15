@@ -1,8 +1,8 @@
 import { type ResourceCheck } from "@effect-server-utils/authz";
 
-import { type OrganizationAccess } from "@/modules/todos/domain/ports/acl/organization-access.acl.js";
+import { type OrganizationAccess } from "@/modules/todos/domain/ports/acl/organization-access.acl";
 
-import { type TodoOrgContext } from "./todo.resource-resolvers.js";
+import { type TodoOrgContext } from "./todo.resource-resolvers";
 
 // "Is this caller a member of the todo's org?" — shared by both todo policy
 // resources (`todoCollection` and `todo`), which both resolve to a
@@ -12,7 +12,7 @@ import { type TodoOrgContext } from "./todo.resource-resolvers.js";
 // the returned check is `R = never`. That is what lets the registry hold
 // fully-closed checks, and what lets a policy test provide this module's own
 // fake and nothing else.
-export const makeIsTodoOrgMember =
+export const isTodoOrgMember =
   (organizations: OrganizationAccess["Service"]): ResourceCheck<TodoOrgContext> =>
   (caller, resource) =>
     organizations.isMember(caller.userId, resource.organizationId);

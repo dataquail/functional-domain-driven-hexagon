@@ -1,12 +1,12 @@
 import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
-import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id";
 import {
   type ApiTokenView,
   type ListMyApiTokensPayload,
-} from "@/modules/auth/queries/list-my-api-tokens.query.js";
+} from "@/modules/auth/queries/list-my-api-tokens.query";
 
 const toView = (row: RowSchemas.ApiTokenRow): ApiTokenView => ({
   id: ApiTokenId.make(row.id),
@@ -21,10 +21,12 @@ export const listMyApiTokensHandler = Effect.fn("listMyApiTokensHandler")(functi
   query: ListMyApiTokensPayload,
 ) {
   const sql = yield* Database.Database;
+
   const rows = yield* sql`
           SELECT * FROM auth.api_tokens
           WHERE user_id = ${query.userId} AND revoked_at IS NULL
           ORDER BY created_at DESC
         `.pipe(Database.rows(RowSchemas.ApiTokenRow), translateDatabaseErrors);
+
   return rows.map(toView);
 });

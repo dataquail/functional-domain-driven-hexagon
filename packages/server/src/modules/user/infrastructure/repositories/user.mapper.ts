@@ -1,10 +1,11 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
+import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.js";
-import { UserRoot } from "@/modules/user/domain/user/user.root.js";
-import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql";
+import { UserRoot } from "@/modules/user/domain/user/user.root";
+import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object";
 
 type Row = RowSchemas.UserRow;
 
@@ -22,34 +23,26 @@ export const toDomain = (row: Row): UserRoot =>
     email: row.email,
     // The three address columns move together (NOT NULL was dropped for JIT
     // provisioning). A row has a full address or none.
-    address:
-      row.country !== null && row.street !== null && row.postal_code !== null
-        ? new AddressValueObject({
-            country: row.country,
-            street: row.street,
-            postalCode: row.postal_code,
-          })
-        : null,
+    address: Option.all({
+      country: Option.fromNullOr(row.country),
+      street: Option.fromNullOr(row.street),
+      postalCode: Option.fromNullOr(row.postal_code),
+    }).pipe(Option.map((fields) => new AddressValueObject(fields))),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
 
-export type PersistenceRow = {
-  readonly id: string;
-  readonly email: string;
-  readonly country: string | null;
-  readonly street: string | null;
-  readonly postal_code: string | null;
-  readonly created_at: Date;
-  readonly updated_at: Date;
-};
+export type PersistenceRow = typeof RowSchemas.UserRow.Encoded;
+
+const addressColumn = (user: UserRoot, field: keyof AddressValueObject) =>
+  Option.getOrNull(Option.map(user.address, (address) => address[field]));
 
 export const toPersistence = (user: UserRoot): PersistenceRow => ({
   id: user.id,
   email: user.email,
-  country: user.address?.country ?? null,
-  street: user.address?.street ?? null,
-  postal_code: user.address?.postalCode ?? null,
+  country: addressColumn(user, "country"),
+  street: addressColumn(user, "street"),
+  postal_code: addressColumn(user, "postalCode"),
   created_at: DateTime.toDate(user.createdAt),
   updated_at: DateTime.toDate(user.updatedAt),
 });

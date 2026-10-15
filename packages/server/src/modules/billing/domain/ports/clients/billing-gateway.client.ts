@@ -1,13 +1,14 @@
 import * as Context from "effect/Context";
 import type * as DateTime from "effect/DateTime";
 import type * as Effect from "effect/Effect";
+import type * as Option from "effect/Option";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id";
 import {
   type BillingGatewayUnavailable,
   type InvalidWebhookSignature,
-} from "@/modules/billing/domain/subscription/subscription.errors.js";
-import { type StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object.js";
+} from "@/modules/billing/domain/subscription/subscription.errors";
+import { type StripeWebhookEvent } from "@/modules/billing/domain/webhook-event/stripe-webhook.value-object";
 
 // Outbound port to the external billing provider (Stripe in prod, an
 // in-memory simulator in tests). The port stays narrow on purpose: the
@@ -37,7 +38,7 @@ export type CreateSubscriptionInput = {
 export type SubscriptionState = {
   readonly stripeSubscriptionId: string;
   readonly status: string;
-  readonly currentPeriodEnd: DateTime.Utc | null;
+  readonly currentPeriodEnd: Option.Option<DateTime.Utc>;
 };
 
 export type CancelSubscriptionInput = {
@@ -46,7 +47,7 @@ export type CancelSubscriptionInput = {
 
 export type CancelSubscriptionResult = {
   readonly status: string;
-  readonly currentPeriodEnd: DateTime.Utc | null;
+  readonly currentPeriodEnd: Option.Option<DateTime.Utc>;
 };
 
 export type VerifyWebhookInput = {
@@ -54,7 +55,7 @@ export type VerifyWebhookInput = {
   readonly signature: string;
 };
 
-export type BillingGatewayShape = {
+export type BillingGatewayService = {
   readonly createCustomer: (
     input: CreateCustomerInput,
   ) => Effect.Effect<CreateCustomerResult, BillingGatewayUnavailable>;
@@ -69,6 +70,6 @@ export type BillingGatewayShape = {
   ) => Effect.Effect<StripeWebhookEvent, InvalidWebhookSignature>;
 };
 
-export class BillingGateway extends Context.Service<BillingGateway, BillingGatewayShape>()(
+export class BillingGateway extends Context.Service<BillingGateway, BillingGatewayService>()(
   "BillingGateway",
 ) {}

@@ -1,10 +1,11 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
+import * as Option from "effect/Option";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.js";
-import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
-import { SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql";
+import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id";
+import { SubscriptionRoot } from "@/modules/billing/domain/subscription/subscription.root";
 
 type Row = RowSchemas.SubscriptionRow;
 
@@ -23,7 +24,7 @@ export const toDomain = (row: Row): SubscriptionRoot =>
     stripeCustomerId: row.stripe_customer_id,
     stripeSubscriptionId: row.stripe_subscription_id,
     status: row.status,
-    currentPeriodEnd: row.current_period_end,
+    currentPeriodEnd: Option.fromNullOr(row.current_period_end),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
@@ -34,7 +35,7 @@ export type PersistenceRow = {
   readonly stripe_customer_id: string;
   readonly stripe_subscription_id: string;
   readonly status: string;
-  readonly current_period_end: Date | null;
+  readonly current_period_end: Option.Option<Date>;
   readonly created_at: Date;
   readonly updated_at: Date;
 };
@@ -45,7 +46,7 @@ export const toPersistence = (sub: SubscriptionRoot): PersistenceRow => ({
   stripe_customer_id: sub.stripeCustomerId,
   stripe_subscription_id: sub.stripeSubscriptionId,
   status: sub.status,
-  current_period_end: sub.currentPeriodEnd === null ? null : DateTime.toDate(sub.currentPeriodEnd),
+  current_period_end: Option.map(sub.currentPeriodEnd, DateTime.toDate),
   created_at: DateTime.toDate(sub.createdAt),
   updated_at: DateTime.toDate(sub.updatedAt),
 });

@@ -2,9 +2,9 @@ import { Command } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { AlreadyHasRole, CannotPromoteSelf } from "@/modules/role/domain/roles/role.errors.js";
-import { RoleValueObject } from "@/modules/role/domain/roles/role.value-object.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { AlreadyHasRole, CannotPromoteSelf } from "@/modules/role/domain/roles/role.errors";
+import { RoleValueObject } from "@/modules/role/domain/roles/role.value-object";
 
 // `actorUserId` is carried explicitly rather than pulled from `CurrentUser` so the bus
 // boundary stays uniform — the HTTP endpoint is the one place that translates
@@ -19,4 +19,5 @@ export const GrantRoleCommand = Command.make("GrantRoleCommand", {
   success: Schema.Void,
   failure: Schema.Union([AlreadyHasRole, CannotPromoteSelf, PersistenceUnavailable]),
 });
+
 export type GrantRolePayload = Command.Payload<typeof GrantRoleCommand>;

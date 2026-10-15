@@ -1,18 +1,21 @@
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
 
 // Aggregate root data — a dumb value (ADR-0003). Operations live in
 // `organization.root-ops.ts` (`OrganizationRootOps`) and predicates in
 // `organization.specification.ts` (`OrganizationSpecifications`).
-export class OrganizationRoot extends Schema.Class<OrganizationRoot>("OrganizationRoot")({
+export class OrganizationRoot extends Schema.Class<
+  OrganizationRoot,
+  { readonly brand: "OrganizationRoot" }
+>("OrganizationRoot")({
   id: OrganizationId,
   name: Schema.String,
   createdAt: Schema.DateTimeUtc,
   updatedAt: Schema.DateTimeUtc,
-  // Soft-delete tombstone. Null = active. Set by `softDelete`, cleared
+  // Soft-delete tombstone. None = active. Set by `softDelete`, cleared
   // by `restore`. Reads filter on this column so callers don't see
   // tombstoned rows by default; the `restore` endpoint asks for them
   // explicitly via a flag on the read path.
-  deletedAt: Schema.NullOr(Schema.DateTimeUtc),
+  deletedAt: Schema.Option(Schema.DateTimeUtc),
 }) {}

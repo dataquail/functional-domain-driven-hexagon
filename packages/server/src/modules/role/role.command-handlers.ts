@@ -3,11 +3,11 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { GrantRoleCommand } from "@/modules/role/commands/grant-role.command.js";
-import { grantRoleHandler } from "@/modules/role/commands/grant-role.handler.js";
-import { RevokeRoleCommand } from "@/modules/role/commands/revoke-role.command.js";
-import { revokeRoleHandler } from "@/modules/role/commands/revoke-role.handler.js";
-import { RolesRepositoryLive } from "@/modules/role/infrastructure/repositories/roles.repository-live.js";
+import { GrantRoleCommand } from "@/modules/role/commands/grant-role.command";
+import { grantRoleHandler } from "@/modules/role/commands/grant-role.handler";
+import { RevokeRoleCommand } from "@/modules/role/commands/revoke-role.command";
+import { revokeRoleHandler } from "@/modules/role/commands/revoke-role.handler";
+import { RolesRepositoryLive } from "@/modules/role/infrastructure/repositories/roles.repository-live";
 
 export const roleCommandGroup = Command.group(GrantRoleCommand, RevokeRoleCommand);
 

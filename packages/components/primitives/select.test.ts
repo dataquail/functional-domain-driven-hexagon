@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
+import { recordCalls } from "../test/calls";
 import Select from "./select.svelte";
 
 const ITEMS = [
@@ -24,7 +25,6 @@ describe("Select", () => {
 
   it("shows the placeholder when nothing is selected", () => {
     render(Select, {
-      value: undefined,
       onValueChange: () => {},
       items: ITEMS,
       placeholder: "Select an organization…",
@@ -37,10 +37,10 @@ describe("Select", () => {
   });
 
   it("reports the item picked from the open list", async () => {
-    const onValueChange = vi.fn();
+    const onValueChange = recordCalls<[string]>();
     render(Select, {
       value: "globex",
-      onValueChange,
+      onValueChange: onValueChange.callback,
       items: ITEMS,
       "aria-label": "Organization",
     });
@@ -48,6 +48,6 @@ describe("Select", () => {
     await userEvent.click(screen.getByRole("button", { name: "Organization" }));
     await userEvent.click(await screen.findByTestId("org-acme"));
 
-    expect(onValueChange).toHaveBeenCalledWith("acme");
+    expect(onValueChange.calls).toEqual([["acme"]]);
   });
 });

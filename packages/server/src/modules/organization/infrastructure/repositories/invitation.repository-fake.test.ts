@@ -1,24 +1,23 @@
-import { deepStrictEqual, notStrictEqual } from "node:assert";
+import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import * as Cause from "effect/Cause";
+import { assertNone, assertTrue } from "@effect/vitest/utils";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
-import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors.js";
-import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
-import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.js";
-import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
-import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository";
+import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root";
+import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops";
+import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification";
 
-import { InvitationRepositoryFake } from "./invitation.repository-fake.js";
+import { InvitationRepositoryFake } from "./invitation.repository-fake";
 
 const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
@@ -43,8 +42,8 @@ describe("InvitationRepositoryFake", () => {
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
       yield* repo.insertOne(seed());
-      const found = yield* repo.findOne(InvitationSpecifications.withId(invitationId));
-      if (found === null) throw new Error("expected invitation");
+      const maybeFound = yield* repo.findOne(InvitationSpecifications.withId(invitationId));
+      const found = Option.getOrThrow(maybeFound);
       deepStrictEqual(found.id, invitationId);
       deepStrictEqual(found.token, "tok-abc");
     }).pipe(provide),
@@ -54,8 +53,8 @@ describe("InvitationRepositoryFake", () => {
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
       yield* repo.insertOne(seed());
-      const found = yield* repo.findOne(InvitationSpecifications.withToken("tok-abc"));
-      if (found === null) throw new Error("expected invitation");
+      const maybeFound = yield* repo.findOne(InvitationSpecifications.withToken("tok-abc"));
+      const found = Option.getOrThrow(maybeFound);
       deepStrictEqual(found.id, invitationId);
     }).pipe(provide),
   );
@@ -65,8 +64,8 @@ describe("InvitationRepositoryFake", () => {
       const repo = yield* InvitationRepository;
       const byId = yield* repo.findOne(InvitationSpecifications.withId(invitationId));
       const byToken = yield* repo.findOne(InvitationSpecifications.withToken("missing"));
-      deepStrictEqual(byId, null);
-      deepStrictEqual(byToken, null);
+      assertNone(byId);
+      assertNone(byToken);
     }).pipe(provide),
   );
 
@@ -77,7 +76,7 @@ describe("InvitationRepositoryFake", () => {
       const revoked = Result.getOrThrow(InvitationRootOps.revoke(seed(), { now }));
       yield* repo.updateOne(revoked.invitation);
       const open = yield* repo.findOne(InvitationSpecifications.isOpen);
-      deepStrictEqual(open, null);
+      assertNone(open);
     }).pipe(provide),
   );
 
@@ -87,23 +86,17 @@ describe("InvitationRepositoryFake", () => {
       yield* repo.insertOne(seed());
       const accepted = Result.getOrThrow(InvitationRootOps.accept(seed(), { userId, now }));
       yield* repo.updateOne(accepted.invitation);
-      const found = yield* repo.findOne(InvitationSpecifications.withId(invitationId));
-      if (found === null) throw new Error("expected invitation");
-      notStrictEqual(found.acceptedAt, null);
+      const maybeFound = yield* repo.findOne(InvitationSpecifications.withId(invitationId));
+      const found = Option.getOrThrow(maybeFound);
+      assertTrue(Option.isSome(found.acceptedAt));
     }).pipe(provide),
   );
 
   it.effect("update fails InvitationNotFound when the row is missing", () =>
     Effect.gen(function* () {
       const repo = yield* InvitationRepository;
-      const exit = yield* Effect.exit(repo.updateOne(seed()));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(InvitationNotFound)(error), true);
-      }
+      const error = yield* Effect.flip(repo.updateOne(seed()));
+      deepStrictEqual(Schema.is(InvitationNotFound)(error), true);
     }).pipe(provide),
   );
 });

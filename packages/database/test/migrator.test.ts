@@ -1,56 +1,71 @@
-import * as fs from "node:fs/promises";
-import * as path from "node:path";
-import { fileURLToPath } from "node:url";
-
-import { describe, expect, it } from "@effect/vitest";
+import * as NodeServices from "@effect/platform-node/NodeServices";
+import { describe, expect, layer } from "@effect/vitest";
+import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
+import * as FileSystem from "effect/FileSystem";
+import * as Option from "effect/Option";
+import * as Path from "effect/Path";
 
-import { migrations } from "../src/migrations/index.js";
-import { migrationsLoader, MODULE_SCHEMAS } from "../src/migrator.js";
+import { migrations } from "../src/migrations/registry";
+import { migrationsLoader, MODULE_SCHEMAS } from "../src/migrator";
 
-const migrationsDirectory = path.join(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../src/migrations",
-);
+const migrationsDirectory = Effect.gen(function* () {
+  const path = yield* Path.Path;
+  const here = yield* path.fromFileUrl(new URL(import.meta.url));
 
-const resolved = Effect.runPromise(migrationsLoader);
+  return path.join(path.dirname(here), "../src/migrations");
+});
 
 describe("migrations", () => {
-  // The registry is hand-maintained, so a new migration file that nobody added
-  // to it would simply never run. This is the guard against that.
-  it("registers exactly the migration files on disk", async () => {
-    const onDisk = (await fs.readdir(migrationsDirectory))
-      .filter((file) => /^\d+_.+\.ts$/.test(file))
-      .map((file) => file.replace(/\.ts$/, ""))
-      .sort();
-    expect(Object.keys(migrations).sort()).toEqual(onDisk);
-  });
+  layer(NodeServices.layer)((it) => {
+    // The registry is hand-maintained, so a new migration file that nobody added
+    // to it would simply never run. This is the guard against that.
+    it.effect("registers exactly the migration files on disk", () =>
+      Effect.gen(function* () {
+        const fs = yield* FileSystem.FileSystem;
+        const files = yield* fs.readDirectory(yield* migrationsDirectory);
 
-  it("resolves every migration, ordered by a contiguous id", async () => {
-    const list = await resolved;
-    expect(list.map(([id]) => id)).toEqual(
-      Array.from({ length: list.length }, (_, index) => index + 1),
+        const onDisk = Arr.getSomes(
+          files.map((file) =>
+            Option.fromNullOr(/^(\d+_.+)\.ts$/.exec(file)).pipe(
+              Option.flatMap((match) => Option.fromUndefinedOr(match[1])),
+            ),
+          ),
+        );
+
+        expect(Object.keys(migrations).sort()).toEqual(onDisk.sort());
+      }),
     );
-    expect(list.map(([, name]) => name).slice(0, 2)).toEqual([
-      "create_schema_user",
-      "create_schema_organization",
-    ]);
-  });
 
-  it("exports an Effect from every migration", async () => {
-    const list = await resolved;
-    for (const [id, name, load] of list) {
-      // `ResolvedMigration` widens every loader's requirements to SqlClient;
-      // `fromRecord` just hands back the value, so nothing is required here.
-      const migration = await Effect.runPromise(load as Effect.Effect<unknown, unknown, never>);
-      expect(Effect.isEffect(migration), `${id}_${name} must export an Effect`).toBe(true);
-    }
-  });
+    it.effect("resolves every migration, ordered by a contiguous id", () =>
+      Effect.gen(function* () {
+        const list = yield* migrationsLoader;
+        expect(list.map(([id]) => id)).toEqual(
+          Array.from({ length: list.length }, (_, index) => index + 1),
+        );
+        expect(list.map(([, name]) => name).slice(0, 2)).toEqual([
+          "create_schema_user",
+          "create_schema_organization",
+        ]);
+      }),
+    );
 
-  it("creates a schema for every module that owns one", async () => {
-    const names = (await resolved).map(([, name]) => name);
-    for (const schema of MODULE_SCHEMAS) {
-      expect(names).toContain(`create_schema_${schema}`);
-    }
+    it.effect("exports an Effect from every migration", () =>
+      Effect.sync(() => {
+        for (const [file, migration] of Object.entries(migrations)) {
+          expect(Effect.isEffect(migration), `${file} must export an Effect`).toBe(true);
+        }
+      }),
+    );
+
+    it.effect("creates a schema for every module that owns one", () =>
+      Effect.gen(function* () {
+        const names = (yield* migrationsLoader).map(([, name]) => name);
+
+        for (const schema of MODULE_SCHEMAS) {
+          expect(names).toContain(`create_schema_${schema}`);
+        }
+      }),
+    );
   });
 });

@@ -1,11 +1,12 @@
 import * as DateTime from "effect/DateTime";
 import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
-import { type TouchApiTokenPayload } from "@/modules/auth/commands/touch-api-token.command.js";
-import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
-import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.js";
-import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
+import { type TouchApiTokenPayload } from "@/modules/auth/commands/touch-api-token.command";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository";
+import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops";
+import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification";
 
 // Last-used stamp, throttled + race-tolerant.
 //
@@ -21,13 +22,19 @@ export const touchApiTokenHandler = Effect.fn("touchApiTokenHandler")(function* 
   cmd: TouchApiTokenPayload,
 ) {
   const repo = yield* ApiTokenRepository;
-  const token = yield* repo
-    .findOne(ApiTokenSpecifications.withId(cmd.apiTokenId))
-    .pipe(Effect.catchTag("PersistenceUnavailable", () => Effect.succeed(null)));
-  if (token?.revokedAt !== null) return;
+
+  const found = yield* repo.findOne(ApiTokenSpecifications.withId(cmd.apiTokenId)).pipe(
+    Effect.map(Option.filter((candidate) => Option.isNone(candidate.revokedAt))),
+    Effect.catchTag("PersistenceUnavailable", () => Effect.succeedNone),
+  );
+
+  if (Option.isNone(found)) return;
+
+  const token = found.value;
 
   const now = yield* DateTime.now;
   const elapsed = DateTime.distance(token.lastUsedAt, now);
+
   if (Duration.isLessThan(elapsed, Duration.seconds(cmd.thresholdSeconds))) return;
 
   yield* repo.updateOne(ApiTokenRootOps.touch({ token, now })).pipe(

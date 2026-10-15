@@ -1,16 +1,17 @@
 import { Database, orFail, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
-import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.js";
-import { type ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
-import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
-import { type ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root.js";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
+import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors";
+import { type ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository";
+import { type ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root";
 
-import * as ApiTokenMapper from "./api-token.mapper.js";
+import * as ApiTokenMapper from "./api-token.mapper";
 
 export const ApiTokenRepositoryLive = Layer.effect(
   ApiTokenRepository,
@@ -19,6 +20,7 @@ export const ApiTokenRepositoryLive = Layer.effect(
 
     const insertOne = Effect.fn("ApiTokenRepository.insertOne")((token: ApiTokenRoot) => {
       const row = ApiTokenMapper.toPersistence(token);
+
       return sql`
           INSERT INTO auth.api_tokens
             (id, user_id, token_hash, prefix, label, expires_at, revoked_at, created_at, last_used_at)
@@ -40,14 +42,17 @@ export const ApiTokenRepositoryLive = Layer.effect(
     // projection. `LIMIT 1` is safe because every spec used with findOne
     // selects at most one row (the id primary key, the unique token_hash).
     const findOne = Effect.fn("ApiTokenRepository.findOne")((spec: Specification<ApiTokenRoot>) =>
-      sql`
+      criteriaToWhere(sql, spec.criteria, ApiTokenMapper.columns).pipe(
+        Effect.flatMap(
+          (where) => sql`
           SELECT * FROM auth.api_tokens
-          WHERE ${criteriaToWhere(sql, spec.criteria, ApiTokenMapper.columns)}
+          WHERE ${where}
           LIMIT 1
-        `.pipe(
+        `,
+        ),
         Database.maybeRow(RowSchemas.ApiTokenRow),
 
-        Effect.map((row) => (row === null ? null : ApiTokenMapper.toDomain(row))),
+        Effect.map(Option.map(ApiTokenMapper.toDomain)),
         translateDatabaseErrors,
       ),
     );
@@ -55,11 +60,14 @@ export const ApiTokenRepositoryLive = Layer.effect(
     // The repository owns the newest-first ordering; the spec (e.g. forUser)
     // contributes the WHERE, including the `revoked_at IS NULL` active filter.
     const findMany = Effect.fn("ApiTokenRepository.findMany")((spec: Specification<ApiTokenRoot>) =>
-      sql`
+      criteriaToWhere(sql, spec.criteria, ApiTokenMapper.columns).pipe(
+        Effect.flatMap(
+          (where) => sql`
           SELECT * FROM auth.api_tokens
-          WHERE ${criteriaToWhere(sql, spec.criteria, ApiTokenMapper.columns)}
+          WHERE ${where}
           ORDER BY created_at DESC
-        `.pipe(
+        `,
+        ),
         Database.rows(RowSchemas.ApiTokenRow),
 
         Effect.map((rows) => rows.map(ApiTokenMapper.toDomain)),
@@ -83,6 +91,7 @@ export const ApiTokenRepositoryLive = Layer.effect(
 
     const updateOne = Effect.fn("ApiTokenRepository.updateOne")((token: ApiTokenRoot) => {
       const row = ApiTokenMapper.toPersistence(token);
+
       return sql`
           UPDATE auth.api_tokens
           SET last_used_at = ${row.last_used_at}

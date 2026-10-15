@@ -1,20 +1,19 @@
-import * as crypto from "node:crypto";
-
 import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
+import * as Crypto from "effect/Crypto";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
-import { type CreateOrganizationPayload } from "@/modules/organization/commands/create-organization.command.js";
-import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
-import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops.js";
-import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors.js";
-import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
-import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.js";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
-import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.js";
-import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
+import { type CreateOrganizationPayload } from "@/modules/organization/commands/create-organization.command";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository";
+import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops";
+import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors";
+import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository";
+import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository";
+import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops";
+import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl";
 
 // Creating an org also creates the creator's Membership AND grants the
 // creator the `admin` OrganizationRole in the same unit of work —
@@ -38,6 +37,7 @@ export const createOrganizationHandler = Effect.fn("createOrganizationHandler")(
   // level (not at HTTP authz) because the rule is a fact about the
   // role model, not a per-resource permission decision.
   const roles = yield* PlatformRoles;
+
   if (yield* roles.isSuperAdmin(cmd.actorUserId)) {
     return yield* new SuperAdminCannotOwnOrganization({ userId: cmd.actorUserId });
   }
@@ -47,22 +47,27 @@ export const createOrganizationHandler = Effect.fn("createOrganizationHandler")(
   const orgRolesRepo = yield* OrganizationRolesRepository;
   const bus = yield* DomainEventBus;
   const now = yield* DateTime.now;
-  const id = OrganizationId.make(crypto.randomUUID());
+  const crypto = yield* Crypto.Crypto;
+  const id = OrganizationId.make(yield* Effect.orDie(crypto.randomUUIDv4));
+
   const { events: orgEvents, organization } = OrganizationRootOps.create({
     id,
     name: cmd.name,
     now,
   });
+
   const { events: memberEvents, membership } = MembershipRootOps.create({
     userId: cmd.actorUserId,
     organizationId: id,
     now,
   });
+
   // `grantRole` returns `Result<GrantResult, AlreadyHasOrganizationRole>`. We
   // just constructed `empty(...)`, so the only way this could fail is a
   // domain-model defect — die explicitly so the typed error channel stays
   // clean for the bus signature.
   const seedRoles = OrganizationRolesRootOps.empty(cmd.actorUserId, id);
+
   const grantResult = yield* Effect.orDie(
     Effect.fromResult(OrganizationRolesRootOps.grantRole(seedRoles, "admin", cmd.actorUserId)),
   );
@@ -71,5 +76,6 @@ export const createOrganizationHandler = Effect.fn("createOrganizationHandler")(
   yield* memberRepo.insertOne(membership);
   yield* orgRolesRepo.upsertOne(grantResult.organizationRoles);
   yield* bus.dispatch([...orgEvents, ...memberEvents, ...grantResult.events]);
+
   return id;
 }, withUnitOfWork);

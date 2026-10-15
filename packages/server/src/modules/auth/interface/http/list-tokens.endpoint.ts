@@ -6,8 +6,8 @@ import * as Effect from "effect/Effect";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { ListMyApiTokensQuery } from "@/modules/auth/queries/list-my-api-tokens.query.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { ListMyApiTokensQuery } from "@/modules/auth/queries/list-my-api-tokens.query";
 
 // Lists the caller's active (non-revoked) tokens. Secret-free: only the
 // display `prefix` and metadata are returned.
@@ -17,6 +17,7 @@ export const listTokensEndpoint = Effect.fn("AuthLive.tokens.list")(function* (
   const currentUser = yield* CurrentUser;
   const queryBus = yield* QueryBus;
   const tokens = yield* queryBus.execute(ListMyApiTokensQuery, { userId: currentUser.userId });
+
   return tokens.map(
     (t) =>
       new AuthContract.ApiTokenSummary({

@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 
 import { textSnippet } from "../../test/snippets";
-import { List } from "./index";
+import { List } from "./list";
 
 describe("List", () => {
   it("is an unordered list by default", () => {

@@ -1,19 +1,42 @@
 import { render, screen } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
-import * as Effect from "effect/Effect";
 import * as Atom from "effect/reactivity/Atom";
 import * as AtomRegistry from "effect/reactivity/AtomRegistry";
 import { flushSync, tick } from "svelte";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import SetProbe from "@/test/bridge/set-probe.svelte";
 import SubscribeProbe from "@/test/bridge/subscribe-probe.svelte";
 import ValueProbe from "@/test/bridge/value-probe.svelte";
 
-// Node removal runs on the registry's own scheduler, a macrotask after unsubscribe.
-const settle = async (): Promise<void> => {
-  await tick();
-  await Effect.runPromise(Effect.sleep(0));
+// Node removal runs on the registry's own scheduler; this one runs its queue on demand.
+const manualScheduler = () => {
+  const queued: Array<() => void> = [];
+
+  return {
+    scheduleTask: (task: () => void) => {
+      queued.push(task);
+
+      return () => {
+        queued.splice(queued.indexOf(task), 1);
+      };
+    },
+    flush: () => {
+      for (const task of queued.splice(0)) task();
+    },
+  };
+};
+
+const scheduledRegistry = () => {
+  const scheduler = manualScheduler();
+  const registry = AtomRegistry.make({ scheduleTask: scheduler.scheduleTask });
+
+  const settle = async (): Promise<void> => {
+    await tick();
+    scheduler.flush();
+  };
+
+  return { registry, settle };
 };
 
 describe("atomValue", () => {
@@ -54,7 +77,7 @@ describe("atomValue", () => {
   });
 
   it("releases its subscription when the component unmounts", async () => {
-    const registry = AtomRegistry.make();
+    const { registry, settle } = scheduledRegistry();
     const count = Atom.make(1);
     const { unmount } = render(ValueProbe, { registry, atom: count });
     expect(registry.getNodes().has(count)).toBe(true);
@@ -67,7 +90,7 @@ describe("atomValue", () => {
 
 describe("atomSet", () => {
   it("writes the atom, which stays mounted while the component lives", async () => {
-    const registry = AtomRegistry.make();
+    const { registry, settle } = scheduledRegistry();
     const count = Atom.make(0);
     const { unmount } = render(SetProbe, { registry, atom: count, next: 5 });
     await settle();
@@ -86,16 +109,21 @@ describe("atomSubscribe", () => {
   it("hands each later value to the listener, in order, until unmount", async () => {
     const registry = AtomRegistry.make();
     const count = Atom.make(0);
-    const listener = vi.fn();
+    const heard: Array<number> = [];
+
+    const listener = (value: number) => {
+      heard.push(value);
+    };
+
     const { unmount } = render(SubscribeProbe, { registry, atom: count, listener });
     flushSync();
 
     registry.set(count, 1);
     registry.set(count, 2);
-    expect(listener.mock.calls).toEqual([[1], [2]]);
+    expect(heard).toEqual([1, 2]);
 
     unmount();
     registry.set(count, 3);
-    expect(listener).toHaveBeenCalledTimes(2);
+    expect(heard).toEqual([1, 2]);
   });
 });

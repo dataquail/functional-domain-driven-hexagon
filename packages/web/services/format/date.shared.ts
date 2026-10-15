@@ -6,8 +6,9 @@
 // string, a Date, or an object with epochMillis" shim.
 
 import * as DateTime from "effect/DateTime";
+import * as Option from "effect/Option";
 
 export const formatDay = (value: DateTime.Utc): string => DateTime.formatIsoDateUtc(value);
 
-export const formatDayOrNull = (value: DateTime.Utc | null): string | null =>
-  value === null ? null : formatDay(value);
+export const formatOptionalDay = (value: Option.Option<DateTime.Utc>): Option.Option<string> =>
+  Option.map(value, formatDay);

@@ -4,12 +4,12 @@ import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
 
-import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { InvitationRootOps } from "./invitation.root-ops.js";
-import { InvitationSpecifications } from "./invitation.specification.js";
+import { InvitationRootOps } from "./invitation.root-ops";
+import { InvitationSpecifications } from "./invitation.specification";
 
 const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");
 const organizationId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
@@ -17,6 +17,7 @@ const userId = UserId.make("33333333-3333-3333-3333-333333333333");
 const now = DateTime.makeUnsafe("2026-01-01T00:00:00Z");
 const inOneDay = DateTime.makeUnsafe("2026-01-02T00:00:00Z");
 const inOneWeek = DateTime.makeUnsafe("2026-01-08T00:00:00Z");
+
 const inputs = {
   id: invitationId,
   organizationId,

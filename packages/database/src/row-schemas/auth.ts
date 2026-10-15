@@ -6,6 +6,7 @@ export const AuthIdentityRow = Schema.Struct({
   provider: Schema.String,
   created_at: Schema.DateTimeUtcFromDate,
 });
+
 export type AuthIdentityRow = typeof AuthIdentityRow.Type;
 
 export const SessionRow = Schema.Struct({
@@ -18,6 +19,7 @@ export const SessionRow = Schema.Struct({
   created_at: Schema.DateTimeUtcFromDate,
   last_used_at: Schema.DateTimeUtcFromDate,
 });
+
 export type SessionRow = typeof SessionRow.Type;
 
 export const ApiTokenRow = Schema.Struct({
@@ -31,6 +33,7 @@ export const ApiTokenRow = Schema.Struct({
   created_at: Schema.DateTimeUtcFromDate,
   last_used_at: Schema.DateTimeUtcFromDate,
 });
+
 export type ApiTokenRow = typeof ApiTokenRow.Type;
 
 export const DeviceGrantRow = Schema.Struct({
@@ -43,4 +46,5 @@ export const DeviceGrantRow = Schema.Struct({
   expires_at: Schema.DateTimeUtcFromDate,
   approved_at: Schema.NullOr(Schema.DateTimeUtcFromDate),
 });
+
 export type DeviceGrantRow = typeof DeviceGrantRow.Type;

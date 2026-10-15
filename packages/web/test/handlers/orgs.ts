@@ -11,8 +11,8 @@ import {
   makePaginatedOrganizations,
   makePendingInvitation,
   ORG_A_ID,
-} from "../fixtures/organization";
-import { getEndpoint, typedHandler } from "../typed-handler";
+} from "@/test/fixtures/organization";
+import { getEndpoint, typedHandler } from "@/test/typed-handler";
 
 const findMineEndpoint = getEndpoint(OrganizationContract.Group, "findMine");
 const createEndpoint = getEndpoint(OrganizationContract.Group, "create");
@@ -55,6 +55,7 @@ export const orgsHandlers = {
           }),
         );
       }
+
       return Effect.succeed(
         new OrganizationContract.CreateOrganizationResponse({ id: outcome.id ?? ORG_A_ID }),
       );
@@ -66,39 +67,45 @@ export const orgsHandlers = {
       | ReadonlyArray<OrganizationContract.Organization>
       | OrganizationContract.PaginatedOrganizations = [],
   ) =>
-    typedHandler(findAllEndpoint, ({ urlParams }) =>
-      Effect.succeed(
-        Schema.is(OrganizationContract.PaginatedOrganizations)(arg)
-          ? arg
-          : makePaginatedOrganizations({
-              organizations: arg,
-              page: urlParams.page,
-              pageSize: urlParams.pageSize,
-              total: arg.length,
-            }),
-      ),
-    ),
+    typedHandler(findAllEndpoint, ({ urlParams }) => {
+      if (Schema.is(OrganizationContract.PaginatedOrganizations)(arg)) return Effect.succeed(arg);
+
+      return Effect.succeed(
+        makePaginatedOrganizations({
+          organizations: arg,
+          page: urlParams.page,
+          pageSize: urlParams.pageSize,
+          total: arg.length,
+        }),
+      );
+    }),
 
   softDelete: (
     outcome: { readonly result: "success" | "OrganizationNotFoundError" } = { result: "success" },
   ) =>
-    typedHandler(softDeleteEndpoint, () =>
-      outcome.result === "success" ? Effect.void : notFound(),
-    ),
+    typedHandler(softDeleteEndpoint, () => {
+      if (outcome.result === "success") {
+        return Effect.void;
+      }
+
+      return notFound();
+    }),
 
   restore: (
     outcome: { readonly result: "success" | "OrganizationNotDeletedError" } = { result: "success" },
   ) =>
-    typedHandler(restoreEndpoint, () =>
-      outcome.result === "success"
-        ? Effect.void
-        : Effect.fail(
-            new OrganizationContract.OrganizationNotDeletedError({
-              organizationId: ORG_A_ID,
-              message: "Organization is not deleted.",
-            }),
-          ),
-    ),
+    typedHandler(restoreEndpoint, () => {
+      if (outcome.result === "success") {
+        return Effect.void;
+      }
+
+      return Effect.fail(
+        new OrganizationContract.OrganizationNotDeletedError({
+          organizationId: ORG_A_ID,
+          message: "Organization is not deleted.",
+        }),
+      );
+    }),
 
   /** GET /orgs/:orgId/members — the roster. */
   findMembers: (members: ReadonlyArray<OrganizationContract.OrganizationMember> = []) =>
@@ -115,82 +122,94 @@ export const orgsHandlers = {
   removeMember: (
     outcome: { readonly result: "success" | "MembershipNotFoundError" } = { result: "success" },
   ) =>
-    typedHandler(removeMemberEndpoint, () =>
-      outcome.result === "success"
-        ? Effect.void
-        : Effect.fail(
-            new OrganizationContract.MembershipNotFoundError({ message: "Not a member." }),
-          ),
-    ),
+    typedHandler(removeMemberEndpoint, () => {
+      if (outcome.result === "success") {
+        return Effect.void;
+      }
+
+      return Effect.fail(
+        new OrganizationContract.MembershipNotFoundError({ message: "Not a member." }),
+      );
+    }),
 
   promoteMember: (
     outcome: { readonly result: "success" | "OrganizationRoleConflictError" } = {
       result: "success",
     },
   ) =>
-    typedHandler(promoteMemberEndpoint, () =>
-      outcome.result === "success"
-        ? Effect.void
-        : Effect.fail(
-            new OrganizationContract.OrganizationRoleConflictError({
-              reason: "already_admin",
-              message: "Already an admin.",
-            }),
-          ),
-    ),
+    typedHandler(promoteMemberEndpoint, () => {
+      if (outcome.result === "success") {
+        return Effect.void;
+      }
+
+      return Effect.fail(
+        new OrganizationContract.OrganizationRoleConflictError({
+          reason: "already_admin",
+          message: "Already an admin.",
+        }),
+      );
+    }),
 
   demoteMember: (
     outcome: { readonly result: "success" | "OrganizationRoleConflictError" } = {
       result: "success",
     },
   ) =>
-    typedHandler(demoteMemberEndpoint, () =>
-      outcome.result === "success"
-        ? Effect.void
-        : Effect.fail(
-            new OrganizationContract.OrganizationRoleConflictError({
-              reason: "not_admin",
-              message: "Not an admin.",
-            }),
-          ),
-    ),
+    typedHandler(demoteMemberEndpoint, () => {
+      if (outcome.result === "success") {
+        return Effect.void;
+      }
+
+      return Effect.fail(
+        new OrganizationContract.OrganizationRoleConflictError({
+          reason: "not_admin",
+          message: "Not an admin.",
+        }),
+      );
+    }),
 
   resendInvitation: (
     outcome: { readonly result: "success" | "InvitationGoneError" } = { result: "success" },
   ) =>
-    typedHandler(resendInvitationEndpoint, () =>
-      outcome.result === "success"
-        ? Effect.void
-        : Effect.fail(
-            new OrganizationContract.InvitationGoneError({
-              reason: "expired",
-              message: "Invitation is closed.",
-            }),
-          ),
-    ),
+    typedHandler(resendInvitationEndpoint, () => {
+      if (outcome.result === "success") {
+        return Effect.void;
+      }
+
+      return Effect.fail(
+        new OrganizationContract.InvitationGoneError({
+          reason: "expired",
+          message: "Invitation is closed.",
+        }),
+      );
+    }),
 
   revokeInvitation: (
     outcome: { readonly result: "success" | "InvitationNotFoundError" } = { result: "success" },
   ) =>
-    typedHandler(revokeInvitationEndpoint, () =>
-      outcome.result === "success"
-        ? Effect.void
-        : Effect.fail(
-            new OrganizationContract.InvitationNotFoundError({ message: "Invitation not found." }),
-          ),
-    ),
+    typedHandler(revokeInvitationEndpoint, () => {
+      if (outcome.result === "success") {
+        return Effect.void;
+      }
+
+      return Effect.fail(
+        new OrganizationContract.InvitationNotFoundError({ message: "Invitation not found." }),
+      );
+    }),
 
   /** POST /orgs/:orgId/invitations — invite by email. */
   inviteUser: (
     outcome: { readonly result: "success" | "OrganizationNotFoundError" } = { result: "success" },
   ) =>
-    typedHandler(inviteUserEndpoint, () =>
-      outcome.result === "success"
-        ? Effect.succeed(
-            new OrganizationContract.InviteUserResponse({
-              invitationId: makePendingInvitation().invitationId,
-            }),
-          )
-        : notFound(),
-    ),
+    typedHandler(inviteUserEndpoint, () => {
+      if (outcome.result === "success") {
+        return Effect.succeed(
+          new OrganizationContract.InviteUserResponse({
+            invitationId: makePendingInvitation().invitationId,
+          }),
+        );
+      }
+
+      return notFound();
+    }),
 };

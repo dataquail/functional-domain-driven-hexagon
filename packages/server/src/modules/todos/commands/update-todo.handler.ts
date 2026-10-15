@@ -1,30 +1,39 @@
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
-import { Spec } from "@/globals/application/ddd/specification.js";
-import { type UpdateTodoPayload } from "@/modules/todos/commands/update-todo.command.js";
-import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.js";
-import { TodoRootOps } from "@/modules/todos/domain/todo/todo.root-ops.js";
-import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js";
-import { TodoSpecifications } from "@/modules/todos/domain/todo/todos.specification.js";
+import { Spec } from "@/globals/application/ddd/specification";
+import { type UpdateTodoPayload } from "@/modules/todos/commands/update-todo.command";
+import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors";
+import { TodoRootOps } from "@/modules/todos/domain/todo/todo.root-ops";
+import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository";
+import { TodoSpecifications } from "@/modules/todos/domain/todo/todos.specification";
 
 export const updateTodoHandler = Effect.fn("updateTodoHandler")(function* (cmd: UpdateTodoPayload) {
   const repo = yield* TodosRepository;
-  const existing = yield* repo.findOne(
+
+  const found = yield* repo.findOne(
     Spec.and(
       TodoSpecifications.withId(cmd.todoId),
       TodoSpecifications.forOrganization(cmd.organizationId),
     ),
   );
-  if (existing === null) {
+
+  if (Option.isNone(found)) {
     return yield* new TodoNotFound({ todoId: cmd.todoId });
   }
+
+  const existing = found.value;
+
   const now = yield* DateTime.now;
+
   const updated = TodoRootOps.update(existing, {
     title: cmd.title,
     completed: cmd.completed,
     now,
   });
+
   yield* repo.updateOne(updated);
+
   return updated;
 });

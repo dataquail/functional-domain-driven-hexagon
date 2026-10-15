@@ -1,12 +1,12 @@
 import type * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id";
 
-import { WalletInsufficientFunds, WalletInvalidAmount } from "./wallet.errors.js";
-import { WalletCreated, WalletCredited, WalletDebited, type WalletEvent } from "./wallet.events.js";
-import { type WalletId } from "./wallet.id.js";
-import { WalletRoot } from "./wallet.root.js";
+import { WalletInsufficientFunds, WalletInvalidAmount } from "./wallet.errors";
+import { WalletCreated, WalletCredited, WalletDebited, type WalletEvent } from "./wallet.events";
+import { type WalletId } from "./wallet.id";
+import { WalletRoot } from "./wallet.root";
 
 export type Outcome = {
   readonly wallet: WalletRoot;
@@ -27,6 +27,7 @@ const create = (input: CreateInput): Outcome => {
     createdAt: input.now,
     updatedAt: input.now,
   });
+
   return {
     wallet,
     events: [WalletCreated.make({ walletId: wallet.id, organizationId: wallet.organizationId })],
@@ -49,7 +50,9 @@ const credit = (
   if (!Number.isFinite(input.amount) || input.amount <= 0) {
     return Result.fail(new WalletInvalidAmount({ walletId: wallet.id, amount: input.amount }));
   }
+
   const newBalance = wallet.balance + input.amount;
+
   const updated = WalletRoot.make({
     id: wallet.id,
     organizationId: wallet.organizationId,
@@ -57,6 +60,7 @@ const credit = (
     createdAt: wallet.createdAt,
     updatedAt: input.now,
   });
+
   return Result.succeed({
     wallet: updated,
     events: [
@@ -76,6 +80,7 @@ const debit = (
   if (!Number.isFinite(input.amount) || input.amount <= 0) {
     return Result.fail(new WalletInvalidAmount({ walletId: wallet.id, amount: input.amount }));
   }
+
   if (input.amount > wallet.balance) {
     return Result.fail(
       new WalletInsufficientFunds({
@@ -85,7 +90,9 @@ const debit = (
       }),
     );
   }
+
   const newBalance = wallet.balance - input.amount;
+
   const updated = WalletRoot.make({
     id: wallet.id,
     organizationId: wallet.organizationId,
@@ -93,6 +100,7 @@ const debit = (
     createdAt: wallet.createdAt,
     updatedAt: input.now,
   });
+
   return Result.succeed({
     wallet: updated,
     events: [

@@ -1,14 +1,14 @@
 import * as Effect from "effect/Effect";
 import * as HttpServerResponse from "effect/http/HttpServerResponse";
 
-import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.js";
-import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client.js";
+import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec";
+import { OidcClient } from "@/modules/auth/infrastructure/clients/oidc.client";
 
 import {
   encodePkcePayload,
   PKCE_COOKIE_MAX_AGE_MS,
   PKCE_COOKIE_NAME,
-} from "./oidc-pkce-cookie.util.js";
+} from "./oidc-pkce-cookie.util";
 
 export const loginEndpoint = Effect.fn("AuthLive.login")(function* () {
   const oidc = yield* OidcClient;

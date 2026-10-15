@@ -19,7 +19,7 @@ import { svelteUsersDriver } from "@org/test-drivers/adapters/svelte-tl/users-pa
 import { describe, it } from "vitest";
 
 import { makeUser } from "@/test/fixtures";
-import { handlers } from "@/test/handlers";
+import { handlers } from "@/test/handlers/handler-set";
 import { renderWithHarness } from "@/test/integration-harness";
 import { server } from "@/test/msw-server";
 
@@ -40,7 +40,7 @@ describe("UsersPage — integration tier", () => {
       handlers.users.create({ result: "success" }),
     );
 
-    const rendered = renderWithHarness(TestUsersPage);
+    const rendered = renderWithHarness(TestUsersPage, {});
     const driver = svelteUsersDriver(rendered);
 
     await driver.goto();
@@ -58,7 +58,7 @@ describe("UsersPage — integration tier", () => {
       }),
     );
 
-    const rendered = renderWithHarness(TestUsersPage);
+    const rendered = renderWithHarness(TestUsersPage, {});
     const driver = svelteUsersDriver(rendered);
 
     await driver.goto();
@@ -75,7 +75,7 @@ describe("UsersPage — integration tier", () => {
       handlers.users.create({ result: "success", id: newUser.id }),
     );
 
-    const rendered = renderWithHarness(TestUsersPage);
+    const rendered = renderWithHarness(TestUsersPage, {});
     const driver = svelteUsersDriver(rendered);
 
     await driver.goto();

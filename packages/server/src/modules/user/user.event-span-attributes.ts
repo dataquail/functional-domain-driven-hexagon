@@ -4,7 +4,7 @@ import {
   userAddressUpdatedSpanAttributes,
   userCreatedSpanAttributes,
   userDeletedSpanAttributes,
-} from "@/modules/user/domain/user/user.events.js";
+} from "@/modules/user/domain/user/user.events";
 
 export const userEventSpanAttributes = Event.spanAttributes({
   UserCreated: userCreatedSpanAttributes,

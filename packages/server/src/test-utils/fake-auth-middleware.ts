@@ -2,7 +2,7 @@ import { CurrentUser, UserAuthMiddleware } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
 // Test-only middleware. Existing endpoint integration tests don't carry
 // a session cookie; the default returns a deterministic super-admin

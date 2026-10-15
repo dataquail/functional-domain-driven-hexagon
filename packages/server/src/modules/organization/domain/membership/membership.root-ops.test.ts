@@ -1,13 +1,16 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import * as Arr from "effect/Array";
 import * as DateTime from "effect/DateTime";
+import * as Option from "effect/Option";
+import * as Predicate from "effect/Predicate";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { type MembershipEvent } from "./membership.events.js";
-import { MembershipRootOps } from "./membership.root-ops.js";
+import { type MembershipEvent } from "./membership.events";
+import { MembershipRootOps } from "./membership.root-ops";
 
 const userId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 const organizationId = OrganizationId.make("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
@@ -16,13 +19,12 @@ const now = DateTime.makeUnsafe("2026-01-01T00:00:00Z");
 const expectEvent = <T extends MembershipEvent["_tag"]>(
   events: ReadonlyArray<MembershipEvent>,
   tag: T,
-): Extract<MembershipEvent, { _tag: T }> => {
-  const event = events[0];
-  if (event?._tag !== tag) {
-    throw new Error(`expected ${tag}, got ${String(event?._tag)}`);
-  }
-  return event as Extract<MembershipEvent, { _tag: T }>;
-};
+): Extract<MembershipEvent, { _tag: T }> =>
+  Option.getOrThrow(
+    Option.filter(Arr.head(events), (event): event is Extract<MembershipEvent, { _tag: T }> =>
+      Predicate.isTagged(event, tag),
+    ),
+  );
 
 describe("MembershipRootOps.create", () => {
   it("sets userId, organizationId, createdAt", () => {

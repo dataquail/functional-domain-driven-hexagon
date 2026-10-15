@@ -1,26 +1,23 @@
-import { deepStrictEqual, notStrictEqual } from "node:assert";
-
 import { describe, it } from "@effect/vitest";
+import { assertInstanceOf, assertSome, assertTrue } from "@effect/vitest/utils";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
-import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { mintApiTokenHandler } from "@/modules/auth/commands/mint-api-token.handler.js";
-import { revokeApiTokenHandler } from "@/modules/auth/commands/revoke-api-token.handler.js";
-import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.js";
-import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
-import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
-import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification.js";
-import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { mintApiTokenHandler } from "@/modules/auth/commands/mint-api-token.handler";
+import { revokeApiTokenHandler } from "@/modules/auth/commands/revoke-api-token.handler";
+import { ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors";
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository";
+import { ApiTokenSpecifications } from "@/modules/auth/domain/api-token/api-token.specification";
+import { ApiTokenRepositoryFake } from "@/modules/auth/infrastructure/repositories/api-token.repository-fake";
+import { CryptoFake } from "@/test-utils/crypto-fake";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const otherUserId = UserId.make("22222222-2222-2222-2222-222222222222");
-const TestLayer = Layer.mergeAll(ApiTokenRepositoryFake, PassThroughUnitOfWork);
+const TestLayer = Layer.mergeAll(ApiTokenRepositoryFake, PassThroughUnitOfWork, CryptoFake);
 
 const mint = (owner: UserId) =>
   mintApiTokenHandler({ userId: owner, label: "ci", expiresInDays: 90 });
@@ -32,38 +29,38 @@ describe("revokeApiTokenHandler", () => {
       yield* revokeApiTokenHandler({ apiTokenId: apiToken.id, userId });
       const repo = yield* ApiTokenRepository;
       const found = yield* repo.findOne(ApiTokenSpecifications.withId(apiToken.id));
-      if (found === null) throw new Error("expected an api token");
-      notStrictEqual(found.revokedAt, null);
+
+      assertTrue(Option.isSome(found));
+      assertTrue(Option.isSome(found.value.revokedAt));
     }).pipe(Effect.provide(TestLayer)),
   );
 
   it.effect("refuses (as NotFound) to revoke another user's token, leaving it active", () =>
     Effect.gen(function* () {
       const { apiToken } = yield* mint(otherUserId);
-      const exit = yield* Effect.exit(revokeApiTokenHandler({ apiTokenId: apiToken.id, userId }));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(ApiTokenNotFound)(error), true);
-      }
+      const error = yield* Effect.flip(revokeApiTokenHandler({ apiTokenId: apiToken.id, userId }));
+      assertInstanceOf(error, ApiTokenNotFound);
+
       const repo = yield* ApiTokenRepository;
       const found = yield* repo.findOne(ApiTokenSpecifications.withId(apiToken.id));
-      if (found === null) throw new Error("expected an api token");
-      deepStrictEqual(found.revokedAt, null);
+
+      assertSome(
+        Option.map(found, (token) => Option.isNone(token.revokedAt)),
+        true,
+      );
     }).pipe(Effect.provide(TestLayer)),
   );
 
   it.effect("fails ApiTokenNotFound for an unknown id", () =>
     Effect.gen(function* () {
-      const exit = yield* Effect.exit(
+      const error = yield* Effect.flip(
         revokeApiTokenHandler({
           apiTokenId: ApiTokenId.make("99999999-9999-9999-9999-999999999999"),
           userId,
         }),
       );
-      deepStrictEqual(Exit.isFailure(exit), true);
+
+      assertInstanceOf(error, ApiTokenNotFound);
     }).pipe(Effect.provide(TestLayer)),
   );
 });

@@ -1,10 +1,10 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.js";
-import { MembershipRoot } from "@/modules/organization/domain/membership/membership.root.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql";
+import { MembershipRoot } from "@/modules/organization/domain/membership/membership.root";
 
 type Row = RowSchemas.MembershipRow;
 

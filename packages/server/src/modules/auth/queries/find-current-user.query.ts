@@ -2,12 +2,13 @@ import { Query } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
 export const CurrentUserView = Schema.Struct({
   userId: UserId,
   isSuperAdmin: Schema.Boolean,
 });
+
 export type CurrentUserView = typeof CurrentUserView.Type;
 
 // Backs `/auth/me`: the caller's identity plus the one authorization fact the
@@ -19,4 +20,5 @@ export const FindCurrentUserQuery = Query.make("FindCurrentUserQuery", {
   success: CurrentUserView,
   failure: PersistenceUnavailable,
 });
+
 export type FindCurrentUserPayload = Query.Payload<typeof FindCurrentUserQuery>;

@@ -2,14 +2,17 @@ import * as HttpApiEndpoint from "effect/http-api/HttpApiEndpoint";
 import * as HttpApiGroup from "effect/http-api/HttpApiGroup";
 import * as Schema from "effect/Schema";
 
-import * as CustomHttpApiError from "../CustomHttpApiError.js";
+import * as CustomHttpApiError from "../CustomHttpApiError";
 
 // ==========================================
 // Device authorization grant (RFC 8628), app-native — the CLI/MCP wire
 // surface for sign-in. Public: the caller has no credential yet (ADR-0005).
 // ==========================================
 
-export class DeviceStartResponse extends Schema.Class<DeviceStartResponse>("DeviceStartResponse")({
+export class DeviceStartResponse extends Schema.Class<
+  DeviceStartResponse,
+  { readonly brand: "DeviceStartResponse" }
+>("DeviceStartResponse")({
   // Held by the CLI and presented on each poll. Secret.
   device_code: Schema.String,
   // Shown to the user to type into the browser (e.g. ABCD-2345).
@@ -22,11 +25,17 @@ export class DeviceStartResponse extends Schema.Class<DeviceStartResponse>("Devi
   expires_in: Schema.Int,
 }) {}
 
-export class DeviceTokenPayload extends Schema.Class<DeviceTokenPayload>("DeviceTokenPayload")({
+export class DeviceTokenPayload extends Schema.Class<
+  DeviceTokenPayload,
+  { readonly brand: "DeviceTokenPayload" }
+>("DeviceTokenPayload")({
   device_code: Schema.String,
 }) {}
 
-export class DeviceTokenResponse extends Schema.Class<DeviceTokenResponse>("DeviceTokenResponse")({
+export class DeviceTokenResponse extends Schema.Class<
+  DeviceTokenResponse,
+  { readonly brand: "DeviceTokenResponse" }
+>("DeviceTokenResponse")({
   access_token: Schema.String,
   token_type: Schema.Literal("Bearer"),
   expires_at: Schema.NullOr(Schema.DateTimeUtc),
@@ -34,23 +43,20 @@ export class DeviceTokenResponse extends Schema.Class<DeviceTokenResponse>("Devi
 
 // RFC 8628 token-endpoint errors. All 400; the tag is the discriminator the
 // CLI switches on (keep polling on pending; stop on the rest).
-export class DeviceAuthorizationPending extends Schema.TaggedError<DeviceAuthorizationPending>()(
-  "DeviceAuthorizationPending",
-  { message: Schema.String },
-  { httpApiStatus: 400 },
-) {}
+export class DeviceAuthorizationPending extends Schema.TaggedError<
+  DeviceAuthorizationPending,
+  { readonly brand: "DeviceAuthorizationPending" }
+>()("DeviceAuthorizationPending", { message: Schema.String }, { httpApiStatus: 400 }) {}
 
-export class DeviceTokenExpired extends Schema.TaggedError<DeviceTokenExpired>()(
-  "DeviceTokenExpired",
-  { message: Schema.String },
-  { httpApiStatus: 400 },
-) {}
+export class DeviceTokenExpired extends Schema.TaggedError<
+  DeviceTokenExpired,
+  { readonly brand: "DeviceTokenExpired" }
+>()("DeviceTokenExpired", { message: Schema.String }, { httpApiStatus: 400 }) {}
 
-export class DeviceCodeNotFound extends Schema.TaggedError<DeviceCodeNotFound>()(
-  "DeviceCodeNotFound",
-  { message: Schema.String },
-  { httpApiStatus: 400 },
-) {}
+export class DeviceCodeNotFound extends Schema.TaggedError<
+  DeviceCodeNotFound,
+  { readonly brand: "DeviceCodeNotFound" }
+>()("DeviceCodeNotFound", { message: Schema.String }, { httpApiStatus: 400 }) {}
 
 export class DeviceGroup extends HttpApiGroup.make("cliAuth")
   .add(

@@ -1,39 +1,38 @@
-import { deepStrictEqual, notStrictEqual } from "node:assert";
+import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertDefined, assertTrue } from "@effect/vitest/utils";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
-import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
-import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { Spec } from "@/globals/application/ddd/specification.js";
-import { acceptInvitationHandler } from "@/modules/organization/commands/accept-invitation.handler.js";
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { Spec } from "@/globals/application/ddd/specification";
+import { acceptInvitationHandler } from "@/modules/organization/commands/accept-invitation.handler";
 import {
   InvitationAlreadyAccepted,
   InvitationExpired,
   InvitationRevoked,
   InvitationTokenNotFound,
-} from "@/modules/organization/domain/invitation/invitation.errors.js";
-import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
-import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.js";
-import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
-import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
-import { type MembershipCreated } from "@/modules/organization/domain/membership/membership.events.js";
-import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
-import { MembershipSpecifications } from "@/modules/organization/domain/membership/membership.specification.js";
-import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors.js";
-import { makePlatformRolesFake } from "@/modules/organization/infrastructure/acl/platform-roles.acl-fake.js";
-import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake.js";
-import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.js";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
+} from "@/modules/organization/domain/invitation/invitation.errors";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository";
+import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root";
+import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops";
+import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification";
+import { type MembershipCreated } from "@/modules/organization/domain/membership/membership.events";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository";
+import { MembershipSpecifications } from "@/modules/organization/domain/membership/membership.specification";
+import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors";
+import { makePlatformRolesFake } from "@/modules/organization/infrastructure/acl/platform-roles.acl-fake";
+import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake";
+import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus";
 
 const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");
 const organizationId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
@@ -73,17 +72,19 @@ describe("acceptInvitationHandler", () => {
       const orgId = yield* acceptInvitationHandler({ token: "tok-abc", userId });
       deepStrictEqual(orgId, organizationId);
 
-      const updated = yield* inv.findOne(InvitationSpecifications.withId(invitationId));
-      if (updated === null) throw new Error("expected invitation");
-      notStrictEqual(updated.acceptedAt, null);
+      const maybeUpdated = yield* inv.findOne(InvitationSpecifications.withId(invitationId));
 
-      const membership = yield* members.findOne(
+      const updated = Option.getOrThrow(maybeUpdated);
+      assertTrue(Option.isSome(updated.acceptedAt));
+
+      const maybeMembership = yield* members.findOne(
         Spec.and(
           MembershipSpecifications.forUser(userId),
           MembershipSpecifications.forOrganization(organizationId),
         ),
       );
-      if (membership === null) throw new Error("expected membership");
+
+      const membership = Option.getOrThrow(maybeMembership);
       deepStrictEqual(membership.userId, userId);
 
       const tags = (yield* rec.all).map((e) => e._tag);
@@ -92,7 +93,8 @@ describe("acceptInvitationHandler", () => {
 
       const memberEvents = yield* rec.byTag<MembershipCreated>("MembershipCreated");
       const event = memberEvents[0];
-      if (event === undefined) throw new Error("expected MembershipCreated event");
+
+      assertDefined(event);
       deepStrictEqual(event.userId, userId);
       deepStrictEqual(event.organizationId, organizationId);
     }).pipe(Effect.provide(TestLayer)),
@@ -100,14 +102,8 @@ describe("acceptInvitationHandler", () => {
 
   it.effect("fails InvitationTokenNotFound when no invitation matches the token", () =>
     Effect.gen(function* () {
-      const exit = yield* Effect.exit(acceptInvitationHandler({ token: "missing", userId }));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(InvitationTokenNotFound)(error), true);
-      }
+      const error = yield* Effect.flip(acceptInvitationHandler({ token: "missing", userId }));
+      deepStrictEqual(Schema.is(InvitationTokenNotFound)(error), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -117,14 +113,8 @@ describe("acceptInvitationHandler", () => {
       const accepted = Result.getOrThrow(InvitationRootOps.accept(seed(), { userId, now }));
       yield* inv.insertOne(accepted.invitation);
 
-      const exit = yield* Effect.exit(acceptInvitationHandler({ token: "tok-abc", userId }));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(InvitationAlreadyAccepted)(error), true);
-      }
+      const error = yield* Effect.flip(acceptInvitationHandler({ token: "tok-abc", userId }));
+      deepStrictEqual(Schema.is(InvitationAlreadyAccepted)(error), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -134,14 +124,8 @@ describe("acceptInvitationHandler", () => {
       const revoked = Result.getOrThrow(InvitationRootOps.revoke(seed(), { now }));
       yield* inv.insertOne(revoked.invitation);
 
-      const exit = yield* Effect.exit(acceptInvitationHandler({ token: "tok-abc", userId }));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(InvitationRevoked)(error), true);
-      }
+      const error = yield* Effect.flip(acceptInvitationHandler({ token: "tok-abc", userId }));
+      deepStrictEqual(Schema.is(InvitationRevoked)(error), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -151,6 +135,7 @@ describe("acceptInvitationHandler", () => {
   it.live("fails InvitationExpired when the invitation has expired", () =>
     Effect.gen(function* () {
       const inv = yield* InvitationRepository;
+
       const expired = InvitationRootOps.issue({
         id: invitationId,
         organizationId,
@@ -159,16 +144,11 @@ describe("acceptInvitationHandler", () => {
         expiresAt: DateTime.makeUnsafe("2020-01-01T00:00:00Z"),
         now: DateTime.makeUnsafe("2019-12-01T00:00:00Z"),
       }).invitation;
+
       yield* inv.insertOne(expired);
 
-      const exit = yield* Effect.exit(acceptInvitationHandler({ token: "tok-abc", userId }));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(InvitationExpired)(error), true);
-      }
+      const error = yield* Effect.flip(acceptInvitationHandler({ token: "tok-abc", userId }));
+      deepStrictEqual(Schema.is(InvitationExpired)(error), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -177,16 +157,11 @@ describe("acceptInvitationHandler", () => {
       const inv = yield* InvitationRepository;
       yield* inv.insertOne(seed());
 
-      const exit = yield* Effect.exit(
+      const error = yield* Effect.flip(
         acceptInvitationHandler({ token: "tok-abc", userId: superAdminUserId }),
       );
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(SuperAdminCannotOwnOrganization)(error), true);
-      }
+
+      deepStrictEqual(Schema.is(SuperAdminCannotOwnOrganization)(error), true);
     }).pipe(
       Effect.provide(
         Layer.mergeAll(

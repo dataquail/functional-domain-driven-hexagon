@@ -2,12 +2,12 @@ import { Command } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { MintApiTokenResultView } from "@/modules/auth/commands/mint-api-token.command.js";
+import { MintApiTokenResultView } from "@/modules/auth/commands/mint-api-token.command";
 import {
   DeviceGrantExpired,
   DeviceGrantNotFound,
   DeviceGrantPending,
-} from "@/modules/auth/domain/device-grant/device-grant.errors.js";
+} from "@/modules/auth/domain/device-grant/device-grant.errors";
 
 // CLI poll: exchange a device code for an app token once the grant is approved.
 // `tokenExpiresInDays` is resolved by the endpoint from config. It mints on the user's behalf,
@@ -22,4 +22,5 @@ export const PollDeviceGrantCommand = Command.make("PollDeviceGrantCommand", {
     PersistenceUnavailable,
   ]),
 });
+
 export type PollDeviceGrantPayload = Command.Payload<typeof PollDeviceGrantCommand>;

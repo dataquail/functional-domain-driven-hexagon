@@ -1,24 +1,22 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
-import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { Spec } from "@/globals/application/ddd/specification.js";
-import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.js";
-import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
-import { TodoRootOps } from "@/modules/todos/domain/todo/todo.root-ops.js";
-import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js";
-import { TodoSpecifications } from "@/modules/todos/domain/todo/todos.specification.js";
-import { TodosRepositoryFake } from "@/modules/todos/infrastructure/repositories/todos.repository-fake.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { Spec } from "@/globals/application/ddd/specification";
+import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors";
+import { TodoId } from "@/modules/todos/domain/todo/todo.id";
+import { TodoRootOps } from "@/modules/todos/domain/todo/todo.root-ops";
+import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository";
+import { TodoSpecifications } from "@/modules/todos/domain/todo/todos.specification";
+import { TodosRepositoryFake } from "@/modules/todos/infrastructure/repositories/todos.repository-fake";
 
-import { updateTodoHandler } from "./update-todo.handler.js";
+import { updateTodoHandler } from "./update-todo.handler";
 
 const aliceId = TodoId.make("11111111-1111-1111-1111-111111111111");
 const aliceUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
@@ -36,6 +34,7 @@ describe("updateTodoHandler", () => {
   it.effect("overwrites title and completed and returns the updated todo", () =>
     Effect.gen(function* () {
       yield* seed;
+
       const updated = yield* updateTodoHandler({
         todoId: aliceId,
         organizationId: orgId,
@@ -43,14 +42,19 @@ describe("updateTodoHandler", () => {
         completed: true,
         userId: aliceUserId,
       });
+
       deepStrictEqual(updated.title, "Buy oat milk");
       deepStrictEqual(updated.completed, true);
 
       const repo = yield* TodosRepository;
-      const stored = yield* repo.findOne(
-        Spec.and(TodoSpecifications.withId(aliceId), TodoSpecifications.forOrganization(orgId)),
+
+      const stored = yield* Effect.map(
+        repo.findOne(
+          Spec.and(TodoSpecifications.withId(aliceId), TodoSpecifications.forOrganization(orgId)),
+        ),
+        Option.getOrThrow,
       );
-      if (stored === null) throw new Error("expected stored todo");
+
       deepStrictEqual(stored.title, "Buy oat milk");
       deepStrictEqual(stored.completed, true);
     }).pipe(Effect.provide(TodosRepositoryFake)),
@@ -58,7 +62,7 @@ describe("updateTodoHandler", () => {
 
   it.effect("fails TodoNotFound when the todo doesn't exist", () =>
     Effect.gen(function* () {
-      const exit = yield* Effect.exit(
+      const error = yield* Effect.flip(
         updateTodoHandler({
           todoId: aliceId,
           organizationId: orgId,
@@ -67,20 +71,16 @@ describe("updateTodoHandler", () => {
           userId: aliceUserId,
         }),
       );
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(TodoNotFound)(error), true);
-      }
+
+      deepStrictEqual(Schema.is(TodoNotFound)(error), true);
     }).pipe(Effect.provide(TodosRepositoryFake)),
   );
 
   it.effect("fails TodoNotFound when the todo belongs to a different org (tenant isolation)", () =>
     Effect.gen(function* () {
       yield* seed;
-      const exit = yield* Effect.exit(
+
+      const error = yield* Effect.flip(
         updateTodoHandler({
           todoId: aliceId,
           organizationId: otherOrgId,
@@ -89,13 +89,8 @@ describe("updateTodoHandler", () => {
           userId: aliceUserId,
         }),
       );
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(TodoNotFound)(error), true);
-      }
+
+      deepStrictEqual(Schema.is(TodoNotFound)(error), true);
     }).pipe(Effect.provide(TodosRepositoryFake)),
   );
 });

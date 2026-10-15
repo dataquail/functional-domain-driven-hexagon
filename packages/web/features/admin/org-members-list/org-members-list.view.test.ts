@@ -20,6 +20,7 @@ const renderRoster = (
   canManage = true,
 ) => {
   server.use(orgsHandlers.findMembers(members));
+
   return renderView(
     OrgMembersList,
     { orgId: ORG_A_ID, canManage },

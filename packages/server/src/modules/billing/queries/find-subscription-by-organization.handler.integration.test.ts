@@ -1,19 +1,20 @@
-import { deepStrictEqual, ok } from "node:assert";
+import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
+import { assertNone } from "@effect/vitest/utils";
 import { Database } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import { beforeEach } from "vitest";
+import * as Option from "effect/Option";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
-import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
-import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
-import { SubscriptionRepositoryLive } from "@/modules/billing/infrastructure/repositories/subscription.repository-live.js";
-import { findSubscriptionByOrganizationHandler } from "@/modules/billing/queries/find-subscription-by-organization.handler.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id";
+import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository";
+import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops";
+import { SubscriptionRepositoryLive } from "@/modules/billing/infrastructure/repositories/subscription.repository-live";
+import { findSubscriptionByOrganizationHandler } from "@/modules/billing/queries/find-subscription-by-organization.handler";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const acme = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const beta = OrganizationId.make("22222222-2222-2222-2222-222222222222");
@@ -36,45 +37,45 @@ const seedOrg = (id: OrganizationId, name: string) =>
         `.pipe(Effect.orDie);
   });
 
-describe("findSubscriptionByOrganizationHandler (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate("billing.subscriptions", "organization.organizations").pipe(
-        Effect.provide(TestDatabaseLive),
-      ),
+describeIntegration(
+  "findSubscriptionByOrganizationHandler (integration)",
+  { layer: TestLayer, tables: ["billing.subscriptions", "organization.organizations"] },
+  (it) => {
+    it.effect(
+      "returns Some(view) when a subscription exists, mapping to the cross-boundary shape",
+      () =>
+        Effect.gen(function* () {
+          yield* seedOrg(acme, "Acme");
+          const repo = yield* SubscriptionRepository;
+
+          const { subscription } = SubscriptionRootOps.create({
+            id: subId,
+            organizationId: acme,
+            stripeCustomerId: "cus_acme",
+            stripeSubscriptionId: "sub_acme",
+            status: "active",
+            currentPeriodEnd: Option.none(),
+            now,
+          });
+
+          yield* repo.insertOne(subscription);
+
+          const result = yield* Effect.fromOption(
+            yield* findSubscriptionByOrganizationHandler({ organizationId: acme }),
+          );
+
+          deepStrictEqual(result.id, subId);
+          deepStrictEqual(result.organizationId, acme);
+          deepStrictEqual(result.status, "active");
+        }),
     );
-  });
 
-  it.effect(
-    "returns Some(view) when a subscription exists, mapping to the cross-boundary shape",
-    () =>
+    it.effect("returns none when no subscription exists for the org", () =>
       Effect.gen(function* () {
-        yield* seedOrg(acme, "Acme");
-        const repo = yield* SubscriptionRepository;
-        const { subscription } = SubscriptionRootOps.create({
-          id: subId,
-          organizationId: acme,
-          stripeCustomerId: "cus_acme",
-          stripeSubscriptionId: "sub_acme",
-          status: "active",
-          currentPeriodEnd: null,
-          now,
-        });
-        yield* repo.insertOne(subscription);
-
-        const result = yield* findSubscriptionByOrganizationHandler({ organizationId: acme });
-        ok(result !== null);
-        deepStrictEqual(result.id, subId);
-        deepStrictEqual(result.organizationId, acme);
-        deepStrictEqual(result.status, "active");
-      }).pipe(Effect.provide(TestLayer)),
-  );
-
-  it.effect("returns null when no subscription exists for the org", () =>
-    Effect.gen(function* () {
-      yield* seedOrg(beta, "Beta");
-      const result = yield* findSubscriptionByOrganizationHandler({ organizationId: beta });
-      deepStrictEqual(result, null);
-    }).pipe(Effect.provide(TestLayer)),
-  );
-});
+        yield* seedOrg(beta, "Beta");
+        const result = yield* findSubscriptionByOrganizationHandler({ organizationId: beta });
+        assertNone(result);
+      }),
+    );
+  },
+);

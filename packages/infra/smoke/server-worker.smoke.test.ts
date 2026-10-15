@@ -6,8 +6,8 @@ import * as FetchHttpClient from "effect/http/FetchHttpClient";
 import * as HttpClient from "effect/http/HttpClient";
 import * as HttpClientRequest from "effect/http/HttpClientRequest";
 
-import Stack from "../alchemy.run.js";
-import { stackProviders } from "../src/stack/providers.js";
+import Stack from "../alchemy.run";
+import { stackProviders } from "../src/stack/providers";
 
 // The server Worker under workerd, as `alchemy dev` runs it: Hyperdrive passes
 // through to the docker Postgres in DATABASE_URL, and the identity Worker is
@@ -19,17 +19,17 @@ const { beforeAll, deploy, test } = Test.make({
   dev: true,
 });
 
+// oxlint-disable-next-line effect/noTestLifecycleHooks -- Alchemy's harness memoizes the dev deploy as an Effect every test yields; it is not a vitest hook
 const stack = beforeAll(deploy(Stack), { timeout: 180_000 });
 
 const serverWorkerUrl = Effect.flatMap(stack, (outputs) =>
-  outputs.serverUrl === undefined
-    ? Effect.die(new Error("the stack reported no server Worker URL"))
-    : Effect.succeed(outputs.serverUrl),
+  Effect.orDie(Effect.fromNullishOr(outputs.serverUrl)),
 );
 
 const send = (build: (serverUrl: string) => HttpClientRequest.HttpClientRequest) =>
   Effect.gen(function* () {
     const client = yield* HttpClient.HttpClient;
+
     return yield* client.execute(build(yield* serverWorkerUrl));
   }).pipe(
     // Redirects are asserted, not followed.
@@ -45,9 +45,12 @@ const get = (path: string, headers: Record<string, string> = {}) =>
     ),
   );
 
-const queueBatch = (queue: string, body: unknown) =>
+type MessageField = string | { readonly [field: string]: MessageField };
+
+const queueBatch = (queue: string, body: { readonly [field: string]: MessageField }) =>
   Effect.gen(function* () {
     const timestamp = yield* Clock.currentTimeMillis;
+
     const response = yield* send((serverUrl) =>
       HttpClientRequest.post(new URL("/cdn-cgi/handler/queue", serverUrl).toString()).pipe(
         HttpClientRequest.bodyJsonUnsafe({
@@ -56,6 +59,7 @@ const queueBatch = (queue: string, body: unknown) =>
         }),
       ),
     );
+
     return yield* Effect.orDie(response.json);
   });
 
@@ -66,7 +70,7 @@ describe("server Worker: fetch", () => {
       const response = yield* get("/auth/me");
 
       expect(response.status).toBe(401);
-      expect(yield* Effect.orDie(response.json)).toMatchObject({ _tag: "Unauthorized" });
+      expect(yield* Effect.orDie(response.json)).toHaveProperty("_tag", "Unauthorized");
     }),
   );
 

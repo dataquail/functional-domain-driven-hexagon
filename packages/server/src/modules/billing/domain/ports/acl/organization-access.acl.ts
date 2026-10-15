@@ -1,9 +1,9 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { type UserId } from "@/globals/application/ddd/ids/user-id";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable";
 
 // ADR-0022 outbound port. Billing distinguishes two levels of access to an org's
 // subscription: any member may read it, only an admin may take on or cancel a
@@ -13,7 +13,7 @@ import { type PersistenceUnavailable } from "@/globals/application/ddd/persisten
 // `isAdmin` is a boolean, not a role list: which org role confers billing
 // authority is a decision the adapter makes, so a change to the org module's
 // role vocabulary never reaches billing's policies.
-export type OrganizationAccessShape = {
+export type OrganizationAccessService = {
   readonly isMember: (
     userId: UserId,
     organizationId: OrganizationId,
@@ -26,5 +26,5 @@ export type OrganizationAccessShape = {
 
 export class OrganizationAccess extends Context.Service<
   OrganizationAccess,
-  OrganizationAccessShape
+  OrganizationAccessService
 >()("@org/server/billing/OrganizationAccess") {}

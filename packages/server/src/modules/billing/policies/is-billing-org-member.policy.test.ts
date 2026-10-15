@@ -3,9 +3,9 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { makeIsBillingOrgMember } from "@/modules/billing/policies/is-billing-org-member.policy.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { isBillingOrgMemberCheck } from "@/modules/billing/policies/is-billing-org-member.policy";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
@@ -18,29 +18,32 @@ const access = (isMember: boolean) => ({
   isAdmin: () => Effect.succeed(false),
 });
 
-describe("makeIsBillingOrgMember", () => {
+describe("isBillingOrgMemberCheck", () => {
   it.effect("returns true for a member of the billing resource's org", () =>
-    Effect.map(makeIsBillingOrgMember(access(true))(caller, resource), (result) => {
+    Effect.map(isBillingOrgMemberCheck(access(true))(caller, resource), (result) => {
       deepStrictEqual(result, true);
     }),
   );
 
   it.effect("returns false for a non-member", () =>
-    Effect.map(makeIsBillingOrgMember(access(false))(caller, resource), (result) => {
+    Effect.map(isBillingOrgMemberCheck(access(false))(caller, resource), (result) => {
       deepStrictEqual(result, false);
     }),
   );
 
   it.effect("asks about membership, not admin authority", () => {
     const asked: Array<string> = [];
+
     return Effect.map(
-      makeIsBillingOrgMember({
+      isBillingOrgMemberCheck({
         isMember: () => {
           asked.push("isMember");
+
           return Effect.succeed(true);
         },
         isAdmin: () => {
           asked.push("isAdmin");
+
           return Effect.succeed(true);
         },
       })(caller, resource),

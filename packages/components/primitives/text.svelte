@@ -2,9 +2,13 @@
   import type { Snippet } from "svelte";
 
   export type TextElement = "p" | "span" | "div" | "dd" | "dt" | "figcaption";
+
   export type TextSize = "xs" | "sm" | "base" | "lg";
+
   export type TextTone = "default" | "muted" | "destructive" | "inherit";
+
   export type TextWeight = "normal" | "medium" | "semibold";
+
   export type TextAlign = "start" | "center" | "end";
 
   const SIZE: Record<TextSize, string> = {

@@ -1,14 +1,15 @@
+import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { DeviceGrantNotFound } from "@/modules/auth/domain/device-grant/device-grant.errors.js";
-import { type DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.js";
-import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
-import { type DeviceGrantRoot } from "@/modules/auth/domain/device-grant/device-grant.root.js";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { DeviceGrantNotFound } from "@/modules/auth/domain/device-grant/device-grant.errors";
+import { type DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id";
+import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository";
+import { type DeviceGrantRoot } from "@/modules/auth/domain/device-grant/device-grant.root";
 
 export const DeviceGrantRepositoryFake = Layer.effect(
   DeviceGrantRepository,
@@ -20,24 +21,30 @@ export const DeviceGrantRepositoryFake = Layer.effect(
 
     // The spec IS the in-memory predicate — the same object the live repo
     // compiles to SQL — so fake and live agree by construction.
-    const findOne = (spec: Specification<DeviceGrantRoot>): Effect.Effect<DeviceGrantRoot | null> =>
-      Effect.map(Ref.get(store), (m) => Array.from(HashMap.values(m)).find(spec) ?? null);
+    const findOne = (
+      spec: Specification<DeviceGrantRoot>,
+    ): Effect.Effect<Option.Option<DeviceGrantRoot>> =>
+      Effect.map(Ref.get(store), (m) => Arr.findFirst(HashMap.values(m), spec));
 
     const updateOne = (grant: DeviceGrantRoot): Effect.Effect<void, DeviceGrantNotFound> =>
       Effect.gen(function* () {
         const m = yield* Ref.get(store);
+
         if (Option.isNone(HashMap.get(m, grant.id))) {
           return yield* new DeviceGrantNotFound();
         }
+
         yield* Ref.update(store, HashMap.set(grant.id, grant));
       });
 
     const deleteGrant = (id: DeviceGrantId): Effect.Effect<void, DeviceGrantNotFound> =>
       Effect.gen(function* () {
         const m = yield* Ref.get(store);
+
         if (Option.isNone(HashMap.get(m, id))) {
           return yield* new DeviceGrantNotFound();
         }
+
         yield* Ref.update(store, HashMap.remove(id));
       });
 

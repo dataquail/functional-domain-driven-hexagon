@@ -3,16 +3,16 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { CancelSubscriptionCommand } from "@/modules/billing/commands/cancel-subscription.command.js";
-import { cancelSubscriptionHandler } from "@/modules/billing/commands/cancel-subscription.handler.js";
-import { IngestStripeWebhookCommand } from "@/modules/billing/commands/ingest-stripe-webhook.command.js";
-import { ingestStripeWebhookHandler } from "@/modules/billing/commands/ingest-stripe-webhook.handler.js";
-import { StartSubscriptionCommand } from "@/modules/billing/commands/start-subscription.command.js";
-import { startSubscriptionHandler } from "@/modules/billing/commands/start-subscription.handler.js";
-import { SyncSubscriptionCommand } from "@/modules/billing/commands/sync-subscription.command.js";
-import { syncSubscriptionHandler } from "@/modules/billing/commands/sync-subscription.handler.js";
-import { SubscriptionRepositoryLive } from "@/modules/billing/infrastructure/repositories/subscription.repository-live.js";
-import { WebhookEventRepositoryLive } from "@/modules/billing/infrastructure/repositories/webhook-event.repository-live.js";
+import { CancelSubscriptionCommand } from "@/modules/billing/commands/cancel-subscription.command";
+import { cancelSubscriptionHandler } from "@/modules/billing/commands/cancel-subscription.handler";
+import { IngestStripeWebhookCommand } from "@/modules/billing/commands/ingest-stripe-webhook.command";
+import { ingestStripeWebhookHandler } from "@/modules/billing/commands/ingest-stripe-webhook.handler";
+import { StartSubscriptionCommand } from "@/modules/billing/commands/start-subscription.command";
+import { startSubscriptionHandler } from "@/modules/billing/commands/start-subscription.handler";
+import { SyncSubscriptionCommand } from "@/modules/billing/commands/sync-subscription.command";
+import { syncSubscriptionHandler } from "@/modules/billing/commands/sync-subscription.handler";
+import { SubscriptionRepositoryLive } from "@/modules/billing/infrastructure/repositories/subscription.repository-live";
+import { WebhookEventRepositoryLive } from "@/modules/billing/infrastructure/repositories/webhook-event.repository-live";
 
 // Repositories are owned-and-static, so each entry below discharges its own. The gateway
 // is the integration seam and stays required: which adapter satisfies it is the one thing

@@ -21,7 +21,8 @@
   // The items are a prop rather than children: the trigger shows the selected
   // label while the list is closed, before any item has rendered.
   export type SelectProps = {
-    readonly value: string | undefined;
+    // Absent while nothing is selected; the trigger then shows the placeholder.
+    readonly value?: string;
     readonly onValueChange: (value: string) => void;
     readonly items: ReadonlyArray<SelectItem>;
     readonly placeholder?: string;
@@ -35,7 +36,7 @@
 <script lang="ts">
   import { Select as SelectPrimitive } from "bits-ui";
 
-  import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "./icon";
+  import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "./icon/icons";
 
   const {
     "aria-label": ariaLabel,
@@ -44,14 +45,14 @@
     items,
     onValueChange,
     placeholder,
-    value,
+    value = "",
     width = "full",
   }: SelectProps = $props();
 </script>
 
 <SelectPrimitive.Root
   type="single"
-  bind:value={() => value ?? "", onValueChange}
+  bind:value={() => value, onValueChange}
   items={items.map(({ disabled: itemDisabled = false, label, value: itemValue }) => ({
     value: itemValue,
     label,

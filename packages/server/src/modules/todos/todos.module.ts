@@ -1,14 +1,14 @@
 import * as Layer from "effect/Layer";
 
-import { OrganizationModule } from "@/modules/organization/organization.module.js";
-import { RoleModule } from "@/modules/role/role.module.js";
+import { OrganizationModule } from "@/modules/organization/organization.module";
+import { RoleModule } from "@/modules/role/role.module";
 
-import { TodosRepositoryLive } from "./infrastructure/repositories/todos.repository-live.js";
-import { TodosCliLive } from "./interface/cli/index.js";
-import { TodosLive } from "./interface/http/index.js";
-import { TodoPoliciesLive } from "./policies/todos.policies.js";
-import { TodoCommandsLive } from "./todo.command-handlers.js";
-import { TodoQueriesLive } from "./todo.query-handlers.js";
+import { TodosRepositoryLive } from "./infrastructure/repositories/todos.repository-live";
+import { TodosCliLive } from "./interface/cli/todos.endpoint-groups";
+import { TodosLive } from "./interface/http/todos.endpoint-groups";
+import { TodoPoliciesLive } from "./policies/todos.policies";
+import { TodoCommandsLive } from "./todo.command-handlers";
+import { TodoQueriesLive } from "./todo.query-handlers";
 
 export const TodosModule = {
   layer: Layer.mergeAll(TodoCommandsLive, TodoQueriesLive, TodoPoliciesLive).pipe(

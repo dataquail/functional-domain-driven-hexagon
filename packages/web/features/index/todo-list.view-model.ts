@@ -20,6 +20,7 @@ export type TodoListView = {
 export const todoListAtom = Atom.family((orgId: OrganizationId) =>
   Atom.make((get): TodoListView => {
     const result = get(todosResultAtom(orgId));
+
     return {
       isEmpty: AsyncResult.isSuccess(result) && Array.isReadonlyArrayEmpty(result.value),
     };

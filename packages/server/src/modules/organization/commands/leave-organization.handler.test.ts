@@ -1,32 +1,32 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertDefined, assertNone } from "@effect/vitest/utils";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { Spec } from "@/globals/application/ddd/specification.js";
-import { createOrganizationHandler } from "@/modules/organization/commands/create-organization.handler.js";
-import { leaveOrganizationHandler } from "@/modules/organization/commands/leave-organization.handler.js";
-import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.js";
-import { type MembershipRevoked } from "@/modules/organization/domain/membership/membership.events.js";
-import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
-import { MembershipSpecifications } from "@/modules/organization/domain/membership/membership.specification.js";
-import { makePlatformRolesFake } from "@/modules/organization/infrastructure/acl/platform-roles.acl-fake.js";
-import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.js";
-import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization.repository-fake.js";
-import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.js";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { Spec } from "@/globals/application/ddd/specification";
+import { createOrganizationHandler } from "@/modules/organization/commands/create-organization.handler";
+import { leaveOrganizationHandler } from "@/modules/organization/commands/leave-organization.handler";
+import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors";
+import { type MembershipRevoked } from "@/modules/organization/domain/membership/membership.events";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository";
+import { MembershipSpecifications } from "@/modules/organization/domain/membership/membership.specification";
+import { makePlatformRolesFake } from "@/modules/organization/infrastructure/acl/platform-roles.acl-fake";
+import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake";
+import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization.repository-fake";
+import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake";
+import { CryptoFake } from "@/test-utils/crypto-fake";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus";
 
 const userId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
 const TestLayer = Layer.mergeAll(
+  CryptoFake,
   OrganizationRepositoryFake,
   MembershipRepositoryFake,
   OrganizationRolesRepositoryFake,
@@ -52,12 +52,14 @@ describe("leaveOrganizationHandler", () => {
           MembershipSpecifications.forOrganization(orgId),
         ),
       );
-      deepStrictEqual(found, null);
+
+      assertNone(found);
 
       const events = yield* rec.byTag<MembershipRevoked>("MembershipRevoked");
       deepStrictEqual(events.length, 1);
       const event = events[0];
-      if (event === undefined) throw new Error("expected MembershipRevoked event");
+
+      assertDefined(event);
       deepStrictEqual(event.userId, userId);
       deepStrictEqual(event.organizationId, orgId);
     }).pipe(Effect.provide(TestLayer)),
@@ -66,14 +68,8 @@ describe("leaveOrganizationHandler", () => {
   it.effect("fails MembershipNotFound when the caller isn't a member", () =>
     Effect.gen(function* () {
       const orgId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
-      const exit = yield* Effect.exit(leaveOrganizationHandler({ userId, organizationId: orgId }));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(MembershipNotFound)(error), true);
-      }
+      const error = yield* Effect.flip(leaveOrganizationHandler({ userId, organizationId: orgId }));
+      deepStrictEqual(Schema.is(MembershipNotFound)(error), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 });

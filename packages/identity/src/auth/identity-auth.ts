@@ -2,11 +2,12 @@ import { oauthProvider } from "@better-auth/oauth-provider";
 import { type Auth, betterAuth, type BetterAuthOptions } from "better-auth";
 import { jwt } from "better-auth/plugins";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import type { Pool } from "pg";
 
-import { passwordResetEmail, verificationEmail } from "../mail/identity-emails.js";
-import type { IdentityMailer } from "../mail/identity-mailer.js";
-import { idTokenEmailClaims } from "./id-token-claims.js";
+import { passwordResetEmail, verificationEmail } from "../mail/identity-emails";
+import type { IdentityMailer } from "../mail/identity-mailer";
+import { idTokenEmailClaims } from "./id-token-claims";
 
 export const IDENTITY_SCOPES = ["openid", "profile", "email", "offline_access"];
 
@@ -24,18 +25,28 @@ export type IdentityAuthSettings = {
   readonly appUrl: string;
   readonly database: Pool;
   readonly mailer: IdentityMailer;
-  readonly runInBackground?: (task: Promise<unknown>) => void;
+  readonly runInBackground: Option.Option<(task: Promise<unknown>) => void>;
   readonly sendVerificationOnSignUp?: boolean;
-  readonly registerClientAs?: ClientCredentials;
+  readonly registerClientAs: Option.Option<ClientCredentials>;
 };
 
-const clientCredentialGenerators = (credentials: ClientCredentials | undefined) =>
-  credentials === undefined
-    ? {}
-    : {
-        generateClientId: () => credentials.clientId,
-        generateClientSecret: () => credentials.clientSecret,
-      };
+const clientCredentialGenerators = (credentials: Option.Option<ClientCredentials>) =>
+  Option.match(credentials, {
+    onNone: () => ({}),
+    onSome: ({ clientId, clientSecret }) => ({
+      generateClientId: () => clientId,
+      generateClientSecret: () => clientSecret,
+    }),
+  });
+
+// Better Auth skips its origin check under a test runner unless told otherwise.
+const advancedOptions = (
+  runInBackground: IdentityAuthSettings["runInBackground"],
+): BetterAuthOptions["advanced"] =>
+  Option.match(runInBackground, {
+    onNone: () => ({ disableOriginCheck: false }),
+    onSome: (handler) => ({ disableOriginCheck: false, backgroundTasks: { handler } }),
+  });
 
 type IdentityPlugins = [ReturnType<typeof jwt>, ReturnType<typeof oauthProvider>];
 
@@ -49,8 +60,7 @@ const identityAuthOptions = (settings: IdentityAuthSettings): IdentityAuthOption
   secret: settings.secret,
   database: settings.database,
   trustedOrigins: [settings.baseUrl, settings.appUrl],
-  // Better Auth skips its origin check under a test runner unless told otherwise.
-  advanced: { disableOriginCheck: false },
+  advanced: advancedOptions(settings.runInBackground),
   disabledPaths: ["/token"],
   emailAndPassword: {
     enabled: true,
@@ -76,10 +86,7 @@ const identityAuthOptions = (settings: IdentityAuthSettings): IdentityAuthOption
       ...clientCredentialGenerators(settings.registerClientAs),
     }),
   ],
-  ...(settings.runInBackground === undefined
-    ? {}
-    : { advanced: { backgroundTasks: { handler: settings.runInBackground } } }),
 });
 
-export const makeIdentityAuth = (settings: IdentityAuthSettings): IdentityAuth =>
+export const identityAuthFor = (settings: IdentityAuthSettings): IdentityAuth =>
   betterAuth(identityAuthOptions(settings));

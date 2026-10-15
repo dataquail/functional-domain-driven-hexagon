@@ -3,11 +3,11 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { CreateUserCommand } from "@/modules/user/commands/create-user.command.js";
-import { createUserHandler } from "@/modules/user/commands/create-user.handler.js";
-import { DeleteUserCommand } from "@/modules/user/commands/delete-user.command.js";
-import { deleteUserHandler } from "@/modules/user/commands/delete-user.handler.js";
-import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live.js";
+import { CreateUserCommand } from "@/modules/user/commands/create-user.command";
+import { createUserHandler } from "@/modules/user/commands/create-user.handler";
+import { DeleteUserCommand } from "@/modules/user/commands/delete-user.command";
+import { deleteUserHandler } from "@/modules/user/commands/delete-user.handler";
+import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live";
 
 export const userCommandGroup = Command.group(CreateUserCommand, DeleteUserCommand);
 

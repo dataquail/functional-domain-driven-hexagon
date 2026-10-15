@@ -1,4 +1,5 @@
 import { assertIdentityReachable } from "@org/identity/seed/seed-client";
+import * as Effect from "effect/Effect";
 
 import { seedAdmin } from "./test-utils/admin-seed";
 import { runMigrations } from "./test-utils/database";
@@ -9,7 +10,8 @@ import { acceptanceTarget } from "./test-utils/target";
 // preview stage was migrated by the pipeline before the suite started.
 export default async (): Promise<void> => {
   const target = acceptanceTarget();
-  if (target.kind === "local") await runMigrations(target);
+
+  if (target.kind === "local") await Effect.runPromise(runMigrations(target));
 
   await assertIdentityReachable(process.env);
   await seedAdmin(target);

@@ -13,9 +13,9 @@ import { afterEach } from "vitest";
 
 import ViewHarness from "./view-harness.svelte";
 
-export type ViewHarnessResult = {
+export type ViewHarnessResult<Props extends Record<string, unknown>> = {
   readonly registry: AtomRegistry.AtomRegistry;
-  readonly rendered: RenderResult<typeof ViewHarness>;
+  readonly rendered: RenderResult<typeof ViewHarness<Props>>;
 };
 
 // Registries are disposed between tests: mounting a View mounts the query atoms
@@ -31,21 +31,23 @@ afterEach(() => {
 
 export const renderView = <Props extends Record<string, unknown>>(
   view: Component<Props>,
-  props?: Props,
+  props: Props,
   options: {
     readonly initialValues?: NonNullable<Parameters<typeof AtomRegistry.make>[0]>["initialValues"];
     readonly fallback?: string;
   } = {},
-): ViewHarnessResult => {
+): ViewHarnessResult<Props> => {
   const registry = AtomRegistry.make({ initialValues: options.initialValues });
   liveRegistries.push(registry);
-  const rendered = render(ViewHarness, {
+
+  const rendered = render(ViewHarness<Props>, {
     props: {
       registry,
-      view: view as Component<Record<string, unknown>>,
-      props: props ?? {},
+      view,
+      props,
       fallback: options.fallback,
     },
   });
+
   return { registry, rendered };
 };

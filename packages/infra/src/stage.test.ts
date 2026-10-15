@@ -1,15 +1,19 @@
 import { describe, expect, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
+import * as Option from "effect/Option";
+import * as Result from "effect/Result";
 
 import {
   appCallbackUrl,
   appSignedOutUrl,
   identityIssuer,
   kindOfStage,
+  presentEntry,
   previewBranchExpiresAt,
   stageHosts,
+  StageSettingMissing,
   workerName,
-} from "./stage.js";
+} from "./stage";
 
 describe("kindOfStage", () => {
   it("keeps prod and staging on databases of their own", () => {
@@ -39,32 +43,34 @@ describe("workerName", () => {
 });
 
 describe("stageHosts", () => {
-  const settings = { appDomain: "example.com", workersSubdomain: "acme" };
+  const settings = { appDomain: Option.some("example.com"), workersSubdomain: Option.some("acme") };
+
+  const hostsOf = (stage: string) => Result.getOrThrow(stageHosts(stage, settings));
 
   it("serves prod on the bare app and auth hosts", () => {
-    expect(stageHosts("prod", settings)).toEqual({
+    expect(hostsOf("prod")).toEqual({
       appUrl: "https://app.example.com",
       identityUrl: "https://auth.example.com",
-      appHostname: "app.example.com",
-      identityHostname: "auth.example.com",
+      appHostname: Option.some("app.example.com"),
+      identityHostname: Option.some("auth.example.com"),
     });
   });
 
   it("serves staging one level down", () => {
-    const hosts = stageHosts("staging", settings);
+    const hosts = hostsOf("staging");
 
     expect(hosts.appUrl).toBe("https://app.staging.example.com");
     expect(identityIssuer(hosts)).toBe("https://auth.staging.example.com/api/auth");
   });
 
   it("serves a preview on workers.dev, outside the zone", () => {
-    const hosts = stageHosts("pr-7", settings);
+    const hosts = hostsOf("pr-7");
 
     expect(hosts).toEqual({
       appUrl: "https://hexagon-pr-7-web.acme.workers.dev",
       identityUrl: "https://hexagon-pr-7-identity.acme.workers.dev",
-      appHostname: undefined,
-      identityHostname: undefined,
+      appHostname: Option.none(),
+      identityHostname: Option.none(),
     });
     expect(appCallbackUrl(hosts)).toBe(
       "https://hexagon-pr-7-web.acme.workers.dev/api/auth/callback",
@@ -73,14 +79,30 @@ describe("stageHosts", () => {
   });
 
   it("refuses a long-lived stage without a domain", () => {
-    expect(() => stageHosts("prod", { appDomain: undefined, workersSubdomain: "acme" })).toThrow(
-      "APP_DOMAIN is required to deploy stage 'prod'",
-    );
+    expect(
+      stageHosts("prod", { appDomain: Option.none(), workersSubdomain: Option.some("acme") }),
+    ).toEqual(Result.fail(new StageSettingMissing({ setting: "APP_DOMAIN", stage: "prod" })));
   });
 
   it("refuses a preview without the account's workers.dev subdomain", () => {
-    expect(() =>
-      stageHosts("pr-7", { appDomain: "example.com", workersSubdomain: undefined }),
-    ).toThrow("CLOUDFLARE_WORKERS_SUBDOMAIN is required to deploy stage 'pr-7'");
+    expect(
+      stageHosts("pr-7", {
+        appDomain: Option.some("example.com"),
+        workersSubdomain: Option.none(),
+      }),
+    ).toEqual(
+      Result.fail(
+        new StageSettingMissing({ setting: "CLOUDFLARE_WORKERS_SUBDOMAIN", stage: "pr-7" }),
+      ),
+    );
+  });
+});
+
+describe("presentEntry", () => {
+  it("adds the entry for a present value and leaves an absent one out", () => {
+    expect({
+      ...presentEntry(Option.some("https://app/cb"), (url) => ({ REDIRECT: url })),
+      ...presentEntry(Option.none(), (url) => ({ LOGOUT: url })),
+    }).toEqual({ REDIRECT: "https://app/cb" });
   });
 });

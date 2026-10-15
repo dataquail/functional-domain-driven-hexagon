@@ -2,6 +2,7 @@
   import type { Snippet } from "svelte";
 
   export type GridColumns = 1 | 2 | 3 | 4;
+
   export type GridGap = "none" | "sm" | "md" | "lg";
 
   const COLUMNS_ABOVE: Record<GridColumns, string> = {

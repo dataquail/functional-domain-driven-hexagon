@@ -1,16 +1,16 @@
 import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
+import { assertNone } from "@effect/vitest/utils";
 import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import { beforeEach } from "vitest";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { AuthIdentityRepository } from "@/modules/auth/domain/auth-identity/auth-identity.repository.js";
-import { AuthIdentitySpecifications } from "@/modules/auth/domain/auth-identity/auth-identity.specification.js";
-import { AuthIdentityRepositoryLive } from "@/modules/auth/infrastructure/repositories/auth-identity.repository-live.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { AuthIdentityRepository } from "@/modules/auth/domain/auth-identity/auth-identity.repository";
+import { AuthIdentitySpecifications } from "@/modules/auth/domain/auth-identity/auth-identity.specification";
+import { AuthIdentityRepositoryLive } from "@/modules/auth/infrastructure/repositories/auth-identity.repository-live";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const subject = "identity-sub-integration";
@@ -29,49 +29,54 @@ const seedUserAndIdentity = Effect.gen(function* () {
     `;
 }).pipe(Effect.orDie);
 
-describe("AuthIdentityRepositoryLive (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(truncate("user.users").pipe(Effect.provide(TestDatabaseLive)));
-  });
+describeIntegration(
+  "AuthIdentityRepositoryLive (integration)",
+  { layer: TestLayer, tables: ["user.users"] },
+  (it) => {
+    it.effect("findOne(bySubject) returns the seeded identity", () =>
+      Effect.gen(function* () {
+        yield* seedUserAndIdentity;
+        const repo = yield* AuthIdentityRepository;
 
-  it.effect("findOne(bySubject) returns the seeded identity", () =>
-    Effect.gen(function* () {
-      yield* seedUserAndIdentity;
-      const repo = yield* AuthIdentityRepository;
-      const found = yield* repo.findOne(AuthIdentitySpecifications.bySubject(subject));
-      if (found === null) throw new Error("expected an identity");
-      deepStrictEqual(found.subject, subject);
-      deepStrictEqual(found.userId, userId);
-      deepStrictEqual(found.provider, "better-auth");
-    }).pipe(Effect.provide(TestLayer)),
-  );
+        const found = yield* repo
+          .findOne(AuthIdentitySpecifications.bySubject(subject))
+          .pipe(Effect.flatMap(Effect.fromOption));
 
-  it.effect("insert links a subject to a user, retrievable via findOne(bySubject)", () =>
-    Effect.gen(function* () {
-      // Seed only the user row (the FK target); the identity is created via
-      // the repository's write path, mirroring JIT provisioning.
-      const sql = yield* Database.Database;
-      yield* sql`
+        deepStrictEqual(found.subject, subject);
+        deepStrictEqual(found.userId, userId);
+        deepStrictEqual(found.provider, "better-auth");
+      }),
+    );
+
+    it.effect("insert links a subject to a user, retrievable via findOne(bySubject)", () =>
+      Effect.gen(function* () {
+        // Seed only the user row (the FK target); the identity is created via
+        // the repository's write path, mirroring JIT provisioning.
+        const sql = yield* Database.Database;
+        yield* sql`
             INSERT INTO "user".users (id, email, created_at, updated_at)
             VALUES (${userId}, 'jit@example.com', now(), now())
           `.pipe(Effect.orDie);
 
-      const repo = yield* AuthIdentityRepository;
-      yield* repo.insertOne({ subject: "jit-sub", userId, provider: "better-auth" });
+        const repo = yield* AuthIdentityRepository;
+        yield* repo.insertOne({ subject: "jit-sub", userId, provider: "better-auth" });
 
-      const found = yield* repo.findOne(AuthIdentitySpecifications.bySubject("jit-sub"));
-      if (found === null) throw new Error("expected an identity");
-      deepStrictEqual(found.subject, "jit-sub");
-      deepStrictEqual(found.userId, userId);
-      deepStrictEqual(found.provider, "better-auth");
-    }).pipe(Effect.provide(TestLayer)),
-  );
+        const found = yield* repo
+          .findOne(AuthIdentitySpecifications.bySubject("jit-sub"))
+          .pipe(Effect.flatMap(Effect.fromOption));
 
-  it.effect("findOne returns null for an unknown subject (absence is not an error)", () =>
-    Effect.gen(function* () {
-      const repo = yield* AuthIdentityRepository;
-      const found = yield* repo.findOne(AuthIdentitySpecifications.bySubject("missing-sub"));
-      deepStrictEqual(found, null);
-    }).pipe(Effect.provide(TestLayer)),
-  );
-});
+        deepStrictEqual(found.subject, "jit-sub");
+        deepStrictEqual(found.userId, userId);
+        deepStrictEqual(found.provider, "better-auth");
+      }),
+    );
+
+    it.effect("findOne returns null for an unknown subject (absence is not an error)", () =>
+      Effect.gen(function* () {
+        const repo = yield* AuthIdentityRepository;
+        const found = yield* repo.findOne(AuthIdentitySpecifications.bySubject("missing-sub"));
+        assertNone(found);
+      }),
+    );
+  },
+);

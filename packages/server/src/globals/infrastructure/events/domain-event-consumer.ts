@@ -15,10 +15,10 @@ import * as Exit from "effect/Exit";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-export class DeadLetteredDomainEvent extends Schema.TaggedError<DeadLetteredDomainEvent>()(
-  "DeadLetteredDomainEvent",
-  { messageId: Schema.String, handler: Schema.String },
-) {}
+export class DeadLetteredDomainEvent extends Schema.TaggedError<
+  DeadLetteredDomainEvent,
+  { readonly brand: "DeadLetteredDomainEvent" }
+>()("DeadLetteredDomainEvent", { messageId: Schema.String, handler: Schema.String }) {}
 
 export type QueueMessage = {
   readonly id: string;
@@ -45,16 +45,22 @@ const isUndeliverable = (cause: Cause.Cause<unknown>): boolean =>
 // bus has already reported it.
 const consumeOne = Effect.fn("DomainEventConsumer.consume")(function* (message: QueueMessage) {
   const envelope = decodeEnvelope(message.body);
+
   if (Option.isNone(envelope)) {
     yield* Effect.logError(`[domain-events] message ${message.id} is not an envelope; dropped`);
     message.ack();
+
     return;
   }
+
   const exit = yield* deliverOnce(envelope.value);
+
   if (Exit.isSuccess(exit) || isUndeliverable(exit.cause)) {
     message.ack();
+
     return;
   }
+
   message.retry({ delaySeconds: retryDelaySeconds(message.attempts) });
 });
 
@@ -71,10 +77,12 @@ export const reportDeadLetters = (
     Effect.fn("DomainEventConsumer.deadLetter")(function* (message) {
       const failures = yield* UnhandledFailures;
       const envelope = decodeEnvelope(message.body);
+
       const handler = Option.match(envelope, {
         onNone: () => "unknown",
         onSome: (value) => value.handler,
       });
+
       yield* Effect.logError("[domain-events] dead-lettered", {
         messageId: message.id,
         handler,

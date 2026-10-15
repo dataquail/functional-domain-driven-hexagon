@@ -1,23 +1,27 @@
 import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
 import {
   type FindUsersPayload,
   type FindUsersUserView,
-} from "@/modules/user/queries/find-users.query.js";
+} from "@/modules/user/queries/find-users.query";
 
 const CountRow = Schema.Struct({ value: Schema.Int });
 
 const toUserView = (row: RowSchemas.UserRow): FindUsersUserView => ({
   id: UserId.make(row.id),
   email: row.email,
-  address:
-    row.country !== null && row.street !== null && row.postal_code !== null
-      ? { country: row.country, street: row.street, postalCode: row.postal_code }
-      : null,
+  address: Option.getOrNull(
+    Option.all({
+      country: Option.fromNullOr(row.country),
+      street: Option.fromNullOr(row.street),
+      postalCode: Option.fromNullOr(row.postal_code),
+    }),
+  ),
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });

@@ -7,7 +7,12 @@ import * as Effect from "effect/Effect";
 import * as Atom from "effect/reactivity/Atom";
 
 import { ApiAtoms } from "@/services/atom/api-atoms.shared";
-import { type FieldErrors, validateWithSchema } from "@/services/atom/form-validation";
+import {
+  type FieldErrors,
+  hasFieldErrors,
+  validateWithSchema,
+  visibleOnceAttempted,
+} from "@/services/atom/form-validation";
 import { navigateTo } from "@/services/atom/navigation.shared";
 import { notify } from "@/services/atom/notifications.shared";
 import { ReactivityKeys } from "@/services/atom/reactivity-keys";
@@ -25,12 +30,10 @@ export const fieldsAtom = Atom.make<CreateOrgFields>(EMPTY_FIELDS);
 
 export const submitAttemptedAtom = Atom.make(false);
 
-export const errorsAtom = Atom.make((get): FieldErrors<CreateOrgFields> | null =>
-  validate(get(fieldsAtom)),
-);
+export const errorsAtom = Atom.make((get): FieldErrors => validate(get(fieldsAtom)));
 
-export const visibleErrorsAtom = Atom.make((get): FieldErrors<CreateOrgFields> | null =>
-  get(submitAttemptedAtom) ? get(errorsAtom) : null,
+export const visibleErrorsAtom = Atom.make(
+  (get): FieldErrors => visibleOnceAttempted(get(submitAttemptedAtom), get(errorsAtom)),
 );
 
 export const setNameAtom = Atom.fnSync<string>()((name, get) => {
@@ -52,7 +55,8 @@ const createOrg = (get: Atom.FnContext) =>
 export const submitAtom = ApiAtoms.runtime.fn<void>()((_, get) =>
   Effect.gen(function* () {
     get.set(submitAttemptedAtom, true);
-    if (get(errorsAtom) !== null) return;
+
+    if (hasFieldErrors(get(errorsAtom))) return;
     yield* createOrg(get);
   }),
 );

@@ -36,7 +36,7 @@
             {view.current.statusLabel}
           </Badge>
         </Stack>
-        {#if view.current.currentPeriodEndLabel !== null}
+        {#if view.current.currentPeriodEndLabel}
           <Stack direction="column" gap="xs" align="end">
             <Text weight="medium" tone="muted" align="end">Current period ends</Text>
             <Text align="end" data-testid="billing-period-end">

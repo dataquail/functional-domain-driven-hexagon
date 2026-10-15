@@ -1,20 +1,21 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
+import type * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable";
 
 // Raised when a user with the same email already exists at provisioning time.
 // This module's own error, not the user module's `UserAlreadyExists` — the
 // adapter translates one into the other, which is what keeps sign-in free of
 // the user module's error vocabulary.
-export class UserProvisioningConflict extends Schema.TaggedError<UserProvisioningConflict>()(
-  "UserProvisioningConflict",
-  {
-    email: Schema.String,
-  },
-) {}
+export class UserProvisioningConflict extends Schema.TaggedError<
+  UserProvisioningConflict,
+  { readonly brand: "UserProvisioningConflict" }
+>()("UserProvisioningConflict", {
+  email: Schema.String,
+}) {}
 
 // ADR-0022 outbound port. Auth needs to just-in-time provision a brand-new,
 // ordinary (non-admin) application user on first OIDC sign-in, or find the user
@@ -25,13 +26,15 @@ export class UserProvisioningConflict extends Schema.TaggedError<UserProvisionin
 // appears. Because the adapter composes a command rather than opening its own
 // unit of work, provisioning joins sign-in's transaction (ADR-0007 +
 // `UnitOfWorkLive` re-entrancy).
-export type UserProvisioningShape = {
+export type UserProvisioningService = {
   readonly provision: (
     email: string,
   ) => Effect.Effect<UserId, PersistenceUnavailable | UserProvisioningConflict>;
-  readonly findByEmail: (email: string) => Effect.Effect<UserId | null, PersistenceUnavailable>;
+  readonly findByEmail: (
+    email: string,
+  ) => Effect.Effect<Option.Option<UserId>, PersistenceUnavailable>;
 };
 
-export class UserProvisioning extends Context.Service<UserProvisioning, UserProvisioningShape>()(
+export class UserProvisioning extends Context.Service<UserProvisioning, UserProvisioningService>()(
   "@org/server/auth/UserProvisioning",
 ) {}

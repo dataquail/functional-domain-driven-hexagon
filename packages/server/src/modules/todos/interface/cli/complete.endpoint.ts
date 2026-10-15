@@ -3,14 +3,14 @@ import { CliTodosContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { Actions } from "@/globals/application/ports/actions.js";
-import * as Authz from "@/globals/infrastructure/auth/authz.js";
+import { Actions } from "@/globals/application/ports/actions";
+import * as Authz from "@/globals/infrastructure/auth/authz";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { CompleteTodoCommand } from "@/modules/todos/commands/complete-todo.command.js";
-import { TodoResource } from "@/modules/todos/policies/todos.policies.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { CompleteTodoCommand } from "@/modules/todos/commands/complete-todo.command";
+import { TodoResource } from "@/modules/todos/policies/todos.policies";
 
 // CLI adapter (ADR-0005): completing is an update-gated action. The `todo`
 // resolver scopes by (orgId, id), so a missing or cross-tenant todo is
@@ -31,11 +31,13 @@ export const completeEndpoint = Effect.fn("CliTodosLive.complete")(
     );
     const commandBus = yield* CommandBus;
     const currentUser = yield* CurrentUser;
+
     const todo = yield* commandBus.execute(CompleteTodoCommand, {
       todoId: request.params.id,
       organizationId: request.params.orgId,
       userId: currentUser.userId,
     });
+
     return new CliTodosContract.CliTodo({
       id: todo.id,
       title: todo.title,

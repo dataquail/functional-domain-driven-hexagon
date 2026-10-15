@@ -1,19 +1,19 @@
 import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
 import { Database } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import { beforeEach } from "vitest";
+import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
-import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
-import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.js";
-import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositories/api-token.repository-live.js";
-import { listMyApiTokensHandler } from "@/modules/auth/queries/list-my-api-tokens.handler.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository";
+import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops";
+import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositories/api-token.repository-live";
+import { listMyApiTokensHandler } from "@/modules/auth/queries/list-my-api-tokens.handler";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const otherUserId = UserId.make("22222222-2222-2222-2222-222222222222");
@@ -32,59 +32,59 @@ const seedUsers = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-describe("listMyApiTokensHandler (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate("auth.api_tokens", "user.users").pipe(Effect.provide(TestDatabaseLive)),
+describeIntegration(
+  "listMyApiTokensHandler (integration)",
+  { layer: TestLayer, tables: ["auth.api_tokens", "user.users"] },
+  (it) => {
+    it.effect("returns only the caller's tokens", () =>
+      Effect.gen(function* () {
+        yield* seedUsers;
+        const repo = yield* ApiTokenRepository;
+
+        const mk = (id: ApiTokenId, owner: UserId) =>
+          ApiTokenRootOps.mint({
+            id,
+            userId: owner,
+            tokenHash: `hash-${id}`,
+            prefix: "pat_abcd1234",
+            label: "ci",
+            now,
+            expiresAt: Option.some(DateTime.add(now, { days: 90 })),
+          });
+
+        yield* repo.insertOne(mk(idA, userId));
+        yield* repo.insertOne(mk(idOther, otherUserId));
+
+        const mine = yield* listMyApiTokensHandler({ userId });
+        deepStrictEqual(
+          mine.map((t) => t.id),
+          [idA],
+        );
+      }),
     );
-  });
 
-  it.effect("returns only the caller's tokens", () =>
-    Effect.gen(function* () {
-      yield* seedUsers;
-      const repo = yield* ApiTokenRepository;
-      const mk = (id: ApiTokenId, owner: UserId) =>
-        ApiTokenRootOps.mint({
-          id,
-          userId: owner,
-          tokenHash: `hash-${id}`,
-          prefix: "pat_abcd1234",
-          label: "ci",
-          now,
-          expiresAt: DateTime.add(now, { days: 90 }),
-        });
-      yield* repo.insertOne(mk(idA, userId));
-      yield* repo.insertOne(mk(idOther, otherUserId));
+    it.effect("excludes revoked tokens", () =>
+      Effect.gen(function* () {
+        yield* seedUsers;
+        const repo = yield* ApiTokenRepository;
+        yield* repo.insertOne(
+          ApiTokenRootOps.mint({
+            id: idA,
+            userId,
+            tokenHash: "hash-live",
+            prefix: "pat_abcd1234",
+            label: "ci",
+            now,
+            expiresAt: Option.some(DateTime.add(now, { days: 90 })),
+          }),
+        );
+        // deleteOne is the revoke path (stamps revoked_at); the query must
+        // filter it out (WHERE revoked_at IS NULL).
+        yield* repo.deleteOne(idA);
 
-      const mine = yield* listMyApiTokensHandler({ userId });
-      deepStrictEqual(
-        mine.map((t) => t.id),
-        [idA],
-      );
-    }).pipe(Effect.provide(TestLayer)),
-  );
-
-  it.effect("excludes revoked tokens", () =>
-    Effect.gen(function* () {
-      yield* seedUsers;
-      const repo = yield* ApiTokenRepository;
-      yield* repo.insertOne(
-        ApiTokenRootOps.mint({
-          id: idA,
-          userId,
-          tokenHash: "hash-live",
-          prefix: "pat_abcd1234",
-          label: "ci",
-          now,
-          expiresAt: DateTime.add(now, { days: 90 }),
-        }),
-      );
-      // deleteOne is the revoke path (stamps revoked_at); the query must
-      // filter it out (WHERE revoked_at IS NULL).
-      yield* repo.deleteOne(idA);
-
-      const mine = yield* listMyApiTokensHandler({ userId });
-      deepStrictEqual([...mine], []);
-    }).pipe(Effect.provide(TestLayer)),
-  );
-});
+        const mine = yield* listMyApiTokensHandler({ userId });
+        deepStrictEqual([...mine], []);
+      }),
+    );
+  },
+);

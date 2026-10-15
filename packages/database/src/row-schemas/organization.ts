@@ -7,6 +7,7 @@ export const OrganizationRow = Schema.Struct({
   updated_at: Schema.DateTimeUtcFromDate,
   deleted_at: Schema.NullOr(Schema.DateTimeUtcFromDate),
 });
+
 export type OrganizationRow = typeof OrganizationRow.Type;
 
 export const MembershipRow = Schema.Struct({
@@ -14,6 +15,7 @@ export const MembershipRow = Schema.Struct({
   organization_id: Schema.String.check(Schema.isGUID()),
   created_at: Schema.DateTimeUtcFromDate,
 });
+
 export type MembershipRow = typeof MembershipRow.Type;
 
 export const InvitationRow = Schema.Struct({
@@ -26,6 +28,7 @@ export const InvitationRow = Schema.Struct({
   revoked_at: Schema.NullOr(Schema.DateTimeUtcFromDate),
   created_at: Schema.DateTimeUtcFromDate,
 });
+
 export type InvitationRow = typeof InvitationRow.Type;
 
 export const OrganizationRoleRow = Schema.Struct({
@@ -35,4 +38,5 @@ export const OrganizationRoleRow = Schema.Struct({
   issued_by: Schema.String.check(Schema.isGUID()),
   created_at: Schema.DateTimeUtcFromDate,
 });
+
 export type OrganizationRoleRow = typeof OrganizationRoleRow.Type;

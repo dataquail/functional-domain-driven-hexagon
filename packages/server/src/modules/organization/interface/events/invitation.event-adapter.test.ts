@@ -12,16 +12,16 @@ import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
-import { SendInvitationEmailCommand } from "@/modules/organization/commands/send-invitation-email.command.js";
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
+import { SendInvitationEmailCommand } from "@/modules/organization/commands/send-invitation-email.command";
 import {
   InvitationIssued,
   InvitationReissued,
-} from "@/modules/organization/domain/invitation/invitation.events.js";
-import { InvitationEventAdapterLive } from "@/modules/organization/interface/events/invitation.event-adapter.js";
-import { RecordedCommands, RecordingCommandBus } from "@/test-utils/recording-command-bus.js";
+} from "@/modules/organization/domain/invitation/invitation.events";
+import { InvitationEventAdapterLive } from "@/modules/organization/interface/events/invitation.event-adapter";
+import { RecordedCommands, RecordingCommandBus } from "@/test-utils/recording-command-bus";
 
 const TestLayer = InvitationEventAdapterLive.pipe(
   Layer.provideMerge(makeEventBus()),

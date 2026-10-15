@@ -1,12 +1,13 @@
 import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
-import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
-import { type GrantRolePayload } from "@/modules/role/commands/grant-role.command.js";
-import { CannotPromoteSelf } from "@/modules/role/domain/roles/role.errors.js";
-import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
-import { RolesRootOps } from "@/modules/role/domain/roles/roles.root-ops.js";
-import { RolesSpecifications } from "@/modules/role/domain/roles/roles.specification.js";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
+import { type GrantRolePayload } from "@/modules/role/commands/grant-role.command";
+import { CannotPromoteSelf } from "@/modules/role/domain/roles/role.errors";
+import { RolesRepository } from "@/modules/role/domain/roles/roles.repository";
+import { RolesRootOps } from "@/modules/role/domain/roles/roles.root-ops";
+import { RolesSpecifications } from "@/modules/role/domain/roles/roles.specification";
 
 export const grantRoleHandler = Effect.fn("grantRoleHandler")(function* (cmd: GrantRolePayload) {
   // Command-level invariant: a user can't grant themselves a role.
@@ -19,9 +20,11 @@ export const grantRoleHandler = Effect.fn("grantRoleHandler")(function* (cmd: Gr
   const repo = yield* RolesRepository;
   const bus = yield* DomainEventBus;
 
-  const aggregate =
-    (yield* repo.findOne(RolesSpecifications.forUser(cmd.userId))) ??
-    RolesRootOps.empty(cmd.userId);
+  const aggregate = Option.getOrElse(
+    yield* repo.findOne(RolesSpecifications.forUser(cmd.userId)),
+    () => RolesRootOps.empty(cmd.userId),
+  );
+
   const result = yield* Effect.fromResult(RolesRootOps.grant(aggregate, cmd.role));
 
   yield* repo.upsertOne(result.roles);

@@ -1,12 +1,12 @@
 import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as Effect from "effect/Effect";
 
-import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
-import { BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client.js";
-import { StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events.js";
-import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository.js";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
+import { BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client";
+import { StripeWebhookIngested } from "@/modules/billing/domain/webhook-event/stripe-webhook.events";
+import { WebhookEventRepository } from "@/modules/billing/domain/webhook-event/webhook-event.repository";
 
-import { type IngestStripeWebhookPayload } from "./ingest-stripe-webhook.command.js";
+import { type IngestStripeWebhookPayload } from "./ingest-stripe-webhook.command";
 
 // Signature verification + parsing + idempotency claim + domain event
 // dispatch in one transactional unit. Verifies OUTSIDE the unit of
@@ -40,6 +40,7 @@ export const ingestStripeWebhookHandler = Effect.fn("ingestStripeWebhookHandler"
       Effect.as(true),
       Effect.catchTag("WebhookEventAlreadyRecorded", () => Effect.succeed(false)),
     );
+
     if (!claimed) return;
     yield* bus.dispatch([StripeWebhookIngested.make({ stripeEvent })]);
   }).pipe(withUnitOfWork);

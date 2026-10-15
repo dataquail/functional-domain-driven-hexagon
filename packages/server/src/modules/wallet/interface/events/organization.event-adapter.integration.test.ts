@@ -1,6 +1,6 @@
-import { deepStrictEqual, ok } from "node:assert";
+import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
+import { assertDefined } from "@effect/vitest/utils";
 import {
   Command,
   CommandBus,
@@ -15,24 +15,24 @@ import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Layer from "effect/Layer";
-import { beforeEach } from "vitest";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
-import { TransactionDriverLive } from "@/globals/infrastructure/database/transaction-driver-live.js";
-import { Api } from "@/globals/infrastructure/framework/http/api.js";
-import { organizationAccessDomainEvents } from "@/modules/organization/organization.exports.js";
-import { createWalletHandler } from "@/modules/wallet/commands/create-wallet.handler.js";
-import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
-import { OrganizationEventAdapterLive } from "@/modules/wallet/interface/events/organization.event-adapter.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
+import { TransactionDriverLive } from "@/globals/infrastructure/database/transaction-driver-live";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { organizationAccessDomainEvents } from "@/modules/organization/organization.exports";
+import { createWalletHandler } from "@/modules/wallet/commands/create-wallet.handler";
+import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository";
+import { OrganizationEventAdapterLive } from "@/modules/wallet/interface/events/organization.event-adapter";
 import {
   walletCommandGroup,
   WalletCommands,
   WalletCommandsLive,
-} from "@/modules/wallet/wallet.command-handlers.js";
-import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
-import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
+} from "@/modules/wallet/wallet.command-handlers";
+import { CryptoFake } from "@/test-utils/crypto-fake";
+import { describeIntegration, describeServer } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
+import { TestServerLiveAsMember } from "@/test-utils/test-server";
 
 const WALLET_TABLES = [
   "wallet.wallets",
@@ -43,21 +43,17 @@ const WALLET_TABLES = [
   "user.users",
 ] as const;
 
-describe("organization → wallet adapter (integration)", () => {
-  // `seedSuperAdminCaller` is required: creating an org inserts a
-  // membership row FK'd to `"user".users(id)` for the caller. Without a
-  // seeded users row for the fake-auth CurrentUser, the membership insert
-  // FK-fails, the publisher tx rolls back, and the test sees a 500 from
-  // POST /orgs — masking the wallet path we're verifying.
-  const { run } = useServerTestRuntime(WALLET_TABLES, {
-    server: TestServerLiveAsMember,
-    seedSuperAdminCaller: true,
-  });
-
-  it("creates a wallet with balance 0 in the same transaction as the organization", async () => {
-    await run(
+// `seedSuperAdminCaller` is required: creating an org inserts a membership row
+// FK'd to `"user".users(id)` for the caller; without it the publisher tx rolls
+// back and POST /orgs 500s, masking the wallet path under test.
+describeServer(
+  "organization → wallet adapter (integration)",
+  { tables: WALLET_TABLES, server: TestServerLiveAsMember, seedSuperAdminCaller: true },
+  (it) => {
+    it.effect("creates a wallet with balance 0 in the same transaction as the organization", () =>
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
+
         const { id } = yield* client.organization.create({
           payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
         });
@@ -70,18 +66,20 @@ describe("organization → wallet adapter (integration)", () => {
         // queries the wallets table by schema (only the row schema is
         // coupled — not a cross-module port reach).
         const sql = yield* Database.Database;
+
         const rows = yield* sql`
             SELECT * FROM wallet.wallets WHERE organization_id = ${id}
           `.pipe(Database.rows(RowSchemas.WalletRow));
+
         deepStrictEqual(rows.length, 1);
-        const wallet = rows[0];
-        ok(wallet !== undefined);
+        const [wallet] = rows;
+        assertDefined(wallet);
         deepStrictEqual(wallet.organization_id, id);
         deepStrictEqual(wallet.balance, 0);
       }),
     );
-  });
-});
+  },
+);
 
 // Proves the load-bearing claim from ADR-0007 under the command-dispatch
 // model: the adapter dispatches CreateWalletCommand synchronously in the
@@ -109,7 +107,7 @@ const FailingWalletRepository = Layer.succeed(
   WalletRepository,
   WalletRepository.of({
     insertOne: () => Effect.die("simulated wallet command failure"),
-    findOne: () => Effect.succeed(null),
+    findOne: () => Effect.succeedNone,
   }),
 );
 
@@ -120,13 +118,16 @@ const FailingCommandBusLive = Layer.effect(
   CommandBus,
   Effect.gen(function* () {
     const failingWallet = yield* Command.dispatcher(walletCommandGroup);
+
     return makeCommandBus(mergeDispatchTables(failingWallet));
   }),
 ).pipe(
   Layer.provide(
     Command.handlersOf(walletCommandGroup, {
       CreateWalletCommand: (payload) =>
-        createWalletHandler(payload).pipe(Effect.provide(FailingWalletRepository)),
+        createWalletHandler(payload).pipe(
+          Effect.provide(Layer.mergeAll(FailingWalletRepository, CryptoFake)),
+        ),
     }),
   ),
 );
@@ -140,9 +141,10 @@ const WorkingCommandBusLive = Layer.effect(
   CommandBus,
   Effect.gen(function* () {
     const wallet = yield* WalletCommands;
+
     return makeCommandBus(mergeDispatchTables(wallet));
   }),
-).pipe(Layer.provide(WalletCommandsLive));
+).pipe(Layer.provide(WalletCommandsLive), Layer.provide(CryptoFake));
 
 // The adapter `yield*`s DomainEventBus/CommandBus at build time, so they must be
 // provided *into* it (provideMerge), not merged as siblings. provideMerge
@@ -165,111 +167,111 @@ const withBusUnder = (
 
 const RollbackTestLayer = withBusUnder(FailingCommandBusLive);
 
-describe("organization → wallet adapter (rollback integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate("wallet.wallets", "organization.organizations").pipe(
-        Effect.provide(TestDatabaseLive),
-      ),
-    );
-  });
+const PROBE_TABLES = ["wallet.wallets", "organization.organizations"];
 
-  it.effect("rolls back the publisher's writes when the dispatched command defects", () =>
-    Effect.gen(function* () {
-      const uow = yield* UnitOfWork;
-      const bus = yield* DomainEventBus;
-      const sql = yield* Database.Database;
+describeIntegration(
+  "organization → wallet adapter (rollback integration)",
+  { layer: RollbackTestLayer, tables: PROBE_TABLES },
+  (it) => {
+    it.effect("rolls back the publisher's writes when the dispatched command defects", () =>
+      Effect.gen(function* () {
+        const uow = yield* UnitOfWork;
+        const bus = yield* DomainEventBus;
+        const sql = yield* Database.Database;
 
-      const exit = yield* Effect.exit(
-        uow.run(
-          Effect.gen(function* () {
-            yield* insertProbeOrg;
-            yield* bus.dispatch([
-              organizationAccessDomainEvents.OrganizationCreated.make({
-                organizationId: probeOrgId,
-                name: probeName,
-              }),
-            ]);
-          }),
-        ),
-      );
-      deepStrictEqual(Exit.isFailure(exit), true);
+        const exit = yield* Effect.exit(
+          uow.run(
+            Effect.gen(function* () {
+              yield* insertProbeOrg;
+              yield* bus.dispatch([
+                organizationAccessDomainEvents.OrganizationCreated.make({
+                  organizationId: probeOrgId,
+                  name: probeName,
+                }),
+              ]);
+            }),
+          ),
+        );
 
-      const rows = yield* sql`
+        deepStrictEqual(Exit.isFailure(exit), true);
+
+        const rows = yield* sql`
           SELECT * FROM "organization".organizations WHERE id = ${probeOrgId}
         `.pipe(Database.rows(RowSchemas.OrganizationRow));
-      deepStrictEqual(rows.length, 0);
-    }).pipe(Effect.provide(RollbackTestLayer)),
-  );
-});
+
+        deepStrictEqual(rows.length, 0);
+      }),
+    );
+  },
+);
 
 const JoinTestLayer = withBusUnder(WorkingCommandBusLive);
 
-describe("organization → wallet adapter (transaction-join integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate("wallet.wallets", "organization.organizations").pipe(
-        Effect.provide(TestDatabaseLive),
-      ),
-    );
-  });
+describeIntegration(
+  "organization → wallet adapter (transaction-join integration)",
+  { layer: JoinTestLayer, tables: PROBE_TABLES },
+  (it) => {
+    // Control for the test below: without the publisher's failure the very same
+    // flow leaves a wallet row behind. Without this, "no wallet row" would also be
+    // satisfied by a dispatch that silently did nothing — `createWallet` is
+    // idempotent and swallows a duplicate, so a no-op is a real possibility.
+    it.effect("inserts the wallet when the publisher commits", () =>
+      Effect.gen(function* () {
+        const uow = yield* UnitOfWork;
+        const bus = yield* DomainEventBus;
+        const sql = yield* Database.Database;
 
-  // Control for the test below: without the publisher's failure the very same
-  // flow leaves a wallet row behind. Without this, "no wallet row" would also be
-  // satisfied by a dispatch that silently did nothing — `createWallet` is
-  // idempotent and swallows a duplicate, so a no-op is a real possibility.
-  it.effect("inserts the wallet when the publisher commits", () =>
-    Effect.gen(function* () {
-      const uow = yield* UnitOfWork;
-      const bus = yield* DomainEventBus;
-      const sql = yield* Database.Database;
-
-      yield* uow.run(
-        Effect.gen(function* () {
-          yield* insertProbeOrg;
-          yield* bus.dispatch([
-            organizationAccessDomainEvents.OrganizationCreated.make({
-              organizationId: probeOrgId,
-              name: probeName,
-            }),
-          ]);
-        }),
-      );
-
-      const wallets = yield* sql`
-          SELECT * FROM wallet.wallets WHERE organization_id = ${probeOrgId}
-        `.pipe(Database.rows(RowSchemas.WalletRow));
-      deepStrictEqual(wallets.length, 1);
-    }).pipe(Effect.provide(JoinTestLayer)),
-  );
-
-  it.effect("discards the dispatched command's write when the publisher rolls back", () =>
-    Effect.gen(function* () {
-      const uow = yield* UnitOfWork;
-      const bus = yield* DomainEventBus;
-      const sql = yield* Database.Database;
-
-      const exit = yield* Effect.exit(
-        uow.run(
+        yield* uow.run(
           Effect.gen(function* () {
             yield* insertProbeOrg;
-            // Succeeds, inserting a wallet row inside the publisher's transaction.
             yield* bus.dispatch([
               organizationAccessDomainEvents.OrganizationCreated.make({
                 organizationId: probeOrgId,
                 name: probeName,
               }),
             ]);
-            return yield* Effect.fail("publisher failed after the wallet was created");
           }),
-        ),
-      );
-      deepStrictEqual(Exit.isFailure(exit), true);
+        );
 
-      const wallets = yield* sql`
+        const wallets = yield* sql`
           SELECT * FROM wallet.wallets WHERE organization_id = ${probeOrgId}
         `.pipe(Database.rows(RowSchemas.WalletRow));
-      deepStrictEqual(wallets.length, 0);
-    }).pipe(Effect.provide(JoinTestLayer)),
-  );
-});
+
+        deepStrictEqual(wallets.length, 1);
+      }),
+    );
+
+    it.effect("discards the dispatched command's write when the publisher rolls back", () =>
+      Effect.gen(function* () {
+        const uow = yield* UnitOfWork;
+        const bus = yield* DomainEventBus;
+        const sql = yield* Database.Database;
+
+        const exit = yield* Effect.exit(
+          uow.run(
+            Effect.gen(function* () {
+              yield* insertProbeOrg;
+              // Succeeds, inserting a wallet row inside the publisher's transaction.
+              yield* bus.dispatch([
+                organizationAccessDomainEvents.OrganizationCreated.make({
+                  organizationId: probeOrgId,
+                  name: probeName,
+                }),
+              ]);
+
+              return yield* Effect.fail("publisher failed after the wallet was created");
+            }),
+          ),
+        );
+
+        deepStrictEqual(Exit.isFailure(exit), true);
+
+        const wallets = yield* sql`
+          SELECT * FROM wallet.wallets WHERE organization_id = ${probeOrgId}
+        `.pipe(Database.rows(RowSchemas.WalletRow));
+
+        deepStrictEqual(wallets.length, 0);
+      }),
+    );
+  },
+);

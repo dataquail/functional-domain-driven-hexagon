@@ -1,11 +1,26 @@
 {
   "$schema": "./node_modules/@effect/tsgo/oxlint-schema.json",
-  "extends": ["./node_modules/@effect/tsgo/oxlint-presets/recommended.json"],
-  "plugins": ["typescript", "import"],
+  "extends": [
+    "./node_modules/@effect/tsgo/oxlint-presets/recommended.json",
+    "./node_modules/oxlint-plugin-effect/presets/recommended.json"
+  ],
+  "plugins": ["typescript", "import", "oxc"],
   "jsPlugins": [
     {
       "name": "local",
       "specifier": "./scripts/lint-rules/index.mjs"
+    },
+    {
+      "name": "anti-slop",
+      "specifier": "./tools/oxlint/anti-slop/index.ts"
+    },
+    {
+      "name": "anti-slop-effect",
+      "specifier": "./tools/oxlint/anti-slop/effect/index.ts"
+    },
+    {
+      "name": "effect-oxc",
+      "specifier": "./tools/oxlint/effect-oxc/index.ts"
     },
     {
       "name": "architecture",
@@ -39,9 +54,48 @@
     "**/.tmp-*/**",
     "**/routeTree.gen.ts",
     "**/.svelte-kit/**",
-    "**/postcss.config.mjs"
+    "**/postcss.config.mjs",
+    "tools/oxlint/anti-slop/**",
+    "tools/oxlint/effect-oxc/**"
   ],
   "rules": {
+    "oxc/no-accumulating-spread": "error",
+    "anti-slop/no-array-filter-map": "error",
+    "anti-slop/no-reduce-accumulator-copy": "error",
+    "anti-slop/no-chained-type-assertions": "error",
+    "anti-slop/no-conditional-empty-object-spread": "error",
+    "anti-slop/no-known-value-widening": "error",
+    "anti-slop/no-module-mocking": "error",
+    "anti-slop/no-object-parameters": "error",
+    "anti-slop/no-reflect-apply": "error",
+    "anti-slop/no-reflect-get": "error",
+    "anti-slop/no-runtime-typeof": "error",
+    "anti-slop/no-shape-in-symbol-names": "error",
+    "anti-slop/no-unknown-parameters": "error",
+    "anti-slop/no-unknown-returns": "error",
+    "anti-slop/no-unknown-type-aliases": "error",
+    "anti-slop/no-unsafe-dictionary-type": "error",
+    "anti-slop/no-widen-then-assert": "error",
+    "anti-slop/require-readable-spacing": "error",
+    "anti-slop/require-safety-comment-for-type-assertion": "error",
+    "anti-slop-effect/no-manual-effect-error-tag": "error",
+    "anti-slop-effect/no-manual-tag-comparison": "error",
+    "anti-slop-effect/no-manual-tagged-construction": "error",
+    "anti-slop-effect/no-service-constructor-imports": "error",
+    "anti-slop-effect/prefer-effect-match": "error",
+    "effect-oxc/no-bigint-literals": "error",
+    "effect-oxc/no-import-from-barrel-package": [
+      "error",
+      {
+        // Effect's own config also checks @effect/*, whose packages there publish one
+        // module per export; @effect/vitest and the platform packages here do not.
+        "checkPatterns": ["^effect$", "^effect/(.+/)?[a-z][a-z0-9]*$"],
+        "checkRelativeIndexImports": true
+      }
+    ],
+    "effect-oxc/no-js-extension-imports": "error",
+    "effect-oxc/no-opaque-instance-fields": "error",
+    "effect-oxc/no-unused-internal": "error",
     "architecture/imports": "error",
     "architecture/exports": "error",
     "architecture/members": "error",
@@ -232,12 +286,21 @@
     // travels the Effect channel, not the return — and TypeScript already knows an
     // exhaustive switch over a closed union returns on every path.
     "typescript/consistent-return": "off",
-    // Effect v4's Random module carries no UUID; an id is minted from crypto inside
-    // Effect.sync, which is the seam the rule asks for.
-    "effecttsgo/crypto-random-uuid-in-effect": "off",
     "local/no-array-push-spread": "error",
     "no-use-before-define": "warn",
-    "effecttsgo/prefer-schema-over-json": "off"
+    // effect/http-api, effect/http, effect/sql and effect/reactivity are this app's
+    // whole stack; the exact effect pin is what absorbs their instability.
+    "effecttsgo/unstable-api-usage": "off"
+  },
+  "settings": {
+    "effect": {
+      "testFiles": [
+        "**/test/**",
+        "**/test-utils/**",
+        "packages/acceptance/**",
+        "packages/test-drivers/**"
+      ]
+    }
   },
   "overrides": [
     {
@@ -276,65 +339,63 @@
       "rules": {}
     },
     {
-      // A test, a fixture harness, a Playwright driver or a story is the async
-      // edge where an Effect is run, not where one is written: vitest, Playwright
-      // and Storybook hand each callback a promise contract. The same files read
-      // process.env because their runners set it before any Effect Config exists.
-      "files": [
-        "**/*.test.{ts,tsx}",
-        "**/test/**/*.{ts,tsx}",
-        "**/test-utils/**/*.{ts,tsx}",
-        "packages/acceptance/**/*.ts",
-        "packages/test-drivers/**/*.ts"
-      ],
-      "rules": {
-        "effecttsgo/async-function": "off",
-        "effecttsgo/process-env": "off",
-        "effecttsgo/global-fetch": "off",
-        "effecttsgo/node-builtin-import": "off"
-      }
-    },
-    {
-      // SvelteKit owns these signatures: a hook and a load function are async, and
-      // the server-side helpers they call are where the request's Effect runtime
-      // is run.
-      "files": ["packages/web/src/**/*.ts", "packages/web/services/**/*.server.ts"],
-      "rules": {
-        "effecttsgo/async-function": "off"
-      }
-    },
-    {
-      // A live client adapter is the seam over a promise SDK — openid-client, Stripe —
-      // and the async closure inside its Effect.tryPromise is that seam, not control
-      // flow that should have been an Effect.
-      "files": [
-        "**/infrastructure/clients/*.client.ts",
-        "**/infrastructure/clients/*.client-live.ts"
-      ],
-      "rules": {
-        "effecttsgo/async-function": "off"
-      }
-    },
-    {
-      // The CLI and MCP's environment boundary, read at call time by synchronous
-      // error mappers that have no runtime to resolve a Config in.
-      "files": ["packages/api-client/src/config.ts"],
-      "rules": {
-        "effecttsgo/process-env": "off"
-      }
-    },
-    {
-      // A Playwright spec is not Effect code; a unique fixture name needs a clock.
-      "files": ["packages/acceptance/**/*.ts"],
-      "rules": {
-        "effecttsgo/global-date": "off"
-      }
-    },
-    {
       // Storybook's config resolves its own paths with node's modules.
       "files": ["**/.storybook/**/*.ts"],
       "rules": {
-        "effecttsgo/node-builtin-import": "off"
+        "effect/noNodeBuiltinImport": "off",
+        "effect/noModulePathFacts": "off"
+      }
+    },
+    {
+      // Playwright owns this tier's contract: async callbacks, thrown assertions,
+      // its own fixtures and lifecycle hooks, and process.env set by the runner.
+      "files": ["packages/acceptance/**/*.ts", "packages/test-drivers/**/*.ts"],
+      "rules": {
+        "effect/noAsyncFunction": "off",
+        "effect/noThrowStatement": "off",
+        "effect/noNewError": "off",
+        "effect/noNewPromise": "off",
+        "effect/noPromiseChainsInTests": "off",
+        "effect/noTestLifecycleHooks": "off",
+        "effect/noTestGlobals": "off",
+        "effect/noGlobals": "off"
+      }
+    },
+    {
+      // Svelte, Testing Library, MSW and Storybook hand the frontend tiers a
+      // promise contract; a View or component test awaits the DOM, not an Effect.
+      "files": [
+        "packages/web/**/*.test.ts",
+        "packages/web/test/**/*.ts",
+        "packages/components/**/*.test.ts",
+        "packages/components/test/**/*.ts",
+        "**/*.stories.svelte"
+      ],
+      "rules": {
+        "effect/noAsyncFunction": "off",
+        "effect/noPromiseChainsInTests": "off",
+        "effect/noTestLifecycleHooks": "off",
+        "effect/noTestGlobals": "off",
+        "effect/noNewPromise": "off"
+      }
+    },
+    {
+      // SvelteKit's hooks and load functions are async, and Kit signals a redirect
+      // or an HTTP error by throwing its own value.
+      "files": ["packages/web/src/**/*.ts", "packages/web/services/**/*.server.ts"],
+      "rules": {
+        "effect/noAsyncFunction": "off",
+        "effect/noThrowStatement": "off"
+      }
+    },
+    {
+      // Vitest's globalSetup contract: a default-exported async function, run by
+      // the runner before any test file and before any Effect test integration.
+      "files": ["**/global-setup.ts"],
+      "rules": {
+        "effect/noAsyncFunction": "off",
+        "effect/noEffectRunInTests": "off",
+        "effect/noGlobals": "off"
       }
     },
     {

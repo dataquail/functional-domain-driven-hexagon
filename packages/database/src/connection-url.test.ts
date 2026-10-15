@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@effect/vitest";
 import * as Redacted from "effect/Redacted";
 
-import { requiresTls } from "./connection-url.js";
+import { requiresTls } from "./connection-url";
 
 const url = (value: string) => Redacted.make(value);
 

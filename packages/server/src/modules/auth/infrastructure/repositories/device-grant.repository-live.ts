@@ -1,16 +1,17 @@
 import { Database, orFail, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
-import { DeviceGrantNotFound } from "@/modules/auth/domain/device-grant/device-grant.errors.js";
-import { type DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.js";
-import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
-import { type DeviceGrantRoot } from "@/modules/auth/domain/device-grant/device-grant.root.js";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
+import { DeviceGrantNotFound } from "@/modules/auth/domain/device-grant/device-grant.errors";
+import { type DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id";
+import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository";
+import { type DeviceGrantRoot } from "@/modules/auth/domain/device-grant/device-grant.root";
 
-import * as DeviceGrantMapper from "./device-grant.mapper.js";
+import * as DeviceGrantMapper from "./device-grant.mapper";
 
 export const DeviceGrantRepositoryLive = Layer.effect(
   DeviceGrantRepository,
@@ -19,6 +20,7 @@ export const DeviceGrantRepositoryLive = Layer.effect(
 
     const insertOne = Effect.fn("DeviceGrantRepository.insertOne")((grant: DeviceGrantRoot) => {
       const row = DeviceGrantMapper.toPersistence(grant);
+
       return sql`
           INSERT INTO auth.device_grants
             (id, device_code_hash, user_code, status, user_id, created_at, expires_at, approved_at)
@@ -40,20 +42,24 @@ export const DeviceGrantRepositoryLive = Layer.effect(
     // selects at most one row (the unique device_code_hash / user_code).
     const findOne = Effect.fn("DeviceGrantRepository.findOne")(
       (spec: Specification<DeviceGrantRoot>) =>
-        sql`
+        criteriaToWhere(sql, spec.criteria, DeviceGrantMapper.columns).pipe(
+          Effect.flatMap(
+            (where) => sql`
           SELECT * FROM auth.device_grants
-          WHERE ${criteriaToWhere(sql, spec.criteria, DeviceGrantMapper.columns)}
+          WHERE ${where}
           LIMIT 1
-        `.pipe(
+        `,
+          ),
           Database.maybeRow(RowSchemas.DeviceGrantRow),
 
-          Effect.map((row) => (row === null ? null : DeviceGrantMapper.toDomain(row))),
+          Effect.map(Option.map(DeviceGrantMapper.toDomain)),
           translateDatabaseErrors,
         ),
     );
 
     const updateOne = Effect.fn("DeviceGrantRepository.updateOne")((grant: DeviceGrantRoot) => {
       const row = DeviceGrantMapper.toPersistence(grant);
+
       return sql`
           UPDATE auth.device_grants
           SET status = ${row.status},

@@ -17,6 +17,6 @@ imports:
     The CLI talks to the server the same way any other client does: through @org/api-client
     and the contracts. It never imports the server.
   external: [effect, "@effect/platform-node"]
-  allow: ["node:**", "~/cli/**", "~/api-client/**", "~/contracts/**"]
+  allow: ["~/cli/**", "~/api-client/**", "~/contracts/**"]
 children:
   "**/": { layout: open, children: {} }

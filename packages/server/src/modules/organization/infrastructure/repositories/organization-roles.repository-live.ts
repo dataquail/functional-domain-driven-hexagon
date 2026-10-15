@@ -2,12 +2,12 @@ import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
-import { type OrganizationRolesRoot } from "@/modules/organization/domain/organization-roles/organization-roles.root.js";
-import * as OrganizationRolesMapper from "@/modules/organization/infrastructure/repositories/organization-roles.mapper.js";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository";
+import { type OrganizationRolesRoot } from "@/modules/organization/domain/organization-roles/organization-roles.root";
+import * as OrganizationRolesMapper from "@/modules/organization/infrastructure/repositories/organization-roles.mapper";
 
 export const OrganizationRolesRepositoryLive = Layer.effect(
   OrganizationRolesRepository,
@@ -51,16 +51,19 @@ export const OrganizationRolesRepositoryLive = Layer.effect(
     );
 
     // The spec pins the composite key, so every matched row belongs to one
-    // aggregate; the mapper groups them (or returns null for zero rows). The
+    // aggregate; the mapper groups them (or returns None for zero rows). The
     // compiler contributes only the WHERE — this repo owns the projection and,
     // for a multi-row aggregate, the reconstitution.
     const findOne = Effect.fn("OrganizationRolesRepository.findOne")(
       (spec: Specification<OrganizationRolesRoot>) =>
-        sql`
+        criteriaToWhere(sql, spec.criteria, OrganizationRolesMapper.columns).pipe(
+          Effect.flatMap(
+            (where) => sql`
           SELECT organization_id, user_id, role, issued_by, created_at
           FROM "organization".organization_roles
-          WHERE ${criteriaToWhere(sql, spec.criteria, OrganizationRolesMapper.columns)}
-        `.pipe(
+          WHERE ${where}
+        `,
+          ),
           Database.rows(RowSchemas.OrganizationRoleRow),
           Effect.map((rows) => OrganizationRolesMapper.toDomain(rows)),
           translateDatabaseErrors,

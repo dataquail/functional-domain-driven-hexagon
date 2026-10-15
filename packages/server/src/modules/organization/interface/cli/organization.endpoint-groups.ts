@@ -1,8 +1,8 @@
 import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.js";
+import { Api } from "@/globals/infrastructure/framework/http/api";
 
-import { findMineEndpoint } from "./find-mine.endpoint.js";
+import { findMineEndpoint } from "./find-mine.endpoint";
 
 // Registers the CLI-facing organization endpoints (the `cliOrganization`
 // group on CliApi). Sibling to the HTTP org group; dispatches to the same bus.

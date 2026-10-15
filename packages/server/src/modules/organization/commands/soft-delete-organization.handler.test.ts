@@ -1,31 +1,32 @@
-import { deepStrictEqual, notStrictEqual } from "node:assert";
+import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertTrue } from "@effect/vitest/utils";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { createOrganizationHandler } from "@/modules/organization/commands/create-organization.handler.js";
-import { softDeleteOrganizationHandler } from "@/modules/organization/commands/soft-delete-organization.handler.js";
-import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors.js";
-import { type OrganizationSoftDeleted } from "@/modules/organization/domain/organization/organization.events.js";
-import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
-import { OrganizationSpecifications } from "@/modules/organization/domain/organization/organization.specification.js";
-import { makePlatformRolesFake } from "@/modules/organization/infrastructure/acl/platform-roles.acl-fake.js";
-import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake.js";
-import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization.repository-fake.js";
-import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.js";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { createOrganizationHandler } from "@/modules/organization/commands/create-organization.handler";
+import { softDeleteOrganizationHandler } from "@/modules/organization/commands/soft-delete-organization.handler";
+import { OrganizationNotFound } from "@/modules/organization/domain/organization/organization.errors";
+import { type OrganizationSoftDeleted } from "@/modules/organization/domain/organization/organization.events";
+import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository";
+import { OrganizationSpecifications } from "@/modules/organization/domain/organization/organization.specification";
+import { makePlatformRolesFake } from "@/modules/organization/infrastructure/acl/platform-roles.acl-fake";
+import { MembershipRepositoryFake } from "@/modules/organization/infrastructure/repositories/membership.repository-fake";
+import { OrganizationRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization.repository-fake";
+import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake";
+import { CryptoFake } from "@/test-utils/crypto-fake";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus";
 
 const actorUserId = UserId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
 const TestLayer = Layer.mergeAll(
+  CryptoFake,
   OrganizationRepositoryFake,
   MembershipRepositoryFake,
   OrganizationRolesRepositoryFake,
@@ -41,9 +42,10 @@ describe("softDeleteOrganizationHandler", () => {
       const rec = yield* RecordedEvents;
       const id = yield* createOrganizationHandler({ name: "Acme", actorUserId });
       yield* softDeleteOrganizationHandler({ organizationId: id });
-      const stored = yield* repo.findOne(OrganizationSpecifications.withId(id));
-      if (stored === null) throw new Error("expected organization");
-      notStrictEqual(stored.deletedAt, null);
+      const maybeStored = yield* repo.findOne(OrganizationSpecifications.withId(id));
+
+      const stored = Option.getOrThrow(maybeStored);
+      assertTrue(Option.isSome(stored.deletedAt));
       const events = yield* rec.byTag<OrganizationSoftDeleted>("OrganizationSoftDeleted");
       deepStrictEqual(events.length, 1);
     }).pipe(Effect.provide(TestLayer)),
@@ -52,14 +54,8 @@ describe("softDeleteOrganizationHandler", () => {
   it.effect("fails OrganizationNotFound when the org doesn't exist", () =>
     Effect.gen(function* () {
       const unknown = OrganizationId.make("00000000-0000-0000-0000-000000000000");
-      const exit = yield* Effect.exit(softDeleteOrganizationHandler({ organizationId: unknown }));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(OrganizationNotFound)(error), true);
-      }
+      const error = yield* Effect.flip(softDeleteOrganizationHandler({ organizationId: unknown }));
+      deepStrictEqual(Schema.is(OrganizationNotFound)(error), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -67,14 +63,8 @@ describe("softDeleteOrganizationHandler", () => {
     Effect.gen(function* () {
       const id = yield* createOrganizationHandler({ name: "Acme", actorUserId });
       yield* softDeleteOrganizationHandler({ organizationId: id });
-      const exit = yield* Effect.exit(softDeleteOrganizationHandler({ organizationId: id }));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(OrganizationNotFound)(error), true);
-      }
+      const error = yield* Effect.flip(softDeleteOrganizationHandler({ organizationId: id }));
+      deepStrictEqual(Schema.is(OrganizationNotFound)(error), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 });

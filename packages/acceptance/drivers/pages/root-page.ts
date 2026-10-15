@@ -4,6 +4,10 @@ import { expect, type Locator, type Page } from "@playwright/test";
 // picker + create-organization form. Hides selectors behind domain-shaped
 // methods. Super-admins are redirected away from `/`, so this driver is
 // only meaningful under the member storageState.
+const missing = (message: string): never => {
+  throw new Error(message);
+};
+
 export class RootPage {
   constructor(private readonly page: Page) {}
 
@@ -29,10 +33,11 @@ export class RootPage {
     await this.createOrgName.fill(name);
     await this.createOrgSubmit.click();
     await this.page.waitForURL(/\/orgs\/[0-9a-f-]+$/, { timeout: 15_000 });
-    const match = /\/orgs\/([0-9a-f-]+)$/.exec(new URL(this.page.url()).pathname);
-    if (match?.[1] === undefined) {
-      throw new Error(`[RootPage] could not parse orgId from URL: ${this.page.url()}`);
-    }
-    return match[1];
+    const match = /\/orgs\/(?<orgId>[0-9a-f-]+)$/.exec(new URL(this.page.url()).pathname);
+
+    return (
+      match?.groups?.orgId ??
+      missing(`[RootPage] could not parse orgId from URL: ${this.page.url()}`)
+    );
   }
 }

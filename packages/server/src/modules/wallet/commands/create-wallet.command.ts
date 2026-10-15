@@ -2,7 +2,7 @@ import { Command } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
 
 // Creates the wallet for a freshly-created organization. Dispatched by the
 // organization → wallet event adapter (interface/events), not by an HTTP
@@ -16,4 +16,5 @@ export const CreateWalletCommand = Command.make("CreateWalletCommand", {
   success: Schema.Void,
   failure: PersistenceUnavailable,
 });
+
 export type CreateWalletPayload = Command.Payload<typeof CreateWalletCommand>;

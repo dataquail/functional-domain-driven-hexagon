@@ -54,7 +54,7 @@ defs:
         @org/database beside what a unit test may. It takes its unit of work from the runtime
         rather than opening its own, and it asserts on rows, not on the contracts — that is
         the endpoint test's job.
-      external: [effect, "@effect/vitest", vitest]
+      external: [effect, "@effect/vitest"]
       allow: ["node:**", "@/**", "~/database/**"]
 
   server-unit-of-work-test-file:
@@ -68,7 +68,6 @@ defs:
       external:
         - effect
         - "@effect/vitest"
-        - vitest
         - "@effect-server-utils/cqrs"
         - "@effect-server-utils/unit-of-work"
       allow: ["node:**", "@/**", "~/contracts/**", "~/database/**"]
@@ -246,7 +245,12 @@ children:
             children:
               "domain-event.ts": {}
               "persistence-unavailable.ts": {}
-              "specification.ts": {}
+              "specification.ts":
+                imports:
+                  message: >-
+                    The specification kit builds its Criteria with Data and reads Option fields, so
+                    it names `effect` — which every domain may already import.
+                  external: [effect]
               "*.test.ts": { use: server-unit-test-file }
 
               # The one tier the domain may name, so the one that must stay smallest.
@@ -831,7 +835,6 @@ children:
             infrastructure/acl/ (ADR-0022).
           external: [effect, "@effect-server-utils/cqrs", "@effect-server-utils/unit-of-work"]
           allow:
-            - "node:**"
             - "@/modules/{module}/domain/**"
             - "@/modules/{module}/commands/**"
             - "@/globals/application/ddd/**"
@@ -1125,7 +1128,8 @@ children:
         message: >-
           interface/ is a container: it admits one subfolder per inbound protocol — http/, cli/
           and events/ (ADR-0013, ADR-0007). No files live directly in interface/. http/ and
-          cli/ hold one *.endpoint.ts per endpoint, plus an index.ts barrel and pure leaf
+          cli/ hold one *.endpoint.ts per endpoint, plus a <module>.endpoint-groups.ts that
+          registers them into groups and pure leaf
           *.util.ts helpers; events/ holds one *.event-adapter.ts per upstream module whose
           domain events this module consumes.
 
@@ -1154,12 +1158,12 @@ children:
                 - "@/modules/{module}/infrastructure/clients/**"
                 - "~/contracts/**"
             children:
-              "index.ts": {}
+              "*.endpoint-groups.ts": { name: { like: "{module}" } }
               "*.endpoint.ts":
                 message: >-
                   Every endpoint (*.endpoint.ts) needs a real *.endpoint.integration.test.ts
                   (ADR-0013) that exercises the HTTP layer against a live DB via
-                  useServerTestRuntime.
+                  describeServer.
                 requires: ["{base}.integration.test.ts"]
                 # The OIDC flow endpoints keep unit-token coverage: their happy
                 # path needs a live IdP and is covered by Playwright plus the
@@ -1466,7 +1470,7 @@ children:
         internals — the harness is a consumer of the published surface like any other.
       external:
         - effect
-        - vitest
+        - "@effect/vitest"
         - "@effect/platform-node"
         - "@effect-server-utils/cqrs"
       allow:

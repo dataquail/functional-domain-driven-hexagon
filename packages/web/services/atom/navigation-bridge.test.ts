@@ -1,20 +1,24 @@
 import { render } from "@testing-library/svelte";
+import * as Option from "effect/Option";
 import type * as Atom from "effect/reactivity/Atom";
 import * as AtomRegistry from "effect/reactivity/AtomRegistry";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
-import type { NavigationSink } from "./navigation.shared";
+import { navigations } from "@/test/kit/navigation";
+import { page } from "@/test/kit/state";
+import NavigationProbe from "@/test/navigation/navigation-probe.svelte";
 
-const { goto, page } = vi.hoisted(() => ({
-  goto: vi.fn(() => Promise.resolve()),
-  page: { url: new URL("http://app.test/orgs/1/members") },
-}));
+import {
+  navigateTo,
+  navigationRequestAtom,
+  type NavigationSink,
+  pathnameAtom,
+} from "./navigation.shared";
 
-vi.mock("$app/navigation", () => ({ goto }));
-vi.mock("$app/state", () => ({ page }));
-
-const { default: NavigationProbe } = await import("@/test/navigation/navigation-probe.svelte");
-const { navigateTo, navigationRequestAtom, pathnameAtom } = await import("./navigation.shared");
+beforeEach(() => {
+  navigations.length = 0;
+  page.url = new URL("http://app.test/orgs/1/members");
+});
 
 describe("NavigationBridge", () => {
   it("mirrors the current path into the graph before anything renders", () => {
@@ -33,10 +37,13 @@ describe("NavigationBridge", () => {
         registry.set(atom, value);
       },
     });
+
     navigateTo(sink, "/orgs/2");
     navigateTo(sink, "/orgs/2");
 
-    expect(goto.mock.calls).toEqual([["/orgs/2"], ["/orgs/2"]]);
-    expect(registry.get(navigationRequestAtom)?.seq).toBe(2);
+    expect(navigations).toEqual(["/orgs/2", "/orgs/2"]);
+    expect(Option.map(registry.get(navigationRequestAtom), (request) => request.seq)).toEqual(
+      Option.some(2),
+    );
   });
 });

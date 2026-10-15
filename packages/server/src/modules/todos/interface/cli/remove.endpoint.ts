@@ -3,14 +3,14 @@ import { CliTodosContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { Actions } from "@/globals/application/ports/actions.js";
-import * as Authz from "@/globals/infrastructure/auth/authz.js";
+import { Actions } from "@/globals/application/ports/actions";
+import * as Authz from "@/globals/infrastructure/auth/authz";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { DeleteTodoCommand } from "@/modules/todos/commands/delete-todo.command.js";
-import { TodoResource } from "@/modules/todos/policies/todos.policies.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { DeleteTodoCommand } from "@/modules/todos/commands/delete-todo.command";
+import { TodoResource } from "@/modules/todos/policies/todos.policies";
 
 // CLI adapter (ADR-0005): same delete-gated resource + DeleteTodoCommand as
 // the GUI's delete endpoint, with the CLI's own NotFound shape.

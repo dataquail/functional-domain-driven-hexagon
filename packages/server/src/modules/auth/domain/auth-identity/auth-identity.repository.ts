@@ -1,9 +1,10 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
+import type * as Option from "effect/Option";
 
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
-import { type Specification } from "@/globals/application/ddd/specification.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable";
+import { type Specification } from "@/globals/application/ddd/specification";
 
 export type AuthIdentity = {
   readonly subject: string;
@@ -13,13 +14,13 @@ export type AuthIdentity = {
 
 // Dumb persistence: link an external subject to an app user (insertOne) and
 // read the linkage back by a Specification. The subject lookup is expressed as
-// a spec at the call site (AuthIdentitySpecifications.bySubject); absence is a
-// plain `null`, mapped to AuthIdentityNotFound (or JIT provisioning) by the
+// a spec at the call site (AuthIdentitySpecifications.bySubject); absence is
+// `Option.none()`, mapped to AuthIdentityNotFound (or JIT provisioning) by the
 // caller.
-export type AuthIdentityRepositoryShape = {
+export type AuthIdentityRepositoryService = {
   readonly findOne: (
     spec: Specification<AuthIdentity>,
-  ) => Effect.Effect<AuthIdentity | null, PersistenceUnavailable>;
+  ) => Effect.Effect<Option.Option<AuthIdentity>, PersistenceUnavailable>;
   // Links a verified external subject to an app user. Used by JIT
   // provisioning on first OIDC sign-in. Joins the caller's transaction.
   readonly insertOne: (identity: AuthIdentity) => Effect.Effect<void, PersistenceUnavailable>;
@@ -27,5 +28,5 @@ export type AuthIdentityRepositoryShape = {
 
 export class AuthIdentityRepository extends Context.Service<
   AuthIdentityRepository,
-  AuthIdentityRepositoryShape
+  AuthIdentityRepositoryService
 >()("AuthIdentityRepository") {}

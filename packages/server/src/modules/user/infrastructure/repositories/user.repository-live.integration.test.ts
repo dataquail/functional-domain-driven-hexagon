@@ -1,24 +1,23 @@
-import { deepStrictEqual, notStrictEqual } from "node:assert";
+import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
+import { describe } from "@effect/vitest";
+import { assertNone, assertTrue } from "@effect/vitest/utils";
 import { Database } from "@org/database/index";
-import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
-import { beforeEach } from "vitest";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user/user.errors.js";
-import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
-import { UserRootOps } from "@/modules/user/domain/user/user.root-ops.js";
-import { UserSpecifications } from "@/modules/user/domain/user/user.specification.js";
-import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.js";
-import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { UserAlreadyExists, UserNotFound } from "@/modules/user/domain/user/user.errors";
+import { UserRepository } from "@/modules/user/domain/user/user.repository";
+import { UserRootOps } from "@/modules/user/domain/user/user.root-ops";
+import { UserSpecifications } from "@/modules/user/domain/user/user.specification";
+import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object";
+import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const aliceId = UserId.make("11111111-1111-1111-1111-111111111111");
 const bobId = UserId.make("22222222-2222-2222-2222-222222222222");
@@ -31,176 +30,186 @@ const address = AddressValueObject.make({
   postalCode: "12345",
 });
 
-const alice = UserRootOps.create({ id: aliceId, email: "alice@example.com", address, now }).user;
+const alice = UserRootOps.create({
+  id: aliceId,
+  email: "alice@example.com",
+  address: Option.some(address),
+  now,
+}).user;
 
 const TestLayer = UserRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-describe("UserRepositoryLive (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(truncate("user.users").pipe(Effect.provide(TestDatabaseLive)));
-  });
+describeIntegration(
+  "UserRepositoryLive (integration)",
+  { layer: TestLayer, tables: ["user.users"] },
+  (it) => {
+    describe("insert", () => {
+      it.effect("persists the user and decodes it back via findOne(withId)", () =>
+        Effect.gen(function* () {
+          const repo = yield* UserRepository;
+          yield* repo.insertOne(alice);
 
-  describe("insert", () => {
-    it.effect("persists the user and decodes it back via findOne(withId)", () =>
-      Effect.gen(function* () {
-        const repo = yield* UserRepository;
-        yield* repo.insertOne(alice);
-        const found = yield* repo.findOne(UserSpecifications.withId(alice.id));
-        if (found === null) throw new Error("expected stored user");
-        deepStrictEqual(found.id, alice.id);
-        deepStrictEqual(found.email, alice.email);
-        if (found.address === null) throw new Error("expected a stored address");
-        deepStrictEqual(found.address.country, "USA");
-        deepStrictEqual(found.address.street, "123 Main St");
-        deepStrictEqual(found.address.postalCode, "12345");
-      }).pipe(Effect.provide(TestLayer)),
-    );
+          const found = yield* Effect.map(
+            repo.findOne(UserSpecifications.withId(alice.id)),
+            Option.getOrThrow,
+          );
 
-    it.effect("fails UserAlreadyExists on duplicate email (unique violation → domain error)", () =>
-      Effect.gen(function* () {
-        const repo = yield* UserRepository;
-        yield* repo.insertOne(alice);
-        const clashing = UserRootOps.create({
-          id: bobId,
-          email: alice.email,
-          address,
-          now,
-        }).user;
-        const exit = yield* Effect.exit(repo.insertOne(clashing));
-        deepStrictEqual(Exit.isFailure(exit), true);
-        if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause)
-            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-            : null;
-          deepStrictEqual(Schema.is(UserAlreadyExists)(error), true);
-          deepStrictEqual((error as UserAlreadyExists).email, alice.email);
-        }
-      }).pipe(Effect.provide(TestLayer)),
-    );
-  });
+          deepStrictEqual(found.id, alice.id);
+          deepStrictEqual(found.email, alice.email);
 
-  describe("findOne", () => {
-    it.effect("returns null for an unknown id (absence is not an error)", () =>
-      Effect.gen(function* () {
-        const repo = yield* UserRepository;
-        const found = yield* repo.findOne(UserSpecifications.withId(aliceId));
-        deepStrictEqual(found, null);
-      }).pipe(Effect.provide(TestLayer)),
-    );
+          const storedAddress = Option.getOrThrow(found.address);
+          deepStrictEqual(storedAddress.country, "USA");
+          deepStrictEqual(storedAddress.street, "123 Main St");
+          deepStrictEqual(storedAddress.postalCode, "12345");
+        }),
+      );
 
-    it.effect("returns the user when the email matches", () =>
-      Effect.gen(function* () {
-        const repo = yield* UserRepository;
-        yield* repo.insertOne(alice);
-        const found = yield* repo.findOne(UserSpecifications.withEmail("alice@example.com"));
-        if (found === null) throw new Error("expected stored user");
-        deepStrictEqual(found.id, alice.id);
-      }).pipe(Effect.provide(TestLayer)),
-    );
+      it.effect(
+        "fails UserAlreadyExists on duplicate email (unique violation → domain error)",
+        () =>
+          Effect.gen(function* () {
+            const repo = yield* UserRepository;
+            yield* repo.insertOne(alice);
 
-    it.effect("returns null when no user has the email", () =>
-      Effect.gen(function* () {
-        const repo = yield* UserRepository;
-        const found = yield* repo.findOne(UserSpecifications.withEmail("nobody@example.com"));
-        deepStrictEqual(found, null);
-      }).pipe(Effect.provide(TestLayer)),
-    );
-  });
+            const clashing = UserRootOps.create({
+              id: bobId,
+              email: alice.email,
+              address: Option.some(address),
+              now,
+            }).user;
 
-  describe("update", () => {
-    it.effect("overwrites address and updatedAt", () =>
-      Effect.gen(function* () {
-        const repo = yield* UserRepository;
-        yield* repo.insertOne(alice);
-        const { user: updated } = UserRootOps.updateAddress(alice, {
-          country: "Canada",
-          now: later,
-        });
-        yield* repo.updateOne(updated);
-        const found = yield* repo.findOne(UserSpecifications.withId(alice.id));
-        if (found === null) throw new Error("expected stored user");
-        deepStrictEqual(found.address?.country, "Canada");
-        deepStrictEqual(
-          DateTime.toDate(found.updatedAt).toISOString(),
-          DateTime.toDate(later).toISOString(),
-        );
-      }).pipe(Effect.provide(TestLayer)),
-    );
+            const error = yield* Effect.flip(repo.insertOne(clashing));
 
-    it.effect("fails UserNotFound when the user isn't stored", () =>
-      Effect.gen(function* () {
-        const repo = yield* UserRepository;
-        const exit = yield* Effect.exit(repo.updateOne(alice));
-        deepStrictEqual(Exit.isFailure(exit), true);
-        if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause)
-            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-            : null;
+            assertTrue(Schema.is(UserAlreadyExists)(error));
+            deepStrictEqual(error.email, alice.email);
+          }),
+      );
+    });
+
+    describe("findOne", () => {
+      it.effect("returns null for an unknown id (absence is not an error)", () =>
+        Effect.gen(function* () {
+          const repo = yield* UserRepository;
+          const found = yield* repo.findOne(UserSpecifications.withId(aliceId));
+          assertNone(found);
+        }),
+      );
+
+      it.effect("returns the user when the email matches", () =>
+        Effect.gen(function* () {
+          const repo = yield* UserRepository;
+          yield* repo.insertOne(alice);
+
+          const found = yield* Effect.map(
+            repo.findOne(UserSpecifications.withEmail("alice@example.com")),
+            Option.getOrThrow,
+          );
+
+          deepStrictEqual(found.id, alice.id);
+        }),
+      );
+
+      it.effect("returns null when no user has the email", () =>
+        Effect.gen(function* () {
+          const repo = yield* UserRepository;
+          const found = yield* repo.findOne(UserSpecifications.withEmail("nobody@example.com"));
+          assertNone(found);
+        }),
+      );
+    });
+
+    describe("update", () => {
+      it.effect("overwrites address and updatedAt", () =>
+        Effect.gen(function* () {
+          const repo = yield* UserRepository;
+          yield* repo.insertOne(alice);
+
+          const { user: updated } = UserRootOps.updateAddress(alice, {
+            country: "Canada",
+            now: later,
+          });
+
+          yield* repo.updateOne(updated);
+
+          const found = yield* Effect.map(
+            repo.findOne(UserSpecifications.withId(alice.id)),
+            Option.getOrThrow,
+          );
+
+          deepStrictEqual(
+            Option.map(found.address, (stored) => stored.country),
+            Option.some("Canada"),
+          );
+          deepStrictEqual(
+            DateTime.toDate(found.updatedAt).toISOString(),
+            DateTime.toDate(later).toISOString(),
+          );
+        }),
+      );
+
+      it.effect("fails UserNotFound when the user isn't stored", () =>
+        Effect.gen(function* () {
+          const repo = yield* UserRepository;
+          const error = yield* Effect.flip(repo.updateOne(alice));
+
           deepStrictEqual(Schema.is(UserNotFound)(error), true);
-        }
-      }).pipe(Effect.provide(TestLayer)),
-    );
-  });
+        }),
+      );
+    });
 
-  describe("remove", () => {
-    it.effect("deletes the row", () =>
-      Effect.gen(function* () {
-        const repo = yield* UserRepository;
-        yield* repo.insertOne(alice);
-        yield* repo.deleteOne(alice.id);
-        const found = yield* repo.findOne(UserSpecifications.withId(alice.id));
-        deepStrictEqual(found, null);
-      }).pipe(Effect.provide(TestLayer)),
-    );
+    describe("remove", () => {
+      it.effect("deletes the row", () =>
+        Effect.gen(function* () {
+          const repo = yield* UserRepository;
+          yield* repo.insertOne(alice);
+          yield* repo.deleteOne(alice.id);
+          const found = yield* repo.findOne(UserSpecifications.withId(alice.id));
+          assertNone(found);
+        }),
+      );
 
-    it.effect("fails UserNotFound when the user isn't stored", () =>
-      Effect.gen(function* () {
-        const repo = yield* UserRepository;
-        const exit = yield* Effect.exit(repo.deleteOne(aliceId));
-        deepStrictEqual(Exit.isFailure(exit), true);
-        if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause)
-            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-            : null;
+      it.effect("fails UserNotFound when the user isn't stored", () =>
+        Effect.gen(function* () {
+          const repo = yield* UserRepository;
+          const error = yield* Effect.flip(repo.deleteOne(aliceId));
+
           deepStrictEqual(Schema.is(UserNotFound)(error), true);
-        }
-      }).pipe(Effect.provide(TestLayer)),
-    );
-  });
+        }),
+      );
+    });
 
-  describe("transaction", () => {
-    it.effect("commits inserts when the body succeeds", () =>
-      Effect.gen(function* () {
-        const repo = yield* UserRepository;
-        const sql = yield* Database.Database;
-        yield* sql.withTransaction(repo.insertOne(alice));
-        const found = yield* repo.findOne(UserSpecifications.withEmail(alice.email));
-        notStrictEqual(found, null);
-      }).pipe(Effect.provide(TestLayer)),
-    );
+    describe("transaction", () => {
+      it.effect("commits inserts when the body succeeds", () =>
+        Effect.gen(function* () {
+          const repo = yield* UserRepository;
+          const sql = yield* Database.Database;
+          yield* sql.withTransaction(repo.insertOne(alice));
+          const found = yield* repo.findOne(UserSpecifications.withEmail(alice.email));
+          assertTrue(Option.isSome(found));
+        }),
+      );
 
-    it.effect("rolls back inserts when the body fails (surfaces typed error)", () =>
-      Effect.gen(function* () {
-        const repo = yield* UserRepository;
-        const sql = yield* Database.Database;
-        const exit = yield* Effect.exit(
-          sql.withTransaction(
-            Effect.gen(function* () {
-              yield* repo.insertOne(alice);
-              return yield* new UserNotFound({ userId: bobId });
-            }),
-          ),
-        );
-        deepStrictEqual(Exit.isFailure(exit), true);
-        if (Exit.isFailure(exit)) {
-          const error = Cause.hasFails(exit.cause)
-            ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-            : null;
+      it.effect("rolls back inserts when the body fails (surfaces typed error)", () =>
+        Effect.gen(function* () {
+          const repo = yield* UserRepository;
+          const sql = yield* Database.Database;
+
+          const error = yield* Effect.flip(
+            sql.withTransaction(
+              Effect.gen(function* () {
+                yield* repo.insertOne(alice);
+
+                return yield* new UserNotFound({ userId: bobId });
+              }),
+            ),
+          );
+
           deepStrictEqual(Schema.is(UserNotFound)(error), true);
-        }
-        const after = yield* repo.findOne(UserSpecifications.withEmail(alice.email));
-        deepStrictEqual(after, null);
-      }).pipe(Effect.provide(TestLayer)),
-    );
-  });
-});
+
+          const after = yield* repo.findOne(UserSpecifications.withEmail(alice.email));
+          assertNone(after);
+        }),
+      );
+    });
+  },
+);

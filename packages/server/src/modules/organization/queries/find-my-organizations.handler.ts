@@ -1,13 +1,14 @@
 import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
 import {
   type FindMyOrganizationsPayload,
   type FindMyOrganizationsView,
-} from "@/modules/organization/queries/find-my-organizations.query.js";
+} from "@/modules/organization/queries/find-my-organizations.query";
 
 // Org columns plus a computed `is_admin` flag — the `EXISTS` subquery
 // below adds a column the standard `OrganizationRow` schema doesn't
@@ -26,6 +27,7 @@ const toView = (row: typeof MyOrganizationRow.Type): FindMyOrganizationsView => 
   name: row.name,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
+  deletedAt: Option.fromNullOr(row.deleted_at),
   isAdmin: row.is_admin,
 });
 
@@ -38,6 +40,7 @@ export const findMyOrganizationsHandler = Effect.fn("findMyOrganizationsHandler"
   query: FindMyOrganizationsPayload,
 ) {
   const sql = yield* Database.Database;
+
   const rows = yield* sql`
           SELECT
             o.*,

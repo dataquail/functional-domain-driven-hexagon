@@ -2,28 +2,31 @@ import { CommandBus } from "@effect-server-utils/cqrs";
 import { BillingContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
-import { Actions } from "@/globals/application/ports/actions.js";
-import * as Authz from "@/globals/infrastructure/auth/authz.js";
+import { Actions } from "@/globals/application/ports/actions";
+import * as Authz from "@/globals/infrastructure/auth/authz";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { CancelSubscriptionCommand } from "@/modules/billing/commands/cancel-subscription.command.js";
-import { BillingResource } from "@/modules/billing/policies/billing.policies.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { CancelSubscriptionCommand } from "@/modules/billing/commands/cancel-subscription.command";
+import { BillingResource } from "@/modules/billing/policies/billing.policies";
 
 export const cancelSubscriptionEndpoint = Effect.fn("BillingLive.cancelSubscription")(
   function* (request: EndpointRequest<typeof BillingContract.PrivateGroup, "cancelSubscription">) {
     yield* Authz.hasPermissions(BillingResource, Actions.Update, request.params.orgId);
     const commandBus = yield* CommandBus;
+
     const subscription = yield* commandBus.execute(CancelSubscriptionCommand, {
       organizationId: request.params.orgId,
     });
+
     return new BillingContract.SubscriptionResponse({
       id: subscription.id,
       organizationId: subscription.organizationId,
       status: subscription.status,
-      currentPeriodEnd: subscription.currentPeriodEnd,
+      currentPeriodEnd: Option.getOrNull(subscription.currentPeriodEnd),
     });
   },
   Effect.catchTags({

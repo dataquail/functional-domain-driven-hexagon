@@ -2,15 +2,16 @@ import { QueryBus } from "@effect-server-utils/cqrs";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
 import {
   FindMyOrganizationsQuery,
   type FindMyOrganizationsView,
-} from "@/modules/organization/queries/find-my-organizations.query.js";
+} from "@/modules/organization/queries/find-my-organizations.query";
 
 const toContract = (view: FindMyOrganizationsView): OrganizationContract.MyOrganization =>
   new OrganizationContract.MyOrganization({
@@ -18,7 +19,7 @@ const toContract = (view: FindMyOrganizationsView): OrganizationContract.MyOrgan
     name: view.name,
     createdAt: view.createdAt,
     updatedAt: view.updatedAt,
-    deletedAt: null,
+    deletedAt: Option.getOrNull(view.deletedAt),
     isAdmin: view.isAdmin,
   });
 
@@ -32,5 +33,6 @@ export const findMineEndpoint = Effect.fn("OrganizationLive.findMine")(function*
   const currentUser = yield* CurrentUser;
   const queryBus = yield* QueryBus;
   const result = yield* queryBus.execute(FindMyOrganizationsQuery, { userId: currentUser.userId });
+
   return result.organizations.map(toContract);
 }, recoverPersistenceUnavailable);

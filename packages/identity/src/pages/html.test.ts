@@ -1,7 +1,8 @@
 import { describe, expect, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
-import { html, htmlResponse } from "./html.js";
+import { html, htmlResponse } from "./html";
 
 describe("html", () => {
   it("escapes every interpolated string, so a form field cannot inject markup", () => {
@@ -21,7 +22,7 @@ describe("html", () => {
   });
 
   it("renders a missing value as nothing", () => {
-    expect(html`<p>${undefined}${null}</p>`.value).toBe("<p></p>");
+    expect(html`<p>${Option.none()}${Option.some("x")}</p>`.value).toBe("<p>x</p>");
   });
 
   it.effect("serves a fragment as an HTML response with the status asked for", () =>

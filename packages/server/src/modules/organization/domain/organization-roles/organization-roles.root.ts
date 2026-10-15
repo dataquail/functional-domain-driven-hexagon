@@ -1,17 +1,18 @@
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { OrganizationRoleValueObject } from "./organization-role.value-object.js";
+import { OrganizationRoleValueObject } from "./organization-role.value-object";
 
 // One role assignment for a (user, org) pair, carrying the audit trail
 // of who issued it. The aggregate models this as a record (not just a
 // role name) so the DELETE-then-INSERT-all save in the repository
 // round-trips `issued_by` rather than dropping it on every re-save.
-export class IssuedRoleValueObject extends Schema.Class<IssuedRoleValueObject>(
-  "IssuedRoleValueObject",
-)({
+export class IssuedRoleValueObject extends Schema.Class<
+  IssuedRoleValueObject,
+  { readonly brand: "IssuedRoleValueObject" }
+>("IssuedRoleValueObject")({
   role: OrganizationRoleValueObject,
   issuedBy: UserId,
 }) {}
@@ -27,9 +28,10 @@ export class IssuedRoleValueObject extends Schema.Class<IssuedRoleValueObject>(
 // treated as a set semantically — `grantRole` / `revokeRole` enforce
 // uniqueness on the `role` axis. Mirrors `RolesRoot` in the role module,
 // scoped to an organization plus an audit column.
-export class OrganizationRolesRoot extends Schema.Class<OrganizationRolesRoot>(
-  "OrganizationRolesRoot",
-)({
+export class OrganizationRolesRoot extends Schema.Class<
+  OrganizationRolesRoot,
+  { readonly brand: "OrganizationRolesRoot" }
+>("OrganizationRolesRoot")({
   userId: UserId,
   organizationId: OrganizationId,
   roles: Schema.Array(IssuedRoleValueObject),

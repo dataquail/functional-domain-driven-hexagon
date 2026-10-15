@@ -2,8 +2,8 @@ import { Command } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
-import { InvitationEmailUndelivered } from "@/modules/organization/domain/invitation/invitation.errors.js";
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id";
+import { InvitationEmailUndelivered } from "@/modules/organization/domain/invitation/invitation.errors";
 
 // Carries only the id. The accept link needs the invitation's token, but a token
 // is a bearer credential and this payload is the kind of thing an outbox would
@@ -14,4 +14,5 @@ export const SendInvitationEmailCommand = Command.make("SendInvitationEmailComma
   success: Schema.Void,
   failure: Schema.Union([InvitationEmailUndelivered, PersistenceUnavailable]),
 });
+
 export type SendInvitationEmailPayload = Command.Payload<typeof SendInvitationEmailCommand>;

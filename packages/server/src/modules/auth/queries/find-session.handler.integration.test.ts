@@ -1,34 +1,31 @@
 import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
+import { assertInstanceOf } from "@effect/vitest/utils";
 import { Database } from "@org/database/index";
-import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
-import * as Schema from "effect/Schema";
 import * as TestClock from "effect/testing/TestClock";
-import { beforeEach } from "vitest";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { SessionId } from "@/modules/auth/domain/session/session.id.js";
-import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
-import { SessionRoot } from "@/modules/auth/domain/session/session.root.js";
-import { SessionRepositoryLive } from "@/modules/auth/infrastructure/repositories/session.repository-live.js";
-import { findSessionHandler } from "@/modules/auth/queries/find-session.handler.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { SessionId } from "@/modules/auth/domain/session/session.id";
+import { SessionRepository } from "@/modules/auth/domain/session/session.repository";
+import { SessionRoot } from "@/modules/auth/domain/session/session.root";
+import { SessionRepositoryLive } from "@/modules/auth/infrastructure/repositories/session.repository-live";
+import { findSessionHandler } from "@/modules/auth/queries/find-session.handler";
 import {
   SessionExpired,
   SessionNotFound,
   SessionRevoked,
-} from "@/modules/auth/queries/find-session.query.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+} from "@/modules/auth/queries/find-session.query";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const sessionId = SessionId.make("22222222-2222-2222-2222-222222222222");
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 
-// The handler reads `DateTime.now`; pin the TestClock so the lifecycle checks
+// The handler reads `DateTime.now`; each test pins a TestClock so the lifecycle checks
 // against `expiresAt` / `absoluteExpiresAt` are deterministic.
 const clockNow = DateTime.makeUnsafe("2026-06-01T00:00:00Z");
 const farPast = DateTime.makeUnsafe("2000-01-01T00:00:00Z");
@@ -49,7 +46,7 @@ const baseFields = {
   id: sessionId,
   userId,
   subject: "identity-sub",
-  revokedAt: null,
+  revokedAt: Option.none(),
   createdAt: farPast,
   lastUsedAt: farPast,
 } as const;
@@ -60,88 +57,77 @@ const insertSession = (session: SessionRoot) =>
     yield* repo.insertOne(session);
   });
 
-const errorOf = (exit: Exit.Exit<unknown, unknown>) =>
-  Exit.isFailure(exit) && Cause.hasFails(exit.cause)
-    ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-    : null;
-
-describe("findSessionHandler (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate("auth.sessions", "user.users").pipe(Effect.provide(TestDatabaseLive)),
+describeIntegration(
+  "findSessionHandler (integration)",
+  { layer: TestLayer, tables: ["auth.sessions", "user.users"] },
+  (it) => {
+    it.effect("returns the session when valid", () =>
+      Effect.gen(function* () {
+        yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
+        yield* seedUser;
+        yield* insertSession(
+          SessionRoot.make({
+            ...baseFields,
+            expiresAt: farFuture,
+            absoluteExpiresAt: farFutureLater,
+          }),
+        );
+        const result = yield* findSessionHandler({ sessionId });
+        deepStrictEqual(result.id, sessionId);
+      }).pipe(Effect.provide(TestClock.layer())),
     );
-  });
 
-  it.effect("returns the session when valid", () =>
-    Effect.gen(function* () {
-      yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
-      yield* seedUser;
-      yield* insertSession(
-        SessionRoot.make({
-          ...baseFields,
-          expiresAt: farFuture,
-          absoluteExpiresAt: farFutureLater,
-        }),
-      );
-      const result = yield* findSessionHandler({ sessionId });
-      deepStrictEqual(result.id, sessionId);
-    }).pipe(Effect.provide(TestLayer)),
-  );
+    it.effect("fails SessionNotFound for an unknown id", () =>
+      Effect.gen(function* () {
+        yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
+        assertInstanceOf(yield* Effect.flip(findSessionHandler({ sessionId })), SessionNotFound);
+      }).pipe(Effect.provide(TestClock.layer())),
+    );
 
-  it.effect("fails SessionNotFound for an unknown id", () =>
-    Effect.gen(function* () {
-      yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
-      const exit = yield* Effect.exit(findSessionHandler({ sessionId }));
-      deepStrictEqual(Schema.is(SessionNotFound)(errorOf(exit)), true);
-    }).pipe(Effect.provide(TestLayer)),
-  );
+    it.effect("fails SessionRevoked when revokedAt is set", () =>
+      Effect.gen(function* () {
+        yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
+        yield* seedUser;
+        yield* insertSession(
+          SessionRoot.make({
+            ...baseFields,
+            revokedAt: Option.some(farPast),
+            expiresAt: farFuture,
+            absoluteExpiresAt: farFutureLater,
+          }),
+        );
+        assertInstanceOf(yield* Effect.flip(findSessionHandler({ sessionId })), SessionRevoked);
+      }).pipe(Effect.provide(TestClock.layer())),
+    );
 
-  it.effect("fails SessionRevoked when revokedAt is set", () =>
-    Effect.gen(function* () {
-      yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
-      yield* seedUser;
-      yield* insertSession(
-        SessionRoot.make({
-          ...baseFields,
-          revokedAt: farPast,
-          expiresAt: farFuture,
-          absoluteExpiresAt: farFutureLater,
-        }),
-      );
-      const exit = yield* Effect.exit(findSessionHandler({ sessionId }));
-      deepStrictEqual(Schema.is(SessionRevoked)(errorOf(exit)), true);
-    }).pipe(Effect.provide(TestLayer)),
-  );
+    it.effect("fails SessionExpired when expiresAt is in the past", () =>
+      Effect.gen(function* () {
+        yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
+        yield* seedUser;
+        yield* insertSession(
+          SessionRoot.make({
+            ...baseFields,
+            expiresAt: farPast,
+            absoluteExpiresAt: farFutureLater,
+          }),
+        );
+        assertInstanceOf(yield* Effect.flip(findSessionHandler({ sessionId })), SessionExpired);
+      }).pipe(Effect.provide(TestClock.layer())),
+    );
 
-  it.effect("fails SessionExpired when expiresAt is in the past", () =>
-    Effect.gen(function* () {
-      yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
-      yield* seedUser;
-      yield* insertSession(
-        SessionRoot.make({
-          ...baseFields,
-          expiresAt: farPast,
-          absoluteExpiresAt: farFutureLater,
-        }),
-      );
-      const exit = yield* Effect.exit(findSessionHandler({ sessionId }));
-      deepStrictEqual(Schema.is(SessionExpired)(errorOf(exit)), true);
-    }).pipe(Effect.provide(TestLayer)),
-  );
-
-  it.effect("fails SessionExpired when absoluteExpiresAt is in the past", () =>
-    Effect.gen(function* () {
-      yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
-      yield* seedUser;
-      yield* insertSession(
-        SessionRoot.make({
-          ...baseFields,
-          expiresAt: farFuture,
-          absoluteExpiresAt: farPast,
-        }),
-      );
-      const exit = yield* Effect.exit(findSessionHandler({ sessionId }));
-      deepStrictEqual(Schema.is(SessionExpired)(errorOf(exit)), true);
-    }).pipe(Effect.provide(TestLayer)),
-  );
-});
+    it.effect("fails SessionExpired when absoluteExpiresAt is in the past", () =>
+      Effect.gen(function* () {
+        yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
+        yield* seedUser;
+        yield* insertSession(
+          SessionRoot.make({
+            ...baseFields,
+            expiresAt: farFuture,
+            absoluteExpiresAt: farPast,
+          }),
+        );
+        assertInstanceOf(yield* Effect.flip(findSessionHandler({ sessionId })), SessionExpired);
+      }).pipe(Effect.provide(TestClock.layer())),
+    );
+  },
+);

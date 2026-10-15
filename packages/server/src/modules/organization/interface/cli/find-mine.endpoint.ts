@@ -6,11 +6,11 @@ import * as Effect from "effect/Effect";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
 import {
   FindMyOrganizationsQuery,
   type FindMyOrganizationsView,
-} from "@/modules/organization/queries/find-my-organizations.query.js";
+} from "@/modules/organization/queries/find-my-organizations.query";
 
 const toCli = (view: FindMyOrganizationsView): CliOrganizationContract.CliOrganization =>
   new CliOrganizationContract.CliOrganization({
@@ -28,5 +28,6 @@ export const findMineEndpoint = Effect.fn("CliOrganizationLive.listMine")(functi
   const currentUser = yield* CurrentUser;
   const queryBus = yield* QueryBus;
   const result = yield* queryBus.execute(FindMyOrganizationsQuery, { userId: currentUser.userId });
+
   return result.organizations.map(toCli);
 }, recoverPersistenceUnavailable);

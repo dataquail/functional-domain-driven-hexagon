@@ -5,7 +5,7 @@ import type {
   CreateUserInput,
   ToastKind,
   UsersPageDriver,
-} from "../../contracts/users-page-driver.js";
+} from "../../contracts/users-page-driver";
 
 // Field locators in one place so the contract methods stay
 // business-intent. Switch keeps each case exhaustive — adding a
@@ -68,6 +68,7 @@ export const playwrightUsersDriver = (page: Page): UsersPageDriver => {
       const toast = page
         .locator(`[data-sonner-toast][data-type="${kind}"]`)
         .filter({ hasText: message });
+
       await expect(toast).toBeVisible();
     },
   };

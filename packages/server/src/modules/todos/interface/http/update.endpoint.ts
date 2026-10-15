@@ -3,14 +3,14 @@ import { TodosContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { Actions } from "@/globals/application/ports/actions.js";
-import * as Authz from "@/globals/infrastructure/auth/authz.js";
+import { Actions } from "@/globals/application/ports/actions";
+import * as Authz from "@/globals/infrastructure/auth/authz";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { UpdateTodoCommand } from "@/modules/todos/commands/update-todo.command.js";
-import { TodoResource } from "@/modules/todos/policies/todos.policies.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { UpdateTodoCommand } from "@/modules/todos/commands/update-todo.command";
+import { TodoResource } from "@/modules/todos/policies/todos.policies";
 
 export const updateEndpoint = Effect.fn("TodosLive.update")(
   function* (request: EndpointRequest<typeof TodosContract.Group, "update">) {
@@ -32,6 +32,7 @@ export const updateEndpoint = Effect.fn("TodosLive.update")(
     );
     const commandBus = yield* CommandBus;
     const currentUser = yield* CurrentUser;
+
     const todo = yield* commandBus.execute(UpdateTodoCommand, {
       todoId: request.params.id,
       organizationId: request.params.orgId,
@@ -39,6 +40,7 @@ export const updateEndpoint = Effect.fn("TodosLive.update")(
       completed: request.payload.completed,
       userId: currentUser.userId,
     });
+
     return new TodosContract.Todo({
       id: todo.id,
       title: todo.title,

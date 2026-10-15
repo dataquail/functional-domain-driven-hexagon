@@ -1,9 +1,9 @@
+import { describe, expect, it } from "@effect/vitest";
 import * as UserContract from "@org/contracts/api/UserContract";
 import * as Effect from "effect/Effect";
 import type * as AsyncResult from "effect/reactivity/AsyncResult";
 import type * as Atom from "effect/reactivity/Atom";
 import * as AtomRegistry from "effect/reactivity/AtomRegistry";
-import { describe, expect, it } from "vitest";
 
 import { apiTransportAtom } from "@/services/atom/api-transport.shared";
 import { makePaginatedUsers, makeUser } from "@/test/fixtures/user";
@@ -28,7 +28,7 @@ const makeRegistry = () =>
 const settle = <A, E>(
   registry: AtomRegistry.AtomRegistry,
   atom: Atom.Atom<AsyncResult.AsyncResult<A, E>>,
-) => Effect.runPromise(AtomRegistry.getResult(registry, atom, { suspendOnWaiting: true }));
+) => AtomRegistry.getResult(registry, atom, { suspendOnWaiting: true });
 
 describe("computePaginationView", () => {
   it("reports a single page and a zero range for an empty set", () => {
@@ -62,57 +62,64 @@ describe("computePaginationView", () => {
 });
 
 describe("user list ViewModel", () => {
-  it("derives pagination from the fetched total", async () => {
-    server.use(usersHandlers.list(makePaginatedUsers({ users: [makeUser()], total: 25 })));
+  it.effect("derives pagination from the fetched total", () =>
+    Effect.gen(function* () {
+      server.use(usersHandlers.list(makePaginatedUsers({ users: [makeUser()], total: 25 })));
 
-    const registry = makeRegistry();
-    await settle(registry, usersResultAtom);
+      const registry = makeRegistry();
+      yield* settle(registry, usersResultAtom);
 
-    expect(registry.get(paginationAtom)).toMatchObject({
-      page: 1,
-      pageSize: PAGE_SIZE,
-      total: 25,
-      totalPages: 3,
-      hasPrevious: false,
-      hasNext: true,
-    });
-  });
+      expect(registry.get(paginationAtom)).toMatchObject({
+        page: 1,
+        pageSize: PAGE_SIZE,
+        total: 25,
+        totalPages: 3,
+        hasPrevious: false,
+        hasNext: true,
+      });
+    }),
+  );
 
-  it("refetches the newly selected page from the server", async () => {
-    const requestedPages: Array<number> = [];
-    server.use(
-      typedHandler(getEndpoint(UserContract.Group, "find"), ({ urlParams }) => {
-        requestedPages.push(urlParams.page);
-        return Effect.succeed(
-          makePaginatedUsers({ users: [makeUser()], page: urlParams.page, total: 25 }),
-        );
-      }),
-    );
+  it.effect("refetches the newly selected page from the server", () =>
+    Effect.gen(function* () {
+      const requestedPages: Array<number> = [];
+      server.use(
+        typedHandler(getEndpoint(UserContract.Group, "find"), ({ urlParams }) => {
+          requestedPages.push(urlParams.page);
 
-    const registry = makeRegistry();
-    await settle(registry, usersResultAtom);
-    expect(requestedPages).toEqual([1]);
+          return Effect.succeed(
+            makePaginatedUsers({ users: [makeUser()], page: urlParams.page, total: 25 }),
+          );
+        }),
+      );
 
-    registry.set(changePageAtom, "next");
-    expect(registry.get(pageAtom)).toBe(2);
+      const registry = makeRegistry();
+      yield* settle(registry, usersResultAtom);
+      expect(requestedPages).toEqual([1]);
 
-    await settle(registry, usersResultAtom);
-    expect(requestedPages).toEqual([1, 2]);
-    expect(registry.get(paginationAtom).page).toBe(2);
-  });
+      registry.set(changePageAtom, "next");
+      expect(registry.get(pageAtom)).toBe(2);
 
-  it("will not advance past the last page or retreat before the first", async () => {
-    server.use(usersHandlers.list(makePaginatedUsers({ users: [makeUser()], total: 15 })));
+      yield* settle(registry, usersResultAtom);
+      expect(requestedPages).toEqual([1, 2]);
+      expect(registry.get(paginationAtom).page).toBe(2);
+    }),
+  );
 
-    const registry = makeRegistry();
-    await settle(registry, usersResultAtom);
+  it.effect("will not advance past the last page or retreat before the first", () =>
+    Effect.gen(function* () {
+      server.use(usersHandlers.list(makePaginatedUsers({ users: [makeUser()], total: 15 })));
 
-    registry.set(changePageAtom, "previous");
-    expect(registry.get(pageAtom)).toBe(1);
+      const registry = makeRegistry();
+      yield* settle(registry, usersResultAtom);
 
-    registry.set(changePageAtom, "next");
-    await settle(registry, usersResultAtom);
-    registry.set(changePageAtom, "next");
-    expect(registry.get(pageAtom)).toBe(2);
-  });
+      registry.set(changePageAtom, "previous");
+      expect(registry.get(pageAtom)).toBe(1);
+
+      registry.set(changePageAtom, "next");
+      yield* settle(registry, usersResultAtom);
+      registry.set(changePageAtom, "next");
+      expect(registry.get(pageAtom)).toBe(2);
+    }),
+  );
 });

@@ -1,6 +1,6 @@
 import { deepStrictEqual, ok } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
+import { OrganizationId } from "@org/contracts/EntityIds";
 import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
@@ -8,11 +8,11 @@ import * as Exit from "effect/Exit";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Option from "effect/Option";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.js";
-import { SUPER_ADMIN_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
-import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { SUPER_ADMIN_CALLER_ID } from "@/test-utils/fake-auth-middleware";
+import { describeServer } from "@/test-utils/server-test-runtime";
 
-const ORG_ID = "11111111-1111-1111-1111-111111111111" as never;
+const ORG_ID = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 
 const seedOrg = Effect.gen(function* () {
   const sql = yield* Database.Database;
@@ -30,14 +30,19 @@ const seedCallerMembership = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-describe("POST /orgs/:orgId/leave (integration)", () => {
-  const { run } = useServerTestRuntime(
-    ["organization.memberships", "organization.organizations", "platform.roles", "user.users"],
-    { seedSuperAdminCaller: true },
-  );
-
-  it("removes the caller's membership", async () => {
-    await run(
+describeServer(
+  "POST /orgs/:orgId/leave (integration)",
+  {
+    tables: [
+      "organization.memberships",
+      "organization.organizations",
+      "platform.roles",
+      "user.users",
+    ],
+    seedSuperAdminCaller: true,
+  },
+  (it) => {
+    it.effect("removes the caller's membership", () =>
       Effect.gen(function* () {
         yield* seedOrg;
         yield* seedCallerMembership;
@@ -50,15 +55,14 @@ describe("POST /orgs/:orgId/leave (integration)", () => {
         deepStrictEqual(stillMember, false);
       }),
     );
-  });
 
-  it("returns 404 when the caller is not a member", async () => {
-    await run(
+    it.effect("returns 404 when the caller is not a member", () =>
       Effect.gen(function* () {
         yield* seedOrg;
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(client.organization.leave({ params: { orgId: ORG_ID } }));
         ok(Exit.isFailure(exit));
+
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           deepStrictEqual(
             Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag,
@@ -67,5 +71,5 @@ describe("POST /orgs/:orgId/leave (integration)", () => {
         }
       }),
     );
-  });
-});
+  },
+);

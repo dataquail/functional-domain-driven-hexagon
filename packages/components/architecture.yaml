@@ -146,13 +146,15 @@ children:
       "*.test.ts": { use: svelte-component-test-file }
 
   "test/":
-    message: test/ holds the harness every component test loads before it runs.
+    message: >-
+      test/ holds the harness every component test loads before it runs, and the recorder a test
+      hands a component in place of a callback.
     imports:
       message: >-
         The test harness installs the DOM matchers and names nothing else.
       external: [vitest, "@testing-library/jest-dom"]
     children:
-      "setup.ts | snippets.ts": {}
+      "setup.ts | snippets.ts | calls.ts": {}
 
   ".storybook/":
     imports:

@@ -1,15 +1,17 @@
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { RoleValueObject } from "./role.value-object.js";
+import { RoleValueObject } from "./role.value-object";
 
 // The set of platform-wide roles assigned to one user. Aggregate root,
 // identified by `userId` (every user has at most one Roles aggregate).
 // A dumb value (ADR-0003); operations live in `roles.root-ops.ts`
 // (`RolesRootOps`) and predicates in `roles.specification.ts`
 // (`RolesSpecifications`).
-export class RolesRoot extends Schema.Class<RolesRoot>("RolesRoot")({
+export class RolesRoot extends Schema.Class<RolesRoot, { readonly brand: "RolesRoot" }>(
+  "RolesRoot",
+)({
   userId: UserId,
   // Modeled as an array at the schema layer for stable
   // (de)serialization, but treated as a set semantically: the

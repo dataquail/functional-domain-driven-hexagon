@@ -2,8 +2,8 @@ import { Query } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
 export const OrganizationMemberView = Schema.Struct({
   userId: UserId,
@@ -11,6 +11,7 @@ export const OrganizationMemberView = Schema.Struct({
   joinedAt: Schema.DateTimeUtc,
   isAdmin: Schema.Boolean,
 });
+
 export type OrganizationMemberView = typeof OrganizationMemberView.Type;
 
 // Detailed membership view returned to the member-management surface
@@ -24,6 +25,7 @@ export const FindOrganizationMembershipsQuery = Query.make("FindOrganizationMemb
   success: Schema.Array(OrganizationMemberView),
   failure: PersistenceUnavailable,
 });
+
 export type FindOrganizationMembershipsPayload = Query.Payload<
   typeof FindOrganizationMembershipsQuery
 >;

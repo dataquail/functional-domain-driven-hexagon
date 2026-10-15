@@ -1,13 +1,11 @@
-import { deepStrictEqual } from "node:assert";
-
-import { describe, it } from "@effect/vitest";
+import { assertNone, assertSome } from "@effect/vitest/utils";
 import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
-import { beforeEach } from "vitest";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { findOrganizationByIdHandler } from "@/modules/organization/queries/find-organization-by-id.handler.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { findOrganizationByIdHandler } from "@/modules/organization/queries/find-organization-by-id.handler";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const activeOrgId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const deletedOrgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
@@ -23,42 +21,34 @@ const seedOrganizations = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-describe("findOrganizationByIdHandler (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate("organization.organizations").pipe(Effect.provide(TestDatabaseLive)),
-    );
-  });
-
-  it("returns the view for an active organization", async () => {
-    await Effect.runPromise(
+describeIntegration(
+  "findOrganizationByIdHandler (integration)",
+  { layer: TestDatabaseLive, tables: ["organization.organizations"] },
+  (it) => {
+    it.effect("returns the view for an active organization", () =>
       Effect.gen(function* () {
         yield* seedOrganizations;
         const view = yield* findOrganizationByIdHandler({ organizationId: activeOrgId });
-        deepStrictEqual(view, { organizationId: activeOrgId });
-      }).pipe(Effect.provide(TestDatabaseLive)),
+        assertSome(view, { organizationId: activeOrgId });
+      }),
     );
-  });
 
-  // The restore endpoint has to resolve a tombstoned org to decide whether the
-  // caller may act on it, so soft-deleted rows must NOT read as absent.
-  it("returns the view for a soft-deleted organization", async () => {
-    await Effect.runPromise(
+    // The restore endpoint has to resolve a tombstoned org to decide whether the
+    // caller may act on it, so soft-deleted rows must NOT read as absent.
+    it.effect("returns the view for a soft-deleted organization", () =>
       Effect.gen(function* () {
         yield* seedOrganizations;
         const view = yield* findOrganizationByIdHandler({ organizationId: deletedOrgId });
-        deepStrictEqual(view, { organizationId: deletedOrgId });
-      }).pipe(Effect.provide(TestDatabaseLive)),
+        assertSome(view, { organizationId: deletedOrgId });
+      }),
     );
-  });
 
-  it("returns null for an unknown organization", async () => {
-    await Effect.runPromise(
+    it.effect("returns None for an unknown organization", () =>
       Effect.gen(function* () {
         yield* seedOrganizations;
         const view = yield* findOrganizationByIdHandler({ organizationId: unknownOrgId });
-        deepStrictEqual(view, null);
-      }).pipe(Effect.provide(TestDatabaseLive)),
+        assertNone(view);
+      }),
     );
-  });
-});
+  },
+);

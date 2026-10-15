@@ -1,10 +1,11 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
+import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.js";
-import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
-import { ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql";
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id";
+import { ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root";
 
 // Resolves the specification field names the live repository filters on to
 // physical columns of auth.api_tokens. Only filterable scalar fields need an
@@ -23,8 +24,8 @@ export const toDomain = (row: RowSchemas.ApiTokenRow): ApiTokenRoot =>
     tokenHash: row.token_hash,
     prefix: row.prefix,
     label: row.label,
-    expiresAt: row.expires_at,
-    revokedAt: row.revoked_at,
+    expiresAt: Option.fromNullOr(row.expires_at),
+    revokedAt: Option.fromNullOr(row.revoked_at),
     createdAt: row.created_at,
     lastUsedAt: row.last_used_at,
   });
@@ -35,8 +36,8 @@ export const toPersistence = (token: ApiTokenRoot) => ({
   token_hash: token.tokenHash,
   prefix: token.prefix,
   label: token.label,
-  expires_at: token.expiresAt === null ? null : DateTime.toDate(token.expiresAt),
-  revoked_at: token.revokedAt === null ? null : DateTime.toDate(token.revokedAt),
+  expires_at: Option.getOrNull(Option.map(token.expiresAt, DateTime.toDate)),
+  revoked_at: Option.getOrNull(Option.map(token.revokedAt, DateTime.toDate)),
   created_at: DateTime.toDate(token.createdAt),
   last_used_at: DateTime.toDate(token.lastUsedAt),
 });

@@ -7,8 +7,8 @@ import type { UserId } from "@org/contracts/EntityIds";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
-import { makePaginatedUsers, makeUser } from "../fixtures/user";
-import { getEndpoint, typedHandler } from "../typed-handler";
+import { makePaginatedUsers, makeUser } from "@/test/fixtures/user";
+import { getEndpoint, typedHandler } from "@/test/typed-handler";
 
 const findEndpoint = getEndpoint(UserContract.Group, "find");
 const createEndpoint = getEndpoint(UserContract.Group, "create");
@@ -17,18 +17,18 @@ const deleteEndpoint = getEndpoint(UserContract.Group, "delete");
 export const usersHandlers = {
   /** GET /users — returns a paginated page using whatever the test passed. */
   list: (arg: ReadonlyArray<UserContract.User> | UserContract.PaginatedUsers = []) =>
-    typedHandler(findEndpoint, ({ urlParams }) =>
-      Effect.succeed(
-        Schema.is(UserContract.PaginatedUsers)(arg)
-          ? arg
-          : makePaginatedUsers({
-              users: arg,
-              page: urlParams.page,
-              pageSize: urlParams.pageSize,
-              total: arg.length,
-            }),
-      ),
-    ),
+    typedHandler(findEndpoint, ({ urlParams }) => {
+      if (Schema.is(UserContract.PaginatedUsers)(arg)) return Effect.succeed(arg);
+
+      return Effect.succeed(
+        makePaginatedUsers({
+          users: arg,
+          page: urlParams.page,
+          pageSize: urlParams.pageSize,
+          total: arg.length,
+        }),
+      );
+    }),
 
   /**
    * POST /users — outcome is either success (returns a `CreateUserResponse`
@@ -43,8 +43,10 @@ export const usersHandlers = {
     typedHandler(createEndpoint, ({ payload }) => {
       if (outcome.result === "success") {
         const id = outcome.id ?? makeUser().id;
+
         return Effect.succeed(new UserContract.CreateUserResponse({ id }));
       }
+
       return Effect.fail(
         new UserContract.UserAlreadyExistsError({
           email: payload.email,
@@ -60,6 +62,7 @@ export const usersHandlers = {
   delete: (outcome: { readonly result: "success" | "UserNotFoundError" }) =>
     typedHandler(deleteEndpoint, ({ path }) => {
       if (outcome.result === "success") return Effect.void;
+
       return Effect.fail(
         new UserContract.UserNotFoundError({
           userId: path.id,

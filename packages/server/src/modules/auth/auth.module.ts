@@ -1,14 +1,14 @@
 import * as Layer from "effect/Layer";
 
-import { RoleModule } from "@/modules/role/role.module.js";
-import { UserModule } from "@/modules/user/user.module.js";
+import { RoleModule } from "@/modules/role/role.module";
+import { UserModule } from "@/modules/user/user.module";
 
-import { AuthCommandsLive } from "./auth.command-handlers.js";
-import { AuthQueriesLive } from "./auth.query-handlers.js";
-import { OidcClient } from "./infrastructure/clients/oidc.client.js";
-import { AuthIdentityRepositoryLive } from "./infrastructure/repositories/auth-identity.repository-live.js";
-import { SessionRepositoryLive } from "./infrastructure/repositories/session.repository-live.js";
-import { AuthLive } from "./interface/http/index.js";
+import { AuthCommandsLive } from "./auth.command-handlers";
+import { AuthQueriesLive } from "./auth.query-handlers";
+import { OidcClient } from "./infrastructure/clients/oidc.client";
+import { AuthIdentityRepositoryLive } from "./infrastructure/repositories/auth-identity.repository-live";
+import { SessionRepositoryLive } from "./infrastructure/repositories/session.repository-live";
+import { AuthLive } from "./interface/http/auth.endpoint-groups";
 
 export const AuthModule = {
   layer: Layer.mergeAll(AuthCommandsLive, AuthQueriesLive).pipe(

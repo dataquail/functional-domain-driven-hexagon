@@ -12,6 +12,7 @@
   }: { readonly registry: AtomRegistry.AtomRegistry; readonly atom: Atom.Atom<unknown> } = $props();
 
   provideRegistry({ registry: untrack(() => registry) });
+
   const value = atomValue(() => atom);
 </script>
 

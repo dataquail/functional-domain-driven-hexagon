@@ -5,7 +5,7 @@ import * as Effect from "effect/Effect";
 import * as Redacted from "effect/Redacted";
 import pg from "pg";
 
-import { migrateIdentityDatabase } from "../auth/identity-migrations.js";
+import { migrateIdentityDatabase } from "../auth/identity-migrations";
 
 dotenv({ path: "../../.env" });
 
@@ -20,9 +20,14 @@ const identityDatabase = Effect.acquireRelease(
 
 const migrate = Effect.gen(function* () {
   const applied = yield* migrateIdentityDatabase(yield* identityDatabase);
-  yield* applied.length === 0
-    ? Effect.log(`No pending identity migrations (${VARIABLE})`)
-    : Effect.log(`Applied identity migrations: ${applied.join(", ")}`);
+
+  if (applied.length === 0) {
+    yield* Effect.log(`No pending identity migrations (${VARIABLE})`);
+
+    return;
+  }
+
+  yield* Effect.log(`Applied identity migrations: ${applied.join(", ")}`);
 }).pipe(Effect.scoped);
 
 NodeRuntime.runMain(migrate);

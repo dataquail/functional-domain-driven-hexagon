@@ -1,17 +1,18 @@
-import { ok, strictEqual } from "node:assert";
+import { deepStrictEqual, ok, strictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
 import * as ConfigProvider from "effect/ConfigProvider";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import Stripe from "stripe";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
-import { BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client.js";
-import { InvalidWebhookSignature } from "@/modules/billing/domain/subscription/subscription.errors.js";
-import { BillingGatewayLive } from "@/modules/billing/infrastructure/clients/billing-gateway.client-live.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars";
+import { BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client";
+import { InvalidWebhookSignature } from "@/modules/billing/domain/subscription/subscription.errors";
+import { BillingGatewayLive } from "@/modules/billing/infrastructure/clients/billing-gateway.client-live";
 
 // Unit coverage for the Stripe adapter's webhook path — the half of the
 // port that is pure, local crypto + translation (no network): signature
@@ -48,6 +49,9 @@ const EnvVarsTest = EnvVars.layer.pipe(
 // re-derives. Both sides are local crypto over the exact bytes, so no
 // network is involved.
 const signer = new Stripe("sk_test");
+
+const encodeJson = Schema.encodeSync(Schema.fromJsonString(Schema.Unknown));
+
 const sign = (payload: string): string =>
   signer.webhooks.generateTestHeaderString({ payload, secret: WEBHOOK_SECRET });
 
@@ -60,9 +64,11 @@ describe("BillingGatewayLive.verifyAndParseWebhook", () => {
     provide(
       Effect.gen(function* () {
         const gw = yield* BillingGateway;
+
         const error = yield* gw
           .verifyAndParseWebhook({ payload: "{}", signature: "t=1,v1=deadbeef" })
           .pipe(Effect.flip);
+
         ok(Schema.is(InvalidWebhookSignature)(error));
       }),
     ),
@@ -72,18 +78,23 @@ describe("BillingGatewayLive.verifyAndParseWebhook", () => {
     provide(
       Effect.gen(function* () {
         const gw = yield* BillingGateway;
-        const payload = JSON.stringify({
+
+        const payload = encodeJson({
           id: "evt_1",
           type: "customer.subscription.updated",
           data: { object: { id: "sub_1", status: "active", current_period_end: 1_700_000_000 } },
         });
+
         const event = yield* gw.verifyAndParseWebhook({ payload, signature: sign(payload) });
         strictEqual(event.eventId, "evt_1");
-        if (event.type !== "customer.subscription.updated") throw new Error("expected sub event");
+
+        ok(event.type === "customer.subscription.updated");
         strictEqual(event.subscription.stripeSubscriptionId, "sub_1");
         strictEqual(event.subscription.status, "active");
-        ok(event.subscription.currentPeriodEnd !== null);
-        strictEqual(DateTime.toEpochMillis(event.subscription.currentPeriodEnd), 1_700_000_000_000);
+        deepStrictEqual(
+          Option.map(event.subscription.currentPeriodEnd, DateTime.toEpochMillis),
+          Option.some(1_700_000_000_000),
+        );
       }),
     ),
   );
@@ -92,7 +103,8 @@ describe("BillingGatewayLive.verifyAndParseWebhook", () => {
     provide(
       Effect.gen(function* () {
         const gw = yield* BillingGateway;
-        const payload = JSON.stringify({
+
+        const payload = encodeJson({
           id: "evt_2",
           type: "customer.subscription.created",
           data: {
@@ -103,10 +115,14 @@ describe("BillingGatewayLive.verifyAndParseWebhook", () => {
             },
           },
         });
+
         const event = yield* gw.verifyAndParseWebhook({ payload, signature: sign(payload) });
-        if (event.type !== "customer.subscription.created") throw new Error("expected sub event");
-        ok(event.subscription.currentPeriodEnd !== null);
-        strictEqual(DateTime.toEpochMillis(event.subscription.currentPeriodEnd), 1_800_000_000_000);
+
+        ok(event.type === "customer.subscription.created");
+        deepStrictEqual(
+          Option.map(event.subscription.currentPeriodEnd, DateTime.toEpochMillis),
+          Option.some(1_800_000_000_000),
+        );
       }),
     ),
   );
@@ -115,14 +131,17 @@ describe("BillingGatewayLive.verifyAndParseWebhook", () => {
     provide(
       Effect.gen(function* () {
         const gw = yield* BillingGateway;
-        const payload = JSON.stringify({
+
+        const payload = encodeJson({
           id: "evt_3",
           type: "invoice.paid",
           data: { object: { id: "in_1", subscription: "sub_3" } },
         });
+
         const event = yield* gw.verifyAndParseWebhook({ payload, signature: sign(payload) });
-        if (event.type !== "invoice.paid") throw new Error("expected invoice event");
-        strictEqual(event.invoice.stripeSubscriptionId, "sub_3");
+
+        ok(event.type === "invoice.paid");
+        deepStrictEqual(event.invoice.stripeSubscriptionId, Option.some("sub_3"));
       }),
     ),
   );
@@ -131,11 +150,13 @@ describe("BillingGatewayLive.verifyAndParseWebhook", () => {
     provide(
       Effect.gen(function* () {
         const gw = yield* BillingGateway;
-        const payload = JSON.stringify({
+
+        const payload = encodeJson({
           id: "evt_4",
           type: "customer.created",
           data: { object: { id: "cus_1" } },
         });
+
         const event = yield* gw.verifyAndParseWebhook({ payload, signature: sign(payload) });
         strictEqual(event.type, "unknown");
         strictEqual(event.eventId, "evt_4");

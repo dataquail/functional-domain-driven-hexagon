@@ -9,7 +9,7 @@ import {
   ExecutionContext,
   makeWorkerExecutionContext,
   waitUntil,
-} from "@/globals/infrastructure/runtime/execution-context.js";
+} from "@/globals/infrastructure/runtime/execution-context";
 
 describe("waitUntil", () => {
   it.effect("runs the work on a detached fiber outside a Worker", () =>
@@ -33,7 +33,9 @@ describe("waitUntil", () => {
           makeWorkerExecutionContext((promise) => registered.push(promise)),
         ),
       );
-      yield* Effect.promise(() => Promise.all(registered));
+      yield* Effect.forEach(registered, (promise) => Effect.promise(() => promise), {
+        discard: true,
+      });
 
       deepStrictEqual(registered.length, 1);
       deepStrictEqual(yield* Ref.get(touched), true);

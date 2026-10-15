@@ -3,11 +3,12 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { Criteria } from "@/globals/application/ddd/specification";
 
-import { TodoId } from "./todo.id.js";
-import { TodoRootOps } from "./todo.root-ops.js";
-import { TodoSpecifications } from "./todos.specification.js";
+import { TodoId } from "./todo.id";
+import { TodoRootOps } from "./todo.root-ops";
+import { TodoSpecifications } from "./todos.specification";
 
 const aliceId = TodoId.make("11111111-1111-1111-1111-111111111111");
 const bobId = TodoId.make("22222222-2222-2222-2222-222222222222");
@@ -24,11 +25,10 @@ describe("TodoSpecifications.withId", () => {
   });
 
   it("carries an Eq criteria over the id column", () => {
-    deepStrictEqual(TodoSpecifications.withId(aliceId).criteria, {
-      _tag: "Eq",
-      field: "id",
-      value: aliceId,
-    });
+    deepStrictEqual(
+      TodoSpecifications.withId(aliceId).criteria,
+      Criteria.Eq({ field: "id", value: aliceId }),
+    );
   });
 });
 
@@ -39,10 +39,9 @@ describe("TodoSpecifications.forOrganization", () => {
   });
 
   it("carries an Eq criteria over the organization_id column", () => {
-    deepStrictEqual(TodoSpecifications.forOrganization(orgId).criteria, {
-      _tag: "Eq",
-      field: "organizationId",
-      value: orgId,
-    });
+    deepStrictEqual(
+      TodoSpecifications.forOrganization(orgId).criteria,
+      Criteria.Eq({ field: "organizationId", value: orgId }),
+    );
   });
 });

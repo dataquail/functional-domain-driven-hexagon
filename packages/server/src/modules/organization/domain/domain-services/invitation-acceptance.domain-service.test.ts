@@ -2,16 +2,17 @@ import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
+import * as Option from "effect/Option";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
-import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { InvitationAlreadyAccepted, InvitationRevoked } from "../invitation/invitation.errors.js";
-import { InvitationRootOps } from "../invitation/invitation.root-ops.js";
-import { InvitationAcceptance } from "./invitation-acceptance.domain-service.js";
+import { InvitationAlreadyAccepted, InvitationRevoked } from "../invitation/invitation.errors";
+import { InvitationRootOps } from "../invitation/invitation.root-ops";
+import { InvitationAcceptance } from "./invitation-acceptance.domain-service";
 
 const organizationId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
 const userId = UserId.make("33333333-3333-3333-3333-333333333333");
@@ -34,7 +35,8 @@ describe("InvitationAcceptance.accept", () => {
     const result = Result.getOrThrow(
       InvitationAcceptance.accept(seed(), { userId, now: inOneDay }),
     );
-    deepStrictEqual(result.invitation.acceptedAt, inOneDay);
+
+    deepStrictEqual(result.invitation.acceptedAt, Option.some(inOneDay));
     deepStrictEqual(result.membership.userId, userId);
     deepStrictEqual(result.membership.organizationId, organizationId);
     const tags = result.events.map((e) => e._tag);
@@ -45,11 +47,14 @@ describe("InvitationAcceptance.accept", () => {
     const accepted = Result.getOrThrow(
       InvitationAcceptance.accept(seed(), { userId, now: inOneDay }),
     );
+
     const twice = InvitationAcceptance.accept(accepted.invitation, {
       userId,
       now: inOneDay,
     });
+
     deepStrictEqual(Result.isFailure(twice), true);
+
     if (Result.isFailure(twice)) {
       deepStrictEqual(Schema.is(InvitationAlreadyAccepted)(twice.failure), true);
     }
@@ -57,11 +62,14 @@ describe("InvitationAcceptance.accept", () => {
 
   it("propagates InvitationRevoked", () => {
     const revoked = Result.getOrThrow(InvitationRootOps.revoke(seed(), { now: inOneDay }));
+
     const result = InvitationAcceptance.accept(revoked.invitation, {
       userId,
       now: inOneDay,
     });
+
     deepStrictEqual(Result.isFailure(result), true);
+
     if (Result.isFailure(result)) {
       deepStrictEqual(Schema.is(InvitationRevoked)(result.failure), true);
     }

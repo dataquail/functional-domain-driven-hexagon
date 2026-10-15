@@ -1,12 +1,12 @@
 import * as Result from "effect/Result";
 
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { AlreadyHasRole, DoesNotHaveRole } from "./role.errors.js";
-import { type RoleEvent, RoleGranted, RoleRevoked } from "./role.events.js";
-import { type RoleValueObject } from "./role.value-object.js";
-import { RolesRoot } from "./roles.root.js";
-import { RolesSpecifications } from "./roles.specification.js";
+import { AlreadyHasRole, DoesNotHaveRole } from "./role.errors";
+import { type RoleEvent, RoleGranted, RoleRevoked } from "./role.events";
+import { type RoleValueObject } from "./role.value-object";
+import { RolesRoot } from "./roles.root";
+import { RolesSpecifications } from "./roles.specification";
 
 export type Outcome = {
   readonly roles: RolesRoot;
@@ -28,6 +28,7 @@ const grant = (
   if (RolesSpecifications.hasRole(role)(aggregate)) {
     return Result.fail(new AlreadyHasRole({ userId: aggregate.userId, role }));
   }
+
   return Result.succeed({
     roles: RolesRoot.make({
       userId: aggregate.userId,
@@ -46,6 +47,7 @@ const revoke = (
   if (!RolesSpecifications.hasRole(role)(aggregate)) {
     return Result.fail(new DoesNotHaveRole({ userId: aggregate.userId, role }));
   }
+
   return Result.succeed({
     roles: RolesRoot.make({
       userId: aggregate.userId,

@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import { apiTransportAtom } from "@/services/atom/api-transport.shared";
 import { renderView } from "@/test/atom-harness";
-import { makePaginatedUsers, makeUser } from "@/test/fixtures/user";
+import { makePaginatedUsers, makeUser, makeUserWithoutAddress } from "@/test/fixtures/user";
 import { usersHandlers } from "@/test/handlers/users";
 import { server } from "@/test/msw-server";
 import { TEST_API_BASE } from "@/test/typed-handler";
@@ -25,6 +25,7 @@ import { pageAtom, usersResultAtom } from "./user-list.view-model";
 // lands on the state the test already described rather than a different one.
 const renderUserList = (page: UserContract.PaginatedUsers) => {
   server.use(usersHandlers.list(page));
+
   return renderView(
     UserList,
     {},
@@ -59,7 +60,7 @@ describe("UserList view", () => {
   });
 
   it("says so when a user has no address on file", () => {
-    renderUserList(makePaginatedUsers({ users: [makeUser({ address: null })], total: 1 }));
+    renderUserList(makePaginatedUsers({ users: [makeUserWithoutAddress()], total: 1 }));
 
     expect(screen.getByText("No address on file")).toBeInTheDocument();
   });

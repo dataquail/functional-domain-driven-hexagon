@@ -2,11 +2,14 @@ import * as HttpApiEndpoint from "effect/http-api/HttpApiEndpoint";
 import * as HttpApiGroup from "effect/http-api/HttpApiGroup";
 import * as Schema from "effect/Schema";
 
-import * as CustomHttpApiError from "../CustomHttpApiError.js";
-import { OrganizationId, TodoId } from "../EntityIds.js";
-import { UserAuthMiddleware } from "../Policy.js";
+import * as CustomHttpApiError from "../CustomHttpApiError";
+import { OrganizationId, TodoId } from "../EntityIds";
+import { UserAuthMiddleware } from "../Policy";
 
-export class TodoNotFoundError extends Schema.TaggedError<TodoNotFoundError>()(
+export class TodoNotFoundError extends Schema.TaggedError<
+  TodoNotFoundError,
+  { readonly brand: "TodoNotFoundError" }
+>()(
   "TodoNotFoundError",
   {
     message: Schema.String,
@@ -16,17 +19,23 @@ export class TodoNotFoundError extends Schema.TaggedError<TodoNotFoundError>()(
   },
 ) {}
 
-export class Todo extends Schema.Class<Todo>("Todo")({
+export class Todo extends Schema.Class<Todo, { readonly brand: "Todo" }>("Todo")({
   id: TodoId,
   title: Schema.Trim.check(Schema.isNonEmpty()),
   completed: Schema.Boolean,
 }) {}
 
-export class CreateTodoPayload extends Schema.Class<CreateTodoPayload>("CreateTodoPayload")({
+export class CreateTodoPayload extends Schema.Class<
+  CreateTodoPayload,
+  { readonly brand: "CreateTodoPayload" }
+>("CreateTodoPayload")({
   title: Todo.fields.title,
 }) {}
 
-export class UpdateTodoPayload extends Schema.Class<UpdateTodoPayload>("UpdateTodoPayload")({
+export class UpdateTodoPayload extends Schema.Class<
+  UpdateTodoPayload,
+  { readonly brand: "UpdateTodoPayload" }
+>("UpdateTodoPayload")({
   title: Todo.fields.title,
   completed: Todo.fields.completed,
 }) {}

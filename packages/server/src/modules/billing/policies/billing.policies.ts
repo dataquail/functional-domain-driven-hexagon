@@ -3,14 +3,14 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { OrganizationAccess } from "@/modules/billing/domain/ports/acl/organization-access.acl.js";
-import { PlatformRoles } from "@/modules/billing/domain/ports/acl/platform-roles.acl.js";
-import { OrganizationAccessLive } from "@/modules/billing/infrastructure/acl/organization-access.acl-live.js";
-import { PlatformRolesLive } from "@/modules/billing/infrastructure/acl/platform-roles.acl-live.js";
+import { OrganizationAccess } from "@/modules/billing/domain/ports/acl/organization-access.acl";
+import { PlatformRoles } from "@/modules/billing/domain/ports/acl/platform-roles.acl";
+import { OrganizationAccessLive } from "@/modules/billing/infrastructure/acl/organization-access.acl-live";
+import { PlatformRolesLive } from "@/modules/billing/infrastructure/acl/platform-roles.acl-live";
 
-import { makeIsBillingOrgAdmin } from "./is-billing-org-admin.policy.js";
-import { makeIsBillingOrgMember } from "./is-billing-org-member.policy.js";
-import { makeIsBillingSuperAdmin } from "./is-billing-super-admin.policy.js";
+import { isBillingOrgAdminCheck } from "./is-billing-org-admin.policy";
+import { isBillingOrgMemberCheck } from "./is-billing-org-member.policy";
+import { isBillingSuperAdminCheck } from "./is-billing-super-admin.policy";
 
 // Billing's single policy resource gates two CRUD operations:
 //   - `read` (GET current subscription) — every member of the org may see the
@@ -46,13 +46,13 @@ export const BillingPoliciesLive = Layer.effect(
   Effect.gen(function* () {
     const roles = yield* PlatformRoles;
     const organizations = yield* OrganizationAccess;
-    const superAdmin = makeIsBillingSuperAdmin(roles);
+    const superAdmin = isBillingSuperAdminCheck(roles);
 
-    return {
+    return BillingPolicyContribution.of({
       billing: {
-        read: Check.any(superAdmin, makeIsBillingOrgMember(organizations)),
-        update: Check.any(superAdmin, makeIsBillingOrgAdmin(organizations)),
+        read: Check.any(superAdmin, isBillingOrgMemberCheck(organizations)),
+        update: Check.any(superAdmin, isBillingOrgAdminCheck(organizations)),
       },
-    };
+    });
   }),
 ).pipe(Layer.provide([PlatformRolesLive, OrganizationAccessLive]));

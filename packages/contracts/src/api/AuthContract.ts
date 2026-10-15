@@ -2,20 +2,26 @@ import * as HttpApiEndpoint from "effect/http-api/HttpApiEndpoint";
 import * as HttpApiGroup from "effect/http-api/HttpApiGroup";
 import * as Schema from "effect/Schema";
 
-import * as CustomHttpApiError from "../CustomHttpApiError.js";
-import { ApiTokenId, UserId } from "../EntityIds.js";
-import { UserAuthMiddleware } from "../Policy.js";
+import * as CustomHttpApiError from "../CustomHttpApiError";
+import { ApiTokenId, UserId } from "../EntityIds";
+import { UserAuthMiddleware } from "../Policy";
 
 // ==========================================
 // Shapes
 // ==========================================
 
-export class CurrentUserResponse extends Schema.Class<CurrentUserResponse>("CurrentUserResponse")({
+export class CurrentUserResponse extends Schema.Class<
+  CurrentUserResponse,
+  { readonly brand: "CurrentUserResponse" }
+>("CurrentUserResponse")({
   userId: UserId,
   isSuperAdmin: Schema.Boolean,
 }) {}
 
-export class CallbackParams extends Schema.Class<CallbackParams>("CallbackParams")({
+export class CallbackParams extends Schema.Class<
+  CallbackParams,
+  { readonly brand: "CallbackParams" }
+>("CallbackParams")({
   code: Schema.optional(Schema.String),
   state: Schema.optional(Schema.String),
   error: Schema.optional(Schema.String),
@@ -80,7 +86,10 @@ export class PrivateGroup extends HttpApiGroup.make("authSession")
 
 // Owner-facing summary of an active token. Carries no secret — `prefix` is
 // the non-secret display fragment shown so an owner can tell tokens apart.
-export class ApiTokenSummary extends Schema.Class<ApiTokenSummary>("ApiTokenSummary")({
+export class ApiTokenSummary extends Schema.Class<
+  ApiTokenSummary,
+  { readonly brand: "ApiTokenSummary" }
+>("ApiTokenSummary")({
   id: ApiTokenId,
   label: Schema.String,
   prefix: Schema.String,
@@ -89,9 +98,10 @@ export class ApiTokenSummary extends Schema.Class<ApiTokenSummary>("ApiTokenSumm
   lastUsedAt: Schema.DateTimeUtc,
 }) {}
 
-export class CreateApiTokenPayload extends Schema.Class<CreateApiTokenPayload>(
-  "CreateApiTokenPayload",
-)({
+export class CreateApiTokenPayload extends Schema.Class<
+  CreateApiTokenPayload,
+  { readonly brand: "CreateApiTokenPayload" }
+>("CreateApiTokenPayload")({
   label: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(255)),
   // Days until the token expires. Optional — the server falls back to its
   // configured default. Capped to keep CI tokens from living forever.
@@ -101,18 +111,20 @@ export class CreateApiTokenPayload extends Schema.Class<CreateApiTokenPayload>(
 }) {}
 
 // The plaintext `token` is returned exactly once at creation and never again.
-export class CreateApiTokenResponse extends Schema.Class<CreateApiTokenResponse>(
-  "CreateApiTokenResponse",
-)({
+export class CreateApiTokenResponse extends Schema.Class<
+  CreateApiTokenResponse,
+  { readonly brand: "CreateApiTokenResponse" }
+>("CreateApiTokenResponse")({
   id: ApiTokenId,
   token: Schema.String,
   prefix: Schema.String,
   expiresAt: Schema.NullOr(Schema.DateTimeUtc),
 }) {}
 
-export class DeviceApprovalPayload extends Schema.Class<DeviceApprovalPayload>(
-  "DeviceApprovalPayload",
-)({
+export class DeviceApprovalPayload extends Schema.Class<
+  DeviceApprovalPayload,
+  { readonly brand: "DeviceApprovalPayload" }
+>("DeviceApprovalPayload")({
   userCode: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(32)),
 }) {}
 

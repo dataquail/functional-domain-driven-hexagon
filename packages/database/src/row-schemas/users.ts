@@ -12,4 +12,5 @@ export const UserRow = Schema.Struct({
   created_at: Schema.DateTimeUtcFromDate,
   updated_at: Schema.DateTimeUtcFromDate,
 });
+
 export type UserRow = typeof UserRow.Type;

@@ -1,24 +1,25 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
+import type * as Option from "effect/Option";
 
-import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { type ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors.js";
-import { type ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
-import { type ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root.js";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { type ApiTokenNotFound } from "@/modules/auth/domain/api-token/api-token.errors";
+import { type ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id";
+import { type ApiTokenRoot } from "@/modules/auth/domain/api-token/api-token.root";
 
 // Dumb collection port (per `feedback_dumb_repositories`): insert/update the
 // aggregate, delete by id, and read it back by a Specification. Domain verbs
 // (mint, revoke, touch) live in the use cases and the aggregate; the
 // soft-delete storage mechanism behind `delete` is an implementation detail.
 // Every lookup — by id, by hash, the owner's active tokens — is expressed as a
-// spec at the call site (ApiTokenSpecifications). Absence is a plain `null` /
-// empty array; mapping it to ApiTokenNotFound is the caller's job.
-export type ApiTokenRepositoryShape = {
+// spec at the call site (ApiTokenSpecifications). Absence is `Option.none()` /
+// an empty array; mapping it to ApiTokenNotFound is the caller's job.
+export type ApiTokenRepositoryService = {
   readonly insertOne: (token: ApiTokenRoot) => Effect.Effect<void, PersistenceUnavailable>;
   readonly findOne: (
     spec: Specification<ApiTokenRoot>,
-  ) => Effect.Effect<ApiTokenRoot | null, PersistenceUnavailable>;
+  ) => Effect.Effect<Option.Option<ApiTokenRoot>, PersistenceUnavailable>;
   readonly findMany: (
     spec: Specification<ApiTokenRoot>,
   ) => Effect.Effect<ReadonlyArray<ApiTokenRoot>, PersistenceUnavailable>;
@@ -36,5 +37,5 @@ export type ApiTokenRepositoryShape = {
 
 export class ApiTokenRepository extends Context.Service<
   ApiTokenRepository,
-  ApiTokenRepositoryShape
+  ApiTokenRepositoryService
 >()("ApiTokenRepository") {}

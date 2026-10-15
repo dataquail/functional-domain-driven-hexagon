@@ -2,14 +2,14 @@ import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 
-import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
-import { BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client.js";
-import { SubscriptionNotFound } from "@/modules/billing/domain/subscription/subscription.errors.js";
-import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
-import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
-import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.js";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
+import { BillingGateway } from "@/modules/billing/domain/ports/clients/billing-gateway.client";
+import { SubscriptionNotFound } from "@/modules/billing/domain/subscription/subscription.errors";
+import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository";
+import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops";
+import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification";
 
-import { type CancelSubscriptionPayload } from "./cancel-subscription.command.js";
+import { type CancelSubscriptionPayload } from "./cancel-subscription.command";
 
 // Cancels upstream first, then flips local status. If Stripe cancel
 // succeeds but the local update fails, the subscription is canceled
@@ -23,12 +23,10 @@ export const cancelSubscriptionHandler = Effect.fn("cancelSubscriptionHandler")(
   const gateway = yield* BillingGateway;
   const bus = yield* DomainEventBus;
 
-  const existing = yield* repo.findOne(
-    SubscriptionSpecifications.forOrganization(cmd.organizationId),
+  const existing = yield* Effect.fromOption(
+    yield* repo.findOne(SubscriptionSpecifications.forOrganization(cmd.organizationId)),
+    () => new SubscriptionNotFound({ organizationId: cmd.organizationId }),
   );
-  if (existing === null) {
-    return yield* new SubscriptionNotFound({ organizationId: cmd.organizationId });
-  }
 
   yield* gateway.cancelSubscription({
     stripeSubscriptionId: existing.stripeSubscriptionId,

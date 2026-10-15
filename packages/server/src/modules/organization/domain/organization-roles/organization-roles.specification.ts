@@ -1,19 +1,16 @@
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
-import {
-  type Predicate,
-  Spec,
-  type Specification,
-} from "@/globals/application/ddd/specification.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { type UserId } from "@/globals/application/ddd/ids/user-id";
+import { type Predicate, Spec, type Specification } from "@/globals/application/ddd/specification";
 
-import { type OrganizationRoleValueObject } from "./organization-role.value-object.js";
-import { type OrganizationRolesRoot } from "./organization-roles.root.js";
+import { type OrganizationRoleValueObject } from "./organization-role.value-object";
+import { type OrganizationRolesRoot } from "./organization-roles.root";
 
 // Translatable identity specs — the composite key `(userId, organizationId)`
 // lives on every row of the aggregate, so these compile to a WHERE that the
 // repository uses to fetch the row set it reconstitutes into one aggregate.
 const forUser = (userId: UserId): Specification<OrganizationRolesRoot> =>
   Spec.eq<OrganizationRolesRoot, "userId">("userId", userId);
+
 const forOrganization = (organizationId: OrganizationId): Specification<OrganizationRolesRoot> =>
   Spec.eq<OrganizationRolesRoot, "organizationId">("organizationId", organizationId);
 

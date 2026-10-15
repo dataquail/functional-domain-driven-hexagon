@@ -6,15 +6,17 @@ import {
   resolveToken,
   saveToken,
 } from "@org/api-client";
+import { CliAuthContract } from "@org/contracts/api/Contracts";
 import * as Command from "effect/cli/Command";
 import * as Flag from "effect/cli/Flag";
 import * as Console from "effect/Console";
 import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
+import * as Predicate from "effect/Predicate";
 import * as Schedule from "effect/Schedule";
 
-import { CliError, maskToken, openBrowser, toCliError } from "../internal.js";
+import { CliError, maskToken, openBrowser, toCliError } from "../internal";
 
 // `auth login [--with-token <pat>]`
 //   - with a token: store it (CI / paste path) and validate it.
@@ -26,9 +28,12 @@ const withTokenOption = Flag.String("with-token").pipe(
 );
 
 const validate = (token: string) =>
-  Effect.flatMap(makeCliClient({ baseUrl: resolveBaseUrl(), token }), (client) =>
-    client.cliOrganization.listMine(),
-  );
+  Effect.gen(function* () {
+    const baseUrl = yield* resolveBaseUrl;
+    const client = yield* makeCliClient({ baseUrl, token: Option.some(token) });
+
+    return yield* client.cliOrganization.listMine();
+  });
 
 const login = Command.make("login", { withToken: withTokenOption }, ({ withToken }) =>
   Effect.gen(function* () {
@@ -36,10 +41,12 @@ const login = Command.make("login", { withToken: withTokenOption }, ({ withToken
       yield* validate(withToken.value);
       yield* saveToken(withToken.value);
       yield* Console.log("✓ Token stored and verified.");
+
       return;
     }
 
-    const client = yield* makeCliClient({ baseUrl: resolveBaseUrl(), token: null });
+    const baseUrl = yield* resolveBaseUrl;
+    const client = yield* makeCliClient({ baseUrl, token: Option.none() });
     const start = yield* client.cliAuth.deviceStart();
     yield* Console.log(
       [
@@ -58,11 +65,14 @@ const login = Command.make("login", { withToken: withTokenOption }, ({ withToken
     // Poll the token endpoint; keep retrying while the grant is pending,
     // bounded by the grant's own lifetime.
     const token = yield* client.cliAuth
-      .deviceToken({ payload: { device_code: start.device_code } })
+      .deviceToken({
+        payload: new CliAuthContract.DeviceTokenPayload({ device_code: start.device_code }),
+      })
       .pipe(
         Effect.retry({
-          while: (error) => error._tag === "DeviceAuthorizationPending",
+          while: Predicate.isTagged("DeviceAuthorizationPending"),
           schedule: Schedule.spaced(Duration.seconds(start.interval)),
+          times: Math.ceil(start.expires_in / start.interval),
         }),
         Effect.timeoutOrElse({
           duration: Duration.seconds(start.expires_in + 5),
@@ -75,26 +85,28 @@ const login = Command.make("login", { withToken: withTokenOption }, ({ withToken
 
     yield* saveToken(token.access_token);
     yield* Console.log("✓ Authenticated! You're signed in.");
-  }).pipe(Effect.mapError(toCliError)),
+  }).pipe(Effect.catch(toCliError)),
 );
 
 const status = Command.make("status", {}, () =>
   Effect.gen(function* () {
     const creds = yield* readCredentials;
-    const token = resolveToken(creds);
-    if (token === null) {
+    const token = yield* resolveToken(creds);
+
+    if (Option.isNone(token)) {
       yield* Console.log("Not authenticated. Run `org auth login`.");
+
       return;
     }
-    const client = yield* makeCliClient({ baseUrl: resolveBaseUrl(), token });
+
+    const baseUrl = yield* resolveBaseUrl;
+    const client = yield* makeCliClient({ baseUrl, token });
     yield* client.cliOrganization.listMine().pipe(
-      Effect.matchEffect({
-        onSuccess: () => Console.log(`Authenticated (token ${maskToken(token)}).`),
-        onFailure: (error) =>
-          error._tag === "Unauthorized"
-            ? Console.log("Token is invalid or expired. Run `org auth login`.")
-            : Effect.fail(toCliError(error)),
-      }),
+      Effect.andThen(Console.log(`Authenticated (token ${maskToken(token.value)}).`)),
+      Effect.catchTag("Unauthorized", () =>
+        Console.log("Token is invalid or expired. Run `org auth login`."),
+      ),
+      Effect.catch(toCliError),
     );
   }),
 );

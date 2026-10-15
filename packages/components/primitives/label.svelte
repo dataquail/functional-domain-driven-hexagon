@@ -2,6 +2,7 @@
   import type { Snippet } from "svelte";
 
   export type LabelTone = "default" | "muted";
+
   export type LabelDecoration = "none" | "line-through";
 
   const TONE: Record<LabelTone, string> = {

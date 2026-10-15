@@ -13,10 +13,10 @@ export type MailSender = {
   readonly name: string;
 };
 
-export class MailDeliveryError extends Schema.TaggedError<MailDeliveryError>()(
-  "MailDeliveryError",
-  { message: Schema.String },
-) {}
+export class MailDeliveryError extends Schema.TaggedError<
+  MailDeliveryError,
+  { readonly brand: "MailDeliveryError" }
+>()("MailDeliveryError", { message: Schema.String }) {}
 
 export type IdentityMailer = {
   readonly send: (email: IdentityEmail) => Effect.Effect<void, MailDeliveryError>;

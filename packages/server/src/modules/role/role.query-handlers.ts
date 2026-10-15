@@ -2,8 +2,8 @@ import { Query } from "@effect-server-utils/cqrs";
 import * as Context from "effect/Context";
 import * as Layer from "effect/Layer";
 
-import { findUserRolesHandler } from "@/modules/role/queries/find-user-roles.handler.js";
-import { FindUserRolesQuery } from "@/modules/role/queries/find-user-roles.policy-query.js";
+import { findUserRolesHandler } from "@/modules/role/queries/find-user-roles.handler";
+import { FindUserRolesQuery } from "@/modules/role/queries/find-user-roles.policy-query";
 
 // This is a policy-query, so its only consumers are other modules' ACL adapters, and
 // ADR-0022 has them reach it through their own port. They resolve this surface directly;

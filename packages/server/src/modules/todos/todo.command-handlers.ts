@@ -3,15 +3,15 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { CompleteTodoCommand } from "@/modules/todos/commands/complete-todo.command.js";
-import { completeTodoHandler } from "@/modules/todos/commands/complete-todo.handler.js";
-import { CreateTodoCommand } from "@/modules/todos/commands/create-todo.command.js";
-import { createTodoHandler } from "@/modules/todos/commands/create-todo.handler.js";
-import { DeleteTodoCommand } from "@/modules/todos/commands/delete-todo.command.js";
-import { deleteTodoHandler } from "@/modules/todos/commands/delete-todo.handler.js";
-import { UpdateTodoCommand } from "@/modules/todos/commands/update-todo.command.js";
-import { updateTodoHandler } from "@/modules/todos/commands/update-todo.handler.js";
-import { TodosRepositoryLive } from "@/modules/todos/infrastructure/repositories/todos.repository-live.js";
+import { CompleteTodoCommand } from "@/modules/todos/commands/complete-todo.command";
+import { completeTodoHandler } from "@/modules/todos/commands/complete-todo.handler";
+import { CreateTodoCommand } from "@/modules/todos/commands/create-todo.command";
+import { createTodoHandler } from "@/modules/todos/commands/create-todo.handler";
+import { DeleteTodoCommand } from "@/modules/todos/commands/delete-todo.command";
+import { deleteTodoHandler } from "@/modules/todos/commands/delete-todo.handler";
+import { UpdateTodoCommand } from "@/modules/todos/commands/update-todo.command";
+import { updateTodoHandler } from "@/modules/todos/commands/update-todo.handler";
+import { TodosRepositoryLive } from "@/modules/todos/infrastructure/repositories/todos.repository-live";
 
 export const todoCommandGroup = Command.group(
   CreateTodoCommand,

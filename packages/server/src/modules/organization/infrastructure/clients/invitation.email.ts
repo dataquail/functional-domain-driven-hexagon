@@ -22,6 +22,7 @@ export const invitationEmail = ({
 }: InvitationEmailProps): RenderedEmail => {
   const url = escapeHtml(acceptUrl);
   const expires = escapeHtml(expiresLabel);
+
   return {
     html: `<!DOCTYPE html>
 <html lang="en">

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "@effect/vitest";
+import { assertInstanceOf, assertNone, assertSome } from "@effect/vitest/utils";
+import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import {
   ConnectionError,
@@ -10,131 +13,145 @@ import {
   UniqueViolation,
 } from "effect/sql/SqlError";
 
-import { exec, maybeRow, row, rows } from "../src/Database.js";
+import { DatabaseError, DatabaseUnavailable, exec, maybeRow, row, rows } from "../src/Database";
 
 const Row = Schema.Struct({ id: Schema.String, at: Schema.DateTimeUtcFromDate });
 
-const statement = (values: ReadonlyArray<unknown>) => Effect.succeed(values);
+const statement = <A>(values: ReadonlyArray<A>) => Effect.succeed(values);
 
-const failing = (reason: SqlError["reason"]) =>
-  Effect.fail(new SqlError({ reason })) as Effect.Effect<ReadonlyArray<unknown>, SqlError>;
+const failing = (reason: SqlError["reason"]): Effect.Effect<ReadonlyArray<never>, SqlError> =>
+  Effect.fail(new SqlError({ reason }));
 
-const failureOf = <A, E>(exit: Exit.Exit<A, E>): E => {
-  const reason = Exit.isFailure(exit) ? exit.cause.reasons[0] : undefined;
-  if (reason?._tag !== "Fail") throw new Error("expected a typed failure");
-  return reason.error;
-};
-
-const defectOf = <A, E>(exit: Exit.Exit<A, E>): unknown => {
-  const reason = Exit.isFailure(exit) ? exit.cause.reasons[0] : undefined;
-  if (reason?._tag !== "Die") throw new Error("expected a defect");
-  return reason.defect;
-};
+const defectOf = <A, E>(self: Effect.Effect<A, E>) =>
+  Effect.exit(self).pipe(Effect.map(Exit.findDefect), Effect.flatMap(Effect.fromResult));
 
 describe("row decoding", () => {
   // A Date, because that is what the driver hands back for a timestamptz column.
-  // oxlint-disable-next-line effecttsgo/global-date
-  const at = new Date("2026-01-02T03:04:05.000Z");
+  const at = DateTime.toDateUtc(DateTime.makeUnsafe("2026-01-02T03:04:05.000Z"));
 
-  it("decodes every row through the schema", async () => {
-    const decoded = await Effect.runPromise(
-      statement([
+  it.effect("decodes every row through the schema", () =>
+    Effect.gen(function* () {
+      const decoded = yield* statement([
         { id: "a", at },
         { id: "b", at },
-      ]).pipe(rows(Row)),
-    );
-    expect(decoded.map((r) => r.id)).toEqual(["a", "b"]);
-    // The column is a Date on the wire and a DateTime.Utc in the domain; the decode
-    // is what makes that true.
-    expect(decoded.map((r) => r.at._tag)).toEqual(["Utc", "Utc"]);
-  });
+      ]).pipe(rows(Row));
 
-  it("returns null from maybeRow for an empty result", async () => {
-    const decoded = await Effect.runPromise(statement([]).pipe(maybeRow(Row)));
-    expect(decoded).toBeNull();
-  });
+      expect(decoded.map((r) => r.id)).toEqual(["a", "b"]);
+      // The column is a Date on the wire and a DateTime.Utc in the domain; the decode
+      // is what makes that true.
+      expect(decoded.map((r) => DateTime.isUtc(r.at))).toEqual([true, true]);
+    }),
+  );
 
-  it("decodes the first row from maybeRow", async () => {
-    const decoded = await Effect.runPromise(statement([{ id: "a", at }]).pipe(maybeRow(Row)));
-    expect(decoded?.id).toBe("a");
-  });
+  it.effect("returns none from maybeRow for an empty result", () =>
+    Effect.gen(function* () {
+      assertNone(yield* statement([]).pipe(maybeRow(Row)));
+    }),
+  );
 
-  it("dies when row expects a row and gets none", async () => {
-    const exit = await Effect.runPromiseExit(statement([]).pipe(row(Row)));
-    expect(Exit.isFailure(exit)).toBe(true);
-    expect(String(defectOf(exit))).toContain("expected one row");
-  });
+  it.effect("decodes the first row from maybeRow", () =>
+    Effect.gen(function* () {
+      const decoded = yield* statement([{ id: "a", at }]).pipe(maybeRow(Row));
+      assertSome(
+        Option.map(decoded, (r) => r.id),
+        "a",
+      );
+    }),
+  );
 
-  it("dies on a row that does not match its schema, rather than failing typed", async () => {
-    const exit = await Effect.runPromiseExit(statement([{ id: 42, at }]).pipe(rows(Row)));
-    expect(Exit.isFailure(exit)).toBe(true);
-    expect(defectOf(exit)).toBeDefined();
-  });
+  it.effect("dies when row expects a row and gets none", () =>
+    Effect.gen(function* () {
+      const defect = yield* defectOf(statement([]).pipe(row(Row)));
+      expect(String(defect)).toContain("expected one row");
+    }),
+  );
+
+  it.effect("dies on a row that does not match its schema, rather than failing typed", () =>
+    Effect.gen(function* () {
+      const defect = yield* defectOf(statement([{ id: 42, at }]).pipe(rows(Row)));
+      expect(defect).toBeDefined();
+    }),
+  );
 });
 
 describe("SqlError translation", () => {
-  const causeWithCode = (code: string) => Object.assign(new Error("pg"), { code });
+  const causeWithCode = (code: string) => ({ message: "pg", code });
 
-  it("maps a unique violation to a permanent DatabaseError", async () => {
-    const exit = await Effect.runPromiseExit(
-      failing(
-        new UniqueViolation({ cause: causeWithCode("23505"), constraint: "todos_pkey" }),
-      ).pipe(exec),
-    );
-    const error = failureOf(exit);
-    expect(error._tag).toBe("DatabaseError");
-    expect(error._tag === "DatabaseError" && error.type).toBe("unique_violation");
-  });
+  it.effect("maps a unique violation to a permanent DatabaseError", () =>
+    Effect.gen(function* () {
+      const error = yield* Effect.flip(
+        failing(
+          new UniqueViolation({ cause: causeWithCode("23505"), constraint: "todos_pkey" }),
+        ).pipe(exec),
+      );
+
+      assertInstanceOf(error, DatabaseError);
+      expect(error.type).toBe("unique_violation");
+    }),
+  );
 
   // 23503 arrives as ConstraintError alongside 23502/23514, so only the SQLSTATE
   // on the cause distinguishes a foreign-key violation.
-  it("maps SQLSTATE 23503 to a foreign_key_violation", async () => {
-    const exit = await Effect.runPromiseExit(
-      failing(new ConstraintError({ cause: causeWithCode("23503") })).pipe(exec),
-    );
-    const error = failureOf(exit);
-    expect(error._tag === "DatabaseError" && error.type).toBe("foreign_key_violation");
-  });
+  it.effect("maps SQLSTATE 23503 to a foreign_key_violation", () =>
+    Effect.gen(function* () {
+      const error = yield* Effect.flip(
+        failing(new ConstraintError({ cause: causeWithCode("23503") })).pipe(exec),
+      );
 
-  it("dies on a constraint violation the application has no vocabulary for", async () => {
-    const exit = await Effect.runPromiseExit(
-      failing(new ConstraintError({ cause: causeWithCode("23502") })).pipe(exec),
-    );
-    expect(Exit.isFailure(exit)).toBe(true);
-    expect(defectOf(exit)).toBeInstanceOf(SqlError);
-  });
+      assertInstanceOf(error, DatabaseError);
+      expect(error.type).toBe("foreign_key_violation");
+    }),
+  );
 
-  it("maps a retryable failure to DatabaseUnavailable", async () => {
-    const exit = await Effect.runPromiseExit(
-      failing(new ConnectionError({ cause: causeWithCode("08006") })).pipe(exec),
-    );
-    expect(failureOf(exit)._tag).toBe("DatabaseUnavailable");
-  });
+  it.effect("dies on a constraint violation the application has no vocabulary for", () =>
+    Effect.gen(function* () {
+      const defect = yield* defectOf(
+        failing(new ConstraintError({ cause: causeWithCode("23502") })).pipe(exec),
+      );
+
+      expect(defect).toBeInstanceOf(SqlError);
+    }),
+  );
+
+  it.effect("maps a retryable failure to DatabaseUnavailable", () =>
+    Effect.gen(function* () {
+      const error = yield* Effect.flip(
+        failing(new ConnectionError({ cause: causeWithCode("08006") })).pipe(exec),
+      );
+
+      assertInstanceOf(error, DatabaseUnavailable);
+    }),
+  );
 
   // Both are logged and surfaced through `String(...)`/`.message`, so they carry the
   // driver's own text rather than the schema-generated tag dump.
-  it("reads a translated failure as the driver's message, named by its kind", async () => {
-    const unique = new SqlError({
-      reason: new UniqueViolation({ cause: causeWithCode("23505"), constraint: "todos_pkey" }),
-    });
-    const unavailable = new SqlError({
-      reason: new ConnectionError({ cause: causeWithCode("08006") }),
-    });
-    const permanent = failureOf(await Effect.runPromiseExit(failing(unique.reason).pipe(exec)));
-    const transient = failureOf(
-      await Effect.runPromiseExit(failing(unavailable.reason).pipe(exec)),
-    );
+  it.effect("reads a translated failure as the driver's message, named by its kind", () =>
+    Effect.gen(function* () {
+      const unique = new SqlError({
+        reason: new UniqueViolation({ cause: causeWithCode("23505"), constraint: "todos_pkey" }),
+      });
 
-    expect(permanent.message).toBe(unique.message);
-    expect(String(permanent)).toBe(`DatabaseError: ${unique.message}`);
-    expect(transient.message).toBe(unavailable.message);
-    expect(String(transient)).toBe(`DatabaseUnavailable: ${unavailable.message}`);
-  });
+      const unavailable = new SqlError({
+        reason: new ConnectionError({ cause: causeWithCode("08006") }),
+      });
 
-  it("dies on a syntax error", async () => {
-    const exit = await Effect.runPromiseExit(
-      failing(new SqlSyntaxError({ cause: causeWithCode("42601") })).pipe(exec),
-    );
-    expect(defectOf(exit)).toBeInstanceOf(SqlError);
-  });
+      const permanent = yield* Effect.flip(failing(unique.reason).pipe(exec));
+      const transient = yield* Effect.flip(failing(unavailable.reason).pipe(exec));
+
+      expect(permanent.message).toBe(unique.message);
+      expect(String(permanent)).toBe(`DatabaseError: ${unique.message}`);
+      expect(transient.message).toBe(unavailable.message);
+      expect(String(transient)).toBe(`DatabaseUnavailable: ${unavailable.message}`);
+    }),
+  );
+
+  it.effect("dies on a syntax error", () =>
+    Effect.gen(function* () {
+      const defect = yield* defectOf(
+        failing(new SqlSyntaxError({ cause: causeWithCode("42601") })).pipe(exec),
+      );
+
+      expect(defect).toBeInstanceOf(SqlError);
+    }),
+  );
 });

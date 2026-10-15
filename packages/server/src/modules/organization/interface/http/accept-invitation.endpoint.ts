@@ -6,8 +6,8 @@ import * as Effect from "effect/Effect";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { AcceptInvitationCommand } from "@/modules/organization/commands/accept-invitation.command.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { AcceptInvitationCommand } from "@/modules/organization/commands/accept-invitation.command";
 
 // Sits in the standalone InvitationGroup (`/api/invitations/:token/accept`)
 // because the caller doesn't have a membership yet and the URL is
@@ -18,10 +18,12 @@ export const acceptInvitationEndpoint = Effect.fn("OrganizationLive.acceptInvita
   function* (request: EndpointRequest<typeof OrganizationContract.InvitationGroup, "accept">) {
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
+
     const organizationId = yield* commandBus.execute(AcceptInvitationCommand, {
       token: request.params.token,
       userId: currentUser.userId,
     });
+
     return new OrganizationContract.AcceptInvitationResponse({ organizationId });
   },
   Effect.catchTags({

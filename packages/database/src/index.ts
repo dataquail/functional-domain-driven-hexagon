@@ -1,4 +1,4 @@
-export * as Database from "./Database.js";
-export { MODULE_SCHEMAS, resetAndMigrate, runMigrations } from "./migrator.js";
-export { orFail } from "./or-fail.js";
-export * as RowSchemas from "./row-schemas/index.js";
+export * as Database from "./Database";
+export { MODULE_SCHEMAS, resetAndMigrate, runMigrations } from "./migrator";
+export { orFail } from "./or-fail";
+export * as RowSchemas from "./row-schemas/index";

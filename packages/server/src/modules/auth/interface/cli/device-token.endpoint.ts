@@ -1,13 +1,14 @@
 import { CommandBus } from "@effect-server-utils/cqrs";
 import { CliAuthContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { PollDeviceGrantCommand } from "@/modules/auth/commands/poll-device-grant.command.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { PollDeviceGrantCommand } from "@/modules/auth/commands/poll-device-grant.command";
 
 // CLI adapter (ADR-0005): the poll/exchange endpoint. Maps the device-grant
 // domain errors to the RFC-8628-shaped contract errors the CLI switches on
@@ -16,14 +17,16 @@ export const deviceTokenEndpoint = Effect.fn("CliAuthLive.deviceToken")(
   function* (request: EndpointRequest<typeof CliAuthContract.DeviceGroup, "deviceToken">) {
     const env = yield* EnvVars;
     const commandBus = yield* CommandBus;
+
     const { apiToken, token } = yield* commandBus.execute(PollDeviceGrantCommand, {
       deviceCode: request.payload.device_code,
       tokenExpiresInDays: env.API_TOKEN_DEFAULT_TTL_DAYS,
     });
+
     return new CliAuthContract.DeviceTokenResponse({
       access_token: token,
       token_type: "Bearer",
-      expires_at: apiToken.expiresAt,
+      expires_at: Option.getOrNull(apiToken.expiresAt),
     });
   },
   Effect.catchTags({

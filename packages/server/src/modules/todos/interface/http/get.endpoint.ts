@@ -2,18 +2,18 @@ import { QueryBus } from "@effect-server-utils/cqrs";
 import { TodosContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
-import { Actions } from "@/globals/application/ports/actions.js";
-import * as Authz from "@/globals/infrastructure/auth/authz.js";
+import { Actions } from "@/globals/application/ports/actions";
+import * as Authz from "@/globals/infrastructure/auth/authz";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { TodoCollectionResource } from "@/modules/todos/policies/todos.policies.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { TodoCollectionResource } from "@/modules/todos/policies/todos.policies";
 import {
   ListTodosQuery,
   type ListTodosResult,
   type ListTodosTodoView,
-} from "@/modules/todos/queries/list-todos.query.js";
+} from "@/modules/todos/queries/list-todos.query";
 
 const toContract = (view: ListTodosTodoView): TodosContract.Todo =>
   new TodosContract.Todo({
@@ -31,5 +31,6 @@ export const getEndpoint = Effect.fn("TodosLive.get")(function* (
   yield* Authz.hasPermissions(TodoCollectionResource, Actions.Read, request.params.orgId);
   const queryBus = yield* QueryBus;
   const result = yield* queryBus.execute(ListTodosQuery, { organizationId: request.params.orgId });
+
   return toResponse(result);
 }, recoverPersistenceUnavailable);

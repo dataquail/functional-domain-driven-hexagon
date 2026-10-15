@@ -27,7 +27,7 @@ describe("CreateUser view", () => {
 
   it("writes each keystroke back to the ViewModel", async () => {
     const user = userEvent.setup();
-    const { registry } = renderView(CreateUser);
+    const { registry } = renderView(CreateUser, {});
 
     await user.type(screen.getByTestId("create-user-country"), "GB");
 
@@ -35,7 +35,7 @@ describe("CreateUser view", () => {
   });
 
   it("shows no errors before a submit attempt", () => {
-    renderView(CreateUser);
+    renderView(CreateUser, {});
     expect(screen.queryAllByRole("alert")).toHaveLength(0);
   });
 

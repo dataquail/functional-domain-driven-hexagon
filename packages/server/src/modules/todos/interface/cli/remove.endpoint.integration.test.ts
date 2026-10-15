@@ -1,14 +1,13 @@
 import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
 import { CliTodosContract, OrganizationContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.js";
-import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
-import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { TodoId } from "@/modules/todos/domain/todo/todo.id";
+import { describeServer } from "@/test-utils/server-test-runtime";
+import { TestServerLiveAsMember } from "@/test-utils/test-server";
 
 const TODO_TABLES = [
   "todos.todos",
@@ -19,42 +18,44 @@ const TODO_TABLES = [
   "user.users",
 ] as const;
 
-describe("DELETE /cli/orgs/:orgId/todos/:id (integration)", () => {
-  const { run } = useServerTestRuntime(TODO_TABLES, {
-    server: TestServerLiveAsMember,
-    seedSuperAdminCaller: true,
-  });
-
-  it("removes a todo so it drops out of the listing", async () => {
-    await run(
+describeServer(
+  "DELETE /cli/orgs/:orgId/todos/:id (integration)",
+  { tables: TODO_TABLES, server: TestServerLiveAsMember, seedSuperAdminCaller: true },
+  (it) => {
+    it.effect("removes a todo so it drops out of the listing", () =>
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
+
         const { id: orgId } = yield* client.organization.create({
           payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
         });
+
         const created = yield* client.cliTodos.create({
           params: { orgId },
           payload: new CliTodosContract.CliCreateTodoPayload({ title: "Buy milk" }),
         });
+
         yield* client.cliTodos.remove({ params: { orgId, id: created.id } });
         deepStrictEqual((yield* client.cliTodos.list({ params: { orgId } })).length, 0);
       }),
     );
-  });
 
-  it("fails CliTodoNotFoundError for an unknown todo", async () => {
-    await run(
+    it.effect("fails CliTodoNotFoundError for an unknown todo", () =>
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
+
         const { id: orgId } = yield* client.organization.create({
           payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
         });
+
         const ghost = TodoId.make("00000000-0000-0000-0000-000000000000");
+
         const error = yield* client.cliTodos
           .remove({ params: { orgId, id: ghost } })
           .pipe(Effect.flip);
+
         deepStrictEqual(error._tag, "CliTodoNotFoundError");
       }),
     );
-  });
-});
+  },
+);

@@ -1,19 +1,21 @@
-import { deepStrictEqual, ok } from "node:assert";
+import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertNone } from "@effect/vitest/utils";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { syncSubscriptionHandler } from "@/modules/billing/commands/sync-subscription.handler.js";
-import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
-import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
-import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
-import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.js";
-import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake.js";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { syncSubscriptionHandler } from "@/modules/billing/commands/sync-subscription.handler";
+import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id";
+import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository";
+import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops";
+import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification";
+import { SubscriptionRepositoryFake } from "@/modules/billing/infrastructure/repositories/subscription.repository-fake";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus";
 
 const acme = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const subId = SubscriptionId.make("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
@@ -29,15 +31,17 @@ const TestLayer = Layer.mergeAll(
 const seedSubscription = () =>
   Effect.gen(function* () {
     const repo = yield* SubscriptionRepository;
+
     const { subscription } = SubscriptionRootOps.create({
       id: subId,
       organizationId: acme,
       stripeCustomerId: "cus_seed",
       stripeSubscriptionId: stripeSubId,
       status: "trialing",
-      currentPeriodEnd: null,
+      currentPeriodEnd: Option.none(),
       now: seedNow,
     });
+
     yield* repo.insertOne(subscription);
   });
 
@@ -50,12 +54,15 @@ describe("syncSubscriptionHandler", () => {
       yield* syncSubscriptionHandler({
         stripeSubscriptionId: stripeSubId,
         status: "active",
-        currentPeriodEnd: null,
+        currentPeriodEnd: Option.none(),
       });
 
       const repo = yield* SubscriptionRepository;
-      const found = yield* repo.findOne(SubscriptionSpecifications.forOrganization(acme));
-      ok(found !== null);
+
+      const found = yield* Effect.fromOption(
+        yield* repo.findOne(SubscriptionSpecifications.forOrganization(acme)),
+      );
+
       deepStrictEqual(found.status, "active");
 
       const tags = (yield* rec.all).map((e) => e._tag);
@@ -70,11 +77,11 @@ describe("syncSubscriptionHandler", () => {
       yield* syncSubscriptionHandler({
         stripeSubscriptionId: "sub_never_seen",
         status: "active",
-        currentPeriodEnd: null,
+        currentPeriodEnd: Option.none(),
       });
       const repo = yield* SubscriptionRepository;
       const found = yield* repo.findOne(SubscriptionSpecifications.forOrganization(acme));
-      deepStrictEqual(found, null);
+      assertNone(found);
       deepStrictEqual((yield* rec.all).length, 0);
     }).pipe(Effect.provide(TestLayer)),
   );

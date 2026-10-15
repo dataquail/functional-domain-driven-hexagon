@@ -55,7 +55,7 @@ export const createEndpoint = Effect.fn("UserHttp.create")(function* (
 The `index.ts` barrel binds each endpoint by name:
 
 ```ts
-// modules/user/interface/http/index.ts
+// modules/user/interface/http/user.endpoint-groups.ts
 export const UserHttpLive = HttpApiBuilder.group(Api, "user", (handlers) =>
   handlers
     .handle("find", findEndpoint)

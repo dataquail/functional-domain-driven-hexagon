@@ -1,7 +1,7 @@
 import { Command } from "@effect-server-utils/cqrs";
 import * as Schema from "effect/Schema";
 
-import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id";
 
 // Records last-used time for a token, dispatched by the auth middleware after a successful
 // bearer lookup. Throttled + race-tolerant in the handler, so it's safe to fire on every
@@ -11,4 +11,5 @@ export const TouchApiTokenCommand = Command.make("TouchApiTokenCommand", {
   payload: { apiTokenId: ApiTokenId, thresholdSeconds: Schema.Int },
   success: Schema.Void,
 });
+
 export type TouchApiTokenPayload = Command.Payload<typeof TouchApiTokenCommand>;

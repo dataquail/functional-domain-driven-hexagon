@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
+import { recordCalls } from "../test/calls";
 import { textSnippet } from "../test/snippets";
 import AppShell from "./app-shell.svelte";
 import CardSection from "./card-section.svelte";
@@ -111,17 +112,17 @@ describe("Pagination", () => {
   };
 
   it("states the position and reports intent upward", async () => {
-    const onPrevious = vi.fn();
-    const onNext = vi.fn();
-    render(Pagination, { ...props, onPrevious, onNext });
+    const onPrevious = recordCalls();
+    const onNext = recordCalls();
+    render(Pagination, { ...props, onPrevious: onPrevious.callback, onNext: onNext.callback });
 
     expect(screen.getByText("Page 2 of 4 · 37 users")).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Previous page" }));
     await userEvent.click(screen.getByRole("button", { name: "Next page" }));
 
-    expect(onPrevious).toHaveBeenCalledOnce();
-    expect(onNext).not.toHaveBeenCalled();
+    expect(onPrevious.calls).toHaveLength(1);
+    expect(onNext.calls).toHaveLength(0);
     expect(screen.getByTestId("pagination-next")).toBeDisabled();
   });
 

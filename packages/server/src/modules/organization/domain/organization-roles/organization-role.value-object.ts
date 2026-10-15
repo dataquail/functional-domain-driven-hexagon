@@ -9,4 +9,5 @@ import * as Schema from "effect/Schema";
 // Adding a new role: extend the literal here (and `KNOWN_ORG_ROLES` in
 // `organization-roles-mapper.ts` and `organization-role-service-live.ts`).
 export const OrganizationRoleValueObject = Schema.Literal("admin");
+
 export type OrganizationRoleValueObject = typeof OrganizationRoleValueObject.Type;

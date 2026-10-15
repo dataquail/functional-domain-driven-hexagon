@@ -6,8 +6,8 @@ import * as Effect from "effect/Effect";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { CreateOrganizationCommand } from "@/modules/organization/commands/create-organization.command.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { CreateOrganizationCommand } from "@/modules/organization/commands/create-organization.command";
 
 // Authenticated, no `Authz.hasPermissions` gate. Anyone can create an
 // org; the caller becomes its first Membership and (Phase 4) receives
@@ -17,10 +17,12 @@ export const createEndpoint = Effect.fn("OrganizationLive.create")(
   function* (request: EndpointRequest<typeof OrganizationContract.Group, "create">) {
     const currentUser = yield* CurrentUser;
     const commandBus = yield* CommandBus;
+
     const id = yield* commandBus.execute(CreateOrganizationCommand, {
       name: request.payload.name,
       actorUserId: currentUser.userId,
     });
+
     return new OrganizationContract.CreateOrganizationResponse({ id });
   },
   Effect.catchTag(

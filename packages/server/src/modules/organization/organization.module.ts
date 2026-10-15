@@ -1,15 +1,19 @@
 import * as Layer from "effect/Layer";
 
-import { RoleModule } from "@/modules/role/role.module.js";
-import { UserModule } from "@/modules/user/user.module.js";
+import { RoleModule } from "@/modules/role/role.module";
+import { UserModule } from "@/modules/user/user.module";
 
-import { OrganizationRepositoryLive } from "./infrastructure/repositories/organization.repository-live.js";
-import { OrgCliLive } from "./interface/cli/index.js";
-import { InvitationEventAdapterLive } from "./interface/events/invitation.event-adapter.js";
-import { InvitationLive, OrganizationAdminLive, OrganizationLive } from "./interface/http/index.js";
-import { OrganizationCommandsLive } from "./organization.command-handlers.js";
-import { OrganizationQueriesLive } from "./organization.query-handlers.js";
-import { OrganizationPoliciesLive } from "./policies/organization.policies.js";
+import { OrganizationRepositoryLive } from "./infrastructure/repositories/organization.repository-live";
+import { OrgCliLive } from "./interface/cli/organization.endpoint-groups";
+import { InvitationEventAdapterLive } from "./interface/events/invitation.event-adapter";
+import {
+  InvitationLive,
+  OrganizationAdminLive,
+  OrganizationLive,
+} from "./interface/http/organization.endpoint-groups";
+import { OrganizationCommandsLive } from "./organization.command-handlers";
+import { OrganizationQueriesLive } from "./organization.query-handlers";
+import { OrganizationPoliciesLive } from "./policies/organization.policies";
 
 export const OrganizationModule = {
   layer: OrganizationPoliciesLive.pipe(

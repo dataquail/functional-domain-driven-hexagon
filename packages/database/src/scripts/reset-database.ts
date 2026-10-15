@@ -5,8 +5,8 @@ import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 
-import * as Database from "../Database.js";
-import { MODULE_SCHEMAS } from "../migrator.js";
+import * as Database from "../Database";
+import { MODULE_SCHEMAS } from "../migrator";
 
 dotenv({
   path: "../../.env",
@@ -50,6 +50,7 @@ const resetDatabase = Effect.gen(function* () {
     Layer.unwrap(
       Effect.gen(function* () {
         const url = yield* Config.Redacted("DATABASE_URL");
+
         return Database.layer({ url, ssl: false });
       }),
     ),

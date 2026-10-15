@@ -17,6 +17,7 @@
   } = $props();
 
   provideRegistry({ registry: untrack(() => registry) });
+
   atomSubscribe(
     untrack(() => atom),
     (value) => listener(value),

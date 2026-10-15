@@ -2,7 +2,9 @@
   import type { Snippet } from "svelte";
 
   export type ListGap = "none" | "xs" | "sm" | "md";
+
   export type ListMarker = "none" | "disc";
+
   export type ListElement = "ul" | "ol";
 
   const GAP: Record<ListGap, string> = {

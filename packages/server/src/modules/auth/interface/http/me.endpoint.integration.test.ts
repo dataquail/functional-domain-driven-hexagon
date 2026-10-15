@@ -1,24 +1,21 @@
 import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.js";
-import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { describeServer } from "@/test-utils/server-test-runtime";
 // `TestServerLive` provides `UserAuthMiddlewareFake`, which always succeeds
 // with a deterministic admin CurrentUser. So `/auth/me` should always return
 // that fake identity here — no cookie required, no identity provider involved. The
 // real cookie path is exercised by `auth-identity-repository-live` and by
 // the Playwright auth-setup project / login.spec.ts.
 
-describe("GET /auth/me (integration)", () => {
-  const { run } = useServerTestRuntime(["user.users", "platform.roles"], {
-    seedSuperAdminCaller: true,
-  });
-
-  it("returns the fake admin CurrentUser", async () => {
-    await run(
+describeServer(
+  "GET /auth/me (integration)",
+  { tables: ["user.users", "platform.roles"], seedSuperAdminCaller: true },
+  (it) => {
+    it.effect("returns the fake admin CurrentUser", () =>
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
         const me = yield* client.authSession.me();
@@ -26,5 +23,5 @@ describe("GET /auth/me (integration)", () => {
         deepStrictEqual(me.isSuperAdmin, true);
       }),
     );
-  });
-});
+  },
+);

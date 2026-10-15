@@ -1,10 +1,10 @@
+import { describe, expect, it } from "@effect/vitest";
 import * as UserContract from "@org/contracts/api/UserContract";
 import * as Effect from "effect/Effect";
 import type * as AsyncResult from "effect/reactivity/AsyncResult";
 import type * as Atom from "effect/reactivity/Atom";
 import * as AtomRegistry from "effect/reactivity/AtomRegistry";
 import * as Hydration from "effect/reactivity/Hydration";
-import { describe, expect, it } from "vitest";
 
 import { usersQueryAtom } from "@/services/data-access/users.atoms";
 import { makePaginatedUsers, makeUser } from "@/test/fixtures/user";
@@ -30,64 +30,74 @@ const usersQuery = (page: number) =>
 const settle = <A, E>(
   registry: AtomRegistry.AtomRegistry,
   atom: Atom.Atom<AsyncResult.AsyncResult<A, E>>,
-) => Effect.runPromise(AtomRegistry.getResult(registry, atom, { suspendOnWaiting: true }));
+) => AtomRegistry.getResult(registry, atom, { suspendOnWaiting: true });
 
 describe("ApiAtoms", () => {
-  it("routes a query atom through the transport atom and decodes the contract response", async () => {
-    const alice = makeUser({ email: "alice@example.com" });
-    server.use(usersHandlers.list([alice]));
+  it.effect(
+    "routes a query atom through the transport atom and decodes the contract response",
+    () =>
+      Effect.gen(function* () {
+        const alice = makeUser({ email: "alice@example.com" });
+        server.use(usersHandlers.list([alice]));
 
-    const registry = makeRegistry();
-    const value = await settle(registry, usersQuery(1));
+        const registry = makeRegistry();
+        const value = yield* settle(registry, usersQuery(1));
 
-    expect(value.users.map((user) => user.email)).toEqual(["alice@example.com"]);
-    expect(value.total).toBe(1);
-  });
+        expect(value.users.map((user) => user.email)).toEqual(["alice@example.com"]);
+        expect(value.total).toBe(1);
+      }),
+  );
 
   it("memoises a query atom on its request, so the same page is one atom", () => {
     expect(usersQuery(1)).toBe(usersQuery(1));
     expect(usersQuery(1)).not.toBe(usersQuery(2));
   });
 
-  it("hydrates a server-dehydrated page into a fresh registry without an HTTP call", async () => {
-    // No MSW handler is registered, and the lifecycle errors on any
-    // unhandled request — so a fetch here would fail the test outright.
-    const page = makePaginatedUsers({ users: [makeUser({ email: "bob@example.com" })] });
+  it.effect("hydrates a server-dehydrated page into a fresh registry without an HTTP call", () =>
+    Effect.gen(function* () {
+      // No MSW handler is registered, and the lifecycle errors on any
+      // unhandled request — so a fetch here would fail the test outright.
+      const page = makePaginatedUsers({ users: [makeUser({ email: "bob@example.com" })] });
 
-    const dehydrated = [dehydrateQuery(usersQuery(1), page)];
+      const dehydrated = yield* dehydrateQuery(usersQuery(1), page);
 
-    const registry = makeRegistry();
-    Hydration.hydrate(registry, dehydrated);
+      const registry = makeRegistry();
+      Hydration.hydrate(registry, [dehydrated]);
 
-    const value = await settle(registry, usersQuery(1));
-    expect(value.users.map((user) => user.email)).toEqual(["bob@example.com"]);
-  });
+      const value = yield* settle(registry, usersQuery(1));
+      expect(value.users.map((user) => user.email)).toEqual(["bob@example.com"]);
+    }),
+  );
 
   // Regression: the spike originally declared its own query atom here, *without*
   // `reactivityKeys` -- a configuration no feature actually uses. Every real
   // query declares both keys, and `AtomHttpApi` wraps a reactivity-keyed atom in
   // a `transform` that does not carry the serialization metadata, so dehydrating
   // the atom a feature actually exports threw. These exercise the exported atom.
-  it("dehydrates the atom a feature actually exports, reactivity keys and all", () => {
-    const page = makePaginatedUsers({ users: [makeUser({ email: "carol@example.com" })] });
+  it.effect("dehydrates the atom a feature actually exports, reactivity keys and all", () =>
+    Effect.gen(function* () {
+      const page = makePaginatedUsers({ users: [makeUser({ email: "carol@example.com" })] });
 
-    const [dehydrated] = Hydration.toValues([
-      dehydrateQuery(usersQueryAtom({ page: 1, pageSize: 10 }), page),
-    ]) as [Hydration.DehydratedAtomValue];
+      const dehydrated = yield* dehydrateQuery(usersQueryAtom({ page: 1, pageSize: 10 }), page);
 
-    expect(dehydrated.key).toContain("user");
-  });
+      expect(Hydration.toValues([dehydrated]).map((entry) => entry.key)).toEqual([
+        expect.stringContaining("user"),
+      ]);
+    }),
+  );
 
-  it("hydrates a production query atom into a fresh registry without an HTTP call", async () => {
-    // No MSW handler is registered and the lifecycle errors on any unhandled
-    // request, so a fetch here fails the test outright.
-    const page = makePaginatedUsers({ users: [makeUser({ email: "dave@example.com" })] });
-    const variables = { page: 1, pageSize: 10 } as const;
+  it.effect("hydrates a production query atom into a fresh registry without an HTTP call", () =>
+    Effect.gen(function* () {
+      // No MSW handler is registered and the lifecycle errors on any unhandled
+      // request, so a fetch here fails the test outright.
+      const page = makePaginatedUsers({ users: [makeUser({ email: "dave@example.com" })] });
+      const variables = { page: 1, pageSize: 10 } as const;
 
-    const registry = makeRegistry();
-    Hydration.hydrate(registry, [dehydrateQuery(usersQueryAtom(variables), page)]);
+      const registry = makeRegistry();
+      Hydration.hydrate(registry, [yield* dehydrateQuery(usersQueryAtom(variables), page)]);
 
-    const value = await settle(registry, usersQueryAtom(variables));
-    expect(value.users.map((user) => user.email)).toEqual(["dave@example.com"]);
-  });
+      const value = yield* settle(registry, usersQueryAtom(variables));
+      expect(value.users.map((user) => user.email)).toEqual(["dave@example.com"]);
+    }),
+  );
 });

@@ -8,5 +8,6 @@
     $props();
 
   const registry = provideRegistry({ defaultIdleTTL: 1_000 });
+
   untrack(() => onRegistry)(registry);
 </script>

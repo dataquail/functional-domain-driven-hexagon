@@ -1,10 +1,10 @@
 <script module lang="ts">
-  import type * as AsyncResult from "effect/reactivity/AsyncResult";
+  import type * as AsyncResultTypes from "effect/reactivity/AsyncResult";
   import type * as Atom from "effect/reactivity/Atom";
   import type { Snippet } from "svelte";
 
   export type AtomResultProps<A, E> = {
-    readonly atom: Atom.Atom<AsyncResult.AsyncResult<A, E>>;
+    readonly atom: Atom.Atom<AsyncResultTypes.AsyncResult<A, E>>;
     readonly children: Snippet<[A]>;
     readonly pending?: Snippet;
   };
@@ -12,6 +12,8 @@
 
 <script lang="ts" generics="A, E">
   import * as Cause from "effect/Cause";
+  import * as Option from "effect/Option";
+  import * as AsyncResult from "effect/reactivity/AsyncResult";
 
   import { atomValue } from "./atom-bridge.svelte";
   import { getPending } from "./pending-context";
@@ -20,18 +22,21 @@
 
   const result = atomValue(() => atom);
   const routePending = getPending();
-  const fallback = $derived(pending ?? routePending);
+  const fallback = $derived(Option.orElse(Option.fromUndefinedOr(pending), () => routePending));
 
   // A failure goes to the nearest error boundary, as a suspense read does in React.
   const value = $derived.by(() => {
     const current = result.current;
-    if (current._tag === "Failure") throw Cause.squash(current.cause);
+
+    // oxlint-disable-next-line effect/noThrowStatement -- Svelte's error boundary catches only what a derived throws
+    if (AsyncResult.isFailure(current)) throw Cause.squash(current.cause);
+
     return current;
   });
 </script>
 
-{#if value._tag === "Success"}
+{#if AsyncResult.isSuccess(value)}
   {@render children(value.value)}
-{:else if fallback !== undefined}
-  {@render fallback()}
+{:else if Option.isSome(fallback)}
+  {@render fallback.value()}
 {/if}

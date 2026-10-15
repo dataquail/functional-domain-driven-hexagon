@@ -1,5 +1,6 @@
 import { screen } from "@testing-library/svelte";
 import { userEvent } from "@testing-library/user-event";
+import * as Option from "effect/Option";
 import * as AsyncResult from "effect/reactivity/AsyncResult";
 import { describe, expect, it } from "vitest";
 
@@ -22,6 +23,7 @@ const renderSwitcher = (
   pathname = "/",
 ) => {
   server.use(orgsHandlers.findMine(orgs));
+
   return renderView(
     OrgSwitcher,
     {},
@@ -57,6 +59,6 @@ describe("OrgSwitcher view", () => {
 
     await user.click(screen.getByTestId("org-switcher-create-new"));
 
-    expect(registry.get(navigationRequestAtom)?.href).toBe("/");
+    expect(Option.getOrThrow(registry.get(navigationRequestAtom)).href).toBe("/");
   });
 });

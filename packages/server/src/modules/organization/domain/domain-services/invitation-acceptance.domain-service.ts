@@ -1,16 +1,16 @@
 import * as Result from "effect/Result";
 
-import { type DomainEvent } from "@/globals/application/ddd/domain-event.js";
+import { type DomainEvent } from "@/globals/application/ddd/domain-event";
 
 import {
   type InvitationAlreadyAccepted,
   type InvitationExpired,
   type InvitationRevoked,
-} from "../invitation/invitation.errors.js";
-import { type InvitationRoot } from "../invitation/invitation.root.js";
-import { type AcceptInput, InvitationRootOps } from "../invitation/invitation.root-ops.js";
-import { type MembershipRoot } from "../membership/membership.root.js";
-import { MembershipRootOps } from "../membership/membership.root-ops.js";
+} from "../invitation/invitation.errors";
+import { type InvitationRoot } from "../invitation/invitation.root";
+import { type AcceptInput, InvitationRootOps } from "../invitation/invitation.root-ops";
+import { type MembershipRoot } from "../membership/membership.root";
+import { MembershipRootOps } from "../membership/membership.root-ops";
 
 export type AcceptanceOutcome = {
   readonly invitation: InvitationRoot;
@@ -33,14 +33,17 @@ const accept = (
   InvitationAlreadyAccepted | InvitationRevoked | InvitationExpired
 > => {
   const accepted = InvitationRootOps.accept(invitation, input);
+
   if (Result.isFailure(accepted)) {
     return Result.fail(accepted.failure);
   }
+
   const { events: membershipEvents, membership } = MembershipRootOps.create({
     userId: input.userId,
     organizationId: invitation.organizationId,
     now: input.now,
   });
+
   return Result.succeed({
     invitation: accepted.success.invitation,
     membership,

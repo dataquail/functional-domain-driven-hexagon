@@ -13,7 +13,7 @@
 <script lang="ts">
   import { Checkbox as CheckboxPrimitive } from "bits-ui";
 
-  import { CheckIcon } from "./icon";
+  import { CheckIcon } from "./icon/icons";
 
   const {
     "aria-label": ariaLabel,

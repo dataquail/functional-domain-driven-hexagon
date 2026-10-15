@@ -2,19 +2,21 @@ import { Query } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { TodoId } from "@/modules/todos/domain/todo/todo.id";
 
 export const ListTodosTodoView = Schema.Struct({
   id: TodoId,
   title: Schema.String,
   completed: Schema.Boolean,
 });
+
 export type ListTodosTodoView = typeof ListTodosTodoView.Type;
 
 export const ListTodosResultView = Schema.Struct({
   todos: Schema.Array(ListTodosTodoView),
 });
+
 export type ListTodosResult = typeof ListTodosResultView.Type;
 
 export const ListTodosQuery = Query.make("ListTodosQuery", {
@@ -22,4 +24,5 @@ export const ListTodosQuery = Query.make("ListTodosQuery", {
   success: ListTodosResultView,
   failure: PersistenceUnavailable,
 });
+
 export type ListTodosPayload = Query.Payload<typeof ListTodosQuery>;

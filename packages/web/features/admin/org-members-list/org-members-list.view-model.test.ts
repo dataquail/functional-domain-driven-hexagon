@@ -1,10 +1,11 @@
+import { describe, expect, it } from "@effect/vitest";
 import * as OrganizationContract from "@org/contracts/api/OrganizationContract";
 import { UserId } from "@org/contracts/EntityIds";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import type * as AsyncResult from "effect/reactivity/AsyncResult";
 import type * as Atom from "effect/reactivity/Atom";
 import * as AtomRegistry from "effect/reactivity/AtomRegistry";
-import { describe, expect, it } from "vitest";
 
 import { apiTransportAtom } from "@/services/atom/api-transport.shared";
 import { notificationAtom } from "@/services/atom/notifications.shared";
@@ -31,95 +32,106 @@ const makeRegistry = () =>
 const run = <A, E>(
   registry: AtomRegistry.AtomRegistry,
   atom: Atom.Atom<AsyncResult.AsyncResult<A, E>>,
-) => Effect.runPromise(AtomRegistry.getResult(registry, atom, { suspendOnWaiting: true }));
+) => AtomRegistry.getResult(registry, atom, { suspendOnWaiting: true });
 
 describe("org members list ViewModel", () => {
-  it("maps each member to a row, carrying the admin flag and joined date", async () => {
-    server.use(
-      orgsHandlers.findMembers([
-        makeOrganizationMember({ isAdmin: true }),
-        makeOrganizationMember({ userId: BOB_ID, email: "bob@example.com" }),
-      ]),
-    );
+  it.effect("maps each member to a row, carrying the admin flag and joined date", () =>
+    Effect.gen(function* () {
+      server.use(
+        orgsHandlers.findMembers([
+          makeOrganizationMember({ isAdmin: true }),
+          makeOrganizationMember({ userId: BOB_ID, email: "bob@example.com" }),
+        ]),
+      );
 
-    const registry = makeRegistry();
-    await run(registry, orgMembersResultAtom(ORG_A_ID));
+      const registry = makeRegistry();
+      yield* run(registry, orgMembersResultAtom(ORG_A_ID));
 
-    expect(registry.get(orgMembersListAtom(ORG_A_ID)).rows).toEqual([
-      {
-        userId: makeOrganizationMember().userId,
-        email: "alice@example.com",
-        joinedAtLabel: "2026-01-01",
-        isAdmin: true,
-      },
-      { userId: BOB_ID, email: "bob@example.com", joinedAtLabel: "2026-01-01", isAdmin: false },
-    ]);
-  });
+      expect(registry.get(orgMembersListAtom(ORG_A_ID)).rows).toEqual([
+        {
+          userId: makeOrganizationMember().userId,
+          email: "alice@example.com",
+          joinedAtLabel: "2026-01-01",
+          isAdmin: true,
+        },
+        { userId: BOB_ID, email: "bob@example.com", joinedAtLabel: "2026-01-01", isAdmin: false },
+      ]);
+    }),
+  );
 
-  it("reports emptiness only once the roster has arrived", async () => {
-    server.use(orgsHandlers.findMembers([]));
+  it.effect("reports emptiness only once the roster has arrived", () =>
+    Effect.gen(function* () {
+      server.use(orgsHandlers.findMembers([]));
 
-    const registry = makeRegistry();
-    expect(registry.get(orgMembersListAtom(ORG_A_ID)).isEmpty).toBe(false);
+      const registry = makeRegistry();
+      expect(registry.get(orgMembersListAtom(ORG_A_ID)).isEmpty).toBe(false);
 
-    await run(registry, orgMembersResultAtom(ORG_A_ID));
+      yield* run(registry, orgMembersResultAtom(ORG_A_ID));
 
-    expect(registry.get(orgMembersListAtom(ORG_A_ID)).isEmpty).toBe(true);
-  });
+      expect(registry.get(orgMembersListAtom(ORG_A_ID)).isEmpty).toBe(true);
+    }),
+  );
 
-  it("promotes the member it was given, in the org it was given", async () => {
-    const promoted: Array<{ orgId: string; userId: string }> = [];
-    server.use(
-      orgsHandlers.findMembers([makeOrganizationMember()]),
-      typedHandler(getEndpoint(OrganizationContract.Group, "promoteMember"), ({ path }) => {
-        promoted.push({ orgId: path.orgId, userId: path.userId });
-        return Effect.void;
-      }),
-    );
+  it.effect("promotes the member it was given, in the org it was given", () =>
+    Effect.gen(function* () {
+      const promoted: Array<{ orgId: string; userId: string }> = [];
+      server.use(
+        orgsHandlers.findMembers([makeOrganizationMember()]),
+        typedHandler(getEndpoint(OrganizationContract.Group, "promoteMember"), ({ path }) => {
+          promoted.push({ orgId: path.orgId, userId: path.userId });
 
-    const registry = makeRegistry();
-    await run(registry, orgMembersResultAtom(ORG_A_ID));
+          return Effect.void;
+        }),
+      );
 
-    registry.set(promoteMemberActionAtom, { orgId: ORG_A_ID, userId: BOB_ID });
-    await run(registry, promoteMemberActionAtom);
+      const registry = makeRegistry();
+      yield* run(registry, orgMembersResultAtom(ORG_A_ID));
 
-    expect(promoted).toEqual([{ orgId: ORG_A_ID, userId: BOB_ID }]);
-    expect(registry.get(notificationAtom)).toMatchObject({
-      kind: "success",
-      message: "Member promoted to admin.",
-    });
-  });
+      registry.set(promoteMemberActionAtom, { orgId: ORG_A_ID, userId: BOB_ID });
+      yield* run(registry, promoteMemberActionAtom);
 
-  it("surfaces a role conflict rather than claiming the demotion worked", async () => {
-    server.use(
-      orgsHandlers.findMembers([makeOrganizationMember()]),
-      orgsHandlers.demoteMember({ result: "OrganizationRoleConflictError" }),
-    );
+      expect(promoted).toEqual([{ orgId: ORG_A_ID, userId: BOB_ID }]);
+      expect(Option.getOrThrow(registry.get(notificationAtom))).toMatchObject({
+        kind: "success",
+        message: "Member promoted to admin.",
+      });
+    }),
+  );
 
-    const registry = makeRegistry();
-    await run(registry, orgMembersResultAtom(ORG_A_ID));
+  it.effect("surfaces a role conflict rather than claiming the demotion worked", () =>
+    Effect.gen(function* () {
+      server.use(
+        orgsHandlers.findMembers([makeOrganizationMember()]),
+        orgsHandlers.demoteMember({ result: "OrganizationRoleConflictError" }),
+      );
 
-    registry.set(demoteMemberActionAtom, { orgId: ORG_A_ID, userId: BOB_ID });
-    await run(registry, demoteMemberActionAtom).catch(() => undefined);
+      const registry = makeRegistry();
+      yield* run(registry, orgMembersResultAtom(ORG_A_ID));
 
-    expect(registry.get(notificationAtom)).toMatchObject({
-      kind: "error",
-      message: "Not an admin.",
-    });
-  });
+      registry.set(demoteMemberActionAtom, { orgId: ORG_A_ID, userId: BOB_ID });
+      yield* Effect.exit(run(registry, demoteMemberActionAtom));
 
-  it("announces a removal", async () => {
-    server.use(orgsHandlers.findMembers([makeOrganizationMember()]), orgsHandlers.removeMember());
+      expect(Option.getOrThrow(registry.get(notificationAtom))).toMatchObject({
+        kind: "error",
+        message: "Not an admin.",
+      });
+    }),
+  );
 
-    const registry = makeRegistry();
-    await run(registry, orgMembersResultAtom(ORG_A_ID));
+  it.effect("announces a removal", () =>
+    Effect.gen(function* () {
+      server.use(orgsHandlers.findMembers([makeOrganizationMember()]), orgsHandlers.removeMember());
 
-    registry.set(removeMemberActionAtom, { orgId: ORG_A_ID, userId: BOB_ID });
-    await run(registry, removeMemberActionAtom);
+      const registry = makeRegistry();
+      yield* run(registry, orgMembersResultAtom(ORG_A_ID));
 
-    expect(registry.get(notificationAtom)).toMatchObject({
-      kind: "success",
-      message: "Member removed.",
-    });
-  });
+      registry.set(removeMemberActionAtom, { orgId: ORG_A_ID, userId: BOB_ID });
+      yield* run(registry, removeMemberActionAtom);
+
+      expect(Option.getOrThrow(registry.get(notificationAtom))).toMatchObject({
+        kind: "success",
+        message: "Member removed.",
+      });
+    }),
+  );
 });

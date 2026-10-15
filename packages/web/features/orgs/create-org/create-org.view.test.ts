@@ -17,7 +17,7 @@ describe("CreateOrg view", () => {
 
   it("writes each keystroke back to the ViewModel", async () => {
     const user = userEvent.setup();
-    const { registry } = renderView(CreateOrg);
+    const { registry } = renderView(CreateOrg, {});
 
     await user.type(screen.getByTestId("create-org-name"), "Acme");
 
@@ -25,7 +25,7 @@ describe("CreateOrg view", () => {
   });
 
   it("shows no error before a submit attempt", () => {
-    renderView(CreateOrg);
+    renderView(CreateOrg, {});
     expect(screen.queryAllByRole("alert")).toHaveLength(0);
   });
 
@@ -37,6 +37,7 @@ describe("CreateOrg view", () => {
 
   it("dispatches submit to the ViewModel", async () => {
     const user = userEvent.setup();
+
     const { registry } = renderView(
       CreateOrg,
       {},

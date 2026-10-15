@@ -6,7 +6,7 @@ import * as Ref from "effect/Ref";
 import {
   InvitationMailer,
   type SendInvitationInput,
-} from "@/modules/organization/domain/ports/clients/invitation-mailer.client.js";
+} from "@/modules/organization/domain/ports/clients/invitation-mailer.client";
 
 // Records every invitation-email request so invite-flow use-case unit
 // tests can assert the side effect (recipient + token) without rendering
@@ -24,6 +24,7 @@ export const InvitationMailerFake: Layer.Layer<InvitationMailer | SentInvitation
   Layer.effectContext(
     Effect.gen(function* () {
       const sent = yield* Ref.make<ReadonlyArray<SendInvitationInput>>([]);
+
       return Context.empty().pipe(
         Context.add(
           InvitationMailer,

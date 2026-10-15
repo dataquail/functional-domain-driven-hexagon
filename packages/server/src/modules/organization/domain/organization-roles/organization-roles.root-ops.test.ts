@@ -1,18 +1,21 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import * as Arr from "effect/Array";
+import * as Option from "effect/Option";
+import * as Predicate from "effect/Predicate";
 import * as Result from "effect/Result";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
 import {
   AlreadyHasOrganizationRole,
   DoesNotHaveOrganizationRole,
-} from "./organization-role.errors.js";
-import { type OrganizationRoleEvent } from "./organization-role.events.js";
-import { OrganizationRolesRootOps } from "./organization-roles.root-ops.js";
+} from "./organization-role.errors";
+import { type OrganizationRoleEvent } from "./organization-role.events";
+import { OrganizationRolesRootOps } from "./organization-roles.root-ops";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
@@ -21,13 +24,12 @@ const issuedBy = UserId.make("99999999-9999-9999-9999-999999999999");
 const expectEvent = <T extends OrganizationRoleEvent["_tag"]>(
   events: ReadonlyArray<OrganizationRoleEvent>,
   tag: T,
-): Extract<OrganizationRoleEvent, { _tag: T }> => {
-  const event = events[0];
-  if (event?._tag !== tag) {
-    throw new Error(`expected ${tag}, got ${String(event?._tag)}`);
-  }
-  return event as Extract<OrganizationRoleEvent, { _tag: T }>;
-};
+): Extract<OrganizationRoleEvent, { _tag: T }> =>
+  Option.getOrThrow(
+    Option.filter(Arr.head(events), (event): event is Extract<OrganizationRoleEvent, { _tag: T }> =>
+      Predicate.isTagged(event, tag),
+    ),
+  );
 
 describe("OrganizationRolesRootOps.empty", () => {
   it("constructs an aggregate with no roles", () => {
@@ -47,6 +49,7 @@ describe("OrganizationRolesRootOps.grantRole", () => {
         issuedBy,
       ),
     );
+
     deepStrictEqual(
       result.organizationRoles.roles.map((r) => ({ role: r.role, issuedBy: r.issuedBy })),
       [{ role: "admin", issuedBy }],
@@ -66,8 +69,10 @@ describe("OrganizationRolesRootOps.grantRole", () => {
         issuedBy,
       ),
     );
+
     const second = OrganizationRolesRootOps.grantRole(first.organizationRoles, "admin", issuedBy);
     deepStrictEqual(Result.isFailure(second), true);
+
     if (Result.isFailure(second)) {
       deepStrictEqual(Schema.is(AlreadyHasOrganizationRole)(second.failure), true);
     }
@@ -83,9 +88,11 @@ describe("OrganizationRolesRootOps.revokeRole", () => {
         issuedBy,
       ),
     );
+
     const result = Result.getOrThrow(
       OrganizationRolesRootOps.revokeRole(granted.organizationRoles, "admin"),
     );
+
     deepStrictEqual([...result.organizationRoles.roles], []);
     const event = expectEvent(result.events, "OrganizationRoleRevoked");
     deepStrictEqual(event.userId, userId);
@@ -98,7 +105,9 @@ describe("OrganizationRolesRootOps.revokeRole", () => {
       OrganizationRolesRootOps.empty(userId, orgId),
       "admin",
     );
+
     deepStrictEqual(Result.isFailure(result), true);
+
     if (Result.isFailure(result)) {
       deepStrictEqual(Schema.is(DoesNotHaveOrganizationRole)(result.failure), true);
     }

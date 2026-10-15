@@ -18,15 +18,16 @@ export const toEnvelope = (row: RowSchemas.EventOutboxRow): Event.Envelope => ({
 });
 
 // Stamping `last_attempted_at` as the claim keeps a concurrent sweep off this batch.
-export const sweepOutbox = (
-  staleAfter: Duration.Duration = Duration.minutes(1),
-): Effect.Effect<number, never, Database.Database | AfterCommitTransport> =>
-  Effect.gen(function* () {
-    const sql = yield* Database.Database;
-    const transport = yield* AfterCommitTransport;
-    const stale = `${Duration.toMillis(staleAfter)} milliseconds`;
+export const sweepOutbox: (
+  staleAfter?: Duration.Duration,
+) => Effect.Effect<number, never, Database.Database | AfterCommitTransport> = Effect.fn(
+  "outbox.sweep",
+)(function* (staleAfter: Duration.Duration = Duration.minutes(1)) {
+  const sql = yield* Database.Database;
+  const transport = yield* AfterCommitTransport;
+  const stale = `${Duration.toMillis(staleAfter)} milliseconds`;
 
-    const claimed = yield* sql`
+  const claimed = yield* sql`
       UPDATE platform.event_outbox
       SET last_attempted_at = now()
       WHERE (event_id, handler) IN (
@@ -42,6 +43,7 @@ export const sweepOutbox = (
       RETURNING *
     `.pipe(Database.rows(RowSchemas.EventOutboxRow), Effect.orDie);
 
-    yield* transport.flush(claimed.map(toEnvelope));
-    return claimed.length;
-  }).pipe(Effect.withSpan("outbox.sweep"));
+  yield* transport.flush(claimed.map(toEnvelope));
+
+  return claimed.length;
+});

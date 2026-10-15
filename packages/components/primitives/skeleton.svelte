@@ -1,6 +1,8 @@
 <script module lang="ts">
   export type SkeletonHeight = "text" | "control" | "row" | "card";
+
   export type SkeletonWidth = "full" | "half" | "switcher";
+
   export type SkeletonRadius = "sm" | "md" | "lg";
 
   const HEIGHT: Record<SkeletonHeight, string> = {

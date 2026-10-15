@@ -1,18 +1,19 @@
 import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql";
 import {
   translateDatabaseErrors,
   translatePersistenceUnavailable,
-} from "@/globals/infrastructure/database/translate-database-errors.js";
-import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors.js";
-import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
-import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.js";
+} from "@/globals/infrastructure/database/translate-database-errors";
+import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors";
+import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository";
+import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root";
 
-import * as WalletMapper from "./wallet.mapper.js";
+import * as WalletMapper from "./wallet.mapper";
 
 export const WalletRepositoryLive = Layer.effect(
   WalletRepository,
@@ -21,6 +22,7 @@ export const WalletRepositoryLive = Layer.effect(
 
     const insertOne = Effect.fn("WalletRepository.insertOne")((wallet: WalletRoot) => {
       const row = WalletMapper.toPersistence(wallet);
+
       return sql`
           INSERT INTO wallet.wallets (id, organization_id, balance, created_at, updated_at)
           VALUES (
@@ -32,13 +34,15 @@ export const WalletRepositoryLive = Layer.effect(
           )
         `.pipe(
         Database.exec,
-        Effect.catchTag("DatabaseError", (e) =>
-          e.type === "unique_violation"
-            ? new WalletAlreadyExistsForOrganization({
-                organizationId: wallet.organizationId,
-              })
-            : Effect.die(e),
-        ),
+        Effect.catchTag("DatabaseError", (e) => {
+          if (e.type === "unique_violation") {
+            return Effect.fail(
+              new WalletAlreadyExistsForOrganization({ organizationId: wallet.organizationId }),
+            );
+          }
+
+          return Effect.die(e);
+        }),
         translatePersistenceUnavailable,
       );
     });
@@ -47,14 +51,17 @@ export const WalletRepositoryLive = Layer.effect(
     // and the `LIMIT 1` (every spec used with findOne selects at most one row —
     // the unique organization_id index guarantees at most one wallet per org).
     const findOne = Effect.fn("WalletRepository.findOne")((spec: Specification<WalletRoot>) =>
-      sql`
+      criteriaToWhere(sql, spec.criteria, WalletMapper.columns).pipe(
+        Effect.flatMap(
+          (where) => sql`
           SELECT * FROM wallet.wallets
-          WHERE ${criteriaToWhere(sql, spec.criteria, WalletMapper.columns)}
+          WHERE ${where}
           LIMIT 1
-        `.pipe(
+        `,
+        ),
         Database.maybeRow(RowSchemas.WalletRow),
 
-        Effect.map((row) => (row === null ? null : WalletMapper.toDomain(row))),
+        Effect.map(Option.map(WalletMapper.toDomain)),
         translateDatabaseErrors,
       ),
     );

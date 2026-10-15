@@ -1,8 +1,8 @@
 import { Command, Query } from "@effect-server-utils/cqrs";
 
-import { UserAlreadyExists } from "./domain/user/user.errors.js";
-import { userCommandGroup } from "./user.command-handlers.js";
-import { userQueryGroup } from "./user.query-handlers.js";
+import { UserAlreadyExists } from "./domain/user/user.errors";
+import { userCommandGroup } from "./user.command-handlers";
+import { userQueryGroup } from "./user.query-handlers";
 
 // The peer surface, one subset per consumer rather than one per module: auth
 // provisions or finds a user and organization reads members' emails, and neither

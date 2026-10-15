@@ -2,18 +2,18 @@ import { QueryBus } from "@effect-server-utils/cqrs";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
-import { Actions } from "@/globals/application/ports/actions.js";
-import * as Authz from "@/globals/infrastructure/auth/authz.js";
+import { Actions } from "@/globals/application/ports/actions";
+import * as Authz from "@/globals/infrastructure/auth/authz";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { OrganizationCollectionResource } from "@/modules/organization/policies/organization.policies.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { OrganizationCollectionResource } from "@/modules/organization/policies/organization.policies";
 import {
   FindAllOrganizationsQuery,
   type FindAllOrganizationsResult,
   type FindAllOrganizationsView,
-} from "@/modules/organization/queries/find-all-organizations.query.js";
+} from "@/modules/organization/queries/find-all-organizations.query";
 
 const toOrganizationContract = (
   view: FindAllOrganizationsView,
@@ -41,10 +41,12 @@ export const findAllEndpoint = Effect.fn("OrganizationAdminLive.findAll")(functi
 ) {
   yield* Authz.hasPermissions(OrganizationCollectionResource, Actions.Read);
   const queryBus = yield* QueryBus;
+
   const result = yield* queryBus.execute(FindAllOrganizationsQuery, {
     page: request.query.page,
     pageSize: request.query.pageSize,
     includeDeleted: request.query.includeDeleted === "true",
   });
+
   return toPaginatedContract(result);
 }, recoverPersistenceUnavailable);

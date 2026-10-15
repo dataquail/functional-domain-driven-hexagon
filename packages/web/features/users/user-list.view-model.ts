@@ -2,6 +2,8 @@
 // derived pagination view. No framework: everything here runs under a bare
 // `AtomRegistry` in a test.
 
+import type { UserContract } from "@org/contracts/api/Contracts";
+import * as Option from "effect/Option";
 import * as AsyncResult from "effect/reactivity/AsyncResult";
 import * as Atom from "effect/reactivity/Atom";
 
@@ -33,6 +35,12 @@ export const computePaginationView = (input: {
   const page = Math.min(Math.max(1, input.currentPage), totalPages);
   const isEmpty = safeTotal === 0;
 
+  const displayedRange = (): PaginationView["displayedRange"] => {
+    if (isEmpty) return { from: 0, to: 0 };
+
+    return { from: (page - 1) * safePageSize + 1, to: Math.min(page * safePageSize, safeTotal) };
+  };
+
   return {
     page,
     pageSize: safePageSize,
@@ -41,10 +49,7 @@ export const computePaginationView = (input: {
     hasPrevious: page > 1,
     hasNext: page < totalPages,
     isEmpty,
-    displayedRange: {
-      from: isEmpty ? 0 : (page - 1) * safePageSize + 1,
-      to: isEmpty ? 0 : Math.min(page * safePageSize, safeTotal),
-    },
+    displayedRange: displayedRange(),
   };
 };
 
@@ -56,10 +61,14 @@ export const usersResultAtom = Atom.make((get) =>
 
 export const paginationAtom = Atom.make((get): PaginationView => {
   const result = get(usersResultAtom);
+
   return computePaginationView({
     currentPage: get(pageAtom),
     pageSize: PAGE_SIZE,
-    total: AsyncResult.isSuccess(result) ? result.value.total : 0,
+    total: AsyncResult.getOrElse(
+      AsyncResult.map(result, (loaded) => loaded.total),
+      () => 0,
+    ),
   });
 });
 
@@ -67,8 +76,18 @@ export type PageChange = "next" | "previous";
 
 export const changePageAtom = Atom.fnSync<PageChange>()((direction, get) => {
   const view = get(paginationAtom);
-  get.set(
-    pageAtom,
-    direction === "next" ? Math.min(view.totalPages, view.page + 1) : Math.max(1, view.page - 1),
-  );
+
+  if (direction === "next") {
+    get.set(pageAtom, Math.min(view.totalPages, view.page + 1));
+
+    return;
+  }
+
+  get.set(pageAtom, Math.max(1, view.page - 1));
 });
+
+export const describeAddress = (user: UserContract.User): string =>
+  Option.match(Option.fromNullOr(user.address), {
+    onNone: () => "No address on file",
+    onSome: (address) => `${address.street}, ${address.postalCode} ${address.country}`,
+  });

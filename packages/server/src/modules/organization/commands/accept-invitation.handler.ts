@@ -1,16 +1,17 @@
 import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
-import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
-import { type AcceptInvitationPayload } from "@/modules/organization/commands/accept-invitation.command.js";
-import { InvitationAcceptance } from "@/modules/organization/domain/domain-services/invitation-acceptance.domain-service.js";
-import { InvitationTokenNotFound } from "@/modules/organization/domain/invitation/invitation.errors.js";
-import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
-import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification.js";
-import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
-import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors.js";
-import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.js";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
+import { type AcceptInvitationPayload } from "@/modules/organization/commands/accept-invitation.command";
+import { InvitationAcceptance } from "@/modules/organization/domain/domain-services/invitation-acceptance.domain-service";
+import { InvitationTokenNotFound } from "@/modules/organization/domain/invitation/invitation.errors";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository";
+import { InvitationSpecifications } from "@/modules/organization/domain/invitation/invitation.specification";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository";
+import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors";
+import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl";
 
 export const acceptInvitationHandler = Effect.fn("acceptInvitationHandler")(
   function* (cmd: AcceptInvitationPayload) {
@@ -18,6 +19,7 @@ export const acceptInvitationHandler = Effect.fn("acceptInvitationHandler")(
     // See `createOrganizationHandler` for the rationale on placing this at
     // the use-case level rather than HTTP authz.
     const roles = yield* PlatformRoles;
+
     if (yield* roles.isSuperAdmin(cmd.userId)) {
       return yield* new SuperAdminCannotOwnOrganization({ userId: cmd.userId });
     }
@@ -27,13 +29,18 @@ export const acceptInvitationHandler = Effect.fn("acceptInvitationHandler")(
     const bus = yield* DomainEventBus;
     const now = yield* DateTime.now;
 
-    const invitation = yield* invRepo.findOne(InvitationSpecifications.withToken(cmd.token));
-    if (invitation === null) {
+    const maybeInvitation = yield* invRepo.findOne(InvitationSpecifications.withToken(cmd.token));
+
+    if (Option.isNone(maybeInvitation)) {
       return yield* new InvitationTokenNotFound();
     }
+
+    const invitation = maybeInvitation.value;
+
     const result = yield* Effect.fromResult(
       InvitationAcceptance.accept(invitation, { userId: cmd.userId, now }),
     );
+
     yield* Effect.annotateCurrentSpan("invitation.id", invitation.id);
     yield* Effect.annotateCurrentSpan("organization.id", invitation.organizationId);
 

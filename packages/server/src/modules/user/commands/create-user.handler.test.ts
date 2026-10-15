@@ -1,24 +1,29 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertDefined, assertNone } from "@effect/vitest/utils";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { UserAlreadyExists } from "@/modules/user/domain/user/user.errors.js";
-import { type UserCreated } from "@/modules/user/domain/user/user.events.js";
-import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
-import { UserSpecifications } from "@/modules/user/domain/user/user.specification.js";
-import { UserRepositoryFake } from "@/modules/user/infrastructure/repositories/user.repository-fake.js";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
+import { UserAlreadyExists } from "@/modules/user/domain/user/user.errors";
+import { type UserCreated } from "@/modules/user/domain/user/user.events";
+import { UserRepository } from "@/modules/user/domain/user/user.repository";
+import { UserSpecifications } from "@/modules/user/domain/user/user.specification";
+import { UserRepositoryFake } from "@/modules/user/infrastructure/repositories/user.repository-fake";
+import { CryptoFake } from "@/test-utils/crypto-fake";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus";
 
-import { createUserHandler } from "./create-user.handler.js";
+import { createUserHandler } from "./create-user.handler";
 
-const TestLayer = Layer.mergeAll(UserRepositoryFake, RecordingEventBus, PassThroughUnitOfWork);
+const TestLayer = Layer.mergeAll(
+  UserRepositoryFake,
+  RecordingEventBus,
+  PassThroughUnitOfWork,
+  CryptoFake,
+);
 
 const baseCmd = {
   email: "alice@example.com",
@@ -32,8 +37,12 @@ describe("createUserHandler", () => {
     Effect.gen(function* () {
       const repo = yield* UserRepository;
       const id = yield* createUserHandler(baseCmd);
-      const stored = yield* repo.findOne(UserSpecifications.withId(id));
-      if (stored === null) throw new Error("expected stored user");
+
+      const stored = yield* Effect.map(
+        repo.findOne(UserSpecifications.withId(id)),
+        Option.getOrThrow,
+      );
+
       deepStrictEqual(stored.email, "alice@example.com");
     }).pipe(Effect.provide(TestLayer)),
   );
@@ -45,9 +54,12 @@ describe("createUserHandler", () => {
       const events = yield* rec.byTag<UserCreated>("UserCreated");
       deepStrictEqual(events.length, 1);
       const event = events[0];
-      if (event === undefined) throw new Error("expected UserCreated event");
+      assertDefined(event);
       deepStrictEqual(event.email, "alice@example.com");
-      deepStrictEqual(event.address?.country, "USA");
+      deepStrictEqual(
+        Option.map(event.address, (address) => address.country),
+        Option.some("USA"),
+      );
     }).pipe(Effect.provide(TestLayer)),
   );
 
@@ -55,24 +67,23 @@ describe("createUserHandler", () => {
     Effect.gen(function* () {
       const repo = yield* UserRepository;
       const id = yield* createUserHandler({ email: "jit@example.com" });
-      const stored = yield* repo.findOne(UserSpecifications.withId(id));
-      if (stored === null) throw new Error("expected stored user");
+
+      const stored = yield* Effect.map(
+        repo.findOne(UserSpecifications.withId(id)),
+        Option.getOrThrow,
+      );
+
       deepStrictEqual(stored.email, "jit@example.com");
-      deepStrictEqual(stored.address, null);
+      assertNone(stored.address);
     }).pipe(Effect.provide(TestLayer)),
   );
 
   it.effect("fails UserAlreadyExists when the email is taken", () =>
     Effect.gen(function* () {
       yield* createUserHandler(baseCmd);
-      const exit = yield* Effect.exit(createUserHandler(baseCmd));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(UserAlreadyExists)(error), true);
-      }
+      const error = yield* Effect.flip(createUserHandler(baseCmd));
+
+      deepStrictEqual(Schema.is(UserAlreadyExists)(error), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 

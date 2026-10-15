@@ -10,3 +10,5 @@ pnpm-lock.yaml
 .next
 **/.astro/
 **/.svelte-kit/
+tools/oxlint/anti-slop/
+tools/oxlint/effect-oxc/

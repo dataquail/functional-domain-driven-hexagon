@@ -2,22 +2,24 @@ import { Query } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
 
 export const OrganizationAuthzView = Schema.Struct({
   organizationId: OrganizationId,
 });
+
 export type OrganizationAuthzView = typeof OrganizationAuthzView.Type;
 
 // Existence projection backing the `organization` authz resource. Soft-deleted
 // rows are included: the restore endpoint has to resolve a tombstoned
 // organization to decide whether the caller may act on it.
 //
-// Returns null rather than failing — absence is a fact about the read model, and
+// Returns None rather than failing — absence is a fact about the read model, and
 // the resolver is the layer that turns it into `NotFound`.
 export const FindOrganizationByIdQuery = Query.make("FindOrganizationByIdQuery", {
   payload: { organizationId: OrganizationId },
-  success: Schema.NullOr(OrganizationAuthzView),
+  success: Schema.OptionFromNullOr(OrganizationAuthzView),
   failure: PersistenceUnavailable,
 });
+
 export type FindOrganizationByIdPayload = Query.Payload<typeof FindOrganizationByIdQuery>;

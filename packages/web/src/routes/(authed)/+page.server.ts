@@ -10,6 +10,8 @@ export const load = async ({
   readonly parent: () => Promise<Awaited<ReturnType<typeof authedLoad>>>;
 }) => {
   const { user } = await parent();
+
   if (user.isSuperAdmin) redirect(302, "/admin/orgs");
+
   return {};
 };

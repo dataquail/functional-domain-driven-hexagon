@@ -6,25 +6,29 @@ import * as Schema from "effect/Schema";
 // safety bucket for event types we haven't modeled yet (record-and-200 so
 // Stripe stops retrying). Produced by the BillingGateway port
 // (`verifyAndParseWebhook`) and carried by the `StripeWebhookIngested` event.
-export const StripeWebhookEvent = Schema.Union([
-  Schema.Struct({
-    eventId: Schema.String,
-    type: Schema.Literals([
-      "customer.subscription.created",
-      "customer.subscription.updated",
-      "customer.subscription.deleted",
-    ]),
-    subscription: Schema.Struct({
-      stripeSubscriptionId: Schema.String,
-      status: Schema.String,
-      currentPeriodEnd: Schema.NullOr(Schema.DateTimeUtc),
-    }),
+export const StripeSubscriptionWebhookEvent = Schema.Struct({
+  eventId: Schema.String,
+  type: Schema.Literals([
+    "customer.subscription.created",
+    "customer.subscription.updated",
+    "customer.subscription.deleted",
+  ]),
+  subscription: Schema.Struct({
+    stripeSubscriptionId: Schema.String,
+    status: Schema.String,
+    currentPeriodEnd: Schema.OptionFromNullOr(Schema.DateTimeUtc),
   }),
+});
+
+export type StripeSubscriptionWebhookEvent = typeof StripeSubscriptionWebhookEvent.Type;
+
+export const StripeWebhookEvent = Schema.Union([
+  StripeSubscriptionWebhookEvent,
   Schema.Struct({
     eventId: Schema.String,
     type: Schema.Literals(["invoice.paid", "invoice.payment_failed"]),
     invoice: Schema.Struct({
-      stripeSubscriptionId: Schema.NullOr(Schema.String),
+      stripeSubscriptionId: Schema.OptionFromNullOr(Schema.String),
     }),
   }),
   Schema.Struct({
@@ -32,4 +36,5 @@ export const StripeWebhookEvent = Schema.Union([
     type: Schema.Literal("unknown"),
   }),
 ]);
+
 export type StripeWebhookEvent = typeof StripeWebhookEvent.Type;

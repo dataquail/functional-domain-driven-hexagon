@@ -1,4 +1,7 @@
+import type * as Cause from "effect/Cause";
 import * as Context from "effect/Context";
+import type * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
 export type EmailBindingMessage = {
   readonly from: { readonly email: string; readonly name: string };
@@ -8,11 +11,13 @@ export type EmailBindingMessage = {
   readonly html: string;
 };
 
-export type EmailBindingShape = {
-  readonly send?: (message: EmailBindingMessage) => Promise<unknown>;
+export type EmailBindingService = {
+  readonly send: Option.Option<
+    (message: EmailBindingMessage) => Effect.Effect<void, Cause.UnknownError>
+  >;
 };
 
 // The Cloudflare `send_email` binding, present only inside a deployed Worker.
-export const EmailBinding = Context.Reference<EmailBindingShape>("EmailBinding", {
-  defaultValue: () => ({}),
+export const EmailBinding = Context.Reference<EmailBindingService>("EmailBinding", {
+  defaultValue: () => ({ send: Option.none() }),
 });

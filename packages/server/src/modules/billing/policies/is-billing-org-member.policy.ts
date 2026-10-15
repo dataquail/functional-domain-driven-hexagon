@@ -1,13 +1,13 @@
 import { type ResourceCheck } from "@effect-server-utils/authz";
 
-import { type OrganizationAccess } from "@/modules/billing/domain/ports/acl/organization-access.acl.js";
+import { type OrganizationAccess } from "@/modules/billing/domain/ports/acl/organization-access.acl";
 
-import { type BillingResourceContext } from "./billing.resource-resolver.js";
+import { type BillingResourceContext } from "./billing.resource-resolver";
 
 // "Is this caller a member of the billing-resource's org?" — gates reading the
 // subscription. The port arrives as an argument rather than through the Effect
 // environment, so the returned check is `R = never`.
-export const makeIsBillingOrgMember =
+export const isBillingOrgMemberCheck =
   (organizations: OrganizationAccess["Service"]): ResourceCheck<BillingResourceContext> =>
   (caller, resource) =>
     organizations.isMember(caller.userId, resource.organizationId);

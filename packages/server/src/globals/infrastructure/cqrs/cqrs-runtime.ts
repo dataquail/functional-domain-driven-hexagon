@@ -11,57 +11,57 @@ import { makeDurableUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { TransactionDriverLive } from "@/globals/infrastructure/database/transaction-driver-live.js";
-import { DeliveryLedgerLive } from "@/globals/infrastructure/events/delivery-ledger-live.js";
-import { type DomainEventQueue } from "@/globals/infrastructure/events/domain-event-queue.js";
+import { TransactionDriverLive } from "@/globals/infrastructure/database/transaction-driver-live";
+import { DeliveryLedgerLive } from "@/globals/infrastructure/events/delivery-ledger-live";
+import { type DomainEventQueue } from "@/globals/infrastructure/events/domain-event-queue";
 import {
   InProcessDomainEventDeliveryLive,
   InProcessDomainEventQueueLive,
-} from "@/globals/infrastructure/events/in-process-domain-event-queue-live.js";
-import { OutboxTransportLive } from "@/globals/infrastructure/events/outbox-transport-live.js";
+} from "@/globals/infrastructure/events/in-process-domain-event-queue-live";
+import { OutboxTransportLive } from "@/globals/infrastructure/events/outbox-transport-live";
 import {
   authCommandGroup,
   AuthCommands,
   AuthQueries,
   authQueryGroup,
-} from "@/modules/auth/auth.platform.js";
+} from "@/modules/auth/auth.platform";
 import {
   billingCommandGroup,
   BillingCommands,
   billingEventSpanAttributes,
   BillingQueries,
   billingQueryGroup,
-} from "@/modules/billing/billing.platform.js";
+} from "@/modules/billing/billing.platform";
 import {
   organizationCommandGroup,
   OrganizationCommands,
   organizationEventSpanAttributes,
   OrganizationQueries,
   organizationQueryGroup,
-} from "@/modules/organization/organization.platform.js";
+} from "@/modules/organization/organization.platform";
 import {
   roleCommandGroup,
   RoleCommands,
   roleEventSpanAttributes,
-} from "@/modules/role/role.platform.js";
+} from "@/modules/role/role.platform";
 import {
   todoCommandGroup,
   TodoCommands,
   TodoQueries,
   todoQueryGroup,
-} from "@/modules/todos/todos.platform.js";
+} from "@/modules/todos/todos.platform";
 import {
   userCommandGroup,
   UserCommands,
   userEventSpanAttributes,
   UserQueries,
   userQueryGroup,
-} from "@/modules/user/user.platform.js";
+} from "@/modules/user/user.platform";
 import {
   walletCommandGroup,
   WalletCommands,
   walletEventSpanAttributes,
-} from "@/modules/wallet/wallet.platform.js";
+} from "@/modules/wallet/wallet.platform";
 
 // The parts of the composition root that production and the test runtime share
 // verbatim. Only the module *ordering* differs between them (the test runtime
@@ -91,6 +91,7 @@ export const CommandBusLive = Layer.effect(
     const todos = yield* TodoCommands;
     const role = yield* RoleCommands;
     const billing = yield* BillingCommands;
+
     return makeCommandBus(
       mergeDispatchTables(wallet, user, organization, auth, todos, role, billing),
       {
@@ -116,6 +117,7 @@ export const QueryBusLive = Layer.effect(
     const user = yield* UserQueries;
     const todos = yield* TodoQueries;
     const billing = yield* BillingQueries;
+
     // `roleQueryGroup` is deliberately absent from both lists. Its one member is a
     // policy-query (ADR-0022): a cross-module contract reached only through a
     // consumer's own ACL adapter against `RoleQueries`, never routed by tag. So
@@ -165,6 +167,7 @@ export const makeUnitOfWorkLive = (queue: Layer.Layer<DomainEventQueue>) =>
 
 export const AfterCommitTransportLive = makeAfterCommitTransportLive(InProcessDomainEventQueueLive);
 export const UnitOfWorkLive = makeUnitOfWorkLive(InProcessDomainEventQueueLive);
+
 export const DomainEventDeliveryLive = InProcessDomainEventDeliveryLive.pipe(
   Layer.provide(Layer.mergeAll(InProcessDomainEventQueueLive, DeliveryLedgerLive)),
 );

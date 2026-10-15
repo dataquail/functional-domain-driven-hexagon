@@ -1,16 +1,20 @@
 import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
+import { describe, layer } from "@effect/vitest";
+import { assertInstanceOf } from "@effect/vitest/utils";
 import * as ConfigProvider from "effect/ConfigProvider";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
+import type * as HttpBody from "effect/http/HttpBody";
 import * as HttpClient from "effect/http/HttpClient";
 import * as HttpClientResponse from "effect/http/HttpClientResponse";
 import * as Layer from "effect/Layer";
+import * as Predicate from "effect/Predicate";
+import * as Schema from "effect/Schema";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
-import { MailpitMailerLive } from "@/globals/infrastructure/email/adapters/mailpit-mailer-live.js";
-import { Mailer } from "@/globals/infrastructure/email/ports/mailer.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars";
+import { MailpitMailerLive } from "@/globals/infrastructure/email/adapters/mailpit-mailer-live";
+import { MailDeliveryError } from "@/globals/infrastructure/email/ports/mail-errors";
+import { Mailer } from "@/globals/infrastructure/email/ports/mailer";
 
 const env = {
   DATABASE_URL: "postgres://localhost/app",
@@ -26,7 +30,15 @@ const env = {
   MAIL_FROM_NAME: "Example",
 };
 
-type Sent = { url: string; body: unknown };
+type Sent = { url: string; body: Schema.Json };
+
+const decodeJsonBody = Schema.decodeSync(Schema.fromJsonString(Schema.Json));
+
+const bodyBytes = (body: HttpBody.HttpBody): Uint8Array => {
+  if (Predicate.isTagged(body, "Uint8Array")) return body.body;
+
+  return new Uint8Array();
+};
 
 const mailpitAnswering = (status: number, sent: Array<Sent>) =>
   MailpitMailerLive.pipe(
@@ -36,8 +48,11 @@ const mailpitAnswering = (status: number, sent: Array<Sent>) =>
       Layer.succeed(
         HttpClient.HttpClient,
         HttpClient.make((request) => {
-          const body = request.body._tag === "Uint8Array" ? request.body.body : new Uint8Array();
-          sent.push({ url: request.url, body: JSON.parse(new TextDecoder().decode(body)) });
+          sent.push({
+            url: request.url,
+            body: decodeJsonBody(new TextDecoder().decode(bodyBytes(request.body))),
+          });
+
           return Effect.succeed(
             HttpClientResponse.fromWeb(request, new Response("{}", { status })),
           );
@@ -49,40 +64,38 @@ const mailpitAnswering = (status: number, sent: Array<Sent>) =>
 const message = { to: "alice@example.com", subject: "Hi", text: "plain", html: "<p>html</p>" };
 
 describe("MailpitMailerLive", () => {
-  it.effect("posts the message to Mailpit's send API from the configured sender", () =>
-    Effect.gen(function* () {
-      const sent: Array<Sent> = [];
-      yield* Effect.flatMap(Effect.service(Mailer), (mailer) => mailer.send(message)).pipe(
-        Effect.provide(mailpitAnswering(200, sent)),
-      );
+  const sent: Array<Sent> = [];
 
-      deepStrictEqual(sent, [
-        {
-          url: "http://mailpit.test:8025/api/v1/send",
-          body: {
-            From: { Email: "noreply@example.com", Name: "Example" },
-            To: [{ Email: "alice@example.com" }],
-            Subject: "Hi",
-            Text: "plain",
-            HTML: "<p>html</p>",
+  layer(mailpitAnswering(200, sent))((it) => {
+    it.effect("posts the message to Mailpit's send API from the configured sender", () =>
+      Effect.gen(function* () {
+        const mailer = yield* Mailer;
+        yield* mailer.send(message);
+
+        deepStrictEqual(sent, [
+          {
+            url: "http://mailpit.test:8025/api/v1/send",
+            body: {
+              From: { Email: "noreply@example.com", Name: "Example" },
+              To: [{ Email: "alice@example.com" }],
+              Subject: "Hi",
+              Text: "plain",
+              HTML: "<p>html</p>",
+            },
           },
-        },
-      ]);
-    }),
-  );
+        ]);
+      }),
+    );
+  });
 
-  it.effect("fails with MailDeliveryError when Mailpit refuses the message", () =>
-    Effect.gen(function* () {
-      const exit = yield* Effect.flatMap(Effect.service(Mailer), (mailer) =>
-        mailer.send(message),
-      ).pipe(Effect.provide(mailpitAnswering(400, [])), Effect.exit);
+  layer(mailpitAnswering(400, []))((it) => {
+    it.effect("fails with MailDeliveryError when Mailpit refuses the message", () =>
+      Effect.gen(function* () {
+        const mailer = yield* Mailer;
+        const error = yield* Effect.flip(mailer.send(message));
 
-      deepStrictEqual(
-        Exit.isFailure(exit) && exit.cause.reasons[0]?._tag === "Fail"
-          ? exit.cause.reasons[0].error._tag
-          : "succeeded",
-        "MailDeliveryError",
-      );
-    }),
-  );
+        assertInstanceOf(error, MailDeliveryError);
+      }),
+    );
+  });
 });

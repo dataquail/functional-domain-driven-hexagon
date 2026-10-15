@@ -7,8 +7,8 @@ import * as Migrator from "effect/sql/Migrator";
 import { SqlClient } from "effect/sql/SqlClient";
 import type { SqlError } from "effect/sql/SqlError";
 
-import { migrations } from "./migrations/index.js";
-import { type Config, driverLayer } from "./pg-driver.js";
+import { migrations } from "./migrations/registry";
+import { type Config, driverLayer } from "./pg-driver";
 
 // ADR-0020: each module owns a Postgres schema named after its folder, plus the
 // shared `platform` schema. Adding a module means a migration and an entry here.
@@ -38,8 +38,10 @@ export const runMigrations = (
 export const resetAndMigrate = (config: Config) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
+
     for (const schema of MODULE_SCHEMAS) {
       yield* sql`DROP SCHEMA IF EXISTS ${sql(schema)} CASCADE`;
     }
+
     yield* sql`DROP TABLE IF EXISTS effect_sql_migrations`;
   }).pipe(Effect.provide(driverLayer(config)), Effect.andThen(runMigrations(config)));

@@ -5,9 +5,10 @@
 import * as BillingContract from "@org/contracts/api/BillingContract";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
-import { BILLING_ORG_ID, makeSubscription } from "../fixtures/billing";
-import { getEndpoint, typedHandler } from "../typed-handler";
+import { BILLING_ORG_ID, makeSubscription } from "@/test/fixtures/billing";
+import { getEndpoint, typedHandler } from "@/test/typed-handler";
 
 const currentEndpoint = getEndpoint(BillingContract.PrivateGroup, "getCurrentSubscription");
 const startEndpoint = getEndpoint(BillingContract.PrivateGroup, "startSubscription");
@@ -22,10 +23,14 @@ const notFound = () =>
   );
 
 export const billingHandlers = {
-  /** GET current — pass `null` for the "never subscribed" 404. */
-  current: (subscription: BillingContract.SubscriptionResponse | null = makeSubscription()) =>
+  /** GET current — pass `Option.none()` for the "never subscribed" 404. */
+  current: (
+    subscription: Option.Option<BillingContract.SubscriptionResponse> = Option.some(
+      makeSubscription(),
+    ),
+  ) =>
     typedHandler(currentEndpoint, () =>
-      subscription === null ? notFound() : Effect.succeed(subscription),
+      Option.match(subscription, { onNone: notFound, onSome: (found) => Effect.succeed(found) }),
     ),
 
   start: (
@@ -39,6 +44,7 @@ export const billingHandlers = {
           new CustomHttpApiError.BadGateway({ message: "Stripe is unreachable." }),
         );
       }
+
       if (outcome.result === "SubscriptionAlreadyExistsError") {
         return Effect.fail(
           new BillingContract.SubscriptionAlreadyExistsError({
@@ -47,15 +53,18 @@ export const billingHandlers = {
           }),
         );
       }
+
       return Effect.succeed(makeSubscription());
     }),
 
   cancel: (
     outcome: { readonly result: "success" | "SubscriptionNotFoundError" } = { result: "success" },
   ) =>
-    typedHandler(cancelEndpoint, () =>
-      outcome.result === "success"
-        ? Effect.succeed(makeSubscription({ status: "canceled" }))
-        : notFound(),
-    ),
+    typedHandler(cancelEndpoint, () => {
+      if (outcome.result === "success") {
+        return Effect.succeed(makeSubscription({ status: "canceled" }));
+      }
+
+      return notFound();
+    }),
 };

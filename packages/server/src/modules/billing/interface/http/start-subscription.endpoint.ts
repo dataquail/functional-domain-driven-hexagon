@@ -2,15 +2,16 @@ import { CommandBus } from "@effect-server-utils/cqrs";
 import { BillingContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
-import { Actions } from "@/globals/application/ports/actions.js";
-import * as Authz from "@/globals/infrastructure/auth/authz.js";
+import { Actions } from "@/globals/application/ports/actions";
+import * as Authz from "@/globals/infrastructure/auth/authz";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { StartSubscriptionCommand } from "@/modules/billing/commands/start-subscription.command.js";
-import { BillingResource } from "@/modules/billing/policies/billing.policies.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { StartSubscriptionCommand } from "@/modules/billing/commands/start-subscription.command";
+import { BillingResource } from "@/modules/billing/policies/billing.policies";
 
 // `Actions.Update` covers subscribe + cancel (CRUD vocabulary; the
 // verb-level difference is the HTTP method). Gated by
@@ -19,14 +20,16 @@ export const startSubscriptionEndpoint = Effect.fn("BillingLive.startSubscriptio
   function* (request: EndpointRequest<typeof BillingContract.PrivateGroup, "startSubscription">) {
     yield* Authz.hasPermissions(BillingResource, Actions.Update, request.params.orgId);
     const commandBus = yield* CommandBus;
+
     const subscription = yield* commandBus.execute(StartSubscriptionCommand, {
       organizationId: request.params.orgId,
     });
+
     return new BillingContract.SubscriptionResponse({
       id: subscription.id,
       organizationId: subscription.organizationId,
       status: subscription.status,
-      currentPeriodEnd: subscription.currentPeriodEnd,
+      currentPeriodEnd: Option.getOrNull(subscription.currentPeriodEnd),
     });
   },
   Effect.catchTags({

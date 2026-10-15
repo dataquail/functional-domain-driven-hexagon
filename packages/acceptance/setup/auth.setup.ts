@@ -21,17 +21,17 @@ setup("authenticate as admin", async ({ page }) => {
   // The seeded admin is a super-admin, redirected off the regular-user root
   // `/` to the platform org admin view — wait for that settled URL rather
   // than the transient `/`.
-  try {
-    await page.waitForURL(({ pathname }) => pathname === "/admin/orgs", { timeout: 15_000 });
-  } catch (cause) {
-    throw new Error(
-      `[auth.setup] Sign-in did not land on the platform admin view.\n` +
-        `  Stuck at: ${page.url()}\n` +
-        `  Page title: ${await page.title()}\n` +
-        `  Most common cause: the identity Worker was seeded with a different IDENTITY_ADMIN_PASSWORD.\n` +
-        `  Original: ${String(cause)}`,
-    );
-  }
+  await page
+    .waitForURL(({ pathname }) => pathname === "/admin/orgs", { timeout: 15_000 })
+    .catch(async (cause: unknown) => {
+      throw new Error(
+        `[auth.setup] Sign-in did not land on the platform admin view.\n` +
+          `  Stuck at: ${page.url()}\n` +
+          `  Page title: ${await page.title()}\n` +
+          `  Most common cause: the identity Worker was seeded with a different IDENTITY_ADMIN_PASSWORD.\n` +
+          `  Original: ${String(cause)}`,
+      );
+    });
 
   await page.context().storageState({ path: ADMIN_STORAGE_STATE });
 });

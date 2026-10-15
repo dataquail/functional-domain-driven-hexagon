@@ -1,12 +1,12 @@
 import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
-import { TodoId } from "@/modules/todos/domain/todo/todo.id.js";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
+import { TodoId } from "@/modules/todos/domain/todo/todo.id";
 import {
   type ListTodosPayload,
   type ListTodosTodoView,
-} from "@/modules/todos/queries/list-todos.query.js";
+} from "@/modules/todos/queries/list-todos.query";
 
 const toView = (row: RowSchemas.TodoRow): ListTodosTodoView => ({
   id: TodoId.make(row.id),
@@ -16,10 +16,12 @@ const toView = (row: RowSchemas.TodoRow): ListTodosTodoView => ({
 
 export const listTodosHandler = Effect.fn("listTodosHandler")(function* (query: ListTodosPayload) {
   const sql = yield* Database.Database;
+
   const rows = yield* sql`
     SELECT * FROM todos.todos
     WHERE organization_id = ${query.organizationId}
     ORDER BY created_at DESC
   `.pipe(Database.rows(RowSchemas.TodoRow), translateDatabaseErrors);
+
   return { todos: rows.map(toView) };
 });

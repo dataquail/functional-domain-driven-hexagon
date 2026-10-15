@@ -8,26 +8,48 @@ import { ADMIN_EMAIL } from "./admin-credentials";
 import { MEMBER_EMAIL } from "./member-credentials";
 import { type AcceptanceTarget } from "./target";
 
-export const runMigrations = async (target: AcceptanceTarget): Promise<void> => {
-  const url = Redacted.make(target.databaseUrl);
-  await Effect.runPromise(
-    resetAndMigrate({ url, ssl: false }).pipe(
-      Effect.asVoid,
-      Effect.provide(NodeServices.layer),
-      Effect.orDie,
-    ),
+export const runMigrations = (target: AcceptanceTarget) =>
+  resetAndMigrate({ url: Redacted.make(target.databaseUrl), ssl: false }).pipe(
+    Effect.asVoid,
+    Effect.provide(NodeServices.layer),
+    Effect.orDie,
   );
+
+// Runs `work`, then `release` whether or not it failed; the failure still propagates.
+export const releasingAfter = async <A>(
+  work: () => Promise<A>,
+  release: () => Promise<void>,
+): Promise<A> => {
+  const result = await work().catch(async (cause: unknown) => {
+    await release();
+    throw cause;
+  });
+
+  await release();
+
+  return result;
 };
 
-const splitQualified = (qualified: string): readonly [string, string] => {
-  const [schema, table, ...rest] = qualified.split(".");
-  if (schema === undefined || table === undefined || rest.length > 0) {
+type QualifiedTable = readonly [schema: string, table: string];
+
+const splitQualified = (qualified: string): QualifiedTable => {
+  const parts = qualified.split(".");
+
+  if (parts.length !== 2) {
     throw new Error(
       `[acceptance/test-utils] expected "schema.table", got "${qualified}". Acceptance specs must qualify table names with their owning module schema.`,
     );
   }
+
+  const [schema = "", table = ""] = parts;
+
   return [schema, table];
 };
+
+const isUsersTable = ([schema, table]: QualifiedTable) => schema === "user" && table === "users";
+
+const tableList = (tables: ReadonlyArray<QualifiedTable>) =>
+  tables.map(([schema, table]) => `"${schema}"."${table}"`).join(", ");
 
 // Truncate is auth-aware: when a spec asks to clear `user.users`, we DELETE
 // non-system rows instead of TRUNCATE'ing — a preserved user's session and
@@ -45,22 +67,19 @@ export const truncate = async (
   const preservedEmails = [ADMIN_EMAIL, MEMBER_EMAIL];
   const qualified = tables.map(splitQualified);
   const pool = new pg.Pool({ connectionString: target.databaseUrl });
-  try {
-    const usersEntry = qualified.find(([s, t]) => s === "user" && t === "users");
-    if (usersEntry !== undefined) {
-      await pool.query(`DELETE FROM "user".users WHERE email <> ALL($1::text[])`, [
-        preservedEmails,
-      ]);
-      const others = qualified.filter(([s, t]) => !(s === "user" && t === "users"));
-      if (others.length > 0) {
-        const list = others.map(([s, t]) => `"${s}"."${t}"`).join(", ");
-        await pool.query(`TRUNCATE TABLE ${list} CASCADE`);
-      }
+
+  const clear = async (): Promise<void> => {
+    if (!qualified.some(isUsersTable)) {
+      await pool.query(`TRUNCATE TABLE ${tableList(qualified)} CASCADE`);
+
       return;
     }
-    const list = qualified.map(([s, t]) => `"${s}"."${t}"`).join(", ");
-    await pool.query(`TRUNCATE TABLE ${list} CASCADE`);
-  } finally {
-    await pool.end();
-  }
+
+    await pool.query(`DELETE FROM "user".users WHERE email <> ALL($1::text[])`, [preservedEmails]);
+    const others = qualified.filter((entry) => !isUsersTable(entry));
+
+    if (others.length > 0) await pool.query(`TRUNCATE TABLE ${tableList(others)} CASCADE`);
+  };
+
+  await releasingAfter(clear, () => pool.end());
 };

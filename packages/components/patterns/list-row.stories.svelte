@@ -3,7 +3,7 @@
 
   import Button from "../primitives/button.svelte";
   import Checkbox from "../primitives/checkbox.svelte";
-  import { TrashIcon } from "../primitives/icon";
+  import { TrashIcon } from "../primitives/icon/icons";
   import Text from "../primitives/text.svelte";
   import ListRow from "./list-row.svelte";
 
@@ -14,13 +14,17 @@
 </script>
 
 <script lang="ts">
-  let done = $state(false);
+  const row = $state({ done: false });
 </script>
 
 <Story name="A todo row" asChild>
   <ListRow revealTrailing>
     {#snippet leading()}
-      <Checkbox checked={done} onCheckedChange={(next) => (done = next)} aria-label="Done" />
+      <Checkbox
+        checked={row.done}
+        onCheckedChange={(next) => (row.done = next)}
+        aria-label="Done"
+      />
     {/snippet}
     <Text truncate>Water the plants</Text>
     {#snippet trailing()}

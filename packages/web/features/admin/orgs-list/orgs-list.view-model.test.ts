@@ -1,8 +1,9 @@
+import { describe, expect, it } from "@effect/vitest";
 import * as OrganizationContract from "@org/contracts/api/OrganizationContract";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import * as AtomRegistry from "effect/reactivity/AtomRegistry";
-import { describe, expect, it } from "vitest";
 
 import { apiTransportAtom } from "@/services/atom/api-transport.shared";
 import { notificationAtom } from "@/services/atom/notifications.shared";
@@ -35,151 +36,162 @@ const makeRegistry = () =>
   });
 
 const settle = (registry: AtomRegistry.AtomRegistry) =>
-  Effect.runPromise(
-    AtomRegistry.getResult(registry, adminOrgsResultAtom, { suspendOnWaiting: true }),
-  );
+  AtomRegistry.getResult(registry, adminOrgsResultAtom, { suspendOnWaiting: true });
 
 describe("admin orgs list ViewModel", () => {
-  it("labels an active row and links it to its detail page", async () => {
-    server.use(orgsHandlers.findAll([makeOrganization({ name: "Org A" })]));
+  it.effect("labels an active row and links it to its detail page", () =>
+    Effect.gen(function* () {
+      server.use(orgsHandlers.findAll([makeOrganization({ name: "Org A" })]));
 
-    const registry = makeRegistry();
-    await settle(registry);
+      const registry = makeRegistry();
+      yield* settle(registry);
 
-    expect(registry.get(orgsListAtom).rows).toEqual([
-      {
-        id: makeOrganization().id,
-        name: "Org A",
-        createdAtLabel: "2026-01-01",
-        isDeleted: false,
-        deletedAtLabel: null,
-        href: `/admin/orgs/${makeOrganization().id}`,
-      },
-    ]);
-  });
+      expect(registry.get(orgsListAtom).rows).toEqual([
+        {
+          id: makeOrganization().id,
+          name: "Org A",
+          createdAtLabel: "2026-01-01",
+          isDeleted: false,
+          href: `/admin/orgs/${makeOrganization().id}`,
+        },
+      ]);
+    }),
+  );
 
-  it("gives a soft-deleted row no link, since there is no page to visit", async () => {
-    server.use(orgsHandlers.findAll([makeOrganization({ id: ORG_B_ID, deletedAt: DELETED_AT })]));
+  it.effect("gives a soft-deleted row no link, since there is no page to visit", () =>
+    Effect.gen(function* () {
+      server.use(orgsHandlers.findAll([makeOrganization({ id: ORG_B_ID, deletedAt: DELETED_AT })]));
 
-    const registry = makeRegistry();
-    await settle(registry);
+      const registry = makeRegistry();
+      yield* settle(registry);
 
-    expect(registry.get(orgsListAtom).rows[0]).toMatchObject({
-      isDeleted: true,
-      deletedAtLabel: "2026-02-03",
-      href: null,
-    });
-  });
+      const [row] = registry.get(orgsListAtom).rows;
+      expect(row).toMatchObject({ isDeleted: true, deletedAtLabel: "2026-02-03" });
+      expect(row).not.toHaveProperty("href");
+    }),
+  );
 
-  it("derives pagination from the server's total, not the rows on this page", async () => {
-    server.use(
-      orgsHandlers.findAll(
-        makePaginatedOrganizations({ organizations: [makeOrganization()], total: 25 }),
-      ),
-    );
-
-    const registry = makeRegistry();
-    await settle(registry);
-
-    expect(registry.get(orgsListAtom)).toMatchObject({
-      page: 1,
-      total: 25,
-      totalPages: 3,
-      hasPrevious: false,
-      hasNext: true,
-    });
-  });
-
-  it("refetches the newly selected page", async () => {
-    const requested: Array<number> = [];
-    server.use(
-      typedHandler(getEndpoint(OrganizationContract.AdminGroup, "findAll"), ({ urlParams }) => {
-        requested.push(urlParams.page);
-        return Effect.succeed(
-          makePaginatedOrganizations({
-            organizations: [makeOrganization()],
-            page: urlParams.page,
-            total: 25,
-          }),
-        );
-      }),
-    );
-
-    const registry = makeRegistry();
-    await settle(registry);
-    expect(requested).toEqual([1]);
-
-    registry.set(changePageAtom, "next");
-    await settle(registry);
-
-    expect(requested).toEqual([1, 2]);
-  });
-
-  it("returns to the first page when the deleted filter is flipped", async () => {
-    const requested: Array<string | undefined> = [];
-    server.use(
-      typedHandler(getEndpoint(OrganizationContract.AdminGroup, "findAll"), ({ urlParams }) => {
-        requested.push(urlParams.includeDeleted);
-        return Effect.succeed(
+  it.effect("derives pagination from the server's total, not the rows on this page", () =>
+    Effect.gen(function* () {
+      server.use(
+        orgsHandlers.findAll(
           makePaginatedOrganizations({ organizations: [makeOrganization()], total: 25 }),
-        );
-      }),
-    );
+        ),
+      );
 
-    const registry = makeRegistry();
-    await settle(registry);
-    registry.set(changePageAtom, "next");
-    await settle(registry);
-    expect(registry.get(pageAtom)).toBe(2);
+      const registry = makeRegistry();
+      yield* settle(registry);
 
-    // Page 2 of the unfiltered list may not exist once deleted rows join it, so
-    // the only page number that is always meaningful is the first.
-    registry.set(toggleIncludeDeletedAtom, undefined);
-    expect(registry.get(includeDeletedAtom)).toBe(true);
-    expect(registry.get(pageAtom)).toBe(1);
+      expect(registry.get(orgsListAtom)).toMatchObject({
+        page: 1,
+        total: 25,
+        totalPages: 3,
+        hasPrevious: false,
+        hasNext: true,
+      });
+    }),
+  );
 
-    await settle(registry);
-    expect(requested).toEqual(["false", "false", "true"]);
-  });
+  it.effect("refetches the newly selected page", () =>
+    Effect.gen(function* () {
+      const requested: Array<number> = [];
+      server.use(
+        typedHandler(getEndpoint(OrganizationContract.AdminGroup, "findAll"), ({ urlParams }) => {
+          requested.push(urlParams.page);
+
+          return Effect.succeed(
+            makePaginatedOrganizations({
+              organizations: [makeOrganization()],
+              page: urlParams.page,
+              total: 25,
+            }),
+          );
+        }),
+      );
+
+      const registry = makeRegistry();
+      yield* settle(registry);
+      expect(requested).toEqual([1]);
+
+      registry.set(changePageAtom, "next");
+      yield* settle(registry);
+
+      expect(requested).toEqual([1, 2]);
+    }),
+  );
+
+  it.effect("returns to the first page when the deleted filter is flipped", () =>
+    Effect.gen(function* () {
+      const requested: Array<OrganizationContract.FindAllOrganizationsParams["includeDeleted"]> =
+        [];
+
+      server.use(
+        typedHandler(getEndpoint(OrganizationContract.AdminGroup, "findAll"), ({ urlParams }) => {
+          requested.push(urlParams.includeDeleted);
+
+          return Effect.succeed(
+            makePaginatedOrganizations({ organizations: [makeOrganization()], total: 25 }),
+          );
+        }),
+      );
+
+      const registry = makeRegistry();
+      yield* settle(registry);
+      registry.set(changePageAtom, "next");
+      yield* settle(registry);
+      expect(registry.get(pageAtom)).toBe(2);
+
+      // Page 2 of the unfiltered list may not exist once deleted rows join it, so
+      // the only page number that is always meaningful is the first.
+      registry.set(toggleIncludeDeletedAtom, void 0);
+      expect(registry.get(includeDeletedAtom)).toBe(true);
+      expect(registry.get(pageAtom)).toBe(1);
+
+      yield* settle(registry);
+      expect(requested).toEqual(["false", "false", "true"]);
+    }),
+  );
 
   it("uses the whole page size the list was built for", () => {
     expect(PAGE_SIZE).toBe(10);
   });
 
-  it("announces a soft delete", async () => {
-    server.use(orgsHandlers.findAll([makeOrganization()]), orgsHandlers.softDelete());
+  it.effect("announces a soft delete", () =>
+    Effect.gen(function* () {
+      server.use(orgsHandlers.findAll([makeOrganization()]), orgsHandlers.softDelete());
 
-    const registry = makeRegistry();
-    await settle(registry);
+      const registry = makeRegistry();
+      yield* settle(registry);
 
-    registry.set(softDeleteOrgActionAtom, makeOrganization().id);
-    await Effect.runPromise(
-      AtomRegistry.getResult(registry, softDeleteOrgActionAtom, { suspendOnWaiting: true }),
-    );
+      registry.set(softDeleteOrgActionAtom, makeOrganization().id);
+      yield* AtomRegistry.getResult(registry, softDeleteOrgActionAtom, { suspendOnWaiting: true });
 
-    expect(registry.get(notificationAtom)).toMatchObject({
-      kind: "success",
-      message: "Organization deleted.",
-    });
-  });
+      expect(Option.getOrThrow(registry.get(notificationAtom))).toMatchObject({
+        kind: "success",
+        message: "Organization deleted.",
+      });
+    }),
+  );
 
-  it("surfaces the server's refusal to restore an org that is not deleted", async () => {
-    server.use(
-      orgsHandlers.findAll([makeOrganization()]),
-      orgsHandlers.restore({ result: "OrganizationNotDeletedError" }),
-    );
+  it.effect("surfaces the server's refusal to restore an org that is not deleted", () =>
+    Effect.gen(function* () {
+      server.use(
+        orgsHandlers.findAll([makeOrganization()]),
+        orgsHandlers.restore({ result: "OrganizationNotDeletedError" }),
+      );
 
-    const registry = makeRegistry();
-    await settle(registry);
+      const registry = makeRegistry();
+      yield* settle(registry);
 
-    registry.set(restoreOrgActionAtom, makeOrganization().id);
-    await Effect.runPromise(
-      AtomRegistry.getResult(registry, restoreOrgActionAtom, { suspendOnWaiting: true }),
-    ).catch(() => undefined);
+      registry.set(restoreOrgActionAtom, makeOrganization().id);
+      yield* Effect.exit(
+        AtomRegistry.getResult(registry, restoreOrgActionAtom, { suspendOnWaiting: true }),
+      );
 
-    expect(registry.get(notificationAtom)).toMatchObject({
-      kind: "error",
-      message: "Organization is not deleted.",
-    });
-  });
+      expect(Option.getOrThrow(registry.get(notificationAtom))).toMatchObject({
+        kind: "error",
+        message: "Organization is not deleted.",
+      });
+    }),
+  );
 });

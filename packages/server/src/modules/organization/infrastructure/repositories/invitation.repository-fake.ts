@@ -1,14 +1,16 @@
+import * as Arr from "effect/Array";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
+import type * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { type InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors.js";
-import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
-import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root.js";
+import { type InvitationId } from "@/globals/application/ddd/ids/invitation-id";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { InvitationNotFound } from "@/modules/organization/domain/invitation/invitation.errors";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository";
+import { type InvitationRoot } from "@/modules/organization/domain/invitation/invitation.root";
 
 export const InvitationRepositoryFake = Layer.effect(
   InvitationRepository,
@@ -19,11 +21,13 @@ export const InvitationRepositoryFake = Layer.effect(
       Ref.update(store, HashMap.set(invitation.id, invitation));
 
     const updateOne = (invitation: InvitationRoot): Effect.Effect<void, InvitationNotFound> =>
-      Effect.flatMap(Ref.get(store), (m) =>
-        HashMap.has(m, invitation.id)
-          ? Ref.update(store, HashMap.set(invitation.id, invitation))
-          : new InvitationNotFound({ invitationId: invitation.id }),
-      );
+      Effect.flatMap(Ref.get(store), (m) => {
+        if (!HashMap.has(m, invitation.id)) {
+          return new InvitationNotFound({ invitationId: invitation.id });
+        }
+
+        return Ref.update(store, HashMap.set(invitation.id, invitation));
+      });
 
     // Newest-first, matching the live repo's `ORDER BY created_at DESC`. The
     // spec IS the in-memory predicate — same object the live repo compiles to
@@ -36,8 +40,9 @@ export const InvitationRepositoryFake = Layer.effect(
         Array.from(HashMap.values(m)).filter(spec).sort(byCreatedAtDesc),
       );
 
-    const findOne = (spec: Specification<InvitationRoot>): Effect.Effect<InvitationRoot | null> =>
-      Effect.map(matching(spec), (rows) => rows[0] ?? null);
+    const findOne = (
+      spec: Specification<InvitationRoot>,
+    ): Effect.Effect<Option.Option<InvitationRoot>> => Effect.map(matching(spec), Arr.head);
 
     const findMany = (
       spec: Specification<InvitationRoot>,

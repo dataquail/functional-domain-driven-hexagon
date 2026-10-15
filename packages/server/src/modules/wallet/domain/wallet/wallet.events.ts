@@ -1,15 +1,16 @@
 import * as Schema from "effect/Schema";
 
-import * as Event from "@/globals/application/ddd/domain-event.js";
-import { type SpanAttributesExtractor } from "@/globals/application/ddd/domain-event.js";
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import * as Event from "@/globals/application/ddd/domain-event";
+import { type SpanAttributesExtractor } from "@/globals/application/ddd/domain-event";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
 
-import { WalletId } from "./wallet.id.js";
+import { WalletId } from "./wallet.id";
 
 export const WalletCreated = Event.make("WalletCreated", {
   walletId: WalletId,
   organizationId: OrganizationId,
 });
+
 export type WalletCreated = typeof WalletCreated.Type;
 
 export const walletCreatedSpanAttributes: SpanAttributesExtractor<WalletCreated> = (event) => ({
@@ -22,6 +23,7 @@ export const WalletCredited = Event.make("WalletCredited", {
   amount: Schema.Finite,
   newBalance: Schema.Finite,
 });
+
 export type WalletCredited = typeof WalletCredited.Type;
 
 export const walletCreditedSpanAttributes: SpanAttributesExtractor<WalletCredited> = (event) => ({
@@ -35,6 +37,7 @@ export const WalletDebited = Event.make("WalletDebited", {
   amount: Schema.Finite,
   newBalance: Schema.Finite,
 });
+
 export type WalletDebited = typeof WalletDebited.Type;
 
 export const walletDebitedSpanAttributes: SpanAttributesExtractor<WalletDebited> = (event) => ({

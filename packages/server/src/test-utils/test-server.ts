@@ -1,10 +1,11 @@
+import * as NodeCrypto from "@effect/platform-node/NodeCrypto";
 import { type UserAuthMiddleware } from "@org/contracts/Policy";
 import * as HttpRouter from "effect/http/HttpRouter";
 import * as HttpApiBuilder from "effect/http-api/HttpApiBuilder";
 import * as Layer from "effect/Layer";
 
-import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.js";
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
+import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars";
 import {
   AfterCommitTransportLive,
   CommandBusLive,
@@ -13,17 +14,17 @@ import {
   QueryBusLive,
   UnhandledFailuresLive,
   UnitOfWorkLive,
-} from "@/globals/infrastructure/cqrs/cqrs-runtime.js";
-import { DeliveryLedgerLive } from "@/globals/infrastructure/events/delivery-ledger-live.js";
-import { Api } from "@/globals/infrastructure/framework/http/api.js";
-import { applicationModules } from "@/globals/infrastructure/framework/modules/application-modules.js";
-import { BillingGatewayFake } from "@/modules/billing/billing.platform.js";
+} from "@/globals/infrastructure/cqrs/cqrs-runtime";
+import { DeliveryLedgerLive } from "@/globals/infrastructure/events/delivery-ledger-live";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { applicationModules } from "@/globals/infrastructure/framework/modules/application-modules";
+import { BillingGatewayFake } from "@/modules/billing/billing.platform";
 import {
   UserAuthMiddlewareFake,
   UserAuthMiddlewareFakeAsMember,
-} from "@/test-utils/fake-auth-middleware.js";
-import { TestDatabaseLive } from "@/test-utils/test-database.js";
-import { InMemoryHttpServerLive } from "@/test-utils/test-http-server.js";
+} from "@/test-utils/fake-auth-middleware";
+import { TestDatabaseLive } from "@/test-utils/test-database";
+import { InMemoryHttpServerLive } from "@/test-utils/test-http-server";
 
 // The same application production runs. What this root does differently is
 // provide a different environment below: a test database, a fake auth
@@ -79,7 +80,7 @@ export const makeTestServerLive = (authMiddleware: Layer.Layer<UserAuthMiddlewar
         DeliveryLedgerLive,
       ),
     ),
-    Layer.provide([CookieCodec.layer, BillingGatewayFake]),
+    Layer.provide([CookieCodec.layer, BillingGatewayFake, NodeCrypto.layer]),
     Layer.provideMerge(TestDatabaseLive),
     Layer.provide(EnvVars.layer),
     Layer.provideMerge(InMemoryHttpServerLive),

@@ -1,3 +1,4 @@
+import * as Arr from "effect/Array";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as HashMap from "effect/HashMap";
@@ -5,11 +6,11 @@ import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { SessionNotFound } from "@/modules/auth/domain/session/session.errors.js";
-import { type SessionId } from "@/modules/auth/domain/session/session.id.js";
-import { SessionRepository } from "@/modules/auth/domain/session/session.repository.js";
-import { SessionRoot } from "@/modules/auth/domain/session/session.root.js";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { SessionNotFound } from "@/modules/auth/domain/session/session.errors";
+import { type SessionId } from "@/modules/auth/domain/session/session.id";
+import { SessionRepository } from "@/modules/auth/domain/session/session.repository";
+import { SessionRoot } from "@/modules/auth/domain/session/session.root";
 
 export const SessionRepositoryFake = Layer.effect(
   SessionRepository,
@@ -21,8 +22,8 @@ export const SessionRepositoryFake = Layer.effect(
 
     // The spec IS the in-memory predicate — the same object the live repo
     // compiles to SQL — so fake and live agree by construction.
-    const findOne = (spec: Specification<SessionRoot>): Effect.Effect<SessionRoot | null> =>
-      Effect.map(Ref.get(store), (m) => Array.from(HashMap.values(m)).find(spec) ?? null);
+    const findOne = (spec: Specification<SessionRoot>): Effect.Effect<Option.Option<SessionRoot>> =>
+      Effect.map(Ref.get(store), (m) => Arr.findFirst(HashMap.values(m), spec));
 
     // Mirrors the live impl: a re-delete on an already-soft-deleted
     // session is reported as SessionNotFound (the SQL UPDATE matches
@@ -32,9 +33,11 @@ export const SessionRepositoryFake = Layer.effect(
       Effect.gen(function* () {
         const m = yield* Ref.get(store);
         const existing = HashMap.get(m, id);
-        if (Option.isNone(existing) || existing.value.revokedAt !== null) {
+
+        if (Option.isNone(existing) || Option.isSome(existing.value.revokedAt)) {
           return yield* new SessionNotFound({ sessionId: id });
         }
+
         const now = yield* DateTime.now;
         yield* Ref.update(store, (m2) =>
           HashMap.set(
@@ -46,7 +49,7 @@ export const SessionRepositoryFake = Layer.effect(
               subject: existing.value.subject,
               expiresAt: existing.value.expiresAt,
               absoluteExpiresAt: existing.value.absoluteExpiresAt,
-              revokedAt: now,
+              revokedAt: Option.some(now),
               createdAt: existing.value.createdAt,
               lastUsedAt: existing.value.lastUsedAt,
             }),
@@ -61,9 +64,11 @@ export const SessionRepositoryFake = Layer.effect(
       Effect.gen(function* () {
         const m = yield* Ref.get(store);
         const existing = HashMap.get(m, session.id);
-        if (Option.isNone(existing) || existing.value.revokedAt !== null) {
+
+        if (Option.isNone(existing) || Option.isSome(existing.value.revokedAt)) {
           return yield* new SessionNotFound({ sessionId: session.id });
         }
+
         yield* Ref.update(store, (m2) =>
           HashMap.set(
             m2,

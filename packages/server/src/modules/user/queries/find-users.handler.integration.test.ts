@@ -1,18 +1,18 @@
 import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
-import { beforeEach } from "vitest";
+import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { UserRepository } from "@/modules/user/domain/user/user.repository.js";
-import { UserRootOps } from "@/modules/user/domain/user/user.root-ops.js";
-import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object.js";
-import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live.js";
-import { findUsersHandler } from "@/modules/user/queries/find-users.handler.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { UserRepository } from "@/modules/user/domain/user/user.repository";
+import { UserRootOps } from "@/modules/user/domain/user/user.root-ops";
+import { AddressValueObject } from "@/modules/user/domain/user/value-objects/address.value-object";
+import { UserRepositoryLive } from "@/modules/user/infrastructure/repositories/user.repository-live";
+import { findUsersHandler } from "@/modules/user/queries/find-users.handler";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const address = AddressValueObject.make({
   country: "USA",
@@ -33,51 +33,51 @@ const TestLayer = UserRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 const seed = (id: UserId, email: string, now: DateTime.Utc) =>
   Effect.gen(function* () {
     const repo = yield* UserRepository;
-    const { user } = UserRootOps.create({ id, email, address, now });
+    const { user } = UserRootOps.create({ id, email, address: Option.some(address), now });
     yield* repo.insertOne(user);
   });
 
-describe("findUsersHandler (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(truncate("user.users").pipe(Effect.provide(TestDatabaseLive)));
-  });
+describeIntegration(
+  "findUsersHandler (integration)",
+  { layer: TestLayer, tables: ["user.users"] },
+  (it) => {
+    it.effect("returns rows ordered by created_at desc with paging metadata", () =>
+      Effect.gen(function* () {
+        yield* seed(aliceId, "alice@example.com", aliceTime);
+        yield* seed(bobId, "bob@example.com", bobTime);
+        yield* seed(carolId, "carol@example.com", carolTime);
 
-  it.effect("returns rows ordered by created_at desc with paging metadata", () =>
-    Effect.gen(function* () {
-      yield* seed(aliceId, "alice@example.com", aliceTime);
-      yield* seed(bobId, "bob@example.com", bobTime);
-      yield* seed(carolId, "carol@example.com", carolTime);
+        const result = yield* findUsersHandler({ page: 1, pageSize: 2 });
+        deepStrictEqual(result.page, 1);
+        deepStrictEqual(result.pageSize, 2);
+        deepStrictEqual(result.total, 3);
+        deepStrictEqual(result.users.length, 2);
+        deepStrictEqual(
+          result.users.map((u) => u.email),
+          ["carol@example.com", "bob@example.com"],
+        );
+      }),
+    );
 
-      const result = yield* findUsersHandler({ page: 1, pageSize: 2 });
-      deepStrictEqual(result.page, 1);
-      deepStrictEqual(result.pageSize, 2);
-      deepStrictEqual(result.total, 3);
-      deepStrictEqual(result.users.length, 2);
-      deepStrictEqual(
-        result.users.map((u) => u.email),
-        ["carol@example.com", "bob@example.com"],
-      );
-    }).pipe(Effect.provide(TestLayer)),
-  );
+    it.effect("returns the correct page when offset", () =>
+      Effect.gen(function* () {
+        yield* seed(aliceId, "alice@example.com", aliceTime);
+        yield* seed(bobId, "bob@example.com", bobTime);
+        yield* seed(carolId, "carol@example.com", carolTime);
 
-  it.effect("returns the correct page when offset", () =>
-    Effect.gen(function* () {
-      yield* seed(aliceId, "alice@example.com", aliceTime);
-      yield* seed(bobId, "bob@example.com", bobTime);
-      yield* seed(carolId, "carol@example.com", carolTime);
+        const result = yield* findUsersHandler({ page: 2, pageSize: 2 });
+        deepStrictEqual(result.total, 3);
+        deepStrictEqual(result.users.length, 1);
+        deepStrictEqual(result.users[0]?.email, "alice@example.com");
+      }),
+    );
 
-      const result = yield* findUsersHandler({ page: 2, pageSize: 2 });
-      deepStrictEqual(result.total, 3);
-      deepStrictEqual(result.users.length, 1);
-      deepStrictEqual(result.users[0]?.email, "alice@example.com");
-    }).pipe(Effect.provide(TestLayer)),
-  );
-
-  it.effect("returns total 0 and empty users when the table is empty", () =>
-    Effect.gen(function* () {
-      const result = yield* findUsersHandler({ page: 1, pageSize: 10 });
-      deepStrictEqual(result.total, 0);
-      deepStrictEqual(result.users, []);
-    }).pipe(Effect.provide(TestLayer)),
-  );
-});
+    it.effect("returns total 0 and empty users when the table is empty", () =>
+      Effect.gen(function* () {
+        const result = yield* findUsersHandler({ page: 1, pageSize: 10 });
+        deepStrictEqual(result.total, 0);
+        deepStrictEqual(result.users, []);
+      }),
+    );
+  },
+);

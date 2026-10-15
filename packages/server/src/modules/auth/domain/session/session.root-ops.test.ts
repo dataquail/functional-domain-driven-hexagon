@@ -1,12 +1,13 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertNone } from "@effect/vitest/utils";
 import * as DateTime from "effect/DateTime";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { SessionId } from "./session.id.js";
-import { SessionRootOps } from "./session.root-ops.js";
+import { SessionId } from "./session.id";
+import { SessionRootOps } from "./session.root-ops";
 
 const sessionId = SessionId.make("11111111-1111-1111-1111-111111111111");
 const userId = UserId.make("22222222-2222-2222-2222-222222222222");
@@ -22,10 +23,11 @@ describe("SessionRootOps.create", () => {
       ttlSeconds: 3600,
       absoluteTtlSeconds: 43200,
     });
+
     deepStrictEqual(session.id, sessionId);
     deepStrictEqual(session.userId, userId);
     deepStrictEqual(session.subject, "identity-sub-1");
-    deepStrictEqual(session.revokedAt, null);
+    assertNone(session.revokedAt);
     deepStrictEqual(session.createdAt, now);
     deepStrictEqual(session.lastUsedAt, now);
   });
@@ -39,6 +41,7 @@ describe("SessionRootOps.create", () => {
       ttlSeconds: 3600,
       absoluteTtlSeconds: 43200,
     });
+
     const expected = DateTime.add(now, { seconds: 3600 });
     deepStrictEqual(session.expiresAt, expected);
   });
@@ -52,6 +55,7 @@ describe("SessionRootOps.create", () => {
       ttlSeconds: 3600,
       absoluteTtlSeconds: 43200,
     });
+
     const expected = DateTime.add(now, { seconds: 43200 });
     deepStrictEqual(session.absoluteExpiresAt, expected);
     deepStrictEqual(DateTime.isLessThan(session.expiresAt, session.absoluteExpiresAt), true);

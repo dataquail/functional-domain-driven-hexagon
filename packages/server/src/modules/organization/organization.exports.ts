@@ -1,7 +1,7 @@
 import { Query } from "@effect-server-utils/cqrs";
 
-import { OrganizationCreated } from "./domain/organization/organization.events.js";
-import { organizationQueryGroup } from "./organization.query-handlers.js";
+import { OrganizationCreated } from "./domain/organization/organization.events";
+import { organizationQueryGroup } from "./organization.query-handlers";
 
 // The peer surface: two of this module's seven queries. Todos and billing ask
 // about membership and organization roles from their policy checks, through

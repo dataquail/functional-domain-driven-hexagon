@@ -1,12 +1,12 @@
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
 
-import { TodoId } from "./todo.id.js";
+import { TodoId } from "./todo.id";
 
 // Aggregate root data — a dumb value (ADR-0003). Operations live in
 // `todo.root-ops.ts` (`TodoRootOps`) and carry the test obligation.
-export class TodoRoot extends Schema.Class<TodoRoot>("TodoRoot")({
+export class TodoRoot extends Schema.Class<TodoRoot, { readonly brand: "TodoRoot" }>("TodoRoot")({
   id: TodoId,
   // Owning organization. Every todo is scoped to exactly one org
   // (Phase 5 multi-tenancy); the repository requires it on every

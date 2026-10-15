@@ -1,4 +1,4 @@
-import { type Command, CommandBus, type CommandBusShape } from "@effect-server-utils/cqrs";
+import { type Command, CommandBus } from "@effect-server-utils/cqrs";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -31,29 +31,34 @@ export const RecordingCommandBus: Layer.Layer<CommandBus | RecordedCommands> = L
       Context.add(
         CommandBus,
         CommandBus.of({
-          // The recorder ignores the typed per-command output and returns a void success;
-          // adapter tests only assert what was dispatched.
-          execute: ((command: { readonly tag: string }, payload: unknown) =>
+          execute: <M extends Command.Any>(command: M, payload: Command.Payload<M>) =>
+            // SAFETY: adapter tests only assert what was dispatched, never what a handler returned.
+            // oxlint-disable-next-line effect/noAs, effect/noChainedTypeAssertions, anti-slop/no-chained-type-assertions -- a recorder runs no handler, so it has no typed output to return
             Ref.update(dispatched, (prev) => [
               ...prev,
               { tag: command.tag, payload },
-            ])) as CommandBusShape["execute"],
+            ]) as unknown as Effect.Effect<Command.Success<M>, Command.Failure<M>>,
           // A recorder answers whatever it is asked, so there is no fixed routing
           // table to report. Tests that need real routing use the production bus.
           tags: new Set<string>(),
         }),
       ),
-      Context.add(RecordedCommands, {
-        all: Ref.get(dispatched),
-        payloadsFor: <M extends Command.Any>(command: M) =>
-          Effect.map(
-            Ref.get(dispatched),
-            (all) =>
-              all.filter((d) => d.tag === command.tag).map((d) => d.payload) as ReadonlyArray<
-                Command.Payload<M>
-              >,
-          ),
-      }),
+      Context.add(
+        RecordedCommands,
+        RecordedCommands.of({
+          all: Ref.get(dispatched),
+          payloadsFor: <M extends Command.Any>(command: M) =>
+            Effect.map(Ref.get(dispatched), (all) =>
+              all.flatMap((dispatch) => {
+                if (dispatch.tag !== command.tag) return [];
+
+                // SAFETY: the tag matched, and `execute` only records a payload typed for its command.
+                // oxlint-disable-next-line effect/noAs -- the log is erased across commands; the tag restores the type
+                return [dispatch.payload as Command.Payload<M>];
+              }),
+            ),
+        }),
+      ),
     );
   }),
 );

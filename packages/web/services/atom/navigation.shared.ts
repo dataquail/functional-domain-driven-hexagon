@@ -6,6 +6,7 @@
 // actual Next router; everything upstream of it is plain values a test can set
 // and read.
 
+import * as Option from "effect/Option";
 import * as Atom from "effect/reactivity/Atom";
 
 // Kept alive: the bridge subscribes for the app's whole lifetime, and a
@@ -20,7 +21,7 @@ export type NavigationRequest = {
   readonly href: string;
 };
 
-export const navigationRequestAtom = Atom.keepAlive(Atom.make<NavigationRequest | null>(null));
+export const navigationRequestAtom = Atom.keepAlive(Atom.make(Option.none<NavigationRequest>()));
 
 // The narrow slice of atom context this module needs, named structurally so a
 // `fn`/`fnSync` action can pass its own smaller context straight through.
@@ -30,6 +31,10 @@ export type NavigationSink = {
 };
 
 export const navigateTo = (get: NavigationSink, href: string): void => {
-  const previous = get(navigationRequestAtom);
-  get.set(navigationRequestAtom, { seq: (previous?.seq ?? 0) + 1, href });
+  const previousSeq = Option.match(get(navigationRequestAtom), {
+    onNone: () => 0,
+    onSome: (previous) => previous.seq,
+  });
+
+  get.set(navigationRequestAtom, Option.some({ seq: previousSeq + 1, href }));
 };

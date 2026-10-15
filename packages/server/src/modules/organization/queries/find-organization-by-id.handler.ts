@@ -1,13 +1,14 @@
 import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
 import {
   type FindOrganizationByIdPayload,
   type OrganizationAuthzView,
-} from "@/modules/organization/queries/find-organization-by-id.query.js";
+} from "@/modules/organization/queries/find-organization-by-id.query";
 
 const IdRow = Schema.Struct({ id: Schema.String });
 
@@ -15,12 +16,16 @@ export const findOrganizationByIdHandler = Effect.fn("findOrganizationByIdHandle
   query: FindOrganizationByIdPayload,
 ) {
   const sql = yield* Database.Database;
+
   const statement = sql`
         SELECT id FROM "organization".organizations
         WHERE id = ${query.organizationId}
       `.pipe(Database.maybeRow(IdRow));
+
   const row = yield* statement.pipe(translateDatabaseErrors);
-  return row === null
-    ? null
-    : ({ organizationId: OrganizationId.make(row.id) } satisfies OrganizationAuthzView);
+
+  return Option.map(
+    row,
+    (found): OrganizationAuthzView => ({ organizationId: OrganizationId.make(found.id) }),
+  );
 });

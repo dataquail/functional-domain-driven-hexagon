@@ -1,5 +1,5 @@
-export { makeCliClient } from "./client.js";
-export { resolveBaseUrl, tokenFromEnv } from "./config.js";
+export { makeCliClient } from "./client";
+export { resolveBaseUrl, tokenFromEnv } from "./config";
 export {
   clearToken,
   Credentials,
@@ -7,4 +7,4 @@ export {
   resolveToken,
   saveDefaultOrg,
   saveToken,
-} from "./credentials.js";
+} from "./credentials";

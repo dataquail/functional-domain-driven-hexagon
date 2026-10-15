@@ -1,6 +1,6 @@
-import { Spec, type Specification } from "@/globals/application/ddd/specification.js";
+import { Spec, type Specification } from "@/globals/application/ddd/specification";
 
-import { type AuthIdentity } from "./auth-identity.repository.js";
+import { type AuthIdentity } from "./auth-identity.repository";
 
 // Translatable spec (carries a Criteria → usable as a repository filter and as
 // an in-memory guard). The field-name string lives here and in the mapper's

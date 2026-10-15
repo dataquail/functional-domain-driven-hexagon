@@ -1,17 +1,18 @@
 import * as Schema from "effect/Schema";
 
-import * as Event from "@/globals/application/ddd/domain-event.js";
-import { type SpanAttributesExtractor } from "@/globals/application/ddd/domain-event.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import * as Event from "@/globals/application/ddd/domain-event";
+import { type SpanAttributesExtractor } from "@/globals/application/ddd/domain-event";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { AddressValueObject } from "./value-objects/address.value-object.js";
+import { AddressValueObject } from "./value-objects/address.value-object";
 
 export const UserCreated = Event.make("UserCreated", {
   userId: UserId,
   email: Schema.String,
-  // Nullable: a JIT-provisioned user is created without an address.
-  address: Schema.NullOr(AddressValueObject),
+  // Absent for a JIT-provisioned user, who is created without an address.
+  address: Schema.OptionFromNullOr(AddressValueObject),
 });
+
 export type UserCreated = typeof UserCreated.Type;
 
 export const userCreatedSpanAttributes: SpanAttributesExtractor<UserCreated> = (event) => ({
@@ -21,6 +22,7 @@ export const userCreatedSpanAttributes: SpanAttributesExtractor<UserCreated> = (
 export const UserDeleted = Event.make("UserDeleted", {
   userId: UserId,
 });
+
 export type UserDeleted = typeof UserDeleted.Type;
 
 export const userDeletedSpanAttributes: SpanAttributesExtractor<UserDeleted> = (event) => ({
@@ -33,6 +35,7 @@ export const UserAddressUpdated = Event.make("UserAddressUpdated", {
   street: Schema.String,
   postalCode: Schema.String,
 });
+
 export type UserAddressUpdated = typeof UserAddressUpdated.Type;
 
 export const userAddressUpdatedSpanAttributes: SpanAttributesExtractor<UserAddressUpdated> = (

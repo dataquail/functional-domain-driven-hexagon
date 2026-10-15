@@ -2,12 +2,12 @@ import { Database, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
-import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
-import { type RolesRoot } from "@/modules/role/domain/roles/roles.root.js";
-import * as RoleMapper from "@/modules/role/infrastructure/repositories/role.mapper.js";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
+import { RolesRepository } from "@/modules/role/domain/roles/roles.repository";
+import { type RolesRoot } from "@/modules/role/domain/roles/roles.root";
+import * as RoleMapper from "@/modules/role/infrastructure/repositories/role.mapper";
 
 export const RolesRepositoryLive = Layer.effect(
   RolesRepository,
@@ -37,15 +37,18 @@ export const RolesRepositoryLive = Layer.effect(
     );
 
     // The spec pins the user id, so every matched row belongs to one aggregate;
-    // the mapper groups them (or returns null for zero rows). The compiler
+    // the mapper groups them (or returns none for zero rows). The compiler
     // contributes only the WHERE — this repo owns the projection and, for a
     // multi-row aggregate, the reconstitution.
     const findOne = Effect.fn("RolesRepository.findOne")((spec: Specification<RolesRoot>) =>
-      sql`
+      criteriaToWhere(sql, spec.criteria, RoleMapper.columns).pipe(
+        Effect.flatMap(
+          (where) => sql`
           SELECT user_id, role, granted_at
           FROM platform.roles
-          WHERE ${criteriaToWhere(sql, spec.criteria, RoleMapper.columns)}
-        `.pipe(
+          WHERE ${where}
+        `,
+        ),
         Database.rows(RowSchemas.PlatformRoleRow),
 
         Effect.map((rows) => RoleMapper.toDomain(rows)),

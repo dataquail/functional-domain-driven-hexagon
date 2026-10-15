@@ -1,20 +1,20 @@
 import * as Result from "effect/Result";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { type UserId } from "@/globals/application/ddd/ids/user-id";
 
 import {
   AlreadyHasOrganizationRole,
   DoesNotHaveOrganizationRole,
-} from "./organization-role.errors.js";
+} from "./organization-role.errors";
 import {
   type OrganizationRoleEvent,
   OrganizationRoleGranted,
   OrganizationRoleRevoked,
-} from "./organization-role.events.js";
-import { type OrganizationRoleValueObject } from "./organization-role.value-object.js";
-import { IssuedRoleValueObject, OrganizationRolesRoot } from "./organization-roles.root.js";
-import { OrganizationRolesSpecifications } from "./organization-roles.specification.js";
+} from "./organization-role.events";
+import { type OrganizationRoleValueObject } from "./organization-role.value-object";
+import { IssuedRoleValueObject, OrganizationRolesRoot } from "./organization-roles.root";
+import { OrganizationRolesSpecifications } from "./organization-roles.specification";
 
 export type Outcome = {
   readonly organizationRoles: OrganizationRolesRoot;
@@ -41,6 +41,7 @@ const grantRole = (
       }),
     );
   }
+
   return Result.succeed({
     organizationRoles: OrganizationRolesRoot.make({
       userId: aggregate.userId,
@@ -73,6 +74,7 @@ const revokeRole = (
       }),
     );
   }
+
   return Result.succeed({
     organizationRoles: OrganizationRolesRoot.make({
       userId: aggregate.userId,

@@ -2,6 +2,8 @@
   // The one component that holds SvelteKit's router. Inbound: the current
   // pathname is mirrored into the graph on every navigation. Outbound: a
   // navigation request written by a ViewModel becomes a client-side `goto`.
+  import * as Option from "effect/Option";
+
   import { atomSet, atomSubscribe } from "@/services/bridge/atom-bridge.svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
@@ -18,8 +20,8 @@
     setPathname(page.url.pathname);
   });
 
-  atomSubscribe(navigationRequestAtom, (request: NavigationRequest | null) => {
-    if (request === null) return;
-    void goto(request.href);
+  atomSubscribe(navigationRequestAtom, (request: Option.Option<NavigationRequest>) => {
+    if (Option.isNone(request)) return;
+    void goto(request.value.href);
   });
 </script>

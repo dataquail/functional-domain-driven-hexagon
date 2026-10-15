@@ -24,7 +24,8 @@ export type OrgPickerView = {
 
 export const orgPickerAtom = Atom.make((get): OrgPickerView => {
   const result = get(myOrgsResultAtom);
-  const orgs = AsyncResult.isSuccess(result) ? result.value : [];
+  const orgs = AsyncResult.getOrElse(result, () => []);
+
   return {
     cards: Array.map(orgs, (org) => ({
       id: org.id,

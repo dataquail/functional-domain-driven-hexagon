@@ -1,19 +1,16 @@
 import { deepStrictEqual, ok } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
 import { OrganizationContract, TodosContract } from "@org/contracts/api/Contracts";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import { Database } from "@org/database/index";
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
-import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.js";
-import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { describeServer } from "@/test-utils/server-test-runtime";
+import { TestServerLiveAsMember } from "@/test-utils/test-server";
 
 const TODO_TABLES = [
   "todos.todos",
@@ -24,16 +21,14 @@ const TODO_TABLES = [
   "user.users",
 ] as const;
 
-describe("GET /orgs/:orgId/todos (integration)", () => {
-  const { run } = useServerTestRuntime(TODO_TABLES, {
-    server: TestServerLiveAsMember,
-    seedSuperAdminCaller: true,
-  });
-
-  it("lists only the org's todos, created_at desc", async () => {
-    await run(
+describeServer(
+  "GET /orgs/:orgId/todos (integration)",
+  { tables: TODO_TABLES, server: TestServerLiveAsMember, seedSuperAdminCaller: true },
+  (it) => {
+    it.effect("lists only the org's todos, created_at desc", () =>
       Effect.gen(function* () {
         const client = yield* HttpApiClient.make(Api);
+
         const { id: orgId } = yield* client.organization.create({
           payload: new OrganizationContract.CreateOrganizationPayload({ name: "Acme" }),
         });
@@ -61,22 +56,19 @@ describe("GET /orgs/:orgId/todos (integration)", () => {
         );
       }),
     );
-  });
-});
+  },
+);
 
 // Non-member caller (not super-admin) is rejected before any query.
 
-describe("GET /orgs/:orgId/todos (integration, non-member caller)", () => {
-  const { run } = useServerTestRuntime(TODO_TABLES, {
-    server: TestServerLiveAsMember,
-    seedSuperAdminCaller: true,
-  });
-
-  it("returns 403 Forbidden for a caller who isn't a member of the org", async () => {
-    await run(
+describeServer(
+  "GET /orgs/:orgId/todos (integration, non-member caller)",
+  { tables: TODO_TABLES, server: TestServerLiveAsMember, seedSuperAdminCaller: true },
+  (it) => {
+    it.effect("returns 403 Forbidden for a caller who isn't a member of the org", () =>
       Effect.gen(function* () {
         // Seed an org directly so the member-caller is NOT a member of it.
-        const orgId = "11111111-1111-1111-1111-111111111111" as never;
+        const orgId = OrganizationId.make("11111111-1111-1111-1111-111111111111");
         const sql = yield* Database.Database;
         yield* sql`
               INSERT INTO "organization".organizations (id, name, created_at, updated_at, deleted_at)
@@ -84,18 +76,9 @@ describe("GET /orgs/:orgId/todos (integration, non-member caller)", () => {
             `.pipe(Effect.orDie);
 
         const client = yield* HttpApiClient.make(Api);
-        const exit = yield* Effect.exit(client.todos.get({ params: { orgId } }));
-        ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(
-            Schema.is(CustomHttpApiError.Forbidden)(
-              Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
-            ),
-          );
-        } else {
-          throw new Error("expected a typed Fail, got " + JSON.stringify(exit));
-        }
+        const error = yield* Effect.flip(client.todos.get({ params: { orgId } }));
+        ok(Schema.is(CustomHttpApiError.Forbidden)(error));
       }),
     );
-  });
-});
+  },
+);

@@ -2,7 +2,7 @@ import { Query } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
 
 export const FindAllOrganizationsView = Schema.Struct({
   id: OrganizationId,
@@ -11,6 +11,7 @@ export const FindAllOrganizationsView = Schema.Struct({
   updatedAt: Schema.DateTimeUtc,
   deletedAt: Schema.NullOr(Schema.DateTimeUtc),
 });
+
 export type FindAllOrganizationsView = typeof FindAllOrganizationsView.Type;
 
 export const FindAllOrganizationsResultView = Schema.Struct({
@@ -19,6 +20,7 @@ export const FindAllOrganizationsResultView = Schema.Struct({
   pageSize: Schema.Int,
   total: Schema.Int,
 });
+
 export type FindAllOrganizationsResult = typeof FindAllOrganizationsResultView.Type;
 
 // Admin-side listing of every org. `includeDeleted` is the explicit
@@ -30,4 +32,5 @@ export const FindAllOrganizationsQuery = Query.make("FindAllOrganizationsQuery",
   success: FindAllOrganizationsResultView,
   failure: PersistenceUnavailable,
 });
+
 export type FindAllOrganizationsPayload = Query.Payload<typeof FindAllOrganizationsQuery>;

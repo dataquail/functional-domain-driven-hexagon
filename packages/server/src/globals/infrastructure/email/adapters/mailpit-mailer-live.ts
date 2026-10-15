@@ -4,10 +4,10 @@ import * as HttpClient from "effect/http/HttpClient";
 import * as HttpClientRequest from "effect/http/HttpClientRequest";
 import * as Layer from "effect/Layer";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars";
 
-import { MailDeliveryError } from "../ports/mail-errors.js";
-import { Mailer } from "../ports/mailer.js";
+import { MailDeliveryError } from "../ports/mail-errors";
+import { Mailer } from "../ports/mailer";
 
 // Mailpit's HTTP send API; read delivered mail at MAILPIT_URL.
 export const MailpitMailerLive: Layer.Layer<Mailer, never, EnvVars | HttpClient.HttpClient> =
@@ -17,6 +17,7 @@ export const MailpitMailerLive: Layer.Layer<Mailer, never, EnvVars | HttpClient.
       const env = yield* EnvVars;
       const client = (yield* HttpClient.HttpClient).pipe(HttpClient.filterStatusOk);
       const sendUrl = new URL("/api/v1/send", env.MAILPIT_URL).toString();
+
       return Mailer.of({
         send: Effect.fn("MailpitMailer.send")(function* (message) {
           yield* HttpClientRequest.post(sendUrl).pipe(

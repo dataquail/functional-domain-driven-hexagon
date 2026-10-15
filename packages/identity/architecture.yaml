@@ -30,8 +30,8 @@ defs:
     imports:
       message: >-
         An identity integration test runs Better Auth against a real Postgres database, set up by
-        test-utils/. It reaches its harness and pg, and vitest for the per-test reset.
-      external: ["@effect/vitest", vitest, pg]
+        test-utils/. It reaches its harness, which owns the pool and the per-test reset.
+      external: ["@effect/vitest"]
 
 name: kebab-case
 message: >-

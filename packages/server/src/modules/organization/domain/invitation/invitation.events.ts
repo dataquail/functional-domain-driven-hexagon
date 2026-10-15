@@ -1,16 +1,17 @@
 import * as Schema from "effect/Schema";
 
-import * as Event from "@/globals/application/ddd/domain-event.js";
-import { type SpanAttributesExtractor } from "@/globals/application/ddd/domain-event.js";
-import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import * as Event from "@/globals/application/ddd/domain-event";
+import { type SpanAttributesExtractor } from "@/globals/application/ddd/domain-event";
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
 export const InvitationIssued = Event.make("InvitationIssued", {
   invitationId: InvitationId,
   organizationId: OrganizationId,
   inviteeEmail: Schema.String,
 });
+
 export type InvitationIssued = typeof InvitationIssued.Type;
 
 export const invitationIssuedSpanAttributes: SpanAttributesExtractor<InvitationIssued> = (
@@ -25,6 +26,7 @@ export const InvitationAccepted = Event.make("InvitationAccepted", {
   organizationId: OrganizationId,
   userId: UserId,
 });
+
 export type InvitationAccepted = typeof InvitationAccepted.Type;
 
 export const invitationAcceptedSpanAttributes: SpanAttributesExtractor<InvitationAccepted> = (
@@ -39,6 +41,7 @@ export const InvitationRevoked = Event.make("InvitationRevoked", {
   invitationId: InvitationId,
   organizationId: OrganizationId,
 });
+
 export type InvitationRevoked = typeof InvitationRevoked.Type;
 
 export const invitationRevokedSpanAttributes: SpanAttributesExtractor<InvitationRevoked> = (
@@ -56,6 +59,7 @@ export const InvitationReissued = Event.make("InvitationReissued", {
   organizationId: OrganizationId,
   inviteeEmail: Schema.String,
 });
+
 export type InvitationReissued = typeof InvitationReissued.Type;
 
 export const invitationReissuedSpanAttributes: SpanAttributesExtractor<InvitationReissued> = (

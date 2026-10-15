@@ -1,26 +1,24 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertInstanceOf, assertNone, assertSome } from "@effect/vitest/utils";
 import { Command, Query } from "@effect-server-utils/cqrs";
 import { type PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
-import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 import {
   userAccessCommands,
   userAccessErrors,
   userSignInAccessQueries,
-} from "@/modules/auth/auth.imports.js";
+} from "@/modules/auth/auth.imports";
 import {
   UserProvisioning,
   UserProvisioningConflict,
-} from "@/modules/auth/domain/ports/acl/user-provisioning.acl.js";
-import { UserProvisioningLive } from "@/modules/auth/infrastructure/acl/user-provisioning.acl-live.js";
+} from "@/modules/auth/domain/ports/acl/user-provisioning.acl";
+import { UserProvisioningLive } from "@/modules/auth/infrastructure/acl/user-provisioning.acl-live";
 
 // `UserProvisioningLive` is a thin translation over the user module's own dispatch
 // surface: it turns "provision a user with this email" into that module's
@@ -44,7 +42,8 @@ const stubUserCommands = (onCreateUser: OnCreateUser) =>
 const registeredUsers = new Map([["member@example.com", provisionedId]]);
 
 const stubUserQueries = Query.handlersOf(userSignInAccessQueries, {
-  FindUserIdByEmailQuery: ({ email }) => Effect.succeed(registeredUsers.get(email) ?? null),
+  FindUserIdByEmailQuery: ({ email }) =>
+    Effect.succeed(Option.getOrNull(Option.fromUndefinedOr(registeredUsers.get(email)))),
 });
 
 const testLayer = (onCreateUser: OnCreateUser) =>
@@ -55,6 +54,7 @@ const testLayer = (onCreateUser: OnCreateUser) =>
 describe("UserProvisioningLive", () => {
   it.effect("dispatches CreateUserPayload for the email and returns the new user id", () => {
     const dispatched: Array<string> = [];
+
     return Effect.gen(function* () {
       const provisioning = yield* UserProvisioning;
       const userId = yield* provisioning.provision("new@example.com");
@@ -64,6 +64,7 @@ describe("UserProvisioningLive", () => {
       Effect.provide(
         testLayer((email) => {
           dispatched.push(email);
+
           return Effect.succeed(provisionedId);
         }),
       ),
@@ -73,15 +74,9 @@ describe("UserProvisioningLive", () => {
   it.effect("maps the user module's UserAlreadyExists to UserProvisioningConflict", () =>
     Effect.gen(function* () {
       const provisioning = yield* UserProvisioning;
-      const exit = yield* Effect.exit(provisioning.provision("taken@example.com"));
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(UserProvisioningConflict)(error), true);
-        deepStrictEqual((error as UserProvisioningConflict).email, "taken@example.com");
-      }
+      const error = yield* Effect.flip(provisioning.provision("taken@example.com"));
+      assertInstanceOf(error, UserProvisioningConflict);
+      deepStrictEqual(error.email, "taken@example.com");
     }).pipe(
       Effect.provide(
         testLayer((email) => Effect.fail(new userAccessErrors.UserAlreadyExists({ email }))),
@@ -92,8 +87,8 @@ describe("UserProvisioningLive", () => {
   it.effect("asks the user module for the user registered under an email", () =>
     Effect.gen(function* () {
       const provisioning = yield* UserProvisioning;
-      deepStrictEqual(yield* provisioning.findByEmail("member@example.com"), provisionedId);
-      deepStrictEqual(yield* provisioning.findByEmail("nobody@example.com"), null);
+      assertSome(yield* provisioning.findByEmail("member@example.com"), provisionedId);
+      assertNone(yield* provisioning.findByEmail("nobody@example.com"));
     }).pipe(Effect.provide(testLayer(() => Effect.die("unexpected CreateUserCommand")))),
   );
 });

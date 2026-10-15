@@ -11,11 +11,15 @@
 </script>
 
 <script lang="ts">
-  let checked = $state(false);
+  const box = $state({ checked: false });
 </script>
 
 <Story name="Controlled" asChild>
-  <Checkbox id="story-checkbox" {checked} onCheckedChange={(next) => (checked = next)} />
+  <Checkbox
+    id="story-checkbox"
+    checked={box.checked}
+    onCheckedChange={(next) => (box.checked = next)}
+  />
   <Label htmlFor="story-checkbox">Remember me</Label>
 </Story>
 

@@ -1,7 +1,7 @@
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
 // Aggregate root data — a dumb value (ADR-0003). Operations live in
 // `membership.root-ops.ts` (`MembershipRootOps`) and carry the test
@@ -16,7 +16,10 @@ import { UserId } from "@/globals/application/ddd/ids/user-id.js";
 // before revoke" is a `MembershipNotFound` from the repository. There's
 // no transitional state column on the row (revoke = delete), so
 // revoke is a pure event-only operation.
-export class MembershipRoot extends Schema.Class<MembershipRoot>("MembershipRoot")({
+export class MembershipRoot extends Schema.Class<
+  MembershipRoot,
+  { readonly brand: "MembershipRoot" }
+>("MembershipRoot")({
   userId: UserId,
   organizationId: OrganizationId,
   createdAt: Schema.DateTimeUtc,

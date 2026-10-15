@@ -1,16 +1,13 @@
 import { deepStrictEqual, ok } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
 import { UserContract } from "@org/contracts/api/Contracts";
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
-import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.js";
-import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { describeServer } from "@/test-utils/server-test-runtime";
 
 const basePayload = new UserContract.CreateUserPayload({
   email: "alice@example.com",
@@ -19,43 +16,32 @@ const basePayload = new UserContract.CreateUserPayload({
   postalCode: "12345",
 });
 
-describe("DELETE /users/:id (integration)", () => {
-  const { run } = useServerTestRuntime(["user.users"]);
+describeServer("DELETE /users/:id (integration)", { tables: ["user.users"] }, (it) => {
+  it.effect("removes the user", () =>
+    Effect.gen(function* () {
+      const client = yield* HttpApiClient.make(Api);
+      const { id } = yield* client.user.create({ payload: basePayload });
+      yield* client.user.delete({ params: { id } });
 
-  it("removes the user", async () => {
-    await run(
-      Effect.gen(function* () {
-        const client = yield* HttpApiClient.make(Api);
-        const { id } = yield* client.user.create({ payload: basePayload });
-        yield* client.user.delete({ params: { id } });
-        const after = yield* client.user.find({
-          query: new UserContract.FindUsersParams({ page: 1, pageSize: 10 }),
-        });
-        deepStrictEqual(after.total, 0);
-      }),
-    );
-  });
+      const after = yield* client.user.find({
+        query: new UserContract.FindUsersParams({ page: 1, pageSize: 10 }),
+      });
 
-  it("returns 404 UserNotFoundError for unknown id", async () => {
-    await run(
-      Effect.gen(function* () {
-        const client = yield* HttpApiClient.make(Api);
-        const exit = yield* Effect.exit(
-          client.user.delete({
-            params: { id: "00000000-0000-0000-0000-000000000000" as never },
-          }),
-        );
-        ok(Exit.isFailure(exit));
-        if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
-          ok(
-            Schema.is(UserContract.UserNotFoundError)(
-              Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow),
-            ),
-          );
-        } else {
-          throw new Error("expected a typed Fail");
-        }
-      }),
-    );
-  });
+      deepStrictEqual(after.total, 0);
+    }),
+  );
+
+  it.effect("returns 404 UserNotFoundError for unknown id", () =>
+    Effect.gen(function* () {
+      const client = yield* HttpApiClient.make(Api);
+
+      const error = yield* Effect.flip(
+        client.user.delete({
+          params: { id: UserId.make("00000000-0000-0000-0000-000000000000") },
+        }),
+      );
+
+      ok(Schema.is(UserContract.UserNotFoundError)(error));
+    }),
+  );
 });

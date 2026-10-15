@@ -1,18 +1,19 @@
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars";
 
-import { withDailyCap } from "../quota/daily-capped-mailer-live.js";
-import { CloudflareEmailMailerLive } from "./cloudflare-email-mailer-live.js";
-import { LogMailerLive } from "./log-mailer-live.js";
-import { MailpitMailerFetchLive } from "./mailpit-mailer-live.js";
+import { withDailyCap } from "../quota/daily-capped-mailer-live";
+import { CloudflareEmailMailerLive } from "./cloudflare-email-mailer-live";
+import { LogMailerLive } from "./log-mailer-live";
+import { MailpitMailerFetchLive } from "./mailpit-mailer-live";
 
 // The one place that names every transport; `MAILER` picks one per environment.
 // Only the transport that costs money is capped.
 export const MailerLive = Layer.unwrap(
   Effect.gen(function* () {
     const env = yield* EnvVars;
+
     switch (env.MAILER) {
       case "mailpit":
         return MailpitMailerFetchLive;

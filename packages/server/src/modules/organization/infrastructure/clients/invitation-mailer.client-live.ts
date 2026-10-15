@@ -2,12 +2,12 @@ import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
-import { Mailer } from "@/globals/infrastructure/email/ports/mailer.js";
-import { InvitationEmailUndelivered } from "@/modules/organization/domain/invitation/invitation.errors.js";
-import { InvitationMailer } from "@/modules/organization/domain/ports/clients/invitation-mailer.client.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars";
+import { Mailer } from "@/globals/infrastructure/email/ports/mailer";
+import { InvitationEmailUndelivered } from "@/modules/organization/domain/invitation/invitation.errors";
+import { InvitationMailer } from "@/modules/organization/domain/ports/clients/invitation-mailer.client";
 
-import { invitationEmail } from "./invitation.email.js";
+import { invitationEmail } from "./invitation.email";
 
 const SUBJECT = "You're invited to join an organization";
 
@@ -28,10 +28,12 @@ export const InvitationMailerLive = Layer.effect(
           // at this URL; the (authed) guard bounces an unauthenticated
           // invitee through sign-in and back.
           const acceptUrl = `${env.APP_URL}/invitations/${token}`;
+
           const expiresLabel = DateTime.format(expiresAt, {
             dateStyle: "medium",
             timeStyle: "short",
           });
+
           const { html, text } = invitationEmail({ acceptUrl, expiresLabel });
 
           yield* mailer

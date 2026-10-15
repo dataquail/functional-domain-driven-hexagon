@@ -4,10 +4,11 @@ import { describe, it } from "@effect/vitest";
 import * as DateTime from "effect/DateTime";
 import * as Result from "effect/Result";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { Criteria } from "@/globals/application/ddd/specification";
 
-import { OrganizationRootOps } from "./organization.root-ops.js";
-import { OrganizationSpecifications } from "./organization.specification.js";
+import { OrganizationRootOps } from "./organization.root-ops";
+import { OrganizationSpecifications } from "./organization.specification";
 
 const id = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const now = DateTime.makeUnsafe("2026-01-01T00:00:00Z");
@@ -24,14 +25,14 @@ describe("OrganizationSpecifications.isDeleted / notDeleted", () => {
   });
 
   it("carry criteria complementary over deletedAt", () => {
-    deepStrictEqual(OrganizationSpecifications.isDeleted.criteria, {
-      _tag: "IsNotNull",
-      field: "deletedAt",
-    });
-    deepStrictEqual(OrganizationSpecifications.notDeleted.criteria, {
-      _tag: "IsNull",
-      field: "deletedAt",
-    });
+    deepStrictEqual(
+      OrganizationSpecifications.isDeleted.criteria,
+      Criteria.IsNotNull({ field: "deletedAt" }),
+    );
+    deepStrictEqual(
+      OrganizationSpecifications.notDeleted.criteria,
+      Criteria.IsNull({ field: "deletedAt" }),
+    );
   });
 });
 
@@ -41,10 +42,9 @@ describe("OrganizationSpecifications.withId", () => {
     const other = OrganizationId.make("22222222-2222-2222-2222-222222222222");
     deepStrictEqual(OrganizationSpecifications.withId(id)(organization), true);
     deepStrictEqual(OrganizationSpecifications.withId(other)(organization), false);
-    deepStrictEqual(OrganizationSpecifications.withId(id).criteria, {
-      _tag: "Eq",
-      field: "id",
-      value: id,
-    });
+    deepStrictEqual(
+      OrganizationSpecifications.withId(id).criteria,
+      Criteria.Eq({ field: "id", value: id }),
+    );
   });
 });

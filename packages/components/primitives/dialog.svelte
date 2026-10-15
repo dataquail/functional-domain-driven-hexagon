@@ -16,7 +16,7 @@
 <script lang="ts">
   import { Dialog as DialogPrimitive } from "bits-ui";
 
-  import { CloseIcon } from "./icon";
+  import { CloseIcon } from "./icon/icons";
 
   const {
     children,

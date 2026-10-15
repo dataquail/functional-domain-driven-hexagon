@@ -3,14 +3,14 @@ import { OrganizationContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
 
-import { Actions } from "@/globals/application/ports/actions.js";
-import * as Authz from "@/globals/infrastructure/auth/authz.js";
+import { Actions } from "@/globals/application/ports/actions";
+import * as Authz from "@/globals/infrastructure/auth/authz";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { ResendInvitationCommand } from "@/modules/organization/commands/resend-invitation.command.js";
-import { OrganizationResource } from "@/modules/organization/policies/organization.policies.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { ResendInvitationCommand } from "@/modules/organization/commands/resend-invitation.command";
+import { OrganizationResource } from "@/modules/organization/policies/organization.policies";
 
 // Default invitation lifetime — 7 days, same as a fresh invite (the TTL
 // is a UX decision, kept at the endpoint, not the command).

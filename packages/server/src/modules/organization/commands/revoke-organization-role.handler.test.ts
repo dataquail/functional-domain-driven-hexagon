@@ -1,25 +1,23 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertDefined, assertNone } from "@effect/vitest/utils";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { Spec } from "@/globals/application/ddd/specification.js";
-import { grantOrganizationRoleHandler } from "@/modules/organization/commands/grant-organization-role.handler.js";
-import { revokeOrganizationRoleHandler } from "@/modules/organization/commands/revoke-organization-role.handler.js";
-import { DoesNotHaveOrganizationRole } from "@/modules/organization/domain/organization-roles/organization-role.errors.js";
-import { type OrganizationRoleRevoked } from "@/modules/organization/domain/organization-roles/organization-role.events.js";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
-import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification.js";
-import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake.js";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { Spec } from "@/globals/application/ddd/specification";
+import { grantOrganizationRoleHandler } from "@/modules/organization/commands/grant-organization-role.handler";
+import { revokeOrganizationRoleHandler } from "@/modules/organization/commands/revoke-organization-role.handler";
+import { DoesNotHaveOrganizationRole } from "@/modules/organization/domain/organization-roles/organization-role.errors";
+import { type OrganizationRoleRevoked } from "@/modules/organization/domain/organization-roles/organization-role.events";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository";
+import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification";
+import { OrganizationRolesRepositoryFake } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-fake";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus";
 
 const TestLayer = Layer.mergeAll(
   OrganizationRolesRepositoryFake,
@@ -58,12 +56,14 @@ describe("revokeOrganizationRoleHandler", () => {
           OrganizationRolesSpecifications.forOrganization(orgId),
         ),
       );
-      deepStrictEqual(roles, null);
+
+      assertNone(roles);
 
       const events = yield* rec.byTag<OrganizationRoleRevoked>("OrganizationRoleRevoked");
       deepStrictEqual(events.length, 1);
       const event = events[0];
-      if (event === undefined) throw new Error("expected OrganizationRoleRevoked event");
+
+      assertDefined(event);
       deepStrictEqual(event.userId, targetId);
       deepStrictEqual(event.organizationId, orgId);
       deepStrictEqual(event.role, "admin");
@@ -72,20 +72,15 @@ describe("revokeOrganizationRoleHandler", () => {
 
   it.effect("fails DoesNotHaveOrganizationRole when the role isn't held", () =>
     Effect.gen(function* () {
-      const exit = yield* Effect.exit(
+      const error = yield* Effect.flip(
         revokeOrganizationRoleHandler({
           userId: targetId,
           organizationId: orgId,
           role: "admin",
         }),
       );
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(DoesNotHaveOrganizationRole)(error), true);
-      }
+
+      deepStrictEqual(Schema.is(DoesNotHaveOrganizationRole)(error), true);
     }).pipe(Effect.provide(TestLayer)),
   );
 });

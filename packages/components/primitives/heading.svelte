@@ -2,8 +2,11 @@
   import type { Snippet } from "svelte";
 
   export type HeadingLevel = 1 | 2 | 3 | 4;
+
   export type HeadingSize = "sm" | "md" | "lg" | "xl";
+
   export type HeadingTone = "default" | "muted";
+
   export type HeadingAlign = "start" | "center";
 
   const SIZE: Record<HeadingSize, string> = {

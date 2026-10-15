@@ -8,7 +8,7 @@ import {
   myOrgsQueryAtom,
 } from "./orgs.atoms";
 
-export const prefetchMyOrgs = () => prefetchQuery(myOrgsQueryAtom, fetchMyOrgs);
+export const prefetchMyOrgs = prefetchQuery(myOrgsQueryAtom, fetchMyOrgs);
 
 export const prefetchAdminOrgs = (variables: AdminOrgsVariables) =>
   prefetchQuery(adminOrgsQueryAtom(variables), fetchAdminOrgs(variables));

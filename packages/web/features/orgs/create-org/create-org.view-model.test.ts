@@ -1,6 +1,8 @@
+import { describe, expect, it } from "@effect/vitest";
+import { assertNone } from "@effect/vitest/utils";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import * as AtomRegistry from "effect/reactivity/AtomRegistry";
-import { describe, expect, it } from "vitest";
 
 import { apiTransportAtom } from "@/services/atom/api-transport.shared";
 import { navigationRequestAtom } from "@/services/atom/navigation.shared";
@@ -25,66 +27,73 @@ const makeRegistry = () =>
   });
 
 const submit = (registry: AtomRegistry.AtomRegistry) => {
-  registry.set(submitAtom, undefined);
-  return Effect.runPromise(
-    AtomRegistry.getResult(registry, submitAtom, { suspendOnWaiting: true }),
-  );
+  registry.set(submitAtom, void 0);
+
+  return AtomRegistry.getResult(registry, submitAtom, { suspendOnWaiting: true });
 };
 
 describe("create org ViewModel", () => {
   it("rejects a blank name and accepts a filled one", () => {
     const registry = makeRegistry();
-    expect(registry.get(errorsAtom)?.name).toBeTypeOf("string");
+    expect(registry.get(errorsAtom).name).toBeTypeOf("string");
 
     registry.set(setNameAtom, "Acme Inc.");
-    expect(registry.get(errorsAtom)).toBeNull();
+    expect(registry.get(errorsAtom)).toEqual({});
   });
 
-  it("keeps the error hidden until the first submit attempt", async () => {
-    const registry = makeRegistry();
-    expect(registry.get(visibleErrorsAtom)).toBeNull();
+  it.effect("keeps the error hidden until the first submit attempt", () =>
+    Effect.gen(function* () {
+      const registry = makeRegistry();
+      expect(registry.get(visibleErrorsAtom)).toEqual({});
 
-    await submit(registry);
+      yield* submit(registry);
 
-    expect(registry.get(visibleErrorsAtom)?.name).toBeTypeOf("string");
-  });
+      expect(registry.get(visibleErrorsAtom).name).toBeTypeOf("string");
+    }),
+  );
 
-  it("does not call the API, announce, or navigate when the name is blank", async () => {
-    // No handler registered: MSW errors on any unhandled request, so a call
-    // here would fail the test rather than pass silently.
-    const registry = makeRegistry();
+  it.effect("does not call the API, announce, or navigate when the name is blank", () =>
+    Effect.gen(function* () {
+      // No handler registered: MSW errors on any unhandled request, so a call
+      // here would fail the test rather than pass silently.
+      const registry = makeRegistry();
 
-    await submit(registry);
+      yield* submit(registry);
 
-    expect(registry.get(notificationAtom)).toBeNull();
-    expect(registry.get(navigationRequestAtom)).toBeNull();
-  });
+      assertNone(registry.get(notificationAtom));
+      assertNone(registry.get(navigationRequestAtom));
+    }),
+  );
 
-  it("creates the org, announces it, clears the form, and moves into the new org", async () => {
-    server.use(orgsHandlers.create({ result: "success", id: ORG_B_ID }));
+  it.effect("creates the org, announces it, clears the form, and moves into the new org", () =>
+    Effect.gen(function* () {
+      server.use(orgsHandlers.create({ result: "success", id: ORG_B_ID }));
 
-    const registry = makeRegistry();
-    registry.set(setNameAtom, "Acme Inc.");
-    await submit(registry);
+      const registry = makeRegistry();
+      registry.set(setNameAtom, "Acme Inc.");
+      yield* submit(registry);
 
-    expect(registry.get(notificationAtom)).toMatchObject({
-      kind: "success",
-      message: "Organization created!",
-    });
-    expect(registry.get(fieldsAtom)).toEqual({ name: "" });
-    expect(registry.get(submitAttemptedAtom)).toBe(false);
-    expect(registry.get(navigationRequestAtom)?.href).toBe(`/orgs/${ORG_B_ID}`);
-  });
+      expect(Option.getOrThrow(registry.get(notificationAtom))).toMatchObject({
+        kind: "success",
+        message: "Organization created!",
+      });
+      expect(registry.get(fieldsAtom)).toEqual({ name: "" });
+      expect(registry.get(submitAttemptedAtom)).toBe(false);
+      expect(Option.getOrThrow(registry.get(navigationRequestAtom)).href).toBe(`/orgs/${ORG_B_ID}`);
+    }),
+  );
 
-  it("stays put and keeps what was typed when the server refuses", async () => {
-    server.use(orgsHandlers.create({ result: "SuperAdminCannotOwnOrganizationError" }));
+  it.effect("stays put and keeps what was typed when the server refuses", () =>
+    Effect.gen(function* () {
+      server.use(orgsHandlers.create({ result: "SuperAdminCannotOwnOrganizationError" }));
 
-    const registry = makeRegistry();
-    registry.set(setNameAtom, "Acme Inc.");
-    await submit(registry).catch(() => undefined);
+      const registry = makeRegistry();
+      registry.set(setNameAtom, "Acme Inc.");
+      yield* Effect.exit(submit(registry));
 
-    expect(registry.get(notificationAtom)).toMatchObject({ kind: "error" });
-    expect(registry.get(fieldsAtom)).toEqual({ name: "Acme Inc." });
-    expect(registry.get(navigationRequestAtom)).toBeNull();
-  });
+      expect(Option.getOrThrow(registry.get(notificationAtom))).toMatchObject({ kind: "error" });
+      expect(registry.get(fieldsAtom)).toEqual({ name: "Acme Inc." });
+      assertNone(registry.get(navigationRequestAtom));
+    }),
+  );
 });

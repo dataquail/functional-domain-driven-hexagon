@@ -5,8 +5,8 @@ import * as Effect from "effect/Effect";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { FindUsersQuery, type FindUsersResult } from "@/modules/user/queries/find-users.query.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { FindUsersQuery, type FindUsersResult } from "@/modules/user/queries/find-users.query";
 
 const toPaginatedUsersContract = (result: FindUsersResult): UserContract.PaginatedUsers =>
   new UserContract.PaginatedUsers({
@@ -29,9 +29,11 @@ export const findEndpoint = Effect.fn("UserLive.find")(function* (
   request: EndpointRequest<typeof UserContract.Group, "find">,
 ) {
   const queryBus = yield* QueryBus;
+
   const result = yield* queryBus.execute(FindUsersQuery, {
     page: request.query.page,
     pageSize: request.query.pageSize,
   });
+
   return toPaginatedUsersContract(result);
 }, recoverPersistenceUnavailable);

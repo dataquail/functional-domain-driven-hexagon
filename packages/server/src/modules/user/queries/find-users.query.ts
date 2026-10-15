@@ -2,7 +2,7 @@ import { Query } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
 export const FindUsersUserView = Schema.Struct({
   id: UserId,
@@ -18,6 +18,7 @@ export const FindUsersUserView = Schema.Struct({
   createdAt: Schema.DateTimeUtc,
   updatedAt: Schema.DateTimeUtc,
 });
+
 export type FindUsersUserView = typeof FindUsersUserView.Type;
 
 export const FindUsersResultView = Schema.Struct({
@@ -26,6 +27,7 @@ export const FindUsersResultView = Schema.Struct({
   pageSize: Schema.Int,
   total: Schema.Int,
 });
+
 export type FindUsersResult = typeof FindUsersResultView.Type;
 
 export const FindUsersQuery = Query.make("FindUsersQuery", {
@@ -33,4 +35,5 @@ export const FindUsersQuery = Query.make("FindUsersQuery", {
   success: FindUsersResultView,
   failure: PersistenceUnavailable,
 });
+
 export type FindUsersPayload = Query.Payload<typeof FindUsersQuery>;

@@ -3,13 +3,13 @@ import { deepStrictEqual } from "node:assert";
 import { describe, it } from "@effect/vitest";
 import * as Result from "effect/Result";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { type Specification } from "@/globals/application/ddd/specification.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { type Specification } from "@/globals/application/ddd/specification";
 
-import { type OrganizationRolesRoot } from "./organization-roles.root.js";
-import { OrganizationRolesRootOps } from "./organization-roles.root-ops.js";
-import { OrganizationRolesSpecifications } from "./organization-roles.specification.js";
+import { type OrganizationRolesRoot } from "./organization-roles.root";
+import { OrganizationRolesRootOps } from "./organization-roles.root-ops";
+import { OrganizationRolesSpecifications } from "./organization-roles.specification";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
@@ -20,9 +20,10 @@ const issuedBy = UserId.make("99999999-9999-9999-9999-999999999999");
 // must never be usable as a repository filter. This assignment must NOT
 // compile — if `hasRole` ever gains a `.criteria`, the directive goes unused
 // and the build fails, catching the regression.
-// @ts-expect-error hasRole("admin") is a Predicate; it has no `.criteria`.
+// @ts-expect-error -- hasRole("admin") is a Predicate; it has no `.criteria`.
 const _hasRoleIsNotASpecification: Specification<OrganizationRolesRoot> =
   OrganizationRolesSpecifications.hasRole("admin");
+
 void _hasRoleIsNotASpecification;
 
 describe("OrganizationRolesSpecifications.hasRole", () => {
@@ -43,6 +44,7 @@ describe("OrganizationRolesSpecifications.hasRole", () => {
         issuedBy,
       ),
     );
+
     deepStrictEqual(
       OrganizationRolesSpecifications.hasRole("admin")(result.organizationRoles),
       true,

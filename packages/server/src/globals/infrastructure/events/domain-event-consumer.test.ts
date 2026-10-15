@@ -15,6 +15,7 @@ import {
 import * as Effect from "effect/Effect";
 import * as Fiber from "effect/Fiber";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
@@ -24,14 +25,15 @@ import {
   type QueueMessage,
   reportDeadLetters,
   retryDelaySeconds,
-} from "@/globals/infrastructure/events/domain-event-consumer.js";
+} from "@/globals/infrastructure/events/domain-event-consumer";
 
 const InvitationSent = Event.make("InvitationSent", { email: Schema.String });
 
-type Outcome = { acked: boolean; retriedAfter: number | null };
+type Outcome = { acked: boolean; retriedAfter: Option.Option<number> };
 
-const recordingMessage = (body: unknown, attempts = 1) => {
-  const outcome: Outcome = { acked: false, retriedAfter: null };
+const recordingMessage = (body: QueueMessage["body"], attempts = 1) => {
+  const outcome: Outcome = { acked: false, retriedAfter: Option.none() };
+
   const message: QueueMessage = {
     id: `message-${attempts}`,
     body,
@@ -40,9 +42,10 @@ const recordingMessage = (body: unknown, attempts = 1) => {
       outcome.acked = true;
     },
     retry: (options) => {
-      outcome.retriedAfter = options?.delaySeconds ?? 0;
+      outcome.retriedAfter = Option.some(options?.delaySeconds ?? 0);
     },
   };
+
   return { message, outcome };
 };
 
@@ -64,6 +67,7 @@ const envelopeFor = (handlerResult: Effect.Effect<void>) =>
       { name: "send-invitation-email" },
     );
     const [envelope] = yield* bus.envelop([InvitationSent.make({ email: "a@example.com" })]);
+
     return { envelope, runs };
   });
 
@@ -75,7 +79,7 @@ describe("consumeDomainEvents", () => {
 
       yield* consumeDomainEvents([message]);
 
-      deepStrictEqual(outcome, { acked: true, retriedAfter: null });
+      deepStrictEqual(outcome, { acked: true, retriedAfter: Option.none() });
       deepStrictEqual(yield* Ref.get(runs), 1);
     }).pipe(Effect.provide(ConsumerLive)),
   );
@@ -100,7 +104,7 @@ describe("consumeDomainEvents", () => {
 
       yield* consumeDomainEvents([message]);
 
-      deepStrictEqual(outcome, { acked: false, retriedAfter: retryDelaySeconds(3) });
+      deepStrictEqual(outcome, { acked: false, retriedAfter: Option.some(retryDelaySeconds(3)) });
     }).pipe(Effect.provide(ConsumerLive)),
   );
 
@@ -111,7 +115,7 @@ describe("consumeDomainEvents", () => {
 
       yield* consumeDomainEvents([message]);
 
-      deepStrictEqual(outcome, { acked: true, retriedAfter: null });
+      deepStrictEqual(outcome, { acked: true, retriedAfter: Option.none() });
     }).pipe(Effect.provide(ConsumerLive)),
   );
 
@@ -121,7 +125,7 @@ describe("consumeDomainEvents", () => {
 
       yield* consumeDomainEvents([message]);
 
-      deepStrictEqual(outcome, { acked: true, retriedAfter: null });
+      deepStrictEqual(outcome, { acked: true, retriedAfter: Option.none() });
     }).pipe(Effect.provide(ConsumerLive)),
   );
 });
@@ -136,9 +140,11 @@ describe("reportDeadLetters", () => {
   it.effect("reports each dead letter as an unhandled after-commit failure and acks it", () =>
     Effect.gen(function* () {
       const failures = yield* UnhandledFailures;
+
       const reported = yield* Stream.runCollect(Stream.take(yield* failures.stream, 1)).pipe(
         Effect.forkChild,
       );
+
       yield* Effect.yieldNow;
       const { envelope } = yield* envelopeFor(Effect.void);
       const { message, outcome } = recordingMessage(envelope, 11);

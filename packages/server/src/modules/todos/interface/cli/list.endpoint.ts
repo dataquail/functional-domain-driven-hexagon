@@ -2,17 +2,14 @@ import { QueryBus } from "@effect-server-utils/cqrs";
 import { CliTodosContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
-import { Actions } from "@/globals/application/ports/actions.js";
-import * as Authz from "@/globals/infrastructure/auth/authz.js";
+import { Actions } from "@/globals/application/ports/actions";
+import * as Authz from "@/globals/infrastructure/auth/authz";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { TodoCollectionResource } from "@/modules/todos/policies/todos.policies.js";
-import {
-  ListTodosQuery,
-  type ListTodosTodoView,
-} from "@/modules/todos/queries/list-todos.query.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { TodoCollectionResource } from "@/modules/todos/policies/todos.policies";
+import { ListTodosQuery, type ListTodosTodoView } from "@/modules/todos/queries/list-todos.query";
 
 const toCli = (view: ListTodosTodoView): CliTodosContract.CliTodo =>
   new CliTodosContract.CliTodo({ id: view.id, title: view.title, completed: view.completed });
@@ -25,5 +22,6 @@ export const listEndpoint = Effect.fn("CliTodosLive.list")(function* (
   yield* Authz.hasPermissions(TodoCollectionResource, Actions.Read, request.params.orgId);
   const queryBus = yield* QueryBus;
   const result = yield* queryBus.execute(ListTodosQuery, { organizationId: request.params.orgId });
+
   return result.todos.map(toCli);
 }, recoverPersistenceUnavailable);

@@ -10,6 +10,7 @@
 </script>
 
 <script lang="ts">
+  import * as Option from "effect/Option";
   import { untrack } from "svelte";
 
   import { hydrateExisting, hydrateNew } from "./hydration";
@@ -19,22 +20,23 @@
   const { children, pending, state }: HydrationBoundaryProps = $props();
 
   const registry = getRegistry();
-  providePending(untrack(() => pending));
 
-  const existing = hydrateNew(
-    registry,
-    untrack(() => state),
-  );
+  providePending(Option.fromUndefinedOr(untrack(() => pending)));
+
+  const initialState = untrack(() => state);
+  const existing = hydrateNew(registry, initialState);
+
   if (typeof window === "undefined") hydrateExisting(registry, existing);
 
-  let mounted = false;
   $effect(() => {
     const next = state;
-    if (!mounted) {
-      mounted = true;
+
+    if (next === initialState) {
       untrack(() => hydrateExisting(registry, existing));
+
       return;
     }
+
     untrack(() => hydrateExisting(registry, hydrateNew(registry, next)));
   });
 </script>

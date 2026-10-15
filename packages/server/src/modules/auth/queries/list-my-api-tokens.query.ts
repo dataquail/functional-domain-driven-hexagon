@@ -2,8 +2,8 @@ import { Query } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id";
 
 // Secret-free projection: only the display `prefix` and metadata, never
 // the `token_hash`.
@@ -15,6 +15,7 @@ export const ApiTokenView = Schema.Struct({
   createdAt: Schema.DateTimeUtc,
   lastUsedAt: Schema.DateTimeUtc,
 });
+
 export type ApiTokenView = typeof ApiTokenView.Type;
 
 // Lists the caller's active (non-revoked) tokens for the management UI.
@@ -23,4 +24,5 @@ export const ListMyApiTokensQuery = Query.make("ListMyApiTokensQuery", {
   success: Schema.Array(ApiTokenView),
   failure: PersistenceUnavailable,
 });
+
 export type ListMyApiTokensPayload = Query.Payload<typeof ListMyApiTokensQuery>;

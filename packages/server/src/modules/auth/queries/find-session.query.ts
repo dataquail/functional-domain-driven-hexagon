@@ -2,8 +2,8 @@ import { Query } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { SessionId } from "@/modules/auth/domain/session/session.id.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { SessionId } from "@/modules/auth/domain/session/session.id";
 
 // The read model the auth middleware needs: the opaque principal ids,
 // nothing else. Lifecycle (revoked/expired) is enforced by the handler
@@ -12,21 +12,31 @@ export const SessionView = Schema.Struct({
   id: SessionId,
   userId: UserId,
 });
+
 export type SessionView = typeof SessionView.Type;
 
 // Read-side lifecycle outcomes. The write-side `Session` aggregate owns
 // its own equivalents (revoke path); these are query-owned so the read
 // path stays off the domain. The auth middleware collapses all three to
 // a 401 — the distinct tags exist for observability.
-export class SessionNotFound extends Schema.TaggedError<SessionNotFound>()("SessionNotFound", {
+export class SessionNotFound extends Schema.TaggedError<
+  SessionNotFound,
+  { readonly brand: "SessionNotFound" }
+>()("SessionNotFound", {
   sessionId: SessionId,
 }) {}
 
-export class SessionExpired extends Schema.TaggedError<SessionExpired>()("SessionExpired", {
+export class SessionExpired extends Schema.TaggedError<
+  SessionExpired,
+  { readonly brand: "SessionExpired" }
+>()("SessionExpired", {
   sessionId: SessionId,
 }) {}
 
-export class SessionRevoked extends Schema.TaggedError<SessionRevoked>()("SessionRevoked", {
+export class SessionRevoked extends Schema.TaggedError<
+  SessionRevoked,
+  { readonly brand: "SessionRevoked" }
+>()("SessionRevoked", {
   sessionId: SessionId,
 }) {}
 
@@ -35,4 +45,5 @@ export const FindSessionQuery = Query.make("FindSessionQuery", {
   success: SessionView,
   failure: Schema.Union([SessionNotFound, SessionExpired, SessionRevoked, PersistenceUnavailable]),
 });
+
 export type FindSessionPayload = Query.Payload<typeof FindSessionQuery>;

@@ -2,27 +2,27 @@ import * as HttpApiEndpoint from "effect/http-api/HttpApiEndpoint";
 import * as HttpApiGroup from "effect/http-api/HttpApiGroup";
 import * as Schema from "effect/Schema";
 
-import * as CustomHttpApiError from "../CustomHttpApiError.js";
-import { OrganizationId, TodoId } from "../EntityIds.js";
-import { UserAuthMiddleware } from "../Policy.js";
+import * as CustomHttpApiError from "../CustomHttpApiError";
+import { OrganizationId, TodoId } from "../EntityIds";
+import { UserAuthMiddleware } from "../Policy";
 
 // CLI-specific error, distinct from the GUI's `TodosContract.TodoNotFoundError`
 // so the two contracts evolve independently (ADR-0005).
-export class CliTodoNotFoundError extends Schema.TaggedError<CliTodoNotFoundError>()(
-  "CliTodoNotFoundError",
-  { message: Schema.String },
-  { httpApiStatus: 404 },
-) {}
+export class CliTodoNotFoundError extends Schema.TaggedError<
+  CliTodoNotFoundError,
+  { readonly brand: "CliTodoNotFoundError" }
+>()("CliTodoNotFoundError", { message: Schema.String }, { httpApiStatus: 404 }) {}
 
-export class CliTodo extends Schema.Class<CliTodo>("CliTodo")({
+export class CliTodo extends Schema.Class<CliTodo, { readonly brand: "CliTodo" }>("CliTodo")({
   id: TodoId,
   title: Schema.String,
   completed: Schema.Boolean,
 }) {}
 
-export class CliCreateTodoPayload extends Schema.Class<CliCreateTodoPayload>(
-  "CliCreateTodoPayload",
-)({
+export class CliCreateTodoPayload extends Schema.Class<
+  CliCreateTodoPayload,
+  { readonly brand: "CliCreateTodoPayload" }
+>("CliCreateTodoPayload")({
   title: Schema.Trim.check(Schema.isNonEmpty()),
 }) {}
 

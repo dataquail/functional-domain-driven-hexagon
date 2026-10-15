@@ -1,6 +1,6 @@
 import * as Effect from "effect/Effect";
 
-import { prepareIdentityTestDatabase } from "./identity-test-database.js";
+import { prepareIdentityTestDatabase } from "./identity-test-database";
 
 // Vitest expects globalSetup to default-export a function.
 export default async function globalSetup(): Promise<void> {

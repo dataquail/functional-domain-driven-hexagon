@@ -1,76 +1,94 @@
-import { describe, expect, it, vi } from "vitest";
+import * as Option from "effect/Option";
+import { describe, expect, it } from "vitest";
 
-vi.mock("$app/server", () => ({ getRequestEvent: vi.fn() }));
+import type { ServerRuntime } from "@/services/runtime.server";
 
-const { handle } = await import("./hooks.server");
+import { handleRequest, type ServerBinding } from "./lib/server/handle-request";
+import { serverBinding } from "./lib/server/platform";
 
-type FetchCall = { readonly url: string; readonly init: RequestInit | undefined };
+type FetchCall = { readonly url: string; readonly init: RequestInit };
 
 const fakeServer = (response: Response) => {
   const calls: Array<FetchCall> = [];
-  const server = {
-    fetch: (input: RequestInfo | URL, init?: RequestInit) => {
-      calls.push({ url: String(input), init });
-      return Promise.resolve(response);
+
+  const server: ServerBinding = {
+    fetch: async (input, init) => {
+      calls.push({ url: String(input), init: init ?? {} });
+
+      return response;
     },
   };
+
   return { calls, server };
 };
 
-const eventFor = (url: string, init: RequestInit, server: unknown) => {
-  const request = new Request(url, init);
+const hookFor = (
+  url: string,
+  init: RequestInit,
+  server: ServerBinding,
+  resolve: () => Promise<Response> = async () => new Response("page"),
+) => {
+  const runtimes: Array<ServerRuntime> = [];
+
   return {
-    url: new URL(url),
-    request,
-    platform: { env: { SERVER: server } },
-    locals: {} as Record<string, unknown>,
+    runtimes,
+    hook: {
+      url: new URL(url),
+      request: new Request(url, init),
+      server,
+      attachRuntime: (runtime: ServerRuntime) => {
+        runtimes.push(runtime);
+      },
+      resolve,
+    },
   };
 };
-
-const run = (event: ReturnType<typeof eventFor>, resolve = vi.fn()) =>
-  handle({ event, resolve } as unknown as Parameters<typeof handle>[0]);
 
 describe("handle", () => {
   it("proxies /api to the server Worker with the prefix stripped", async () => {
     const { calls, server } = fakeServer(new Response("{}", { status: 200 }));
-    const event = eventFor(
+
+    const { hook } = hookFor(
       "http://app.test/api/users?page=2",
       { headers: { cookie: "session=abc" } },
       server,
     );
 
-    const response = await run(event);
+    const response = await handleRequest(hook);
 
     expect(response.status).toBe(200);
     expect(calls).toHaveLength(1);
     expect(calls[0]?.url).toBe("http://app.test/users?page=2");
-    expect(calls[0]?.init?.redirect).toBe("manual");
-    expect(new Headers(calls[0]?.init?.headers).get("cookie")).toBe("session=abc");
+    expect(calls[0]?.init.redirect).toBe("manual");
+    expect(new Headers(calls[0]?.init.headers).get("cookie")).toBe("session=abc");
   });
 
   it("forwards a write's method and body", async () => {
-    const { calls, server } = fakeServer(new Response(null, { status: 204 }));
-    const event = eventFor(
+    const { calls, server } = fakeServer(new Response("{}", { status: 201 }));
+
+    const { hook } = hookFor(
       "http://app.test/api/todos",
       { method: "POST", body: '{"title":"x"}', headers: { "content-type": "application/json" } },
       server,
     );
 
-    await run(event);
+    await handleRequest(hook);
 
-    expect(calls[0]?.init?.method).toBe("POST");
-    expect(await new Response(calls[0]?.init?.body).text()).toBe('{"title":"x"}');
+    expect(calls[0]?.init.method).toBe("POST");
+    expect(await new Response(calls[0]?.init.body).text()).toBe('{"title":"x"}');
   });
 
   it("hands a redirect and its cookie back to the browser untouched", async () => {
     const { server } = fakeServer(
-      new Response(null, {
+      new Response("", {
         status: 302,
         headers: { location: "http://auth.test/authorize", "set-cookie": "oidc_pkce=1" },
       }),
     );
 
-    const response = await run(eventFor("http://app.test/api/auth/login", {}, server));
+    const response = await handleRequest(
+      hookFor("http://app.test/api/auth/login", {}, server).hook,
+    );
 
     expect(response.status).toBe(302);
     expect(response.headers.get("location")).toBe("http://auth.test/authorize");
@@ -79,20 +97,23 @@ describe("handle", () => {
 
   it("renders every other path with a per-request runtime it disposes afterwards", async () => {
     const { calls, server } = fakeServer(new Response("{}"));
-    const event = eventFor("http://app.test/users", {}, server);
-    const resolve = vi.fn(() => Promise.resolve(new Response("page")));
+    const resolved: Array<string> = [];
 
-    const response = await run(event, resolve);
+    const { hook, runtimes } = hookFor("http://app.test/users", {}, server, async () => {
+      resolved.push("page");
+
+      return new Response("page");
+    });
+
+    const response = await handleRequest(hook);
 
     expect(await response.text()).toBe("page");
-    expect(resolve).toHaveBeenCalledWith(event);
-    expect(event.locals.runtime).toBeDefined();
+    expect(resolved).toEqual(["page"]);
+    expect(runtimes).toHaveLength(1);
     expect(calls).toHaveLength(0);
   });
 
-  it("refuses to serve without the server Worker binding", async () => {
-    const event = { ...eventFor("http://app.test/users", {}, undefined), platform: undefined };
-
-    await expect(run(event as never)).rejects.toMatchObject({ status: 500 });
+  it("refuses to serve without the server Worker binding", () => {
+    expect(() => serverBinding(Option.none())).toThrow(expect.objectContaining({ status: 500 }));
   });
 });

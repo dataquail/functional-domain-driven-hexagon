@@ -27,6 +27,7 @@ import { adminOrgsResultAtom, includeDeletedAtom, pageAtom } from "./orgs-list.v
 // lands on the state the test already described rather than a different one.
 const renderList = (page: ReturnType<typeof makePaginatedOrganizations>) => {
   server.use(orgsHandlers.findAll(page));
+
   return renderView(
     OrgsList,
     {},

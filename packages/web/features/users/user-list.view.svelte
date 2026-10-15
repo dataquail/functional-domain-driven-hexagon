@@ -5,20 +5,19 @@
   import Stack from "@org/components/primitives/stack.svelte";
   import Surface from "@org/components/primitives/surface.svelte";
   import Text from "@org/components/primitives/text.svelte";
-  import type { UserContract } from "@org/contracts/api/Contracts";
 
   import { atomSet, atomValue } from "@/services/bridge/atom-bridge.svelte";
   import AtomResult from "@/services/bridge/atom-result.svelte";
 
-  import { changePageAtom, paginationAtom, usersResultAtom } from "./user-list.view-model";
+  import {
+    changePageAtom,
+    describeAddress,
+    paginationAtom,
+    usersResultAtom,
+  } from "./user-list.view-model";
 
   const pagination = atomValue(paginationAtom);
   const changePage = atomSet(changePageAtom);
-
-  const describeAddress = (user: UserContract.User): string =>
-    user.address !== null
-      ? `${user.address.street}, ${user.address.postalCode} ${user.address.country}`
-      : "No address on file";
 </script>
 
 <AtomResult atom={usersResultAtom}>

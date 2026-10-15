@@ -1,12 +1,11 @@
-import { assertTestDatabaseConfigured, runMigrations } from "./test-database.js";
+import * as Effect from "effect/Effect";
 
-// Vitest expects globalSetup to default-export a function.
+import { migrateTestDatabase } from "./test-database";
+
+// Vitest expects globalSetup to default-export a function. Integration mode
+// migrates, and fails the whole run when the database is unset or unreachable.
 export default async function globalSetup(): Promise<void> {
-  // Integration mode must fail — never skip — when there's no database.
-  // Assert the URL is set, then let `runMigrations` connect (it throws if the
-  // database is unreachable), so a missing or dead DB aborts the whole run.
   if (process.env.TEST_INTEGRATION === "true") {
-    assertTestDatabaseConfigured();
+    await Effect.runPromise(migrateTestDatabase);
   }
-  await runMigrations();
 }

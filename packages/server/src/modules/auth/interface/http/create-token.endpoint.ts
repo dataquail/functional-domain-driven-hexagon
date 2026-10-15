@@ -2,13 +2,14 @@ import { CommandBus } from "@effect-server-utils/cqrs";
 import { AuthContract } from "@org/contracts/api/Contracts";
 import { CurrentUser } from "@org/contracts/Policy";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { MintApiTokenCommand } from "@/modules/auth/commands/mint-api-token.command.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { MintApiTokenCommand } from "@/modules/auth/commands/mint-api-token.command";
 
 // Mints a personal access token for the authenticated caller and returns the
 // plaintext exactly once (only its hash is stored). `expiresInDays` falls
@@ -19,15 +20,17 @@ export const createTokenEndpoint = Effect.fn("AuthLive.tokens.create")(function*
   const currentUser = yield* CurrentUser;
   const env = yield* EnvVars;
   const commandBus = yield* CommandBus;
+
   const { apiToken, token } = yield* commandBus.execute(MintApiTokenCommand, {
     userId: currentUser.userId,
     label: request.payload.label,
     expiresInDays: request.payload.expiresInDays ?? env.API_TOKEN_DEFAULT_TTL_DAYS,
   });
+
   return new AuthContract.CreateApiTokenResponse({
     id: apiToken.id,
     token,
     prefix: apiToken.prefix,
-    expiresAt: apiToken.expiresAt,
+    expiresAt: Option.getOrNull(apiToken.expiresAt),
   });
 }, recoverPersistenceUnavailable);

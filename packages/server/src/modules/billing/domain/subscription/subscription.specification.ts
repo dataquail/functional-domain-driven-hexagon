@@ -1,7 +1,7 @@
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { Spec, type Specification } from "@/globals/application/ddd/specification.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { Spec, type Specification } from "@/globals/application/ddd/specification";
 
-import { type SubscriptionRoot } from "./subscription.root.js";
+import { type SubscriptionRoot } from "./subscription.root";
 
 // Translatable specs (carry a Criteria → usable as repository filters and as
 // in-memory guards). The field-name strings live here and in the mapper's

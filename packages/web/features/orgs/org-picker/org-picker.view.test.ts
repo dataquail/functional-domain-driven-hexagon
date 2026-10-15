@@ -14,6 +14,7 @@ import { myOrgsResultAtom } from "./org-picker.view-model";
 
 const renderPicker = (orgs: ReadonlyArray<ReturnType<typeof makeMyOrganization>>) => {
   server.use(orgsHandlers.findMine(orgs));
+
   return renderView(
     OrgPicker,
     {},

@@ -1,15 +1,16 @@
+import * as Arr from "effect/Array";
 import * as Effect from "effect/Effect";
 import * as HashMap from "effect/HashMap";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors.js";
-import { type WalletId } from "@/modules/wallet/domain/wallet/wallet.id.js";
-import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository.js";
-import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { WalletAlreadyExistsForOrganization } from "@/modules/wallet/domain/wallet/wallet.errors";
+import { type WalletId } from "@/modules/wallet/domain/wallet/wallet.id";
+import { WalletRepository } from "@/modules/wallet/domain/wallet/wallet.repository";
+import { type WalletRoot } from "@/modules/wallet/domain/wallet/wallet.root";
 
 const findByOrganizationIdIn = (
   store: HashMap.HashMap<WalletId, WalletRoot>,
@@ -18,6 +19,7 @@ const findByOrganizationIdIn = (
   for (const wallet of HashMap.values(store)) {
     if (wallet.organizationId === organizationId) return Option.some(wallet);
   }
+
   return Option.none();
 };
 
@@ -30,13 +32,17 @@ export const WalletRepositoryFake = Layer.effect(
       wallet: WalletRoot,
     ): Effect.Effect<void, WalletAlreadyExistsForOrganization> =>
       Effect.flatMap(Ref.get(store), (m) =>
-        Option.isSome(findByOrganizationIdIn(m, wallet.organizationId))
-          ? new WalletAlreadyExistsForOrganization({ organizationId: wallet.organizationId })
-          : Ref.update(store, HashMap.set(wallet.id, wallet)),
+        Option.match(findByOrganizationIdIn(m, wallet.organizationId), {
+          onNone: () => Ref.update(store, HashMap.set(wallet.id, wallet)),
+          onSome: () =>
+            Effect.fail(
+              new WalletAlreadyExistsForOrganization({ organizationId: wallet.organizationId }),
+            ),
+        }),
       );
 
-    const findOne = (spec: Specification<WalletRoot>): Effect.Effect<WalletRoot | null> =>
-      Effect.map(Ref.get(store), (m) => Array.from(HashMap.values(m)).find(spec) ?? null);
+    const findOne = (spec: Specification<WalletRoot>): Effect.Effect<Option.Option<WalletRoot>> =>
+      Effect.map(Ref.get(store), (m) => Arr.findFirst(HashMap.values(m), spec));
 
     return WalletRepository.of({ insertOne, findOne });
   }),

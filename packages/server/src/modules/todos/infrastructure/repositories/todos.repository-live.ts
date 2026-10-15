@@ -1,17 +1,18 @@
 import { Database, orFail, RowSchemas } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { type Specification } from "@/globals/application/ddd/specification.js";
-import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql.js";
-import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors.js";
-import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors.js";
-import { type TodoId } from "@/modules/todos/domain/todo/todo.id.js";
-import { type TodoRoot } from "@/modules/todos/domain/todo/todo.root.js";
-import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { type Specification } from "@/globals/application/ddd/specification";
+import { criteriaToWhere } from "@/globals/infrastructure/database/criteria-to-sql";
+import { translateDatabaseErrors } from "@/globals/infrastructure/database/translate-database-errors";
+import { TodoNotFound } from "@/modules/todos/domain/todo/todo.errors";
+import { type TodoId } from "@/modules/todos/domain/todo/todo.id";
+import { type TodoRoot } from "@/modules/todos/domain/todo/todo.root";
+import { TodosRepository } from "@/modules/todos/domain/todo/todos.repository";
 
-import * as TodoMapper from "./todo.mapper.js";
+import * as TodoMapper from "./todo.mapper";
 
 export const TodosRepositoryLive = Layer.effect(
   TodosRepository,
@@ -20,6 +21,7 @@ export const TodosRepositoryLive = Layer.effect(
 
     const insertOne = Effect.fn("TodosRepository.insertOne")((todo: TodoRoot) => {
       const row = TodoMapper.toPersistence(todo);
+
       return sql`
         INSERT INTO todos.todos (id, organization_id, title, completed, created_at, updated_at)
         VALUES (
@@ -37,6 +39,7 @@ export const TodosRepositoryLive = Layer.effect(
     // in another org matches no row and surfaces as TodoNotFound.
     const updateOne = Effect.fn("TodosRepository.updateOne")((todo: TodoRoot) => {
       const row = TodoMapper.toPersistence(todo);
+
       return sql`
         UPDATE todos.todos SET
           title = ${row.title},
@@ -70,13 +73,16 @@ export const TodosRepositoryLive = Layer.effect(
     // projection. `LIMIT 1` is safe because every spec used with findOne pins
     // the (id, organization_id) primary key, selecting at most one row.
     const findOne = Effect.fn("TodosRepository.findOne")((spec: Specification<TodoRoot>) =>
-      sql`
+      criteriaToWhere(sql, spec.criteria, TodoMapper.columns).pipe(
+        Effect.flatMap(
+          (where) => sql`
         SELECT * FROM todos.todos
-        WHERE ${criteriaToWhere(sql, spec.criteria, TodoMapper.columns)}
+        WHERE ${where}
         LIMIT 1
-      `.pipe(
+      `,
+        ),
         Database.maybeRow(RowSchemas.TodoRow),
-        Effect.map((row) => (row === null ? null : TodoMapper.toDomain(row))),
+        Effect.map(Option.map(TodoMapper.toDomain)),
         translateDatabaseErrors,
       ),
     );

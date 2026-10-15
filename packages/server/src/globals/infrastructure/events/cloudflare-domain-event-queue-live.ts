@@ -1,13 +1,15 @@
-import { type Event } from "@effect-server-utils/cqrs";
+import { Event } from "@effect-server-utils/cqrs";
+import type * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Schema from "effect/Schema";
 
-import { DomainEventQueue } from "@/globals/infrastructure/events/domain-event-queue.js";
+import { DomainEventQueue } from "@/globals/infrastructure/events/domain-event-queue";
 
 export type QueueProducerBinding = {
   readonly sendBatch: (
-    messages: Iterable<{ readonly body: unknown; readonly contentType: "json" }>,
-  ) => Promise<unknown>;
+    messages: ReadonlyArray<{ readonly body: Event.Envelope; readonly contentType: "json" }>,
+  ) => Effect.Effect<void, Cause.UnknownError>;
 };
 
 // Cloudflare Queues limits: 100 messages and 256 KB per sendBatch, 128 KB per
@@ -21,8 +23,10 @@ export const QUEUE_LIMITS = {
 
 const encoder = new TextEncoder();
 
+const encodeEnvelope = Schema.encodeSync(Schema.fromJsonString(Event.Envelope));
+
 const sizeOf = (envelope: Event.Envelope): number =>
-  encoder.encode(JSON.stringify(envelope)).byteLength + QUEUE_LIMITS.metadataBytesPerMessage;
+  encoder.encode(encodeEnvelope(envelope)).byteLength + QUEUE_LIMITS.metadataBytesPerMessage;
 
 export type QueueBatches = {
   readonly batches: ReadonlyArray<ReadonlyArray<Event.Envelope>>;
@@ -34,24 +38,31 @@ export const toQueueBatches = (envelopes: ReadonlyArray<Event.Envelope>): QueueB
   const oversized: Array<Event.Envelope> = [];
   let current: Array<Event.Envelope> = [];
   let currentBytes = 0;
+
   for (const envelope of envelopes) {
     const bytes = sizeOf(envelope);
+
     if (bytes > QUEUE_LIMITS.bytesPerMessage) {
       oversized.push(envelope);
       continue;
     }
+
     const full =
       current.length === QUEUE_LIMITS.messagesPerBatch ||
       currentBytes + bytes > QUEUE_LIMITS.bytesPerBatch;
+
     if (full) {
       batches.push(current);
       current = [];
       currentBytes = 0;
     }
+
     current.push(envelope);
     currentBytes += bytes;
   }
+
   if (current.length > 0) batches.push(current);
+
   return { batches, oversized };
 };
 
@@ -63,21 +74,24 @@ export const CloudflareDomainEventQueueLive = (binding: QueueProducerBinding) =>
     DomainEventQueue.of({
       send: Effect.fn("CloudflareDomainEventQueue.send")(function* (envelopes) {
         const { batches, oversized } = toQueueBatches(envelopes);
+
         if (oversized.length > 0) {
           yield* Effect.logError(
             `[domain-events] ${oversized.length} envelope(s) exceed the queue's message size and stay in the outbox`,
           );
         }
+
         const unsent = yield* Effect.forEach(batches, (batch) =>
-          Effect.tryPromise(() =>
-            binding.sendBatch(batch.map((envelope) => ({ body: envelope, contentType: "json" }))),
-          ).pipe(
-            Effect.as([]),
-            Effect.catchCause((cause) =>
-              Effect.as(Effect.logError("[domain-events] sendBatch failed", cause), batch),
+          binding
+            .sendBatch(batch.map((envelope) => ({ body: envelope, contentType: "json" })))
+            .pipe(
+              Effect.as([]),
+              Effect.catchCause((cause) =>
+                Effect.as(Effect.logError("[domain-events] sendBatch failed", cause), batch),
+              ),
             ),
-          ),
         );
+
         return [...oversized, ...unsent.flat()];
       }),
     }),

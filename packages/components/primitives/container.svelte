@@ -2,8 +2,11 @@
   import type { Snippet } from "svelte";
 
   export type ContainerWidth = "xs" | "sm" | "md" | "lg" | "full";
+
   export type ContainerPaddingX = "none" | "md";
+
   export type ContainerPaddingY = "none" | "xs" | "sm" | "lg";
+
   export type ContainerElement = "div" | "section" | "main";
 
   const WIDTH: Record<ContainerWidth, string> = {

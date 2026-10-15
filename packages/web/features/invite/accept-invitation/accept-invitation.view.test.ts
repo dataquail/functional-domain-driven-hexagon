@@ -20,6 +20,7 @@ describe("AcceptInvitation view", () => {
     server.use(
       typedHandler(acceptEndpoint, ({ path }) => {
         tokens.push(path.token);
+
         return Effect.succeed(
           new OrganizationContract.AcceptInvitationResponse({ organizationId: ORG_B_ID }),
         );

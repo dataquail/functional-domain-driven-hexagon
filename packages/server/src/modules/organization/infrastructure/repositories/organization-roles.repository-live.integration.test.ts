@@ -1,20 +1,22 @@
 import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
+import { describe } from "@effect/vitest";
+import { assertNone } from "@effect/vitest/utils";
 import { Database } from "@org/database/index";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 import * as Result from "effect/Result";
-import { beforeEach } from "vitest";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { Spec } from "@/globals/application/ddd/specification.js";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
-import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.js";
-import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification.js";
-import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-live.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { Spec } from "@/globals/application/ddd/specification";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository";
+import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops";
+import { OrganizationRolesSpecifications } from "@/modules/organization/domain/organization-roles/organization-roles.specification";
+import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-live";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const orgId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
@@ -47,69 +49,75 @@ const seedFixtures = Effect.gen(function* () {
 
 const TestLayer = OrganizationRolesRepositoryLive.pipe(Layer.provideMerge(TestDatabaseLive));
 
-describe("OrganizationRolesRepositoryLive (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate("organization.organization_roles", "organization.organizations", "user.users").pipe(
-        Effect.provide(TestDatabaseLive),
-      ),
-    );
-  });
+describeIntegration(
+  "OrganizationRolesRepositoryLive (integration)",
+  {
+    layer: TestLayer,
+    tables: ["organization.organization_roles", "organization.organizations", "user.users"],
+  },
+  (it) => {
+    describe("findOne", () => {
+      it.effect("returns null when no rows exist (the empty case is the caller's)", () =>
+        Effect.gen(function* () {
+          yield* seedFixtures;
+          const repo = yield* OrganizationRolesRepository;
+          const roles = yield* repo.findOne(forPair);
+          assertNone(roles);
+        }),
+      );
+    });
 
-  describe("findOne", () => {
-    it.effect("returns null when no rows exist (the empty case is the caller's)", () =>
-      Effect.gen(function* () {
-        yield* seedFixtures;
-        const repo = yield* OrganizationRolesRepository;
-        const roles = yield* repo.findOne(forPair);
-        deepStrictEqual(roles, null);
-      }).pipe(Effect.provide(TestLayer)),
-    );
-  });
+    describe("save", () => {
+      it.effect("persists granted roles with the issuedBy audit and round-trips", () =>
+        Effect.gen(function* () {
+          yield* seedFixtures;
+          const repo = yield* OrganizationRolesRepository;
 
-  describe("save", () => {
-    it.effect("persists granted roles with the issuedBy audit and round-trips", () =>
-      Effect.gen(function* () {
-        yield* seedFixtures;
-        const repo = yield* OrganizationRolesRepository;
-        const granted = Result.getOrThrow(
-          OrganizationRolesRootOps.grantRole(
-            OrganizationRolesRootOps.empty(userId, orgId),
-            "admin",
-            issuedBy,
-          ),
-        );
-        yield* repo.upsertOne(granted.organizationRoles);
-        const fetched = yield* repo.findOne(forPair);
-        if (fetched === null) throw new Error("expected aggregate");
-        deepStrictEqual(
-          fetched.roles.map((r) => ({ role: r.role, issuedBy: r.issuedBy })),
-          [{ role: "admin", issuedBy }],
-        );
-      }).pipe(Effect.provide(TestLayer)),
-    );
+          const granted = Result.getOrThrow(
+            OrganizationRolesRootOps.grantRole(
+              OrganizationRolesRootOps.empty(userId, orgId),
+              "admin",
+              issuedBy,
+            ),
+          );
 
-    it.effect("replaces existing rows when an aggregate revokes a role", () =>
-      Effect.gen(function* () {
-        yield* seedFixtures;
-        const repo = yield* OrganizationRolesRepository;
-        const granted = Result.getOrThrow(
-          OrganizationRolesRootOps.grantRole(
-            OrganizationRolesRootOps.empty(userId, orgId),
-            "admin",
-            issuedBy,
-          ),
-        );
-        yield* repo.upsertOne(granted.organizationRoles);
-        const revoked = Result.getOrThrow(
-          OrganizationRolesRootOps.revokeRole(granted.organizationRoles, "admin"),
-        );
-        yield* repo.upsertOne(revoked.organizationRoles);
-        // Revoking the last role deletes every row, so there is nothing to
-        // reconstitute — findOne reports null (no rows = no roles).
-        const fetched = yield* repo.findOne(forPair);
-        deepStrictEqual(fetched, null);
-      }).pipe(Effect.provide(TestLayer)),
-    );
-  });
-});
+          yield* repo.upsertOne(granted.organizationRoles);
+          const maybeFetched = yield* repo.findOne(forPair);
+
+          const fetched = Option.getOrThrow(maybeFetched);
+          deepStrictEqual(
+            fetched.roles.map((r) => ({ role: r.role, issuedBy: r.issuedBy })),
+            [{ role: "admin", issuedBy }],
+          );
+        }),
+      );
+
+      it.effect("replaces existing rows when an aggregate revokes a role", () =>
+        Effect.gen(function* () {
+          yield* seedFixtures;
+          const repo = yield* OrganizationRolesRepository;
+
+          const granted = Result.getOrThrow(
+            OrganizationRolesRootOps.grantRole(
+              OrganizationRolesRootOps.empty(userId, orgId),
+              "admin",
+              issuedBy,
+            ),
+          );
+
+          yield* repo.upsertOne(granted.organizationRoles);
+
+          const revoked = Result.getOrThrow(
+            OrganizationRolesRootOps.revokeRole(granted.organizationRoles, "admin"),
+          );
+
+          yield* repo.upsertOne(revoked.organizationRoles);
+          // Revoking the last role deletes every row, so there is nothing to
+          // reconstitute — findOne reports null (no rows = no roles).
+          const fetched = yield* repo.findOne(forPair);
+          assertNone(fetched);
+        }),
+      );
+    });
+  },
+);

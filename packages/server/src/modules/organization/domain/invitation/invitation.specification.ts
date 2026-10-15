@@ -1,14 +1,10 @@
 import * as DateTime from "effect/DateTime";
 
-import { type InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import {
-  type Predicate,
-  Spec,
-  type Specification,
-} from "@/globals/application/ddd/specification.js";
+import { type InvitationId } from "@/globals/application/ddd/ids/invitation-id";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { type Predicate, Spec, type Specification } from "@/globals/application/ddd/specification";
 
-import { type InvitationRoot } from "./invitation.root.js";
+import { type InvitationRoot } from "./invitation.root";
 
 // Translatable specs (carry a Criteria → usable as repository filters and as
 // in-memory guards). The field-name strings live here and in the mapper's
@@ -16,10 +12,13 @@ import { type InvitationRoot } from "./invitation.root.js";
 // a compile error.
 const withId = (id: InvitationId): Specification<InvitationRoot> =>
   Spec.eq<InvitationRoot, "id">("id", id);
+
 const withToken = (token: string): Specification<InvitationRoot> =>
   Spec.eq<InvitationRoot, "token">("token", token);
+
 const forOrganization = (organizationId: OrganizationId): Specification<InvitationRoot> =>
   Spec.eq<InvitationRoot, "organizationId">("organizationId", organizationId);
+
 const withInviteeEmail = (inviteeEmail: string): Specification<InvitationRoot> =>
   Spec.eq<InvitationRoot, "inviteeEmail">("inviteeEmail", inviteeEmail);
 
@@ -43,8 +42,11 @@ export type InvitationStatus = "pending" | "expired";
 
 // Display status for an *open* invitation. Accepted/revoked invitations are
 // filtered out before this is called, so only live-vs-lapsed remains.
-const statusAt = (invitation: InvitationRoot, now: DateTime.Utc): InvitationStatus =>
-  isExpiredAt(now)(invitation) ? "expired" : "pending";
+const statusAt = (invitation: InvitationRoot, now: DateTime.Utc): InvitationStatus => {
+  if (isExpiredAt(now)(invitation)) return "expired";
+
+  return "pending";
+};
 
 export const InvitationSpecifications = {
   withId,

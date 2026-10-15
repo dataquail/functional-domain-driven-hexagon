@@ -1,32 +1,31 @@
 import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
+import { assertInstanceOf } from "@effect/vitest/utils";
 import { Database } from "@org/database/index";
-import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
-import * as Schema from "effect/Schema";
 import * as TestClock from "effect/testing/TestClock";
-import { beforeEach } from "vitest";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id.js";
-import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository.js";
-import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops.js";
-import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositories/api-token.repository-live.js";
-import { findApiTokenByHashHandler } from "@/modules/auth/queries/find-api-token-by-hash.handler.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { ApiTokenId } from "@/modules/auth/domain/api-token/api-token.id";
+import { ApiTokenRepository } from "@/modules/auth/domain/api-token/api-token.repository";
+import { ApiTokenRootOps } from "@/modules/auth/domain/api-token/api-token.root-ops";
+import { ApiTokenRepositoryLive } from "@/modules/auth/infrastructure/repositories/api-token.repository-live";
+import { findApiTokenByHashHandler } from "@/modules/auth/queries/find-api-token-by-hash.handler";
 import {
   ApiTokenExpired,
+  ApiTokenNotFound,
   ApiTokenRevoked,
-} from "@/modules/auth/queries/find-api-token-by-hash.query.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+} from "@/modules/auth/queries/find-api-token-by-hash.query";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const apiTokenId = ApiTokenId.make("11111111-1111-1111-1111-111111111111");
 const userId = UserId.make("22222222-2222-2222-2222-222222222222");
-// The handler reads `DateTime.now`; pin the TestClock to a fixed instant so
+
+// The handler reads `DateTime.now`; each test pins a TestClock to a fixed instant so
 // expiry assertions ("future"/"past") are deterministic.
 const clockNow = DateTime.makeUnsafe("2026-06-01T00:00:00Z");
 const future = DateTime.makeUnsafe("2099-01-01T00:00:00Z");
@@ -42,7 +41,7 @@ const seedUser = Effect.gen(function* () {
       `.pipe(Effect.orDie);
 });
 
-const insert = (opts: { expiresAt: DateTime.Utc | null; revokedAt?: DateTime.Utc }) =>
+const insert = (opts: { expiresAt: DateTime.Utc; revokedAt?: DateTime.Utc }) =>
   Effect.gen(function* () {
     const repo = yield* ApiTokenRepository;
     yield* repo.insertOne(
@@ -52,69 +51,69 @@ const insert = (opts: { expiresAt: DateTime.Utc | null; revokedAt?: DateTime.Utc
         tokenHash: "hash-A",
         prefix: "pat_abcd1234",
         label: "ci",
-        expiresAt: opts.expiresAt,
+        expiresAt: Option.some(opts.expiresAt),
         now: clockNow,
       }),
     );
-    const revokedAt = opts.revokedAt;
-    if (revokedAt !== undefined) {
+    const revokedAt = Option.fromUndefinedOr(opts.revokedAt);
+
+    if (Option.isSome(revokedAt)) {
       // Revocation isn't a mint-time concern, and the live repo's write
       // surface doesn't expose it — stamp `revoked_at` directly.
       const sql = yield* Database.Database;
       yield* sql`
-            UPDATE auth.api_tokens SET revoked_at = ${DateTime.toDate(revokedAt)}
+            UPDATE auth.api_tokens SET revoked_at = ${DateTime.toDate(revokedAt.value)}
             WHERE id = ${apiTokenId}
           `.pipe(Effect.orDie);
     }
   });
 
-const errorOf = (exit: Exit.Exit<unknown, unknown>) =>
-  Exit.isFailure(exit) && Cause.hasFails(exit.cause)
-    ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-    : null;
-
-describe("findApiTokenByHashHandler (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate("auth.api_tokens", "user.users").pipe(Effect.provide(TestDatabaseLive)),
+describeIntegration(
+  "findApiTokenByHashHandler (integration)",
+  { layer: TestLayer, tables: ["auth.api_tokens", "user.users"] },
+  (it) => {
+    it.effect("returns an active token", () =>
+      Effect.gen(function* () {
+        yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
+        yield* seedUser;
+        yield* insert({ expiresAt: future });
+        const token = yield* findApiTokenByHashHandler({ tokenHash: "hash-A" });
+        deepStrictEqual(token.id, apiTokenId);
+      }).pipe(Effect.provide(TestClock.layer())),
     );
-  });
 
-  it.effect("returns an active token", () =>
-    Effect.gen(function* () {
-      yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
-      yield* seedUser;
-      yield* insert({ expiresAt: future });
-      const token = yield* findApiTokenByHashHandler({ tokenHash: "hash-A" });
-      deepStrictEqual(token.id, apiTokenId);
-    }).pipe(Effect.provide(TestLayer)),
-  );
+    it.effect("fails ApiTokenNotFound for an unknown hash", () =>
+      Effect.gen(function* () {
+        yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
+        assertInstanceOf(
+          yield* Effect.flip(findApiTokenByHashHandler({ tokenHash: "missing" })),
+          ApiTokenNotFound,
+        );
+      }).pipe(Effect.provide(TestClock.layer())),
+    );
 
-  it.effect("fails ApiTokenNotFound for an unknown hash", () =>
-    Effect.gen(function* () {
-      yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
-      const exit = yield* Effect.exit(findApiTokenByHashHandler({ tokenHash: "missing" }));
-      deepStrictEqual(Exit.isFailure(exit), true);
-    }).pipe(Effect.provide(TestLayer)),
-  );
+    it.effect("fails ApiTokenRevoked when the token is revoked", () =>
+      Effect.gen(function* () {
+        yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
+        yield* seedUser;
+        yield* insert({ expiresAt: future, revokedAt: clockNow });
+        assertInstanceOf(
+          yield* Effect.flip(findApiTokenByHashHandler({ tokenHash: "hash-A" })),
+          ApiTokenRevoked,
+        );
+      }).pipe(Effect.provide(TestClock.layer())),
+    );
 
-  it.effect("fails ApiTokenRevoked when the token is revoked", () =>
-    Effect.gen(function* () {
-      yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
-      yield* seedUser;
-      yield* insert({ expiresAt: future, revokedAt: clockNow });
-      const exit = yield* Effect.exit(findApiTokenByHashHandler({ tokenHash: "hash-A" }));
-      deepStrictEqual(Schema.is(ApiTokenRevoked)(errorOf(exit)), true);
-    }).pipe(Effect.provide(TestLayer)),
-  );
-
-  it.effect("fails ApiTokenExpired when past the expiry instant", () =>
-    Effect.gen(function* () {
-      yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
-      yield* seedUser;
-      yield* insert({ expiresAt: past });
-      const exit = yield* Effect.exit(findApiTokenByHashHandler({ tokenHash: "hash-A" }));
-      deepStrictEqual(Schema.is(ApiTokenExpired)(errorOf(exit)), true);
-    }).pipe(Effect.provide(TestLayer)),
-  );
-});
+    it.effect("fails ApiTokenExpired when past the expiry instant", () =>
+      Effect.gen(function* () {
+        yield* TestClock.setTime(DateTime.toEpochMillis(clockNow));
+        yield* seedUser;
+        yield* insert({ expiresAt: past });
+        assertInstanceOf(
+          yield* Effect.flip(findApiTokenByHashHandler({ tokenHash: "hash-A" })),
+          ApiTokenExpired,
+        );
+      }).pipe(Effect.provide(TestClock.layer())),
+    );
+  },
+);

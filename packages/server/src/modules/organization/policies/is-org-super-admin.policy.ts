@@ -2,7 +2,7 @@ import { type CallerCheck } from "@effect-server-utils/authz";
 import { type PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import { type CurrentUser } from "@org/contracts/Policy";
 
-import { type PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.js";
+import { type PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl";
 
 // Super-admin bypass, owned by this module rather than shared from platform:
 // each module asks the role module through its own port, so extracting the
@@ -11,7 +11,7 @@ import { type PlatformRoles } from "@/modules/organization/domain/ports/acl/plat
 //
 // Declared as a `CallerCheck` (caller only) so one instance composes into both
 // the scoped `organization` resource and the unscoped `organizationCollection`.
-export const makeIsOrgSuperAdmin =
+export const isOrgSuperAdminCheck =
   (roles: PlatformRoles["Service"]): CallerCheck<CurrentUser["Service"], PersistenceUnavailable> =>
   (caller) =>
     roles.isSuperAdmin(caller.userId);

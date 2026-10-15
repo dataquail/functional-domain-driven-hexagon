@@ -1,9 +1,9 @@
-import * as Event from "@/globals/application/ddd/domain-event.js";
-import { type SpanAttributesExtractor } from "@/globals/application/ddd/domain-event.js";
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import * as Event from "@/globals/application/ddd/domain-event";
+import { type SpanAttributesExtractor } from "@/globals/application/ddd/domain-event";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
-import { OrganizationRoleValueObject } from "./organization-role.value-object.js";
+import { OrganizationRoleValueObject } from "./organization-role.value-object";
 
 export const OrganizationRoleGranted = Event.make("OrganizationRoleGranted", {
   userId: UserId,
@@ -11,6 +11,7 @@ export const OrganizationRoleGranted = Event.make("OrganizationRoleGranted", {
   role: OrganizationRoleValueObject,
   issuedBy: UserId,
 });
+
 export type OrganizationRoleGranted = typeof OrganizationRoleGranted.Type;
 
 export const organizationRoleGrantedSpanAttributes: SpanAttributesExtractor<
@@ -27,6 +28,7 @@ export const OrganizationRoleRevoked = Event.make("OrganizationRoleRevoked", {
   organizationId: OrganizationId,
   role: OrganizationRoleValueObject,
 });
+
 export type OrganizationRoleRevoked = typeof OrganizationRoleRevoked.Type;
 
 export const organizationRoleRevokedSpanAttributes: SpanAttributesExtractor<

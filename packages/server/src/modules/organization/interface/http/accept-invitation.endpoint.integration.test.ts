@@ -1,6 +1,6 @@
 import { deepStrictEqual, ok } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
+import { OrganizationId } from "@org/contracts/EntityIds";
 import { Database } from "@org/database/index";
 import * as Cause from "effect/Cause";
 import * as DateTime from "effect/DateTime";
@@ -9,12 +9,12 @@ import * as Exit from "effect/Exit";
 import * as HttpApiClient from "effect/http-api/HttpApiClient";
 import * as Option from "effect/Option";
 
-import { Api } from "@/globals/infrastructure/framework/http/api.js";
-import { MEMBER_CALLER_ID } from "@/test-utils/fake-auth-middleware.js";
-import { useServerTestRuntime } from "@/test-utils/server-test-runtime.js";
-import { TestServerLiveAsMember } from "@/test-utils/test-server.js";
+import { Api } from "@/globals/infrastructure/framework/http/api";
+import { MEMBER_CALLER_ID } from "@/test-utils/fake-auth-middleware";
+import { describeServer } from "@/test-utils/server-test-runtime";
+import { TestServerLiveAsMember } from "@/test-utils/test-server";
 
-const ORG_ID = "11111111-1111-1111-1111-111111111111" as never;
+const ORG_ID = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 
 const seedOrg = Effect.gen(function* () {
   const sql = yield* Database.Database;
@@ -31,6 +31,7 @@ const seedOrg = Effect.gen(function* () {
 // cross-caller accept flow — mirrors how the sibling tests seed the org row.
 const iso = (offsetMs: number): string =>
   DateTime.formatIso(DateTime.add(DateTime.nowUnsafe(), { milliseconds: offsetMs }));
+
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 const seedInvitation = (
@@ -45,8 +46,8 @@ const seedInvitation = (
             (organization_id, invitee_email, token, expires_at, accepted_at, revoked_at, created_at)
           VALUES (
             ${ORG_ID}, 'alice@example.com', ${token}, ${expiresAt},
-            ${overrides.acceptedAt ?? null},
-            ${overrides.revokedAt ?? null},
+            ${Option.getOrNull(Option.fromUndefinedOr(overrides.acceptedAt))},
+            ${Option.getOrNull(Option.fromUndefinedOr(overrides.revokedAt))},
             now()
           )
         `.pipe(Effect.orDie);
@@ -54,19 +55,20 @@ const seedInvitation = (
 
 // Accepting provisions a membership keyed to CurrentUser — a super-admin can't
 // own an org, so the invitee session is the member-caller variant.
-describe("POST /invitations/:token/accept (integration, member caller)", () => {
-  const { run } = useServerTestRuntime(
-    [
+describeServer(
+  "POST /invitations/:token/accept (integration, member caller)",
+  {
+    tables: [
       "organization.invitations",
       "organization.memberships",
       "organization.organizations",
       "user.users",
     ],
-    { server: TestServerLiveAsMember, seedSuperAdminCaller: true },
-  );
-
-  it("accepts a pending invitation and provisions membership", async () => {
-    await run(
+    server: TestServerLiveAsMember,
+    seedSuperAdminCaller: true,
+  },
+  (it) => {
+    it.effect("accepts a pending invitation and provisions membership", () =>
       Effect.gen(function* () {
         yield* seedOrg;
         yield* seedInvitation("accept-token-happy-path");
@@ -75,25 +77,27 @@ describe("POST /invitations/:token/accept (integration, member caller)", () => {
         const { organizationId } = yield* client.invitations.accept({
           params: { token: "accept-token-happy-path" },
         });
+
         deepStrictEqual(organizationId, ORG_ID);
 
         const sql = yield* Database.Database;
+
         const membership = yield* sql`
           SELECT 1 FROM "organization".memberships
           WHERE user_id = ${MEMBER_CALLER_ID} AND organization_id = ${ORG_ID}
         `.pipe(Effect.orDie);
+
         deepStrictEqual(membership.length, 1);
       }),
     );
-  });
 
-  it("returns 404 for an unknown token", async () => {
-    await run(
+    it.effect("returns 404 for an unknown token", () =>
       Effect.gen(function* () {
         yield* seedOrg;
         const client = yield* HttpApiClient.make(Api);
         const exit = yield* Effect.exit(client.invitations.accept({ params: { token: "nope" } }));
         ok(Exit.isFailure(exit));
+
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           deepStrictEqual(
             Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag,
@@ -102,18 +106,19 @@ describe("POST /invitations/:token/accept (integration, member caller)", () => {
         }
       }),
     );
-  });
 
-  it("returns 410 Gone for an already-revoked invitation", async () => {
-    await run(
+    it.effect("returns 410 Gone for an already-revoked invitation", () =>
       Effect.gen(function* () {
         yield* seedOrg;
         yield* seedInvitation("accept-token-revoked", { revokedAt: "2020-01-01T00:00:00Z" });
         const client = yield* HttpApiClient.make(Api);
+
         const exit = yield* Effect.exit(
           client.invitations.accept({ params: { token: "accept-token-revoked" } }),
         );
+
         ok(Exit.isFailure(exit));
+
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           const error = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
           deepStrictEqual(error._tag, "InvitationGoneError");
@@ -121,18 +126,19 @@ describe("POST /invitations/:token/accept (integration, member caller)", () => {
         }
       }),
     );
-  });
 
-  it("returns 410 Gone for an expired invitation", async () => {
-    await run(
+    it.effect("returns 410 Gone for an expired invitation", () =>
       Effect.gen(function* () {
         yield* seedOrg;
         yield* seedInvitation("accept-token-expired", { expiresAt: iso(-SEVEN_DAYS_MS) });
         const client = yield* HttpApiClient.make(Api);
+
         const exit = yield* Effect.exit(
           client.invitations.accept({ params: { token: "accept-token-expired" } }),
         );
+
         ok(Exit.isFailure(exit));
+
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           const error = Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow);
           deepStrictEqual(error._tag, "InvitationGoneError");
@@ -140,31 +146,34 @@ describe("POST /invitations/:token/accept (integration, member caller)", () => {
         }
       }),
     );
-  });
-});
+  },
+);
 
 // A super-admin session hitting accept must be refused — they don't join orgs.
-describe("POST /invitations/:token/accept (integration, super-admin caller)", () => {
-  const { run } = useServerTestRuntime(
-    [
+describeServer(
+  "POST /invitations/:token/accept (integration, super-admin caller)",
+  {
+    tables: [
       "organization.invitations",
       "organization.memberships",
       "organization.organizations",
       "user.users",
     ],
-    { seedSuperAdminCaller: true },
-  );
-
-  it("refuses a super-admin caller with 409", async () => {
-    await run(
+    seedSuperAdminCaller: true,
+  },
+  (it) => {
+    it.effect("refuses a super-admin caller with 409", () =>
       Effect.gen(function* () {
         yield* seedOrg;
         yield* seedInvitation("accept-token-superadmin");
         const client = yield* HttpApiClient.make(Api);
+
         const exit = yield* Effect.exit(
           client.invitations.accept({ params: { token: "accept-token-superadmin" } }),
         );
+
         ok(Exit.isFailure(exit));
+
         if (Exit.isFailure(exit) && Cause.hasFails(exit.cause)) {
           deepStrictEqual(
             Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)._tag,
@@ -173,5 +182,5 @@ describe("POST /invitations/:token/accept (integration, super-admin caller)", ()
         }
       }),
     );
-  });
-});
+  },
+);

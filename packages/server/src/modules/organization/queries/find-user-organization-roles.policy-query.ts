@@ -2,14 +2,15 @@ import { Query } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
 export const UserOrganizationRolesView = Schema.Struct({
   userId: UserId,
   organizationId: OrganizationId,
   roles: Schema.Array(Schema.String),
 });
+
 export type FindUserOrganizationRolesResult = typeof UserOrganizationRolesView.Type;
 
 // Read-side projection of a user's roles within one organization.
@@ -22,4 +23,5 @@ export const FindUserOrganizationRolesQuery = Query.make("FindUserOrganizationRo
   success: UserOrganizationRolesView,
   failure: PersistenceUnavailable,
 });
+
 export type FindUserOrganizationRolesPayload = Query.Payload<typeof FindUserOrganizationRolesQuery>;

@@ -3,15 +3,15 @@ import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl.js";
-import { PlatformRolesLive } from "@/modules/organization/infrastructure/acl/platform-roles.acl-live.js";
-import { OrganizationQueries } from "@/modules/organization/organization.query-handlers.js";
-import { type OrganizationAuthzView } from "@/modules/organization/queries/find-organization-by-id.query.js";
+import { type OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { PlatformRoles } from "@/modules/organization/domain/ports/acl/platform-roles.acl";
+import { PlatformRolesLive } from "@/modules/organization/infrastructure/acl/platform-roles.acl-live";
+import { OrganizationQueries } from "@/modules/organization/organization.query-handlers";
+import { type OrganizationAuthzView } from "@/modules/organization/queries/find-organization-by-id.query";
 
-import { makeIsMember, type UserOrganizationLookup } from "./is-member.policy.js";
-import { makeIsOrgAdmin } from "./is-org-admin.policy.js";
-import { makeIsOrgSuperAdmin } from "./is-org-super-admin.policy.js";
+import { isMemberCheck, type UserOrganizationLookup } from "./is-member.policy";
+import { isOrgAdminCheck } from "./is-org-admin.policy";
+import { isOrgSuperAdminCheck } from "./is-org-super-admin.policy";
 
 // Two resources, split by whether the operation names an organization:
 //
@@ -79,17 +79,17 @@ export const OrganizationPoliciesLive = Layer.effect(
         .FindUserOrganizationRolesQuery({ userId, organizationId })
         .pipe(Effect.map((result) => result.roles.includes(ORG_ADMIN_ROLE)));
 
-    const superAdmin = makeIsOrgSuperAdmin(roles);
+    const superAdmin = isOrgSuperAdminCheck(roles);
 
-    return {
+    return OrganizationPolicyContribution.of({
       organization: {
-        read: Check.any(superAdmin, makeIsMember(isMember)),
-        update: Check.any(superAdmin, makeIsOrgAdmin(isOrgAdmin)),
+        read: Check.any(superAdmin, isMemberCheck(isMember)),
+        update: Check.any(superAdmin, isOrgAdminCheck(isOrgAdmin)),
         delete: superAdmin,
       },
       organizationCollection: {
         read: superAdmin,
       },
-    };
+    });
   }),
 ).pipe(Layer.provide(PlatformRolesLive));

@@ -71,7 +71,7 @@ These three plus the Effect runtime are the entire dependency graph for a use-ca
 
 ### HTTP integration setup via a shared helper
 
-HTTP integration tests use `useServerTestRuntime(["table1", "table2"])` from `test-utils/`, which wires `ManagedRuntime.make(TestServerLive)` + `beforeAll`/`afterAll` + per-test `truncate`. Tests exercise the contract via `HttpApiClient.make(Api)` and seed prior state by calling _other endpoints_, not by reaching into module internals. Query/repository integration tests seed via the live repository (or other production-path code), not raw SQL — keeping the test honest about what production paths look like.
+HTTP integration tests use `describeServer(name, { tables }, (it) => …)` from `test-utils/`, which builds `TestServerLive` once per describe block through `@effect/vitest`'s `layer` and truncates the tables before every `it.effect`; repository and query tests use its sibling `describeIntegration` with their own layer. Tests exercise the contract via `HttpApiClient.make(Api)` and seed prior state by calling _other endpoints_, not by reaching into module internals. Query/repository integration tests seed via the live repository (or other production-path code), not raw SQL — keeping the test honest about what production paths look like.
 
 ### What is _not_ in this strategy
 

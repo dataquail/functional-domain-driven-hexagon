@@ -6,4 +6,5 @@ import * as Schema from "effect/Schema";
 // See ADR-0002 ("typed-ID shared kernel" addendum). Same scope rules as
 // UserId/OrganizationId: branded entity IDs only.
 export const InvitationId = Schema.String.pipe(Schema.brand("InvitationId"));
+
 export type InvitationId = typeof InvitationId.Type;

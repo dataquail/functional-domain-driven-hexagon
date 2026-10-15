@@ -45,12 +45,12 @@ export type EndpointRequest<G, Name> = HttpApiEndpoint.HttpApiEndpoint.Request<
 
 The endpoint's parameter type is computed from the contract group and the endpoint name; it stays in sync automatically. Adding a header or payload field to the contract flows through to every implementation file's parameter type without manual annotation.
 
-### Group registration is pure wiring, in `index.ts`
+### Group registration is pure wiring, in `<feature>.endpoint-groups.ts`
 
-The folder's `index.ts` barrel imports each endpoint and binds it to the contract by name (a group is assembled in one `HttpApiBuilder.group(...)` call):
+The folder's `<feature>.endpoint-groups.ts` imports each endpoint and binds it to the contract by name (a group is assembled in one `HttpApiBuilder.group(...)` call):
 
 ```ts
-// modules/user/interface/http/index.ts
+// modules/user/interface/http/user.endpoint-groups.ts
 export const UserHttpLive = HttpApiBuilder.group(Api, "user", (handlers) =>
   handlers
     .handle("find", findEndpoint)
@@ -66,7 +66,7 @@ No deconstruction, no logic. Adding an endpoint is a two-line change here plus a
 
 Each `<endpoint>.endpoint.ts` must have a sibling `<endpoint>.endpoint.integration.test.ts`. This is one required-sibling obligation in the `project-structure/folder-structure` lint rule (`project-structure.config.mjs`, run under `pnpm lint` — ADR-0008), which resolves the sibling against the real filesystem. dependency-cruiser cannot express "for every file matching X there must exist a sibling matching Y" — it checks edges, not file existence — so the file taxonomy is the ESLint rule's job and the import graph is dependency-cruiser's.
 
-Because the rule's `enforceExistence` is AND-only (no "either sibling"), endpoints carry **one canonical requirement**: `*.endpoint.integration.test.ts`, which exercises the real HTTP layer against a live database via `useServerTestRuntime(...)`. Two exceptions, encoded as explicitly named rules:
+Because the rule's `enforceExistence` is AND-only (no "either sibling"), endpoints carry **one canonical requirement**: `*.endpoint.integration.test.ts`, which exercises the real HTTP layer against a live database via `describeServer(...)`. Two exceptions, encoded as explicitly named rules:
 
 - The OIDC `login` and `logout` endpoints are **exempted** — their happy path needs a live identity provider and is covered by Playwright + the session-repository integration tests.
 - `callback` has a real `callback.endpoint.integration.test.ts` for its reachable no-IdP guard.
@@ -75,13 +75,13 @@ A file ending `*.endpoint.test.ts` (no `integration`) is a deliberate unit token
 
 ### Tests own their HTTP setup via a shared helper
 
-Each per-endpoint test file uses `useServerTestRuntime(["users"])` from `test-utils/`, which wires `ManagedRuntime.make(TestServerLive)`, `beforeAll`/`afterAll`, and per-test truncate into the surrounding describe block. Integration tests do _not_ import endpoint files directly; they exercise the contract via `HttpApiClient.make(Api)`, which is what the parity rule guarantees a test exists for.
+Each per-endpoint test file uses `describeServer(name, { tables: ["user.users"] }, (it) => …)` from `test-utils/`, which builds `TestServerLive` once for the block with `@effect/vitest`'s `layer` and truncates before every `it.effect`. Integration tests do _not_ import endpoint files directly; they exercise the contract via `HttpApiClient.make(Api)`, which is what the parity rule guarantees a test exists for.
 
 ## Consequences
 
 - Endpoint files are short. Each does one thing. Reviewing a change to the user-create flow means reading one file.
-- The `index.ts` group registration stays small as a module's endpoint count grows — purely declarative wiring, one line per binding.
-- Adding an endpoint is a four-step change: add the contract endpoint, create `<name>.endpoint.ts`, create `<name>.endpoint.integration.test.ts`, register in `index.ts`. `pnpm lint` fails if the test file is omitted.
+- The `<feature>.endpoint-groups.ts` registration stays small as a module's endpoint count grows — purely declarative wiring, one line per binding.
+- Adding an endpoint is a four-step change: add the contract endpoint, create `<name>.endpoint.ts`, create `<name>.endpoint.integration.test.ts`, register in `<feature>.endpoint-groups.ts`. `pnpm lint` fails if the test file is omitted.
 - The contract drives the implementation's request type. A breaking contract change surfaces as a TypeScript error in the implementation file, not at runtime.
 - The naming `<name>.endpoint.ts` / `<name>.endpoint.integration.test.ts` is mechanical and is the parity detector; renames must keep the suffixes in lockstep.
 
@@ -90,7 +90,7 @@ Each per-endpoint test file uses `useServerTestRuntime(["users"])` from `test-ut
 - **Single group file with all endpoints inlined.** Rejected because file length grows monotonically with endpoint count and "what implements X?" becomes a search inside a wall of code.
 - **Endpoint takes deconstructed args** (e.g. `findEndpoint(urlParams)`). Rejected — pushes deconstruction into the registration file and creates a two-file change every time an endpoint's request envelope grows.
 - **"Handler" as the file/function name.** Rejected — the contract calls these endpoints; aligning vocabulary reduces translation cost.
-- **Per-endpoint Layer composition.** `HttpApiBuilder` requires a group be assembled in one call; the chosen shape achieves the same separation with normal function imports and one thin `index.ts`.
+- **Per-endpoint Layer composition.** `HttpApiBuilder` requires a group be assembled in one call; the chosen shape achieves the same separation with normal function imports and one thin `<feature>.endpoint-groups.ts` (named, not an `index.ts` barrel, since ADR-0040).
 - **Enforce parity via dependency-cruiser.** Rejected — "this file must exist" is not expressible as an edge rule; the integration tests go through `HttpApiClient`, so reachability isn't the right property. The folder-structure lint rule is the right tool.
 
 ## Related

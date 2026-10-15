@@ -1,9 +1,11 @@
 import { describe, expect, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
-import type { IdentityAuthPort, SignInInput } from "../auth/identity-auth-port.js";
-import type { SeedRequest, SeedUser } from "../seed/identity-seed.js";
-import { handleIdentityRequest, type IdentityRouterContext } from "./identity-router.js";
+import type { IdentityAuthPort, SignInInput } from "../auth/identity-auth-port";
+import type { SeedRequest, SeedUser } from "../seed/identity-seed";
+import { handleIdentityRequest, type IdentityRouterContext } from "./identity-router";
 
 const BASE = "http://localhost:3002";
 const APP_URL = "http://localhost:3000";
@@ -23,10 +25,11 @@ const authPort = (overrides: Partial<IdentityAuthPort> = {}): IdentityAuthPort =
   ...overrides,
 });
 
-const context = (
-  auth: IdentityAuthPort,
-  seedToken: string | undefined = undefined,
-): IdentityRouterContext => ({ auth, appUrl: APP_URL, seedToken });
+const context = (auth: IdentityAuthPort, seedToken?: string): IdentityRouterContext => ({
+  auth,
+  appUrl: APP_URL,
+  seedToken: Option.fromUndefinedOr(seedToken),
+});
 
 const form = (path: string, fields: Record<string, string>) =>
   new Request(`${BASE}${path}`, { method: "POST", body: new URLSearchParams(fields) });
@@ -35,9 +38,11 @@ describe("handleIdentityRequest", () => {
   it.effect("hands everything under /api/auth to Better Auth untouched", () =>
     Effect.gen(function* () {
       const seen: Array<string> = [];
+
       const auth = authPort({
         handle: (request) => {
           seen.push(request.url);
+
           return Effect.succeed(Response.json({ issuer: `${BASE}/api/auth` }));
         },
       });
@@ -69,9 +74,11 @@ describe("handleIdentityRequest", () => {
     () =>
       Effect.gen(function* () {
         const calls: Array<Omit<SignInInput, "request">> = [];
+
         const auth = authPort({
           signIn: ({ request: _request, ...input }) => {
             calls.push(input);
+
             return Effect.succeed(
               Response.json(
                 { redirect: true, url: `${APP_URL}/api/auth/callback?code=c` },
@@ -99,7 +106,7 @@ describe("handleIdentityRequest", () => {
     Effect.gen(function* () {
       const auth = authPort({
         signIn: () =>
-          Effect.succeed(new Response(null, { status: 302, headers: { location: "/elsewhere" } })),
+          Effect.succeed(new Response("", { status: 302, headers: { location: "/elsewhere" } })),
       });
 
       const response = yield* handleIdentityRequest(
@@ -173,10 +180,12 @@ describe("handleIdentityRequest", () => {
     () =>
       Effect.gen(function* () {
         const callbacks: Array<string> = [];
+
         const auth = authPort({
           signUp: ({ callbackUrl }) => {
             callbacks.push(callbackUrl);
-            return Effect.succeed(Response.json({ token: null }));
+
+            return Effect.succeed(Response.json({}));
           },
         });
 
@@ -212,9 +221,11 @@ describe("handleIdentityRequest", () => {
   it.effect("answers a reset request the same way whether or not the account exists", () =>
     Effect.gen(function* () {
       const redirects: Array<string> = [];
+
       const auth = authPort({
         requestPasswordReset: ({ redirectTo }) => {
           redirects.push(redirectTo);
+
           return Effect.succeed(Response.json({ status: true }));
         },
       });
@@ -237,6 +248,7 @@ describe("handleIdentityRequest", () => {
           Response.json({ status: true }),
           Response.json({ message: "Password too short" }, { status: 400 }),
         ];
+
         const auth = authPort({
           resetPassword: () => Effect.succeed(outcomes.shift() ?? Response.error()),
         });
@@ -245,6 +257,7 @@ describe("handleIdentityRequest", () => {
           form("/reset-password", { token: "tok", password: "longenough" }),
           context(auth),
         );
+
         const rejected = yield* handleIdentityRequest(
           form("/reset-password", { token: "tok", password: "x" }),
           context(auth),
@@ -274,9 +287,11 @@ describe("handleIdentityRequest", () => {
   it.effect("returns to the client once the user decides on consent", () =>
     Effect.gen(function* () {
       const decisions: Array<boolean> = [];
+
       const auth = authPort({
         consent: ({ accept }) => {
           decisions.push(accept);
+
           return Effect.succeed(
             Response.json({ redirect_uri: `${APP_URL}/api/auth/callback?code=c` }),
           );
@@ -296,6 +311,7 @@ describe("handleIdentityRequest", () => {
   it.effect("sends a visitor at the root on to the app, and anything unknown to a 404", () =>
     Effect.gen(function* () {
       const root = yield* handleIdentityRequest(new Request(`${BASE}/`), context(authPort()));
+
       const unknown = yield* handleIdentityRequest(
         new Request(`${BASE}/admin`),
         context(authPort()),
@@ -310,11 +326,25 @@ describe("handleIdentityRequest", () => {
     const seedRequest: SeedRequest = {
       users: [{ email: "admin@example.com", password: "pw", name: "Admin" }],
     };
-    const seedCall = (token: string | null, body: unknown = seedRequest) =>
+
+    const encodeSeedCall = Schema.encodeSync(
+      Schema.fromJsonString(
+        Schema.Struct({
+          users: Schema.Array(
+            Schema.Struct({ email: Schema.String, password: Schema.String, name: Schema.String }),
+          ),
+        }),
+      ),
+    );
+
+    const seedCall = (
+      token: string,
+      body: { readonly users: ReadonlyArray<SeedUser> } = seedRequest,
+    ) =>
       new Request(`${BASE}/internal/seed`, {
         method: "POST",
-        headers: token === null ? {} : { authorization: `Bearer ${token}` },
-        body: JSON.stringify(body),
+        headers: { authorization: `Bearer ${token}` },
+        body: encodeSeedCall(body),
       });
 
     it.effect("does not exist on a stage that configured no seed token", () =>
@@ -330,6 +360,7 @@ describe("handleIdentityRequest", () => {
           seedCall("wrong"),
           context(authPort(), "seed-token"),
         );
+
         expect(response.status).toBe(401);
       }),
     );
@@ -340,6 +371,7 @@ describe("handleIdentityRequest", () => {
           seedCall("seed-token", { users: [] }),
           context(authPort(), "seed-token"),
         );
+
         expect(response.status).toBe(400);
       }),
     );

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@effect/vitest";
 import * as Redacted from "effect/Redacted";
 
-import { driverSettings } from "../src/pg-driver.js";
+import { driverSettings } from "../src/pg-driver";
 
 const url = Redacted.make("postgres://user:pass@localhost:5432/app");
 

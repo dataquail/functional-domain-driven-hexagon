@@ -1,12 +1,12 @@
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
 // Returned by the repository when a (userId, organizationId) pair is
 // expected to exist but doesn't — e.g. the user removing a member that
 // isn't actually a member, or `IsMember` resolving a non-member.
-export class MembershipNotFound extends Schema.TaggedError<MembershipNotFound>()(
-  "MembershipNotFound",
-  { userId: UserId, organizationId: OrganizationId },
-) {}
+export class MembershipNotFound extends Schema.TaggedError<
+  MembershipNotFound,
+  { readonly brand: "MembershipNotFound" }
+>()("MembershipNotFound", { userId: UserId, organizationId: OrganizationId }) {}

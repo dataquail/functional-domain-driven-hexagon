@@ -1,30 +1,31 @@
 import { Query } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
+import type * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { SubscriptionId } from "@/modules/billing/domain/subscription/subscription.id";
 
 export const SubscriptionView = Schema.Struct({
   id: SubscriptionId,
   organizationId: OrganizationId,
   status: Schema.String,
-  currentPeriodEnd: Schema.NullOr(Schema.DateTimeUtc),
+  currentPeriodEnd: Schema.OptionFromNullOr(Schema.DateTimeUtc),
 });
+
 export type SubscriptionView = typeof SubscriptionView.Type;
 
-// `null` for "no subscription", not `Option`: every other absent-read model here is
-// nullable, and a null is representable on a wire where an `Option` needs a codec.
-export type FindSubscriptionByOrganizationResult = SubscriptionView | null;
+export type FindSubscriptionByOrganizationResult = Option.Option<SubscriptionView>;
 
 export const FindSubscriptionByOrganizationQuery = Query.make(
   "FindSubscriptionByOrganizationQuery",
   {
     payload: { organizationId: OrganizationId },
-    success: Schema.NullOr(SubscriptionView),
+    success: Schema.OptionFromNullOr(SubscriptionView),
     failure: PersistenceUnavailable,
   },
 );
+
 export type FindSubscriptionByOrganizationPayload = Query.Payload<
   typeof FindSubscriptionByOrganizationQuery
 >;

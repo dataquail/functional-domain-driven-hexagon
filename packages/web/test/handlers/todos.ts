@@ -6,8 +6,8 @@ import * as TodosContract from "@org/contracts/api/TodosContract";
 import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Effect from "effect/Effect";
 
-import { makeTodo } from "../fixtures/todo";
-import { getEndpoint, typedHandler } from "../typed-handler";
+import { makeTodo } from "@/test/fixtures/todo";
+import { getEndpoint, typedHandler } from "@/test/typed-handler";
 
 const listEndpoint = getEndpoint(TodosContract.Group, "get");
 const createEndpoint = getEndpoint(TodosContract.Group, "create");
@@ -25,6 +25,7 @@ export const todosHandlers = {
       if (outcome.result === "Forbidden") {
         return Effect.fail(new CustomHttpApiError.Forbidden({ message: "Not a member." }));
       }
+
       return Effect.succeed(makeTodo({ title: payload.title }));
     }),
 
@@ -34,6 +35,7 @@ export const todosHandlers = {
       if (outcome.result === "TodoNotFoundError") {
         return Effect.fail(new TodosContract.TodoNotFoundError({ message: "Todo not found." }));
       }
+
       return Effect.succeed(
         makeTodo({ id: path.id, title: payload.title, completed: payload.completed }),
       );
@@ -45,6 +47,7 @@ export const todosHandlers = {
       if (outcome.result === "TodoNotFoundError") {
         return Effect.fail(new TodosContract.TodoNotFoundError({ message: "Todo not found." }));
       }
+
       return Effect.void;
     }),
 };

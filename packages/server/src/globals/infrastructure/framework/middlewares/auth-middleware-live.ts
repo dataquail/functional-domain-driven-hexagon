@@ -5,10 +5,11 @@ import * as cookie from "cookie";
 import * as Effect from "effect/Effect";
 import * as HttpServerRequest from "effect/http/HttpServerRequest";
 import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
 
-import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec.js";
-import { EnvVars } from "@/globals/infrastructure/config/env-vars.js";
-import { waitUntil } from "@/globals/infrastructure/runtime/execution-context.js";
+import { CookieCodec } from "@/globals/infrastructure/auth/cookie-codec";
+import { EnvVars } from "@/globals/infrastructure/config/env-vars";
+import { waitUntil } from "@/globals/infrastructure/runtime/execution-context";
 import {
   CredentialHash,
   FindApiTokenByHashQuery,
@@ -16,18 +17,19 @@ import {
   SessionId,
   TouchApiTokenCommand,
   TouchSessionCommand,
-} from "@/modules/auth/auth.platform.js";
+} from "@/modules/auth/auth.platform";
 
-// `Authorization: Bearer <token>` — case-insensitive scheme. Returns the
-// raw token, or null when the header is absent or not a bearer credential.
+// `Authorization: Bearer <token>` — case-insensitive scheme. The raw token,
+// or none when the header is absent or not a bearer credential.
 const BEARER_PREFIX = /^Bearer\s+/i;
-const readBearer = (authorization: string | undefined): string | null => {
-  if (authorization === undefined) return null;
-  const trimmed = authorization.trim();
-  if (!BEARER_PREFIX.test(trimmed)) return null;
-  const token = trimmed.replace(BEARER_PREFIX, "").trim();
-  return token === "" ? null : token;
-};
+
+const readBearer = (authorization: Option.Option<string>): Option.Option<string> =>
+  authorization.pipe(
+    Option.map((header) => header.trim()),
+    Option.filter((header) => BEARER_PREFIX.test(header)),
+    Option.map((header) => header.replace(BEARER_PREFIX, "").trim()),
+    Option.filter((token) => token !== ""),
+  );
 
 // Distinguish "the DB is down" (503, retry) from "your session is bad"
 // (401, log back in). Collapsing the former into the latter would confuse
@@ -42,6 +44,7 @@ const readBearer = (authorization: string | undefined): string | null => {
 // here for.
 const storeUnavailable = () =>
   new CustomHttpApiError.ServiceUnavailable({ message: "Auth store is unavailable" });
+
 const rejectCredential = () => new CustomHttpApiError.Unauthorized();
 
 export const UserAuthMiddlewareLive = Layer.effect(
@@ -62,10 +65,11 @@ export const UserAuthMiddlewareLive = Layer.effect(
       // token takes precedence over the cookie. We hash the presented token
       // here so the raw secret never travels through the bus or a span,
       // then resolve it to the same `CurrentUser` the cookie path produces.
-      const bearer = readBearer(httpReq.headers.authorization);
-      if (bearer !== null) {
+      const bearer = readBearer(Option.fromUndefinedOr(httpReq.headers.authorization));
+
+      if (Option.isSome(bearer)) {
         const apiToken = yield* queryBus
-          .execute(FindApiTokenByHashQuery, { tokenHash: CredentialHash.of(bearer) })
+          .execute(FindApiTokenByHashQuery, { tokenHash: CredentialHash.of(bearer.value) })
           .pipe(
             Effect.catchTags({
               PersistenceUnavailable: storeUnavailable,
@@ -74,6 +78,7 @@ export const UserAuthMiddlewareLive = Layer.effect(
               ApiTokenRevoked: rejectCredential,
             }),
           );
+
         // Off the auth critical path and outliving the response; the handler
         // throttles and swallows its own failures.
         yield* waitUntil(
@@ -82,17 +87,26 @@ export const UserAuthMiddlewareLive = Layer.effect(
             thresholdSeconds: env.API_TOKEN_TOUCH_THRESHOLD_SECONDS,
           }),
         );
+
         // No browser session for a bearer caller; the token id stands in as
         // the opaque principal id on `CurrentUser` (Policy.ts unchanged).
         return { sessionId: apiToken.id, userId: apiToken.userId };
       }
 
-      const cookies = cookie.parse(httpReq.headers.cookie ?? "");
-      const raw = cookies[env.SESSION_COOKIE_NAME];
-      if (raw === undefined || raw === "") return yield* new CustomHttpApiError.Unauthorized();
-      const verified = codec.verify(raw);
-      if (verified === null) return yield* new CustomHttpApiError.Unauthorized();
-      const sessionId = SessionId.make(verified);
+      const cookieHeader = Option.fromUndefinedOr(httpReq.headers.cookie);
+
+      const verified = cookieHeader.pipe(
+        Option.flatMap((header) =>
+          Option.fromUndefinedOr(cookie.parse(header)[env.SESSION_COOKIE_NAME]),
+        ),
+        Option.filter((raw) => raw !== ""),
+        Option.flatMap(codec.verify),
+      );
+
+      if (Option.isNone(verified)) return yield* new CustomHttpApiError.Unauthorized();
+
+      const sessionId = SessionId.make(verified.value);
+
       const session = yield* queryBus.execute(FindSessionQuery, { sessionId }).pipe(
         Effect.catchTags({
           PersistenceUnavailable: storeUnavailable,
@@ -101,6 +115,7 @@ export const UserAuthMiddlewareLive = Layer.effect(
           SessionRevoked: rejectCredential,
         }),
       );
+
       // Sliding-TTL refresh, off the auth critical path; the command's own
       // throttle decides whether to write and swallows benign races.
       yield* waitUntil(
@@ -110,6 +125,7 @@ export const UserAuthMiddlewareLive = Layer.effect(
           thresholdSeconds: env.SESSION_TOUCH_THRESHOLD_SECONDS,
         }),
       );
+
       return {
         sessionId: session.id,
         userId: session.userId,

@@ -2,13 +2,14 @@ import { Query } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 
 // The projection, written down as a schema rather than a bare type alias: this is a
 // published cross-module contract (two other modules' ACL adapters read it), so the
 // shape it promises deserves to be a contract and not just a shape.
 export const MembershipView = Schema.Struct({ isMember: Schema.Boolean });
+
 export type FindMembershipResult = typeof MembershipView.Type;
 
 // Read-side "is this user a member of this org?" projection, published so other
@@ -20,4 +21,5 @@ export const FindMembershipQuery = Query.make("FindMembershipQuery", {
   success: MembershipView,
   failure: PersistenceUnavailable,
 });
+
 export type FindMembershipPayload = Query.Payload<typeof FindMembershipQuery>;

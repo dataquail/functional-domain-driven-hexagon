@@ -89,9 +89,37 @@ const PROBES = [
     // applied to the oxlint binary, and that patch is reapplied by `prepare` on
     // every install. This probe is what catches a reinstall that silently
     // dropped it.
-    rule: "effecttsgo/global-date",
-    file: "packages/server/src/zzprobe-global-date.ts",
-    source: "export const probe = (): Date => new Date();\n",
+    rule: "effecttsgo/floating-effect",
+    file: "packages/server/src/zzprobe-floating-effect.ts",
+    source:
+      'import * as Effect from "effect/Effect";\n\n' +
+      "export const probe = (): void => {\n" +
+      '  Effect.log("dropped");\n' +
+      "};\n",
+  },
+  {
+    // The jsPlugins load by path or package; a plugin that fails to load takes
+    // every rule it ships with it, so one probe per plugin.
+    rule: "effect/noTernary",
+    file: "packages/server/src/zzprobe-no-ternary.ts",
+    source: "export const probe = (flag: boolean): number => (flag ? 1 : 2);\n",
+  },
+  {
+    rule: "effect-oxc/no-js-extension-imports",
+    file: "packages/server/src/zzprobe-js-extension.ts",
+    source: 'export { probe } from "./zzprobe-target.js";\n',
+  },
+  {
+    rule: "anti-slop/no-reflect-get",
+    file: "packages/server/src/zzprobe-reflect-get.ts",
+    source:
+      'export const probe = (owner: { readonly a: number }): number => Reflect.get(owner, "a");\n',
+  },
+  {
+    rule: "anti-slop-effect/no-manual-tag-comparison",
+    file: "packages/server/src/zzprobe-manual-tag.ts",
+    source:
+      'export const probe = (value: { readonly _tag: "A" | "B" }): boolean => value._tag === "A";\n',
   },
   {
     // A real violation in the shape production code actually takes: a bare `sql`

@@ -5,11 +5,11 @@ import { Query } from "@effect-server-utils/cqrs";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { organizationAccessQueries } from "@/modules/organization/organization.exports.js";
-import { OrganizationAccess } from "@/modules/todos/domain/ports/acl/organization-access.acl.js";
-import { OrganizationAccessLive } from "@/modules/todos/infrastructure/acl/organization-access.acl-live.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { organizationAccessQueries } from "@/modules/organization/organization.exports";
+import { OrganizationAccess } from "@/modules/todos/domain/ports/acl/organization-access.acl";
+import { OrganizationAccessLive } from "@/modules/todos/infrastructure/acl/organization-access.acl-live";
 
 // `OrganizationAccessLive` asks the organization module its own membership question
 // through that module's dispatch surface. Todos never reaches the org module's memberships
@@ -28,6 +28,7 @@ const stubOrganizationQueries = (
   Query.handlersOf(organizationAccessQueries, {
     FindMembershipQuery: (payload) => {
       seen.push({ userId: payload.userId, orgId: payload.organizationId });
+
       return Effect.succeed({ isMember });
     },
     FindUserOrganizationRolesQuery: unreached("FindUserOrganizationRolesQuery"),
@@ -41,6 +42,7 @@ describe("OrganizationAccessLive", () => {
     "asks the organization module about the (user, org) pair and returns its answer",
     () => {
       const seen: Array<{ userId: UserId; orgId: OrganizationId }> = [];
+
       return Effect.gen(function* () {
         const access = yield* OrganizationAccess;
         deepStrictEqual(yield* access.isMember(userId, orgId), true);
@@ -51,6 +53,7 @@ describe("OrganizationAccessLive", () => {
 
   it.effect("returns false when the organization module reports non-membership", () => {
     const seen: Array<{ userId: UserId; orgId: OrganizationId }> = [];
+
     return Effect.gen(function* () {
       const access = yield* OrganizationAccess;
       deepStrictEqual(yield* access.isMember(userId, orgId), false);

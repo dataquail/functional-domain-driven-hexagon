@@ -2,14 +2,14 @@ import { QueryBus } from "@effect-server-utils/cqrs";
 import { OrganizationContract } from "@org/contracts/api/Contracts";
 import * as Effect from "effect/Effect";
 
-import { Actions } from "@/globals/application/ports/actions.js";
-import * as Authz from "@/globals/infrastructure/auth/authz.js";
+import { Actions } from "@/globals/application/ports/actions";
+import * as Authz from "@/globals/infrastructure/auth/authz";
 import {
   type EndpointRequest,
   recoverPersistenceUnavailable,
-} from "@/globals/infrastructure/framework/http/http-endpoint.js";
-import { OrganizationResource } from "@/modules/organization/policies/organization.policies.js";
-import { FindOrganizationMembershipsQuery } from "@/modules/organization/queries/find-organization-memberships.query.js";
+} from "@/globals/infrastructure/framework/http/http-endpoint";
+import { OrganizationResource } from "@/modules/organization/policies/organization.policies";
+import { FindOrganizationMembershipsQuery } from "@/modules/organization/queries/find-organization-memberships.query";
 
 // Any member of the org (plus super-admins) may read the roster — the
 // `read` policy's OR chain (`any(SuperAdminOnly, IsMember)`). Viewing
@@ -34,6 +34,7 @@ export const findMembersEndpoint = Effect.fn("OrganizationLive.findMembers")(fun
   );
 
   const queryBus = yield* QueryBus;
+
   const members = yield* queryBus.execute(FindOrganizationMembershipsQuery, {
     organizationId: request.params.orgId,
   });

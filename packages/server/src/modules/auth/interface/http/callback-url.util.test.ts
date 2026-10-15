@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@effect/vitest";
 
-import { buildCallbackUrl } from "./callback-url.util.js";
+import { buildCallbackUrl } from "./callback-url.util";
 
 // The deterministic substructure of the callback endpoint worth pinning: the
 // reconstruction of the absolute callback URL openid-client receives. Off-by-one
@@ -48,6 +48,7 @@ describe("buildCallbackUrl", () => {
       "https://app.example.com/api/auth/callback",
       "/auth/callback?code=abc",
     );
+
     expect(url.origin).toBe("https://app.example.com");
     expect(url.pathname).toBe("/api/auth/callback");
     expect(url.searchParams.get("code")).toBe("abc");

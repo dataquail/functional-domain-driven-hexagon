@@ -7,11 +7,11 @@ import * as Effect from "effect/Effect";
 import * as FetchHttpClient from "effect/http/FetchHttpClient";
 import * as Layer from "effect/Layer";
 
-import { authCommand } from "./commands/auth.js";
-import { configCommand } from "./commands/config.js";
-import { orgsCommand } from "./commands/orgs.js";
-import { todosCommand } from "./commands/todos.js";
-import type { CliError } from "./internal.js";
+import { authCommand } from "./commands/auth";
+import { configCommand } from "./commands/config";
+import { orgsCommand } from "./commands/orgs";
+import { todosCommand } from "./commands/todos";
+import type { CliError } from "./internal";
 
 const root = Command.make("org", {}, () =>
   Console.log("Run `org --help` to see available commands."),

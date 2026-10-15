@@ -16,6 +16,7 @@ import { todosResultAtom } from "./todo-list.view-model";
 
 const renderList = (todos: ReadonlyArray<TodosContract.Todo>) => {
   server.use(todosHandlers.list(todos));
+
   return renderView(
     TodoList,
     { orgId: TEST_ORG_ID },

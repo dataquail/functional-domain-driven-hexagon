@@ -1,9 +1,10 @@
+import { describe, expect, it } from "@effect/vitest";
 import { InvitationId } from "@org/contracts/EntityIds";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 import type * as AsyncResult from "effect/reactivity/AsyncResult";
 import type * as Atom from "effect/reactivity/Atom";
 import * as AtomRegistry from "effect/reactivity/AtomRegistry";
-import { describe, expect, it } from "vitest";
 
 import { apiTransportAtom } from "@/services/atom/api-transport.shared";
 import { notificationAtom } from "@/services/atom/notifications.shared";
@@ -29,111 +30,121 @@ const makeRegistry = () =>
 const run = <A, E>(
   registry: AtomRegistry.AtomRegistry,
   atom: Atom.Atom<AsyncResult.AsyncResult<A, E>>,
-) => Effect.runPromise(AtomRegistry.getResult(registry, atom, { suspendOnWaiting: true }));
+) => AtomRegistry.getResult(registry, atom, { suspendOnWaiting: true });
 
 describe("org invitations list ViewModel", () => {
-  it("flags a lapsed invitation as expired and a live one as not", async () => {
-    server.use(
-      orgsHandlers.findInvitations([
-        makePendingInvitation(),
-        makePendingInvitation({
+  it.effect("flags a lapsed invitation as expired and a live one as not", () =>
+    Effect.gen(function* () {
+      server.use(
+        orgsHandlers.findInvitations([
+          makePendingInvitation(),
+          makePendingInvitation({
+            invitationId: LAPSED_ID,
+            inviteeEmail: "lapsed@example.com",
+            status: "expired",
+          }),
+        ]),
+      );
+
+      const registry = makeRegistry();
+      yield* run(registry, orgInvitationsResultAtom(ORG_A_ID));
+
+      expect(registry.get(orgInvitationsListAtom(ORG_A_ID)).rows).toEqual([
+        {
+          invitationId: makePendingInvitation().invitationId,
+          email: "invitee@example.com",
+          isExpired: false,
+          expiresAtLabel: "2026-01-01",
+        },
+        {
           invitationId: LAPSED_ID,
-          inviteeEmail: "lapsed@example.com",
-          status: "expired",
-        }),
-      ]),
-    );
+          email: "lapsed@example.com",
+          isExpired: true,
+          expiresAtLabel: "2026-01-01",
+        },
+      ]);
+    }),
+  );
 
-    const registry = makeRegistry();
-    await run(registry, orgInvitationsResultAtom(ORG_A_ID));
+  it.effect("reports emptiness only once the list has arrived", () =>
+    Effect.gen(function* () {
+      server.use(orgsHandlers.findInvitations([]));
 
-    expect(registry.get(orgInvitationsListAtom(ORG_A_ID)).rows).toEqual([
-      {
+      const registry = makeRegistry();
+      expect(registry.get(orgInvitationsListAtom(ORG_A_ID)).isEmpty).toBe(false);
+
+      yield* run(registry, orgInvitationsResultAtom(ORG_A_ID));
+
+      expect(registry.get(orgInvitationsListAtom(ORG_A_ID)).isEmpty).toBe(true);
+    }),
+  );
+
+  it.effect("announces a resend", () =>
+    Effect.gen(function* () {
+      server.use(
+        orgsHandlers.findInvitations([makePendingInvitation()]),
+        orgsHandlers.resendInvitation(),
+      );
+
+      const registry = makeRegistry();
+      yield* run(registry, orgInvitationsResultAtom(ORG_A_ID));
+
+      registry.set(resendInvitationActionAtom, {
+        orgId: ORG_A_ID,
         invitationId: makePendingInvitation().invitationId,
-        email: "invitee@example.com",
-        isExpired: false,
-        expiresAtLabel: "2026-01-01",
-      },
-      {
-        invitationId: LAPSED_ID,
-        email: "lapsed@example.com",
-        isExpired: true,
-        expiresAtLabel: "2026-01-01",
-      },
-    ]);
-  });
+      });
+      yield* run(registry, resendInvitationActionAtom);
 
-  it("reports emptiness only once the list has arrived", async () => {
-    server.use(orgsHandlers.findInvitations([]));
+      expect(Option.getOrThrow(registry.get(notificationAtom))).toMatchObject({
+        kind: "success",
+        message: "Invitation resent.",
+      });
+    }),
+  );
 
-    const registry = makeRegistry();
-    expect(registry.get(orgInvitationsListAtom(ORG_A_ID)).isEmpty).toBe(false);
+  it.effect("surfaces the server's message when the invitation is already closed", () =>
+    Effect.gen(function* () {
+      server.use(
+        orgsHandlers.findInvitations([makePendingInvitation()]),
+        orgsHandlers.resendInvitation({ result: "InvitationGoneError" }),
+      );
 
-    await run(registry, orgInvitationsResultAtom(ORG_A_ID));
+      const registry = makeRegistry();
+      yield* run(registry, orgInvitationsResultAtom(ORG_A_ID));
 
-    expect(registry.get(orgInvitationsListAtom(ORG_A_ID)).isEmpty).toBe(true);
-  });
+      registry.set(resendInvitationActionAtom, {
+        orgId: ORG_A_ID,
+        invitationId: makePendingInvitation().invitationId,
+      });
+      yield* Effect.exit(run(registry, resendInvitationActionAtom));
 
-  it("announces a resend", async () => {
-    server.use(
-      orgsHandlers.findInvitations([makePendingInvitation()]),
-      orgsHandlers.resendInvitation(),
-    );
+      expect(Option.getOrThrow(registry.get(notificationAtom))).toMatchObject({
+        kind: "error",
+        message: "Invitation is closed.",
+      });
+    }),
+  );
 
-    const registry = makeRegistry();
-    await run(registry, orgInvitationsResultAtom(ORG_A_ID));
+  it.effect("announces a revoke", () =>
+    Effect.gen(function* () {
+      server.use(
+        orgsHandlers.findInvitations([makePendingInvitation()]),
+        orgsHandlers.revokeInvitation(),
+      );
 
-    registry.set(resendInvitationActionAtom, {
-      orgId: ORG_A_ID,
-      invitationId: makePendingInvitation().invitationId,
-    });
-    await run(registry, resendInvitationActionAtom);
+      const registry = makeRegistry();
+      yield* run(registry, orgInvitationsResultAtom(ORG_A_ID));
 
-    expect(registry.get(notificationAtom)).toMatchObject({
-      kind: "success",
-      message: "Invitation resent.",
-    });
-  });
+      registry.set(revokeInvitationActionAtom, {
+        orgId: ORG_A_ID,
+        invitationId: makePendingInvitation().invitationId,
+      });
+      yield* run(registry, revokeInvitationActionAtom);
 
-  it("surfaces the server's message when the invitation is already closed", async () => {
-    server.use(
-      orgsHandlers.findInvitations([makePendingInvitation()]),
-      orgsHandlers.resendInvitation({ result: "InvitationGoneError" }),
-    );
-
-    const registry = makeRegistry();
-    await run(registry, orgInvitationsResultAtom(ORG_A_ID));
-
-    registry.set(resendInvitationActionAtom, {
-      orgId: ORG_A_ID,
-      invitationId: makePendingInvitation().invitationId,
-    });
-    await run(registry, resendInvitationActionAtom).catch(() => undefined);
-
-    expect(registry.get(notificationAtom)).toMatchObject({
-      kind: "error",
-      message: "Invitation is closed.",
-    });
-  });
-
-  it("announces a revoke", async () => {
-    server.use(
-      orgsHandlers.findInvitations([makePendingInvitation()]),
-      orgsHandlers.revokeInvitation(),
-    );
-
-    const registry = makeRegistry();
-    await run(registry, orgInvitationsResultAtom(ORG_A_ID));
-
-    registry.set(revokeInvitationActionAtom, {
-      orgId: ORG_A_ID,
-      invitationId: makePendingInvitation().invitationId,
-    });
-    await run(registry, revokeInvitationActionAtom);
-
-    expect(registry.get(notificationAtom)).toMatchObject({
-      kind: "success",
-      message: "Invitation revoked.",
-    });
-  });
+      expect(Option.getOrThrow(registry.get(notificationAtom))).toMatchObject({
+        kind: "success",
+        message: "Invitation revoked.",
+      });
+    }),
+  );
 });

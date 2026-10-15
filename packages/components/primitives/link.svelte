@@ -2,7 +2,9 @@
   import type { Snippet } from "svelte";
 
   export type LinkTone = "default" | "muted" | "primary" | "inherit";
+
   export type LinkUnderline = "none" | "hover" | "always";
+
   export type LinkAppearance = "text" | "nav-item" | "button";
 
   const TONE: Record<LinkTone, string> = {

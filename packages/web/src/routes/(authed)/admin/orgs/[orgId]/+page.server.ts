@@ -10,6 +10,7 @@ import {
 
 export const load = async ({ params }: { readonly params: { readonly orgId: string } }) => {
   const orgId = OrganizationId.make(params.orgId);
+
   return {
     orgId,
     members: await collectPrefetched([prefetchOrgMembers(orgId)]),

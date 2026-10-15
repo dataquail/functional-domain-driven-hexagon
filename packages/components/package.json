@@ -7,7 +7,7 @@
   "description": "The bespoke component library in Svelte 5 (primitives + patterns), growing beside @org/components until the Phase 7 cutover. Stories for every component live alongside it.",
   "exports": {
     "./primitives/*.svelte": "./primitives/*.svelte",
-    "./primitives/*": "./primitives/*/index.ts",
+    "./primitives/*": "./primitives/*/*.ts",
     "./patterns/*.svelte": "./patterns/*.svelte",
     "./providers/*": "./providers/*",
     "./styles/*": "./styles/*",

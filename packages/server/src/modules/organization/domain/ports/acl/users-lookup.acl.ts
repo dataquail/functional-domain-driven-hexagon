@@ -1,8 +1,8 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
-import { type UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable.js";
+import { type UserId } from "@/globals/application/ddd/ids/user-id";
+import { type PersistenceUnavailable } from "@/globals/application/ddd/persistence-unavailable";
 
 // ADR-0022 outbound port. The org module needs to enrich its
 // membership rows with each user's email for the SA admin "list
@@ -18,12 +18,12 @@ export type UserLookupView = {
   readonly email: string;
 };
 
-export type UsersLookupShape = {
+export type UsersLookupService = {
   readonly findByIds: (
     ids: ReadonlyArray<UserId>,
   ) => Effect.Effect<ReadonlyArray<UserLookupView>, PersistenceUnavailable>;
 };
 
-export class UsersLookup extends Context.Service<UsersLookup, UsersLookupShape>()(
+export class UsersLookup extends Context.Service<UsersLookup, UsersLookupService>()(
   "@org/server/organization/UsersLookup",
 ) {}

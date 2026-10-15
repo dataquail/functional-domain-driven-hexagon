@@ -2,15 +2,15 @@ import { Command } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
 import {
   InvitationAlreadyAccepted,
   InvitationExpired,
   InvitationRevoked,
   InvitationTokenNotFound,
-} from "@/modules/organization/domain/invitation/invitation.errors.js";
-import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors.js";
+} from "@/modules/organization/domain/invitation/invitation.errors";
+import { SuperAdminCannotOwnOrganization } from "@/modules/organization/domain/organization/organization.errors";
 
 export const AcceptInvitationCommand = Command.make("AcceptInvitationCommand", {
   payload: { token: Schema.String, userId: UserId },
@@ -24,4 +24,5 @@ export const AcceptInvitationCommand = Command.make("AcceptInvitationCommand", {
     PersistenceUnavailable,
   ]),
 });
+
 export type AcceptInvitationPayload = Command.Payload<typeof AcceptInvitationCommand>;

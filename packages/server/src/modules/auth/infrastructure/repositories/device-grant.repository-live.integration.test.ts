@@ -1,20 +1,21 @@
-import { deepStrictEqual, notStrictEqual } from "node:assert";
+import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
+import { assertNone, assertTrue } from "@effect/vitest/utils";
 import { Database } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import { beforeEach } from "vitest";
+import * as Option from "effect/Option";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id.js";
-import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository.js";
-import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant/device-grant.root-ops.js";
-import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification.js";
-import { DeviceGrantRepositoryLive } from "@/modules/auth/infrastructure/repositories/device-grant.repository-live.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { DeviceGrantId } from "@/modules/auth/domain/device-grant/device-grant.id";
+import { DeviceGrantRepository } from "@/modules/auth/domain/device-grant/device-grant.repository";
+import { DeviceGrantRootOps } from "@/modules/auth/domain/device-grant/device-grant.root-ops";
+import { DeviceGrantSpecifications } from "@/modules/auth/domain/device-grant/device-grant.specification";
+import { DeviceGrantRepositoryLive } from "@/modules/auth/infrastructure/repositories/device-grant.repository-live";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const userId = UserId.make("11111111-1111-1111-1111-111111111111");
 const id = DeviceGrantId.make("22222222-2222-2222-2222-222222222222");
@@ -38,53 +39,60 @@ const start = (now: DateTime.Utc) =>
     ttlSeconds: 600,
   });
 
-describe("DeviceGrantRepositoryLive (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate("auth.device_grants", "user.users").pipe(Effect.provide(TestDatabaseLive)),
+describeIntegration(
+  "DeviceGrantRepositoryLive (integration)",
+  { layer: TestLayer, tables: ["auth.device_grants", "user.users"] },
+  (it) => {
+    it.effect("insert + findOne by code hash and by user code round-trip", () =>
+      Effect.gen(function* () {
+        const repo = yield* DeviceGrantRepository;
+        const now = yield* DateTime.now;
+        yield* repo.insertOne(start(now));
+
+        const byHash = yield* repo
+          .findOne(DeviceGrantSpecifications.withCodeHash("dc-hash"))
+          .pipe(Effect.flatMap(Effect.fromOption));
+
+        const byUser = yield* repo
+          .findOne(DeviceGrantSpecifications.withUserCode("ABCD-2345"))
+          .pipe(Effect.flatMap(Effect.fromOption));
+
+        deepStrictEqual(byHash.id, id);
+        deepStrictEqual(byUser.status, "pending");
+        assertNone(byUser.userId);
+      }),
     );
-  });
 
-  it.effect("insert + findOne by code hash and by user code round-trip", () =>
-    Effect.gen(function* () {
-      const repo = yield* DeviceGrantRepository;
-      const now = yield* DateTime.now;
-      yield* repo.insertOne(start(now));
-      const byHash = yield* repo.findOne(DeviceGrantSpecifications.withCodeHash("dc-hash"));
-      const byUser = yield* repo.findOne(DeviceGrantSpecifications.withUserCode("ABCD-2345"));
-      if (byHash === null || byUser === null) throw new Error("expected a grant");
-      deepStrictEqual(byHash.id, id);
-      deepStrictEqual(byUser.status, "pending");
-      deepStrictEqual(byUser.userId, null);
-    }).pipe(Effect.provide(TestLayer)),
-  );
+    it.effect("update persists an approval (status + user_id + approved_at)", () =>
+      Effect.gen(function* () {
+        yield* insertUserRow;
+        const repo = yield* DeviceGrantRepository;
+        const now = yield* DateTime.now;
+        const grant = start(now);
+        yield* repo.insertOne(grant);
+        yield* repo.updateOne(DeviceGrantRootOps.approve({ grant, userId, now }));
 
-  it.effect("update persists an approval (status + user_id + approved_at)", () =>
-    Effect.gen(function* () {
-      yield* insertUserRow;
-      const repo = yield* DeviceGrantRepository;
-      const now = yield* DateTime.now;
-      const grant = start(now);
-      yield* repo.insertOne(grant);
-      yield* repo.updateOne(DeviceGrantRootOps.approve({ grant, userId, now }));
-      const after = yield* repo.findOne(DeviceGrantSpecifications.withCodeHash("dc-hash"));
-      if (after === null) throw new Error("expected a grant");
-      deepStrictEqual(after.status, "approved");
-      deepStrictEqual(after.userId, userId);
-      notStrictEqual(after.approvedAt, null);
-    }).pipe(Effect.provide(TestLayer)),
-  );
+        const after = yield* repo
+          .findOne(DeviceGrantSpecifications.withCodeHash("dc-hash"))
+          .pipe(Effect.flatMap(Effect.fromOption));
 
-  it.effect("delete consumes the grant; a second delete is NotFound", () =>
-    Effect.gen(function* () {
-      const repo = yield* DeviceGrantRepository;
-      const now = yield* DateTime.now;
-      yield* repo.insertOne(start(now));
-      yield* repo.deleteOne(id);
-      const lookup = yield* repo.findOne(DeviceGrantSpecifications.withCodeHash("dc-hash"));
-      deepStrictEqual(lookup, null);
-      const second = yield* Effect.exit(repo.deleteOne(id));
-      deepStrictEqual(Exit.isFailure(second), true);
-    }).pipe(Effect.provide(TestLayer)),
-  );
-});
+        deepStrictEqual(after.status, "approved");
+        deepStrictEqual(after.userId, Option.some(userId));
+        assertTrue(Option.isSome(after.approvedAt));
+      }),
+    );
+
+    it.effect("delete consumes the grant; a second delete is NotFound", () =>
+      Effect.gen(function* () {
+        const repo = yield* DeviceGrantRepository;
+        const now = yield* DateTime.now;
+        yield* repo.insertOne(start(now));
+        yield* repo.deleteOne(id);
+        const lookup = yield* repo.findOne(DeviceGrantSpecifications.withCodeHash("dc-hash"));
+        assertNone(lookup);
+        const second = yield* Effect.exit(repo.deleteOne(id));
+        deepStrictEqual(Exit.isFailure(second), true);
+      }),
+    );
+  },
+);

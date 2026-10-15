@@ -8,6 +8,8 @@
 // another's lands on the other's billing page.
 
 import type { OrganizationId } from "@org/contracts/EntityIds";
+import * as Arr from "effect/Array";
+import * as Option from "effect/Option";
 import * as AsyncResult from "effect/reactivity/AsyncResult";
 import * as Atom from "effect/reactivity/Atom";
 
@@ -21,62 +23,68 @@ export type OrgOption = {
 };
 
 export type OrgSwitcherView = {
-  readonly activeOrgId: OrganizationId | null;
+  readonly activeOrgId: Option.Option<OrganizationId>;
+  // The same id, as the select's value; absent while no option is active.
+  readonly selectedOrgId?: OrganizationId;
   readonly options: ReadonlyArray<OrgOption>;
   readonly isEmpty: boolean;
 };
 
-// Group 2 always matches (the empty string when there's no sub-route), so the
-// template literal in `buildHref` never interpolates `undefined`.
 const ORG_PATH_PATTERN = /^\/orgs\/([^/]+)(.*)$/;
 
-export const extractActiveOrgId = (pathname: string): string | null => {
-  const match = ORG_PATH_PATTERN.exec(pathname);
-  if (match === null) return null;
-  return match[1];
-};
+const matchOrgPath = (pathname: string) => Option.fromNullOr(ORG_PATH_PATTERN.exec(pathname));
 
-const buildHref = (orgId: OrganizationId, pathname: string): string => {
-  const match = ORG_PATH_PATTERN.exec(pathname);
-  // Off any /orgs/<id>/<rest> path, swap the id and preserve the rest.
-  // From any other path (root, /users, /admin/orgs) land at the org root.
-  if (match !== null) {
-    return `/orgs/${orgId}${match[2]}`;
-  }
-  return `/orgs/${orgId}`;
-};
+export const extractActiveOrgId = (pathname: string): Option.Option<string> =>
+  Option.flatMap(matchOrgPath(pathname), (match) => Option.fromUndefinedOr(match[1]));
+
+// Off any /orgs/<id>/<rest> path, swap the id and preserve the rest.
+// From any other path (root, /users, /admin/orgs) land at the org root.
+const buildHref = (orgId: OrganizationId, pathname: string): string =>
+  Option.match(matchOrgPath(pathname), {
+    onNone: () => `/orgs/${orgId}`,
+    onSome: (match) => `/orgs/${orgId}${match[2]}`,
+  });
 
 export const computeOrgSwitcherView = (input: {
   readonly orgs: ReadonlyArray<{ readonly id: OrganizationId; readonly name: string }>;
   readonly pathname: string;
 }): OrgSwitcherView => {
-  const activeId = extractActiveOrgId(input.pathname);
   const options = input.orgs.map((org) => ({
     id: org.id,
     name: org.name,
     href: buildHref(org.id, input.pathname),
   }));
-  const activeOrgId =
-    activeId !== null
-      ? (options.find((o) => o.id === (activeId as OrganizationId))?.id ?? null)
-      : null;
-  return { activeOrgId, options, isEmpty: options.length === 0 };
+
+  const activeOrgId = Option.flatMap(extractActiveOrgId(input.pathname), (activeId) =>
+    Option.map(
+      Arr.findFirst(options, (option) => option.id === activeId),
+      (option) => option.id,
+    ),
+  );
+
+  const view: OrgSwitcherView = { activeOrgId, options, isEmpty: options.length === 0 };
+
+  return Option.match(activeOrgId, {
+    onNone: () => view,
+    onSome: (selectedOrgId) => ({ ...view, selectedOrgId }),
+  });
 };
 
 export const orgSwitcherResultAtom = Atom.make((get) => get(myOrgsQueryAtom));
 
-export const orgSwitcherAtom = Atom.make((get): OrgSwitcherView => {
-  const result = get(orgSwitcherResultAtom);
-  return computeOrgSwitcherView({
-    orgs: AsyncResult.isSuccess(result) ? result.value : [],
-    pathname: get(pathnameAtom),
-  });
-});
+export const orgSwitcherAtom = Atom.make(
+  (get): OrgSwitcherView =>
+    computeOrgSwitcherView({
+      orgs: AsyncResult.getOrElse(get(orgSwitcherResultAtom), () => []),
+      pathname: get(pathnameAtom),
+    }),
+);
 
 export const selectOrgAtom = Atom.fnSync<OrganizationId>()((orgId, get) => {
-  const option = get(orgSwitcherAtom).options.find((o) => o.id === orgId);
-  if (option === undefined) return;
-  navigateTo(get, option.href);
+  const option = Arr.findFirst(get(orgSwitcherAtom).options, (candidate) => candidate.id === orgId);
+
+  if (Option.isNone(option)) return;
+  navigateTo(get, option.value.href);
 });
 
 export const createNewOrgAtom = Atom.fnSync<void>()((_, get) => {

@@ -10,7 +10,7 @@
     "skipLibCheck": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "Bundler",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": [],
     "isolatedModules": true,
@@ -30,7 +30,7 @@
     "noUncheckedIndexedAccess": true,
     "strictNullChecks": true,
     "target": "ES2022",
-    "module": "NodeNext",
+    "module": "ESNext",
     "incremental": true,
     "removeComments": false,
     "plugins": [
@@ -44,6 +44,9 @@
           // safety there (the contract schemas already validate at the API
           // edge), so preferring it would be gold-plating. Rule off project-wide.
           "preferSchemaOverJson": "off",
+          // effect/http-api, effect/http, effect/sql and effect/reactivity are
+          // this app's whole stack; the exact effect pin absorbs their instability.
+          "unstableApiUsage": "off",
           // Raised from message to warning as the effect-diagnostics campaign
           // (ADR-0033) brought each rule to zero, so `pnpm check:effect` gates it.
           "multipleCatchTag": "warning",

@@ -1,12 +1,13 @@
 import { withUnitOfWork } from "@effect-server-utils/unit-of-work";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
 
-import { DomainEventBus } from "@/globals/application/ports/event-bus.js";
-import { type SyncSubscriptionPayload } from "@/modules/billing/commands/sync-subscription.command.js";
-import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository.js";
-import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops.js";
-import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification.js";
+import { DomainEventBus } from "@/globals/application/ports/event-bus";
+import { type SyncSubscriptionPayload } from "@/modules/billing/commands/sync-subscription.command";
+import { SubscriptionRepository } from "@/modules/billing/domain/subscription/subscription.repository";
+import { SubscriptionRootOps } from "@/modules/billing/domain/subscription/subscription.root-ops";
+import { SubscriptionSpecifications } from "@/modules/billing/domain/subscription/subscription.specification";
 
 // Syncs the local Subscription projection to a Stripe-reported status.
 // Out-of-order deliveries — a status update for a subscription whose
@@ -19,16 +20,21 @@ export const syncSubscriptionHandler = Effect.fn("syncSubscriptionHandler")(func
 ) {
   const repo = yield* SubscriptionRepository;
   const bus = yield* DomainEventBus;
+
   const found = yield* repo.findOne(
     SubscriptionSpecifications.withStripeSubscriptionId(cmd.stripeSubscriptionId),
   );
-  if (found === null) return;
+
+  if (Option.isNone(found)) return;
+
   const now = yield* DateTime.now;
-  const { events, subscription } = SubscriptionRootOps.applyStatus(found, {
+
+  const { events, subscription } = SubscriptionRootOps.applyStatus(found.value, {
     status: cmd.status,
     currentPeriodEnd: cmd.currentPeriodEnd,
     now,
   });
+
   yield* repo.updateOne(subscription);
   yield* bus.dispatch(events);
 }, withUnitOfWork);

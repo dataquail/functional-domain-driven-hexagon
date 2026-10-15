@@ -1,9 +1,10 @@
 import { type RowSchemas } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
+import * as Option from "effect/Option";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql.js";
-import { OrganizationRoot } from "@/modules/organization/domain/organization/organization.root.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { type ColumnMap } from "@/globals/infrastructure/database/criteria-to-sql";
+import { OrganizationRoot } from "@/modules/organization/domain/organization/organization.root";
 
 type Row = RowSchemas.OrganizationRow;
 
@@ -21,21 +22,13 @@ export const toDomain = (row: Row): OrganizationRoot =>
     name: row.name,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    deletedAt: row.deleted_at,
+    deletedAt: Option.fromNullOr(row.deleted_at),
   });
 
-export type PersistenceRow = {
-  readonly id: string;
-  readonly name: string;
-  readonly created_at: Date;
-  readonly updated_at: Date;
-  readonly deleted_at: Date | null;
-};
-
-export const toPersistence = (organization: OrganizationRoot): PersistenceRow => ({
+export const toPersistence = (organization: OrganizationRoot) => ({
   id: organization.id,
   name: organization.name,
   created_at: DateTime.toDate(organization.createdAt),
   updated_at: DateTime.toDate(organization.updatedAt),
-  deleted_at: organization.deletedAt === null ? null : DateTime.toDate(organization.deletedAt),
+  deleted_at: Option.getOrNull(Option.map(organization.deletedAt, DateTime.toDate)),
 });

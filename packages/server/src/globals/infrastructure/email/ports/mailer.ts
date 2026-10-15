@@ -1,7 +1,7 @@
 import * as Context from "effect/Context";
 import type * as Effect from "effect/Effect";
 
-import { type MailDeliveryError } from "./mail-errors.js";
+import { type MailDeliveryError } from "./mail-errors";
 
 // Platform transport port for outbound email. It carries a *rendered*
 // message — `html` + a plaintext `text` fallback — and knows nothing
@@ -24,11 +24,11 @@ export type MailMessage = {
   readonly text: string;
 };
 
-export type MailerShape = {
+export type MailerService = {
   // Real backends can fail at the transport boundary, so `send` carries a
   // modeled error. `LogMailerLive` returns `Effect<void, never>`, which is
   // assignable here.
   readonly send: (message: MailMessage) => Effect.Effect<void, MailDeliveryError>;
 };
 
-export class Mailer extends Context.Service<Mailer, MailerShape>()("Mailer") {}
+export class Mailer extends Context.Service<Mailer, MailerService>()("Mailer") {}

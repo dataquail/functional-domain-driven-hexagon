@@ -17,6 +17,7 @@
   } = $props();
 
   provideRegistry({ registry: untrack(() => registry) });
+
   const set = atomSet(() => atom);
 </script>
 

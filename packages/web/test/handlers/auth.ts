@@ -9,14 +9,18 @@
 // middleware would produce.
 
 import * as AuthContract from "@org/contracts/api/AuthContract";
+import * as CustomHttpApiError from "@org/contracts/CustomHttpApiError";
 import * as Effect from "effect/Effect";
+import * as Schema from "effect/Schema";
 import { http, HttpResponse } from "msw";
 
-import { makeCurrentUser } from "../fixtures/auth";
-import { getEndpoint, TEST_API_BASE, typedHandler } from "../typed-handler";
+import { makeCurrentUser } from "@/test/fixtures/auth";
+import { getEndpoint, TEST_API_BASE, typedHandler } from "@/test/typed-handler";
 
 const meEndpoint = getEndpoint(AuthContract.PrivateGroup, "me");
 const meUrl = `${TEST_API_BASE}${meEndpoint.path}`;
+
+const encodeUnauthorized = Schema.encodeSync(CustomHttpApiError.Unauthorized);
 
 export const authHandlers = {
   /** `/auth/me` returns `CurrentUserResponse`. Defaults to a guest user. */
@@ -26,6 +30,9 @@ export const authHandlers = {
   /** `/auth/me` returns 401 — the `(authed)` layout will redirect to /login. */
   signedOut: () =>
     http.get(meUrl, () =>
-      HttpResponse.json({ _tag: "Unauthorized", message: "Not authenticated." }, { status: 401 }),
+      HttpResponse.json(
+        encodeUnauthorized(new CustomHttpApiError.Unauthorized({ message: "Not authenticated." })),
+        { status: 401 },
+      ),
     ),
 };

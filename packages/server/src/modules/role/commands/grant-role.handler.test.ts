@@ -1,22 +1,20 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertDefined, assertTrue } from "@effect/vitest/utils";
 import { PassThroughUnitOfWork } from "@effect-server-utils/unit-of-work/testing";
-import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
-import * as Exit from "effect/Exit";
 import * as Layer from "effect/Layer";
-import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { grantRoleHandler } from "@/modules/role/commands/grant-role.handler.js";
-import { AlreadyHasRole, CannotPromoteSelf } from "@/modules/role/domain/roles/role.errors.js";
-import { type RoleGranted } from "@/modules/role/domain/roles/role.events.js";
-import { RolesRepository } from "@/modules/role/domain/roles/roles.repository.js";
-import { RolesSpecifications } from "@/modules/role/domain/roles/roles.specification.js";
-import { RolesRepositoryFake } from "@/modules/role/infrastructure/repositories/roles.repository-fake.js";
-import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus.js";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { grantRoleHandler } from "@/modules/role/commands/grant-role.handler";
+import { AlreadyHasRole, CannotPromoteSelf } from "@/modules/role/domain/roles/role.errors";
+import { type RoleGranted } from "@/modules/role/domain/roles/role.events";
+import { RolesRepository } from "@/modules/role/domain/roles/roles.repository";
+import { RolesSpecifications } from "@/modules/role/domain/roles/roles.specification";
+import { RolesRepositoryFake } from "@/modules/role/infrastructure/repositories/roles.repository-fake";
+import { RecordedEvents, RecordingEventBus } from "@/test-utils/recording-event-bus";
 
 const TestLayer = Layer.mergeAll(RolesRepositoryFake, RecordingEventBus, PassThroughUnitOfWork);
 
@@ -31,14 +29,16 @@ describe("grantRoleHandler", () => {
 
       yield* grantRoleHandler({ userId: targetId, role: "super_admin", actorUserId: actorId });
 
-      const roles = yield* repo.findOne(RolesSpecifications.forUser(targetId));
-      if (roles === null) throw new Error("expected aggregate");
+      const roles = yield* Effect.fromOption(
+        yield* repo.findOne(RolesSpecifications.forUser(targetId)),
+      );
+
       deepStrictEqual([...roles.roles], ["super_admin"]);
 
       const events = yield* rec.byTag<RoleGranted>("RoleGranted");
       deepStrictEqual(events.length, 1);
-      const event = events[0];
-      if (event === undefined) throw new Error("expected RoleGranted event");
+      const [event] = events;
+      assertDefined(event);
       deepStrictEqual(event.userId, targetId);
       deepStrictEqual(event.role, "super_admin");
     }).pipe(Effect.provide(TestLayer)),
@@ -46,32 +46,23 @@ describe("grantRoleHandler", () => {
 
   it.effect("fails CannotPromoteSelf when actor equals target", () =>
     Effect.gen(function* () {
-      const exit = yield* Effect.exit(
+      const error = yield* Effect.flip(
         grantRoleHandler({ userId: targetId, role: "super_admin", actorUserId: targetId }),
       );
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(CannotPromoteSelf)(error), true);
-      }
+
+      assertTrue(Schema.is(CannotPromoteSelf)(error));
     }).pipe(Effect.provide(TestLayer)),
   );
 
   it.effect("fails AlreadyHasRole when the role is already granted", () =>
     Effect.gen(function* () {
       yield* grantRoleHandler({ userId: targetId, role: "super_admin", actorUserId: actorId });
-      const exit = yield* Effect.exit(
+
+      const error = yield* Effect.flip(
         grantRoleHandler({ userId: targetId, role: "super_admin", actorUserId: actorId }),
       );
-      deepStrictEqual(Exit.isFailure(exit), true);
-      if (Exit.isFailure(exit)) {
-        const error = Cause.hasFails(exit.cause)
-          ? Cause.findErrorOption(exit.cause).pipe(Option.getOrThrow)
-          : null;
-        deepStrictEqual(Schema.is(AlreadyHasRole)(error), true);
-      }
+
+      assertTrue(Schema.is(AlreadyHasRole)(error));
     }).pipe(Effect.provide(TestLayer)),
   );
 });

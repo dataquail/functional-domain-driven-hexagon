@@ -2,6 +2,7 @@
   import type { Snippet } from "svelte";
 
   export type CardElevation = "none" | "sm" | "md";
+
   export type CardInteractive = "none" | "raise";
 
   const ELEVATION: Record<CardElevation, string> = {

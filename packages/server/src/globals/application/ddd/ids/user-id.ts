@@ -10,4 +10,5 @@ import * as Schema from "effect/Schema";
 // only — no value objects, no enums, no aggregate types. Vernon's "shared
 // kernel keeps growing" warning is real; the constraint here is the rule.
 export const UserId = Schema.String.pipe(Schema.brand("UserId"));
+
 export type UserId = typeof UserId.Type;

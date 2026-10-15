@@ -19,13 +19,13 @@
 </script>
 
 <script lang="ts">
-  let value = $state<string | undefined>("acme");
+  const selection = $state({ value: "acme" });
 </script>
 
 <Story name="Controlled" asChild>
   <Select
-    {value}
-    onValueChange={(next) => (value = next)}
+    value={selection.value}
+    onValueChange={(next) => (selection.value = next)}
     items={ORGANIZATIONS}
     width="md"
     aria-label="Organization"
@@ -35,7 +35,6 @@
 <Story
   name="Placeholder"
   args={{
-    value: undefined,
     items: ORGANIZATIONS,
     placeholder: "Select an organization…",
     width: "md",

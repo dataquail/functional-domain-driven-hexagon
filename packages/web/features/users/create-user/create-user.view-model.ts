@@ -7,7 +7,12 @@ import * as Effect from "effect/Effect";
 import * as Atom from "effect/reactivity/Atom";
 
 import { ApiAtoms } from "@/services/atom/api-atoms.shared";
-import { type FieldErrors, validateWithSchema } from "@/services/atom/form-validation";
+import {
+  type FieldErrors,
+  hasFieldErrors,
+  validateWithSchema,
+  visibleOnceAttempted,
+} from "@/services/atom/form-validation";
 import { notify } from "@/services/atom/notifications.shared";
 import { ReactivityKeys } from "@/services/atom/reactivity-keys";
 import { createUserAtom } from "@/services/data-access/users.atoms";
@@ -36,12 +41,10 @@ export const fieldsAtom = Atom.make<CreateUserFields>(EMPTY_FIELDS);
 // submit -- an empty form should not greet you with four errors.
 export const submitAttemptedAtom = Atom.make(false);
 
-export const errorsAtom = Atom.make((get): FieldErrors<CreateUserFields> | null =>
-  validate(get(fieldsAtom)),
-);
+export const errorsAtom = Atom.make((get): FieldErrors => validate(get(fieldsAtom)));
 
-export const visibleErrorsAtom = Atom.make((get): FieldErrors<CreateUserFields> | null =>
-  get(submitAttemptedAtom) ? get(errorsAtom) : null,
+export const visibleErrorsAtom = Atom.make(
+  (get): FieldErrors => visibleOnceAttempted(get(submitAttemptedAtom), get(errorsAtom)),
 );
 
 export const setFieldAtom = Atom.fnSync<{
@@ -73,7 +76,8 @@ const createUser = (get: Atom.FnContext) =>
 export const submitAtom = ApiAtoms.runtime.fn<void>()((_, get) =>
   Effect.gen(function* () {
     get.set(submitAttemptedAtom, true);
-    if (get(errorsAtom) !== null) return;
+
+    if (hasFieldErrors(get(errorsAtom))) return;
     yield* createUser(get);
   }),
 );

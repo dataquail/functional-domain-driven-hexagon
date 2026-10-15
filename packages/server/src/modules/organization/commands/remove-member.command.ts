@@ -2,9 +2,9 @@ import { Command } from "@effect-server-utils/cqrs";
 import { PersistenceUnavailable } from "@effect-server-utils/unit-of-work";
 import * as Schema from "effect/Schema";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { MembershipNotFound } from "@/modules/organization/domain/membership/membership.errors";
 
 // Removes another user from an org. `actorUserId` is recorded for
 // span attributes and (Phase 4) the policy layer's grant check; the
@@ -20,4 +20,5 @@ export const RemoveMemberCommand = Command.make("RemoveMemberCommand", {
   success: Schema.Void,
   failure: Schema.Union([MembershipNotFound, PersistenceUnavailable]),
 });
+
 export type RemoveMemberPayload = Command.Payload<typeof RemoveMemberCommand>;

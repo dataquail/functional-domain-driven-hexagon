@@ -1,17 +1,29 @@
+import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
-import pg from "pg";
+import * as Layer from "effect/Layer";
+import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 
-import { type ClientCredentials, makeIdentityAuth } from "../auth/identity-auth.js";
-import type { IdentityEmail } from "../mail/identity-mailer.js";
-import { identityTestDatabaseUrl, truncateIdentityTables } from "./identity-test-database.js";
+import { type ClientCredentials, type IdentityAuth, identityAuthFor } from "../auth/identity-auth";
+import type { IdentityEmail } from "../mail/identity-mailer";
+import { IdentityTestDatabase, truncateIdentityTables } from "./identity-test-database";
 
 export const IDENTITY_BASE_URL = "http://localhost:3002";
 export const APP_URL = "http://localhost:3000";
 
-export const makeIdentityTestHarness = () => {
-  const database = new pg.Pool({ connectionString: identityTestDatabaseUrl(), max: 2 });
+type Harness = {
+  readonly sent: ReadonlyArray<IdentityEmail>;
+  readonly makeAuth: () => IdentityAuth;
+  readonly makeSeedingAuth: (client: Option.Option<ClientCredentials>) => IdentityAuth;
+  // Truncates the identity tables and forgets the recorded mail; run at the start of each test.
+  readonly reset: Effect.Effect<void>;
+};
+
+const makeHarness = Effect.gen(function* () {
+  const database = yield* IdentityTestDatabase;
   const sent: Array<IdentityEmail> = [];
-  const settings = (registerClientAs?: ClientCredentials) => ({
+
+  const settings = (registerClientAs: Option.Option<ClientCredentials>) => ({
     baseUrl: IDENTITY_BASE_URL,
     secret: "identity-integration-tests-secret-0123456789abcdef",
     appUrl: APP_URL,
@@ -22,22 +34,33 @@ export const makeIdentityTestHarness = () => {
           sent.push(email);
         }),
     },
-    ...(registerClientAs === undefined ? {} : { registerClientAs }),
+    runInBackground: Option.none(),
+    registerClientAs,
   });
-  return {
-    sent,
-    makeAuth: () => makeIdentityAuth(settings()),
-    makeSeedingAuth: (client: ClientCredentials | undefined) =>
-      makeIdentityAuth({ ...settings(client), sendVerificationOnSignUp: false }),
-    reset: () => {
-      sent.length = 0;
-      return truncateIdentityTables(database);
-    },
-    close: () => database.end(),
-  };
-};
 
-export const formPost = (path: string, fields: Record<string, string>): Request =>
+  const harness: Harness = {
+    sent,
+    makeAuth: () => identityAuthFor(settings(Option.none())),
+    makeSeedingAuth: (client) =>
+      identityAuthFor({ ...settings(client), sendVerificationOnSignUp: false }),
+    reset: Effect.sync(() => {
+      sent.length = 0;
+    }).pipe(Effect.andThen(truncateIdentityTables(database))),
+  };
+
+  return harness;
+});
+
+// Better Auth wired to the identity test database, with a mailer that records instead of sending.
+export class IdentityTestHarness extends Context.Service<IdentityTestHarness, Harness>()(
+  "IdentityTestHarness",
+) {
+  public static readonly layer = Layer.effect(IdentityTestHarness, makeHarness).pipe(
+    Layer.provideMerge(IdentityTestDatabase.layer),
+  );
+}
+
+export const formPost = (path: string, fields: Readonly<Record<string, string>>): Request =>
   new Request(`${IDENTITY_BASE_URL}${path}`, {
     method: "POST",
     headers: {
@@ -47,8 +70,15 @@ export const formPost = (path: string, fields: Record<string, string>): Request 
     body: new URLSearchParams(fields),
   });
 
-export const linkIn = (email: IdentityEmail | undefined): URL => {
-  const match = /https?:\/\/\S+/.exec(email?.text ?? "");
-  if (match === null) throw new Error("expected an email carrying a link");
-  return new URL(match[0]);
-};
+class NoLinkInEmail extends Schema.TaggedError<
+  NoLinkInEmail,
+  { readonly brand: "NoLinkInEmail" }
+>()("NoLinkInEmail", {}) {}
+
+export const linkIn = (email: Option.Option<IdentityEmail>): Effect.Effect<URL> =>
+  Option.flatMap(email, ({ text }) => Option.fromNullOr(/https?:\/\/\S+/.exec(text))).pipe(
+    Option.match({
+      onNone: () => Effect.die(new NoLinkInEmail()),
+      onSome: (match) => Effect.succeed(new URL(match[0])),
+    }),
+  );

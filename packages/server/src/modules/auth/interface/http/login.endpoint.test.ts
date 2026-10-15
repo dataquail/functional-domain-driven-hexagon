@@ -1,12 +1,13 @@
 import { describe, expect, it } from "@effect/vitest";
+import { assertNone, assertSome } from "@effect/vitest/utils";
 
-import { loginEndpoint } from "./login.endpoint.js";
+import { loginEndpoint } from "./login.endpoint";
 import {
   decodePkcePayload,
   encodePkcePayload,
   PKCE_COOKIE_MAX_AGE_MS,
   PKCE_COOKIE_NAME,
-} from "./oidc-pkce-cookie.util.js";
+} from "./oidc-pkce-cookie.util";
 
 // The login endpoint's overall flow — building the issuer's authorize URL,
 // signing the cookie, stamping the 302 — is exercised end-to-end by
@@ -22,7 +23,7 @@ import {
 
 describe("loginEndpoint", () => {
   it("exports a callable endpoint factory", () => {
-    expect(typeof loginEndpoint).toBe("function");
+    expect(loginEndpoint).toBeInstanceOf(Function);
   });
 });
 
@@ -44,9 +45,9 @@ describe("encodePkcePayload / decodePkcePayload", () => {
       state: "abc123-state-token",
       codeVerifier: "verifier-string-of-length-43+characters-required",
     };
+
     const encoded = encodePkcePayload(original);
-    const decoded = decodePkcePayload(encoded);
-    expect(decoded).toEqual(original);
+    assertSome(decodePkcePayload(encoded), original);
   });
 
   it("encodes to a URL-safe string (no '+', '/', or '=')", () => {
@@ -54,37 +55,37 @@ describe("encodePkcePayload / decodePkcePayload", () => {
       state: "state with spaces & special / chars+",
       codeVerifier: "verifier?with=tricky&characters",
     });
+
     expect(encoded).not.toMatch(/[+/=]/);
   });
 
   it("rejects malformed base64url input", () => {
-    expect(decodePkcePayload("!!!not-base64!!!")).toBeNull();
+    assertNone(decodePkcePayload("!!!not-base64!!!"));
   });
 
   it("rejects valid base64url that doesn't decode to JSON", () => {
     const garbage = Buffer.from("not valid json at all").toString("base64url");
-    expect(decodePkcePayload(garbage)).toBeNull();
+    assertNone(decodePkcePayload(garbage));
   });
 
   it("rejects JSON that is missing the state field", () => {
-    const encoded = Buffer.from(JSON.stringify({ codeVerifier: "v" })).toString("base64url");
-    expect(decodePkcePayload(encoded)).toBeNull();
+    const encoded = Buffer.from('{"codeVerifier":"v"}').toString("base64url");
+    assertNone(decodePkcePayload(encoded));
   });
 
   it("rejects JSON that is missing the codeVerifier field", () => {
-    const encoded = Buffer.from(JSON.stringify({ state: "s" })).toString("base64url");
-    expect(decodePkcePayload(encoded)).toBeNull();
+    const encoded = Buffer.from('{"state":"s"}').toString("base64url");
+    assertNone(decodePkcePayload(encoded));
   });
 
   it("rejects JSON whose fields have the wrong types", () => {
-    const encoded = Buffer.from(JSON.stringify({ state: 42, codeVerifier: "v" })).toString(
-      "base64url",
-    );
-    expect(decodePkcePayload(encoded)).toBeNull();
+    const encoded = Buffer.from('{"state":42,"codeVerifier":"v"}').toString("base64url");
+
+    assertNone(decodePkcePayload(encoded));
   });
 
-  it("rejects a null payload (JSON `null` is technically valid JSON)", () => {
+  it("rejects a JSON `null` payload (technically valid JSON)", () => {
     const encoded = Buffer.from("null").toString("base64url");
-    expect(decodePkcePayload(encoded)).toBeNull();
+    assertNone(decodePkcePayload(encoded));
   });
 });

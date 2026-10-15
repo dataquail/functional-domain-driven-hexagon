@@ -1,15 +1,20 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import * as Option from "effect/Option";
 
-import { Spec } from "./specification.js";
+import { Criteria, Spec } from "./specification";
 
-type Row = { id: string; acceptedAt: string | null; revokedAt: string | null };
+type Row = {
+  id: string;
+  acceptedAt: Option.Option<string>;
+  revokedAt: Option.Option<string>;
+};
 
 const open = (o: Partial<Row> = {}): Row => ({
   id: "1",
-  acceptedAt: null,
-  revokedAt: null,
+  acceptedAt: Option.none(),
+  revokedAt: Option.none(),
   ...o,
 });
 
@@ -18,14 +23,15 @@ describe("Spec builders — predicate + criteria in one object", () => {
     const withId = Spec.eq<Row, "id">("id", "abc");
     deepStrictEqual(withId(open({ id: "abc" })), true);
     deepStrictEqual(withId(open({ id: "xyz" })), false);
-    deepStrictEqual(withId.criteria, { _tag: "Eq", field: "id", value: "abc" });
+    deepStrictEqual(withId.criteria, Criteria.Eq({ field: "id", value: "abc" }));
   });
 
-  it("isNull / isNotNull match nullability", () => {
+  it("isNull / isNotNull read an Option field's None as null", () => {
     const accepted = Spec.isNotNull<Row>("acceptedAt");
-    deepStrictEqual(accepted(open({ acceptedAt: "2026-01-01" })), true);
+    deepStrictEqual(accepted(open({ acceptedAt: Option.some("2026-01-01") })), true);
     deepStrictEqual(accepted(open()), false);
-    deepStrictEqual(accepted.criteria, { _tag: "IsNotNull", field: "acceptedAt" });
+    deepStrictEqual(Spec.isNull<Row>("acceptedAt")(open()), true);
+    deepStrictEqual(accepted.criteria, Criteria.IsNotNull({ field: "acceptedAt" }));
   });
 
   it("and / or / not compose both the predicate and the AST", () => {
@@ -34,18 +40,19 @@ describe("Spec builders — predicate + criteria in one object", () => {
     const isOpen = Spec.not(Spec.or(isAccepted, isRevoked));
 
     deepStrictEqual(isOpen(open()), true);
-    deepStrictEqual(isOpen(open({ acceptedAt: "2026-01-01" })), false);
-    deepStrictEqual(isOpen(open({ revokedAt: "2026-01-01" })), false);
+    deepStrictEqual(isOpen(open({ acceptedAt: Option.some("2026-01-01") })), false);
+    deepStrictEqual(isOpen(open({ revokedAt: Option.some("2026-01-01") })), false);
 
-    deepStrictEqual(isOpen.criteria, {
-      _tag: "Not",
-      node: {
-        _tag: "Or",
-        nodes: [
-          { _tag: "IsNotNull", field: "acceptedAt" },
-          { _tag: "IsNotNull", field: "revokedAt" },
-        ],
-      },
-    });
+    deepStrictEqual(
+      isOpen.criteria,
+      Criteria.Not({
+        node: Criteria.Or({
+          nodes: [
+            Criteria.IsNotNull({ field: "acceptedAt" }),
+            Criteria.IsNotNull({ field: "revokedAt" }),
+          ],
+        }),
+      }),
+    );
   });
 });

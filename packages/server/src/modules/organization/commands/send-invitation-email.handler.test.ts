@@ -1,20 +1,21 @@
 import { deepStrictEqual } from "node:assert";
 
 import { describe, it } from "@effect/vitest";
+import { assertDefined } from "@effect/vitest/utils";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 
-import { InvitationId } from "@/globals/application/ddd/ids/invitation-id.js";
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { sendInvitationEmailHandler } from "@/modules/organization/commands/send-invitation-email.handler.js";
-import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository.js";
-import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops.js";
+import { InvitationId } from "@/globals/application/ddd/ids/invitation-id";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { sendInvitationEmailHandler } from "@/modules/organization/commands/send-invitation-email.handler";
+import { InvitationRepository } from "@/modules/organization/domain/invitation/invitation.repository";
+import { InvitationRootOps } from "@/modules/organization/domain/invitation/invitation.root-ops";
 import {
   InvitationMailerFake,
   SentInvitations,
-} from "@/modules/organization/infrastructure/clients/invitation-mailer.client-fake.js";
-import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake.js";
+} from "@/modules/organization/infrastructure/clients/invitation-mailer.client-fake";
+import { InvitationRepositoryFake } from "@/modules/organization/infrastructure/repositories/invitation.repository-fake";
 
 const invitationId = InvitationId.make("11111111-1111-1111-1111-111111111111");
 const organizationId = OrganizationId.make("22222222-2222-2222-2222-222222222222");
@@ -47,7 +48,8 @@ describe("sendInvitationEmailHandler", () => {
       const invites = yield* sent.all;
       deepStrictEqual(invites.length, 1);
       const invite = invites[0];
-      if (invite === undefined) throw new Error("expected one sent invitation");
+
+      assertDefined(invite);
       deepStrictEqual(invite.to, "alice@example.com");
       deepStrictEqual(invite.token, "tok-stored");
       deepStrictEqual(DateTime.toEpochMillis(invite.expiresAt), DateTime.toEpochMillis(expiresAt));

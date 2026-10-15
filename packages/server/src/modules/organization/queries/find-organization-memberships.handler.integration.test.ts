@@ -1,28 +1,27 @@
 import { deepStrictEqual } from "node:assert";
 
-import { describe, it } from "@effect/vitest";
 import { Database } from "@org/database/index";
 import * as DateTime from "effect/DateTime";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
 import * as Result from "effect/Result";
-import { beforeEach } from "vitest";
 
-import { OrganizationId } from "@/globals/application/ddd/ids/organization-id.js";
-import { UserId } from "@/globals/application/ddd/ids/user-id.js";
-import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository.js";
-import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops.js";
-import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository.js";
-import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops.js";
-import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository.js";
-import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops.js";
-import { type UserLookupView } from "@/modules/organization/domain/ports/acl/users-lookup.acl.js";
-import { makeUsersLookupFake } from "@/modules/organization/infrastructure/acl/users-lookup.acl-fake.js";
-import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/repositories/membership.repository-live.js";
-import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live.js";
-import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-live.js";
-import { findOrganizationMembershipsHandler } from "@/modules/organization/queries/find-organization-memberships.handler.js";
-import { TestDatabaseLive, truncate } from "@/test-utils/test-database.js";
+import { OrganizationId } from "@/globals/application/ddd/ids/organization-id";
+import { UserId } from "@/globals/application/ddd/ids/user-id";
+import { MembershipRepository } from "@/modules/organization/domain/membership/membership.repository";
+import { MembershipRootOps } from "@/modules/organization/domain/membership/membership.root-ops";
+import { OrganizationRepository } from "@/modules/organization/domain/organization/organization.repository";
+import { OrganizationRootOps } from "@/modules/organization/domain/organization/organization.root-ops";
+import { OrganizationRolesRepository } from "@/modules/organization/domain/organization-roles/organization-roles.repository";
+import { OrganizationRolesRootOps } from "@/modules/organization/domain/organization-roles/organization-roles.root-ops";
+import { type UserLookupView } from "@/modules/organization/domain/ports/acl/users-lookup.acl";
+import { makeUsersLookupFake } from "@/modules/organization/infrastructure/acl/users-lookup.acl-fake";
+import { MembershipRepositoryLive } from "@/modules/organization/infrastructure/repositories/membership.repository-live";
+import { OrganizationRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization.repository-live";
+import { OrganizationRolesRepositoryLive } from "@/modules/organization/infrastructure/repositories/organization-roles.repository-live";
+import { findOrganizationMembershipsHandler } from "@/modules/organization/queries/find-organization-memberships.handler";
+import { describeIntegration } from "@/test-utils/server-test-runtime";
+import { TestDatabaseLive } from "@/test-utils/test-database";
 
 const orgA = OrganizationId.make("11111111-1111-1111-1111-111111111111");
 const orgB = OrganizationId.make("22222222-2222-2222-2222-222222222222");
@@ -78,6 +77,7 @@ const seedMember = (userId: UserId, organizationId: OrganizationId) =>
 const seedAdmin = (userId: UserId, organizationId: OrganizationId) =>
   Effect.gen(function* () {
     const rolesRepo = yield* OrganizationRolesRepository;
+
     const granted = Result.getOrThrow(
       OrganizationRolesRootOps.grantRole(
         OrganizationRolesRootOps.empty(userId, organizationId),
@@ -85,76 +85,78 @@ const seedAdmin = (userId: UserId, organizationId: OrganizationId) =>
         issuer,
       ),
     );
+
     yield* rolesRepo.upsertOne(granted.organizationRoles);
   });
 
-describe("findOrganizationMembershipsHandler (integration)", () => {
-  beforeEach(async () => {
-    await Effect.runPromise(
-      truncate(
-        "organization.organization_roles",
-        "organization.memberships",
-        "organization.organizations",
-        "user.users",
-      ).pipe(Effect.provide(TestDatabaseLive)),
+describeIntegration(
+  "findOrganizationMembershipsHandler (integration)",
+  {
+    layer: TestLayer,
+    tables: [
+      "organization.organization_roles",
+      "organization.memberships",
+      "organization.organizations",
+      "user.users",
+    ],
+  },
+  (it) => {
+    it.effect("returns only the requested org's members, enriched with email", () =>
+      Effect.gen(function* () {
+        yield* seedUsers;
+        yield* seedOrgs;
+        yield* seedMember(userA, orgA);
+        yield* seedMember(userB, orgA);
+        yield* seedMember(userC, orgB);
+
+        const result = yield* findOrganizationMembershipsHandler({ organizationId: orgA });
+        deepStrictEqual(result.length, 2);
+        deepStrictEqual(
+          new Set(result.map((r) => r.email)),
+          new Set(["a@example.com", "b@example.com"]),
+        );
+      }),
     );
-  });
 
-  it.effect("returns only the requested org's members, enriched with email", () =>
-    Effect.gen(function* () {
-      yield* seedUsers;
-      yield* seedOrgs;
-      yield* seedMember(userA, orgA);
-      yield* seedMember(userB, orgA);
-      yield* seedMember(userC, orgB);
+    it.effect("flags admins via isAdmin and leaves plain members false", () =>
+      Effect.gen(function* () {
+        yield* seedUsers;
+        yield* seedOrgs;
+        yield* seedMember(userA, orgA);
+        yield* seedMember(userB, orgA);
+        yield* seedAdmin(userA, orgA);
 
-      const result = yield* findOrganizationMembershipsHandler({ organizationId: orgA });
-      deepStrictEqual(result.length, 2);
-      deepStrictEqual(
-        new Set(result.map((r) => r.email)),
-        new Set(["a@example.com", "b@example.com"]),
-      );
-    }).pipe(Effect.provide(TestLayer)),
-  );
+        const result = yield* findOrganizationMembershipsHandler({ organizationId: orgA });
+        const byUser = new Map(result.map((r) => [r.userId, r.isAdmin]));
+        deepStrictEqual(byUser.get(userA), true);
+        deepStrictEqual(byUser.get(userB), false);
+      }),
+    );
 
-  it.effect("flags admins via isAdmin and leaves plain members false", () =>
-    Effect.gen(function* () {
-      yield* seedUsers;
-      yield* seedOrgs;
-      yield* seedMember(userA, orgA);
-      yield* seedMember(userB, orgA);
-      yield* seedAdmin(userA, orgA);
+    it.effect("returns empty when the org has no members", () =>
+      Effect.gen(function* () {
+        yield* seedUsers;
+        yield* seedOrgs;
+        const result = yield* findOrganizationMembershipsHandler({ organizationId: orgA });
+        deepStrictEqual(result, []);
+      }),
+    );
 
-      const result = yield* findOrganizationMembershipsHandler({ organizationId: orgA });
-      const byUser = new Map(result.map((r) => [r.userId, r.isAdmin]));
-      deepStrictEqual(byUser.get(userA), true);
-      deepStrictEqual(byUser.get(userB), false);
-    }).pipe(Effect.provide(TestLayer)),
-  );
+    it.effect("skips members whose user record is missing from the lookup", () =>
+      Effect.gen(function* () {
+        yield* seedUsers;
+        yield* seedOrgs;
+        yield* seedMember(userA, orgA);
+        // `orphanedUser` has a membership row but is absent from the lookup map.
+        yield* seedMember(orphanedUser, orgA);
 
-  it.effect("returns empty when the org has no members", () =>
-    Effect.gen(function* () {
-      yield* seedUsers;
-      yield* seedOrgs;
-      const result = yield* findOrganizationMembershipsHandler({ organizationId: orgA });
-      deepStrictEqual(result, []);
-    }).pipe(Effect.provide(TestLayer)),
-  );
-
-  it.effect("skips members whose user record is missing from the lookup", () =>
-    Effect.gen(function* () {
-      yield* seedUsers;
-      yield* seedOrgs;
-      yield* seedMember(userA, orgA);
-      // `orphanedUser` has a membership row but is absent from the lookup map.
-      yield* seedMember(orphanedUser, orgA);
-
-      const result = yield* findOrganizationMembershipsHandler({ organizationId: orgA });
-      deepStrictEqual(result.length, 1);
-      deepStrictEqual(
-        result.map((r) => r.userId),
-        [userA],
-      );
-    }).pipe(Effect.provide(TestLayer)),
-  );
-});
+        const result = yield* findOrganizationMembershipsHandler({ organizationId: orgA });
+        deepStrictEqual(result.length, 1);
+        deepStrictEqual(
+          result.map((r) => r.userId),
+          [userA],
+        );
+      }),
+    );
+  },
+);
