@@ -20,9 +20,9 @@
     "@sveltejs/kit": "3.0.1",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "@tailwindcss/vite": "4.2.4",
-    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/svelte": "^5.4.2",
-    "@testing-library/user-event": "^14.6.1",
+    "@testing-library/user-event": "^14.6.7",
     "jsdom": "^26.1.0",
     "msw": "^2.14.7",
     "svelte": "^5.57.2",
@@ -31,6 +31,6 @@
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^6.0.3",
     "vite": "^8.3.4",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.4"
   }
 }
