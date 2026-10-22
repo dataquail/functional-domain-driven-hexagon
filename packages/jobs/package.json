@@ -14,9 +14,9 @@
   },
   "dependencies": {
     "@org/database": "workspace:^",
-    "effect": "4.0.2"
+    "effect": "4.0.5"
   },
   "devDependencies": {
-    "@effect/platform-node": "4.0.2"
+    "@effect/platform-node": "4.0.5"
   }
 }

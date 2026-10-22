@@ -12,9 +12,9 @@
   },
   "dependencies": {
     "@better-auth/oauth-provider": "1.7.7",
-    "@effect/platform-node": "4.0.2",
+    "@effect/platform-node": "4.0.5",
     "better-auth": "1.7.7",
-    "effect": "4.0.2",
+    "effect": "4.0.5",
     "pg": "8.23.1"
   },
   "devDependencies": {
