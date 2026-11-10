@@ -14,7 +14,7 @@
     "@effect/platform-node": "4.0.2",
     "@effect/sql-pg": "4.0.2",
     "alchemy": "2.0.0-beta.81",
-    "effect": "4.0.2"
+    "effect": "4.0.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20260918.1",
