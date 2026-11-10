@@ -22,7 +22,7 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@org/api-client": "workspace:^",
     "@org/contracts": "workspace:^",
-    "effect": "4.0.2",
+    "effect": "4.0.3",
     "zod": "^3.25.76"
   },
   "devDependencies": {

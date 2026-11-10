@@ -21,7 +21,7 @@
   "dependencies": {
     "@lucide/svelte": "^1.55.0",
     "bits-ui": "^2.19.5",
-    "effect": "4.0.2",
+    "effect": "4.0.3",
     "svelte-sonner": "^1.2.1"
   },
   "peerDependencies": {

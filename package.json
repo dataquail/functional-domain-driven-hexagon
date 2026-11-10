@@ -79,7 +79,7 @@
     "@typescript/native": "npm:typescript@7.0.2",
     "@vitest/coverage-v8": "5.0.3",
     "babel-plugin-annotate-pure-calls": "^0.4.0",
-    "effect": "4.0.2",
+    "effect": "4.0.3",
     "eslint": "^10.12.0",
     "eslint-plugin-codegen": "^0.34.1",
     "eslint-plugin-simple-import-sort": "^13.0.0",
@@ -106,7 +106,7 @@
     "overrides": {
       "vitest": "^5.0.3",
       "vite": "^8.3.4",
-      "effect": "4.0.2",
+      "effect": "4.0.3",
       "@goodbones/browser>effect": "4.0.0-beta.94",
       "@goodbones/campaigns>effect": "4.0.0-beta.94",
       "@goodbones/cli>effect": "4.0.0-beta.94",
