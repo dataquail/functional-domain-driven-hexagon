@@ -17,7 +17,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "5.20260918.1",
     "@org/test-drivers": "workspace:^",
-    "@sveltejs/kit": "3.0.1",
+    "@sveltejs/kit": "3.1.1",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "@tailwindcss/vite": "4.2.4",
     "@testing-library/jest-dom": "^6.9.1",
